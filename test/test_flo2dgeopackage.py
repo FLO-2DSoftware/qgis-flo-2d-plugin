@@ -10,6 +10,7 @@
 
 import os
 import unittest
+
 from .utilities import get_qgis_app
 
 QGIS_APP = get_qgis_app()
@@ -21,8 +22,8 @@ EXPORT_DATA_DIR = os.path.join(THIS_DIR, "data")
 CONT_1 = os.path.join(IMPORT_DATA_DIR_1, "CONT.DAT")
 CONT_2 = os.path.join(IMPORT_DATA_DIR_2, "CONT.DAT")
 
-from flo2d.geopackage_utils import database_create
 from flo2d.flo2d_ie.flo2dgeopackage import Flo2dGeoPackage
+from flo2d.geopackage_utils import database_create
 
 
 def file_len(fname):

@@ -72,6 +72,8 @@ from .table_editor_widget import CommandItemEdit, StandardItem, StandardItemMode
 from .ui_utils import load_ui, set_icon, try_disconnect
 
 uiDialog, qtBaseClass = load_ui("inp_groups")
+
+
 class INP_GroupsDialog(qtBaseClass, uiDialog):
     def __init__(self, con, iface):
         qtBaseClass.__init__(self)
@@ -1021,7 +1023,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
 
                     for curve in storm_drain.INP_curves:
                         if curve[1][0:4] in ["Pump", "PUMP"]:
-                            self.gutils.execute(insert_pump_curves_sql, (curve[0], curve[1], curve[2], curve[3])) 
+                            self.gutils.execute(insert_pump_curves_sql, (curve[0], curve[1], curve[2], curve[3]))
                         elif curve[1][0:5].upper() == "TIDAL":
                             self.gutils.execute(insert_tidal_curves_sql, (curve[0], curve[1]))
                             self.gutils.execute(insert_tidal_curves_data_sql, (curve[0], curve[2], curve[3]))
@@ -1895,7 +1897,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 start_date = NULL
                 end_date = NULL
                 non_sync_dates = 0
-                
+
                 with open(swmm_file, "w") as swmm_inp_file:
                     no_in_out_conduits = 0
                     no_in_out_pumps = 0
@@ -1924,7 +1926,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                     swmm_inp_file.write("\nFLOW_ROUTING         " + dlg_INP_groups.flow_routing_cbo.currentText())
                     start_date = dlg_INP_groups.start_date.date().toString("MM/dd/yyyy")
                     swmm_inp_file.write("\nSTART_DATE           " + start_date)
-                    
+
                     swmm_inp_file.write(
                         "\nSTART_TIME           " + dlg_INP_groups.start_time.time().toString("hh:mm:ss")
                     )
@@ -2533,22 +2535,24 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                                         swmm_inp_file.write(line1.format(*description))
                                         for data in time_series_data:
                                             date = data[0] if data[0] is not None else "00/00/0000"
-                                            swmm_inp_file.write(line3.format(
-                                                                name if name is not None else " ", 
-                                                                date, 
-                                                                data[1] if data[1] is not None else "00:00", 
-                                                                data[2] if data[2] is not None else 0.0)
-                                                            )
+                                            swmm_inp_file.write(
+                                                line3.format(
+                                                    name if name is not None else " ",
+                                                    date,
+                                                    data[1] if data[1] is not None else "00:00",
+                                                    data[2] if data[2] is not None else 0.0,
+                                                )
+                                            )
                                             try:
                                                 d0 = datetime.strptime(date, "%m/%d/%Y").date()
                                                 start = datetime.strptime(start_date, "%m/%d/%Y").date()
                                                 end = datetime.strptime(end_date, "%m/%d/%Y").date()
-                                                if ( d0 < start or d0 > end):
+                                                if d0 < start or d0 > end:
                                                     non_sync_dates += 1
                                             except ValueError:
-                                                non_sync_dates += 1     
-                                        swmm_inp_file.write("\n;")                                       
-                                        
+                                                non_sync_dates += 1
+                                        swmm_inp_file.write("\n;")
+
                     except Exception as e:
                         QApplication.restoreOverrideCursor()
                         self.uc.show_error("ERROR 230220.1005: error while exporting [TIMESERIES] to .INP file!", e)
@@ -2735,25 +2739,47 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 )
                 warn = ""
                 if no_in_out_conduits != 0:
-                    warn += "* " + str(no_in_out_conduits) + " conduits have no inlet and/or outlet!\nThe value '?' was written in [CONDUITS] group.\n\n"
-                    
+                    warn += (
+                        "* "
+                        + str(no_in_out_conduits)
+                        + " conduits have no inlet and/or outlet!\nThe value '?' was written in [CONDUITS] group.\n\n"
+                    )
+
                 if no_in_out_pumps != 0:
-                    warn += "* " + str(no_in_out_pumps) + " pumps have no inlet and/or outlet!\nThe value '?' was written in [PUMPS] group.\n\n"
-                    
+                    warn += (
+                        "* "
+                        + str(no_in_out_pumps)
+                        + " pumps have no inlet and/or outlet!\nThe value '?' was written in [PUMPS] group.\n\n"
+                    )
+
                 if no_in_out_orifices != 0:
-                    warn += "* " + str(no_in_out_orifices) + " orifices have no inlet and/or outlet!\nThe value '?' was written in [ORIFICES] group.\n\n"
-                    
+                    warn += (
+                        "* "
+                        + str(no_in_out_orifices)
+                        + " orifices have no inlet and/or outlet!\nThe value '?' was written in [ORIFICES] group.\n\n"
+                    )
+
                 if no_in_out_weirs != 0:
-                    warn += "* " + str(no_in_out_weirs)+ " weirs have no inlet and/or outlet!\nThe value '?' was written in [WEIRS] group.\n\n"
-                    
+                    warn += (
+                        "* "
+                        + str(no_in_out_weirs)
+                        + " weirs have no inlet and/or outlet!\nThe value '?' was written in [WEIRS] group.\n\n"
+                    )
+
                 if non_sync_dates > 0:
-                    warn += "* " + str(non_sync_dates)+ " time series dates are outside the start and end times of the simulation!\nSee [TIMESERIES] group.\n\n"  
-                        
+                    warn += (
+                        "* "
+                        + str(non_sync_dates)
+                        + " time series dates are outside the start and end times of the simulation!\nSee [TIMESERIES] group.\n\n"
+                    )
+
                 if warn != "":
-                    self.uc.show_warn("WARNING 090422.0554: SWMM.INP file:\n\n" +
-                                       warn + 
-                                       "Please review these issues because they will cause errors during their processing.")
-                        
+                    self.uc.show_warn(
+                        "WARNING 090422.0554: SWMM.INP file:\n\n"
+                        + warn
+                        + "Please review these issues because they will cause errors during their processing."
+                    )
+
         except Exception as e:
             self.uc.show_error("ERROR 160618.0634: couldn't export .INP file!", e)
 

@@ -6,15 +6,125 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>435</width>
-    <height>420</height>
+    <width>500</width>
+    <height>500</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>Compute Green-Ampt</string>
   </property>
   <layout class="QGridLayout" name="gridLayout">
-   <item row="2" column="0">
+   <item row="5" column="0">
+    <widget class="QDialogButtonBox" name="buttonBox">
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+     <property name="standardButtons">
+      <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
+     </property>
+    </widget>
+   </item>
+   <item row="6" column="0">
+    <spacer name="verticalSpacer">
+     <property name="orientation">
+      <enum>Qt::Vertical</enum>
+     </property>
+     <property name="sizeHint" stdset="0">
+      <size>
+       <width>20</width>
+       <height>40</height>
+      </size>
+     </property>
+    </spacer>
+   </item>
+   <item row="1" column="0">
+    <widget class="QGroupBox" name="soil_grp">
+     <property name="title">
+      <string>Soil</string>
+     </property>
+     <layout class="QGridLayout" name="gridLayout_6">
+      <item row="0" column="0">
+       <layout class="QGridLayout" name="gridLayout_2">
+        <item row="0" column="0">
+         <widget class="QLabel" name="label_4">
+          <property name="text">
+           <string>Soil layer</string>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="0">
+         <widget class="QLabel" name="label">
+          <property name="text">
+           <string>Hydraulic conductivity [in/hr or mm/hr]</string>
+          </property>
+         </widget>
+        </item>
+        <item row="2" column="0">
+         <widget class="QLabel" name="label_2">
+          <property name="text">
+           <string>Rock outcrop [0 to 100%]</string>
+          </property>
+         </widget>
+        </item>
+        <item row="3" column="0">
+         <widget class="QLabel" name="label_10">
+          <property name="text">
+           <string>Soil Depth [ft or m]</string>
+          </property>
+         </widget>
+        </item>
+        <item row="4" column="0">
+         <widget class="QLabel" name="label_3">
+          <property name="text">
+           <string>DTHETA</string>
+          </property>
+         </widget>
+        </item>
+        <item row="5" column="0">
+         <widget class="QLabel" name="label_7">
+          <property name="text">
+           <string>PSIF</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+      <item row="0" column="1">
+       <layout class="QGridLayout" name="gridLayout_5">
+        <item row="2" column="0">
+         <widget class="QComboBox" name="rtimps_cbo"/>
+        </item>
+        <item row="3" column="0">
+         <widget class="QComboBox" name="soil_depth_cbo"/>
+        </item>
+        <item row="1" column="0">
+         <widget class="QComboBox" name="xksat_cbo"/>
+        </item>
+        <item row="0" column="0">
+         <widget class="QComboBox" name="soil_cbo"/>
+        </item>
+        <item row="4" column="0">
+         <widget class="QComboBox" name="dtheta_cbo"/>
+        </item>
+        <item row="5" column="0">
+         <widget class="QComboBox" name="psif_cbo"/>
+        </item>
+       </layout>
+      </item>
+      <item row="1" column="0">
+       <widget class="QCheckBox" name="log_area_average_chbox">
+        <property name="text">
+         <string>Log Area Average calculations</string>
+        </property>
+        <property name="checked">
+         <bool>true</bool>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item row="3" column="0">
     <widget class="QGroupBox" name="land_grp">
      <property name="title">
       <string>Land Use</string>
@@ -37,7 +147,7 @@
          </widget>
         </item>
         <item row="2" column="0">
-         <widget class="QCheckBox" name="veg_cover_chBox">
+         <widget class="QCheckBox" name="veg_cover_chbox">
           <property name="text">
            <string>Vegetation cover [0 to 100%]</string>
           </property>
@@ -80,86 +190,6 @@
       </item>
      </layout>
     </widget>
-   </item>
-   <item row="1" column="0">
-    <widget class="QGroupBox" name="soil_grp">
-     <property name="title">
-      <string>Soil</string>
-     </property>
-     <layout class="QGridLayout" name="gridLayout_6">
-      <item row="0" column="1">
-       <layout class="QGridLayout" name="gridLayout_5">
-        <item row="3" column="0">
-         <widget class="QComboBox" name="soil_depth_cbo"/>
-        </item>
-        <item row="1" column="0">
-         <widget class="QComboBox" name="xksat_cbo"/>
-        </item>
-        <item row="0" column="0">
-         <widget class="QComboBox" name="soil_cbo"/>
-        </item>
-        <item row="2" column="0">
-         <widget class="QComboBox" name="rtimps_cbo"/>
-        </item>
-       </layout>
-      </item>
-      <item row="0" column="0">
-       <layout class="QGridLayout" name="gridLayout_2">
-        <item row="0" column="0">
-         <widget class="QLabel" name="label_4">
-          <property name="text">
-           <string>Soil layer</string>
-          </property>
-         </widget>
-        </item>
-        <item row="1" column="0">
-         <widget class="QLabel" name="label">
-          <property name="text">
-           <string>Hydraulic conductivity [in/hr or mm/hr]</string>
-          </property>
-         </widget>
-        </item>
-        <item row="2" column="0">
-         <widget class="QLabel" name="label_2">
-          <property name="text">
-           <string>Rock outcrop [0 to 100%]</string>
-          </property>
-         </widget>
-        </item>
-        <item row="3" column="0">
-         <widget class="QLabel" name="label_10">
-          <property name="text">
-           <string>Soil Depth [ft or m]</string>
-          </property>
-         </widget>
-        </item>
-       </layout>
-      </item>
-     </layout>
-    </widget>
-   </item>
-   <item row="3" column="0">
-    <widget class="QDialogButtonBox" name="buttonBox">
-     <property name="orientation">
-      <enum>Qt::Horizontal</enum>
-     </property>
-     <property name="standardButtons">
-      <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
-     </property>
-    </widget>
-   </item>
-   <item row="4" column="0">
-    <spacer name="verticalSpacer">
-     <property name="orientation">
-      <enum>Qt::Vertical</enum>
-     </property>
-     <property name="sizeHint" stdset="0">
-      <size>
-       <width>20</width>
-       <height>40</height>
-      </size>
-     </property>
-    </spacer>
    </item>
   </layout>
  </widget>

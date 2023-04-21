@@ -17,11 +17,10 @@ from qgis.core import (
     QgsField,
     QgsFields,
     QgsGeometry,
-    QgsProject,
     QgsRectangle,
     QgsSpatialIndex,
 )
-from qgis.PyQt.QtCore import QSettings
+from qgis.PyQt.QtCore import QVariant
 from qgis.PyQt.QtWidgets import QApplication
 from qgis.utils import iface
 
@@ -48,6 +47,8 @@ class InfiltrationCalculator(object):
         self.xksat_fld = None
         self.rtimps_fld = None
         self.soil_depth_fld = None
+        self.soil_dtheta_fld = None
+        self.soil_psif_fld = None
 
         # Land use fields
         self.saturation_fld = None
@@ -55,7 +56,8 @@ class InfiltrationCalculator(object):
         self.ia_fld = None
         self.rtimpl_fld = None
 
-        self.vcCheck = None
+        self.vc_check = None
+        self.log_area_average = None
 
         # SCS (single) layer fields
         self.curve_fld = None
@@ -69,10 +71,13 @@ class InfiltrationCalculator(object):
         self,
         soil,
         land,
-        vcCheck,
+        vc_check,
+        log_area_average,
         xksat_fld="XKSAT",
         rtimps_fld="field_4",
         soil_depth_fld="soil_depth",
+        dtheta_fld="DTHETA",
+        psif_fld="PSIF",
         saturation_fld="field_6",
         vc_fld="field_5",
         ia_fld="field_3",
@@ -85,6 +90,8 @@ class InfiltrationCalculator(object):
         self.xksat_fld = xksat_fld
         self.rtimps_fld = rtimps_fld
         self.soil_depth_fld = soil_depth_fld
+        self.soil_dtheta_fld = dtheta_fld
+        self.soil_psif_fld = psif_fld
 
         # Land use fields
         self.saturation_fld = saturation_fld
@@ -92,7 +99,8 @@ class InfiltrationCalculator(object):
         self.ia_fld = ia_fld
         self.rtimpl_fld = rtimpl_fld
 
-        self.vcCheck = vcCheck
+        self.vc_check = vc_check
+        self.log_area_average = log_area_average
 
         # get area of an item in self.grid_lyr.
 
@@ -139,36 +147,46 @@ class InfiltrationCalculator(object):
                 soil_features, soil_index = intersection_spatial_index(self.soil_lyr, soil_and_land_request, clip=True)
                 land_features, land_index = intersection_spatial_index(self.land_lyr, soil_and_land_request, clip=True)
 
-                rtimp_features = {}
-                rtimp_index = QgsSpatialIndex()
-                rtimp_fields = QgsFields()
-                rtimp_fields.append(QgsField("rtimp"))
+                land_soil_features = {}
+                land_soil_index = QgsSpatialIndex()
+                land_soil_fields = QgsFields()
+                land_soil_fields.append(QgsField("rtimp", QVariant.Double))
+                land_soil_fields.append(QgsField("dtheta", QVariant.Double))
+                land_soil_fields.append(QgsField("psif", QVariant.Double))
+                land_soil_fields.append(QgsField("saturation", QVariant.String))
 
-                rtimp_fid = 0
+                land_soil_fid = 0
 
                 for land_feat, engine in land_features.values():
                     land_rtimp = land_feat[self.rtimpl_fld]
+                    land_saturation = land_feat[self.saturation_fld]
                     land_geom = land_feat.geometry()
 
                     soil_fids = soil_index.intersects(land_geom.boundingBox())
                     for soil_fid in soil_fids:
                         soil_feat, soil_engine = soil_features[soil_fid]
                         soil_rtimp = soil_feat[self.rtimps_fld]
-                        rtimp_geom = land_geom.intersection(soil_feat.geometry())
+                        soil_dtheta = soil_feat[self.soil_dtheta_fld]
+                        soil_psif = soil_feat[self.soil_psif_fld]
 
-                        if rtimp_geom.isEmpty():
+                        land_soil_geom = land_geom.intersection(soil_feat.geometry())
+
+                        if land_soil_geom.isEmpty():
                             continue
 
-                        rtimp_feat = QgsFeature(rtimp_fields, rtimp_fid)
+                        land_soil_feat = QgsFeature(land_soil_fields, land_soil_fid)
 
-                        rtimp_feat.setGeometry(rtimp_geom)
-                        rtimp_feat[0] = max(land_rtimp, soil_rtimp)
-                        rtimp_features[rtimp_fid] = (
-                            rtimp_feat,
-                            QgsGeometry.createGeometryEngine(rtimp_geom.constGet()),
+                        land_soil_feat.setGeometry(land_soil_geom)
+                        land_soil_feat["rtimp"] = max(land_rtimp, soil_rtimp)
+                        land_soil_feat["dtheta"] = soil_dtheta
+                        land_soil_feat["psif"] = soil_psif
+                        land_soil_feat["saturation"] = land_saturation
+                        land_soil_features[land_soil_fid] = (
+                            land_soil_feat,
+                            QgsGeometry.createGeometryEngine(land_soil_geom.constGet()),
                         )
-                        rtimp_index.insertFeature(rtimp_feat)
-                        rtimp_fid = rtimp_fid + 1
+                        land_soil_index.insertFeature(land_soil_feat)
+                        land_soil_fid = land_soil_fid + 1
 
                 try:
                     soil_values = poly2poly_geos_from_features(
@@ -191,17 +209,17 @@ class InfiltrationCalculator(object):
                     try:
                         xksat_parts = [(row[0], row[-1]) for row in values]
                         avg_soil_depth = sum(row[1] * row[-1] for row in values)
-                        avg_xksat = green_ampt.calculate_xksat(xksat_parts)
+                        avg_xksat = green_ampt.calculate_xksat_weighted(xksat_parts)
 
-                        psif = green_ampt.calculate_psif(avg_xksat)
-
-                        grid_params[gid] = {
+                        soil_params = {
                             "soilParts": len(values),
                             "soilhydc": avg_xksat,
                             "hydc": avg_xksat,
-                            "soils": psif,
                             "soil_depth": avg_soil_depth,
                         }
+                        if not self.log_area_average:
+                            soil_params["soils"] = green_ampt.calculate_psif(avg_xksat)
+                        grid_params[gid] = soil_params
                     except Exception as e:
                         self.uc.show_error(
                             "ERROR 1401181951.2035: Green-Ampt infiltration failed"
@@ -217,45 +235,61 @@ class InfiltrationCalculator(object):
 
                 for gid, values in land_values:
                     try:
-                        params = grid_params[gid]
-                        avg_xksat = params["hydc"]
+                        land_params = grid_params[gid]
+                        avg_xksat = land_params["hydc"]
 
                         vc_parts = [(row[1], row[-1]) for row in values]
                         ia_parts = [(row[2], row[-1]) for row in values]
 
-                        dtheta = sum([green_ampt.calculate_dtheta(avg_xksat, row[0]) * row[-1] for row in values])
-                        if self.vcCheck == True:
-                            # perform vc adjusment
+                        if not self.log_area_average:
+                            dtheta = sum([green_ampt.calculate_dtheta(avg_xksat, row[0]) * row[-1] for row in values])
+                            land_params["dtheta"] = dtheta
+
+                        if self.vc_check is True:
+                            # perform vc adjustment
                             xksatc = green_ampt.calculate_xksatc(avg_xksat, vc_parts)
                         else:
-                            # don't perform vc adjusment
+                            # don't perform vc adjustment
                             xksatc = avg_xksat
 
                         iabstr = green_ampt.calculate_iabstr(ia_parts)
 
-                        params["dtheta"] = dtheta
-                        params["hydc"] = xksatc
-                        params["abstrinf"] = iabstr
-                        params["luParts"] = len(values)
+                        land_params["hydc"] = xksatc
+                        land_params["abstrinf"] = iabstr
+                        land_params["luParts"] = len(values)
 
                     except ValueError as e:
                         raise ValueError(
                             "Calculation of land use variables failed for grid cell with fid: {}".format(gid)
                         )
 
-                rtimp_values = poly2poly_geos_from_features(
-                    self.grid_lyr, rtimp_features, rtimp_index, request, "rtimp"
+                land_soil_values = poly2poly_geos_from_features(
+                    self.grid_lyr,
+                    land_soil_features,
+                    land_soil_index,
+                    request,
+                    "rtimp",
+                    "dtheta",
+                    "psif",
+                    "saturation",
                 )
+                for gid, values in land_soil_values:
+                    land_params = grid_params[gid]
+                    rtimp_parts, dtheta_parts, psif_parts = [], [], []
+                    for rtimp, dtheta, psif, saturation, area in values:
+                        rtimp_parts.append((rtimp * 0.01, area))
+                        if saturation not in {"wet", "saturated"}:
+                            dtheta_parts.append((dtheta, area))
+                        psif_parts.append((psif, area))
+                    land_params["rtimpf"] = green_ampt.calculate_rtimp_n(rtimp_parts)
+                    if self.log_area_average:
+                        land_params["dtheta"] = green_ampt.calculate_dtheta_weighted(dtheta_parts)
+                        land_params["soils"] = green_ampt.calculate_psif_weighted(psif_parts)
 
-                for gid, values in rtimp_values:
-                    params = grid_params[gid]
-                    rtimp_part = [(row[0] * 0.01, row[-1]) for row in values]
-                    params["rtimpf"] = green_ampt.calculate_rtimp_n(rtimp_part)
-
-            if writeDiagnosticCSV == True:
+            if writeDiagnosticCSV is True:
                 # write a diagnostic CSV file with all fo the information for the calculations in it
                 diagCSVFolder = r"C:\temp"
-                if os.path.exists(diagCSVFolder) == False:
+                if os.path.exists(diagCSVFolder) is False:
                     os.mkdir(diagCSVFolder)
                 diagFilename = "GA_Diagnostics.csv"
                 diagPath = os.path.join(diagCSVFolder, diagFilename)
@@ -338,20 +372,19 @@ class GreenAmpt(object):
     def __init__(self):
         self.uc = UserCommunication(iface, "FLO-2D")
 
-    #     @staticmethod
-    def calculate_xksat(self, parts, globalXKSAT=0.06):
+    def calculate_xksat_weighted(self, parts, globalXKSAT=0.06):
         # parts are reported in % of grid area
         try:
-            xksat_gen = [area * log10(xksat) for xksat, area in parts if xksat > 0]
-            areaTotal = sum(area for xksat, area in parts)
+            xksat_partial = [area * log10(xksat) for xksat, area in parts if xksat > 0]
+            area_total = sum(area for xksat, area in parts)
             if (
-                areaTotal < 1.0
+                area_total < 1.0
             ):  # check if intersected parts area is less than grid area, assumes same units. Values would differ if soils did not completely cover cell.
                 if (
                     globalXKSAT > 0
                 ):  # if it's zero, we don't need to do anything and can't evaluate log10. If it's less than zero, it's not valid input.
-                    xksat_gen.append((1.0 - areaTotal) * log10(globalXKSAT))
-            avg_xksat = round(10 ** (sum(xksat_gen)), 4)
+                    xksat_partial.append((1.0 - area_total) * log10(globalXKSAT))
+            avg_xksat = round(10 ** (sum(xksat_partial)), 4)
             return avg_xksat
 
         except Exception as e:
@@ -359,6 +392,38 @@ class GreenAmpt(object):
             self.uc.show_error(
                 "ERROR 140119.1715: Green-Ampt infiltration failed!."
                 + "\nError while calculating xksat."
+                + "\n__________________________________________________",
+                e,
+            )
+
+    def calculate_dtheta_weighted(self, parts):
+        # parts are reported in % of grid area
+        try:
+            dtheta_partial = [area * log10(dtheta) for dtheta, area in parts if dtheta > 0]
+            avg_dtheta = round(10 ** (sum(dtheta_partial)), 4)
+            return avg_dtheta
+
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.uc.show_error(
+                "ERROR 140119.1715: Green-Ampt infiltration failed!."
+                + "\nError while calculating DTHETA."
+                + "\n__________________________________________________",
+                e,
+            )
+
+    def calculate_psif_weighted(self, parts):
+        # parts are reported in % of grid area
+        try:
+            psif_partial = [area * log10(psif) for psif, area in parts if psif > 0]
+            avg_psif = round(10 ** (sum(psif_partial)), 4)
+            return avg_psif
+
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.uc.show_error(
+                "ERROR 140119.1715: Green-Ampt infiltration failed!."
+                + "\nError while calculating PSIF."
                 + "\n__________________________________________________",
                 e,
             )

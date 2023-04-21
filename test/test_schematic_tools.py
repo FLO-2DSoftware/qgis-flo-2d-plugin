@@ -8,8 +8,9 @@
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 
-import unittest
 import os
+import unittest
+
 from .utilities import get_qgis_app
 
 QGIS_APP = get_qgis_app()
@@ -18,13 +19,13 @@ VECTOR_PATH = os.path.join(THIS_DIR, "data", "vector")
 EXPORT_DATA_DIR = os.path.join(THIS_DIR, "data")
 
 from collections import defaultdict
+
 from qgis.core import QgsVectorLayer
-from flo2d.flo2d_tools.schematic_tools import (
-    get_intervals,
-    interpolate_along_line,
-    schematize_lines,
-    populate_directions,
-)
+
+from flo2d.flo2d_tools.schematic_tools import (get_intervals,
+                                               interpolate_along_line,
+                                               populate_directions,
+                                               schematize_lines)
 
 
 class TestSchematicTools(unittest.TestCase):

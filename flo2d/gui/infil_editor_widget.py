@@ -476,9 +476,9 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
             QApplication.setOverrideCursor(Qt.WaitCursor)
             dlg.save_green_ampt_shapefile_fields()
             self.gutils.disable_geom_triggers()
-            soil_lyr, land_lyr, fields, vcCheck = dlg.green_ampt_parameters()
+            soil_lyr, land_lyr, fields, vc_check, log_area_average = dlg.green_ampt_parameters()
             inf_calc = InfiltrationCalculator(self.grid_lyr, self.iface, self.gutils)
-            inf_calc.setup_green_ampt(soil_lyr, land_lyr, vcCheck, *fields)
+            inf_calc.setup_green_ampt(soil_lyr, land_lyr, vc_check, log_area_average, *fields)
             grid_params = inf_calc.green_ampt_infiltration()
 
             if grid_params:
@@ -497,7 +497,7 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
                 cells_values = []
                 non_intercepted = []
                 for i, (gid, params) in enumerate(grid_params.items(), 1):
-                    if not "dtheta" in params:
+                    if "dtheta" not in params:
                         non_intercepted.append(gid)
                         params["dtheta"] = 0.3
                         params["abstrinf"] = 0.1
@@ -785,7 +785,7 @@ class GreenAmptDialog(uiDialog_green, qtBaseClass_green):
         self.lyrs = lyrs
         self.setupUi(self)
         self.uc = UserCommunication(iface, "FLO-2D")
-        self.soil_combos = [self.xksat_cbo, self.rtimps_cbo, self.soil_depth_cbo]
+        self.soil_combos = [self.xksat_cbo, self.rtimps_cbo, self.soil_depth_cbo, self.dtheta_cbo, self.psif_cbo]
         self.land_combos = [self.saturation_cbo, self.vc_cbo, self.ia_cbo, self.rtimpl_cbo]
         self.soil_cbo.currentIndexChanged.connect(self.populate_soil_fields)
         self.land_cbo.currentIndexChanged.connect(self.populate_land_fields)
@@ -841,8 +841,9 @@ class GreenAmptDialog(uiDialog_green, qtBaseClass_green):
         lidx = self.land_cbo.currentIndex()
         land_lyr = self.land_cbo.itemData(lidx)
         fields = [f.currentText() for f in chain(self.soil_combos, self.land_combos)]
-        vcCheck = self.veg_cover_chBox.isChecked()
-        return soil_lyr, land_lyr, fields, vcCheck
+        vc_check = self.veg_cover_chbox.isChecked()
+        log_area_average = self.log_area_average_chbox.isChecked()
+        return soil_lyr, land_lyr, fields, vc_check, log_area_average
 
     def save_green_ampt_shapefile_fields(self):
         s = QSettings()
@@ -851,6 +852,8 @@ class GreenAmptDialog(uiDialog_green, qtBaseClass_green):
         s.setValue("ga_soil_XKSAT", self.xksat_cbo.currentIndex())
         s.setValue("ga_soil_rtimps", self.rtimps_cbo.currentIndex())
         s.setValue("ga_soil_depth", self.soil_depth_cbo.currentIndex())
+        s.setValue("ga_soil_DTHETA", self.dtheta_cbo.currentIndex())
+        s.setValue("ga_soil_PSIF", self.psif_cbo.currentIndex())
 
         s.setValue("ga_land_layer_name", self.land_cbo.currentText())
         s.setValue("ga_land_saturation", self.saturation_cbo.currentIndex())
@@ -871,6 +874,12 @@ class GreenAmptDialog(uiDialog_green, qtBaseClass_green):
 
             val = int(-1 if s.value("ga_soil_depth") is None else s.value("ga_soil_depth"))
             self.soil_depth_cbo.setCurrentIndex(val)
+
+            val = int(-1 if s.value("ga_soil_DTHETA") is None else s.value("ga_soil_DTHETA"))
+            self.dtheta_cbo.setCurrentIndex(val)
+
+            val = int(-1 if s.value("ga_soil_PSIF") is None else s.value("ga_soil_PSIF"))
+            self.psif_cbo.setCurrentIndex(val)
 
         name = "" if s.value("ga_land_layer_name") is None else s.value("ga_land_layer_name")
         if name == self.land_cbo.currentText():
