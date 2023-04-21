@@ -128,7 +128,7 @@ class ParseHDF5:
     @property
     def neighbors_group(self):
         group_name = "Neighbors"
-        group_datasets = []
+        group_datasets = ["N", "E", "S", "W", "NE", "SE", "SW", "NW"]
         group = HDF5Group(group_name)
         for dataset_name in group_datasets:
             group.create_dataset(dataset_name, [])

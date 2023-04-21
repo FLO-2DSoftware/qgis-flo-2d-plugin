@@ -19,6 +19,7 @@ from qgis.core import NULL, QgsApplication
 from qgis.PyQt.QtCore import Qt
 from qgis.PyQt.QtWidgets import QApplication
 
+from ..flo2d_tools.grid_tools import grid_compas_neighbors
 from ..geopackage_utils import GeoPackageUtils
 from ..gui.bc_editor_widget import BCEditorWidget
 from ..layers import Layers
@@ -1562,7 +1563,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
         except Exception as e:
             QApplication.restoreOverrideCursor()
-            self.uc.show_error("ERROR 101218.1541: exporting MANNINGS_N.DAT or TOPO.DAT failed!.\n", e)
+            self.uc.show_error("ERROR 101218.1541: exporting Grid data failed!.\n", e)
             QApplication.setOverrideCursor(Qt.WaitCursor)
             return False
 
@@ -1608,6 +1609,27 @@ class Flo2dGeoPackage(GeoPackageUtils):
         except Exception as e:
             QApplication.restoreOverrideCursor()
             self.uc.show_error("ERROR 101218.1541: exporting MANNINGS_N.DAT or TOPO.DAT failed!.\n", e)
+            QApplication.setOverrideCursor(Qt.WaitCursor)
+            return False
+
+    def export_neighbours(self):
+        if self.parsed_format == self.FORMAT_DAT:
+            raise NotImplementedError("Exporting NEIGHBOURS.DAT is not supported!")
+        elif self.parsed_format == self.FORMAT_HDF5:
+            return self.export_neighbours_hdf5()
+
+    def export_neighbours_hdf5(self):
+        try:
+            neighbors_group = self.parser.neighbors_group
+            for row in grid_compas_neighbors(self.gutils):
+                directions = ["N", "E", "S", "W", "NE", "SE", "SW", "NW"]
+                for direction, neighbor_gid in zip(directions, row):
+                    neighbors_group.datasets[direction].data.append(neighbor_gid)
+            self.parser.write_groups(neighbors_group)
+            return True
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.uc.show_error("ERROR: exporting grid neighbors data failed!.\n", e)
             QApplication.setOverrideCursor(Qt.WaitCursor)
             return False
 

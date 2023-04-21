@@ -2127,6 +2127,7 @@ class Flo2D(object):
             export_calls = [
                 "export_cont_toler",
                 "export_mannings_n_topo",
+                "export_neighbours",
             ]
             try:
                 s = QSettings()
