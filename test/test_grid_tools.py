@@ -10,6 +10,7 @@
 
 import os
 import unittest
+
 from .utilities import get_qgis_app
 
 QGIS_APP = get_qgis_app()
@@ -18,7 +19,9 @@ VECTOR_PATH = os.path.join(THIS_DIR, "data", "vector")
 EXPORT_DATA_DIR = os.path.join(THIS_DIR, "data")
 
 from qgis.core import QgsVectorLayer
-from flo2d.flo2d_tools.grid_tools import build_grid, poly2grid, calculate_arfwrf
+
+from flo2d.flo2d_tools.grid_tools import (build_grid, calculate_arfwrf,
+                                          poly2grid)
 
 
 class TestGridTools(unittest.TestCase):

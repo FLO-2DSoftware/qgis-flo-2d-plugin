@@ -794,16 +794,16 @@ class StormDrainProject(object):
                         time_list = list(zip_longest(time_cols_file, timeSplit))
                     else:
                         if len(timeSplit) < 4:
-                            if warn  == "":
+                            if warn == "":
                                 if timeSplit[0] != name:
                                     warn = "WARNING 310323.0507: Wrong data in [TIMESERIES] group!"
                                     continue
                                 else:
-                                    time  = timeSplit[1]
+                                    time = timeSplit[1]
                                     value = timeSplit[2]
                                     timeSplit = [name, date, time, value]
-                                    time_list = list(zip_longest(time_cols_date, timeSplit))                                    
-                        else:    
+                                    time_list = list(zip_longest(time_cols_date, timeSplit))
+                        else:
                             name = timeSplit[0]
                             date = timeSplit[1]
                             time = timeSplit[2]
