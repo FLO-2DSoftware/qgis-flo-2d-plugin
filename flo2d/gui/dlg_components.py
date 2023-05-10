@@ -153,44 +153,60 @@ class ComponentsDialog(qtBaseClass, uiDialog):
 
         elif self.in_or_out == "out":
             self.setWindowTitle("FLO-2D Components to Export")
+            show_note = False
 
             sql = """SELECT name, value FROM cont;"""
             options = {o: v if v is not None else "" for o, v in self.gutils.execute(sql).fetchall()}
 
-            if options["ICHANNEL"] == "0":
+            if options["ICHANNEL"] == "0" and not self.gutils.is_table_empty("chan"):
                 self.channels_chbox.setText("*" + self.channels_chbox.text() + "*")
+                show_note = True
 
-            if options["IEVAP"] == "0":
+            if options["IEVAP"] == "0" and not self.gutils.is_table_empty("evapor"):
                 self.evaporation_chbox.setText("*" + self.evaporation_chbox.text() + "*")
+                show_note = True
 
-            if options["IHYDRSTRUCT"] == "0":
+            if options["IHYDRSTRUCT"] == "0" and not self.gutils.is_table_empty("struct"):
                 self.hydr_struct_chbox.setText("*" + self.hydr_struct_chbox.text() + "*")
+                show_note = True
 
-            if options["IMULTC"] == "0":
+            if options["IMULTC"] == "0" and not (
+                self.gutils.is_table_empty("mult_cells") and self.gutils.is_table_empty("simple_mult_cells")
+            ):
                 self.multiple_channels_chbox.setText("*" + self.multiple_channels_chbox.text() + "*")
+                show_note = True
 
-            if options["INFIL"] == "0":
+            if options["INFIL"] == "0" and not self.gutils.is_table_empty("infil"):
                 self.infiltration_chbox.setText("*" + self.infiltration_chbox.text() + "*")
+                show_note = True
 
-            if options["IRAIN"] == "0":
+            if options["IRAIN"] == "0" and not self.gutils.is_table_empty("rain"):
                 self.rain_chbox.setText("*" + self.rain_chbox.text() + "*")
+                show_note = True
 
-            if options["ISED"] == "0" and options["MUD"] == "0":
+            if (options["ISED"] == "0" and not self.gutils.is_table_empty("sed")) and (
+                options["MUD"] == "0" and not self.gutils.is_table_empty("mud")
+            ):
                 self.mud_and_sed_chbox.setText("*" + self.mud_and_sed_chbox.text() + "*")
+                show_note = True
 
-            if options["IWRFS"] == "0":
+            if options["IWRFS"] == "0" and not self.gutils.is_table_empty("blocked_cells"):
                 self.reduction_factors_chbox.setText("*" + self.reduction_factors_chbox.text() + "*")
+                show_note = True
 
-            if options["LEVEE"] == "0":
+            if options["LEVEE"] == "0" and not self.gutils.is_table_empty("levee_data"):
                 self.levees_chbox.setText("*" + self.levees_chbox.text() + "*")
+                show_note = True
 
-            if options["MSTREET"] == "0":
+            if options["MSTREET"] == "0" and not self.gutils.is_table_empty("streets"):
                 self.streets_chbox.setText("*" + self.streets_chbox.text() + "*")
+                show_note = True
 
-            if options["SWMM"] == "0":
+            if options["SWMM"] == "0" and not self.gutils.is_table_empty("swmmflo"):
                 self.storm_drain_chbox.setText("*" + self.storm_drain_chbox.text() + "*")
+                show_note = True
 
-            self.components_note_lbl.setVisible(True)
+            self.components_note_lbl.setVisible(show_note)
 
             if not self.gutils.is_table_empty("chan"):
                 self.channels_chbox.setChecked(True)
@@ -217,22 +233,20 @@ class ComponentsDialog(qtBaseClass, uiDialog):
                 self.levees_chbox.setEnabled(True)
 
             # Multiple channels:
-            if options["IMULTC"] == "1":
-                if self.gutils.is_table_empty("mult_cells") and self.gutils.is_table_empty("simple_mult_cells"):
-                    QApplication.restoreOverrideCursor()
-                    self.uc.show_info(
-                        "WARNING 130222.0843: there aren't mult channels or simple mult channels in the project!\n\nThe IMULTC switch will be turned off."
-                    )
-                    self.gutils.set_cont_par("IMULTC", 0)
-                    # self.multiple_channels_chbox.setChecked(False)
-                    # self.multiple_channels_chbox.setEnabled(False)
-                    QApplication.setOverrideCursor(Qt.WaitCursor)
-                else:  # There are Mult or simple channels cells:
-                    if self.gutils.is_table_empty("mult"):
-                        # There are mult or simple channels but 'mult' (globals) is empty: set globals:
-                        self.gutils.fill_empty_mult_globals()
-                    self.multiple_channels_chbox.setChecked(True)
-                    self.multiple_channels_chbox.setEnabled(True)
+            # if options["IMULTC"] == "1":
+            if self.gutils.is_table_empty("mult_cells") and self.gutils.is_table_empty("simple_mult_cells"):
+                QApplication.restoreOverrideCursor()
+                self.uc.show_info(
+                    "WARNING 130222.0843: there aren't mult channels or simple mult channels in the project!\n\nThe IMULTC switch will be turned off."
+                )
+                self.gutils.set_cont_par("IMULTC", 0)
+                QApplication.setOverrideCursor(Qt.WaitCursor)
+            else:  # There are Mult or simple channels cells:
+                if self.gutils.is_table_empty("mult"):
+                    # There are mult or simple channels but 'mult' (globals) is empty: set globals:
+                    self.gutils.fill_empty_mult_globals()
+                self.multiple_channels_chbox.setChecked(True)
+                self.multiple_channels_chbox.setEnabled(True)
 
             if not self.gutils.is_table_empty("breach"):
                 self.breach_chbox.setChecked(True)
