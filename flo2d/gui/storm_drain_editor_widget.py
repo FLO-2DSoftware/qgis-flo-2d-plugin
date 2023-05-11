@@ -2516,7 +2516,8 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                                 if row[3] == "False":  # Inflow data comes from file:
                                     description = [row[1]]
                                     swmm_inp_file.write(line1.format(*description))
-                                    fileName = os.path.basename(row[2].strip())
+                                    fileName = row[2].strip()
+                                    # fileName = os.path.basename(row[2].strip())
                                     file = '"' + fileName + '"'
                                     file = os.path.normpath(file)
                                     lrow2 = [row[0], "FILE", file]
