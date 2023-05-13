@@ -879,7 +879,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                                             ) 
                                             VALUES (?, ?, ?, ?, ?, ?);"""
                     for name, values in list(storm_drain.INP_inflows.items()):
-                        constituent = values["constituent"].upper() if "cosntituent" in values else "FLOW"
+                        constituent = values["constituent"].upper() if "constituent" in values else "FLOW"
                         baseline = values["baseline"] if values["baseline"] is not None else 0.0
                         pattern_name = values["pattern_name"] if "pattern_name" in values else "?"
                         time_series_name = values["time_series_name"] if "time_series_name" in values else "?"
@@ -2492,13 +2492,13 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                         swmm_inp_file.write("\n;;Name           Date       Time       Value     ")
                         swmm_inp_file.write("\n;;-------------- ---------- ---------- ----------")
 
-                        SD_inflow_time_series_sql = """SELECT time_series_name, 
+                        SD_time_series_sql = """SELECT time_series_name, 
                                                             time_series_description, 
                                                             time_series_file,
                                                             time_series_data
                                           FROM swmm_time_series ORDER BY fid;"""
 
-                        SD_inflow_time_series_data_sql = """SELECT                                 
+                        SD_time_series_data_sql = """SELECT                                 
                                                             date, 
                                                             time,
                                                             value
@@ -2508,7 +2508,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                         line2 = "\n{0:16} {1:<10} {2:<50}"
                         line3 = "\n{0:16} {1:<10} {2:<10} {3:<7.4f}"
 
-                        time_series_rows = self.gutils.execute(SD_inflow_time_series_sql).fetchall()
+                        time_series_rows = self.gutils.execute(SD_time_series_sql).fetchall()
                         if not time_series_rows:
                             pass
                         else:
@@ -2516,8 +2516,9 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                                 if row[3] == "False":  # Inflow data comes from file:
                                     description = [row[1]]
                                     swmm_inp_file.write(line1.format(*description))
-                                    fileName = os.path.basename(row[2].strip())
-                                    file = '"' + last_dir + "/" + fileName + '"'
+                                    fileName = row[2].strip()
+                                    # fileName = os.path.basename(row[2].strip())
+                                    file = '"' + fileName + '"'
                                     file = os.path.normpath(file)
                                     lrow2 = [row[0], "FILE", file]
                                     swmm_inp_file.write(line2.format(*lrow2))
@@ -2525,9 +2526,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                                 else:
                                     # Inflow data given in table 'swmm_time_series_data':
                                     name = row[0]
-                                    time_series_data = self.gutils.execute(
-                                        SD_inflow_time_series_data_sql, (name,)
-                                    ).fetchall()
+                                    time_series_data = self.gutils.execute(SD_time_series_data_sql, (name,)).fetchall()
                                     if not time_series_data:
                                         pass
                                     else:
