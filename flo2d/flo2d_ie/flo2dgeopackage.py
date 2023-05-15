@@ -186,10 +186,16 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
     def import_inflow(self):
         cont_sql = ["""INSERT INTO cont (name, value, note) VALUES""", 3]
-        inflow_sql = ["""INSERT INTO inflow (time_series_fid, ident, inoutfc, bc_fid) VALUES""", 4]
+        inflow_sql = [
+            """INSERT INTO inflow (time_series_fid, ident, inoutfc, bc_fid) VALUES""",
+            4,
+        ]
         cells_sql = ["""INSERT INTO inflow_cells (inflow_fid, grid_fid) VALUES""", 2]
         ts_sql = ["""INSERT INTO inflow_time_series (fid, name) VALUES""", 2]
-        tsd_sql = ["""INSERT INTO inflow_time_series_data (series_fid, time, value, value2) VALUES""", 4]
+        tsd_sql = [
+            """INSERT INTO inflow_time_series_data (series_fid, time, value, value2) VALUES""",
+            4,
+        ]
 
         errors = ""
 
@@ -216,13 +222,22 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     """INSERT INTO reservoirs (grid_fid, wsel, n_value, use_n_value, geom) VALUES""",
                     5,
                 ]
-                user_reservoirs_sql = ["""INSERT INTO user_reservoirs (wsel, n_value, use_n_value, geom) VALUES""", 4]
+                user_reservoirs_sql = [
+                    """INSERT INTO user_reservoirs (wsel, n_value, use_n_value, geom) VALUES""",
+                    4,
+                ]
                 with_n_values = True
                 with_tailings = False
         except:
             # n_value doesn't exist.
-            schematic_reservoirs_sql = ["""INSERT INTO reservoirs (grid_fid, wsel, geom) VALUES""", 3]
-            user_reservoirs_sql = ["""INSERT INTO user_reservoirs (wsel, geom) VALUES""", 2]
+            schematic_reservoirs_sql = [
+                """INSERT INTO reservoirs (grid_fid, wsel, geom) VALUES""",
+                3,
+            ]
+            user_reservoirs_sql = [
+                """INSERT INTO user_reservoirs (wsel, geom) VALUES""",
+                2,
+            ]
             with_n_values = False
             with_tailingss = False
 
@@ -239,7 +254,11 @@ class Flo2dGeoPackage(GeoPackageUtils):
             if not head == None:
                 cont_sql += [
                     ("IDEPLT", head["IDEPLT"], self.PARAMETER_DESCRIPTION["IDEPLT"]),
-                    ("IHOURDAILY", head["IHOURDAILY"], self.PARAMETER_DESCRIPTION["IHOURDAILY"]),
+                    (
+                        "IHOURDAILY",
+                        head["IHOURDAILY"],
+                        self.PARAMETER_DESCRIPTION["IHOURDAILY"],
+                    ),
                 ]
 
                 for i, gid in enumerate(inf, 1):
@@ -318,7 +337,10 @@ class Flo2dGeoPackage(GeoPackageUtils):
             self.uc.show_error("ERROR 070719.1051: Import inflows failed!.", e)
 
     def import_tailings(self):
-        tailingsf_sql = ["""INSERT INTO tailing_cells (grid_fid, thickness) VALUES""", 2]
+        tailingsf_sql = [
+            """INSERT INTO tailing_cells (grid_fid, thickness) VALUES""",
+            2,
+        ]
         self.clear_tables("tailing_cells")
         data = self.parser.parse_tailings()
         for row in data:
@@ -334,11 +356,20 @@ class Flo2dGeoPackage(GeoPackageUtils):
         ]
         cells_sql = ["""INSERT INTO outflow_cells (outflow_fid, grid_fid) VALUES""", 2]
         qh_params_sql = ["""INSERT INTO qh_params (fid) VALUES""", 1]
-        qh_params_data_sql = ["""INSERT INTO qh_params_data (params_fid, hmax, coef, exponent) VALUES""", 4]
+        qh_params_data_sql = [
+            """INSERT INTO qh_params_data (params_fid, hmax, coef, exponent) VALUES""",
+            4,
+        ]
         qh_tab_sql = ["""INSERT INTO qh_table (fid) VALUES""", 1]
-        qh_tab_data_sql = ["""INSERT INTO qh_table_data (table_fid, depth, q) VALUES""", 3]
+        qh_tab_data_sql = [
+            """INSERT INTO qh_table_data (table_fid, depth, q) VALUES""",
+            3,
+        ]
         ts_sql = ["""INSERT INTO outflow_time_series (fid) VALUES""", 1]
-        ts_data_sql = ["""INSERT INTO outflow_time_series_data (series_fid, time, value) VALUES""", 3]
+        ts_data_sql = [
+            """INSERT INTO outflow_time_series_data (series_fid, time, value) VALUES""",
+            3,
+        ]
 
         self.clear_tables(
             "outflow",
@@ -391,13 +422,29 @@ class Flo2dGeoPackage(GeoPackageUtils):
             else:
                 pass
             outflow_sql += [
-                (chan_out, fp_out, hydro_out, chan_tser_fid, chan_qhpar_fid, chan_qhtab_fid, fp_tser_fid, fid)
+                (
+                    chan_out,
+                    fp_out,
+                    hydro_out,
+                    chan_tser_fid,
+                    chan_qhpar_fid,
+                    chan_qhtab_fid,
+                    fp_tser_fid,
+                    fid,
+                )
             ]
             cells_sql += [(fid, gid)]
             fid += 1
 
         self.batch_execute(
-            qh_params_sql, qh_params_data_sql, qh_tab_sql, qh_tab_data_sql, ts_sql, ts_data_sql, outflow_sql, cells_sql
+            qh_params_sql,
+            qh_params_data_sql,
+            qh_tab_sql,
+            qh_tab_data_sql,
+            ts_sql,
+            ts_data_sql,
+            outflow_sql,
+            cells_sql,
         )
         type_qry = """UPDATE outflow SET type = (CASE
                     WHEN (fp_out > 0 AND chan_out = 0 AND fp_tser_fid = 0) THEN 1
@@ -431,11 +478,26 @@ class Flo2dGeoPackage(GeoPackageUtils):
             9,
         ]
         ts_sql = ["""INSERT INTO rain_time_series (fid) VALUES""", 1]
-        tsd_sql = ["""INSERT INTO rain_time_series_data (series_fid, time, value) VALUES""", 3]
-        rain_arf_sql = ["""INSERT INTO rain_arf_areas (rain_fid, arf, geom) VALUES""", 3]
-        cells_sql = ["""INSERT INTO rain_arf_cells (rain_arf_area_fid, grid_fid, arf) VALUES""", 3]
+        tsd_sql = [
+            """INSERT INTO rain_time_series_data (series_fid, time, value) VALUES""",
+            3,
+        ]
+        rain_arf_sql = [
+            """INSERT INTO rain_arf_areas (rain_fid, arf, geom) VALUES""",
+            3,
+        ]
+        cells_sql = [
+            """INSERT INTO rain_arf_cells (rain_arf_area_fid, grid_fid, arf) VALUES""",
+            3,
+        ]
 
-        self.clear_tables("rain", "rain_arf_areas", "rain_arf_cells", "rain_time_series", "rain_time_series_data")
+        self.clear_tables(
+            "rain",
+            "rain_arf_areas",
+            "rain_arf_cells",
+            "rain_time_series",
+            "rain_time_series_data",
+        )
         options, time_series, rain_arf = self.parser.parse_rain()
         gids = (x[0] for x in rain_arf)
         cells = self.grid_centroids(gids)
@@ -460,8 +522,14 @@ class Flo2dGeoPackage(GeoPackageUtils):
         self.execute(name_qry)
 
     def import_raincell(self):
-        head_sql = ["""INSERT INTO raincell (rainintime, irinters, timestamp) VALUES""", 3]
-        data_sql = ["""INSERT INTO raincell_data (time_interval, rrgrid, iraindum) VALUES""", 3]
+        head_sql = [
+            """INSERT INTO raincell (rainintime, irinters, timestamp) VALUES""",
+            3,
+        ]
+        data_sql = [
+            """INSERT INTO raincell_data (time_interval, rrgrid, iraindum) VALUES""",
+            3,
+        ]
 
         self.clear_tables("raincell", "raincell_data")
 
@@ -500,15 +568,24 @@ class Flo2dGeoPackage(GeoPackageUtils):
             "decaya",
         ]
         infil_sql = ["INSERT INTO infil (" + ", ".join(infil_params) + ") VALUES", 16]
-        infil_seg_sql = ["""INSERT INTO infil_chan_seg (chan_seg_fid, hydcx, hydcxfinal, soildepthcx) VALUES""", 4]
+        infil_seg_sql = [
+            """INSERT INTO infil_chan_seg (chan_seg_fid, hydcx, hydcxfinal, soildepthcx) VALUES""",
+            4,
+        ]
         infil_green_sql = [
             """INSERT INTO infil_cells_green (grid_fid, hydc, soils, dtheta,
                                                              abstrinf, rtimpf, soil_depth) VALUES""",
             7,
         ]
         infil_scs_sql = ["""INSERT INTO infil_cells_scs (grid_fid, scsn) VALUES""", 2]
-        infil_horton_sql = ["""INSERT INTO infil_cells_horton (grid_fid, fhorti, fhortf, deca) VALUES""", 4]
-        infil_chan_sql = ["""INSERT INTO infil_chan_elems (grid_fid, hydconch) VALUES""", 2]
+        infil_horton_sql = [
+            """INSERT INTO infil_cells_horton (grid_fid, fhorti, fhortf, deca) VALUES""",
+            4,
+        ]
+        infil_chan_sql = [
+            """INSERT INTO infil_chan_elems (grid_fid, hydconch) VALUES""",
+            2,
+        ]
 
         sqls = {
             "F": infil_green_sql,
@@ -540,12 +617,25 @@ class Flo2dGeoPackage(GeoPackageUtils):
             else:
                 pass
 
-        self.batch_execute(infil_sql, infil_seg_sql, infil_green_sql, infil_scs_sql, infil_horton_sql, infil_chan_sql)
+        self.batch_execute(
+            infil_sql,
+            infil_seg_sql,
+            infil_green_sql,
+            infil_scs_sql,
+            infil_horton_sql,
+            infil_chan_sql,
+        )
 
     def import_evapor(self):
         evapor_sql = ["""INSERT INTO evapor (ievapmonth, iday, clocktime) VALUES""", 3]
-        evapor_month_sql = ["""INSERT INTO evapor_monthly (month, monthly_evap) VALUES""", 2]
-        evapor_hour_sql = ["""INSERT INTO evapor_hourly (month, hour, hourly_evap) VALUES""", 3]
+        evapor_month_sql = [
+            """INSERT INTO evapor_monthly (month, monthly_evap) VALUES""",
+            2,
+        ]
+        evapor_hour_sql = [
+            """INSERT INTO evapor_hourly (month, hour, hourly_evap) VALUES""",
+            3,
+        ]
 
         self.clear_tables("evapor", "evapor_monthly", "evapor_hourly")
         head, data = self.parser.parse_evapor()
@@ -569,25 +659,48 @@ class Flo2dGeoPackage(GeoPackageUtils):
         #     self.uc.show_warn("WARNING 060319.1632: Can't import channels!.\n\nCHANBANK.DAT doesn't exist.")
         #     return
 
-        chan_sql = ["""INSERT INTO chan (geom, depinitial, froudc, roughadj, isedn) VALUES""", 5]
+        chan_sql = [
+            """INSERT INTO chan (geom, depinitial, froudc, roughadj, isedn) VALUES""",
+            5,
+        ]
         chan_elems_sql = [
             """INSERT INTO chan_elems (geom, fid, seg_fid, nr_in_seg, rbankgrid, fcn, xlen, type) VALUES""",
             8,
         ]
-        chan_r_sql = ["""INSERT INTO chan_r (elem_fid, bankell, bankelr, fcw, fcd) VALUES""", 5]
+        chan_r_sql = [
+            """INSERT INTO chan_r (elem_fid, bankell, bankelr, fcw, fcd) VALUES""",
+            5,
+        ]
         chan_v_sql = [
             """INSERT INTO chan_v (elem_fid, bankell, bankelr, fcd, a1, a2, b1, b2, c1, c2,
                                                  excdep, a11, a22, b11, b22, c11, c22) VALUES""",
             17,
         ]
-        chan_t_sql = ["""INSERT INTO chan_t (elem_fid, bankell, bankelr, fcw, fcd, zl, zr) VALUES""", 7]
+        chan_t_sql = [
+            """INSERT INTO chan_t (elem_fid, bankell, bankelr, fcw, fcd, zl, zr) VALUES""",
+            7,
+        ]
         chan_n_sql = ["""INSERT INTO chan_n (elem_fid, nxsecnum, xsecname) VALUES""", 3]
-        chan_wsel_sql = ["""INSERT INTO chan_wsel (istart, wselstart, iend, wselend) VALUES""", 4]
-        chan_conf_sql = ["""INSERT INTO chan_confluences (geom, conf_fid, type, chan_elem_fid) VALUES""", 4]
+        chan_wsel_sql = [
+            """INSERT INTO chan_wsel (istart, wselstart, iend, wselend) VALUES""",
+            4,
+        ]
+        chan_conf_sql = [
+            """INSERT INTO chan_confluences (geom, conf_fid, type, chan_elem_fid) VALUES""",
+            4,
+        ]
         chan_e_sql = ["""INSERT INTO user_noexchange_chan_areas (geom) VALUES""", 1]
-        elems_e_sql = ["""INSERT INTO noexchange_chan_cells (area_fid, grid_fid) VALUES""", 2]
+        elems_e_sql = [
+            """INSERT INTO noexchange_chan_cells (area_fid, grid_fid) VALUES""",
+            2,
+        ]
 
-        sqls = {"R": [chan_r_sql, 4, 7], "V": [chan_v_sql, 4, 6], "T": [chan_t_sql, 4, 7], "N": [chan_n_sql, 2, 3]}
+        sqls = {
+            "R": [chan_r_sql, 4, 7],
+            "V": [chan_v_sql, 4, 6],
+            "T": [chan_t_sql, 4, 7],
+            "N": [chan_n_sql, 2, 3],
+        }
 
         try:
             self.clear_tables(
@@ -726,24 +839,43 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 "clength",
                 "cdiameter",
             ]
-            hystruc_sql = ["INSERT INTO struct (" + ", ".join(hystruc_params) + ") VALUES", 11]
-            ratc_sql = ["""INSERT INTO rat_curves (struct_fid, hdepexc, coefq, expq, coefa, expa) VALUES""", 6]
+            hystruc_sql = [
+                "INSERT INTO struct (" + ", ".join(hystruc_params) + ") VALUES",
+                11,
+            ]
+            ratc_sql = [
+                """INSERT INTO rat_curves (struct_fid, hdepexc, coefq, expq, coefa, expa) VALUES""",
+                6,
+            ]
             repl_ratc_sql = [
                 """INSERT INTO repl_rat_curves (struct_fid, repdep, rqcoef, rqexp, racoef, raexp) VALUES""",
                 6,
             ]
-            ratt_sql = ["""INSERT INTO rat_table (struct_fid, hdepth, qtable, atable) VALUES""", 4]
+            ratt_sql = [
+                """INSERT INTO rat_table (struct_fid, hdepth, qtable, atable) VALUES""",
+                4,
+            ]
             culvert_sql = [
                 """INSERT INTO culvert_equations (struct_fid, typec, typeen, culvertn, ke, cubase, multibarrels) VALUES""",
                 7,
             ]
-            storm_sql = ["""INSERT INTO storm_drains (struct_fid, istormdout, stormdmax) VALUES""", 3]
+            storm_sql = [
+                """INSERT INTO storm_drains (struct_fid, istormdout, stormdmax) VALUES""",
+                3,
+            ]
             bridge_sql = [
                 """INSERT INTO bridge_variables (struct_fid, IBTYPE, COEFF, C_PRIME_USER, KF_COEF, KWW_COEF, KPHI_COEF, KY_COEF, KX_COEF, KJ_COEF, BOPENING, BLENGTH, BN_VALUE, UPLENGTH12, LOWCHORD, DECKHT, DECKLENGTH, PIERWIDTH, SLUICECOEFADJ, ORIFICECOEFADJ, COEFFWEIRB, WINGWALL_ANGLE, PHI_ANGLE, LBTOEABUT, RBTOEABUT) VALUES""",
                 25,
             ]
 
-            sqls = {"C": ratc_sql, "R": repl_ratc_sql, "T": ratt_sql, "F": culvert_sql, "D": storm_sql, "B": bridge_sql}
+            sqls = {
+                "C": ratc_sql,
+                "R": repl_ratc_sql,
+                "T": ratt_sql,
+                "F": culvert_sql,
+                "D": storm_sql,
+                "B": bridge_sql,
+            }
 
             n_cells = next(self.execute("SELECT COUNT(*) FROM grid;"))[0]
             data = self.parser.parse_hystruct()
@@ -776,7 +908,15 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 "storm_drains",
                 "bridge_variables",
             )
-            self.batch_execute(hystruc_sql, ratc_sql, repl_ratc_sql, ratt_sql, culvert_sql, storm_sql, bridge_sql)
+            self.batch_execute(
+                hystruc_sql,
+                ratc_sql,
+                repl_ratc_sql,
+                ratt_sql,
+                culvert_sql,
+                storm_sql,
+                bridge_sql,
+            )
             qry = """UPDATE struct SET notes = 'imported';"""
             self.execute(qry)
 
@@ -794,7 +934,10 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
     def import_hystruc_bridge_xs(self):
         try:
-            bridge_xs_sql = ["""INSERT INTO bridge_xs (struct_fid, xup, yup, yb) VALUES""", 4]
+            bridge_xs_sql = [
+                """INSERT INTO bridge_xs (struct_fid, xup, yup, yb) VALUES""",
+                4,
+            ]
             no_struct = ""
             value_missing = False
             data = self.parser.parse_hystruct_bridge_xs()
@@ -834,9 +977,15 @@ class Flo2dGeoPackage(GeoPackageUtils):
             QApplication.setOverrideCursor(Qt.WaitCursor)
 
     def import_street(self):
-        general_sql = ["""INSERT INTO street_general (strman, istrflo, strfno, depx, widst) VALUES""", 5]
+        general_sql = [
+            """INSERT INTO street_general (strman, istrflo, strfno, depx, widst) VALUES""",
+            5,
+        ]
         streets_sql = ["""INSERT INTO streets (stname) VALUES""", 1]
-        seg_sql = ["""INSERT INTO street_seg (geom, str_fid, igridn, depex, stman, elstr) VALUES""", 6]
+        seg_sql = [
+            """INSERT INTO street_seg (geom, str_fid, igridn, depex, stman, elstr) VALUES""",
+            6,
+        ]
         elem_sql = ["""INSERT INTO street_elems (seg_fid, istdir, widr) VALUES""", 3]
 
         sqls = {"N": streets_sql, "S": seg_sql, "W": elem_sql}
@@ -906,8 +1055,14 @@ class Flo2dGeoPackage(GeoPackageUtils):
                                                  xnmultall, sslopemin, sslopemax, avuld50, simple_n) VALUES""",
                     9,
                 ]
-                mult_area_sql = ["""INSERT INTO mult_areas (geom, wdr, dm, nodchns, xnmult) VALUES""", 5]
-                mult_cells_sql = ["""INSERT INTO mult_cells (area_fid, grid_fid, wdr, dm, nodchns, xnmult) VALUES""", 6]
+                mult_area_sql = [
+                    """INSERT INTO mult_areas (geom, wdr, dm, nodchns, xnmult) VALUES""",
+                    5,
+                ]
+                mult_cells_sql = [
+                    """INSERT INTO mult_cells (area_fid, grid_fid, wdr, dm, nodchns, xnmult) VALUES""",
+                    6,
+                ]
                 head.append("0.04")
                 mult_sql += [tuple(head)]
                 gids = (x[0] for x in data)
@@ -942,7 +1097,10 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 if self.is_table_empty("mult"):
                     self.gutils.fill_empty_mult_globals()
                 simple_mult_sql = """UPDATE mult SET simple_n = ?; """
-                simple_mult_cells_sql = ["""INSERT INTO simple_mult_cells (grid_fid) VALUES""", 1]
+                simple_mult_cells_sql = [
+                    """INSERT INTO simple_mult_cells (grid_fid) VALUES""",
+                    1,
+                ]
                 gids = (x[0] for x in data)
                 cells = self.grid_centroids(gids)
                 for row in data:
@@ -969,20 +1127,39 @@ class Flo2dGeoPackage(GeoPackageUtils):
             10,
         ]
         sgf_sql = ["""INSERT INTO sed_group_frac (fid) VALUES""", 1]
-        sed_z_sql = ["""INSERT INTO sed_groups (dist_fid, isedeqi, bedthick, cvfi) VALUES""", 4]
-        sed_p_sql = ["""INSERT INTO sed_group_frac_data (dist_fid, sediam, sedpercent) VALUES""", 3]
+        sed_z_sql = [
+            """INSERT INTO sed_groups (dist_fid, isedeqi, bedthick, cvfi) VALUES""",
+            4,
+        ]
+        sed_p_sql = [
+            """INSERT INTO sed_group_frac_data (dist_fid, sediam, sedpercent) VALUES""",
+            3,
+        ]
         areas_d_sql = ["""INSERT INTO mud_areas (geom, debrisv) VALUES""", 2]
         cells_d_sql = ["""INSERT INTO mud_cells (area_fid, grid_fid) VALUES""", 2]
         areas_g_sql = ["""INSERT INTO sed_group_areas (geom, group_fid) VALUES""", 2]
         cells_g_sql = ["""INSERT INTO sed_group_cells (area_fid, grid_fid) VALUES""", 2]
         areas_r_sql = ["""INSERT INTO sed_rigid_areas (geom) VALUES""", 1]
         cells_r_sql = ["""INSERT INTO sed_rigid_cells (area_fid, grid_fid) VALUES""", 2]
-        areas_s_sql = ["""INSERT INTO sed_supply_areas (geom, dist_fid, isedcfp, ased, bsed) VALUES""", 5]
-        cells_s_sql = ["""INSERT INTO sed_supply_cells (area_fid, grid_fid) VALUES""", 2]
+        areas_s_sql = [
+            """INSERT INTO sed_supply_areas (geom, dist_fid, isedcfp, ased, bsed) VALUES""",
+            5,
+        ]
+        cells_s_sql = [
+            """INSERT INTO sed_supply_cells (area_fid, grid_fid) VALUES""",
+            2,
+        ]
         sed_n_sql = ["""INSERT INTO sed_supply_frac (fid) VALUES""", 1]
-        data_n_sql = ["""INSERT INTO sed_supply_frac_data (dist_fid, ssediam, ssedpercent) VALUES""", 3]
+        data_n_sql = [
+            """INSERT INTO sed_supply_frac_data (dist_fid, ssediam, ssedpercent) VALUES""",
+            3,
+        ]
 
-        parts = [["D", areas_d_sql, cells_d_sql], ["G", areas_g_sql, cells_g_sql], ["R", areas_r_sql, cells_r_sql]]
+        parts = [
+            ["D", areas_d_sql, cells_d_sql],
+            ["G", areas_g_sql, cells_g_sql],
+            ["R", areas_r_sql, cells_r_sql],
+        ]
 
         self.clear_tables(
             "mud",
@@ -1081,14 +1258,23 @@ class Flo2dGeoPackage(GeoPackageUtils):
         # self.batch_execute(areas_r_sql)
 
     def import_levee(self):
-        lgeneral_sql = ["""INSERT INTO levee_general (raiselev, ilevfail, gfragchar, gfragprob) VALUES""", 4]
-        ldata_sql = ["""INSERT INTO levee_data (geom, grid_fid, ldir, levcrest) VALUES""", 4]
+        lgeneral_sql = [
+            """INSERT INTO levee_general (raiselev, ilevfail, gfragchar, gfragprob) VALUES""",
+            4,
+        ]
+        ldata_sql = [
+            """INSERT INTO levee_data (geom, grid_fid, ldir, levcrest) VALUES""",
+            4,
+        ]
         lfailure_sql = [
             """INSERT INTO levee_failure (grid_fid, lfaildir, failevel, failtime,
                                                       levbase, failwidthmax, failrate, failwidrate) VALUES""",
             8,
         ]
-        lfragility_sql = ["""INSERT INTO levee_fragility (grid_fid, levfragchar, levfragprob) VALUES""", 3]
+        lfragility_sql = [
+            """INSERT INTO levee_fragility (grid_fid, levfragchar, levfragprob) VALUES""",
+            3,
+        ]
 
         self.clear_tables("levee_general", "levee_data", "levee_failure", "levee_fragility")
         head, data = self.parser.parse_levee()
@@ -1113,7 +1299,10 @@ class Flo2dGeoPackage(GeoPackageUtils):
     def import_fpxsec(self):
         cont_sql = ["""INSERT INTO cont (name, value) VALUES""", 2]
         fpxsec_sql = ["""INSERT INTO fpxsec (geom, iflo, nnxsec) VALUES""", 3]
-        cells_sql = ["""INSERT INTO fpxsec_cells (geom, fpxsec_fid, grid_fid) VALUES""", 3]
+        cells_sql = [
+            """INSERT INTO fpxsec_cells (geom, fpxsec_fid, grid_fid) VALUES""",
+            3,
+        ]
 
         self.clear_tables("fpxsec", "fpxsec_cells")
         head, data = self.parser.parse_fpxsec()
@@ -1203,7 +1392,10 @@ class Flo2dGeoPackage(GeoPackageUtils):
         global_sql = ["INSERT INTO breach_global (" + ", ".join(glob) + ") VALUES", 32]
         local_sql = ["INSERT INTO breach (" + ", ".join(local) + ") VALUES", 33]
         cells_sql = ["""INSERT INTO breach_cells (breach_fid, grid_fid) VALUES""", 2]
-        frag_sql = ["""INSERT INTO breach_fragility_curves (fragchar, prfail, prdepth) VALUES""", 3]
+        frag_sql = [
+            """INSERT INTO breach_fragility_curves (fragchar, prfail, prdepth) VALUES""",
+            3,
+        ]
 
         data = self.parser.parse_breach()
         gids = (x[0] for x in data["D"])
@@ -1244,9 +1436,18 @@ class Flo2dGeoPackage(GeoPackageUtils):
         self.batch_execute(fpfroude_sql, cells_sql)
 
     def import_gutter(self):
-        gutter_globals_sql = ["""INSERT INTO gutter_globals (width, height, n_value) VALUES""", 3]
-        gutter_areas_sql = ["""INSERT INTO gutter_areas (geom, width, height, n_value, direction) VALUES""", 5]
-        cells_sql = ["""INSERT INTO gutter_cells (geom, area_fid, grid_fid) VALUES""", 3]
+        gutter_globals_sql = [
+            """INSERT INTO gutter_globals (width, height, n_value) VALUES""",
+            3,
+        ]
+        gutter_areas_sql = [
+            """INSERT INTO gutter_areas (geom, width, height, n_value, direction) VALUES""",
+            5,
+        ]
+        cells_sql = [
+            """INSERT INTO gutter_cells (geom, area_fid, grid_fid) VALUES""",
+            3,
+        ]
 
         self.clear_tables("gutter_globals", "gutter_areas", "gutter_lines", "gutter_cells")
         head, data = self.parser.parse_gutter()
@@ -1313,18 +1514,30 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
                 elif row[0] == "S":  # Culvert Eq.
                     culvert_rows.append(
-                        (gid, inlet_name, cdiameter, row[4][0][0], row[4][0][1], row[4][0][2], row[4][0][3])
+                        (
+                            gid,
+                            inlet_name,
+                            cdiameter,
+                            row[4][0][0],
+                            row[4][0][1],
+                            row[4][0][2],
+                            row[4][0][3],
+                        )
                     )
 
             if swmmflort_rows:
                 self.clear_tables("swmmflort")
-                self.con.executemany("INSERT INTO swmmflort (grid_fid, name) VALUES (?,?);", swmmflort_rows)
+                self.con.executemany(
+                    "INSERT INTO swmmflort (grid_fid, name) VALUES (?,?);",
+                    swmmflort_rows,
+                )
                 # self.batch_execute(swmmflort_sql)
 
             if rt_data_rows:
                 self.clear_tables("swmmflort_data")
                 self.con.executemany(
-                    "INSERT INTO swmmflort_data (swmm_rt_fid, depth, q) VALUES (?, ?, ?);", rt_data_rows
+                    "INSERT INTO swmmflort_data (swmm_rt_fid, depth, q) VALUES (?, ?, ?);",
+                    rt_data_rows,
                 )
 
             if culvert_rows:
@@ -1339,7 +1552,10 @@ class Flo2dGeoPackage(GeoPackageUtils):
             self.uc.show_error("ERROR 150221.1535: importing SWMMFLORT.DAT failed!.\n", e)
 
     def import_swmmoutf(self):
-        swmmoutf_sql = ["""INSERT INTO swmmoutf (geom, name, grid_fid, outf_flo) VALUES""", 4]
+        swmmoutf_sql = [
+            """INSERT INTO swmmoutf (geom, name, grid_fid, outf_flo) VALUES""",
+            4,
+        ]
 
         self.clear_tables("swmmoutf")
         data = self.parser.parse_swmmoutf()
@@ -1383,7 +1599,10 @@ class Flo2dGeoPackage(GeoPackageUtils):
         self.batch_execute(wsurf_sql)
 
     def import_wstime(self):
-        wstime_sql = ["""INSERT INTO wstime (geom, grid_fid, wselev, wstime) VALUES""", 4]
+        wstime_sql = [
+            """INSERT INTO wstime (geom, grid_fid, wselev, wstime) VALUES""",
+            4,
+        ]
 
         self.clear_tables("wstime")
         dummy, data = self.parser.parse_wstime()
@@ -1591,7 +1810,11 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     x, y = geom.strip("POINT()").split()
                     m.write(mline.format(fid, "{0:.3f}".format(man)))
                     t.write(
-                        tline.format("{0:.4f}".format(float(x)), "{0:.4f}".format(float(y)), "{0:.4f}".format(elev))
+                        tline.format(
+                            "{0:.4f}".format(float(x)),
+                            "{0:.4f}".format(float(y)),
+                            "{0:.4f}".format(elev),
+                        )
                     )
 
             if nulls > 0:
@@ -2022,7 +2245,14 @@ class Flo2dGeoPackage(GeoPackageUtils):
             infil = os.path.join(outdir, "INFIL.DAT")
             with open(infil, "w") as i:
                 gen = [x if x is not None else "" for x in infil_row[1:]]
-                v1, v2, v3, v4, v5, v9 = gen[0], gen[1:7], gen[7:10], gen[10:11], gen[11:13], gen[13:]
+                v1, v2, v3, v4, v5, v9 = (
+                    gen[0],
+                    gen[1:7],
+                    gen[7:10],
+                    gen[10:11],
+                    gen[11:13],
+                    gen[13:],
+                )
                 i.write(line1.format(v1))
                 if v1 == 1 or v1 == 3:
                     i.write(line2.format(*v2))
@@ -2163,7 +2393,13 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     elems = [
                         x if x is not None else "" for x in elems
                     ]  # If 'elems' has a None in any of above values of list, replace it by ''
-                    eid, rbank, fcn, xlen, typ = elems  # Separates values of list into individual variables.
+                    (
+                        eid,
+                        rbank,
+                        fcn,
+                        xlen,
+                        typ,
+                    ) = elems  # Separates values of list into individual variables.
                     sql, line, fcn_idx, xlen_idx = sqls[
                         typ
                     ]  # depending on 'typ' (R,V,T, or N) select sql (the SQLite SELECT statement to execute),
@@ -2888,8 +3124,20 @@ class Flo2dGeoPackage(GeoPackageUtils):
             cells_sql = """SELECT grid_fid FROM breach_cells WHERE breach_fid = ?;"""
             frag_sql = """SELECT fragchar, prfail, prdepth FROM breach_fragility_curves ORDER BY fid;"""
 
-            b1, g1, g2, g3, g4 = slice(1, 5), slice(6, 14), slice(14, 21), slice(21, 28), slice(28, 34)
-            b2, d1, d2, d3, d4 = slice(0, 2), slice(2, 11), slice(11, 18), slice(18, 25), slice(25, 33)
+            b1, g1, g2, g3, g4 = (
+                slice(1, 5),
+                slice(6, 14),
+                slice(14, 21),
+                slice(21, 28),
+                slice(28, 34),
+            )
+            b2, d1, d2, d3, d4 = (
+                slice(0, 2),
+                slice(2, 11),
+                slice(11, 18),
+                slice(18, 25),
+                slice(25, 33),
+            )
 
             bline = "B{0} {1}\n"
             line_1 = "{0}1 {1}\n"
@@ -2898,7 +3146,12 @@ class Flo2dGeoPackage(GeoPackageUtils):
             line_4 = "{0}4 {1}\n"
             fline = "F {0} {1} {2}\n"
 
-            parts = [[g1, d1, line_1], [g2, d2, line_2], [g3, d3, line_3], [g4, d4, line_4]]
+            parts = [
+                [g1, d1, line_1],
+                [g2, d2, line_2],
+                [g3, d3, line_3],
+                [g4, d4, line_4],
+            ]
 
             global_rows = self.execute(global_sql).fetchall()
             local_rows = self.execute(local_sql).fetchall()
@@ -3092,7 +3345,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
                                         rows = self.execute(data_sql, (fid,)).fetchone()
                                         if not rows:
                                             inlet_name = self.execute(
-                                                "SELECT name FROM user_swmm_nodes WHERE grid = ?;", (gid,)
+                                                "SELECT name FROM user_swmm_nodes WHERE grid = ?;",
+                                                (gid,),
                                             ).fetchone()
                                             if inlet_name != None:
                                                 if inlet_name[0] == "":
@@ -3116,7 +3370,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
                                         else:
                                             if not self.gutils.is_table_empty("user_swmm_nodes"):
                                                 inlet_name = self.execute(
-                                                    "SELECT name FROM user_swmm_nodes WHERE grid = ?;", (gid,)
+                                                    "SELECT name FROM user_swmm_nodes WHERE grid = ?;",
+                                                    (gid,),
                                                 ).fetchone()
                                                 if inlet_name != None:
                                                     if inlet_name[0] != "":
@@ -3145,7 +3400,15 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 ).fetchall()
                 if culverts:
                     for culv in culverts:
-                        grid_fid, name, cdiameter, typec, typeen, cubase, multbarrels = culv
+                        (
+                            grid_fid,
+                            name,
+                            cdiameter,
+                            typec,
+                            typeen,
+                            cubase,
+                            multbarrels,
+                        ) = culv
                         s.write("S " + str(grid_fid) + " " + name + " " + str(cdiameter) + "\n")
                         s.write(
                             "F " + str(typec) + " " + str(typeen) + " " + str(cubase) + " " + str(multbarrels) + "\n"

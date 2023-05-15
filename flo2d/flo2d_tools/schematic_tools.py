@@ -71,7 +71,14 @@ def get_intervals(line_feature, point_features, col_value, buffer_size):
         while True:
             delta_distance = end_distance - start_distance
             delta_value = end_value - start_value
-            interval = (start_distance, end_distance, delta_distance, start_value, end_value, delta_value)
+            interval = (
+                start_distance,
+                end_distance,
+                delta_distance,
+                start_value,
+                end_value,
+                delta_value,
+            )
             intervals.append(interval)
             start_distance, start_value = end_distance, end_value
             end_distance, end_value = next(snapped)
@@ -97,7 +104,14 @@ def interpolate_along_line(line_feature, sampling_features, intervals, id_col="f
     inter_iter = iter(intervals)
     snapped_iter = iter(sc)
     try:
-        start_distance, end_distance, delta_distance, start_value, end_value, delta_value = next(inter_iter)
+        (
+            start_distance,
+            end_distance,
+            delta_distance,
+            start_value,
+            end_value,
+            delta_value,
+        ) = next(inter_iter)
         position, fid = next(snapped_iter)
         while True:
             if start_distance < position < end_distance:
@@ -114,14 +128,29 @@ def interpolate_along_line(line_feature, sampling_features, intervals, id_col="f
             elif position > end[1]:
                 yield (start[4], fid)
             else:
-                start_distance, end_distance, delta_distance, start_value, end_value, delta_value = next(inter_iter)
+                (
+                    start_distance,
+                    end_distance,
+                    delta_distance,
+                    start_value,
+                    end_value,
+                    delta_value,
+                ) = next(inter_iter)
                 continue
             position, fid = next(snapped_iter)
     except StopIteration:
         return
 
 
-def polys2levees(line_feature, poly_lyr, levees_lyr, value_col, correct_val, id_col="fid", join_col="user_line_fid"):
+def polys2levees(
+    line_feature,
+    poly_lyr,
+    levees_lyr,
+    value_col,
+    correct_val,
+    id_col="fid",
+    join_col="user_line_fid",
+):
     """
     Generator for assigning elevation values from polygons to levees.
     Levee sides centroids are snapped to the user levee line feature and next tested for intersecting with polygons.
@@ -190,14 +219,70 @@ def generate_schematic_levees(gutils, levee_lyr, grid_lyr):
         # octagon nodes to sides map
         octagon_levee_dirs = {0: 1, 1: 5, 2: 2, 3: 6, 4: 3, 5: 7, 6: 4, 7: 8}
         levee_dir_pts = {
-            1: (lambda x, y, square_half, octa_half: (x - octa_half, y + square_half, x + octa_half, y + square_half)),
-            2: (lambda x, y, square_half, octa_half: (x + square_half, y + octa_half, x + square_half, y - octa_half)),
-            3: (lambda x, y, square_half, octa_half: (x + octa_half, y - square_half, x - octa_half, y - square_half)),
-            4: (lambda x, y, square_half, octa_half: (x - square_half, y - octa_half, x - square_half, y + octa_half)),
-            5: (lambda x, y, square_half, octa_half: (x + octa_half, y + square_half, x + square_half, y + octa_half)),
-            6: (lambda x, y, square_half, octa_half: (x + square_half, y - octa_half, x + octa_half, y - square_half)),
-            7: (lambda x, y, square_half, octa_half: (x - octa_half, y - square_half, x - square_half, y - octa_half)),
-            8: (lambda x, y, square_half, octa_half: (x - square_half, y + octa_half, x - octa_half, y + square_half)),
+            1: (
+                lambda x, y, square_half, octa_half: (
+                    x - octa_half,
+                    y + square_half,
+                    x + octa_half,
+                    y + square_half,
+                )
+            ),
+            2: (
+                lambda x, y, square_half, octa_half: (
+                    x + square_half,
+                    y + octa_half,
+                    x + square_half,
+                    y - octa_half,
+                )
+            ),
+            3: (
+                lambda x, y, square_half, octa_half: (
+                    x + octa_half,
+                    y - square_half,
+                    x - octa_half,
+                    y - square_half,
+                )
+            ),
+            4: (
+                lambda x, y, square_half, octa_half: (
+                    x - square_half,
+                    y - octa_half,
+                    x - square_half,
+                    y + octa_half,
+                )
+            ),
+            5: (
+                lambda x, y, square_half, octa_half: (
+                    x + octa_half,
+                    y + square_half,
+                    x + square_half,
+                    y + octa_half,
+                )
+            ),
+            6: (
+                lambda x, y, square_half, octa_half: (
+                    x + square_half,
+                    y - octa_half,
+                    x + octa_half,
+                    y - square_half,
+                )
+            ),
+            7: (
+                lambda x, y, square_half, octa_half: (
+                    x - octa_half,
+                    y - square_half,
+                    x - square_half,
+                    y - octa_half,
+                )
+            ),
+            8: (
+                lambda x, y, square_half, octa_half: (
+                    x - square_half,
+                    y + octa_half,
+                    x - octa_half,
+                    y + square_half,
+                )
+            ),
         }
 
         # lid_gid_elev = fid_from_grid(gutils, "user_levee_lines", None, False, False, "elevation")
@@ -277,9 +362,10 @@ def generate_schematic_levees(gutils, levee_lyr, grid_lyr):
                                         elif not user_levees_data[1] == 0.0:
                                             # failDepth selected, use adjacent cell elevations to calculate fail elevation.
 
-                                            adj_cell, adj_elev = get_adjacent_cell_elevation(
-                                                gutils, grid_lyr, gid, ldir, cell_size
-                                            )
+                                            (
+                                                adj_cell,
+                                                adj_elev,
+                                            ) = get_adjacent_cell_elevation(gutils, grid_lyr, gid, ldir, cell_size)
                                             grid_elev = gutils.grid_value(gid, "elevation")
                                             max_elev = max(adj_elev, grid_elev)
 
@@ -299,9 +385,10 @@ def generate_schematic_levees(gutils, levee_lyr, grid_lyr):
                                             pass
 
                                         if user_levees_data[7] is None:  # crest elevation in user levees not defined
-                                            adj_cell, adj_elev = get_adjacent_cell_elevation(
-                                                gutils, grid_lyr, gid, ldir, cell_size
-                                            )
+                                            (
+                                                adj_cell,
+                                                adj_elev,
+                                            ) = get_adjacent_cell_elevation(gutils, grid_lyr, gid, ldir, cell_size)
                                             side_elev = max(adj_elev, elev)
 
                                 data.append(
@@ -1050,7 +1137,10 @@ class ChannelsSchematizer(GeoPackageUtils):
                 self.uc.show_warn(msg)
                 raise Exception
 
-        for feat, sorted_xs in feat_xs:  # For each channel segment and the XSs that intersect them.
+        for (
+            feat,
+            sorted_xs,
+        ) in feat_xs:  # For each channel segment and the XSs that intersect them.
             lbank_fid = feat.id()
             lbank_geom = QgsGeometry.fromPolylineXY(feat.geometry().asPolyline())
             # Getting left edge.
@@ -1160,7 +1250,12 @@ class ChannelsSchematizer(GeoPackageUtils):
             # before schematized bank, insert point on intersection with cross section
             user_left_bank_positions = self.bank_stations(sorted_xs, left_bank_geom)
             for intersection in user_left_bank_positions:
-                dist, x_y_position, vert_pos, left = left_bank_geom.closestSegmentWithContext(intersection)
+                (
+                    dist,
+                    x_y_position,
+                    vert_pos,
+                    left,
+                ) = left_bank_geom.closestSegmentWithContext(intersection)
                 left_bank_geom.insertVertex(x_y_position.x(), x_y_position.y(), vert_pos)
             left_feat.setGeometry(left_bank_geom)
 
@@ -1173,7 +1268,12 @@ class ChannelsSchematizer(GeoPackageUtils):
                 # before schematized bank, insert point on intersection with cross section
                 user_right_bank_positions = self.bank_stations(sorted_xs, right_bank_geom)
                 for intersection in user_right_bank_positions:
-                    dist, x_y_position, vert_pos, left = right_bank_geom.closestSegmentWithContext(intersection)
+                    (
+                        dist,
+                        x_y_position,
+                        vert_pos,
+                        left,
+                    ) = right_bank_geom.closestSegmentWithContext(intersection)
                     right_bank_geom.insertVertex(x_y_position.x(), x_y_position.y(), vert_pos)
                 right_feat.setGeometry(right_bank_geom)
 
@@ -1228,7 +1328,10 @@ class ChannelsSchematizer(GeoPackageUtils):
             user_left_bank_nodes = self.closest_nodes(left_schematized_geometry, user_left_bank_positions)
 
             # make sure the first cross section is connected with the first point of the bank
-            user_left_bank_nodes[0] = (QgsPointXY(left_schematized_geometry.vertexAt(0)), 0)
+            user_left_bank_nodes[0] = (
+                QgsPointXY(left_schematized_geometry.vertexAt(0)),
+                0,
+            )
 
             if rbank_fid >= 0:
                 # do the same with right bank
@@ -1330,7 +1433,14 @@ class ChannelsSchematizer(GeoPackageUtils):
                 end_left_position = end_left_node[0]
                 end_left_node_idx = end_left_node[1]
                 xs = sorted_xs[len(sorted_xs) - 1]
-                vals = (end_left_position, end_right_position, lbank_fid, end_left_node_idx + 1, xs.id(), False)
+                vals = (
+                    end_left_position,
+                    end_right_position,
+                    lbank_fid,
+                    end_left_node_idx + 1,
+                    xs.id(),
+                    False,
+                )
                 cross_section_definitions.append(vals)
 
             else:  # right bank is not valid, only consider left bank to define channel
@@ -1344,14 +1454,28 @@ class ChannelsSchematizer(GeoPackageUtils):
                     end_left_node_idx = end_left_node[1]
 
                     xs = sorted_xs[i]
-                    vals = (start_left_position, QgsPointXY(), lbank_fid, start_left_node_idx + 1, xs.id(), False)
+                    vals = (
+                        start_left_position,
+                        QgsPointXY(),
+                        lbank_fid,
+                        start_left_node_idx + 1,
+                        xs.id(),
+                        False,
+                    )
                     cross_section_definitions.append(vals)
 
                     idx_left = start_left_node_idx + 1
                     left_bank_points = left_schematized_geometry.asPolyline()
                     while idx_left < end_left_node_idx:
                         left_bank_interpolate_xs = left_bank_points[idx_left]
-                        vals = (left_bank_interpolate_xs, QgsPointXY(), lbank_fid, idx_left, xs.id() + 1, True)
+                        vals = (
+                            left_bank_interpolate_xs,
+                            QgsPointXY(),
+                            lbank_fid,
+                            idx_left,
+                            xs.id() + 1,
+                            True,
+                        )
                         cross_section_definitions.append(vals)
                         idx_left = idx_left + 1
 
@@ -1359,14 +1483,28 @@ class ChannelsSchematizer(GeoPackageUtils):
                 end_left_position = end_left_node[0]
                 end_left_node_idx = end_left_node[1]
                 xs = sorted_xs[len(sorted_xs) - 1]
-                vals = (end_left_position, QgsPointXY(), lbank_fid, end_left_node_idx + 1, xs.id(), False)
+                vals = (
+                    end_left_position,
+                    QgsPointXY(),
+                    lbank_fid,
+                    end_left_node_idx + 1,
+                    xs.id(),
+                    False,
+                )
                 cross_section_definitions.append(vals)
 
         # Saving schematized and interpolated cross sections
         sqls = []
         prev_node_pos = QgsPointXY()  # direction of the previous node used to give direction of xs with no right bank
         for i in range(len(cross_section_definitions)):
-            pt1, pt2, lbank_fid, nr_in_seg, xs_fid, interpolated = cross_section_definitions[i]
+            (
+                pt1,
+                pt2,
+                lbank_fid,
+                nr_in_seg,
+                xs_fid,
+                interpolated,
+            ) = cross_section_definitions[i]
             try:
                 lbankgrid = self.grid_on_point(pt1.x(), pt1.y())
                 if not pt2.isEmpty():
@@ -1420,7 +1558,12 @@ class ChannelsSchematizer(GeoPackageUtils):
                 geom_pt2 = QgsPointXY(pt1.x() + dx, pt1.y() - dy)
 
             prev_node_pos = pt1
-            sqls.append((insert_chan.format(geom_pt1.x(), geom_pt1.y(), geom_pt2.x(), geom_pt2.y()), vals))
+            sqls.append(
+                (
+                    insert_chan.format(geom_pt1.x(), geom_pt1.y(), geom_pt2.x(), geom_pt2.y()),
+                    vals,
+                )
+            )
         cursor = self.con.cursor()
         for qry, vals in sqls:
             try:
@@ -1636,7 +1779,14 @@ class ChannelsSchematizer(GeoPackageUtils):
                     end_point += shift
                     interpolated = 1
                 # end_point = self.fix_angle(left_segment, start_point, end_point)
-                yield [start_point.x(), start_point.y(), end_point.x(), end_point.y(), xs_fid, interpolated]
+                yield [
+                    start_point.x(),
+                    start_point.y(),
+                    end_point.x(),
+                    end_point.y(),
+                    xs_fid,
+                    interpolated,
+                ]
                 i += 1
                 previous_vertex = current_vertex
                 current_vertex = next(isegment)
@@ -1902,12 +2052,26 @@ class ChannelsSchematizer(GeoPackageUtils):
             xs_iter = iter(xsections_feats)
             up_feat = next(xs_iter)
             lo_feat = next(xs_iter)
-            intervals[fid].append((up_feat["nr_in_seg"], lo_feat["nr_in_seg"], up_feat["fid"], lo_feat["fid"]))
+            intervals[fid].append(
+                (
+                    up_feat["nr_in_seg"],
+                    lo_feat["nr_in_seg"],
+                    up_feat["fid"],
+                    lo_feat["fid"],
+                )
+            )
             try:
                 while True:
                     up_feat = lo_feat
                     lo_feat = next(xs_iter)
-                    intervals[fid].append((up_feat["nr_in_seg"], lo_feat["nr_in_seg"], up_feat["fid"], lo_feat["fid"]))
+                    intervals[fid].append(
+                        (
+                            up_feat["nr_in_seg"],
+                            lo_feat["nr_in_seg"],
+                            up_feat["fid"],
+                            lo_feat["fid"],
+                        )
+                    )
             except StopIteration:
                 pass
         return intervals
@@ -2071,7 +2235,20 @@ class ChannelsSchematizer(GeoPackageUtils):
             inter_rlen = val["inter_rlen"] if "inter_rlen" in val else 0
             for xs_id, xs_fid, seg_fid, start, end, ldist, rdist in xs_rows:
                 end = end if end < infinity else None
-                cursor.execute(qry, (xs_id, xs_fid, seg_fid, start, end, ldist, rdist, inter_llen, inter_rlen))
+                cursor.execute(
+                    qry,
+                    (
+                        xs_id,
+                        xs_fid,
+                        seg_fid,
+                        start,
+                        end,
+                        ldist,
+                        rdist,
+                        inter_llen,
+                        inter_rlen,
+                    ),
+                )
         self.con.commit()
 
 

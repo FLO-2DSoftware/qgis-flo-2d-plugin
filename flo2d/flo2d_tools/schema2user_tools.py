@@ -333,7 +333,14 @@ class SchemaInfiltrationConverter(SchemaConverter):
         self.schema_horton_lyr = lyrs.data[self.schema_horton_tab]["qlyr"]
         self.schema_chan_lyr = lyrs.data[self.schema_chan_tab]["qlyr"]
 
-        self.green_columns = ["hydc", "soils", "dtheta", "abstrinf", "rtimpf", "soil_depth"]
+        self.green_columns = [
+            "hydc",
+            "soils",
+            "dtheta",
+            "abstrinf",
+            "rtimpf",
+            "soil_depth",
+        ]
         self.scs_columns = ["scsn"]
         self.horton_columns = ["fhorti", "fhortf", "deca"]
         self.chan_columns = ["hydconch"]
@@ -397,9 +404,16 @@ class SchemaSWMMConverter(SchemaConverter):
             ("swmm_feature", "swmm_feature"),
         ]
 
-        self.outlet_columns = [("grid_fid", "grid"), ("name", "name"), ("outf_flo", "swmm_allow_discharge")]
+        self.outlet_columns = [
+            ("grid_fid", "grid"),
+            ("name", "name"),
+            ("outf_flo", "swmm_allow_discharge"),
+        ]
 
-        self.lyrs_cols = [(self.schema_inlet_lyr, self.inlet_columns), (self.schema_outlet_lyr, self.outlet_columns)]
+        self.lyrs_cols = [
+            (self.schema_inlet_lyr, self.inlet_columns),
+            (self.schema_outlet_lyr, self.outlet_columns),
+        ]
 
         self.ui_fields = self.user_swmm_nodes_lyr.fields()
         self.rt_grids, self.rt_names = self.check_rating_tables()

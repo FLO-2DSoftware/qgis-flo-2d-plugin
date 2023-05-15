@@ -107,7 +107,8 @@ class TableEditorWidget(qtBaseClass, uiDialog):
                 return
             if sel_row + num_rows > self.tview.model().rowCount():
                 self.tview.model().insertRows(
-                    self.tview.model().rowCount(), num_rows - (self.tview.model().rowCount() - sel_row)
+                    self.tview.model().rowCount(),
+                    num_rows - (self.tview.model().rowCount() - sel_row),
                 )
                 for i in range(self.tview.model().rowCount()):
                     self.tview.setRowHeight(i, 20)
@@ -126,7 +127,8 @@ class TableEditorWidget(qtBaseClass, uiDialog):
                     )
             self.after_paste.emit()
             self.tview.model().dataChanged.emit(
-                top_left_idx.parent(), self.tview.model().createIndex(sel_row + num_rows, sel_col + num_cols)
+                top_left_idx.parent(),
+                self.tview.model().createIndex(sel_row + num_rows, sel_col + num_cols),
             )
         QApplication.restoreOverrideCursor()
 
@@ -254,7 +256,11 @@ class TableView(QTableView):
         """
         if role == Qt.EditRole:
             command = CommandItemEdit(
-                self, item, oldValue, newValue, "Text changed from '{0}' to '{1}'".format(oldValue, newValue)
+                self,
+                item,
+                oldValue,
+                newValue,
+                "Text changed from '{0}' to '{1}'".format(oldValue, newValue),
             )
             self.undoStack.push(command)
             return True

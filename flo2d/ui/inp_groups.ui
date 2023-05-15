@@ -2,6 +2,9 @@
 <ui version="4.0">
  <class>INP_groups_dlg</class>
  <widget class="QDialog" name="INP_groups_dlg">
+  <property name="windowModality">
+   <enum>Qt::NonModal</enum>
+  </property>
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -111,7 +114,7 @@ p, li { white-space: pre-wrap; }
      <property name="flat">
       <bool>false</bool>
      </property>
-     <widget class="QWidget" name="">
+     <widget class="QWidget" name="layoutWidget">
       <property name="geometry">
        <rect>
         <x>16</x>

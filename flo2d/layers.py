@@ -475,9 +475,18 @@ class Layers(object):
                         "sgroup": "User Layers",
                         "styles": ["blocked_areas.qml"],
                         "attrs_edit_widgets": {
-                            "collapse": {"name": "CheckBox", "config": {"CheckedState": 1, "UncheckedState": 0}},
-                            "calc_arf": {"name": "CheckBox", "config": {"CheckedState": 1, "UncheckedState": 0}},
-                            "calc_wrf": {"name": "CheckBox", "config": {"CheckedState": 1, "UncheckedState": 0}},
+                            "collapse": {
+                                "name": "CheckBox",
+                                "config": {"CheckedState": 1, "UncheckedState": 0},
+                            },
+                            "calc_arf": {
+                                "name": "CheckBox",
+                                "config": {"CheckedState": 1, "UncheckedState": 0},
+                            },
+                            "calc_wrf": {
+                                "name": "CheckBox",
+                                "config": {"CheckedState": 1, "UncheckedState": 0},
+                            },
                         },
                         "module": ["redfac"],
                         "readonly": False,
@@ -612,7 +621,10 @@ class Layers(object):
                         "sgroup": "User Layers",
                         "styles": ["user_reservoirs.qml"],
                         "attrs_edit_widgets": {
-                            "use_n_value": {"name": "CheckBox", "config": {"CheckedState": 1, "UncheckedState": 0}}
+                            "use_n_value": {
+                                "name": "CheckBox",
+                                "config": {"CheckedState": 1, "UncheckedState": 0},
+                            }
                         },
                         "module": ["all"],
                         "readonly": False,
@@ -1033,7 +1045,11 @@ class Layers(object):
                         "styles": None,
                         "attrs_edit_widgets": {},
                         "readonly": False,
-                        "attrs_defaults": {"height": "0.88", "width": "0.99", "n_value": "0.77"},
+                        "attrs_defaults": {
+                            "height": "0.88",
+                            "width": "0.99",
+                            "n_value": "0.77",
+                        },
                     },
                 ),
                 (
@@ -1767,7 +1783,16 @@ class Layers(object):
             self.data[lyr]["qlyr"] = None
 
     def load_layer(
-        self, table, uri, group, name, subgroup=None, style=None, visible=True, readonly=False, provider="ogr"
+        self,
+        table,
+        uri,
+        group,
+        name,
+        subgroup=None,
+        style=None,
+        visible=True,
+        readonly=False,
+        provider="ogr",
     ):
         try:
             # check if the layer is already loaded
@@ -2201,7 +2226,8 @@ class Layers(object):
                     for attr, widget_data in data["attrs_edit_widgets"].items():
                         attr_idx = l.fields().lookupField(attr)
                         l.setEditorWidgetSetup(
-                            attr_idx, QgsEditorWidgetSetup(widget_data["name"], widget_data["config"])
+                            attr_idx,
+                            QgsEditorWidgetSetup(widget_data["name"], widget_data["config"]),
                         )
                 else:
                     pass  # no attributes edit widgets config

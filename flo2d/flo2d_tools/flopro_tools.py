@@ -10,7 +10,17 @@
 import os
 import time
 from contextlib import contextmanager
-from subprocess import CREATE_NO_WINDOW, PIPE, STDOUT, CalledProcessError, Popen, call, check_call, check_output, run
+from subprocess import (
+    CREATE_NO_WINDOW,
+    PIPE,
+    STDOUT,
+    CalledProcessError,
+    Popen,
+    call,
+    check_call,
+    check_output,
+    run,
+)
 
 from ..user_communication import UserCommunication
 
@@ -100,7 +110,10 @@ class FLOPROExecutor(object):
                 # 555555
                 # result = call(self.flo2d_exe)
 
-                self.uc.bar_info("Model FLOPRO.exe started " + str(result) if result is not None else "", 10)
+                self.uc.bar_info(
+                    "Model FLOPRO.exe started " + str(result) if result is not None else "",
+                    10,
+                )
 
                 return result
 

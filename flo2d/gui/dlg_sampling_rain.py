@@ -23,7 +23,15 @@ uiDialog, qtBaseClass = load_ui("sampling_rain")
 
 
 class SamplingRainDialog(qtBaseClass, uiDialog):
-    RTYPE = {1: "Byte", 2: "UInt16", 3: "Int16", 4: "UInt32", 5: "Int32", 6: "Float32", 7: "Float64"}
+    RTYPE = {
+        1: "Byte",
+        2: "UInt16",
+        3: "Int16",
+        4: "UInt32",
+        5: "Int32",
+        6: "Float32",
+        7: "Float64",
+    }
 
     def __init__(self, con, iface, lyrs, cell_size):
         qtBaseClass.__init__(self)
@@ -153,7 +161,14 @@ class SamplingRainDialog(qtBaseClass, uiDialog):
         else:
             pass
         cmd = 'gdalwarp {} "{}" "{}"'.format(" ".join([opt for opt in opts]), self.src_raster, self.out_raster)
-        proc = Popen(cmd, shell=True, stdin=open(os.devnull), stdout=PIPE, stderr=STDOUT, universal_newlines=True)
+        proc = Popen(
+            cmd,
+            shell=True,
+            stdin=open(os.devnull),
+            stdout=PIPE,
+            stderr=STDOUT,
+            universal_newlines=True,
+        )
         out = proc.communicate()
         for line in out:
             self.uc.log_info(line)
@@ -177,7 +192,14 @@ class SamplingRainDialog(qtBaseClass, uiDialog):
     def fill_nodata(self):
         opts = ["-md {}".format(self.radiusSBox.value())]
         cmd = 'gdal_fillnodata {} "{}"'.format(" ".join([opt for opt in opts]), self.out_raster)
-        proc = Popen(cmd, shell=True, stdin=open(os.devnull), stdout=PIPE, stderr=STDOUT, universal_newlines=True)
+        proc = Popen(
+            cmd,
+            shell=True,
+            stdin=open(os.devnull),
+            stdout=PIPE,
+            stderr=STDOUT,
+            universal_newlines=True,
+        )
         out = proc.communicate()
         for line in out:
             self.uc.log_info(line)

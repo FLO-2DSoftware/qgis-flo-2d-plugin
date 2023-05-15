@@ -13,7 +13,16 @@ from random import randrange
 
 from PyQt5 import QtCore
 from qgis.core import QgsFeatureRequest
-from qgis.PyQt.QtCore import NULL, QDate, QDateTime, QRegExp, QSettings, Qt, QTime, pyqtSignal
+from qgis.PyQt.QtCore import (
+    NULL,
+    QDate,
+    QDateTime,
+    QRegExp,
+    QSettings,
+    Qt,
+    QTime,
+    pyqtSignal,
+)
 from qgis.PyQt.QtGui import QColor, QRegExpValidator, QStandardItem, QStandardItemModel
 from qgis.PyQt.QtWidgets import (
     QApplication,
@@ -203,7 +212,13 @@ class OutfallNodesDialog(qtBaseClass, uiDialog):
                                 index = 0
                             self.outfall_type_cbo.setCurrentIndex(index)
                             data = self.outfall_type_cbo.currentText()
-                            if not data in ("FIXED", "FREE", "NORMAL", "TIDAL", "TIMESERIES"):
+                            if not data in (
+                                "FIXED",
+                                "FREE",
+                                "NORMAL",
+                                "TIDAL",
+                                "TIMESERIES",
+                            ):
                                 data = "NORMAL"
                             item.setData(Qt.DisplayRole, data)
                         elif col_number == 7:
@@ -649,7 +664,13 @@ class OutfallNodesDialog(qtBaseClass, uiDialog):
             item = self.outfalls_tblw.item(row, 5)
             if item is not None:
                 outfall_type = str(item.text())
-                if not outfall_type in ("FIXED", "FREE", "NORMAL", "TIDAL", "TIMESERIES"):
+                if not outfall_type in (
+                    "FIXED",
+                    "FREE",
+                    "NORMAL",
+                    "TIDAL",
+                    "TIMESERIES",
+                ):
                     outfall_type = "NORMAL"
 
             item = self.outfalls_tblw.item(row, 6)
@@ -849,7 +870,10 @@ class OutfallTimeSeriesDialog(qtBaseClass, uiDialog):
         delete_data_sql = "DELETE FROM swmm_time_series_data WHERE time_series_name = ?"
         self.gutils.execute(delete_data_sql, (self.name_le.text(),))
 
-        insert_data_sql = ["""INSERT INTO swmm_time_series_data (time_series_name, date, time, value) VALUES""", 4]
+        insert_data_sql = [
+            """INSERT INTO swmm_time_series_data (time_series_name, date, time, value) VALUES""",
+            4,
+        ]
         for row in range(0, self.outfall_time_series_tblw.rowCount()):
             date = self.outfall_time_series_tblw.item(row, 0)
             if date:
@@ -1055,7 +1079,10 @@ class OutfallTidalCurveDialog(qtBaseClass, uiDialog):
         delete_data_sql = "DELETE FROM swmm_tidal_curve_data WHERE tidal_curve_name = ?"
         self.gutils.execute(delete_data_sql, (self.name_le.text(),))
 
-        insert_data_sql = ["""INSERT INTO swmm_tidal_curve_data (tidal_curve_name, hour, stage) VALUES""", 3]
+        insert_data_sql = [
+            """INSERT INTO swmm_tidal_curve_data (tidal_curve_name, hour, stage) VALUES""",
+            3,
+        ]
         for row in range(0, self.outfall_tidal_curve_tblw.rowCount()):
             hour = self.outfall_tidal_curve_tblw.item(row, 0)
             if hour:
@@ -1162,7 +1189,10 @@ class OutfallTidalCurveDialog(qtBaseClass, uiDialog):
         last_dir = s.value("FLO-2D/lastSWMMDir", "")
 
         tidal_file, __ = QFileDialog.getSaveFileName(
-            None, "Save tidal table as file...", directory=last_dir, filter="Text files (*.txt *.TXT*);;All files(*.*)"
+            None,
+            "Save tidal table as file...",
+            directory=last_dir,
+            filter="Text files (*.txt *.TXT*);;All files(*.*)",
         )
 
         if not tidal_file:

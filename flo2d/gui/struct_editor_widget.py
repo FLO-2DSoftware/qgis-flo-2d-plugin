@@ -69,7 +69,12 @@ class StructEditorWidget(qtBaseClass, uiDialog):
         self.struct_data = None
         self.d1, self.d2 = [[], []]
 
-        self.rating = ["Rating curve", "Rating table", "Culvert equation", "Bridge routine"]
+        self.rating = [
+            "Rating curve",
+            "Rating table",
+            "Culvert equation",
+            "Bridge routine",
+        ]
         # set button icons
         set_icon(self.create_struct_btn, "mActionCaptureLine.svg")
         set_icon(self.save_changes_btn, "mActionSaveAllEdits.svg")
@@ -179,7 +184,10 @@ class StructEditorWidget(qtBaseClass, uiDialog):
                 self.type_cbo.setCurrentIndex(0)
         else:
             self.struct.ifporchan = idx
-            self.gutils.execute("UPDATE struct SET ifporchan = ? WHERE structname =?;", (idx, self.struct.name))
+            self.gutils.execute(
+                "UPDATE struct SET ifporchan = ? WHERE structname =?;",
+                (idx, self.struct.name),
+            )
             # self.struct.set_row()
 
     def rating_changed(self, idx):
@@ -193,7 +201,10 @@ class StructEditorWidget(qtBaseClass, uiDialog):
                 self.rating_cbo.setCurrentIndex(0)
         else:
             self.struct.icurvtable = idx
-            self.gutils.execute("UPDATE struct SET icurvtable = ? WHERE structname =?;", (idx, self.struct.name))
+            self.gutils.execute(
+                "UPDATE struct SET icurvtable = ? WHERE structname =?;",
+                (idx, self.struct.name),
+            )
             # self.struct.set_row()
         self.show_table_data()
         self.bridge_variables_btn.setVisible(self.rating_cbo.currentIndex() == 3)  # Bridge routine
@@ -211,7 +222,10 @@ class StructEditorWidget(qtBaseClass, uiDialog):
                 self.twater_effect_cbo.setCurrentIndex(0)
         else:
             self.struct.inoutcont = idx
-            self.gutils.execute("UPDATE struct SET inoutcont = ? WHERE structname =?;", (idx, self.struct.name))
+            self.gutils.execute(
+                "UPDATE struct SET inoutcont = ? WHERE structname =?;",
+                (idx, self.struct.name),
+            )
             # self.struct.set_row()
 
     def set_stormdrain(self):
@@ -301,7 +315,12 @@ class StructEditorWidget(qtBaseClass, uiDialog):
     def populate_rating_cbo(self):
         self.rating_cbo.clear()
         self.rating_types = OrderedDict(
-            [(0, "Rating curve"), (1, "Rating table"), (2, "Culvert equation"), (3, "Bridge routine")]
+            [
+                (0, "Rating curve"),
+                (1, "Rating table"),
+                (2, "Culvert equation"),
+                (3, "Bridge routine"),
+            ]
         )
         for typ, name in self.rating_types.items():
             self.rating_cbo.addItem(name, typ)
@@ -332,7 +351,8 @@ class StructEditorWidget(qtBaseClass, uiDialog):
 
                     # See if there is structure with same name of file:
                     row = self.gutils.execute(
-                        "SELECT fid, icurvtable FROM struct WHERE structname  = ?", (file_name,)
+                        "SELECT fid, icurvtable FROM struct WHERE structname  = ?",
+                        (file_name,),
                     ).fetchone()
 
                     if row:
@@ -362,7 +382,8 @@ class StructEditorWidget(qtBaseClass, uiDialog):
                             )
                             if answer:
                                 self.gutils.execute(
-                                    "UPDATE struct SET icurvtable = ? WHERE structname =?;", (1, file_name)
+                                    "UPDATE struct SET icurvtable = ? WHERE structname =?;",
+                                    (1, file_name),
                                 )
                                 self.rating_cbo.setCurrentIndex(1)
 
@@ -416,7 +437,8 @@ class StructEditorWidget(qtBaseClass, uiDialog):
             return
         self.struct.headrefel = self.ref_head_elev_sbox.value()
         self.gutils.execute(
-            "UPDATE struct SET headrefel = ? WHERE structname =?;", (self.struct.headrefel, self.struct.name)
+            "UPDATE struct SET headrefel = ? WHERE structname =?;",
+            (self.struct.headrefel, self.struct.name),
         )
         # self.struct.set_row()
 
@@ -425,7 +447,8 @@ class StructEditorWidget(qtBaseClass, uiDialog):
             return
         self.struct.clength = self.culvert_len_sbox.value()
         self.gutils.execute(
-            "UPDATE struct SET clength = ? WHERE structname =?;", (self.struct.clength, self.struct.name)
+            "UPDATE struct SET clength = ? WHERE structname =?;",
+            (self.struct.clength, self.struct.name),
         )
         # self.struct.set_row()
 
@@ -434,13 +457,25 @@ class StructEditorWidget(qtBaseClass, uiDialog):
             return
         self.struct.cdiameter = self.culvert_width_sbox.value()
         self.gutils.execute(
-            "UPDATE struct SET cdiameter = ? WHERE structname =?;", (self.struct.cdiameter, self.struct.name)
+            "UPDATE struct SET cdiameter = ? WHERE structname =?;",
+            (self.struct.cdiameter, self.struct.name),
         )
         # self.struct.set_row()
 
     def define_data_table_head(self):
         self.tab_heads = {
-            0: ["HDEPEXC", "COEFQ", "EXPQ", "COEFA", "EXPA", "REPDEP", "RQCOEF", "RQEXP", "RACOEF", "RAEXP"],
+            0: [
+                "HDEPEXC",
+                "COEFQ",
+                "EXPQ",
+                "COEFA",
+                "EXPA",
+                "REPDEP",
+                "RQCOEF",
+                "RQEXP",
+                "RACOEF",
+                "RAEXP",
+            ],
             1: ["HDEPTH", "QTABLE", "ATABLE"],
             2: ["TYPEC", "TYPEEN", "CULVERTN", "KE", "CUBASE", "MULTBARRELS"],
             3: ["XUP", "YUP", "YB"],
@@ -643,7 +678,10 @@ class StructEditorWidget(qtBaseClass, uiDialog):
         self.repaint_structs()
 
     def repaint_structs(self):
-        self.lyrs.lyrs_to_repaint = [self.lyrs.data["user_struct"]["qlyr"], self.lyrs.data["struct"]["qlyr"]]
+        self.lyrs.lyrs_to_repaint = [
+            self.lyrs.data["user_struct"]["qlyr"],
+            self.lyrs.data["struct"]["qlyr"],
+        ]
         self.lyrs.repaint_layers()
 
     def show_bridge(self):

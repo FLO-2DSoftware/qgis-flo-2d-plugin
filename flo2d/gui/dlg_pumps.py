@@ -12,7 +12,12 @@ from math import isnan
 from qgis.core import QgsFeatureRequest
 from qgis.PyQt.QtCore import Qt
 from qgis.PyQt.QtGui import QColor
-from qgis.PyQt.QtWidgets import QApplication, QDialogButtonBox, QInputDialog, QTableWidgetItem
+from qgis.PyQt.QtWidgets import (
+    QApplication,
+    QDialogButtonBox,
+    QInputDialog,
+    QTableWidgetItem,
+)
 
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
@@ -164,7 +169,10 @@ class PumpsDialog(qtBaseClass, uiDialog):
                 )
         except Exception as e:
             QApplication.restoreOverrideCursor()
-            self.uc.show_error("ERROR 251121.0705: assignment of value from pumps users layer failed!.\n", e)
+            self.uc.show_error(
+                "ERROR 251121.0705: assignment of value from pumps users layer failed!.\n",
+                e,
+            )
 
     """
     Events for changes in values of widgets: 
@@ -213,7 +221,8 @@ class PumpsDialog(qtBaseClass, uiDialog):
         self.pump_curve_description_lbl.setText("Description:")
         name = self.pump_curve_cbo.currentText()
         curve = self.gutils.execute(
-            "SELECT pump_curve_type, description FROM swmm_pumps_curve_data WHERE pump_curve_name = ?", (name,)
+            "SELECT pump_curve_type, description FROM swmm_pumps_curve_data WHERE pump_curve_name = ?",
+            (name,),
         ).fetchone()
         if curve:
             self.pump_curve_type_lbl.setText("Pump Type: " + curve[0] if curve[0] != None else "")
@@ -536,7 +545,13 @@ class PumpsDialog(qtBaseClass, uiDialog):
         for i in range(self.pumps_data_model.rowCount()):
             # save only rows with a number in the first column
             if is_number(m_fdata(self.pumps_data_model, i, 0)) and not isnan(m_fdata(self.pumps_data_model, i, 0)):
-                pc_data.append((pc_fid, m_fdata(self.pumps_data_model, i, 0), m_fdata(self.pumps_data_model, i, 1)))
+                pc_data.append(
+                    (
+                        pc_fid,
+                        m_fdata(self.pumps_data_model, i, 0),
+                        m_fdata(self.pumps_data_model, i, 1),
+                    )
+                )
             else:
                 pass
         data_name = self.pump_curve_cbo.currentText()

@@ -10,7 +10,10 @@
 from qgis.PyQt.QtCore import Qt
 from qgis.PyQt.QtWidgets import QApplication, QTableWidgetItem
 
-from ..flo2d_tools.grid_tools import highlight_selected_segment, highlight_selected_xsection_a
+from ..flo2d_tools.grid_tools import (
+    highlight_selected_segment,
+    highlight_selected_xsection_a,
+)
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
 from ..utils import float_or_zero, int_or_zero

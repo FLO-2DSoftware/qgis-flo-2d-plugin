@@ -10,7 +10,10 @@
 from qgis.PyQt.QtCore import Qt
 from qgis.PyQt.QtWidgets import QTableWidgetItem
 
-from ..flo2d_tools.grid_tools import highlight_selected_segment, highlight_selected_xsection_a
+from ..flo2d_tools.grid_tools import (
+    highlight_selected_segment,
+    highlight_selected_xsection_a,
+)
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
 from ..utils import float_or_zero
@@ -212,7 +215,25 @@ class ChannelGeometryDialog(qtBaseClass, uiDialog):
             if row is not None:
                 self.assign_values_to_row(cell_values, row)
 
-        for elem_fid, bankell, bankelr, fcd, a1, a2, b1, b2, c1, c2, excdep, a11, a22, b11, b22, c11, c22 in chan_v:
+        for (
+            elem_fid,
+            bankell,
+            bankelr,
+            fcd,
+            a1,
+            a2,
+            b1,
+            b2,
+            c1,
+            c2,
+            excdep,
+            a11,
+            a22,
+            b11,
+            b22,
+            c11,
+            c22,
+        ) in chan_v:
             cell_values = (
                 (bankell, 4),
                 (bankelr, 5),
@@ -236,7 +257,14 @@ class ChannelGeometryDialog(qtBaseClass, uiDialog):
                 self.assign_values_to_row(cell_values, row)
 
         for elem_fid, bankell, bankelr, fcw, fcd, zl, zr in chan_t:
-            cell_values = ((bankell, 4), (bankelr, 5), (fcw, 8), (fcd, 9), (zl, 6), (zr, 7))
+            cell_values = (
+                (bankell, 4),
+                (bankelr, 5),
+                (fcw, 8),
+                (fcd, 9),
+                (zl, 6),
+                (zr, 7),
+            )
             row = cell_pos.get(elem_fid)
             if row is not None:
                 self.assign_values_to_row(cell_values, row)
@@ -414,7 +442,9 @@ class ChannelGeometryDialog(qtBaseClass, uiDialog):
 
         highlight_selected_segment(self.lyrs.data["chan"]["qlyr"], self.channel_segment_cbo.currentIndex() + 1)
         highlight_selected_xsection_a(
-            self.gutils, self.lyrs.data["chan_elems"]["qlyr"], int(self.grid_element_cbo.currentText())
+            self.gutils,
+            self.lyrs.data["chan_elems"]["qlyr"],
+            int(self.grid_element_cbo.currentText()),
         )
 
     def clear_all_individual_items_for_current_cell_element(self):
@@ -555,7 +585,9 @@ class ChannelGeometryDialog(qtBaseClass, uiDialog):
 
         highlight_selected_segment(self.lyrs.data["chan"]["qlyr"], self.channel_segment_cbo.currentIndex() + 1)
         highlight_selected_xsection_a(
-            self.gutils, self.lyrs.data["chan_elems"]["qlyr"], int(self.grid_element_cbo.currentText())
+            self.gutils,
+            self.lyrs.data["chan_elems"]["qlyr"],
+            int(self.grid_element_cbo.currentText()),
         )
 
     def int_or_zero(self, value):

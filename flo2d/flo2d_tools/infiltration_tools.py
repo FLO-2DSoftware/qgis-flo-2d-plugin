@@ -131,7 +131,11 @@ class InfiltrationCalculator(object):
                 grid_span = int(max(sqrt(grid_element_count) / 10, 10))
 
             for request in gridRegionGenerator(
-                self.gutils, self.grid_lyr, gridSpan=grid_span, regionPadding=5, showProgress=True
+                self.gutils,
+                self.grid_lyr,
+                gridSpan=grid_span,
+                regionPadding=5,
+                showProgress=True,
             ):
                 # calculate extent of concerned grid element
                 grid_elems = self.grid_lyr.getFeatures(request)
@@ -230,7 +234,13 @@ class InfiltrationCalculator(object):
                         return grid_params
 
                 land_values = poly2poly_geos_from_features(
-                    self.grid_lyr, land_features, land_index, request, self.saturation_fld, self.vc_fld, self.ia_fld
+                    self.grid_lyr,
+                    land_features,
+                    land_index,
+                    request,
+                    self.saturation_fld,
+                    self.vc_fld,
+                    self.ia_fld,
                 )
 
                 for gid, values in land_values:
@@ -303,7 +313,12 @@ class InfiltrationCalculator(object):
                         str(grid_params[gid]["rtimpf"]),
                         str(grid_params[gid]["soil_depth"]),
                         str(grid_params[gid]["luParts"]),
-                        str(round(grid_params[gid]["hydc"] / grid_params[gid]["soilhydc"], 5)),
+                        str(
+                            round(
+                                grid_params[gid]["hydc"] / grid_params[gid]["soilhydc"],
+                                5,
+                            )
+                        ),
                         str(grid_params[gid]["hydc"]),
                         str(grid_params[gid]["dtheta"]),
                         str(grid_params[gid]["abstrinf"]),
@@ -356,7 +371,12 @@ class InfiltrationCalculator(object):
         grid_params = {}
         scs = SCPCurveNumber()
         ground_values = centroids2poly_geos(
-            self.grid_lyr, self.combined_lyr, None, self.landsoil_fld, self.cd_fld, self.imp_fld
+            self.grid_lyr,
+            self.combined_lyr,
+            None,
+            self.landsoil_fld,
+            self.cd_fld,
+            self.imp_fld,
         )
         for gid, values in ground_values:
             try:

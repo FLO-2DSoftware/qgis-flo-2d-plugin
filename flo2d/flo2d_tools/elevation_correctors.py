@@ -8,7 +8,15 @@ import time
 from collections import defaultdict
 
 from qgis.analysis import QgsZonalStatistics
-from qgis.core import NULL, QgsFeature, QgsFeatureRequest, QgsField, QgsGeometry, QgsVectorLayer, QgsWkbTypes
+from qgis.core import (
+    NULL,
+    QgsFeature,
+    QgsFeatureRequest,
+    QgsField,
+    QgsGeometry,
+    QgsVectorLayer,
+    QgsWkbTypes,
+)
 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -233,7 +241,11 @@ class LeveesElevation(ElevationCorrector):
         qry = "UPDATE levee_data SET levcrest = ? WHERE fid = ?;"
         for feat in self.user_levees.getFeatures():
             poly_values = polys2levees(
-                feat, self.user_polygons, self.schema_levees, self.ELEVATION_FIELD, self.CORRECTION_FIELD
+                feat,
+                self.user_polygons,
+                self.schema_levees,
+                self.ELEVATION_FIELD,
+                self.CORRECTION_FIELD,
             )
             for elev, fid in poly_values:
                 qry_values.append((round(elev, 4), fid))
@@ -305,7 +317,16 @@ class GridElevation(ElevationCorrector):
         tin = TINInterpolator(self.user_points, self.VIRTUAL_SUM)
         tin.setup_layer_data()
         grid_fids = [
-            val[-1] for val in poly2grid(self.grid, self.user_polygons, request, True, True, False, self.threshold)
+            val[-1]
+            for val in poly2grid(
+                self.grid,
+                self.user_polygons,
+                request,
+                True,
+                True,
+                False,
+                self.threshold,
+            )
         ]
         request = QgsFeatureRequest().setFilterFids(grid_fids)
         qry_values = []
@@ -347,7 +368,16 @@ class GridElevation(ElevationCorrector):
         tin = TINInterpolator(grid_centroids, "elevation")
         tin.setup_layer_data()
         grid_fids = [
-            val[-1] for val in poly2grid(self.grid, self.user_polygons, request, True, True, False, self.threshold)
+            val[-1]
+            for val in poly2grid(
+                self.grid,
+                self.user_polygons,
+                request,
+                True,
+                True,
+                False,
+                self.threshold,
+            )
         ]
         request = QgsFeatureRequest().setFilterFids(grid_fids)
         qry_values = []
@@ -527,7 +557,15 @@ class ExternalElevation(ElevationCorrector):
             raise ValueError
         cur = self.gutils.con.cursor()
         qry = "UPDATE grid SET elevation = ? WHERE fid = ?;"
-        grid_gen = poly2grid(self.grid, self.polygons, self.request, self.only_centroids, True, False, self.threshold)
+        grid_gen = poly2grid(
+            self.grid,
+            self.polygons,
+            self.request,
+            self.only_centroids,
+            True,
+            False,
+            self.threshold,
+        )
         fids_grids = defaultdict(list)
         fids_elevs = {}
         for fid, gid in grid_gen:

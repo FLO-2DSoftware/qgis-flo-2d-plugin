@@ -25,14 +25,36 @@ from PyQt5.QtWidgets import QApplication
 from qgis.core import NULL, QgsProject, QgsWkbTypes
 from qgis.gui import QgsDockWidget, QgsProjectionSelectionWidget
 from qgis.PyQt import QtCore
-from qgis.PyQt.QtCore import QCoreApplication, QSettings, QSize, Qt, QTranslator, QUrl, qVersion
+from qgis.PyQt.QtCore import (
+    QCoreApplication,
+    QSettings,
+    QSize,
+    Qt,
+    QTranslator,
+    QUrl,
+    qVersion,
+)
 from qgis.PyQt.QtGui import QCursor, QDesktopServices, QIcon, QPixmap
-from qgis.PyQt.QtWidgets import QAction, QApplication, QFileDialog, QMenu, QMessageBox, QSizePolicy, QSpacerItem, qApp
+from qgis.PyQt.QtWidgets import (
+    QAction,
+    QApplication,
+    QFileDialog,
+    QMenu,
+    QMessageBox,
+    QSizePolicy,
+    QSpacerItem,
+    qApp,
+)
 from urllib3.contrib import _securetransport
 
 from .flo2d_ie.flo2dgeopackage import Flo2dGeoPackage
 from .flo2d_tools.channel_profile_tool import ChannelProfile
-from .flo2d_tools.flopro_tools import FLOPROExecutor, MapperExecutor, ProgramExecutor, TailingsDamBreachExecutor
+from .flo2d_tools.flopro_tools import (
+    FLOPROExecutor,
+    MapperExecutor,
+    ProgramExecutor,
+    TailingsDamBreachExecutor,
+)
 from .flo2d_tools.grid_info_tool import GridInfoTool
 from .flo2d_tools.grid_tools import (
     add_col_and_row_fields,
@@ -43,7 +65,10 @@ from .flo2d_tools.grid_tools import (
     number_of_elements,
 )
 from .flo2d_tools.info_tool import InfoTool
-from .flo2d_tools.schematic_tools import delete_redundant_levee_directions_np, generate_schematic_levees
+from .flo2d_tools.schematic_tools import (
+    delete_redundant_levee_directions_np,
+    generate_schematic_levees,
+)
 from .geopackage_utils import GeoPackageUtils, connection_required, database_disconnect
 from .gui.dlg_components import ComponentsDialog
 from .gui.dlg_cont_toler_jj import ContToler_JJ
@@ -253,11 +278,31 @@ class Flo2D(object):
             callback=self.run_flopro,
             parent=self.iface.mainWindow(),
             menu=(
-                (os.path.join(self.plugin_dir, "img/flo2d.svg"), "Run FLO-2D Pro", self.run_flopro),
-                (os.path.join(self.plugin_dir, "img/profile_run2.svg"), "Run Profiles", self.run_profiles),
-                (os.path.join(self.plugin_dir, "img/hydrog.svg"), "Run Hydrog", self.run_hydrog),
-                (os.path.join(self.plugin_dir, "img/maxplot.svg"), "Run MaxPlot", self.run_maxplot),
-                (os.path.join(self.plugin_dir, "img/mapper2.svg"), "Run Mapper", self.run_mapper2),
+                (
+                    os.path.join(self.plugin_dir, "img/flo2d.svg"),
+                    "Run FLO-2D Pro",
+                    self.run_flopro,
+                ),
+                (
+                    os.path.join(self.plugin_dir, "img/profile_run2.svg"),
+                    "Run Profiles",
+                    self.run_profiles,
+                ),
+                (
+                    os.path.join(self.plugin_dir, "img/hydrog.svg"),
+                    "Run Hydrog",
+                    self.run_hydrog,
+                ),
+                (
+                    os.path.join(self.plugin_dir, "img/maxplot.svg"),
+                    "Run MaxPlot",
+                    self.run_maxplot,
+                ),
+                (
+                    os.path.join(self.plugin_dir, "img/mapper2.svg"),
+                    "Run Mapper",
+                    self.run_mapper2,
+                ),
                 (
                     os.path.join(self.plugin_dir, "img/tailings dam breach.svg"),
                     "Run Tailings Dam Tool ",
@@ -1341,7 +1386,10 @@ class Flo2D(object):
         s = QSettings()
         last_dir = s.value("FLO-2D/lastGdsDir", "")
         input_hdf5, _ = QFileDialog.getOpenFileName(
-            None, "Import FLO-2D model data from HDF5 format", directory=last_dir, filter="HDF5 file (*.hdf5; *.HDF5)"
+            None,
+            "Import FLO-2D model data from HDF5 format",
+            directory=last_dir,
+            filter="HDF5 file (*.hdf5; *.HDF5)",
         )
 
         if not input_hdf5:
@@ -1852,7 +1900,9 @@ class Flo2D(object):
                 method()
                 QApplication.restoreOverrideCursor()
                 QMessageBox.information(
-                    self.iface.mainWindow(), "Import selected GDS file", "Import from {0} is successful".format(bname)
+                    self.iface.mainWindow(),
+                    "Import selected GDS file",
+                    "Import from {0} is successful".format(bname),
                 )
                 if call_string == "import_chan":
                     self.gutils.create_schematized_rbank_lines_from_xs_tips()
@@ -1863,7 +1913,9 @@ class Flo2D(object):
             except Exception as e:
                 QApplication.restoreOverrideCursor()
                 QMessageBox.critical(
-                    self.iface.mainWindow(), "Import selected GDS file", "Import from {0} fails".format(bname)
+                    self.iface.mainWindow(),
+                    "Import selected GDS file",
+                    "Import from {0} fails".format(bname),
                 )
 
             finally:
@@ -1908,7 +1960,8 @@ class Flo2D(object):
         if remove_grid:
             for rg in remove_grid:
                 self.gutils.execute(
-                    "UPDATE swmmflort SET grid_fid = ?, name = ? WHERE grid_fid = ?", (None, rg[1], rg[0])
+                    "UPDATE swmmflort SET grid_fid = ?, name = ? WHERE grid_fid = ?",
+                    (None, rg[1], rg[0]),
                 )
 
     @connection_required
@@ -1922,7 +1975,9 @@ class Flo2D(object):
 
         project_dir = QgsProject.instance().absolutePath()
         outdir = QFileDialog.getExistingDirectory(
-            None, "Select directory where FLO-2D model will be exported", directory=project_dir
+            None,
+            "Select directory where FLO-2D model will be exported",
+            directory=project_dir,
         )
         if outdir:
             self.f2g = Flo2dGeoPackage(self.con, self.iface)
@@ -2118,7 +2173,10 @@ class Flo2D(object):
         s = QSettings()
         last_dir = s.value("FLO-2D/lastGdsDir", "")
         output_hdf5, _ = QFileDialog.getSaveFileName(
-            None, "Save FLO-2D model data into HDF5 format", directory=last_dir, filter="HDF5 file (*.hdf5; *.HDF5)"
+            None,
+            "Save FLO-2D model data into HDF5 format",
+            directory=last_dir,
+            filter="HDF5 file (*.hdf5; *.HDF5)",
         )
         if output_hdf5:
             outdir = os.path.dirname(output_hdf5)
@@ -2148,7 +2206,10 @@ class Flo2D(object):
         s = QSettings()
         last_dir = s.value("FLO-2D/lastGpkgDir", "")
         attached_gpkg, __ = QFileDialog.getOpenFileName(
-            None, "Select GeoPackage with data to import", directory=last_dir, filter="*.gpkg"
+            None,
+            "Select GeoPackage with data to import",
+            directory=last_dir,
+            filter="*.gpkg",
         )
         if not attached_gpkg:
             return
@@ -2351,7 +2412,12 @@ class Flo2D(object):
             n_fail_features_total = 0
 
             starttime = time.time()
-            for n_elements, n_levee_directions, n_fail_features, ranger in self.schematize_levees():
+            for (
+                n_elements,
+                n_levee_directions,
+                n_fail_features,
+                ranger,
+            ) in self.schematize_levees():
                 n_elements_total += n_elements
                 n_levee_directions_total += n_levee_directions
                 n_fail_features_total += n_fail_features
@@ -2417,7 +2483,11 @@ class Flo2D(object):
                             if k <= 3:
                                 dletes += (
                                     "{:<25}".format(
-                                        "{:>10}-{:1}({:2})".format(str(levee[0]), str(levee[1]), dirID(levee[1]))
+                                        "{:>10}-{:1}({:2})".format(
+                                            str(levee[0]),
+                                            str(levee[1]),
+                                            dirID(levee[1]),
+                                        )
                                     )
                                     + "\t"
                                 )
@@ -2429,7 +2499,11 @@ class Flo2D(object):
                                 dletes += (
                                     "\n"
                                     + "{:<25}".format(
-                                        "{:>10}-{:1}({:2})".format(str(levee[0]), str(levee[1]), dirID(levee[1]))
+                                        "{:>10}-{:1}({:2})".format(
+                                            str(levee[0]),
+                                            str(levee[1]),
+                                            dirID(levee[1]),
+                                        )
                                     )
                                     + "\t"
                                 )
@@ -2439,7 +2513,11 @@ class Flo2D(object):
                             if k <= 3:
                                 dletes += (
                                     "{:<25}".format(
-                                        "{:>10}-{:1}({:2})".format(str(levee[0]), str(levee[1]), dirID(levee[1]))
+                                        "{:>10}-{:1}({:2})".format(
+                                            str(levee[0]),
+                                            str(levee[1]),
+                                            dirID(levee[1]),
+                                        )
                                     )
                                     + "\t"
                                 )
@@ -2451,7 +2529,11 @@ class Flo2D(object):
                                 dletes += (
                                     "\n"
                                     + "{:<25}".format(
-                                        "{:>10}-{:1}({:2})".format(str(levee[0]), str(levee[1]), dirID(levee[1]))
+                                        "{:>10}-{:1}({:2})".format(
+                                            str(levee[0]),
+                                            str(levee[1]),
+                                            dirID(levee[1]),
+                                        )
                                     )
                                     + "\t"
                                 )
@@ -2585,7 +2667,8 @@ class Flo2D(object):
             QApplication.restoreOverrideCursor()
             self.uc.log_info(traceback.format_exc())
             self.uc.show_error(
-                "ERROR 060319.1806: Assigning values aborted! Please check your crest elevation source layers.\n", e
+                "ERROR 060319.1806: Assigning values aborted! Please check your crest elevation source layers.\n",
+                e,
             )
 
     @connection_required
@@ -2678,9 +2761,12 @@ class Flo2D(object):
             levee_lyr = self.lyrs.get_layer_by_name("Levee Lines", group=self.lyrs.group).layer()
             grid_lyr = self.lyrs.get_layer_by_name("Grid", group=self.lyrs.group).layer()
 
-            for n_elements, n_levee_directions, n_fail_features, regionReq in generate_schematic_levees(
-                self.gutils, levee_lyr, grid_lyr
-            ):
+            for (
+                n_elements,
+                n_levee_directions,
+                n_fail_features,
+                regionReq,
+            ) in generate_schematic_levees(self.gutils, levee_lyr, grid_lyr):
                 yield (n_elements, n_levee_directions, n_fail_features, regionReq)
         except Exception as e:
             QApplication.restoreOverrideCursor()

@@ -78,7 +78,10 @@ class SamplingPointElevDialog(qtBaseClass, uiDialog):
         s = QSettings()
         last_elev_file_dir = s.value("FLO-2D/lastElevFileDir", "")
         self.src_file, __ = QFileDialog.getOpenFileName(
-            None, "Choose elevation CSV file or raster...", directory=last_elev_file_dir, filter="Elev (*.tif *.csv)"
+            None,
+            "Choose elevation CSV file or raster...",
+            directory=last_elev_file_dir,
+            filter="Elev (*.tif *.csv)",
         )
         if not self.src_file:
             return
@@ -296,7 +299,10 @@ class SamplingPointElevDialog(qtBaseClass, uiDialog):
                 if os.path.exists(src_point_file):
                     os.unlink(src_point_file)
                 point_elev.raster_to_xyz(
-                    dest_clip_raster, src_point_file, False, remove_nodata=self.fillNoDataChBox.isChecked()
+                    dest_clip_raster,
+                    src_point_file,
+                    False,
+                    remove_nodata=self.fillNoDataChBox.isChecked(),
                 )
             # Process the XYZ point file
             if self.algCbo.currentText() == "Average GDS":
@@ -366,7 +372,14 @@ class SamplingPointElevDialog(qtBaseClass, uiDialog):
         self.log_message(">>> Filling nodata values")
         opts = ["-md {}".format(self.radiusSBox.value())]
         cmd = 'gdal_fillnodata {} "{}"'.format(" ".join([opt for opt in opts]), raster_file)
-        proc = Popen(cmd, shell=True, stdin=open(os.devnull), stdout=PIPE, stderr=STDOUT, universal_newlines=True)
+        proc = Popen(
+            cmd,
+            shell=True,
+            stdin=open(os.devnull),
+            stdout=PIPE,
+            stderr=STDOUT,
+            universal_newlines=True,
+        )
         out = proc.communicate()
         for line in out:
             self.uc.log_info(line)
@@ -416,6 +429,7 @@ class SamplingPointElevDialog(qtBaseClass, uiDialog):
 
         finally:
             point_elev.gdal.SetConfigOption(
-                "GDAL_CACHEMAX", "{0:.2f}".format(point_elev.gdal_default_cachemax / (1024.0 * 1024))
+                "GDAL_CACHEMAX",
+                "{0:.2f}".format(point_elev.gdal_default_cachemax / (1024.0 * 1024)),
             )  # Mb
             point_elev.gdal.SetConfigOption("GDAL_NUM_THREADS", None)

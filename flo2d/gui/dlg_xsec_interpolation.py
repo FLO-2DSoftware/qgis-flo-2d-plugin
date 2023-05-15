@@ -49,7 +49,9 @@ class XSecInterpolationDialog(qtBaseClass, uiDialog):
     def get_interpolation_dir(self):
         s = QSettings()
         interpolation_dir = QFileDialog.getExistingDirectory(
-            None, "Select Cross Sections Interpolation program folder", directory=self.interpolation_le.text()
+            None,
+            "Select Cross Sections Interpolation program folder",
+            directory=self.interpolation_le.text(),
         )
         if not interpolation_dir:
             return

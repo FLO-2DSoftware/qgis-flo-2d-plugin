@@ -120,7 +120,12 @@ class BCEditorWidget(qtBaseClass, uiDialog):
 
         self.setup_connection()
 
-        out_deleted, time_stage_1, time_stage_2, border = self.select_outflows_according_to_type()
+        (
+            out_deleted,
+            time_stage_1,
+            time_stage_2,
+            border,
+        ) = self.select_outflows_according_to_type()
         self.highlight_time_stage_cells(time_stage_1, time_stage_2)
 
         if time_stage_1:
@@ -157,7 +162,11 @@ class BCEditorWidget(qtBaseClass, uiDialog):
         """
         if role == Qt.EditRole:
             command = CommandItemEdit(
-                self, item, oldValue, newValue, "Text changed from '{0}' to '{1}'".format(oldValue, newValue)
+                self,
+                item,
+                oldValue,
+                newValue,
+                "Text changed from '{0}' to '{1}'".format(oldValue, newValue),
             )
             self.bc_tview.undoStack.push(command)
             return True
@@ -179,7 +188,12 @@ class BCEditorWidget(qtBaseClass, uiDialog):
         out_inserted = self.schematize_outflows()
         in_inserted = self.schematize_inflows()
 
-        out_deleted, time_stage_1, time_stage_2, border = self.select_outflows_according_to_type()
+        (
+            out_deleted,
+            time_stage_1,
+            time_stage_2,
+            border,
+        ) = self.select_outflows_according_to_type()
         self.highlight_time_stage_cells(time_stage_1, time_stage_2)
 
         if time_stage_1:
@@ -261,7 +275,11 @@ class BCEditorWidget(qtBaseClass, uiDialog):
     def show_editor(self, user_bc_table=None, bc_fid=None):
         typ = "inflow"
         fid = None
-        geom_type_map = {"user_bc_points": "point", "user_bc_lines": "line", "user_bc_polygons": "polygon"}
+        geom_type_map = {
+            "user_bc_points": "point",
+            "user_bc_lines": "line",
+            "user_bc_polygons": "polygon",
+        }
         if user_bc_table:
             qry = """SELECT
                         fid, type
@@ -601,7 +619,12 @@ class BCEditorWidget(qtBaseClass, uiDialog):
                 plot_scene.removeItem(self.plot.plot.legend)
         self.plot.plot.addLegend()
 
-        self.plot.add_item("Original Discharge", [self.ot, self.od], col=QColor("#7dc3ff"), sty=Qt.DotLine)
+        self.plot.add_item(
+            "Original Discharge",
+            [self.ot, self.od],
+            col=QColor("#7dc3ff"),
+            sty=Qt.DotLine,
+        )
         self.plot.add_item("Current Discharge", [self.ot, self.od], col=QColor("#0018d4"))
         self.plot.add_item("Original Mud", [self.ot, self.om], col=QColor("#cd904b"), sty=Qt.DotLine)
         self.plot.add_item("Current Mud", [self.ot, self.om], col=QColor("#884800"))
@@ -952,7 +975,8 @@ class BCEditorWidget(qtBaseClass, uiDialog):
                     )
                 else:
                     tab_bc_fid = self.gutils.execute(
-                        "SELECT tab_bc_fid FROM all_schem_bc WHERE grid_fid = ?;", (grid,)
+                        "SELECT tab_bc_fid FROM all_schem_bc WHERE grid_fid = ?;",
+                        (grid,),
                     ).fetchone()
                     if tab_bc_fid:
                         self.gutils.execute(
@@ -1055,19 +1079,35 @@ class BCEditorWidget(qtBaseClass, uiDialog):
                                                     if this is not None:
                                                         if this not in time_stage_1 + time_stage_2:
                                                             adj_cell = get_adjacent_cell(
-                                                                self.gutils, grid_lyr, this, "N", cell_size
+                                                                self.gutils,
+                                                                grid_lyr,
+                                                                this,
+                                                                "N",
+                                                                cell_size,
                                                             )
                                                             if adj_cell is not None:
                                                                 adj_cell = get_adjacent_cell(
-                                                                    self.gutils, grid_lyr, this, "E", cell_size
+                                                                    self.gutils,
+                                                                    grid_lyr,
+                                                                    this,
+                                                                    "E",
+                                                                    cell_size,
                                                                 )
                                                                 if adj_cell is not None:
                                                                     adj_cell = get_adjacent_cell(
-                                                                        self.gutils, grid_lyr, this, "S", cell_size
+                                                                        self.gutils,
+                                                                        grid_lyr,
+                                                                        this,
+                                                                        "S",
+                                                                        cell_size,
                                                                     )
                                                                     if adj_cell is not None:
                                                                         adj_cell = get_adjacent_cell(
-                                                                            self.gutils, grid_lyr, this, "W", cell_size
+                                                                            self.gutils,
+                                                                            grid_lyr,
+                                                                            this,
+                                                                            "W",
+                                                                            cell_size,
                                                                         )
                                                                         if adj_cell is not None:
                                                                             time_stage_2.append(this)
@@ -1099,9 +1139,17 @@ class BCEditorWidget(qtBaseClass, uiDialog):
                                         no_outflow.remove(cell)
 
                             for cell in no_outflow:
-                                self.gutils.execute("DELETE FROM outflow_cells WHERE grid_fid = ?;", (cell,))
+                                self.gutils.execute(
+                                    "DELETE FROM outflow_cells WHERE grid_fid = ?;",
+                                    (cell,),
+                                )
 
-                return len(no_outflow), list(set(time_stage_1 + time_stage_2)), [], border
+                return (
+                    len(no_outflow),
+                    list(set(time_stage_1 + time_stage_2)),
+                    [],
+                    border,
+                )
 
         except Exception as e:
             QApplication.restoreOverrideCursor()
@@ -1161,8 +1209,18 @@ class BCEditorWidget(qtBaseClass, uiDialog):
     def define_outflow_types(self):
         self.outflow_types = {
             0: {"name": "No outflow", "wids": [], "data_label": "", "tab_head": None},
-            1: {"name": "Floodplain outflow (no hydrograph)", "wids": [], "data_label": "", "tab_head": None},
-            2: {"name": "Channel outflow (no hydrograph)", "wids": [], "data_label": "", "tab_head": None},
+            1: {
+                "name": "Floodplain outflow (no hydrograph)",
+                "wids": [],
+                "data_label": "",
+                "tab_head": None,
+            },
+            2: {
+                "name": "Channel outflow (no hydrograph)",
+                "wids": [],
+                "data_label": "",
+                "tab_head": None,
+            },
             3: {
                 "name": "Floodplain and channel outflow (no hydrograph)",
                 "wids": [],
@@ -1177,25 +1235,41 @@ class BCEditorWidget(qtBaseClass, uiDialog):
             },
             5: {
                 "name": "Time-stage for floodplain",
-                "wids": [self.outflow_data_cbo, self.change_outflow_data_name_btn, self.plot],
+                "wids": [
+                    self.outflow_data_cbo,
+                    self.change_outflow_data_name_btn,
+                    self.plot,
+                ],
                 "data_label": "Time series",
                 "tab_head": ["Time", "Stage"],
             },
             6: {
                 "name": "Time-stage for channel",
-                "wids": [self.outflow_data_cbo, self.change_outflow_data_name_btn, self.plot],
+                "wids": [
+                    self.outflow_data_cbo,
+                    self.change_outflow_data_name_btn,
+                    self.plot,
+                ],
                 "data_label": "Time series",
                 "tab_head": ["Time", "Stage"],
             },
             7: {
                 "name": "Time-stage for floodplain and free floodplain and channel",
-                "wids": [self.outflow_data_cbo, self.change_outflow_data_name_btn, self.plot],
+                "wids": [
+                    self.outflow_data_cbo,
+                    self.change_outflow_data_name_btn,
+                    self.plot,
+                ],
                 "data_label": "Time series",
                 "tab_head": ["Time", "Stage"],
             },
             8: {
                 "name": "Time-stage for channel and free floodplain and channel",
-                "wids": [self.outflow_data_cbo, self.change_outflow_data_name_btn, self.plot],
+                "wids": [
+                    self.outflow_data_cbo,
+                    self.change_outflow_data_name_btn,
+                    self.plot,
+                ],
                 "data_label": "Time series",
                 "tab_head": ["Time", "Stage"],
             },
@@ -1213,7 +1287,11 @@ class BCEditorWidget(qtBaseClass, uiDialog):
             },
             11: {
                 "name": "Channel depth-discharge (Q(h) table)",
-                "wids": [self.outflow_data_cbo, self.change_outflow_data_name_btn, self.plot],
+                "wids": [
+                    self.outflow_data_cbo,
+                    self.change_outflow_data_name_btn,
+                    self.plot,
+                ],
                 "data_label": "Q(h) table",
                 "tab_head": ["Depth", "Discharge"],
             },
@@ -1358,13 +1436,21 @@ class BCEditorWidget(qtBaseClass, uiDialog):
         self.bc_tview.setModel(self.bc_data_model)
         self.lyrs.clear_rubber()
         if self.bc_type_inflow_radio.isChecked():
-            self.populate_inflows(inflow_fid=bc_fid, show_last_edited=show_last_edited, widget_setup=widget_setup)
+            self.populate_inflows(
+                inflow_fid=bc_fid,
+                show_last_edited=show_last_edited,
+                widget_setup=widget_setup,
+            )
             if self.bc_name_cbo.count() == 0:
                 self.inflow_frame.setDisabled(True)
             else:
                 self.inflow_frame.setEnabled(True)
         elif self.bc_type_outflow_radio.isChecked():
-            self.populate_outflows(outflow_fid=bc_fid, show_last_edited=show_last_edited, widget_setup=widget_setup)
+            self.populate_outflows(
+                outflow_fid=bc_fid,
+                show_last_edited=show_last_edited,
+                widget_setup=widget_setup,
+            )
             if self.bc_name_cbo.count() == 0:
                 self.outflow_frame.setDisabled(True)
             else:

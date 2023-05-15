@@ -1380,27 +1380,71 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                     feat.setAttribute("conduit_inlet", conduit_inlet)
                     feat.setAttribute("conduit_outlet", conduit_outlet)
                     feat.setAttribute(
-                        "conduit_inlet_offset", conduit_inlet_offset if conduit_inlet_offset != NULL else 0.0
+                        "conduit_inlet_offset",
+                        conduit_inlet_offset if conduit_inlet_offset != NULL else 0.0,
                     )
                     feat.setAttribute(
-                        "conduit_outlet_offset", conduit_outlet_offset if conduit_outlet_offset != NULL else 0.0
+                        "conduit_outlet_offset",
+                        conduit_outlet_offset if conduit_outlet_offset != NULL else 0.0,
                     )
-                    feat.setAttribute("conduit_length", conduit_length if conduit_length != NULL else 0.0)
-                    feat.setAttribute("conduit_manning", conduit_manning if conduit_manning != NULL else 0.0)
-                    feat.setAttribute("conduit_init_flow", conduit_init_flow if conduit_init_flow != NULL else 0.0)
-                    feat.setAttribute("conduit_max_flow", conduit_max_flow if conduit_max_flow != NULL else 0.0)
-                    feat.setAttribute("losses_inlet", conduit_entry_loss if conduit_entry_loss != NULL else 0.0)
-                    feat.setAttribute("losses_outlet", conduit_exit_loss if conduit_exit_loss != NULL else 0.0)
-                    feat.setAttribute("losses_average", conduit_loss_average if conduit_loss_average != NULL else 0.0)
-                    feat.setAttribute("losses_flapgate", conduits_flap_gate if conduits_flap_gate != NULL else 0)
+                    feat.setAttribute(
+                        "conduit_length",
+                        conduit_length if conduit_length != NULL else 0.0,
+                    )
+                    feat.setAttribute(
+                        "conduit_manning",
+                        conduit_manning if conduit_manning != NULL else 0.0,
+                    )
+                    feat.setAttribute(
+                        "conduit_init_flow",
+                        conduit_init_flow if conduit_init_flow != NULL else 0.0,
+                    )
+                    feat.setAttribute(
+                        "conduit_max_flow",
+                        conduit_max_flow if conduit_max_flow != NULL else 0.0,
+                    )
+                    feat.setAttribute(
+                        "losses_inlet",
+                        conduit_entry_loss if conduit_entry_loss != NULL else 0.0,
+                    )
+                    feat.setAttribute(
+                        "losses_outlet",
+                        conduit_exit_loss if conduit_exit_loss != NULL else 0.0,
+                    )
+                    feat.setAttribute(
+                        "losses_average",
+                        conduit_loss_average if conduit_loss_average != NULL else 0.0,
+                    )
+                    feat.setAttribute(
+                        "losses_flapgate",
+                        conduits_flap_gate if conduits_flap_gate != NULL else 0,
+                    )
 
-                    feat.setAttribute("xsections_shape", conduit_shape if conduit_shape in self.shape else "CIRCULAR")
+                    feat.setAttribute(
+                        "xsections_shape",
+                        conduit_shape if conduit_shape in self.shape else "CIRCULAR",
+                    )
                     # feat.setAttribute("xsections_shape", "CIRCULAR")
-                    feat.setAttribute("xsections_barrels", conduit_barrels if conduit_barrels != NULL else 0)
-                    feat.setAttribute("xsections_max_depth", conduit_max_depth if conduit_max_depth != NULL else 0.0)
-                    feat.setAttribute("xsections_geom2", conduit_geom2 if conduit_geom2 != NULL else 0.0)
-                    feat.setAttribute("xsections_geom3", conduit_geom3 if conduit_geom3 != NULL else 0.0)
-                    feat.setAttribute("xsections_geom4", conduit_geom4 if conduit_geom4 != NULL else 0.0)
+                    feat.setAttribute(
+                        "xsections_barrels",
+                        conduit_barrels if conduit_barrels != NULL else 0,
+                    )
+                    feat.setAttribute(
+                        "xsections_max_depth",
+                        conduit_max_depth if conduit_max_depth != NULL else 0.0,
+                    )
+                    feat.setAttribute(
+                        "xsections_geom2",
+                        conduit_geom2 if conduit_geom2 != NULL else 0.0,
+                    )
+                    feat.setAttribute(
+                        "xsections_geom3",
+                        conduit_geom3 if conduit_geom3 != NULL else 0.0,
+                    )
+                    feat.setAttribute(
+                        "xsections_geom4",
+                        conduit_geom4 if conduit_geom4 != NULL else 0.0,
+                    )
 
                     new_feats.append(feat)
 
@@ -1537,9 +1581,18 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                     feat.setAttribute("pump_inlet", pump_inlet)
                     feat.setAttribute("pump_outlet", pump_outlet)
                     feat.setAttribute("pump_init_status", pump_initial_status)
-                    feat.setAttribute("pump_startup_depth", pump_startup_depth if pump_startup_depth != NULL else 0.0)
-                    feat.setAttribute("pump_shutoff_depth", pump_shutoff_depth if pump_shutoff_depth != NULL else 0.0)
-                    feat.setAttribute("pump_curve", pump_curve_name if pump_curve_name != NULL else "*")
+                    feat.setAttribute(
+                        "pump_startup_depth",
+                        pump_startup_depth if pump_startup_depth != NULL else 0.0,
+                    )
+                    feat.setAttribute(
+                        "pump_shutoff_depth",
+                        pump_shutoff_depth if pump_shutoff_depth != NULL else 0.0,
+                    )
+                    feat.setAttribute(
+                        "pump_curve",
+                        pump_curve_name if pump_curve_name != NULL else "*",
+                    )
 
                     new_feats.append(feat)
 
@@ -1780,7 +1833,12 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                         if self.weir_type_FieldCbo.currentText() != ""
                         else "TRANSVERSE"
                     )
-                    if not weir_type in ["TRANSVERSE", "SIDEFLOW", "V-NOTCH", "TRAPEZOIDAL"]:
+                    if not weir_type in [
+                        "TRANSVERSE",
+                        "SIDEFLOW",
+                        "V-NOTCH",
+                        "TRAPEZOIDAL",
+                    ]:
                         weir_type = "TRANSVERSE"
                         wrong_types += 1
 
@@ -1936,25 +1994,49 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
         s.setValue("sf_inlets_layer_name", self.inlets_shapefile_cbo.currentText())
         s.setValue("sf_inlets_name", self.inlets_name_FieldCbo.currentIndex())
         s.setValue("sf_inlets_type", self.inlets_type_FieldCbo.currentIndex())
-        s.setValue("sf_inlets_invert_elevation", self.inlets_invert_elevation_FieldCbo.currentIndex())
+        s.setValue(
+            "sf_inlets_invert_elevation",
+            self.inlets_invert_elevation_FieldCbo.currentIndex(),
+        )
         s.setValue("sf_inlets_max_depth", self.inlets_max_depth_FieldCbo.currentIndex())
         s.setValue("sf_inlets_init_depth", self.inlets_init_depth_FieldCbo.currentIndex())
-        s.setValue("sf_inlets_surcharge_depth", self.inlets_surcharge_depth_FieldCbo.currentIndex())
-        s.setValue("sf_inlets_length_perimeter", self.inlets_length_perimeter_FieldCbo.currentIndex())
+        s.setValue(
+            "sf_inlets_surcharge_depth",
+            self.inlets_surcharge_depth_FieldCbo.currentIndex(),
+        )
+        s.setValue(
+            "sf_inlets_length_perimeter",
+            self.inlets_length_perimeter_FieldCbo.currentIndex(),
+        )
         s.setValue("sf_inlets_width_area", self.inlets_width_area_FieldCbo.currentIndex())
-        s.setValue("sf_inlets_height_sag_surch", self.inlets_height_sag_surch_FieldCbo.currentIndex())
+        s.setValue(
+            "sf_inlets_height_sag_surch",
+            self.inlets_height_sag_surch_FieldCbo.currentIndex(),
+        )
         s.setValue("sf_inlets_weir_coeff", self.inlets_weir_coeff_FieldCbo.currentIndex())
         s.setValue("sf_inlets_feature", self.inlets_feature_FieldCbo.currentIndex())
         s.setValue("sf_inlets_curb_height", self.inlets_curb_height_FieldCbo.currentIndex())
-        s.setValue("sf_inlets_clogging_factor", self.inlets_clogging_factor_FieldCbo.currentIndex())
-        s.setValue("sf_inlets_time_for_clogging", self.inlets_time_for_clogging_FieldCbo.currentIndex())
+        s.setValue(
+            "sf_inlets_clogging_factor",
+            self.inlets_clogging_factor_FieldCbo.currentIndex(),
+        )
+        s.setValue(
+            "sf_inlets_time_for_clogging",
+            self.inlets_time_for_clogging_FieldCbo.currentIndex(),
+        )
 
         # Outfalls
         s.setValue("sf_outfalls_layer_name", self.outfalls_shapefile_cbo.currentText())
         s.setValue("sf_outfalls_name", self.outfall_name_FieldCbo.currentIndex())
-        s.setValue("sf_outfalls_invert_elevation", self.outfall_invert_elevation_FieldCbo.currentIndex())
+        s.setValue(
+            "sf_outfalls_invert_elevation",
+            self.outfall_invert_elevation_FieldCbo.currentIndex(),
+        )
         s.setValue("sf_outfalls_flap_gate", self.outfall_flap_gate_FieldCbo.currentIndex())
-        s.setValue("sf_outfalls_allow_discharge", self.outfall_allow_discharge_FieldCbo.currentIndex())
+        s.setValue(
+            "sf_outfalls_allow_discharge",
+            self.outfall_allow_discharge_FieldCbo.currentIndex(),
+        )
         s.setValue("sf_outfalls_type", self.outfall_type_FieldCbo.currentIndex())
         s.setValue("sf_outfalls_water_depth", self.outfall_water_depth_FieldCbo.currentIndex())
         s.setValue("sf_outfalls_tidal_curve", self.outfall_tidal_curve_FieldCbo.currentIndex())
@@ -1965,8 +2047,14 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
         s.setValue("sf_conduits_name", self.conduit_name_FieldCbo.currentIndex())
         s.setValue("sf_conduits_from_inlet", self.conduit_from_inlet_FieldCbo.currentIndex())
         s.setValue("sf_conduits_to_outlet", self.conduit_to_outlet_FieldCbo.currentIndex())
-        s.setValue("sf_conduits_inlet_offset", self.conduit_inlet_offset_FieldCbo.currentIndex())
-        s.setValue("sf_conduits_outlet_offset", self.conduit_outlet_offset_FieldCbo.currentIndex())
+        s.setValue(
+            "sf_conduits_inlet_offset",
+            self.conduit_inlet_offset_FieldCbo.currentIndex(),
+        )
+        s.setValue(
+            "sf_conduits_outlet_offset",
+            self.conduit_outlet_offset_FieldCbo.currentIndex(),
+        )
         s.setValue("sf_conduits_shape", self.conduit_shape_FieldCbo.currentIndex())
         s.setValue("sf_conduits_barrels", self.conduit_barrels_FieldCbo.currentIndex())
         s.setValue("sf_conduits_max_depth", self.conduit_max_depth_FieldCbo.currentIndex())
@@ -1975,11 +2063,17 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
         s.setValue("sf_conduits_geom4", self.conduit_geom4_FieldCbo.currentIndex())
         s.setValue("sf_conduits_length", self.conduit_length_FieldCbo.currentIndex())
         s.setValue("sf_conduits_manning", self.conduit_manning_FieldCbo.currentIndex())
-        s.setValue("sf_conduits_initial_flow", self.conduit_initial_flow_FieldCbo.currentIndex())
+        s.setValue(
+            "sf_conduits_initial_flow",
+            self.conduit_initial_flow_FieldCbo.currentIndex(),
+        )
         s.setValue("sf_conduits_max_flow", self.conduit_max_flow_FieldCbo.currentIndex())
         s.setValue("sf_conduits_entry_loss", self.conduit_entry_loss_FieldCbo.currentIndex())
         s.setValue("sf_conduits_exit_loss", self.conduit_exit_loss_FieldCbo.currentIndex())
-        s.setValue("sf_conduits_average_loss", self.conduit_average_loss_FieldCbo.currentIndex())
+        s.setValue(
+            "sf_conduits_average_loss",
+            self.conduit_average_loss_FieldCbo.currentIndex(),
+        )
         s.setValue("sf_conduits_flap_gate", self.conduit_flap_gate_FieldCbo.currentIndex())
 
         # Pumps:
@@ -1992,7 +2086,10 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
         s.setValue("sf_pump_shutoff_depth", self.pump_shutoff_depth_FieldCbo.currentIndex())
         s.setValue("sf_pump_curve_name", self.pump_curve_name_FieldCbo.currentIndex())
         s.setValue("sf_pump_curve_type", self.pump_curve_type_FieldCbo.currentIndex())
-        s.setValue("sf_pump_curve_description", self.pump_curve_description_FieldCbo.currentIndex())
+        s.setValue(
+            "sf_pump_curve_description",
+            self.pump_curve_description_FieldCbo.currentIndex(),
+        )
 
         # Orifices:
         s.setValue("sf_orifices_layer_name", self.orifices_shapefile_cbo.currentText())
@@ -2001,9 +2098,15 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
         s.setValue("sf_orifice_to_outlet", self.orifice_to_outlet_FieldCbo.currentIndex())
         s.setValue("sf_orifice_type", self.orifice_type_FieldCbo.currentIndex())
         s.setValue("sf_orifice_crest_height", self.orifice_crest_height_FieldCbo.currentIndex())
-        s.setValue("sf_orifice_disch_coeff", self.orifice_discharge_coeff_FieldCbo.currentIndex())
+        s.setValue(
+            "sf_orifice_disch_coeff",
+            self.orifice_discharge_coeff_FieldCbo.currentIndex(),
+        )
         s.setValue("sf_orifice_flap_gate", self.orifice_flap_gate_FieldCbo.currentIndex())
-        s.setValue("sf_orifice_open_close_time", self.orifice_time_open_close_FieldCbo.currentIndex())
+        s.setValue(
+            "sf_orifice_open_close_time",
+            self.orifice_time_open_close_FieldCbo.currentIndex(),
+        )
         s.setValue("sf_orifice_shape", self.orifice_shape_FieldCbo.currentIndex())
         s.setValue("sf_orifice_height", self.orifice_height_FieldCbo.currentIndex())
         s.setValue("sf_orifice_width", self.orifice_width_FieldCbo.currentIndex())

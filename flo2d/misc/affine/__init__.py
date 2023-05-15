@@ -255,7 +255,20 @@ class Affine(namedtuple("Affine", ("a", "b", "c", "d", "e", "f", "g", "h", "i"))
             return tuple.__new__(cls, (ca, -sa, 0.0, sa, ca, 0.0, 0.0, 0.0, 1.0))
         else:
             px, py = pivot
-            return tuple.__new__(cls, (ca, -sa, px - px * ca + py * sa, sa, ca, py - px * sa - py * ca, 0.0, 0.0, 1.0))
+            return tuple.__new__(
+                cls,
+                (
+                    ca,
+                    -sa,
+                    px - px * ca + py * sa,
+                    sa,
+                    ca,
+                    py - px * sa - py * ca,
+                    0.0,
+                    0.0,
+                    1.0,
+                ),
+            )
 
     @classmethod
     def permutation(cls, *scaling):
@@ -513,7 +526,11 @@ class Affine(namedtuple("Affine", ("a", "b", "c", "d", "e", "f", "g", "h", "i"))
         just a guarantee, since we would potentially return the wrong
         answer in that case.
         """
-        warnings.warn("Right multiplication will be prohibited in version 3.0", DeprecationWarning, stacklevel=2)
+        warnings.warn(
+            "Right multiplication will be prohibited in version 3.0",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         assert not isinstance(other, Affine)
         return self.__mul__(other)
 
@@ -549,7 +566,10 @@ class Affine(namedtuple("Affine", ("a", "b", "c", "d", "e", "f", "g", "h", "i"))
         rb = -sb * idet
         rd = -sd * idet
         re = sa * idet
-        return tuple.__new__(self.__class__, (ra, rb, -sc * ra - sf * rb, rd, re, -sc * rd - sf * re, 0.0, 0.0, 1.0))
+        return tuple.__new__(
+            self.__class__,
+            (ra, rb, -sc * ra - sf * rb, rd, re, -sc * rd - sf * re, 0.0, 0.0, 1.0),
+        )
 
     __hash__ = tuple.__hash__  # hash is not inherited in Py 3
 

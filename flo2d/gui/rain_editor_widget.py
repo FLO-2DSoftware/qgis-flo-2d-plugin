@@ -75,7 +75,11 @@ class RainEditorWidget(qtBaseClass, uiDialog):
         """
         if role == Qt.EditRole:
             command = CommandItemEdit(
-                self, item, oldValue, newValue, "Text changed from '{0}' to '{1}'".format(oldValue, newValue)
+                self,
+                item,
+                oldValue,
+                newValue,
+                "Text changed from '{0}' to '{1}'".format(oldValue, newValue),
             )
             self.tview.undoStack.push(command)
             return True
@@ -145,7 +149,9 @@ class RainEditorWidget(qtBaseClass, uiDialog):
             s = QSettings()
             last_dir = s.value("FLO-2D/lastASC", "")
             asc_dir = QFileDialog.getExistingDirectory(
-                None, "Select directory with Rainfall ASCII grid files", directory=last_dir
+                None,
+                "Select directory with Rainfall ASCII grid files",
+                directory=last_dir,
             )
             if not asc_dir:
                 return
@@ -195,7 +201,9 @@ class RainEditorWidget(qtBaseClass, uiDialog):
                 return
             project_dir = QgsProject.instance().absolutePath()
             outdir = QFileDialog.getExistingDirectory(
-                None, "Select directory where RAINCEL.DAT will be exported", directory=project_dir
+                None,
+                "Select directory where RAINCEL.DAT will be exported",
+                directory=project_dir,
             )
             if outdir:
                 flo2dgeo = Flo2dGeoPackage(self.con, self.iface)
@@ -351,7 +359,10 @@ class RainEditorWidget(qtBaseClass, uiDialog):
         s = QSettings()
         last_dir = s.value("FLO-2D/lastPredefinedSeriesDir", "")
         predefined_files, __ = QFileDialog.getOpenFileNames(
-            None, "Select time series files to import data", directory=last_dir, filter="(*.DAT *.TXT)"
+            None,
+            "Select time series files to import data",
+            directory=last_dir,
+            filter="(*.DAT *.TXT)",
         )
         if not predefined_files:
             return
@@ -460,7 +471,11 @@ class RainEditorWidget(qtBaseClass, uiDialog):
             # save only rows with a number in the first column
             if is_number(m_fdata(self.rain_data_model, i, 0)) and not isnan(m_fdata(self.rain_data_model, i, 0)):
                 ts_data.append(
-                    (self.rain.series_fid, m_fdata(self.rain_data_model, i, 0), m_fdata(self.rain_data_model, i, 1))
+                    (
+                        self.rain.series_fid,
+                        m_fdata(self.rain_data_model, i, 0),
+                        m_fdata(self.rain_data_model, i, 1),
+                    )
                 )
             else:
                 pass
@@ -551,7 +566,12 @@ class RainEditorWidget(qtBaseClass, uiDialog):
             return cs
         else:
             r, ok = QInputDialog.getDouble(
-                None, "Grid Cell Size", "Enter grid element cell size", value=100, min=0.1, max=99999
+                None,
+                "Grid Cell Size",
+                "Enter grid element cell size",
+                value=100,
+                min=0.1,
+                max=99999,
             )
             if ok:
                 cs = r

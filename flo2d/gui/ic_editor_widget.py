@@ -147,7 +147,10 @@ class ICEditorWidget(qtBaseClass, uiDialog):
         self.save_res()
 
     def repaint_reservoirs(self):
-        self.lyrs.lyrs_to_repaint = [self.lyrs.data["reservoirs"]["qlyr"], self.lyrs.data["user_reservoirs"]["qlyr"]]
+        self.lyrs.lyrs_to_repaint = [
+            self.lyrs.data["reservoirs"]["qlyr"],
+            self.lyrs.data["user_reservoirs"]["qlyr"],
+        ]
         self.lyrs.repaint_layers()
 
     def revert_res_lyr_edits(self):

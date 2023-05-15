@@ -40,7 +40,11 @@ from qgis.PyQt.QtWidgets import (
 )
 
 from ..flo2d_ie.flo2d_parser import ParseDAT
-from ..flo2d_tools.flopro_tools import ChannelNInterpolatorExecutor, ChanRightBankExecutor, XSECInterpolatorExecutor
+from ..flo2d_tools.flopro_tools import (
+    ChannelNInterpolatorExecutor,
+    ChanRightBankExecutor,
+    XSECInterpolatorExecutor,
+)
 from ..flo2d_tools.grid_tools import adjacent_grids
 from ..flo2d_tools.schematic_tools import ChannelsSchematizer, Confluences
 from ..flo2dobjects import ChannelSegment, UserCrossSection
@@ -52,7 +56,13 @@ from ..user_communication import UserCommunication
 from ..utils import is_number, m_fdata
 from .plot_widget import PlotWidget
 from .table_editor_widget import CommandItemEdit, StandardItem, StandardItemModel
-from .ui_utils import center_canvas, load_ui, set_icon, switch_to_selected, try_disconnect
+from .ui_utils import (
+    center_canvas,
+    load_ui,
+    set_icon,
+    switch_to_selected,
+    try_disconnect,
+)
 
 uiDialog, qtBaseClass = load_ui("schematized_channels_info")
 
@@ -100,7 +110,8 @@ class ShematizedChannelsInfo(qtBaseClass, uiDialog):
                 self.schematized_summary_tblw.setItem(row_number, 1, item)
                 item = QTableWidgetItem()
                 item.setData(
-                    Qt.DisplayRole, str(total_xs[row_number][0]) + " (" + str(n_interpolated_xs) + " interpolated)"
+                    Qt.DisplayRole,
+                    str(total_xs[row_number][0]) + " (" + str(n_interpolated_xs) + " interpolated)",
                 )
                 self.schematized_summary_tblw.setItem(row_number, 2, item)
         except Exception as e:
@@ -168,7 +179,10 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         set_icon(self.rename_xs_btn, "change_name.svg")
         set_icon(self.sample_elevation_current_R_T_V_btn, "sample_channel_current_RTV.svg")
         set_icon(self.sample_elevation_all_R_T_V_btn, "sample_channel_all_RTV.svg")
-        set_icon(self.sample_elevation_current_natural_btn, "sample_channel_current_natural.svg")
+        set_icon(
+            self.sample_elevation_current_natural_btn,
+            "sample_channel_current_natural.svg",
+        )
         set_icon(self.sample_elevation_all_natural_btn, "sample_channel_all_natural.svg")
         # Connections:
 
@@ -620,7 +634,13 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
             for i in range(self.xs_data_model.rowCount()):
                 # save only rows with a number in the first column
                 if is_number(m_fdata(self.xs_data_model, i, 0)) and not isnan(m_fdata(self.xs_data_model, i, 0)):
-                    xiyi.append((self.xs.fid, m_fdata(self.xs_data_model, i, 0), m_fdata(self.xs_data_model, i, 1)))
+                    xiyi.append(
+                        (
+                            self.xs.fid,
+                            m_fdata(self.xs_data_model, i, 0),
+                            m_fdata(self.xs_data_model, i, 1),
+                        )
+                    )
             self.xs.set_chan_natural_data(xiyi)
             self.update_plot()
         else:
@@ -855,7 +875,8 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
                             #                     msg.setStandardButtons(
                             #                         QMessageBox().Ok | QMessageBox().Cancel)
                             msg.addButton(
-                                QPushButton("Import CHAN.DAT, CHANBANK.DAT, and XSEC.DAT files"), QMessageBox.YesRole
+                                QPushButton("Import CHAN.DAT, CHANBANK.DAT, and XSEC.DAT files"),
+                                QMessageBox.YesRole,
                             )
                             msg.addButton(QPushButton("Run CHANRIGHTBANK.EXE"), QMessageBox.NoRole)
                             msg.addButton(QPushButton("Cancel"), QMessageBox.RejectRole)
@@ -900,25 +921,48 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
 
         cont_file = last_dir + "\CHAN.DAT"
 
-        chan_sql = ["""INSERT INTO chan (geom, depinitial, froudc, roughadj, isedn) VALUES""", 5]
+        chan_sql = [
+            """INSERT INTO chan (geom, depinitial, froudc, roughadj, isedn) VALUES""",
+            5,
+        ]
         chan_elems_sql = [
             """INSERT INTO chan_elems (geom, fid, seg_fid, nr_in_seg, rbankgrid, fcn, xlen, type) VALUES""",
             8,
         ]
-        chan_r_sql = ["""INSERT INTO chan_r (elem_fid, bankell, bankelr, fcw, fcd) VALUES""", 5]
+        chan_r_sql = [
+            """INSERT INTO chan_r (elem_fid, bankell, bankelr, fcw, fcd) VALUES""",
+            5,
+        ]
         chan_v_sql = [
             """INSERT INTO chan_v (elem_fid, bankell, bankelr, fcd, a1, a2, b1, b2, c1, c2,
                                                  excdep, a11, a22, b11, b22, c11, c22) VALUES""",
             17,
         ]
-        chan_t_sql = ["""INSERT INTO chan_t (elem_fid, bankell, bankelr, fcw, fcd, zl, zr) VALUES""", 7]
+        chan_t_sql = [
+            """INSERT INTO chan_t (elem_fid, bankell, bankelr, fcw, fcd, zl, zr) VALUES""",
+            7,
+        ]
         chan_n_sql = ["""INSERT INTO chan_n (elem_fid, nxsecnum, xsecname) VALUES""", 3]
-        chan_wsel_sql = ["""INSERT INTO chan_wsel (istart, wselstart, iend, wselend) VALUES""", 4]
-        chan_conf_sql = ["""INSERT INTO chan_confluences (geom, conf_fid, type, chan_elem_fid) VALUES""", 4]
+        chan_wsel_sql = [
+            """INSERT INTO chan_wsel (istart, wselstart, iend, wselend) VALUES""",
+            4,
+        ]
+        chan_conf_sql = [
+            """INSERT INTO chan_confluences (geom, conf_fid, type, chan_elem_fid) VALUES""",
+            4,
+        ]
         chan_e_sql = ["""INSERT INTO user_noexchange_chan_areas (geom) VALUES""", 1]
-        elems_e_sql = ["""INSERT INTO noexchange_chan_cells (area_fid, grid_fid) VALUES""", 2]
+        elems_e_sql = [
+            """INSERT INTO noexchange_chan_cells (area_fid, grid_fid) VALUES""",
+            2,
+        ]
 
-        sqls = {"R": [chan_r_sql, 4, 7], "V": [chan_v_sql, 4, 6], "T": [chan_t_sql, 4, 7], "N": [chan_n_sql, 2, 3]}
+        sqls = {
+            "R": [chan_r_sql, 4, 7],
+            "V": [chan_v_sql, 4, 6],
+            "T": [chan_t_sql, 4, 7],
+            "N": [chan_n_sql, 2, 3],
+        }
 
         #             try:
         self.gutils.clear_tables(
@@ -1131,7 +1175,10 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
                                     res.insert(3, 0)
                                     non_surveyed += 1
                                 else:
-                                    res.insert(3, natural_channel_section_number_dict[usr_xs_fid])
+                                    res.insert(
+                                        3,
+                                        natural_channel_section_number_dict[usr_xs_fid],
+                                    )
                                     surveyed += 1
                                     previous_xs = usr_xs_fid
                             else:
@@ -1357,7 +1404,10 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         s = QSettings()
         last_dir = s.value("FLO-2D/lastGdsDir", "")
         chanbank_file, __ = QFileDialog.getOpenFileName(
-            None, "Select CHANBANK.DAT file to read", directory=last_dir, filter="CHANBANK.DAT"
+            None,
+            "Select CHANBANK.DAT file to read",
+            directory=last_dir,
+            filter="CHANBANK.DAT",
         )
         if not chanbank_file:
             return
@@ -1413,7 +1463,10 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
             rbank.removeSelection()
 
         except Exception as e:
-            self.uc.show_error("ERROR 260618.0416: couln't read CHANBANK.DAT or reassign right bank coordinates !", e)
+            self.uc.show_error(
+                "ERROR 260618.0416: couln't read CHANBANK.DAT or reassign right bank coordinates !",
+                e,
+            )
 
     def import_channel_peaks_from_HYCHAN_OUT(self):
         if self.gutils.is_table_empty("grid"):
@@ -1635,9 +1688,16 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
             for key, last in lastCellInSegments:
                 # Find adjacent cells to 'last' cell in others segments:
                 lastCell = next(grid_lyr.getFeatures(QgsFeatureRequest(last)))
-                n_grid, ne_grid, e_grid, se_grid, s_grid, sw_grid, w_grid, nw_grid = adjacent_grids(
-                    self.gutils, lastCell, cell_size
-                )
+                (
+                    n_grid,
+                    ne_grid,
+                    e_grid,
+                    se_grid,
+                    s_grid,
+                    sw_grid,
+                    w_grid,
+                    nw_grid,
+                ) = adjacent_grids(self.gutils, lastCell, cell_size)
                 if n_grid:
                     lst = list(segments[key])
                     lst.append(n_grid)
@@ -1741,9 +1801,12 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         else:
             intersect_point = intersects.asPoint()
 
-        dist, left_intersect_point, left_after_vertex_index, side = xs_geometry.closestSegmentWithContext(
-            QgsPointXY(intersect_point)
-        )
+        (
+            dist,
+            left_intersect_point,
+            left_after_vertex_index,
+            side,
+        ) = xs_geometry.closestSegmentWithContext(QgsPointXY(intersect_point))
 
         user_right_bank_layer = self.lyrs.data["user_right_bank"]["qlyr"]
         right_bank_intersect = False
@@ -1763,9 +1826,12 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
             else:
                 intersect_point = intersects.asPoint()
 
-            dist, right_intersect_point, right_after_vertex_index, side = xs_geometry.closestSegmentWithContext(
-                QgsPointXY(intersect_point)
-            )
+            (
+                dist,
+                right_intersect_point,
+                right_after_vertex_index,
+                side,
+            ) = xs_geometry.closestSegmentWithContext(QgsPointXY(intersect_point))
 
             last_vertex = right_intersect_point
         else:

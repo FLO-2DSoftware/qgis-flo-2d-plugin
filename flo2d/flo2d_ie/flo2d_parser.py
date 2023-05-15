@@ -136,7 +136,11 @@ class ParseHDF5:
 
     @property
     def groups(self):
-        grouped_datasets_list = [self.control_group, self.grid_group, self.neighbors_group]
+        grouped_datasets_list = [
+            self.control_group,
+            self.grid_group,
+            self.neighbors_group,
+        ]
         return grouped_datasets_list
 
     @property
@@ -479,7 +483,14 @@ class ParseDAT(object):
 
     def parse_rain(self):
         rain = self.dat_files["RAIN.DAT"]
-        head = ["IRAINREAL", "IRAINBUILDING", "RTT", "RAINABS", "RAINARF", "MOVINGSTORM"]
+        head = [
+            "IRAINREAL",
+            "IRAINBUILDING",
+            "RTT",
+            "RAINABS",
+            "RAINARF",
+            "MOVINGSTORM",
+        ]
         par = self.single_parser(rain)
         line1 = next(par)
         line2 = next(par)
@@ -763,7 +774,18 @@ class ParseDAT(object):
         par = self.single_parser(sed)
         data = defaultdict(list)
         vals = slice(1, None)
-        chars = {"M": 7, "C": 10, "Z": 4, "P": 3, "D": 3, "E": 2, "R": 2, "S": 5, "N": 3, "G": 3}
+        chars = {
+            "M": 7,
+            "C": 10,
+            "Z": 4,
+            "P": 3,
+            "D": 3,
+            "E": 2,
+            "R": 2,
+            "S": 5,
+            "N": 3,
+            "G": 3,
+        }
         for row in par:
             char = row[0]
             self.fix_row_size(row, chars[char])
