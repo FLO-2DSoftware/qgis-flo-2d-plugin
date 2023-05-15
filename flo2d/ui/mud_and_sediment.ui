@@ -1702,7 +1702,7 @@
                           <set>Qt::ImhNone</set>
                          </property>
                          <property name="editTriggers">
-                          <set>QAbstractItemView::DoubleClicked</set>
+                          <set>QAbstractItemView::AllEditTriggers</set>
                          </property>
                          <property name="selectionMode">
                           <enum>QAbstractItemView::SingleSelection</enum>
@@ -2134,7 +2134,7 @@
                          <item>
                           <widget class="QTableWidget" name="sed_rating_curve_dp_tblw">
                            <property name="editTriggers">
-                            <set>QAbstractItemView::DoubleClicked</set>
+                            <set>QAbstractItemView::AllEditTriggers</set>
                            </property>
                            <property name="selectionMode">
                             <enum>QAbstractItemView::SingleSelection</enum>
