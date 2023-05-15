@@ -29,7 +29,15 @@ from qgis.PyQt.QtWidgets import (
 from ..flo2dobjects import InletRatingTable
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
-from ..utils import NumericDelegate, TimeSeriesDelegate, float_or_zero, int_or_zero, is_number, is_true, m_fdata
+from ..utils import (
+    NumericDelegate,
+    TimeSeriesDelegate,
+    float_or_zero,
+    int_or_zero,
+    is_number,
+    is_true,
+    m_fdata,
+)
 from .table_editor_widget import CommandItemEdit, StandardItem, StandardItemModel
 from .ui_utils import center_canvas, load_ui, set_icon, zoom
 
@@ -226,7 +234,8 @@ class InletNodesDialog(qtBaseClass, uiDialog):
                             fid_rt = self.gutils.execute("SELECT fid FROM swmmflort WHERE name = ?", (data,)).fetchone()
                             if not fid_rt:
                                 fid_c = self.gutils.execute(
-                                    "SELECT fid FROM swmmflo_culvert WHERE name = ?", (data,)
+                                    "SELECT fid FROM swmmflo_culvert WHERE name = ?",
+                                    (data,),
                                 ).fetchone()
                                 if not fid_c:
                                     no_rt += data + "\t   for inlet   " + inlet + "\n"
@@ -752,7 +761,8 @@ class InletNodesDialog(qtBaseClass, uiDialog):
                     if swmmflort_fid:
                         # See if data exists:
                         data = self.gutils.execute(
-                            "SELECT fid FROM swmmflort_data WHERE swmm_rt_fid = ?", (swmmflort_fid[0],)
+                            "SELECT fid FROM swmmflort_data WHERE swmm_rt_fid = ?",
+                            (swmmflort_fid[0],),
                         ).fetchone()
                         if data:
                             # All Rating table data exists for this inlet.
@@ -779,10 +789,14 @@ class InletNodesDialog(qtBaseClass, uiDialog):
                         ).fetchone()
                         if swmmflort_fid:
                             data = self.gutils.execute(
-                                "SELECT fid FROM swmmflort_data WHERE swmm_rt_fid = ?", (swmmflort_fid[0],)
+                                "SELECT fid FROM swmmflort_data WHERE swmm_rt_fid = ?",
+                                (swmmflort_fid[0],),
                             ).fetchone()
                             if data:
-                                self.gutils.execute("UPDATE swmmflort SET grid_fid = ? WHERE name = ?", (grid, rt_name))
+                                self.gutils.execute(
+                                    "UPDATE swmmflort SET grid_fid = ? WHERE name = ?",
+                                    (grid, rt_name),
+                                )
                                 rt_fid = swmmflort_fid[0]
                             else:
                                 self.uc.show_info(
@@ -800,7 +814,10 @@ class InletNodesDialog(qtBaseClass, uiDialog):
                     rows = self.gutils.execute("SELECT fid FROM swmmflort WHERE grid_fid = ?", (grid,)).fetchall()
                     if rows:  # There may be at least one item in swmmflort for this grid, set grid to NULL:
                         for r in rows:
-                            self.gutils.execute("UPDATE swmmflort SET grid_fid = ? WHERE fid = ?", (None, r[0]))
+                            self.gutils.execute(
+                                "UPDATE swmmflort SET grid_fid = ? WHERE fid = ?",
+                                (None, r[0]),
+                            )
                     t4_but_rt_name.append([name, grid])
 
                 inlets.append(
@@ -1022,7 +1039,10 @@ class ExternalInflowsDialog(qtBaseClass, uiDialog):
             if pattern_name != "" and pattern_name is not None:
                 idx = self.swmm_inflow_pattern_cbo.findText(pattern_name.strip())
                 if idx == -1:
-                    self.uc.bar_warn('"' + pattern_name + '"' + " baseline pattern is not of HOURLY type!", 5)
+                    self.uc.bar_warn(
+                        '"' + pattern_name + '"' + " baseline pattern is not of HOURLY type!",
+                        5,
+                    )
                     self.swmm_inflow_pattern_cbo.setCurrentIndex(self.swmm_inflow_pattern_cbo.count() - 1)
                 else:
                     self.swmm_inflow_pattern_cbo.setCurrentIndex(idx)
@@ -1383,7 +1403,10 @@ class InflowTimeSeriesDialog(qtBaseClass, uiDialog):
         delete_data_sql = "DELETE FROM swmm_time_series_data WHERE time_series_name = ?"
         self.gutils.execute(delete_data_sql, (self.name_le.text(),))
 
-        insert_data_sql = ["""INSERT INTO swmm_time_series_data (time_series_name, date, time, value) VALUES""", 4]
+        insert_data_sql = [
+            """INSERT INTO swmm_time_series_data (time_series_name, date, time, value) VALUES""",
+            4,
+        ]
         for row in range(0, self.inflow_time_series_tblw.rowCount()):
             date = self.inflow_time_series_tblw.item(row, 0)
             if date:

@@ -12,7 +12,12 @@ from math import isnan
 from qgis.core import QgsFeatureRequest
 from qgis.PyQt.QtCore import Qt
 from qgis.PyQt.QtGui import QColor
-from qgis.PyQt.QtWidgets import QApplication, QDialogButtonBox, QInputDialog, QTableWidgetItem
+from qgis.PyQt.QtWidgets import (
+    QApplication,
+    QDialogButtonBox,
+    QInputDialog,
+    QTableWidgetItem,
+)
 
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
@@ -107,7 +112,14 @@ class OrificesDialog(qtBaseClass, uiDialog):
                             self.orifice_to_node_txt.setText(str(data))
 
                         elif column == 4:
-                            if data not in ("SIDE", "BOTTOM", "side", "botton", "Side", "Bottom"):
+                            if data not in (
+                                "SIDE",
+                                "BOTTOM",
+                                "side",
+                                "botton",
+                                "Side",
+                                "Bottom",
+                            ):
                                 wrong_status += 1
                                 data = "SIDE"
                                 item.setData(Qt.DisplayRole, data)
@@ -174,7 +186,10 @@ class OrificesDialog(qtBaseClass, uiDialog):
                 )
         except Exception as e:
             QApplication.restoreOverrideCursor()
-            self.uc.show_error("ERROR 070422.0730: assignment of value from orifices users layer failed!.\n", e)
+            self.uc.show_error(
+                "ERROR 070422.0730: assignment of value from orifices users layer failed!.\n",
+                e,
+            )
 
     def orifice_crest_height_dbox_valueChanged(self):
         self.box_valueChanged(self.orifice_crest_height_dbox, 4)
@@ -364,7 +379,8 @@ class OrificesDialog(qtBaseClass, uiDialog):
             if self.orifices_lyr is not None:
                 if orifice != "":
                     fid = self.gutils.execute(
-                        "SELECT fid FROM user_swmm_orifices WHERE orifice_name = ?;", (orifice,)
+                        "SELECT fid FROM user_swmm_orifices WHERE orifice_name = ?;",
+                        (orifice,),
                     ).fetchone()
                     self.lyrs.show_feat_rubber(self.orifices_lyr.id(), fid[0], QColor(Qt.yellow))
                     feat = next(self.orifices_lyr.getFeatures(QgsFeatureRequest(fid[0])))

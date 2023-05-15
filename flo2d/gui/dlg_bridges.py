@@ -11,7 +11,12 @@ from math import isnan
 
 from qgis.PyQt.QtCore import Qt
 from qgis.PyQt.QtGui import QColor
-from qgis.PyQt.QtWidgets import QApplication, QDialogButtonBox, QInputDialog, QTableWidgetItem
+from qgis.PyQt.QtWidgets import (
+    QApplication,
+    QDialogButtonBox,
+    QInputDialog,
+    QTableWidgetItem,
+)
 
 from ..flo2dobjects import InletRatingTable
 from ..geopackage_utils import GeoPackageUtils

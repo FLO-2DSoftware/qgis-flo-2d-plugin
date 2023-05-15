@@ -12,7 +12,12 @@ from math import isnan
 from qgis.core import QgsFeatureRequest
 from qgis.PyQt.QtCore import Qt
 from qgis.PyQt.QtGui import QColor
-from qgis.PyQt.QtWidgets import QApplication, QDialogButtonBox, QInputDialog, QTableWidgetItem
+from qgis.PyQt.QtWidgets import (
+    QApplication,
+    QDialogButtonBox,
+    QInputDialog,
+    QTableWidgetItem,
+)
 
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
@@ -114,7 +119,12 @@ class WeirsDialog(qtBaseClass, uiDialog):
                                 self.weir_to_node_txt.setText(str(data))
 
                             elif column == 4:
-                                if data.upper() not in ("TRANSVERSE", "SIDEFLOW", "V-NOTCH", "TRAPEZOIDAL"):
+                                if data.upper() not in (
+                                    "TRANSVERSE",
+                                    "SIDEFLOW",
+                                    "V-NOTCH",
+                                    "TRAPEZOIDAL",
+                                ):
                                     wrong_status += 1
                                     data = "TRANSVERSE"
                                     item.setData(Qt.DisplayRole, data)
@@ -189,7 +199,10 @@ class WeirsDialog(qtBaseClass, uiDialog):
                 )
         except Exception as e:
             QApplication.restoreOverrideCursor()
-            self.uc.show_error("ERROR 070422.0730: assignment of value from weirs users layer failed!.\n", e)
+            self.uc.show_error(
+                "ERROR 070422.0730: assignment of value from weirs users layer failed!.\n",
+                e,
+            )
 
     def weir_type_cbo_currentIndexChanged(self):
         self.combo_valueChanged(self.weir_type_cbo, 3)

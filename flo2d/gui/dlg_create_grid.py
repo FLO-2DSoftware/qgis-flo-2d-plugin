@@ -61,7 +61,10 @@ class CreateGridDialog(qtBaseClass, uiDialog):
         s = QSettings()
         last_elev_raster_dir = s.value("FLO-2D/lastElevRasterDir", "")
         src_file, __ = QFileDialog.getOpenFileName(
-            None, "Choose elevation raster...", directory=last_elev_raster_dir, filter="Elev (*.tif )"
+            None,
+            "Choose elevation raster...",
+            directory=last_elev_raster_dir,
+            filter="Elev (*.tif )",
         )
         if not src_file:
             return

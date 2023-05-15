@@ -379,7 +379,12 @@ class GeoPackageUtils(object):
             sql = """SELECT fid, AsGPB(ST_Centroid(GeomFromGPB(geom))) FROM "{0}";"""
 
         for g in self.execute(sql.format(table)).fetchall():
-            cells.append((g[0], [float(item) for item in g[1].replace("POINT(", "").replace(")", "").split(" ")]))
+            cells.append(
+                (
+                    g[0],
+                    [float(item) for item in g[1].replace("POINT(", "").replace(")", "").split(" ")],
+                )
+            )
         return cells
 
     def single_centroid(self, gid, table="grid", field="fid", buffers=False):

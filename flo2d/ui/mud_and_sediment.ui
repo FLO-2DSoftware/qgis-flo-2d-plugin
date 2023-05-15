@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1215</width>
-    <height>700</height>
+    <width>1260</width>
+    <height>778</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -37,7 +37,7 @@
   <property name="modal">
    <bool>true</bool>
   </property>
-  <layout class="QGridLayout" name="gridLayout_10">
+  <layout class="QGridLayout" name="gridLayout_9">
    <item row="0" column="0">
     <widget class="QScrollArea" name="scrollArea">
      <property name="widgetResizable">
@@ -48,8 +48,8 @@
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>1161</width>
-        <height>957</height>
+        <width>1206</width>
+        <height>914</height>
        </rect>
       </property>
       <layout class="QGridLayout" name="gridLayout_3">
@@ -1702,7 +1702,7 @@
                           <set>Qt::ImhNone</set>
                          </property>
                          <property name="editTriggers">
-                          <set>QAbstractItemView::DoubleClicked</set>
+                          <set>QAbstractItemView::AllEditTriggers</set>
                          </property>
                          <property name="selectionMode">
                           <enum>QAbstractItemView::SingleSelection</enum>
@@ -2134,7 +2134,7 @@
                          <item>
                           <widget class="QTableWidget" name="sed_rating_curve_dp_tblw">
                            <property name="editTriggers">
-                            <set>QAbstractItemView::DoubleClicked</set>
+                            <set>QAbstractItemView::AllEditTriggers</set>
                            </property>
                            <property name="selectionMode">
                             <enum>QAbstractItemView::SingleSelection</enum>
@@ -2534,19 +2534,6 @@
          </widget>
         </widget>
        </item>
-       <item row="2" column="0">
-        <widget class="QDialogButtonBox" name="buttonBox">
-         <property name="orientation">
-          <enum>Qt::Horizontal</enum>
-         </property>
-         <property name="standardButtons">
-          <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
-         </property>
-         <property name="centerButtons">
-          <bool>true</bool>
-         </property>
-        </widget>
-       </item>
       </layout>
       <widget class="QWidget" name="layoutWidget">
        <property name="geometry">
@@ -2562,41 +2549,21 @@
      </widget>
     </widget>
    </item>
+   <item row="1" column="0">
+    <widget class="QDialogButtonBox" name="buttonBox">
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+     <property name="standardButtons">
+      <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
+     </property>
+     <property name="centerButtons">
+      <bool>true</bool>
+     </property>
+    </widget>
+   </item>
   </layout>
  </widget>
  <resources/>
- <connections>
-  <connection>
-   <sender>buttonBox</sender>
-   <signal>accepted()</signal>
-   <receiver>Dialog</receiver>
-   <slot>accept()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>1016</x>
-     <y>879</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>941</x>
-     <y>0</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>buttonBox</sender>
-   <signal>rejected()</signal>
-   <receiver>Dialog</receiver>
-   <slot>reject()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>1142</x>
-     <y>879</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>941</x>
-     <y>0</y>
-    </hint>
-   </hints>
-  </connection>
- </connections>
+ <connections/>
 </ui>

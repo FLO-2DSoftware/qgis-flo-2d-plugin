@@ -86,7 +86,20 @@ class MultipleChannelsEditorWidget(qtBaseClass, uiDialog):
         avuld50 = self.mc_d50_dbox.value()
         simple_n = self.simple_manning_dbox.value()
 
-        self.gutils.execute(qry, (wmc, wdrall, dmall, nodchansall, xnmultall, sslopemin, sslopemax, avuld50, simple_n))
+        self.gutils.execute(
+            qry,
+            (
+                wmc,
+                wdrall,
+                dmall,
+                nodchansall,
+                xnmultall,
+                sslopemin,
+                sslopemax,
+                avuld50,
+                simple_n,
+            ),
+        )
 
     def show_individual_multiple_channels_dialog(self):
         """

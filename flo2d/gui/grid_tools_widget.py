@@ -52,7 +52,9 @@ from ..gui.dlg_grid_elev import GridCorrectionDialog
 from ..gui.dlg_sampling_elev import SamplingElevDialog
 from ..gui.dlg_sampling_mann import SamplingManningDialog
 from ..gui.dlg_sampling_point_elev import SamplingPointElevDialog
-from ..gui.dlg_sampling_raster_roughness import SamplingRoughnessDialog  # update this after elevation test is ok
+from ..gui.dlg_sampling_raster_roughness import (
+    SamplingRoughnessDialog,
+)  # update this after elevation test is ok
 from ..gui.dlg_sampling_tailings import SamplingTailingsDialog2
 from ..gui.dlg_sampling_variable_into_grid import SamplingOtherVariableDialog
 from ..gui.dlg_sampling_xyz import SamplingXYZDialog
@@ -145,7 +147,12 @@ class GridToolsWidget(qtBaseClass, uiDialog):
             return cs
         else:
             r, ok = QInputDialog.getDouble(
-                None, "Grid Cell Size", "Enter grid element cell size", value=100, min=0.1, max=99999
+                None,
+                "Grid Cell Size",
+                "Enter grid element cell size",
+                value=100,
+                min=0.1,
+                max=99999,
             )
             if ok:
                 cs = r
@@ -162,7 +169,11 @@ class GridToolsWidget(qtBaseClass, uiDialog):
             if not self.lyrs.save_edits_and_proceed("Computational Domain"):
                 return
             if create_grid_dlg.use_external_layer():
-                external_layer, cell_size_field, raster_file = create_grid_dlg.external_layer_parameters()
+                (
+                    external_layer,
+                    cell_size_field,
+                    raster_file,
+                ) = create_grid_dlg.external_layer_parameters()
                 if not self.import_comp_domain(external_layer, cell_size_field):
                     return
             if self.gutils.count("user_model_boundary") > 1:
@@ -361,7 +372,14 @@ class GridToolsWidget(qtBaseClass, uiDialog):
                             ini_time = time.time()
                             QApplication.setOverrideCursor(Qt.WaitCursor)
                             # grid_lyr = self.lyrs.data["grid"]["qlyr"]
-                            zs = ZonalStatistics(self.gutils, grid, points_lyr, zfield, calc_type, search_distance)
+                            zs = ZonalStatistics(
+                                self.gutils,
+                                grid,
+                                points_lyr,
+                                zfield,
+                                calc_type,
+                                search_distance,
+                            )
                             points_elevation = zs.points_elevation()
                             zs.set_elevation(points_elevation)
                             cmd, out = zs.rasterize_grid()
@@ -537,7 +555,10 @@ class GridToolsWidget(qtBaseClass, uiDialog):
         self.statBar.removeWidget(self.cancelButton)
 
     def workerError(self, e, exception_string):
-        QgsMessageLog.logMessage("Worker thread raised an exception:\n".format(exception_string), level=Qgis.Critical)
+        QgsMessageLog.logMessage(
+            "Worker thread raised an exception:\n".format(exception_string),
+            level=Qgis.Critical,
+        )
 
     def other_variable(self):
         if self.gutils.is_table_empty("grid"):
@@ -573,7 +594,13 @@ class GridToolsWidget(qtBaseClass, uiDialog):
                 QApplication.setOverrideCursor(Qt.WaitCursor)
                 grid_lyr = self.lyrs.data["grid"]["qlyr"]
                 zs = ZonalStatisticsOther(
-                    self.gutils, grid_lyr, grid_field, points_lyr, zfield, calc_type, search_distance
+                    self.gutils,
+                    grid_lyr,
+                    grid_field,
+                    points_lyr,
+                    zfield,
+                    calc_type,
+                    search_distance,
                 )
                 points_elevation = zs.points_elevation()
                 zs.set_other(points_elevation)
@@ -731,7 +758,16 @@ class GridToolsWidget(qtBaseClass, uiDialog):
                 use_centroid = True  # Hardwired to use/not use centroid.
 
                 if use_centroid:
-                    values2 = poly2grid(grid_lyr, external_layer, None, True, False, False, 1, tailing_field)
+                    values2 = poly2grid(
+                        grid_lyr,
+                        external_layer,
+                        None,
+                        True,
+                        False,
+                        False,
+                        1,
+                        tailing_field,
+                    )
                     for value, gid in values2:
                         if value:
                             value = "%.2f" % value
@@ -792,7 +828,12 @@ class GridToolsWidget(qtBaseClass, uiDialog):
             if not self.lyrs.save_edits_and_proceed("Blocked Areas"):
                 return
             if eval_dlg.use_external_layer():
-                external_layer, collapse_field, arf_field, wrf_field = eval_dlg.external_layer_parameters()
+                (
+                    external_layer,
+                    collapse_field,
+                    arf_field,
+                    wrf_field,
+                ) = eval_dlg.external_layer_parameters()
                 if not self.import_external_blocked_areas(external_layer, collapse_field, arf_field, wrf_field):
                     return
             else:

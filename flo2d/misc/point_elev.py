@@ -95,7 +95,14 @@ def timer(function):
     return wrapper
 
 
-GDALGRID_METHOD_NAMES = ("average", "invdist", "invdistnn", "nearest", "linear", "linear")
+GDALGRID_METHOD_NAMES = (
+    "average",
+    "invdist",
+    "invdistnn",
+    "nearest",
+    "linear",
+    "linear",
+)
 GDALGRID_METHOD_DESC = (
     "Average",
     "Inverse Distance",
@@ -116,8 +123,24 @@ GDALGRID_METHOD_PARAMS = (
 )
 GDALGRID_METHOD_PARAM_DICT = {
     "Average": ("radius1", "radius2", "angle", "min points", "nodata"),
-    "Inverse Distance": ("power", "smoothing", "angle", "radius1", "radius2", "min points", "max points", "nodata"),
-    "Inverse Distance Nearest Neighbor": ("power", "smoothing", "radius", "min points", "max points", "nodata"),
+    "Inverse Distance": (
+        "power",
+        "smoothing",
+        "angle",
+        "radius1",
+        "radius2",
+        "min points",
+        "max points",
+        "nodata",
+    ),
+    "Inverse Distance Nearest Neighbor": (
+        "power",
+        "smoothing",
+        "radius",
+        "min points",
+        "max points",
+        "nodata",
+    ),
     "Nearest Neighbor": ("angle", "radius1", "radius2", "nodata"),
     "Linear": ("radius", "nodata"),
 }
@@ -189,14 +212,30 @@ class ResamplingOption:
                 "%s:power=%s:smoothing=%s:radius=%s:"
                 "min_points=%s:max_points=%s:nodata=%s"
                 ""
-                % (self.method, self.power, self.smoothing, self.radius, self.min_points, self.max_points, self.nodata)
+                % (
+                    self.method,
+                    self.power,
+                    self.smoothing,
+                    self.radius,
+                    self.min_points,
+                    self.max_points,
+                    self.nodata,
+                )
             )
 
         elif self.method == "average":
             result = (
                 "%s:radius1=%s:radius2=%s:"
                 "angle=%s:min_points=%s:nodata=%s"
-                "" % (self.method, self.radius1, self.radius2, self.angle, self.min_points, self.nodata)
+                ""
+                % (
+                    self.method,
+                    self.radius1,
+                    self.radius2,
+                    self.angle,
+                    self.min_points,
+                    self.nodata,
+                )
             )
 
         elif self.method == "nearest":
@@ -317,7 +356,11 @@ def raster_to_xyz(raster_inpath, xyz_outpath, set_integer_nodata=False, remove_n
         gdal_callback_data = ["Raster-to-XYZ"]
         # Note: DECIMAL_PRECISION works with gdal >= 3.0.0.
         trans_opt = gdal.TranslateOptions(
-            creationOptions=["DECIMAL_PRECISION=4", "COLUMN_SEPARATOR=COMMA", "ADD_HEADER_LINE=YES"],
+            creationOptions=[
+                "DECIMAL_PRECISION=4",
+                "COLUMN_SEPARATOR=COMMA",
+                "ADD_HEADER_LINE=YES",
+            ],
             format="XYZ",
             callback=gdal_progress_callback,
             callback_data=gdal_callback_data,
@@ -456,7 +499,12 @@ def xyz_to_raster_gds_average(csv_file, extents, shape, srs, open_dashboard, pro
 
 
 if __name__ == "__main__":
-    extents = (656965.3593088828492910, 957283.4235482572112232, 665321.0101062507601455, 963900.0000000000000000)
+    extents = (
+        656965.3593088828492910,
+        957283.4235482572112232,
+        665321.0101062507601455,
+        963900.0000000000000000,
+    )
     cell_size = 30
     xmin, ymin, xmax, ymax = extents
     srs = r"+proj=tmerc +lat_0=31 +lon_0=-111.9166666666667 +k=0.9999 +x_0=213360 +y_0=0 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=ft +no_defs"

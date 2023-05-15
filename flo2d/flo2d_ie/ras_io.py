@@ -139,8 +139,14 @@ class RASProject(GeoPackageUtils):
             right_bank_feat.setAttribute("chan_seg_fid", seg_fid)
             user_rbank_lyr.addFeature(right_bank_feat)
         cursor = self.con.cursor()
-        cursor.executemany("INSERT INTO user_chan_n (user_xs_fid, nxsecnum, xsecname) VALUES (?,?,?);", uchan_n_rows)
-        cursor.executemany("INSERT INTO user_xsec_n_data (chan_n_nxsecnum, xi, yi) VALUES (?,?,?);", uxsec_n_rows)
+        cursor.executemany(
+            "INSERT INTO user_chan_n (user_xs_fid, nxsecnum, xsecname) VALUES (?,?,?);",
+            uchan_n_rows,
+        )
+        cursor.executemany(
+            "INSERT INTO user_xsec_n_data (chan_n_nxsecnum, xi, yi) VALUES (?,?,?);",
+            uxsec_n_rows,
+        )
         self.con.commit()
         user_lbank_lyr.commitChanges()
         user_lbank_lyr.updateExtents()
@@ -333,6 +339,13 @@ class RASGeometry(object):
                 if length != len(points):
                     continue
                 xs_key = "{}_{}".format(key, rm)
-                xs_data[xs_key] = {"rm": rm, "points": points, "sta": sta, "elev": elev, "man": man, "extra": extra_txt}
+                xs_data[xs_key] = {
+                    "rm": rm,
+                    "points": points,
+                    "sta": sta,
+                    "elev": elev,
+                    "man": man,
+                    "extra": extra_txt,
+                }
 
             self.ras_geometry[key]["xs_data"] = xs_data

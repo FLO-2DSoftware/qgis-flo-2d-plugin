@@ -19,7 +19,13 @@ from qgis.PyQt.QtWidgets import QApplication
 from ..flo2d_tools.grid_tools import number_of_elements, render_grid_elevations2
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
-from ..utils import get_min_max_elevs, is_number, m_fdata, second_smallest, set_min_max_elevs
+from ..utils import (
+    get_min_max_elevs,
+    is_number,
+    m_fdata,
+    second_smallest,
+    set_min_max_elevs,
+)
 from .ui_utils import center_canvas, load_ui, set_icon, zoom
 
 uiDialog, qtBaseClass = load_ui("grid_info_widget")
@@ -150,7 +156,13 @@ class GridInfoWidget(qtBaseClass, uiDialog):
                 mini = min(elevs)
                 mini2 = second_smallest(elevs)
                 maxi = max(elevs)
-                render_grid_elevations2(self.grid, self.render_elevations_chbox.isChecked(), mini, mini2, maxi)
+                render_grid_elevations2(
+                    self.grid,
+                    self.render_elevations_chbox.isChecked(),
+                    mini,
+                    mini2,
+                    maxi,
+                )
                 set_min_max_elevs(mini, maxi)
                 self.lyrs.lyrs_to_repaint = [self.grid]
                 self.lyrs.repaint_layers()

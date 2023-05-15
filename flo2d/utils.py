@@ -26,7 +26,14 @@ from math import ceil, log10
 
 from qgis.PyQt.QtCore import QRegExp, Qt
 from qgis.PyQt.QtGui import QDoubleValidator, QRegExpValidator
-from qgis.PyQt.QtWidgets import QApplication, QDoubleSpinBox, QItemDelegate, QLineEdit, QMessageBox, QStyledItemDelegate
+from qgis.PyQt.QtWidgets import (
+    QApplication,
+    QDoubleSpinBox,
+    QItemDelegate,
+    QLineEdit,
+    QMessageBox,
+    QStyledItemDelegate,
+)
 
 
 class NumericDelegate(QStyledItemDelegate):

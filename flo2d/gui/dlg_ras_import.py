@@ -36,7 +36,10 @@ class RasImportDialog(qtBaseClass, uiDialog):
         s = QSettings()
         last_dir = s.value("FLO-2D/lastRasDir", "")
         ras_file, __ = QFileDialog.getOpenFileName(
-            None, "Select HEC-RAS project or geometry file to import data", directory=last_dir, filter="(*.prj *.g*)"
+            None,
+            "Select HEC-RAS project or geometry file to import data",
+            directory=last_dir,
+            filter="(*.prj *.g*)",
         )
         if not ras_file:
             return
@@ -47,7 +50,13 @@ class RasImportDialog(qtBaseClass, uiDialog):
         ras_file = self.ras_line.text()
         interpolated_xs = True if self.interpolated.isChecked() else False
         if ras_file.lower().endswith(".prj"):
-            project = RASProject(self.con, self.iface, self.lyrs, prj_path=ras_file, interpolated=interpolated_xs)
+            project = RASProject(
+                self.con,
+                self.iface,
+                self.lyrs,
+                prj_path=ras_file,
+                interpolated=interpolated_xs,
+            )
             project.find_geometry()
             ras_geom = project.get_geometry()
         else:

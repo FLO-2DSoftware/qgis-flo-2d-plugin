@@ -16,7 +16,13 @@ from pickle import FALSE
 import numpy as np
 from qgis.core import *
 from qgis.PyQt.QtCore import QEvent, Qt
-from qgis.PyQt.QtGui import QColor, QIntValidator, QPalette, QStandardItem, QStandardItemModel
+from qgis.PyQt.QtGui import (
+    QColor,
+    QIntValidator,
+    QPalette,
+    QStandardItem,
+    QStandardItemModel,
+)
 from qgis.PyQt.QtWidgets import (
     QApplication,
     QComboBox,
@@ -547,7 +553,11 @@ class LeveeFragilityCurvesDialog(qtBaseClass, uiDialog_levee_fragility):
         #         mode = QLineEdit.Normal
         #         default = "<your name here>"
         #         txt, ok = QinputDialog.getText(qid,title, label, mode, default)
-        ID, ok = QInputDialog.getText(None, "New fragility curve ID", "Fragility curve ID (one letter and one number)")
+        ID, ok = QInputDialog.getText(
+            None,
+            "New fragility curve ID",
+            "Fragility curve ID (one letter and one number)",
+        )
         if not ok or not ID:
             return
         sql = """INSERT INTO breach_fragility_curves (fragchar, prfail, prdepth) VALUES (?,?,?);"""
@@ -1315,7 +1325,8 @@ class IndividualLeveesDialog(qtBaseClass, uiDialog_individual_levees):
         try:
             # Retrive previous levee user_line_fid:
             user_line_fid = self.gutils.execute(
-                "SELECT user_line_fid FROM levee_data WHERE grid_fid = ?;", (levee_grid,)
+                "SELECT user_line_fid FROM levee_data WHERE grid_fid = ?;",
+                (levee_grid,),
             ).fetchone()
             user_line_fid = None if not user_line_fid else user_line_fid[0]
 
@@ -1330,7 +1341,10 @@ class IndividualLeveesDialog(qtBaseClass, uiDialog_individual_levees):
 
             if self.N_chbox.isChecked():
                 geom = self.gutils.build_levee(levee_grid, "1", cell_size)
-                self.gutils.execute(insert_qry, (1, self.N_dbox.value(), levee_grid, user_line_fid, geom))
+                self.gutils.execute(
+                    insert_qry,
+                    (1, self.N_dbox.value(), levee_grid, user_line_fid, geom),
+                )
                 if self.failureData.get(1)[0]:
                     self.gutils.execute(
                         insert_failure_qry,
@@ -1348,7 +1362,10 @@ class IndividualLeveesDialog(qtBaseClass, uiDialog_individual_levees):
 
             if self.E_chbox.isChecked():
                 geom = self.gutils.build_levee(levee_grid, "2", cell_size)
-                self.gutils.execute(insert_qry, (2, self.E_dbox.value(), levee_grid, user_line_fid, geom))
+                self.gutils.execute(
+                    insert_qry,
+                    (2, self.E_dbox.value(), levee_grid, user_line_fid, geom),
+                )
                 if self.failureData.get(2)[0]:
                     self.gutils.execute(
                         insert_failure_qry,
@@ -1366,7 +1383,10 @@ class IndividualLeveesDialog(qtBaseClass, uiDialog_individual_levees):
 
             if self.S_chbox.isChecked():
                 geom = self.gutils.build_levee(levee_grid, "3", cell_size)
-                self.gutils.execute(insert_qry, (3, self.S_dbox.value(), levee_grid, user_line_fid, geom))
+                self.gutils.execute(
+                    insert_qry,
+                    (3, self.S_dbox.value(), levee_grid, user_line_fid, geom),
+                )
                 if self.failureData.get(3)[0]:
                     self.gutils.execute(
                         insert_failure_qry,
@@ -1384,7 +1404,10 @@ class IndividualLeveesDialog(qtBaseClass, uiDialog_individual_levees):
 
             if self.W_chbox.isChecked():
                 geom = self.gutils.build_levee(levee_grid, "4", cell_size)
-                self.gutils.execute(insert_qry, (4, self.W_dbox.value(), levee_grid, user_line_fid, geom))
+                self.gutils.execute(
+                    insert_qry,
+                    (4, self.W_dbox.value(), levee_grid, user_line_fid, geom),
+                )
                 if self.failureData.get(4)[0]:
                     self.gutils.execute(
                         insert_failure_qry,
@@ -1402,7 +1425,10 @@ class IndividualLeveesDialog(qtBaseClass, uiDialog_individual_levees):
 
             if self.NE_chbox.isChecked():
                 geom = self.gutils.build_levee(levee_grid, "5", cell_size)
-                self.gutils.execute(insert_qry, (5, self.NE_dbox.value(), levee_grid, user_line_fid, geom))
+                self.gutils.execute(
+                    insert_qry,
+                    (5, self.NE_dbox.value(), levee_grid, user_line_fid, geom),
+                )
                 if self.failureData.get(5)[0]:
                     self.gutils.execute(
                         insert_failure_qry,
@@ -1420,7 +1446,10 @@ class IndividualLeveesDialog(qtBaseClass, uiDialog_individual_levees):
 
             if self.SE_chbox.isChecked():
                 geom = self.gutils.build_levee(levee_grid, "6", cell_size)
-                self.gutils.execute(insert_qry, (6, self.SE_dbox.value(), levee_grid, user_line_fid, geom))
+                self.gutils.execute(
+                    insert_qry,
+                    (6, self.SE_dbox.value(), levee_grid, user_line_fid, geom),
+                )
                 if self.failureData.get(6)[0]:
                     self.gutils.execute(
                         insert_failure_qry,
@@ -1438,7 +1467,10 @@ class IndividualLeveesDialog(qtBaseClass, uiDialog_individual_levees):
 
             if self.SW_chbox.isChecked():
                 geom = self.gutils.build_levee(levee_grid, "7", cell_size)
-                self.gutils.execute(insert_qry, (7, self.SW_dbox.value(), levee_grid, user_line_fid, geom))
+                self.gutils.execute(
+                    insert_qry,
+                    (7, self.SW_dbox.value(), levee_grid, user_line_fid, geom),
+                )
                 if self.failureData.get(7)[0]:
                     self.gutils.execute(
                         insert_failure_qry,
@@ -1456,7 +1488,10 @@ class IndividualLeveesDialog(qtBaseClass, uiDialog_individual_levees):
 
             if self.NW_chbox.isChecked():
                 geom = self.gutils.build_levee(levee_grid, "8", cell_size)
-                self.gutils.execute(insert_qry, (8, self.NW_dbox.value(), levee_grid, user_line_fid, geom))
+                self.gutils.execute(
+                    insert_qry,
+                    (8, self.NW_dbox.value(), levee_grid, user_line_fid, geom),
+                )
                 if self.failureData.get(8)[0]:
                     self.gutils.execute(
                         insert_failure_qry,
@@ -1472,7 +1507,10 @@ class IndividualLeveesDialog(qtBaseClass, uiDialog_individual_levees):
                         ),
                     )
 
-            self.lyrs.lyrs_to_repaint = [self.lyrs.data["levee_data"]["qlyr"], self.lyrs.data["levee_failure"]["qlyr"]]
+            self.lyrs.lyrs_to_repaint = [
+                self.lyrs.data["levee_data"]["qlyr"],
+                self.lyrs.data["levee_failure"]["qlyr"],
+            ]
             self.lyrs.repaint_layers()
 
             levees = self.lyrs.data["levee_data"]["qlyr"]

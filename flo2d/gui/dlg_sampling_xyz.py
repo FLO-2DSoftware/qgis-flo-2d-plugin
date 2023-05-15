@@ -32,7 +32,16 @@ from qgis.core import (
 )
 from qgis.PyQt import QtCore, QtGui
 from qgis.PyQt.QtCore import QObject, QSettings, Qt, QVariant, pyqtSignal
-from qgis.PyQt.QtWidgets import QApplication, QFileDialog, QLabel, QMessageBox, QProgressBar, QPushButton, QWidget, qApp
+from qgis.PyQt.QtWidgets import (
+    QApplication,
+    QFileDialog,
+    QLabel,
+    QMessageBox,
+    QProgressBar,
+    QPushButton,
+    QWidget,
+    qApp,
+)
 
 from ..errors import Flo2dError
 from ..flo2d_tools.grid_tools import (
@@ -373,10 +382,19 @@ class SamplingXYZDialog(qtBaseClass, uiDialog):
                                 QgsProject.instance().removeMapLayers([lyr.id()])
 
                         epsg = self.grid.crs().authid()
-                        vl = QgsVectorLayer("{}?crs={}".format("Point", epsg), "Cell elevations from LIDAR", "memory")
+                        vl = QgsVectorLayer(
+                            "{}?crs={}".format("Point", epsg),
+                            "Cell elevations from LIDAR",
+                            "memory",
+                        )
                         pr = vl.dataProvider()
                         # add fields
-                        pr.addAttributes([QgsField("elevation", QVariant.Double), QgsField("grid", QVariant.Int)])
+                        pr.addAttributes(
+                            [
+                                QgsField("elevation", QVariant.Double),
+                                QgsField("grid", QVariant.Int),
+                            ]
+                        )
                         vl.updateFields()  # tell the vector layer to fetch changes from the provider
                         # Enter editing mode
                         vl.startEditing()
@@ -411,7 +429,14 @@ class SamplingXYZDialog(qtBaseClass, uiDialog):
                         try:
                             ini_time = time.time()
                             QApplication.setOverrideCursor(Qt.WaitCursor)
-                            zs = ZonalStatistics(self.gutils, self.grid, vl, zfield, calc_type, search_distance)
+                            zs = ZonalStatistics(
+                                self.gutils,
+                                self.grid,
+                                vl,
+                                zfield,
+                                calc_type,
+                                search_distance,
+                            )
                             points_elevation = zs.points_elevation()
                             zs.set_elevation(points_elevation)
                             cmd, out = zs.rasterize_grid()

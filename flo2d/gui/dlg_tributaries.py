@@ -95,7 +95,14 @@ class TributariesDialog(qtBaseClass, uiDialog):
     def confluences_tblw_cell_update(self, row):
         tributary_cell = self.confluences_tblw.item(row, 0).text()
         find_this_cell(
-            self.iface, self.lyrs, self.uc, self.gutils, tributary_cell, Qt.cyan, zoom_in=True, clear_previous=True
+            self.iface,
+            self.lyrs,
+            self.uc,
+            self.gutils,
+            tributary_cell,
+            Qt.cyan,
+            zoom_in=True,
+            clear_previous=True,
         )
         self.rubber_bands.append(self.lyrs.rb)
 
@@ -104,7 +111,14 @@ class TributariesDialog(qtBaseClass, uiDialog):
             main_cell = current_widget.currentText()
             if main_cell != "":
                 find_this_cell(
-                    self.iface, self.lyrs, self.uc, self.gutils, main_cell, Qt.blue, zoom_in=False, clear_previous=False
+                    self.iface,
+                    self.lyrs,
+                    self.uc,
+                    self.gutils,
+                    main_cell,
+                    Qt.blue,
+                    zoom_in=False,
+                    clear_previous=False,
                 )
                 self.rubber_bands.append(self.lyrs.rb)
 
@@ -133,7 +147,10 @@ class TributariesDialog(qtBaseClass, uiDialog):
             self.canvas.scene().removeItem(rb)
 
     def save(self):
-        chan_conf_sql = ["""INSERT INTO chan_confluences (geom, conf_fid, type, chan_elem_fid) VALUES""", 4]
+        chan_conf_sql = [
+            """INSERT INTO chan_confluences (geom, conf_fid, type, chan_elem_fid) VALUES""",
+            4,
+        ]
 
         for row in range(0, self.confluences_tblw.rowCount()):
             widget = self.confluences_tblw.cellWidget(row, 1)

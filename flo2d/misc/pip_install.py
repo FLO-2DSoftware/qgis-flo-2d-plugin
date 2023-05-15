@@ -13,7 +13,11 @@ def pip_install(name, pipe=print):
     try:
         pipe("Using QGIS python 3 pip via subprocess ...\n")
         result = subprocess.run(
-            ["python3", "-m", "pip", "install", *libs], capture_output=True, check=True, text=True, env=os.environ
+            ["python3", "-m", "pip", "install", *libs],
+            capture_output=True,
+            check=True,
+            text=True,
+            env=os.environ,
         )
     except subprocess.CalledProcessError as e:
         pipe("Exception: stderr: %s\n" % e.stderr)

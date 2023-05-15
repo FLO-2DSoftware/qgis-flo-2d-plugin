@@ -10,12 +10,23 @@
 import datetime
 import sys
 
-from qgis.core import QgsFeature, QgsFeatureRequest, QgsGeometry, QgsProject, QgsRectangle, QgsWkbTypes
+from qgis.core import (
+    QgsFeature,
+    QgsFeatureRequest,
+    QgsGeometry,
+    QgsProject,
+    QgsRectangle,
+    QgsWkbTypes,
+)
 from qgis.gui import QgsFieldComboBox
 from qgis.PyQt.QtCore import QSettings, Qt
 from qgis.PyQt.QtWidgets import QApplication, QComboBox, QDialogButtonBox
 
-from ..flo2d_tools.grid_tools import adjacent_grid_elevations, fid_from_grid, gridRegionGenerator
+from ..flo2d_tools.grid_tools import (
+    adjacent_grid_elevations,
+    fid_from_grid,
+    gridRegionGenerator,
+)
 from ..flo2d_tools.schema2user_tools import remove_features
 from ..geopackage_utils import GeoPackageUtils, extractPoints
 from ..user_communication import UserCommunication
@@ -434,8 +445,14 @@ class WallsShapefile(qtBaseClass, uiDialog):
         s.setValue("sf_walls_duration", self.duration_FieldCbo.currentIndex())
         s.setValue("sf_walls_base_elevation", self.base_elevation_FieldCbo.currentIndex())
         s.setValue("sf_walls_maximum_width", self.maximum_width_FieldCbo.currentIndex())
-        s.setValue("sf_walls_vertical_fail_rate", self.vertical_fail_rate_FieldCbo.currentIndex())
-        s.setValue("sf_walls_horizontal_fail_rate", self.horizontal_fail_rate_FieldCbo.currentIndex())
+        s.setValue(
+            "sf_walls_vertical_fail_rate",
+            self.vertical_fail_rate_FieldCbo.currentIndex(),
+        )
+        s.setValue(
+            "sf_walls_horizontal_fail_rate",
+            self.horizontal_fail_rate_FieldCbo.currentIndex(),
+        )
 
     def restore_storm_drain_shapefile_fields(self):
         s = QSettings()

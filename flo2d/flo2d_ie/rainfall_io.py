@@ -64,10 +64,22 @@ class HDFProcessor(object):
             grp = hdf_file.create_group("raincell")
             tstamp = np.array([timestamp], dtype=np.string_)
             datasets = [
-                ("RAININTIME", np.int(rainintime), "Time interval in minutes of the realtime rainfall data."),
+                (
+                    "RAININTIME",
+                    np.int(rainintime),
+                    "Time interval in minutes of the realtime rainfall data.",
+                ),
                 ("IRINTERS", np.int(irinters), "Number of intervals in the dataset."),
-                ("TIMESTAMP", tstamp, "Timestamp indicates the start and end time of the storm."),
-                ("IRAINDUM", np.array(data), "Cumulative rainfall in inches or mm over the time interval."),
+                (
+                    "TIMESTAMP",
+                    tstamp,
+                    "Timestamp indicates the start and end time of the storm.",
+                ),
+                (
+                    "IRAINDUM",
+                    np.array(data),
+                    "Cumulative rainfall in inches or mm over the time interval.",
+                ),
             ]
             for name, value, description in datasets:
                 dts = grp.create_dataset(name, data=value)

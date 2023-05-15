@@ -359,7 +359,10 @@ class ConduitsDialog(qtBaseClass, uiDialog):
 
         except Exception as e:
             QApplication.restoreOverrideCursor()
-            self.uc.show_error("ERROR 200618.0705: assignment of value from conduits users layer failed!.\n", e)
+            self.uc.show_error(
+                "ERROR 200618.0705: assignment of value from conduits users layer failed!.\n",
+                e,
+            )
 
     def onVerticalSectionClicked(self, logicalIndex):
         self.conduits_tblw_cell_clicked(logicalIndex, 0)
@@ -489,7 +492,8 @@ class ConduitsDialog(qtBaseClass, uiDialog):
             if self.conduits_lyr is not None:
                 if conduit != "":
                     fid = self.gutils.execute(
-                        "SELECT fid FROM user_swmm_conduits WHERE conduit_name = ?;", (conduit,)
+                        "SELECT fid FROM user_swmm_conduits WHERE conduit_name = ?;",
+                        (conduit,),
                     ).fetchone()
                     self.lyrs.show_feat_rubber(self.conduits_lyr.id(), fid[0], QColor(Qt.yellow))
                     feat = next(self.conduits_lyr.getFeatures(QgsFeatureRequest(fid[0])))

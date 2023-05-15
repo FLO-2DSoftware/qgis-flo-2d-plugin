@@ -214,7 +214,12 @@ class HazusDialog(qtBaseClass, uiDialog):
             return cs
         else:
             r, ok = QInputDialog.getDouble(
-                None, "Grid Cell Size", "Enter grid element cell size", value=100, min=0.1, max=99999
+                None,
+                "Grid Cell Size",
+                "Enter grid element cell size",
+                value=100,
+                min=0.1,
+                max=99999,
             )
             if ok:
                 cs = r
@@ -473,12 +478,28 @@ class HazusDialog(qtBaseClass, uiDialog):
                         if field_to_uniformize == "water_elev":
                             cur.execute(
                                 insert_water_elev_statistics,
-                                (current_id, elev_sum / n, elev_min, elev_max, avg, min, max),
+                                (
+                                    current_id,
+                                    elev_sum / n,
+                                    elev_min,
+                                    elev_max,
+                                    avg,
+                                    min,
+                                    max,
+                                ),
                             )
                         elif field_to_uniformize == "flow_depth":
                             cur.execute(
                                 insert_flow_depth_statistics,
-                                (current_id, elev_sum / n, elev_min, elev_max, avg, min, max),
+                                (
+                                    current_id,
+                                    elev_sum / n,
+                                    elev_min,
+                                    elev_max,
+                                    avg,
+                                    min,
+                                    max,
+                                ),
                             )
                     else:
                         if field_to_uniformize == "water_elev":
@@ -521,7 +542,9 @@ class HazusDialog(qtBaseClass, uiDialog):
                 f0 = next(building_fts)
                 id0 = f0[ID_field]
                 lyr.changeAttributeValue(
-                    f0.id(), lyr.fields().lookupField(field_to_uniformize), final_val_list[index_val]
+                    f0.id(),
+                    lyr.fields().lookupField(field_to_uniformize),
+                    final_val_list[index_val],
                 )
                 while index_lyr < n_features:
                     f1 = next(building_fts)
@@ -529,12 +552,16 @@ class HazusDialog(qtBaseClass, uiDialog):
                     index_lyr += 1
                     if id1 == id0:
                         lyr.changeAttributeValue(
-                            f1.id(), lyr.fields().lookupField(field_to_uniformize), final_val_list[index_val]
+                            f1.id(),
+                            lyr.fields().lookupField(field_to_uniformize),
+                            final_val_list[index_val],
                         )
                     else:
                         index_val += 1
                         lyr.changeAttributeValue(
-                            f1.id(), lyr.fields().lookupField(field_to_uniformize), final_val_list[index_val]
+                            f1.id(),
+                            lyr.fields().lookupField(field_to_uniformize),
+                            final_val_list[index_val],
                         )
                         id0 = id1
 
@@ -750,7 +777,14 @@ class HazusDialog(qtBaseClass, uiDialog):
             self.gutils.con.commit()
 
             QApplication.restoreOverrideCursor()
-            return True, (building_name, ID_field, elev_field, water_field, flow_field, adjust)
+            return True, (
+                building_name,
+                ID_field,
+                elev_field,
+                water_field,
+                flow_field,
+                adjust,
+            )
 
         except Exception as e:
             QApplication.restoreOverrideCursor()

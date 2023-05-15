@@ -77,7 +77,15 @@ class TINInterpolator(object):
 
 
 class ZonalStatistics(object):
-    def __init__(self, gutils, grid_lyr, point_lyr, field_name, calculation_type, search_distance=0):
+    def __init__(
+        self,
+        gutils,
+        grid_lyr,
+        point_lyr,
+        field_name,
+        calculation_type,
+        search_distance=0,
+    ):
         self.gutils = gutils
         self.grid = grid_lyr
         self.points = point_lyr
@@ -152,7 +160,12 @@ class ZonalStatistics(object):
 
     def rasterize_grid(self):
         grid_extent = self.grid.extent()
-        corners = (grid_extent.xMinimum(), grid_extent.yMinimum(), grid_extent.xMaximum(), grid_extent.yMaximum())
+        corners = (
+            grid_extent.xMinimum(),
+            grid_extent.yMinimum(),
+            grid_extent.xMaximum(),
+            grid_extent.yMaximum(),
+        )
 
         command = "gdal_rasterize"
         field = "-a elevation"
@@ -167,13 +180,33 @@ class ZonalStatistics(object):
         gpkg = '"{0}"'.format(self.grid.source().split("|")[0])
         raster = '"{0}"'.format(self.gap_raster)
 
-        parameters = (command, field, rtype, rformat, extent, res, nodata, compress, predictor, vlayer, gpkg, raster)
+        parameters = (
+            command,
+            field,
+            rtype,
+            rformat,
+            extent,
+            res,
+            nodata,
+            compress,
+            predictor,
+            vlayer,
+            gpkg,
+            raster,
+        )
         cmd = " ".join(parameters)
         success = False
         loop = 0
         out = None
         while success is False:
-            proc = Popen(cmd, shell=True, stdin=open(os.devnull), stdout=PIPE, stderr=STDOUT, universal_newlines=True)
+            proc = Popen(
+                cmd,
+                shell=True,
+                stdin=open(os.devnull),
+                stdout=PIPE,
+                stderr=STDOUT,
+                universal_newlines=True,
+            )
             out = proc.communicate()
             if os.path.exists(self.gap_raster):
                 success = True
@@ -186,7 +219,14 @@ class ZonalStatistics(object):
     def fill_nodata(self):
         search = "-md {0}".format(self.search_distance) if self.search_distance > 0 else ""
         cmd = 'gdal_fillnodata {0} "{1}" "{2}"'.format(search, self.gap_raster, self.filled_raster)
-        proc = Popen(cmd, shell=True, stdin=open(os.devnull), stdout=PIPE, stderr=STDOUT, universal_newlines=True)
+        proc = Popen(
+            cmd,
+            shell=True,
+            stdin=open(os.devnull),
+            stdout=PIPE,
+            stderr=STDOUT,
+            universal_newlines=True,
+        )
         out = proc.communicate()
         return cmd, out
 
@@ -207,7 +247,16 @@ class ZonalStatistics(object):
 
 
 class ZonalStatisticsOther(object):
-    def __init__(self, gutils, grid_lyr, grid_field, point_lyr, field_name, calculation_type, search_distance=0):
+    def __init__(
+        self,
+        gutils,
+        grid_lyr,
+        grid_field,
+        point_lyr,
+        field_name,
+        calculation_type,
+        search_distance=0,
+    ):
         self.gutils = gutils
         self.grid = grid_lyr
         self.points = point_lyr
@@ -287,7 +336,12 @@ class ZonalStatisticsOther(object):
 
     def rasterize_grid(self):
         grid_extent = self.grid.extent()
-        corners = (grid_extent.xMinimum(), grid_extent.yMinimum(), grid_extent.xMaximum(), grid_extent.yMaximum())
+        corners = (
+            grid_extent.xMinimum(),
+            grid_extent.yMinimum(),
+            grid_extent.xMaximum(),
+            grid_extent.yMaximum(),
+        )
 
         command = "gdal_rasterize"
         field = "-a elevation"
@@ -302,13 +356,33 @@ class ZonalStatisticsOther(object):
         gpkg = '"{0}"'.format(self.grid.source().split("|")[0])
         raster = '"{0}"'.format(self.gap_raster)
 
-        parameters = (command, field, rtype, rformat, extent, res, nodata, compress, predictor, vlayer, gpkg, raster)
+        parameters = (
+            command,
+            field,
+            rtype,
+            rformat,
+            extent,
+            res,
+            nodata,
+            compress,
+            predictor,
+            vlayer,
+            gpkg,
+            raster,
+        )
         cmd = " ".join(parameters)
         success = False
         loop = 0
         out = None
         while success is False:
-            proc = Popen(cmd, shell=True, stdin=open(os.devnull), stdout=PIPE, stderr=STDOUT, universal_newlines=True)
+            proc = Popen(
+                cmd,
+                shell=True,
+                stdin=open(os.devnull),
+                stdout=PIPE,
+                stderr=STDOUT,
+                universal_newlines=True,
+            )
             out = proc.communicate()
             if os.path.exists(self.gap_raster):
                 success = True
@@ -321,7 +395,14 @@ class ZonalStatisticsOther(object):
     def fill_nodata(self):
         search = "-md {0}".format(self.search_distance) if self.search_distance > 0 else ""
         cmd = 'gdal_fillnodata {0} "{1}" "{2}"'.format(search, self.gap_raster, self.filled_raster)
-        proc = Popen(cmd, shell=True, stdin=open(os.devnull), stdout=PIPE, stderr=STDOUT, universal_newlines=True)
+        proc = Popen(
+            cmd,
+            shell=True,
+            stdin=open(os.devnull),
+            stdout=PIPE,
+            stderr=STDOUT,
+            universal_newlines=True,
+        )
         out = proc.communicate()
         return cmd, out
 
@@ -483,16 +564,48 @@ def divide_geom(geom, threshold=1000):
     xmax, ymax = bbox.xMaximum(), bbox.yMaximum()
     center_point = QgsPointXY(center_x, center_y)
     s1 = QgsGeometry.fromPolygonXY(
-        [[center_point, QgsPointXY(center_x, ymin), QgsPointXY(xmin, ymin), QgsPointXY(xmin, center_y), center_point]]
+        [
+            [
+                center_point,
+                QgsPointXY(center_x, ymin),
+                QgsPointXY(xmin, ymin),
+                QgsPointXY(xmin, center_y),
+                center_point,
+            ]
+        ]
     )
     s2 = QgsGeometry.fromPolygonXY(
-        [[center_point, QgsPointXY(xmin, center_y), QgsPointXY(xmin, ymax), QgsPointXY(center_x, ymax), center_point]]
+        [
+            [
+                center_point,
+                QgsPointXY(xmin, center_y),
+                QgsPointXY(xmin, ymax),
+                QgsPointXY(center_x, ymax),
+                center_point,
+            ]
+        ]
     )
     s3 = QgsGeometry.fromPolygonXY(
-        [[center_point, QgsPointXY(center_x, ymax), QgsPointXY(xmax, ymax), QgsPointXY(xmax, center_y), center_point]]
+        [
+            [
+                center_point,
+                QgsPointXY(center_x, ymax),
+                QgsPointXY(xmax, ymax),
+                QgsPointXY(xmax, center_y),
+                center_point,
+            ]
+        ]
     )
     s4 = QgsGeometry.fromPolygonXY(
-        [[center_point, QgsPointXY(xmax, center_y), QgsPointXY(xmax, ymin), QgsPointXY(center_x, ymin), center_point]]
+        [
+            [
+                center_point,
+                QgsPointXY(xmax, center_y),
+                QgsPointXY(xmax, ymin),
+                QgsPointXY(center_x, ymin),
+                center_point,
+            ]
+        ]
     )
 
     new_geoms = []
@@ -1183,7 +1296,10 @@ def evaluate_roughness(gutils, grid, roughness, column_name, method, reset=False
         #                 gutils.execute(qry,(manning, gid),)
         else:
             # Centroids
-            gutils.con.executemany(qry, poly2grid(grid, roughness, None, True, False, False, 1, column_name))
+            gutils.con.executemany(
+                qry,
+                poly2grid(grid, roughness, None, True, False, False, 1, column_name),
+            )
             gutils.con.commit()
             return True
 
@@ -1503,14 +1619,70 @@ def calculate_arfwrf(grid, areas):
     """
     try:
         sides = (
-            (lambda x, y, square_half, octa_half: (x - octa_half, y + square_half, x + octa_half, y + square_half)),
-            (lambda x, y, square_half, octa_half: (x + square_half, y + octa_half, x + square_half, y - octa_half)),
-            (lambda x, y, square_half, octa_half: (x + octa_half, y - square_half, x - octa_half, y - square_half)),
-            (lambda x, y, square_half, octa_half: (x - square_half, y - octa_half, x - square_half, y + octa_half)),
-            (lambda x, y, square_half, octa_half: (x + octa_half, y + square_half, x + square_half, y + octa_half)),
-            (lambda x, y, square_half, octa_half: (x + square_half, y - octa_half, x + octa_half, y - square_half)),
-            (lambda x, y, square_half, octa_half: (x - octa_half, y - square_half, x - square_half, y - octa_half)),
-            (lambda x, y, square_half, octa_half: (x - square_half, y + octa_half, x - octa_half, y + square_half)),
+            (
+                lambda x, y, square_half, octa_half: (
+                    x - octa_half,
+                    y + square_half,
+                    x + octa_half,
+                    y + square_half,
+                )
+            ),
+            (
+                lambda x, y, square_half, octa_half: (
+                    x + square_half,
+                    y + octa_half,
+                    x + square_half,
+                    y - octa_half,
+                )
+            ),
+            (
+                lambda x, y, square_half, octa_half: (
+                    x + octa_half,
+                    y - square_half,
+                    x - octa_half,
+                    y - square_half,
+                )
+            ),
+            (
+                lambda x, y, square_half, octa_half: (
+                    x - square_half,
+                    y - octa_half,
+                    x - square_half,
+                    y + octa_half,
+                )
+            ),
+            (
+                lambda x, y, square_half, octa_half: (
+                    x + octa_half,
+                    y + square_half,
+                    x + square_half,
+                    y + octa_half,
+                )
+            ),
+            (
+                lambda x, y, square_half, octa_half: (
+                    x + square_half,
+                    y - octa_half,
+                    x + octa_half,
+                    y - square_half,
+                )
+            ),
+            (
+                lambda x, y, square_half, octa_half: (
+                    x - octa_half,
+                    y - square_half,
+                    x - square_half,
+                    y - octa_half,
+                )
+            ),
+            (
+                lambda x, y, square_half, octa_half: (
+                    x - square_half,
+                    y + octa_half,
+                    x - octa_half,
+                    y + square_half,
+                )
+            ),
         )
         was_null = False
         allfeatures, index = spatial_index(areas)
@@ -1617,8 +1789,14 @@ def evaluate_spatial_gutter(gutils, grid, areas, lines):
     """
     cell_size = float(gutils.get_cont_par("CELLSIZE"))
     del_cells = "DELETE FROM gutter_cells;"
-    insert_cells_from_polygons = ["""INSERT INTO gutter_cells (geom, area_fid, grid_fid) VALUES""", 3]
-    insert_cells_from_lines = ["""INSERT INTO gutter_cells (geom, line_fid, grid_fid) VALUES""", 3]
+    insert_cells_from_polygons = [
+        """INSERT INTO gutter_cells (geom, area_fid, grid_fid) VALUES""",
+        3,
+    ]
+    insert_cells_from_lines = [
+        """INSERT INTO gutter_cells (geom, line_fid, grid_fid) VALUES""",
+        3,
+    ]
 
     try:
         gutils.execute(del_cells)
@@ -2688,7 +2866,12 @@ def render_grid_elevations2(elevs_lyr, show_nodata, mini, mini2, maxi):
                 symbol.setSize(1)
             except:
                 pass
-            myRange = QgsRendererRange(low, high, symbol, "{0:.2f}".format(low) + " - " + "{0:.2f}".format(high))
+            myRange = QgsRendererRange(
+                low,
+                high,
+                symbol,
+                "{0:.2f}".format(low) + " - " + "{0:.2f}".format(high),
+            )
             myRangeList.append(myRange)
             low = high
             high = high + step

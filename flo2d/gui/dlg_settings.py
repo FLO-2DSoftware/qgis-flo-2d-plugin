@@ -14,11 +14,23 @@ from itertools import chain
 from qgis.core import QgsCoordinateReferenceSystem, QgsUnitTypes
 from qgis.gui import QgsProjectionSelectionWidget
 from qgis.PyQt.QtCore import QSettings, Qt
-from qgis.PyQt.QtWidgets import QApplication, QCheckBox, QDoubleSpinBox, QFileDialog, QLineEdit, QSpinBox
+from qgis.PyQt.QtWidgets import (
+    QApplication,
+    QCheckBox,
+    QDoubleSpinBox,
+    QFileDialog,
+    QLineEdit,
+    QSpinBox,
+)
 
 from ..errors import Flo2dQueryResultNull
 from ..flo2d_ie.flo2d_parser import ParseDAT
-from ..geopackage_utils import GeoPackageUtils, database_connect, database_create, database_disconnect
+from ..geopackage_utils import (
+    GeoPackageUtils,
+    database_connect,
+    database_create,
+    database_disconnect,
+)
 from ..user_communication import UserCommunication
 from ..utils import is_number
 from .ui_utils import load_ui
@@ -42,7 +54,10 @@ class SettingsDialog(qtBaseClass, uiDialog):
         self.crs = None
         self.projectionSelector = QgsProjectionSelectionWidget()
         self.projectionSelector.setCrs(self.iface.mapCanvas().mapSettings().destinationCrs())
-        self.widget_map = {"MANNING": self.manningDSpinBox, "CELLSIZE": self.cellSizeDSpinBox}
+        self.widget_map = {
+            "MANNING": self.manningDSpinBox,
+            "CELLSIZE": self.cellSizeDSpinBox,
+        }
 
         self.setup()
 
@@ -68,7 +83,9 @@ class SettingsDialog(qtBaseClass, uiDialog):
         toler_rows = self.parser.toler_rows
         extra_rows = [["IHOURDAILY", "IDEPLT"]]
         parameters = chain(
-            chain.from_iterable(cont_rows), chain.from_iterable(toler_rows), chain.from_iterable(extra_rows)
+            chain.from_iterable(cont_rows),
+            chain.from_iterable(toler_rows),
+            chain.from_iterable(extra_rows),
         )
         values = []
         for param in parameters:
@@ -259,7 +276,10 @@ class SettingsDialog(qtBaseClass, uiDialog):
         last_gpkg_dir = s.value("FLO-2D/lastGpkgDir", "")
         if not gpkg_path:
             gpkg_path, __ = QFileDialog.getOpenFileName(
-                None, "Select GeoPackage to connect", directory=last_gpkg_dir, filter="*.gpkg"
+                None,
+                "Select GeoPackage to connect",
+                directory=last_gpkg_dir,
+                filter="*.gpkg",
             )
         if not gpkg_path:
             return

@@ -10,7 +10,13 @@
 from collections import OrderedDict
 from math import isnan, sqrt
 
-from qgis.core import QgsCsException, QgsFeatureRequest, QgsPointXY, QgsRaster, QgsRectangle
+from qgis.core import (
+    QgsCsException,
+    QgsFeatureRequest,
+    QgsPointXY,
+    QgsRaster,
+    QgsRectangle,
+)
 
 from .errors import Flo2dError
 from .geopackage_utils import GeoPackageUtils
@@ -175,7 +181,12 @@ class UserCrossSection(GeoPackageUtils):
         self.name = None
         self.chan_x_row = None
         self.xsec = None
-        self.chan_x_tabs = {"N": "user_chan_n", "R": "user_chan_r", "T": "user_chan_t", "V": "user_chan_v"}
+        self.chan_x_tabs = {
+            "N": "user_chan_n",
+            "R": "user_chan_r",
+            "T": "user_chan_t",
+            "V": "user_chan_v",
+        }
 
     def get_row(self):
         qry = "SELECT * FROM user_xsections WHERE fid = ?;"
@@ -365,7 +376,11 @@ class UserCrossSection(GeoPackageUtils):
                     if result.isValid():
                         value = result.results()
                         xiyi.append(
-                            (self.fid, round(distance + sqrt((x - x1) ** 2 + (y - y1) ** 2), 2), round(value[1], 2))
+                            (
+                                self.fid,
+                                round(distance + sqrt((x - x1) ** 2 + (y - y1) ** 2), 2),
+                                round(value[1], 2),
+                            )
                         )
 
                 distance = distance + length_segment
@@ -467,7 +482,18 @@ class ChannelSegment(GeoPackageUtils):
     Channel segment object representation.
     """
 
-    columns = ["fid", "name", "depinitial", "froudc", "roughadj", "isedn", "notes", "user_lbank_fid", "rank", "geom"]
+    columns = [
+        "fid",
+        "name",
+        "depinitial",
+        "froudc",
+        "roughadj",
+        "isedn",
+        "notes",
+        "user_lbank_fid",
+        "rank",
+        "geom",
+    ]
 
     def __init__(self, fid, con, iface):
         super(ChannelSegment, self).__init__(con, iface)
@@ -601,7 +627,16 @@ class Inflow(GeoPackageUtils):
     Inflow object representation.
     """
 
-    columns = ["fid", "name", "time_series_fid", "ident", "inoutfc", "note", "geom_type", "bc_fid"]
+    columns = [
+        "fid",
+        "name",
+        "time_series_fid",
+        "ident",
+        "inoutfc",
+        "note",
+        "geom_type",
+        "bc_fid",
+    ]
 
     def __init__(self, fid, con, iface):
         super(Inflow, self).__init__(con, iface)
@@ -1075,7 +1110,12 @@ class Outflow(GeoPackageUtils):
         """
         Get first non-zero outflow data fid (i.e. ch_tser_fid, fp_tser_fid, chan_qhpar_fid or ch_qhtab_fid).
         """
-        data_fid_vals = [self.chan_tser_fid, self.chan_qhpar_fid, self.chan_qhtab_fid, self.fp_tser_fid]
+        data_fid_vals = [
+            self.chan_tser_fid,
+            self.chan_qhpar_fid,
+            self.chan_qhtab_fid,
+            self.fp_tser_fid,
+        ]
         return next((val for val in data_fid_vals if val), None)
 
     def clear_data_fids(self):

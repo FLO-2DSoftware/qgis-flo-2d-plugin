@@ -89,7 +89,12 @@ if __name__ == "__main__":
         if not nodata in ["None", "none"]:
             df = df[df.Z > (float(nodata) + 0.1)]  # assuming elevation smaller than nodata is nodata too
         df["gridno"] = str(grid_nodata)
-        df["gridno"] = df.apply(pixel_coord_from_xy, axis=1, args=(transform, shape[0], shape[1]), meta=("str"))
+        df["gridno"] = df.apply(
+            pixel_coord_from_xy,
+            axis=1,
+            args=(transform, shape[0], shape[1]),
+            meta=("str"),
+        )
         print("Long computation ...\n")
         series = df.groupby("gridno").Z.mean().compute()
 

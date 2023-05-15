@@ -519,7 +519,13 @@ class StormDrainProject(object):
 
     def add_LOSSES_to_INP_conduits_dictionary(self):
         try:
-            losses_cols = ["conduit_name", "losses_inlet", "losses_outlet", "losses_average", "losses_flapgate"]
+            losses_cols = [
+                "conduit_name",
+                "losses_inlet",
+                "losses_outlet",
+                "losses_average",
+                "losses_flapgate",
+            ]
             losses = self.select_this_INP_group("losses")
             if losses is not None:
                 for lo in losses:
@@ -535,7 +541,10 @@ class StormDrainProject(object):
                     else:
                         self.status_report += "Undefined Link (" + loss + ") reference at \n[LOSSES]\n" + lo + "\n\n"
         except Exception as e:
-            self.uc.show_error("ERROR 010422.0513: couldn't create a [LOSSES] group from storm drain .INP file!", e)
+            self.uc.show_error(
+                "ERROR 010422.0513: couldn't create a [LOSSES] group from storm drain .INP file!",
+                e,
+            )
 
     def add_XSECTIONS_to_INP_conduits_dictionary(self):
         try:
@@ -569,7 +578,10 @@ class StormDrainProject(object):
                         self.status_report += "Undefined Link (" + xsec + ") reference at  [XSECTIONS]\n" + xs + "\n\n"
 
         except Exception as e:
-            self.uc.show_error("ERROR 170618.0456: couldn't create a [XSECTIONS] group from storm drain .INP file!", e)
+            self.uc.show_error(
+                "ERROR 170618.0456: couldn't create a [XSECTIONS] group from storm drain .INP file!",
+                e,
+            )
 
     def add_XSECTIONS_to_INP_orifices_dictionary(self):
         try:
@@ -597,7 +609,10 @@ class StormDrainProject(object):
                         # an already existing key in dictionary INP_orifices.
 
         except Exception as e:
-            self.uc.show_error("ERROR 310322.1014: couldn't create a [XSECTIONS] group from storm drain .INP file!", e)
+            self.uc.show_error(
+                "ERROR 310322.1014: couldn't create a [XSECTIONS] group from storm drain .INP file!",
+                e,
+            )
 
     def add_XSECTIONS_to_INP_weirs_dictionary(self):
         try:
@@ -625,7 +640,10 @@ class StormDrainProject(object):
                         # an already existing key in dictionary INP_weirs.
 
         except Exception as e:
-            self.uc.show_error("ERROR 080422.1050: couldn't create a [XSECTIONS] group from storm drain .INP file!", e)
+            self.uc.show_error(
+                "ERROR 080422.1050: couldn't create a [XSECTIONS] group from storm drain .INP file!",
+                e,
+            )
 
     def add_SUBCATCHMENTS_to_INP_nodes_dictionary(self):
         try:
@@ -664,7 +682,13 @@ class StormDrainProject(object):
 
     def add_OUTFALLS_to_INP_nodes_dictionary(self):
         try:
-            out_cols = ["outfall", "outfall_invert_elev", "out_type", "series", "tide_gate"]
+            out_cols = [
+                "outfall",
+                "outfall_invert_elev",
+                "out_type",
+                "series",
+                "tide_gate",
+            ]
             # out_cols = ['outfall', 'outfall_invert_elev', 'outfall_type', 'boundary_condition','flapgate' ]
             outfalls = self.select_this_INP_group(
                 "outf"
@@ -700,11 +724,21 @@ class StormDrainProject(object):
                     outfall = out_dict.pop("outfall")
                     self.INP_nodes[outfall].update(out_dict)
         except Exception as e:
-            self.uc.show_error("ERROR 170618.0700: couldn't create a [OUTFALLS] group from storm drain .INP file!", e)
+            self.uc.show_error(
+                "ERROR 170618.0700: couldn't create a [OUTFALLS] group from storm drain .INP file!",
+                e,
+            )
 
     def add_JUNCTIONS_to_INP_nodes_dictionary(self):
         try:
-            jun_cols = ["junction", "junction_invert_elev", "max_depth", "init_depth", "surcharge_depth", "ponded_area"]
+            jun_cols = [
+                "junction",
+                "junction_invert_elev",
+                "max_depth",
+                "init_depth",
+                "surcharge_depth",
+                "ponded_area",
+            ]
             jnctns = self.select_this_INP_group(
                 "junc"
             )  # Returns the whole [JUNCTIONS] group from self.INP_groups. NOTE: Somehow 'junc' is used as key instead of 'JUNCTIONS'. Why?
@@ -751,7 +785,17 @@ class StormDrainProject(object):
 
     def create_INP_patterns_list_with_patterns(self):
         try:
-            pattern_cols = ["pattern_name", "type", "mult1", "mult2", "mult3", "mult4", "mult5", "mult6", "mult7"]
+            pattern_cols = [
+                "pattern_name",
+                "type",
+                "mult1",
+                "mult2",
+                "mult3",
+                "mult4",
+                "mult5",
+                "mult6",
+                "mult7",
+            ]
             patterns = self.select_this_INP_group("pattern")
             if patterns:
                 for patt in patterns:

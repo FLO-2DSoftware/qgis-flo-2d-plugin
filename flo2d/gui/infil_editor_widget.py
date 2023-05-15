@@ -476,7 +476,13 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
             QApplication.setOverrideCursor(Qt.WaitCursor)
             dlg.save_green_ampt_shapefile_fields()
             self.gutils.disable_geom_triggers()
-            soil_lyr, land_lyr, fields, vc_check, log_area_average = dlg.green_ampt_parameters()
+            (
+                soil_lyr,
+                land_lyr,
+                fields,
+                vc_check,
+                log_area_average,
+            ) = dlg.green_ampt_parameters()
             inf_calc = InfiltrationCalculator(self.grid_lyr, self.iface, self.gutils)
             inf_calc.setup_green_ampt(soil_lyr, land_lyr, vc_check, log_area_average, *fields)
             grid_params = inf_calc.green_ampt_infiltration()
@@ -740,7 +746,13 @@ class ChannelDialog(uiDialog_chan, qtBaseClass_chan):
         FROM chan AS c
         LEFT OUTER JOIN infil_chan_seg AS i
         ON c.fid = i.chan_seg_fid;"""
-        headers = ["Channel Name", "Channel FID", "Initial hyd. cond.", "Final hyd. cond.", "Max. Soil Depth"]
+        headers = [
+            "Channel Name",
+            "Channel FID",
+            "Initial hyd. cond.",
+            "Final hyd. cond.",
+            "Max. Soil Depth",
+        ]
         tab_data = self.con.execute(qry).fetchall()
         model = QStandardItemModel()
         for i, head in enumerate(headers):
@@ -785,8 +797,19 @@ class GreenAmptDialog(uiDialog_green, qtBaseClass_green):
         self.lyrs = lyrs
         self.setupUi(self)
         self.uc = UserCommunication(iface, "FLO-2D")
-        self.soil_combos = [self.xksat_cbo, self.rtimps_cbo, self.soil_depth_cbo, self.dtheta_cbo, self.psif_cbo]
-        self.land_combos = [self.saturation_cbo, self.vc_cbo, self.ia_cbo, self.rtimpl_cbo]
+        self.soil_combos = [
+            self.xksat_cbo,
+            self.rtimps_cbo,
+            self.soil_depth_cbo,
+            self.dtheta_cbo,
+            self.psif_cbo,
+        ]
+        self.land_combos = [
+            self.saturation_cbo,
+            self.vc_cbo,
+            self.ia_cbo,
+            self.rtimpl_cbo,
+        ]
         self.soil_cbo.currentIndexChanged.connect(self.populate_soil_fields)
         self.land_cbo.currentIndexChanged.connect(self.populate_land_fields)
 

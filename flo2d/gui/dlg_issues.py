@@ -45,7 +45,11 @@ from qgis.PyQt.QtWidgets import (
     qApp,
 )
 
-from ..flo2d_tools.grid_tools import get_adjacent_cell_elevation, grid_has_empty_elev, number_of_elements
+from ..flo2d_tools.grid_tools import (
+    get_adjacent_cell_elevation,
+    grid_has_empty_elev,
+    number_of_elements,
+)
 from ..geopackage_utils import GeoPackageUtils
 from ..gui.dlg_sampling_buildings_elevations import SamplingBuildingsElevationsDialog
 from ..gui.dlg_sampling_elev import SamplingElevDialog
@@ -88,7 +92,9 @@ class ErrorsDialog(qtBaseClass, uiDialog):
 
     def import_DEBUG_file(self):
         DEBUG_dir = QFileDialog.getExistingDirectory(
-            None, "Select FLO-2D program folder", directory=self.debug_file_lineEdit.text()
+            None,
+            "Select FLO-2D program folder",
+            directory=self.debug_file_lineEdit.text(),
         )
         if not DEBUG_dir:
             return
@@ -323,7 +329,10 @@ class IssuesFromDEBUGDialog(qtBaseClass, uiDialog):
         last_dir = s.value("FLO-2D/lastGdsDir", "")
         # last_dir = s.value("FLO-2D/lastDEBUGDir", s.value("FLO-2D/lastGdsDir"))
         debug_file, __ = QFileDialog.getOpenFileName(
-            None, "Select DEBUG file to import", directory=last_dir, filter="(DEBUG* debug*"
+            None,
+            "Select DEBUG file to import",
+            directory=last_dir,
+            filter="(DEBUG* debug*",
         )
         if not debug_file:
             return False
@@ -605,7 +614,13 @@ class IssuesFromDEBUGDialog(qtBaseClass, uiDialog):
                     for row in f:
                         values = row.split()
                         if values:
-                            self.errors.append([values[0], "9002", "CHANBANKEL.CHK : Bank - Floodplain = " + values[5]])
+                            self.errors.append(
+                                [
+                                    values[0],
+                                    "9002",
+                                    "CHANBANKEL.CHK : Bank - Floodplain = " + values[5],
+                                ]
+                            )
 
                             features.append(
                                 [
@@ -673,14 +688,26 @@ class IssuesFromDEBUGDialog(qtBaseClass, uiDialog):
                         if values:
                             if values[0] != "GRID":
                                 self.errors.append(
-                                    [values[0], "9003", "FPRIMELEV.OUT : Floodplain - Rim = " + values[3]]
+                                    [
+                                        values[0],
+                                        "9003",
+                                        "FPRIMELEV.OUT : Floodplain - Rim = " + values[3],
+                                    ]
                                 )
                                 cell = int(values[0])
                                 if self.n_cells >= cell and cell > 0:
                                     feat = next(self.grid.getFeatures(QgsFeatureRequest(cell)))
                                     x, y = feat.geometry().centroid().asPoint()
                                     features.append(
-                                        [x, y, values[0], values[1], values[2], values[3], values[4]]
+                                        [
+                                            x,
+                                            y,
+                                            values[0],
+                                            values[1],
+                                            values[2],
+                                            values[3],
+                                            values[4],
+                                        ]
                                     )  # x, y, cell, etc
                                 else:
                                     self.cells_out += 1
@@ -810,7 +837,15 @@ class IssuesFromDEBUGDialog(qtBaseClass, uiDialog):
                                 feat = next(self.grid.getFeatures(QgsFeatureRequest(cell)))
                                 x, y = feat.geometry().centroid().asPoint()
                                 features.append(
-                                    [x, y, values[0], values[1], values[2], values[3], values[4]]
+                                    [
+                                        x,
+                                        y,
+                                        values[0],
+                                        values[1],
+                                        values[2],
+                                        values[3],
+                                        values[4],
+                                    ]
                                 )  # x, y, cell, etc
                             else:
                                 self.cells_out += 1
@@ -934,7 +969,16 @@ class IssuesFromDEBUGDialog(qtBaseClass, uiDialog):
                             )
 
                             features.append(
-                                [values[0], values[1], values[2], values[3], values[4], values[5], values[6], values[7]]
+                                [
+                                    values[0],
+                                    values[1],
+                                    values[2],
+                                    values[3],
+                                    values[4],
+                                    values[5],
+                                    values[6],
+                                    values[7],
+                                ]
                             )  # x, y, cell, etc
 
                             cell = int(values[2])
@@ -1324,7 +1368,10 @@ class IssuesFromDEBUGDialog(qtBaseClass, uiDialog):
             vlayer = self.iface.addVectorLayer(shapefile, layerName, "ogr")
         except Exception as e:
             QApplication.restoreOverrideCursor()
-            self.uc.show_error("ERROR 190519.2015: error while loading shapefile\n\n " + shapefile + "!\n", e)
+            self.uc.show_error(
+                "ERROR 190519.2015: error while loading shapefile\n\n " + shapefile + "!\n",
+                e,
+            )
             return False
 
 
@@ -1472,7 +1519,13 @@ class CurrentConflictsDialog(qtBaseClass, uiDialog):
         # Inflow conflicts:
 
         self.conflict4(
-            "Inflows", "inflow_cells", "grid_fid", "Inflows", "inflow_cells", "grid_fid", "2 or more inflows"
+            "Inflows",
+            "inflow_cells",
+            "grid_fid",
+            "Inflows",
+            "inflow_cells",
+            "grid_fid",
+            "2 or more inflows",
         )
 
         self.conflict4(
@@ -1536,7 +1589,13 @@ class CurrentConflictsDialog(qtBaseClass, uiDialog):
         )
 
         self.conflict4(
-            "Inflows", "inflow_cells", "grid_fid", "Levees", "levee_data", "grid_fid", "Inflow and levee in same cell"
+            "Inflows",
+            "inflow_cells",
+            "grid_fid",
+            "Levees",
+            "levee_data",
+            "grid_fid",
+            "Inflow and levee in same cell",
         )
 
         self.conflict4(
@@ -1571,7 +1630,13 @@ class CurrentConflictsDialog(qtBaseClass, uiDialog):
 
         # Outflow conflicts:
         self.conflict4(
-            "Outflows", "outflow_cells", "grid_fid", "Outflows", "outflow_cells", "grid_fid", "2 or more outflows"
+            "Outflows",
+            "outflow_cells",
+            "grid_fid",
+            "Outflows",
+            "outflow_cells",
+            "grid_fid",
+            "2 or more outflows",
         )
 
         self.conflict4(
@@ -2140,7 +2205,13 @@ class CurrentConflictsDialog(qtBaseClass, uiDialog):
         # Street conflicts:
 
         self.conflict4(
-            "Streets", "street_seg", "igridn", "Streets", "street_seg", "igridn", "2 or more Streets in same cell"
+            "Streets",
+            "street_seg",
+            "igridn",
+            "Streets",
+            "street_seg",
+            "igridn",
+            "2 or more Streets in same cell",
         )
 
         self.setWindowTitle("Errors and Warnings for: " + self.issue1 + " with " + self.issue2)
