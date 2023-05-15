@@ -11,6 +11,7 @@ about=QGIS tools for FLO-2D
 changelog=
  <p>0.10.103
   - Sediment transport dialog: allow more than 2 decimals in Diameter and Percent Finer columns.
+  - OK/Cancel buttons in Sediment Transport dialog is now fixed at bottom when scrolling vertically.
  <p>0.10.102
   - Check time series dates within start and end of simulation (when writing SWMM.INP).
  <p>0.10.101
