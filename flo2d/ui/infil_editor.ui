@@ -40,7 +40,7 @@
      <item row="0" column="0">
       <widget class="QToolButton" name="create_polygon_btn">
        <property name="toolTip">
-        <string>Add infiltration polygon</string>
+        <string>Add infiltration polygon.</string>
        </property>
        <property name="text">
         <string>...</string>
@@ -66,7 +66,7 @@
         </size>
        </property>
        <property name="toolTip">
-        <string>Revert unsaved changes for current infiltration polygon</string>
+        <string>Revert unsaved changes for current infiltration polygon.</string>
        </property>
        <property name="text">
         <string/>
@@ -86,7 +86,7 @@
      <item row="0" column="5">
       <widget class="QToolButton" name="schema_btn">
        <property name="toolTip">
-        <string>Schematize infiltration polygons</string>
+        <string>Schematize infiltration polygons.</string>
        </property>
        <property name="text">
         <string>...</string>
@@ -124,6 +124,9 @@
          <height>0</height>
         </size>
        </property>
+       <property name="toolTip">
+        <string>Define global infiltration first.</string>
+       </property>
        <property name="text">
         <string>Global Infiltration</string>
        </property>
@@ -132,7 +135,7 @@
      <item row="0" column="2">
       <widget class="QToolButton" name="save_changes_btn">
        <property name="toolTip">
-        <string>Save current infiltration</string>
+        <string>Save current infiltration.</string>
        </property>
        <property name="text">
         <string>...</string>
@@ -152,7 +155,7 @@
      <item row="0" column="4">
       <widget class="QToolButton" name="delete_btn">
        <property name="toolTip">
-        <string>Delete current infiltration polygon</string>
+        <string>Delete current infiltration polygon.</string>
        </property>
        <property name="text">
         <string>...</string>
@@ -178,6 +181,9 @@
      </property>
      <item>
       <widget class="QLabel" name="label">
+       <property name="toolTip">
+        <string>Name of the infiltration feature.</string>
+       </property>
        <property name="text">
         <string>Infiltration name</string>
        </property>
@@ -203,6 +209,9 @@
          <width>150</width>
          <height>0</height>
         </size>
+       </property>
+       <property name="toolTip">
+        <string>Select infitration feature.</string>
        </property>
        <property name="editable">
         <bool>false</bool>
@@ -276,6 +285,9 @@
             <height>16777215</height>
            </size>
           </property>
+          <property name="toolTip">
+           <string>Calculate  Green-Ampt infiltration from soil and landuse polygons.</string>
+          </property>
           <property name="layoutDirection">
            <enum>Qt::LeftToRight</enum>
           </property>
@@ -300,6 +312,11 @@
         <layout class="QGridLayout" name="gridLayout_2">
          <item row="1" column="0">
           <widget class="QLabel" name="label_4">
+           <property name="toolTip">
+            <string>DTHETA
+Soil moisture deficit of the selected feature.
+ </string>
+           </property>
            <property name="text">
             <string>Soil Moisture Deficit</string>
            </property>
@@ -343,6 +360,11 @@
          </item>
          <item row="0" column="2">
           <widget class="QLabel" name="label_3">
+           <property name="toolTip">
+            <string>SOILS
+Capillary suction head for the selected feature.
+(in or mm)</string>
+           </property>
            <property name="text">
             <string>Capillary Suction</string>
            </property>
@@ -366,6 +388,9 @@
          </item>
          <item row="0" column="0">
           <widget class="QLabel" name="label_2">
+           <property name="toolTip">
+            <string>Hydraulic conductivity of the selected feature. (in/hr or mm/hr)</string>
+           </property>
            <property name="text">
             <string>Hydraulic Conduct.</string>
            </property>
@@ -379,6 +404,11 @@
          </item>
          <item row="1" column="2">
           <widget class="QLabel" name="label_5">
+           <property name="toolTip">
+            <string>ABSTRINF
+Initial abstraction for the selected feature.
+(in or mm)</string>
+           </property>
            <property name="text">
             <string>Rainfall Abstraction</string>
            </property>
@@ -392,6 +422,11 @@
          </item>
          <item row="2" column="0">
           <widget class="QLabel" name="label_6">
+           <property name="toolTip">
+            <string>RTIMPF
+Percent Impervious area of the selected feature.
+(decimal percentage)</string>
+           </property>
            <property name="text">
             <string>Impervious Area</string>
            </property>
@@ -415,6 +450,12 @@
          </item>
          <item row="2" column="2">
           <widget class="QLabel" name="label_7">
+           <property name="toolTip">
+            <string>SOIL_DEPTH
+Soil depth for the selected feature.
+Not used if global soil depth is 0.
+(ft or m)</string>
+           </property>
            <property name="text">
             <string>Soil Depth</string>
            </property>
@@ -453,6 +494,11 @@
         <layout class="QGridLayout" name="gridLayout_3">
          <item row="0" column="1">
           <widget class="QLabel" name="label_8">
+           <property name="toolTip">
+            <string>HYDCONCH
+Hydraulic conductivity for the selected feature.
+(in/hr or mm/hr)</string>
+           </property>
            <property name="text">
             <string>Hydraulic Conduct.</string>
            </property>
@@ -511,6 +557,10 @@
      <layout class="QGridLayout" name="gridLayout_4">
       <item row="1" column="1">
        <widget class="QLabel" name="label_9">
+        <property name="toolTip">
+         <string>SCSCN
+Curve number for the selected feature.</string>
+        </property>
         <property name="text">
          <string>SCS Curve Number</string>
         </property>
@@ -565,6 +615,11 @@
      <layout class="QGridLayout" name="gridLayout_5">
       <item row="0" column="0">
        <widget class="QLabel" name="label_10">
+        <property name="toolTip">
+         <string>FHORTF
+Initial Horton infiltration rate for the selected feature.
+(in/hr both unit systems}</string>
+        </property>
         <property name="text">
          <string>Initial Rate</string>
         </property>
@@ -578,6 +633,11 @@
       </item>
       <item row="0" column="2">
        <widget class="QLabel" name="label_11">
+        <property name="toolTip">
+         <string>FHORTI
+Final Horton infiltration rate for the selected feature.
+(in/hr both unit systems}</string>
+        </property>
         <property name="text">
          <string>Final Rate</string>
         </property>
@@ -591,6 +651,11 @@
       </item>
       <item row="0" column="4">
        <widget class="QLabel" name="label_12">
+        <property name="toolTip">
+         <string>DECA
+Horton decay coefficient for the selected feature.
+(1/second)</string>
+        </property>
         <property name="text">
          <string>Decay Coeff.</string>
         </property>
@@ -604,6 +669,9 @@
       </item>
       <item row="0" column="1">
        <widget class="QDoubleSpinBox" name="spin_fhorti">
+        <property name="toolTip">
+         <string/>
+        </property>
         <property name="decimals">
          <number>4</number>
         </property>

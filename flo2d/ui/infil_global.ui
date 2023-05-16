@@ -50,8 +50,13 @@
         <property name="enabled">
          <bool>false</bool>
         </property>
+        <property name="toolTip">
+         <string>HYDCHN
+Average global hydraulic conductivity for the entire channel.
+(in/hr or mm/hr)</string>
+        </property>
         <property name="text">
-         <string>Initial Hydraulic Conductivity</string>
+         <string>Global Hydraulic Conductivity</string>
         </property>
         <property name="wordWrap">
          <bool>true</bool>
@@ -61,7 +66,7 @@
       <item row="4" column="0">
        <widget class="QCheckBox" name="cb_infchan">
         <property name="enabled">
-         <bool>false</bool>
+         <bool>true</bool>
         </property>
         <property name="text">
          <string>Channel Infiltration</string>
@@ -80,6 +85,14 @@
       </item>
       <item row="3" column="0">
        <widget class="QLabel" name="label_4">
+        <property name="toolTip">
+         <string>HYDADJ
+Hydraulic conductivity adjustment variable for spatially variable hydraulic conductivity.
+
+0.01 to 1; HYDCON = HYDCON + HYDCADJ
+1 to 100; HYDCON = HYDCON * HYDCADJ
+-2 to -1; HYDCON = HYDCON * 2.HYDCADJ</string>
+        </property>
         <property name="lineWidth">
          <number>1</number>
         </property>
@@ -109,6 +122,13 @@
       </item>
       <item row="3" column="2">
        <widget class="QLabel" name="label_8">
+        <property name="toolTip">
+         <string>SOILD
+Global infiltration limiting depth storage.
+Set SOILD = 0 to have unlimited infiltration.
+If SOILD = 0, spatially variable soil depth will not be used.
+(ft or m)</string>
+        </property>
         <property name="text">
          <string>Soil Depth</string>
         </property>
@@ -132,6 +152,11 @@
       </item>
       <item row="2" column="0">
        <widget class="QLabel" name="label_3">
+        <property name="toolTip">
+         <string>HYDCALL
+Average global floodplain hydraulic conductivity.
+(in/hr or mm/hr)</string>
+        </property>
         <property name="text">
          <string>Average global floodplain hydraulic conductivity</string>
         </property>
@@ -155,6 +180,11 @@
       </item>
       <item row="2" column="2">
        <widget class="QLabel" name="label_7">
+        <property name="toolTip">
+         <string>SOILALL
+Average global floodplain capillary suction head.
+(in or mm)</string>
+        </property>
         <property name="text">
          <string>Soil Suction</string>
         </property>
@@ -178,6 +208,12 @@
       </item>
       <item row="1" column="0">
        <widget class="QLabel" name="label_2">
+        <property name="toolTip">
+         <string>POROS
+Global floodplain soil porosity.
+If using the volumetric soil moisture deficiency for DTHETA, set POROS = 0.
+(Volume pore space  Volume soil sample)</string>
+        </property>
         <property name="text">
          <string>Soil Porosity</string>
         </property>
@@ -191,6 +227,11 @@
       </item>
       <item row="0" column="0">
        <widget class="QLabel" name="label">
+        <property name="toolTip">
+         <string>ABSTR
+Green Ampt global floodplain rainfall abstraction or interception.
+(in or mm)</string>
+        </property>
         <property name="text">
          <string>Initial Abstraction</string>
         </property>
@@ -214,6 +255,9 @@
       </item>
       <item row="0" column="1">
        <widget class="QDoubleSpinBox" name="spin_abstr">
+        <property name="toolTip">
+         <string/>
+        </property>
         <property name="decimals">
          <number>4</number>
         </property>
@@ -224,6 +268,11 @@
       </item>
       <item row="0" column="2">
        <widget class="QLabel" name="label_5">
+        <property name="toolTip">
+         <string>SATI
+Global initial saturation of the soil.
+(Volume Water / Volume Void)</string>
+        </property>
         <property name="text">
          <string>Initial Saturation</string>
         </property>
@@ -237,6 +286,11 @@
       </item>
       <item row="1" column="2">
        <widget class="QLabel" name="label_6">
+        <property name="toolTip">
+         <string>SATF
+Global final saturation of the soil.
+(Volume Water / Volume Void)</string>
+        </property>
         <property name="text">
          <string>Final Saturation</string>
         </property>
@@ -304,6 +358,12 @@
       </item>
       <item row="0" column="3">
        <widget class="QLabel" name="label_11">
+        <property name="toolTip">
+         <string>ABSTRSCS
+SCS global floodplain rainfall abstraction or interception.
+Assign ABSTRSCS = 0 for automatic computation of the initial abstraction.
+(in or mm)</string>
+        </property>
         <property name="text">
          <string>Abstraction</string>
         </property>
@@ -317,6 +377,13 @@
       </item>
       <item row="0" column="0">
        <widget class="QLabel" name="label_10">
+        <property name="toolTip">
+         <string>SCSCNALL
+Global floodplain SCS curve number for infiltration.
+The variable can range from 1 to 99 but use engineering judgment.
+Values lower than 67 will result in an excessive loss.
+Variables higher than 99 will be reset to 99.</string>
+        </property>
         <property name="text">
          <string>Curve Number</string>
         </property>
@@ -367,6 +434,11 @@
       </property>
       <item row="0" column="3">
        <widget class="QLabel" name="label_12">
+        <property name="toolTip">
+         <string>FHORTONF
+Global Horton final infiltration rate.
+(in/hr both unit systems)</string>
+        </property>
         <property name="text">
          <string>Final Rate</string>
         </property>
@@ -390,6 +462,11 @@
       </item>
       <item row="0" column="6">
        <widget class="QLabel" name="label_14">
+        <property name="toolTip">
+         <string>DECAYA
+Horton global decay coefficient.
+(1/second)</string>
+        </property>
         <property name="text">
          <string>Decay Coeff.</string>
         </property>
@@ -423,6 +500,11 @@
       </item>
       <item row="0" column="0">
        <widget class="QLabel" name="label_13">
+        <property name="toolTip">
+         <string>FHORTONI
+Global Horton initial infiltration rate.
+(in/hr both unit systems)</string>
+        </property>
         <property name="text">
          <string>Initial Rate</string>
         </property>
