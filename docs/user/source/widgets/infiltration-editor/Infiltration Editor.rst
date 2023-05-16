@@ -23,11 +23,12 @@ This option will set up uniform infiltration data for every grid element.
 
 .. image:: ../../img/Infiltration-Editor/Infilt004.png
 
-Spatial Infiltration from User Layer
-------------------------------------
+Spatial Infiltration Areas User Layer
+--------------------------------------
 
-Spatially variable floodplain infiltration is set by digitizing infiltration polygons or importing infiltration polygons.
-Use the polygon editor to digitize spatially variable infiltration.
+Spatially variable floodplain infiltration is set by digitizing infiltration polygons into the Infiltration Areas user
+layer. Use the polygon editor to digitize spatially variable infiltration.
+
 Create a polygon to represent an area of infiltration.
 
 1. Click the create  
@@ -229,8 +230,8 @@ infiltration curve numbers.
 
 .. image:: ../../img/Infiltration-Editor/Infilt020.png
 
-Spatial Infiltration from User Layer
-------------------------------------
+Spatial SCS Infiltration from Infiltration Areas User Layer
+-------------------------------------------------------------
 
 .. note:: This method is the most effective way to sample SCS data.  If using the other calculators, review SCS column
           for errors.
