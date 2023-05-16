@@ -2565,5 +2565,38 @@
   </layout>
  </widget>
  <resources/>
- <connections/>
+ <connections>
+  <connection>
+   <sender>buttonBox</sender>
+   <signal>accepted()</signal>
+   <receiver>Dialog</receiver>
+   <slot>accept()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>561</x>
+     <y>750</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>1254</x>
+     <y>618</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>buttonBox</sender>
+   <signal>rejected()</signal>
+   <receiver>Dialog</receiver>
+   <slot>reject()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>732</x>
+     <y>741</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>1251</x>
+     <y>654</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
 </ui>
