@@ -1512,8 +1512,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
     def import_swmmflo(self):
         swmmflo_sql = [
             """INSERT INTO swmmflo (geom, swmmchar, swmm_jt, swmm_iden, intype, swmm_length,
-                                               swmm_width, swmm_height, swmm_coeff, flapgate, curbheight) VALUES""",
-            11,
+                                               swmm_width, swmm_height, swmm_coeff, flapgate, curbheight, swmm_feature) VALUES""",
+            12,
         ]
 
         self.clear_tables("swmmflo")
@@ -1523,6 +1523,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
         for row in data:
             gid = row[1]
             geom = cells[gid]
+            row.append(row[8])
             swmmflo_sql += [(geom,) + tuple(row)]
 
         self.batch_execute(swmmflo_sql)
