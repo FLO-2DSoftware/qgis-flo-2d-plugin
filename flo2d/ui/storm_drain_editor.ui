@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>440</width>
-    <height>485</height>
+    <height>523</height>
    </rect>
   </property>
   <property name="minimumSize">
@@ -180,7 +180,7 @@
         </size>
        </property>
        <property name="toolTip">
-        <string>Schematize storm drain components</string>
+        <string>Schematize from User layer ' Storm Drain Nodes'</string>
        </property>
        <property name="text">
         <string>...</string>
