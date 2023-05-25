@@ -1114,7 +1114,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
         except Exception as e:
             self.uc.show_error(
-                "ERROR 280122.1938.: couldn't import SIMPLE_MULT.DAT file!"
+                "ERROR 280122.1938: couldn't import SIMPLE_MULT.DAT file!"
                 + "\n__________________________________________________",
                 e,
             )
@@ -1161,6 +1161,20 @@ class Flo2dGeoPackage(GeoPackageUtils):
             ["R", areas_r_sql, cells_r_sql],
         ]
 
+        new_dict = {
+            "M": [],
+            "C": [],
+            "Z": [],
+            "P": [],
+            "D": [],
+            "E": [],
+            "R": [],
+            "S": [],
+            "N": [],
+            "G": [],
+        }  # Create a new empty dictionary
+        error = ""
+
         self.clear_tables(
             "mud",
             "mud_areas",
@@ -1179,83 +1193,115 @@ class Flo2dGeoPackage(GeoPackageUtils):
             "sed_supply_frac_data",
         )
 
-        data = self.parser.parse_sed()
-        gids = (x[0] for x in chain(data["D"], data["G"], data["R"], data["S"]))
-        cells = self.grid_centroids(gids)
-        for row in data["M"]:
-            sed_m_sql += [tuple(row)]
-        for row in data["C"]:
-            erow = ["10.0"]
-            if data["E"]:
-                erow = data["E"][0]
-            if erow:
-                row += erow
-            else:
-                row.append(None)
-            sed_c_sql += [tuple(row)]
-        for i, row in enumerate(data["Z"], 1):
-            sgf_sql += [(i,)]
-            sed_z_sql += [(i,) + tuple(row[:-1])]
-            for prow in row[-1]:
-                sed_p_sql += [(i,) + tuple(prow)]
-        for char, asql, csql in parts:
-            for i, row in enumerate(data[char], 1):
+        try:
+            n_cells = self.gutils.execute("SELECT COUNT(fid) FROM grid;").fetchone()[0]
+            data = self.parser.parse_sed()
+            for key, value in data.items():
+                # If value satisfies the condition, then store it in new_dict
+                if key == "S":
+                    for v in value:
+                        if int(v[0]) <= n_cells:
+                            new_dict["S"].append(v)
+                        else:
+                            error += v[0] + "\n"
+                else:
+                    for v in value:
+                        new_dict[key].append(v)
+
+            data = new_dict
+            gids = (x[0] for x in chain(data["D"], data["G"], data["R"], data["S"]))
+            cells = self.grid_centroids(gids)
+            for row in data["M"]:
+                sed_m_sql += [tuple(row)]
+            for row in data["C"]:
+                erow = ["10.0"]
+                if data["E"]:
+                    erow = data["E"][0]
+                if erow:
+                    row += erow
+                else:
+                    row.append(None)
+                sed_c_sql += [tuple(row)]
+            for i, row in enumerate(data["Z"], 1):
+                sgf_sql += [(i,)]
+                sed_z_sql += [(i,) + tuple(row[:-1])]
+                for prow in row[-1]:
+                    sed_p_sql += [(i,) + tuple(prow)]
+            for char, asql, csql in parts:
+                for i, row in enumerate(data[char], 1):
+                    gid = row[0]
+                    vals = row[1:]
+                    geom = self.build_square(cells[gid], self.shrink)
+                    asql += [(geom,) + tuple(vals)]
+                    csql += [(i, gid)]
+
+            for i, row in enumerate(data["S"], 1):
                 gid = row[0]
-                vals = row[1:]
+                vals = row[1:-1]
+                nrows = row[-1]
                 geom = self.build_square(cells[gid], self.shrink)
-                asql += [(geom,) + tuple(vals)]
-                csql += [(i, gid)]
+                areas_s_sql += [(geom, i) + tuple(vals)]
+                cells_s_sql += [(i, gid)]
+                for ii, nrow in enumerate(nrows, 1):
+                    sed_n_sql += [(ii,)]
+                    data_n_sql += [(i,) + tuple(nrow)]
+            triggers = self.execute("SELECT name, enabled FROM trigger_control").fetchall()
+            self.batch_execute(
+                sed_m_sql,
+                areas_d_sql,
+                cells_d_sql,
+                sed_c_sql,
+                sgf_sql,
+                sed_z_sql,
+                areas_g_sql,
+                cells_g_sql,
+                sed_p_sql,
+                areas_r_sql,
+                # cells_r_sql,
+                areas_s_sql,
+                cells_s_sql,
+                sed_n_sql,
+                data_n_sql,
+            )
 
-        for i, row in enumerate(data["S"], 1):
-            gid = row[0]
-            vals = row[1:-1]
-            nrows = row[-1]
-            geom = self.build_square(cells[gid], self.shrink)
-            areas_s_sql += [(geom, i) + tuple(vals)]
-            cells_s_sql += [(i, gid)]
-            for ii, nrow in enumerate(nrows, 1):
-                sed_n_sql += [(ii,)]
-                data_n_sql += [(i,) + tuple(nrow)]
-        triggers = self.execute("SELECT name, enabled FROM trigger_control").fetchall()
-        self.batch_execute(
-            sed_m_sql,
-            areas_d_sql,
-            cells_d_sql,
-            sed_c_sql,
-            sgf_sql,
-            sed_z_sql,
-            areas_g_sql,
-            cells_g_sql,
-            sed_p_sql,
-            areas_r_sql,
-            # cells_r_sql,
-            areas_s_sql,
-            cells_s_sql,
-            sed_n_sql,
-            data_n_sql,
-        )
+            if self.is_table_empty("mud_cells"):
+                self.set_cont_par("IDEBRV", 0)
 
-        if self.is_table_empty("mud_cells"):
-            self.set_cont_par("IDEBRV", 0)
+            if data["M"] == [] and data["C"] == []:
+                self.set_cont_par("MUD", 0)
+                self.set_cont_par("ISED", 0)
 
-        if data["M"] == [] and data["C"] == []:
-            self.set_cont_par("MUD", 0)
-            self.set_cont_par("ISED", 0)
+            elif data["M"] == [] and data["C"] != []:
+                self.set_cont_par("MUD", 0)
+                self.set_cont_par("ISED", 1)
 
-        elif data["M"] == [] and data["C"] != []:
-            self.set_cont_par("MUD", 0)
-            self.set_cont_par("ISED", 1)
+            elif data["M"] != [] and data["C"] == []:
+                self.set_cont_par("MUD", 1)
+                self.set_cont_par("ISED", 0)
 
-        elif data["M"] != [] and data["C"] == []:
-            self.set_cont_par("MUD", 1)
-            self.set_cont_par("ISED", 0)
+            elif data["M"] != [] and data["C"] != []:
+                self.set_cont_par("MUD", 2)
+                self.set_cont_par("ISED", 0)
 
-        elif data["M"] != [] and data["C"] != []:
-            self.set_cont_par("MUD", 2)
-            self.set_cont_par("ISED", 0)
+            # Also triggers the creation of rigid cells (rigid_cells table):
+            # self.batch_execute(areas_r_sql)
+            if error != "":
+                QApplication.restoreOverrideCursor()
+                self.uc.show_info(
+                    "WARNING 190523.0432: some cells are outside the domain in file SED.DAT.\n"
+                    + "They were omitted:\n\n"
+                    + error,
+                )
+                QApplication.setOverrideCursor(Qt.WaitCursor)
 
-        # Also triggers the creation of rigid cells (rigid_cells table):
-        # self.batch_execute(areas_r_sql)
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.uc.show_error(
+                "ERROR 180523.0453: couldn't import SED.DAT file!"
+                + "\n__________________________________________________",
+                e,
+            )
+            QApplication.setOverrideCursor(Qt.WaitCursor)
 
     def import_levee(self):
         lgeneral_sql = [
@@ -1466,8 +1512,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
     def import_swmmflo(self):
         swmmflo_sql = [
             """INSERT INTO swmmflo (geom, swmmchar, swmm_jt, swmm_iden, intype, swmm_length,
-                                               swmm_width, swmm_height, swmm_coeff, flapgate, curbheight) VALUES""",
-            11,
+                                               swmm_width, swmm_height, swmm_coeff, flapgate, curbheight, swmm_feature) VALUES""",
+            12,
         ]
 
         self.clear_tables("swmmflo")
@@ -1477,6 +1523,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
         for row in data:
             gid = row[1]
             geom = cells[gid]
+            row.append(row[8])
             swmmflo_sql += [(geom,) + tuple(row)]
 
         self.batch_execute(swmmflo_sql)
@@ -3288,7 +3335,11 @@ class Flo2dGeoPackage(GeoPackageUtils):
             with open(swmmflo, "w") as s:
                 for row in swmmflo_rows:
                     new_row = []
-                    if row[2][0] in ["I", "i"]:
+                    if row[2][0] in ["I", "i"]:   # First letter of name (swmm_iden) is 
+                                                  # "I" or "i" for inlet,
+                                                  # "IM" or "im" for manhole
+                                                  # "j" or "J" for junctions
+                                                  # "O" or "o" for outfalls.
                         for i, item in enumerate(row, 1):
                             new_row.append(item if item is not None else 0)
                         s.write(line1.format(*new_row))

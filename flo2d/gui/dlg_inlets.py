@@ -111,6 +111,7 @@ class InletNodesDialog(qtBaseClass, uiDialog):
         self.inlets_tblw.verticalHeader().sectionClicked.connect(self.onVerticalSectionClicked)
 
         self.set_header()
+        self.inlets_note_lbl.setText("Values for files: (1) SWMMFLO.DAT     (2) SWMMFLORT.DAT     (3) SDCLOGGING.DAT")
 
         self.populate_inlets()
 

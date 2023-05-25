@@ -2026,7 +2026,15 @@
                            </column>
                            <column>
                             <property name="text">
-                             <string>Chan/FP</string>
+                             <string>Chan(1)/FP(0)</string>
+                            </property>
+                            <property name="font">
+                             <font>
+                              <pointsize>7</pointsize>
+                             </font>
+                            </property>
+                            <property name="textAlignment">
+                             <set>AlignLeading|AlignVCenter</set>
                             </property>
                            </column>
                            <column>

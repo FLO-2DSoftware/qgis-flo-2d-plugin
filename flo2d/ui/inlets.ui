@@ -9,7 +9,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>721</width>
+    <width>986</width>
     <height>754</height>
    </rect>
   </property>
@@ -805,6 +805,12 @@
                 <height>23</height>
                </size>
               </property>
+              <property name="toolTip">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;0 = Horizontal Inlet&lt;/p&gt;&lt;p&gt;1 = Vertical Inlet&lt;/p&gt;&lt;p&gt;2 = Flapgate&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
+              <property name="maximum">
+               <number>2</number>
+              </property>
              </widget>
             </item>
            </layout>
@@ -983,7 +989,7 @@
        </layout>
       </item>
       <item row="3" column="0">
-       <widget class="QLabel" name="label_9">
+       <widget class="QLabel" name="inlets_note_lbl">
         <property name="sizePolicy">
          <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
           <horstretch>50</horstretch>
