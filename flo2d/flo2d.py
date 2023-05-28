@@ -1891,6 +1891,7 @@ class Flo2D(object):
                 "Import selected GDS file",
                 "Import from {0} file is not supported.".format(bname),
             )
+            return
 
         if self.f2g.set_parser(fname):
             call_string = file_to_import_calls[bname]

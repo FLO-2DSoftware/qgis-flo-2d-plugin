@@ -759,9 +759,10 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         """
         self.uc.clear_bar_messages()
 
-        if self.gutils.is_table_empty("user_model_boundary"):
-            self.uc.bar_warn("There is no computational domain! Please digitize it before running tool.")
-            return
+        # if self.gutils.is_table_empty("user_model_boundary"):
+        #     self.uc.bar_warn("There is no computational domain! Please digitize it before running tool.")
+        #     return
+        
         if self.gutils.is_table_empty("grid"):
             self.uc.bar_warn("There is no grid! Please create it before running tool.")
             return
@@ -3399,18 +3400,21 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         Shows import shapefile dialog.
 
         """
-        # # See if there are inlets:
-        # if self.gutils.is_table_empty('user_swmm_conduits'):
-        #     self.uc.bar_warn('User Layer "Storm Drain Conduits" is empty!.')
-        #     return
-        # self.uc.clear_bar_messages()
-        #
-        # if self.gutils.is_table_empty('user_model_boundary'):
-        #     self.uc.bar_warn('There is no computational domain! Please digitize it before running tool.')
-        #     return
-        # if self.gutils.is_table_empty('grid'):
-        #     self.uc.bar_warn('There is no grid! Please create it before running tool.')
-        #     return
+        if self.gutils.is_table_empty('user_model_boundary'):
+            self.uc.bar_warn('There is no computational domain! Please digitize it before running tool.')
+            return
+
+        point_or_line_layers = False
+        layers = self.lyrs.list_group_vlayers()
+        for l in layers:
+            if l.geometryType() in [QgsWkbTypes.PointGeometry, QgsWkbTypes.LineGeometry]:
+                if l.featureCount() > 0:
+                    point_or_line_layers = True
+                    break
+        if not point_or_line_layers:
+            QApplication.restoreOverrideCursor()
+            self.uc.bar_warn("There aren't any line or point layers (or they are not visible)!")
+            return
 
         dlg_shapefile = StormDrainShapefile(self.con, self.iface, self.lyrs)
         dlg_shapefile.components_tabWidget.setCurrentPage = 0
