@@ -761,20 +761,20 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
 
         # if self.gutils.is_table_empty("user_model_boundary"):
         #     self.uc.bar_warn("There is no computational domain! Please digitize it before running tool.")
-        #     return
-        
+        #     return False
+
         if self.gutils.is_table_empty("grid"):
             self.uc.bar_warn("There is no grid! Please create it before running tool.")
-            return
+            return False
 
         s = QSettings()
         #         last_dir = s.value('FLO-2D/lastGpkgDir', '')
-        last_dir = s.value("FLO-2D/lastSWMMDir", "")
+        last_dir = s.value("FLO-2D/lastGdsDir", "")
         swmm_file, __ = QFileDialog.getOpenFileName(
             None, "Select SWMM input file to import data", directory=last_dir, filter="(*.inp *.INP*)"
         )
         if not swmm_file:
-            return
+            return False
         s.setValue("FLO-2D/lastSWMMDir", os.path.dirname(swmm_file))
 
         QApplication.setOverrideCursor(Qt.WaitCursor)
@@ -821,9 +821,9 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 self.uc.show_warn(
                     "WARNING 060319.1729: SWMM input file\n\n " + swmm_file + "\n\n has no coordinates defined!"
                 )
-                return
+                return False
             elif ret == 0:
-                return
+                return False
 
             # Build Nodes:
             if storm_drain.create_INP_nodes_dictionary_with_coordinates() == 0:
@@ -831,13 +831,13 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 self.uc.show_warn(
                     "WARNING 060319.1730: SWMM input file\n\n " + swmm_file + "\n\n has no coordinates defined!"
                 )
-                return
+                return False
             else:
                 QApplication.restoreOverrideCursor()
                 if not self.gutils.is_table_empty("user_swmm_nodes"):
                     complete_or_create = self.import_INP_action()
                     if complete_or_create == "Cancel":
-                        return
+                        return False
                 else:
                     complete_or_create = "Create New"
 
@@ -1040,7 +1040,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         except Exception as e:
             QApplication.restoreOverrideCursor()
             self.uc.show_error("ERROR 080618.0448: reading SWMM input file failed!", e)
-            return
+            return False
 
         # JUNCTIONS/OUTFALLS: Create User Junctions and Outfalls layers:
         try:
@@ -1238,7 +1238,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 + "Please check your SWMM input data.\nAre the nodes coordinates inside the computational domain?",
                 e,
             )
-            return
+            return False
 
         # CONDUITS: Create User Conduits layer:
         if complete_or_create == "Create New":
@@ -1817,6 +1817,8 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         self.pump_curve_cbo.blockSignals(True)
         self.update_pump_curve_data()
         self.pump_curve_cbo.blockSignals(False)
+
+        return True
 
     def import_INP_action(self):
         msg = QMessageBox()
@@ -3400,8 +3402,8 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         Shows import shapefile dialog.
 
         """
-        if self.gutils.is_table_empty('user_model_boundary'):
-            self.uc.bar_warn('There is no computational domain! Please digitize it before running tool.')
+        if self.gutils.is_table_empty("user_model_boundary"):
+            self.uc.bar_warn("There is no computational domain! Please digitize it before running tool.")
             return
 
         point_or_line_layers = False

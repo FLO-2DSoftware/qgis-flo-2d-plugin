@@ -46,7 +46,6 @@ from qgis.PyQt.QtWidgets import (
     qApp,
 )
 from urllib3.contrib import _securetransport
-
 from .flo2d_ie.flo2dgeopackage import Flo2dGeoPackage
 from .flo2d_tools.channel_profile_tool import ChannelProfile
 from .flo2d_tools.flopro_tools import (
@@ -87,6 +86,7 @@ from .gui.f2d_main_widget import FLO2DWidget
 from .gui.grid_info_widget import GridInfoWidget
 from .gui.plot_widget import PlotWidget
 from .gui.table_editor_widget import TableEditorWidget
+from .gui.storm_drain_editor_widget import StormDrainEditorWidget
 from .layers import Layers
 from .user_communication import UserCommunication
 
@@ -1291,6 +1291,10 @@ class Flo2D(object):
                     self.uc.bar_info("Flo2D model imported", dur=3)
                     self.gutils.enable_geom_triggers()
 
+                    if "Storm Drain" in dlg_components.components:
+                        if self.f2d_widget.storm_drain_editor.import_storm_drain_INP_file():
+                            self.files_used += "SWMM.INP" + "\n"
+
                     if "import_chan" in import_calls:
                         self.gutils.create_schematized_rbank_lines_from_xs_tips()
 
@@ -1357,7 +1361,8 @@ class Flo2D(object):
                         msg += "must be done using the "
                         msg += "<FONT COLOR=green>Conversion from Schematic Layers to User Layers</FONT>"
                         msg += " tool in the <FONT COLOR=blue>FLO-2D panel</FONT>...<br>"
-                        msg += "...and <FONT COLOR=green>Import SWMM.INP</FONT> from the <FONT COLOR=blue>Storm Drain Editor widget</FONT>."
+                        if "SWMM.INP" not in self.files_used:
+                            msg += "...and <FONT COLOR=green>Import SWMM.INP</FONT> from the <FONT COLOR=blue>Storm Drain Editor widget</FONT>."
 
                     if "import_inflow" in import_calls or "import_outflow" in import_calls:
                         if msg:
@@ -1607,7 +1612,7 @@ class Flo2D(object):
                     msg += "must be done using the "
                     msg += "<FONT COLOR=green>Conversion from Schematic Layers to User Layers</FONT>"
                     msg += " tool in the <FONT COLOR=blue>FLO-2D panel</FONT>...<br>"
-                    msg += "...and <FONT COLOR=green>Import SWMM.INP</FONT> from the <FONT COLOR=blue>Storm Drain Editor widget</FONT>."
+                    # msg += "...and <FONT COLOR=green>Import SWMM.INP</FONT> from the <FONT COLOR=blue>Storm Drain Editor widget</FONT>."
 
                 if "import_inflow" in import_calls or "import_outflow" in import_calls:
                     if msg:
@@ -1681,11 +1686,12 @@ class Flo2D(object):
         #     if bname not in self.f2g.parser.dat_files:
         #         return
 
-        project_dir = QgsProject.instance().absolutePath()
-        outdir = QFileDialog.getExistingDirectory(
-            None, "Select directory of files to be imported", directory=project_dir
-        )
+        s = QSettings()
+        last_dir = s.value("FLO-2D/lastGdsDir", "")
+        # project_dir = QgsProject.instance().absolutePath()
+        outdir = QFileDialog.getExistingDirectory(None, "Select directory of files to be imported", directory=last_dir)
         if outdir:
+            s.setValue("FLO-2D/lastGdsDir", outdir)
             bname = "CONT.DAT"
             fname = outdir + "/CONT.DAT"
             if self.f2g.set_parser(fname):
@@ -1783,6 +1789,10 @@ class Flo2D(object):
                         self.uc.bar_info("Flo2D model imported", dur=3)
                         self.gutils.enable_geom_triggers()
 
+                        if "Storm Drain" in dlg_components.components:
+                            if self.f2d_widget.storm_drain_editor.import_storm_drain_INP_file():
+                                self.files_used += "SWMM.INP" + "\n"
+
                         if "import_chan" in import_calls:
                             self.gutils.create_schematized_rbank_lines_from_xs_tips()
 
@@ -1815,14 +1825,15 @@ class Flo2D(object):
                             msg += "must be done using the "
                             msg += "<FONT COLOR=green>Conversion from Schematic Layers to User Layers</FONT>"
                             msg += " tool in the <FONT COLOR=blue>FLO-2D panel</FONT>...<br>"
-                            msg += "...and <FONT COLOR=green>Import SWMM.INP</FONT> from the <FONT COLOR=blue>Storm Drain Editor widget</FONT>."
-
+                            if "SWMM.INP" not in self.files_used:
+                                msg += "...and <FONT COLOR=green>Import SWMM.INP</FONT> from the <FONT COLOR=blue>Storm Drain Editor widget</FONT>."
                         else:
                             msg += "* To complete the Storm Drain functionality, the 'Storm Drains' conversion "
                             msg += "must be done using the "
                             msg += "<FONT COLOR=green>Conversion from Schematic Layers to User Layers</FONT>"
                             msg += " tool in the <FONT COLOR=blue>FLO-2D panel</FONT>...<br>"
-                            msg += "...and <FONT COLOR=green>Import SWMM.INP</FONT> from the <FONT COLOR=blue>Storm Drain Editor widget</FONT>."
+                            if "SWMM.INP" not in self.files_used:
+                                msg += "...and <FONT COLOR=green>Import SWMM.INP</FONT> from the <FONT COLOR=blue>Storm Drain Editor widget</FONT>."
 
                     if "import_inflow" in import_calls or "import_outflow" in import_calls:
                         if msg:
