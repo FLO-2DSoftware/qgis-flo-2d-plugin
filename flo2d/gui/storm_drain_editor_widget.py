@@ -3710,7 +3710,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             grid_fid = cul[0]
             if grid_fid is None or grid_fid == "":
                 q = (
-                    'WARNING 250622.0517:\n\Culvert equation "'
+                    'WARNING 250622.0517:\nCulvert equation "'
                     + type4_name
                     + '" is not assigned to any grid element.\nDo you want to delete it?'
                 )
