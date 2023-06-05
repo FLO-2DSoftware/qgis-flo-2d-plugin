@@ -3311,7 +3311,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 self.uc.show_info("No rating tables or Culvert equations were imported.")
                 return
             else:
-                with open(last_dir + "\Rating Tables Warnings.CHK", "w") as report_file:
+                with open(last_dir + "\\Rating Tables Warnings.CHK", "w") as report_file:
                     for w in warnings:
                         report_file.write(w + "\n")
 
