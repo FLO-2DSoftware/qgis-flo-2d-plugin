@@ -886,7 +886,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
                             if ret == 0:
                                 s = QSettings()
                                 last_dir = s.value("FLO-2D/lastGdsDir", "")
-                                fname = last_dir + "\CONT.DAT"
+                                fname = last_dir + "\\CONT.DAT"
                                 if not fname:
                                     return
                                 self.parser.scan_project_dir(fname)
