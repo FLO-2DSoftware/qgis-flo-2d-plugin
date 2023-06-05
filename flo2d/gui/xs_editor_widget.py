@@ -1308,7 +1308,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         try:
             QApplication.setOverrideCursor(Qt.WaitCursor)
             self.exe_dir, self.project_dir = dlg.get_parameters()
-            if os.path.isfile(self.exe_dir + "\INTERPOLATE.EXE"):
+            if os.path.isfile(self.exe_dir + "\\INTERPOLATE.EXE"):
                 interpolate = XSECInterpolatorExecutor(self.exe_dir, self.project_dir)
                 return_code = interpolate.run()
                 QApplication.restoreOverrideCursor()
