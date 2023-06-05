@@ -1341,7 +1341,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
             return
         try:
             QApplication.setOverrideCursor(Qt.WaitCursor)
-            if os.path.isfile(self.exe_dir + "\CHANRIGHTBANK.EXE"):
+            if os.path.isfile(self.exe_dir + "\\CHANRIGHTBANK.EXE"):
                 chanrightbank = ChanRightBankExecutor(self.exe_dir, self.project_dir)
                 return_code = chanrightbank.run()
                 if return_code != 0:
