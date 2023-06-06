@@ -240,7 +240,7 @@ class SchemaBCConverter(SchemaConverter):
         except Exception as e:
             QApplication.restoreOverrideCursor()
             self.uc.show_error(
-                "ERROR 100321.1010:\n\Conversion of Boundary Conditions to User Layer failed!"
+                "ERROR 100321.1010:\nConversion of Boundary Conditions to User Layer failed!"
                 + "\n_______________________________________________________________",
                 e,
             )
