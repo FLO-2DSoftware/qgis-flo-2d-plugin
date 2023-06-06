@@ -173,9 +173,13 @@ class OutfallNodesDialog(qtBaseClass, uiDialog):
 
             # Fill table:
             self.outfalls_tblw.setRowCount(0)
-            for row_number, row_data in enumerate(rows):  # In each iteration gets a tuple, for example:  0, ('fid'12, 'name''OUT3', 2581, 'False', 'False' 0,0,0, '', '')
+            for row_number, row_data in enumerate(
+                rows
+            ):  # In each iteration gets a tuple, for example:  0, ('fid'12, 'name''OUT3', 2581, 'False', 'False' 0,0,0, '', '')
                 self.outfalls_tblw.insertRow(row_number)
-                for col_number, data in enumerate(row_data):  # For each iteration gets, for example: first iteration:  0, 12. 2nd. iteration 1, 'OUT3', etc
+                for col_number, data in enumerate(
+                    row_data
+                ):  # For each iteration gets, for example: first iteration:  0, 12. 2nd. iteration 1, 'OUT3', etc
                     if col_number == 6 and data not in self.outfalls_tuple:
                         data = "NORMAL"
                     item = QTableWidgetItem()
@@ -184,7 +188,9 @@ class OutfallNodesDialog(qtBaseClass, uiDialog):
                     )  # item gets value of data (as QTableWidgetItem Class)
 
                     # Fill the list of outfall names:
-                    if (col_number == 1):  # We need 2nd. col_number: 'OUT3' in the example above, and its fid from row_data[0]
+                    if (
+                        col_number == 1
+                    ):  # We need 2nd. col_number: 'OUT3' in the example above, and its fid from row_data[0]
                         self.outfall_cbo.addItem(data, row_data[0])
 
                     # Fill all text boxes with data of first feature of query (first element in table user_swmm_nodes):

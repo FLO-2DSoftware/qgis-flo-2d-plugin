@@ -68,6 +68,8 @@ from .flo2d_tools.schematic_tools import (
     delete_redundant_levee_directions_np,
     generate_schematic_levees,
 )
+from .flo2d_tools.schema2user_tools import SchemaSWMMConverter
+
 from .geopackage_utils import GeoPackageUtils, connection_required, database_disconnect
 from .gui.dlg_components import ComponentsDialog
 from .gui.dlg_cont_toler_jj import ContToler_JJ
@@ -1291,16 +1293,41 @@ class Flo2D(object):
                     self.uc.bar_info("Flo2D model imported", dur=3)
                     self.gutils.enable_geom_triggers()
 
-                    if "Storm Drain" in dlg_components.components:
-                        if self.f2d_widget.storm_drain_editor.import_storm_drain_INP_file():
-                            self.files_used += "SWMM.INP" + "\n"
-
                     if "import_chan" in import_calls:
                         self.gutils.create_schematized_rbank_lines_from_xs_tips()
+
+                    if "Storm Drain" in dlg_components.components:
+
+                        if self.uc.question("Would you like to convert schematic SD to user SD?"):
+                            try:
+                                swmm_converter = SchemaSWMMConverter(self.con, self.iface, self.lyrs)
+                                swmm_converter.create_user_swmm_nodes()
+                            except Exception as e:
+                                self.uc.log_info(traceback.format_exc())
+                                QApplication.restoreOverrideCursor()
+                                self.uc.show_error(
+                                    "ERROR 040723.1749:\n\nConverting Schematic SD Inlets to User Storm Drain Nodes failed!"
+                                    + "\n_______________________________________________________________",
+                                    e,
+                                )
+                                
+                        # if self.uc.question("Would you like to import SWMM.INP?"):    
+                        # imprt = self.uc.dialog_with_2_customized_buttons(
+                        #     "Select SWMM.INP import method", "", "Keep existing", "Replace existing"
+                        #     )  
+                        #
+
+                        # if imprt == QMessageBox.Yes:
+                        #     self.import_selected_components()
+                        
+                        if self.f2d_widget.storm_drain_editor.import_storm_drain_INP_file("Choose"):                        
+                        # if self.f2d_widget.storm_drain_editor.import_storm_drain_INP_file("Force import of SWMM.INP"):
+                            self.files_used += "SWMM.INP" + "\n"
 
                     self.setup_dock_widgets()
                     self.lyrs.refresh_layers()
                     self.lyrs.zoom_to_all()
+                    
                     # See if geopackage has grid with 'col' and 'row' fields:
                     grid_lyr = self.lyrs.data["grid"]["qlyr"]
                     field_index = grid_lyr.fields().indexFromName("col")
@@ -1376,7 +1403,7 @@ class Flo2D(object):
 
                     if msg:
                         self.uc.show_info(msg)
-
+                            
     @connection_required
     def import_hdf5(self):
         """
@@ -1790,7 +1817,7 @@ class Flo2D(object):
                         self.gutils.enable_geom_triggers()
 
                         if "Storm Drain" in dlg_components.components:
-                            if self.f2d_widget.storm_drain_editor.import_storm_drain_INP_file():
+                            if self.f2d_widget.storm_drain_editor.import_storm_drain_INP_file("Force import of SWMM.INP"):
                                 self.files_used += "SWMM.INP" + "\n"
 
                         if "import_chan" in import_calls:

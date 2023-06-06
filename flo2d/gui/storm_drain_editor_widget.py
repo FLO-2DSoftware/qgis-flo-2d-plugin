@@ -268,7 +268,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         self.pump_curve_type_cbo.currentIndexChanged.connect(self.update_pump_curve_data)
         self.pump_curve_description_le.textChanged.connect(self.update_pump_curve_data)
 
-        self.import_inp_btn.clicked.connect(self.import_storm_drain_INP_file)
+        self.import_inp_btn.clicked.connect(lambda: self.import_storm_drain_INP_file("Choose"))
         self.export_inp_btn.clicked.connect(self.export_storm_drain_INP_file)
 
         self.pump_curve_cbo.activated.connect(self.current_cbo_pump_curve_index_changed)
@@ -742,7 +742,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         else:
             self.gutils.set_cont_par("SWMM", 0)
 
-    def import_storm_drain_INP_file(self):
+    def import_storm_drain_INP_file(self, mode):
         """
         Reads a Storm Water Management Model (SWMM) .INP file.
 
@@ -768,13 +768,16 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             return False
 
         s = QSettings()
-        #         last_dir = s.value('FLO-2D/lastGpkgDir', '')
         last_dir = s.value("FLO-2D/lastGdsDir", "")
-        swmm_file, __ = QFileDialog.getOpenFileName(
-            None, "Select SWMM input file to import data", directory=last_dir, filter="(*.inp *.INP*)"
-        )
-        if not swmm_file:
-            return False
+        if mode == "Force import of SWMM.INP":
+            swmm_file = last_dir + r"\SWMM.INP"
+        else:
+            # Show dialog to import SWMM.INP or cancel its import:
+            swmm_file, __ = QFileDialog.getOpenFileName(
+                None, "Select SWMM input file to import data", directory=last_dir, filter="(*.inp *.INP*)"
+            )
+            if not swmm_file:
+                return False
         s.setValue("FLO-2D/lastSWMMDir", os.path.dirname(swmm_file))
 
         QApplication.setOverrideCursor(Qt.WaitCursor)
@@ -834,12 +837,21 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 return False
             else:
                 QApplication.restoreOverrideCursor()
-                if not self.gutils.is_table_empty("user_swmm_nodes"):
+                if mode == "Force import of SWMM.INP":
+                    complete_or_create = "Keep and Complete"
+                else: 
+                    
                     complete_or_create = self.import_INP_action()
                     if complete_or_create == "Cancel":
-                        return False
-                else:
-                    complete_or_create = "Create New"
+                        return False                      
+                    
+                       
+                    # if self.gutils.is_table_empty("user_swmm_nodes"):
+                    #     complete_or_create = "Create New"
+                    # else:
+                    #     complete_or_create = self.import_INP_action()
+                    #     if complete_or_create == "Cancel":
+                    #         return False                        
 
                 QApplication.setOverrideCursor(Qt.WaitCursor)
                 subcatchments = storm_drain.add_SUBCATCHMENTS_to_INP_nodes_dictionary()
@@ -1055,7 +1067,8 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             # Transfer data from "storm_drain.INP_dict" to "user_swmm_nodes" layer:
 
             replace_user_swmm_nodes_sql = """UPDATE user_swmm_nodes 
-                             SET    junction_invert_elev = ?,
+                             SET    geom = ?,
+                                    junction_invert_elev = ?,
                                     max_depth = ?, 
                                     init_depth = ?,
                                     surcharge_depth = ?, 
@@ -1178,6 +1191,8 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                     feat.setAttribute("ge_elev", elev)
                     feat.setAttribute("difference", difference)
 
+                    # The following attributes are not defined in .INP files,
+                    # assign them zero as default values: 
                     feat.setAttribute("swmm_length", 0)
                     feat.setAttribute("swmm_width", 0)
                     feat.setAttribute("swmm_height", 0)
@@ -1191,36 +1206,45 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
 
                     new_nodes.append(feat)
 
-                else:
-                    existing_node = self.gutils.execute(
-                        "SELECT fid FROM user_swmm_nodes WHERE name = ?;", (name,)
-                    ).fetchone()
-                    if existing_node:
-                        self.gutils.execute(
-                            replace_user_swmm_nodes_sql,
-                            (
-                                junction_invert_elev,
-                                max_depth,
-                                init_depth,
-                                surcharge_depth,
-                                ponded_area,
-                                outfall_type,
-                                outfall_invert_elev,
-                                tidal_curve,
-                                time_series,
-                                water_depth,
-                                flapgate,
-                                allow_discharge,
-                                junction_invert_elev,
-                                max_depth,
-                                rim_elev,
-                                rim_elev,
-                                elev,
-                                difference,
-                                name,
-                            ),
-                        )
-                        updated_nodes += 1
+                else: # Keep some existing data in user_swmm_nodes (e.g swmm_length, swmm_width, etc.)
+                    fid = self.gutils.execute("SELECT fid FROM user_swmm_nodes WHERE name = ?;", (name,)).fetchone()
+                    if fid:
+                        try:
+                            fid, wkt_geom = self.gutils.execute(
+                                "SELECT fid, ST_AsText(ST_Centroid(GeomFromGPB(geom))) FROM user_swmm_nodes WHERE name = ?;", (name,)
+                            ).fetchone()
+                        except Exception:
+                            continue                    
+                        if fid:
+                            xc, yc = [float(i) for i in wkt_geom.strip("POINT()").split()]
+                            geom = "POINT({0} {1})".format(xc, yc)
+                            geom = self.gutils.wkt_to_gpb(geom)
+                            self.gutils.execute(
+                                replace_user_swmm_nodes_sql,
+                                (
+                                    geom,
+                                    junction_invert_elev,
+                                    max_depth,
+                                    init_depth,
+                                    surcharge_depth,
+                                    ponded_area,
+                                    outfall_type,
+                                    outfall_invert_elev,
+                                    tidal_curve,
+                                    time_series,
+                                    water_depth,
+                                    flapgate,
+                                    allow_discharge,
+                                    junction_invert_elev,
+                                    max_depth,
+                                    rim_elev,
+                                    rim_elev,
+                                    elev,
+                                    difference,
+                                    name,
+                                ),
+                            )
+                            updated_nodes += 1
 
             if complete_or_create == "Create New" and len(new_nodes) != 0:
                 remove_features(self.user_swmm_nodes_lyr)
@@ -1230,7 +1254,10 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 self.user_swmm_nodes_lyr.updateExtents()
                 self.user_swmm_nodes_lyr.triggerRepaint()
                 self.user_swmm_nodes_lyr.removeSelection()
-
+            else:
+                # The option 'Keep existing and complete' already updated values taken from the .INP file.
+                pass
+                
         except Exception as e:
             QApplication.restoreOverrideCursor()
             self.uc.show_error(
@@ -1745,6 +1772,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 "later export the .DAT files used by the FLO-2D model."
             )
         else:
+            QApplication.restoreOverrideCursor()            
             self.uc.show_info(
                 "Storm Drain data was updated from file\n"
                 + swmm_file
@@ -1828,7 +1856,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             + "or you prefer to erase it and create new storm drains from the .INP file?\n"
         )
 
-        msg.addButton(QPushButton("Keep existing and complete "), QMessageBox.YesRole)
+        msg.addButton(QPushButton("Keep existing and complete"), QMessageBox.YesRole)
         msg.addButton(QPushButton("Create new Storm Drains"), QMessageBox.NoRole)
         msg.addButton(QPushButton("Cancel"), QMessageBox.RejectRole)
         msg.setDefaultButton(QMessageBox().Cancel)

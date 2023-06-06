@@ -180,7 +180,7 @@
         </size>
        </property>
        <property name="toolTip">
-        <string>Schematize from User layer ' Storm Drain Nodes'</string>
+        <string>Convert User 'Storm Drain Nodes' to Schematic 'Storm Drains'</string>
        </property>
        <property name="text">
         <string>...</string>
