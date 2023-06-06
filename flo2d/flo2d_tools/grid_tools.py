@@ -474,7 +474,7 @@ def spatial_index(vlayer, request=None):
     for feat in vlayer.getFeatures() if request is None else vlayer.getFeatures(request):
         feat_copy = QgsFeature(feat)
         allfeatures[feat.id()] = feat_copy
-        index.insertFeature(feat_copy)
+        index.addFeature(feat_copy)
     return allfeatures, index
 
 
