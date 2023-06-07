@@ -1784,16 +1784,16 @@ class Layers(object):
             self.data[lyr]["qlyr"] = None
 
     def load_layer(
-        self,
-        table,
-        uri,
-        group,
-        name,
-        subgroup=None,
-        style=None,
-        visible=True,
-        readonly=False,
-        provider="ogr",
+            self,
+            table,
+            uri,
+            group,
+            name,
+            subgroup=None,
+            style=None,
+            visible=True,
+            readonly=False,
+            provider="ogr",
     ):
         try:
             # check if the layer is already loaded
@@ -2199,6 +2199,7 @@ class Layers(object):
 
         for lyr in self.data:
             try:
+                if lyr == "rain_arf_areas": continue
                 start_time = time.time()
                 data = self.data[lyr]
                 if data["styles"]:
