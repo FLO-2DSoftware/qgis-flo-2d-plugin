@@ -488,7 +488,7 @@ def spatial_centroids_index(vlayer, request=None):
         feat_copy = QgsFeature(feat)
         feat_copy.setGeometry(feat_copy.geometry().centroid())
         allfeatures[feat.id()] = feat_copy
-        index.insertFeature(feat_copy)
+        index.addFeature(feat_copy)
     return allfeatures, index
 
 
@@ -539,7 +539,7 @@ def intersection_spatial_index(vlayer, request=None, clip=False):
             else:
                 fid = feat.id()
             allfeatures[fid] = (feat_copy, engine)
-            index.insertFeature(feat_copy)
+            index.addFeature(feat_copy)
 
     return allfeatures, index
 
