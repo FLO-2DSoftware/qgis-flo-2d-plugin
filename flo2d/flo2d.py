@@ -1284,7 +1284,7 @@ class Flo2D(object):
                     # FLO-2D .DAT files
 
                     # save CRS to table cont
-                    self.gutils.set_cont_par("PROJ", self.crs.toProj4())
+                    self.gutils.set_cont_par("PROJ", self.crs.toProj())
 
                     # load layers and tables
                     self.load_layers()
@@ -1551,7 +1551,7 @@ class Flo2D(object):
                 self.call_IO_methods(import_calls, True)
 
                 # save CRS to table cont
-                self.gutils.set_cont_par("PROJ", self.crs.toProj4())
+                self.gutils.set_cont_par("PROJ", self.crs.toProj())
 
                 # load layers and tables
                 self.load_layers()
@@ -1782,7 +1782,7 @@ class Flo2D(object):
                         # FLO-2D .DAT files
 
                         # save CRS to table cont
-                        self.gutils.set_cont_par("PROJ", self.crs.toProj4())
+                        self.gutils.set_cont_par("PROJ", self.crs.toProj())
 
                         # load layers and tables
                         self.load_layers()
