@@ -15,7 +15,7 @@ import os
 # pylint: disable=no-self-use
 from collections import OrderedDict
 
-from qgis.core import QgsFeatureRequest
+from qgis.core import QgsFeatureRequest, QgsWkbTypes
 from qgis.gui import QgsMapToolIdentify, QgsRubberBand
 from qgis.PyQt.QtCore import QPoint, pyqtSignal
 from qgis.PyQt.QtGui import QColor, QCursor, QPixmap
@@ -105,7 +105,12 @@ class ChannelProfile(QgsMapToolIdentify):
     def clear_rubber(self):
         if self.rb:
             for i in range(3):
-                self.rb.reset(i)
+                if i == 0:
+                    self.rb.reset(QgsWkbTypes.PointGeometry)
+                elif i == 1:
+                    self.rb.reset(QgsWkbTypes.LineGeometry)
+                elif i == 2:
+                    self.rb.reset(QgsWkbTypes.PolygonGeometry)
 
     def activate(self):
         self.canvas.setCursor(
