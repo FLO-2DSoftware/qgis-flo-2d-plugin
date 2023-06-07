@@ -210,7 +210,7 @@ class SettingsDialog(qtBaseClass, uiDialog):
                 self.uc.show_warn(msg)
                 return
             self.unit_lab.setText(mu)
-            proj4 = self.crs.toProj4()
+            proj4 = self.crs.toProj()
 
             # check if the CRS exist in the db
             sql = "SELECT * FROM gpkg_spatial_ref_sys WHERE srs_id=?;"
