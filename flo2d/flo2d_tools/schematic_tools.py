@@ -1847,7 +1847,7 @@ class ChannelsSchematizer(GeoPackageUtils):
             feat.setId(org_fid)
             feat.setGeometry(geom)
             allfeatures[org_fid] = feat
-            index.insertFeature(feat)
+            index.addFeature(feat)
             previous[org_fid] = geom
 
         # Clipping interpolated cross sections to original one and between each other

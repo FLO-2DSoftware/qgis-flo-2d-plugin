@@ -637,7 +637,7 @@ class InfilGlobal(uiDialog_glob, qtBaseClass_glob):
                 self.spin_soilall.setValue(infil_glob[8] if infil_glob[8] is not None else 4.3)
                 self.spin_hydcadj.setValue(infil_glob[9] if infil_glob[9] is not None else 0.0)
                 self.spin_hydcxx.setValue(infil_glob[10] if infil_glob[10] is not None else 0.1)
-                self.spin_scsnall.setValue(infil_glob[11] if infil_glob[11] is not None else 99)
+                self.spin_scsnall.setValue(int(infil_glob[11]) if infil_glob[11] is not None else 99)
                 self.spin_abstr1.setValue(infil_glob[12] if infil_glob[12] is not None else 0.0)
                 self.spin_fhortoni.setValue(infil_glob[13] if infil_glob[13] is not None else 0.0)
                 self.spin_fhortonf.setValue(infil_glob[14] if infil_glob[14] is not None else 0.0)

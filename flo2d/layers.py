@@ -21,6 +21,7 @@ from qgis.core import (
     QgsProject,
     QgsRectangle,
     QgsVectorLayer,
+    QgsWkbTypes
 )
 from qgis.gui import QgsRubberBand
 from qgis.PyQt.QtCore import Qt
@@ -2425,7 +2426,12 @@ class Layers(object):
     def clear_rubber(self):
         if self.rb:
             for i in range(3):
-                self.rb.reset(i)
+                if i == 0:
+                    self.rb.reset(QgsWkbTypes.PointGeometry)
+                elif i == 1:
+                    self.rb.reset(QgsWkbTypes.LineGeometry)
+                elif i == 2:
+                    self.rb.reset(QgsWkbTypes.PolygonGeometry)
 
     def zoom_to_all(self):
         if self.gutils.is_table_empty("grid"):

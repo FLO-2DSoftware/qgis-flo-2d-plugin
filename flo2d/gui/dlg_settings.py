@@ -210,7 +210,7 @@ class SettingsDialog(qtBaseClass, uiDialog):
                 self.uc.show_warn(msg)
                 return
             self.unit_lab.setText(mu)
-            proj4 = self.crs.toProj4()
+            proj4 = self.crs.toProj()
 
             # check if the CRS exist in the db
             sql = "SELECT * FROM gpkg_spatial_ref_sys WHERE srs_id=?;"
@@ -344,7 +344,7 @@ class SettingsDialog(qtBaseClass, uiDialog):
             else:
                 pass
             self.gutils.set_cont_par(name, value)
-        self.gutils.set_cont_par("PROJ", self.crs.toProj4())
+        self.gutils.set_cont_par("PROJ", self.crs.toProj())
         if self.crs.mapUnits() == QgsUnitTypes.DistanceMeters:
             metric = 1
         elif self.crs.mapUnits() == QgsUnitTypes.DistanceFeet:

@@ -189,7 +189,7 @@ class InfiltrationCalculator(object):
                             land_soil_feat,
                             QgsGeometry.createGeometryEngine(land_soil_geom.constGet()),
                         )
-                        land_soil_index.insertFeature(land_soil_feat)
+                        land_soil_index.addFeature(land_soil_feat)
                         land_soil_fid = land_soil_fid + 1
 
                 try:
