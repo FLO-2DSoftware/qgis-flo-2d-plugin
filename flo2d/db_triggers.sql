@@ -84,33 +84,6 @@ CREATE TRIGGER IF NOT EXISTS "find_outflow_chan_elems_delete"
 
 -- RAIN.DAT
 
-CREATE TRIGGER IF NOT EXISTS "find_rain_arf_cells_insert"
-    AFTER INSERT ON "rain_arf_areas"
-    WHEN (new."geom" NOT NULL AND NOT ST_IsEmpty(NEW."geom"))
-    BEGIN
-        DELETE FROM "rain_arf_cells" WHERE rain_arf_area_fid = NEW."fid";
-        INSERT INTO "rain_arf_cells" (rain_arf_area_fid, grid_fid, arf)
-        SELECT NEW.fid, g.fid, NEW.arf FROM grid as g
-        WHERE ST_Intersects(CastAutomagic(g.geom), CastAutomagic(NEW.geom));
-    END;
-
-CREATE TRIGGER IF NOT EXISTS "find_rain_arf_cells_update"
-    AFTER UPDATE ON "rain_arf_areas"
-    WHEN (new."geom" NOT NULL AND NOT ST_IsEmpty(NEW."geom"))
-    BEGIN
-        DELETE FROM "rain_arf_cells" WHERE rain_arf_area_fid = NEW."fid";
-        INSERT INTO "rain_arf_cells" (rain_arf_area_fid, grid_fid, arf)
-        SELECT NEW.fid, g.fid, NEW.arf FROM grid as g
-        WHERE ST_Intersects(CastAutomagic(g.geom), CastAutomagic(NEW.geom));
-    END;
-
-CREATE TRIGGER IF NOT EXISTS "find_rain_arf_cells_delete"
-    AFTER DELETE ON "rain_arf_areas"
-    BEGIN
-        DELETE FROM "rain_arf_cells" WHERE rain_arf_area_fid = OLD."fid";
-    END;
-
-
 -- CHAN.DAT
 
 CREATE TRIGGER IF NOT EXISTS "find_user_chan_n_delete"

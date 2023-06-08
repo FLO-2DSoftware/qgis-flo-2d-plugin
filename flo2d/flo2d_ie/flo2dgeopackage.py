@@ -482,10 +482,6 @@ class Flo2dGeoPackage(GeoPackageUtils):
             """INSERT INTO rain_time_series_data (series_fid, time, value) VALUES""",
             3,
         ]
-        # rain_arf_sql = [
-        #     """INSERT INTO rain_arf_areas (rain_fid, arf, geom) VALUES""",
-        #     3,
-        # ]
         cells_sql = [
             """INSERT INTO rain_arf_cells (rain_arf_area_fid, grid_fid, arf) VALUES""",
             3,
@@ -493,7 +489,6 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
         self.clear_tables(
             "rain",
-            # "rain_arf_areas",
             "rain_arf_cells",
             "rain_time_series",
             "rain_time_series_data",

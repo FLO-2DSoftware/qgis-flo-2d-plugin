@@ -240,16 +240,6 @@ class Layers(object):
                 #     },
                 # ),
                 # (
-                #     "rain_arf_areas",
-                #     {
-                #         "name": "Rain ARF Areas",
-                #         "sgroup": "User Layers. Grid Attributes",
-                #         "styles": ["rain_arf_areas.qml"],
-                #         "attrs_edit_widgets": {},
-                #         "readonly": False,
-                #     },
-                # ),
-                # (
                 #     "user_blocked_areas",
                 #     {
                 #         "name": "Blocked Areas",
@@ -455,16 +445,6 @@ class Layers(object):
                         "name": "Tolerance Areas",
                         "sgroup": "User Layers",
                         "styles": ["tolspatial.qml"],
-                        "attrs_edit_widgets": {},
-                        "readonly": False,
-                    },
-                ),
-                (
-                    "rain_arf_areas",
-                    {
-                        "name": "Rain ARF Areas",
-                        "sgroup": "User Layers",
-                        "styles": ["rain_arf_areas.qml"],
                         "attrs_edit_widgets": {},
                         "readonly": False,
                     },
@@ -2199,7 +2179,6 @@ class Layers(object):
 
         for lyr in self.data:
             try:
-                if lyr == "rain_arf_areas": continue
                 start_time = time.time()
                 data = self.data[lyr]
                 if data["styles"]:
