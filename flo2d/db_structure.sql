@@ -441,17 +441,6 @@ CREATE TABLE "rain" (
 );
 INSERT INTO gpkg_contents (table_name, data_type) VALUES ('rain', 'aspatial');
 
-CREATE TABLE "rain_arf_areas" (
-    "fid" INTEGER NOT NULL PRIMARY KEY,
-    "rain_fid" INTEGER, -- fid of rain the area is defined for
-    "arf" REAL, -- RAINARF(I), area reduction factor
-    "notes" TEXT
-);
-INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('rain_arf_areas', 'features', 4326);
-SELECT gpkgAddGeometryColumn('rain_arf_areas', 'geom', 'POLYGON', 0, 0, 0);
-SELECT gpkgAddGeometryTriggers('rain_arf_areas', 'geom');
--- SELECT gpkgAddSpatialIndex('rain_arf_areas', 'geom');
-
 CREATE TABLE "rain_arf_cells" (
     "fid" INTEGER NOT NULL PRIMARY KEY,
     "rain_arf_area_fid" INTEGER, -- fid of area with ARF defined
@@ -459,35 +448,6 @@ CREATE TABLE "rain_arf_cells" (
     "arf" REAL -- RAINARF(I), ARF value for a grid elemen
 );
 INSERT INTO gpkg_contents (table_name, data_type) VALUES ('rain_arf_cells', 'aspatial');
-
---CREATE TRIGGER "find_rain_arf_cells_insert"
---    AFTER INSERT ON "rain_arf_areas"
---    WHEN (new."geom" NOT NULL AND NOT ST_IsEmpty(NEW."geom"))
---    BEGIN
---        DELETE FROM "rain_arf_cells" WHERE rain_arf_area_fid = NEW."fid";
---        INSERT INTO "rain_arf_cells" (rain_arf_area_fid, grid_fid, arf)
---        SELECT NEW.fid, g.fid, NEW.arf FROM grid as g
---        WHERE ST_Intersects(CastAutomagic(g.geom), CastAutomagic(NEW.geom));
---    END;
---
---CREATE TRIGGER "find_rain_arf_cells_update"
---    AFTER UPDATE ON "rain_arf_areas"
---    WHEN (new."geom" NOT NULL AND NOT ST_IsEmpty(NEW."geom"))
---    BEGIN
---        DELETE FROM "rain_arf_cells" WHERE rain_arf_area_fid = NEW."fid";
---        INSERT INTO "rain_arf_cells" (rain_arf_area_fid, grid_fid, arf)
---        SELECT NEW.fid, g.fid, NEW.arf FROM grid as g
---        WHERE ST_Intersects(CastAutomagic(g.geom), CastAutomagic(NEW.geom));
---    END;
---
---CREATE TRIGGER "find_rain_arf_cells_delete"
---    AFTER DELETE ON "rain_arf_areas"
---    BEGIN
---        DELETE FROM "rain_arf_cells" WHERE rain_arf_area_fid = OLD."fid";
---    END;
-
-
--- CHAN.DAT
 
 CREATE TABLE "chan" (
     "fid" INTEGER NOT NULL PRIMARY KEY,
