@@ -41,8 +41,12 @@ class FLOPROExecutor(object):
     def __init__(self, iface, flo2d_dir, project_dir):
         self.flo2d_dir = flo2d_dir
         self.flo2d_exe = flo2d_dir + "/" + self.FLOPRO_EXE
+        self.flo2d_exe = self.flo2d_exe.replace("/", "\\")
+        
         # self.flo2d_exe = os.path.join(flo2d_dir, self.FLOPRO_EXE)
         self.project_dir = project_dir
+        self.project_dir = self.project_dir.replace("/", "\\")
+        
         self.uc = self.uc = UserCommunication(iface, "FLO-2D")
 
     def execute_flopro(self):
@@ -69,32 +73,68 @@ class FLOPROExecutor(object):
                 # result = run(["self.flo2d_exe"], shell=True, capture_output=True, text=True)
 
                 # 22222
+                
                 result = Popen(
-                    args=self.flo2d_exe,
-                    bufsize=-1,
-                    executable=None,
-                    stdin=None,
-                    stdout=None,
-                    stderr=None,
-                    preexec_fn=None,
-                    close_fds=True,
-                    shell=False,
-                    cwd=None,
-                    env=None,
-                    universal_newlines=None,
-                    startupinfo=None,
-                    creationflags=0,
-                    restore_signals=True,
-                    start_new_session=False,
-                    pass_fds=(),
-                    group=None,
-                    extra_groups=None,
-                    user=None,
-                    umask=-1,
-                    encoding=None,
-                    errors=None,
-                    text=None,
-                )
+                    self.flo2d_exe,
+                    cwd=self.project_dir
+                    # bufsize=-1,
+                    # executable=None,
+                    # stdin=None,
+                    # stdout=None,
+                    # stderr=None,
+                    # preexec_fn=None,
+                    # close_fds=True,
+                    # shell=False,
+                    # env=None,
+                    # universal_newlines=None,
+                    # startupinfo=None,
+                    # creationflags=0,
+                    # restore_signals=True,
+                    # start_new_session=False,
+                    # pass_fds=(),
+                    # group=None,
+                    # extra_groups=None,
+                    # user=None,
+                    # umask=-1,
+                    # encoding=None,
+                    # errors=None,
+                    # text=None,
+                )                
+                
+                
+                
+                
+                
+                
+                # result = Popen(
+                #     args=self.flo2d_exe,
+                #     bufsize=-1,
+                #     executable=None,
+                #     stdin=None,
+                #     stdout=None,
+                #     stderr=None,
+                #     preexec_fn=None,
+                #     close_fds=True,
+                #     shell=False,
+                #     cwd=None,
+                #     env=None,
+                #     universal_newlines=None,
+                #     startupinfo=None,
+                #     creationflags=0,
+                #     restore_signals=True,
+                #     start_new_session=False,
+                #     pass_fds=(),
+                #     group=None,
+                #     extra_groups=None,
+                #     user=None,
+                #     umask=-1,
+                #     encoding=None,
+                #     errors=None,
+                #     text=None,
+                # )
+                
+                
+                
                 # out = result.communicate()
                 # for line in out:
                 #     self.uc.bar_info(line)

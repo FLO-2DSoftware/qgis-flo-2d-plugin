@@ -1,6 +1,6 @@
 [general]
 name=FLO-2D
-version=0.10.105
+version=0.10.106
 qgisMinimumVersion=3.0
 qgisMaximumVersion=3.99
 description=FLO-2D tools for QGIS

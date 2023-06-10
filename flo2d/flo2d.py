@@ -68,6 +68,8 @@ from .flo2d_tools.schematic_tools import (
     delete_redundant_levee_directions_np,
     generate_schematic_levees,
 )
+from .flo2d_tools.schema2user_tools import SchemaSWMMConverter
+
 from .geopackage_utils import GeoPackageUtils, connection_required, database_disconnect
 from .gui.dlg_components import ComponentsDialog
 from .gui.dlg_cont_toler_jj import ContToler_JJ
@@ -1214,6 +1216,7 @@ class Flo2D(object):
                         "qh_table",
                         "qh_table_data",
                         "rain",
+                        "rain_arf_areas",
                         "rain_arf_cells",
                         "rain_time_series",
                         "rain_time_series_data",
@@ -1267,6 +1270,9 @@ class Flo2D(object):
                         "user_streets",
                         "user_struct",
                         "user_swmm_conduits",
+                        "user_swmm_pumps",
+                        "user_swmm_orifices",
+                        "user_swmm_weirs",
                         "user_swmm_nodes",
                         "user_xsec_n_data",
                         "user_xsections",
@@ -1283,7 +1289,7 @@ class Flo2D(object):
                     # FLO-2D .DAT files
 
                     # save CRS to table cont
-                    self.gutils.set_cont_par("PROJ", self.crs.toProj())
+                    self.gutils.set_cont_par("PROJ", self.crs.toProj4())
 
                     # load layers and tables
                     self.load_layers()
@@ -1297,9 +1303,31 @@ class Flo2D(object):
                     if "import_chan" in import_calls:
                         self.gutils.create_schematized_rbank_lines_from_xs_tips()
 
+                    if "Storm Drain" in dlg_components.components:
+
+                        try:
+                            swmm_converter = SchemaSWMMConverter(self.con, self.iface, self.lyrs)
+                            swmm_converter.create_user_swmm_nodes()
+                        except Exception as e:
+                            self.uc.log_info(traceback.format_exc())
+                            QApplication.restoreOverrideCursor()
+                            self.uc.show_error(
+                                "ERROR 040723.1749:\n\nConverting Schematic SD Inlets to User Storm Drain Nodes failed!"
+                                + "\n_______________________________________________________________",
+                                e,
+                            )
+                       
+                        if os.path.isfile(dir_name + r"\SWMM.INP"):
+                            # if self.f2d_widget.storm_drain_editor.import_storm_drain_INP_file("Choose"):                        
+                            if self.f2d_widget.storm_drain_editor.import_storm_drain_INP_file("Force import of SWMM.INP", False):
+                                self.files_used += "SWMM.INP" + "\n" 
+                        else:
+                            self.uc.bar_error("ERROR 100623.0944: SWMM.INP file not found!")            
+                                                                             
                     self.setup_dock_widgets()
                     self.lyrs.refresh_layers()
                     self.lyrs.zoom_to_all()
+                    
                     # See if geopackage has grid with 'col' and 'row' fields:
                     grid_lyr = self.lyrs.data["grid"]["qlyr"]
                     field_index = grid_lyr.fields().indexFromName("col")
@@ -1375,7 +1403,7 @@ class Flo2D(object):
 
                     if msg:
                         self.uc.show_info(msg)
-
+                            
     @connection_required
     def import_hdf5(self):
         """
@@ -1482,6 +1510,7 @@ class Flo2D(object):
                     "qh_table",
                     "qh_table_data",
                     "rain",
+                    "rain_arf_areas",
                     "rain_arf_cells",
                     "rain_time_series",
                     "rain_time_series_data",
@@ -1549,7 +1578,7 @@ class Flo2D(object):
                 self.call_IO_methods(import_calls, True)
 
                 # save CRS to table cont
-                self.gutils.set_cont_par("PROJ", self.crs.toProj())
+                self.gutils.set_cont_par("PROJ", self.crs.toProj4())
 
                 # load layers and tables
                 self.load_layers()
@@ -1780,7 +1809,7 @@ class Flo2D(object):
                         # FLO-2D .DAT files
 
                         # save CRS to table cont
-                        self.gutils.set_cont_par("PROJ", self.crs.toProj())
+                        self.gutils.set_cont_par("PROJ", self.crs.toProj4())
 
                         # load layers and tables
                         self.load_layers()
@@ -1790,6 +1819,28 @@ class Flo2D(object):
                         if "Storm Drain" in dlg_components.components:
                             if self.f2d_widget.storm_drain_editor.import_storm_drain_INP_file():
                                 self.files_used += "SWMM.INP" + "\n"
+                            try:
+                                swmm_converter = SchemaSWMMConverter(self.con, self.iface, self.lyrs)
+                                swmm_converter.create_user_swmm_nodes()
+                            except Exception as e:
+                                self.uc.log_info(traceback.format_exc())
+                                QApplication.restoreOverrideCursor()
+                                self.uc.show_error(
+                                    "ERROR 100623.1044:\n\nConverting Schematic SD Inlets to User Storm Drain Nodes failed!"
+                                    + "\n_______________________________________________________________",
+                                    e,
+                                )
+                           
+                            if os.path.isfile(outdir + r"\SWMM.INP"):
+                                # if self.f2d_widget.storm_drain_editor.import_storm_drain_INP_file("Choose"):                        
+                                if self.f2d_widget.storm_drain_editor.import_storm_drain_INP_file("Force import of SWMM.INP", True):
+                                    self.files_used += "SWMM.INP" + "\n" 
+                            else:
+                                self.uc.bar_error("ERROR 100623.0944: SWMM.INP file not found!")
+
+                        # if "Storm Drain" in dlg_components.components:
+                        #     if self.f2d_widget.storm_drain_editor.import_storm_drain_INP_file("Force import of SWMM.INP", True):
+                        #         self.files_used += "SWMM.INP" + "\n"
 
                         if "import_chan" in import_calls:
                             self.gutils.create_schematized_rbank_lines_from_xs_tips()
@@ -2024,6 +2075,9 @@ class Flo2D(object):
                 "export_shallowNSpatial",
                 "export_mannings_n_topo",
             ]
+
+            s = QSettings()
+            s.setValue("FLO-2D/lastGdsDir", outdir)
 
             dlg_components = ComponentsDialog(self.con, self.iface, self.lyrs, "out")
             ok = dlg_components.exec_()
