@@ -1296,10 +1296,6 @@ class Flo2D(object):
                     self.uc.bar_info("Flo2D model imported", dur=3)
                     self.gutils.enable_geom_triggers()
 
-                    if "Storm Drain" in dlg_components.components:
-                        if self.f2d_widget.storm_drain_editor.import_storm_drain_INP_file():
-                            self.files_used += "SWMM.INP" + "\n"
-
                     if "import_chan" in import_calls:
                         self.gutils.create_schematized_rbank_lines_from_xs_tips()
 
@@ -1817,8 +1813,6 @@ class Flo2D(object):
                         self.gutils.enable_geom_triggers()
 
                         if "Storm Drain" in dlg_components.components:
-                            if self.f2d_widget.storm_drain_editor.import_storm_drain_INP_file():
-                                self.files_used += "SWMM.INP" + "\n"
                             try:
                                 swmm_converter = SchemaSWMMConverter(self.con, self.iface, self.lyrs)
                                 swmm_converter.create_user_swmm_nodes()
@@ -1837,7 +1831,6 @@ class Flo2D(object):
                                     self.files_used += "SWMM.INP" + "\n" 
                             else:
                                 self.uc.bar_error("ERROR 100623.0944: SWMM.INP file not found!")
-
                         # if "Storm Drain" in dlg_components.components:
                         #     if self.f2d_widget.storm_drain_editor.import_storm_drain_INP_file("Force import of SWMM.INP", True):
                         #         self.files_used += "SWMM.INP" + "\n"
