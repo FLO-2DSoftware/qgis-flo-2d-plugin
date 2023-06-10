@@ -1270,6 +1270,9 @@ class Flo2D(object):
                         "user_streets",
                         "user_struct",
                         "user_swmm_conduits",
+                        "user_swmm_pumps",
+                        "user_swmm_orifices",
+                        "user_swmm_weirs",
                         "user_swmm_nodes",
                         "user_xsec_n_data",
                         "user_xsections",
@@ -1298,32 +1301,25 @@ class Flo2D(object):
 
                     if "Storm Drain" in dlg_components.components:
 
-                        if self.uc.question("Would you like to convert schematic SD to user SD?"):
-                            try:
-                                swmm_converter = SchemaSWMMConverter(self.con, self.iface, self.lyrs)
-                                swmm_converter.create_user_swmm_nodes()
-                            except Exception as e:
-                                self.uc.log_info(traceback.format_exc())
-                                QApplication.restoreOverrideCursor()
-                                self.uc.show_error(
-                                    "ERROR 040723.1749:\n\nConverting Schematic SD Inlets to User Storm Drain Nodes failed!"
-                                    + "\n_______________________________________________________________",
-                                    e,
-                                )
-                                
-                        # if self.uc.question("Would you like to import SWMM.INP?"):    
-                        # imprt = self.uc.dialog_with_2_customized_buttons(
-                        #     "Select SWMM.INP import method", "", "Keep existing", "Replace existing"
-                        #     )  
-                        #
-
-                        # if imprt == QMessageBox.Yes:
-                        #     self.import_selected_components()
-                        
-                        if self.f2d_widget.storm_drain_editor.import_storm_drain_INP_file("Choose"):                        
-                        # if self.f2d_widget.storm_drain_editor.import_storm_drain_INP_file("Force import of SWMM.INP"):
-                            self.files_used += "SWMM.INP" + "\n"
-
+                        try:
+                            swmm_converter = SchemaSWMMConverter(self.con, self.iface, self.lyrs)
+                            swmm_converter.create_user_swmm_nodes()
+                        except Exception as e:
+                            self.uc.log_info(traceback.format_exc())
+                            QApplication.restoreOverrideCursor()
+                            self.uc.show_error(
+                                "ERROR 040723.1749:\n\nConverting Schematic SD Inlets to User Storm Drain Nodes failed!"
+                                + "\n_______________________________________________________________",
+                                e,
+                            )
+                       
+                        if os.path.isfile(dir_name + r"\SWMM.INP"):
+                            # if self.f2d_widget.storm_drain_editor.import_storm_drain_INP_file("Choose"):                        
+                            if self.f2d_widget.storm_drain_editor.import_storm_drain_INP_file("Force import of SWMM.INP", False):
+                                self.files_used += "SWMM.INP" + "\n" 
+                        else:
+                            self.uc.bar_error("ERROR 100623.0944: SWMM.INP file not found!")            
+                                                                             
                     self.setup_dock_widgets()
                     self.lyrs.refresh_layers()
                     self.lyrs.zoom_to_all()
@@ -1817,8 +1813,29 @@ class Flo2D(object):
                         self.gutils.enable_geom_triggers()
 
                         if "Storm Drain" in dlg_components.components:
-                            if self.f2d_widget.storm_drain_editor.import_storm_drain_INP_file("Force import of SWMM.INP"):
-                                self.files_used += "SWMM.INP" + "\n"
+    
+                            try:
+                                swmm_converter = SchemaSWMMConverter(self.con, self.iface, self.lyrs)
+                                swmm_converter.create_user_swmm_nodes()
+                            except Exception as e:
+                                self.uc.log_info(traceback.format_exc())
+                                QApplication.restoreOverrideCursor()
+                                self.uc.show_error(
+                                    "ERROR 100623.1044:\n\nConverting Schematic SD Inlets to User Storm Drain Nodes failed!"
+                                    + "\n_______________________________________________________________",
+                                    e,
+                                )
+                           
+                            if os.path.isfile(outdir + r"\SWMM.INP"):
+                                # if self.f2d_widget.storm_drain_editor.import_storm_drain_INP_file("Choose"):                        
+                                if self.f2d_widget.storm_drain_editor.import_storm_drain_INP_file("Force import of SWMM.INP", True):
+                                    self.files_used += "SWMM.INP" + "\n" 
+                            else:
+                                self.uc.bar_error("ERROR 100623.0944: SWMM.INP file not found!")
+
+                        # if "Storm Drain" in dlg_components.components:
+                        #     if self.f2d_widget.storm_drain_editor.import_storm_drain_INP_file("Force import of SWMM.INP", True):
+                        #         self.files_used += "SWMM.INP" + "\n"
 
                         if "import_chan" in import_calls:
                             self.gutils.create_schematized_rbank_lines_from_xs_tips()
@@ -2053,6 +2070,9 @@ class Flo2D(object):
                 "export_shallowNSpatial",
                 "export_mannings_n_topo",
             ]
+
+            s = QSettings()
+            s.setValue("FLO-2D/lastGdsDir", outdir)
 
             dlg_components = ComponentsDialog(self.con, self.iface, self.lyrs, "out")
             ok = dlg_components.exec_()
