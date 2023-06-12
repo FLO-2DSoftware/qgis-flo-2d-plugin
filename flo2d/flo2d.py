@@ -733,6 +733,9 @@ class Flo2D(object):
                 stderr=STDOUT,
                 universal_newlines=True,
             )
+            result.wait()
+            result.kill()
+            
 
         return
 
