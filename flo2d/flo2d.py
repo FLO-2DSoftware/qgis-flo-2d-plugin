@@ -18,9 +18,20 @@ import pstats
 import sys
 import time
 import traceback
+from contextlib import contextmanager
 from datetime import datetime
 from pstats import SortKey
-
+from subprocess import (
+    CREATE_NO_WINDOW,
+    PIPE,
+    STDOUT,
+    CalledProcessError,
+    Popen,
+    call,
+    check_call,
+    check_output,
+    run,
+)
 from PyQt5.QtWidgets import QApplication
 from qgis.core import NULL, QgsProject, QgsWkbTypes
 from qgis.gui import QgsDockWidget, QgsProjectionSelectionWidget
@@ -92,6 +103,14 @@ from .gui.storm_drain_editor_widget import StormDrainEditorWidget
 from .layers import Layers
 from .user_communication import UserCommunication
 
+@contextmanager
+def cd(newdir):
+    prevdir = os.getcwd()
+    os.chdir(os.path.expanduser(newdir))
+    try:
+        yield
+    finally:
+        os.chdir(prevdir)
 
 class Flo2D(object):
     def __init__(self, iface):
@@ -697,10 +716,56 @@ class Flo2D(object):
             s = QSettings()
             s.setValue("FLO-2D/last_flopro_project", os.path.dirname(gpkg_path))
             s.setValue("FLO-2D/lastGdsDir", os.path.dirname(gpkg_path))
-
+ 
     def run_flopro(self):
-        # self.run_program("FLOPRO.exe")
-        # return
+        
+        s = QSettings()
+        model = s.value("FLO-2D/last_flopro", "") + "/FLOPROCore.exe"
+        last_dir = s.value("FLO-2D/lastGdsDir", "")
+        project = last_dir + "/CONT.DAT"
+
+        with cd(last_dir):
+            result = Popen(
+                model,
+                shell=True,
+                stdin=open(os.devnull),
+                stdout=PIPE,
+                stderr=STDOUT,
+                universal_newlines=True,
+            )
+
+        return
+
+        # model = "C:/TRACKS/FLOPROCore/FLOPROCore/bin/Debug/net6.0-windows/FLOPROCore.exe"
+        
+        
+        # result = Popen(
+        #     args=model,
+        #     bufsize=-1,
+        #     executable=None,
+        #     stdin=None,
+        #     stdout=None,
+        #     stderr=None,
+        #     preexec_fn=None,
+        #     close_fds=True,
+        #     shell=False,
+        #     cwd=None,
+        #     env=None,
+        #     universal_newlines=None,
+        #     startupinfo=None,
+        #     creationflags=0,
+        #     restore_signals=True,
+        #     start_new_session=False,
+        #     pass_fds=(),
+        #     group=None,
+        #     extra_groups=None,
+        #     user=None,
+        #     umask=-1,
+        #     encoding=None,
+        #     errors=None,
+        #     text=None,
+        # )
+        
 
         # dlg = ExternalProgramFLO2D(self.iface, "Run FLO-2D model")
         # dlg.exec_folder_lbl.setText("FLO-2D Folder (of FLO-2D model executable)")
@@ -772,6 +837,7 @@ class Flo2D(object):
         except Exception as e:
             self.uc.log_info(repr(e))
             self.uc.bar_warn("Running simulation failed!")
+
 
     def run_tailingsdambreach(self):
         dlg = ExternalProgramFLO2D(self.iface, "Run Tailings Dam Breach model")
