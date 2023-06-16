@@ -722,20 +722,25 @@ class Flo2D(object):
         s = QSettings()
         #model = s.value("FLO-2D/last_flopro", "") + "/FLOPROCore"
         model = "C:\Program Files (x86)\FLO-2D PRO\RunFLO-2D.exe"
-        last_dir = s.value("FLO-2D/lastGdsDir", "")
-        project = last_dir + "/CONT.DAT"
-
-        with cd(last_dir):
-            result = Popen(
-                model,
-                shell=True,
-                stdin=open(os.devnull),
-                stdout=PIPE,
-                stderr=STDOUT,
-                universal_newlines=True,
-            )
-            result.wait()
-            result.kill()
+        if os.path.isfile(model):
+            last_dir = s.value("FLO-2D/lastGdsDir", "")
+            project = last_dir + "/CONT.DAT"
+    
+            with cd(last_dir):
+                result = Popen(
+                    model,
+                    shell=True,
+                    stdin=open(os.devnull),
+                    stdout=PIPE,
+                    stderr=STDOUT,
+                    universal_newlines=True,
+                )
+                result.wait()
+                result.kill()
+        else:
+            self.uc.show_warn("WARNING 160623.1803: " +
+                              "Program RunFLO-2D.exe is not in directory\n\n" + 
+                              "C:\Program Files (x86)\FLO-2D PRO")                    
         return
 
         # model = "C:/TRACKS/FLOPROCore/FLOPROCore/bin/Debug/net6.0-windows/FLOPROCore.exe"
