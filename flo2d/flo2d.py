@@ -720,7 +720,7 @@ class Flo2D(object):
     def run_flopro(self):
         
         s = QSettings()
-        model = s.value("FLO-2D/last_flopro", "") + "/FLOPROCore.exe"
+        model = s.value("FLO-2D/last_flopro", "") + "/RunFLO-2D.exe"
         last_dir = s.value("FLO-2D/lastGdsDir", "")
         project = last_dir + "/CONT.DAT"
 
