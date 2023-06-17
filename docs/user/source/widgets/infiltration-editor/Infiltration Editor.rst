@@ -1,13 +1,27 @@
 Infiltration Editor
 ===================
 
+FLO-2D uses three infiltration method.  Green_Ampt, SCS, and Horton infiltration data development is outlined in this
+section.  The INFIL.DAT file contains the infiltration data.  The data can be global (uniform) or spatially variable
+at the grid element resolution.  Global data is applied uniformly to all grid elements and spatially variable data allows
+different parameters to be applied to individual cells or groups of cells.  The different methods for setting up the data
+are defined below.
+
 Green-Ampt
 ----------
 
-The Green-Ampt infiltration editor can add global or spatially variable infiltration data to the INFIL.DAT file.
+The Green-Ampt infiltration editor can add global or spatially variable infiltration data to the INFIL.DAT file.  The
+FLO-2D plugin uses 4 tools for processing Green-Ampt data.
+
+- Global Infiltration Editor
+- Green-Ampt Polygon Schematize
+- Green-Ampt Infiltration Calculator (FCDMC Method 1)
+- Green-Ampt Log Average Infiltration Calculator (Full Green-Ampt Calculator)
 
 Global Uniform Infiltration
 ----------------------------
+
+Global infiltration parameters set a uniform infiltration for the grid system.
 
 1. Global data is set  
    up using the Global Infiltration button.
@@ -17,14 +31,26 @@ Global Uniform Infiltration
 
 .. image:: ../../img/Infiltration-Editor/Infilt002.png
 
+3. Check the Green-Ampt checkbox.
+
+4. Fill the Green-Ampt with uniform infiltration parameters and click OK.
+
+5. Tool tips have information related to the parameters.  Hover the mouse pointer over the variable name to show the
+   tooltip.
+
 .. image:: ../../img/Infiltration-Editor/Infilt003.png
 
-This option will set up uniform infiltration data for every grid element.
+6. This option will set up uniform infiltration data for every grid element.
 
 .. image:: ../../img/Infiltration-Editor/Infilt004.png
 
 Spatial Infiltration Areas User Layer
 --------------------------------------
+
+Simple polygon method
+______________________
+
+.. image:: ../../img/Infiltration-Editor/Infilt004a.png
 
 Spatially variable floodplain infiltration is set by digitizing infiltration polygons into the Infiltration Areas user
 layer. Use the polygon editor to digitize spatially variable infiltration.
@@ -77,6 +103,54 @@ In the following image, the infiltration areas are different for urban, desert a
 
 .. image:: ../../img/Infiltration-Editor/Infilt009.png
 
+
+Multi-Polygon method
+_______________________
+
+This method is more complex and offers some ideas for assembling and building Green-Ampt data from various sources.
+
+1. Use the Curve Number Generator to download and process the soil and landuse data layers.
+
+.. image:: ../../img/Infiltration-Editor/infilt009a.png
+
+
+2. Fill the Curve Number Generator form as shown and use the Run button to process the data.
+
+.. image:: ../../img/Infiltration-Editor/infilt009b.png
+
+
+3. The following layers are added to the map.  It is a good practice to group them into an Infiltration Group and save
+   them to the project folder as a set of \*.tif and \*.shp or \*.gpkg files.
+
+.. image:: ../../img/Infiltration-Editor/infilt009c.png
+
+
+4. The layers can be used for CN processing or they can be joined to Green-Ampt parameters and added to the Infiltration
+   Areas user layer.
+
+5. Green-Ampt parameters can be challenging to find.  Many Department of Transportation and Department of Agriculture
+   have data tables and hydrology manuals.  They are available for any country, province, state, or county that allows
+   the Green-Ampt method to be used for hydrology studies.
+
+Here are some samples of data parameters that are available online.
+https://www.hec.usace.army.mil/confluence/rasdocs/ras1dtechref/6.1/overview-of-optional-capabilities/modeling-precipitation-and-infiltration/green-ampt
+
+.. csv-table:: Table 2-5 Green-Ampt Parameter Estimates and Ranges (HEC-RAS Hydraulic Reference Manual)
+   :file: Green_Ampt_from_HEC-RAS_Manual.csv
+   :widths: 10, 10, 10, 10, 10, 10, 10, 10
+   :header-rows: 1
+
+.. csv-table:: Green-Ampt Loss Rate Parameter Value for Bare Ground (FCDMC Hydrology Manual 2009)
+   :file: Green_Ampt_FCDMC.csv
+   :widths: 10, 10, 10, 10, 10, 10
+   :header-rows: 2
+
+.. csv-table:: Green-Ampt State of Nevada Database. (GreenAndAmpt_STATSGO2.csv)
+   :file: GreenAndAmpt_STATSGO2_truncated.csv
+   :widths: 10, 10, 10, 10, 10, 10, 10, 10 ,10
+   :header-rows: 1
+
+6. The soil properties from Green-Ampt sources can be joined to Soil Polygons using the soil classification
 
 Channel Infiltration
 ---------------------

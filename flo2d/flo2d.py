@@ -431,12 +431,12 @@ class Flo2D(object):
             parent=self.iface.mainWindow(),
         )
 
-        self.add_action(
-            os.path.join(self.plugin_dir, "img/tailings dam breach.svg"),
-            text=self.tr("Tailings Dam Tool"),
-            callback=self.run_tailingsdambreach,
-            parent=self.iface.mainWindow(),
-        )
+       # self.add_action(
+       #     os.path.join(self.plugin_dir, "img/tailings dam breach.svg"),
+       #     text=self.tr("Tailings Dam Tool"),
+       #     callback=self.run_tailingsdambreach,
+       #     parent=self.iface.mainWindow(),
+       # )
 
         self.add_action(
             os.path.join(self.plugin_dir, "img/landslide.svg"),
