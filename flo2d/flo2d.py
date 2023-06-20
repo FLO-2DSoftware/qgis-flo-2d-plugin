@@ -103,6 +103,7 @@ from .gui.storm_drain_editor_widget import StormDrainEditorWidget
 from .layers import Layers
 from .user_communication import UserCommunication
 
+
 @contextmanager
 def cd(newdir):
     prevdir = os.getcwd()
@@ -111,6 +112,7 @@ def cd(newdir):
         yield
     finally:
         os.chdir(prevdir)
+
 
 class Flo2D(object):
     def __init__(self, iface):
@@ -716,16 +718,15 @@ class Flo2D(object):
             s = QSettings()
             s.setValue("FLO-2D/last_flopro_project", os.path.dirname(gpkg_path))
             s.setValue("FLO-2D/lastGdsDir", os.path.dirname(gpkg_path))
- 
+
     def run_flopro(self):
-        
         s = QSettings()
-        #model = s.value("FLO-2D/last_flopro", "") + "/FLOPROCore"
+        # model = s.value("FLO-2D/last_flopro", "") + "/FLOPROCore"
         model = "C:\Program Files (x86)\FLO-2D PRO\RunFLO-2D.exe"
         if os.path.isfile(model):
             last_dir = s.value("FLO-2D/lastGdsDir", "")
             project = last_dir + "/CONT.DAT"
-    
+
             with cd(last_dir):
                 result = Popen(
                     model,
@@ -738,14 +739,15 @@ class Flo2D(object):
                 result.wait()
                 result.kill()
         else:
-            self.uc.show_warn("WARNING 160623.1803: " +
-                              "Program RunFLO-2D.exe is not in directory\n\n" + 
-                              "C:\Program Files (x86)\FLO-2D PRO")                    
+            self.uc.show_warn(
+                "WARNING 160623.1803: "
+                + "Program RunFLO-2D.exe is not in directory\n\n"
+                + "C:\Program Files (x86)\FLO-2D PRO"
+            )
         return
 
         # model = "C:/TRACKS/FLOPROCore/FLOPROCore/bin/Debug/net6.0-windows/FLOPROCore.exe"
-        
-        
+
         # result = Popen(
         #     args=model,
         #     bufsize=-1,
@@ -772,7 +774,6 @@ class Flo2D(object):
         #     errors=None,
         #     text=None,
         # )
-        
 
         # dlg = ExternalProgramFLO2D(self.iface, "Run FLO-2D model")
         # dlg.exec_folder_lbl.setText("FLO-2D Folder (of FLO-2D model executable)")
@@ -844,7 +845,6 @@ class Flo2D(object):
         except Exception as e:
             self.uc.log_info(repr(e))
             self.uc.bar_warn("Running simulation failed!")
-
 
     def run_tailingsdambreach(self):
         dlg = ExternalProgramFLO2D(self.iface, "Run Tailings Dam Breach model")
@@ -1372,7 +1372,6 @@ class Flo2D(object):
                         self.gutils.create_schematized_rbank_lines_from_xs_tips()
 
                     if "Storm Drain" in dlg_components.components:
-
                         try:
                             swmm_converter = SchemaSWMMConverter(self.con, self.iface, self.lyrs)
                             swmm_converter.create_user_swmm_nodes()
@@ -1384,18 +1383,20 @@ class Flo2D(object):
                                 + "\n_______________________________________________________________",
                                 e,
                             )
-                       
+
                         if os.path.isfile(dir_name + r"\SWMM.INP"):
-                            # if self.f2d_widget.storm_drain_editor.import_storm_drain_INP_file("Choose"):                        
-                            if self.f2d_widget.storm_drain_editor.import_storm_drain_INP_file("Force import of SWMM.INP", False):
-                                self.files_used += "SWMM.INP" + "\n" 
+                            # if self.f2d_widget.storm_drain_editor.import_storm_drain_INP_file("Choose"):
+                            if self.f2d_widget.storm_drain_editor.import_storm_drain_INP_file(
+                                "Force import of SWMM.INP", False
+                            ):
+                                self.files_used += "SWMM.INP" + "\n"
                         else:
-                            self.uc.bar_error("ERROR 100623.0944: SWMM.INP file not found!")            
-                                                                             
+                            self.uc.bar_error("ERROR 100623.0944: SWMM.INP file not found!")
+
                     self.setup_dock_widgets()
                     self.lyrs.refresh_layers()
                     self.lyrs.zoom_to_all()
-                    
+
                     # See if geopackage has grid with 'col' and 'row' fields:
                     grid_lyr = self.lyrs.data["grid"]["qlyr"]
                     field_index = grid_lyr.fields().indexFromName("col")
@@ -1471,7 +1472,7 @@ class Flo2D(object):
 
                     if msg:
                         self.uc.show_info(msg)
-                            
+
     @connection_required
     def import_hdf5(self):
         """
@@ -1895,11 +1896,13 @@ class Flo2D(object):
                                     + "\n_______________________________________________________________",
                                     e,
                                 )
-                           
+
                             if os.path.isfile(outdir + r"\SWMM.INP"):
-                                # if self.f2d_widget.storm_drain_editor.import_storm_drain_INP_file("Choose"):                        
-                                if self.f2d_widget.storm_drain_editor.import_storm_drain_INP_file("Force import of SWMM.INP", True):
-                                    self.files_used += "SWMM.INP" + "\n" 
+                                # if self.f2d_widget.storm_drain_editor.import_storm_drain_INP_file("Choose"):
+                                if self.f2d_widget.storm_drain_editor.import_storm_drain_INP_file(
+                                    "Force import of SWMM.INP", True
+                                ):
+                                    self.files_used += "SWMM.INP" + "\n"
                             else:
                                 self.uc.bar_error("ERROR 100623.0944: SWMM.INP file not found!")
                         # if "Storm Drain" in dlg_components.components:

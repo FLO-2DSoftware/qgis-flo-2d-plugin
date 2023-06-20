@@ -34,6 +34,7 @@ def cd(newdir):
     finally:
         os.chdir(prevdir)
 
+
 class FLOPROExecutor(object):
     FLOPRO_EXE = "FLOPRO.exe"
 
@@ -68,7 +69,7 @@ class FLOPROExecutor(object):
                 # result = run(["self.flo2d_exe"], shell=True, capture_output=True, text=True)
 
                 # 22222
-                
+
                 # self.flo2d_exe = "C:/TRACKS/FLOPROCore/FLOPROCore/bin/Debug/net6.0-windows/FLOPROCore.exe"
                 result = Popen(
                     args=self.flo2d_exe,
@@ -123,6 +124,7 @@ class FLOPROExecutor(object):
 
     def perform(self):
         return self.execute_flopro()
+
 
 class XSECInterpolatorExecutor(object):
     INTERPOLATOR_EXE = "INTERPOLATE.EXE"

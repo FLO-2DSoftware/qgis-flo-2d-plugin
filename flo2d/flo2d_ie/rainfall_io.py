@@ -69,18 +69,12 @@ class HDFProcessor(object):
                     int(rainintime),
                     "Time interval in minutes of the realtime rainfall data.",
                 ),
-
-                (
-                    "IRINTERS",
-                    int(irinters),
-                    "Number of intervals in the dataset."),
-
+                ("IRINTERS", int(irinters), "Number of intervals in the dataset."),
                 (
                     "TIMESTAMP",
                     tstamp,
                     "Timestamp indicates the start and end time of the storm.",
                 ),
-
                 (
                     "IRAINDUM",
                     np.array(data),
