@@ -722,7 +722,7 @@ class Flo2D(object):
     def run_flopro(self):
         s = QSettings()
         # model = s.value("FLO-2D/last_flopro", "") + "/FLOPROCore"
-        model = "C:\Program Files (x86)\FLO-2D PRO\RunFLO-2D.exe"
+        model = r"C:\Program Files (x86)\FLO-2D PRO\RunFLO-2D.exe"
         if os.path.isfile(model):
             last_dir = s.value("FLO-2D/lastGdsDir", "")
             project = last_dir + "/CONT.DAT"
@@ -742,7 +742,7 @@ class Flo2D(object):
             self.uc.show_warn(
                 "WARNING 160623.1803: "
                 + "Program RunFLO-2D.exe is not in directory\n\n"
-                + "C:\Program Files (x86)\FLO-2D PRO"
+                + r"C:\Program Files (x86)\FLO-2D PRO"
             )
         return
 

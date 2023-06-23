@@ -1364,7 +1364,7 @@ def gridRegionGenerator(gutils, grid, gridSpan=100, regionPadding=50, showProgre
                 if showProgress == True:
                     if progDialog.wasCanceled() == True:
                         break
-                    progDialog.setValue(regionCounter / regionCount * 100.0)
+                    progDialog.setValue(int(regionCounter / regionCount * 100.0))
                     QApplication.processEvents()
                 print("Processing region: %s of %s" % (regionCounter, regionCount))
                 yield request
