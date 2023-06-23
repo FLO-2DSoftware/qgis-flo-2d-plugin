@@ -216,7 +216,7 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
             self.groups = set()
         for grp in self.groups:
             for obj in grp.children():
-                if not isinstance(obj, (QDoubleSpinBox, QCheckBox)):
+                if not isinstance(obj, (QSpinBox, QDoubleSpinBox, QCheckBox)):
                     continue
                 obj_name = obj.objectName()
                 name = obj_name.split("_", 1)[-1]
