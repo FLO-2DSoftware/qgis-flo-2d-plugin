@@ -160,7 +160,7 @@ class RainEditorWidget(qtBaseClass, uiDialog):
             try:
                 grid_lyr = self.lyrs.data["grid"]["qlyr"]
                 QApplication.setOverrideCursor(Qt.WaitCursor)
-                asc_processor = ASCProcessor(grid_lyr, asc_dir)  # as_processor, an instance of the ASCProcessor class,
+                asc_processor = ASCProcessor(grid_lyr, asc_dir, self.iface)  # as_processor, an instance of the ASCProcessor class,
                 head_qry = "INSERT INTO raincell (rainintime, irinters, timestamp) VALUES(?,?,?);"
                 data_qry = "INSERT INTO raincell_data (time_interval, rrgrid, iraindum) VALUES (?,?,?);"
                 self.gutils.clear_tables("raincell", "raincell_data")
