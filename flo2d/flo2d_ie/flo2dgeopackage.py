@@ -17,7 +17,7 @@ from operator import itemgetter
 import numpy as np
 from qgis.core import NULL, QgsApplication
 from qgis.PyQt.QtCore import Qt
-from qgis.PyQt.QtWidgets import QApplication
+from qgis.PyQt.QtWidgets import QApplication, QProgressDialog
 
 from ..flo2d_tools.grid_tools import grid_compas_neighbors
 from ..geopackage_utils import GeoPackageUtils
@@ -2227,16 +2227,21 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 return False
             head_sql = """SELECT rainintime, irinters, timestamp FROM raincell LIMIT 1;"""
             data_sql = """SELECT rrgrid, iraindum FROM raincell_data ORDER BY time_interval, rrgrid;"""
-
+            size_sql = """SELECT COUNT(iraindum) FROM raincell_data"""
             line1 = "{0} {1} {2}\n"
             line2 = "{0} {1}\n"
 
             raincell_head = self.execute(head_sql).fetchone()
             raincell_rows = self.execute(data_sql)
-
+            raincell_size = self.execute(size_sql).fetchone()[0]
             raincell = os.path.join(outdir, "RAINCELL.DAT")
             with open(raincell, "w") as r:
                 r.write(line1.format(*raincell_head))
+                progDialog = QProgressDialog("Exporting RealTime Rainfall (.DAT)...", None, 0, int(raincell_size))
+                progDialog.setModal(True)
+                progDialog.setValue(0)
+                progDialog.show()
+                i = 0
                 for row in raincell_rows:
                     if row[1] is None:
                         r.write(line2.format(row[0], "0"))
@@ -2244,6 +2249,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
                         # r.write(line2.format(*row))
                         r.write(line2.format(row[0], "{0:.4f}".format(float(row[1]))))
                         # r.write(tline.format('{0:.3f}'.format(float(x)), '{0:.3f}'.format(float(y)), '{0:.2f}'.format(elev)))
+                    progDialog.setValue(i)
+                    i += 1
 
             return True
 
