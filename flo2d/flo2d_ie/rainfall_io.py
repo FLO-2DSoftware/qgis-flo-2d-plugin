@@ -14,7 +14,7 @@ import numpy as np
 from ..flo2d_tools.grid_tools import rasters2centroids
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
-from qgis.PyQt.QtWidgets import QProgressBar
+from qgis.PyQt.QtWidgets import QProgressDialog
 
 try:
     import h5py
@@ -108,16 +108,19 @@ class HDFProcessor(object):
             n_cells = self.gutils.execute(qry_size).fetchone()[0] / irinters
             dts = grp.create_dataset("IRAINDUM", (n_cells, int(irinters)), compression="gzip")
 
-            pb = self.uc.progress_bar2("Exporting RealTime Rainfall...", 0, int(irinters), 0)
+            progDialog = QProgressDialog("Exporting RealTime Rainfall (.HDF5)...", None, 0, int(irinters))
+            progDialog.setModal(True)
+            progDialog.setValue(0)
+            progDialog.show()
+
             timeinterval = self.gutils.execute(qry_timeinterval).fetchall()
 
             i = 0
             for interval in timeinterval:
-                pb.setValue(i)
+                progDialog.setValue(i)
                 batch_query = qry_data + f" WHERE time_interval = {interval[0]} ORDER BY rrgrid, time_interval"
                 data = self.gutils.execute(batch_query).fetchall()
                 data = np.array(data)
                 dts[:, i] = data.flatten()
                 i += 1
 
-            pb.close()

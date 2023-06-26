@@ -15,7 +15,7 @@ from math import isnan
 from qgis.core import QgsProject
 from qgis.PyQt.QtCore import QSettings, Qt
 from qgis.PyQt.QtGui import QColor
-from qgis.PyQt.QtWidgets import QApplication, QFileDialog, QInputDialog, QMessageBox
+from qgis.PyQt.QtWidgets import QApplication, QFileDialog, QInputDialog, QMessageBox, QProgressDialog
 
 from ..flo2d_ie.flo2dgeopackage import Flo2dGeoPackage
 from ..flo2d_ie.rainfall_io import ASCProcessor, HDFProcessor
@@ -166,14 +166,23 @@ class RainEditorWidget(qtBaseClass, uiDialog):
                 self.gutils.clear_tables("raincell", "raincell_data")
                 header = asc_processor.parse_rfc()
                 time_step = float(header[0])
+                irinters = int(header[1])
                 self.gutils.execute(head_qry, header)
                 time_interval = 0
+                progDialog = QProgressDialog("Importing RealTime Rainfall ASCII Files...", None, 0, irinters)
+                progDialog.setModal(True)
+                progDialog.setValue(0)
+                progDialog.show()
+                QApplication.processEvents()
+                i = 1
                 for rain_series in asc_processor.rainfall_sampling():
+                    progDialog.setValue(i)
                     cur = self.gutils.con.cursor()
                     for val, gid in rain_series:
                         cur.execute(data_qry, (time_interval, gid, val))
                     self.gutils.con.commit()
                     time_interval += time_step
+                    i += 1
                 QApplication.restoreOverrideCursor()
                 self.uc.show_info("Importing Rainfall Data finished!")
             except Exception as e:
