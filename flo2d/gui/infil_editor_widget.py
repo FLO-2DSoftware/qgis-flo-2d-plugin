@@ -16,7 +16,7 @@ from math import isnan
 from qgis.core import QgsFeatureRequest, QgsWkbTypes
 from qgis.PyQt.QtCore import QSettings, Qt, pyqtSignal, pyqtSlot
 from qgis.PyQt.QtGui import QStandardItem, QStandardItemModel
-from qgis.PyQt.QtWidgets import QApplication, QCheckBox, QDoubleSpinBox, QInputDialog
+from qgis.PyQt.QtWidgets import QApplication, QCheckBox, QDoubleSpinBox, QInputDialog, QSpinBox
 
 from ..flo2d_tools.grid_tools import poly2grid, poly2poly_geos
 from ..flo2d_tools.infiltration_tools import InfiltrationCalculator
@@ -216,7 +216,7 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
             self.groups = set()
         for grp in self.groups:
             for obj in grp.children():
-                if not isinstance(obj, (QDoubleSpinBox, QCheckBox)):
+                if not isinstance(obj, (QSpinBox, QDoubleSpinBox, QCheckBox)):
                     continue
                 obj_name = obj.objectName()
                 name = obj_name.split("_", 1)[-1]
@@ -326,7 +326,7 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
                         grp = self.fplain_grp
             for obj in grp.children():
                 obj_name = obj.objectName().split("_", 1)[-1]
-                if isinstance(obj, QDoubleSpinBox):
+                if isinstance(obj, QDoubleSpinBox) or isinstance(obj, QSpinBox):
                     infil_dict[obj_name] = obj.value()
                 else:
                     continue
@@ -379,7 +379,7 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
                         self.fplain_grp.setChecked(True)
                         grp = self.fplain_grp
             for obj in grp.children():
-                if isinstance(obj, QDoubleSpinBox):
+                if isinstance(obj, QDoubleSpinBox) or isinstance(obj, QSpinBox):
                     obj_name = obj.objectName().split("_", 1)[-1]
                     obj.setValue(infil_dict[obj_name])
                 else:

@@ -21,7 +21,7 @@ from qgis.core import (
     QgsProject,
     QgsRectangle,
     QgsVectorLayer,
-    QgsWkbTypes
+    QgsWkbTypes,
 )
 from qgis.gui import QgsRubberBand
 from qgis.PyQt.QtCore import Qt
@@ -1764,16 +1764,16 @@ class Layers(object):
             self.data[lyr]["qlyr"] = None
 
     def load_layer(
-            self,
-            table,
-            uri,
-            group,
-            name,
-            subgroup=None,
-            style=None,
-            visible=True,
-            readonly=False,
-            provider="ogr",
+        self,
+        table,
+        uri,
+        group,
+        name,
+        subgroup=None,
+        style=None,
+        visible=True,
+        readonly=False,
+        provider="ogr",
     ):
         try:
             # check if the layer is already loaded

@@ -512,7 +512,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             # rain_arf_sql += [(fid, val, self.build_buffer(cells[gid], self.buffer))]
             cells_sql += [(i, gid, val)]
 
-        self.batch_execute(ts_sql, rain_sql, tsd_sql, cells_sql) # rain_arf_sql
+        self.batch_execute(ts_sql, rain_sql, tsd_sql, cells_sql)  # rain_arf_sql
         name_qry = """UPDATE rain_time_series SET name = 'Time series ' || cast (fid as text) """
         self.execute(name_qry)
 

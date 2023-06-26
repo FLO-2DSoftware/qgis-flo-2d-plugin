@@ -238,20 +238,20 @@ class ComponentsDialog(qtBaseClass, uiDialog):
                 self.levees_chbox.setEnabled(True)
 
             # Multiple channels:
-            # if options["IMULTC"] == "1":
-            if self.gutils.is_table_empty("mult_cells") and self.gutils.is_table_empty("simple_mult_cells"):
-                QApplication.restoreOverrideCursor()
-                self.uc.show_info(
-                    "WARNING 130222.0843: there aren't mult channels or simple mult channels in the project!\n\nThe IMULTC switch will be turned off."
-                )
-                self.gutils.set_cont_par("IMULTC", 0)
-                QApplication.setOverrideCursor(Qt.WaitCursor)
-            else:  # There are Mult or simple channels cells:
-                if self.gutils.is_table_empty("mult"):
-                    # There are mult or simple channels but 'mult' (globals) is empty: set globals:
-                    self.gutils.fill_empty_mult_globals()
-                self.multiple_channels_chbox.setChecked(True)
-                self.multiple_channels_chbox.setEnabled(True)
+            if options["IMULTC"] == "1":
+                if self.gutils.is_table_empty("mult_cells") and self.gutils.is_table_empty("simple_mult_cells"):
+                    QApplication.restoreOverrideCursor()
+                    self.uc.show_info(
+                        "WARNING 130222.0843: there aren't mult channels or simple mult channels in the project!\n\nThe IMULTC switch will be turned off."
+                    )
+                    self.gutils.set_cont_par("IMULTC", 0)
+                    QApplication.setOverrideCursor(Qt.WaitCursor)
+                else:  # There are Mult or simple channels cells:
+                    if self.gutils.is_table_empty("mult"):
+                        # There are mult or simple channels but 'mult' (globals) is empty: set globals:
+                        self.gutils.fill_empty_mult_globals()
+                    self.multiple_channels_chbox.setChecked(True)
+                    self.multiple_channels_chbox.setEnabled(True)
 
             if not self.gutils.is_table_empty("breach"):
                 self.breach_chbox.setChecked(True)

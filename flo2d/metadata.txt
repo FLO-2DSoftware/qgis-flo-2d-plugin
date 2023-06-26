@@ -1,6 +1,6 @@
 [general]
 name=FLO-2D
-version=0.10.106
+version=0.10.109
 qgisMinimumVersion=3.0
 qgisMaximumVersion=3.99
 description=FLO-2D tools for QGIS
@@ -9,6 +9,12 @@ email=jj@flo-2d.com
 about=QGIS tools for FLO-2D
 
 changelog=
+ <p>0.10.109
+  - Remove/Improve multiple channel messages when exporting GDS files.
+ <p>0.10.108
+  - Remove tailings dam_breach tool from FLO-2D toolbar.
+ <p>0.10.107
+  - Call external C# program to execute FLOPRO.EXE.
  <p>0.10.106
   - Robson connection test
  <p>0.10.105

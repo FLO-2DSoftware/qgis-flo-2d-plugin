@@ -18,9 +18,20 @@ import pstats
 import sys
 import time
 import traceback
+from contextlib import contextmanager
 from datetime import datetime
 from pstats import SortKey
-
+from subprocess import (
+    CREATE_NO_WINDOW,
+    PIPE,
+    STDOUT,
+    CalledProcessError,
+    Popen,
+    call,
+    check_call,
+    check_output,
+    run,
+)
 from PyQt5.QtWidgets import QApplication
 from qgis.core import NULL, QgsProject, QgsWkbTypes
 from qgis.gui import QgsDockWidget, QgsProjectionSelectionWidget
@@ -91,6 +102,16 @@ from .gui.table_editor_widget import TableEditorWidget
 from .gui.storm_drain_editor_widget import StormDrainEditorWidget
 from .layers import Layers
 from .user_communication import UserCommunication
+
+
+@contextmanager
+def cd(newdir):
+    prevdir = os.getcwd()
+    os.chdir(os.path.expanduser(newdir))
+    try:
+        yield
+    finally:
+        os.chdir(prevdir)
 
 
 class Flo2D(object):
@@ -433,12 +454,12 @@ class Flo2D(object):
             parent=self.iface.mainWindow(),
         )
 
-        self.add_action(
-            os.path.join(self.plugin_dir, "img/tailings dam breach.svg"),
-            text=self.tr("Tailings Dam Tool"),
-            callback=self.run_tailingsdambreach,
-            parent=self.iface.mainWindow(),
-        )
+        # self.add_action(
+        #     os.path.join(self.plugin_dir, "img/tailings dam breach.svg"),
+        #     text=self.tr("Tailings Dam Tool"),
+        #     callback=self.run_tailingsdambreach,
+        #     parent=self.iface.mainWindow(),
+        # )
 
         self.add_action(
             os.path.join(self.plugin_dir, "img/landslide.svg"),
@@ -699,8 +720,60 @@ class Flo2D(object):
             s.setValue("FLO-2D/lastGdsDir", os.path.dirname(gpkg_path))
 
     def run_flopro(self):
-        # self.run_program("FLOPRO.exe")
-        # return
+        s = QSettings()
+        # model = s.value("FLO-2D/last_flopro", "") + "/FLOPROCore"
+        model = "C:\Program Files (x86)\FLO-2D PRO\RunFLO-2D.exe"
+        if os.path.isfile(model):
+            last_dir = s.value("FLO-2D/lastGdsDir", "")
+            project = last_dir + "/CONT.DAT"
+
+            with cd(last_dir):
+                result = Popen(
+                    model,
+                    shell=True,
+                    stdin=open(os.devnull),
+                    stdout=PIPE,
+                    stderr=STDOUT,
+                    universal_newlines=True,
+                )
+                result.wait()
+                result.kill()
+        else:
+            self.uc.show_warn(
+                "WARNING 160623.1803: "
+                + "Program RunFLO-2D.exe is not in directory\n\n"
+                + "C:\Program Files (x86)\FLO-2D PRO"
+            )
+        return
+
+        # model = "C:/TRACKS/FLOPROCore/FLOPROCore/bin/Debug/net6.0-windows/FLOPROCore.exe"
+
+        # result = Popen(
+        #     args=model,
+        #     bufsize=-1,
+        #     executable=None,
+        #     stdin=None,
+        #     stdout=None,
+        #     stderr=None,
+        #     preexec_fn=None,
+        #     close_fds=True,
+        #     shell=False,
+        #     cwd=None,
+        #     env=None,
+        #     universal_newlines=None,
+        #     startupinfo=None,
+        #     creationflags=0,
+        #     restore_signals=True,
+        #     start_new_session=False,
+        #     pass_fds=(),
+        #     group=None,
+        #     extra_groups=None,
+        #     user=None,
+        #     umask=-1,
+        #     encoding=None,
+        #     errors=None,
+        #     text=None,
+        # )
 
         # dlg = ExternalProgramFLO2D(self.iface, "Run FLO-2D model")
         # dlg.exec_folder_lbl.setText("FLO-2D Folder (of FLO-2D model executable)")
@@ -1299,7 +1372,6 @@ class Flo2D(object):
                         self.gutils.create_schematized_rbank_lines_from_xs_tips()
 
                     if "Storm Drain" in dlg_components.components:
-
                         try:
                             swmm_converter = SchemaSWMMConverter(self.con, self.iface, self.lyrs)
                             swmm_converter.create_user_swmm_nodes()
@@ -1311,18 +1383,20 @@ class Flo2D(object):
                                 + "\n_______________________________________________________________",
                                 e,
                             )
-                       
+
                         if os.path.isfile(dir_name + r"\SWMM.INP"):
-                            # if self.f2d_widget.storm_drain_editor.import_storm_drain_INP_file("Choose"):                        
-                            if self.f2d_widget.storm_drain_editor.import_storm_drain_INP_file("Force import of SWMM.INP", False):
-                                self.files_used += "SWMM.INP" + "\n" 
+                            # if self.f2d_widget.storm_drain_editor.import_storm_drain_INP_file("Choose"):
+                            if self.f2d_widget.storm_drain_editor.import_storm_drain_INP_file(
+                                "Force import of SWMM.INP", False
+                            ):
+                                self.files_used += "SWMM.INP" + "\n"
                         else:
-                            self.uc.bar_error("ERROR 100623.0944: SWMM.INP file not found!")            
-                                                                             
+                            self.uc.bar_error("ERROR 100623.0944: SWMM.INP file not found!")
+
                     self.setup_dock_widgets()
                     self.lyrs.refresh_layers()
                     self.lyrs.zoom_to_all()
-                    
+
                     # See if geopackage has grid with 'col' and 'row' fields:
                     grid_lyr = self.lyrs.data["grid"]["qlyr"]
                     field_index = grid_lyr.fields().indexFromName("col")
@@ -1398,7 +1472,7 @@ class Flo2D(object):
 
                     if msg:
                         self.uc.show_info(msg)
-                            
+
     @connection_required
     def import_hdf5(self):
         """
@@ -1822,11 +1896,13 @@ class Flo2D(object):
                                     + "\n_______________________________________________________________",
                                     e,
                                 )
-                           
+
                             if os.path.isfile(outdir + r"\SWMM.INP"):
-                                # if self.f2d_widget.storm_drain_editor.import_storm_drain_INP_file("Choose"):                        
-                                if self.f2d_widget.storm_drain_editor.import_storm_drain_INP_file("Force import of SWMM.INP", True):
-                                    self.files_used += "SWMM.INP" + "\n" 
+                                # if self.f2d_widget.storm_drain_editor.import_storm_drain_INP_file("Choose"):
+                                if self.f2d_widget.storm_drain_editor.import_storm_drain_INP_file(
+                                    "Force import of SWMM.INP", True
+                                ):
+                                    self.files_used += "SWMM.INP" + "\n"
                             else:
                                 self.uc.bar_error("ERROR 100623.0944: SWMM.INP file not found!")
                         # if "Storm Drain" in dlg_components.components:
