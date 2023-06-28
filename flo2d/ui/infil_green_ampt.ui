@@ -43,7 +43,7 @@
       <string>Soil</string>
      </property>
      <layout class="QGridLayout" name="gridLayout_6">
-      <item row="0" column="0">
+      <item row="1" column="0">
        <layout class="QGridLayout" name="gridLayout_2">
         <item row="0" column="0">
          <widget class="QLabel" name="label_4">
@@ -89,10 +89,27 @@
         </item>
        </layout>
       </item>
-      <item row="0" column="1">
+      <item row="2" column="0">
+       <widget class="QCheckBox" name="log_area_average_chbox">
+        <property name="text">
+         <string>Log Area Average calculations</string>
+        </property>
+        <property name="checked">
+         <bool>true</bool>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="1">
        <layout class="QGridLayout" name="gridLayout_5">
         <item row="2" column="0">
-         <widget class="QComboBox" name="rtimps_cbo"/>
+         <widget class="QComboBox" name="rtimps_cbo">
+          <property name="enabled">
+           <bool>true</bool>
+          </property>
+          <property name="editable">
+           <bool>false</bool>
+          </property>
+         </widget>
         </item>
         <item row="3" column="0">
          <widget class="QComboBox" name="soil_depth_cbo"/>
@@ -111,13 +128,20 @@
         </item>
        </layout>
       </item>
-      <item row="1" column="0">
-       <widget class="QCheckBox" name="log_area_average_chbox">
+      <item row="0" column="0">
+       <widget class="QRadioButton" name="rb_soilLyr">
         <property name="text">
-         <string>Log Area Average calculations</string>
+         <string>User soil layer</string>
         </property>
         <property name="checked">
          <bool>true</bool>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="1">
+       <widget class="QRadioButton" name="rb_NRCS">
+        <property name="text">
+         <string>NRCS soil survey databases</string>
         </property>
        </widget>
       </item>
@@ -202,8 +226,8 @@
    <slot>accept()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>248</x>
-     <y>254</y>
+     <x>259</x>
+     <y>481</y>
     </hint>
     <hint type="destinationlabel">
      <x>157</x>
@@ -218,12 +242,220 @@
    <slot>reject()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>316</x>
-     <y>260</y>
+     <x>327</x>
+     <y>481</y>
     </hint>
     <hint type="destinationlabel">
      <x>286</x>
      <y>274</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>rb_NRCS</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>soil_cbo</receiver>
+   <slot>setDisabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>368</x>
+     <y>50</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>361</x>
+     <y>67</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>rb_NRCS</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>xksat_cbo</receiver>
+   <slot>setDisabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>346</x>
+     <y>48</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>313</x>
+     <y>99</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>rb_NRCS</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>rtimps_cbo</receiver>
+   <slot>setDisabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>285</x>
+     <y>47</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>283</x>
+     <y>127</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>rb_NRCS</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>soil_depth_cbo</receiver>
+   <slot>setDisabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>267</x>
+     <y>51</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>271</x>
+     <y>160</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>rb_NRCS</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>dtheta_cbo</receiver>
+   <slot>setDisabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>425</x>
+     <y>46</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>382</x>
+     <y>186</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>rb_NRCS</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>psif_cbo</receiver>
+   <slot>setDisabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>458</x>
+     <y>47</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>438</x>
+     <y>206</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>rb_NRCS</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>log_area_average_chbox</receiver>
+   <slot>setDisabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>468</x>
+     <y>52</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>29</x>
+     <y>239</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>rb_NRCS</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>label_4</receiver>
+   <slot>setDisabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>407</x>
+     <y>47</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>71</x>
+     <y>76</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>rb_NRCS</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>label</receiver>
+   <slot>setDisabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>458</x>
+     <y>50</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>200</x>
+     <y>111</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>rb_NRCS</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>label_2</receiver>
+   <slot>setDisabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>420</x>
+     <y>49</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>139</x>
+     <y>129</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>rb_NRCS</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>label_10</receiver>
+   <slot>setDisabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>399</x>
+     <y>42</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>102</x>
+     <y>156</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>rb_NRCS</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>label_3</receiver>
+   <slot>setDisabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>431</x>
+     <y>45</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>43</x>
+     <y>184</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>rb_NRCS</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>label_7</receiver>
+   <slot>setDisabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>340</x>
+     <y>52</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>64</x>
+     <y>209</y>
     </hint>
    </hints>
   </connection>
