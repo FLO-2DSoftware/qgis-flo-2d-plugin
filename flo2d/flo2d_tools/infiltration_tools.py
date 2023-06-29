@@ -299,7 +299,7 @@ class InfiltrationCalculator(object):
                             dtheta_parts.append((dthetad, area))
                         elif saturation == "normal":
                             dtheta_parts.append((dthetan, area))
-                        else: # saturation == "wet" or saturation == "saturated":
+                        else:
                             dtheta_parts.append((0, area))
                         psif_parts.append((psif, area))
                     land_params["rtimpf"] = green_ampt.calculate_rtimp_n(rtimp_parts)
@@ -431,20 +431,35 @@ class GreenAmpt(object):
     def calculate_dtheta_weighted(self, parts):
         # parts are reported in % of grid area
         try:
-            #dtheta_partial = [area * log10(dtheta) if dtheta > 0 else 0 for dtheta, area in parts]
-            #dtheta_partial = [area * log10(dtheta) for dtheta, area in parts if dtheta > 0]
-            dtheta_partial = []
+
+            # Log area average for dry and normal saturation and area weighted average for wet saturation
+            dtheta_partial_dn = []
+            area_dn = []
+            area_sat = []
             for dtheta, area in parts:
                 if dtheta > 0:
-                    result = area * log10(dtheta)
-                    dtheta_partial.append(result)
+                    dtheta_partial_dn.append(area * log10(dtheta))
+                    area_dn.append(area)
                 else:
-                    dtheta_partial.append(0)
-
-            if sum(dtheta_partial) == 0:
+                    area_sat.append(area)
+            area_total = sum(area_dn) + sum(area_sat)
+            # Only dry and normal DTHETA
+            if sum(area_sat) == 0:
+                avg_dtheta = round(10 ** (sum(dtheta_partial_dn)/sum(area_dn)), 4)
+            # Only wet DTHETA
+            elif sum(area_dn) == 0:
                 avg_dtheta = 0
+            # Dry, normal and wet DTHETA
             else:
-                avg_dtheta = round(10 ** (sum(dtheta_partial)), 4)
+                avg_dtheta = round(((10 ** (sum(dtheta_partial_dn)/sum(area_dn))) * sum(area_dn)) / area_total, 4)
+
+            # # Arithmetic weighted average
+            # dtheta_dn = []
+            # area_total = []
+            # for dtheta, area in parts:
+            #     area_total.append(area)
+            #     dtheta_dn.append(dtheta * area)
+            # avg_dtheta = sum(dtheta_dn) / sum(area_total)
 
             return avg_dtheta
 
