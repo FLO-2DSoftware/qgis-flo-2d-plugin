@@ -25,6 +25,8 @@ from ..user_communication import UserCommunication
 from ..utils import m_fdata
 from .ui_utils import center_canvas, load_ui, set_icon, switch_to_selected
 
+from ..misc.ssurgo_soils import SsurgoSoil
+
 uiDialog, qtBaseClass = load_ui("infil_editor")
 
 
@@ -472,88 +474,110 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
         ok = dlg.exec_()
         if not ok:
             return
-        try:
-            QApplication.setOverrideCursor(Qt.WaitCursor)
-            dlg.save_green_ampt_shapefile_fields()
-            self.gutils.disable_geom_triggers()
-            (
-                soil_lyr,
-                land_lyr,
-                fields,
-                vc_check,
-                log_area_average,
-            ) = dlg.green_ampt_parameters()
-            inf_calc = InfiltrationCalculator(self.grid_lyr, self.iface, self.gutils)
-            inf_calc.setup_green_ampt(soil_lyr, land_lyr, vc_check, log_area_average, *fields)
-            grid_params = inf_calc.green_ampt_infiltration()
 
-            if grid_params:
-                # apply effective impervious area layer
-                if self.eff_lyr is not None:
-                    eff_values = poly2poly_geos(self.grid_lyr, self.eff_lyr, None, "eff")
-                    try:
-                        for gid, values in eff_values:
-                            fact = 1 - sum((1 - row[0] * 0.01) * row[-1] for row in values)
-                            grid_params[gid]["rtimpf"] *= fact
-                    except Exception:
-                        pass
+        # The end of this algorithm has to be a soil layer containing:
+        # XKSAT, PERC_ROCK, DEPTH, DTHETA_D, DTHETA_N, PSIF
 
-                self.gutils.clear_tables("infil_cells_green")
-                qry_cells = """INSERT INTO infil_cells_green (grid_fid, hydc, soils, dtheta, abstrinf, rtimpf, soil_depth) VALUES (?,?,?,?,?,?,?);"""
-                cells_values = []
-                non_intercepted = []
-                for i, (gid, params) in enumerate(grid_params.items(), 1):
-                    if "dtheta" not in params:
-                        non_intercepted.append(gid)
-                        params["dtheta"] = 0.3
-                        params["abstrinf"] = 0.1
-                    par = (
-                        params["hydc"],
-                        params["soils"],
-                        params["dtheta"],
-                        params["abstrinf"],
-                        params["rtimpf"],
-                        params["soil_depth"],
-                    )
-                    values = (gid,) + tuple(round(p, 3) for p in par)
-                    cells_values.append(values)
-                cur = self.con.cursor()
-                cur.executemany(qry_cells, cells_values)
-                self.con.commit()
-                self.gutils.enable_geom_triggers()
-                QApplication.restoreOverrideCursor()
+        # NRCS soil survey database
+        if dlg.rb_NRCS.isChecked():
 
-                if non_intercepted:
-                    no_inter = ""
-                    for nope in non_intercepted:
-                        no_inter += "\n" + str(nope)
+            # 1. Download relevant soil data from NRCS SSURGO database:
+            # hzdept, hzdepb, sandtotal, silttotal, claytotal, fragsize, fragvol
+
+            ssurgoSoil = SsurgoSoil(self.grid_lyr, self.iface)
+            ssurgoSoil.postRequest()
+
+
+
+            # 2.  Use the equations presented on the section 2.4 to calculate:
+            # DTHETA, PSIF, and XKSAT
+
+            # Use this calculated DTHETA, PSIF, and XKSAT to compute the Green-Ampt.
+
+        # User soil layer
+        else:
+            try:
+                QApplication.setOverrideCursor(Qt.WaitCursor)
+                dlg.save_green_ampt_shapefile_fields()
+                self.gutils.disable_geom_triggers()
+                (
+                    soil_lyr,
+                    land_lyr,
+                    fields,
+                    vc_check,
+                    log_area_average,
+                ) = dlg.green_ampt_parameters()
+                inf_calc = InfiltrationCalculator(self.grid_lyr, self.iface, self.gutils)
+                inf_calc.setup_green_ampt(soil_lyr, land_lyr, vc_check, log_area_average, *fields)
+                grid_params = inf_calc.green_ampt_infiltration()
+
+                if grid_params:
+                    # apply effective impervious area layer
+                    if self.eff_lyr is not None:
+                        eff_values = poly2poly_geos(self.grid_lyr, self.eff_lyr, None, "eff")
+                        try:
+                            for gid, values in eff_values:
+                                fact = 1 - sum((1 - row[0] * 0.01) * row[-1] for row in values)
+                                grid_params[gid]["rtimpf"] *= fact
+                        except Exception:
+                            pass
+
+                    self.gutils.clear_tables("infil_cells_green")
+                    qry_cells = """INSERT INTO infil_cells_green (grid_fid, hydc, soils, dtheta, abstrinf, rtimpf, soil_depth) VALUES (?,?,?,?,?,?,?);"""
+                    cells_values = []
+                    non_intercepted = []
+                    for i, (gid, params) in enumerate(grid_params.items(), 1):
+                        if "dtheta" not in params:
+                            non_intercepted.append(gid)
+                            params["dtheta"] = 0.3
+                            params["abstrinf"] = 0.1
+                        par = (
+                            params["hydc"],
+                            params["soils"],
+                            params["dtheta"],
+                            params["abstrinf"],
+                            params["rtimpf"],
+                            params["soil_depth"],
+                        )
+                        values = (gid,) + tuple(round(p, 3) for p in par)
+                        cells_values.append(values)
+                    cur = self.con.cursor()
+                    cur.executemany(qry_cells, cells_values)
+                    self.con.commit()
+                    self.gutils.enable_geom_triggers()
                     QApplication.restoreOverrideCursor()
-                    self.uc.show_info(
-                        "WARNING 150119.0354: Calculating Green-Ampt parameters finished, but \n"
-                        + str(len(non_intercepted))
-                        + " cells didn´t intercept the land use shapefile.\n"
-                        + "Default values were assigned for the infiltration.\n"
-                        + no_inter
-                    )
-                else:
-                    self.uc.show_info("Calculating Green-Ampt parameters finished!")
 
-            else:
-                QApplication.restoreOverrideCursor()
-                self.uc.show_critical(
-                    "ERROR 061218.1839: Green-Ampt infiltration failed!. Please check data in your input layers."
+                    if non_intercepted:
+                        no_inter = ""
+                        for nope in non_intercepted:
+                            no_inter += "\n" + str(nope)
+                        QApplication.restoreOverrideCursor()
+                        self.uc.show_info(
+                            "WARNING 150119.0354: Calculating Green-Ampt parameters finished, but \n"
+                            + str(len(non_intercepted))
+                            + " cells didn´t intercept the land use shapefile.\n"
+                            + "Default values were assigned for the infiltration.\n"
+                            + no_inter
+                        )
+                    else:
+                        self.uc.show_info("Calculating Green-Ampt parameters finished!")
+
+                else:
+                    QApplication.restoreOverrideCursor()
+                    self.uc.show_critical(
+                        "ERROR 061218.1839: Green-Ampt infiltration failed!. Please check data in your input layers."
+                    )
+
+            except Exception as e:
+                self.gutils.enable_geom_triggers()
+                self.uc.log_info(traceback.format_exc())
+                self.uc.show_error(
+                    "ERROR 051218.1839: Green-Ampt infiltration failed!. Please check data in your input layers."
+                    + "\n__________________________________________________",
+                    e,
                 )
 
-        except Exception as e:
-            self.gutils.enable_geom_triggers()
-            self.uc.log_info(traceback.format_exc())
-            self.uc.show_error(
-                "ERROR 051218.1839: Green-Ampt infiltration failed!. Please check data in your input layers."
-                + "\n__________________________________________________",
-                e,
-            )
-
-        QApplication.restoreOverrideCursor()
+            QApplication.restoreOverrideCursor()
 
     def calculate_scs(self):
         dlg = SCSDialog(self.iface, self.lyrs)
@@ -797,6 +821,7 @@ class GreenAmptDialog(uiDialog_green, qtBaseClass_green):
         self.lyrs = lyrs
         self.setupUi(self)
         self.uc = UserCommunication(iface, "FLO-2D")
+        self.rb_NRCS = self.rb_NRCS
         self.soil_combos = [
             self.xksat_cbo,
             self.rtimps_cbo,
