@@ -1,10 +1,11 @@
 import requests
 import processing
 from qgis.core import (QgsCoordinateReferenceSystem, QgsFeature, QgsField,
-                       QgsGeometry, QgsProcessing, QgsVectorLayer, QgsProject)
+                       QgsGeometry, QgsProcessing, QgsVectorLayer, QgsProject,
+                       QgsProcessingException)
 from qgis.PyQt.QtCore import QVariant
 from ..user_communication import UserCommunication
-
+from flo2d.misc.SSURGO.config import CONUS_NLCD_SSURGO
 class SsurgoSoil(object):
     """Class to get SSURGO soil data"""
 
@@ -17,16 +18,27 @@ class SsurgoSoil(object):
 
         self.uc = UserCommunication(iface, "FLO-2D")
 
+    def setup_ssurgo(self):
+        self.uc.log_info("Setting up SSURGO...")
+
+        parameter = {
+            'INPUT': self.grid_lyr,
+            'TARGET_CRS': 'EPSG:4326',
+            'OUTPUT': 'memory:Reprojected'
+        }
+        self.grid_lyr_4326 = processing.run('native:reprojectlayer', parameter)['OUTPUT']
+        uri = "Polygon?crs=epsg:4326"
+        self.soil_layer = QgsVectorLayer(uri, "soil layer", "memory")
+
     def postRequest(self):
-        """Download soil for AOI using post request and populate self.soil_layer"""
+        """Download soil for AOI"""
 
         # create vector layer structure to store data
         self.uc.log_info("Creating POST request...")
-        uri = "Polygon?crs=epsg:4326"
-        self.soil_layer = QgsVectorLayer(uri, "soil layer", "memory")
         provider = self.soil_layer.dataProvider()
         attributes = []
         attr_dict = [
+            {"name": "mupolygonkey", "type": "str"},
             {"name": "areasymbol", "type": "str"},
             {"name": "musym", "type": "str"},
             {"name": "muname", "type": "str"},
@@ -38,7 +50,6 @@ class SsurgoSoil(object):
             {"name": "claytotal", "type": "str"},
             {"name": "fragsize", "type": "str"},
             {"name": "fragvol ", "type": "str"},
-
         ]
 
         # initialize fields
@@ -47,12 +58,7 @@ class SsurgoSoil(object):
             provider.addAttributes(attributes)
             self.soil_layer.updateFields()
 
-        parameter = {
-            'INPUT': self.grid_lyr,
-            'TARGET_CRS': 'EPSG:4326',
-            'OUTPUT': 'memory:Reprojected'
-        }
-        self.grid_lyr_4326 = processing.run('native:reprojectlayer', parameter)['OUTPUT']
+        # reproject layer
         aoi_reproj_wkt = self.grid_lyr_4326.extent().asWktPolygon()
 
         # send post request
@@ -60,6 +66,7 @@ class SsurgoSoil(object):
             "format": "JSON",
             "query": f"""
                 SELECT 
+                    M.mupolygonkey,
                     M.areasymbol,
                     Ma.musym,
                     Ma.muname,
@@ -70,7 +77,8 @@ class SsurgoSoil(object):
                     Ch.silttotal_r,
                     Ch.claytotal_r,
                     Cf.fragsize_r,
-                    Cf.fragvol_r
+                    Cf.fragvol_r,  
+                    M.mupolygongeo
                 FROM muaggatt Ma
                     JOIN mupolygon M ON M.mukey = Ma.mukey
                     JOIN component C ON C.mukey = Ma.mukey
@@ -84,8 +92,6 @@ class SsurgoSoil(object):
                     AND M.mukey = Ma.mukey
                 """,
                 }
-
-        self.uc.log_info(str(body["query"]))
 
         url = "https://sdmdataaccess.sc.egov.usda.gov/TABULAR/post.rest"
         soil_response = requests.post(url, json=body).json()
@@ -102,24 +108,81 @@ class SsurgoSoil(object):
                     feat.setGeometry(QgsGeometry.fromWkt(col))
             provider.addFeatures([feat])
 
-        # STOPPED HERE!
-        # THE POST REQUEST IS WORKING BUT NO FEATURE IS SHOWN ON THE SOIL LAYER
-        # THE ATTRIBUTE TABLE IS CORRECT
+        QgsProject.instance().addMapLayer(self.soil_layer)
+
+        return
+
+    def wfsRequest(self):
+        """Download soil for AOI using wfs request and populate self.soil_layer"""
+        self.uc.log_info("Creating WFS request...")
+        request_URL = CONUS_NLCD_SSURGO["SSURGO_Soil"].format(",".join([str(item) for item in self.getExtent(self.grid_lyr_4326)]))
+        self.uc.log_info(str(request_URL))
+        alg_params = {"URL": request_URL, "OUTPUT": QgsProcessing.TEMPORARY_OUTPUT}
+        self.soil_layer = processing.run("native:filedownloader", alg_params)["OUTPUT"]
 
         QgsProject.instance().addMapLayer(self.soil_layer)
 
         return
 
-    # def reprojectLayer(self, grid_lyr, target_crs, output=QgsProcessing.TEMPORARY_OUTPUT):
-    #     alg_params = {
-    #         "INPUT": grid_lyr,
-    #         "OPERATION": "",
-    #         "TARGET_CRS": target_crs,
-    #         "OUTPUT": output,
-    #     }
-    #     return processing.run(
-    #         "native:reprojectlayer",
-    #         alg_params,
-    #         is_child_algorithm=True,
-    #     )["OUTPUT"]
 
+        # WfsRequest
+        # request_URL = CONUS_NLCD_SSURGO["SSURGO_Soil"].format(",".join([str(item) for item in self.getExtent(self.grid_lyr_4326)]))
+        # self.outputs["WFSDownload"] = self.downloadFile(request_URL)
+        #
+        # alg_params = {
+        #     "INPUT": self.outputs["WFSDownload"],
+        #     "OUTPUT": QgsProcessing.TEMPORARY_OUTPUT,
+        # }
+        #
+        # self.outputs["SwapXAndYCoordinates"] = processing.run(
+        #     "native:swapxy",
+        #     alg_params,
+        # )["OUTPUT"]
+        #
+        # self.soil_layer = self.outputs["SwapXAndYCoordinates"]
+
+        # QgsProject.instance().addMapLayer(self.soil_layer)
+
+        # # Fix soil layer
+        # parameter = {
+        #     "INPUT": self.soil_layer,
+        #     "OUTPUT": 'memory:FixedGeoms'}
+        # self.soil_layer = processing.run('native:fixgeometries', parameter)['OUTPUT']
+        #
+        # # Clip soil layer
+        # parameter = {
+        #     "INPUT": self.soil_layer,
+        #     "OVERLAY": self.grid_lyr,
+        #     "OUTPUT": 'memory:Clipped'}
+        #
+        # self.soil_layer = processing.run('native:clip', parameter)['OUTPUT']
+
+
+        # STOPPED HERE!
+        # THE POST REQUEST IS WORKING BUT NO FEATURE IS SHOWN ON THE SOIL LAYER
+        # THE ATTRIBUTE TABLE IS CORRECT
+
+        # QgsProject.instance().addMapLayer(self.soil_layer)
+
+    def getExtent(self, layer) -> tuple:
+        # Get extent of the area boundary layer
+        extent = layer.extent()
+        xmin = extent.xMinimum()
+        ymin = extent.yMinimum()
+        xmax = extent.xMaximum()
+        ymax = extent.yMaximum()
+        return xmin, ymin, xmax, ymax
+
+    def swapXY(self):
+        """Swap X and Y coordinates of WFS Download"""
+        alg_params = {
+            "INPUT": self.outputs["WFSDownload"],
+            "OUTPUT": QgsProcessing.TEMPORARY_OUTPUT,
+        }
+        self.outputs["SwapXAndYCoordinates"] = processing.run(
+            "native:swapxy",
+            alg_params,
+            is_child_algorithm=True,
+        )["OUTPUT"]
+        self.soil_layer = self.outputs["SwapXAndYCoordinates"]
+        return

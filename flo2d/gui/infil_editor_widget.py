@@ -16,7 +16,7 @@ from math import isnan
 from qgis.core import QgsFeatureRequest, QgsWkbTypes
 from qgis.PyQt.QtCore import QSettings, Qt, pyqtSignal, pyqtSlot
 from qgis.PyQt.QtGui import QStandardItem, QStandardItemModel
-from qgis.PyQt.QtWidgets import QApplication, QCheckBox, QDoubleSpinBox, QInputDialog, QSpinBox
+from qgis.PyQt.QtWidgets import QApplication, QCheckBox, QDoubleSpinBox, QInputDialog, QSpinBox, QProgressDialog
 
 from ..flo2d_tools.grid_tools import poly2grid, poly2poly_geos
 from ..flo2d_tools.infiltration_tools import InfiltrationCalculator
@@ -483,11 +483,16 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
 
             # 1. Download relevant soil data from NRCS SSURGO database:
             # hzdept, hzdepb, sandtotal, silttotal, claytotal, fragsize, fragvol
-
             ssurgoSoil = SsurgoSoil(self.grid_lyr, self.iface)
+            ssurgoSoil.setup_ssurgo()
+            # try:
+            # ssurgoSoil.wfsRequest()
+            # SSURGO wfs is misconfigured to return x as y and y and x
+            # ssurgoSoil.swapXY()
+
+            # except:
+            #     self.uc.log_info("Error getting soil data through wfs request. Trying post request download now.")
             ssurgoSoil.postRequest()
-
-
 
             # 2.  Use the equations presented on the section 2.4 to calculate:
             # DTHETA, PSIF, and XKSAT
