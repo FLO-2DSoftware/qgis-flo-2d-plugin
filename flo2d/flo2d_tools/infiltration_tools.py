@@ -432,34 +432,34 @@ class GreenAmpt(object):
         # parts are reported in % of grid area
         try:
 
-            # Log area average for dry and normal saturation and area weighted average for wet saturation
-            dtheta_partial_dn = []
-            area_dn = []
-            area_sat = []
-            for dtheta, area in parts:
-                if dtheta > 0:
-                    dtheta_partial_dn.append(area * log10(dtheta))
-                    area_dn.append(area)
-                else:
-                    area_sat.append(area)
-            area_total = sum(area_dn) + sum(area_sat)
-            # Only dry and normal DTHETA
-            if sum(area_sat) == 0:
-                avg_dtheta = round(10 ** (sum(dtheta_partial_dn)/sum(area_dn)), 4)
-            # Only wet DTHETA
-            elif sum(area_dn) == 0:
-                avg_dtheta = 0
-            # Dry, normal and wet DTHETA
-            else:
-                avg_dtheta = round(((10 ** (sum(dtheta_partial_dn)/sum(area_dn))) * sum(area_dn)) / area_total, 4)
-
-            # # Arithmetic weighted average
-            # dtheta_dn = []
-            # area_total = []
+            # # Log area average for dry and normal saturation and area weighted average for wet saturation
+            # dtheta_partial_dn = []
+            # area_dn = []
+            # area_sat = []
             # for dtheta, area in parts:
-            #     area_total.append(area)
-            #     dtheta_dn.append(dtheta * area)
-            # avg_dtheta = sum(dtheta_dn) / sum(area_total)
+            #     if dtheta > 0:
+            #         dtheta_partial_dn.append(area * log10(dtheta))
+            #         area_dn.append(area)
+            #     else:
+            #         area_sat.append(area)
+            # area_total = sum(area_dn) + sum(area_sat)
+            # # Only dry and normal DTHETA
+            # if sum(area_sat) == 0:
+            #     avg_dtheta = round(10 ** (sum(dtheta_partial_dn)/sum(area_dn)), 4)
+            # # Only wet DTHETA
+            # elif sum(area_dn) == 0:
+            #     avg_dtheta = 0
+            # # Dry, normal and wet DTHETA
+            # else:
+            #     avg_dtheta = round(((10 ** (sum(dtheta_partial_dn)/sum(area_dn))) * sum(area_dn)) / area_total, 4)
+
+            # Arithmetic weighted average
+            dtheta_dn = []
+            area_total = []
+            for dtheta, area in parts:
+                area_total.append(area)
+                dtheta_dn.append(dtheta * area)
+            avg_dtheta = sum(dtheta_dn) / sum(area_total)
 
             return avg_dtheta
 
