@@ -16,7 +16,7 @@ from math import isnan
 from qgis.core import QgsFeatureRequest, QgsWkbTypes
 from qgis.PyQt.QtCore import QSettings, Qt, pyqtSignal, pyqtSlot
 from qgis.PyQt.QtGui import QStandardItem, QStandardItemModel
-from qgis.PyQt.QtWidgets import QApplication, QCheckBox, QDoubleSpinBox, QInputDialog
+from qgis.PyQt.QtWidgets import QApplication, QCheckBox, QDoubleSpinBox, QInputDialog, QSpinBox
 
 from ..flo2d_tools.grid_tools import poly2grid, poly2poly_geos
 from ..flo2d_tools.infiltration_tools import InfiltrationCalculator
@@ -216,7 +216,7 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
             self.groups = set()
         for grp in self.groups:
             for obj in grp.children():
-                if not isinstance(obj, (QDoubleSpinBox, QCheckBox)):
+                if not isinstance(obj, (QSpinBox, QDoubleSpinBox, QCheckBox)):
                     continue
                 obj_name = obj.objectName()
                 name = obj_name.split("_", 1)[-1]
@@ -326,7 +326,7 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
                         grp = self.fplain_grp
             for obj in grp.children():
                 obj_name = obj.objectName().split("_", 1)[-1]
-                if isinstance(obj, QDoubleSpinBox):
+                if isinstance(obj, QDoubleSpinBox) or isinstance(obj, QSpinBox):
                     infil_dict[obj_name] = obj.value()
                 else:
                     continue
@@ -379,7 +379,7 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
                         self.fplain_grp.setChecked(True)
                         grp = self.fplain_grp
             for obj in grp.children():
-                if isinstance(obj, QDoubleSpinBox):
+                if isinstance(obj, QDoubleSpinBox) or isinstance(obj, QSpinBox):
                     obj_name = obj.objectName().split("_", 1)[-1]
                     obj.setValue(infil_dict[obj_name])
                 else:
@@ -637,7 +637,7 @@ class InfilGlobal(uiDialog_glob, qtBaseClass_glob):
                 self.spin_soilall.setValue(infil_glob[8] if infil_glob[8] is not None else 4.3)
                 self.spin_hydcadj.setValue(infil_glob[9] if infil_glob[9] is not None else 0.0)
                 self.spin_hydcxx.setValue(infil_glob[10] if infil_glob[10] is not None else 0.1)
-                self.spin_scsnall.setValue(infil_glob[11] if infil_glob[11] is not None else 99)
+                self.spin_scsnall.setValue(int(infil_glob[11]) if infil_glob[11] is not None else 99)
                 self.spin_abstr1.setValue(infil_glob[12] if infil_glob[12] is not None else 0.0)
                 self.spin_fhortoni.setValue(infil_glob[13] if infil_glob[13] is not None else 0.0)
                 self.spin_fhortonf.setValue(infil_glob[14] if infil_glob[14] is not None else 0.0)
@@ -801,7 +801,8 @@ class GreenAmptDialog(uiDialog_green, qtBaseClass_green):
             self.xksat_cbo,
             self.rtimps_cbo,
             self.soil_depth_cbo,
-            self.dtheta_cbo,
+            self.dthetan_cbo,
+            self.dthetad_cbo,
             self.psif_cbo,
         ]
         self.land_combos = [
@@ -875,7 +876,8 @@ class GreenAmptDialog(uiDialog_green, qtBaseClass_green):
         s.setValue("ga_soil_XKSAT", self.xksat_cbo.currentIndex())
         s.setValue("ga_soil_rtimps", self.rtimps_cbo.currentIndex())
         s.setValue("ga_soil_depth", self.soil_depth_cbo.currentIndex())
-        s.setValue("ga_soil_DTHETA", self.dtheta_cbo.currentIndex())
+        s.setValue("ga_soil_DTHETAn", self.dthetan_cbo.currentIndex())
+        s.setValue("ga_soil_DTHETAd", self.dthetad_cbo.currentIndex())
         s.setValue("ga_soil_PSIF", self.psif_cbo.currentIndex())
 
         s.setValue("ga_land_layer_name", self.land_cbo.currentText())
@@ -898,8 +900,11 @@ class GreenAmptDialog(uiDialog_green, qtBaseClass_green):
             val = int(-1 if s.value("ga_soil_depth") is None else s.value("ga_soil_depth"))
             self.soil_depth_cbo.setCurrentIndex(val)
 
-            val = int(-1 if s.value("ga_soil_DTHETA") is None else s.value("ga_soil_DTHETA"))
-            self.dtheta_cbo.setCurrentIndex(val)
+            val = int(-1 if s.value("ga_soil_DTHETAn") is None else s.value("ga_soil_DTHETAn"))
+            self.dthetan_cbo.setCurrentIndex(val)
+
+            val = int(-1 if s.value("ga_soil_DTHETAd") is None else s.value("ga_soil_DTHETAd"))
+            self.dthetad_cbo.setCurrentIndex(val)
 
             val = int(-1 if s.value("ga_soil_PSIF") is None else s.value("ga_soil_PSIF"))
             self.psif_cbo.setCurrentIndex(val)

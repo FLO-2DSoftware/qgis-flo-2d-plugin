@@ -189,6 +189,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
             for l in lyrs:
                 if l.geometryType() == QgsWkbTypes.PointGeometry:
                     if l.featureCount() > 0:
+                        # if l.selectedFeatureCount() != 0:
                         self.inlets_shapefile_cbo.addItem(l.name(), l.dataProvider().dataSourceUri())
                         self.outfalls_shapefile_cbo.addItem(l.name(), l.dataProvider().dataSourceUri())
 

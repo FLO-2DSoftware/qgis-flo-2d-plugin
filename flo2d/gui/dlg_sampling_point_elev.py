@@ -253,7 +253,7 @@ class SamplingPointElevDialog(qtBaseClass, uiDialog):
         rows = int((ymax - ymin) / self.cell_size)
         cols = int((xmax - xmin) / self.cell_size)
         shape = (rows, cols)
-        crs_proj4 = self.grid.crs().toProj4()
+        crs_proj4 = self.grid.crs().toProj()
         try:
             src_nodata = float(self.srcNoDataEdit.text())
         except:

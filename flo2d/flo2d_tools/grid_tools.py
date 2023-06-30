@@ -474,7 +474,7 @@ def spatial_index(vlayer, request=None):
     for feat in vlayer.getFeatures() if request is None else vlayer.getFeatures(request):
         feat_copy = QgsFeature(feat)
         allfeatures[feat.id()] = feat_copy
-        index.insertFeature(feat_copy)
+        index.addFeature(feat_copy)
     return allfeatures, index
 
 
@@ -488,7 +488,7 @@ def spatial_centroids_index(vlayer, request=None):
         feat_copy = QgsFeature(feat)
         feat_copy.setGeometry(feat_copy.geometry().centroid())
         allfeatures[feat.id()] = feat_copy
-        index.insertFeature(feat_copy)
+        index.addFeature(feat_copy)
     return allfeatures, index
 
 
@@ -539,7 +539,7 @@ def intersection_spatial_index(vlayer, request=None, clip=False):
             else:
                 fid = feat.id()
             allfeatures[fid] = (feat_copy, engine)
-            index.insertFeature(feat_copy)
+            index.addFeature(feat_copy)
 
     return allfeatures, index
 
@@ -1364,7 +1364,7 @@ def gridRegionGenerator(gutils, grid, gridSpan=100, regionPadding=50, showProgre
                 if showProgress == True:
                     if progDialog.wasCanceled() == True:
                         break
-                    progDialog.setValue(regionCounter / regionCount * 100.0)
+                    progDialog.setValue(int(regionCounter / regionCount * 100.0))
                     QApplication.processEvents()
                 print("Processing region: %s of %s" % (regionCounter, regionCount))
                 yield request

@@ -110,7 +110,7 @@ class TimeSeriesDelegate(QStyledItemDelegate):
         editor = super(TimeSeriesDelegate, self).createEditor(parent, option, index)
         if index.column() == 0:
             if isinstance(editor, QLineEdit):
-                reg_ex = QRegExp("^(0[1-9]|1[012])[- /.](0[1-9]|[12][0-9]|3[01])[- /.](19|20)\d\d")
+                reg_ex = QRegExp("^(0[1-9]|1[012])[- /.](0[1-9]|[12][0-9]|3[01])[- /.](19|20)\\d\\d")
                 validator = QRegExpValidator(reg_ex, editor)
                 editor.setValidator(validator)
         if index.column() == 1:
@@ -120,7 +120,7 @@ class TimeSeriesDelegate(QStyledItemDelegate):
                 editor.setValidator(validator)
         if index.column() == 2:
             if isinstance(editor, QLineEdit):
-                reg_ex = QRegExp("^[0-9]{1,11}(?:\.[0-9]{1,3})?$")
+                reg_ex = QRegExp("^[0-9]{1,11}(?:\\.[0-9]{1,3})?$")
                 validator = QRegExpValidator(reg_ex, editor)
                 editor.setValidator(validator)
         return editor
@@ -134,7 +134,7 @@ class FloatDelegate(QItemDelegate):
     def createEditor(self, parent, option, index):
         editor = super(FloatDelegate, self).createEditor(parent, option, index)
         if isinstance(editor, QLineEdit):
-            reg_ex = QRegExp("[^a-zA-Z!·$%&/()=?¿><;:_¡^*][0-9]*\.?[0-9]*")
+            reg_ex = QRegExp("[^a-zA-Z!·$%&/()=?¿><;:_¡^*][0-9]*\\.?[0-9]*")
             validator = QRegExpValidator(reg_ex, editor)
             editor.setValidator(validator)
         return editor

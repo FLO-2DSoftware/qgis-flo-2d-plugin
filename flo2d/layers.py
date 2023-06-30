@@ -21,6 +21,7 @@ from qgis.core import (
     QgsProject,
     QgsRectangle,
     QgsVectorLayer,
+    QgsWkbTypes,
 )
 from qgis.gui import QgsRubberBand
 from qgis.PyQt.QtCore import Qt
@@ -239,16 +240,6 @@ class Layers(object):
                 #     },
                 # ),
                 # (
-                #     "rain_arf_areas",
-                #     {
-                #         "name": "Rain ARF Areas",
-                #         "sgroup": "User Layers. Grid Attributes",
-                #         "styles": ["rain_arf_areas.qml"],
-                #         "attrs_edit_widgets": {},
-                #         "readonly": False,
-                #     },
-                # ),
-                # (
                 #     "user_blocked_areas",
                 #     {
                 #         "name": "Blocked Areas",
@@ -454,16 +445,6 @@ class Layers(object):
                         "name": "Tolerance Areas",
                         "sgroup": "User Layers",
                         "styles": ["tolspatial.qml"],
-                        "attrs_edit_widgets": {},
-                        "readonly": False,
-                    },
-                ),
-                (
-                    "rain_arf_areas",
-                    {
-                        "name": "Rain ARF Areas",
-                        "sgroup": "User Layers",
-                        "styles": ["rain_arf_areas.qml"],
                         "attrs_edit_widgets": {},
                         "readonly": False,
                     },
@@ -2425,7 +2406,12 @@ class Layers(object):
     def clear_rubber(self):
         if self.rb:
             for i in range(3):
-                self.rb.reset(i)
+                if i == 0:
+                    self.rb.reset(QgsWkbTypes.PointGeometry)
+                elif i == 1:
+                    self.rb.reset(QgsWkbTypes.LineGeometry)
+                elif i == 2:
+                    self.rb.reset(QgsWkbTypes.PolygonGeometry)
 
     def zoom_to_all(self):
         if self.gutils.is_table_empty("grid"):

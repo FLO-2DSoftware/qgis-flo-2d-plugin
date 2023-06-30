@@ -18,9 +18,20 @@ import pstats
 import sys
 import time
 import traceback
+from contextlib import contextmanager
 from datetime import datetime
 from pstats import SortKey
-
+from subprocess import (
+    CREATE_NO_WINDOW,
+    PIPE,
+    STDOUT,
+    CalledProcessError,
+    Popen,
+    call,
+    check_call,
+    check_output,
+    run,
+)
 from PyQt5.QtWidgets import QApplication
 from qgis.core import NULL, QgsProject, QgsWkbTypes
 from qgis.gui import QgsDockWidget, QgsProjectionSelectionWidget
@@ -46,7 +57,6 @@ from qgis.PyQt.QtWidgets import (
     qApp,
 )
 from urllib3.contrib import _securetransport
-
 from .flo2d_ie.flo2dgeopackage import Flo2dGeoPackage
 from .flo2d_tools.channel_profile_tool import ChannelProfile
 from .flo2d_tools.flopro_tools import (
@@ -69,6 +79,8 @@ from .flo2d_tools.schematic_tools import (
     delete_redundant_levee_directions_np,
     generate_schematic_levees,
 )
+from .flo2d_tools.schema2user_tools import SchemaSWMMConverter
+
 from .geopackage_utils import GeoPackageUtils, connection_required, database_disconnect
 from .gui.dlg_components import ComponentsDialog
 from .gui.dlg_cont_toler_jj import ContToler_JJ
@@ -87,8 +99,19 @@ from .gui.f2d_main_widget import FLO2DWidget
 from .gui.grid_info_widget import GridInfoWidget
 from .gui.plot_widget import PlotWidget
 from .gui.table_editor_widget import TableEditorWidget
+from .gui.storm_drain_editor_widget import StormDrainEditorWidget
 from .layers import Layers
 from .user_communication import UserCommunication
+
+
+@contextmanager
+def cd(newdir):
+    prevdir = os.getcwd()
+    os.chdir(os.path.expanduser(newdir))
+    try:
+        yield
+    finally:
+        os.chdir(prevdir)
 
 
 class Flo2D(object):
@@ -431,12 +454,12 @@ class Flo2D(object):
             parent=self.iface.mainWindow(),
         )
 
-       # self.add_action(
-       #     os.path.join(self.plugin_dir, "img/tailings dam breach.svg"),
-       #     text=self.tr("Tailings Dam Tool"),
-       #     callback=self.run_tailingsdambreach,
-       #     parent=self.iface.mainWindow(),
-       # )
+        # self.add_action(
+        #     os.path.join(self.plugin_dir, "img/tailings dam breach.svg"),
+        #     text=self.tr("Tailings Dam Tool"),
+        #     callback=self.run_tailingsdambreach,
+        #     parent=self.iface.mainWindow(),
+        # )
 
         self.add_action(
             os.path.join(self.plugin_dir, "img/landslide.svg"),
@@ -697,8 +720,60 @@ class Flo2D(object):
             s.setValue("FLO-2D/lastGdsDir", os.path.dirname(gpkg_path))
 
     def run_flopro(self):
-        # self.run_program("FLOPRO.exe")
-        # return
+        s = QSettings()
+        # model = s.value("FLO-2D/last_flopro", "") + "/FLOPROCore"
+        model = r"C:\Program Files (x86)\FLO-2D PRO\RunFLO-2D.exe"
+        if os.path.isfile(model):
+            last_dir = s.value("FLO-2D/lastGdsDir", "")
+            project = last_dir + "/CONT.DAT"
+
+            with cd(last_dir):
+                result = Popen(
+                    model,
+                    shell=True,
+                    stdin=open(os.devnull),
+                    stdout=PIPE,
+                    stderr=STDOUT,
+                    universal_newlines=True,
+                )
+                result.wait()
+                result.kill()
+        else:
+            self.uc.show_warn(
+                "WARNING 160623.1803: "
+                + "Program RunFLO-2D.exe is not in directory\n\n"
+                + r"C:\Program Files (x86)\FLO-2D PRO"
+            )
+        return
+
+        # model = "C:/TRACKS/FLOPROCore/FLOPROCore/bin/Debug/net6.0-windows/FLOPROCore.exe"
+
+        # result = Popen(
+        #     args=model,
+        #     bufsize=-1,
+        #     executable=None,
+        #     stdin=None,
+        #     stdout=None,
+        #     stderr=None,
+        #     preexec_fn=None,
+        #     close_fds=True,
+        #     shell=False,
+        #     cwd=None,
+        #     env=None,
+        #     universal_newlines=None,
+        #     startupinfo=None,
+        #     creationflags=0,
+        #     restore_signals=True,
+        #     start_new_session=False,
+        #     pass_fds=(),
+        #     group=None,
+        #     extra_groups=None,
+        #     user=None,
+        #     umask=-1,
+        #     encoding=None,
+        #     errors=None,
+        #     text=None,
+        # )
 
         # dlg = ExternalProgramFLO2D(self.iface, "Run FLO-2D model")
         # dlg.exec_folder_lbl.setText("FLO-2D Folder (of FLO-2D model executable)")
@@ -1214,7 +1289,6 @@ class Flo2D(object):
                         "qh_table",
                         "qh_table_data",
                         "rain",
-                        "rain_arf_areas",
                         "rain_arf_cells",
                         "rain_time_series",
                         "rain_time_series_data",
@@ -1268,6 +1342,9 @@ class Flo2D(object):
                         "user_streets",
                         "user_struct",
                         "user_swmm_conduits",
+                        "user_swmm_pumps",
+                        "user_swmm_orifices",
+                        "user_swmm_weirs",
                         "user_swmm_nodes",
                         "user_xsec_n_data",
                         "user_xsections",
@@ -1294,9 +1371,32 @@ class Flo2D(object):
                     if "import_chan" in import_calls:
                         self.gutils.create_schematized_rbank_lines_from_xs_tips()
 
+                    if "Storm Drain" in dlg_components.components:
+                        try:
+                            swmm_converter = SchemaSWMMConverter(self.con, self.iface, self.lyrs)
+                            swmm_converter.create_user_swmm_nodes()
+                        except Exception as e:
+                            self.uc.log_info(traceback.format_exc())
+                            QApplication.restoreOverrideCursor()
+                            self.uc.show_error(
+                                "ERROR 040723.1749:\n\nConverting Schematic SD Inlets to User Storm Drain Nodes failed!"
+                                + "\n_______________________________________________________________",
+                                e,
+                            )
+
+                        if os.path.isfile(dir_name + r"\SWMM.INP"):
+                            # if self.f2d_widget.storm_drain_editor.import_storm_drain_INP_file("Choose"):
+                            if self.f2d_widget.storm_drain_editor.import_storm_drain_INP_file(
+                                "Force import of SWMM.INP", False
+                            ):
+                                self.files_used += "SWMM.INP" + "\n"
+                        else:
+                            self.uc.bar_error("ERROR 100623.0944: SWMM.INP file not found!")
+
                     self.setup_dock_widgets()
                     self.lyrs.refresh_layers()
                     self.lyrs.zoom_to_all()
+
                     # See if geopackage has grid with 'col' and 'row' fields:
                     grid_lyr = self.lyrs.data["grid"]["qlyr"]
                     field_index = grid_lyr.fields().indexFromName("col")
@@ -1357,7 +1457,8 @@ class Flo2D(object):
                         msg += "must be done using the "
                         msg += "<FONT COLOR=green>Conversion from Schematic Layers to User Layers</FONT>"
                         msg += " tool in the <FONT COLOR=blue>FLO-2D panel</FONT>...<br>"
-                        msg += "...and <FONT COLOR=green>Import SWMM.INP</FONT> from the <FONT COLOR=blue>Storm Drain Editor widget</FONT>."
+                        if "SWMM.INP" not in self.files_used:
+                            msg += "...and <FONT COLOR=green>Import SWMM.INP</FONT> from the <FONT COLOR=blue>Storm Drain Editor widget</FONT>."
 
                     if "import_inflow" in import_calls or "import_outflow" in import_calls:
                         if msg:
@@ -1478,7 +1579,6 @@ class Flo2D(object):
                     "qh_table",
                     "qh_table_data",
                     "rain",
-                    "rain_arf_areas",
                     "rain_arf_cells",
                     "rain_time_series",
                     "rain_time_series_data",
@@ -1607,7 +1707,7 @@ class Flo2D(object):
                     msg += "must be done using the "
                     msg += "<FONT COLOR=green>Conversion from Schematic Layers to User Layers</FONT>"
                     msg += " tool in the <FONT COLOR=blue>FLO-2D panel</FONT>...<br>"
-                    msg += "...and <FONT COLOR=green>Import SWMM.INP</FONT> from the <FONT COLOR=blue>Storm Drain Editor widget</FONT>."
+                    # msg += "...and <FONT COLOR=green>Import SWMM.INP</FONT> from the <FONT COLOR=blue>Storm Drain Editor widget</FONT>."
 
                 if "import_inflow" in import_calls or "import_outflow" in import_calls:
                     if msg:
@@ -1681,11 +1781,12 @@ class Flo2D(object):
         #     if bname not in self.f2g.parser.dat_files:
         #         return
 
-        project_dir = QgsProject.instance().absolutePath()
-        outdir = QFileDialog.getExistingDirectory(
-            None, "Select directory of files to be imported", directory=project_dir
-        )
+        s = QSettings()
+        last_dir = s.value("FLO-2D/lastGdsDir", "")
+        # project_dir = QgsProject.instance().absolutePath()
+        outdir = QFileDialog.getExistingDirectory(None, "Select directory of files to be imported", directory=last_dir)
         if outdir:
+            s.setValue("FLO-2D/lastGdsDir", outdir)
             bname = "CONT.DAT"
             fname = outdir + "/CONT.DAT"
             if self.f2g.set_parser(fname):
@@ -1783,6 +1884,31 @@ class Flo2D(object):
                         self.uc.bar_info("Flo2D model imported", dur=3)
                         self.gutils.enable_geom_triggers()
 
+                        if "Storm Drain" in dlg_components.components:
+                            try:
+                                swmm_converter = SchemaSWMMConverter(self.con, self.iface, self.lyrs)
+                                swmm_converter.create_user_swmm_nodes()
+                            except Exception as e:
+                                self.uc.log_info(traceback.format_exc())
+                                QApplication.restoreOverrideCursor()
+                                self.uc.show_error(
+                                    "ERROR 100623.1044:\n\nConverting Schematic SD Inlets to User Storm Drain Nodes failed!"
+                                    + "\n_______________________________________________________________",
+                                    e,
+                                )
+
+                            if os.path.isfile(outdir + r"\SWMM.INP"):
+                                # if self.f2d_widget.storm_drain_editor.import_storm_drain_INP_file("Choose"):
+                                if self.f2d_widget.storm_drain_editor.import_storm_drain_INP_file(
+                                    "Force import of SWMM.INP", True
+                                ):
+                                    self.files_used += "SWMM.INP" + "\n"
+                            else:
+                                self.uc.bar_error("ERROR 100623.0944: SWMM.INP file not found!")
+                        # if "Storm Drain" in dlg_components.components:
+                        #     if self.f2d_widget.storm_drain_editor.import_storm_drain_INP_file("Force import of SWMM.INP", True):
+                        #         self.files_used += "SWMM.INP" + "\n"
+
                         if "import_chan" in import_calls:
                             self.gutils.create_schematized_rbank_lines_from_xs_tips()
 
@@ -1815,14 +1941,15 @@ class Flo2D(object):
                             msg += "must be done using the "
                             msg += "<FONT COLOR=green>Conversion from Schematic Layers to User Layers</FONT>"
                             msg += " tool in the <FONT COLOR=blue>FLO-2D panel</FONT>...<br>"
-                            msg += "...and <FONT COLOR=green>Import SWMM.INP</FONT> from the <FONT COLOR=blue>Storm Drain Editor widget</FONT>."
-
+                            if "SWMM.INP" not in self.files_used:
+                                msg += "...and <FONT COLOR=green>Import SWMM.INP</FONT> from the <FONT COLOR=blue>Storm Drain Editor widget</FONT>."
                         else:
                             msg += "* To complete the Storm Drain functionality, the 'Storm Drains' conversion "
                             msg += "must be done using the "
                             msg += "<FONT COLOR=green>Conversion from Schematic Layers to User Layers</FONT>"
                             msg += " tool in the <FONT COLOR=blue>FLO-2D panel</FONT>...<br>"
-                            msg += "...and <FONT COLOR=green>Import SWMM.INP</FONT> from the <FONT COLOR=blue>Storm Drain Editor widget</FONT>."
+                            if "SWMM.INP" not in self.files_used:
+                                msg += "...and <FONT COLOR=green>Import SWMM.INP</FONT> from the <FONT COLOR=blue>Storm Drain Editor widget</FONT>."
 
                     if "import_inflow" in import_calls or "import_outflow" in import_calls:
                         if msg:
@@ -1891,6 +2018,7 @@ class Flo2D(object):
                 "Import selected GDS file",
                 "Import from {0} file is not supported.".format(bname),
             )
+            return
 
         if self.f2g.set_parser(fname):
             call_string = file_to_import_calls[bname]
@@ -2014,6 +2142,9 @@ class Flo2D(object):
                 "export_shallowNSpatial",
                 "export_mannings_n_topo",
             ]
+
+            s = QSettings()
+            s.setValue("FLO-2D/lastGdsDir", outdir)
 
             dlg_components = ComponentsDialog(self.con, self.iface, self.lyrs, "out")
             ok = dlg_components.exec_()

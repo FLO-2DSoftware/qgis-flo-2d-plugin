@@ -47,7 +47,8 @@ class InfiltrationCalculator(object):
         self.xksat_fld = None
         self.rtimps_fld = None
         self.soil_depth_fld = None
-        self.soil_dtheta_fld = None
+        self.soil_dthetan_fld = None
+        self.soil_dthetad_fld = None
         self.soil_psif_fld = None
 
         # Land use fields
@@ -76,7 +77,8 @@ class InfiltrationCalculator(object):
         xksat_fld="XKSAT",
         rtimps_fld="field_4",
         soil_depth_fld="soil_depth",
-        dtheta_fld="DTHETA",
+        dthetan_fld="DTHETAn",
+        dthetad_fld="DTHETAd",
         psif_fld="PSIF",
         saturation_fld="field_6",
         vc_fld="field_5",
@@ -90,7 +92,8 @@ class InfiltrationCalculator(object):
         self.xksat_fld = xksat_fld
         self.rtimps_fld = rtimps_fld
         self.soil_depth_fld = soil_depth_fld
-        self.soil_dtheta_fld = dtheta_fld
+        self.soil_dthetan_fld = dthetan_fld
+        self.soil_dthetad_fld = dthetad_fld
         self.soil_psif_fld = psif_fld
 
         # Land use fields
@@ -155,7 +158,8 @@ class InfiltrationCalculator(object):
                 land_soil_index = QgsSpatialIndex()
                 land_soil_fields = QgsFields()
                 land_soil_fields.append(QgsField("rtimp", QVariant.Double))
-                land_soil_fields.append(QgsField("dtheta", QVariant.Double))
+                land_soil_fields.append(QgsField("dthetan", QVariant.Double))
+                land_soil_fields.append(QgsField("dthetad", QVariant.Double))
                 land_soil_fields.append(QgsField("psif", QVariant.Double))
                 land_soil_fields.append(QgsField("saturation", QVariant.String))
 
@@ -170,7 +174,8 @@ class InfiltrationCalculator(object):
                     for soil_fid in soil_fids:
                         soil_feat, soil_engine = soil_features[soil_fid]
                         soil_rtimp = soil_feat[self.rtimps_fld]
-                        soil_dtheta = soil_feat[self.soil_dtheta_fld]
+                        soil_dthetan = soil_feat[self.soil_dthetan_fld]
+                        soil_dthetad = soil_feat[self.soil_dthetad_fld]
                         soil_psif = soil_feat[self.soil_psif_fld]
 
                         land_soil_geom = land_geom.intersection(soil_feat.geometry())
@@ -182,14 +187,15 @@ class InfiltrationCalculator(object):
 
                         land_soil_feat.setGeometry(land_soil_geom)
                         land_soil_feat["rtimp"] = max(land_rtimp, soil_rtimp)
-                        land_soil_feat["dtheta"] = soil_dtheta
+                        land_soil_feat["dthetan"] = soil_dthetan
+                        land_soil_feat["dthetad"] = soil_dthetad
                         land_soil_feat["psif"] = soil_psif
                         land_soil_feat["saturation"] = land_saturation
                         land_soil_features[land_soil_fid] = (
                             land_soil_feat,
                             QgsGeometry.createGeometryEngine(land_soil_geom.constGet()),
                         )
-                        land_soil_index.insertFeature(land_soil_feat)
+                        land_soil_index.addFeature(land_soil_feat)
                         land_soil_fid = land_soil_fid + 1
 
                 try:
@@ -279,20 +285,26 @@ class InfiltrationCalculator(object):
                     land_soil_index,
                     request,
                     "rtimp",
-                    "dtheta",
+                    "dthetan",
+                    "dthetad",
                     "psif",
                     "saturation",
                 )
                 for gid, values in land_soil_values:
                     land_params = grid_params[gid]
                     rtimp_parts, dtheta_parts, psif_parts = [], [], []
-                    for rtimp, dtheta, psif, saturation, area in values:
+                    for rtimp, dthetan, dthetad, psif, saturation, area in values:
                         rtimp_parts.append((rtimp * 0.01, area))
-                        if saturation not in {"wet", "saturated"}:
-                            dtheta_parts.append((dtheta, area))
+                        if saturation == "dry":
+                            dtheta_parts.append((dthetad, area))
+                        elif saturation == "normal":
+                            dtheta_parts.append((dthetan, area))
+                        else:
+                            dtheta_parts.append((0, area))
                         psif_parts.append((psif, area))
                     land_params["rtimpf"] = green_ampt.calculate_rtimp_n(rtimp_parts)
                     if self.log_area_average:
+                        
                         land_params["dtheta"] = green_ampt.calculate_dtheta_weighted(dtheta_parts)
                         land_params["soils"] = green_ampt.calculate_psif_weighted(psif_parts)
 
@@ -419,8 +431,36 @@ class GreenAmpt(object):
     def calculate_dtheta_weighted(self, parts):
         # parts are reported in % of grid area
         try:
-            dtheta_partial = [area * log10(dtheta) for dtheta, area in parts if dtheta > 0]
-            avg_dtheta = round(10 ** (sum(dtheta_partial)), 4)
+
+            # # Log area average for dry and normal saturation and area weighted average for wet saturation
+            # dtheta_partial_dn = []
+            # area_dn = []
+            # area_sat = []
+            # for dtheta, area in parts:
+            #     if dtheta > 0:
+            #         dtheta_partial_dn.append(area * log10(dtheta))
+            #         area_dn.append(area)
+            #     else:
+            #         area_sat.append(area)
+            # area_total = sum(area_dn) + sum(area_sat)
+            # # Only dry and normal DTHETA
+            # if sum(area_sat) == 0:
+            #     avg_dtheta = round(10 ** (sum(dtheta_partial_dn)/sum(area_dn)), 4)
+            # # Only wet DTHETA
+            # elif sum(area_dn) == 0:
+            #     avg_dtheta = 0
+            # # Dry, normal and wet DTHETA
+            # else:
+            #     avg_dtheta = round(((10 ** (sum(dtheta_partial_dn)/sum(area_dn))) * sum(area_dn)) / area_total, 4)
+
+            # Arithmetic weighted average
+            dtheta_dn = []
+            area_total = []
+            for dtheta, area in parts:
+                area_total.append(area)
+                dtheta_dn.append(dtheta * area)
+            avg_dtheta = sum(dtheta_dn) / sum(area_total)
+
             return avg_dtheta
 
         except Exception as e:

@@ -69,6 +69,8 @@ class FLOPROExecutor(object):
                 # result = run(["self.flo2d_exe"], shell=True, capture_output=True, text=True)
 
                 # 22222
+
+                # self.flo2d_exe = "C:/TRACKS/FLOPROCore/FLOPROCore/bin/Debug/net6.0-windows/FLOPROCore.exe"
                 result = Popen(
                     args=self.flo2d_exe,
                     bufsize=-1,
