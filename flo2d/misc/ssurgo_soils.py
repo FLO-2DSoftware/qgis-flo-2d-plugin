@@ -79,19 +79,21 @@ class SsurgoSoil(object):
                     Cf.fragsize_r,
                     Cf.fragvol_r,  
                     M.mupolygongeo
-                FROM muaggatt Ma
-                    JOIN mupolygon M ON M.mukey = Ma.mukey
+                FROM mapunit Mu
+                    JOIN mupolygon M ON M.mukey = Mu.mukey
+                    JOIN muaggatt Ma ON Ma.mukey = Mu.mukey
                     JOIN component C ON C.mukey = Ma.mukey
                     JOIN chorizon Ch ON Ch.cokey = C.cokey
                     JOIN chfrags Cf ON Cf.chkey = Ch.chkey
                 WHERE 
                 M.mupolygonkey IN (SELECT 
                         *
-                    FROM
+                    FROM 
                         SDA_Get_Mupolygonkey_from_intersection_with_WktWgs84('{aoi_reproj_wkt.lower()}'))
-                    AND M.mukey = Ma.mukey
                 """,
                 }
+
+        self.uc.log_info(str(body))
 
         url = "https://sdmdataaccess.sc.egov.usda.gov/TABULAR/post.rest"
         soil_response = requests.post(url, json=body).json()
@@ -108,7 +110,7 @@ class SsurgoSoil(object):
                     feat.setGeometry(QgsGeometry.fromWkt(col))
             provider.addFeatures([feat])
 
-        QgsProject.instance().addMapLayer(self.soil_layer)
+        # QgsProject.instance().addMapLayer(self.soil_layer)
 
         return
 
@@ -119,8 +121,6 @@ class SsurgoSoil(object):
         self.uc.log_info(str(request_URL))
         alg_params = {"URL": request_URL, "OUTPUT": QgsProcessing.TEMPORARY_OUTPUT}
         self.soil_layer = processing.run("native:filedownloader", alg_params)["OUTPUT"]
-
-        QgsProject.instance().addMapLayer(self.soil_layer)
 
         return
 
@@ -163,6 +163,17 @@ class SsurgoSoil(object):
         # THE ATTRIBUTE TABLE IS CORRECT
 
         # QgsProject.instance().addMapLayer(self.soil_layer)
+
+    def fixGeometries(self):
+        alg_params = {"INPUT": self.soil_layer, "OUTPUT": QgsProcessing.TEMPORARY_OUTPUT}
+        self.outputs["FixGeometries"] = processing.run("native:fixgeometries",alg_params)["OUTPUT"]
+        self.soil_layer = self.outputs["FixGeometries"]
+        return
+
+    def clip(self):
+        alg_params = {"INPUT": self.soil_layer, "OVERLAY": self.grid_lyr, "OUTPUT": QgsProcessing.TEMPORARY_OUTPUT}
+        self.outputs["Clipped"] = processing.run("native:clip", alg_params)["OUTPUT"]
+        self.soil_layer = self.outputs["Clipped"]
 
     def getExtent(self, layer) -> tuple:
         # Get extent of the area boundary layer

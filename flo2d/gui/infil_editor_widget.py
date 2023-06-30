@@ -13,7 +13,7 @@ from collections import OrderedDict
 from itertools import chain
 from math import isnan
 
-from qgis.core import QgsFeatureRequest, QgsWkbTypes
+from qgis.core import QgsFeatureRequest, QgsWkbTypes, QgsProject
 from qgis.PyQt.QtCore import QSettings, Qt, pyqtSignal, pyqtSlot
 from qgis.PyQt.QtGui import QStandardItem, QStandardItemModel
 from qgis.PyQt.QtWidgets import QApplication, QCheckBox, QDoubleSpinBox, QInputDialog, QSpinBox, QProgressDialog
@@ -493,6 +493,11 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
             # except:
             #     self.uc.log_info("Error getting soil data through wfs request. Trying post request download now.")
             ssurgoSoil.postRequest()
+            ssurgoSoil.fixGeometries()
+            ssurgoSoil.clip()
+
+            QgsProject.instance().addMapLayer(ssurgoSoil.soil_layer)
+
 
             # 2.  Use the equations presented on the section 2.4 to calculate:
             # DTHETA, PSIF, and XKSAT
