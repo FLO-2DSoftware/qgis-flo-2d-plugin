@@ -291,22 +291,32 @@ class InfiltrationCalculator(object):
                     "saturation",
                 )
                 for gid, values in land_soil_values:
-                    land_params = grid_params[gid]
-                    rtimp_parts, dtheta_parts, psif_parts = [], [], []
-                    for rtimp, dthetan, dthetad, psif, saturation, area in values:
-                        rtimp_parts.append((rtimp * 0.01, area))
-                        if saturation == "dry":
-                            dtheta_parts.append((dthetad, area))
-                        elif saturation == "normal":
-                            dtheta_parts.append((dthetan, area))
-                        else:
-                            dtheta_parts.append((0, area))
-                        psif_parts.append((psif, area))
-                    land_params["rtimpf"] = green_ampt.calculate_rtimp_n(rtimp_parts)
-                    if self.log_area_average:
-                        
-                        land_params["dtheta"] = green_ampt.calculate_dtheta_weighted(dtheta_parts)
-                        land_params["soils"] = green_ampt.calculate_psif_weighted(psif_parts)
+                    try:
+                        land_params = grid_params[gid]
+                        rtimp_parts, dtheta_parts, psif_parts = [], [], []
+                        for rtimp, dthetan, dthetad, psif, saturation, area in values:
+                            rtimp_parts.append((rtimp * 0.01, area))
+                            if saturation.lower() == "dry":
+                                dtheta_parts.append((dthetad, area))
+                            elif saturation.lower() == "normal":
+                                dtheta_parts.append((dthetan, area))
+                            elif saturation.lower() == "wet" or saturation.lower() == "saturated":
+                                dtheta_parts.append((0, area))
+                            else:
+                                raise Exception
+                            psif_parts.append((psif, area))
+                        land_params["rtimpf"] = green_ampt.calculate_rtimp_n(rtimp_parts)
+                        if self.log_area_average:
+
+                            land_params["dtheta"] = green_ampt.calculate_dtheta_weighted(dtheta_parts)
+                            land_params["soils"] = green_ampt.calculate_psif_weighted(psif_parts)
+                    except Exception as e:
+                        self.uc.show_error(
+                            "ERROR: Green-Ampt infiltration failed\nwhile defining the saturation."
+                            + "\n__________________________________________________",
+                            e,
+                        )
+                        return grid_params
 
             if writeDiagnosticCSV is True:
                 # write a diagnostic CSV file with all fo the information for the calculations in it
