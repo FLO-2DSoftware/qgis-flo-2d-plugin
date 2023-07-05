@@ -475,39 +475,59 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
         if not ok:
             return
 
-        # The end of this algorithm has to be a soil layer containing:
-        # XKSAT, PERC_ROCK, DEPTH, DTHETA_D, DTHETA_N, PSIF
+        QApplication.setOverrideCursor(Qt.WaitCursor)
 
         # NRCS soil survey database
         if dlg.rb_NRCS.isChecked():
+            try:
+                # Create the progress Dialog
+                pd = QProgressDialog("Setting up...", None, 0, 5)
+                pd.setModal(True)
+                pd.forceShow()
 
-            # 1. Download relevant soil data from NRCS SSURGO database:
-            # hzdept, hzdepb, sandtotal, silttotal, claytotal, fragsize, fragvol
-            ssurgoSoil = SsurgoSoil(self.grid_lyr, self.iface)
-            ssurgoSoil.setup_ssurgo()
-            # try:
-            # ssurgoSoil.wfsRequest()
-            # SSURGO wfs is misconfigured to return x as y and y and x
-            # ssurgoSoil.swapXY()
+                ssurgoSoil = SsurgoSoil(self.grid_lyr, self.iface)
 
-            # except:
-            #     self.uc.log_info("Error getting soil data through wfs request. Trying post request download now.")
-            ssurgoSoil.postRequest()
-            ssurgoSoil.fixGeometries()
-            ssurgoSoil.clip()
+                # 1. Set up the ssurgo
+                ssurgoSoil.setup_ssurgo()
+                pd.setValue(1)
 
-            QgsProject.instance().addMapLayer(ssurgoSoil.soil_layer)
+                # 2. Download Chorizon data
+                ssurgoSoil.downloadChorizon()
+                pd.setLabelText("Downloading chorizon data...")
+                pd.setValue(2)
 
+                # 3. Download Cfrags data
+                ssurgoSoil.downloadChfrags()
+                pd.setLabelText("Downloading chfrags data...")
+                pd.setValue(3)
 
-            # 2.  Use the equations presented on the section 2.4 to calculate:
-            # DTHETA, PSIF, and XKSAT
+                # 4. Join the Tables
+                ssurgoSoil.combineSsurgoLayers()
+                pd.setLabelText("Combining the layers...")
+                pd.setValue(4)
 
-            # Use this calculated DTHETA, PSIF, and XKSAT to compute the Green-Ampt.
+                # 5. Calculate the G&A parameters
+                ssurgoSoil.calculateGAparameters()
+                pd.setLabelText("Calculating G&A parameters...")
+                pd.setValue(5)
+
+                # 6. Add to the G&A table
+                pd.setLabelText("Writing parameters to G&A table...")
+                pd.setValue(6)
+                pd.close()
+
+            except Exception as e:
+                self.gutils.enable_geom_triggers()
+                self.uc.log_info(traceback.format_exc())
+                self.uc.show_error(
+                    "ERROR: Green-Ampt infiltration failed!."
+                    + "\n__________________________________________________",
+                    e,
+                )
 
         # User soil layer
         else:
             try:
-                QApplication.setOverrideCursor(Qt.WaitCursor)
                 dlg.save_green_ampt_shapefile_fields()
                 self.gutils.disable_geom_triggers()
                 (
@@ -517,6 +537,7 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
                     vc_check,
                     log_area_average,
                 ) = dlg.green_ampt_parameters()
+
                 inf_calc = InfiltrationCalculator(self.grid_lyr, self.iface, self.gutils)
                 inf_calc.setup_green_ampt(soil_lyr, land_lyr, vc_check, log_area_average, *fields)
                 grid_params = inf_calc.green_ampt_infiltration()
