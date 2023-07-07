@@ -1,13 +1,27 @@
 Infiltration Editor
 ===================
 
+FLO-2D uses three infiltration method.  Green_Ampt, SCS, and Horton infiltration data development is outlined in this
+section.  The INFIL.DAT file contains the infiltration data.  The data can be global (uniform) or spatially variable
+at the grid element resolution.  Global data is applied uniformly to all grid elements and spatially variable data allows
+different parameters to be applied to individual cells or groups of cells.  The different methods for setting up the data
+are defined below.
+
 Green-Ampt
 ----------
 
-The Green-Ampt infiltration editor can add global or spatially variable infiltration data to the INFIL.DAT file.
+The Green-Ampt infiltration editor can add global or spatially variable infiltration data to the INFIL.DAT file.  The
+FLO-2D plugin uses 4 tools for processing Green-Ampt data.
+
+- Global Infiltration Editor
+- Green-Ampt Polygon Schematize
+- Green-Ampt Infiltration Calculator (FCDMC Method 1)
+- Green-Ampt Log Average Infiltration Calculator (Full Green-Ampt Calculator)
 
 Global Uniform Infiltration
 ----------------------------
+
+Global infiltration parameters set a uniform infiltration for the grid system.
 
 1. Global data is set  
    up using the Global Infiltration button.
@@ -17,14 +31,26 @@ Global Uniform Infiltration
 
 .. image:: ../../img/Infiltration-Editor/Infilt002.png
 
+3. Check the Green-Ampt checkbox.
+
+4. Fill the Green-Ampt with uniform infiltration parameters and click OK.
+
+5. Tool tips have information related to the parameters.  Hover the mouse pointer over the variable name to show the
+   tooltip.
+
 .. image:: ../../img/Infiltration-Editor/Infilt003.png
 
-This option will set up uniform infiltration data for every grid element.
+6. This option will set up uniform infiltration data for every grid element.
 
 .. image:: ../../img/Infiltration-Editor/Infilt004.png
 
 Spatial Infiltration Areas User Layer
 --------------------------------------
+
+Simple polygon method
+______________________
+
+.. image:: ../../img/Infiltration-Editor/Infilt004a.png
 
 Spatially variable floodplain infiltration is set by digitizing infiltration polygons into the Infiltration Areas user
 layer. Use the polygon editor to digitize spatially variable infiltration.
@@ -97,37 +123,42 @@ Channel Infiltration
 
 .. image:: ../../img/Infiltration-Editor/Infilt011.png
 
-Green-Ampt Infiltration Calculator FCDMC Method
-------------------------------------------------
+Green-Ampt Infiltration Calculator FCDMC Method 2023
+------------------------------------------------------
 
-To use the Flood Control District of Maricopa County (FCDMC) Green-Ampt calculator, the user must prepare soil,
-landuse, and eff shapefiles.  The data is provided by the District.  See the FCDMC hydrology manual for a more detailed
-discussion on modeling with the Green and Ampt method.
+To use the Flood Control District of Maricopa County (FCDMC) Green-Ampt calculator, the user must prepare or download soil,
+landuse, and eff shapefiles.  The data maybe provided by the District.  See the FCDMC hydrology manual for a more detailed
+discussion on modeling with the Green-Ampt method.  Review the FLO-2D Plugin Technical Reference Manual for information
+pertaining to the Green-Ampt calculators.  Review the FLO-2D Pro Reference Manual for information pertaining to the use
+of the Green-Ampt method by the FLO-2D engine.
 
 1. Prepare the soil data shapefile as seen in the following figure.
 
- - ROCKOUT is the percentage of rock outcrop coverage.  0 to 100
- - XKSAT is the hydraulic conductivity for the soil group. in/hr
- - Soil Depth is the limiting infiltration depth. Once the infiltration reaches this depth, it will turn off.  ft or m
+- ROCKOUT is the percentage of rock outcrop coverage.  0 to 100
+- XKSAT is the hydraulic conductivity for the soil group. in/hr or mm/hr
+- Soil Depth is the limiting infiltration depth. Once the infiltration reaches this depth, it will turn off.  ft or m
+- DTHETAdry is the soil moisture deficit for dry soil condition.  It ranges in value from zero to the effective porosity.
+- DTHETAnormal is the soil moisture deficit for normal soil condition.
+- PSIF is the wetting front capillary suction. in or mm
 
 .. image:: ../../img/Infiltration-Editor/infil001.png
 
 
 2. Prepare the Landuse data shapefile as seen in the following figure.
 
- - Saturation is the initial saturation condition.  wet, dry, or normal
+ - Saturation is the initial saturation condition.  wet or saturated, dry, or normal
  - Initial Abstraction storage depth that must be reached before infiltration begins.  in or mm
  - Impervious area is the percentage of impermeability for a given polygon.  0 to 100
- - Vegetative cover is not used by FCDMC.
+ - Vegetative cover is not used by FCDMC. Leave it unchecked.
 
 .. image:: ../../img/Infiltration-Editor/infil002.png
 
 
 3. Prepare the EFF data shapefile as seen in the following figure.
 
- - Eff is the percent effectiveness of the impervious space.  It pertains more to HEC-1 calculations but can also be
-   applied as an additional control or adjustment for a 2D grid.  If an EFF polygon is present, the calculator will
-   multiply the RTIMP grid * the EFF to determine a final RTIMP.  0 to 100
+- Eff is the percent effectiveness of the impervious space.  It pertains more to HEC-1 calculations but can also be
+  applied as an additional control or adjustment for a 2D grid.  If an EFF polygon is present, the calculator will
+  multiply the RTIMPgrid * the EFF to determine a final RTIMP.  0 to 100
 
 .. image:: ../../img/Infiltration-Editor/infil003.png
 
@@ -144,53 +175,13 @@ discussion on modeling with the Green and Ampt method.
 .. image:: ../../img/Infiltration-Editor/Infilt015.png
 
 
-6. The calculator uses the following
-   methods for the FCDMC Green-Ampt Infiltration.
-
-
-**Hydraulic Conductivity** (XKSAT) is calculated by an intersection between the soil polygons and the grid with
-a log weighted average calculation.
-
-.. image:: ../../img/Infiltration-Editor/infil004.png
-
-
-**Capillary suction** (PSIF) is derived from a lookup table in the FCDMC Hydrology Manual Composite Values of PSIF
-and DTHETA as a Function of XKSAT.
-
-.. image:: ../../img/Infiltration-Editor/infil005.png
-
-
-**Soil moisture deficit** (DTHETA) is the volumetric measurement of the soil moisture storage capacity.  It is also
-derived from a FCDMC table for Composite Values of PSIF and DTHETA as a function of XKSAT.  The following lookup
-lookup tables are applied based on the Initial Saturation Condition.
-
-.. image:: ../../img/Infiltration-Editor/infil007.png
-
-
-**Initial abstraction** (IA) is the intersection between the Landuse polygons and the grid with an area weighted
-average calculation.
-
-.. image:: ../../img/Infiltration-Editor/infil008.png
-
-
-**Impervious** - (RTIMP) is the percent impervious for the grid element.  This calculation
-is taken from an area weighted average of the RTIMPmax and the grid element.
-
-**RTIMPmax** - Intersection(Landuse, Soil) makes a temporary polygon
-layer of the maximum of the parts from RTIMPlu and RockOut.
-
-**RTIMPgrid** - Intersection(RTIMPmax, Grid)
-calculates the area weighted average RTIMP for each grid element.
-
-.. image:: ../../img/Infiltration-Editor/infil009.png
-
-**RTIMPfinal** - Intersection(EFFareas, Grid)
-samples the EFFareas * 0.01 * RTIMPgrid for any grid centroid within an EFF polygon.
+6. The calculator uses the calculation methods outlined in the FLO-2D Plugin Technical Reference manual.
 
 7. When the infiltration
    calculator is finished, the following message will appear.
 
 .. image:: ../../img/Infiltration-Editor/Infilt016.png
+
 
 8. The INFIL.DAT file
    looks like this.  For a detailed explanation of these variables, see the FLO-2D Data Input Manual INFIL.DAT section.

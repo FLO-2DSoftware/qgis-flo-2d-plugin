@@ -1,7 +1,7 @@
 [general]
 name=FLO-2D
-version=0.10.109
-qgisMinimumVersion=3.0
+version=0.10.110
+qgisMinimumVersion=3.28
 qgisMaximumVersion=3.99
 description=FLO-2D tools for QGIS
 author=FLO-2D
@@ -9,6 +9,18 @@ email=jj@flo-2d.com
 about=QGIS tools for FLO-2D
 
 changelog=
+ <p>0.10.110
+  - Finalize Green-Ampt Method FCDMC 2023 and Documentation.
+  - PSIF and DTHETA calculators finished.
+  - Log AVG PSIF and Area Avg DTHETA.
+  - Updated user manual.  Updated Technical Reference Manual.
+  - Tool tips added to Infiltration widgets.
+  - Improve raincell.hdf5 export using a block method to eliminate memory error.
+  - Gzip Compression used on raincell.hdf5.
+  - Tested hdf5 output data for raincell.dat and raincell.hdf5.
+  - Green-Ampt calculator processes 4.4 million cells in 1 hour.
+  - Removed deprecated python code from python 3.7.
+  - Fixed a bug that prevented the data from loading in the infiltration widget when a new polygon was selected.
  <p>0.10.109
   - Remove/Improve multiple channel messages when exporting GDS files.
  <p>0.10.108

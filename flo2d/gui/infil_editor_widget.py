@@ -857,7 +857,8 @@ class GreenAmptDialog(uiDialog_green, qtBaseClass_green):
             self.xksat_cbo,
             self.rtimps_cbo,
             self.soil_depth_cbo,
-            self.dtheta_cbo,
+            self.dthetan_cbo,
+            self.dthetad_cbo,
             self.psif_cbo,
         ]
         self.land_combos = [
@@ -931,7 +932,8 @@ class GreenAmptDialog(uiDialog_green, qtBaseClass_green):
         s.setValue("ga_soil_XKSAT", self.xksat_cbo.currentIndex())
         s.setValue("ga_soil_rtimps", self.rtimps_cbo.currentIndex())
         s.setValue("ga_soil_depth", self.soil_depth_cbo.currentIndex())
-        s.setValue("ga_soil_DTHETA", self.dtheta_cbo.currentIndex())
+        s.setValue("ga_soil_DTHETAn", self.dthetan_cbo.currentIndex())
+        s.setValue("ga_soil_DTHETAd", self.dthetad_cbo.currentIndex())
         s.setValue("ga_soil_PSIF", self.psif_cbo.currentIndex())
 
         s.setValue("ga_land_layer_name", self.land_cbo.currentText())
@@ -954,8 +956,11 @@ class GreenAmptDialog(uiDialog_green, qtBaseClass_green):
             val = int(-1 if s.value("ga_soil_depth") is None else s.value("ga_soil_depth"))
             self.soil_depth_cbo.setCurrentIndex(val)
 
-            val = int(-1 if s.value("ga_soil_DTHETA") is None else s.value("ga_soil_DTHETA"))
-            self.dtheta_cbo.setCurrentIndex(val)
+            val = int(-1 if s.value("ga_soil_DTHETAn") is None else s.value("ga_soil_DTHETAn"))
+            self.dthetan_cbo.setCurrentIndex(val)
+
+            val = int(-1 if s.value("ga_soil_DTHETAd") is None else s.value("ga_soil_DTHETAd"))
+            self.dthetad_cbo.setCurrentIndex(val)
 
             val = int(-1 if s.value("ga_soil_PSIF") is None else s.value("ga_soil_PSIF"))
             self.psif_cbo.setCurrentIndex(val)

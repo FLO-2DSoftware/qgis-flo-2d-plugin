@@ -45,10 +45,24 @@
      <layout class="QGridLayout" name="gridLayout_6">
       <item row="1" column="0">
        <layout class="QGridLayout" name="gridLayout_2">
+        <item row="2" column="0">
+         <widget class="QLabel" name="label_2">
+          <property name="text">
+           <string>Rock outcrop [0 to 100%]</string>
+          </property>
+         </widget>
+        </item>
         <item row="0" column="0">
          <widget class="QLabel" name="label_4">
           <property name="text">
            <string>Soil layer</string>
+          </property>
+         </widget>
+        </item>
+        <item row="6" column="0">
+         <widget class="QLabel" name="label_7">
+          <property name="text">
+           <string>PSIF</string>
           </property>
          </widget>
         </item>
@@ -59,31 +73,24 @@
           </property>
          </widget>
         </item>
-        <item row="2" column="0">
-         <widget class="QLabel" name="label_2">
-          <property name="text">
-           <string>Rock outcrop [0 to 100%]</string>
-          </property>
-         </widget>
-        </item>
         <item row="3" column="0">
          <widget class="QLabel" name="label_10">
           <property name="text">
-           <string>Soil Depth [ft or m]</string>
+           <string>Soil depth [ft or m]</string>
           </property>
          </widget>
         </item>
         <item row="4" column="0">
          <widget class="QLabel" name="label_3">
           <property name="text">
-           <string>DTHETA</string>
+           <string>DTHETA normal</string>
           </property>
          </widget>
         </item>
         <item row="5" column="0">
-         <widget class="QLabel" name="label_7">
+         <widget class="QLabel" name="label_11">
           <property name="text">
-           <string>PSIF</string>
+           <string>DTHETA dry</string>
           </property>
          </widget>
         </item>
@@ -101,6 +108,9 @@
       </item>
       <item row="1" column="1">
        <layout class="QGridLayout" name="gridLayout_5">
+        <item row="4" column="0">
+         <widget class="QComboBox" name="dthetan_cbo"/>
+        </item>
         <item row="2" column="0">
          <widget class="QComboBox" name="rtimps_cbo">
           <property name="enabled">
@@ -111,20 +121,20 @@
           </property>
          </widget>
         </item>
-        <item row="3" column="0">
-         <widget class="QComboBox" name="soil_depth_cbo"/>
+        <item row="6" column="0">
+         <widget class="QComboBox" name="psif_cbo"/>
         </item>
         <item row="1" column="0">
          <widget class="QComboBox" name="xksat_cbo"/>
         </item>
+        <item row="3" column="0">
+         <widget class="QComboBox" name="soil_depth_cbo"/>
+        </item>
         <item row="0" column="0">
          <widget class="QComboBox" name="soil_cbo"/>
         </item>
-        <item row="4" column="0">
-         <widget class="QComboBox" name="dtheta_cbo"/>
-        </item>
         <item row="5" column="0">
-         <widget class="QComboBox" name="psif_cbo"/>
+         <widget class="QComboBox" name="dthetad_cbo"/>
         </item>
        </layout>
       </item>

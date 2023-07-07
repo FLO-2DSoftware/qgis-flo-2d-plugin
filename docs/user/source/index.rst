@@ -15,14 +15,14 @@ Table of Contents
 
 .. toctree::
    :maxdepth: 1
-   :caption: Setup:
+   :caption: Setup
 
    /installation-instructions/Installation
    /installation-instructions/QGIS General Tools
 
 .. toctree::
    :maxdepth: 1
-   :caption: Plugin Features:
+   :caption: Plugin Features
 
    /plugin-features/Data Storage
    /plugin-features/Plugin Features
@@ -30,7 +30,7 @@ Table of Contents
 
 .. toctree::
    :maxdepth: 1
-   :caption: Toolbar QGIS and FLO-2D:
+   :caption: Toolbar QGIS and FLO-2D
 
    /toolbar/FLO-2D Toolbar
    /toolbar/FLO-2D Settings
@@ -56,7 +56,7 @@ Table of Contents
 
 .. toctree::
    :maxdepth: 1
-   :caption: Widgets (Grid Tools):
+   :caption: Widgets (Grid Tools)
 
    /widgets/grid-tools/Create a Grid
    /widgets/grid-tools/Sample Elevation from Raster
@@ -74,7 +74,7 @@ Table of Contents
 
 .. toctree::
    :maxdepth: 1
-   :caption: Widgets:
+   :caption: Widgets
 
    /widgets/profile-tool/Profile Tool
    /widgets/cross-sections-editor/Cross Sections Editor
@@ -93,12 +93,12 @@ Table of Contents
 
 .. toctree::
    :maxdepth: 1
-   :caption: Post Development Grid Modification:
+   :caption: Post Development Grid Modification
 
    /post-development-grid-modification/Post Development Grid Modification
 
 .. toctree::
    :maxdepth: 1
-   :caption: References:
+   :caption: References
 
    References
