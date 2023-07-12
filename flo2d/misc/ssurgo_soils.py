@@ -1,14 +1,12 @@
 import requests
 import processing
-from qgis.core import (QgsCoordinateReferenceSystem, QgsFeature, QgsField,
-                       QgsGeometry, QgsProcessing, QgsVectorLayer, QgsProject,
-                       QgsProcessingException)
-from qgis.PyQt.QtWidgets import QProgressDialog
+from qgis.core import (QgsDistanceArea, QgsFeature, QgsField,
+                       QgsGeometry, QgsProcessing, QgsVectorLayer, QgsProject)
 from qgis.PyQt.QtCore import QVariant
 from ..user_communication import UserCommunication
-from flo2d.misc.SSURGO.config import CONUS_NLCD_SSURGO
 import math
-
+from ..gui.dlg_settings import SettingsDialog
+from ..geopackage_utils import GeoPackageUtils
 
 class SsurgoSoil(object):
     """Class to get SSURGO soil data"""
@@ -17,28 +15,43 @@ class SsurgoSoil(object):
         """Initialize the required layers"""
 
         self.grid_lyr = grid_lyr
+        self.grid_lyr_4326 = None
+        self.aoi_reproj_wkt = None
+
         self.outputs = {}
         self.uc = UserCommunication(iface, "FLO-2D")
+        self.iface = iface
         self.url = "https://sdmdataaccess.sc.egov.usda.gov/TABULAR/post.rest"
 
+        self.soil_layer = None
+        self.soil_prov = None
         self.soil_att_dict = None
         self.soil_att = None
+
+        self.soil_chorizon = None
         self.chorizon_att_dict = None
         self.chorizon_att = None
         self.chorizon_prov = None
-        self.grid_lyr_4326 = None
-        self.soil_layer = None
-        self.soil_prov = None
-        self.soil_chorizon = None
+
         self.soil_chfrags = None
-        self.ssurgo_layer = None
-        self.aoi_reproj_wkt = None
         self.chfrags_att_dict = None
         self.chfrags_att = None
         self.chfrags_prov = None
 
+        self.soil_comp = None
+        self.comp_att_dict = None
+        self.comp_att = None
+        self.comp_prov = None
 
-    def setup_ssurgo(self):
+        self.ssurgo_layer = None
+
+        self.holes = None
+        self.saveLayers = False
+
+        self.gutils = None
+        self.con = None
+
+    def setup_ssurgo(self, saveLayers):
         """Set up the required layers that will be used in this class"""
 
         # Create the grid layer in the correct projection
@@ -57,8 +70,8 @@ class SsurgoSoil(object):
         self.soil_prov = self.soil_layer.dataProvider()
         self.soil_att = []
         self.soil_att_dict = [
+            {"name": "MUKEY", "type": "str"},
             {"name": "hydc", "type": "double"},
-            {"name": "abstrinf", "type": "double"},
             {"name": "rtimpf", "type": "double"},
             {"name": "soil_depth", "type": "double"},
             {"name": "psif", "type": "double"},
@@ -72,7 +85,10 @@ class SsurgoSoil(object):
 
         # Initialize soil fields
         for field in self.soil_att_dict:
-            self.soil_att.append(QgsField(field["name"], QVariant.Double))
+            if field["type"] == "double":
+                self.soil_att.append(QgsField(field["name"], QVariant.Double))
+            else:
+                self.soil_att.append(QgsField(field["name"], QVariant.String))
             self.soil_prov.addAttributes(self.soil_att)
             self.soil_layer.updateFields()
 
@@ -108,8 +124,8 @@ class SsurgoSoil(object):
             {"name": "mupolygonkey", "type": "str"},
             {"name": "mukey", "type": "str"},
             {"name": "fragsize", "type": "double"},
-            {"name": "fragvol ", "type": "double"},
-         ]
+            {"name": "fragvol", "type": "double"},
+        ]
 
         # Initialize chfrags fields
         for field in self.chfrags_att_dict:
@@ -120,7 +136,35 @@ class SsurgoSoil(object):
             self.chfrags_prov.addAttributes(self.chfrags_att)
             self.soil_chfrags.updateFields()
 
+        # Create the component layer
+        self.soil_comp = QgsVectorLayer(uri, "component", "memory")
+        self.comp_prov = self.soil_comp.dataProvider()
+        self.comp_att = []
+        self.comp_att_dict = [
+            {"name": "mupolygonkey", "type": "str"},
+            {"name": "mukey", "type": "str"},
+            {"name": "compname", "type": "str"},
+            {"name": "comppct_r", "type": "double"},
+        ]
+
+        # Initialize component fields
+        for field in self.comp_att_dict:
+            if field["type"] == "double":
+                self.comp_att.append(QgsField(field["name"], QVariant.Double))
+            else:
+                self.comp_att.append(QgsField(field["name"], QVariant.String))
+            self.comp_prov.addAttributes(self.comp_att)
+            self.soil_comp.updateFields()
+
         self.ssurgo_layer = QgsVectorLayer(uri, "ssurgo", "memory")
+        self.holes = QgsVectorLayer(uri, "holes", "memory")
+
+        self.saveLayers = saveLayers
+
+        con = self.iface.f2d["con"]
+        if con is not None:
+            self.con = con
+            self.gutils = GeoPackageUtils(self.con, self.iface)
 
     def downloadChorizon(self):
         """Method for downloading the chrozion layer using PostRequest"""
@@ -142,10 +186,12 @@ class SsurgoSoil(object):
                         FROM chorizon Ch
                             JOIN component C ON C.cokey = Ch.cokey
                             JOIN mupolygon M ON M.mukey = C.mukey
+                            JOIN mapunit Map ON Map.mukey = M.mukey
+                            JOIN legend l ON l.lkey = Map.lkey
                         WHERE 
-                        Ch.hzdept_r = 0
+                            Ch.hzdept_r = 0
                         AND
-                        M.mupolygonkey IN (SELECT 
+                            M.mupolygonkey IN (SELECT 
                                 *
                             FROM 
                                 SDA_Get_Mupolygonkey_from_intersection_with_WktWgs84('{self.aoi_reproj_wkt.lower()}'))
@@ -154,20 +200,26 @@ class SsurgoSoil(object):
 
         chorizon_response = requests.post(self.url, json=body).json()
 
-        for row in chorizon_response["Table"]:
-            # None attribute for empty data
-            row = [None if not attr else attr for attr in row]
-            feat = QgsFeature(self.soil_chorizon.fields())
-            # populate data
-            for index, col in enumerate(row):
-                if index != len(self.chorizon_att_dict):
-                    feat.setAttribute(self.chorizon_att_dict[index]["name"], col)
-                else:
-                    feat.setGeometry(QgsGeometry.fromWkt(col))
-            self.chorizon_prov.addFeatures([feat])
+        if chorizon_response:
+            for row in chorizon_response["Table"]:
+                # None attribute for empty data
+                row = [None if not attr else attr for attr in row]
+                feat = QgsFeature(self.soil_chorizon.fields())
+                # populate data
+                for index, col in enumerate(row):
+                    if index != len(self.chorizon_att_dict):
+                        feat.setAttribute(self.chorizon_att_dict[index]["name"], col)
+                    else:
+                        feat.setGeometry(QgsGeometry.fromWkt(col))
+                self.chorizon_prov.addFeatures([feat])
 
-        self.aggregateChorizon()
-        self.soil_chorizon = self.clip(self.soil_chorizon)
+            self.aggregateChorizon()
+            self.soil_chorizon = self.clip(self.soil_chorizon)
+            self.soil_chorizon = self.reprojectLayer(self.soil_chorizon, QgsProject.instance().crs())
+
+            self.soil_chorizon.setName("chorizon")
+
+        if self.saveLayers: QgsProject.instance().addMapLayer(self.soil_chorizon)
 
     def downloadChfrags(self):
         """Method for downloading the chfrags layer using PostRequest"""
@@ -186,58 +238,153 @@ class SsurgoSoil(object):
                                 JOIN chorizon Ch ON Ch.chkey = Cf.chkey
                                 JOIN component C ON C.cokey = Ch.cokey
                                 JOIN mupolygon M ON M.mukey = C.mukey
+                                JOIN mapunit Map ON Map.mukey = M.mukey
+                                JOIN legend l ON l.lkey = Map.lkey
                             WHERE 
-                            Ch.hzdept_r = 0
+                                Ch.hzdept_r = 0
                             AND
                             M.mupolygonkey IN (SELECT 
                                     *
                                 FROM 
                                     SDA_Get_Mupolygonkey_from_intersection_with_WktWgs84('{self.aoi_reproj_wkt.lower()}'))
                             """,
-                             }
+        }
 
         chfrags_response = requests.post(self.url, json=body).json()
 
-        for row in chfrags_response["Table"]:
-            # None attribute for empty data
-            row = [None if not attr else attr for attr in row]
-            feat = QgsFeature(self.soil_chfrags.fields())
-            # populate data
-            for index, col in enumerate(row):
-                if index != len(self.chfrags_att_dict):
-                    feat.setAttribute(self.chfrags_att_dict[index]["name"], col)
-                else:
-                    feat.setGeometry(QgsGeometry.fromWkt(col))
-            self.chfrags_prov.addFeatures([feat])
+        if chfrags_response:
+            for row in chfrags_response["Table"]:
+                # None attribute for empty data
+                row = [None if not attr else attr for attr in row]
+                feat = QgsFeature(self.soil_chfrags.fields())
+                # populate data
+                for index, col in enumerate(row):
+                    if index != len(self.chfrags_att_dict):
+                        feat.setAttribute(self.chfrags_att_dict[index]["name"], col)
+                    else:
+                        feat.setGeometry(QgsGeometry.fromWkt(col))
+                self.chfrags_prov.addFeatures([feat])
 
-        self.soil_chfrags = self.clip(self.soil_chfrags)
+            self.soil_chfrags = self.clip(self.soil_chfrags)
+            self.soil_chfrags = self.reprojectLayer(self.soil_chfrags, QgsProject.instance().crs())
+
+            self.soil_chfrags.setName("chfrags")
+        if self.saveLayers: QgsProject.instance().addMapLayer(self.soil_chfrags)
+
+    def downloadComp(self):
+        """Method for downloading the component layer using PostRequest"""
+
+        # component post request
+        body = {
+            "format": "JSON",
+            "query": f"""
+                            SELECT
+                                M.mupolygonkey,
+                                C.mukey,
+                                C.compname,
+                                C.comppct_r,
+                                M.mupolygongeo
+                            FROM component C
+                                JOIN mupolygon M ON M.mukey = C.mukey
+                                JOIN chorizon Ch ON Ch.cokey = C.cokey
+                                JOIN mapunit Map ON Map.mukey = M.mukey
+                                JOIN legend l ON l.lkey = Map.lkey
+                            WHERE
+                                C.compname = 'Rock outcrop'
+                            AND
+                            M.mupolygonkey IN (SELECT
+                                    *
+                                FROM
+                                    SDA_Get_Mupolygonkey_from_intersection_with_WktWgs84('{self.aoi_reproj_wkt.lower()}'))
+                            """,
+        }
+
+        comp_response = requests.post(self.url, json=body).json()
+
+        self.uc.log_info(str(body))
+
+        if comp_response:
+            for row in comp_response["Table"]:
+                # None attribute for empty data
+                row = [None if not attr else attr for attr in row]
+                feat = QgsFeature(self.soil_comp.fields())
+                # populate data
+                for index, col in enumerate(row):
+                    if index != len(self.comp_att_dict):
+                        feat.setAttribute(self.comp_att_dict[index]["name"], col)
+                    else:
+                        feat.setGeometry(QgsGeometry.fromWkt(col))
+                self.comp_prov.addFeatures([feat])
+
+            self.soil_comp = self.clip(self.soil_comp)
+            self.soil_comp = self.reprojectLayer(self.soil_comp, QgsProject.instance().crs())
+
+            self.soil_comp.setName("component")
+
+        if self.saveLayers: QgsProject.instance().addMapLayer(self.soil_comp)
 
     def combineSsurgoLayers(self):
         """Method for combining the chorizon and chfrags layer"""
-
         self.ssurgo_layer = self.joinLayers(self.soil_chorizon, self.soil_chfrags)
+        self.ssurgo_layer = self.joinLayers(self.ssurgo_layer, self.soil_comp)
+        self.ssurgo_layer.setName("ssurgo")
+        if self.saveLayers: QgsProject.instance().addMapLayer(self.ssurgo_layer)
 
     def calculateGAparameters(self):
         """Method for calculating the G&A parameters based on JE Fuller"""
+
+        self.soil_layer = self.reprojectLayer(self.soil_layer, QgsProject.instance().crs())
+        self.soil_prov = self.soil_layer.dataProvider()
 
         # Start editing the target layer
         self.soil_layer.startEditing()
         fields = self.soil_layer.fields()
 
+        # Check the model unit
+        if self.gutils.get_cont_par("METRIC") == "1":
+            depth_unit = 100  # meters
+            xksat_unit = 1  # mm/hr
+        else:
+            depth_unit = 30.48  # ft
+            xksat_unit = 25.4  # in/hr
+
         # Iterate over features in the source layer
         for feature in self.ssurgo_layer.getFeatures():
-            # Wilting point
-            sand = feature['sandtotal'] / 100
-            clay = feature['claytotal'] / 100
-            orgmat = feature['orgmat']  # DOUBLE CHECK
+
+            # sand
+            if type(feature['sandtotal']) == float:
+                sand = feature['sandtotal'] / 100  # Data is in %, need to change to dec
+            else:
+                sand = 0
+
+            # clay
+            if type(feature['claytotal']) == float:
+                clay = feature['claytotal'] / 100  # Data is in %, need to change to dec
+            else:
+                clay = 0
+
+            # organic material
+            if type(feature['orgmat']) == float:
+                orgmat = feature['orgmat']  # Data is in %, keep on %
+            else:
+                orgmat = 0
             if orgmat > 8:
                 orgamat = 8
-            soil_depth = feature['hzdepb_r']
-            if type(feature["fragsize"]) == float:
-                gravel = feature["fragsize"]
+
+            soil_depth = feature['hzdepb_r'] / depth_unit  # meters or ft
+
+            # fragvol is the volume percentage of the horizon occupied by the 2 mm or larger fraction
+            if type(feature['fragvol']) == float:
+                gravel = feature['fragvol'] / 100
             else:
                 gravel = 0
 
+            if type(feature['comppct_r']) == float:
+                rtimpf = feature['comppct_r']
+            else:
+                rtimpf = 0
+
+            # Wilting point
             predict_wp = -0.024 * sand + 0.487 * clay + 0.006 * orgmat + 0.005 * sand * orgmat - 0.013 * clay * orgmat + 0.068 * sand * clay + 0.031
             wPoint = predict_wp + (0.14 * predict_wp - 0.02)
 
@@ -286,16 +433,17 @@ class SsurgoSoil(object):
             target_feature = QgsFeature(fields)
             target_feature.setGeometry(feature.geometry())
             target_feature.setAttributes(feature.attributes())
-            target_feature['hydc'] = round(XKSAT_n, 2)
-            target_feature['abstrinf'] = 99999
-            target_feature['rtimpf'] = 99999
+            target_feature['MUKEY'] = feature['MUKEY']
+            target_feature['hydc'] = round(XKSAT_n / xksat_unit, 3)
+            target_feature['rtimpf'] = rtimpf
             target_feature['soil_depth'] = round(soil_depth, 2)
-            target_feature['psif'] = round(PSIF, 2)
-            target_feature['dthetad'] = round(sat - wPoint, 2)
-            target_feature['dthetan'] = round(sat - FCapac, 2)
-            target_feature['wpoint'] = round(wPoint, 2)
-            target_feature['fcapac'] = round(FCapac, 2)
-            target_feature['sat'] = round(sat, 2)
+            target_feature['psif'] = round(PSIF, 3)
+            target_feature['dthetad'] = round(sat - wPoint, 3)
+            target_feature['dthetan'] = round(sat - FCapac, 3)
+            target_feature['dthetaw'] = round(sat - sat, 3)
+            target_feature['wpoint'] = round(wPoint, 3)
+            target_feature['fcapac'] = round(FCapac, 3)
+            target_feature['sat'] = round(sat, 3)
 
             # Add the new feature to the target layer
             self.soil_prov.addFeature(target_feature)
@@ -304,60 +452,104 @@ class SsurgoSoil(object):
         self.soil_layer.commitChanges()
         self.soil_layer.updateExtents()
 
-        QgsProject.instance().addMapLayer(self.soil_layer)
+    def postProcessSsurgo(self):
 
+        # Get the holes polygons
+        self.holes = self.symetricalDifference(self.soil_layer, self.grid_lyr)
 
-        # # Fix soil layer
-        # parameter = {
-        #     "INPUT": self.soil_layer,
-        #     "OUTPUT": 'memory:FixedGeoms'}
-        # self.soil_layer = processing.run('native:fixgeometries', parameter)['OUTPUT']
-        #
-        # # Clip soil layer
-        # parameter = {
-        #     "INPUT": self.soil_layer,
-        #     "OVERLAY": self.grid_lyr,
-        #     "OUTPUT": 'memory:Clipped'}
-        #
-        # self.soil_layer = processing.run('native:clip', parameter)['OUTPUT']
+        # Dissolve the fields
+        self.holes = self.dissolve(self.holes)
 
-        # STOPPED HERE!
-        # THE POST REQUEST IS WORKING BUT NO FEATURE IS SHOWN ON THE SOIL LAYER
-        # THE ATTRIBUTE TABLE IS CORRECT
+        # check if there is holes
+        if self.holes.isValid():
+            # Delete fields
+            field_indices = list(range(self.holes.fields().count()))
+            self.holes.dataProvider().deleteAttributes(field_indices)
+            self.holes.updateFields()
+            self.holes.commitChanges()
 
-        # QgsProject.instance().addMapLayer(self.soil_layer)
+            # Union with the soil data
+            self.soil_layer = self.union(self.soil_layer, self.holes)
+
+            # Get the index of the "hydc" field
+            hydc_field_index = self.soil_layer.fields().indexFromName('hydc')
+
+            # Get the field names of all fields
+            field_names = [field.name() for field in self.soil_layer.fields()]
+
+            # Create a dictionary to store the feature IDs and their corresponding values
+            feature_values = {}
+
+            # Create a QgsDistanceArea object for distance calculations
+            distance_area = QgsDistanceArea()
+
+            # Iterate over all features in the layer
+            for feature in self.soil_layer.getFeatures():
+                # Get the feature ID
+                feature_id = feature.id()
+
+                # Get the value of the "hydc" field
+                hydc_value = feature.attribute(hydc_field_index)
+
+                # Check if the "hydc" field is null
+                if hydc_value is None:
+                    # Get the closest feature's values
+                    closest_values = None
+                    closest_distance = float('inf')
+                    for neighbor in self.soil_layer.getFeatures():
+                        if neighbor.id() != feature_id:
+                            neighbor_hydc = neighbor.attribute(hydc_field_index)
+                            if neighbor_hydc is not None:
+                                # Calculate the geometric distance between the features
+                                distance = distance_area.measureLine(feature.geometry().centroid().asPoint(),
+                                                                     neighbor.geometry().centroid().asPoint())
+                                if distance < closest_distance:
+                                    closest_distance = distance
+                                    closest_values = {field_index: neighbor.attribute(field_index) for field_index in
+                                                      range(len(field_names))}
+
+                    if closest_values:
+                        feature_values[feature_id] = closest_values
+
+            # Update the null values in the layer with the closest values
+            self.soil_layer.startEditing()
+            for feature_id, closest_values in feature_values.items():
+                self.soil_layer.changeAttributeValues(feature_id, closest_values)
+
+            # Commit the changes
+            self.soil_layer.commitChanges()
+            self.soil_layer.updateExtents()
+
+            self.soil_layer.setName("soil_layer")
+            QgsProject.instance().addMapLayer(self.soil_layer)
+
+    def soil_lyr(self):
+        return self.soil_layer
 
     def aggregateChorizon(self):
         alg_params = {"INPUT": self.soil_chorizon,
                       'GROUP_BY': '"mupolygonkey"', 'AGGREGATES': [
-                        {'aggregate': 'first_value', 'delimiter': ',', 'input': '"mupolygonkey"', 'length': 0,
-                         'name': 'mupolygonkey', 'precision': 0, 'sub_type': 0, 'type': 10, 'type_name': 'text'},
-                        {'aggregate': 'first_value', 'delimiter': ',', 'input': '"mukey"', 'length': 0, 'name': 'mukey',
-                         'precision': 0, 'sub_type': 0, 'type': 10, 'type_name': 'text'},
-                        {'aggregate': 'mean', 'delimiter': ',', 'input': '"hzdept_r"', 'length': 0, 'name': 'hzdept_r',
-                         'precision': 1, 'sub_type': 0, 'type': 6, 'type_name': 'double precision'},
-                        {'aggregate': 'mean', 'delimiter': ',', 'input': '"hzdepb_r"', 'length': 0, 'name': 'hzdepb_r',
-                         'precision': 1, 'sub_type': 0, 'type': 6, 'type_name': 'double precision'},
-                        {'aggregate': 'mean', 'delimiter': ',', 'input': '"sandtotal"', 'length': 0, 'name': 'sandtotal',
-                         'precision': 1, 'sub_type': 0, 'type': 6, 'type_name': 'double precision'},
-                        {'aggregate': 'mean', 'delimiter': ',', 'input': '"silttotal"', 'length': 0, 'name': 'silttotal',
-                         'precision': 1, 'sub_type': 0, 'type': 6, 'type_name': 'double precision'},
-                        {'aggregate': 'mean', 'delimiter': ',', 'input': '"claytotal"', 'length': 0, 'name': 'claytotal',
-                         'precision': 1, 'sub_type': 0, 'type': 6, 'type_name': 'double precision'},
-                        {'aggregate': 'mean', 'delimiter': ',', 'input': '"orgmat"', 'length': 0, 'name': 'orgmat',
-                         'precision': 1, 'sub_type': 0, 'type': 6, 'type_name': 'double precision'}],
+                {'aggregate': 'first_value', 'delimiter': ',', 'input': '"mupolygonkey"', 'length': 0,
+                 'name': 'mupolygonkey', 'precision': 0, 'sub_type': 0, 'type': 10, 'type_name': 'text'},
+                {'aggregate': 'first_value', 'delimiter': ',', 'input': '"mukey"', 'length': 0, 'name': 'mukey',
+                 'precision': 0, 'sub_type': 0, 'type': 10, 'type_name': 'text'},
+                {'aggregate': 'mean', 'delimiter': ',', 'input': '"hzdept_r"', 'length': 0, 'name': 'hzdept_r',
+                 'precision': 1, 'sub_type': 0, 'type': 6, 'type_name': 'double precision'},
+                {'aggregate': 'mean', 'delimiter': ',', 'input': '"hzdepb_r"', 'length': 0, 'name': 'hzdepb_r',
+                 'precision': 1, 'sub_type': 0, 'type': 6, 'type_name': 'double precision'},
+                {'aggregate': 'mean', 'delimiter': ',', 'input': '"sandtotal"', 'length': 0, 'name': 'sandtotal',
+                 'precision': 1, 'sub_type': 0, 'type': 6, 'type_name': 'double precision'},
+                {'aggregate': 'mean', 'delimiter': ',', 'input': '"silttotal"', 'length': 0, 'name': 'silttotal',
+                 'precision': 1, 'sub_type': 0, 'type': 6, 'type_name': 'double precision'},
+                {'aggregate': 'mean', 'delimiter': ',', 'input': '"claytotal"', 'length': 0, 'name': 'claytotal',
+                 'precision': 1, 'sub_type': 0, 'type': 6, 'type_name': 'double precision'},
+                {'aggregate': 'mean', 'delimiter': ',', 'input': '"orgmat"', 'length': 0, 'name': 'orgmat',
+                 'precision': 1, 'sub_type': 0, 'type': 6, 'type_name': 'double precision'}],
                       "OUTPUT": QgsProcessing.TEMPORARY_OUTPUT,
                       }
 
         self.outputs["Aggregate"] = processing.run("native:aggregate", alg_params)["OUTPUT"]
         self.soil_chorizon = self.outputs["Aggregate"]
-
-        return
-
-    def fixGeometries(self, layer):
-        alg_params = {"INPUT": layer, "OUTPUT": QgsProcessing.TEMPORARY_OUTPUT}
-        self.outputs["FixGeometries"] = processing.run("native:fixgeometries", alg_params)["OUTPUT"]
-        self.soil_layer = self.outputs["FixGeometries"]
         return
 
     def clip(self, layer):
@@ -372,6 +564,33 @@ class SsurgoSoil(object):
                       "OUTPUT": QgsProcessing.TEMPORARY_OUTPUT}
         return processing.run("qgis:joinattributestable", alg_params)["OUTPUT"]
 
+    def symetricalDifference(self, layer1, layer2):
+        alg_params = {'INPUT': layer1,
+                      'OVERLAY': layer2,
+                      'OUTPUT': QgsProcessing.TEMPORARY_OUTPUT}
+
+        return processing.run("native:symmetricaldifference", alg_params)["OUTPUT"]
+
+    def dissolve(self, layer):
+        alg_params = {'INPUT': layer,
+                      'OUTPUT': QgsProcessing.TEMPORARY_OUTPUT}
+        return processing.run("native:dissolve", alg_params)["OUTPUT"]
+
+    def union(self, layer1, layer2):
+        alg_params = {'INPUT': layer1,
+                      'OVERLAY': layer2,
+                      'OUTPUT': QgsProcessing.TEMPORARY_OUTPUT}
+        return processing.run("native:union", alg_params)["OUTPUT"]
+
+    def reprojectLayer(self, layer, target_crs):
+        alg_params = {
+            "INPUT": layer,
+            "OPERATION": "",
+            "TARGET_CRS": target_crs,
+            "OUTPUT": QgsProcessing.TEMPORARY_OUTPUT,
+        }
+        return processing.run("native:reprojectlayer", alg_params)["OUTPUT"]
+
     def getExtent(self, layer) -> tuple:
         # Get extent of the area boundary layer
         extent = layer.extent()
@@ -381,16 +600,3 @@ class SsurgoSoil(object):
         ymax = extent.yMaximum()
         return xmin, ymin, xmax, ymax
 
-    def swapXY(self):
-        """Swap X and Y coordinates of WFS Download"""
-        alg_params = {
-            "INPUT": self.outputs["WFSDownload"],
-            "OUTPUT": QgsProcessing.TEMPORARY_OUTPUT,
-        }
-        self.outputs["SwapXAndYCoordinates"] = processing.run(
-            "native:swapxy",
-            alg_params,
-            is_child_algorithm=True,
-        )["OUTPUT"]
-        self.soil_layer = self.outputs["SwapXAndYCoordinates"]
-        return

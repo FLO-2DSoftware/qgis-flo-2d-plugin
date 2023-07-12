@@ -469,6 +469,7 @@ class GreenAmpt(object):
             for dtheta, area in parts:
                 area_total.append(area)
                 dtheta_dn.append(dtheta * area)
+
             avg_dtheta = sum(dtheta_dn) / sum(area_total)
 
             return avg_dtheta

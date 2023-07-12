@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>500</width>
-    <height>500</height>
+    <height>553</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -43,22 +43,18 @@
       <string>Soil</string>
      </property>
      <layout class="QGridLayout" name="gridLayout_6">
+      <item row="0" column="0">
+       <widget class="QRadioButton" name="rb_soilLyr">
+        <property name="text">
+         <string>User soil layer</string>
+        </property>
+        <property name="checked">
+         <bool>true</bool>
+        </property>
+       </widget>
+      </item>
       <item row="1" column="0">
        <layout class="QGridLayout" name="gridLayout_2">
-        <item row="2" column="0">
-         <widget class="QLabel" name="label_2">
-          <property name="text">
-           <string>Rock outcrop [0 to 100%]</string>
-          </property>
-         </widget>
-        </item>
-        <item row="0" column="0">
-         <widget class="QLabel" name="label_4">
-          <property name="text">
-           <string>Soil layer</string>
-          </property>
-         </widget>
-        </item>
         <item row="6" column="0">
          <widget class="QLabel" name="label_7">
           <property name="text">
@@ -66,17 +62,10 @@
           </property>
          </widget>
         </item>
-        <item row="1" column="0">
-         <widget class="QLabel" name="label">
+        <item row="5" column="0">
+         <widget class="QLabel" name="label_11">
           <property name="text">
-           <string>Hydraulic conductivity [in/hr or mm/hr]</string>
-          </property>
-         </widget>
-        </item>
-        <item row="3" column="0">
-         <widget class="QLabel" name="label_10">
-          <property name="text">
-           <string>Soil depth [ft or m]</string>
+           <string>DTHETA dry</string>
           </property>
          </widget>
         </item>
@@ -87,10 +76,31 @@
           </property>
          </widget>
         </item>
-        <item row="5" column="0">
-         <widget class="QLabel" name="label_11">
+        <item row="2" column="0">
+         <widget class="QLabel" name="label_2">
           <property name="text">
-           <string>DTHETA dry</string>
+           <string>Rock outcrop [0 to 100%]</string>
+          </property>
+         </widget>
+        </item>
+        <item row="3" column="0">
+         <widget class="QLabel" name="label_10">
+          <property name="text">
+           <string>Soil depth [ft or m]</string>
+          </property>
+         </widget>
+        </item>
+        <item row="0" column="0">
+         <widget class="QLabel" name="label_4">
+          <property name="text">
+           <string>Soil layer</string>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="0">
+         <widget class="QLabel" name="label">
+          <property name="text">
+           <string>Hydraulic conductivity [in/hr or mm/hr]</string>
           </property>
          </widget>
         </item>
@@ -106,10 +116,22 @@
         </property>
        </widget>
       </item>
-      <item row="1" column="1">
+      <item row="1" column="1" colspan="2">
        <layout class="QGridLayout" name="gridLayout_5">
+        <item row="1" column="0">
+         <widget class="QComboBox" name="xksat_cbo"/>
+        </item>
+        <item row="6" column="0">
+         <widget class="QComboBox" name="psif_cbo"/>
+        </item>
+        <item row="5" column="0">
+         <widget class="QComboBox" name="dthetad_cbo"/>
+        </item>
         <item row="4" column="0">
          <widget class="QComboBox" name="dthetan_cbo"/>
+        </item>
+        <item row="3" column="0">
+         <widget class="QComboBox" name="soil_depth_cbo"/>
         </item>
         <item row="2" column="0">
          <widget class="QComboBox" name="rtimps_cbo">
@@ -121,37 +143,25 @@
           </property>
          </widget>
         </item>
-        <item row="6" column="0">
-         <widget class="QComboBox" name="psif_cbo"/>
-        </item>
-        <item row="1" column="0">
-         <widget class="QComboBox" name="xksat_cbo"/>
-        </item>
-        <item row="3" column="0">
-         <widget class="QComboBox" name="soil_depth_cbo"/>
-        </item>
         <item row="0" column="0">
          <widget class="QComboBox" name="soil_cbo"/>
         </item>
-        <item row="5" column="0">
-         <widget class="QComboBox" name="dthetad_cbo"/>
-        </item>
        </layout>
-      </item>
-      <item row="0" column="0">
-       <widget class="QRadioButton" name="rb_soilLyr">
-        <property name="text">
-         <string>User soil layer</string>
-        </property>
-        <property name="checked">
-         <bool>true</bool>
-        </property>
-       </widget>
       </item>
       <item row="0" column="1">
        <widget class="QRadioButton" name="rb_NRCS">
         <property name="text">
-         <string>NRCS soil survey databases</string>
+         <string>SSURGO database</string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="2">
+       <widget class="QPushButton" name="calculateJE_btn">
+        <property name="enabled">
+         <bool>false</bool>
+        </property>
+        <property name="text">
+         <string>Calculate</string>
         </property>
        </widget>
       </item>
@@ -236,8 +246,8 @@
    <slot>accept()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>259</x>
-     <y>481</y>
+     <x>270</x>
+     <y>532</y>
     </hint>
     <hint type="destinationlabel">
      <x>157</x>
@@ -252,8 +262,8 @@
    <slot>reject()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>327</x>
-     <y>481</y>
+     <x>338</x>
+     <y>532</y>
     </hint>
     <hint type="destinationlabel">
      <x>286</x>
@@ -264,128 +274,16 @@
   <connection>
    <sender>rb_NRCS</sender>
    <signal>toggled(bool)</signal>
-   <receiver>soil_cbo</receiver>
+   <receiver>label_2</receiver>
    <slot>setDisabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
      <x>368</x>
-     <y>50</y>
+     <y>59</y>
     </hint>
     <hint type="destinationlabel">
-     <x>361</x>
-     <y>67</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>rb_NRCS</sender>
-   <signal>toggled(bool)</signal>
-   <receiver>xksat_cbo</receiver>
-   <slot>setDisabled(bool)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>346</x>
-     <y>48</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>313</x>
-     <y>99</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>rb_NRCS</sender>
-   <signal>toggled(bool)</signal>
-   <receiver>rtimps_cbo</receiver>
-   <slot>setDisabled(bool)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>285</x>
-     <y>47</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>283</x>
-     <y>127</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>rb_NRCS</sender>
-   <signal>toggled(bool)</signal>
-   <receiver>soil_depth_cbo</receiver>
-   <slot>setDisabled(bool)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>267</x>
-     <y>51</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>271</x>
-     <y>160</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>rb_NRCS</sender>
-   <signal>toggled(bool)</signal>
-   <receiver>dtheta_cbo</receiver>
-   <slot>setDisabled(bool)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>425</x>
-     <y>46</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>382</x>
-     <y>186</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>rb_NRCS</sender>
-   <signal>toggled(bool)</signal>
-   <receiver>psif_cbo</receiver>
-   <slot>setDisabled(bool)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>458</x>
-     <y>47</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>438</x>
-     <y>206</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>rb_NRCS</sender>
-   <signal>toggled(bool)</signal>
-   <receiver>log_area_average_chbox</receiver>
-   <slot>setDisabled(bool)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>468</x>
-     <y>52</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>29</x>
-     <y>239</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>rb_NRCS</sender>
-   <signal>toggled(bool)</signal>
-   <receiver>label_4</receiver>
-   <slot>setDisabled(bool)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>407</x>
-     <y>47</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>71</x>
-     <y>76</y>
+     <x>187</x>
+     <y>147</y>
     </hint>
    </hints>
   </connection>
@@ -396,8 +294,8 @@
    <slot>setDisabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>458</x>
-     <y>50</y>
+     <x>368</x>
+     <y>59</y>
     </hint>
     <hint type="destinationlabel">
      <x>200</x>
@@ -408,48 +306,16 @@
   <connection>
    <sender>rb_NRCS</sender>
    <signal>toggled(bool)</signal>
-   <receiver>label_2</receiver>
-   <slot>setDisabled(bool)</slot>
+   <receiver>calculateJE_btn</receiver>
+   <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>420</x>
-     <y>49</y>
+     <x>276</x>
+     <y>50</y>
     </hint>
     <hint type="destinationlabel">
-     <x>139</x>
-     <y>129</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>rb_NRCS</sender>
-   <signal>toggled(bool)</signal>
-   <receiver>label_10</receiver>
-   <slot>setDisabled(bool)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>399</x>
-     <y>42</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>102</x>
-     <y>156</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>rb_NRCS</sender>
-   <signal>toggled(bool)</signal>
-   <receiver>label_3</receiver>
-   <slot>setDisabled(bool)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>431</x>
-     <y>45</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>43</x>
-     <y>184</y>
+     <x>476</x>
+     <y>298</y>
     </hint>
    </hints>
   </connection>
@@ -464,8 +330,200 @@
      <y>52</y>
     </hint>
     <hint type="destinationlabel">
-     <x>64</x>
-     <y>209</y>
+     <x>136</x>
+     <y>262</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>rb_NRCS</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>label_4</receiver>
+   <slot>setDisabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>368</x>
+     <y>59</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>71</x>
+     <y>76</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>rb_NRCS</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>xksat_cbo</receiver>
+   <slot>setDisabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>346</x>
+     <y>48</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>475</x>
+     <y>119</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>rb_NRCS</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>label_10</receiver>
+   <slot>setDisabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>368</x>
+     <y>59</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>150</x>
+     <y>176</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>rb_NRCS</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>label_11</receiver>
+   <slot>setDisabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>325</x>
+     <y>45</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>186</x>
+     <y>220</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>rb_NRCS</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>soil_depth_cbo</receiver>
+   <slot>setDisabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>267</x>
+     <y>51</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>475</x>
+     <y>176</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>rb_NRCS</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>label_3</receiver>
+   <slot>setDisabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>257</x>
+     <y>51</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>111</x>
+     <y>204</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>rb_NRCS</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>dthetan_cbo</receiver>
+   <slot>setDisabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>304</x>
+     <y>44</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>295</x>
+     <y>201</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>rb_NRCS</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>rtimps_cbo</receiver>
+   <slot>setDisabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>285</x>
+     <y>47</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>475</x>
+     <y>148</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>rb_NRCS</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>dthetad_cbo</receiver>
+   <slot>setDisabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>316</x>
+     <y>43</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>341</x>
+     <y>234</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>rb_NRCS</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>soil_cbo</receiver>
+   <slot>setDisabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>368</x>
+     <y>50</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>475</x>
+     <y>90</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>rb_NRCS</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>psif_cbo</receiver>
+   <slot>setDisabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>368</x>
+     <y>59</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>475</x>
+     <y>262</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>rb_NRCS</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>label_3</receiver>
+   <slot>setDisabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>368</x>
+     <y>59</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>67</x>
+     <y>205</y>
     </hint>
    </hints>
   </connection>
