@@ -71,6 +71,7 @@ class SsurgoSoil(object):
         self.soil_att = []
         self.soil_att_dict = [
             {"name": "MUKEY", "type": "str"},
+            {"name": "muname", "type": "str"},
             {"name": "hydc", "type": "double"},
             {"name": "rtimpf", "type": "double"},
             {"name": "soil_depth", "type": "double"},
@@ -99,6 +100,7 @@ class SsurgoSoil(object):
         self.chorizon_att_dict = [
             {"name": "mupolygonkey", "type": "str"},
             {"name": "mukey", "type": "str"},
+            {"name": "muname", "type": "str"},
             {"name": "hzdept_r", "type": "double"},
             {"name": "hzdepb_r", "type": "double"},
             {"name": "sandtotal", "type": "double"},
@@ -117,7 +119,7 @@ class SsurgoSoil(object):
             self.soil_chorizon.updateFields()
 
         # Create the chfrags layer
-        self.soil_chfrags = QgsVectorLayer(uri, "chorizon", "memory")
+        self.soil_chfrags = QgsVectorLayer(uri, "chfrags", "memory")
         self.chfrags_prov = self.soil_chfrags.dataProvider()
         self.chfrags_att = []
         self.chfrags_att_dict = [
@@ -176,6 +178,7 @@ class SsurgoSoil(object):
                         SELECT 
                             M.mupolygonkey,
                             C.mukey,
+                            Map.muname,
                             Ch.hzdept_r,
                             Ch.hzdepb_r,
                             Ch.sandtotal_r, 
@@ -376,6 +379,8 @@ class SsurgoSoil(object):
             # fragvol is the volume percentage of the horizon occupied by the 2 mm or larger fraction
             if type(feature['fragvol']) == float:
                 gravel = feature['fragvol'] / 100
+                if gravel > 0.5:
+                    gravel = 0.5
             else:
                 gravel = 0
 
@@ -403,23 +408,21 @@ class SsurgoSoil(object):
             DensityC = DensityO * DensityFactor
             PorO = 1 - (DensityC / 2.65)
             PorC = PorO - (1 - DensityO / 2.65)
-            M33C = FCapac + 0.25 * PorC
+            M33C = FCapac + 0.25 * PorC  # DIFFERENT FROM THE NDOT (0.2)
             PM33C = PorO - M33C
             if PM33C < 0:
                 PM33C = 0
 
-            # Hydraulic Conductivity
+            # Hydraulic Conductivity (mm/hr) - Spreadsheet
+            lmbda = (math.log(M33C) - math.log(wPoint)) / (math.log(1500) - math.log(33))
             Gadj = (1 - gravel) / (1 - gravel * (1 - 1.5 * ((DensityC) / 2.65)))
-            B = (math.log(1500) - math.log(33)) / (math.log(M33C) - math.log(wPoint))
-            A = math.exp(math.log(33) + (B * math.log(M33C)))
-            lmbda = 1 / B
-            XKSAT_fs = 1930 * (PM33C ** (3 - lmbda)) * 0.0393700787 * Gadj
+            XKSAT_fs = 1930 * (PM33C ** (3 - lmbda)) * Gadj # DIFFERENT FROM THE NDOT
             KsCF = 0.5
             XKSAT_n = XKSAT_fs * KsCF
-            if XKSAT_n < 0.01:
-                XKSAT_n = 0.01
-            if XKSAT_n > 2:
-                XKSAT_n = 2
+            if XKSAT_n < 0.254:
+                XKSAT_n = 0.254
+            if XKSAT_n > 50.8:
+                XKSAT_n = 50.8
 
             # Suction(per Rawls, Brackensiek & Miller, 1983)
             BubblingPressure = -21.674 * sand - 27.932 * clay - 81.975 * PM33C + 71.121 * sand * PM33C + 8.294 * clay * PM33C + 14.05 * sand * clay + 27.161
@@ -434,6 +437,7 @@ class SsurgoSoil(object):
             target_feature.setGeometry(feature.geometry())
             target_feature.setAttributes(feature.attributes())
             target_feature['MUKEY'] = feature['MUKEY']
+            target_feature['MUNAME'] = feature['muname']
             target_feature['hydc'] = round(XKSAT_n / xksat_unit, 3)
             target_feature['rtimpf'] = rtimpf
             target_feature['soil_depth'] = round(soil_depth, 2)
@@ -532,6 +536,8 @@ class SsurgoSoil(object):
                 {'aggregate': 'first_value', 'delimiter': ',', 'input': '"mupolygonkey"', 'length': 0,
                  'name': 'mupolygonkey', 'precision': 0, 'sub_type': 0, 'type': 10, 'type_name': 'text'},
                 {'aggregate': 'first_value', 'delimiter': ',', 'input': '"mukey"', 'length': 0, 'name': 'mukey',
+                 'precision': 0, 'sub_type': 0, 'type': 10, 'type_name': 'text'},
+                {'aggregate': 'first_value', 'delimiter': ',', 'input': '"muname"', 'length': 0, 'name': 'muname',
                  'precision': 0, 'sub_type': 0, 'type': 10, 'type_name': 'text'},
                 {'aggregate': 'mean', 'delimiter': ',', 'input': '"hzdept_r"', 'length': 0, 'name': 'hzdept_r',
                  'precision': 1, 'sub_type': 0, 'type': 6, 'type_name': 'double precision'},
