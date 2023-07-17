@@ -13,19 +13,16 @@ from collections import defaultdict
 from functools import wraps
 
 from qgis.core import QgsGeometry
-
 from .user_communication import UserCommunication
-
 
 def connection_required(fn):
     """
     Checking for active connection object.
     """
-
     @wraps(fn)
     def wrapper(self, *args, **kwargs):
         if not self.con:
-            self.uc.bar_warn("Define a database connections first!")
+            self.uc.bar_warn("Define a database connection first!")             
             return
         else:
             return fn(self, *args, **kwargs)
