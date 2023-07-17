@@ -80,6 +80,7 @@ from .flo2d_tools.schematic_tools import (
     generate_schematic_levees,
 )
 from .flo2d_tools.schema2user_tools import SchemaSWMMConverter
+from collections import OrderedDict, defaultdict
 
 from .geopackage_utils import GeoPackageUtils, connection_required, database_disconnect
 from .gui.dlg_components import ComponentsDialog
@@ -103,6 +104,7 @@ from .gui.storm_drain_editor_widget import StormDrainEditorWidget
 from .layers import Layers
 from .user_communication import UserCommunication
 
+global GRID_INFO, GENERAL_INFO
 
 @contextmanager
 def cd(newdir):
@@ -115,6 +117,7 @@ def cd(newdir):
 
 
 class Flo2D(object):
+
     def __init__(self, iface):
         self.pr = cProfile.Profile()
         self.pr.enable()
@@ -248,12 +251,6 @@ class Flo2D(object):
         action.triggered.connect(callback)
         action.setEnabled(enabled_flag)
 
-        #         if menu is not None:
-        #             popup = QMenu()
-        #             for m in menu:
-        #                 popup.addAction(m)
-        #             action.setMenu(popup)
-
         if menu is not None:
             popup = QMenu()
             for m in menu:
@@ -261,12 +258,16 @@ class Flo2D(object):
                 act = QAction(icon, m[1], parent)
                 act.triggered.connect(m[2])
                 popup.addAction(act)
-
             action.setMenu(popup)
 
         if text == "Grid Info Tool":
-            # action.setCheckable(True)
-            # action.setChecked(False)
+            action.setCheckable(True)
+            action.setChecked(False)
+            pass
+
+        if text == "Info Tool":
+            action.setCheckable(True)
+            action.setChecked(False)
             pass
 
         if status_tip is not None:
@@ -288,6 +289,8 @@ class Flo2D(object):
         """
         Create the menu entries and toolbar icons inside the QGIS GUI.
         """
+        global GRID_INFO, GENERAL_INFO
+
         self.add_action(
             os.path.join(self.plugin_dir, "img/settings.svg"),
             text=self.tr("Settings"),
@@ -331,7 +334,6 @@ class Flo2D(object):
                     "Run Tailings Dam Tool ",
                     self.run_tailingsdambreach,
                 )
-                #                     (os.path.join(self.plugin_dir, 'img/mapper_logo.svg'),'Run Mapper', self.run_program('Mapper PRO.Exe', 'Run Mapper', 'FLO-2D Folder (Mapper PRO.exe)'))
             ),
         )
 
@@ -419,14 +421,26 @@ class Flo2D(object):
             parent=self.iface.mainWindow(),
         )
 
-        self.add_action(
+        GENERAL_INFO =self.add_action(
             os.path.join(self.plugin_dir, "img/info_tool.svg"),
             text=self.tr("Info Tool"),
             callback=self.activate_general_info_tool,
             parent=self.iface.mainWindow(),
+            menu=(
+                # (
+                #     os.path.join(self.plugin_dir, "img/info_tool.svg"),
+                #     "Info Tool",
+                #     self.activate_general_info_tool ,
+                # ),                
+                (
+                    os.path.join(self.plugin_dir, "img/flo2d.svg"),
+                    "Select .RPT file",
+                    self.select_RPT_File,
+                ),
+            ),      
         )
 
-        self.add_action(
+        GRID_INFO = self.add_action(
             os.path.join(self.plugin_dir, "img/grid_info_tool.svg"),
             text=self.tr("Grid Info Tool"),
             callback=lambda: self.activate_grid_info_tool(),
@@ -951,6 +965,17 @@ class Flo2D(object):
             self.uc.log_info(repr(e))
             self.uc.bar_warn("Running " + exe_name + " failed!")
 
+    def select_RPT_File(self):
+        GRID_INFO.setChecked(False)  
+        GENERAL_INFO.setChecked(False)
+        self.canvas.unsetMapTool(self.grid_info_tool)  
+        self.canvas.unsetMapTool(self.info_tool)       
+        grid = self.lyrs.data["grid"]["qlyr"]
+        if grid is not None:        
+            self.f2d_widget.storm_drain_editor.create_SD_discharge_table_and_plots("Just assign FLO-2D settings") 
+        else:
+            self.uc.bar_warn("There is no grid layer to identify.")            
+
     def load_gpkg_from_proj(self):
         """
         If QGIS project has a gpkg path saved ask user if it should be loaded.
@@ -992,7 +1017,10 @@ class Flo2D(object):
                 window_title = s.value("FLO-2D/last_flopro_project", "")
                 self.iface.mainWindow().setWindowTitle(window_title)
                 QApplication.restoreOverrideCursor()
-
+                
+            GRID_INFO.setChecked(False)  
+            GENERAL_INFO.setChecked(False)   
+                          
     def call_IO_methods(self, calls, debug, *args):
         if self.f2g.parsed_format == Flo2dGeoPackage.FORMAT_DAT:
             self.call_IO_methods_dat(calls, debug, *args)
@@ -2410,8 +2438,25 @@ class Flo2D(object):
             self.uc.show_error("ERROR 110618.1816: Could not save FLO-2D parameters!!", e)
 
     def activate_general_info_tool(self):
-        self.canvas.setMapTool(self.info_tool)
-        self.info_tool.update_lyrs_list()
+        # GRID_INFO.setChecked(False)  
+        # GENERAL_INFO.setChecked(False)
+        # self.canvas.unsetMapTool(self.info_tool)  
+        # self.canvas.unsetMapTool(self.grid_info_tool)  
+        grid = self.lyrs.data["grid"]["qlyr"]
+        if grid is not None:        
+            self.f2d_grid_info_dock.setUserVisible(True)
+            tool = self.canvas.mapTool()
+            if tool == self.info_tool:  
+                self.canvas.unsetMapTool(self.info_tool)  
+            else:
+                if tool is not None:
+                    self.canvas.unsetMapTool(tool)
+                self.canvas.setMapTool(self.info_tool) 
+                GRID_INFO.setChecked(False)  
+                GENERAL_INFO.setChecked(True)      
+        else:
+            self.uc.bar_warn("Define a database connection first!") 
+            GENERAL_INFO.setChecked(False)        
 
     @connection_required
     def activate_grid_info_tool(self):
@@ -2431,8 +2476,10 @@ class Flo2D(object):
                 self.f2d_grid_info.n_cells = number_of_elements(self.gutils, grid)
                 self.f2d_grid_info.gutils = self.gutils
                 self.canvas.setMapTool(self.grid_info_tool)
+                GENERAL_INFO.setChecked(False)  
         else:
             self.uc.bar_warn("There is no grid layer to identify.")
+            GRID_INFO.setChecked(False) 
 
     @connection_required
     def show_user_profile(self, fid=None):
@@ -2464,6 +2511,18 @@ class Flo2D(object):
         self.f2d_widget.struct_editor_grp.setCollapsed(False)
         self.f2d_widget.struct_editor.populate_structs(struct_fid=fid)
 
+
+    @connection_required
+    def show_sd_discharge(self, fid=None):
+        """
+        Show storm drain discharge for a given inlet node.
+        """
+        name, grid = self.gutils.execute("SELECT name, grid FROM user_swmm_nodes WHERE fid = ?", (fid,)).fetchone()
+        
+        self.f2d_dock.setUserVisible(True)
+        self.f2d_widget.storm_drain_editor_grp.setCollapsed(False) 
+        self.f2d_widget.storm_drain_editor.create_SD_discharge_table_and_plots(name)
+          
     @connection_required
     def show_schem_xsec_info(self, fid=None):
         """
@@ -2992,7 +3051,11 @@ class Flo2D(object):
             "user_bc_polygons": self.show_bc_editor,
             "user_struct": self.show_struct_editor,
             "struct": self.show_struct_editor,
+            "user_swmm_nodes": self.show_sd_discharge,
         }
 
     def restore_settings(self):
         pass
+
+    def grid_info_tool_clicked(self):
+        self.uc.bar_info("grid info tool clicked.")

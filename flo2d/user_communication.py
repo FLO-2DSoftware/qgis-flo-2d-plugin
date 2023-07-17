@@ -118,9 +118,9 @@ class UserCommunication(object):
         else:
             print(msg)
 
-    def bar_error(self, msg):
+    def bar_error(self, msg, dur=5):
         if self.iface is not None:
-            self.iface.messageBar().pushMessage(self.context, msg, level=Qgis.Critical)
+            self.iface.messageBar().pushMessage(self.context, msg, level=Qgis.Critical, duration=dur)
         else:
             print(msg)
 
