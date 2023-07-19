@@ -51,13 +51,29 @@ class OSMLanduse(object):
 
         return processing.run("qgis:rastercalculator", alg_params)['OUTPUT']
 
-    def landuse_vectorizor(self, raster):
+    def landuse_vectorizor(self, raster, grid_lyr):
+
+        # vectorize the landuse raster
         alg_params = {'INPUT': raster,
                       'BAND': 1,
                       'FIELD': 'DN',
                       'OUTPUT': 'TEMPORARY_OUTPUT'}
+        vector_landuse = processing.run("gdal:polygonize", alg_params)['OUTPUT']
 
-        return processing.run("gdal:polygonize", alg_params)['OUTPUT']
+        # dissolve grid for speed up
+        alg_params = {'INPUT': grid_lyr,
+                      'OUTPUT': 'TEMPORARY_OUTPUT'}
+        dissolved = processing.run("native:dissolve", alg_params)['OUTPUT']
+
+        # clip landuse vector with dissolved grid
+        alg_params = {"INPUT": vector_landuse,
+                      "OVERLAY": dissolved,
+                      "OUTPUT": 'TEMPORARY_OUTPUT'}
+        return processing.run("native:clip", alg_params)["OUTPUT"]
+
+
+
+
 
 
 
