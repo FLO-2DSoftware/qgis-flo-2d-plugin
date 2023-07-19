@@ -13,6 +13,7 @@ changelog=
   - Create Storm Drain discharge plots (issue #847).
   - FLO-2D toolbar: Make info and grid info icons as toggle buttons (on/off).
  <p>0.10.110
+  - New infiltration editor using SSURGO data for estimating G&A parameters
   - Finalize Green-Ampt Method FCDMC 2023 and Documentation.
   - PSIF and DTHETA calculators finished.
   - Log AVG PSIF and Area Avg DTHETA.

@@ -13,10 +13,12 @@ from collections import OrderedDict
 from itertools import chain
 from math import isnan
 
-from qgis.core import QgsFeatureRequest, QgsWkbTypes
+from qgis.core import QgsFeatureRequest, QgsWkbTypes, QgsProject
 from qgis.PyQt.QtCore import QSettings, Qt, pyqtSignal, pyqtSlot
 from qgis.PyQt.QtGui import QStandardItem, QStandardItemModel
-from qgis.PyQt.QtWidgets import QApplication, QCheckBox, QDoubleSpinBox, QInputDialog, QSpinBox
+from qgis.PyQt.QtWidgets import (QApplication, QCheckBox, QDoubleSpinBox,
+                                 QInputDialog, QSpinBox, QProgressDialog,
+                                 QMessageBox)
 
 from ..flo2d_tools.grid_tools import poly2grid, poly2poly_geos
 from ..flo2d_tools.infiltration_tools import InfiltrationCalculator
@@ -24,6 +26,8 @@ from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
 from ..utils import m_fdata
 from .ui_utils import center_canvas, load_ui, set_icon, switch_to_selected
+
+from ..misc.ssurgo_soils import SsurgoSoil
 
 uiDialog, qtBaseClass = load_ui("infil_editor")
 
@@ -473,7 +477,6 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
         if not ok:
             return
         try:
-            QApplication.setOverrideCursor(Qt.WaitCursor)
             dlg.save_green_ampt_shapefile_fields()
             self.gutils.disable_geom_triggers()
             (
@@ -483,6 +486,7 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
                 vc_check,
                 log_area_average,
             ) = dlg.green_ampt_parameters()
+
             inf_calc = InfiltrationCalculator(self.grid_lyr, self.iface, self.gutils)
             inf_calc.setup_green_ampt(soil_lyr, land_lyr, vc_check, log_area_average, *fields)
             grid_params = inf_calc.green_ampt_infiltration()
@@ -788,15 +792,16 @@ class ChannelDialog(uiDialog_chan, qtBaseClass_chan):
 
 uiDialog_green, qtBaseClass_green = load_ui("infil_green_ampt")
 
-
 class GreenAmptDialog(uiDialog_green, qtBaseClass_green):
     def __init__(self, iface, lyrs):
         qtBaseClass_green.__init__(self)
         uiDialog_green.__init__(self)
         self.iface = iface
         self.lyrs = lyrs
+        self.grid_lyr = self.lyrs.data["grid"]["qlyr"]
         self.setupUi(self)
         self.uc = UserCommunication(iface, "FLO-2D")
+        self.rb_NRCS = self.rb_NRCS
         self.soil_combos = [
             self.xksat_cbo,
             self.rtimps_cbo,
@@ -811,11 +816,14 @@ class GreenAmptDialog(uiDialog_green, qtBaseClass_green):
             self.ia_cbo,
             self.rtimpl_cbo,
         ]
+
         self.soil_cbo.currentIndexChanged.connect(self.populate_soil_fields)
         self.land_cbo.currentIndexChanged.connect(self.populate_land_fields)
 
         self.setup_layer_combos()
         self.restore_green_ampt_shapefile_fields()
+
+        self.calculateJE_btn.clicked.connect(self.calculate_ssurgo)
 
     def setup_layer_combos(self):
         """
@@ -923,6 +931,82 @@ class GreenAmptDialog(uiDialog_green, qtBaseClass_green):
             val = int(-1 if s.value("ga_land_rtimpl") is None else s.value("ga_land_rtimpl"))
             self.rtimpl_cbo.setCurrentIndex(val)
 
+    def calculate_ssurgo(self):
+
+        # Verify if the user would like to save the intermediate calculation layers
+        saveLayers = False
+        answer = QMessageBox.question(self.iface.mainWindow(), 'NRCS G&A parameters',
+                                     'Save intermediate calculation layers as temporary layers?', QMessageBox.Yes, QMessageBox.No)
+        if answer == QMessageBox.Yes:
+            saveLayers = True
+
+        try:
+            # Create the progress Dialog
+            pd = QProgressDialog("Setting up...", None, 0, 7)
+            pd.setWindowTitle("NRCS soil survey database")
+            pd.setModal(True)
+            pd.forceShow()
+            pd.setValue(0)
+
+            ssurgoSoil = SsurgoSoil(self.grid_lyr, self.iface)
+
+            # 1. Set up the ssurgo
+            ssurgoSoil.setup_ssurgo(saveLayers)
+
+            # 2. Download Chorizon data
+            pd.setLabelText("Downloading chorizon data...")
+            ssurgoSoil.downloadChorizon()
+            pd.setValue(1)
+
+            # 3. Download Cfrags data
+            pd.setLabelText("Downloading chfrags data...")
+            ssurgoSoil.downloadChfrags()
+            pd.setValue(2)
+
+            # 4. Download Component data
+            pd.setLabelText("Downloading component data...")
+            ssurgoSoil.downloadComp()
+            pd.setValue(3)
+
+            # 5. Join the Tables
+            pd.setLabelText("Combining the layers...")
+            ssurgoSoil.combineSsurgoLayers()
+            pd.setValue(4)
+
+            # 6. Calculate the G&A parameters
+            pd.setLabelText("Calculating G&A parameters...")
+            ssurgoSoil.calculateGAparameters()
+            pd.setValue(5)
+
+            # 7. Fill empty polygons
+            pd.setLabelText("Post processing data...")
+            ssurgoSoil.postProcessSsurgo()
+            pd.setValue(6)
+
+            # 8. Add to the G&A table
+            pd.setLabelText("Writing parameters to G&A table...")
+            ssurgo_lyr = ssurgoSoil.soil_lyr()
+            self.soil_cbo.insertItem(0, ssurgo_lyr.name(), ssurgo_lyr)
+            self.soil_cbo.setCurrentIndex(0)
+            self.xksat_cbo.setCurrentIndex(2)
+            self.rtimps_cbo.setCurrentIndex(3)
+            self.soil_depth_cbo.setCurrentIndex(4)
+            self.dthetan_cbo.setCurrentIndex(7)
+            self.dthetad_cbo.setCurrentIndex(6)
+            self.psif_cbo.setCurrentIndex(5)
+
+            pd.setValue(7)
+            pd.close()
+
+            QApplication.restoreOverrideCursor()
+
+        except Exception as e:
+            self.uc.log_info(traceback.format_exc())
+            self.uc.show_error(
+                "ERROR: Green-Ampt SSURGO infiltration parameters failed!."
+                + "\n__________________________________________________",
+                e,
+            )
 
 uiDialog_scs, qtBaseClass_scs = load_ui("infil_scs")
 

@@ -336,7 +336,8 @@ class SchemaInfiltrationConverter(SchemaConverter):
         self.green_columns = [
             "hydc",
             "soils",
-            "dtheta",
+            "dthetan",
+            "dthetad",
             "abstrinf",
             "rtimpf",
             "soil_depth",
