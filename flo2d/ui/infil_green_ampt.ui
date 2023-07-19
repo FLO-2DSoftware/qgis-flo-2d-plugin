@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>500</width>
-    <height>500</height>
+    <height>516</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -140,30 +140,66 @@
       <string>Land Use</string>
      </property>
      <layout class="QGridLayout" name="gridLayout_7">
-      <item row="0" column="0">
+      <item row="2" column="2">
+       <layout class="QGridLayout" name="gridLayout_4">
+        <item row="0" column="0">
+         <widget class="QRadioButton" name="lu_osm_rb">
+          <property name="text">
+           <string>OSM data</string>
+          </property>
+         </widget>
+        </item>
+        <item row="0" column="1">
+         <widget class="QPushButton" name="lu_osm_btn">
+          <property name="enabled">
+           <bool>false</bool>
+          </property>
+          <property name="text">
+           <string>Calculate</string>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="0" colspan="2">
+         <widget class="QComboBox" name="land_cbo"/>
+        </item>
+        <item row="2" column="0" colspan="2">
+         <widget class="QComboBox" name="saturation_cbo"/>
+        </item>
+        <item row="3" column="0" colspan="2">
+         <widget class="QComboBox" name="vc_cbo"/>
+        </item>
+        <item row="4" column="0" colspan="2">
+         <widget class="QComboBox" name="ia_cbo"/>
+        </item>
+        <item row="5" column="0" colspan="2">
+         <widget class="QComboBox" name="rtimpl_cbo"/>
+        </item>
+       </layout>
+      </item>
+      <item row="2" column="0">
        <layout class="QGridLayout" name="gridLayout_3">
-        <item row="3" column="0">
+        <item row="4" column="0">
          <widget class="QLabel" name="label_8">
           <property name="text">
            <string>Initial abstraction [in or mm]</string>
           </property>
          </widget>
         </item>
-        <item row="1" column="0">
-         <widget class="QLabel" name="label_6">
-          <property name="text">
-           <string>Saturation [wet, dry, or normal]</string>
-          </property>
-         </widget>
-        </item>
-        <item row="2" column="0">
+        <item row="3" column="0">
          <widget class="QCheckBox" name="veg_cover_chbox">
           <property name="text">
            <string>Vegetation cover [0 to 100%]</string>
           </property>
          </widget>
         </item>
-        <item row="4" column="0">
+        <item row="1" column="0">
+         <widget class="QLabel" name="label_5">
+          <property name="text">
+           <string>Land use layer</string>
+          </property>
+         </widget>
+        </item>
+        <item row="5" column="0">
          <widget class="QLabel" name="label_9">
           <property name="text">
            <string>Impervious area [0 to 100%]</string>
@@ -171,30 +207,21 @@
          </widget>
         </item>
         <item row="0" column="0">
-         <widget class="QLabel" name="label_5">
+         <widget class="QRadioButton" name="lu_user_rb">
           <property name="text">
-           <string>Land use layer</string>
+           <string>User layer</string>
+          </property>
+          <property name="checked">
+           <bool>true</bool>
           </property>
          </widget>
         </item>
-       </layout>
-      </item>
-      <item row="0" column="1">
-       <layout class="QGridLayout" name="gridLayout_4">
         <item row="2" column="0">
-         <widget class="QComboBox" name="vc_cbo"/>
-        </item>
-        <item row="4" column="0">
-         <widget class="QComboBox" name="rtimpl_cbo"/>
-        </item>
-        <item row="0" column="0">
-         <widget class="QComboBox" name="land_cbo"/>
-        </item>
-        <item row="1" column="0">
-         <widget class="QComboBox" name="saturation_cbo"/>
-        </item>
-        <item row="3" column="0">
-         <widget class="QComboBox" name="ia_cbo"/>
+         <widget class="QLabel" name="label_6">
+          <property name="text">
+           <string>Saturation [wet, dry, or normal]</string>
+          </property>
+         </widget>
         </item>
        </layout>
       </item>
@@ -212,8 +239,8 @@
    <slot>accept()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>248</x>
-     <y>254</y>
+     <x>259</x>
+     <y>497</y>
     </hint>
     <hint type="destinationlabel">
      <x>157</x>
@@ -228,12 +255,108 @@
    <slot>reject()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>316</x>
-     <y>260</y>
+     <x>327</x>
+     <y>497</y>
     </hint>
     <hint type="destinationlabel">
      <x>286</x>
      <y>274</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>lu_osm_rb</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>land_cbo</receiver>
+   <slot>setDisabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>303</x>
+     <y>286</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>294</x>
+     <y>318</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>lu_osm_rb</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>saturation_cbo</receiver>
+   <slot>setDisabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>343</x>
+     <y>288</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>343</x>
+     <y>357</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>lu_osm_rb</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>vc_cbo</receiver>
+   <slot>setDisabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>329</x>
+     <y>295</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>327</x>
+     <y>385</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>lu_osm_rb</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>ia_cbo</receiver>
+   <slot>setDisabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>318</x>
+     <y>295</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>315</x>
+     <y>417</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>lu_osm_rb</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>rtimpl_cbo</receiver>
+   <slot>setDisabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>301</x>
+     <y>291</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>298</x>
+     <y>437</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>lu_osm_rb</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>lu_osm_btn</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>280</x>
+     <y>291</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>387</x>
+     <y>290</y>
     </hint>
    </hints>
   </connection>
