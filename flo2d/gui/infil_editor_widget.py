@@ -1046,6 +1046,7 @@ class GreenAmptDialog(uiDialog_green, qtBaseClass_green):
         if rlayer.isValid():
 
             # Add it to the canvas because it will export the layer based on the canva's extent
+            QgsProject.instance().layerTreeRegistryBridge().setLayerInsertionPoint(QgsProject.instance().layerTreeRoot(), 0)
             QgsProject.instance().addMapLayer(rlayer)
 
             parameters = {

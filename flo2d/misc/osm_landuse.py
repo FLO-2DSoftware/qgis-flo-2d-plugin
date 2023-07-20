@@ -11,7 +11,15 @@ class OSMLanduse(object):
         """Initialize the required layers"""
         self.iface = iface
         self.uc = UserCommunication(iface, "FLO-2D")
-        pass
+
+    def add_layer_to_top(self, layer):
+        project = QgsProject.instance()
+        layers = project.mapLayers()
+        layer_ids = [layer.id() for layer in project.mapLayers().values()]
+        project.addMapLayer(layer, False)
+        for id in layer_ids:
+            layer = layers[id]
+            project.moveLayer(layer, len(layer_ids))
 
     def raster_calculator(self, input, band1, band2, band3):
 
