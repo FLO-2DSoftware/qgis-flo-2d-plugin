@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>509</width>
-    <height>553</height>
+    <height>586</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -217,7 +217,7 @@
         <item row="0" column="0">
          <widget class="QRadioButton" name="lu_user_rb">
           <property name="text">
-           <string>User layer</string>
+           <string>User landuse layer</string>
           </property>
           <property name="checked">
            <bool>true</bool>
@@ -276,8 +276,8 @@
    <slot>accept()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>270</x>
-     <y>532</y>
+     <x>281</x>
+     <y>567</y>
     </hint>
     <hint type="destinationlabel">
      <x>157</x>
@@ -292,8 +292,8 @@
    <slot>reject()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>338</x>
-     <y>532</y>
+     <x>349</x>
+     <y>567</y>
     </hint>
     <hint type="destinationlabel">
      <x>286</x>
@@ -308,8 +308,8 @@
    <slot>setDisabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>368</x>
-     <y>59</y>
+     <x>366</x>
+     <y>62</y>
     </hint>
     <hint type="destinationlabel">
      <x>211</x>
@@ -324,8 +324,8 @@
    <slot>setDisabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>368</x>
-     <y>59</y>
+     <x>366</x>
+     <y>62</y>
     </hint>
     <hint type="destinationlabel">
      <x>200</x>
@@ -360,8 +360,8 @@
      <y>52</y>
     </hint>
     <hint type="destinationlabel">
-     <x>160</x>
-     <y>237</y>
+     <x>184</x>
+     <y>270</y>
     </hint>
    </hints>
   </connection>
@@ -372,8 +372,8 @@
    <slot>setDisabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>368</x>
-     <y>59</y>
+     <x>366</x>
+     <y>62</y>
     </hint>
     <hint type="destinationlabel">
      <x>71</x>
@@ -404,8 +404,8 @@
    <slot>setDisabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>368</x>
-     <y>59</y>
+     <x>366</x>
+     <y>62</y>
     </hint>
     <hint type="destinationlabel">
      <x>174</x>
@@ -424,8 +424,8 @@
      <y>45</y>
     </hint>
     <hint type="destinationlabel">
-     <x>210</x>
-     <y>213</y>
+     <x>234</x>
+     <y>241</y>
     </hint>
    </hints>
   </connection>
@@ -456,8 +456,8 @@
      <y>51</y>
     </hint>
     <hint type="destinationlabel">
-     <x>135</x>
-     <y>188</y>
+     <x>159</x>
+     <y>212</y>
     </hint>
    </hints>
   </connection>
@@ -473,7 +473,7 @@
     </hint>
     <hint type="destinationlabel">
      <x>484</x>
-     <y>189</y>
+     <y>212</y>
     </hint>
    </hints>
   </connection>
@@ -505,7 +505,7 @@
     </hint>
     <hint type="destinationlabel">
      <x>484</x>
-     <y>213</y>
+     <y>241</y>
     </hint>
    </hints>
   </connection>
@@ -516,8 +516,8 @@
    <slot>setDisabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>368</x>
-     <y>50</y>
+     <x>366</x>
+     <y>62</y>
     </hint>
     <hint type="destinationlabel">
      <x>475</x>
@@ -532,12 +532,12 @@
    <slot>setDisabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>368</x>
-     <y>59</y>
+     <x>366</x>
+     <y>62</y>
     </hint>
     <hint type="destinationlabel">
      <x>484</x>
-     <y>237</y>
+     <y>270</y>
     </hint>
    </hints>
   </connection>
@@ -548,12 +548,12 @@
    <slot>setDisabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>368</x>
-     <y>59</y>
+     <x>366</x>
+     <y>62</y>
     </hint>
     <hint type="destinationlabel">
-     <x>91</x>
-     <y>188</y>
+     <x>115</x>
+     <y>212</y>
     </hint>
    </hints>
   </connection>
@@ -564,12 +564,12 @@
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>302</x>
-     <y>326</y>
+     <x>368</x>
+     <y>370</y>
     </hint>
     <hint type="destinationlabel">
-     <x>403</x>
-     <y>333</y>
+     <x>484</x>
+     <y>374</y>
     </hint>
    </hints>
   </connection>
@@ -580,12 +580,12 @@
    <slot>setDisabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>269</x>
-     <y>332</y>
+     <x>368</x>
+     <y>370</y>
     </hint>
     <hint type="destinationlabel">
-     <x>269</x>
-     <y>364</y>
+     <x>484</x>
+     <y>403</y>
     </hint>
    </hints>
   </connection>
@@ -596,12 +596,12 @@
    <slot>setDisabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>284</x>
-     <y>328</y>
+     <x>368</x>
+     <y>370</y>
     </hint>
     <hint type="destinationlabel">
-     <x>294</x>
-     <y>398</y>
+     <x>484</x>
+     <y>432</y>
     </hint>
    </hints>
   </connection>
@@ -612,12 +612,12 @@
    <slot>setDisabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>312</x>
-     <y>319</y>
+     <x>368</x>
+     <y>370</y>
     </hint>
     <hint type="destinationlabel">
-     <x>345</x>
-     <y>412</y>
+     <x>484</x>
+     <y>461</y>
     </hint>
    </hints>
   </connection>
@@ -628,12 +628,12 @@
    <slot>setDisabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>324</x>
-     <y>325</y>
+     <x>368</x>
+     <y>370</y>
     </hint>
     <hint type="destinationlabel">
-     <x>363</x>
-     <y>444</y>
+     <x>484</x>
+     <y>490</y>
     </hint>
    </hints>
   </connection>
@@ -644,12 +644,92 @@
    <slot>setDisabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>312</x>
-     <y>321</y>
+     <x>368</x>
+     <y>370</y>
     </hint>
     <hint type="destinationlabel">
-     <x>400</x>
-     <y>470</y>
+     <x>484</x>
+     <y>519</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>lu_osm_rb</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>label_5</receiver>
+   <slot>setDisabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>278</x>
+     <y>363</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>117</x>
+     <y>393</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>lu_osm_rb</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>label_6</receiver>
+   <slot>setDisabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>335</x>
+     <y>352</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>144</x>
+     <y>425</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>lu_osm_rb</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>veg_cover_chbox</receiver>
+   <slot>setDisabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>289</x>
+     <y>356</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>55</x>
+     <y>449</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>lu_osm_rb</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>label_8</receiver>
+   <slot>setDisabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>327</x>
+     <y>363</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>165</x>
+     <y>469</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>lu_osm_rb</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>label_9</receiver>
+   <slot>setDisabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>343</x>
+     <y>353</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>115</x>
+     <y>502</y>
     </hint>
    </hints>
   </connection>
