@@ -14,7 +14,7 @@ from itertools import chain
 from math import isnan
 
 from PyQt5.QtCore import QVariant
-from qgis._core import QgsField, QgsVectorLayer, QgsRasterLayer, QgsProcessing
+from qgis._core import QgsField, QgsVectorLayer, QgsRasterLayer, QgsProcessing, QgsLayerTreeRegistryBridge
 from qgis.core import QgsFeatureRequest, QgsWkbTypes, QgsProject
 from qgis.PyQt.QtCore import QSettings, Qt, pyqtSignal, pyqtSlot
 from qgis.PyQt.QtGui import QStandardItem, QStandardItemModel
@@ -987,7 +987,7 @@ class GreenAmptDialog(uiDialog_green, qtBaseClass_green):
 
             # 7. Fill empty polygons
             pd.setLabelText("Post processing data...")
-            ssurgoSoil.postProcessSsurgo()
+            ssurgoSoil.postProcess()
             pd.setValue(6)
 
             # 8. Add to the G&A table
@@ -1039,342 +1039,413 @@ class GreenAmptDialog(uiDialog_green, qtBaseClass_green):
             self.con = con
             self.gutils = GeoPackageUtils(self.con, self.iface)
 
-        # OSM data
-        urlWithParams = 'type=xyz&url=http://a.tile.openstreetmap.org/%7Bz%7D/%7Bx%7D/%7By%7D.png&zmax=16&zmin=16'
-        rlayer = QgsRasterLayer(urlWithParams, 'OpenStreetMap', 'wms')
-        # Check if the layer is valid
-        if rlayer.isValid():
+        try:
 
-            # Add it to the canvas because it will export the layer based on the canva's extent
-            QgsProject.instance().layerTreeRegistryBridge().setLayerInsertionPoint(QgsProject.instance().layerTreeRoot(), 0)
-            QgsProject.instance().addMapLayer(rlayer)
+            # OSM data
+            urlWithParams = 'type=xyz&url=http://a.tile.openstreetmap.org/%7Bz%7D/%7Bx%7D/%7By%7D.png&zmax=16&zmin=16'
+            rlayer = QgsRasterLayer(urlWithParams, 'OpenStreetMap', 'wms')
+            # Check if the layer is valid
+            if rlayer.isValid():
 
-            parameters = {
-                "INPUT": rlayer,
-                "EXTENT": self.grid_lyr.extent(),  # Provide the extent parameter
-                'TILE_SIZE': 64,
-                'MAP_UNITS_PER_PIXEL': 10,
-                "OUTPUT": 'TEMPORARY_OUTPUT'
-            }
-            proc_output = processing.run("native:rasterize", parameters)
+                # Add it to the canvas because it will export the layer based on the canva's extent
+                root_group = QgsProject.instance().layerTreeRoot()
+                insertion_point = QgsLayerTreeRegistryBridge.InsertionPoint(root_group, 0)
+                QgsProject.instance().layerTreeRegistryBridge().setLayerInsertionPoint(insertion_point)
 
-            finalRaster = QgsRasterLayer(proc_output['OUTPUT'], "OSM")
-            QgsProject.instance().removeMapLayer(rlayer)
-            QgsProject.instance().addMapLayer(finalRaster)
-            layers.append(finalRaster)
+                QgsProject.instance().addMapLayer(rlayer)
 
-            # RASTER CALCULATOR starts here
-            osm = osm_landuse.OSMLanduse(self.iface)
+                parameters = {
+                    "INPUT": rlayer,
+                    "EXTENT": self.grid_lyr.extent(),  # Provide the extent parameter
+                    'TILE_SIZE': 64,
+                    'MAP_UNITS_PER_PIXEL': 10,
+                    "OUTPUT": 'TEMPORARY_OUTPUT'
+                }
+                proc_output = processing.run("native:rasterize", parameters)
 
-            # Medium Density Residential
-            pd.setLabelText("Finding residential areas...")
-            pd.setValue(1)
+                finalRaster = QgsRasterLayer(proc_output['OUTPUT'], "OSM")
+                QgsProject.instance().removeMapLayer(rlayer)
+                QgsProject.instance().addMapLayer(finalRaster)
+                layers.append(finalRaster)
 
-            residential_1 = QgsRasterLayer(osm.raster_calculator(finalRaster, 224, 223, 223), "RES1")
-            QgsProject.instance().addMapLayer(residential_1)
-            temp_layers.append(residential_1)
-            residential_2 = QgsRasterLayer(osm.raster_calculator(finalRaster, 242, 239, 233), "RES2")
-            QgsProject.instance().addMapLayer(residential_2)
-            temp_layers.append(residential_2)
-            school = QgsRasterLayer(osm.raster_calculator(finalRaster, 255, 255, 229), "SCHO")
-            QgsProject.instance().addMapLayer(school)
-            temp_layers.append(school)
-            church = QgsRasterLayer(osm.raster_calculator(finalRaster, 208, 208, 208), "CHUR")
-            QgsProject.instance().addMapLayer(church)
-            temp_layers.append(church)
+                # RASTER CALCULATOR starts here
+                osm = osm_landuse.OSMLanduse(self.iface)
 
-            mdr = QgsRasterLayer(osm.landuse_calculator(residential_1,
-                                                        [
-                                                            residential_1.name(),
-                                                            residential_2.name(),
-                                                            school.name(),
-                                                            church.name()]
-                                                        , 1), "MDR")
-            QgsProject.instance().addMapLayer(mdr)
-            layers.append(mdr)
+                # Medium Density Residential
+                pd.setLabelText("Finding residential areas...")
+                pd.setValue(1)
 
-            # Commercial
-            pd.setLabelText("Finding commercial areas...")
-            pd.setValue(2)
+                residential_1 = QgsRasterLayer(osm.raster_calculator(finalRaster, 224, 223, 223), "RES1")
+                QgsProject.instance().addMapLayer(residential_1)
+                temp_layers.append(residential_1)
+                residential_2 = QgsRasterLayer(osm.raster_calculator(finalRaster, 242, 239, 233), "RES2")
+                QgsProject.instance().addMapLayer(residential_2)
+                temp_layers.append(residential_2)
+                residential_3 = QgsRasterLayer(osm.raster_calculator(finalRaster, 226, 212, 212), "RES3")
+                QgsProject.instance().addMapLayer(residential_3)
+                temp_layers.append(residential_3)
+                school = QgsRasterLayer(osm.raster_calculator(finalRaster, 255, 255, 229), "SCHO")
+                QgsProject.instance().addMapLayer(school)
+                temp_layers.append(school)
+                church = QgsRasterLayer(osm.raster_calculator(finalRaster, 208, 208, 208), "CHUR")
+                QgsProject.instance().addMapLayer(church)
+                temp_layers.append(church)
 
-            commercial_1 = QgsRasterLayer(osm.raster_calculator(finalRaster, 242, 218, 217), "COM1")
-            QgsProject.instance().addMapLayer(commercial_1)
-            temp_layers.append(commercial_1)
-            commercial_2 = QgsRasterLayer(osm.raster_calculator(finalRaster, 255, 214, 209), "COM2")
-            QgsProject.instance().addMapLayer(commercial_2)
-            temp_layers.append(commercial_2)
+                mdr = QgsRasterLayer(osm.landuse_calculator(residential_1,
+                                                            [
+                                                                residential_1.name(),
+                                                                residential_2.name(),
+                                                                residential_3.name(),
+                                                                school.name(),
+                                                                church.name()]
+                                                            , 1), "MDR")
+                QgsProject.instance().addMapLayer(mdr)
+                layers.append(mdr)
 
-            c = QgsRasterLayer(osm.landuse_calculator(commercial_1,
-                                                      [commercial_1.name(),
-                                                       commercial_2.name()],
-                                                       2), "C")
-            QgsProject.instance().addMapLayer(c)
-            layers.append(c)
+                # Commercial
+                pd.setLabelText("Finding commercial areas...")
+                pd.setValue(2)
 
-            # Lawns/Parks/Cemeteries
-            pd.setLabelText("Finding green areas...")
-            pd.setValue(3)
+                commercial_1 = QgsRasterLayer(osm.raster_calculator(finalRaster, 242, 218, 217), "COM1")
+                QgsProject.instance().addMapLayer(commercial_1)
+                temp_layers.append(commercial_1)
+                commercial_2 = QgsRasterLayer(osm.raster_calculator(finalRaster, 255, 214, 209), "COM2")
+                QgsProject.instance().addMapLayer(commercial_2)
+                temp_layers.append(commercial_2)
+                commercial_3 = QgsRasterLayer(osm.raster_calculator(finalRaster, 243, 227, 221), "COM3")
+                QgsProject.instance().addMapLayer(commercial_3)
+                temp_layers.append(commercial_3)
+                commercial_4 = QgsRasterLayer(osm.raster_calculator(finalRaster, 235, 209, 205), "COM4")
+                QgsProject.instance().addMapLayer(commercial_4)
+                temp_layers.append(commercial_4)
+                commercial_5 = QgsRasterLayer(osm.raster_calculator(finalRaster, 236, 199, 196), "COM5")
+                QgsProject.instance().addMapLayer(commercial_5)
+                temp_layers.append(commercial_5)
 
-            park = QgsRasterLayer(osm.raster_calculator(finalRaster, 200, 250, 204), "PARK")
-            QgsProject.instance().addMapLayer(park)
-            temp_layers.append(park)
-            green_area_1 = QgsRasterLayer(osm.raster_calculator(finalRaster, 174, 223, 163), "GRE1")
-            QgsProject.instance().addMapLayer(green_area_1)
-            temp_layers.append(green_area_1)
-            green_area_2 = QgsRasterLayer(osm.raster_calculator(finalRaster, 205, 235, 176), "GRE2")
-            QgsProject.instance().addMapLayer(green_area_2)
-            temp_layers.append(green_area_2)
-            green_area_3 = QgsRasterLayer(osm.raster_calculator(finalRaster, 170, 224, 203), "GRE3")
-            QgsProject.instance().addMapLayer(green_area_3)
-            temp_layers.append(green_area_3)
-            green_area_4 = QgsRasterLayer(osm.raster_calculator(finalRaster, 222, 246, 192), "GRE4")
-            QgsProject.instance().addMapLayer(green_area_4)
-            temp_layers.append(green_area_4)
-            green_area_5 = QgsRasterLayer(osm.raster_calculator(finalRaster, 223, 252, 226), "GRE5")
-            QgsProject.instance().addMapLayer(green_area_5)
-            temp_layers.append(green_area_5)
-            green_area_6 = QgsRasterLayer(osm.raster_calculator(finalRaster, 170, 203, 175), "GRE6")
-            QgsProject.instance().addMapLayer(green_area_6)
-            temp_layers.append(green_area_6)
-            green_area_7 = QgsRasterLayer(osm.raster_calculator(finalRaster, 222, 252, 225), "GRE7")
-            QgsProject.instance().addMapLayer(green_area_7)
-            temp_layers.append(green_area_7)
-            green_area_8 = QgsRasterLayer(osm.raster_calculator(finalRaster, 200, 215, 171), "GRE8")
-            QgsProject.instance().addMapLayer(green_area_8)
-            temp_layers.append(green_area_8)
-            green_area_9 = QgsRasterLayer(osm.raster_calculator(finalRaster, 173, 209, 158), "GRE9")
-            QgsProject.instance().addMapLayer(green_area_9)
-            temp_layers.append(green_area_9)
-            green_area_10 = QgsRasterLayer(osm.raster_calculator(finalRaster, 214, 217, 159), "GRE10")
-            QgsProject.instance().addMapLayer(green_area_10)
-            temp_layers.append(green_area_10)
+                c = QgsRasterLayer(osm.landuse_calculator(commercial_1,
+                                                          [commercial_1.name(),
+                                                           commercial_2.name(),
+                                                           commercial_3.name(),
+                                                           commercial_4.name(),
+                                                           commercial_5.name()],
+                                                           2), "C")
+                QgsProject.instance().addMapLayer(c)
+                layers.append(c)
 
-            lpc = QgsRasterLayer(osm.landuse_calculator(park,
-                                                      [park.name(),
-                                                       green_area_1.name(),
-                                                       green_area_2.name(),
-                                                       green_area_3.name(),
-                                                       green_area_4.name(),
-                                                       green_area_5.name(),
-                                                       green_area_6.name(),
-                                                       green_area_7.name(),
-                                                       green_area_8.name(),
-                                                       green_area_9.name(),
-                                                       green_area_10.name()],
-                                                       3), "LPC")
-            QgsProject.instance().addMapLayer(lpc)
-            layers.append(lpc)
+                # Lawns/Parks/Cemeteries
+                pd.setLabelText("Finding green areas...")
+                pd.setValue(3)
 
-            # Water
-            pd.setLabelText("Finding water...")
-            pd.setValue(4)
+                park = QgsRasterLayer(osm.raster_calculator(finalRaster, 200, 250, 204), "PARK")
+                QgsProject.instance().addMapLayer(park)
+                temp_layers.append(park)
+                green_area_1 = QgsRasterLayer(osm.raster_calculator(finalRaster, 174, 223, 163), "GRE1")
+                QgsProject.instance().addMapLayer(green_area_1)
+                temp_layers.append(green_area_1)
+                green_area_2 = QgsRasterLayer(osm.raster_calculator(finalRaster, 205, 235, 176), "GRE2")
+                QgsProject.instance().addMapLayer(green_area_2)
+                temp_layers.append(green_area_2)
+                green_area_3 = QgsRasterLayer(osm.raster_calculator(finalRaster, 170, 224, 203), "GRE3")
+                QgsProject.instance().addMapLayer(green_area_3)
+                temp_layers.append(green_area_3)
+                green_area_4 = QgsRasterLayer(osm.raster_calculator(finalRaster, 222, 246, 192), "GRE4")
+                QgsProject.instance().addMapLayer(green_area_4)
+                temp_layers.append(green_area_4)
+                green_area_5 = QgsRasterLayer(osm.raster_calculator(finalRaster, 223, 252, 226), "GRE5")
+                QgsProject.instance().addMapLayer(green_area_5)
+                temp_layers.append(green_area_5)
+                green_area_6 = QgsRasterLayer(osm.raster_calculator(finalRaster, 170, 203, 175), "GRE6")
+                QgsProject.instance().addMapLayer(green_area_6)
+                temp_layers.append(green_area_6)
+                green_area_7 = QgsRasterLayer(osm.raster_calculator(finalRaster, 222, 252, 225), "GRE7")
+                QgsProject.instance().addMapLayer(green_area_7)
+                temp_layers.append(green_area_7)
+                green_area_8 = QgsRasterLayer(osm.raster_calculator(finalRaster, 200, 215, 171), "GRE8")
+                QgsProject.instance().addMapLayer(green_area_8)
+                temp_layers.append(green_area_8)
+                green_area_9 = QgsRasterLayer(osm.raster_calculator(finalRaster, 173, 209, 158), "GRE9")
+                QgsProject.instance().addMapLayer(green_area_9)
+                temp_layers.append(green_area_9)
+                green_area_10 = QgsRasterLayer(osm.raster_calculator(finalRaster, 214, 217, 159), "GRE10")
+                QgsProject.instance().addMapLayer(green_area_10)
+                temp_layers.append(green_area_10)
+                green_area_11 = QgsRasterLayer(osm.raster_calculator(finalRaster, 224, 233, 184), "GRE11")
+                QgsProject.instance().addMapLayer(green_area_11)
+                temp_layers.append(green_area_11)
+                green_area_12 = QgsRasterLayer(osm.raster_calculator(finalRaster, 204, 236, 194), "GRE12")
+                QgsProject.instance().addMapLayer(green_area_12)
+                temp_layers.append(green_area_12)
+                green_area_13 = QgsRasterLayer(osm.raster_calculator(finalRaster, 177, 212, 193), "GRE13")
+                QgsProject.instance().addMapLayer(green_area_13)
+                temp_layers.append(green_area_13)
+                green_area_14 = QgsRasterLayer(osm.raster_calculator(finalRaster, 179, 198, 153), "GRE14")
+                QgsProject.instance().addMapLayer(green_area_14)
+                temp_layers.append(green_area_14)
 
-            water = QgsRasterLayer(osm.raster_calculator(finalRaster, 170, 211, 223), "WAT1")
-            QgsProject.instance().addMapLayer(water)
-            temp_layers.append(water)
+                lpc = QgsRasterLayer(osm.landuse_calculator(park,
+                                                          [park.name(),
+                                                           green_area_1.name(),
+                                                           green_area_2.name(),
+                                                           green_area_3.name(),
+                                                           green_area_4.name(),
+                                                           green_area_5.name(),
+                                                           green_area_6.name(),
+                                                           green_area_7.name(),
+                                                           green_area_8.name(),
+                                                           green_area_9.name(),
+                                                           green_area_10.name(),
+                                                           green_area_11.name(),
+                                                           green_area_12.name(),
+                                                           green_area_13.name()],
+                                                           3), "LPC")
+                QgsProject.instance().addMapLayer(lpc)
+                layers.append(lpc)
 
-            watr = QgsRasterLayer(osm.landuse_calculator(water,
-                                                        [water.name(),
-                                                         ],
-                                                        4), "WATR")
-            QgsProject.instance().addMapLayer(watr)
-            layers.append(watr)
+                # Water
+                pd.setLabelText("Finding water...")
+                pd.setValue(4)
 
-            # Agricultural
-            pd.setLabelText("Finding agricultural...")
-            pd.setValue(5)
+                water = QgsRasterLayer(osm.raster_calculator(finalRaster, 170, 211, 223), "WAT1")
+                QgsProject.instance().addMapLayer(water)
+                temp_layers.append(water)
+                water_2 = QgsRasterLayer(osm.raster_calculator(finalRaster, 177, 200, 211), "WAT2")
+                QgsProject.instance().addMapLayer(water_2)
+                temp_layers.append(water_2)
 
-            agricultural = QgsRasterLayer(osm.raster_calculator(finalRaster, 238, 240, 213), "AGRI")
-            QgsProject.instance().addMapLayer(agricultural)
-            temp_layers.append(agricultural)
+                watr = QgsRasterLayer(osm.landuse_calculator(water,
+                                                            [water.name(),
+                                                             water_2.name(),
+                                                             ],
+                                                            4), "WATR")
+                QgsProject.instance().addMapLayer(watr)
+                layers.append(watr)
 
-            ag = QgsRasterLayer(osm.landuse_calculator(agricultural,
-                                                         [agricultural.name(),
-                                                          ],
-                                                         5), "AG")
-            QgsProject.instance().addMapLayer(ag)
-            layers.append(ag)
+                # Agricultural
+                pd.setLabelText("Finding agricultural...")
+                pd.setValue(5)
 
-            # Undeveloped Desert Rangeland
-            pd.setLabelText("Finding undeveloped areas...")
-            pd.setValue(6)
+                agricultural = QgsRasterLayer(osm.raster_calculator(finalRaster, 238, 240, 213), "AGRI")
+                QgsProject.instance().addMapLayer(agricultural)
+                temp_layers.append(agricultural)
 
-            undeveloped = QgsRasterLayer(osm.raster_calculator(finalRaster, 199, 199, 180), "UNDE")
-            QgsProject.instance().addMapLayer(undeveloped)
-            temp_layers.append(undeveloped)
+                ag = QgsRasterLayer(osm.landuse_calculator(agricultural,
+                                                             [agricultural.name(),
+                                                              ],
+                                                             5), "AG")
+                QgsProject.instance().addMapLayer(ag)
+                layers.append(ag)
 
-            ndr = QgsRasterLayer(osm.landuse_calculator(undeveloped,
-                                                         [undeveloped.name(),
-                                                          ],
-                                                         6), "NDR")
-            QgsProject.instance().addMapLayer(ndr)
-            layers.append(ndr)
+                # Undeveloped Desert Rangeland
+                pd.setLabelText("Finding undeveloped areas...")
+                pd.setValue(6)
 
-            # Desert Landscaping
-            pd.setLabelText("Finding desert areas...")
-            pd.setValue(7)
+                undeveloped_1 = QgsRasterLayer(osm.raster_calculator(finalRaster, 199, 199, 180), "UND1")
+                QgsProject.instance().addMapLayer(undeveloped_1)
+                temp_layers.append(undeveloped_1)
+                undeveloped_2 = QgsRasterLayer(osm.raster_calculator(finalRaster, 234, 220, 215), "UND2")
+                QgsProject.instance().addMapLayer(undeveloped_2)
+                temp_layers.append(undeveloped_2)
+                undeveloped_3 = QgsRasterLayer(osm.raster_calculator(finalRaster, 203, 190, 173), "UND3")
+                QgsProject.instance().addMapLayer(undeveloped_3)
+                temp_layers.append(undeveloped_3)
 
-            desert = QgsRasterLayer(osm.raster_calculator(finalRaster, 245, 233, 198), "DESE")
-            QgsProject.instance().addMapLayer(desert)
-            temp_layers.append(desert)
+                ndr = QgsRasterLayer(osm.landuse_calculator(undeveloped_1,
+                                                             [undeveloped_1.name(),
+                                                              undeveloped_2.name(),
+                                                              undeveloped_3.name(),
+                                                              ],
+                                                             6), "NDR")
+                QgsProject.instance().addMapLayer(ndr)
+                layers.append(ndr)
 
-            dl = QgsRasterLayer(osm.landuse_calculator(desert,
-                                                        [desert.name(),
-                                                         ],
-                                                        7), "DL")
-            QgsProject.instance().addMapLayer(dl)
-            layers.append(dl)
+                # Desert Landscaping
+                pd.setLabelText("Finding desert areas...")
+                pd.setValue(7)
 
-            # Industrial
-            pd.setLabelText("Finding industrial areas...")
-            pd.setValue(8)
+                desert_1 = QgsRasterLayer(osm.raster_calculator(finalRaster, 245, 233, 198), "DES1")
+                QgsProject.instance().addMapLayer(desert_1)
+                temp_layers.append(desert_1)
+                desert_2 = QgsRasterLayer(osm.raster_calculator(finalRaster, 238, 229, 220), "DES2")
+                QgsProject.instance().addMapLayer(desert_2)
+                temp_layers.append(desert_2)
+                desert_3 = QgsRasterLayer(osm.raster_calculator(finalRaster, 245, 221, 189), "DES3")
+                QgsProject.instance().addMapLayer(desert_3)
+                temp_layers.append(desert_3)
 
-            industrial_1 = QgsRasterLayer(osm.raster_calculator(finalRaster, 197, 195, 195), "IND1")
-            QgsProject.instance().addMapLayer(industrial_1)
-            temp_layers.append(industrial_1)
-            industrial_2 = QgsRasterLayer(osm.raster_calculator(finalRaster, 235, 219, 232), "IND2")
-            QgsProject.instance().addMapLayer(industrial_2)
-            temp_layers.append(industrial_2)
-            industrial_3 = QgsRasterLayer(osm.raster_calculator(finalRaster, 226, 203, 222), "IND3")
-            QgsProject.instance().addMapLayer(industrial_3)
-            temp_layers.append(industrial_3)
-            industrial_4 = QgsRasterLayer(osm.raster_calculator(finalRaster, 245, 220, 186), "IND4")
-            QgsProject.instance().addMapLayer(industrial_4)
-            temp_layers.append(industrial_4)
-            industrial_5 = QgsRasterLayer(osm.raster_calculator(finalRaster, 245, 220, 186), "IND5")
-            QgsProject.instance().addMapLayer(industrial_5)
-            temp_layers.append(industrial_5)
+                dl = QgsRasterLayer(osm.landuse_calculator(desert_1,
+                                                            [desert_1.name(),
+                                                             desert_2.name(),
+                                                             desert_3.name()
+                                                             ],
+                                                            7), "DL")
+                QgsProject.instance().addMapLayer(dl)
+                layers.append(dl)
 
-            i = QgsRasterLayer(osm.landuse_calculator(industrial_1,
-                                                        [industrial_1.name(),
-                                                         industrial_2.name(),
-                                                         industrial_3.name(),
-                                                         industrial_4.name(),
-                                                         industrial_5.name()
-                                                         ],
-                                                        8), "I")
-            QgsProject.instance().addMapLayer(i)
-            layers.append(i)
+                # Industrial
+                pd.setLabelText("Finding industrial areas...")
+                pd.setValue(8)
 
-            # Land cover raster
-            pd.setLabelText("Creating land cover map...")
-            pd.setValue(9)
+                industrial_1 = QgsRasterLayer(osm.raster_calculator(finalRaster, 197, 195, 195), "IND1")
+                QgsProject.instance().addMapLayer(industrial_1)
+                temp_layers.append(industrial_1)
+                industrial_2 = QgsRasterLayer(osm.raster_calculator(finalRaster, 235, 219, 232), "IND2")
+                QgsProject.instance().addMapLayer(industrial_2)
+                temp_layers.append(industrial_2)
+                industrial_3 = QgsRasterLayer(osm.raster_calculator(finalRaster, 226, 203, 222), "IND3")
+                QgsProject.instance().addMapLayer(industrial_3)
+                temp_layers.append(industrial_3)
+                industrial_4 = QgsRasterLayer(osm.raster_calculator(finalRaster, 245, 220, 186), "IND4")
+                QgsProject.instance().addMapLayer(industrial_4)
+                temp_layers.append(industrial_4)
+                industrial_5 = QgsRasterLayer(osm.raster_calculator(finalRaster, 245, 220, 186), "IND5")
+                QgsProject.instance().addMapLayer(industrial_5)
+                temp_layers.append(industrial_5)
+                industrial_6 = QgsRasterLayer(osm.raster_calculator(finalRaster, 201, 186, 186), "IND6")
+                QgsProject.instance().addMapLayer(industrial_6)
+                temp_layers.append(industrial_6)
+                industrial_7 = QgsRasterLayer(osm.raster_calculator(finalRaster, 228, 194, 211), "IND7")
+                QgsProject.instance().addMapLayer(industrial_7)
+                temp_layers.append(industrial_7)
 
-            land_cover = QgsRasterLayer(osm.landuse_rasterizor(lpc,
-                                                      [mdr.name(),
-                                                       c.name(),
-                                                       lpc.name(),
-                                                       watr.name(),
-                                                       ag.name(),
-                                                       ndr.name(),
-                                                       dl.name(),
-                                                       i.name()]),
-                                                       "land_use")
-            QgsProject.instance().addMapLayer(land_cover)
-            layers.append(land_cover)
+                i = QgsRasterLayer(osm.landuse_calculator(industrial_1,
+                                                            [industrial_1.name(),
+                                                             industrial_2.name(),
+                                                             industrial_3.name(),
+                                                             industrial_4.name(),
+                                                             industrial_5.name(),
+                                                             industrial_6.name(),
+                                                             industrial_7.name()
+                                                             ],
+                                                            8), "I")
+                QgsProject.instance().addMapLayer(i)
+                layers.append(i)
 
-            # Land cover vector
-            pd.setLabelText("Vectorizing land cover map...")
-            pd.setValue(10)
-            land_cover_vector = osm.landuse_vectorizor(land_cover, self.grid_lyr)
-            land_cover_vector.setName("landuse_layer")
+                # Land cover raster
+                pd.setLabelText("Creating land cover map...")
+                pd.setValue(9)
 
-            # adding the fields
-            layer_provider = land_cover_vector.dataProvider()
-            layer_provider.addAttributes([QgsField("Land use category", QVariant.String)])
-            layer_provider.addAttributes([QgsField("Initial Abstraction", QVariant.Double)])
-            layer_provider.addAttributes([QgsField("RTIMP", QVariant.Double)])
-            layer_provider.addAttributes([QgsField("Vegetation Cover", QVariant.Double)])
-            layer_provider.addAttributes([QgsField("Saturation", QVariant.String)])
-            land_cover_vector.updateFields()
+                land_cover = QgsRasterLayer(osm.landuse_rasterizor(lpc,
+                                                          [mdr.name(),
+                                                           c.name(),
+                                                           lpc.name(),
+                                                           watr.name(),
+                                                           ag.name(),
+                                                           ndr.name(),
+                                                           dl.name(),
+                                                           i.name()]),
+                                                           "land_use")
+                QgsProject.instance().addMapLayer(land_cover)
+                layers.append(land_cover)
 
-            # Check model's unit
-            if self.gutils.get_cont_par("METRIC") == "1":
-                unit_conversion = 25.4  # mm
-            else:
-                unit_conversion = 1  # inches
+                # Land cover vector
+                pd.setLabelText("Vectorizing land cover map...")
+                pd.setValue(10)
+                land_cover_vector = osm.landuse_vectorizor(land_cover, self.grid_lyr)
+                land_cover_vector.setName("landuse_layer")
 
-            # Updating attributes
-            land_cover_vector.startEditing()
-            for feature in land_cover_vector.getFeatures():
-                if feature['DN'] == 0:
-                    feature['Land use category'] = "Pavement and Rooftops"
-                    feature['Initial Abstraction'] = 0.05 * unit_conversion
-                    feature['RTIMP'] = 95
-                    feature['Vegetation Cover'] = 0
-                    feature['Saturation'] = "normal"
-                if feature['DN'] == 1:
-                    feature['Land use category'] = "Medium density residential"
-                    feature['Initial Abstraction'] = 0.25 * unit_conversion
-                    feature['RTIMP'] = 30
-                    feature['Vegetation Cover'] = 50
-                    feature['Saturation'] = "normal"
-                if feature['DN'] == 2:
-                    feature['Land use category'] = "Commercial"
-                    feature['Initial Abstraction'] = 0.1 * unit_conversion
-                    feature['RTIMP'] = 80
-                    feature['Vegetation Cover'] = 75
-                    feature['Saturation'] = "normal"
-                if feature['DN'] == 3:
-                    feature['Land use category'] = "Lawns/Parks/Cemeteries"
-                    feature['Initial Abstraction'] = 0.2 * unit_conversion
-                    feature['RTIMP'] = 0 # assumed
-                    feature['Vegetation Cover'] = 80
-                    feature['Saturation'] = "normal"
-                if feature['DN'] == 4: # DOUBLE CHECK
-                    feature['Land use category'] = "Water"
-                    feature['Initial Abstraction'] = 0
-                    feature['RTIMP'] = 0
-                    feature['Vegetation Cover'] = 0
-                    feature['Saturation'] = "normal"
-                if feature['DN'] == 5:
-                    feature['Land use category'] = "Agricultural"
-                    feature['Initial Abstraction'] = 0.5 * unit_conversion
-                    feature['RTIMP'] = 0
-                    feature['Vegetation Cover'] = 85
-                    feature['Saturation'] = "normal"
-                if feature['DN'] == 6:
-                    feature['Land use category'] = "Undeveloped Desert Rangeland"
-                    feature['Initial Abstraction'] = 0.35 * unit_conversion
-                    feature['RTIMP'] = 0 # assumed
-                    feature['Vegetation Cover'] = 0 # assumed
-                    feature['Saturation'] = "normal"
-                if feature['DN'] == 7:
-                    feature['Land use category'] = "Desert Landscaping"
-                    feature['Initial Abstraction'] = 0.1 * unit_conversion
-                    feature['RTIMP'] = 95
-                    feature['Vegetation Cover'] = 30
-                    feature['Saturation'] = "normal"
-                if feature['DN'] == 8:
-                    feature['Land use category'] = "Industrial"
-                    feature['Initial Abstraction'] = 0.15 * unit_conversion
-                    feature['RTIMP'] = 55
-                    feature['Vegetation Cover'] = 60
-                    feature['Saturation'] = "normal"
+                # adding the fields
+                layer_provider = land_cover_vector.dataProvider()
+                layer_provider.addAttributes([QgsField("landuse_category", QVariant.String)])
+                layer_provider.addAttributes([QgsField("InitAbs", QVariant.Double)])
+                layer_provider.addAttributes([QgsField("RTIMP", QVariant.Double)])
+                layer_provider.addAttributes([QgsField("VegCov", QVariant.Double)])
+                layer_provider.addAttributes([QgsField("Sat", QVariant.String)])
+                land_cover_vector.updateFields()
 
-                land_cover_vector.updateFeature(feature)
+                # Check model's unit
+                if self.gutils.get_cont_par("METRIC") == "1":
+                    unit_conversion = 25.4  # mm
+                else:
+                    unit_conversion = 1  # inches
 
-            land_cover_vector.commitChanges()
+                # Updating attributes
+                land_cover_vector.startEditing()
+                for feature in land_cover_vector.getFeatures():
+                    if feature['DN'] == 0:
+                        feature['landuse_category'] = "Pavement and Rooftops"
+                        feature['InitAbs'] = 0.05 * unit_conversion
+                        feature['RTIMP'] = 98
+                        feature['VegCov'] = 0
+                        feature['Sat'] = "normal"
+                    if feature['DN'] == 1:
+                        feature['landuse_category'] = "Medium density residential"
+                        feature['InitAbs'] = 0.25 * unit_conversion
+                        feature['RTIMP'] = 30
+                        feature['VegCov'] = 50
+                        feature['Sat'] = "dry"
+                    if feature['DN'] == 2:
+                        feature['landuse_category'] = "Commercial"
+                        feature['InitAbs'] = 0.1 * unit_conversion
+                        feature['RTIMP'] = 80
+                        feature['VegCov'] = 75
+                        feature['Sat'] = "normal"
+                    if feature['DN'] == 3:
+                        feature['landuse_category'] = "Lawns/Parks/Cemeteries"
+                        feature['InitAbs'] = 0.2 * unit_conversion
+                        feature['RTIMP'] = 0 # assumed
+                        feature['VegCov'] = 80
+                        feature['Sat'] = "normal"
+                    if feature['DN'] == 4: # DOUBLE CHECK
+                        feature['landuse_category'] = "Water"
+                        feature['InitAbs'] = 0
+                        feature['RTIMP'] = 0
+                        feature['VegCov'] = 0
+                        feature['Sat'] = "normal"
+                    if feature['DN'] == 5:
+                        feature['landuse_category'] = "Agricultural"
+                        feature['InitAbs'] = 0.5 * unit_conversion
+                        feature['RTIMP'] = 0
+                        feature['VegCov'] = 85
+                        feature['Sat'] = "normal"
+                    if feature['DN'] == 6:
+                        feature['landuse_category'] = "Undeveloped Desert Rangeland"
+                        feature['InitAbs'] = 0.35 * unit_conversion
+                        feature['RTIMP'] = 0 # assumed
+                        feature['VegCov'] = 0 # assumed
+                        feature['Sat'] = "normal"
+                    if feature['DN'] == 7:
+                        feature['landuse_category'] = "Desert Landscaping"
+                        feature['InitAbs'] = 0.1 * unit_conversion
+                        feature['RTIMP'] = 95
+                        feature['VegCov'] = 30
+                        feature['Sat'] = "normal"
+                    if feature['DN'] == 8:
+                        feature['landuse_category'] = "Industrial"
+                        feature['InitAbs'] = 0.15 * unit_conversion
+                        feature['RTIMP'] = 55
+                        feature['VegCov'] = 60
+                        feature['Sat'] = "normal"
 
-            QgsProject.instance().addMapLayer(land_cover_vector)
+                    land_cover_vector.updateFeature(feature)
 
-            pd.setValue(11)
-            pd.close()
+                land_cover_vector.commitChanges()
 
-            for layer in temp_layers:
-                QgsProject.instance().removeMapLayer(layer)
+                QgsProject.instance().addMapLayer(land_cover_vector)
 
-            if saveLayers == False:
-                for layer in layers:
+                pd.setValue(11)
+                pd.close()
+
+                for layer in temp_layers:
                     QgsProject.instance().removeMapLayer(layer)
 
-            self.land_cbo.insertItem(0, land_cover_vector.name(), land_cover_vector)
-            self.land_cbo.setCurrentIndex(0)
-            self.saturation_cbo.setCurrentIndex(6)
-            self.vc_cbo.setCurrentIndex(5)
-            self.ia_cbo.setCurrentIndex(3)
-            self.rtimpl_cbo.setCurrentIndex(4)
+                if saveLayers == False:
+                    for layer in layers:
+                        QgsProject.instance().removeMapLayer(layer)
 
+                self.land_cbo.insertItem(0, land_cover_vector.name(), land_cover_vector)
+                self.land_cbo.setCurrentIndex(0)
+                self.saturation_cbo.setCurrentIndex(6)
+                self.vc_cbo.setCurrentIndex(5)
+                self.ia_cbo.setCurrentIndex(3)
+                self.rtimpl_cbo.setCurrentIndex(4)
+
+        except Exception as e:
+            self.uc.log_info(traceback.format_exc())
+            self.uc.show_error(
+                "ERROR: Green-Ampt OSM parameters failed!."
+                + "\n__________________________________________________",
+                e,
+            )
 
         return
 

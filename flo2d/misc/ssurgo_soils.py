@@ -304,8 +304,6 @@ class SsurgoSoil(object):
 
         comp_response = requests.post(self.url, json=body).json()
 
-        self.uc.log_info(str(body))
-
         if comp_response:
             for row in comp_response["Table"]:
                 # None attribute for empty data
@@ -330,6 +328,7 @@ class SsurgoSoil(object):
         """Method for combining the chorizon and chfrags layer"""
         self.ssurgo_layer = self.joinLayers(self.soil_chorizon, self.soil_chfrags)
         self.ssurgo_layer = self.joinLayers(self.ssurgo_layer, self.soil_comp)
+        self.ssurgo_layer = self.deleteHoles(self.ssurgo_layer)
         self.ssurgo_layer.setName("ssurgo")
         if self.saveLayers: QgsProject.instance().addMapLayer(self.ssurgo_layer)
 
@@ -456,7 +455,7 @@ class SsurgoSoil(object):
         self.soil_layer.commitChanges()
         self.soil_layer.updateExtents()
 
-    def postProcessSsurgo(self):
+    def postProcess(self):
 
         # Get the holes polygons
         self.holes = self.symetricalDifference(self.soil_layer, self.grid_lyr)
@@ -605,4 +604,12 @@ class SsurgoSoil(object):
         xmax = extent.xMaximum()
         ymax = extent.yMaximum()
         return xmin, ymin, xmax, ymax
+
+    def deleteHoles(self, layer):
+        alg_params = {
+                      'INPUT' : layer,
+                      'MIN_AREA': 0,
+                      'OUTPUT': QgsProcessing.TEMPORARY_OUTPUT
+                     }
+        return processing.run("native:deleteholes", alg_params)["OUTPUT"]
 
