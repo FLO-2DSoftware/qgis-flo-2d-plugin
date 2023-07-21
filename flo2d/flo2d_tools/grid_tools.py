@@ -614,7 +614,12 @@ def divide_geom(geom, threshold=1000):
         if part.isEmpty():
             continue
         if part.isMultipart():
-            single_geoms = [QgsGeometry.fromPolygonXY(g) for g in part.asMultiPolygon()]
+            # multipolygon
+            if part.type() == 6:
+                single_geoms = [QgsGeometry.fromPolygonXY(g) for g in part.asMultiPolygon()]
+            # geometry collection
+            else:
+                single_geoms = [g for g in part.asGeometryCollection()]
             for sg in single_geoms:
                 new_geoms += divide_geom(sg, threshold)
             continue

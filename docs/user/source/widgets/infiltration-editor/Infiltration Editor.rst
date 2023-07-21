@@ -17,6 +17,7 @@ FLO-2D plugin uses 4 tools for processing Green-Ampt data.
 - Green-Ampt Polygon Schematize
 - Green-Ampt Infiltration Calculator (FCDMC Method 1)
 - Green-Ampt Log Average Infiltration Calculator (Full Green-Ampt Calculator)
+- Green-Ampt SSURGO and OSM databases
 
 Global Uniform Infiltration
 ----------------------------
@@ -169,10 +170,10 @@ of the Green-Ampt method by the FLO-2D engine.
 .. image:: ../../img/Infiltration-Editor/Infilt014.png
 
 
-5. Fill the form and
+5. Check if the User soil and landuse layer are selected, fill the form and
    click OK.
 
-.. image:: ../../img/Infiltration-Editor/Infilt015.png
+.. image:: ../../img/Infiltration-Editor/Infilt041.png
 
 
 6. The calculator uses the calculation methods outlined in the FLO-2D Plugin Technical Reference manual.
@@ -184,6 +185,62 @@ of the Green-Ampt method by the FLO-2D engine.
 
 
 8. The INFIL.DAT file
+   looks like this.  For a detailed explanation of these variables, see the FLO-2D Data Input Manual INFIL.DAT section.
+
+.. image:: ../../img/Infiltration-Editor/Infilt017.png
+
+Green-Ampt SSURGO and OSM databases
+-------------------------------------
+
+The user can estimate Green-Ampt parameters by leveraging data from two
+databases: the Soil Survey Geographic Database (SSURGO) and OpenStreetMap (OSM).
+The SSURGO database contains comprehensive information on soil, gathered through the collaborative efforts
+of the National Cooperative Soil Survey. Utilizing the NDOT Green and Ampt Rainfall Loss Parameters,
+the Green-Ampt parameters for different soil types can be estimated. This document outlines the methods
+and equations for developing Green and Ampt loss parameters for soils developed by Saxton and Rawls in 2006.
+
+The OpenStreetMap (OSM) database, a freely accessible and continually updated geographic resource,
+relies on contributions from volunteers worldwide. This database provides data on land use,
+which serves as a component for estimating Green-Ampt parameters. In combination with the information
+available on the Drainage Design Manual for Maricopa County, estimations for Vegetation Cover,
+Initial Abstraction, and RTIMP can be determined for different land uses using the OSM dataset.
+
+FLO-2D collects, organizes, and calculates the information from SSURGO and OSM databases.
+By preparing this data in shapefiles, it becomes readily available for use within the Green-Ampt calculator.
+
+1. Select the SSURGO data and press calculate. This process downloads the data from
+NRCS and fills the missing data. Care should be taken because data could be scarce in some areas.
+Engineering judgment is essencial in such situations.
+
+.. image:: ../../img/Infiltration-Editor/Infilt042.png
+
+
+2. The soil layer and fields will be automatically updated once the process is finished.
+
+.. image:: ../../img/Infiltration-Editor/Infilt043.png
+
+
+3. Select the OSM data and press calculate. This process downloads the data from
+OSM and generates the land use map. This process could take a long time for larger areas.
+This information is more precise in urban areas and less precise in rural areas.
+Engineering judgment is essencial for evaluating the data quality.
+
+.. image:: ../../img/Infiltration-Editor/Infilt044.png
+
+
+4. The landuse layer and fields will be automatically updated.
+
+.. image:: ../../img/Infiltration-Editor/Infilt045.png
+
+5. Check the form if the fields are correctly selected and click OK.
+
+6. When the infiltration
+   calculator is finished, the following message will appear.
+
+.. image:: ../../img/Infiltration-Editor/Infilt016.png
+
+
+7. The INFIL.DAT file
    looks like this.  For a detailed explanation of these variables, see the FLO-2D Data Input Manual INFIL.DAT section.
 
 .. image:: ../../img/Infiltration-Editor/Infilt017.png
