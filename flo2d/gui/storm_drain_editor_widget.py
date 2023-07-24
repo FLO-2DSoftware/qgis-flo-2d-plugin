@@ -3704,10 +3704,12 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                     return  
                 else:
                     s.setValue("FLO-2D/lastRPTFile", RPT_file)
+                    last_RPT_dir = os.path.dirname(RPT_file) 
                     s.setValue("FLO-2D/lastRPTDir", last_RPT_dir) 
                                         
             if intersection == "Just assign FLO-2D settings":
                 s.setValue("FLO-2D/lastRPTFile", RPT_file)
+                last_RPT_dir = os.path.dirname(RPT_file)                 
                 s.setValue("FLO-2D/lastRPTDir", last_RPT_dir) 
                 return           
 
@@ -3727,6 +3729,10 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                         self.uc.clear_bar_messages()
                         if not  RPT_file:              
                             return  
+                        else:
+                            s.setValue("FLO-2D/lastRPTFile", RPT_file)
+                            last_RPT_dir = os.path.dirname(RPT_file) 
+                            s.setValue("FLO-2D/lastRPTDir", last_RPT_dir)                           
                      
             data = OrderedDict()            
             try: # Read RPT file.
@@ -3736,7 +3742,10 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 par = pd.single_parser(RPT_file)
                 
                 previous = []
+                units = "CMS"
                 for row in par:
+                    if "Flow" in row and "Units" in row:
+                        units = "CMS" if "CMS" in row else "CFS" if "CFS" in row else "CMS"
                     if previous:
                         cell = previous[2]
                         for _ in range(3):
@@ -3781,18 +3790,20 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                             return                                      
                         else: 
                             s.setValue("FLO-2D/lastRPTFile", RPT_file)
+                            last_RPT_dir = os.path.dirname(RPT_file) 
                             s.setValue("FLO-2D/lastRPTDir", last_RPT_dir) 
                             return 
                                
                     node_series = data[intersection]
-                    self.uc.bar_info("Discharge for node " + intersection + " from file  '" + RPT_file + "'")
                     I = 1
                     day = 0
                     previousHour = -1
-                    timeSeries = []
-                    timeSeriesTime = []
-                    timeSeriesInflow = []
-                    timeSeriesFlooding = []
+                    RPTtimeSeries = []
+                    inflow_discharge_to_SD = []
+                    outfall_discharge_to_FLO_2D = []
+                    SWMMQINtimeSeries = []
+                    SWMMOUTFINtimeSeries = []
+                    
                     for nextTime in node_series:
                         time = nextTime[1]
                         inflow = float(nextTime[2])
@@ -3805,9 +3816,70 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                             day = day + 24
                         previousHour = currentHour 
                         hour = day + currentHour + minutes + seconds 
-                        timeSeries.append([hour, inflow, flooding])  
+                        RPTtimeSeries.append([hour, inflow, flooding])  
+
+
+
+
+
+
+
+
+
+                    # See if there are aditional .DAT files with SD data:
+                    SWMMQIN_file =last_RPT_dir + r"\SWMMQIN.OUT"
+                    if not os.path.isfile(SWMMQIN_file): 
+                        self.uc.bar_info("There is no SWMMQIN.OUT file")
+                    else:  
+                        inflow_discharge_to_SD = self.get_SWMMQIN(SWMMQIN_file)
+                        if intersection in inflow_discharge_to_SD:
+                            node_series = inflow_discharge_to_SD[intersection]
+                            I = 1
+                            day = 0
+                            previousHour = -1
+                            
+                            for nextTime in node_series:
+                                hour = float(nextTime[0])
+                                discharge = float(nextTime[1])
+                                return_flow = float(nextTime[2])
+                                SWMMQINtimeSeries.append([hour, discharge, return_flow])  
+                        else:
+                            self.uc.bar_info("Node " + intersection + " is not in file SWMMQIN.OUT")
+
+
+
+
+                    SWMMOUTFIN_file = last_RPT_dir + r"\SWMMOUTFIN.OUT"   
+                    if not os.path.isfile(SWMMOUTFIN_file): 
+                        self.uc.bar_info("There is no SWMMOUTFIN.OUT file")
+                    else:                         
+                        outfall_discharge_to_FLO_2D = self.get_SWMMOUTFIN(SWMMOUTFIN_file)
+                        grid_sql = "SELECT grid FROM user_swmm_nodes WHERE name = ?;"
+                        grid = self.gutils.execute(grid_sql,(intersection,)).fetchone()
+                        if grid:
+                            grid = str(grid[0])
+                            if grid in outfall_discharge_to_FLO_2D:
+                                node_series = outfall_discharge_to_FLO_2D[grid]
+                                I = 1
+                                day = 0
+                                previousHour = -1
+                                
+                                for nextTime in node_series:
+                                    hour = float(nextTime[0])
+                                    discharge = float(nextTime[1])
+                                    SWMMOUTFINtimeSeries.append([hour, discharge])  
+                            else:
+                                self.uc.bar_info("Node " + intersection + " is not in file SWMMOUTFIN.OUT")                            
+                        else:
+                            self.uc.bar_info("Grid " + grid + " not found in Storm Drain Nodes!")                       
                     
-                    self.show_discharge_table_and_plot(intersection, timeSeries)
+
+
+                    # Plot discharge graph:
+                    self.uc.bar_info("Discharge for node " + intersection + " from file  '" + RPT_file + "'")
+                    self.show_discharge_table_and_plot(intersection, units, RPTtimeSeries, 
+                                                       SWMMQINtimeSeries,
+                                                       SWMMOUTFINtimeSeries)
                 else:
                     QApplication.restoreOverrideCursor()
                     self.uc.bar_error("No time series found in file " + RPT_file +" for node " + intersection)    
@@ -3966,7 +4038,10 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             
         self.update_rt_plot()
 
-    def show_discharge_table_and_plot(self, node, series):
+    def show_discharge_table_and_plot(self, node, units,
+                                      RPTseries, 
+                                      SWMMQINtimeSeries, 
+                                      SWMMOUTFINtimeseries):
         try:
             self.SD_table.after_delete.disconnect()
             self.SD_table.after_delete.connect(self.save_SD_table_data)
@@ -3978,16 +4053,28 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             else:
                 grid = "?"          
 
-            
             try: # Build plot.
                 self.plot.clear()
-                time, inflow, flooding = [], [], []
+                timeRPT, inflowRPT, floodingRPT = [], [], []
+                timeInToSD, dischargeInToSD, returnInToSD = [], [], []
+                timeOutToFLO, dischargeOutToFLO = [], []
     
-                for row in series:
-                    time.append(row[0] if not row[0] is None else float("NaN"))
-                    inflow.append(row[1] if not row[1] is None else float("NaN"))
-                    flooding.append(row[2] if not row[2] is None else float("NaN"))
-        
+                for row in RPTseries:
+                    timeRPT.append(row[0] if not row[0] is None else float("NaN"))
+                    inflowRPT.append(row[1] if not row[1] is None else float("NaN"))
+                    floodingRPT.append(row[2] if not row[2] is None else float("NaN"))
+ 
+                if SWMMQINtimeSeries:
+                    for row in SWMMQINtimeSeries:
+                        timeInToSD.append(row[0] if not row[0] is None else float("NaN"))
+                        dischargeInToSD.append(row[1] if not row[1] is None else float("NaN"))
+                        returnInToSD.append(row[2] if not row[2] is None else float("NaN")) 
+
+                if SWMMOUTFINtimeseries:
+                    for row in SWMMOUTFINtimeseries:
+                        timeOutToFLO.append(row[0] if not row[0] is None else float("NaN"))
+                        dischargeOutToFLO.append(row[1] if not row[1] is None else float("NaN"))
+                 
                 if self.plot.plot.legend is not None:
                     plot_scene = self.plot.plot.legend.scene()
                     if plot_scene is not None:
@@ -3995,11 +4082,20 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                         
                 self.plot.plot.legend = None
                 self.plot.plot.addLegend()
-                self.plot.add_item("Inflow", [time, inflow], col=QColor(Qt.darkGreen), sty=Qt.SolidLine)
-                self.plot.add_item("Flooding", [time, flooding], col=QColor(Qt.red), sty=Qt.SolidLine)
-                self.plot.plot.setTitle(title="Discharge for node " + node + " (grid element " + grid +")")
-                self.plot.plot.setLabel("bottom", text="Time")
-                self.plot.plot.setLabel("left", text="Inflow / Flooding")
+                self.plot.plot.setTitle(title="Discharge " + node + " (grid " + grid + ")")
+                self.plot.plot.setLabel("bottom", text="Time (hours)")
+                self.plot.add_item("Total Inflow", [timeRPT, inflowRPT], col=QColor(Qt.darkGreen), sty=Qt.SolidLine)
+                self.plot.add_item("Flooding", [timeRPT, floodingRPT], col=QColor(Qt.red), sty=Qt.SolidLine)
+                
+                if SWMMQINtimeSeries:
+                    self.plot.add_item("Inflow Discharge to Storm Drain", [timeInToSD, dischargeInToSD], col=QColor(Qt.blue), sty=Qt.SolidLine)
+                    self.plot.add_item("Return Discharge to FLO-2D", [timeInToSD, returnInToSD], col=QColor(Qt.darkYellow), sty=Qt.SolidLine)                    
+
+                if SWMMOUTFINtimeseries:
+                    self.plot.add_item("Discharge to FLO-2D", [timeOutToFLO, dischargeOutToFLO], col=QColor(Qt.black), sty=Qt.SolidLine)                
+                
+                self.plot.plot.setLabel("left", text="Discharge (" + units + ")") 
+                
             except:
                 QApplication.restoreOverrideCursor()
                 self.uc.bar_warn("Error while building plot for SD discharge!")
@@ -4011,7 +4107,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 self.tview.setModel(discharge_data_model)
                 discharge_data_model.clear()
                 discharge_data_model.setHorizontalHeaderLabels(["Time", "Inflow", "Flooding"]) 
-                for row in series:
+                for row in RPTseries:
                     items = [StandardItem("{:.4f}".format(x)) if x is not None else StandardItem("") for x in row]
                     discharge_data_model.appendRow(items) 
                 self.tview.horizontalHeader().setStretchLastSection(True)
@@ -4029,6 +4125,59 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             self.uc.show_error("Error while creating discharge plot for node "  + node, e)
             return            
 
+    def get_SWMMQIN(self, SWMMQIN_file):
+        data = OrderedDict()            
+        try: # Read SWMMQIN_file.      
+            pd = ParseDAT()
+            par = pd.single_parser(SWMMQIN_file)
+            for row in par:
+                if "INLET" in row:
+                    cell = row[7]
+                    inlet =  row[11]
+                    next(par)
+                    data[inlet] = []   
+                    for row2 in par:
+                        if len(row2)==3:
+                            time = row2[0]
+                            discharge = row2[1]
+                            return_flow = row2[2]
+                            data[inlet].append(row2)
+                        elif "INLET" in row2:
+                            cell = row2[7]
+                            inlet =  row2[11]
+                            next(par)
+                            data[inlet] = [] 
+        except Exception as e:
+            self.uc.show_error("Error while reading file\n\n "  + SWMMQIN_file, e)
+        finally:
+            return data
+         
+    def get_SWMMOUTFIN(self, SWMMOUTFIN_file):
+        data = OrderedDict()            
+        try: # Read SWMMOUTFIN_file.      
+            pd = ParseDAT()
+            par = pd.single_parser(SWMMOUTFIN_file)
+            for row in par:
+                if "GRID" in row:
+                    cell = row[2]
+                    # channel_element=  row[5]
+                    next(par)
+                    data[cell] = []   
+                    for row2 in par:
+                        if len(row2)==2:
+                            time = row2[0]
+                            discharge = row2[1]
+                            data[cell].append(row2)
+                        elif "GRID" in row2:
+                            cell = row2[2]
+                            # channel_element=  row2[5]
+                            next(par)
+                            data[cell] = []  
+        except Exception as e:
+            self.uc.show_error("Error while reading file\n\n "  + SWMMOUTFIN_file, e)
+        finally:
+            return data  
+         
     def check_simulate_SD_1(self):
         qry = """SELECT value FROM cont WHERE name = 'SWMM';"""
         row = self.gutils.execute(qry).fetchone()

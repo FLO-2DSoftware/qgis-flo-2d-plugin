@@ -1,6 +1,6 @@
 [general]
 name=FLO-2D
-version=0.10.111
+version=0.10.112
 qgisMinimumVersion=3.28
 qgisMaximumVersion=3.99
 description=FLO-2D tools for QGIS
@@ -9,6 +9,10 @@ email=jj@flo-2d.com
 about=QGIS tools for FLO-2D
 
 changelog=
+ <p>0.10.112
+  - Storm Drain discharge plots:
+  		- time series from .RPT, SWMMQIN.OUT, and SWMMOUTFIN.OUT.
+  		- add legend, title, and axis labels.
  <p>0.10.111
   - Create Storm Drain discharge plots (issue #847).
   - FLO-2D toolbar: Make info and grid info icons as toggle buttons (on/off).
