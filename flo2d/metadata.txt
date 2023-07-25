@@ -9,6 +9,9 @@ email=jj@flo-2d.com
 about=QGIS tools for FLO-2D
 
 changelog=
+ <p>0.10.113
+  - New SCS infiltration editor using raster.
+  - Updated FLO-2D documentation for SCS infiltration editor.
  <p>0.10.112
   - Storm Drain discharge plots:
   		- time series from .RPT, SWMMQIN.OUT, and SWMMOUTFIN.OUT.
