@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-
 # FLO-2D Preprocessor tools for QGIS
 # Copyright © 2021 Lutra Consulting for FLO-2D
 
@@ -14,6 +13,7 @@ from itertools import chain
 from math import isnan
 
 from PyQt5.QtCore import QVariant
+from PyQt5.QtWidgets import QFileDialog
 from qgis._core import QgsField, QgsVectorLayer, QgsRasterLayer, QgsProcessing, QgsLayerTreeRegistryBridge
 from qgis.core import QgsFeatureRequest, QgsWkbTypes, QgsProject
 from qgis.PyQt.QtCore import QSettings, Qt, pyqtSignal, pyqtSlot
@@ -34,6 +34,7 @@ from ..misc.ssurgo_soils import SsurgoSoil
 from ..misc import osm_landuse
 
 import processing
+import os
 
 uiDialog, qtBaseClass = load_ui("infil_editor")
 
@@ -578,6 +579,10 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
                 single_lyr, single_fields = dlg.single_scs_parameters()
                 inf_calc.setup_scs_single(single_lyr, *single_fields)
                 grid_params = inf_calc.scs_infiltration_single()
+            elif dlg.raster_grp.isChecked():
+                raster_lyr, algorithm, nodatavalue, fillnodata, multithread = dlg.raster_scs_parameters()
+                inf_calc.setup_scs_raster(raster_lyr, algorithm, nodatavalue, fillnodata, multithread)
+                grid_params = inf_calc.scs_infiltration_raster()
             else:
                 multi_lyr, multi_fields = dlg.multi_scs_parameters()
                 inf_calc.setup_scs_multi(multi_lyr, *multi_fields)
@@ -1460,19 +1465,29 @@ class SCSDialog(uiDialog_scs, qtBaseClass_scs):
         self.lyrs = lyrs
         self.setupUi(self)
         self.uc = UserCommunication(iface, "FLO-2D")
+
         self.single_combos = [self.cn_cbo]
-        self.multi_combos = [self.landsoil_cbo, self.cd_cbo, self.imp_cbo]
         self.single_lyr_cbo.currentIndexChanged.connect(self.populate_single_fields)
-        self.multi_lyr_cbo.currentIndexChanged.connect(self.populate_multi_fields)
-        self.setup_layer_combos()
         self.single_grp.toggled.connect(self.single_checked)
+
+        self.raster_combos = [self.raster_lyr_cbo, self.resamp_cbo]
+        self.raster_grp.toggled.connect(self.raster_checked)
+        self.browse_btn.clicked.connect(self.browse_raster)
+        self.populate_alg_cbo()
+        self.src_nodata = -9999
+        self.grid = None
+
+        self.multi_combos = [self.landsoil_cbo, self.cd_cbo, self.imp_cbo]
+        self.multi_lyr_cbo.currentIndexChanged.connect(self.populate_multi_fields)
         self.multi_grp.toggled.connect(self.multi_checked)
+        self.setup_layer_combos()
 
     def setup_layer_combos(self):
         """
-        Filter layer and fields combo boxes for polygons and connect fields cbo.
+        Filter layer and fields combo boxes for polygons and rasters and connect fields cbo.
         """
         self.single_lyr_cbo.clear()
+        self.raster_lyr_cbo.clear()
         self.multi_lyr_cbo.clear()
         try:
             lyrs = self.lyrs.list_group_vlayers()
@@ -1481,6 +1496,9 @@ class SCSDialog(uiDialog_scs, qtBaseClass_scs):
                     lyr_name = l.name()
                     self.single_lyr_cbo.addItem(lyr_name, l)
                     self.multi_lyr_cbo.addItem(lyr_name, l)
+            rasters = self.lyrs.list_group_rlayers()
+            for r in rasters:
+                self.raster_lyr_cbo.addItem(r.name(), r.dataProvider().dataSourceUri())
         except Exception as e:
             pass
 
@@ -1502,11 +1520,22 @@ class SCSDialog(uiDialog_scs, qtBaseClass_scs):
         if self.single_grp.isChecked():
             if self.multi_grp.isChecked():
                 self.multi_grp.setChecked(False)
+            if self.raster_grp.isChecked():
+                self.raster_grp.setChecked(False)
+
+    def raster_checked(self):
+        if self.raster_grp.isChecked():
+            if self.multi_grp.isChecked():
+                self.multi_grp.setChecked(False)
+            if self.single_grp.isChecked():
+                self.single_grp.setChecked(False)
 
     def multi_checked(self):
         if self.multi_grp.isChecked():
             if self.single_grp.isChecked():
                 self.single_grp.setChecked(False)
+            if self.raster_grp.isChecked():
+                self.raster_grp.setChecked(False)
 
     def single_scs_parameters(self):
         idx = self.single_lyr_cbo.currentIndex()
@@ -1514,8 +1543,57 @@ class SCSDialog(uiDialog_scs, qtBaseClass_scs):
         fields = [f.currentText() for f in self.single_combos]
         return single_lyr, fields
 
+    def raster_scs_parameters(self):
+        idx = self.raster_lyr_cbo.currentIndex()
+        raster_lyr = self.raster_lyr_cbo.itemData(idx)
+        idx_algo = self.resamp_cbo.currentIndex()
+        algorithm = self.resamp_cbo.itemData(idx_algo)
+        nodatavalue = self.nodata_value.text()
+        fillnodata = self.fillNoDataChBox.isChecked()
+        multithread = self.multiThreadChBox.isChecked()
+        return raster_lyr, algorithm, nodatavalue, fillnodata, multithread
+
     def multi_scs_parameters(self):
         idx = self.multi_lyr_cbo.currentIndex()
         multi_lyr = self.multi_lyr_cbo.itemData(idx)
         fields = [f.currentText() for f in self.multi_combos]
         return multi_lyr, fields
+
+    def populate_alg_cbo(self):
+        """
+        Populate resample algorithm combobox.
+        """
+        met = {
+            "near": "Nearest neighbour",
+            "bilinear": "Bilinear",
+            "cubic": "Cubic",
+            "cubicspline": "Cubic spline",
+            "lanczos": "Lanczos",
+            "average": "Average of all non-NODATA pixels",
+            "mode": "Mode - Select the value which appears most often",
+            "max": "Maximum value from all non-NODATA pixels",
+            "min": "Minimum value from all non-NODATA pixels",
+            "med": "Median value of all non-NODATA pixels",
+            "q1": "q1 - First quartile value of all non-NODATA",
+            "q3": "q1 - Third quartile value of all non-NODATA",
+        }
+        for m in sorted(met.keys()):
+            self.resamp_cbo.addItem(met[m], m)
+            self.resamp_cbo.setCurrentIndex(0)
+
+    def browse_raster(self):
+        """
+        Users pick a source raster not loaded into project.
+        """
+        s = QSettings()
+        last_elev_raster_dir = s.value("FLO-2D/lastScsRasterDir", "")
+        self.src, __ = QFileDialog.getOpenFileName(None, "Choose SCS Curve Number raster...", directory=last_elev_raster_dir)
+        if not self.src:
+            return
+        s.setValue("FLO-2D/lastScsRasterDir", os.path.dirname(self.src))
+        if self.raster_lyr_cbo.findData(self.src) == -1:
+            bname = os.path.basename(self.src)
+            self.raster_lyr_cbo.addItem(bname, self.src)
+            self.raster_lyr_cbo.setCurrentIndex(len(self.raster_lyr_cbo) - 1)
+
+

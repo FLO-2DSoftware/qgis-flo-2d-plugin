@@ -11,6 +11,7 @@ import os
 # of the License, or (at your option) any later version
 from math import exp, log, log10, sqrt
 
+from qgis._core import QgsRasterLayer
 from qgis.core import (
     QgsFeature,
     QgsFeatureRequest,
@@ -32,11 +33,26 @@ from .grid_tools import (
     poly2poly_geos_from_features,
 )
 
+from subprocess import PIPE, STDOUT, Popen
+from ..flo2d_tools.grid_tools import raster2grid
+
 
 class InfiltrationCalculator(object):
+    RTYPE = {
+        1: "Byte",
+        2: "UInt16",
+        3: "Int16",
+        4: "UInt32",
+        5: "Int32",
+        6: "Float32",
+        7: "Float64",
+    }
+
     def __init__(self, grid_lyr, iface, gutils):
+
         self.uc = UserCommunication(iface, "FLO-2D")
         self.grid_lyr = grid_lyr
+        self.cell_size = float(gutils.get_cont_par("CELLSIZE"))
         self.soil_lyr = None
         self.land_lyr = None
         self.curve_lyr = None
@@ -62,6 +78,19 @@ class InfiltrationCalculator(object):
 
         # SCS (single) layer fields
         self.curve_fld = None
+        self.out_srs = None
+
+        # SCS (raster)
+        self.out_raster = None
+        self.output_bounds = None
+        self.raster_type = None
+        self.src_srs = None
+        self.src_nodata = None
+        self.raster_lyr = None
+        self.algorithm = None
+        self.nodatavalue = None
+        self.fillnodata = None
+        self.multithread = None
 
         # SCS (multiple) combined layers fields
         self.landsoil_fld = None
@@ -69,21 +98,21 @@ class InfiltrationCalculator(object):
         self.imp_fld = None
 
     def setup_green_ampt(
-        self,
-        soil,
-        land,
-        vc_check,
-        log_area_average,
-        xksat_fld="XKSAT",
-        rtimps_fld="field_4",
-        soil_depth_fld="soil_depth",
-        dthetan_fld="DTHETAn",
-        dthetad_fld="DTHETAd",
-        psif_fld="PSIF",
-        saturation_fld="field_6",
-        vc_fld="field_5",
-        ia_fld="field_3",
-        rtimpl_fld="field_4",
+            self,
+            soil,
+            land,
+            vc_check,
+            log_area_average,
+            xksat_fld="XKSAT",
+            rtimps_fld="field_4",
+            soil_depth_fld="soil_depth",
+            dthetan_fld="DTHETAn",
+            dthetad_fld="DTHETAd",
+            psif_fld="PSIF",
+            saturation_fld="field_6",
+            vc_fld="field_5",
+            ia_fld="field_3",
+            rtimpl_fld="field_4",
     ):
         self.soil_lyr = soil
         self.land_lyr = land
@@ -115,6 +144,13 @@ class InfiltrationCalculator(object):
         self.curve_lyr = curve_lyr
         self.curve_fld = curve_fld
 
+    def setup_scs_raster(self, raster_lyr, algorithm, nodatavalue, fillnodata, multithread):
+        self.raster_lyr = raster_lyr
+        self.algorithm = algorithm
+        self.nodatavalue = nodatavalue
+        self.fillnodata = fillnodata
+        self.multithread = multithread
+
     def setup_scs_multi(self, combined_lyr, landsoil_fld="LandSoil", cd_fld="cov_den", imp_fld="IMP"):
         self.combined_lyr = combined_lyr
         self.landsoil_fld = landsoil_fld
@@ -134,11 +170,11 @@ class InfiltrationCalculator(object):
                 grid_span = int(max(sqrt(grid_element_count) / 10, 10))
 
             for request in gridRegionGenerator(
-                self.gutils,
-                self.grid_lyr,
-                gridSpan=grid_span,
-                regionPadding=5,
-                showProgress=True,
+                    self.gutils,
+                    self.grid_lyr,
+                    gridSpan=grid_span,
+                    regionPadding=5,
+                    showProgress=True,
             ):
                 # calculate extent of concerned grid element
                 grid_elems = self.grid_lyr.getFeatures(request)
@@ -307,7 +343,6 @@ class InfiltrationCalculator(object):
                             psif_parts.append((psif, area))
                         land_params["rtimpf"] = green_ampt.calculate_rtimp_n(rtimp_parts)
                         if self.log_area_average:
-
                             land_params["dtheta"] = green_ampt.calculate_dtheta_weighted(dtheta_parts)
                             land_params["soils"] = green_ampt.calculate_psif_weighted(psif_parts)
                     except Exception as e:
@@ -350,23 +385,23 @@ class InfiltrationCalculator(object):
                 )
                 with open(diagPath, "w") as writer:
                     header = (
-                        ",".join(
-                            [
-                                "GridNum",
-                                "NumSoilPartsInGrid",
-                                "SoilXKSAT",
-                                "SoilRTIMP",
-                                "InfilDepth",
-                                "NumLUPartsInGrid",
-                                "VCAdjustment",
-                                "VCXKSAT",
-                                "DTHETA",
-                                "IA",
-                                "PSIF",
-                                "LU_RTIMP",
-                            ]
-                        )
-                        + "\n"
+                            ",".join(
+                                [
+                                    "GridNum",
+                                    "NumSoilPartsInGrid",
+                                    "SoilXKSAT",
+                                    "SoilRTIMP",
+                                    "InfilDepth",
+                                    "NumLUPartsInGrid",
+                                    "VCAdjustment",
+                                    "VCXKSAT",
+                                    "DTHETA",
+                                    "IA",
+                                    "PSIF",
+                                    "LU_RTIMP",
+                                ]
+                            )
+                            + "\n"
                     )
                     writer.write(header)
                     for item in writeVals:
@@ -386,6 +421,68 @@ class InfiltrationCalculator(object):
         for gid, values in curve_values:
             grid_cn = sum(cn * subarea for cn, subarea in values)
             grid_params[gid] = {"scsn": grid_cn}
+
+        return grid_params
+
+    def scs_infiltration_raster(self):
+        """
+        Resample raster to be aligned with the grid, then probe values and update elements scs attr.
+        """
+        self.out_raster = "{}_interp_cn.tif".format(self.raster_lyr[:-4])  # Raster name with suffix '_interp_cn.tif'
+        try:
+            if os.path.isfile(self.out_raster):
+                os.remove(self.out_raster)
+        except OSError:
+            msg = "WARNING 060319.1651: Couldn't remove existing raster:\n{}\nChoose another filename.".format(
+                self.out_raster
+            )
+            self.uc.show_warn(msg)
+            return False
+        self.get_worp_opts_data()
+        opts = [
+            "-of GTiff",
+            "-ot {}".format(self.RTYPE[self.raster_type]),
+            "-tr {0} {0}".format(self.cell_size),
+            '-s_srs "{}"'.format(self.src_srs),
+            '-t_srs "{}"'.format(self.out_srs),
+            "-te {}".format(" ".join([str(c) for c in self.output_bounds])),
+            '-te_srs "{}"'.format(self.out_srs),
+            # "-ovr {}".format(self.ovrCbo.itemData(self.ovrCbo.currentIndex())),
+            "-dstnodata {}".format(self.src_nodata),
+            "-r {}".format(self.algorithm),
+            "-co COMPRESS=LZW",
+            "-wo OPTIMIZE_SIZE=TRUE",
+        ]
+        if self.multithread:
+            opts.append("-multi -wo NUM_THREADS=ALL_CPUS")
+        else:
+            pass
+        cmd = 'gdalwarp {} "{}" "{}"'.format(" ".join([opt for opt in opts]), self.raster_lyr, self.out_raster)
+        # print(cmd)
+        proc = Popen(
+            cmd,
+            shell=True,
+            stdin=open(os.devnull),
+            stdout=PIPE,
+            stderr=STDOUT,
+            universal_newlines=True,
+        )
+        out = proc.communicate()
+        for line in out:
+            self.uc.log_info(line)
+        # Fill NODATA raster cells if desired
+        if self.fillnodata:
+            self.fill_nodata()
+        else:
+            pass
+        sampler = raster2grid(self.grid_lyr, self.out_raster)
+
+        grid_params = {}
+        for cn, gid in sampler:
+            try:
+                grid_params[gid] = {"scsn": int(round(cn, 0))}
+            except ValueError as e:
+                raise ValueError("Calculation failed for grid cell with fid: {}".format(gid))
 
         return grid_params
 
@@ -409,6 +506,42 @@ class InfiltrationCalculator(object):
 
         return grid_params
 
+    def get_worp_opts_data(self):
+        """
+        Get all data needed for GDAL Warp.
+        """
+        grid_ext = self.grid_lyr.extent()
+        xmin = grid_ext.xMinimum()
+        xmax = grid_ext.xMaximum()
+        ymin = grid_ext.yMinimum()
+        ymax = grid_ext.yMaximum()
+        self.output_bounds = (xmin, ymin, xmax, ymax)
+        self.out_srs = self.grid_lyr.crs().authid()
+        src_raster_lyr = QgsRasterLayer(self.raster_lyr)
+        self.raster_type = src_raster_lyr.dataProvider().dataType(1)
+        self.src_srs = src_raster_lyr.crs().authid()
+        if not self.src_srs:
+            self.src_srs = self.out_srs
+        und = self.nodatavalue
+        if und:
+            self.src_nodata = int(und)
+
+    def fill_nodata(self):
+        # opts = ["-md {}".format(self.radiusSBox.value())]
+        # cmd = 'gdal_fillnodata {} "{}"'.format(" ".join([opt for opt in opts]), self.out_raster)
+        cmd = f'gdal_fillnodata "{self.raster_lyr}" "{self.out_raster}"'
+        self.uc.log_info(str(cmd))
+        proc = Popen(
+            cmd,
+            shell=True,
+            stdin=open(os.devnull),
+            stdout=PIPE,
+            stderr=STDOUT,
+            universal_newlines=True,
+        )
+        out = proc.communicate()
+        for line in out:
+            self.uc.log_info(line)
 
 class GreenAmpt(object):
     def __init__(self):
@@ -420,10 +553,10 @@ class GreenAmpt(object):
             xksat_partial = [area * log10(xksat) for xksat, area in parts if xksat > 0]
             area_total = sum(area for xksat, area in parts)
             if (
-                area_total < 1.0
+                    area_total < 1.0
             ):  # check if intersected parts area is less than grid area, assumes same units. Values would differ if soils did not completely cover cell.
                 if (
-                    globalXKSAT > 0
+                        globalXKSAT > 0
                 ):  # if it's zero, we don't need to do anything and can't evaluate log10. If it's less than zero, it's not valid input.
                     xksat_partial.append((1.0 - area_total) * log10(globalXKSAT))
             avg_xksat = round(10 ** (sum(xksat_partial)), 4)
@@ -655,11 +788,11 @@ class SCPCurveNumber(object):
     @staticmethod
     def calculate_mountain_brush(soil_group, cover_density):
         if soil_group == "D":
-            cn = -0.0013 * cover_density**2 + -0.1737 * cover_density + 95
+            cn = -0.0013 * cover_density ** 2 + -0.1737 * cover_density + 95
         elif soil_group == "C":
-            cn = -0.0014 * cover_density**2 + -0.2942 * cover_density + 90
+            cn = -0.0014 * cover_density ** 2 + -0.2942 * cover_density + 90
         elif soil_group == "B":
-            cn = -0.0025 * cover_density**2 + -0.3522 * cover_density + 83
+            cn = -0.0025 * cover_density ** 2 + -0.3522 * cover_density + 83
         else:
             raise ValueError(soil_group)
         return cn
@@ -680,9 +813,9 @@ class SCPCurveNumber(object):
     def calculate_ponderosa_pine(soil_group, cover_density):
         if 0 < cover_density <= 10:
             if soil_group == "C":
-                cn = -0.08 * cover_density**2 + -1.9 * cover_density + 91
+                cn = -0.08 * cover_density ** 2 + -1.9 * cover_density + 91
             elif soil_group == "B":
-                cn = -0.1 * cover_density**2 + -2.4 * cover_density + 84
+                cn = -0.1 * cover_density ** 2 + -2.4 * cover_density + 84
             else:
                 raise ValueError(soil_group)
         elif 10 < cover_density <= 80:

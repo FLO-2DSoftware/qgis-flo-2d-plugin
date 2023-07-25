@@ -209,8 +209,8 @@ FLO-2D collects, organizes, and calculates the information from SSURGO and OSM d
 By preparing this data in shapefiles, it becomes readily available for use within the Green-Ampt calculator.
 
 1. Select the SSURGO data and press calculate. This process downloads the data from
-NRCS and fills the missing data. Care should be taken because data could be scarce in some areas.
-Engineering judgment is essencial in such situations.
+   NRCS and fills the missing data. Care should be taken because data could be scarce in some areas.
+   Engineering judgment is essencial in such situations.
 
 .. image:: ../../img/Infiltration-Editor/Infilt042.png
 
@@ -221,9 +221,9 @@ Engineering judgment is essencial in such situations.
 
 
 3. Select the OSM data and press calculate. This process downloads the data from
-OSM and generates the land use map. This process could take a long time for larger areas.
-This information is more precise in urban areas and less precise in rural areas.
-Engineering judgment is essencial for evaluating the data quality.
+   OSM and generates the land use map. This process could take a long time for larger areas.
+   This information is more precise in urban areas and less precise in rural areas.
+   Engineering judgment is essencial for evaluating the data quality.
 
 .. image:: ../../img/Infiltration-Editor/Infilt044.png
 
@@ -349,8 +349,8 @@ Curve Number Generator
 4. Click Close when
    process is finished.  The Curve Number Polygon Layer can be used in the next section.
 
-SCS Calculator Single Shapefile
--------------------------------
+SCS Calculator From Single Shapefile
+------------------------------------
 
 .. warning:: If applying this method, review min and max of the SCS field.  This method only works on polygon shapefiles
              that have no geometric deficiencies.  If this method results in errors, copy the polygons to the User layer
@@ -363,33 +363,35 @@ This option will add spatially variable infiltration data to the grid from a sha
 
 .. image:: ../../img/Infiltration-Editor/Infilt026.png
 
-2. Select the layer and field  
-   with the infiltration data and click OK to run the calculator.
+2. Check the 'Assign SCS Curve Number from Polygon Layer - single field'.
 
-3. This method works for  
+3. Select the layer and field
+   with the infiltration data.
+
+4. This method works for
    shapefiles that have a CN already calculated.
 
-4. Click OK to calculate a  
+5. Click OK to calculate a
    spatially variable CN value for every grid element.
 
-.. image:: ../../img/Infiltration-Editor/Infilt027.png
+.. image:: ../../img/Infiltration-Editor/Infilt046.png
 
-5. When the calculation is complete, the following box will appear.
+6. When the calculation is complete, the following box will appear.
    Click OK to close the box.
 
 .. image:: ../../img/Infiltration-Editor/Infilt028.png
 
-6. The INFIL.DAT file  
+7. The INFIL.DAT file
    looks like this.
 
 .. image:: ../../img/Infiltration-Editor/Infilt029.png
 
-SCS Calculator Single Shapefile Multiple Fields Pima County Method
--------------------------------------------------------------------
+SCS Calculator From Single Shapefile Multiple Fields Pima County Method
+-----------------------------------------------------------------------
 
 Use this option for Pima County to calculate SCS curve number data from a single layer with multiple fields.
-This is a vector layer with polygon features and field to define the landuse/soil group, vegetation coverage and impervious space.
-This option was developed specifically for Pima County.
+This is a vector layer with polygon features and field to define the landuse/soil group, vegetation coverage
+and impervious space. This option was developed specifically for Pima County.
 
 The data should be arranged as shown in the attribute table.
 
@@ -400,15 +402,72 @@ The data should be arranged as shown in the attribute table.
 
 .. image:: ../../img/Infiltration-Editor/Infilt031.png
 
-2. Select the layer  
+2. Check the 'Assign SCS Curve Number from Polygon Layer - multiple fields'.
+
+3. Select the layer
    and fields with the infiltration data and click OK to run the calculator.
 
-.. image:: ../../img/Infiltration-Editor/Infilt032.png
+.. image:: ../../img/Infiltration-Editor/Infilt047.png
 
-3. When the calculation is complete, the following box will appear.
+4. When the calculation is complete, the following box will appear.
    Click OK to close the box.
 
 .. image:: ../../img/Infiltration-Editor/Infilt033.png
+
+5. The INFIL.DAT file
+   looks like this.
+
+.. image:: ../../img/Infiltration-Editor/Infilt029.png
+
+SCS Calculator From Raster Layer
+--------------------------------
+
+This option will add spatially variable infiltration data to the grid from a raster with cells containing CN
+values. Important properties:
+
+-  The raster must have the same coordinate reference system (CRS) as the project.
+   If the CRS is missing or is set by the user, save the raster with the correct CRS.
+
+-  The best resolution of the grid element CN is achieved when the CN
+   raster pixel size is smaller than the grid element size.
+
+-  The raster warp method uses a weighted average to warp the original
+   raster pixels to the cell size pixels.
+
+
+1. Click the Calculate
+   SCS CN button.
+
+.. image:: ../../img/Infiltration-Editor/Infilt026.png
+
+2. Check the 'Assign SCS Curve Number from Raster Layer'.
+
+3. Select the raster containing CN values from the dropdown
+   or choose a raster from the file dialog.
+
+4. Set the NODATA value.
+
+5. Select the resampling algorithm.
+
+6. Select the Fill NODATA option to set the CN of empty grid elements from neighbors.
+   This is only necessary if there are empty raster pixels.
+
+7. Select the multithread option to use all CPU's for running the algorithm.
+
+8. Click OK to calculate a
+   spatially variable CN value for every grid element.
+
+.. image:: ../../img/Infiltration-Editor/Infilt048.png
+
+8. When the calculation is complete, the following box will appear.
+   Click OK to close the box.
+
+.. image:: ../../img/Infiltration-Editor/Infilt028.png
+
+9. The INFIL.DAT file
+   looks like this.
+
+.. image:: ../../img/Infiltration-Editor/Infilt029.png
 
 Horton
 ------
