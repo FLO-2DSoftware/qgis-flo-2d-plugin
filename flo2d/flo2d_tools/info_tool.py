@@ -21,7 +21,6 @@ from qgis.PyQt.QtCore import QPoint, Qt, pyqtSignal
 from qgis.PyQt.QtGui import QColor, QCursor, QPixmap
 from qgis.PyQt.QtWidgets import QAction, QMenu
 
-
 class InfoTool(QgsMapToolIdentify):
     feature_picked = pyqtSignal(str, int)
 
@@ -61,14 +60,29 @@ class InfoTool(QgsMapToolIdentify):
             actions[i] = {}
             if len(lyrs_found[ln]["fids"]) == 1:
                 fid = lyrs_found[ln]["fids"][0]
-                a_text = "{} ({})".format(ln, fid)
-                actions[i][0] = QAction(a_text, None)
+                if ln == "Storm Drain Nodes":
+                    sd_layer = self.lyrs.get_layer_by_name("Storm Drain Nodes", group=self.lyrs.group).layer()
+                    feat = next(sd_layer.getFeatures(QgsFeatureRequest(fid)))
+                    name = feat["name"]
+                    grid = feat["grid"]
+                    a_text = "{} -{}".format(ln, name + " (" + str(grid) + ")")
+                    actions[i][0] = QAction(a_text, None)
+                else:
+                    a_text = "{} ({})".format(ln, fid)
+                    actions[i][0] = QAction(a_text, None)                
                 actions[i][0].hovered.connect(functools.partial(self.show_rubber, lid, fid))
                 actions[i][0].triggered.connect(functools.partial(self.pass_res, tab, fid))
                 popup.addAction(actions[i][0])
             else:
                 for j, fid in enumerate(lyrs_found[ln]["fids"]):
-                    actions[i][j] = QAction(str(fid), None)
+                    if ln == "Storm Drain Nodes":
+                        sd_layer = self.lyrs.get_layer_by_name("Storm Drain Nodes", group=self.lyrs.group).layer()
+                        feat = next(sd_layer.getFeatures(QgsFeatureRequest(fid)))
+                        name = feat["name"]
+                        grid = feat["grid"]
+                        actions[i][j] = QAction(name + " (" + str(grid) + ")", None)
+                    else:
+                        actions[i][j] = QAction(str(fid), None)
                     actions[i][j].hovered.connect(functools.partial(self.show_rubber, lid, fid))
                     actions[i][j].triggered.connect(functools.partial(self.pass_res, tab, fid))
                     sm[i].addAction(actions[i][j])
