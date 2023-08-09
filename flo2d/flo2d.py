@@ -100,7 +100,6 @@ from .gui.f2d_main_widget import FLO2DWidget
 from .gui.grid_info_widget import GridInfoWidget
 from .gui.plot_widget import PlotWidget
 from .gui.table_editor_widget import TableEditorWidget
-from .gui.storm_drain_editor_widget import StormDrainEditorWidget
 from .layers import Layers
 from .user_communication import UserCommunication
 

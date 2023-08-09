@@ -65,7 +65,7 @@ class InfoTool(QgsMapToolIdentify):
                     feat = next(sd_layer.getFeatures(QgsFeatureRequest(fid)))
                     name = feat["name"]
                     grid = feat["grid"]
-                    a_text = "{} -{}".format(ln, name + " (" + str(grid) + ")")
+                    a_text = "{} {}".format(ln, name + " (" + str(grid) + ")")
                     actions[i][0] = QAction(a_text, None)
                 else:
                     a_text = "{} ({})".format(ln, fid)
