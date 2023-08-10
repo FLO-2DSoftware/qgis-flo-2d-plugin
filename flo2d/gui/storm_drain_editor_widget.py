@@ -38,6 +38,7 @@ from qgis.PyQt.QtGui import QColor
 from qgis.PyQt.QtWidgets import (
     QApplication,
     QCheckBox,
+    QRadioButton,
     QComboBox,
     QDialog,
     QDoubleSpinBox,
@@ -53,6 +54,9 @@ from qgis.PyQt.QtWidgets import (
     QWidget,
     qApp,
 )
+
+import pyqtgraph as pg
+# from pyqtgraph.Qt import QtCore, QtGui
 
 from ..flo2d_ie.swmm_io import StormDrainProject
 from ..flo2d_tools.grid_tools import spatial_index
@@ -277,7 +281,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
 
         self.simulate_stormdrain_chbox.clicked.connect(self.simulate_stormdrain)
         self.import_shapefile_btn.clicked.connect(self.import_hydraulics)
-        self.create_discharge_plots_btn.clicked.connect(self.create_SD_discharge_table_and_plots)
+        # self.create_discharge_plots_btn.clicked.connect(self.create_SD_discharge_table_and_plots)
 
         self.SD_type4_cbo.activated.connect(self.SD_show_type4_table_and_plot)
 
@@ -3593,10 +3597,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 )
 
                 self.uc.show_info(
-                    "INFO 181120.1629:\n\n"
-                    + "* "
-                    + str(len(rating_files))
-                    + " files selected.\n\n"
+                    "INFO 100823.0517: (" + str(len(rating_files)) + " files selected)\n\n"
                     + (
                         "* " + str(len(noInlets)) + " rating tables were not read (no inlets with identical name).\n\n"
                         if len(noInlets) > 0
@@ -3818,14 +3819,6 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                         hour = day + currentHour + minutes + seconds 
                         RPTtimeSeries.append([hour, inflow, flooding])  
 
-
-
-
-
-
-
-
-
                     # See if there are aditional .DAT files with SD data:
                     SWMMQIN_file =last_RPT_dir + r"\SWMMQIN.OUT"
                     if not os.path.isfile(SWMMQIN_file): 
@@ -3845,9 +3838,6 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                                 SWMMQINtimeSeries.append([hour, discharge, return_flow])  
                         else:
                             self.uc.bar_info("Node " + intersection + " is not in file SWMMQIN.OUT")
-
-
-
 
                     SWMMOUTFIN_file = last_RPT_dir + r"\SWMMOUTFIN.OUT"   
                     if not os.path.isfile(SWMMOUTFIN_file): 
@@ -3872,9 +3862,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                                 self.uc.bar_info("Node " + intersection + " is not in file SWMMOUTFIN.OUT")                            
                         else:
                             self.uc.bar_info("Grid " + grid + " not found in Storm Drain Nodes!")                       
-                    
-
-
+  
                     # Plot discharge graph:
                     self.uc.bar_info("Discharge for node " + intersection + " from file  '" + RPT_file + "'")
                     self.show_discharge_table_and_plot(intersection, units, RPTtimeSeries, 
@@ -3889,35 +3877,6 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 QApplication.restoreOverrideCursor()
                 self.uc.show_error("Reading .RPT file failed !!", e)
                 return
-            
-            # try: # Create SD discharge plots. 
-            #     QApplication.setOverrideCursor(Qt.WaitCursor)
-            #
-            #     QApplication.restoreOverrideCursor()
-            # except Exception as e:
-            #     QApplication.restoreOverrideCursor()
-            #     self.uc.show_error("Creating SD discharge plots failed !!", e)
-            #     return
-
-            
-
-            
-
-        # s = QSettings()
-        # last_dir = s.value("FLO-2D/lastSDPlotsDir", "")
-        #
-        #
-        # project_dir = QgsProject.instance().absolutePath()       
-        # outdir = QFileDialog.getExistingDirectory(
-        #     None,
-        #     "Select directory where Storm Drain discharge plots will be exported",
-        #     directory=project_dir,
-        # )
-        # if outdir:
-        #     pass   
-
-
-
 
     def block_saving(self):
         model = self.tview.model()
@@ -4058,28 +4017,28 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 timeRPT, inflowRPT, floodingRPT = [], [], []
                 timeInToSD, dischargeInToSD, returnInToSD = [], [], []
                 timeOutToFLO, dischargeOutToFLO = [], []
-    
+                
                 for row in RPTseries:
                     timeRPT.append(row[0] if not row[0] is None else float("NaN"))
                     inflowRPT.append(row[1] if not row[1] is None else float("NaN"))
                     floodingRPT.append(row[2] if not row[2] is None else float("NaN"))
- 
+                
                 if SWMMQINtimeSeries:
                     for row in SWMMQINtimeSeries:
                         timeInToSD.append(row[0] if not row[0] is None else float("NaN"))
                         dischargeInToSD.append(row[1] if not row[1] is None else float("NaN"))
                         returnInToSD.append(row[2] if not row[2] is None else float("NaN")) 
-
+                
                 if SWMMOUTFINtimeseries:
                     for row in SWMMOUTFINtimeseries:
                         timeOutToFLO.append(row[0] if not row[0] is None else float("NaN"))
                         dischargeOutToFLO.append(row[1] if not row[1] is None else float("NaN"))
-                 
+                
                 if self.plot.plot.legend is not None:
                     plot_scene = self.plot.plot.legend.scene()
                     if plot_scene is not None:
                         plot_scene.removeItem(self.plot.plot.legend)
-                        
+                
                 self.plot.plot.legend = None
                 self.plot.plot.addLegend()
                 self.plot.plot.setTitle(title="Discharge " + node + " (grid " + grid + ")")
@@ -4090,7 +4049,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 if SWMMQINtimeSeries:
                     self.plot.add_item("Inflow Discharge to Storm Drain", [timeInToSD, dischargeInToSD], col=QColor(Qt.blue), sty=Qt.SolidLine)
                     self.plot.add_item("Return Discharge to FLO-2D", [timeInToSD, returnInToSD], col=QColor(Qt.darkYellow), sty=Qt.SolidLine)                    
-
+                
                 if SWMMOUTFINtimeseries:
                     self.plot.add_item("Discharge to FLO-2D", [timeOutToFLO, dischargeOutToFLO], col=QColor(Qt.black), sty=Qt.SolidLine)                
                 
@@ -4101,24 +4060,27 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 self.uc.bar_warn("Error while building plot for SD discharge!")
                 return
             
-            try: # Build table.
-                discharge_data_model = StandardItemModel()
-                self.tview.undoStack.clear()
-                self.tview.setModel(discharge_data_model)
-                discharge_data_model.clear()
-                discharge_data_model.setHorizontalHeaderLabels(["Time", "Inflow", "Flooding"]) 
-                for row in RPTseries:
-                    items = [StandardItem("{:.4f}".format(x)) if x is not None else StandardItem("") for x in row]
-                    discharge_data_model.appendRow(items) 
-                self.tview.horizontalHeader().setStretchLastSection(True)
-                for col in range(3):
-                    self.tview.setColumnWidth(col, 100)
-                for i in range(discharge_data_model.rowCount()):
-                    self.tview.setRowHeight(i, 20) 
-            except:
-                QApplication.restoreOverrideCursor()
-                self.uc.bar_warn("Error while building table for SD discharge!")
-                return                
+            # try: # Build table.
+            #     discharge_data_model = StandardItemModel()
+            #     self.tview.undoStack.clear()
+            #     self.tview.setModel(discharge_data_model)
+            #     discharge_data_model.clear()
+            #     discharge_data_model.setHorizontalHeaderLabels(["Time", "Inflow", "Flooding"]) 
+            #     for row in RPTseries:
+            #         items = [StandardItem("{:.4f}".format(x)) if x is not None else StandardItem("") for x in row]
+            #         discharge_data_model.appendRow(items) 
+            #     self.tview.horizontalHeader().setStretchLastSection(True)
+            #     for col in range(3):
+            #         self.tview.setColumnWidth(col, 100)
+            #     for i in range(discharge_data_model.rowCount()):
+            #         self.tview.setRowHeight(i, 20) 
+            #
+            #     # self.plot.plot.getViewBox().state['viewRange'] = [[0,1],[0,1]]
+            #     return
+            # except:
+            #     QApplication.restoreOverrideCursor()
+            #     self.uc.bar_warn("Error while building table for SD discharge!")
+            #     return                
             
         except Exception as e:
             QApplication.restoreOverrideCursor()
