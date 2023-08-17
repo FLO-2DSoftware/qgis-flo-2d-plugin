@@ -1687,14 +1687,6 @@ class Structure(GeoPackageUtils):
         self.table_data = res
         return res
 
-    def get_rating_tables_data(self, rt_fid):
-        qry = "SELECT depth, q FROM swmmflort_data WHERE swmm_rt_fid = ? ORDER BY depth;"
-        rating_table_data = self.execute(qry, (rt_fid,)).fetchall()
-        if not rating_table_data:
-            # add a new time series
-            rating_table_data = self.add_rating_table_data(rt_fid, fetch=True)
-        return rating_table_data
-
     def set_table_data(self, data):
         if self.icurvtable == 0:
             # rating curve
@@ -1785,12 +1777,12 @@ class InletRatingTable(GeoPackageUtils):
         qry = "DELETE FROM swmmflort_data WHERE swmm_rt_fid = ?;"
         self.execute(qry, (rt_fid,))
 
-    def get_rating_tables_data(self, rt_fid):
-        qry = "SELECT depth, q FROM swmmflort_data WHERE swmm_rt_fid = ? ORDER BY depth;"
-        rating_table_data = self.execute(qry, (rt_fid,)).fetchall()
-        if not rating_table_data:
-            # add a new time series
-            rating_table_data = self.add_rating_table_data(rt_fid, fetch=True)
+    def get_inlet_table_data(self, rt_fid):
+        qryRT = "SELECT depth, q FROM swmmflort_data WHERE swmm_rt_fid = ? ORDER BY depth;"
+        rating_table_data = self.execute(qryRT, (rt_fid,)).fetchall()      
+        # if not rating_table_data:
+        #     # add a new time series
+        #     rating_table_data = self.add_rating_table_data(rt_fid, fetch=True)
         return rating_table_data
 
     def add_rating_table_data(self, rt_fid, rows=5, fetch=False):
@@ -1800,7 +1792,7 @@ class InletRatingTable(GeoPackageUtils):
         qry = "INSERT INTO swmmflort_data (swmm_rt_fid, depth, q) VALUES (?, 0, 0);"
         self.execute_many(qry, ([rt_fid],) * rows)
         if fetch:
-            return self.get_rating_tables_data(rt_fid)
+            return self.get_inlet_table_data(rt_fid)
 
     def set_rating_table_data(self, rt_fid, name, data):
         qry = "UPDATE swmmflort SET name=? WHERE fid=?;"

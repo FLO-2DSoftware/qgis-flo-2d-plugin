@@ -18,7 +18,6 @@ from qgis.PyQt.QtWidgets import (
     QTableWidgetItem,
 )
 
-from ..flo2dobjects import InletRatingTable
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
 from ..utils import float_or_zero, int_or_zero, is_number, m_fdata

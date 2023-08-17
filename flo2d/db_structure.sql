@@ -1558,6 +1558,14 @@ CREATE TABLE "swmmflort_data" (
 );
 INSERT INTO gpkg_contents (table_name, data_type) VALUES ('swmmflort_data', 'aspatial');
 
+INSERT INTO trigger_control (name, enabled) VALUES ('update_swmmflort_data_on_swmmflort_delete', 1);
+CREATE TRIGGER IF NOT EXISTS "update_swmmflort_data_on_swmmflort_delete"
+    AFTER DELETE ON "swmmflort"
+    WHEN (SELECT enabled FROM trigger_control WHERE name = 'update_swmmflort_data_on_swmmflort_delete')
+    BEGIN
+        DELETE FROM swmmflort_data WHERE swmm_rt_fid = OLD."fid";
+    END;
+
 CREATE TABLE "swmmflo_culvert" (
     "fid" INTEGER NOT NULL PRIMARY KEY,
     "grid_fid" INTEGER UNIQUE ON CONFLICT REPLACE, 

@@ -907,43 +907,47 @@ class InletNodesDialog(qtBaseClass, uiDialog):
     #         if duplicates:
     #             self.uc.show_warn("WARNING 301220.0451:\n\nThe following rating tables are duplicated\n\n" + duplicates)
 
-    def populate_rtables_data(self):
-        idx = self.inlet_rating_table_cbo.currentIndex()
-        rt_fid = self.inlet_rating_table_cbo.itemData(idx)
-        rt_name = self.inlet_rating_table_cbo.currentText()
-        if rt_fid is None:
-            #             self.uc.bar_warn("No rating table defined!")
-            self.plot.clear()
-            self.tview.undoStack.clear()
-            self.tview.setModel(self.inlet_data_model)
-            self.inlet_data_model.clear()
-            return
 
-        self.inlet_series_data = self.inletRT.get_rating_tables_data(rt_fid)
-        if not self.inlet_series_data:
-            return
-        self.create_plot(rt_name)
-        self.tview.undoStack.clear()
-        self.tview.setModel(self.inlet_data_model)
-        self.inlet_data_model.clear()
-        self.inlet_data_model.setHorizontalHeaderLabels(["Depth", "Q"])
-        self.d1, self.d2 = [[], []]
-        for row in self.inlet_series_data:
-            items = [StandardItem("{:.4f}".format(x)) if x is not None else StandardItem("") for x in row]
-            self.inlet_data_model.appendRow(items)
-            self.d1.append(row[0] if not row[0] is None else float("NaN"))
-            self.d2.append(row[1] if not row[1] is None else float("NaN"))
-        rc = self.inlet_data_model.rowCount()
-        if rc < 500:
-            for row in range(rc, 500 + 1):
-                items = [StandardItem(x) for x in ("",) * 2]
-                self.inlet_data_model.appendRow(items)
-        self.tview.horizontalHeader().setStretchLastSection(True)
-        for col in range(2):
-            self.tview.setColumnWidth(col, 100)
-        for i in range(self.inlet_data_model.rowCount()):
-            self.tview.setRowHeight(i, 20)
-        self.update_plot()
+
+
+
+    # def populate_rtables_data(self):
+    #     idx = self.inlet_rating_table_cbo.currentIndex()
+    #     rt_fid = self.inlet_rating_table_cbo.itemData(idx)
+    #     rt_name = self.inlet_rating_table_cbo.currentText()
+    #     if rt_fid is None:
+    #         #             self.uc.bar_warn("No rating table defined!")
+    #         self.plot.clear()
+    #         self.tview.undoStack.clear()
+    #         self.tview.setModel(self.inlet_data_model)
+    #         self.inlet_data_model.clear()
+    #         return
+    #
+    #     self.inlet_series_data = self.inletRT.get_inlet_table_data(rt_fid)
+    #     if not self.inlet_series_data:
+    #         return
+    #     self.create_plot(rt_name)
+    #     self.tview.undoStack.clear()
+    #     self.tview.setModel(self.inlet_data_model)
+    #     self.inlet_data_model.clear()
+    #     self.inlet_data_model.setHorizontalHeaderLabels(["Depth", "Q"])
+    #     self.d1, self.d2 = [[], []]
+    #     for row in self.inlet_series_data:
+    #         items = [StandardItem("{:.4f}".format(x)) if x is not None else StandardItem("") for x in row]
+    #         self.inlet_data_model.appendRow(items)
+    #         self.d1.append(row[0] if not row[0] is None else float("NaN"))
+    #         self.d2.append(row[1] if not row[1] is None else float("NaN"))
+    #     rc = self.inlet_data_model.rowCount()
+    #     if rc < 500:
+    #         for row in range(rc, 500 + 1):
+    #             items = [StandardItem(x) for x in ("",) * 2]
+    #             self.inlet_data_model.appendRow(items)
+    #     self.tview.horizontalHeader().setStretchLastSection(True)
+    #     for col in range(2):
+    #         self.tview.setColumnWidth(col, 100)
+    #     for i in range(self.inlet_data_model.rowCount()):
+    #         self.tview.setRowHeight(i, 20)
+    #     self.update_plot()
 
     def create_plot(self, name):
         self.plot.clear()
