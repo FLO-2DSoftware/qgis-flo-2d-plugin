@@ -6,15 +6,9 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1251</width>
-    <height>967</height>
+    <width>926</width>
+    <height>520</height>
    </rect>
-  </property>
-  <property name="sizePolicy">
-   <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-    <horstretch>0</horstretch>
-    <verstretch>0</verstretch>
-   </sizepolicy>
   </property>
   <property name="minimumSize">
    <size>
@@ -44,10 +38,16 @@
       <property name="geometry">
        <rect>
         <x>0</x>
-        <y>0</y>
-        <width>1223</width>
-        <height>939</height>
+        <y>-348</y>
+        <width>892</width>
+        <height>848</height>
        </rect>
+      </property>
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
       </property>
       <layout class="QGridLayout" name="gridLayout_41">
        <item row="0" column="0">
@@ -136,7 +136,7 @@
            </property>
            <widget class="QWidget" name="CONT">
             <property name="sizePolicy">
-             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+             <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
               <horstretch>0</horstretch>
               <verstretch>0</verstretch>
              </sizepolicy>
@@ -2081,7 +2081,7 @@
            </widget>
            <widget class="QWidget" name="TOLER">
             <property name="sizePolicy">
-             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+             <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
               <horstretch>0</horstretch>
               <verstretch>0</verstretch>
              </sizepolicy>
@@ -2495,7 +2495,7 @@
            </widget>
            <widget class="QWidget" name="GLOBAL">
             <property name="sizePolicy">
-             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+             <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
               <horstretch>0</horstretch>
               <verstretch>0</verstretch>
              </sizepolicy>
@@ -2507,7 +2507,7 @@
              <item row="0" column="0">
               <layout class="QGridLayout" name="gridLayout">
                <property name="sizeConstraint">
-                <enum>QLayout::SetFixedSize</enum>
+                <enum>QLayout::SetNoConstraint</enum>
                </property>
                <item row="0" column="0">
                 <widget class="QLabel" name="globalARF_RevisonLabel">
