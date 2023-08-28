@@ -1128,14 +1128,6 @@ def raster2grid(grid, out_raster, request=None):
         return
 
     features = grid.getFeatures() if request is None else grid.getFeatures(request)
-    feature_count = sum(1 for _ in features)
-
-    progDialog = QProgressDialog("Sampling raster. Please wait...", None, 0, feature_count)
-    progDialog.setModal(True)
-    progDialog.setValue(0)
-    progDialog.show()
-    QApplication.processEvents()
-    i = 0
 
     for feat in features:
         center = feat.geometry().centroid().asPoint()
@@ -1147,9 +1139,6 @@ def raster2grid(grid, out_raster, request=None):
             else:
                 val = None
             yield val, feat.id()
-        progDialog.setValue(i)
-        QApplication.processEvents()
-        i += 1
 
 
 def rasters2centroids(vlayer, request, *raster_paths):
@@ -1459,8 +1448,6 @@ def update_roughness(gutils, grid, roughness, column_name, reset=False):
     Updating roughness values inside 'grid' table.
     """
     try:
-        #     startTime = time.time()
-
         globalnValue = gutils.get_cont_par("MANNING")
         if reset is True:
             gutils.execute("UPDATE grid SET n_value=?;", (globalnValue,))
