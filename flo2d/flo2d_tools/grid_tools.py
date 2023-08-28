@@ -1128,6 +1128,15 @@ def raster2grid(grid, out_raster, request=None):
         return
 
     features = grid.getFeatures() if request is None else grid.getFeatures(request)
+    feature_count = sum(1 for _ in features)
+
+    progDialog = QProgressDialog("Sampling raster. Please wait...", None, 0, feature_count)
+    progDialog.setModal(True)
+    progDialog.setValue(0)
+    progDialog.show()
+    QApplication.processEvents()
+    i = 0
+
     for feat in features:
         center = feat.geometry().centroid().asPoint()
         ident = probe_raster.dataProvider().identify(center, QgsRaster.IdentifyFormatValue)
@@ -1138,6 +1147,9 @@ def raster2grid(grid, out_raster, request=None):
             else:
                 val = None
             yield val, feat.id()
+        progDialog.setValue(i)
+        QApplication.processEvents()
+        i += 1
 
 
 def rasters2centroids(vlayer, request, *raster_paths):
@@ -1195,7 +1207,7 @@ def square_grid(gutils, boundary, upper_left_coords=None):
     polygons = list(build_grid(boundary, cellsize, upper_left_coords))
     total_polygons = len(polygons)
 
-    progDialog = QProgressDialog("Creating Grid. Please wait...", "Cancel", 0, total_polygons)
+    progDialog = QProgressDialog("Creating Grid. Please wait...", None, 0, total_polygons)
     progDialog.setModal(True)
     progDialog.setValue(0)
     progDialog.show()
