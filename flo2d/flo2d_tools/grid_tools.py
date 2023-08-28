@@ -1128,6 +1128,7 @@ def raster2grid(grid, out_raster, request=None):
         return
 
     features = grid.getFeatures() if request is None else grid.getFeatures(request)
+
     for feat in features:
         center = feat.geometry().centroid().asPoint()
         ident = probe_raster.dataProvider().identify(center, QgsRaster.IdentifyFormatValue)
@@ -1192,10 +1193,22 @@ def square_grid(gutils, boundary, upper_left_coords=None):
     gutils.execute(update_cellsize, (cellsize,))
     gutils.clear_tables("grid")
 
+    polygons = list(build_grid(boundary, cellsize, upper_left_coords))
+    total_polygons = len(polygons)
+
+    progDialog = QProgressDialog("Creating Grid. Please wait...", None, 0, total_polygons)
+    progDialog.setModal(True)
+    progDialog.setValue(0)
+    progDialog.show()
+    QApplication.processEvents()
+    i = 0
+
     polygons = ((gutils.build_square_from_polygon(poly),) for poly in build_grid(boundary, cellsize, upper_left_coords))
     sql = ["""INSERT INTO grid (geom) VALUES""", 1]
     for g_tuple in polygons:
         sql.append(g_tuple)
+        progDialog.setValue(i)
+        i += 1
     if len(sql) > 2:
         gutils.batch_execute(sql)
     else:
@@ -1435,8 +1448,6 @@ def update_roughness(gutils, grid, roughness, column_name, reset=False):
     Updating roughness values inside 'grid' table.
     """
     try:
-        #     startTime = time.time()
-
         globalnValue = gutils.get_cont_par("MANNING")
         if reset is True:
             gutils.execute("UPDATE grid SET n_value=?;", (globalnValue,))

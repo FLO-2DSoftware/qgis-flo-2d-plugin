@@ -193,7 +193,6 @@ class GridToolsWidget(qtBaseClass, uiDialog):
 
             QApplication.setOverrideCursor(Qt.WaitCursor)
             ini_time = time.time()
-            self.uc.progress_bar("Creating grid...")
             QApplication.setOverrideCursor(Qt.WaitCursor)
             boundary = self.lyrs.data["user_model_boundary"]["qlyr"]
 
