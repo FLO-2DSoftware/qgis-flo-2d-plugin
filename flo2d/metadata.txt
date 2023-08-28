@@ -10,6 +10,8 @@ about=QGIS tools for FLO-2D
 
 changelog=
  <p>0.10.115
+  - Grid Tools
+       - Added a Progress bar to sampling roughness - centroid point cell
   - Storm Drain type 4 inlets. 
        - Issues #907 and #720.
        - Improve/fix import of Rating Tables and Culvert Eq.
