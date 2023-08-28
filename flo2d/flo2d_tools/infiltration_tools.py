@@ -22,7 +22,7 @@ from qgis.core import (
     QgsSpatialIndex,
 )
 from qgis.PyQt.QtCore import QVariant
-from qgis.PyQt.QtWidgets import QApplication, QProgressDialog
+from qgis.PyQt.QtWidgets import QApplication
 from qgis.utils import iface
 
 from ..user_communication import UserCommunication
