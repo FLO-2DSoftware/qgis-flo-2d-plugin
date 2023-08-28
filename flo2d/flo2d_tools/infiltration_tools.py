@@ -22,7 +22,7 @@ from qgis.core import (
     QgsSpatialIndex,
 )
 from qgis.PyQt.QtCore import QVariant
-from qgis.PyQt.QtWidgets import QApplication
+from qgis.PyQt.QtWidgets import QApplication, QProgressDialog
 from qgis.utils import iface
 
 from ..user_communication import UserCommunication
@@ -416,14 +416,25 @@ class InfiltrationCalculator(object):
         return grid_params
 
     def scs_infiltration_single(self):
-        grid_params = {}
-        curve_values = centroids2poly_geos(self.grid_lyr, self.curve_lyr, None, self.curve_fld)
-        for gid, values in curve_values:
-            grid_cn = sum(cn * subarea for cn, subarea in values)
-            grid_params[gid] = {"scsn": grid_cn}
+        """
+        This code sets the CN based on the centroid of the intersecting layer.
+        """
+        try:
+            grid_params = {}
+            curve_values = centroids2poly_geos(self.grid_lyr, self.curve_lyr, None, self.curve_fld)
+            for gid, values in curve_values:
+                if len(values) == 0:
+                    raise Exception("Grid element centroid is not inside the Infiltration Polygon.")
+                else:
+                    cn = values[0][0]
+                    grid_params[gid] = {"scsn": cn}
+            return grid_params
 
-        return grid_params
-
+        except Exception as e:
+            self.uc.show_error(
+                "ERROR: SCS infiltration failed!",
+                e,
+            )
     def scs_infiltration_raster(self):
         """
         Resample raster to be aligned with the grid, then probe values and update elements scs attr.
