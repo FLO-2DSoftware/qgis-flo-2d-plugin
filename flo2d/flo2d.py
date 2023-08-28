@@ -118,8 +118,8 @@ def cd(newdir):
 class Flo2D(object):
 
     def __init__(self, iface):
-        self.pr = cProfile.Profile()
-        self.pr.enable()
+        # self.pr = cProfile.Profile()
+        # self.pr.enable()
 
         self.iface = iface
         self.iface.f2d = {}
@@ -591,19 +591,19 @@ class Flo2D(object):
         """
 
         # Close and safe routines execution times statistics:
-        try:
-            s = QSettings()
-            lastDir = s.value("FLO-2D/lastGdsDir", "")
-            stts = os.path.join(lastDir, "STATS.TXT")
-            with open(stts, "w") as f:
-                self.pr.disable()
-                sortby = SortKey.TIME
-                ps = pstats.Stats(self.pr, stream=f).sort_stats(sortby)
-                ps.print_stats()
-        except Exception as e:
-            QApplication.restoreOverrideCursor()
-            self.uc.show_error("ERROR", e)
-            time.sleep(3)
+        # try:
+        #     s = QSettings()
+        #     lastDir = s.value("FLO-2D/lastGdsDir", "")
+        #     stts = os.path.join(lastDir, "STATS.TXT")
+        #     with open(stts, "w") as f:
+        #         self.pr.disable()
+        #         sortby = SortKey.TIME
+        #         ps = pstats.Stats(self.pr, stream=f).sort_stats(sortby)
+        #         ps.print_stats()
+        # except Exception as e:
+        #     QApplication.restoreOverrideCursor()
+        #     self.uc.show_error("ERROR", e)
+        #     time.sleep(3)
 
         self.lyrs.clear_rubber()
         # remove maptools

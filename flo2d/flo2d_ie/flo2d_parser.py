@@ -25,7 +25,6 @@ try:
 except ImportError:
     pass
 
-
 class HDF5Group:
     def __init__(self, name: str):
         self.name = name
