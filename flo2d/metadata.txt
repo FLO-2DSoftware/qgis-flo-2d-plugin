@@ -12,6 +12,8 @@ changelog=
  <p>0.10.115
   - Grid Tools
        - Added a Progress bar to sampling roughness - centroid point cell
+  - SCS Infiltration Editor
+       - SCS Infiltration Editor - single field intersecting with grid centroid.
   - Storm Drain type 4 inlets. 
        - Issues #907 and #720.
        - Improve/fix import of Rating Tables and Culvert Eq.
