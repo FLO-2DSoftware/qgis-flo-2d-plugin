@@ -704,11 +704,10 @@ class GridToolsWidget(qtBaseClass, uiDialog):
                 pass
         #  Assign values:
         try:
+
             start_time = time.time()
             QApplication.setOverrideCursor(Qt.WaitCursor)
             grid_lyr = self.lyrs.data["grid"]["qlyr"]
-            #             field = rough_lyr.fields().field(nfield)
-            #             update_roughness(self.gutils, grid_lyr, rough_lyr, nfield, reset=flag)
             if mann_dlg.intersect_cell_rectangle_radio.isChecked():
                 method = "Areas"
             else:
