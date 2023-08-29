@@ -10,6 +10,8 @@ about=QGIS tools for FLO-2D
 
 changelog=
  <p>0.10.115
+  - SCS Infiltration Editor
+       - SCS Infiltration Editor - single field intersecting with grid centroid.
   - Storm Drain type 4 inlets. 
        - Issues #907 and #720.
        - Improve/fix import of Rating Tables and Culvert Eq.
