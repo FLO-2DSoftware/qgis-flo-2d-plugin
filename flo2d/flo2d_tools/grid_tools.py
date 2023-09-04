@@ -794,6 +794,13 @@ def poly2grid(grid, polygons, request, use_centroids, get_fid, get_grid_geom, th
     allfeatures, index = spatial_centroids_index(grid) if use_centroids is True else spatial_index(grid)
     polygon_features = polygons.getFeatures() if request is None else polygons.getFeatures(request)
 
+    pd = QProgressDialog("Assigning values...", None, 0, polygons.featureCount())
+    pd.setModal(True)
+    pd.setValue(0)
+    pd.forceShow()
+    i = 0
+    QApplication.processEvents()
+
     for feat in polygon_features:
         fid = feat.id()
         geom = feat.geometry()
@@ -817,7 +824,8 @@ def poly2grid(grid, polygons, request, use_centroids, get_fid, get_grid_geom, th
             values.append(gid)
             values = tuple(values)
             yield values
-
+        i += 1
+        pd.setValue(i)
 
 def poly2poly(base_polygons, polygons, request, area_percent, *columns):
     """
