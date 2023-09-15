@@ -121,7 +121,6 @@ class PreProcessingWidget(qtBaseClass, uiDialog):
         self.channel_tool_btn.setEnabled(False)
         self.save_changes_channel_btn.setEnabled(False)
         self.delete_channel_btn.setEnabled(False)
-        self.channel_cbo.setEnabled(False)
         self.label_3.setEnabled(False)
 
     def create_channel(self):
@@ -169,6 +168,8 @@ class PreProcessingWidget(qtBaseClass, uiDialog):
         self.reservoir.setOpacity(1)
 
         self.remove_dam_btn.setEnabled(True)
+        self.label.setEnabled(True)
+        self.srcRasterCbo.setEnabled(True)
 
     def delete_cur_channel(self):
         """
@@ -181,6 +182,8 @@ class PreProcessingWidget(qtBaseClass, uiDialog):
             return
         QgsProject.instance().removeMapLayers([self.channel_layer.id()])
         self.remove_dam_btn.setEnabled(False)
+        self.label.setEnabled(False)
+        self.srcRasterCbo.setEnabled(False)
         self.channel_cbo.clear()
         self.iface.mapCanvas().refreshAllLayers()
 
@@ -236,7 +239,6 @@ class PreProcessingWidget(qtBaseClass, uiDialog):
         self.channel_tool_btn.setEnabled(True)
         self.save_changes_channel_btn.setEnabled(True)
         self.delete_channel_btn.setEnabled(True)
-        self.channel_cbo.setEnabled(True)
         self.label_3.setEnabled(True)
 
     def create_reservoir(self, distances, elevations, i):
@@ -291,6 +293,8 @@ class PreProcessingWidget(qtBaseClass, uiDialog):
         Function to remove the dam
         """
 
+        dam_elevation = self.h_top_sb.value()
+
         file_dialog = QFileDialog()
         file_dialog.setAcceptMode(QFileDialog.AcceptSave)
         file_dialog.setNameFilter("GeoTIFF files (*.tif *.tiff);;All files (*.*)")
@@ -344,6 +348,15 @@ class PreProcessingWidget(qtBaseClass, uiDialog):
                                                        'INVERT': False,
                                                        'EXTRA': '',
                                                        'OUTPUT': 'TEMPORARY_OUTPUT'})['OUTPUT']
+
+        table = processing.run("native:rastersurfacevolume", {'INPUT': rasterized,
+                                                              'BAND': 1,
+                                                              'LEVEL': dam_elevation,
+                                                              'METHOD': 1,
+                                                              'OUTPUT_TABLE': 'TEMPORARY_OUTPUT'})
+
+        formatted_output = f"{'='*30}\nArea (km²): {round(table['AREA']/1000000, 2)}\nVolume (M m³): {round(table['VOLUME']/1000000, 2)}\n{'='*30}"
+        self.results_te.setText(formatted_output)
 
         # merge raster
         self.final_DEM = processing.run("gdal:merge", {'INPUT': [self.raster_DEM, rasterized],

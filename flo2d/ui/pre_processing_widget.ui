@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>407</width>
-    <height>389</height>
+    <height>485</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -22,15 +22,8 @@
      <layout class="QGridLayout" name="gridLayout_3">
       <item row="0" column="0">
        <layout class="QGridLayout" name="gridLayout_2">
-        <item row="4" column="0">
-         <widget class="QLabel" name="label_5">
-          <property name="text">
-           <string>Dam elevation</string>
-          </property>
-         </widget>
-        </item>
-        <item row="4" column="1" colspan="2">
-         <spacer name="horizontalSpacer_5">
+        <item row="2" column="0">
+         <spacer name="horizontalSpacer_7">
           <property name="orientation">
            <enum>Qt::Horizontal</enum>
           </property>
@@ -42,109 +35,51 @@
           </property>
          </spacer>
         </item>
-        <item row="9" column="1" colspan="2">
-         <spacer name="horizontalSpacer_3">
-          <property name="orientation">
-           <enum>Qt::Horizontal</enum>
-          </property>
-          <property name="sizeHint" stdset="0">
-           <size>
-            <width>40</width>
-            <height>20</height>
-           </size>
-          </property>
-         </spacer>
-        </item>
-        <item row="1" column="5">
-         <widget class="QToolButton" name="delete_dam_btn">
-          <property name="toolTip">
-           <string>Delete current dam area</string>
-          </property>
+        <item row="6" column="0">
+         <widget class="QLabel" name="label_7">
           <property name="text">
-           <string>...</string>
-          </property>
-          <property name="icon">
-           <iconset>
-            <normaloff>../img/mActionDeleteSelected.svg</normaloff>../img/mActionDeleteSelected.svg</iconset>
-          </property>
-          <property name="iconSize">
-           <size>
-            <width>24</width>
-            <height>24</height>
-           </size>
+           <string>Intervals</string>
           </property>
          </widget>
         </item>
-        <item row="9" column="4">
-         <widget class="QToolButton" name="save_changes_channel_btn">
-          <property name="enabled">
-           <bool>false</bool>
-          </property>
-          <property name="toolTip">
-           <string>Save channel</string>
-          </property>
-          <property name="text">
-           <string>...</string>
-          </property>
-          <property name="icon">
-           <iconset>
-            <normaloff>../img/mActionSaveAllEdits.svg</normaloff>../img/mActionSaveAllEdits.svg</iconset>
-          </property>
-          <property name="iconSize">
-           <size>
-            <width>24</width>
-            <height>24</height>
-           </size>
-          </property>
-         </widget>
-        </item>
-        <item row="11" column="0" colspan="6">
-         <widget class="Line" name="line_2">
-          <property name="orientation">
-           <enum>Qt::Horizontal</enum>
-          </property>
-         </widget>
-        </item>
-        <item row="9" column="5">
-         <widget class="QToolButton" name="delete_channel_btn">
-          <property name="enabled">
-           <bool>false</bool>
-          </property>
-          <property name="toolTip">
-           <string>Delete current</string>
-          </property>
-          <property name="text">
-           <string>...</string>
-          </property>
-          <property name="icon">
-           <iconset>
-            <normaloff>../img/mActionDeleteSelected.svg</normaloff>../img/mActionDeleteSelected.svg</iconset>
-          </property>
-          <property name="iconSize">
-           <size>
-            <width>24</width>
-            <height>24</height>
-           </size>
-          </property>
-         </widget>
-        </item>
-        <item row="12" column="2" colspan="4">
-         <spacer name="horizontalSpacer_9">
-          <property name="orientation">
-           <enum>Qt::Horizontal</enum>
-          </property>
-          <property name="sizeHint" stdset="0">
-           <size>
-            <width>40</width>
-            <height>20</height>
-           </size>
-          </property>
-         </spacer>
-        </item>
-        <item row="3" column="3" colspan="3">
-         <widget class="QDoubleSpinBox" name="side_slope_sb">
+        <item row="4" column="3" colspan="3">
+         <widget class="QDoubleSpinBox" name="h_top_sb">
           <property name="maximum">
            <double>9999.000000000000000</double>
+          </property>
+         </widget>
+        </item>
+        <item row="15" column="0" colspan="6">
+         <widget class="Line" name="line_3">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+         </widget>
+        </item>
+        <item row="5" column="3" colspan="3">
+         <widget class="QDoubleSpinBox" name="h_bottom_sb">
+          <property name="maximum">
+           <double>9999.000000000000000</double>
+          </property>
+         </widget>
+        </item>
+        <item row="14" column="0">
+         <spacer name="horizontalSpacer_8">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>40</width>
+            <height>20</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+        <item row="1" column="0">
+         <widget class="QLabel" name="label_2">
+          <property name="text">
+           <string>Dam Area Shapefile</string>
           </property>
          </widget>
         </item>
@@ -161,68 +96,8 @@
           </property>
          </spacer>
         </item>
-        <item row="10" column="0">
-         <spacer name="horizontalSpacer_4">
-          <property name="orientation">
-           <enum>Qt::Horizontal</enum>
-          </property>
-          <property name="sizeHint" stdset="0">
-           <size>
-            <width>40</width>
-            <height>20</height>
-           </size>
-          </property>
-         </spacer>
-        </item>
-        <item row="4" column="3" colspan="3">
-         <widget class="QDoubleSpinBox" name="h_top_sb">
-          <property name="maximum">
-           <double>9999.000000000000000</double>
-          </property>
-         </widget>
-        </item>
         <item row="1" column="1" colspan="2">
          <spacer name="horizontalSpacer">
-          <property name="orientation">
-           <enum>Qt::Horizontal</enum>
-          </property>
-          <property name="sizeHint" stdset="0">
-           <size>
-            <width>40</width>
-            <height>20</height>
-           </size>
-          </property>
-         </spacer>
-        </item>
-        <item row="0" column="0">
-         <widget class="QLabel" name="label">
-          <property name="text">
-           <string>Input Raster</string>
-          </property>
-         </widget>
-        </item>
-        <item row="12" column="1">
-         <widget class="QPushButton" name="remove_dam_btn">
-          <property name="enabled">
-           <bool>false</bool>
-          </property>
-          <property name="text">
-           <string>Remove Dam</string>
-          </property>
-         </widget>
-        </item>
-        <item row="1" column="0">
-         <widget class="QLabel" name="label_2">
-          <property name="text">
-           <string>Dam Area Shapefile</string>
-          </property>
-         </widget>
-        </item>
-        <item row="0" column="1" colspan="5">
-         <widget class="QComboBox" name="srcRasterCbo"/>
-        </item>
-        <item row="2" column="0">
-         <spacer name="horizontalSpacer_7">
           <property name="orientation">
            <enum>Qt::Horizontal</enum>
           </property>
@@ -241,19 +116,38 @@
           </property>
          </widget>
         </item>
-        <item row="10" column="1" colspan="5">
-         <widget class="QComboBox" name="channel_cbo">
-          <property name="enabled">
-           <bool>false</bool>
+        <item row="1" column="4">
+         <widget class="QToolButton" name="save_changes_dam_btn">
+          <property name="toolTip">
+           <string>Save dam area</string>
+          </property>
+          <property name="text">
+           <string>...</string>
+          </property>
+          <property name="icon">
+           <iconset>
+            <normaloff>../img/mActionSaveAllEdits.svg</normaloff>../img/mActionSaveAllEdits.svg</iconset>
+          </property>
+          <property name="iconSize">
+           <size>
+            <width>24</width>
+            <height>24</height>
+           </size>
           </property>
          </widget>
         </item>
-        <item row="7" column="1">
-         <widget class="QPushButton" name="estimate_btn">
-          <property name="text">
-           <string>Estimate reservoir</string>
+        <item row="7" column="0">
+         <spacer name="horizontalSpacer_10">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
           </property>
-         </widget>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>40</width>
+            <height>20</height>
+           </size>
+          </property>
+         </spacer>
         </item>
         <item row="1" column="3">
          <widget class="QToolButton" name="dam_area_tool_btn">
@@ -285,13 +179,126 @@
           </property>
          </widget>
         </item>
-        <item row="9" column="0">
-         <widget class="QLabel" name="label_3">
+        <item row="9" column="1" colspan="2">
+         <spacer name="horizontalSpacer_3">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>40</width>
+            <height>20</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+        <item row="4" column="1" colspan="2">
+         <spacer name="horizontalSpacer_5">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>40</width>
+            <height>20</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+        <item row="9" column="4">
+         <widget class="QToolButton" name="save_changes_channel_btn">
+          <property name="enabled">
+           <bool>false</bool>
+          </property>
+          <property name="toolTip">
+           <string>Save channel</string>
+          </property>
+          <property name="text">
+           <string>...</string>
+          </property>
+          <property name="icon">
+           <iconset>
+            <normaloff>../img/mActionSaveAllEdits.svg</normaloff>../img/mActionSaveAllEdits.svg</iconset>
+          </property>
+          <property name="iconSize">
+           <size>
+            <width>24</width>
+            <height>24</height>
+           </size>
+          </property>
+         </widget>
+        </item>
+        <item row="6" column="1">
+         <spacer name="horizontalSpacer_12">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>40</width>
+            <height>20</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+        <item row="11" column="0" colspan="6">
+         <widget class="Line" name="line_2">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+         </widget>
+        </item>
+        <item row="5" column="0">
+         <widget class="QLabel" name="label_6">
+          <property name="text">
+           <string>Dam invert elevation</string>
+          </property>
+         </widget>
+        </item>
+        <item row="4" column="0">
+         <widget class="QLabel" name="label_5">
+          <property name="text">
+           <string>Dam elevation</string>
+          </property>
+         </widget>
+        </item>
+        <item row="10" column="0">
+         <spacer name="horizontalSpacer_4">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>40</width>
+            <height>20</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+        <item row="13" column="0">
+         <widget class="QLabel" name="label">
           <property name="enabled">
            <bool>false</bool>
           </property>
           <property name="text">
-           <string>Channel Shapefile</string>
+           <string>Input Raster</string>
+          </property>
+         </widget>
+        </item>
+        <item row="7" column="1">
+         <widget class="QPushButton" name="estimate_btn">
+          <property name="text">
+           <string>Estimate reservoir</string>
+          </property>
+         </widget>
+        </item>
+        <item row="14" column="1">
+         <widget class="QPushButton" name="remove_dam_btn">
+          <property name="enabled">
+           <bool>false</bool>
+          </property>
+          <property name="text">
+           <string>Remove Dam</string>
           </property>
          </widget>
         </item>
@@ -307,6 +314,46 @@
            </size>
           </property>
          </spacer>
+        </item>
+        <item row="3" column="3" colspan="3">
+         <widget class="QDoubleSpinBox" name="side_slope_sb">
+          <property name="maximum">
+           <double>9999.000000000000000</double>
+          </property>
+         </widget>
+        </item>
+        <item row="9" column="5">
+         <widget class="QToolButton" name="delete_channel_btn">
+          <property name="enabled">
+           <bool>false</bool>
+          </property>
+          <property name="toolTip">
+           <string>Delete current</string>
+          </property>
+          <property name="text">
+           <string>...</string>
+          </property>
+          <property name="icon">
+           <iconset>
+            <normaloff>../img/mActionDeleteSelected.svg</normaloff>../img/mActionDeleteSelected.svg</iconset>
+          </property>
+          <property name="iconSize">
+           <size>
+            <width>24</width>
+            <height>24</height>
+           </size>
+          </property>
+         </widget>
+        </item>
+        <item row="6" column="3" colspan="3">
+         <widget class="QSpinBox" name="intervals_sb">
+          <property name="minimum">
+           <number>1</number>
+          </property>
+          <property name="value">
+           <number>10</number>
+          </property>
+         </widget>
         </item>
         <item row="9" column="3">
          <widget class="QToolButton" name="channel_tool_btn">
@@ -347,43 +394,10 @@
           </property>
          </spacer>
         </item>
-        <item row="7" column="0">
-         <spacer name="horizontalSpacer_10">
-          <property name="orientation">
-           <enum>Qt::Horizontal</enum>
-          </property>
-          <property name="sizeHint" stdset="0">
-           <size>
-            <width>40</width>
-            <height>20</height>
-           </size>
-          </property>
-         </spacer>
-        </item>
-        <item row="5" column="3" colspan="3">
-         <widget class="QDoubleSpinBox" name="h_bottom_sb">
-          <property name="maximum">
-           <double>9999.000000000000000</double>
-          </property>
-         </widget>
-        </item>
-        <item row="1" column="4">
-         <widget class="QToolButton" name="save_changes_dam_btn">
-          <property name="toolTip">
-           <string>Save dam area</string>
-          </property>
-          <property name="text">
-           <string>...</string>
-          </property>
-          <property name="icon">
-           <iconset>
-            <normaloff>../img/mActionSaveAllEdits.svg</normaloff>../img/mActionSaveAllEdits.svg</iconset>
-          </property>
-          <property name="iconSize">
-           <size>
-            <width>24</width>
-            <height>24</height>
-           </size>
+        <item row="10" column="1" colspan="5">
+         <widget class="QComboBox" name="channel_cbo">
+          <property name="enabled">
+           <bool>false</bool>
           </property>
          </widget>
         </item>
@@ -394,15 +408,31 @@
           </property>
          </widget>
         </item>
-        <item row="5" column="0">
-         <widget class="QLabel" name="label_6">
+        <item row="1" column="5">
+         <widget class="QToolButton" name="delete_dam_btn">
+          <property name="toolTip">
+           <string>Delete current dam area</string>
+          </property>
           <property name="text">
-           <string>Dam invert elevation</string>
+           <string>...</string>
+          </property>
+          <property name="icon">
+           <iconset>
+            <normaloff>../img/mActionDeleteSelected.svg</normaloff>../img/mActionDeleteSelected.svg</iconset>
+          </property>
+          <property name="iconSize">
+           <size>
+            <width>24</width>
+            <height>24</height>
+           </size>
           </property>
          </widget>
         </item>
-        <item row="12" column="0">
-         <spacer name="horizontalSpacer_8">
+        <item row="16" column="0" colspan="6">
+         <widget class="QTextEdit" name="results_te"/>
+        </item>
+        <item row="14" column="2" colspan="4">
+         <spacer name="horizontalSpacer_9">
           <property name="orientation">
            <enum>Qt::Horizontal</enum>
           </property>
@@ -414,33 +444,20 @@
           </property>
          </spacer>
         </item>
-        <item row="6" column="0">
-         <widget class="QLabel" name="label_7">
+        <item row="9" column="0">
+         <widget class="QLabel" name="label_3">
+          <property name="enabled">
+           <bool>false</bool>
+          </property>
           <property name="text">
-           <string>Intervals</string>
+           <string>Channel Shapefile</string>
           </property>
          </widget>
         </item>
-        <item row="6" column="1">
-         <spacer name="horizontalSpacer_12">
-          <property name="orientation">
-           <enum>Qt::Horizontal</enum>
-          </property>
-          <property name="sizeHint" stdset="0">
-           <size>
-            <width>40</width>
-            <height>20</height>
-           </size>
-          </property>
-         </spacer>
-        </item>
-        <item row="6" column="3" colspan="3">
-         <widget class="QSpinBox" name="intervals_sb">
-          <property name="minimum">
-           <number>1</number>
-          </property>
-          <property name="value">
-           <number>10</number>
+        <item row="13" column="1" colspan="5">
+         <widget class="QComboBox" name="srcRasterCbo">
+          <property name="enabled">
+           <bool>false</bool>
           </property>
          </widget>
         </item>
@@ -465,7 +482,6 @@
   </layout>
  </widget>
  <tabstops>
-  <tabstop>srcRasterCbo</tabstop>
   <tabstop>dam_area_tool_btn</tabstop>
   <tabstop>save_changes_dam_btn</tabstop>
   <tabstop>delete_dam_btn</tabstop>
