@@ -372,80 +372,6 @@
       <string>Tailings Stack</string>
      </property>
      <layout class="QGridLayout" name="gridLayout_2">
-      <item row="4" column="0">
-       <layout class="QHBoxLayout" name="horizontalLayout_5">
-        <item>
-         <widget class="QLabel" name="label_3">
-          <property name="enabled">
-           <bool>false</bool>
-          </property>
-          <property name="text">
-           <string>Tailings Elevation</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <spacer name="horizontalSpacer_3">
-          <property name="orientation">
-           <enum>Qt::Horizontal</enum>
-          </property>
-          <property name="sizeHint" stdset="0">
-           <size>
-            <width>40</width>
-            <height>20</height>
-           </size>
-          </property>
-         </spacer>
-        </item>
-        <item>
-         <widget class="QgsDoubleSpinBox" name="tailings_elev_sb">
-          <property name="enabled">
-           <bool>false</bool>
-          </property>
-          <property name="maximum">
-           <double>9999.000000000000000</double>
-          </property>
-         </widget>
-        </item>
-       </layout>
-      </item>
-      <item row="5" column="0">
-       <layout class="QHBoxLayout" name="horizontalLayout_6">
-        <item>
-         <widget class="QLabel" name="label_4">
-          <property name="enabled">
-           <bool>false</bool>
-          </property>
-          <property name="text">
-           <string>Water Surface Elevation</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <spacer name="horizontalSpacer_4">
-          <property name="orientation">
-           <enum>Qt::Horizontal</enum>
-          </property>
-          <property name="sizeHint" stdset="0">
-           <size>
-            <width>40</width>
-            <height>20</height>
-           </size>
-          </property>
-         </spacer>
-        </item>
-        <item>
-         <widget class="QgsDoubleSpinBox" name="wse_sb">
-          <property name="enabled">
-           <bool>false</bool>
-          </property>
-          <property name="maximum">
-           <double>9999.000000000000000</double>
-          </property>
-         </widget>
-        </item>
-       </layout>
-      </item>
       <item row="0" column="0">
        <layout class="QHBoxLayout" name="horizontalLayout_8">
         <item>
@@ -526,7 +452,28 @@
         </item>
        </layout>
       </item>
-      <item row="6" column="0">
+      <item row="1" column="0">
+       <layout class="QGridLayout" name="gridLayout_3">
+        <item row="0" column="0">
+         <widget class="QComboBox" name="tailings_cbo">
+          <property name="enabled">
+           <bool>false</bool>
+          </property>
+         </widget>
+        </item>
+        <item row="0" column="1">
+         <widget class="QCheckBox" name="user_polygon_cb">
+          <property name="layoutDirection">
+           <enum>Qt::LeftToRight</enum>
+          </property>
+          <property name="text">
+           <string>User polygon</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+      <item row="8" column="0">
        <layout class="QHBoxLayout" name="horizontalLayout_9">
         <item>
          <spacer name="horizontalSpacer_7">
@@ -566,22 +513,112 @@
         </item>
        </layout>
       </item>
-      <item row="1" column="0">
-       <layout class="QGridLayout" name="gridLayout_3">
-        <item row="0" column="0">
-         <widget class="QComboBox" name="tailings_cbo">
+      <item row="5" column="0">
+       <layout class="QHBoxLayout" name="horizontalLayout_6">
+        <item>
+         <widget class="QLabel" name="label_4">
           <property name="enabled">
            <bool>false</bool>
           </property>
+          <property name="text">
+           <string>Water Surface Elevation</string>
+          </property>
          </widget>
         </item>
-        <item row="0" column="1">
-         <widget class="QCheckBox" name="user_polygon_cb">
-          <property name="layoutDirection">
-           <enum>Qt::LeftToRight</enum>
+        <item>
+         <spacer name="horizontalSpacer_4">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>40</width>
+            <height>20</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+        <item>
+         <widget class="QgsDoubleSpinBox" name="wse_sb">
+          <property name="enabled">
+           <bool>false</bool>
+          </property>
+          <property name="maximum">
+           <double>9999.000000000000000</double>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+      <item row="4" column="0">
+       <layout class="QHBoxLayout" name="horizontalLayout_5">
+        <item>
+         <widget class="QLabel" name="label_3">
+          <property name="enabled">
+           <bool>false</bool>
           </property>
           <property name="text">
-           <string>User polygon</string>
+           <string>Tailings Elevation</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <spacer name="horizontalSpacer_3">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>40</width>
+            <height>20</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+        <item>
+         <widget class="QgsDoubleSpinBox" name="tailings_elev_sb">
+          <property name="enabled">
+           <bool>false</bool>
+          </property>
+          <property name="maximum">
+           <double>9999.000000000000000</double>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+      <item row="6" column="0">
+       <layout class="QHBoxLayout" name="horizontalLayout_10">
+        <item>
+         <widget class="QLabel" name="label_5">
+          <property name="enabled">
+           <bool>false</bool>
+          </property>
+          <property name="text">
+           <string>Concentration</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <spacer name="horizontalSpacer_9">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>40</width>
+            <height>20</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+        <item>
+         <widget class="QgsDoubleSpinBox" name="concentration_sb">
+          <property name="enabled">
+           <bool>false</bool>
+          </property>
+          <property name="maximum">
+           <double>150.000000000000000</double>
           </property>
          </widget>
         </item>
@@ -599,6 +636,29 @@
    <header>qgsdoublespinbox.h</header>
   </customwidget>
  </customwidgets>
+ <tabstops>
+  <tabstop>add_user_res_btn</tabstop>
+  <tabstop>save_changes_btn</tabstop>
+  <tabstop>revert_changes_btn</tabstop>
+  <tabstop>delete_res_btn</tabstop>
+  <tabstop>schem_res_btn</tabstop>
+  <tabstop>center_res_chbox</tabstop>
+  <tabstop>res_cbo</tabstop>
+  <tabstop>rename_res_btn</tabstop>
+  <tabstop>res_ini_sbox</tabstop>
+  <tabstop>center_seg_chbox</tabstop>
+  <tabstop>chan_seg_cbo</tabstop>
+  <tabstop>seg_ini_sbox</tabstop>
+  <tabstop>add_tailings_btn</tabstop>
+  <tabstop>save_tailings_btn</tabstop>
+  <tabstop>delete_tailings_btn</tabstop>
+  <tabstop>tailings_cbo</tabstop>
+  <tabstop>user_polygon_cb</tabstop>
+  <tabstop>tailings_elev_sb</tabstop>
+  <tabstop>wse_sb</tabstop>
+  <tabstop>concentration_sb</tabstop>
+  <tabstop>export_tailings_btn</tabstop>
+ </tabstops>
  <resources/>
  <connections/>
 </ui>

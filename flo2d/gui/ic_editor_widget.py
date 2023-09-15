@@ -2,7 +2,7 @@
 import csv
 
 from PyQt5.QtCore import QVariant
-from PyQt5.QtWidgets import QFileDialog
+from PyQt5.QtWidgets import QFileDialog, QProgressDialog, QApplication
 from qgis._core import QgsVectorLayer, QgsProject, QgsField, QgsExpression, QgsExpressionContext, \
     QgsExpressionContextUtils, QgsWkbTypes
 # FLO-2D Preprocessor tools for QGIS
@@ -261,8 +261,10 @@ class ICEditorWidget(qtBaseClass, uiDialog):
         self.tailings_elev_sb.setEnabled(True)
         self.wse_sb.setEnabled(True)
         self.export_tailings_btn.setEnabled(True)
+        self.concentration_sb.setEnabled(True)
         self.label_3.setEnabled(True)
         self.label_4.setEnabled(True)
+        self.label_5.setEnabled(True)
 
     def delete_tailings(self):
         """
@@ -289,8 +291,10 @@ class ICEditorWidget(qtBaseClass, uiDialog):
         self.tailings_elev_sb.setEnabled(False)
         self.wse_sb.setEnabled(False)
         self.export_tailings_btn.setEnabled(False)
+        self.concentration_sb.setEnabled(False)
         self.label_3.setEnabled(False)
         self.label_4.setEnabled(False)
+        self.label_5.setEnabled(False)
         self.tailings_cbo.setEnabled(False)
 
         # set the spin box to zero
@@ -311,6 +315,8 @@ class ICEditorWidget(qtBaseClass, uiDialog):
             self.tailings_elev_sb.setEnabled(True)
             self.wse_sb.setEnabled(True)
             self.export_tailings_btn.setEnabled(True)
+            self.concentration_sb.setEnabled(True)
+            self.label_5.setEnabled(True)
             self.label_3.setEnabled(True)
             self.label_4.setEnabled(True)
             self.tailings_cbo.setEnabled(True)
@@ -322,6 +328,8 @@ class ICEditorWidget(qtBaseClass, uiDialog):
             self.tailings_elev_sb.setEnabled(False)
             self.wse_sb.setEnabled(False)
             self.export_tailings_btn.setEnabled(False)
+            self.concentration_sb.setEnabled(False)
+            self.label_5.setEnabled(False)
             self.label_3.setEnabled(False)
             self.label_4.setEnabled(False)
             self.tailings_cbo.setEnabled(False)
@@ -335,6 +343,7 @@ class ICEditorWidget(qtBaseClass, uiDialog):
         """
         tailings_elevation = self.tailings_elev_sb.value()
         wse = self.wse_sb.value()
+        cv = self.concentration_sb.value()
 
         # check the elevations
         if wse != 0 and tailings_elevation > wse:
@@ -348,19 +357,47 @@ class ICEditorWidget(qtBaseClass, uiDialog):
 
         if file_dialog.exec_():
             folder_path = file_dialog.selectedFiles()[0]
-            export_file_path = f"{folder_path}/TAILINGS_STACK_DEPTH.DAT"
+            export_tsd_path = f"{folder_path}/TAILINGS_STACK_DEPTH.DAT"
+            export_t_path = f"{folder_path}/TAILINGS.DAT"
+            export_tcv_path = f"{folder_path}/TAILINGS_CV.DAT"
+
+            pd = QProgressDialog("Processing Tailings files...", None, 0, 3)
+            pd.setModal(True)
+            pd.setValue(0)
+            pd.show()
+            QApplication.processEvents()
+
             exported_data = self.create_tailings_table(tailings_elevation, wse)
 
-            max_id_length = max(len(str(row[0])) for row in exported_data)
+            pd.setLabelText("Exporting TAILINGS_STACK_DEPTH.DAT...")
+            pd.setValue(1)
 
-            num_spaces_before_id = (11 - max_id_length) // 2
-            num_spaces_after_id = 11 - max_id_length - num_spaces_before_id
-
-            with open(export_file_path, 'w') as txt_file:
+            with open(export_tsd_path, 'w') as txt_file:
                 for row in exported_data:
-                    id_value = str(row[0]).rjust(num_spaces_before_id + max_id_length + num_spaces_after_id)
+                    id_value = str(row[0]).rjust(10)
                     formatted_values = [f"{value:.3f}".rjust(10) for value in row[1:]]
                     line = f"{id_value}{' '.join(formatted_values)}"
+                    txt_file.write(line + '\n')
+
+            pd.setLabelText("Exporting TAILINGS.DAT...")
+            pd.setValue(2)
+
+            with open(export_t_path, 'w') as txt_file:
+                for row in exported_data:
+                    id_value = str(row[0]).rjust(10)
+                    formatted_values = [f"{row[2]:.3f}".rjust(10)]
+                    line = f"{id_value}{' '.join(formatted_values)}"
+                    txt_file.write(line + '\n')
+
+            pd.setLabelText("Exporting TAILINGS_CV.DAT...")
+            pd.setValue(3)
+
+            with open(export_tcv_path, 'w') as txt_file:
+                for row in exported_data:
+                    id_value = str(row[0]).rjust(10)
+                    formatted_values = [f"{row[2]:.3f}".rjust(10)]
+                    formatted_cv = f"{cv:.3f}".rjust(10)
+                    line = f"{id_value}{' '.join(formatted_values)}{formatted_cv}"
                     txt_file.write(line + '\n')
 
             self.uc.show_info("Export complete!")
