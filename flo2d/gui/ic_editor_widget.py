@@ -357,11 +357,8 @@ class ICEditorWidget(qtBaseClass, uiDialog):
 
         if file_dialog.exec_():
             folder_path = file_dialog.selectedFiles()[0]
-            export_tsd_path = f"{folder_path}/TAILINGS_STACK_DEPTH.DAT"
-            export_t_path = f"{folder_path}/TAILINGS.DAT"
-            export_tcv_path = f"{folder_path}/TAILINGS_CV.DAT"
 
-            pd = QProgressDialog("Processing Tailings files...", None, 0, 3)
+            pd = QProgressDialog("Processing Tailings files...", None, 0, 1)
             pd.setModal(True)
             pd.setValue(0)
             pd.show()
@@ -369,36 +366,40 @@ class ICEditorWidget(qtBaseClass, uiDialog):
 
             exported_data = self.create_tailings_table(tailings_elevation, wse)
 
-            pd.setLabelText("Exporting TAILINGS_STACK_DEPTH.DAT...")
             pd.setValue(1)
 
-            with open(export_tsd_path, 'w') as txt_file:
-                for row in exported_data:
-                    id_value = str(row[0]).rjust(10)
-                    formatted_values = [f"{value:.3f}".rjust(10) for value in row[1:]]
-                    line = f"{id_value}{' '.join(formatted_values)}"
-                    txt_file.write(line + '\n')
+            # Two-phase
+            if wse != 0:
+                export_tsd_path = f"{folder_path}/TAILINGS_STACK_DEPTH.DAT"
+                with open(export_tsd_path, 'w') as txt_file:
+                    for row in exported_data:
+                        id_value = str(row[0]).rjust(10)
+                        formatted_values = [f"{value:.3f}".rjust(10) for value in row[1:]]
+                        line = f"{id_value}{' '.join(formatted_values)}"
+                        txt_file.write(line + '\n')
 
-            pd.setLabelText("Exporting TAILINGS.DAT...")
-            pd.setValue(2)
+            # pd.setValue(2)
+            # export_t_path = f"{folder_path}/TAILINGS.DAT"
+            # with open(export_t_path, 'w') as txt_file:
+            #     for row in exported_data:
+            #         id_value = str(row[0]).rjust(10)
+            #         formatted_values = [f"{row[2]:.3f}".rjust(10)]
+            #         line = f"{id_value}{' '.join(formatted_values)}"
+            #         txt_file.write(line + '\n')
 
-            with open(export_t_path, 'w') as txt_file:
-                for row in exported_data:
-                    id_value = str(row[0]).rjust(10)
-                    formatted_values = [f"{row[2]:.3f}".rjust(10)]
-                    line = f"{id_value}{' '.join(formatted_values)}"
-                    txt_file.write(line + '\n')
-
-            pd.setLabelText("Exporting TAILINGS_CV.DAT...")
-            pd.setValue(3)
-
-            with open(export_tcv_path, 'w') as txt_file:
-                for row in exported_data:
-                    id_value = str(row[0]).rjust(10)
-                    formatted_values = [f"{row[2]:.3f}".rjust(10)]
-                    formatted_cv = f"{cv:.3f}".rjust(10)
-                    line = f"{id_value}{' '.join(formatted_values)}{formatted_cv}"
-                    txt_file.write(line + '\n')
+            else:
+                if cv == 0:
+                    self.uc.show_warn("For dry stack, concentration must be defined.")
+                    return
+                else:
+                    export_tcv_path = f"{folder_path}/TAILINGS_CV.DAT"
+                    with open(export_tcv_path, 'w') as txt_file:
+                        for row in exported_data:
+                            id_value = str(row[0]).rjust(10)
+                            formatted_values = [f"{row[2]:.3f}".rjust(10)]
+                            formatted_cv = f"{cv:.3f}".rjust(10)
+                            line = f"{id_value}{' '.join(formatted_values)}{formatted_cv}"
+                            txt_file.write(line + '\n')
 
             self.uc.show_info("Export complete!")
             if self.uc.question(f"Would you like to remove the intermediate calculation shapefiles?"):
