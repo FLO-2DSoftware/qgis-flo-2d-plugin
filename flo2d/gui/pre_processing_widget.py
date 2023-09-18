@@ -14,7 +14,7 @@ from PyQt5.QtWidgets import QFileDialog
 
 from ..user_communication import UserCommunication
 from .ui_utils import load_ui
-from qgis._core import QgsProject, QgsVectorLayer, QgsField, QgsRasterLayer
+from qgis._core import QgsProject, QgsVectorLayer, QgsField, QgsRasterLayer, QgsUnitTypes
 
 uiDialog, qtBaseClass = load_ui("pre_processing_widget")
 
@@ -233,7 +233,7 @@ class PreProcessingWidget(qtBaseClass, uiDialog):
 
         elevations.append(h_top)
 
-        self.create_reservoir(distances, elevations, i)
+        self.create_reservoir(distances, elevations)
 
         # enable the buttons
         self.channel_tool_btn.setEnabled(True)
@@ -241,7 +241,7 @@ class PreProcessingWidget(qtBaseClass, uiDialog):
         self.delete_channel_btn.setEnabled(True)
         self.label_3.setEnabled(True)
 
-    def create_reservoir(self, distances, elevations, i):
+    def create_reservoir(self, distances, elevations):
         """
         Function to create the reservoir
         """
@@ -355,7 +355,18 @@ class PreProcessingWidget(qtBaseClass, uiDialog):
                                                               'METHOD': 1,
                                                               'OUTPUT_TABLE': 'TEMPORARY_OUTPUT'})
 
-        formatted_output = f"{'='*30}\nArea (km²): {round(table['AREA']/1000000, 2)}\nVolume (M m³): {round(table['VOLUME']/1000000, 2)}\n{'='*30}"
+        if QgsProject.instance().crs().mapUnits() == QgsUnitTypes.DistanceMeters:
+            area_unit = "km²"
+            volume_unit = "M m³"
+            area_conversion = 1000000
+            volume_conversion = 1000000
+        else:
+            area_unit = "acres"
+            volume_unit = "acre-foot"
+            area_conversion = 4047
+            volume_conversion = 43560
+
+        formatted_output = f"{'='*30}\nArea ({area_unit}): {round(table['AREA']/area_conversion, 2)}\nVolume ({volume_unit}): {round(table['VOLUME']/volume_conversion, 2)}\n{'='*30}"
         self.results_te.setText(formatted_output)
 
         # merge raster
