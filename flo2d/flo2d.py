@@ -105,6 +105,7 @@ from .user_communication import UserCommunication
 
 global GRID_INFO, GENERAL_INFO
 
+
 @contextmanager
 def cd(newdir):
     prevdir = os.getcwd()
@@ -231,17 +232,17 @@ class Flo2D(object):
         self.f2d_widget.multiple_channels_editor.setup_connection()
 
     def add_action(
-        self,
-        icon_path,
-        text,
-        callback,
-        enabled_flag=True,
-        add_to_menu=True,
-        add_to_toolbar=True,
-        status_tip=None,
-        whats_this=None,
-        parent=None,
-        menu=None,
+            self,
+            icon_path,
+            text,
+            callback,
+            enabled_flag=True,
+            add_to_menu=True,
+            add_to_toolbar=True,
+            status_tip=None,
+            whats_this=None,
+            parent=None,
+            menu=None,
     ):
         icon = QIcon(icon_path)
         action = QAction(icon, text, parent)
@@ -326,12 +327,17 @@ class Flo2D(object):
                 (
                     os.path.join(self.plugin_dir, "img/mapper2.svg"),
                     "Run Mapper",
-                    self.run_mapper2,
+                    self.run_mapper,
                 ),
                 (
                     os.path.join(self.plugin_dir, "img/tailings dam breach.svg"),
                     "Run Tailings Dam Tool ",
                     self.run_tailingsdambreach,
+                ),
+                (
+                    os.path.join(self.plugin_dir, "img/settings2.svg"),
+                    "Run Settings",
+                    self.run_settings,
                 )
             ),
         )
@@ -416,11 +422,12 @@ class Flo2D(object):
         self.add_action(
             os.path.join(self.plugin_dir, "img/profile_tool.svg"),
             text=self.tr("Channel Profile"),
-            callback=self.channel_profile,  # Connects to 'init_channel_profile' method, via QAction triggered.connect(callback)
+            callback=self.channel_profile,
+            # Connects to 'init_channel_profile' method, via QAction triggered.connect(callback)
             parent=self.iface.mainWindow(),
         )
 
-        GENERAL_INFO =self.add_action(
+        GENERAL_INFO = self.add_action(
             os.path.join(self.plugin_dir, "img/info_tool.svg"),
             text=self.tr("Info Tool"),
             callback=self.activate_general_info_tool,
@@ -436,7 +443,7 @@ class Flo2D(object):
                     "Select .RPT file",
                     self.select_RPT_File,
                 ),
-            ),      
+            ),
         )
 
         GRID_INFO = self.add_action(
@@ -732,204 +739,71 @@ class Flo2D(object):
             s.setValue("FLO-2D/last_flopro_project", os.path.dirname(gpkg_path))
             s.setValue("FLO-2D/lastGdsDir", os.path.dirname(gpkg_path))
 
-    def run_flopro(self):
+    def run_settings(self):
+        """
+        Function to set the run settings: FLO-2D and Project folders
+        """
+        dlg = ExternalProgramFLO2D(self.iface, "Run Settings")
+        dlg.debug_run_btn.setVisible(False)
+        dlg.exec_folder_lbl.setText("FLO-2D Folder")
+        ok = dlg.exec_()
+        if not ok:
+            return
+        flo2d_dir, project_dir = dlg.get_parameters()
         s = QSettings()
-        # model = s.value("FLO-2D/last_flopro", "") + "/FLOPROCore"
-        model = r"C:\Program Files (x86)\FLO-2D PRO\RunFLO-2D.exe"
-        if os.path.isfile(model):
-            last_dir = s.value("FLO-2D/lastGdsDir", "")
-            project = last_dir + "/CONT.DAT"
+        s.setValue("FLO-2D/lastGdsDir", project_dir)
+        s.setValue("FLO-2D/last_flopro", flo2d_dir)
 
-            with cd(last_dir):
-                result = Popen(
-                    model,
-                    shell=True,
-                    stdin=open(os.devnull),
-                    stdout=PIPE,
-                    stderr=STDOUT,
-                    universal_newlines=True,
+        if project_dir != "" and flo2d_dir != "":
+            s.setValue("FLO-2D/run_settings", True)
+
+        self.uc.show_info("Run Settings Saved!")
+
+    def run_flopro(self):
+        """
+        Function to run FLO-2D Pro
+        """
+        s = QSettings()
+        # check if run was configured
+        if not s.contains("FLO-2D/run_settings"):
+            self.run_settings()
+        if s.value("FLO-2D/last_flopro") == "" or s.value("FLO-2D/lastGdsDir") == "":
+            self.run_settings()
+        model = s.value("FLO-2D/last_flopro") + "/FLOPRO.exe"
+        last_dir = s.value("FLO-2D/lastGdsDir")
+        project = last_dir + "/CONT.DAT"
+        if os.path.isfile(model):
+            if os.path.isfile(project):
+                with cd(last_dir):
+                    result = Popen(
+                        model,
+                        shell=True,
+                        stdin=open(os.devnull),
+                        stdout=PIPE,
+                        stderr=STDOUT,
+                        universal_newlines=True,
+                    )
+                    result.wait()
+                    result.kill()
+            else:
+                self.uc.show_warn(
+                    "CONT.DAT is not in directory\n\n"
+                    + f"{project}\n\n"
+                      f"Select the correct directory."
                 )
-                result.wait()
-                result.kill()
+                self.run_settings()
         else:
             self.uc.show_warn(
                 "WARNING 160623.1803: "
-                + "Program RunFLO-2D.exe is not in directory\n\n"
-                + r"C:\Program Files (x86)\FLO-2D PRO"
+                + "Program FLOPRO.exe is not in directory\n\n"
+                + f"{model}"
             )
         return
 
-        # model = "C:/TRACKS/FLOPROCore/FLOPROCore/bin/Debug/net6.0-windows/FLOPROCore.exe"
-
-        # result = Popen(
-        #     args=model,
-        #     bufsize=-1,
-        #     executable=None,
-        #     stdin=None,
-        #     stdout=None,
-        #     stderr=None,
-        #     preexec_fn=None,
-        #     close_fds=True,
-        #     shell=False,
-        #     cwd=None,
-        #     env=None,
-        #     universal_newlines=None,
-        #     startupinfo=None,
-        #     creationflags=0,
-        #     restore_signals=True,
-        #     start_new_session=False,
-        #     pass_fds=(),
-        #     group=None,
-        #     extra_groups=None,
-        #     user=None,
-        #     umask=-1,
-        #     encoding=None,
-        #     errors=None,
-        #     text=None,
-        # )
-
-        # dlg = ExternalProgramFLO2D(self.iface, "Run FLO-2D model")
-        # dlg.exec_folder_lbl.setText("FLO-2D Folder (of FLO-2D model executable)")
-        # ok = dlg.exec_()
-        # if not ok:
-        #     return
-        # flo2d_dir, project_dir = dlg.get_parameters()
-        # if sys.platform != "win32":
-        #     self.uc.bar_warn("Could not run simulation under current operation system!")
-        #     return
-        # try:
-        #     return_code = -9999
-        #     if os.path.isfile(flo2d_dir + r"\FLOPRO.exe"):
-        #         debugDAT = os.path.join(project_dir, "QGISDEBUG.DAT")
-        #         if os.path.exists(debugDAT):
-        #             os.remove(debugDAT)
-        #         simulation = FLOPROExecutor(self.iface, flo2d_dir, project_dir)
-        #         return_code = simulation.perform()
-        #         # if return_code != 0:
-        #         #     self.uc.show_warn(
-        #         #         "ERROR 190821.1120: FLO2D.EXE Model run failed!\n\n"
-        #         #         + "Program finished with return code " + str(return_code)
-        #         #     )
-        #         # else:
-        #         #     self.uc.show_info( "Model finished with return code "  + str(return_code))
-        #
-        #
-        #     else:
-        #         self.uc.show_warn("WARNING 180821.0841: Program FLO2D.exe is not in directory\n\n" + flo2d_dir)
-        # except Exception as e:
-        #     self.uc.log_info(repr(e))
-        #     self.uc.bar_warn("Running simulation failed!")
-
-        dlg = ExternalProgramFLO2D(self.iface, "Run FLO-2D model")
-        dlg.exec_folder_lbl.setText("FLO-2D Folder (of FLO-2D model executable)")
-        ok = dlg.exec_()
-        if not ok:
-            return
-        flo2d_dir, project_dir = dlg.get_parameters()
-        if sys.platform != "win32":
-            self.uc.bar_warn("Could not run simulation under current operation system!")
-            return
-        try:
-            if os.path.isfile(flo2d_dir + r"\FLOPRO.exe"):
-                debugDAT = os.path.join(project_dir, "QGISDEBUG.DAT")
-                if os.path.exists(debugDAT):
-                    os.remove(debugDAT)
-                simulation = FLOPROExecutor(self.iface, flo2d_dir, project_dir)
-                result = simulation.perform()
-
-                # if result != 0:
-                #     self.uc.show_warn(
-                #     "error 190821.1120: flo2d.exe model run failed!\n\n"
-                #     + "program finished with return code " + str(result))
-                # else:
-                #     self.uc.show_info( "model finished with return code "  + str(result))
-
-                # self.uc.show_info( "Model started asynchronously.\nYou can close QGIS or continue working with QGIS.")
-
-                # time.sleep(1)
-                # return_code = proc.poll()
-                # if return_code is None:
-                #     self.uc.show_info( "FLO-2D simulation is running")
-                # else:
-                #     self.uc.show_info( "FLO-2D simulation stopped!")
-
-            else:
-                self.uc.show_warn("WARNING 180821.0841: Program FLOPRO.exe is not in directory\n\n" + flo2d_dir)
-        except Exception as e:
-            self.uc.log_info(repr(e))
-            self.uc.bar_warn("Running simulation failed!")
-
     def run_tailingsdambreach(self):
-        dlg = ExternalProgramFLO2D(self.iface, "Run Tailings Dam Breach model")
-        dlg.debug_run_btn.setVisible(False)
-        dlg.exec_folder_lbl.setText("FLO-2D Folder (Tailings Dam Breach.exe)")
-        ok = dlg.exec_()
-        if not ok:
-            return
-        flo2d_dir, project_dir = dlg.get_parameters()
-
-        if sys.platform != "win32":
-            self.uc.bar_warn("Could not run Tailings Dam Breach program under current operation system!")
-            return
-        try:
-            QApplication.setOverrideCursor(Qt.WaitCursor)
-            if os.path.isfile(flo2d_dir + r"\Tailings Dam Breach.exe"):
-                tailings = TailingsDamBreachExecutor(flo2d_dir, project_dir)
-                return_code = tailings.perform()
-
-                # if return_code != 0:
-                #     QApplication.restoreOverrideCursor()
-                #     self.uc.show_warn(
-                #         "ERROR 240719.1601: Tailings Dam Breach failed!\n\n"
-                #         + "Program finished with return code "
-                #         + str(return_code)
-                #     )
-                # else:
-                #     QApplication.restoreOverrideCursor()
-                #     self.uc.show_info(
-                #         "Tailings Dam Tool has been closed.\n\n"
-                #         + "If a new INFLOW.DAT was created, import the data file into FLO-2D QGIS."
-                #     )
-
-                QApplication.restoreOverrideCursor()
-            else:
-                QApplication.restoreOverrideCursor()
-                self.uc.show_warn(
-                    "WARNING 240719.1607: Program Tailings Dam Breach.exe is not in directory\n\n" + flo2d_dir
-                )
-        except Exception as e:
-            QApplication.restoreOverrideCursor()
-
-            self.uc.show_error(
-                "ERROR 201019.0917: 'Tailings Dam Breach.exe failed!"
-                + "\n__________________________________________________",
-                e,
-            )
+        self.run_program("Tailings Dam Breach.exe")
 
     def run_mapper(self):
-        dlg = ExternalProgramFLO2D(self.iface, "Run Mapper")
-        dlg.debug_run_btn.setVisible(False)
-        dlg.exec_folder_lbl.setText("FLO-2D Folder (Mapper PRO.exe)")
-        ok = dlg.exec_()
-        if not ok:
-            return
-        flo2d_dir, project_dir = dlg.get_parameters()
-
-        if sys.platform != "win32":
-            self.uc.bar_warn("Could not run Mapper program under current operation system!")
-            return
-        try:
-            if os.path.isfile(flo2d_dir + r"\Mapper PRO.exe"):
-                mapper = MapperExecutor(flo2d_dir, project_dir)
-                mapper.perform()
-                self.uc.bar_info("Mapper started!", dur=3)
-            else:
-                self.uc.show_warn("WARNING 241020.0424: Program Mapper PRO.exe is not in directory\n\n" + flo2d_dir)
-        except Exception as e:
-            self.uc.log_info(repr(e))
-            self.uc.bar_warn("Running Mapper failed!")
-
-    def run_mapper2(self):
         self.run_program("Mapper PRO.exe")
 
     def run_profiles(self):
@@ -942,13 +816,17 @@ class Flo2D(object):
         self.run_program("MAXPLOT.exe")
 
     def run_program(self, exe_name):
-        dlg = ExternalProgramFLO2D(self.iface, exe_name)
-        dlg.debug_run_btn.setVisible(False)
-        dlg.exec_folder_lbl.setText("FLO-2D Folder (" + exe_name + ")")
-        ok = dlg.exec_()
-        if not ok:
-            return
-        flo2d_dir, project_dir = dlg.get_parameters()
+        """
+        Function to run programs
+        """
+        s = QSettings()
+        # check if run was configured
+        if not s.contains("FLO-2D/run_settings"):
+            self.run_settings()
+        if s.value("FLO-2D/last_flopro") == "" or s.value("FLO-2D/lastGdsDir") == "":
+            self.run_settings()
+        flo2d_dir = s.value("FLO-2D/last_flopro")
+        project_dir = s.value("FLO-2D/lastGdsDir")
 
         if sys.platform != "win32":
             self.uc.bar_warn("Could not run " + exe_name + " under current operation system!")
@@ -965,15 +843,15 @@ class Flo2D(object):
             self.uc.bar_warn("Running " + exe_name + " failed!")
 
     def select_RPT_File(self):
-        GRID_INFO.setChecked(False)  
+        GRID_INFO.setChecked(False)
         GENERAL_INFO.setChecked(False)
-        self.canvas.unsetMapTool(self.grid_info_tool)  
-        self.canvas.unsetMapTool(self.info_tool)       
+        self.canvas.unsetMapTool(self.grid_info_tool)
+        self.canvas.unsetMapTool(self.info_tool)
         grid = self.lyrs.data["grid"]["qlyr"]
-        if grid is not None:        
-            self.f2d_widget.storm_drain_editor.create_SD_discharge_table_and_plots("Just assign FLO-2D settings") 
+        if grid is not None:
+            self.f2d_widget.storm_drain_editor.create_SD_discharge_table_and_plots("Just assign FLO-2D settings")
         else:
-            self.uc.bar_warn("There is no grid layer to identify.")            
+            self.uc.bar_warn("There is no grid layer to identify.")
 
     def load_gpkg_from_proj(self):
         """
@@ -1016,10 +894,10 @@ class Flo2D(object):
                 window_title = s.value("FLO-2D/last_flopro_project", "")
                 self.iface.mainWindow().setWindowTitle(window_title)
                 QApplication.restoreOverrideCursor()
-                
-            GRID_INFO.setChecked(False)  
-            GENERAL_INFO.setChecked(False)   
-                          
+
+            GRID_INFO.setChecked(False)
+            GENERAL_INFO.setChecked(False)
+
     def call_IO_methods(self, calls, debug, *args):
         if self.f2g.parsed_format == Flo2dGeoPackage.FORMAT_DAT:
             self.call_IO_methods_dat(calls, debug, *args)
@@ -1414,7 +1292,7 @@ class Flo2D(object):
                         if os.path.isfile(dir_name + r"\SWMM.INP"):
                             # if self.f2d_widget.storm_drain_editor.import_storm_drain_INP_file("Choose"):
                             if self.f2d_widget.storm_drain_editor.import_storm_drain_INP_file(
-                                "Force import of SWMM.INP", False
+                                    "Force import of SWMM.INP", False
                             ):
                                 self.files_used += "SWMM.INP" + "\n"
                         else:
@@ -1927,7 +1805,7 @@ class Flo2D(object):
                             if os.path.isfile(outdir + r"\SWMM.INP"):
                                 # if self.f2d_widget.storm_drain_editor.import_storm_drain_INP_file("Choose"):
                                 if self.f2d_widget.storm_drain_editor.import_storm_drain_INP_file(
-                                    "Force import of SWMM.INP", True
+                                        "Force import of SWMM.INP", True
                                 ):
                                     self.files_used += "SWMM.INP" + "\n"
                             else:
@@ -2256,7 +2134,7 @@ class Flo2D(object):
 
                 if "export_swmmflort" in export_calls:
                     if not self.uc.question(
-                        "Did you schematize Storm Drains? Do you want to export Storm Drain files?"
+                            "Did you schematize Storm Drains? Do you want to export Storm Drain files?"
                     ):
                         export_calls.remove("export_swmmflo")
                         export_calls.remove("export_swmmflort")
@@ -2291,10 +2169,10 @@ class Flo2D(object):
                             self.files_used = new_files_used
                             if os.path.isfile(outdir + r"\SIMPLE_MULT.DAT"):
                                 if self.uc.question(
-                                    "There are no simple multiple channel cells in the project but\n"
-                                    + "there is a SIMPLE_MULT.DAT file in the directory.\n"
-                                    + "If the file is not deleted it will be used by the model.\n\n"
-                                    + "Delete SIMPLE_MULT.DAT?"
+                                        "There are no simple multiple channel cells in the project but\n"
+                                        + "there is a SIMPLE_MULT.DAT file in the directory.\n"
+                                        + "If the file is not deleted it will be used by the model.\n\n"
+                                        + "Delete SIMPLE_MULT.DAT?"
                                 ):
                                     os.remove(outdir + r"\SIMPLE_MULT.DAT")
 
@@ -2303,10 +2181,10 @@ class Flo2D(object):
                             self.files_used = new_files_used
                             if os.path.isfile(outdir + r"\MULT.DAT"):
                                 if self.uc.question(
-                                    "There are no multiple channel cells in the project but\n"
-                                    + "there is a MULT.DAT file in the directory.\n"
-                                    + "If the file is not deleted it will be used by the model.\n\n"
-                                    + "Delete MULT.DAT?"
+                                        "There are no multiple channel cells in the project but\n"
+                                        + "there is a MULT.DAT file in the directory.\n"
+                                        + "If the file is not deleted it will be used by the model.\n\n"
+                                        + "Delete MULT.DAT?"
                                 ):
                                     os.remove(outdir + r"\MULT.DAT")
 
@@ -2442,20 +2320,20 @@ class Flo2D(object):
         # self.canvas.unsetMapTool(self.info_tool)  
         # self.canvas.unsetMapTool(self.grid_info_tool)  
         grid = self.lyrs.data["grid"]["qlyr"]
-        if grid is not None:        
+        if grid is not None:
             self.f2d_grid_info_dock.setUserVisible(True)
             tool = self.canvas.mapTool()
-            if tool == self.info_tool:  
-                self.canvas.unsetMapTool(self.info_tool)  
+            if tool == self.info_tool:
+                self.canvas.unsetMapTool(self.info_tool)
             else:
                 if tool is not None:
                     self.canvas.unsetMapTool(tool)
-                self.canvas.setMapTool(self.info_tool) 
-                GRID_INFO.setChecked(False)  
-                GENERAL_INFO.setChecked(True)      
+                self.canvas.setMapTool(self.info_tool)
+                GRID_INFO.setChecked(False)
+                GENERAL_INFO.setChecked(True)
         else:
-            self.uc.bar_warn("Define a database connection first!") 
-            GENERAL_INFO.setChecked(False)        
+            self.uc.bar_warn("Define a database connection first!")
+            GENERAL_INFO.setChecked(False)
 
     @connection_required
     def activate_grid_info_tool(self):
@@ -2475,10 +2353,10 @@ class Flo2D(object):
                 self.f2d_grid_info.n_cells = number_of_elements(self.gutils, grid)
                 self.f2d_grid_info.gutils = self.gutils
                 self.canvas.setMapTool(self.grid_info_tool)
-                GENERAL_INFO.setChecked(False)  
+                GENERAL_INFO.setChecked(False)
         else:
             self.uc.bar_warn("There is no grid layer to identify.")
-            GRID_INFO.setChecked(False) 
+            GRID_INFO.setChecked(False)
 
     @connection_required
     def show_user_profile(self, fid=None):
@@ -2510,18 +2388,17 @@ class Flo2D(object):
         self.f2d_widget.struct_editor_grp.setCollapsed(False)
         self.f2d_widget.struct_editor.populate_structs(struct_fid=fid)
 
-
     @connection_required
     def show_sd_discharge(self, fid=None):
         """
         Show storm drain discharge for a given inlet node.
         """
         name, grid = self.gutils.execute("SELECT name, grid FROM user_swmm_nodes WHERE fid = ?", (fid,)).fetchone()
-        
+
         self.f2d_dock.setUserVisible(True)
-        self.f2d_widget.storm_drain_editor_grp.setCollapsed(False) 
+        self.f2d_widget.storm_drain_editor_grp.setCollapsed(False)
         self.f2d_widget.storm_drain_editor.create_SD_discharge_table_and_plots(name)
-          
+
     @connection_required
     def show_schem_xsec_info(self, fid=None):
         """
@@ -2602,10 +2479,10 @@ class Flo2D(object):
 
             starttime = time.time()
             for (
-                n_elements,
-                n_levee_directions,
-                n_fail_features,
-                ranger,
+                    n_elements,
+                    n_levee_directions,
+                    n_fail_features,
+                    ranger,
             ) in self.schematize_levees():
                 n_elements_total += n_elements
                 n_levee_directions_total += n_levee_directions
@@ -2671,14 +2548,14 @@ class Flo2D(object):
                         if i < 50:
                             if k <= 3:
                                 dletes += (
-                                    "{:<25}".format(
-                                        "{:>10}-{:1}({:2})".format(
-                                            str(levee[0]),
-                                            str(levee[1]),
-                                            dirID(levee[1]),
+                                        "{:<25}".format(
+                                            "{:>10}-{:1}({:2})".format(
+                                                str(levee[0]),
+                                                str(levee[1]),
+                                                dirID(levee[1]),
+                                            )
                                         )
-                                    )
-                                    + "\t"
+                                        + "\t"
                                 )
                             elif k == 4:
                                 dletes += "{:<25}".format(
@@ -2686,29 +2563,29 @@ class Flo2D(object):
                                 )
                             elif k > 4:
                                 dletes += (
-                                    "\n"
-                                    + "{:<25}".format(
-                                        "{:>10}-{:1}({:2})".format(
-                                            str(levee[0]),
-                                            str(levee[1]),
-                                            dirID(levee[1]),
-                                        )
+                                        "\n"
+                                        + "{:<25}".format(
+                                    "{:>10}-{:1}({:2})".format(
+                                        str(levee[0]),
+                                        str(levee[1]),
+                                        dirID(levee[1]),
                                     )
-                                    + "\t"
+                                )
+                                        + "\t"
                                 )
                                 k = 1
 
                         else:
                             if k <= 3:
                                 dletes += (
-                                    "{:<25}".format(
-                                        "{:>10}-{:1}({:2})".format(
-                                            str(levee[0]),
-                                            str(levee[1]),
-                                            dirID(levee[1]),
+                                        "{:<25}".format(
+                                            "{:>10}-{:1}({:2})".format(
+                                                str(levee[0]),
+                                                str(levee[1]),
+                                                dirID(levee[1]),
+                                            )
                                         )
-                                    )
-                                    + "\t"
+                                        + "\t"
                                 )
                             elif k == 4:
                                 dletes += "{:<25}".format(
@@ -2716,15 +2593,15 @@ class Flo2D(object):
                                 )
                             elif k > 4:
                                 dletes += (
-                                    "\n"
-                                    + "{:<25}".format(
-                                        "{:>10}-{:1}({:2})".format(
-                                            str(levee[0]),
-                                            str(levee[1]),
-                                            dirID(levee[1]),
-                                        )
+                                        "\n"
+                                        + "{:<25}".format(
+                                    "{:>10}-{:1}({:2})".format(
+                                        str(levee[0]),
+                                        str(levee[1]),
+                                        dirID(levee[1]),
                                     )
-                                    + "\t"
+                                )
+                                        + "\t"
                                 )
                                 k = 1
 
@@ -2837,16 +2714,16 @@ class Flo2D(object):
             values = levees.uniqueValues(idx)
             QApplication.restoreOverrideCursor()
             info = (
-                "Values assigned to the Schematic Levees layer!"
-                + "\n\nThere are now "
-                + str(len(values))
-                + " grid elements with levees,"
-                + "\nwith "
-                + str(n_levee_directions_total)
-                + " levee directions,"
-                + "\nof which, "
-                + str(n_fail_features_total)
-                + " have failure data."
+                    "Values assigned to the Schematic Levees layer!"
+                    + "\n\nThere are now "
+                    + str(len(values))
+                    + " grid elements with levees,"
+                    + "\nwith "
+                    + str(n_levee_directions_total)
+                    + " levee directions,"
+                    + "\nof which, "
+                    + str(n_fail_features_total)
+                    + " have failure data."
             )
             if n_fail_features_total > n_levee_directions_total:
                 info += "\n\n(WARNING 191219.1649: Please review the input User Levee Lines. There may be more than one line intersecting grid elements)"
@@ -2951,10 +2828,10 @@ class Flo2D(object):
             grid_lyr = self.lyrs.get_layer_by_name("Grid", group=self.lyrs.group).layer()
 
             for (
-                n_elements,
-                n_levee_directions,
-                n_fail_features,
-                regionReq,
+                    n_elements,
+                    n_levee_directions,
+                    n_fail_features,
+                    regionReq,
             ) in generate_schematic_levees(self.gutils, levee_lyr, grid_lyr):
                 yield (n_elements, n_levee_directions, n_fail_features, regionReq)
         except Exception as e:

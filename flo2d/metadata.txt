@@ -10,6 +10,8 @@ about=QGIS tools for FLO-2D
 
 changelog=
  <p>0.10.115
+  - Run FLO-2D Pro
+       - Fixed the issue of not starting correctly FLO-2D and other executables from QGIS
   - Grid Tools
        - Added a Progress bar to sampling roughness - centroid point cell
   - SCS Infiltration Editor
