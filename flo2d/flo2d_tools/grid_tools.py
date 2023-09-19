@@ -800,7 +800,7 @@ def poly2grid(grid, polygons, request, use_centroids, get_fid, get_grid_geom, th
     pd.forceShow()
     i = 0
     QApplication.processEvents()
-
+    
     for feat in polygon_features:
         fid = feat.id()
         geom = feat.geometry()
@@ -1308,8 +1308,6 @@ def evaluate_roughness(gutils, grid, roughness, column_name, method, reset=False
     Updating roughness values inside 'grid' table.
     """
     try:
-        # start_time = time.time()
-
         if reset is True:
             default = gutils.get_cont_par("MANNING")
             gutils.execute("UPDATE grid SET n_value=?;", (default,))
@@ -1323,12 +1321,6 @@ def evaluate_roughness(gutils, grid, roughness, column_name, method, reset=False
             gridArea = cellSize * cellSize
             if update_roughness(gutils, grid, roughness, column_name):
                 return True
-        #         manning_values = grid_roughness(grid, gridArea, roughness,column_name)
-        #         for gid, values in manning_values:
-        #             if values:
-        #                 manning = float(sum(ma * subarea for ma, subarea in values))
-        #                 manning =  "{0:.4}".format(manning)
-        #                 gutils.execute(qry,(manning, gid),)
         else:
             # Centroids
             gutils.con.executemany(
