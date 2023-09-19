@@ -16,6 +16,7 @@ import io
 import os
 import pstats
 import sys
+import threading
 import time
 import traceback
 from contextlib import contextmanager
@@ -757,48 +758,10 @@ class Flo2D(object):
         if project_dir != "" and flo2d_dir != "":
             s.setValue("FLO-2D/run_settings", True)
 
-        self.uc.show_info("Run Settings Saved!")
+        self.uc.show_info("Run Settings saved!")
 
     def run_flopro(self):
-        """
-        Function to run FLO-2D Pro
-        """
-        s = QSettings()
-        # check if run was configured
-        if not s.contains("FLO-2D/run_settings"):
-            self.run_settings()
-        if s.value("FLO-2D/last_flopro") == "" or s.value("FLO-2D/lastGdsDir") == "":
-            self.run_settings()
-        model = s.value("FLO-2D/last_flopro") + "/FLOPRO.exe"
-        last_dir = s.value("FLO-2D/lastGdsDir")
-        project = last_dir + "/CONT.DAT"
-        if os.path.isfile(model):
-            if os.path.isfile(project):
-                with cd(last_dir):
-                    result = Popen(
-                        model,
-                        shell=True,
-                        stdin=open(os.devnull),
-                        stdout=PIPE,
-                        stderr=STDOUT,
-                        universal_newlines=True,
-                    )
-                    result.wait()
-                    result.kill()
-            else:
-                self.uc.show_warn(
-                    "CONT.DAT is not in directory\n\n"
-                    + f"{project}\n\n"
-                      f"Select the correct directory."
-                )
-                self.run_settings()
-        else:
-            self.uc.show_warn(
-                "WARNING 160623.1803: "
-                + "Program FLOPRO.exe is not in directory\n\n"
-                + f"{model}"
-            )
-        return
+        self.run_program("FLOPRO.exe")
 
     def run_tailingsdambreach(self):
         self.run_program("Tailings Dam Breach.exe")
@@ -833,9 +796,13 @@ class Flo2D(object):
             return
         try:
             if os.path.isfile(flo2d_dir + "\\" + exe_name):
-                program = ProgramExecutor(flo2d_dir, project_dir, exe_name)
-                program.perform()
-                self.uc.bar_info(exe_name + " started!", dur=3)
+                if os.path.isfile(project_dir + "\\" + "CONT.DAT"):
+                    program = ProgramExecutor(flo2d_dir, project_dir, exe_name)
+                    program.perform()
+                    self.uc.bar_info(exe_name + " started!", dur=3)
+                else:
+                    self.uc.show_warn("CONT.DAT is not in directory:\n\n" + f"{project_dir}\n\n" + f"Select the correct directory.")
+                    self.run_settings()
             else:
                 self.uc.show_warn("WARNING 241020.0424: Program " + exe_name + " is not in directory\n\n" + flo2d_dir)
         except Exception as e:
