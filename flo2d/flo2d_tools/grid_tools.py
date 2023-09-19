@@ -794,14 +794,13 @@ def poly2grid(grid, polygons, request, use_centroids, get_fid, get_grid_geom, th
     allfeatures, index = spatial_centroids_index(grid) if use_centroids is True else spatial_index(grid)
     polygon_features = polygons.getFeatures() if request is None else polygons.getFeatures(request)
 
-    total_polygons = polygons.featureCount() if request is None else polygons.featureCount(request)
-    progress_dialog = QProgressDialog("Processing polygons. Please wait...", None, 0, total_polygons)
-    progress_dialog.setModal(True)
-    progress_dialog.setValue(0)
-    progress_dialog.show()
-    QApplication.processEvents()
-
+    pd = QProgressDialog("Assigning values...", None, 0, polygons.featureCount())
+    pd.setModal(True)
+    pd.setValue(0)
+    pd.forceShow()
     i = 0
+    QApplication.processEvents()
+    
     for feat in polygon_features:
         fid = feat.id()
         geom = feat.geometry()
@@ -825,11 +824,8 @@ def poly2grid(grid, polygons, request, use_centroids, get_fid, get_grid_geom, th
             values.append(gid)
             values = tuple(values)
             yield values
-
-        progress_dialog.setValue(i)
         i += 1
-        QApplication.processEvents()
-
+        pd.setValue(i)
 
 def poly2poly(base_polygons, polygons, request, area_percent, *columns):
     """
@@ -1141,6 +1137,12 @@ def raster2grid(grid, out_raster, request=None):
 
     features = grid.getFeatures() if request is None else grid.getFeatures(request)
 
+    pd = QProgressDialog("Probing raster...", None, 0, grid.featureCount())
+    pd.setModal(True)
+    pd.setValue(0)
+    pd.forceShow()
+    i = 0
+
     for feat in features:
         center = feat.geometry().centroid().asPoint()
         ident = probe_raster.dataProvider().identify(center, QgsRaster.IdentifyFormatValue)
@@ -1151,6 +1153,9 @@ def raster2grid(grid, out_raster, request=None):
             else:
                 val = None
             yield val, feat.id()
+        i += 1
+        pd.setValue(i)
+
 
 
 def rasters2centroids(vlayer, request, *raster_paths):
