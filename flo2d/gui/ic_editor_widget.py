@@ -1,5 +1,10 @@
 # -*- coding: utf-8 -*-
+import csv
 
+from PyQt5.QtCore import QVariant
+from PyQt5.QtWidgets import QFileDialog, QProgressDialog, QApplication
+from qgis._core import QgsVectorLayer, QgsProject, QgsField, QgsExpression, QgsExpressionContext, \
+    QgsExpressionContextUtils, QgsWkbTypes
 # FLO-2D Preprocessor tools for QGIS
 # Copyright © 2021 Lutra Consulting for FLO-2D
 
@@ -7,6 +12,8 @@
 # modify it under the terms of the GNU General Public License
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
+
+import processing
 
 from qgis.core import QgsFeatureRequest
 from qgis.PyQt.QtWidgets import QInputDialog
@@ -39,7 +46,7 @@ class ICEditorWidget(qtBaseClass, uiDialog):
         set_icon(self.schem_res_btn, "schematize_res.svg")
         set_icon(self.rename_res_btn, "change_name.svg")
 
-        # connections
+        # connections Reservoir
         self.add_user_res_btn.clicked.connect(self.create_user_res)
         self.save_changes_btn.clicked.connect(self.save_res_lyr_edits)
         self.revert_changes_btn.clicked.connect(self.revert_res_lyr_edits)
@@ -50,6 +57,16 @@ class ICEditorWidget(qtBaseClass, uiDialog):
         self.res_ini_sbox.editingFinished.connect(self.save_res)
         self.chan_seg_cbo.activated.connect(self.cur_seg_changed)
         self.seg_ini_sbox.editingFinished.connect(self.save_chan_seg)
+
+        # Tailings
+        self.tailings_layer = None
+
+        # connections Tailings
+        self.add_tailings_btn.clicked.connect(self.create_tailings)
+        self.save_tailings_btn.clicked.connect(self.save_tailings_edits)
+        self.delete_tailings_btn.clicked.connect(self.delete_tailings)
+        self.export_tailings_btn.clicked.connect(self.export_tailings)
+        self.user_polygon_cb.stateChanged.connect(self.populate_tailings_cbo)
 
     def populate_cbos(self, fid=None, show_last_edited=False):
         if not self.iface.f2d["con"]:
@@ -188,11 +205,11 @@ class ICEditorWidget(qtBaseClass, uiDialog):
             sch_rsvs = self.gutils.execute("SELECT Count(*) FROM reservoirs").fetchone()[0]
             if sch_rsvs > 0:
                 if self.uc.question(
-                    "There aren't any user reservoirs."
-                    + "\nBut there are "
-                    + str(sch_rsvs)
-                    + " schematic reservoirs."
-                    + "\n\nDo you want to delete them?"
+                        "There aren't any user reservoirs."
+                        + "\nBut there are "
+                        + str(sch_rsvs)
+                        + " schematic reservoirs."
+                        + "\n\nDo you want to delete them?"
                 ):
                     self.gutils.execute("DELETE FROM reservoirs;")
                     self.repaint_reservoirs()
@@ -220,3 +237,257 @@ class ICEditorWidget(qtBaseClass, uiDialog):
 
     def save_seg_init_depth(self):
         pass
+
+    def create_tailings(self):
+        """
+        Start editing the tailings shapefile
+        """
+        self.tailings_layer = QgsVectorLayer('Polygon', 'Tailings', "memory")
+        self.tailings_layer.setCrs(QgsProject.instance().crs())
+        QgsProject.instance().addMapLayers([self.tailings_layer])
+        self.iface.setActiveLayer(self.tailings_layer)
+        self.tailings_layer.startEditing()
+        self.iface.actionAddFeature().trigger()
+
+    def save_tailings_edits(self):
+        """
+        Save the tailings shapefile
+        """
+        self.tailings_layer.commitChanges()
+        self.tailings_cbo.clear()
+        self.tailings_cbo.addItem(self.tailings_layer.name(), self.tailings_layer.dataProvider().dataSourceUri())
+
+        # enable the elevations
+        self.tailings_elev_sb.setEnabled(True)
+        self.wse_sb.setEnabled(True)
+        self.export_tailings_btn.setEnabled(True)
+        self.concentration_sb.setEnabled(True)
+        self.label_3.setEnabled(True)
+        self.label_4.setEnabled(True)
+        self.label_5.setEnabled(True)
+
+    def delete_tailings(self):
+        """
+        Delete the tailings shapefile
+        """
+        if not self.tailings_cbo.count():
+            return
+        q = "Are you sure you want delete the current tailings?"
+        if not self.uc.question(q):
+            return
+
+        if self.tailings_layer is not None:
+            try:
+                layer_id = self.tailings_layer.id()
+                if QgsProject.instance().mapLayers().get(layer_id) is not None:
+                    QgsProject.instance().removeMapLayer(layer_id)
+            except Exception as e:
+                self.uc.show_warn(f"Error deleting tailings layer: {str(e)}")
+
+        self.tailings_cbo.clear()
+        self.iface.mapCanvas().refreshAllLayers()
+
+        # disable the buttons
+        self.tailings_elev_sb.setEnabled(False)
+        self.wse_sb.setEnabled(False)
+        self.export_tailings_btn.setEnabled(False)
+        self.concentration_sb.setEnabled(False)
+        self.label_3.setEnabled(False)
+        self.label_4.setEnabled(False)
+        self.label_5.setEnabled(False)
+        self.tailings_cbo.setEnabled(False)
+
+        # set the spin box to zero
+        self.tailings_elev_sb.setValue(0)
+        self.wse_sb.setValue(0)
+
+    def populate_tailings_cbo(self):
+        """
+        Function to populate the tailings cbo once the saving is finished
+        """
+        self.tailings_cbo.clear()
+        if self.user_polygon_cb.isChecked():
+            for layer_id, layer in QgsProject.instance().mapLayers().items():
+                if isinstance(layer, QgsVectorLayer) and layer.geometryType() == QgsWkbTypes.PolygonGeometry:
+                    self.tailings_cbo.addItem(layer.name())
+            self.tailings_cbo.setCurrentIndex(0)
+            self.tailings_cbo.setEnabled(True)
+            self.tailings_elev_sb.setEnabled(True)
+            self.wse_sb.setEnabled(True)
+            self.export_tailings_btn.setEnabled(True)
+            self.concentration_sb.setEnabled(True)
+            self.label_5.setEnabled(True)
+            self.label_3.setEnabled(True)
+            self.label_4.setEnabled(True)
+            self.tailings_cbo.setEnabled(True)
+            self.add_tailings_btn.setEnabled(False)
+            self.save_tailings_btn.setEnabled(False)
+            self.delete_tailings_btn.setEnabled(False)
+
+        else:
+            self.tailings_elev_sb.setEnabled(False)
+            self.wse_sb.setEnabled(False)
+            self.export_tailings_btn.setEnabled(False)
+            self.concentration_sb.setEnabled(False)
+            self.label_5.setEnabled(False)
+            self.label_3.setEnabled(False)
+            self.label_4.setEnabled(False)
+            self.tailings_cbo.setEnabled(False)
+            self.add_tailings_btn.setEnabled(True)
+            self.save_tailings_btn.setEnabled(True)
+            self.delete_tailings_btn.setEnabled(True)
+
+    def export_tailings(self):
+        """
+        Function to export the TAILINGS_STACK_DEPTH.DAT
+        """
+        tailings_elevation = self.tailings_elev_sb.value()
+        wse = self.wse_sb.value()
+        cv = self.concentration_sb.value()
+
+        # check the elevations
+        if wse != 0 and tailings_elevation > wse:
+            self.uc.show_warn("Water Surface Elevation should be greater than Tailings elevations. ")
+            return
+
+        file_dialog = QFileDialog()
+        file_dialog.setFileMode(QFileDialog.Directory)
+        file_dialog.setOption(QFileDialog.ShowDirsOnly, True)
+        file_dialog.setWindowTitle("Select export folder")
+
+        if file_dialog.exec_():
+            folder_path = file_dialog.selectedFiles()[0]
+
+            pd = QProgressDialog("Processing Tailings files...", None, 0, 1)
+            pd.setModal(True)
+            pd.setValue(0)
+            pd.show()
+            QApplication.processEvents()
+
+            exported_data = self.create_tailings_table(tailings_elevation, wse)
+
+            pd.setValue(1)
+
+            # Two-phase
+            if wse != 0:
+                export_tsd_path = f"{folder_path}/TAILINGS_STACK_DEPTH.DAT"
+                with open(export_tsd_path, 'w') as txt_file:
+                    for row in exported_data:
+                        id_value = str(row[0]).rjust(10)
+                        formatted_values = [f"{value:.3f}".rjust(10) for value in row[1:]]
+                        line = f"{id_value}{' '.join(formatted_values)}"
+                        txt_file.write(line + '\n')
+
+            # pd.setValue(2)
+            # export_t_path = f"{folder_path}/TAILINGS.DAT"
+            # with open(export_t_path, 'w') as txt_file:
+            #     for row in exported_data:
+            #         id_value = str(row[0]).rjust(10)
+            #         formatted_values = [f"{row[2]:.3f}".rjust(10)]
+            #         line = f"{id_value}{' '.join(formatted_values)}"
+            #         txt_file.write(line + '\n')
+
+            else:
+                if cv == 0:
+                    self.uc.show_warn("For dry stack, concentration must be defined.")
+                    return
+                else:
+                    export_tcv_path = f"{folder_path}/TAILINGS_CV.DAT"
+                    with open(export_tcv_path, 'w') as txt_file:
+                        for row in exported_data:
+                            id_value = str(row[0]).rjust(10)
+                            formatted_values = [f"{row[2]:.3f}".rjust(10)]
+                            formatted_cv = f"{cv:.3f}".rjust(10)
+                            line = f"{id_value}{' '.join(formatted_values)}{formatted_cv}"
+                            txt_file.write(line + '\n')
+
+            self.uc.show_info("Export complete!")
+            if self.uc.question(f"Would you like to remove the intermediate calculation shapefiles?"):
+                QgsProject.instance().removeMapLayers([self.tailings_layer.id()])
+                self.tailings_cbo.clear()
+                self.iface.mapCanvas().refreshAllLayers()
+                return
+            return
+        else:
+            self.uc.show_warn("Save canceled.")
+            return
+
+    def create_tailings_table(self, tailings_elevation, wse):
+        """
+        Function to create the TAILINGS_STACK_DEPTH.DAT
+        """
+        if self.user_polygon_cb.isChecked():
+            selected_layer_name = self.tailings_cbo.currentText()
+            self.tailings_layer = QgsProject.instance().mapLayersByName(selected_layer_name)[0]
+
+        grid = self.lyrs.get_layer_by_name("Grid", self.lyrs.group).layer()
+
+        intersection = processing.run("native:intersection", {'INPUT': grid,
+                                                              'OVERLAY': self.tailings_layer,
+                                                              'INPUT_FIELDS': ['fid', 'elevation'],
+                                                              'OVERLAY_FIELDS': [],
+                                                              'OVERLAY_FIELDS_PREFIX': '',
+                                                              'OUTPUT': 'TEMPORARY_OUTPUT',
+                                                              'GRID_SIZE': None})['OUTPUT']
+
+        intersection_pv = intersection.dataProvider()
+        intersection_pv.addAttributes([QgsField("tailings_depth", QVariant.Double)])
+        intersection_pv.addAttributes([QgsField("water_depth", QVariant.Double)])
+        intersection.updateFields()
+
+        intersection.startEditing()
+        elev_field_index = intersection.fields().indexFromName("tailings_depth")
+        water_field_index = intersection.fields().indexFromName("water_depth")
+
+        elev_expression = QgsExpression(
+            f'IF({tailings_elevation} - "elevation" > 0, {tailings_elevation} - "elevation", 0)')
+        water_expression = QgsExpression(
+            f'IF({wse} - "elevation" > 0, IF({tailings_elevation} - "elevation" > 0,{wse} - {tailings_elevation}, {wse} - "elevation"), 0)')
+
+        context = QgsExpressionContext()
+        context.appendScopes(QgsExpressionContextUtils.globalProjectLayerScopes(intersection))
+
+        for feature in intersection.getFeatures():
+            context.setFeature(feature)
+            feature[elev_field_index] = round(elev_expression.evaluate(context), 2)
+            feature[water_field_index] = round(water_expression.evaluate(context), 2)
+            intersection.updateFeature(feature)
+
+        intersection.commitChanges()
+
+        # delete features that does not have water and tailings depth
+        features_to_delete = []
+
+        for feature in intersection.getFeatures():
+            if feature["tailings_depth"] == 0 and feature["water_depth"] == 0:
+                features_to_delete.append(feature.id())
+
+        intersection.startEditing()
+        intersection.deleteFeatures(features_to_delete)
+        intersection.commitChanges()
+
+        # join layer with grid
+        joined_grid = processing.run("native:joinattributestable", {'INPUT': grid,
+                                                                    'FIELD': 'fid',
+                                                                    'INPUT_2': intersection,
+                                                                    'FIELD_2': 'fid',
+                                                                    'FIELDS_TO_COPY': [],
+                                                                    'METHOD': 1,
+                                                                    'DISCARD_NONMATCHING': False,
+                                                                    'PREFIX': '',
+                                                                    'OUTPUT': 'TEMPORARY_OUTPUT'})['OUTPUT']
+
+        fields_to_export = ['fid', 'water_depth', 'tailings_depth']
+
+        exported_data = []
+
+        for feature in joined_grid.getFeatures():
+            feature_data = []
+            for field_name in fields_to_export:
+                field_value = feature[field_name]
+                if str(field_value) == "NULL":
+                    field_value = 0
+                feature_data.append(field_value)
+            exported_data.append(feature_data)
+
+        return exported_data

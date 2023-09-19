@@ -26,6 +26,7 @@ from .street_editor_widget import StreetEditorWidget
 from .struct_editor_widget import StructEditorWidget
 from .ui_utils import load_ui, set_icon
 from .xs_editor_widget import XsecEditorWidget
+from .pre_processing_widget import PreProcessingWidget
 
 uiDialog, qtBaseClass = load_ui("f2d_widget")
 
@@ -55,6 +56,7 @@ class FLO2DWidget(qtBaseClass, uiDialog):
         self.setup_infil_editor()
         self.setup_levee_and_breach_editor()
         self.setup_multiple_channels_editor()
+        self.setup_pre_processing_tools()
 
         self.cgroups = [
             self.grid_tools_grp,
@@ -71,6 +73,7 @@ class FLO2DWidget(qtBaseClass, uiDialog):
             self.profile_tool_grp,
             self.levee_and_breach_editor_grp,
             self.multiple_channels_editor_grp,
+            self.pre_processing_grp
         ]
         self.set_collapsible_groups()
 
@@ -153,6 +156,10 @@ class FLO2DWidget(qtBaseClass, uiDialog):
     def setup_multiple_channels_editor(self):
         self.multiple_channels_editor = MultipleChannelsEditorWidget(self.iface, self.lyrs)
         self.multiple_channels_lout.addWidget(self.multiple_channels_editor)
+
+    def setup_pre_processing_tools(self):
+        self.pre_processing_tools = PreProcessingWidget(self.iface, self.lyrs)
+        self.pre_processing_lout.addWidget(self.pre_processing_tools)
 
     def set_collapsible_groups(self):
         for grp in self.cgroups:

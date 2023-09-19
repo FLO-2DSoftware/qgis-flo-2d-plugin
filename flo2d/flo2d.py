@@ -230,6 +230,8 @@ class Flo2D(object):
 
         self.f2d_widget.multiple_channels_editor.setup_connection()
 
+        self.f2d_widget.pre_processing_tools.setup_connection()
+
     def add_action(
         self,
         icon_path,
