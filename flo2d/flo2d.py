@@ -796,13 +796,18 @@ class Flo2D(object):
             return
         try:
             if os.path.isfile(flo2d_dir + "\\" + exe_name):
-                if os.path.isfile(project_dir + "\\" + "CONT.DAT"):
+                if exe_name == "Tailings Dam Breach.exe":
                     program = ProgramExecutor(flo2d_dir, project_dir, exe_name)
                     program.perform()
                     self.uc.bar_info(exe_name + " started!", dur=3)
                 else:
-                    self.uc.show_warn("CONT.DAT is not in directory:\n\n" + f"{project_dir}\n\n" + f"Select the correct directory.")
-                    self.run_settings()
+                    if os.path.isfile(project_dir + "\\" + "CONT.DAT"):
+                        program = ProgramExecutor(flo2d_dir, project_dir, exe_name)
+                        program.perform()
+                        self.uc.bar_info(exe_name + " started!", dur=3)
+                    else:
+                        self.uc.show_warn("CONT.DAT is not in directory:\n\n" + f"{project_dir}\n\n" + f"Select the correct directory.")
+                        self.run_settings()
             else:
                 self.uc.show_warn("WARNING 241020.0424: Program " + exe_name + " is not in directory\n\n" + flo2d_dir)
         except Exception as e:
