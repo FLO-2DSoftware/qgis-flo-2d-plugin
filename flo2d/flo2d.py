@@ -33,7 +33,7 @@ from subprocess import (
     check_output,
     run,
 )
-from PyQt5.QtWidgets import QApplication
+from PyQt5.QtWidgets import QApplication, QToolButton
 from qgis.core import NULL, QgsProject, QgsWkbTypes
 from qgis.gui import QgsDockWidget, QgsProjectionSelectionWidget
 from qgis.PyQt import QtCore
@@ -238,7 +238,7 @@ class Flo2D(object):
             self,
             icon_path,
             text,
-            callback,
+            callback=None,
             enabled_flag=True,
             add_to_menu=True,
             add_to_toolbar=True,
@@ -251,11 +251,13 @@ class Flo2D(object):
         action = QAction(icon, text, parent)
 
         # INFO: action.triggered pass False to callback if it is decorated!
-        action.triggered.connect(callback)
+        if callback is not None:
+            action.triggered.connect(callback)
         action.setEnabled(enabled_flag)
 
         if menu is not None:
             popup = QMenu()
+
             for m in menu:
                 icon = QIcon(m[0])
                 act = QAction(icon, m[1], parent)
@@ -280,7 +282,15 @@ class Flo2D(object):
             action.setWhatsThis(whats_this)
 
         if add_to_toolbar:
-            self.toolbar.addAction(action)
+            if text == "Run Simulation":
+                toolButton = QToolButton()
+                toolButton.setMenu(popup)
+                toolButton.setIcon(QIcon(self.plugin_dir + "/img/run_flopro.png"))
+                toolButton.setPopupMode(QToolButton.InstantPopup)
+                self.toolbar.addWidget(toolButton)
+            else:
+                self.toolbar.addAction(action)
+
 
         if add_to_menu:
             self.iface.addPluginToMenu(self.menu, action)
@@ -298,13 +308,13 @@ class Flo2D(object):
             os.path.join(self.plugin_dir, "img/settings.svg"),
             text=self.tr("Settings"),
             callback=self.show_settings,
-            parent=self.iface.mainWindow(),
+            parent=self.iface.mainWindow()
         )
 
         self.add_action(
             os.path.join(self.plugin_dir, "img/run_flopro.png"),
             text=self.tr("Run Simulation"),
-            callback=self.run_flopro,
+            callback=None,
             parent=self.iface.mainWindow(),
             menu=(
                 (
@@ -342,7 +352,7 @@ class Flo2D(object):
                     "Run Settings",
                     self.run_settings,
                 )
-            ),
+            )
         )
 
         self.add_action(
