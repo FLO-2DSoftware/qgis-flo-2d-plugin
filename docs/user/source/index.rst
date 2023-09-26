@@ -56,6 +56,12 @@ Table of Contents
 
 .. toctree::
    :maxdepth: 1
+   :caption: Widgets
+
+   /widgets/pre-processing-tools/Pre-Processing Tools
+
+.. toctree::
+   :maxdepth: 1
    :caption: Widgets (Grid Tools)
 
    /widgets/grid-tools/Create a Grid
