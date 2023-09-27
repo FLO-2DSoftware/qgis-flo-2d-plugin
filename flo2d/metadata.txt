@@ -10,8 +10,13 @@ about=QGIS tools for FLO-2D
 
 changelog=
  <p>0.10.115
+  - Documentation
+       - Added documentation for Mud and Sediment Transport Tool
+       - Added documentation for Pre-Processing Tools
+       - Added documentation for the Tailings Stack Initial Condition Editor
   - Run FLO-2D Pro
        - Fixed the issue of not starting correctly FLO-2D and other executables from QGIS
+       - Added a dropdown menu when clicking the FLO-2D icon
   - Grid Tools
        - Added a Progress bar to sampling roughness - centroid point cell
   - SCS Infiltration Editor
