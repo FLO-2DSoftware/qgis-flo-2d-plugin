@@ -196,7 +196,7 @@
          </widget>
         </item>
         <item row="0" column="1">
-         <widget class="QDoubleSpinBox" name="cellSizeDSpinBox">
+         <widget class="QSpinBox" name="cellSizeDSpinBox">
           <property name="sizePolicy">
            <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
             <horstretch>0</horstretch>
@@ -215,17 +215,11 @@
           <property name="buttonSymbols">
            <enum>QAbstractSpinBox::NoButtons</enum>
           </property>
-          <property name="decimals">
-           <number>0</number>
-          </property>
-          <property name="minimum">
-           <double>0.000000000000000</double>
-          </property>
           <property name="maximum">
-           <double>100000.000000000000000</double>
+           <number>10000</number>
           </property>
           <property name="value">
-           <double>100.000000000000000</double>
+           <number>100</number>
           </property>
          </widget>
         </item>
