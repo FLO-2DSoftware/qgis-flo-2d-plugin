@@ -547,7 +547,7 @@ class RainEditorWidget(qtBaseClass, uiDialog):
         bl = self.lyrs.data["user_model_boundary"]["qlyr"]
         bfeat = next(bl.getFeatures())
         if bfeat["cell_size"]:
-            cs = bfeat["cell_size"]
+            cs = int(bfeat["cell_size"])
             if cs <= 0:
                 self.uc.show_warn(
                     "WARNING 060319.1727: Cell size must be positive. Change the feature attribute value in Computational Domain layer."
