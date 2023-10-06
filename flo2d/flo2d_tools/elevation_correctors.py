@@ -282,6 +282,7 @@ class GridElevation(ElevationCorrector):
         set_add_qry = "UPDATE grid SET elevation = ? + ? WHERE fid = ?;"
         cur = self.gutils.con.cursor()
         for el, cor, fid in poly2grid(
+            self.gutils,
             self.grid,
             self.user_polygons,
             request,
@@ -319,6 +320,7 @@ class GridElevation(ElevationCorrector):
         grid_fids = [
             val[-1]
             for val in poly2grid(
+                self.gutils,
                 self.grid,
                 self.user_polygons,
                 request,
@@ -370,6 +372,7 @@ class GridElevation(ElevationCorrector):
         grid_fids = [
             val[-1]
             for val in poly2grid(
+                self.gutils,
                 self.grid,
                 self.user_polygons,
                 request,
@@ -501,6 +504,7 @@ class ExternalElevation(ElevationCorrector):
         add_qry = "UPDATE grid SET elevation = elevation + ? WHERE fid = ?;"
         set_add_qry = "UPDATE grid SET elevation = ? + ? WHERE fid = ?;"
         poly_list = poly2grid(
+            self.gutils,
             self.grid,
             self.polygons,
             self.request,
@@ -558,6 +562,7 @@ class ExternalElevation(ElevationCorrector):
         cur = self.gutils.con.cursor()
         qry = "UPDATE grid SET elevation = ? WHERE fid = ?;"
         grid_gen = poly2grid(
+            self.gutils,
             self.grid,
             self.polygons,
             self.request,

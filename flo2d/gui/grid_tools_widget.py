@@ -757,6 +757,7 @@ class GridToolsWidget(qtBaseClass, uiDialog):
 
                 if use_centroid:
                     values2 = poly2grid(
+                        self.gutils,
                         grid_lyr,
                         external_layer,
                         None,
