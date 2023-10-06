@@ -10,6 +10,12 @@ about=QGIS tools for FLO-2D
 
 changelog=
  <p>0.10.115
+  - Bug fix
+       - RealTime Rainfall
+       - Rounding improvements
+  - Grid element
+       - Calculate the area from the Control Table
+       - Use integer for Cell Size
   - Documentation
        - Added documentation for Mud and Sediment Transport Tool
        - Added documentation for Pre-Processing Tools
