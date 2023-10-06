@@ -106,7 +106,7 @@ class SamplingPointElevDialog(qtBaseClass, uiDialog):
 
     def configure_gdal_sliders(self):
         thread_count = multiprocessing.cpu_count()
-        cachemax_min = int(point_elev.gdal_default_cachemax / (1024 * 1024.0))  # MB
+        cachemax_min = int(round(point_elev.gdal_default_cachemax / (1024 * 1024.0)))  # MB
         cachemax_max = min(cachemax_min * 2, max(2000, cachemax_min))  # not more than 2 GB or inital cachemax
 
         self.thread_count_slider.setRange(1, thread_count)
@@ -115,7 +115,7 @@ class SamplingPointElevDialog(qtBaseClass, uiDialog):
         self.thread_count_slider.setTickInterval(1)
         self.thread_count_slider.setValue(thread_count - 2)  # assuming 2 hyper threads per core
 
-        cache_step = int((cachemax_max - cachemax_min) / 4.0)
+        cache_step = int(round((cachemax_max - cachemax_min) / 4.0))
         self.cache_slider.setRange(cachemax_min, cachemax_max)
         self.cache_slider.setTickInterval(cache_step)
         self.cache_slider.setSingleStep(cache_step)

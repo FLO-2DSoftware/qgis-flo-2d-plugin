@@ -270,8 +270,8 @@ def colrow_from_transform(transform, x, y):
     ulY = transform[3]
     xDist = transform[1]
     yDist = transform[5]
-    col = int((x - ulX) / xDist)
-    row = int((ulY - y) / xDist)
+    col = int(round((x - ulX) / xDist))
+    row = int(round((ulY - y) / xDist))
     return (col, row)
 
 
@@ -508,8 +508,8 @@ if __name__ == "__main__":
     cell_size = 30
     xmin, ymin, xmax, ymax = extents
     srs = r"+proj=tmerc +lat_0=31 +lon_0=-111.9166666666667 +k=0.9999 +x_0=213360 +y_0=0 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=ft +no_defs"
-    rows = int((ymax - ymin) / cell_size)
-    cols = int((xmax - xmin) / cell_size)
+    rows = int(round((ymax - ymin) / cell_size))
+    cols = int(round((xmax - xmin) / cell_size))
     shape = (rows, cols)
     transform = Affine(cell_size, 0, xmin, 0, -cell_size, ymax)
     xyz_file = os.path.join(r"C:\projects\FLO-2D\Lesson1 welev", "Elevation_xyz.csv")

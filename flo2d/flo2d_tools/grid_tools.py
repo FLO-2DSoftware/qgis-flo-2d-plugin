@@ -1729,8 +1729,8 @@ def calculate_arfwrf(grid, areas):
                 fgeom = f.geometry()
                 if f["calc_arf"] == NULL or f["calc_wrf"] == NULL:
                     was_null = True
-                farf = int(1 if f["calc_arf"] == NULL else f["calc_arf"])
-                fwrf = int(1 if f["calc_wrf"] == NULL else f["calc_wrf"])
+                farf = int(round(1 if f["calc_arf"] == NULL else f["calc_arf"]))
+                fwrf = int(round(1 if f["calc_wrf"] == NULL else f["calc_wrf"]))
                 inter = fgeom.intersects(geom)
                 if inter is True:
                     areas_intersection = fgeom.intersection(geom)
@@ -2838,8 +2838,8 @@ def cell_centroid(self, cell):
 
 
 def cell_elevation(self, x, y):
-    col = int((float(x) - self.xMinimum) / self.cell_size) + 2
-    row = int((float(y) - self.yMinimum) / self.cell_size) + 2
+    col = int(round((float(x) - self.xMinimum) / self.cell_size)) + 2
+    row = int(round((float(y) - self.yMinimum) / self.cell_size)) + 2
     elev = self.gutils.execute(
         "SELECT elevation FROM grid WHERE col = ? AND row = ?;",
         (

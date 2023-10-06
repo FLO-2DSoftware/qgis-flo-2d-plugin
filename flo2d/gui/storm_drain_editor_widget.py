@@ -107,8 +107,8 @@ class INP_GroupsDialog(qtBaseClass, uiDialog):
             tout = float(self.gutils.get_cont_par("TOUT"))
 
             mins, hours = modf(tout)
-            hours = int(hours)
-            mins = int(mins * 60)
+            hours = int(round(hours))
+            mins = int(round(mins * 60))
 
             time_string = timedelta(hours=tout)
 
@@ -3857,9 +3857,9 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                         inflow = float(nextTime[2])
                         flooding = float(nextTime[3])
                         currentHour, minutes, seconds = time.split(":")
-                        currentHour = int(currentHour)
-                        minutes = int(minutes) / 60
-                        seconds = int(seconds) / 3600
+                        currentHour = int(round(currentHour))
+                        minutes = int(round(minutes)) / 60
+                        seconds = int(round(seconds)) / 3600
                         if currentHour < previousHour:
                             day = day + 24
                         previousHour = currentHour 
