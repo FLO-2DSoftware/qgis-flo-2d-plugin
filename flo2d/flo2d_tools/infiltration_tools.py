@@ -136,7 +136,7 @@ class InfiltrationCalculator(object):
 
         # get area of an item in self.grid_lyr.
 
-        self.gridArea = self.gutils.get_cont_par("CELLSIZE") ** 2
+        self.gridArea = float(self.gutils.get_cont_par("CELLSIZE")) ** 2
         # gridfeat = next(self.grid_lyr.getFeatures())
         # self.gridArea = gridfeat.geometry().area()
 
