@@ -10,6 +10,7 @@ about=QGIS tools for FLO-2D
 
 changelog=
  <p>0.10.115
+  - Update test files
   - Bug fix
        - RealTime Rainfall
        - Rounding improvements
