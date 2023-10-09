@@ -68,6 +68,7 @@ class TestGridTools(unittest.TestCase):
         glayer = QgsVectorLayer(grid, "grid", "ogr")
         rlayer = QgsVectorLayer(roughness, "roughness", "ogr")
         n_values = []
+        cell_size_integer
         for n, gid in poly2grid(cellsize, glayer, rlayer, None, True, False, False, 1, "manning"):
             n_values.append(float(n))
         man_sum = sum(n_values)

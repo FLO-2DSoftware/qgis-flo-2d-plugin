@@ -14,47 +14,47 @@ The Dam Removal Tool is a specialized utility designed to process Digital Elevat
 
 1.  Click on Dam area.
 
-.. image:: ../../img/Pre-Processing-tools/Prepro001.png
+.. image:: ../../img/Pre-Processing-Tools/Prepro001.png
 
 2.  Draw the dam area
 
-.. image:: ../../img/Pre-Processing-tools/Prepro002.png
+.. image:: ../../img/Pre-Processing-Tools/Prepro002.png
 
 3.  Click on Save dam area to save the shapefile.
 
-.. image:: ../../img/Pre-Processing-tools/Prepro003.png
+.. image:: ../../img/Pre-Processing-Tools/Prepro003.png
 
 4.  Fill the Side slope, Dam elevation, Dam invert elevation, and Intervals.
 
-.. image:: ../../img/Pre-Processing-tools/Prepro004.png
+.. image:: ../../img/Pre-Processing-Tools/Prepro004.png
 
 5.  Click on Estimate Reservoir.
 
-.. image:: ../../img/Pre-Processing-tools/Prepro005.png
+.. image:: ../../img/Pre-Processing-Tools/Prepro005.png
 
 6.  Click on Add Channel.
 
-.. image:: ../../img/Pre-Processing-tools/Prepro006.png
+.. image:: ../../img/Pre-Processing-Tools/Prepro006.png
 
 7.  Draw the channel.
 
-.. image:: ../../img/Pre-Processing-tools/Prepro007.png
+.. image:: ../../img/Pre-Processing-Tools/Prepro007.png
 
 8.  Click on Save channel.
 
-.. image:: ../../img/Pre-Processing-tools/Prepro008.png
+.. image:: ../../img/Pre-Processing-Tools/Prepro008.png
 
 8. Select the Input Raster.
 
-.. image:: ../../img/Pre-Processing-tools/Prepro009.png
+.. image:: ../../img/Pre-Processing-Tools/Prepro009.png
 
 9.  Click on Remove Dam and save or not the intermediate calculation shapefiles (Dam Area & Channel).
 
-.. image:: ../../img/Pre-Processing-tools/Prepro010.png
+.. image:: ../../img/Pre-Processing-Tools/Prepro010.png
 
 10. Check the modified DEM for any bad data and redo the process until the DEM is satisfactory.
 
-.. image:: ../../img/Pre-Processing-tools/Prepro011.png
+.. image:: ../../img/Pre-Processing-Tools/Prepro011.png
 
 
 
