@@ -746,7 +746,7 @@ def assign_col_row_indexes_to_grid(grid, gutils):
     gutils.con.commit()
 
 
-def poly2grid(gutils, grid, polygons, request, use_centroids, get_fid, get_grid_geom, threshold, *columns):
+def poly2grid(cell_size, grid, polygons, request, use_centroids, get_fid, get_grid_geom, threshold, *columns):
     """
     Generator for assigning values from any polygon layer to target grid layer.
     """
@@ -754,7 +754,8 @@ def poly2grid(gutils, grid, polygons, request, use_centroids, get_fid, get_grid_
         # grid_feats = grid.getFeatures()
         # first = next(grid_feats)
         # grid_area = first.geometry().area()
-        grid_area = float(gutils.get_cont_par("CELLSIZE")) ** 2
+        cell_size = float(cell_size)
+        grid_area = cell_size ** 2
     except StopIteration:
         return
 
@@ -1324,9 +1325,10 @@ def evaluate_roughness(gutils, grid, roughness, column_name, method, reset=False
                 return True
         else:
             # Centroids
+            cellSize = float(gutils.get_cont_par("CELLSIZE"))
             gutils.con.executemany(
                 qry,
-                poly2grid(gutils, grid, roughness, None, True, False, False, 1, column_name),
+                poly2grid(cellSize, grid, roughness, None, True, False, False, 1, column_name),
             )
             gutils.con.commit()
             return True
@@ -1514,7 +1516,8 @@ def modify_elevation(gutils, grid, elev):
     add_vals = []
     set_add_vals = []
     qry_dict = {set_qry: set_vals, add_qry: add_vals, set_add_qry: set_add_vals}
-    for el, cor, fid in poly2grid(gutils, grid, elev, None, True, False, False, 1, "elev", "correction"):
+    cellSize = float(gutils.get_cont_par("CELLSIZE"))
+    for el, cor, fid in poly2grid(cellSize, grid, elev, None, True, False, False, 1, "elev", "correction"):
         if el != NULL and cor == NULL:
             set_vals.append((el, fid))
         elif el == NULL and cor != NULL:

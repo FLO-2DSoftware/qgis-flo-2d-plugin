@@ -755,9 +755,11 @@ class GridToolsWidget(qtBaseClass, uiDialog):
 
                 use_centroid = True  # Hardwired to use/not use centroid.
 
+                cellSize = float(self.gutils.get_cont_par("CELLSIZE"))
+
                 if use_centroid:
                     values2 = poly2grid(
-                        self.gutils,
+                        cellSize,
                         grid_lyr,
                         external_layer,
                         None,

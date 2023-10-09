@@ -281,8 +281,9 @@ class GridElevation(ElevationCorrector):
         add_qry = "UPDATE grid SET elevation = elevation + ? WHERE fid = ?;"
         set_add_qry = "UPDATE grid SET elevation = ? + ? WHERE fid = ?;"
         cur = self.gutils.con.cursor()
+        cellSize = float(self.gutils.get_cont_par("CELLSIZE"))
         for el, cor, fid in poly2grid(
-            self.gutils,
+            cellSize,
             self.grid,
             self.user_polygons,
             request,
@@ -317,10 +318,11 @@ class GridElevation(ElevationCorrector):
         self.add_virtual_sum(self.user_points)
         tin = TINInterpolator(self.user_points, self.VIRTUAL_SUM)
         tin.setup_layer_data()
+        cellSize = float(self.gutils.get_cont_par("CELLSIZE"))
         grid_fids = [
             val[-1]
             for val in poly2grid(
-                self.gutils,
+                cellSize,
                 self.grid,
                 self.user_polygons,
                 request,
@@ -368,11 +370,12 @@ class GridElevation(ElevationCorrector):
         boundary_request = QgsFeatureRequest().setFilterFids(boundary_grid_fids)
         grid_centroids = self.centroid_layer(self.grid, boundary_request)
         tin = TINInterpolator(grid_centroids, "elevation")
+        cellSize = float(self.gutils.get_cont_par("CELLSIZE"))
         tin.setup_layer_data()
         grid_fids = [
             val[-1]
             for val in poly2grid(
-                self.gutils,
+                cellSize,
                 self.grid,
                 self.user_polygons,
                 request,
@@ -503,8 +506,9 @@ class ExternalElevation(ElevationCorrector):
         set_qry = "UPDATE grid SET elevation = ? WHERE fid = ?;"
         add_qry = "UPDATE grid SET elevation = elevation + ? WHERE fid = ?;"
         set_add_qry = "UPDATE grid SET elevation = ? + ? WHERE fid = ?;"
+        cellSize = float(self.gutils.get_cont_par("CELLSIZE"))
         poly_list = poly2grid(
-            self.gutils,
+            cellSize,
             self.grid,
             self.polygons,
             self.request,
@@ -561,8 +565,9 @@ class ExternalElevation(ElevationCorrector):
             raise ValueError
         cur = self.gutils.con.cursor()
         qry = "UPDATE grid SET elevation = ? WHERE fid = ?;"
+        cellSize = float(self.gutils.get_cont_par("CELLSIZE"))
         grid_gen = poly2grid(
-            self.gutils,
+            cellSize,
             self.grid,
             self.polygons,
             self.request,
