@@ -11,6 +11,7 @@
 import os
 import unittest
 
+from flo2d.flo2d_ie.flo2dgeopackage import Flo2dGeoPackage
 from .utilities import get_qgis_app
 
 QGIS_APP = get_qgis_app()
@@ -22,9 +23,27 @@ from qgis.core import QgsVectorLayer
 
 from flo2d.flo2d_tools.grid_tools import (build_grid, calculate_arfwrf,
                                           poly2grid)
+from flo2d.geopackage_utils import database_create, GeoPackageUtils
 
+IMPORT_DATA_DIR_1 = os.path.join(THIS_DIR, "data", "import")
+IMPORT_DATA_DIR_2 = os.path.join(THIS_DIR, "data", "import_2")
+CONT_1 = os.path.join(IMPORT_DATA_DIR_1, "CONT.DAT")
+CONT_2 = os.path.join(IMPORT_DATA_DIR_2, "CONT.DAT")
 
 class TestGridTools(unittest.TestCase):
+    con = database_create(":memory:")
+    con_2 = database_create(":memory:")
+
+    @classmethod
+    def setUpClass(cls):
+        cls.f2g = Flo2dGeoPackage(cls.con, None)
+        cls.f2g.disable_geom_triggers()
+        cls.f2g.set_parser(CONT_1)
+
+        cls.f2g_2 = Flo2dGeoPackage(cls.con_2, None)
+        cls.f2g_2.disable_geom_triggers()
+        cls.f2g_2.set_parser(CONT_2)
+
     @classmethod
     def tearDownClass(cls):
         for f in os.listdir(EXPORT_DATA_DIR):
@@ -42,12 +61,15 @@ class TestGridTools(unittest.TestCase):
         self.assertEqual(len(polygons), 494)
 
     def test_poly2grid(self):
+        self.f2g.import_cont_toler()
+        cellsize = self.f2g.execute("""SELECT value FROM cont WHERE name = 'CELLSIZE';""").fetchone()[0]
         grid = os.path.join(VECTOR_PATH, "grid.geojson")
         roughness = os.path.join(VECTOR_PATH, "roughness.geojson")
         glayer = QgsVectorLayer(grid, "grid", "ogr")
         rlayer = QgsVectorLayer(roughness, "roughness", "ogr")
         n_values = []
-        for n, gid in poly2grid(GUTILS, glayer, rlayer, None, True, False, False, 1, "manning"):
+        cell_size_integer
+        for n, gid in poly2grid(cellsize, glayer, rlayer, None, True, False, False, 1, "manning"):
             n_values.append(float(n))
         man_sum = sum(n_values)
         self.assertEqual(round(man_sum, 1), 16.5)

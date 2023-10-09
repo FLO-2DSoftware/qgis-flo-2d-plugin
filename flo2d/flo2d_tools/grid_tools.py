@@ -746,14 +746,16 @@ def assign_col_row_indexes_to_grid(grid, gutils):
     gutils.con.commit()
 
 
-def poly2grid(grid, polygons, request, use_centroids, get_fid, get_grid_geom, threshold, *columns):
+def poly2grid(cell_size, grid, polygons, request, use_centroids, get_fid, get_grid_geom, threshold, *columns):
     """
     Generator for assigning values from any polygon layer to target grid layer.
     """
     try:
-        grid_feats = grid.getFeatures()
-        first = next(grid_feats)
-        grid_area = first.geometry().area()
+        # grid_feats = grid.getFeatures()
+        # first = next(grid_feats)
+        # grid_area = first.geometry().area()
+        cell_size = float(cell_size)
+        grid_area = cell_size ** 2
     except StopIteration:
         return
 
@@ -1323,9 +1325,10 @@ def evaluate_roughness(gutils, grid, roughness, column_name, method, reset=False
                 return True
         else:
             # Centroids
+            cellSize = float(gutils.get_cont_par("CELLSIZE"))
             gutils.con.executemany(
                 qry,
-                poly2grid(grid, roughness, None, True, False, False, 1, column_name),
+                poly2grid(cellSize, grid, roughness, None, True, False, False, 1, column_name),
             )
             gutils.con.commit()
             return True
@@ -1513,7 +1516,8 @@ def modify_elevation(gutils, grid, elev):
     add_vals = []
     set_add_vals = []
     qry_dict = {set_qry: set_vals, add_qry: add_vals, set_add_qry: set_add_vals}
-    for el, cor, fid in poly2grid(grid, elev, None, True, False, False, 1, "elev", "correction"):
+    cellSize = float(gutils.get_cont_par("CELLSIZE"))
+    for el, cor, fid in poly2grid(cellSize, grid, elev, None, True, False, False, 1, "elev", "correction"):
         if el != NULL and cor == NULL:
             set_vals.append((el, fid))
         elif el == NULL and cor != NULL:
@@ -1729,8 +1733,8 @@ def calculate_arfwrf(grid, areas):
                 fgeom = f.geometry()
                 if f["calc_arf"] == NULL or f["calc_wrf"] == NULL:
                     was_null = True
-                farf = int(1 if f["calc_arf"] == NULL else f["calc_arf"])
-                fwrf = int(1 if f["calc_wrf"] == NULL else f["calc_wrf"])
+                farf = int(round(1 if f["calc_arf"] == NULL else f["calc_arf"]))
+                fwrf = int(round(1 if f["calc_wrf"] == NULL else f["calc_wrf"]))
                 inter = fgeom.intersects(geom)
                 if inter is True:
                     areas_intersection = fgeom.intersection(geom)
@@ -2838,8 +2842,8 @@ def cell_centroid(self, cell):
 
 
 def cell_elevation(self, x, y):
-    col = int((float(x) - self.xMinimum) / self.cell_size) + 2
-    row = int((float(y) - self.yMinimum) / self.cell_size) + 2
+    col = int(round((float(x) - self.xMinimum) / self.cell_size)) + 2
+    row = int(round((float(y) - self.yMinimum) / self.cell_size)) + 2
     elev = self.gutils.execute(
         "SELECT elevation FROM grid WHERE col = ? AND row = ?;",
         (

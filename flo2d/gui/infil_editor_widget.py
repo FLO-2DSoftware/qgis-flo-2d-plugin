@@ -420,7 +420,8 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
             self.gutils.disable_geom_triggers()
             sl = self.slices[imethod]
             columns = self.infil_columns[sl]
-            infiltration_grids = list(poly2grid(self.grid_lyr, self.infil_lyr, None, True, False, False, 1, *columns))
+            cellSize = float(self.gutils.get_cont_par("CELLSIZE"))
+            infiltration_grids = list(poly2grid(cellSize, self.grid_lyr, self.infil_lyr, None, True, False, False, 1, *columns))
             self.gutils.clear_tables(
                 "infil_cells_green",
                 "infil_cells_scs",

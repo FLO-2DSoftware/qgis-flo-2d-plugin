@@ -127,7 +127,7 @@ class GridToolsWidget(qtBaseClass, uiDialog):
         bl = self.lyrs.data["user_model_boundary"]["qlyr"]
         bfeat = next(bl.getFeatures())
         if bfeat["cell_size"]:
-            cs = bfeat["cell_size"]
+            cs = int(bfeat["cell_size"])
             if cs <= 0:
                 self.uc.show_warn(
                     "WARNING 060319.1706: Cell size must be positive. Change the feature attribute value in Computational Domain layer."
@@ -138,7 +138,6 @@ class GridToolsWidget(qtBaseClass, uiDialog):
             cs = self.gutils.get_cont_par("CELLSIZE")
             cs = None if cs == "" else cs
         if cs:
-            cs = float(cs)
             if cs <= 0:
                 self.uc.show_warn(
                     "WARNING 060319.1707: Cell size must be positive. Change the feature attribute value in Computational Domain layer or default cell size in the project settings."
@@ -146,12 +145,12 @@ class GridToolsWidget(qtBaseClass, uiDialog):
                 return None
             return cs
         else:
-            r, ok = QInputDialog.getDouble(
+            r, ok = QInputDialog.getInt(
                 None,
                 "Grid Cell Size",
                 "Enter grid element cell size",
                 value=100,
-                min=0.1,
+                min=0,
                 max=99999,
             )
             if ok:
@@ -176,6 +175,7 @@ class GridToolsWidget(qtBaseClass, uiDialog):
                 ) = create_grid_dlg.external_layer_parameters()
                 if not self.import_comp_domain(external_layer, cell_size_field):
                     return
+
             if self.gutils.count("user_model_boundary") > 1:
                 warn = "WARNING 060319.1708: There are multiple features in Computational Domain layer.\n"
             if self.gutils.is_table_empty("user_model_boundary"):
@@ -199,7 +199,7 @@ class GridToolsWidget(qtBaseClass, uiDialog):
             upper_left_coords_override = None
 
             if create_grid_dlg.use_external_layer() and raster_file:
-                # compute upper left coordinate aligning it with with source raster pixel
+                # compute upper left coordinate aligning it with source raster pixel
                 feat = next(boundary.getFeatures())
                 geom = feat.geometry()
                 bbox = geom.boundingBox()
@@ -755,8 +755,11 @@ class GridToolsWidget(qtBaseClass, uiDialog):
 
                 use_centroid = True  # Hardwired to use/not use centroid.
 
+                cellSize = float(self.gutils.get_cont_par("CELLSIZE"))
+
                 if use_centroid:
                     values2 = poly2grid(
+                        cellSize,
                         grid_lyr,
                         external_layer,
                         None,

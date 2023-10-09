@@ -12,6 +12,7 @@ import os
 import traceback
 from math import isnan
 
+from PyQt5.QtWidgets import QProgressDialog
 from qgis.core import QgsProject
 from qgis.PyQt.QtCore import QSettings, Qt
 from qgis.PyQt.QtGui import QColor
@@ -160,20 +161,31 @@ class RainEditorWidget(qtBaseClass, uiDialog):
             try:
                 grid_lyr = self.lyrs.data["grid"]["qlyr"]
                 QApplication.setOverrideCursor(Qt.WaitCursor)
-                asc_processor = ASCProcessor(grid_lyr, asc_dir)  # as_processor, an instance of the ASCProcessor class,
+                asc_processor = ASCProcessor(grid_lyr, asc_dir, self.iface)  # as_processor, an instance of the ASCProcessor class,
                 head_qry = "INSERT INTO raincell (rainintime, irinters, timestamp) VALUES(?,?,?);"
                 data_qry = "INSERT INTO raincell_data (time_interval, rrgrid, iraindum) VALUES (?,?,?);"
                 self.gutils.clear_tables("raincell", "raincell_data")
                 header = asc_processor.parse_rfc()
                 time_step = float(header[0])
+                irinters = int(header[1]) - 1
                 self.gutils.execute(head_qry, header)
                 time_interval = 0
+
+                pd = QProgressDialog("Importing RealTime Rainfall...", None, 0, irinters)
+                pd.setModal(True)
+                pd.setValue(0)
+                pd.show()
+                i = 0
+
                 for rain_series in asc_processor.rainfall_sampling():
+                    pd.setValue(i)
                     cur = self.gutils.con.cursor()
                     for val, gid in rain_series:
                         cur.execute(data_qry, (time_interval, gid, val))
                     self.gutils.con.commit()
                     time_interval += time_step
+                    i += 1
+
                 QApplication.restoreOverrideCursor()
                 self.uc.show_info("Importing Rainfall Data finished!")
             except Exception as e:
@@ -187,7 +199,7 @@ class RainEditorWidget(qtBaseClass, uiDialog):
             self.uc.log_info(traceback.format_exc())
             QApplication.restoreOverrideCursor()
             self.uc.show_warn(
-                "WARNING 060319.1835: Importing Rainfall Data failed! ({0}) : {1}".format(e.errno, e.strerror)
+                f"WARNING 060319.1835: Importing Rainfall Data failed! : {e}"
             )
 
     def export_rainfall_to_binary_hdf5(self):
@@ -236,29 +248,29 @@ class RainEditorWidget(qtBaseClass, uiDialog):
             hdf_file = hdf_dir + "/RAINCELL.HDF5"
             s.setValue("FLO-2D/lastHDF", os.path.dirname(hdf_file))
             # s.setValue("FLO-2D/lastHDF", hdf_file)
-            try:
-                QApplication.setOverrideCursor(Qt.WaitCursor)
-                qry_header = "SELECT rainintime, irinters, timestamp FROM raincell LIMIT 1;"
-                header = self.gutils.execute(qry_header).fetchone()
-                if header:
-                    rainintime, irinters, timestamp = header
-                    header_data = [rainintime, irinters, timestamp]
-                    qry_data = "SELECT iraindum FROM raincell_data ORDER BY rrgrid, time_interval;"
-                    data = self.gutils.execute(qry_data).fetchall()
-                    data = [data[i : i + irinters] for i in range(0, len(data), irinters)]
-                    hdf_processor = HDFProcessor(hdf_file)
-                    hdf_processor.export_rainfall_to_binary_hdf5(header_data, data)
-                    QApplication.restoreOverrideCursor()
-                    self.uc.show_info("Exporting Rainfall Data finished!")
-                else:
-                    QApplication.restoreOverrideCursor()
-                    self.uc.show_info(
-                        "There is no data in layer 'Realtime Rainfall'\n\nImport Realtime Rainfall ASCII files."
-                    )
-            except Exception as e:
-                self.uc.log_info(traceback.format_exc())
+            # try:
+            QApplication.setOverrideCursor(Qt.WaitCursor)
+            qry_header = "SELECT rainintime, irinters, timestamp FROM raincell LIMIT 1;"
+            header = self.gutils.execute(qry_header).fetchone()
+            if header:
+                rainintime, irinters, timestamp = header
+                header_data = [rainintime, irinters, timestamp]
+                qry_data = "SELECT iraindum FROM raincell_data"
+                qry_size = "SELECT COUNT(iraindum) FROM raincell_data"
+                qry_timeinterval = "SELECT DISTINCT time_interval FROM raincell_data"
+                hdf_processor = HDFProcessor(hdf_file, self.iface)
+                hdf_processor.export_rainfall_to_binary_hdf5(header_data, qry_data, qry_size, qry_timeinterval)
                 QApplication.restoreOverrideCursor()
-                self.uc.bar_warn("Exporting Rainfall Data failed! Please check your input data.")
+                self.uc.show_info("Exporting Rainfall Data finished!")
+            else:
+                QApplication.restoreOverrideCursor()
+                self.uc.show_info(
+                    "There is no data in layer 'Realtime Rainfall'\n\nImport Realtime Rainfall ASCII files."
+                )
+            # except Exception as e:
+            #     self.uc.log_info(traceback.format_exc())
+            #     QApplication.restoreOverrideCursor()
+            #     self.uc.bar_warn("Exporting Rainfall Data failed! Please check your input data.")
 
     def create_plot(self):
         """
@@ -547,7 +559,7 @@ class RainEditorWidget(qtBaseClass, uiDialog):
         bl = self.lyrs.data["user_model_boundary"]["qlyr"]
         bfeat = next(bl.getFeatures())
         if bfeat["cell_size"]:
-            cs = bfeat["cell_size"]
+            cs = int(bfeat["cell_size"])
             if cs <= 0:
                 self.uc.show_warn(
                     "WARNING 060319.1727: Cell size must be positive. Change the feature attribute value in Computational Domain layer."

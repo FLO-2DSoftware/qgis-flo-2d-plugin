@@ -136,9 +136,9 @@ class InfiltrationCalculator(object):
 
         # get area of an item in self.grid_lyr.
 
-        self.gridArea = None
-        gridfeat = next(self.grid_lyr.getFeatures())
-        self.gridArea = gridfeat.geometry().area()
+        self.gridArea = float(self.gutils.get_cont_par("CELLSIZE")) ** 2
+        # gridfeat = next(self.grid_lyr.getFeatures())
+        # self.gridArea = gridfeat.geometry().area()
 
     def setup_scs_single(self, curve_lyr, curve_fld="CurveNum"):
         self.curve_lyr = curve_lyr

@@ -112,7 +112,7 @@ class SettingsDialog(qtBaseClass, uiDialog):
                 wid.setChecked(int(value))
             elif isinstance(wid, QSpinBox):
                 if value and is_number(value):
-                    wid.setValue(int(value))
+                    wid.setValue(int(float(value)))
                 else:
                     pass
             elif isinstance(wid, QDoubleSpinBox):
@@ -335,7 +335,7 @@ class SettingsDialog(qtBaseClass, uiDialog):
             if isinstance(wid, QLineEdit):
                 value = wid.text()
             elif isinstance(wid, QSpinBox):
-                value = wid.value()
+                value = int(float(wid.value()))
             elif isinstance(wid, QDoubleSpinBox):
                 value = str(wid.value())
             elif isinstance(wid, QCheckBox):

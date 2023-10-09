@@ -89,7 +89,7 @@ class GridInfoWidget(qtBaseClass, uiDialog):
         try:
             if not fid == -1:
                 feat = next(self.grid.getFeatures(QgsFeatureRequest(fid)))
-                cell_size = sqrt(feat.geometry().area())
+                # cell_size = sqrt(feat.geometry().area())
                 gid = str(fid)
                 if feat["elevation"]:
                     elev = "{:10.4f}".format(feat["elevation"]).strip()
@@ -102,7 +102,7 @@ class GridInfoWidget(qtBaseClass, uiDialog):
                     self.idEdit.setText(gid)
                     self.elevEdit.setText(elev)
                     self.mannEdit.setText(str(n))
-                    self.cellEdit.setText(str(cell_size))
+                    self.cellEdit.setText(str(self.gutils.get_cont_par("CELLSIZE")))
                     self.grid = self.lyrs.data["grid"]["qlyr"]
                     self.n_cells = number_of_elements(self.gutils, self.grid)
                     self.n_cells_lbl.setText("Number of cells: " + "{:,}".format(self.n_cells) + "   ")
@@ -244,7 +244,7 @@ class GridInfoWidget(qtBaseClass, uiDialog):
                                 zoom(self.iface, 0.4)
                                 self.mannEdit.setText(str(feat["n_value"]))
                                 self.elevEdit.setText(str(feat["elevation"]).strip())
-                                self.cellEdit.setText(str(sqrt(feat.geometry().area())))
+                                self.cellEdit.setText(str(self.gutils.get_cont_par("CELLSIZE")))
                                 self.n_cells = n_cells
                                 self.n_cells_lbl.setText("Number of cells: " + "{:,}".format(n_cells) + "   ")
                             else:
