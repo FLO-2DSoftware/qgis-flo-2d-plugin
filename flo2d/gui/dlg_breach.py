@@ -8,6 +8,7 @@
 # of the License, or (at your option) any later version
 
 import functools
+import os
 import time
 from datetime import datetime
 from math import modf
@@ -47,7 +48,7 @@ from ..flo2d_tools.grid_tools import (
 )
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
-from ..utils import float_or_zero, int_or_zero
+from ..utils import float_or_zero, int_or_zero, get_file_path
 from .ui_utils import center_canvas, load_ui, set_icon, zoom
 
 
@@ -1514,7 +1515,9 @@ class IndividualLeveesDialog(qtBaseClass, uiDialog_individual_levees):
             self.lyrs.repaint_layers()
 
             levees = self.lyrs.data["levee_data"]["qlyr"]
-            levees.triggerRepaint()
+            self.repaint_levee(levees)
+
+            #levees.triggerRepaint()
 
             QApplication.restoreOverrideCursor()
             self.uc.bar_info("Individual Levee Data for cell " + levee_grid + " saved.")
@@ -2001,3 +2004,59 @@ class IndividualLeveesDialog(qtBaseClass, uiDialog_individual_levees):
             pass
         finally:
             QApplication.restoreOverrideCursor()
+
+    def repaint_levee(self, levees_layer):
+        """
+        Function to change the breach symbology
+        """
+
+        style_path = get_file_path("styles", "levee.qml")
+        if os.path.isfile(style_path):
+            levees_layer.loadNamedStyle(style_path)
+
+        levee_breach_qry = """SELECT grid_fid, lfaildir
+                                   FROM levee_failure """
+
+        breaches = self.gutils.execute(levee_breach_qry).fetchall()
+
+        breach_qrys = {}
+
+        for breach in breaches:
+            grid_fid = breach[0]
+            lfaildir = breach[1]
+            rule = f'"grid_fid" = {grid_fid} AND  "ldir" = {lfaildir}'
+            breach_name = f'Breach {grid_fid}-{lfaildir}'
+            breach_qrys[breach_name] = rule
+
+        # create a new rule-based renderer
+        symbol = QgsSymbol.defaultSymbol(levees_layer.geometryType())
+        renderer = QgsRuleBasedRenderer(symbol)
+
+        # get the "root" rule
+        root_rule = renderer.rootRule()
+
+        # create clone of the default rule
+        levee_rule = root_rule.children()[0].clone()
+        levee_rule_qry = '"fid" is not NULL'
+        levee_rule.setLabel("Levee")
+        levee_rule.setFilterExpression(levee_rule_qry)
+        levee_rule.symbol().setColor(QColor("red"))
+        levee_rule.symbol().setWidth(0.5)
+        root_rule.appendChild(levee_rule)
+
+        # Set the breach rule
+        for breach_name, breach_rule_qry in breach_qrys.items():
+            breach_rule = root_rule.children()[0].clone()
+            breach_rule.setLabel(breach_name)
+            breach_rule.setFilterExpression(breach_rule_qry)
+            breach_rule.symbol().setColor(QColor("yellow"))
+            breach_rule.symbol().setWidth(0.5)
+            root_rule.appendChild(breach_rule)
+
+        root_rule.removeChildAt(0)
+
+        # Apply the renderer
+        levees_layer.setRenderer(renderer)
+        levees_layer.triggerRepaint()
+
+
