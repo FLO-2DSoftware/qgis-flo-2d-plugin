@@ -130,8 +130,6 @@ def repaint_levee(gutils, levees_layer):
             prescribed_rule.symbol().setWidth(0.5)
             root_rule.appendChild(prescribed_rule)
 
-        root_rule.removeChildAt(0)
-
     if failure_mode == 2:
         levee_breach_qry = """
                             SELECT breach_cells.breach_fid, breach_cells.grid_fid, breach.ibreachdir
@@ -158,9 +156,8 @@ def repaint_levee(gutils, levees_layer):
             breach_rule.symbol().setWidth(0.5)
             root_rule.appendChild(breach_rule)
 
-        root_rule.removeChildAt(0)
-
     # Apply the renderer
+    root_rule.removeChildAt(0)
     levees_layer.setRenderer(renderer)
     levees_layer.triggerRepaint()
 
