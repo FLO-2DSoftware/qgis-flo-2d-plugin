@@ -17,6 +17,7 @@ from operator import itemgetter
 from subprocess import PIPE, STDOUT, Popen
 
 import numpy as np
+from qgis._core import QgsMessageLog
 from qgis.analysis import QgsInterpolator, QgsTinInterpolator, QgsZonalStatistics
 from qgis.core import (
     NULL,
@@ -1725,9 +1726,19 @@ def calculate_arfwrf(grid, areas):
         empty_wrf = (0,) * 8
         full_wrf = (1,) * 8
         features.rewind()
+
+        pd = QProgressDialog("Calculating ARF and WRF...", None, 0, sum(1 for feature in features))
+        pd.setModal(True)
+        pd.setValue(0)
+        pd.forceShow()
+        i = 0
+
+        features = grid.getFeatures()
+
         for feat in features:
             geom = feat.geometry()
             fids = index.intersects(geom.boundingBox())
+
             for fid in fids:
                 f = allfeatures[fid]
                 fgeom = f.geometry()
@@ -1758,6 +1769,8 @@ def calculate_arfwrf(grid, areas):
                     yield (centroid_wkt, feat.id(), f.id(), arf) + tuple(wrf), was_null
                 else:
                     pass
+            i += 1
+            pd.setValue(i)
 
     except:
         show_error(
