@@ -3092,16 +3092,17 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     l.write(line2.format(gid))
                     for row in directions:
                         l.write(line3.format(*row[1:]))
-                fail_rows = groupby(self.execute(levee_fail_sql), key=itemgetter(1))
-                for gid, directions in fail_rows:
-                    l.write(line4.format(gid))
-                    for row in directions:
-                        rowl = list(row)
-                        for i in range(0, len(rowl)):
-                            rowl[i] = rowl[i] if rowl[i] is not None else 0
-                            rowl[i] = rowl[i] if rowl[i] != "None" else 0
-                        row = tuple(rowl)
-                        l.write(line5.format(*row[2:]))
+                if head[1] == 1:
+                    fail_rows = groupby(self.execute(levee_fail_sql), key=itemgetter(1))
+                    for gid, directions in fail_rows:
+                        l.write(line4.format(gid))
+                        for row in directions:
+                            rowl = list(row)
+                            for i in range(0, len(rowl)):
+                                rowl[i] = rowl[i] if rowl[i] is not None else 0
+                                rowl[i] = rowl[i] if rowl[i] != "None" else 0
+                            row = tuple(rowl)
+                            l.write(line5.format(*row[2:]))
                 if None not in glob_frag:
                     l.write(line6.format(*glob_frag))
                 else:
