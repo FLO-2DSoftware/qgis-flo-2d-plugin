@@ -3237,7 +3237,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     gid = self.execute(cells_sql, (fid,)).fetchone()[0]
                     row_slice = [str(x) if x is not None else "" for x in row[b2]]
                     row_slice[0] = str(gid)
-                    row_slice[1] = str(int(row_slice[1]) + 1)
+                    row_slice[1] = str(int(row_slice[1]))
                     b.write(bline.format(c, " ".join(row_slice)))
                     for gslice, dslice, line in parts:
                         row_slice = [str(x) if x is not None else "" for x in row[dslice]]
