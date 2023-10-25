@@ -1,5 +1,7 @@
 #  -*- coding: utf-8 -*-
+import os
 
+from PyQt5.QtGui import QColor
 # FLO-2D Preprocessor tools for QGIS
 # Copyright ? 2017 Lutra Consulting for FLO-2D
 
@@ -10,6 +12,7 @@
 
 from qgis.PyQt.QtCore import Qt
 from qgis.PyQt.QtWidgets import QApplication
+from qgis._core import QgsMessageLog, QgsSymbol, QgsRuleBasedRenderer
 
 from ..geopackage_utils import GeoPackageUtils
 from ..gui.dlg_breach import (
@@ -19,8 +22,9 @@ from ..gui.dlg_breach import (
     LeveeFragilityCurvesDialog,
 )
 from ..user_communication import UserCommunication
-from ..utils import float_or_zero
+from ..utils import float_or_zero, get_file_path
 from .ui_utils import load_ui, set_icon
+from .dlg_breach import repaint_levee
 
 uiDialog, qtBaseClass = load_ui("levee_and_breach_editor")
 
@@ -73,32 +77,32 @@ class LeveeAndBreachEditorWidget(qtBaseClass, uiDialog):
             self.populate_levee_and_breach_widget()
 
     def populate_levee_and_breach_widget(self):
-        qry = "SELECT ibreachsedeqn, gbratio, gweircoef, gbreachtime FROM breach_global"
-        row = self.gutils.execute(qry).fetchone()
-        if not row:
-            return
-
-        equation = row[0] - 1 if row[0] is not None else 0
-        self.transport_eq_cbo.setCurrentIndex(equation)
-        self.initial_breach_width_depth_ratio_dbox.setValue(float_or_zero(row[1]))
-        self.weir_coefficient_dbox.setValue(float_or_zero(row[2]))
-        self.time_to_initial_failure_dbox.setValue(float_or_zero(row[3]))
-
+        """
+        Function to populate the levee and breach widget
+        """
+        # First check the Levee global conditions
         qry = "SELECT raiselev, ilevfail FROM levee_general"
         row = self.gutils.execute(qry).fetchone()
         if not row:
+            self.no_failure_radio.setChecked(True)
             return
 
+        # Crest increment
+        self.crest_increment_dbox.setValue(float_or_zero(row[0]))
+
+        # Prescribed
         if row[1] == 1:
             self.prescribed_failure_radio.setChecked(True)
+        # Breach
         elif row[1] == 2:
             self.breach_failure_radio.setChecked(True)
+            self.enable_breach_group()
+        # No failure
         else:
             self.no_failure_radio.setChecked(True)
 
-        self.crest_increment_dbox.setValue(float_or_zero(row[0]))
-
-        self.enable_breach_group()
+        levees = self.lyrs.data["levee_data"]["qlyr"]
+        repaint_levee(self.gutils, levees)
 
     def levee_elevation_tool(self):
         return
@@ -111,6 +115,9 @@ class LeveeAndBreachEditorWidget(qtBaseClass, uiDialog):
         if not self.lyrs.any_lyr_in_edit("breach"):
             return
         self.lyrs.save_lyrs_edits("breach")
+        levees = self.lyrs.data["levee_data"]["qlyr"]
+        repaint_levee(self.gutils, levees)
+
 
     def revert_breach_lyr_edits(self):
         breach_lyr_edited = self.lyrs.rollback_lyrs_edits("breach")
@@ -118,7 +125,6 @@ class LeveeAndBreachEditorWidget(qtBaseClass, uiDialog):
     def show_levees(self):
         """
         Shows individual levees dialog.
-
         """
         if self.gutils.is_table_empty("levee_data"):
             self.uc.bar_info("There aren't cells with levees defined!")
@@ -174,6 +180,8 @@ class LeveeAndBreachEditorWidget(qtBaseClass, uiDialog):
         if save:
             try:
                 if dlg_individual_breach.save_individual_breach_data():
+                    levees = self.lyrs.data["levee_data"]["qlyr"]
+                    repaint_levee(self.gutils, levees)
                     self.uc.bar_info("Individual Breach Data saved.")
                 else:
                     self.uc.bar_info("Saving of Individual Breach Data failed!.")
@@ -226,21 +234,28 @@ class LeveeAndBreachEditorWidget(qtBaseClass, uiDialog):
             else 0
         )
         self.gutils.execute(qry, (value,))
-
+        levees = self.lyrs.data["levee_data"]["qlyr"]
+        repaint_levee(self.gutils, levees)
         self.enable_breach_group()
 
     def enable_breach_group(self):
         if self.no_failure_radio.isChecked():
             self.breach_grp.setDisabled(True)
-        #             self.show_levees_btn.setEnabled(True)
 
         elif self.prescribed_failure_radio.isChecked():
             self.breach_grp.setDisabled(True)
-        #             self.show_levees_btn.setEnabled(True)
+
         else:
             self.breach_grp.setEnabled(True)
-
-    #             self.show_levees_btn.setEnabled(False)
+            qry = "SELECT ibreachsedeqn, gbratio, gweircoef, gbreachtime FROM breach_global"
+            row = self.gutils.execute(qry).fetchone()
+            if not row:
+                return
+            equation = row[0] - 1 if row[0] is not None else 0
+            self.transport_eq_cbo.setCurrentIndex(equation)
+            self.initial_breach_width_depth_ratio_dbox.setValue(float_or_zero(row[1]))
+            self.weir_coefficient_dbox.setValue(float_or_zero(row[2]))
+            self.time_to_initial_failure_dbox.setValue(float_or_zero(row[3]))
 
     def update_crest_increment(self):
         self.fill_levee_general_with_defauts_if_empty()
@@ -287,3 +302,4 @@ class LeveeAndBreachEditorWidget(qtBaseClass, uiDialog):
         qry = """UPDATE breach_global SET gbreachtime = ?;"""
         value = self.time_to_initial_failure_dbox.value()
         self.gutils.execute(qry, (value,))
+

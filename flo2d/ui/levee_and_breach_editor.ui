@@ -119,6 +119,9 @@
                     <property name="text">
                      <string>No failure</string>
                     </property>
+                    <property name="checked">
+                     <bool>true</bool>
+                    </property>
                    </widget>
                   </item>
                   <item row="0" column="1">
@@ -233,6 +236,9 @@
    </item>
    <item row="1" column="0">
     <widget class="QGroupBox" name="breach_grp">
+     <property name="enabled">
+      <bool>false</bool>
+     </property>
      <property name="title">
       <string>Breach</string>
      </property>
@@ -575,7 +581,7 @@
       <item row="3" column="1">
        <widget class="QPushButton" name="levee_fragility_curves_btn">
         <property name="enabled">
-         <bool>true</bool>
+         <bool>false</bool>
         </property>
         <property name="text">
          <string>Levee Fragility Curves</string>
@@ -601,5 +607,54 @@
   </layout>
  </widget>
  <resources/>
- <connections/>
+ <connections>
+  <connection>
+   <sender>no_failure_radio</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>breach_grp</receiver>
+   <slot>setDisabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>170</x>
+     <y>115</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>55</x>
+     <y>263</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>prescribed_failure_radio</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>breach_grp</receiver>
+   <slot>setDisabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>264</x>
+     <y>117</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>198</x>
+     <y>272</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>breach_failure_radio</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>breach_grp</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>374</x>
+     <y>115</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>357</x>
+     <y>279</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
 </ui>

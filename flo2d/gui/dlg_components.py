@@ -254,8 +254,14 @@ class ComponentsDialog(qtBaseClass, uiDialog):
                     self.multiple_channels_chbox.setEnabled(True)
 
             if not self.gutils.is_table_empty("breach"):
-                self.breach_chbox.setChecked(True)
-                self.breach_chbox.setEnabled(True)
+                qry = "SELECT ilevfail FROM levee_general"
+                row = self.gutils.execute(qry).fetchone()
+                if row[0] == 2:
+                    self.breach_chbox.setChecked(True)
+                    self.breach_chbox.setEnabled(True)
+                else:
+                    self.breach_chbox.setChecked(False)
+                    self.breach_chbox.setEnabled(False)
 
             if not self.gutils.is_table_empty("gutter_cells"):
                 self.gutters_chbox.setChecked(True)

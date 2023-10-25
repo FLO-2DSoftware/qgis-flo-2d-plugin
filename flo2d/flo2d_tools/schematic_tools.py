@@ -738,8 +738,8 @@ def levee_schematic(lid_gid_elev, levee_lyr, grid_lyr):
                 c_p2_a = c_p2.angle(nv)
                 c_p2_a = 2 * pi + c_p2_a if c_p2_a < 0 else c_p2_a
                 # nearest octagon nodes
-                n1 = int(round(c_p1_a / (pi / 4))) % 8
-                n2 = int(round(c_p2_a / (pi / 4))) % 8
+                n1 = int(c_p1_a / (pi / 4)) % 8
+                n2 = int(c_p2_a / (pi / 4)) % 8
                 # if entry and leaving octagon node are identical, skip the pair (no levee seg)
                 if n1 == n2:
                     continue

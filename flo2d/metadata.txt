@@ -10,6 +10,14 @@ about=QGIS tools for FLO-2D
 
 changelog=
  <p>0.10.115
+  - Added progress dialog to ARF and WRF
+  - Added symbology for Prescribed Failure & Breach Failure
+  - Bug fix
+       - Levee schematized correctly
+       - Levee and breach editor set up
+       - Wrong direction on BREACH.DAT export
+       - Removed the export breach checkbox on components when it is not selected on the widget
+       - Removed the fail data on LEVEE.DAT when it is not selected on the widget
   - Update test files
   - Bug fix
        - RealTime Rainfall
