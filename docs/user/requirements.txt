@@ -1,3 +1,2 @@
 sphinx_rtd_theme
-sphinxcontrib.yt
 sphinx-book-theme
