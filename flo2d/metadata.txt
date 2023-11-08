@@ -9,6 +9,9 @@ email=jj@flo-2d.com
 about=QGIS tools for FLO-2D
 
 changelog=
+ <p>1.0.0
+  - Added the quick run option
+  - Changed the Run FLO-2D Pro button
  <p>0.10.115
   - Added progress dialog to ARF and WRF
   - Added symbology for Prescribed Failure & Breach Failure

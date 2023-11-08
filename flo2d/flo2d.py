@@ -34,6 +34,7 @@ from subprocess import (
     run,
 )
 from PyQt5.QtWidgets import QApplication, QToolButton
+from qgis._core import QgsMessageLog
 from qgis.core import NULL, QgsProject, QgsWkbTypes
 from qgis.gui import QgsDockWidget, QgsProjectionSelectionWidget
 from qgis.PyQt import QtCore
@@ -285,7 +286,7 @@ class Flo2D(object):
             if text == "Run Simulation":
                 toolButton = QToolButton()
                 toolButton.setMenu(popup)
-                toolButton.setIcon(QIcon(self.plugin_dir + "/img/run_flopro.png"))
+                toolButton.setIcon(QIcon(self.plugin_dir + "/img/flo2d.svg"))
                 toolButton.setPopupMode(QToolButton.InstantPopup)
                 self.toolbar.addWidget(toolButton)
             else:
@@ -312,13 +313,18 @@ class Flo2D(object):
         )
 
         self.add_action(
-            os.path.join(self.plugin_dir, "img/run_flopro.png"),
+            os.path.join(self.plugin_dir, "img/flo2d.svg"),
             text=self.tr("Run Simulation"),
             callback=None,
             parent=self.iface.mainWindow(),
             menu=(
                 (
                     os.path.join(self.plugin_dir, "img/flo2d.svg"),
+                    "Quick Run FLO-2D Pro",
+                    lambda: self.quick_run_flopro(),
+                ),
+                (
+                    os.path.join(self.plugin_dir, "img/FLO.png"),
                     "Run FLO-2D Pro",
                     self.run_flopro,
                 ),
@@ -771,6 +777,196 @@ class Flo2D(object):
             s.setValue("FLO-2D/run_settings", True)
 
         self.uc.show_info("Run Settings saved!")
+
+    @connection_required
+    def quick_run_flopro(self):
+        """
+        Function to export and run FLO-2D Pro
+        """
+        if self.gutils.is_table_empty("grid"):
+            self.uc.bar_warn("There is no grid! Please create it before running tool.")
+            return
+
+        project_dir = QgsProject.instance().absolutePath()
+        outdir = QFileDialog.getExistingDirectory(
+            None,
+            "Select directory where FLO-2D model will run",
+            directory=project_dir,
+        )
+
+        if outdir:
+            self.f2g = Flo2dGeoPackage(self.con, self.iface)
+            sql = """SELECT name, value FROM cont;"""
+            options = {o: v if v is not None else "" for o, v in self.f2g.execute(sql).fetchall()}
+            export_calls = [
+                "export_cont_toler",
+                "export_tolspatial",
+                "export_inflow",
+                "export_tailings",
+                "export_outflow",
+                "export_rain",
+                "export_evapor",
+                "export_infil",
+                "export_chan",
+                "export_xsec",
+                "export_hystruc",
+                "export_bridge_xsec",
+                "export_bridge_coeff_data",
+                "export_street",
+                "export_arf",
+                "export_mult",
+                "export_sed",
+                "export_levee",
+                "export_fpxsec",
+                "export_breach",
+                "export_gutter",
+                "export_fpfroude",
+                "export_swmmflo",
+                "export_swmmflort",
+                "export_swmmoutf",
+                "export_wsurf",
+                "export_wstime",
+                "export_shallowNSpatial",
+                "export_mannings_n_topo",
+            ]
+
+            s = QSettings()
+            s.setValue("FLO-2D/lastGdsDir", outdir)
+
+            dlg_components = ComponentsDialog(self.con, self.iface, self.lyrs, "out")
+            QgsMessageLog.logMessage(str(dlg_components))
+            ok = dlg_components.exec_()
+            if ok:
+                if "Channels" not in dlg_components.components:
+                    export_calls.remove("export_chan")
+                    export_calls.remove("export_xsec")
+
+                if "Reduction Factors" not in dlg_components.components:
+                    export_calls.remove("export_arf")
+
+                if "Streets" not in dlg_components.components:
+                    export_calls.remove("export_street")
+
+                if "Outflow Elements" not in dlg_components.components:
+                    export_calls.remove("export_outflow")
+
+                if "Inflow Elements" not in dlg_components.components:
+                    export_calls.remove("export_inflow")
+                    export_calls.remove("export_tailings")
+
+                if "Levees" not in dlg_components.components:
+                    export_calls.remove("export_levee")
+
+                if "Multiple Channels" not in dlg_components.components:
+                    export_calls.remove("export_mult")
+
+                if "Breach" not in dlg_components.components:
+                    export_calls.remove("export_breach")
+
+                if "Gutters" not in dlg_components.components:
+                    export_calls.remove("export_gutter")
+
+                if "Infiltration" not in dlg_components.components:
+                    export_calls.remove("export_infil")
+
+                if "Floodplain Cross Sections" not in dlg_components.components:
+                    export_calls.remove("export_fpxsec")
+
+                if "Mudflow and Sediment Transport" not in dlg_components.components:
+                    export_calls.remove("export_sed")
+
+                if "Evaporation" not in dlg_components.components:
+                    export_calls.remove("export_evapor")
+
+                if "Hydraulic  Structures" not in dlg_components.components:
+                    export_calls.remove("export_hystruc")
+                    export_calls.remove("export_bridge_xsec")
+                    export_calls.remove("export_bridge_coeff_data")
+                else:
+                    xsecs = self.gutils.execute("SELECT fid FROM struct WHERE icurvtable = 3").fetchone()
+                    if not xsecs:
+                        if os.path.isfile(outdir + r"\BRIDGE_XSEC.DAT"):
+                            os.remove(outdir + r"\BRIDGE_XSEC.DAT")
+                        export_calls.remove("export_bridge_xsec")
+                        export_calls.remove("export_bridge_coeff_data")
+
+                if "Rain" not in dlg_components.components:
+                    export_calls.remove("export_rain")
+
+                if "Storm Drain" not in dlg_components.components:
+                    export_calls.remove("export_swmmflo")
+                    export_calls.remove("export_swmmflort")
+                    export_calls.remove("export_swmmoutf")
+                else:
+                    self.uc.show_info("Storm Drain features not allowed on the Quick Run FLO-2D Pro.")
+                    return
+
+                if "Spatial Shallow-n" not in dlg_components.components:
+                    export_calls.remove("export_shallowNSpatial")
+
+                if "Spatial Tolerance" not in dlg_components.components:
+                    export_calls.remove("export_tolspatial")
+
+                if "Spatial Froude" not in dlg_components.components:
+                    export_calls.remove("export_fpfroude")
+
+                if "Manning's n and Topo" not in dlg_components.components:
+                    export_calls.remove("export_mannings_n_topo")
+
+                QApplication.setOverrideCursor(Qt.WaitCursor)
+
+                try:
+                    s = QSettings()
+                    s.setValue("FLO-2D/lastGdsDir", outdir)
+
+                    QApplication.setOverrideCursor(Qt.WaitCursor)
+                    self.call_IO_methods(export_calls, True, outdir)
+
+                    # The strings list 'export_calls', contains the names of
+                    # the methods in the class Flo2dGeoPackage to export (write) the
+                    # FLO-2D .DAT files
+
+                    self.uc.bar_info("Flo2D model exported to " + outdir, dur=3)
+                    QApplication.restoreOverrideCursor()
+
+                finally:
+                    QApplication.restoreOverrideCursor()
+
+                    if "export_swmmflo" in export_calls:
+                        self.f2d_widget.storm_drain_editor.export_storm_drain_INP_file()
+
+                    # Delete .DAT files the model will try to use if existing:
+                    if "export_mult" in export_calls:
+                        if self.gutils.is_table_empty("simple_mult_cells"):
+                            new_files_used = self.files_used.replace("SIMPLE_MULT.DAT\n", "")
+                            self.files_used = new_files_used
+                            if os.path.isfile(outdir + r"\SIMPLE_MULT.DAT"):
+                                if self.uc.question(
+                                        "There are no simple multiple channel cells in the project but\n"
+                                        + "there is a SIMPLE_MULT.DAT file in the directory.\n"
+                                        + "If the file is not deleted it will be used by the model.\n\n"
+                                        + "Delete SIMPLE_MULT.DAT?"
+                                ):
+                                    os.remove(outdir + r"\SIMPLE_MULT.DAT")
+
+                        if self.gutils.is_table_empty("mult_cells"):
+                            new_files_used = self.files_used.replace("\nMULT.DAT\n", "\n")
+                            self.files_used = new_files_used
+                            if os.path.isfile(outdir + r"\MULT.DAT"):
+                                if self.uc.question(
+                                        "There are no multiple channel cells in the project but\n"
+                                        + "there is a MULT.DAT file in the directory.\n"
+                                        + "If the file is not deleted it will be used by the model.\n\n"
+                                        + "Delete MULT.DAT?"
+                                ):
+                                    os.remove(outdir + r"\MULT.DAT")
+
+                    if self.f2g.export_messages != "":
+                        info = "WARNINGS:\n\n" + self.f2g.export_messages
+                        self.uc.show_info(info)
+
+            QApplication.restoreOverrideCursor()
+            self.run_program("FLOPRO.exe")
 
     def run_flopro(self):
         self.run_program("FLOPRO.exe")
