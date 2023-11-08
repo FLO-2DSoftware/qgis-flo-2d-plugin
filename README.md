@@ -67,4 +67,4 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 ## Contact
 
-For questions or feedback, feel free to contact us at contact@flo-2d.com.
+For questions or feedback, feel free to contact us at https://flo-2d.com/contact/.
