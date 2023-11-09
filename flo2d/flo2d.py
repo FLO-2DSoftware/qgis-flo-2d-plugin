@@ -34,6 +34,7 @@ from subprocess import (
     run,
 )
 from PyQt5.QtWidgets import QApplication, QToolButton
+from qgis._core import QgsMessageLog
 from qgis.core import NULL, QgsProject, QgsWkbTypes
 from qgis.gui import QgsDockWidget, QgsProjectionSelectionWidget
 from qgis.PyQt import QtCore
@@ -282,10 +283,17 @@ class Flo2D(object):
             action.setWhatsThis(whats_this)
 
         if add_to_toolbar:
+
             if text == "Run Simulation":
                 toolButton = QToolButton()
                 toolButton.setMenu(popup)
                 toolButton.setIcon(QIcon(self.plugin_dir + "/img/run_flopro.png"))
+                toolButton.setPopupMode(QToolButton.InstantPopup)
+                self.toolbar.addWidget(toolButton)
+            elif text == "Import/Export":
+                toolButton = QToolButton()
+                toolButton.setMenu(popup)
+                toolButton.setIcon(QIcon(self.plugin_dir + "/img/export.png"))
                 toolButton.setPopupMode(QToolButton.InstantPopup)
                 self.toolbar.addWidget(toolButton)
             else:
@@ -356,59 +364,47 @@ class Flo2D(object):
         )
 
         self.add_action(
-            os.path.join(self.plugin_dir, "img/gpkg2gpkg.svg"),
-            text=self.tr("Import from GeoPackage"),
-            callback=lambda: self.import_from_gpkg(),
+            os.path.join(self.plugin_dir, "img/export.png"),
+            text=self.tr("Import/Export"),
+            callback=None,
             parent=self.iface.mainWindow(),
-        )
-
-        self.add_action(
-            os.path.join(self.plugin_dir, "img/import_gds.svg"),
-            text=self.tr("Import GDS files"),
-            callback=lambda: self.import_gds(),
-            parent=self.iface.mainWindow(),
-        )
-
-        self.add_action(
-            os.path.join(self.plugin_dir, "img/import_components.svg"),
-            text=self.tr("Import selected components files"),
-            callback=lambda: self.import_components(),
-            parent=self.iface.mainWindow(),
-        )
-
-        # self.add_action(
-        #     os.path.join(self.plugin_dir, "img/import_components2.svg"),
-        #     text=self.tr("Import one component"),
-        #     callback=lambda: self.import_selected_components2(),
-        #     parent=self.iface.mainWindow(),
-        # )
-
-        self.add_action(
-            os.path.join(self.plugin_dir, "img/export_gds.svg"),
-            text=self.tr("Export GDS files"),
-            callback=lambda: self.export_gds(),
-            parent=self.iface.mainWindow(),
-        )
-
-        self.add_action(
-            os.path.join(self.plugin_dir, "img/import_hdf.svg"),
-            text=self.tr("Import from HDF5"),
-            callback=lambda: self.import_hdf5(),
-            parent=self.iface.mainWindow(),
-        )
-
-        self.add_action(
-            os.path.join(self.plugin_dir, "img/export_hdf.svg"),
-            text=self.tr("Export to HDF5"),
-            callback=lambda: self.export_hdf5(),
-            parent=self.iface.mainWindow(),
-        )
-
-        self.add_action(
-            os.path.join(self.plugin_dir, "img/import_ras.svg"),
-            text=self.tr("Import RAS geometry"),
-            callback=lambda: self.import_from_ras(),
-            parent=self.iface.mainWindow(),
+            menu=(
+                (
+                    os.path.join(self.plugin_dir, "img/gpkg2gpkg.svg"),
+                    "Import from GeoPackage",
+                    lambda: self.import_from_gpkg(),
+                ),
+                (
+                    os.path.join(self.plugin_dir, "img/import_gds.svg"),
+                    "Import data (*.DAT) files",
+                    lambda: self.import_gds(),
+                ),
+                (
+                    os.path.join(self.plugin_dir, "img/import_components.svg"),
+                    "Import selected components files",
+                    lambda: self.import_components(),
+                ),
+                (
+                    os.path.join(self.plugin_dir, "img/export_gds.svg"),
+                    "Export data (*.DAT) files",
+                    lambda: self.export_gds(),
+                ),
+                (
+                    os.path.join(self.plugin_dir, "img/import_hdf.svg"),
+                    "Import from HDF5",
+                    lambda: self.import_hdf5(),
+                ),
+                (
+                    os.path.join(self.plugin_dir, "img/export_hdf.svg"),
+                    "Export to HDF5",
+                    lambda: self.export_hdf5(),
+                ),
+                (
+                    os.path.join(self.plugin_dir, "img/import_ras.svg"),
+                    "Import RAS geometry",
+                    lambda: self.import_from_ras(),
+                )
+            )
         )
 
         self.add_action(
