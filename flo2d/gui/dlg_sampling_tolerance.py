@@ -42,7 +42,8 @@ class SamplingToleranceDialog(qtBaseClass, uiDialog):
         poly_lyrs = self.lyrs.list_group_vlayers()
         for l in poly_lyrs:
             if l.geometryType() == QgsWkbTypes.PolygonGeometry:
-                self.srcLayerCbo.addItem(l.name(), l.dataProvider().dataSourceUri())
+                if l.featureCount() > 0:
+                    self.srcLayerCbo.addItem(l.name(), l.dataProvider().dataSourceUri())
             else:
                 pass
 

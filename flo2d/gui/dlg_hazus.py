@@ -80,7 +80,8 @@ class HazusDialog(qtBaseClass, uiDialog):
             lyrs = self.lyrs.list_group_vlayers()
             for l in lyrs:
                 if l.geometryType() == QgsWkbTypes.PolygonGeometry:
-                    self.buildings_cbo.addItem(l.name(), l.dataProvider().dataSourceUri())
+                    if l.featureCount() > 0:    
+                        self.buildings_cbo.addItem(l.name(), l.dataProvider().dataSourceUri())
 
             if self.buildings_cbo.count():
                 self.populate_lists_with_buildigns_attributes(self.buildings_cbo.currentIndex())

@@ -848,9 +848,10 @@ class GreenAmptDialog(uiDialog_green, qtBaseClass_green):
             lyrs = self.lyrs.list_group_vlayers()
             for l in lyrs:
                 if l.geometryType() == QgsWkbTypes.PolygonGeometry:
-                    lyr_name = l.name()
-                    self.soil_cbo.addItem(lyr_name, l)
-                    self.land_cbo.addItem(lyr_name, l)
+                    if l.featureCount() > 0:
+                        lyr_name = l.name()
+                        self.soil_cbo.addItem(lyr_name, l)
+                        self.land_cbo.addItem(lyr_name, l)
         except Exception as e:
             pass
 
@@ -1494,9 +1495,10 @@ class SCSDialog(uiDialog_scs, qtBaseClass_scs):
             lyrs = self.lyrs.list_group_vlayers()
             for l in lyrs:
                 if l.geometryType() == QgsWkbTypes.PolygonGeometry:
-                    lyr_name = l.name()
-                    self.single_lyr_cbo.addItem(lyr_name, l)
-                    self.multi_lyr_cbo.addItem(lyr_name, l)
+                    if l.featureCount() > 0:                   
+                        lyr_name = l.name()
+                        self.single_lyr_cbo.addItem(lyr_name, l)
+                        self.multi_lyr_cbo.addItem(lyr_name, l)
             rasters = self.lyrs.list_group_rlayers()
             for r in rasters:
                 self.raster_lyr_cbo.addItem(r.name(), r.dataProvider().dataSourceUri())
