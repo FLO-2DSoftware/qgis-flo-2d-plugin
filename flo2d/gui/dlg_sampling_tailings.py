@@ -8,7 +8,7 @@
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 
-from qgis.core import QgsWkbTypes
+from qgis.core import QgsWkbTypes, QgsProject
 
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
@@ -42,7 +42,8 @@ class SamplingTailingsDialog(qtBaseClass, uiDialog):
         poly_lyrs = self.lyrs.list_group_vlayers()
         for l in poly_lyrs:
             if l.geometryType() == QgsWkbTypes.PolygonGeometry:
-                self.srcLayerCbo.addItem(l.name(), l.dataProvider().dataSourceUri())
+                if l.featureCount() > 0:                 
+                    self.srcLayerCbo.addItem(l.name(), l.dataProvider().dataSourceUri())
             else:
                 pass
 
@@ -77,6 +78,21 @@ class SamplingTailingsDialog2(qtBaseClass, uiDialog):
         uiDialog.__init__(self)
         self.setupUi(self)
         self.external_lyr_cbo.setFilters(QgsMapLayerProxyModel.PolygonLayer)
+        
+        
+        # non_empty = []
+        # for i in range(self.external_lyr_cbo.count()):
+        #     name = self.external_lyr_cbo.itemText(i)
+        #     layer = QgsProject.instance().mapLayersByName(name)[0]
+        #     if layer.featureCount() > 0:         
+        #         non_empty.append(layer)
+        #
+        # self.external_lyr_cbo.clear()
+        # for lyr in non_empty: 
+        #     layer = QgsProject.instance().mapLayersByName(lyr)[0]     
+        #     self.external_lyr_cbo.setAdditionalLayers(non_empty)
+        
+        
         self.tailings_cbo.setFilters(QgsFieldProxyModel.Numeric | QgsFieldProxyModel.String)
         self.external_layer_changed()
         # connections

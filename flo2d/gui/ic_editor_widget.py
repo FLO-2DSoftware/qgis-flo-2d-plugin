@@ -309,7 +309,8 @@ class ICEditorWidget(qtBaseClass, uiDialog):
         if self.user_polygon_cb.isChecked():
             for layer_id, layer in QgsProject.instance().mapLayers().items():
                 if isinstance(layer, QgsVectorLayer) and layer.geometryType() == QgsWkbTypes.PolygonGeometry:
-                    self.tailings_cbo.addItem(layer.name())
+                   if layer.featureCount() > 0: 
+                       self.tailings_cbo.addItem(layer.name())
             self.tailings_cbo.setCurrentIndex(0)
             self.tailings_cbo.setEnabled(True)
             self.tailings_elev_sb.setEnabled(True)
