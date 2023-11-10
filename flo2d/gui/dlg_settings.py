@@ -63,7 +63,7 @@ class SettingsDialog(qtBaseClass, uiDialog):
 
         # connection
         self.gpkgCreateBtn.clicked.connect(self.create_db)
-        self.gpkgOpenBtn.clicked.connect(self.connect)
+        # self.gpkgOpenBtn.clicked.connect(self.connect) -> Old settings
 
     def set_default_controls(self, con):
         defaults = {

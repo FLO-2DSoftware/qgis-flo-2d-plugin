@@ -159,14 +159,8 @@ class UserCommunication(object):
         buttonN = msgBox.button(QMessageBox.No)
         buttonN.setText(text2)
 
-        # grid = QGridLayout
-        # index = grid.indexOf(checkbox)
-        # row, column, rowSpan, columnSpan = int
-        # grid.getItemPosition(index, row, column, rowSpan, columnSpan)
-        # grid.addWidget(geometryCheckBox, row + 1,  column, rowSpan, columnSpan)
-
-        ret = msgBox.exec()
-        return ret
+        # ret = msgBox.exec()
+        return msgBox.exec_()
 
     def customized_question(
         self,
