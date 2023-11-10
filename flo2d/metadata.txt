@@ -12,6 +12,8 @@ changelog=
  <p>1.0.0
   - Improvements on the geopackage
   - Grouped import/export buttons
+  - Added the quick run option
+  - Changed the Run FLO-2D Pro button
  <p>0.10.115
   - Added progress dialog to ARF and WRF
   - Added symbology for Prescribed Failure & Breach Failure
