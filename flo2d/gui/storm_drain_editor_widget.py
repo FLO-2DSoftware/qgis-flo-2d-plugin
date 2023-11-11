@@ -3759,7 +3759,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 s.setValue("FLO-2D/lastRPTFile", RPT_file)
                 last_RPT_dir = os.path.dirname(RPT_file)                 
                 s.setValue("FLO-2D/lastRPTDir", last_RPT_dir) 
-                return           
+                return True         
 
             if intersection:
                 with open(RPT_file) as f:
@@ -3840,7 +3840,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                             s.setValue("FLO-2D/lastRPTFile", RPT_file)
                             last_RPT_dir = os.path.dirname(RPT_file) 
                             s.setValue("FLO-2D/lastRPTDir", last_RPT_dir) 
-                            return 
+                            return True
                                
                     node_series = data[intersection]
                     I = 1
