@@ -3715,7 +3715,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         self.uc.clear_bar_messages()
         if self.gutils.is_table_empty("grid"):
             self.uc.bar_warn("There is no grid! Please create it before running tool.")
-            return
+            return False
 
         s = QSettings()
         RPT_file = s.value("FLO-2D/lastRPTFile", "")
@@ -3734,12 +3734,12 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         else:
            last_RPT_dir = os.path.dirname(RPT_file) 
         if not RPT_file:
-            return
+            return False
         else:   
             if os.path.getsize(RPT_file) == 0:
                 QApplication.restoreOverrideCursor()
                 self.uc.bar_warn("File  '" + os.path.basename(RPT_file) + "'  is empty! Select a valid .RPT file.") 
-                self.uc.show_warn("File  '" + os.path.basename(RPT_file) + "'  is empty!\n" +
+                self.uc.show_warn("WARNING 111123.1744: File  '" + os.path.basename(RPT_file) + "'  is empty!\n" +
                                     "Select a valid .RPT file.") 
                 RPT_file, _ = QFileDialog.getOpenFileName(
                     None,
@@ -3749,7 +3749,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 )
                 self.uc.clear_bar_messages() 
                 if not  RPT_file:              
-                    return  
+                    return False
                 else:
                     s.setValue("FLO-2D/lastRPTFile", RPT_file)
                     last_RPT_dir = os.path.dirname(RPT_file) 
@@ -3766,7 +3766,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                    if not intersection in f.read():
                         self.uc.bar_error("Node " + intersection + " not found in file " + RPT_file)
                         QApplication.restoreOverrideCursor()
-                        self.uc.show_warn("Node " + intersection + " not found in file\n\n" + RPT_file +
+                        self.uc.show_warn("WARNING 111123.1742: Node " + intersection + " not found in file\n\n" + RPT_file +
                                             "\n\nSelect a valid .RPT file.") 
                         RPT_file, _ = QFileDialog.getOpenFileName(
                             None,
@@ -3775,8 +3775,8 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                             filter="RPT file (*.rpt; *.RPT)",
                         ) 
                         self.uc.clear_bar_messages()
-                        if not  RPT_file:              
-                            return  
+                        if not RPT_file:              
+                            return False 
                         else:
                             s.setValue("FLO-2D/lastRPTFile", RPT_file)
                             last_RPT_dir = os.path.dirname(RPT_file) 
@@ -3825,7 +3825,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                         self.uc.bar_error("Node " + intersection + " not found in file  '" + RPT_file + "'") 
                         
                         QApplication.restoreOverrideCursor()
-                        self.uc.show_warn("Node " + intersection + " not found in file\n\n" + RPT_file +
+                        self.uc.show_warn("WARNING 111123.1743: Node " + intersection + " not found in file\n\n" + RPT_file +
                                             "\n\nSelect a valid .RPT file.") 
                         RPT_file, _ = QFileDialog.getOpenFileName(
                             None,
@@ -3834,8 +3834,8 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                             filter="RPT file (*.rpt; *.RPT)",
                         ) 
                         self.uc.clear_bar_messages() 
-                        if not  RPT_file:              
-                            return                                      
+                        if not RPT_file:              
+                            return False                                   
                         else: 
                             s.setValue("FLO-2D/lastRPTFile", RPT_file)
                             last_RPT_dir = os.path.dirname(RPT_file) 
@@ -3919,11 +3919,13 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                     QApplication.restoreOverrideCursor()
                     self.uc.bar_error("No time series found in file " + RPT_file +" for node " + intersection)    
                 
-                QApplication.restoreOverrideCursor()                                 
+                QApplication.restoreOverrideCursor()    
+                return True
+            
             except Exception as e:
                 QApplication.restoreOverrideCursor()
                 self.uc.show_error("Reading .RPT file failed !!", e)
-                return
+                return False
 
     def block_saving(self):
         model = self.tview.model()
