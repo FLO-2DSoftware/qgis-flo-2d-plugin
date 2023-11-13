@@ -19,6 +19,7 @@ from ..flo2d_tools.schema2user_tools import (
     SchemaGridConverter,
     SchemaLeveesConverter,
     SchemaSWMMConverter,
+    SchemaHydrStructsConverter,
 )
 from ..geopackage_utils import GeoPackageUtils
 from .ui_utils import load_ui
@@ -45,6 +46,7 @@ class Schema2UserDialog(qtBaseClass, uiDialog):
         self.ckbox_levees.stateChanged.connect(self.convert_levees_checked)
         self.ckbox_fpxsec.stateChanged.connect(self.convert_fpxsec_checked)
         self.ckbox_swmm.stateChanged.connect(self.convert_swmm_checked)
+        self.chbox_hydr_struct.stateChanged.connect(self.convert_hydr_checked)
 
         self.populate_components()
 
@@ -55,6 +57,7 @@ class Schema2UserDialog(qtBaseClass, uiDialog):
         schema_levee_tables = ["levee_data"]
         schema_fpxsec_tables = ["fpxsec"]
         schema_swwmm_tables = ["swmmflo"]
+        schema_hydr_tables = ["struct"]
 
         if all(self.gutils.is_table_empty(t) for t in schema_domain_tables):
             self.ckbox_domain.setDisabled(True)
@@ -85,6 +88,11 @@ class Schema2UserDialog(qtBaseClass, uiDialog):
             self.ckbox_swmm.setDisabled(True)
         else:
             self.ckbox_swmm.setEnabled(True)
+            
+        if any(self.gutils.is_table_empty(t) for t in schema_hydr_tables):
+            self.chbox_hydr_struct.setDisabled(True)
+        else:
+            self.chbox_hydr_struct.setEnabled(True)            
 
     def convert_domain_checked(self):
         if self.ckbox_domain.isChecked():
@@ -121,6 +129,12 @@ class Schema2UserDialog(qtBaseClass, uiDialog):
             self.methods[6] = self.convert_swmm
         else:
             self.methods.pop(6)
+
+    def convert_hydr_checked(self):
+        if self.chbox_hydr_struct.isChecked():
+            self.methods[7] = self.convert_hydr
+        else:
+            self.methods.pop(7)
 
     def convert_domain(self):
         try:
@@ -175,3 +189,19 @@ class Schema2UserDialog(qtBaseClass, uiDialog):
                 + "\n_______________________________________________________________",
                 e,
             )
+
+    def convert_hydr(self):
+        try:
+            hydr_converter = SchemaHydrStructsConverter(self.con, self.iface, self.lyrs)
+            hydr_converter.create_user_structure_lines()
+        except Exception as e:
+            self.uc.log_info(traceback.format_exc())
+            QApplication.restoreOverrideCursor()
+            self.uc.show_error(
+                "ERROR 121123.0508:\n\nConverting Hydraulic Structures to User Structure Lines failed!"
+                + "\n_______________________________________________________________",
+                e,
+            )
+        
+
+
