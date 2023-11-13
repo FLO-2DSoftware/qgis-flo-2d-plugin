@@ -152,6 +152,8 @@ class GeoPackageUtils(object):
         ["PROJ_NAME", "Project Name"],
         ["CONTACT", "Contact Engineer Name"],
         ["EMAIL", "Email Address"],
+        ["COMPANY", "Company Name"],
+        ["PHONE", "Phone Number"],
         ["PLUGIN_V", "FLO-2D-Plugin Version"],
         ["QGIS_V", "QGIS Version"],
         ["FLO-2D_V", "FLO-2D Build Version"],

@@ -776,8 +776,28 @@ class Flo2D(object):
             proj_name = "FLO-2D-Plugin"
             uri = f'geopackage:{gpkg_path}?projectName={proj_name}'
             self.project.write(uri)
-            self.uc.show_info("FLO-2D-Project sucessfully created.")
 
+            pn = dlg_settings.lineEdit_pn.text()
+            contact = dlg_settings.lineEdit_au.text()
+            email = dlg_settings.lineEdit_co.text()
+            company = dlg_settings.lineEdit_em.text()
+            phone = dlg_settings.lineEdit_te.text()
+
+            plugin_v = dlg_settings.label_pv.text()
+            qgis_v = dlg_settings.label_qv.text()
+            flo2d_v = dlg_settings.label_fv.text()
+
+            self.gutils.set_metadata_par("PROJ_NAME", pn)
+            self.gutils.set_metadata_par("CONTACT", contact)
+            self.gutils.set_metadata_par("EMAIL", email)
+            self.gutils.set_metadata_par("PHONE", phone)
+            self.gutils.set_metadata_par("COMPANY", company)
+            self.gutils.set_metadata_par("PLUGIN_V", plugin_v)
+            self.gutils.set_metadata_par("QGIS_V", qgis_v)
+            self.gutils.set_metadata_par("FLO-2D_V", flo2d_v)
+            self.gutils.set_metadata_par("CRS", self.crs.authid())
+
+            self.uc.show_info("FLO-2D-Project sucessfully created.")
 
     def flo_open_project(self):
         """
