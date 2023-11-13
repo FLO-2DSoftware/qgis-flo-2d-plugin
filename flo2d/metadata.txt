@@ -1,16 +1,18 @@
 [general]
 name=FLO-2D
-version=0.10.115
+version=0.10.116
 qgisMinimumVersion=3.28
 qgisMaximumVersion=3.99
 description=FLO-2D tools for QGIS
 author=FLO-2D
-email=jj@flo-2d.com
+email=jj@flo-2d.com.
 about=QGIS tools for FLO-2D
 
 changelog=
  <p>1.0.0
   - Grouped import/export buttons
+ <p>0.10.116
+  - Convert schematic hydraulic structures to user structure lines.
  <p>0.10.115
   - Added progress dialog to ARF and WRF
   - Added symbology for Prescribed Failure & Breach Failure
