@@ -1601,6 +1601,14 @@ SELECT gpkgAddGeometryColumn('swmmoutf', 'geom', 'POINT', 0, 0, 0);
 SELECT gpkgAddGeometryTriggers('swmmoutf', 'geom');
 -- SELECT gpkgAddSpatialIndex('swmmoutf', 'geom');
 
+CREATE TABLE "swmm_export" (
+    "fid" INTEGER NOT NULL PRIMARY KEY,
+    "name" TEXT NOT NULL UNIQUE ON CONFLICT REPLACE,
+    "value" TEXT,
+    "note" TEXT
+);
+INSERT INTO gpkg_contents (table_name, data_type) VALUES ('swmm_export', 'aspatial');
+
 -- SHALLOW_SPATIAL.DAT
 
 CREATE TABLE "spatialshallow" (
