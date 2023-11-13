@@ -11,6 +11,8 @@ import os
 import time
 from itertools import chain
 
+import qgis
+from qgis._core import QgsProject
 from qgis.core import QgsCoordinateReferenceSystem, QgsUnitTypes
 from qgis.gui import QgsProjectionSelectionWidget
 from qgis.PyQt.QtCore import QSettings, Qt
@@ -32,7 +34,7 @@ from ..geopackage_utils import (
     database_disconnect,
 )
 from ..user_communication import UserCommunication
-from ..utils import is_number
+from ..utils import is_number, get_plugin_version
 from .ui_utils import load_ui
 
 uiDialog, qtBaseClass = load_ui("settings")
@@ -64,6 +66,30 @@ class SettingsDialog(qtBaseClass, uiDialog):
         # connection
         self.gpkgCreateBtn.clicked.connect(self.create_db)
         # self.gpkgOpenBtn.clicked.connect(self.connect) -> Old settings
+
+    def set_metadata(self, con):
+        """
+        Function to set the geopackage metadata
+        """
+
+        defaults = {
+            "PROJ_NAME": os.path.splitext(os.path.basename(self.gpkg_path))[0],
+            "CONTACT": QgsProject.instance().metadata().author(),
+            "EMAIL": "",
+            "PLUGIN_V": get_plugin_version(),
+            "QGIS_V": qgis.core.Qgis.QGIS_VERSION,
+            "FLO-2D_V": "",
+            "CRS": QgsProject.instance().crs().authid(),
+        }
+        qry = """INSERT INTO metadata (name, value, note) VALUES (?,?,?);"""
+
+        parameters = defaults.items()
+
+        values = []
+        for param, val in parameters:
+            row = (param, val, GeoPackageUtils.METADATA_DESCRIPTION[param])
+            values.append(row)
+        con.executemany(qry, values)
 
     def set_default_controls(self, con):
         defaults = {
@@ -265,6 +291,8 @@ class SettingsDialog(qtBaseClass, uiDialog):
         QApplication.restoreOverrideCursor()
         #         QApplication.setOverrideCursor(Qt.ArrowCursor)
         self.uc.log_info("{0:.3f} seconds => loading layers".format(time.time() - start_time))
+
+        self.set_metadata(con)
 
         self.iface.actionPan().trigger()
 
