@@ -11,7 +11,7 @@ about=QGIS tools for FLO-2D
 changelog=
  <p>1.0.0
   - Grouped import/export buttons
-<p>0.10.11
+<p>0.10.117
   - Do not duplicate conduits when importing .INP file (issue #1031).
  <p>0.10.116
   - Convert schematic hydraulic structures to user structure lines.
