@@ -98,6 +98,7 @@ class BCEditorWidget(qtBaseClass, uiDialog):
         self.bc_type_outflow_radio.clicked.connect(self.change_bc_type)
 
         self.change_bc_name_btn.clicked.connect(self.change_bc_name)
+        self.clear_rubberband_btn.clicked.connect(self.clear_rubberband)
         self.change_inflow_data_name_btn.clicked.connect(self.change_bc_data_name)
         self.change_outflow_data_name_btn.clicked.connect(self.change_bc_data_name)
         self.ifc_fplain_radio.clicked.connect(self.inflow_dest_changed)
@@ -348,6 +349,12 @@ class BCEditorWidget(qtBaseClass, uiDialog):
             self.outflow.set_row()
             self.populate_outflows(outflow_fid=self.outflow.fid)
 
+    def clear_rubberband(self):
+        """
+        Function to clear the rubberbands
+        """
+        self.lyrs.clear_rubber()
+
     def change_bc_data_name(self):
         new_name, ok = QInputDialog.getText(None, "Change data name", "New name:")
         if not ok or not new_name:
@@ -390,9 +397,11 @@ class BCEditorWidget(qtBaseClass, uiDialog):
         if not all_inflows and not widget_setup:
             self.uc.bar_info("There is no inflow defined in the database...")
             self.change_bc_name_btn.setDisabled(True)
+            self.clear_rubberband_btn.setDisabled(True)
             return
         else:
             self.change_bc_name_btn.setDisabled(False)
+            self.clear_rubberband_btn.setDisabled(False)
         self.enable_bc_type_change()
         cur_name_idx = 0
         inflows_skipped = 0
@@ -690,9 +699,11 @@ class BCEditorWidget(qtBaseClass, uiDialog):
         if not all_outflows and not widget_setup:
             self.uc.bar_info("There is no outflow defined in the database...")
             self.change_bc_name_btn.setDisabled(True)
+            self.clear_rubberband_btn.setDisabled(True)
             return
         else:
             self.change_bc_name_btn.setDisabled(False)
+            self.clear_rubberband_btn.setDisabled(False)
         cur_out_idx = 0
         outflows_skipped = 0
         for i, row in enumerate(all_outflows):
