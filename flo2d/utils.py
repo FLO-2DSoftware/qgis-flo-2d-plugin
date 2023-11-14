@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from qgis._core import QgsMessageLog
 
 # FLO-2D Preprocessor tools for QGIS
 # Copyright © 2021 Lutra Consulting for FLO-2D
@@ -349,3 +350,18 @@ def copy_tablewidget_selection(tablewidget):
         stream = io.StringIO()
         csv.writer(stream, delimiter="\t").writerows(table)
         QApplication.clipboard().setText(stream.getvalue())
+
+
+def get_plugin_version():
+    """
+    Function to get the current FLO-2D Plugin version
+    """
+    metadata_path = os.path.join(os.path.dirname(__file__), 'metadata.txt')
+    try:
+        with open(metadata_path, 'r') as file:
+            version_line = file.readlines()[2]
+            version = version_line.split('=')[1].strip()
+            return version
+    except FileNotFoundError:
+        return "Metadata not found"
+

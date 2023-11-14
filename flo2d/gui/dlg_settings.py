@@ -11,6 +11,8 @@ import os
 import time
 from itertools import chain
 
+import qgis
+from qgis._core import QgsProject, QgsMessageLog
 from qgis.core import QgsCoordinateReferenceSystem, QgsUnitTypes
 from qgis.gui import QgsProjectionSelectionWidget
 from qgis.PyQt.QtCore import QSettings, Qt
@@ -32,7 +34,7 @@ from ..geopackage_utils import (
     database_disconnect,
 )
 from ..user_communication import UserCommunication
-from ..utils import is_number
+from ..utils import is_number, get_plugin_version
 from .ui_utils import load_ui
 
 uiDialog, qtBaseClass = load_ui("settings")
@@ -63,7 +65,47 @@ class SettingsDialog(qtBaseClass, uiDialog):
 
         # connection
         self.gpkgCreateBtn.clicked.connect(self.create_db)
-        self.gpkgOpenBtn.clicked.connect(self.connect)
+
+        self.groupBox.setEnabled(False)
+        self.groupBox_2.setEnabled(False)
+
+    def set_metadata(
+                    self,
+                    con,
+                    proj_name,
+                    contact,
+                    email,
+                    company,
+                    phone,
+                    plugin_v,
+                    qgis_v,
+                    flo2d_v,
+                    crs):
+        """
+        Function to set the geopackage metadata
+        """
+
+        defaults = {
+            "PROJ_NAME": proj_name,
+            "CONTACT": contact,
+            "EMAIL": email,
+            "COMPANY": company,
+            "PHONE": phone,
+            "PLUGIN_V": plugin_v,
+            "QGIS_V": qgis_v,
+            "FLO-2D_V": flo2d_v,
+            "CRS": crs,
+        }
+        qry = """INSERT INTO metadata (name, value, note) VALUES (?,?,?);"""
+
+        parameters = defaults.items()
+
+        values = []
+        for param, val in parameters:
+            row = (param, val, GeoPackageUtils.METADATA_DESCRIPTION[param])
+            values.append(row)
+
+        self.con.executemany(qry, values)
 
     def set_default_controls(self, con):
         defaults = {
@@ -267,6 +309,24 @@ class SettingsDialog(qtBaseClass, uiDialog):
         self.uc.log_info("{0:.3f} seconds => loading layers".format(time.time() - start_time))
 
         self.iface.actionPan().trigger()
+
+        proj_name = os.path.splitext(os.path.basename(self.gpkg_path))[0]
+        contact = QgsProject.instance().metadata().author()
+        plugin_v = get_plugin_version()
+        qgis_v = qgis.core.Qgis.QGIS_VERSION
+        flo2d_v = ""
+
+        self.lineEdit_pn.setText(proj_name)
+        self.lineEdit_au.setText(contact)
+        self.lineEdit_co.setText("")
+        self.lineEdit_em.setText("")
+
+        self.label_pv.setText(plugin_v)
+        self.label_qv.setText(qgis_v)
+        self.label_fv.setText("") # TODO fix the FLO-2D Build based on the FLO-2D.exe
+
+        self.groupBox.setEnabled(True)
+        self.groupBox_2.setEnabled(True)
 
     def connect(self, gpkg_path=None):
         """

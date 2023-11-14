@@ -34,7 +34,7 @@ from subprocess import (
     run,
 )
 from PyQt5.QtWidgets import QApplication, QToolButton
-from qgis._core import QgsMessageLog
+from qgis._core import QgsMessageLog, QgsCoordinateReferenceSystem
 from qgis.core import NULL, QgsProject, QgsWkbTypes
 from qgis.gui import QgsDockWidget, QgsProjectionSelectionWidget
 from qgis.PyQt import QtCore
@@ -84,7 +84,8 @@ from .flo2d_tools.schematic_tools import (
 from .flo2d_tools.schema2user_tools import SchemaSWMMConverter
 from collections import OrderedDict, defaultdict
 
-from .geopackage_utils import GeoPackageUtils, connection_required, database_disconnect
+from .geopackage_utils import GeoPackageUtils, connection_required, database_disconnect, database_connect
+from .gui import dlg_settings
 from .gui.dlg_components import ComponentsDialog
 from .gui.dlg_cont_toler_jj import ContToler_JJ
 from .gui.dlg_evap_editor import EvapEditorDialog
@@ -166,6 +167,7 @@ class Flo2D(object):
         self.create_map_tools()
         self.crs = None
         self.cur_info_table = None
+        self.new_gpkg = None
 
         # if hasattr(QtCore.Qt, 'AA_EnableHighDpiScaling'):
         #     QApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling, True)
@@ -287,7 +289,7 @@ class Flo2D(object):
             if text == "Run Simulation":
                 toolButton = QToolButton()
                 toolButton.setMenu(popup)
-                toolButton.setIcon(QIcon(self.plugin_dir + "/img/run_flopro.png"))
+                toolButton.setIcon(QIcon(self.plugin_dir + "/img/flo2d.svg"))
                 toolButton.setPopupMode(QToolButton.InstantPopup)
                 self.toolbar.addWidget(toolButton)
             elif text == "Import/Export":
@@ -320,13 +322,32 @@ class Flo2D(object):
         )
 
         self.add_action(
-            os.path.join(self.plugin_dir, "img/run_flopro.png"),
+            os.path.join(self.plugin_dir, "img/flo_open_project.svg"),
+            text=self.tr("Open FLO-2D geopackage"),
+            callback=lambda: self.flo_open_project(),
+            parent=self.iface.mainWindow()
+        )
+
+        self.add_action(
+            os.path.join(self.plugin_dir, "img/flo_save_project.svg"),
+            text=self.tr("Save FLO-2D geopackage"),
+            callback=lambda: self.flo_save_project(),
+            parent=self.iface.mainWindow()
+        )
+
+        self.add_action(
+            os.path.join(self.plugin_dir, "img/flo2d.svg"),
             text=self.tr("Run Simulation"),
             callback=None,
             parent=self.iface.mainWindow(),
             menu=(
                 (
                     os.path.join(self.plugin_dir, "img/flo2d.svg"),
+                    "Quick Run FLO-2D Pro",
+                    lambda: self.quick_run_flopro(),
+                ),
+                (
+                    os.path.join(self.plugin_dir, "img/FLO.png"),
                     "Run FLO-2D Pro",
                     self.run_flopro,
                 ),
@@ -732,8 +753,10 @@ class Flo2D(object):
             return None
 
     def show_settings(self):
+        """
+        Function to create a new geopackage
+        """
         self.uncheck_all_info_toggles()
-                
         dlg_settings = SettingsDialog(self.con, self.iface, self.lyrs, self.gutils)
         dlg_settings.show()
         result = dlg_settings.exec_()
@@ -743,13 +766,127 @@ class Flo2D(object):
             self.iface.f2d["con"] = self.con
             self.gutils = dlg_settings.gutils
             self.crs = dlg_settings.crs  # Coordinate Reference System.
-            gpkg_path = self.gutils.get_gpkg_path().replace("\\", "/")
-            self.write_proj_entry("gpkg", gpkg_path)
+            gpkg_path = self.gutils.get_gpkg_path()
+            gpkg_path_adj = gpkg_path.replace("\\", "/")
+            self.write_proj_entry("gpkg", gpkg_path_adj)  # TODO check if this could cause an error
             self.setup_dock_widgets()
             s = QSettings()
-            s.setValue("FLO-2D/last_flopro_project", os.path.dirname(gpkg_path))
-            s.setValue("FLO-2D/lastGdsDir", os.path.dirname(gpkg_path))
-          
+            s.setValue("FLO-2D/last_flopro_project", os.path.dirname(gpkg_path_adj))
+            s.setValue("FLO-2D/lastGdsDir", os.path.dirname(gpkg_path_adj))
+
+            proj_name = "FLO-2D-Plugin"
+            uri = f'geopackage:{gpkg_path}?projectName={proj_name}'
+            self.project.write(uri)
+
+            pn = dlg_settings.lineEdit_pn.text()
+            contact = dlg_settings.lineEdit_au.text()
+            email = dlg_settings.lineEdit_co.text()
+            company = dlg_settings.lineEdit_em.text()
+            phone = dlg_settings.lineEdit_te.text()
+
+            plugin_v = dlg_settings.label_pv.text()
+            qgis_v = dlg_settings.label_qv.text()
+            flo2d_v = dlg_settings.label_fv.text()
+
+            self.gutils.set_metadata_par("PROJ_NAME", pn)
+            self.gutils.set_metadata_par("CONTACT", contact)
+            self.gutils.set_metadata_par("EMAIL", email)
+            self.gutils.set_metadata_par("PHONE", phone)
+            self.gutils.set_metadata_par("COMPANY", company)
+            self.gutils.set_metadata_par("PLUGIN_V", plugin_v)
+            self.gutils.set_metadata_par("QGIS_V", qgis_v)
+            self.gutils.set_metadata_par("FLO-2D_V", flo2d_v)
+            self.gutils.set_metadata_par("CRS", self.crs.authid())
+
+            self.uc.show_info("FLO-2D-Project sucessfully created.")
+
+    def flo_open_project(self):
+        """
+        Function to open a FLO-2D project from geopackage
+        """
+        s = QSettings()
+        last_dir = s.value("FLO-2D/lastGpkgDir", "")
+        gpkg_path, __ = QFileDialog.getOpenFileName(
+            None,
+            "Select GeoPackage with data to import",
+            directory=last_dir,
+            filter="*.gpkg",
+        )
+        if not gpkg_path:
+            return
+        try:
+            s.setValue("FLO-2D/lastGpkgDir", os.path.dirname(gpkg_path))
+
+            self.new_gpkg = gpkg_path
+            proj_name = "FLO-2D-Plugin"
+            uri = f'geopackage:{gpkg_path}?projectName={proj_name}'
+
+            # No project inside the geopackage
+            if not self.project.read(uri):
+
+                title = "Missing Project File"
+                msg = "No FLO-2D-Project file (*.qgz) was found in the geopackage. Would you like to create a new one or open an existing?"
+                text1 = "Create"
+                text2 = "Open"
+
+                answer = self.uc.dialog_with_2_customized_buttons(title, msg, text1, text2)
+                # Create new project
+                if answer == QMessageBox.Yes:
+                    dlg_settings = SettingsDialog(self.con, self.iface, self.lyrs, self.gutils)
+                    dlg_settings.connect(gpkg_path)
+                    self.con = dlg_settings.con
+                    self.iface.f2d["con"] = self.con
+                    self.gutils = dlg_settings.gutils
+                    self.crs = dlg_settings.crs
+                    self.setup_dock_widgets()
+
+                    proj = self.gutils.get_cont_par("PROJ")
+                    cs = QgsCoordinateReferenceSystem()
+                    cs.createFromProj(proj)
+                    self.project.setCrs(cs)
+                    gpkg_path_adj = gpkg_path.replace("\\", "/")
+                    self.write_proj_entry("gpkg", gpkg_path_adj)
+                    self.project.write(uri)
+                    self.uc.show_info("FLO-2D-Project created into the Geopackage.")
+                # Open existing project
+                elif answer == QMessageBox.No:
+                    # Open the project and geopackage and then save the project into the geopackage
+                    qgz_path, __ = QFileDialog.getOpenFileName(
+                        None,
+                        "Select FLO-2D-Project (*.qgz) to import",
+                        directory=last_dir,
+                        filter="*.qgz",
+                    )
+                    if not qgz_path:
+                        return
+
+                    self.project.read(qgz_path)
+                    self.project.write(uri)
+                    self.uc.show_info("FLO-2D-Project added into the Geopackage.")
+
+                # Cancel
+                else:
+                    QApplication.restoreOverrideCursor()
+                    self.uc.show_info("FLO-2D-Project opening cancelled.")
+                    return
+
+            else:
+                QApplication.restoreOverrideCursor()
+                self.uc.show_info("FLO-2D-Project successfully loaded.")
+
+        finally:
+            QApplication.restoreOverrideCursor()
+
+    @connection_required
+    def flo_save_project(self):
+        """
+        Function to save a FLO-2D project into a geopackage
+        """
+        gpkg_path = self.gutils.get_gpkg_path()
+        proj_name = "FLO-2D-Plugin"
+        uri = f'geopackage:{gpkg_path}?projectName={proj_name}'
+        self.project.write(uri)
+        self.uc.show_info("FLO-2D-Project saved!")
 
     def run_settings(self):
         """
@@ -771,6 +908,196 @@ class Flo2D(object):
             s.setValue("FLO-2D/run_settings", True)
 
         self.uc.show_info("Run Settings saved!")
+
+    @connection_required
+    def quick_run_flopro(self):
+        """
+        Function to export and run FLO-2D Pro
+        """
+        if self.gutils.is_table_empty("grid"):
+            self.uc.bar_warn("There is no grid! Please create it before running tool.")
+            return
+
+        project_dir = QgsProject.instance().absolutePath()
+        outdir = QFileDialog.getExistingDirectory(
+            None,
+            "Select directory where FLO-2D model will run",
+            directory=project_dir,
+        )
+
+        if outdir:
+            self.f2g = Flo2dGeoPackage(self.con, self.iface)
+            sql = """SELECT name, value FROM cont;"""
+            options = {o: v if v is not None else "" for o, v in self.f2g.execute(sql).fetchall()}
+            export_calls = [
+                "export_cont_toler",
+                "export_tolspatial",
+                "export_inflow",
+                "export_tailings",
+                "export_outflow",
+                "export_rain",
+                "export_evapor",
+                "export_infil",
+                "export_chan",
+                "export_xsec",
+                "export_hystruc",
+                "export_bridge_xsec",
+                "export_bridge_coeff_data",
+                "export_street",
+                "export_arf",
+                "export_mult",
+                "export_sed",
+                "export_levee",
+                "export_fpxsec",
+                "export_breach",
+                "export_gutter",
+                "export_fpfroude",
+                "export_swmmflo",
+                "export_swmmflort",
+                "export_swmmoutf",
+                "export_wsurf",
+                "export_wstime",
+                "export_shallowNSpatial",
+                "export_mannings_n_topo",
+            ]
+
+            s = QSettings()
+            s.setValue("FLO-2D/lastGdsDir", outdir)
+
+            dlg_components = ComponentsDialog(self.con, self.iface, self.lyrs, "out")
+            QgsMessageLog.logMessage(str(dlg_components))
+            ok = dlg_components.exec_()
+            if ok:
+                if "Channels" not in dlg_components.components:
+                    export_calls.remove("export_chan")
+                    export_calls.remove("export_xsec")
+
+                if "Reduction Factors" not in dlg_components.components:
+                    export_calls.remove("export_arf")
+
+                if "Streets" not in dlg_components.components:
+                    export_calls.remove("export_street")
+
+                if "Outflow Elements" not in dlg_components.components:
+                    export_calls.remove("export_outflow")
+
+                if "Inflow Elements" not in dlg_components.components:
+                    export_calls.remove("export_inflow")
+                    export_calls.remove("export_tailings")
+
+                if "Levees" not in dlg_components.components:
+                    export_calls.remove("export_levee")
+
+                if "Multiple Channels" not in dlg_components.components:
+                    export_calls.remove("export_mult")
+
+                if "Breach" not in dlg_components.components:
+                    export_calls.remove("export_breach")
+
+                if "Gutters" not in dlg_components.components:
+                    export_calls.remove("export_gutter")
+
+                if "Infiltration" not in dlg_components.components:
+                    export_calls.remove("export_infil")
+
+                if "Floodplain Cross Sections" not in dlg_components.components:
+                    export_calls.remove("export_fpxsec")
+
+                if "Mudflow and Sediment Transport" not in dlg_components.components:
+                    export_calls.remove("export_sed")
+
+                if "Evaporation" not in dlg_components.components:
+                    export_calls.remove("export_evapor")
+
+                if "Hydraulic  Structures" not in dlg_components.components:
+                    export_calls.remove("export_hystruc")
+                    export_calls.remove("export_bridge_xsec")
+                    export_calls.remove("export_bridge_coeff_data")
+                else:
+                    xsecs = self.gutils.execute("SELECT fid FROM struct WHERE icurvtable = 3").fetchone()
+                    if not xsecs:
+                        if os.path.isfile(outdir + r"\BRIDGE_XSEC.DAT"):
+                            os.remove(outdir + r"\BRIDGE_XSEC.DAT")
+                        export_calls.remove("export_bridge_xsec")
+                        export_calls.remove("export_bridge_coeff_data")
+
+                if "Rain" not in dlg_components.components:
+                    export_calls.remove("export_rain")
+
+                if "Storm Drain" not in dlg_components.components:
+                    export_calls.remove("export_swmmflo")
+                    export_calls.remove("export_swmmflort")
+                    export_calls.remove("export_swmmoutf")
+                else:
+                    self.uc.show_info("Storm Drain features not allowed on the Quick Run FLO-2D Pro.")
+                    return
+
+                if "Spatial Shallow-n" not in dlg_components.components:
+                    export_calls.remove("export_shallowNSpatial")
+
+                if "Spatial Tolerance" not in dlg_components.components:
+                    export_calls.remove("export_tolspatial")
+
+                if "Spatial Froude" not in dlg_components.components:
+                    export_calls.remove("export_fpfroude")
+
+                if "Manning's n and Topo" not in dlg_components.components:
+                    export_calls.remove("export_mannings_n_topo")
+
+                QApplication.setOverrideCursor(Qt.WaitCursor)
+
+                try:
+                    s = QSettings()
+                    s.setValue("FLO-2D/lastGdsDir", outdir)
+
+                    QApplication.setOverrideCursor(Qt.WaitCursor)
+                    self.call_IO_methods(export_calls, True, outdir)
+
+                    # The strings list 'export_calls', contains the names of
+                    # the methods in the class Flo2dGeoPackage to export (write) the
+                    # FLO-2D .DAT files
+
+                    self.uc.bar_info("Flo2D model exported to " + outdir, dur=3)
+                    QApplication.restoreOverrideCursor()
+
+                finally:
+                    QApplication.restoreOverrideCursor()
+
+                    if "export_swmmflo" in export_calls:
+                        self.f2d_widget.storm_drain_editor.export_storm_drain_INP_file()
+
+                    # Delete .DAT files the model will try to use if existing:
+                    if "export_mult" in export_calls:
+                        if self.gutils.is_table_empty("simple_mult_cells"):
+                            new_files_used = self.files_used.replace("SIMPLE_MULT.DAT\n", "")
+                            self.files_used = new_files_used
+                            if os.path.isfile(outdir + r"\SIMPLE_MULT.DAT"):
+                                if self.uc.question(
+                                        "There are no simple multiple channel cells in the project but\n"
+                                        + "there is a SIMPLE_MULT.DAT file in the directory.\n"
+                                        + "If the file is not deleted it will be used by the model.\n\n"
+                                        + "Delete SIMPLE_MULT.DAT?"
+                                ):
+                                    os.remove(outdir + r"\SIMPLE_MULT.DAT")
+
+                        if self.gutils.is_table_empty("mult_cells"):
+                            new_files_used = self.files_used.replace("\nMULT.DAT\n", "\n")
+                            self.files_used = new_files_used
+                            if os.path.isfile(outdir + r"\MULT.DAT"):
+                                if self.uc.question(
+                                        "There are no multiple channel cells in the project but\n"
+                                        + "there is a MULT.DAT file in the directory.\n"
+                                        + "If the file is not deleted it will be used by the model.\n\n"
+                                        + "Delete MULT.DAT?"
+                                ):
+                                    os.remove(outdir + r"\MULT.DAT")
+
+                    if self.f2g.export_messages != "":
+                        info = "WARNINGS:\n\n" + self.f2g.export_messages
+                        self.uc.show_info(info)
+
+            QApplication.restoreOverrideCursor()
+            self.run_program("FLOPRO.exe")
 
     def run_flopro(self):
         self.uncheck_all_info_toggles()

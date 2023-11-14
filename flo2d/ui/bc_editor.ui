@@ -336,6 +336,17 @@ intervals (hours/days)</string>
       </widget>
      </item>
      <item>
+      <widget class="QToolButton" name="clear_rubberband_btn">
+       <property name="text">
+        <string>...</string>
+       </property>
+       <property name="icon">
+        <iconset>
+         <normaloff>../img/broom.png</normaloff>../img/broom.png</iconset>
+       </property>
+      </widget>
+     </item>
+     <item>
       <widget class="QCheckBox" name="bc_center_chbox">
        <property name="sizePolicy">
         <sizepolicy hsizetype="Preferred" vsizetype="Fixed">

@@ -2007,8 +2007,9 @@ class Layers(object):
         l = []
         if grp:
             for lyr in grp.findLayers():
-                if lyr.layer().type() == 1:
-                    l.append(lyr.layer())
+                if lyr.layer() is not None:
+                    if lyr.layer().type() == 1:
+                        l.append(lyr.layer())
         else:
             pass
         return l

@@ -81,7 +81,8 @@ def database_create(path):
     con = database_connect(path)
     plugin_dir = os.path.dirname(__file__)
     script = os.path.join(plugin_dir, "db_structure.sql")
-    qry = open(script, "r").read()
+    with open(script, "r") as file:
+        qry = file.read()
     c = con.cursor()
     c.executescript(qry)
     con.commit()
@@ -147,6 +148,18 @@ class GeoPackageUtils(object):
     GeoPackage utils for handling data inside GeoPackage.
     """
 
+    _metadata = [
+        ["PROJ_NAME", "Project Name"],
+        ["CONTACT", "Contact Engineer Name"],
+        ["EMAIL", "Email Address"],
+        ["COMPANY", "Company Name"],
+        ["PHONE", "Phone Number"],
+        ["PLUGIN_V", "FLO-2D-Plugin Version"],
+        ["QGIS_V", "QGIS Version"],
+        ["FLO-2D_V", "FLO-2D Build Version"],
+        ["CRS", "Coordinate Reference System"],
+    ]
+
     _descriptions = [
         ["TIME_ACCEL", "Timestep Sensitivity"],
         ["DEPTOL", "Percent Change in Depth"],
@@ -205,6 +218,10 @@ class GeoPackageUtils(object):
     PARAMETER_DESCRIPTION = defaultdict(str)
     for name, description in _descriptions:
         PARAMETER_DESCRIPTION[name] = description
+
+    METADATA_DESCRIPTION = defaultdict(str)
+    for name, metadata in _metadata:
+        METADATA_DESCRIPTION[name] = metadata
 
     def __init__(self, con, iface):
         self.iface = iface
@@ -322,6 +339,14 @@ class GeoPackageUtils(object):
                 return r
         except Exception as e:
             return None
+
+    def set_metadata_par(self, name, value):
+        """
+        Set a parameter value in metadata table.
+        """
+        metadata = self.METADATA_DESCRIPTION[name]
+        sql = """INSERT OR REPLACE INTO metadata (name, value, note) VALUES (?,?,?);"""
+        self.execute(sql, (name, value, metadata))
 
     def set_cont_par(self, name, value):
         """

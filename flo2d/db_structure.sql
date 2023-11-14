@@ -26,8 +26,18 @@ PRAGMA journal_mode = memory; -- try to create the db using memory journal as it
 
 -- FLO-2D tables definitions
 
--- The main table with model control parameters (from CONT.DAT and others)
 
+-- The metadata table with relevant information
+CREATE TABLE metadata (
+    "fid" INTEGER NOT NULL PRIMARY KEY,
+    "name" TEXT NOT NULL UNIQUE ON CONFLICT REPLACE,
+    "value" TEXT,
+    "note" TEXT
+);
+INSERT INTO gpkg_contents (table_name, data_type) VALUES ('metadata', 'aspatial');
+
+
+-- The main table with model control parameters (from CONT.DAT and others)
 CREATE TABLE cont (
     "fid" INTEGER NOT NULL PRIMARY KEY,
     "name" TEXT NOT NULL UNIQUE ON CONFLICT REPLACE,
@@ -1590,6 +1600,14 @@ INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('swmmoutf', 'f
 SELECT gpkgAddGeometryColumn('swmmoutf', 'geom', 'POINT', 0, 0, 0);
 SELECT gpkgAddGeometryTriggers('swmmoutf', 'geom');
 -- SELECT gpkgAddSpatialIndex('swmmoutf', 'geom');
+
+CREATE TABLE "swmm_export" (
+    "fid" INTEGER NOT NULL PRIMARY KEY,
+    "name" TEXT NOT NULL UNIQUE ON CONFLICT REPLACE,
+    "value" TEXT,
+    "note" TEXT
+);
+INSERT INTO gpkg_contents (table_name, data_type) VALUES ('swmm_export', 'aspatial');
 
 -- SHALLOW_SPATIAL.DAT
 
