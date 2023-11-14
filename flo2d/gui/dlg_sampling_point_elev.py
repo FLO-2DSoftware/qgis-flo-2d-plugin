@@ -53,7 +53,7 @@ class SamplingPointElevDialog(qtBaseClass, uiDialog):
         self.max_radius_lab.setHidden(True)
         self.resampling_url_id = 0
         self.configure_gdal_sliders()
-        self.configure_dask_options()
+        # self.configure_dask_options()
         self.populate_alg_cbo()
 
         # Redirects gdal prints to GUI

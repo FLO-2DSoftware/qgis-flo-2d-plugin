@@ -479,3 +479,18 @@ class SchemaSWMMConverter(SchemaConverter):
                 + "\n_______________________________________________________________",
                 e,
             )
+            
+class SchemaHydrStructsConverter(SchemaConverter):
+    def __init__(self, con, iface, lyrs):
+        super(SchemaHydrStructsConverter, self).__init__(con, iface, lyrs)
+
+        self.schema_struct_tab = "struct"
+        self.user_struct_tab = "user_struct"
+
+        self.schema_struct_lyr = lyrs.data[self.schema_struct_tab]["qlyr"]
+        self.user_struct_lyr = lyrs.data[self.user_struct_tab]["qlyr"]
+
+    def create_user_structure_lines(self):
+        remove_features(self.user_struct_lyr)
+        self.schema2user(self.schema_struct_lyr, self.user_struct_lyr, "polyline")
+

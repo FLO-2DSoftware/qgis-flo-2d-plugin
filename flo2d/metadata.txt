@@ -1,19 +1,28 @@
 [general]
 name=FLO-2D
-version=0.10.115
+version=1.0.0
 qgisMinimumVersion=3.28
 qgisMaximumVersion=3.99
 description=FLO-2D tools for QGIS
 author=FLO-2D
-email=jj@flo-2d.com
+email=jj@flo-2d.com.
 about=QGIS tools for FLO-2D
 
 changelog=
  <p>1.0.0
+  - Create the SWMM export table into the geopackage
+  - Added more fields on the Settings Dialog
+  - Project saved inside the geopackage
+  - Added metadata table into the geopackage
+  - Fixed rubberband on the BC editor
   - Improvements on the geopackage
   - Grouped import/export buttons
   - Added the quick run option
   - Changed the Run FLO-2D Pro button
+  - Do not duplicate conduits when importing .INP file (issue #1031).
+  - Grouped import/export buttons
+ <p>0.10.116
+  - Convert schematic hydraulic structures to user structure lines.
  <p>0.10.115
   - Added progress dialog to ARF and WRF
   - Added symbology for Prescribed Failure & Breach Failure

@@ -124,7 +124,7 @@ class InletNodesDialog(qtBaseClass, uiDialog):
             self.gutils = GeoPackageUtils(self.con, self.iface)
             self.inletRT = InletRatingTable(self.con, self.iface)
             self.populate_rtables()
-
+        
     def populate_inlets(self):
         qry = """SELECT
                         name, 

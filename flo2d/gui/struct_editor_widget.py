@@ -155,9 +155,12 @@ class StructEditorWidget(qtBaseClass, uiDialog):
         self.struct.get_row()
         self.show_struct_rb()
         if self.center_chbox.isChecked():
-            feat = next(self.user_struct_lyr.getFeatures(QgsFeatureRequest(self.struct.fid)))
-            x, y = feat.geometry().centroid().asPoint()
-            center_canvas(self.iface, x, y)
+            try:
+                feat = next(self.user_struct_lyr.getFeatures(QgsFeatureRequest(self.struct.fid)))
+                x, y = feat.geometry().centroid().asPoint()
+                center_canvas(self.iface, x, y)
+            except:
+                pass   
 
         self.type_changed(None)
         self.rating_changed(None)

@@ -463,11 +463,11 @@ class Flo2D(object):
             callback=self.activate_general_info_tool,
             parent=self.iface.mainWindow(),
             menu=(
-                # (
-                #     os.path.join(self.plugin_dir, "img/info_tool.svg"),
-                #     "Info Tool",
-                #     self.activate_general_info_tool ,
-                # ),                
+                (
+                    os.path.join(self.plugin_dir, "img/info_tool.svg"),
+                    "Info Tool",
+                    self.activate_general_info_tool ,
+                ),                
                 (
                     os.path.join(self.plugin_dir, "img/flo2d.svg"),
                     "Select .RPT file",
@@ -756,6 +756,7 @@ class Flo2D(object):
         """
         Function to create a new geopackage
         """
+        self.uncheck_all_info_toggles()
         dlg_settings = SettingsDialog(self.con, self.iface, self.lyrs, self.gutils)
         dlg_settings.show()
         result = dlg_settings.exec_()
@@ -891,6 +892,7 @@ class Flo2D(object):
         """
         Function to set the run settings: FLO-2D and Project folders
         """
+        self.uncheck_all_info_toggles()
         dlg = ExternalProgramFLO2D(self.iface, "Run Settings")
         dlg.debug_run_btn.setVisible(False)
         dlg.exec_folder_lbl.setText("FLO-2D Folder")
@@ -1098,27 +1100,34 @@ class Flo2D(object):
             self.run_program("FLOPRO.exe")
 
     def run_flopro(self):
+        self.uncheck_all_info_toggles()
         self.run_program("FLOPRO.exe")
 
     def run_tailingsdambreach(self):
+        self.uncheck_all_info_toggles()
         self.run_program("Tailings Dam Breach.exe")
 
     def run_mapper(self):
+        self.uncheck_all_info_toggles()
         self.run_program("Mapper PRO.exe")
 
     def run_profiles(self):
+        self.uncheck_all_info_toggles()
         self.run_program("PROFILES.exe")
 
     def run_hydrog(self):
+        self.uncheck_all_info_toggles()
         self.run_program("HYDROG.exe")
 
     def run_maxplot(self):
+        self.uncheck_all_info_toggles()
         self.run_program("MAXPLOT.exe")
 
     def run_program(self, exe_name):
         """
         Function to run programs
         """
+        self.uncheck_all_info_toggles()
         s = QSettings()
         # check if run was configured
         if not s.contains("FLO-2D/run_settings"):
@@ -1152,13 +1161,13 @@ class Flo2D(object):
             self.uc.bar_warn("Running " + exe_name + " failed!")
 
     def select_RPT_File(self):
-        GRID_INFO.setChecked(False)
-        GENERAL_INFO.setChecked(False)
-        self.canvas.unsetMapTool(self.grid_info_tool)
-        self.canvas.unsetMapTool(self.info_tool)
+        self.uncheck_all_info_toggles()
+
         grid = self.lyrs.data["grid"]["qlyr"]
         if grid is not None:
-            self.f2d_widget.storm_drain_editor.create_SD_discharge_table_and_plots("Just assign FLO-2D settings")
+            if self.f2d_widget.storm_drain_editor.create_SD_discharge_table_and_plots("Just assign FLO-2D settings"):
+                GENERAL_INFO.setChecked(True)
+                self.canvas.setMapTool(self.info_tool)
         else:
             self.uc.bar_warn("There is no grid layer to identify.")
 
@@ -1304,6 +1313,7 @@ class Flo2D(object):
         """
         Import traditional GDS files into FLO-2D database (GeoPackage).
         """
+        self.uncheck_all_info_toggles()
         self.gutils.disable_geom_triggers()
         self.f2g = Flo2dGeoPackage(self.con, self.iface)
         import_calls = [
@@ -1692,6 +1702,7 @@ class Flo2D(object):
         """
         Import HDF5 datasets into FLO-2D database (GeoPackage).
         """
+        self.uncheck_all_info_toggles()
         self.gutils.disable_geom_triggers()
         self.f2g = Flo2dGeoPackage(self.con, self.iface)
         import_calls = [
@@ -1939,6 +1950,7 @@ class Flo2D(object):
         """
         Import selected traditional GDS files into FLO-2D database (GeoPackage).
         """
+        self.uncheck_all_info_toggles()
         imprt = self.uc.dialog_with_2_customized_buttons(
             "Select import method", "", " Several Components", " One Single Component "
         )
@@ -2311,6 +2323,7 @@ class Flo2D(object):
         """
         Export traditional GDS files into FLO-2D database (GeoPackage).
         """
+        self.uncheck_all_info_toggles()
         if self.gutils.is_table_empty("grid"):
             self.uc.bar_warn("There is no grid! Please create it before running tool.")
             return
@@ -2511,6 +2524,7 @@ class Flo2D(object):
         """
         Export FLO-2D database (GeoPackage) data into HDF5 format.
         """
+        self.uncheck_all_info_toggles()
         if self.gutils.is_table_empty("grid"):
             self.uc.bar_warn("There is no grid! Please create it before running tool.")
             return
@@ -2548,6 +2562,7 @@ class Flo2D(object):
 
     @connection_required
     def import_from_gpkg(self):
+        self.uncheck_all_info_toggles()
         s = QSettings()
         last_dir = s.value("FLO-2D/lastGpkgDir", "")
         attached_gpkg, __ = QFileDialog.getOpenFileName(
@@ -2569,6 +2584,7 @@ class Flo2D(object):
 
     @connection_required
     def import_from_ras(self):
+        self.uncheck_all_info_toggles()
         dlg = RasImportDialog(self.con, self.iface, self.lyrs)
         ok = dlg.exec_()
         if ok:
@@ -2605,6 +2621,7 @@ class Flo2D(object):
 
     @connection_required
     def show_cont_toler(self):
+        self.uncheck_all_info_toggles()
         try:
             dlg_control = ContToler_JJ(self.con, self.iface, self.lyrs)
             while True:
@@ -2702,8 +2719,11 @@ class Flo2D(object):
         """
         Show storm drain discharge for a given inlet node.
         """
+        if self.gutils.is_table_empty("grid"):
+            self.uc.bar_warn("There is no grid! Please create it before running tool.")
+            return
+                
         name, grid = self.gutils.execute("SELECT name, grid FROM user_swmm_nodes WHERE fid = ?", (fid,)).fetchone()
-
         self.f2d_dock.setUserVisible(True)
         self.f2d_widget.storm_drain_editor_grp.setCollapsed(False)
         self.f2d_widget.storm_drain_editor.create_SD_discharge_table_and_plots(name)
@@ -2734,6 +2754,7 @@ class Flo2D(object):
         """
         Show evaporation editor.
         """
+        self.uncheck_all_info_toggles()
         try:
             self.dlg_evap_editor = EvapEditorDialog(self.con, self.iface)
             self.dlg_evap_editor.show()
@@ -2745,6 +2766,7 @@ class Flo2D(object):
         """
         Show levee elevation tool.
         """
+        self.uncheck_all_info_toggles()
         if self.gutils.is_table_empty("grid"):
             self.uc.bar_warn("There is no grid! Please create it before running tool.")
             return
@@ -3048,6 +3070,7 @@ class Flo2D(object):
 
     @connection_required
     def show_hazus_dialog(self):
+        self.uncheck_all_info_toggles()
         if self.gutils.is_table_empty("grid"):
             self.uc.bar_warn("There is no grid! Please create it before running tool.")
             return
@@ -3084,6 +3107,7 @@ class Flo2D(object):
 
     @connection_required
     def show_errors_dialog(self):
+        self.uncheck_all_info_toggles()
         if self.gutils.is_table_empty("grid"):
             self.uc.bar_warn("There is no grid! Please create it before running tool.")
             return
@@ -3099,6 +3123,7 @@ class Flo2D(object):
 
     @connection_required
     def show_mud_and_sediment_dialog(self):
+        self.uncheck_all_info_toggles()
         if self.gutils.is_table_empty("grid"):
             self.uc.bar_warn("There is no grid! Please create it before running tool.")
             return
@@ -3149,6 +3174,7 @@ class Flo2D(object):
 
     @connection_required
     def schematic2user(self):
+        self.uncheck_all_info_toggles()
         converter_dlg = Schema2UserDialog(self.con, self.iface, self.lyrs, self.uc)
         ok = converter_dlg.exec_()
         if ok:
@@ -3173,6 +3199,7 @@ class Flo2D(object):
 
     @connection_required
     def user2schematic(self):
+        self.uncheck_all_info_toggles
         converter_dlg = User2SchemaDialog(self.con, self.iface, self.lyrs, self.uc)
         ok = converter_dlg.exec_()
         if ok:
@@ -3206,6 +3233,7 @@ class Flo2D(object):
         show_editor(fid)
 
     def channel_profile(self):
+        self.uncheck_all_info_toggles()
         self.canvas.setMapTool(
             self.channel_profile_tool
         )  # 'channel_profile_tool' is an instance of ChannelProfile class,
@@ -3244,3 +3272,9 @@ class Flo2D(object):
 
     def grid_info_tool_clicked(self):
         self.uc.bar_info("grid info tool clicked.")
+        
+    def uncheck_all_info_toggles(self):
+        GRID_INFO.setChecked(False)
+        GENERAL_INFO.setChecked(False)
+        self.canvas.unsetMapTool(self.grid_info_tool)
+        self.canvas.unsetMapTool(self.info_tool)  
