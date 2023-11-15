@@ -186,6 +186,8 @@ class SettingsDialog(qtBaseClass, uiDialog):
         else:
             mu = "----"
         self.unit_lab.setText(mu)
+        proj_name = self.gutils.get_metadata_par("PROJ_NAME")
+        self.label_pn.setText(proj_name)
 
     def setup(self):
         if not self.gutils:

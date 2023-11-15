@@ -340,6 +340,18 @@ class GeoPackageUtils(object):
         except Exception as e:
             return None
 
+    def get_metadata_par(self, name):
+        """
+        Get a parameter value from metadata table.
+        """
+        try:
+            sql = """SELECT value FROM metadata WHERE name = ?;"""
+            r = self.execute(sql, (name,)).fetchone()[0]
+            if r:
+                return r
+        except Exception as e:
+            return None
+
     def set_metadata_par(self, name, value):
         """
         Set a parameter value in metadata table.
