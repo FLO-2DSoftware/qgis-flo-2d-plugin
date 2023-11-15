@@ -768,22 +768,18 @@ class Flo2D(object):
             self.crs = dlg_settings.crs  # Coordinate Reference System.
             gpkg_path = self.gutils.get_gpkg_path()
             gpkg_path_adj = gpkg_path.replace("\\", "/")
-            self.write_proj_entry("gpkg", gpkg_path_adj)  # TODO check if this could cause an error
+            self.write_proj_entry("gpkg", gpkg_path_adj)
             self.setup_dock_widgets()
             s = QSettings()
             s.setValue("FLO-2D/last_flopro_project", os.path.dirname(gpkg_path_adj))
             s.setValue("FLO-2D/lastGdsDir", os.path.dirname(gpkg_path_adj))
 
-            proj_name = "FLO-2D-Plugin"
-            uri = f'geopackage:{gpkg_path}?projectName={proj_name}'
-            self.project.write(uri)
-
-            pn = dlg_settings.lineEdit_pn.text()
             contact = dlg_settings.lineEdit_au.text()
             email = dlg_settings.lineEdit_co.text()
             company = dlg_settings.lineEdit_em.text()
             phone = dlg_settings.lineEdit_te.text()
 
+            pn = dlg_settings.label_pn.text()
             plugin_v = dlg_settings.label_pv.text()
             qgis_v = dlg_settings.label_qv.text()
             flo2d_v = dlg_settings.label_fv.text()
@@ -797,6 +793,9 @@ class Flo2D(object):
             self.gutils.set_metadata_par("QGIS_V", qgis_v)
             self.gutils.set_metadata_par("FLO-2D_V", flo2d_v)
             self.gutils.set_metadata_par("CRS", self.crs.authid())
+
+            uri = f'geopackage:{gpkg_path}?projectName={pn}'
+            self.project.write(uri)
 
             self.uc.show_info("FLO-2D-Project sucessfully created.")
 
@@ -818,7 +817,7 @@ class Flo2D(object):
             s.setValue("FLO-2D/lastGpkgDir", os.path.dirname(gpkg_path))
 
             self.new_gpkg = gpkg_path
-            proj_name = "FLO-2D-Plugin"
+            proj_name = os.path.splitext(os.path.basename(gpkg_path))[0]
             uri = f'geopackage:{gpkg_path}?projectName={proj_name}'
 
             # No project inside the geopackage
@@ -848,7 +847,8 @@ class Flo2D(object):
                     self.write_proj_entry("gpkg", gpkg_path_adj)
                     self.project.write(uri)
                     self.uc.show_info("FLO-2D-Project created into the Geopackage.")
-                # Open existing project
+
+                # Open existing project TODO: Need to check this
                 elif answer == QMessageBox.No:
                     # Open the project and geopackage and then save the project into the geopackage
                     qgz_path, __ = QFileDialog.getOpenFileName(
@@ -883,9 +883,16 @@ class Flo2D(object):
         Function to save a FLO-2D project into a geopackage
         """
         gpkg_path = self.gutils.get_gpkg_path()
-        proj_name = "FLO-2D-Plugin"
+        proj_name = os.path.splitext(os.path.basename(gpkg_path))[0]
         uri = f'geopackage:{gpkg_path}?projectName={proj_name}'
         self.project.write(uri)
+
+        # Save on recent projects
+        QSettings().setValue('UI/recentProjects/1/crs', self.project.crs().authid())
+        QSettings().setValue('UI/recentProjects/1/path', uri)
+        QSettings().setValue('UI/recentProjects/1/previewImage', os.path.join(self.plugin_dir, "img/F2D 400 Transparent.png"))
+        QSettings().setValue('UI/recentProjects/1/title', proj_name)
+
         self.uc.show_info("FLO-2D-Project saved!")
 
     def run_settings(self):
@@ -1176,30 +1183,53 @@ class Flo2D(object):
         If QGIS project has a gpkg path saved ask user if it should be loaded.
         """
         old_gpkg = self.read_proj_entry("gpkg")
+        new_gpkg = self.new_gpkg
         qgs_file = QgsProject.instance().fileName()
         qgs_dir = os.path.dirname(qgs_file)
+
+        # Check if there is a FLO-2D geopackage in the project
         if old_gpkg:
-            QApplication.restoreOverrideCursor()
-            msg = f"This QGIS project uses the FLO-2D Plugin and the following database file:\n\n{old_gpkg}\n\n"
-            if not os.path.exists(old_gpkg):
-                msg += "Unfortunately it seems that database file doesn't exist at given location."
-                gpkg_dir, gpkg_file = os.path.split(old_gpkg)
-                _old_gpkg = os.path.join(qgs_dir, gpkg_file)
-                if os.path.exists(_old_gpkg):
-                    msg += f" However there is a file with the same name at your project location:\n\n{_old_gpkg}\n\n"
-                    msg += "Load the model?"
-                    old_gpkg = _old_gpkg
-                    answer = self.uc.customized_question("FLO-2D", msg)
+            if old_gpkg == new_gpkg:
+                QApplication.restoreOverrideCursor()
+                msg = f"This QGIS project uses the FLO-2D Plugin and the following database file:\n\n{old_gpkg}\n\n"
+                if not os.path.exists(old_gpkg):
+                    msg += "Unfortunately it seems that database file doesn't exist at given location."
+                    gpkg_dir, gpkg_file = os.path.split(old_gpkg)
+                    _old_gpkg = os.path.join(qgs_dir, gpkg_file)
+                    if os.path.exists(_old_gpkg):
+                        msg += f" However there is a file with the same name at your project location:\n\n{_old_gpkg}\n\n"
+                        msg += "Load the model?"
+                        old_gpkg = _old_gpkg
+                        answer = self.uc.customized_question("FLO-2D", msg)
+                    else:
+                        answer = self.uc.customized_question("FLO-2D", msg, QMessageBox.Cancel, QMessageBox.Cancel)
                 else:
-                    answer = self.uc.customized_question("FLO-2D", msg, QMessageBox.Cancel, QMessageBox.Cancel)
+                    msg += "Load the model?"
+                    answer = self.uc.customized_question("FLO-2D", msg)
+                if answer == QMessageBox.Yes:
+                    QApplication.setOverrideCursor(Qt.WaitCursor)
+                    qApp.processEvents()
+                    dlg_settings = SettingsDialog(self.con, self.iface, self.lyrs, self.gutils)
+                    dlg_settings.connect(old_gpkg)
+                    self.con = dlg_settings.con
+                    self.iface.f2d["con"] = self.con
+                    self.gutils = dlg_settings.gutils
+                    self.crs = dlg_settings.crs
+                    self.setup_dock_widgets()
+
+                    s = QSettings()
+                    s.setValue("FLO-2D/last_flopro_project", qgs_file)
+                    s.setValue("FLO-2D/lastGdsDir", qgs_dir)
+                    window_title = s.value("FLO-2D/last_flopro_project", "")
+                    self.iface.mainWindow().setWindowTitle(window_title)
+                    QApplication.restoreOverrideCursor()
+
+            # New geopackage
             else:
-                msg += "Load the model?"
-                answer = self.uc.customized_question("FLO-2D", msg)
-            if answer == QMessageBox.Yes:
                 QApplication.setOverrideCursor(Qt.WaitCursor)
                 qApp.processEvents()
                 dlg_settings = SettingsDialog(self.con, self.iface, self.lyrs, self.gutils)
-                dlg_settings.connect(old_gpkg)
+                dlg_settings.connect(new_gpkg)
                 self.con = dlg_settings.con
                 self.iface.f2d["con"] = self.con
                 self.gutils = dlg_settings.gutils
@@ -1212,6 +1242,11 @@ class Flo2D(object):
                 window_title = s.value("FLO-2D/last_flopro_project", "")
                 self.iface.mainWindow().setWindowTitle(window_title)
                 QApplication.restoreOverrideCursor()
+
+            gpkg_path = self.gutils.get_gpkg_path()
+            proj_name = os.path.splitext(os.path.basename(gpkg_path))[0]
+            uri = f'geopackage:{gpkg_path}?projectName={proj_name}'
+            self.project.write(uri)
 
             GRID_INFO.setChecked(False)
             GENERAL_INFO.setChecked(False)

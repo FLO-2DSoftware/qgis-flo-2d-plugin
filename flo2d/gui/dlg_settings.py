@@ -71,7 +71,6 @@ class SettingsDialog(qtBaseClass, uiDialog):
 
     def set_metadata(
                     self,
-                    con,
                     proj_name,
                     contact,
                     email,
@@ -211,7 +210,6 @@ class SettingsDialog(qtBaseClass, uiDialog):
             pass
 
         s.setValue("FLO-2D/lastGpkgDir", os.path.dirname(gpkg_path))
-        #         QApplication.setOverrideCursor(Qt.WaitCursor)
         start_time = time.time()
         con = database_create(gpkg_path)
         self.uc.log_info("{0:.3f} seconds => database create".format(time.time() - start_time))
@@ -305,7 +303,7 @@ class SettingsDialog(qtBaseClass, uiDialog):
         self.lyrs.load_all_layers(self.gutils)
         self.lyrs.zoom_to_all()
         QApplication.restoreOverrideCursor()
-        #         QApplication.setOverrideCursor(Qt.ArrowCursor)
+
         self.uc.log_info("{0:.3f} seconds => loading layers".format(time.time() - start_time))
 
         self.iface.actionPan().trigger()
@@ -316,11 +314,11 @@ class SettingsDialog(qtBaseClass, uiDialog):
         qgis_v = qgis.core.Qgis.QGIS_VERSION
         flo2d_v = ""
 
-        self.lineEdit_pn.setText(proj_name)
         self.lineEdit_au.setText(contact)
         self.lineEdit_co.setText("")
         self.lineEdit_em.setText("")
 
+        self.label_pn.setText(proj_name)
         self.label_pv.setText(plugin_v)
         self.label_qv.setText(qgis_v)
         self.label_fv.setText("") # TODO fix the FLO-2D Build based on the FLO-2D.exe
