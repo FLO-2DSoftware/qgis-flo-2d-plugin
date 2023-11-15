@@ -848,7 +848,7 @@ class Flo2D(object):
                     self.project.write(uri)
                     self.uc.show_info("FLO-2D-Project created into the Geopackage.")
 
-                # Open existing project TODO: Need to check this
+                # Open existing project
                 elif answer == QMessageBox.No:
                     # Open the project and geopackage and then save the project into the geopackage
                     qgz_path, __ = QFileDialog.getOpenFileName(
