@@ -1058,162 +1058,6 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             self.uc.show_error("ERROR 080618.0448: reading SWMM input file failed!", e)
             return False
 
-        # CONDUITS: Create User Conduits layer:
-        if complete_or_create == "Create New":
-            remove_features(self.user_swmm_conduits_lyr)
-
-        if storm_drain.INP_conduits:
-            try:
-                """
-                Creates Storm Drain Conduits layer (Users layers)
-
-                Creates "user_swmm_conduits" layer with attributes taken from
-                the [CONDUITS], [LOSSES], and [XSECTIONS] groups.
-
-                """
-
-                # Transfer data from "storm_drain.INP_dict" to "user_swmm_conduits" layer:
-
-                # replace_user_swmm_conduits_sql = """UPDATE user_swmm_conduits
-                #                  SET   conduit_inlet  = ?,
-                #                        conduit_outlet  = ?,
-                #                        conduit_length  = ?,
-                #                        conduit_manning  = ?,
-                #                        conduit_inlet_offset  = ?,
-                #                        conduit_outlet_offset  = ?,
-                #                        conduit_init_flow  = ?,
-                #                        conduit_max_flow  = ?,
-                #                        losses_inlet  = ?,
-                #                        losses_outlet  = ?,
-                #                        losses_average  = ?,
-                #                        losses_flapgate  = ?,
-                #                        xsections_shape  = ?,
-                #                        xsections_barrels  = ?,
-                #                        xsections_max_depth  = ?,
-                #                        xsections_geom2  = ?,
-                #                        xsections_geom3  = ?,
-                #                        xsections_geom4  = ?
-                #                  WHERE conduit_name = ?;"""
-
-                fields = self.user_swmm_conduits_lyr.fields()
-                conduit_inlets_not_found = ""
-                conduit_outlets_not_found = ""
-
-                for name, values in list(storm_drain.INP_conduits.items()):
-                    go_go = True
-
-                    conduit_inlet = values["conduit_inlet"] if "conduit_inlet" in values else None
-                    conduit_outlet = values["conduit_outlet"] if "conduit_outlet" in values else None
-                    conduit_length = float_or_zero(values["conduit_length"]) if "conduit_length" in values else 0
-                    conduit_manning = float_or_zero(values["conduit_manning"]) if "conduit_manning" in values else 0
-                    conduit_inlet_offset = (
-                        float_or_zero(values["conduit_inlet_offset"]) if "conduit_inlet_offset" in values else 0
-                    )
-                    conduit_outlet_offset = (
-                        float_or_zero(values["conduit_outlet_offset"]) if "conduit_outlet_offset" in values else 0
-                    )
-                    conduit_init_flow = (
-                        float_or_zero(values["conduit_init_flow"]) if "conduit_init_flow" in values else 0
-                    )
-                    conduit_max_flow = float_or_zero(values["conduit_max_flow"]) if "conduit_max_flow" in values else 0
-
-                    conduit_losses_inlet = float_or_zero(values["losses_inlet"]) if "losses_inlet" in values else 0
-                    conduit_losses_outlet = float_or_zero(values["losses_outlet"]) if "losses_outlet" in values else 0
-                    conduit_losses_average = (
-                        float_or_zero(values["losses_average"]) if "losses_average" in values else 0
-                    )
-
-                    conduit_losses_flapgate = values["losses_flapgate"] if "losses_flapgate" in values else "False"
-                    conduit_losses_flapgate = "True" if is_true(conduit_losses_flapgate) else "False"
-
-                    conduit_xsections_shape = values["xsections_shape"] if "xsections_shape" in values else "CIRCULAR"
-                    conduit_xsections_barrels = (
-                        float_or_zero(values["xsections_barrels"]) if "xsections_barrels" in values else 0
-                    )
-                    conduit_xsections_max_depth = (
-                        float_or_zero(values["xsections_max_depth"]) if "xsections_max_depth" in values else 0
-                    )
-                    conduit_xsections_geom2 = (
-                        float_or_zero(values["xsections_geom2"]) if "xsections_geom2" in values else 0
-                    )
-                    conduit_xsections_geom3 = (
-                        float_or_zero(values["xsections_geom3"]) if "xsections_geom3" in values else 0
-                    )
-                    conduit_xsections_geom4 = (
-                        float_or_zero(values["xsections_geom4"]) if "xsections_geom4" in values else 0
-                    )
-
-                    feat = QgsFeature()
-                    feat.setFields(fields)
-
-                    if not conduit_inlet in storm_drain.INP_nodes:
-                        conduit_inlets_not_found += name + "\n"
-                        go_go = False
-                    if not conduit_outlet in storm_drain.INP_nodes:
-                        conduit_outlets_not_found += name + "\n"
-                        go_go = False
-
-                    if not go_go:
-                        continue
-
-                    x1 = float(storm_drain.INP_nodes[conduit_inlet]["x"])
-                    y1 = float(storm_drain.INP_nodes[conduit_inlet]["y"])
-                    x2 = float(storm_drain.INP_nodes[conduit_outlet]["x"])
-                    y2 = float(storm_drain.INP_nodes[conduit_outlet]["y"])
-
-                    grid = self.gutils.grid_on_point(x1, y1)
-                    if grid is None:
-                        outside_conduits += name + "\n"
-                        continue
-
-                    grid = self.gutils.grid_on_point(x2, y2)
-                    if grid is None:
-                        outside_conduits += name + "\n"
-                        continue
-
-                    # NOTE: for now ALWAYS read all inlets   !!!:
-                    #                 if complete_or_create == "Create New":
-
-                    geom = QgsGeometry.fromPolylineXY([QgsPointXY(x1, y1), QgsPointXY(x2, y2)])
-                    feat.setGeometry(geom)
-
-                    feat.setAttribute("conduit_name", name)
-                    feat.setAttribute("conduit_inlet", conduit_inlet)
-                    feat.setAttribute("conduit_outlet", conduit_outlet)
-                    feat.setAttribute("conduit_length", conduit_length)
-                    feat.setAttribute("conduit_manning", conduit_manning)
-                    feat.setAttribute("conduit_inlet_offset", conduit_inlet_offset)
-                    feat.setAttribute("conduit_outlet_offset", conduit_outlet_offset)
-                    feat.setAttribute("conduit_init_flow", conduit_init_flow)
-                    feat.setAttribute("conduit_max_flow", conduit_max_flow)
-
-                    feat.setAttribute("losses_inlet", conduit_losses_inlet)
-                    feat.setAttribute("losses_outlet", conduit_losses_outlet)
-                    feat.setAttribute("losses_average", conduit_losses_average)
-                    feat.setAttribute("losses_flapgate", conduit_losses_flapgate)
-
-                    feat.setAttribute("xsections_shape", conduit_xsections_shape)
-                    feat.setAttribute("xsections_barrels", conduit_xsections_barrels)
-                    feat.setAttribute("xsections_max_depth", conduit_xsections_max_depth)
-                    feat.setAttribute("xsections_geom2", conduit_xsections_geom2)
-                    feat.setAttribute("xsections_geom3", conduit_xsections_geom3)
-                    feat.setAttribute("xsections_geom4", conduit_xsections_geom4)
-
-                    new_conduits.append(feat)
-                    updated_conduits += 1
-
-                if len(new_conduits) != 0:
-                    self.user_swmm_conduits_lyr.startEditing()
-                    self.user_swmm_conduits_lyr.addFeatures(new_conduits)
-                    self.user_swmm_conduits_lyr.commitChanges()
-                    self.user_swmm_conduits_lyr.updateExtents()
-                    self.user_swmm_conduits_lyr.triggerRepaint()
-                    self.user_swmm_conduits_lyr.removeSelection()
-
-            except Exception as e:
-                QApplication.restoreOverrideCursor()
-                self.uc.show_error("ERROR 050618.1804: creation of Storm Drain Conduits layer failed!", e)
-
         # JUNCTIONS/OUTFALLS: Create User Junctions and Outfalls layers:
         try:
             """
@@ -1484,6 +1328,216 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 e,
             )
             return False
+
+        # CONDUITS: Create User Conduits layer:
+        if complete_or_create == "Create New":
+            remove_features(self.user_swmm_conduits_lyr)
+        
+        if storm_drain.INP_conduits:
+            try:
+                """
+                Creates Storm Drain Conduits layer (Users layers)
+        
+                Creates "user_swmm_conduits" layer with attributes taken from
+                the [CONDUITS], [LOSSES], and [XSECTIONS] groups.
+        
+                """
+        
+                # Transfer data from "storm_drain.INP_dict" to "user_swmm_conduits" layer:
+                replace_user_swmm_conduits_sql = """UPDATE user_swmm_conduits
+                                 SET   conduit_inlet  = ?,
+                                       conduit_outlet  = ?,
+                                       conduit_length  = ?,
+                                       conduit_manning  = ?,
+                                       conduit_inlet_offset  = ?,
+                                       conduit_outlet_offset  = ?,
+                                       conduit_init_flow  = ?,
+                                       conduit_max_flow  = ?,
+                                       losses_inlet  = ?,
+                                       losses_outlet  = ?,
+                                       losses_average  = ?,
+                                       losses_flapgate  = ?,
+                                       xsections_shape  = ?,
+                                       xsections_barrels  = ?,
+                                       xsections_max_depth  = ?,
+                                       xsections_geom2  = ?,
+                                       xsections_geom3  = ?,
+                                       xsections_geom4  = ?
+                                 WHERE conduit_name = ?;"""
+        
+                fields = self.user_swmm_conduits_lyr.fields()
+                conduit_inlets_not_found = ""
+                conduit_outlets_not_found = ""
+        
+                for name, values in list(storm_drain.INP_conduits.items()):
+                    go_go = True
+        
+                    conduit_inlet = values["conduit_inlet"] if "conduit_inlet" in values else None
+                    conduit_outlet = values["conduit_outlet"] if "conduit_outlet" in values else None
+                    conduit_length = float_or_zero(values["conduit_length"]) if "conduit_length" in values else 0
+                    conduit_manning = float_or_zero(values["conduit_manning"]) if "conduit_manning" in values else 0
+                    conduit_inlet_offset = (
+                        float_or_zero(values["conduit_inlet_offset"]) if "conduit_inlet_offset" in values else 0
+                    )
+                    conduit_outlet_offset = (
+                        float_or_zero(values["conduit_outlet_offset"]) if "conduit_outlet_offset" in values else 0
+                    )
+                    conduit_init_flow = (
+                        float_or_zero(values["conduit_init_flow"]) if "conduit_init_flow" in values else 0
+                    )
+                    conduit_max_flow = float_or_zero(values["conduit_max_flow"]) if "conduit_max_flow" in values else 0
+        
+                    conduit_losses_inlet = float_or_zero(values["losses_inlet"]) if "losses_inlet" in values else 0
+                    conduit_losses_outlet = float_or_zero(values["losses_outlet"]) if "losses_outlet" in values else 0
+                    conduit_losses_average = (
+                        float_or_zero(values["losses_average"]) if "losses_average" in values else 0
+                    )
+        
+                    conduit_losses_flapgate = values["losses_flapgate"] if "losses_flapgate" in values else "False"
+                    conduit_losses_flapgate = "True" if is_true(conduit_losses_flapgate) else "False"
+        
+                    conduit_xsections_shape = values["xsections_shape"] if "xsections_shape" in values else "CIRCULAR"
+                    conduit_xsections_barrels = (
+                        float_or_zero(values["xsections_barrels"]) if "xsections_barrels" in values else 0
+                    )
+                    conduit_xsections_max_depth = (
+                        float_or_zero(values["xsections_max_depth"]) if "xsections_max_depth" in values else 0
+                    )
+                    conduit_xsections_geom2 = (
+                        float_or_zero(values["xsections_geom2"]) if "xsections_geom2" in values else 0
+                    )
+                    conduit_xsections_geom3 = (
+                        float_or_zero(values["xsections_geom3"]) if "xsections_geom3" in values else 0
+                    )
+                    conduit_xsections_geom4 = (
+                        float_or_zero(values["xsections_geom4"]) if "xsections_geom4" in values else 0
+                    )
+        
+                    feat = QgsFeature()
+                    feat.setFields(fields)
+        
+                    if not conduit_inlet in storm_drain.INP_nodes:
+                        conduit_inlets_not_found += name + "\n"
+                        go_go = False
+                    if not conduit_outlet in storm_drain.INP_nodes:
+                        conduit_outlets_not_found += name + "\n"
+                        go_go = False
+        
+                    if not go_go:
+                        continue
+        
+                    x1 = float(storm_drain.INP_nodes[conduit_inlet]["x"])
+                    y1 = float(storm_drain.INP_nodes[conduit_inlet]["y"])
+                    x2 = float(storm_drain.INP_nodes[conduit_outlet]["x"])
+                    y2 = float(storm_drain.INP_nodes[conduit_outlet]["y"])
+        
+                    grid = self.gutils.grid_on_point(x1, y1)
+                    if grid is None:
+                        outside_conduits += name + "\n"
+                        continue
+        
+                    grid = self.gutils.grid_on_point(x2, y2)
+                    if grid is None:
+                        outside_conduits += name + "\n"
+                        continue
+        
+                    geom = QgsGeometry.fromPolylineXY([QgsPointXY(x1, y1), QgsPointXY(x2, y2)])
+                    
+                    if complete_or_create == "Create New":
+                        feat.setGeometry(geom)
+            
+                        feat.setAttribute("conduit_name", name)
+                        feat.setAttribute("conduit_inlet", conduit_inlet)
+                        feat.setAttribute("conduit_outlet", conduit_outlet)
+                        feat.setAttribute("conduit_length", conduit_length)
+                        feat.setAttribute("conduit_manning", conduit_manning)
+                        feat.setAttribute("conduit_inlet_offset", conduit_inlet_offset)
+                        feat.setAttribute("conduit_outlet_offset", conduit_outlet_offset)
+                        feat.setAttribute("conduit_init_flow", conduit_init_flow)
+                        feat.setAttribute("conduit_max_flow", conduit_max_flow)
+            
+                        feat.setAttribute("losses_inlet", conduit_losses_inlet)
+                        feat.setAttribute("losses_outlet", conduit_losses_outlet)
+                        feat.setAttribute("losses_average", conduit_losses_average)
+                        feat.setAttribute("losses_flapgate", conduit_losses_flapgate)
+            
+                        feat.setAttribute("xsections_shape", conduit_xsections_shape)
+                        feat.setAttribute("xsections_barrels", conduit_xsections_barrels)
+                        feat.setAttribute("xsections_max_depth", conduit_xsections_max_depth)
+                        feat.setAttribute("xsections_geom2", conduit_xsections_geom2)
+                        feat.setAttribute("xsections_geom3", conduit_xsections_geom3)
+                        feat.setAttribute("xsections_geom4", conduit_xsections_geom4)
+            
+                        new_conduits.append(feat)
+                
+                    else:  # Keep some existing data in user_swmm_swmm (e.g swmm_length, swmm_width, etc.)
+                        # See if name is in user_swmm_conduits:                     
+                        fid = self.gutils.execute("SELECT fid FROM user_swmm_conduits WHERE conduit_name = ?;", (name,)).fetchone()
+                        if fid:  # name already in user_swmm_conduits
+                                self.gutils.execute(
+                                    replace_user_swmm_conduits_sql,
+                                    (
+                                        conduit_inlet,
+                                        conduit_outlet,
+                                        conduit_length,
+                                        conduit_manning,
+                                        conduit_inlet_offset,
+                                        conduit_outlet_offset,
+                                        conduit_init_flow,
+                                        conduit_max_flow,
+                                        conduit_losses_inlet,
+                                        conduit_losses_outlet,
+                                        conduit_losses_average,
+                                        conduit_losses_flapgate,
+                                        conduit_xsections_shape,
+                                        conduit_xsections_barrels,
+                                        conduit_xsections_max_depth,
+                                        conduit_xsections_geom2,
+                                        conduit_xsections_geom3,
+                                        conduit_xsections_geom4,            
+                                        name,
+                                    ),
+                                )
+                                updated_conduits += 1                        
+                        else:                         
+                            
+                            feat.setGeometry(geom)
+                
+                            feat.setAttribute("conduit_name", name)
+                            feat.setAttribute("conduit_inlet", conduit_inlet)
+                            feat.setAttribute("conduit_outlet", conduit_outlet)
+                            feat.setAttribute("conduit_length", conduit_length)
+                            feat.setAttribute("conduit_manning", conduit_manning)
+                            feat.setAttribute("conduit_inlet_offset", conduit_inlet_offset)
+                            feat.setAttribute("conduit_outlet_offset", conduit_outlet_offset)
+                            feat.setAttribute("conduit_init_flow", conduit_init_flow)
+                            feat.setAttribute("conduit_max_flow", conduit_max_flow)
+                
+                            feat.setAttribute("losses_inlet", conduit_losses_inlet)
+                            feat.setAttribute("losses_outlet", conduit_losses_outlet)
+                            feat.setAttribute("losses_average", conduit_losses_average)
+                            feat.setAttribute("losses_flapgate", conduit_losses_flapgate)
+                
+                            feat.setAttribute("xsections_shape", conduit_xsections_shape)
+                            feat.setAttribute("xsections_barrels", conduit_xsections_barrels)
+                            feat.setAttribute("xsections_max_depth", conduit_xsections_max_depth)
+                            feat.setAttribute("xsections_geom2", conduit_xsections_geom2)
+                            feat.setAttribute("xsections_geom3", conduit_xsections_geom3)
+                            feat.setAttribute("xsections_geom4", conduit_xsections_geom4)
+                
+                            new_conduits.append(feat)
+        
+                if len(new_conduits) != 0:
+                    self.user_swmm_conduits_lyr.startEditing()
+                    self.user_swmm_conduits_lyr.addFeatures(new_conduits)
+                    self.user_swmm_conduits_lyr.commitChanges()
+                    self.user_swmm_conduits_lyr.updateExtents()
+                    self.user_swmm_conduits_lyr.triggerRepaint()
+                    self.user_swmm_conduits_lyr.removeSelection()
+        
+            except Exception as e:
+                QApplication.restoreOverrideCursor()
+                self.uc.show_error("ERROR 050618.1804: creation of Storm Drain Conduits layer failed!", e)
 
         # PUMPS: Create User Pumps layer:
         pump_inlets_not_found = ""
@@ -1828,7 +1882,8 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 + " Nodes (inlets, junctions, and outfalls) in the 'Storm Drain Nodes' layer ('User Layers' group) were updated, and\n\n"
                 + "* "
                 + str(updated_conduits)
-                + " Conduits in the 'Storm Drain Conduits' layer ('User Layers' group) were updated. and\n\n"
+                + " Conduits in the 'Storm Drain Conduits' layer ('User Layers' group) were updated. and\n"
+                + "  " + str(len(new_conduits)) + " new conduits created.\n\n"
                 + "* "
                 + str(updated_pumps)
                 + " Pumps in the 'Storm Drain Pumps' layer ('User Layers' group) were updated. \n\n"
