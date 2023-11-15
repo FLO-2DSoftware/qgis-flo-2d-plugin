@@ -1584,7 +1584,7 @@ class Flo2D(object):
                     # the methods in the class Flo2dGeoPackage to import (read) the
                     # FLO-2D .DAT files
 
-                    # save CRS to table cont
+                    # Save CRS to table cont
                     self.gutils.set_cont_par("PROJ", self.crs.toProj())
 
                     # load layers and tables
