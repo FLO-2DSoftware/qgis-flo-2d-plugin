@@ -2333,6 +2333,11 @@ class Flo2D(object):
 
         s = QSettings()
         project_dir = s.value("FLO-2D/lastGdsDir")
+
+        # This is a workaround. It will work, but it not a good coding practice
+        if project_dir.startswith("geopackage:"):
+            project_dir = project_dir[len("geopackage:"):].strip("/")
+
         outdir = QFileDialog.getExistingDirectory(
             None,
             "Select directory where FLO-2D model will be exported",
