@@ -918,7 +918,8 @@ class Flo2D(object):
             self.uc.bar_warn("There is no grid! Please create it before running tool.")
             return
 
-        project_dir = QgsProject.instance().absolutePath()
+        s = QSettings()
+        project_dir = s.value("FLO-2D/lastGdsDir")
         outdir = QFileDialog.getExistingDirectory(
             None,
             "Select directory where FLO-2D model will run",
@@ -961,7 +962,6 @@ class Flo2D(object):
                 "export_mannings_n_topo",
             ]
 
-            s = QSettings()
             s.setValue("FLO-2D/lastGdsDir", outdir)
 
             dlg_components = ComponentsDialog(self.con, self.iface, self.lyrs, "out")
@@ -1584,8 +1584,8 @@ class Flo2D(object):
                     # the methods in the class Flo2dGeoPackage to import (read) the
                     # FLO-2D .DAT files
 
-                    # save CRS to table cont
-                    self.gutils.set_cont_par("PROJ", self.crs.toProj4())
+                    # Save CRS to table cont
+                    self.gutils.set_cont_par("PROJ", self.crs.toProj())
 
                     # load layers and tables
                     self.load_layers()
@@ -1696,6 +1696,9 @@ class Flo2D(object):
 
                     if msg:
                         self.uc.show_info(msg)
+
+            # Update the lastGdsDir to the original
+            s.setValue("FLO-2D/lastGdsDir", last_dir)
 
     @connection_required
     def import_hdf5(self):
@@ -2328,7 +2331,13 @@ class Flo2D(object):
             self.uc.bar_warn("There is no grid! Please create it before running tool.")
             return
 
-        project_dir = QgsProject.instance().absolutePath()
+        s = QSettings()
+        project_dir = s.value("FLO-2D/lastGdsDir")
+
+        # This is a workaround. It will work, but it not a good coding practice
+        if project_dir.startswith("geopackage:"):
+            project_dir = project_dir[len("geopackage:"):].strip("/")
+
         outdir = QFileDialog.getExistingDirectory(
             None,
             "Select directory where FLO-2D model will be exported",
@@ -2370,7 +2379,6 @@ class Flo2D(object):
                 "export_mannings_n_topo",
             ]
 
-            s = QSettings()
             s.setValue("FLO-2D/lastGdsDir", outdir)
 
             dlg_components = ComponentsDialog(self.con, self.iface, self.lyrs, "out")
