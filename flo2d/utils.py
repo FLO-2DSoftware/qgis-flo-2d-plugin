@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import ctypes
 
 from qgis._core import QgsMessageLog
 
@@ -374,25 +375,50 @@ def get_flo2dpro_version(file_path):
     if not os.path.exists(file_path):
         return "No FLO2D.exe in the folder"
 
+    try:
+        # Load the file version DLL
+        version_dll = ctypes.windll.version
+
+        # Get the file version info size
+        file_version_info_size = version_dll.GetFileVersionInfoSizeW(file_path, None)
+
+        # Allocate buffer for file version info
+        file_version_info = ctypes.create_string_buffer(file_version_info_size)
+
+        # Retrieve file version info
+        version_dll.GetFileVersionInfoW(file_path, None, file_version_info_size, file_version_info)
+
+        # Query the product version
+        info = ctypes.c_void_p()
+        length = ctypes.c_uint()
+
+        version_dll.VerQueryValueW(file_version_info, '\\', ctypes.byref(info), ctypes.byref(length))
+        version_data = ctypes.cast(info, ctypes.POINTER(ctypes.c_uint))
+        version_str = f"{version_data.contents >> 16}.{version_data.contents & 0xFFFF}"
+
+        return version_str
+
     # Get the file's creation date and time
-    creation_time = os.path.getmtime(file_path)
+    except:
 
-    # Convert the timestamp to a datetime object
-    creation_date = datetime.fromtimestamp(creation_time)
+        creation_time = os.path.getmtime(file_path)
 
-    # Extract the date part
-    date = creation_date.date()
-    date_str_dict = date.strftime("%Y-%m-%d")
+        # Convert the timestamp to a datetime object
+        creation_date = datetime.fromtimestamp(creation_time)
 
-    # Iterate over versions and find the corresponding version for the given date
-    found_version = None
-    for version, dates in FLO2D_VERSIONS.items():
-        if date_str_dict in dates:
-            found_version = version
-            break
+        # Extract the date part
+        date = creation_date.date()
+        date_str_dict = date.strftime("%Y-%m-%d")
 
-    if found_version == None:
-        found_version = "Version not found"
+        # Iterate over versions and find the corresponding version for the given date
+        found_version = None
+        for version, dates in FLO2D_VERSIONS.items():
+            if date_str_dict in dates:
+                found_version = version
+                break
 
-    return found_version
+        if found_version is None:
+            found_version = "Version not found"
+
+        return found_version
 
