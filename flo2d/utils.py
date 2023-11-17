@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
+import win32api
 from qgis._core import QgsMessageLog
+
+from flo2d.flo2d_versions.flo2d_versions import FLO2D_VERSIONS
 
 # FLO-2D Preprocessor tools for QGIS
 # Copyright © 2021 Lutra Consulting for FLO-2D
@@ -364,4 +367,32 @@ def get_plugin_version():
             return version
     except FileNotFoundError:
         return "Metadata not found"
+
+
+def get_flo2dpro_version(file_path):
+
+    if not os.path.exists(file_path):
+        return "No FLO2D.exe in the folder"
+
+    # Get the file's creation date and time
+    creation_time = os.path.getmtime(file_path)
+
+    # Convert the timestamp to a datetime object
+    creation_date = datetime.fromtimestamp(creation_time)
+
+    # Extract the date part
+    date = creation_date.date()
+    date_str_dict = date.strftime("%Y-%m-%d")
+
+    # Iterate over versions and find the corresponding version for the given date
+    found_version = None
+    for version, dates in FLO2D_VERSIONS.items():
+        if date_str_dict in dates:
+            found_version = version
+            break
+
+    if found_version == None:
+        found_version = "Version not found"
+
+    return found_version
 

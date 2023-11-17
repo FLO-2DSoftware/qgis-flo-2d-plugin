@@ -34,7 +34,7 @@ from ..geopackage_utils import (
     database_disconnect,
 )
 from ..user_communication import UserCommunication
-from ..utils import is_number, get_plugin_version
+from ..utils import is_number, get_plugin_version, get_flo2dpro_version
 from .ui_utils import load_ui
 
 uiDialog, qtBaseClass = load_ui("settings")
@@ -186,8 +186,26 @@ class SettingsDialog(qtBaseClass, uiDialog):
         else:
             mu = "----"
         self.unit_lab.setText(mu)
-        proj_name = self.gutils.get_metadata_par("PROJ_NAME")
-        self.label_pn.setText(proj_name)
+
+        contact = self.gutils.get_metadata_par("CONTACT")
+        email = self.gutils.get_metadata_par("EMAIL")
+        company = self.gutils.get_metadata_par("COMPANY")
+        phone = self.gutils.get_metadata_par("PHONE")
+
+        pn = self.gutils.get_metadata_par("PROJ_NAME")
+        plugin_v = self.gutils.get_metadata_par("PLUGIN_V")
+        qgis_v = self.gutils.get_metadata_par("QGIS_V")
+        flo2d_v = self.gutils.get_metadata_par("FLO-2D_V")
+
+        self.lineEdit_au.setText(contact)
+        self.lineEdit_co.setText(company)
+        self.lineEdit_em.setText(email)
+        self.lineEdit_te.setText(phone)
+
+        self.label_pn.setText(pn)
+        self.label_pv.setText(plugin_v)
+        self.label_qv.setText(qgis_v)
+        self.label_fv.setText(flo2d_v)
 
     def setup(self):
         if not self.gutils:
@@ -314,7 +332,7 @@ class SettingsDialog(qtBaseClass, uiDialog):
         contact = QgsProject.instance().metadata().author()
         plugin_v = get_plugin_version()
         qgis_v = qgis.core.Qgis.QGIS_VERSION
-        flo2d_v = ""
+        flo2d_v = get_flo2dpro_version(s.value("FLO-2D/last_flopro") + "/FLOPRO.exe")
 
         self.lineEdit_au.setText(contact)
         self.lineEdit_co.setText("")
@@ -323,7 +341,7 @@ class SettingsDialog(qtBaseClass, uiDialog):
         self.label_pn.setText(proj_name)
         self.label_pv.setText(plugin_v)
         self.label_qv.setText(qgis_v)
-        self.label_fv.setText("") # TODO fix the FLO-2D Build based on the FLO-2D.exe
+        self.label_fv.setText(flo2d_v)
 
         self.groupBox.setEnabled(True)
         self.groupBox_2.setEnabled(True)

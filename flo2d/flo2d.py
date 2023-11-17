@@ -105,6 +105,7 @@ from .gui.plot_widget import PlotWidget
 from .gui.table_editor_widget import TableEditorWidget
 from .layers import Layers
 from .user_communication import UserCommunication
+from .utils import get_flo2dpro_version
 
 global GRID_INFO, GENERAL_INFO
 
@@ -913,6 +914,8 @@ class Flo2D(object):
 
         if project_dir != "" and flo2d_dir != "":
             s.setValue("FLO-2D/run_settings", True)
+            flo2d_v = get_flo2dpro_version(s.value("FLO-2D/last_flopro") + "/FLOPRO.exe")
+            self.gutils.set_metadata_par("FLO-2D_V", flo2d_v)
 
         self.uc.show_info("Run Settings saved!")
 
@@ -1104,10 +1107,15 @@ class Flo2D(object):
                         self.uc.show_info(info)
 
             QApplication.restoreOverrideCursor()
+            flo2d_v = get_flo2dpro_version(s.value("FLO-2D/last_flopro") + "/FLOPRO.exe")
+            self.gutils.set_metadata_par("FLO-2D_V", flo2d_v)
             self.run_program("FLOPRO.exe")
 
     def run_flopro(self):
         self.uncheck_all_info_toggles()
+        s = QSettings()
+        flo2d_v = get_flo2dpro_version(s.value("FLO-2D/last_flopro") + "/FLOPRO.exe")
+        self.gutils.set_metadata_par("FLO-2D_V", flo2d_v)
         self.run_program("FLOPRO.exe")
 
     def run_tailingsdambreach(self):
