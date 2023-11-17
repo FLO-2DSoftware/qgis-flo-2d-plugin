@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-import win32api
+
 from qgis._core import QgsMessageLog
 
 from flo2d.flo2d_versions.flo2d_versions import FLO2D_VERSIONS
