@@ -7,6 +7,8 @@ import functools
 import time
 from collections import defaultdict
 
+from PyQt5.QtWidgets import QMessageBox
+from qgis._core import QgsMessageLog
 from qgis.analysis import QgsZonalStatistics
 from qgis.core import (
     NULL,
@@ -72,13 +74,15 @@ class ElevationCorrector(object):
         END
         """
 
+        self.new_filter_expression = ""
+
     def setup_elevation_layers(self):
         self.user_points = self.lyrs.data["user_elevation_points"]["qlyr"]
         self.user_polygons = self.lyrs.data["user_elevation_polygons"]["qlyr"]
 
     def set_filter(self):
-        self.user_points.setSubsetString(self.filter_expression.format("user_elevation_points"))
-        self.user_polygons.setSubsetString(self.filter_expression.format("user_elevation_polygons"))
+        self.user_points.setSubsetString(self.new_filter_expression)
+        self.user_polygons.setSubsetString(self.new_filter_expression)
 
     def clear_filter(self):
         self.user_points.setSubsetString("")
@@ -168,6 +172,7 @@ class LeveesElevation(ElevationCorrector):
         self.setup_elevation_layers()
         self.user_levees = self.lyrs.data["user_levee_lines"]["qlyr"]
         self.schema_levees = self.lyrs.data["levee_data"]["qlyr"]
+        self.new_filter_expression = "membership IN ('all', 'levees')"
         self.filter_expression = "SELECT * FROM {} WHERE membership = 'all' OR membership = 'levees';"
 
     @timer
@@ -270,9 +275,21 @@ class GridElevation(ElevationCorrector):
         self.request = QgsFeatureRequest().setFilterFids(self.user_polygons.selectedFeatureIds())
         self.grid = self.lyrs.data["grid"]["qlyr"]
         self.blocked_areas = self.lyrs.data["user_blocked_areas"]["qlyr"]
+        self.new_filter_expression = "membership IN ('all', 'grid')"
         self.filter_expression = "SELECT * FROM {} WHERE membership = 'all' OR membership = 'grid';"
 
     def elevation_from_polygons(self):
+
+        if self.user_polygons.featureCount() <= 0:
+            ms_box = QMessageBox(
+                QMessageBox.Critical,
+                "Error",
+                "Please, define Elevation Polygon."
+            )
+            ms_box.exec_()
+            ms_box.show()
+            return
+
         if self.only_selected is True:
             request = self.request
         else:
@@ -311,6 +328,17 @@ class GridElevation(ElevationCorrector):
         self.gutils.con.commit()
 
     def elevation_from_tin(self):
+
+        if self.user_polygons.featureCount() <= 0 or self.user_points.featureCount() <= 0:
+            ms_box = QMessageBox(
+                QMessageBox.Critical,
+                "Error",
+                "Please, define Elevation Polygon & Elevation points."
+            )
+            ms_box.exec_()
+            ms_box.show()
+            return
+
         if self.only_selected is True:
             request = self.request
         else:
@@ -319,6 +347,7 @@ class GridElevation(ElevationCorrector):
         tin = TINInterpolator(self.user_points, self.VIRTUAL_SUM)
         tin.setup_layer_data()
         cellSize = float(self.gutils.get_cont_par("CELLSIZE"))
+
         grid_fids = [
             val[-1]
             for val in poly2grid(
@@ -332,6 +361,7 @@ class GridElevation(ElevationCorrector):
                 self.threshold,
             )
         ]
+
         request = QgsFeatureRequest().setFilterFids(grid_fids)
         qry_values = []
         qry = "UPDATE grid SET elevation = ? WHERE fid = ?;"
@@ -348,6 +378,17 @@ class GridElevation(ElevationCorrector):
         self.remove_virtual_sum(self.user_points)
 
     def tin_elevation_within_polygons(self):
+
+        if self.user_polygons.featureCount() <= 0:
+            ms_box = QMessageBox(
+                QMessageBox.Critical,
+                "Error",
+                "Please, define Elevation Polygon."
+            )
+            ms_box.exec_()
+            ms_box.show()
+            return
+
         if self.only_selected is True:
             request = self.request
         else:
@@ -389,6 +430,7 @@ class GridElevation(ElevationCorrector):
         qry_values = []
         qry = "UPDATE grid SET elevation = ? WHERE fid = ?;"
         for feat in self.grid.getFeatures(request):
+            QgsMessageLog.logMessage(str(feat.id()))
             geom = feat.geometry()
             centroid = geom.centroid().asPoint()
             succes, value = tin.tin_at_xy(centroid.x(), centroid.y())
@@ -400,6 +442,17 @@ class GridElevation(ElevationCorrector):
         self.gutils.con.commit()
 
     def elevation_within_arf(self, calculation_type):
+
+        if self.blocked_areas.featureCount() <= 0:
+            ms_box = QMessageBox(
+                QMessageBox.Critical,
+                "Error",
+                "Please, define Blocked Areas."
+            )
+            ms_box.exec_()
+            ms_box.show()
+            return
+
         if calculation_type == "Mean":
 
             def calculation_method(vals):

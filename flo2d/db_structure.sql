@@ -936,7 +936,8 @@ UNION ALL
 SELECT DISTINCT 'F' as type, struct_fid FROM culvert_equations
 UNION ALL
 SELECT DISTINCT 'D' as type, struct_fid FROM storm_drains;
-INSERT INTO gpkg_contents (table_name, data_type) VALUES ('struct_data_tables', 'aspatial');
+
+-- INSERT INTO gpkg_contents (table_name, data_type) VALUES ('struct_data_tables', 'aspatial');
 
 -- STREET.DAT
 
