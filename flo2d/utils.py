@@ -406,7 +406,7 @@ def get_flo2dpro_version(file_path):
                 found_version = version
                 break
 
-        if found_version == None:
+        if found_version is None:
             found_version = "Version not found"
 
         return found_version
