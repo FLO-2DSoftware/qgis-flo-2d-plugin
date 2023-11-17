@@ -38,6 +38,7 @@ from qgis.PyQt.QtWidgets import (
     QMessageBox,
     QStyledItemDelegate,
 )
+from .deps import safe_win32api as win32api
 
 
 class NumericDelegate(QStyledItemDelegate):
@@ -374,25 +375,39 @@ def get_flo2dpro_version(file_path):
     if not os.path.exists(file_path):
         return "No FLO2D.exe in the folder"
 
-    # Get the file's creation date and time
-    creation_time = os.path.getmtime(file_path)
+    # First try to read from FLO-2D.exe properties
+    try:
 
-    # Convert the timestamp to a datetime object
-    creation_date = datetime.fromtimestamp(creation_time)
+        info = win32api.GetFileVersionInfo(file_path, "\\")
+        ms = info['FileVersionMS']
+        ls = info['FileVersionLS']
 
-    # Extract the date part
-    date = creation_date.date()
-    date_str_dict = date.strftime("%Y-%m-%d")
+        version_str = f"{win32api.HIWORD(ms)}.{win32api.LOWORD(ms)}.{win32api.HIWORD(ls)}"
 
-    # Iterate over versions and find the corresponding version for the given date
-    found_version = None
-    for version, dates in FLO2D_VERSIONS.items():
-        if date_str_dict in dates:
-            found_version = version
-            break
+        if version_str != "":
+            return version_str
 
-    if found_version == None:
-        found_version = "Version not found"
+    # If there is no information, use the date dictionary
+    except:
+        # Get the file's creation date and time
+        creation_time = os.path.getmtime(file_path)
 
-    return found_version
+        # Convert the timestamp to a datetime object
+        creation_date = datetime.fromtimestamp(creation_time)
+
+        # Extract the date part
+        date = creation_date.date()
+        date_str_dict = date.strftime("%Y-%m-%d")
+
+        # Iterate over versions and find the corresponding version for the given date
+        found_version = None
+        for version, dates in FLO2D_VERSIONS.items():
+            if date_str_dict in dates:
+                found_version = version
+                break
+
+        if found_version == None:
+            found_version = "Version not found"
+
+        return found_version
 
