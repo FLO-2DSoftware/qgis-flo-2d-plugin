@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import ctypes
 
 from qgis._core import QgsMessageLog
 
@@ -38,7 +39,6 @@ from qgis.PyQt.QtWidgets import (
     QMessageBox,
     QStyledItemDelegate,
 )
-from .deps import safe_win32api as win32api
 
 
 class NumericDelegate(QStyledItemDelegate):
@@ -375,21 +375,32 @@ def get_flo2dpro_version(file_path):
     if not os.path.exists(file_path):
         return "No FLO2D.exe in the folder"
 
-    # First try to read from FLO-2D.exe properties
     try:
+        # Load the file version DLL
+        version_dll = ctypes.windll.version
 
-        info = win32api.GetFileVersionInfo(file_path, "\\")
-        ms = info['FileVersionMS']
-        ls = info['FileVersionLS']
+        # Get the file version info size
+        file_version_info_size = version_dll.GetFileVersionInfoSizeW(file_path, None)
 
-        version_str = f"{win32api.HIWORD(ms)}.{win32api.LOWORD(ms)}.{win32api.HIWORD(ls)}"
+        # Allocate buffer for file version info
+        file_version_info = ctypes.create_string_buffer(file_version_info_size)
 
-        if version_str != "":
-            return version_str
+        # Retrieve file version info
+        version_dll.GetFileVersionInfoW(file_path, None, file_version_info_size, file_version_info)
 
-    # If there is no information, use the date dictionary
+        # Query the product version
+        info = ctypes.c_void_p()
+        length = ctypes.c_uint()
+
+        version_dll.VerQueryValueW(file_version_info, '\\', ctypes.byref(info), ctypes.byref(length))
+        version_data = ctypes.cast(info, ctypes.POINTER(ctypes.c_uint))
+        version_str = f"{version_data.contents >> 16}.{version_data.contents & 0xFFFF}"
+
+        return version_str
+
+    # Get the file's creation date and time
     except:
-        # Get the file's creation date and time
+
         creation_time = os.path.getmtime(file_path)
 
         # Convert the timestamp to a datetime object
