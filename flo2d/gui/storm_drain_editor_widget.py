@@ -1470,7 +1470,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             
                         new_conduits.append(feat)
                 
-                    else:  # Keep some existing data in user_swmm_swmm (e.g swmm_length, swmm_width, etc.)
+                    else:  # Keep some existing data in user_swmm_conduits (e.g swmm_length, swmm_width, etc.)
                         # See if name is in user_swmm_conduits:                     
                         fid = self.gutils.execute("SELECT fid FROM user_swmm_conduits WHERE conduit_name = ?;", (name,)).fetchone()
                         if fid:  # name already in user_swmm_conduits
@@ -1557,19 +1557,29 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
 
                 """
 
+                replace_user_swmm_pumps_sql = """UPDATE user_swmm_pumps
+                                 SET   pump_inlet  = ?,
+                                       pump_outlet  = ?,
+                                       pump_curve  = ?,
+                                       pump_init_status  = ?,
+                                       pump_startup_depth  = ?,
+                                       pump_shutoff_depth  = ?
+                                 WHERE pump_name = ?;"""
+    
+
                 fields = self.user_swmm_pumps_lyr.fields()
 
                 for name, values in list(storm_drain.INP_pumps.items()):
+                    
                     if values["pump_shutoff_depth"] == None:
                         pump_data_missing = "\nError(s) in [PUMP] group. Are values missing?"
                         continue
-
+                    
+                    go_go = True
                     pump_inlet = values["pump_inlet"] if "pump_inlet" in values else None
                     pump_outlet = values["pump_outlet"] if "pump_outlet" in values else None
                     pump_curve = values["pump_curve"] if "pump_curve" in values else None
                     pump_init_status = values["pump_init_status"] if "pump_init_status" in values else "OFF"
-                    # pump_init_status = "ON" if is_true(pump_init_status) else "ON"
-
                     pump_startup_depth = (
                         float_or_zero(values["pump_startup_depth"]) if "pump_startup_depth" in values else 0.0
                     )
@@ -1577,13 +1587,19 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                         float_or_zero(values["pump_shutoff_depth"]) if "pump_shutoff_depth" in values else 0.0
                     )
 
+                    feat = QgsFeature()
+                    feat.setFields(fields)
+
                     if not pump_inlet in storm_drain.INP_nodes:
                         pump_inlets_not_found += name + "\n"
-                        continue
+                        go_go = False
                     if not pump_outlet in storm_drain.INP_nodes:
                         pump_outlets_not_found += name + "\n"
-                        continue
+                        go_go = False
 
+                    if not go_go:
+                        continue  # Force execution of next iteration, skip rest of code. No inlet or outlet nodes in INP file.
+        
                     x1 = float(storm_drain.INP_nodes[pump_inlet]["x"])
                     y1 = float(storm_drain.INP_nodes[pump_inlet]["y"])
                     x2 = float(storm_drain.INP_nodes[pump_outlet]["x"])
@@ -1599,25 +1615,51 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                         outside_pumps += name + "\n"
                         continue
 
-                    # NOTE: for now ALWAYS read all inlets   !!!:
-                    #                 if complete_or_create == "Create New":
-
                     geom = QgsGeometry.fromPolylineXY([QgsPointXY(x1, y1), QgsPointXY(x2, y2)])
 
-                    feat = QgsFeature()
-                    feat.setFields(fields)
-                    feat.setGeometry(geom)
-                    feat.setAttribute("pump_name", name)
-                    feat.setAttribute("pump_inlet", pump_inlet)
-                    feat.setAttribute("pump_outlet", pump_outlet)
-                    feat.setAttribute("pump_curve", pump_curve)
-                    feat.setAttribute("pump_init_status", pump_init_status)
-                    feat.setAttribute("pump_startup_depth", pump_startup_depth)
-                    feat.setAttribute("pump_shutoff_depth", pump_shutoff_depth)
+                    if complete_or_create == "Create New":
+                        feat.setGeometry(geom)
+                        
+                        feat.setAttribute("pump_name", name)
+                        feat.setAttribute("pump_inlet", pump_inlet)
+                        feat.setAttribute("pump_outlet", pump_outlet)
+                        feat.setAttribute("pump_curve", pump_curve)
+                        feat.setAttribute("pump_init_status", pump_init_status)
+                        feat.setAttribute("pump_startup_depth", pump_startup_depth)
+                        feat.setAttribute("pump_shutoff_depth", pump_shutoff_depth)
+    
+                        new_pumps.append(feat)
 
-                    new_pumps.append(feat)
-                    updated_pumps += 1
+                    else:  # Keep some existing data in user_swmm_pumps (e.g pump_curve, etc.)
+                        # See if name is in user_swmm_pumps:                     
+                        fid = self.gutils.execute("SELECT fid FROM user_swmm_pumps WHERE pump_name = ?;", (name,)).fetchone()
+                        if fid:  # name already in user_swmm_pumps
+                                self.gutils.execute(
+                                    replace_user_swmm_pumps_sql,
+                                    ( 
+                                        pump_inlet,
+                                        pump_outlet,
+                                        pump_curve,
+                                        pump_init_status,
+                                        pump_startup_depth,
+                                        pump_shutoff_depth,                                                   
+                                        name,
+                                    ),
+                                )
+                                updated_pumps += 1                        
+                        else:                         
+                            feat.setGeometry(geom)
 
+                            feat.setAttribute("pump_name", name)
+                            feat.setAttribute("pump_inlet", pump_inlet)
+                            feat.setAttribute("pump_outlet", pump_outlet)
+                            feat.setAttribute("pump_curve", pump_curve)
+                            feat.setAttribute("pump_init_status", pump_init_status)
+                            feat.setAttribute("pump_startup_depth", pump_startup_depth)
+                            feat.setAttribute("pump_shutoff_depth", pump_shutoff_depth)
+        
+                            new_pumps.append(feat)
+                        
                 if len(new_pumps) != 0:
                     self.user_swmm_pumps_lyr.startEditing()
                     self.user_swmm_pumps_lyr.addFeatures(new_pumps)
@@ -1882,11 +1924,12 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 + " Nodes (inlets, junctions, and outfalls) in the 'Storm Drain Nodes' layer ('User Layers' group) were updated, and\n\n"
                 + "* "
                 + str(updated_conduits)
-                + " Conduits in the 'Storm Drain Conduits' layer ('User Layers' group) were updated. and\n"
+                + " Conduits in the 'Storm Drain Conduits' layer ('User Layers' group) were updated, and\n"
                 + "  " + str(len(new_conduits)) + " new conduits created.\n\n"
                 + "* "
                 + str(updated_pumps)
-                + " Pumps in the 'Storm Drain Pumps' layer ('User Layers' group) were updated. \n\n"
+                + " Pumps in the 'Storm Drain Pumps' layer ('User Layers' group) were updated, and\n"
+                + "  " + str(len(new_pumps)) + " new pumps created.\n\n"
                 + "* "
                 + str(updated_orifices)
                 + " Orifices in the 'Storm Drain Orifices' layer ('User Layers' group) were updated. \n\n"
