@@ -1565,7 +1565,6 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                                        pump_startup_depth  = ?,
                                        pump_shutoff_depth  = ?
                                  WHERE pump_name = ?;"""
-    
 
                 fields = self.user_swmm_pumps_lyr.fields()
 
@@ -1689,9 +1688,23 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
 
                 """
 
+                replace_user_swmm_orificies_sql = """UPDATE user_swmm_orifices
+                                 SET   orifice_inlet  = ?,
+                                       orifice_outlet  = ?,
+                                       orifice_type  = ?,
+                                       orifice_crest_height  = ?,
+                                       orifice_disch_coeff  = ?,
+                                       orifice_flap_gate  = ?,
+                                       orifice_open_close_time  = ?,
+                                       orifice_shape  = ?,
+                                       orifice_height  = ?,
+                                       orifice_width  = ?
+                                 WHERE orifice_name = ?;"""
+                                 
                 fields = self.user_swmm_orifices_lyr.fields()
 
                 for name, values in list(storm_drain.INP_orifices.items()):
+                    go_go = True
                     orifice_inlet = values["ori_inlet"] if "ori_inlet" in values else None
                     orifice_outlet = values["ori_outlet"] if "ori_outlet" in values else None
                     orifice_type = values["ori_type"] if "ori_type" in values else "SIDE"
@@ -1701,7 +1714,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                     orifice_disch_coeff = (
                         float_or_zero(values["ori_disch_coeff"]) if "ori_disch_coeff" in values else 0.0
                     )
-                    orifice_flap = values["ori_flap_gate"] if "ori_flap_gate" in values else "NO"
+                    orifice_flap_gate = values["ori_flap_gate"] if "ori_flap_gate" in values else "NO"
                     orifice_open_close_time = (
                         float_or_zero(values["ori_open_close_time"]) if "ori_open_close_time" in values else 0.0
                     )
@@ -1709,13 +1722,19 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                     orifice_height = float_or_zero(values["xsections_height"]) if "xsections_height" in values else 0.0
                     orifice_width = float_or_zero(values["xsections_width"]) if "xsections_width" in values else 0.0
 
+                    feat = QgsFeature()
+                    feat.setFields(fields)
+                    
                     if not orifice_inlet in storm_drain.INP_nodes:
                         orifice_inlets_not_found += name + "\n"
-                        continue
+                        go_go = False
                     if not orifice_outlet in storm_drain.INP_nodes:
                         orifice_outlets_not_found += name + "\n"
-                        continue
+                        go_go = False
 
+                    if not go_go:
+                        continue  # Force execution of next iteration, skip rest of code. No inlet or outlet nodes in INP file.
+        
                     x1 = float(storm_drain.INP_nodes[orifice_inlet]["x"])
                     y1 = float(storm_drain.INP_nodes[orifice_inlet]["y"])
                     x2 = float(storm_drain.INP_nodes[orifice_outlet]["x"])
@@ -1731,28 +1750,62 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                         outside_orifices += name + "\n"
                         continue
 
-                    # NOTE: for now ALWAYS read all inlets   !!!:
-                    #                 if complete_or_create == "Create New":
-
                     geom = QgsGeometry.fromPolylineXY([QgsPointXY(x1, y1), QgsPointXY(x2, y2)])
 
-                    feat = QgsFeature()
-                    feat.setFields(fields)
-                    feat.setGeometry(geom)
-                    feat.setAttribute("orifice_name", name)
-                    feat.setAttribute("orifice_inlet", orifice_inlet)
-                    feat.setAttribute("orifice_outlet", orifice_outlet)
-                    feat.setAttribute("orifice_type", orifice_type)
-                    feat.setAttribute("orifice_crest_height", orifice_crest_height)
-                    feat.setAttribute("orifice_disch_coeff", orifice_disch_coeff)
-                    feat.setAttribute("orifice_flap_gate", orifice_flap)
-                    feat.setAttribute("orifice_open_close_time", orifice_open_close_time)
-                    feat.setAttribute("orifice_shape", orifice_shape)
-                    feat.setAttribute("orifice_height", orifice_height)
-                    feat.setAttribute("orifice_width", orifice_width)
+                    if complete_or_create == "Create New":
+                        feat.setGeometry(geom)
+                        
+                        feat.setAttribute("orifice_name", name)
+                        feat.setAttribute("orifice_inlet", orifice_inlet)
+                        feat.setAttribute("orifice_outlet", orifice_outlet)
+                        feat.setAttribute("orifice_type", orifice_type)
+                        feat.setAttribute("orifice_crest_height", orifice_crest_height)
+                        feat.setAttribute("orifice_disch_coeff", orifice_disch_coeff)
+                        feat.setAttribute("orifice_flap_gate", orifice_flap_gate)
+                        feat.setAttribute("orifice_open_close_time", orifice_open_close_time)
+                        feat.setAttribute("orifice_shape", orifice_shape)
+                        feat.setAttribute("orifice_height", orifice_height)
+                        feat.setAttribute("orifice_width", orifice_width)
+    
+                        new_orifices.append(feat)
+                
+                    else:  # Keep some existing data in user_swmm_orifices (e.g orifice_type, orifice_crest_height, etc.)
+                        # See if name is in user_swmm_orifices:                     
+                        fid = self.gutils.execute("SELECT fid FROM user_swmm_orifices WHERE orifice_name = ?;", (name,)).fetchone()
+                        if fid:  # name already in user_swmm_orifices
+                                self.gutils.execute(
+                                    replace_user_swmm_orificies_sql,
+                                    ( 
+                                       orifice_inlet,
+                                       orifice_outlet,
+                                       orifice_type,
+                                       orifice_crest_height,
+                                       orifice_disch_coeff,
+                                       orifice_flap_gate,
+                                       orifice_open_close_time,
+                                       orifice_shape,
+                                       orifice_height,
+                                       orifice_width,
+                                       name,
+                                    ),
+                                )
+                                updated_orifices += 1                        
+                        else:                         
+                            feat.setGeometry(geom)
 
-                    new_orifices.append(feat)
-                    updated_orifices += 1
+                            feat.setAttribute("orifice_name", name)
+                            feat.setAttribute("orifice_inlet", orifice_inlet)
+                            feat.setAttribute("orifice_outlet", orifice_outlet)
+                            feat.setAttribute("orifice_type", orifice_type)
+                            feat.setAttribute("orifice_crest_height", orifice_crest_height)
+                            feat.setAttribute("orifice_disch_coeff", orifice_disch_coeff)
+                            feat.setAttribute("orifice_flap_gate", orifice_flap_gate)
+                            feat.setAttribute("orifice_open_close_time", orifice_open_close_time)
+                            feat.setAttribute("orifice_shape", orifice_shape)
+                            feat.setAttribute("orifice_height", orifice_height)
+                            feat.setAttribute("orifice_width", orifice_width)
+        
+                            new_orifices.append(feat)
 
                 if len(new_orifices) != 0:
                     self.user_swmm_orifices_lyr.startEditing()
@@ -1782,10 +1835,25 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 the [WEIRS], and [XSECTIONS] groups.
 
                 """
+                replace_user_swmm_weirs_sql = """UPDATE user_swmm_weirs
+                                 SET   weir_inlet  = ?,
+                                       weir_outlet  = ?,
+                                       weir_type = ?,
+                                       weir_crest_height = ?,
+                                       weir_disch_coeff = ?,
+                                       weir_flap_gate = ?,
+                                       weir_end_contrac = ?,
+                                       weir_end_coeff = ?,
+                                       weir_shape = ?,
+                                       weir_height = ?,
+                                       weir_length = ?,
+                                       weir_side_slope = ?
+                                 WHERE weir_name = ?;"""
 
                 fields = self.user_swmm_weirs_lyr.fields()
 
                 for name, values in list(storm_drain.INP_weirs.items()):
+                    go_go = True
                     weir_inlet = values["weir_inlet"] if "weir_inlet" in values else None
                     weir_outlet = values["weir_outlet"] if "weir_outlet" in values else None
                     weir_type = values["weir_type"] if "weir_type" in values else "TRANSVERSE"
@@ -1803,12 +1871,18 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                     weir_length = float_or_zero(values["xsections_width"]) if "xsections_width" in values else 0.0
                     weir_side_slope = float_or_zero(values["xsections_geom3"]) if "xsections_geom3" in values else 0.0
 
+                    feat = QgsFeature()
+                    feat.setFields(fields)
+
                     if not weir_inlet in storm_drain.INP_nodes:
                         weir_inlets_not_found += name + "\n"
-                        continue
+                        go_go = False
                     if not weir_outlet in storm_drain.INP_nodes:
                         weir_outlets_not_found += name + "\n"
-                        continue
+                        go_go = False
+
+                    if not go_go:
+                        continue  # Force execution of next iteration, skip rest of code. No inlet or outlet nodes in INP file.
 
                     x1 = float(storm_drain.INP_nodes[weir_inlet]["x"])
                     y1 = float(storm_drain.INP_nodes[weir_inlet]["y"])
@@ -1825,30 +1899,68 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                         outside_weirs += name + "\n"
                         continue
 
-                    # NOTE: for now ALWAYS read all inlets   !!!:
-                    #                 if complete_or_create == "Create New":
-
                     geom = QgsGeometry.fromPolylineXY([QgsPointXY(x1, y1), QgsPointXY(x2, y2)])
 
-                    feat = QgsFeature()
-                    feat.setFields(fields)
-                    feat.setGeometry(geom)
-                    feat.setAttribute("weir_name", name)
-                    feat.setAttribute("weir_inlet", weir_inlet)
-                    feat.setAttribute("weir_outlet", weir_outlet)
-                    feat.setAttribute("weir_type", weir_type)
-                    feat.setAttribute("weir_crest_height", weir_crest_height)
-                    feat.setAttribute("weir_disch_coeff", weir_disch_coeff)
-                    feat.setAttribute("weir_flap_gate", weir_flap)
-                    feat.setAttribute("weir_end_contrac", weir_end_contrac)
-                    feat.setAttribute("weir_end_coeff", weir_end_coeff)
-                    feat.setAttribute("weir_shape", weir_shape)
-                    feat.setAttribute("weir_height", weir_height)
-                    feat.setAttribute("weir_length", weir_length)
-                    feat.setAttribute("weir_side_slope", weir_side_slope)
+                    if complete_or_create == "Create New":
+                        feat.setGeometry(geom)
+                        
+                        feat.setAttribute("weir_name", name)
+                        feat.setAttribute("weir_inlet", weir_inlet)
+                        feat.setAttribute("weir_outlet", weir_outlet)
+                        feat.setAttribute("weir_type", weir_type)
+                        feat.setAttribute("weir_crest_height", weir_crest_height)
+                        feat.setAttribute("weir_disch_coeff", weir_disch_coeff)
+                        feat.setAttribute("weir_flap_gate", weir_flap)
+                        feat.setAttribute("weir_end_contrac", weir_end_contrac)
+                        feat.setAttribute("weir_end_coeff", weir_end_coeff)
+                        feat.setAttribute("weir_shape", weir_shape)
+                        feat.setAttribute("weir_height", weir_height)
+                        feat.setAttribute("weir_length", weir_length)
+                        feat.setAttribute("weir_side_slope", weir_side_slope)
+    
+                        new_weirs.append(feat)
 
-                    new_weirs.append(feat)
-                    updated_weirs += 1
+                    else:  # Keep some existing data in user_swmmm_weirs (e.g weir_crest_height, etc.)
+                        # See if name is in user_swmm_weirs:                     
+                        fid = self.gutils.execute("SELECT fid FROM user_swmm_weirs WHERE weir_name = ?;", (name,)).fetchone()
+                        if fid:  # name already in user_swmm_weirs
+                                self.gutils.execute(
+                                    replace_user_swmm_weirs_sql,
+                                    ( 
+                                        weir_inlet,
+                                        weir_outlet,
+                                        weir_type,
+                                        weir_crest_height,
+                                        weir_disch_coeff,
+                                        weir_flap,
+                                        weir_end_contrac,
+                                        weir_end_coeff,
+                                        weir_shape,
+                                        weir_height,
+                                        weir_length,
+                                        weir_side_slope,                                               
+                                        name,
+                                    ),
+                                )
+                                updated_weirs += 1                        
+                        else:                         
+                            feat.setGeometry(geom)
+
+                            feat.setAttribute("weir_name", name)
+                            feat.setAttribute("weir_inlet", weir_inlet)
+                            feat.setAttribute("weir_outlet", weir_outlet)
+                            feat.setAttribute("weir_type", weir_type)
+                            feat.setAttribute("weir_crest_height", weir_crest_height)
+                            feat.setAttribute("weir_disch_coeff", weir_disch_coeff)
+                            feat.setAttribute("weir_flap_gate", weir_flap)
+                            feat.setAttribute("weir_end_contrac", weir_end_contrac)
+                            feat.setAttribute("weir_end_coeff", weir_end_coeff)
+                            feat.setAttribute("weir_shape", weir_shape)
+                            feat.setAttribute("weir_height", weir_height)
+                            feat.setAttribute("weir_length", weir_length)
+                            feat.setAttribute("weir_side_slope", weir_side_slope)
+        
+                            new_weirs.append(feat)
 
                 if len(new_weirs) != 0:
                     self.user_swmm_weirs_lyr.startEditing()
@@ -1869,7 +1981,8 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             and len(new_nodes) == 0
             and len(new_conduits) == 0
             and len(new_pumps) == 0
-            and len(new_orifices)
+            and len(new_orifices == 0
+            and len(new_weirs) == 0)
         ):
             error_msg += "\nThere are no nodes or links inside the domain of this project."
 
@@ -1887,6 +2000,18 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
 
         if pump_outlets_not_found != "":
             error_msg += "\n\nThe following pumps have no outlet defined!\n" + pump_outlets_not_found
+
+        if orifice_inlets_not_found != "":
+            error_msg += "\n\nThe following orifices have no inlet defined!\n" + orifice_inlets_not_found
+
+        if orifice_outlets_not_found != "":
+            error_msg += "\n\nThe following orifices have no outlet defined!\n" + orifice_outlets_not_found
+
+        if weir_inlets_not_found != "":
+            error_msg += "\n\nThe following weirs have no inlet defined!\n" + weir_inlets_not_found
+
+        if weir_outlets_not_found != "":
+            error_msg += "\n\nThe following weirs have no outlet defined!\n" + weir_outlets_not_found
 
         if error_msg != "ERROR 050322.9423: error(s) importing file\n\n" + swmm_file:
             self.uc.show_critical(error_msg)
@@ -1932,10 +2057,12 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 + "  " + str(len(new_pumps)) + " new pumps created.\n\n"
                 + "* "
                 + str(updated_orifices)
-                + " Orifices in the 'Storm Drain Orifices' layer ('User Layers' group) were updated. \n\n"
-                + "* "
+                + " Orifices in the 'Storm Drain Orifices' layer ('User Layers' group) were updated, and\n"
+                + "  " + str(len(new_orifices)) + " new orifices created.\n\n"
+                + "* "                
                 + str(updated_weirs)
-                + " Weirs in the 'Storm Drain Weirs' layer ('User Layers' group). \n\n"
+                + " Weirs in the 'Storm Drain Weirs' layer ('User Layers' group) were updated, and\n"
+                + "  " + str(len(new_weirs)) + " new weirs created.\n\n"                
                 "Click the 'Inlets/Junctions', 'Outfalls', 'Conduits', 'Pumps', 'Orifices', and 'Weirs' buttons in the Storm Drain Editor widget to see or edit their attributes.\n\n"
                 "NOTE: the 'Schematize Storm Drain Components' button  in the Storm Drain Editor widget will update the 'Storm Drain' layer group, required to "
                 "later export the .DAT files used by the FLO-2D model."
@@ -1978,6 +2105,17 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             msgBox.setText("WARNING 080422.0522:")
             msgBox.setInformativeText("The following Orifices are outside the domain:")
             msgBox.setDetailedText(outside_orifices)
+            msgBox.setStandardButtons(QMessageBox.Ok)
+            msgBox.exec_()
+
+
+        if outside_weirs != "":
+            msgBox = QMessageBox()
+            msgBox.setIcon(QMessageBox.Warning)
+            msgBox.setWindowTitle("Storm Drain weirs outside domain")
+            msgBox.setText("WARNING 211123.0639:")
+            msgBox.setInformativeText("The following Weirs are outside the domain:")
+            msgBox.setDetailedText(outside_weirs)
             msgBox.setStandardButtons(QMessageBox.Ok)
             msgBox.exec_()
 

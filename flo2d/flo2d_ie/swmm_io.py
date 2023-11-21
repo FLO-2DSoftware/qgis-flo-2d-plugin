@@ -695,9 +695,11 @@ class StormDrainProject(object):
             )  # Returns the whole [OUTFALLS] group. NOTE: Somehow 'outf' is used as key instead of 'OUTFALLS'. Why?
             if outfalls is not None:
                 for out in outfalls:
-                    if not out or out[0] in self.ignore:
+                    if (not out) or (out[0] in self.ignore):
                         continue
                     items = out.split()
+                    if not items:
+                        continue
                     i0 = items[0]
                     i1 = items[1]
                     if items[2] == "TIDAL":
