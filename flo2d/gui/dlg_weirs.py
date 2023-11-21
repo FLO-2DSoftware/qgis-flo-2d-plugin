@@ -21,7 +21,7 @@ from qgis.PyQt.QtWidgets import (
 
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
-from ..utils import is_number, is_true, m_fdata
+from ..utils import is_number, is_true, m_fdata, float_or_zero
 from .table_editor_widget import StandardItem, StandardItemModel
 from .ui_utils import center_canvas, load_ui, set_icon, try_disconnect, zoom
 
@@ -104,7 +104,7 @@ class WeirsDialog(qtBaseClass, uiDialog):
             for row_number, row_data in enumerate(rows):
                 self.weirs_tblw.insertRow(row_number)
                 for column, data in enumerate(row_data):
-                    if data:
+                    # if data is not None:
                         item = QTableWidgetItem()
                         item.setData(Qt.DisplayRole, data)  # item gets value of data (as QTableWidgetItem Class)
 
@@ -134,10 +134,10 @@ class WeirsDialog(qtBaseClass, uiDialog):
                                 self.weir_type_cbo.setCurrentIndex(index)
 
                             elif column == 5:
-                                self.weir_crest_height_dbox.setValue(data)
+                                self.weir_crest_height_dbox.setValue(float_or_zero(data))
 
                             elif column == 6:
-                                self.weir_discharge_coeff_dbox.setValue(data)
+                                self.weir_discharge_coeff_dbox.setValue(float_or_zero(data))
 
                             elif column == 7:
                                 if data.upper() not in ("YES", "NO"):
@@ -160,10 +160,10 @@ class WeirsDialog(qtBaseClass, uiDialog):
                                 self.weir_end_contrac_cbo.setCurrentIndex(index)
 
                             elif column == 9:
-                                self.weir_end_coeff_dbox.setValue(data)
+                                self.weir_end_coeff_dbox.setValue(float_or_zero(data))
 
                             elif column == 10:
-                                self.weir_side_slope_dbox.setValue(data)
+                                self.weir_side_slope_dbox.setValue(float_or_zero(data))
 
                             elif column == 11:
                                 if data.upper() not in self.shape:
@@ -176,18 +176,18 @@ class WeirsDialog(qtBaseClass, uiDialog):
                                 self.weir_shape_cbo.setCurrentIndex(index)
 
                             elif column == 12:
-                                self.weir_height_dbox.setValue(data)
+                                self.weir_height_dbox.setValue(float_or_zero(data))
 
                             elif column == 13:
-                                self.weir_length_dbox.setValue(data)
+                                self.weir_length_dbox.setValue(float_or_zero(data))
 
                         if column > 0:  # Omit fid number (in column = 0)
                             if column in (1, 2, 3, 4, 7, 9):
                                 item.setFlags(Qt.ItemIsSelectable | Qt.ItemIsEnabled)
 
                             self.weirs_tblw.setItem(row_number, column - 1, item)
-                    else:
-                        wrong_status += 1
+                    # else:
+                    #     wrong_status += 1
 
             self.highlight_weir(self.weir_name_cbo.currentText())
             QApplication.restoreOverrideCursor()
@@ -486,7 +486,9 @@ class WeirsDialog(qtBaseClass, uiDialog):
             if item is not None:
                 typ = str(item.text())
                 weir_type = typ if typ.upper() in ["TRANSVERSE", "SIDEFLOW", "V-NOTCH", "TRAPEZOIDAL"] else "TRANSVERSE"
-
+            else:
+                weir_type ="TRANSVERSE"
+                
             item = self.weirs_tblw.item(row, 4)
             if item is not None:
                 weir_crest_height = str(item.text())
@@ -499,7 +501,7 @@ class WeirsDialog(qtBaseClass, uiDialog):
             if item is not None:
                 gate = str(item.text())
                 weir_flap_gate = gate if gate.upper() in ["YES", "NO"] else "YES"
-
+            
             item = self.weirs_tblw.item(row, 7)
             if item is not None:
                 end = str(item.text())
