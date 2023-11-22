@@ -107,7 +107,7 @@ from .layers import Layers
 from .user_communication import UserCommunication
 from .utils import get_flo2dpro_version
 
-global GRID_INFO, GENERAL_INFO
+# global GRID_INFO, GENERAL_INFO
 
 
 @contextmanager
@@ -287,7 +287,13 @@ class Flo2D(object):
 
         if add_to_toolbar:
 
-            if text == "Run Simulation":
+            if text == "FLO-2D Project":
+                toolButton = QToolButton()
+                toolButton.setMenu(popup)
+                toolButton.setIcon(QIcon(self.plugin_dir + "/img/mGeoPackage.svg"))
+                toolButton.setPopupMode(QToolButton.InstantPopup)
+                self.toolbar.addWidget(toolButton)
+            elif text == "Run FLO-2D Pro":
                 toolButton = QToolButton()
                 toolButton.setMenu(popup)
                 toolButton.setIcon(QIcon(self.plugin_dir + "/img/flo2d.svg"))
@@ -296,7 +302,13 @@ class Flo2D(object):
             elif text == "Import/Export":
                 toolButton = QToolButton()
                 toolButton.setMenu(popup)
-                toolButton.setIcon(QIcon(self.plugin_dir + "/img/export.png"))
+                toolButton.setIcon(QIcon(self.plugin_dir + "/img/mActionSharingImport.svg"))
+                toolButton.setPopupMode(QToolButton.InstantPopup)
+                self.toolbar.addWidget(toolButton)
+            elif text == "Info Tool":
+                toolButton = QToolButton()
+                toolButton.setMenu(popup)
+                toolButton.setIcon(QIcon(self.plugin_dir + "/img/info_tool.svg"))
                 toolButton.setPopupMode(QToolButton.InstantPopup)
                 self.toolbar.addWidget(toolButton)
             else:
@@ -313,32 +325,70 @@ class Flo2D(object):
         """
         Create the menu entries and toolbar icons inside the QGIS GUI.
         """
-        global GRID_INFO, GENERAL_INFO
+        # global GRID_INFO, GENERAL_INFO
 
         self.add_action(
-            os.path.join(self.plugin_dir, "img/settings.svg"),
-            text=self.tr("Settings"),
-            callback=self.show_settings,
-            parent=self.iface.mainWindow()
+            os.path.join(self.plugin_dir, "img/mGeoPackage.svg"),
+            text=self.tr("FLO-2D Project"),
+            callback=None,
+            parent=self.iface.mainWindow(),
+            menu=(
+                (
+                    os.path.join(self.plugin_dir, "img/mActionNewGeoPackageLayer.svg"),
+                    "New FLO-2D Project",
+                    lambda: self.show_settings(),
+                ),
+                (
+                    os.path.join(self.plugin_dir, "img/mActionAddGeoPackageLayer.svg"),
+                    "Open FLO-2D Project",
+                    lambda: self.flo_open_project(),
+                ),
+                (
+                    os.path.join(self.plugin_dir, "img/mActionSaveGeoPackageLayer.svg"),
+                    "Save FLO-2D Project",
+                    lambda: self.flo_save_project(),
+                )
+            )
         )
 
         self.add_action(
-            os.path.join(self.plugin_dir, "img/flo_open_project.svg"),
-            text=self.tr("Open FLO-2D geopackage"),
-            callback=lambda: self.flo_open_project(),
-            parent=self.iface.mainWindow()
+            os.path.join(self.plugin_dir, "img/schematic_to_user.svg"),
+            text=self.tr("Convert Schematic Layers to User Layers"),
+            callback=lambda: self.schematic2user(),
+            parent=self.iface.mainWindow(),
         )
 
         self.add_action(
-            os.path.join(self.plugin_dir, "img/flo_save_project.svg"),
-            text=self.tr("Save FLO-2D geopackage"),
-            callback=lambda: self.flo_save_project(),
-            parent=self.iface.mainWindow()
+            os.path.join(self.plugin_dir, "img/evaporation_editor.svg"),
+            text=self.tr("Evaporation Editor"),
+            callback=lambda: self.show_evap_editor(),
+            parent=self.iface.mainWindow(),
+        )
+
+        self.add_action(
+            os.path.join(self.plugin_dir, "img/set_levee_elev.svg"),
+            text=self.tr("Levee Elevation Tool"),
+            callback=lambda: self.show_levee_elev_tool(),
+            parent=self.iface.mainWindow(),
+        )
+
+        self.add_action(
+            os.path.join(self.plugin_dir, "img/landslide.svg"),
+            text=self.tr("Mud and Sediment Transport"),
+            callback=lambda: self.show_mud_and_sediment_dialog(),
+            parent=self.iface.mainWindow(),
+        )
+
+        self.add_action(
+            os.path.join(self.plugin_dir, "img/show_cont_table.svg"),
+            text=self.tr("Set Control Parameters"),
+            callback=lambda: self.show_cont_toler(),
+            parent=self.iface.mainWindow(),
         )
 
         self.add_action(
             os.path.join(self.plugin_dir, "img/flo2d.svg"),
-            text=self.tr("Run Simulation"),
+            text=self.tr("Run FLO-2D Pro"),
             callback=None,
             parent=self.iface.mainWindow(),
             menu=(
@@ -348,7 +398,7 @@ class Flo2D(object):
                     lambda: self.quick_run_flopro(),
                 ),
                 (
-                    os.path.join(self.plugin_dir, "img/FLO.png"),
+                    os.path.join(self.plugin_dir, "img/FLO.svg"),
                     "Run FLO-2D Pro",
                     self.run_flopro,
                 ),
@@ -376,17 +426,41 @@ class Flo2D(object):
                     os.path.join(self.plugin_dir, "img/tailings dam breach.svg"),
                     "Run Tailings Dam Tool ",
                     self.run_tailingsdambreach,
-                ),
-                (
-                    os.path.join(self.plugin_dir, "img/settings2.svg"),
-                    "Run Settings",
-                    self.run_settings,
                 )
             )
         )
 
         self.add_action(
-            os.path.join(self.plugin_dir, "img/export.png"),
+            os.path.join(self.plugin_dir, "img/info_tool.svg"),
+            text=self.tr("Info Tool"),
+            callback=None,
+            parent=self.iface.mainWindow(),
+            menu=(
+                (
+                    os.path.join(self.plugin_dir, "img/info_tool.svg"),
+                    "Info Tool",
+                    self.activate_general_info_tool,
+                ),
+                (
+                    os.path.join(self.plugin_dir, "img/grid_info_tool.svg"),
+                    "Grid Info Tool",
+                    self.activate_grid_info_tool,
+                ),
+                (
+                    os.path.join(self.plugin_dir, "img/profile_tool.svg"),
+                    "Channel Profile",
+                    self.channel_profile,
+                ),
+                (
+                    os.path.join(self.plugin_dir, "img/import_swmm.svg"),
+                    "Select .RPT file",
+                    self.select_RPT_File,
+                ),
+            ),
+        )
+
+        self.add_action(
+            os.path.join(self.plugin_dir, "img/mActionSharingImport.svg"),
             text=self.tr("Import/Export"),
             callback=None,
             parent=self.iface.mainWindow(),
@@ -412,12 +486,12 @@ class Flo2D(object):
                     lambda: self.export_gds(),
                 ),
                 (
-                    os.path.join(self.plugin_dir, "img/import_hdf.svg"),
+                    os.path.join(self.plugin_dir, "img/import_hdf5.svg"),
                     "Import from HDF5",
                     lambda: self.import_hdf5(),
                 ),
                 (
-                    os.path.join(self.plugin_dir, "img/export_hdf.svg"),
+                    os.path.join(self.plugin_dir, "img/export_hdf5.svg"),
                     "Export to HDF5",
                     lambda: self.export_hdf5(),
                 ),
@@ -430,92 +504,16 @@ class Flo2D(object):
         )
 
         self.add_action(
-            os.path.join(self.plugin_dir, "img/show_cont_table.svg"),
-            text=self.tr("Set Control Parameters"),
-            callback=lambda: self.show_cont_toler(),
-            parent=self.iface.mainWindow(),
-        )
-
-        self.add_action(
-            os.path.join(self.plugin_dir, "img/schematic_to_user.svg"),
-            text=self.tr("Convert Schematic Layers to User Layers"),
-            callback=lambda: self.schematic2user(),
-            parent=self.iface.mainWindow(),
-        )
-
-        # self.add_action(
-        #     os.path.join(self.plugin_dir, "img/user_to_schematic.svg"),
-        #     text=self.tr("Convert User Layers to Schematic Layers"),
-        #     callback=lambda: self.user2schematic(),
-        #     parent=self.iface.mainWindow(),
-        # )
-
-        self.add_action(
-            os.path.join(self.plugin_dir, "img/profile_tool.svg"),
-            text=self.tr("Channel Profile"),
-            callback=self.channel_profile,
-            # Connects to 'init_channel_profile' method, via QAction triggered.connect(callback)
-            parent=self.iface.mainWindow(),
-        )
-
-        GENERAL_INFO = self.add_action(
-            os.path.join(self.plugin_dir, "img/info_tool.svg"),
-            text=self.tr("Info Tool"),
-            callback=self.activate_general_info_tool,
-            parent=self.iface.mainWindow(),
-            menu=(
-                (
-                    os.path.join(self.plugin_dir, "img/info_tool.svg"),
-                    "Info Tool",
-                    self.activate_general_info_tool ,
-                ),                
-                (
-                    os.path.join(self.plugin_dir, "img/flo2d.svg"),
-                    "Select .RPT file",
-                    self.select_RPT_File,
-                ),
-            ),
-        )
-
-        GRID_INFO = self.add_action(
-            os.path.join(self.plugin_dir, "img/grid_info_tool.svg"),
-            text=self.tr("Grid Info Tool"),
-            callback=lambda: self.activate_grid_info_tool(),
-            parent=self.iface.mainWindow(),
-        )
-
-        self.add_action(
-            os.path.join(self.plugin_dir, "img/evaporation_editor.svg"),
-            text=self.tr("Evaporation Editor"),
-            callback=lambda: self.show_evap_editor(),
-            parent=self.iface.mainWindow(),
-        )
-
-        self.add_action(
-            os.path.join(self.plugin_dir, "img/set_levee_elev.svg"),
-            text=self.tr("Levee Elevation Tool"),
-            callback=lambda: self.show_levee_elev_tool(),
-            parent=self.iface.mainWindow(),
+            os.path.join(self.plugin_dir, "img/mActionOptions.svg"),
+            text=self.tr("FLO-2D Settings"),
+            callback=lambda: self.run_settings(),
+            parent=self.iface.mainWindow()
         )
 
         self.add_action(
             os.path.join(self.plugin_dir, "img/hazus.svg"),
             text=self.tr("HAZUS"),
             callback=lambda: self.show_hazus_dialog(),
-            parent=self.iface.mainWindow(),
-        )
-
-        # self.add_action(
-        #     os.path.join(self.plugin_dir, "img/tailings dam breach.svg"),
-        #     text=self.tr("Tailings Dam Tool"),
-        #     callback=self.run_tailingsdambreach,
-        #     parent=self.iface.mainWindow(),
-        # )
-
-        self.add_action(
-            os.path.join(self.plugin_dir, "img/landslide.svg"),
-            text=self.tr("Mud and Sediment Transport"),
-            callback=lambda: self.show_mud_and_sediment_dialog(),
             parent=self.iface.mainWindow(),
         )
 
@@ -1277,8 +1275,8 @@ class Flo2D(object):
         uri = f'geopackage:{gpkg_path}?projectName={proj_name}'
         self.project.write(uri)
 
-        GRID_INFO.setChecked(False)
-        GENERAL_INFO.setChecked(False)
+        # GRID_INFO.setChecked(False)
+        # GENERAL_INFO.setChecked(False)
 
     def call_IO_methods(self, calls, debug, *args):
         if self.f2g.parsed_format == Flo2dGeoPackage.FORMAT_DAT:
@@ -2727,11 +2725,11 @@ class Flo2D(object):
                 if tool is not None:
                     self.canvas.unsetMapTool(tool)
                 self.canvas.setMapTool(self.info_tool)
-                GRID_INFO.setChecked(False)
-                GENERAL_INFO.setChecked(True)
+                # GRID_INFO.setChecked(False)
+                # GENERAL_INFO.setChecked(True)
         else:
             self.uc.bar_warn("Define a database connection first!")
-            GENERAL_INFO.setChecked(False)
+            # GENERAL_INFO.setChecked(False)
 
     @connection_required
     def activate_grid_info_tool(self):
@@ -2751,10 +2749,10 @@ class Flo2D(object):
                 self.f2d_grid_info.n_cells = number_of_elements(self.gutils, grid)
                 self.f2d_grid_info.gutils = self.gutils
                 self.canvas.setMapTool(self.grid_info_tool)
-                GENERAL_INFO.setChecked(False)
+                # GENERAL_INFO.setChecked(False)
         else:
             self.uc.bar_warn("There is no grid layer to identify.")
-            GRID_INFO.setChecked(False)
+            # GRID_INFO.setChecked(False)
 
     @connection_required
     def show_user_profile(self, fid=None):
@@ -3339,14 +3337,13 @@ class Flo2D(object):
             "user_swmm_nodes": self.show_sd_discharge,
         }
 
-    def restore_settings(self):
-        pass
+    def restore_settings(self):        pass
 
     def grid_info_tool_clicked(self):
         self.uc.bar_info("grid info tool clicked.")
         
     def uncheck_all_info_toggles(self):
-        GRID_INFO.setChecked(False)
-        GENERAL_INFO.setChecked(False)
+        # GRID_INFO.setChecked(False)
+        # GENERAL_INFO.setChecked(False)
         self.canvas.unsetMapTool(self.grid_info_tool)
         self.canvas.unsetMapTool(self.info_tool)  
