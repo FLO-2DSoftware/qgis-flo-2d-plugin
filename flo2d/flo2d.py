@@ -33,6 +33,8 @@ from subprocess import (
     check_output,
     run,
 )
+
+from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QApplication, QToolButton
 from qgis._core import QgsMessageLog, QgsCoordinateReferenceSystem
 from qgis.core import NULL, QgsProject, QgsWkbTypes
@@ -292,6 +294,7 @@ class Flo2D(object):
                 toolButton.setMenu(popup)
                 toolButton.setIcon(QIcon(self.plugin_dir + "/img/mGeoPackage.svg"))
                 toolButton.setPopupMode(QToolButton.InstantPopup)
+                toolButton.setToolTip("<b>FLO-2D Project</b>")
                 self.toolbar.addWidget(toolButton)
             elif text == "Run FLO-2D Pro":
                 toolButton = QToolButton()
@@ -299,18 +302,35 @@ class Flo2D(object):
                 toolButton.setIcon(QIcon(self.plugin_dir + "/img/flo2d.svg"))
                 toolButton.setPopupMode(QToolButton.InstantPopup)
                 self.toolbar.addWidget(toolButton)
-            elif text == "Import/Export":
+                toolButton.setToolTip("<b>Run FLO-2D Pro</b>")
+            elif text == "FLO-2D Import/Export":
                 toolButton = QToolButton()
                 toolButton.setMenu(popup)
-                toolButton.setIcon(QIcon(self.plugin_dir + "/img/mActionSharingImport.svg"))
+                toolButton.setIcon(QIcon(self.plugin_dir + "/img/ie.svg"))
                 toolButton.setPopupMode(QToolButton.InstantPopup)
                 self.toolbar.addWidget(toolButton)
-            elif text == "Info Tool":
+                toolButton.setToolTip("<b>FLO-2D Import/Export</b>")
+            elif text == "FLO-2D Info Tool":
                 toolButton = QToolButton()
                 toolButton.setMenu(popup)
                 toolButton.setIcon(QIcon(self.plugin_dir + "/img/info_tool.svg"))
                 toolButton.setPopupMode(QToolButton.InstantPopup)
                 self.toolbar.addWidget(toolButton)
+                toolButton.setToolTip("<b>FLO-2D Info Tool</b>")
+            elif text == "FLO-2D Project Review":
+                toolButton = QToolButton()
+                toolButton.setMenu(popup)
+                toolButton.setIcon(QIcon(self.plugin_dir + "/img/editmetadata.svg"))
+                toolButton.setPopupMode(QToolButton.InstantPopup)
+                self.toolbar.addWidget(toolButton)
+                toolButton.setToolTip("<b>FLO-2D Project Review</b>")
+            elif text == "FLO-2D Parameters":
+                toolButton = QToolButton()
+                toolButton.setMenu(popup)
+                toolButton.setIcon(QIcon(self.plugin_dir + "/img/show_cont_table.svg"))
+                toolButton.setPopupMode(QToolButton.InstantPopup)
+                self.toolbar.addWidget(toolButton)
+                toolButton.setToolTip("<b>FLO-2D Parameters</b>")
             else:
                 self.toolbar.addAction(action)
 
@@ -352,38 +372,47 @@ class Flo2D(object):
         )
 
         self.add_action(
-            os.path.join(self.plugin_dir, "img/schematic_to_user.svg"),
-            text=self.tr("Convert Schematic Layers to User Layers"),
-            callback=lambda: self.schematic2user(),
+            os.path.join(self.plugin_dir, "img/ie.svg"),
+            text=self.tr("FLO-2D Import/Export"),
+            callback=None,
             parent=self.iface.mainWindow(),
-        )
-
-        self.add_action(
-            os.path.join(self.plugin_dir, "img/evaporation_editor.svg"),
-            text=self.tr("Evaporation Editor"),
-            callback=lambda: self.show_evap_editor(),
-            parent=self.iface.mainWindow(),
-        )
-
-        self.add_action(
-            os.path.join(self.plugin_dir, "img/set_levee_elev.svg"),
-            text=self.tr("Levee Elevation Tool"),
-            callback=lambda: self.show_levee_elev_tool(),
-            parent=self.iface.mainWindow(),
-        )
-
-        self.add_action(
-            os.path.join(self.plugin_dir, "img/landslide.svg"),
-            text=self.tr("Mud and Sediment Transport"),
-            callback=lambda: self.show_mud_and_sediment_dialog(),
-            parent=self.iface.mainWindow(),
-        )
-
-        self.add_action(
-            os.path.join(self.plugin_dir, "img/show_cont_table.svg"),
-            text=self.tr("Set Control Parameters"),
-            callback=lambda: self.show_cont_toler(),
-            parent=self.iface.mainWindow(),
+            menu=(
+                (
+                    os.path.join(self.plugin_dir, "img/gpkg2gpkg.svg"),
+                    "Import from GeoPackage",
+                    lambda: self.import_from_gpkg(),
+                ),
+                (
+                    os.path.join(self.plugin_dir, "img/import_gds.svg"),
+                    "Import data (*.DAT) files",
+                    lambda: self.import_gds(),
+                ),
+                (
+                    os.path.join(self.plugin_dir, "img/import_components.svg"),
+                    "Import selected components files",
+                    lambda: self.import_components(),
+                ),
+                (
+                    os.path.join(self.plugin_dir, "img/export_gds.svg"),
+                    "Export data (*.DAT) files",
+                    lambda: self.export_gds(),
+                ),
+                (
+                    os.path.join(self.plugin_dir, "img/import_hdf5.svg"),
+                    "Import from HDF5",
+                    lambda: self.import_hdf5(),
+                ),
+                (
+                    os.path.join(self.plugin_dir, "img/export_hdf5.svg"),
+                    "Export to HDF5",
+                    lambda: self.export_hdf5(),
+                ),
+                (
+                    os.path.join(self.plugin_dir, "img/import_ras.svg"),
+                    "Import RAS geometry",
+                    lambda: self.import_from_ras(),
+                )
+            )
         )
 
         self.add_action(
@@ -431,8 +460,42 @@ class Flo2D(object):
         )
 
         self.add_action(
+            os.path.join(self.plugin_dir, "img/show_cont_table.svg"),
+            text=self.tr("FLO-2D Parameters"),
+            callback=None,
+            parent=self.iface.mainWindow(),
+            menu=(
+                (
+                    os.path.join(self.plugin_dir, "img/show_cont_table.svg"),
+                    "Set Control Parameters (CONT.DAT)",
+                    lambda: self.show_cont_toler(),
+                ),
+                (
+                    os.path.join(self.plugin_dir, "img/landslide.svg"),
+                    "Mud and Sediment Transport (SED.DAT)",
+                    lambda: self.show_mud_and_sediment_dialog(),
+                ),
+                (
+                    os.path.join(self.plugin_dir, "img/schematic_to_user.svg"),
+                    "Convert Schematic Layers to User Layers",
+                    lambda: self.schematic2user(),
+                ),
+                (
+                    os.path.join(self.plugin_dir, "img/evaporation_editor.svg"),
+                    "Evaporation Editor",
+                    lambda: self.show_evap_editor(),
+                ),
+                (
+                    os.path.join(self.plugin_dir, "img/set_levee_elev.svg"),
+                    "Levee Elevation Tool",
+                    lambda: self.show_levee_elev_tool(),
+                ),
+            )
+        )
+
+        self.add_action(
             os.path.join(self.plugin_dir, "img/info_tool.svg"),
-            text=self.tr("Info Tool"),
+            text=self.tr("FLO-2D Info Tool"),
             callback=None,
             parent=self.iface.mainWindow(),
             menu=(
@@ -442,64 +505,34 @@ class Flo2D(object):
                     self.activate_general_info_tool,
                 ),
                 (
+                    os.path.join(self.plugin_dir, "img/import_swmm.svg"),
+                    "Select .RPT file",
+                    self.select_RPT_File,
+                ),
+                (
                     os.path.join(self.plugin_dir, "img/grid_info_tool.svg"),
                     "Grid Info Tool",
                     self.activate_grid_info_tool,
+                ),
+            )
+        )
+
+        self.add_action(
+            os.path.join(self.plugin_dir, "img/editmetadata.svg"),
+            text=self.tr("FLO-2D Project Review"),
+            callback=None,
+            parent=self.iface.mainWindow(),
+            menu=(
+                (
+                    os.path.join(self.plugin_dir, "img/hazus.svg"),
+                    "HAZUS",
+                    self.show_hazus_dialog,
                 ),
                 (
                     os.path.join(self.plugin_dir, "img/profile_tool.svg"),
                     "Channel Profile",
                     self.channel_profile,
                 ),
-                (
-                    os.path.join(self.plugin_dir, "img/import_swmm.svg"),
-                    "Select .RPT file",
-                    self.select_RPT_File,
-                ),
-            ),
-        )
-
-        self.add_action(
-            os.path.join(self.plugin_dir, "img/mActionSharingImport.svg"),
-            text=self.tr("Import/Export"),
-            callback=None,
-            parent=self.iface.mainWindow(),
-            menu=(
-                (
-                    os.path.join(self.plugin_dir, "img/gpkg2gpkg.svg"),
-                    "Import from GeoPackage",
-                    lambda: self.import_from_gpkg(),
-                ),
-                (
-                    os.path.join(self.plugin_dir, "img/import_gds.svg"),
-                    "Import data (*.DAT) files",
-                    lambda: self.import_gds(),
-                ),
-                (
-                    os.path.join(self.plugin_dir, "img/import_components.svg"),
-                    "Import selected components files",
-                    lambda: self.import_components(),
-                ),
-                (
-                    os.path.join(self.plugin_dir, "img/export_gds.svg"),
-                    "Export data (*.DAT) files",
-                    lambda: self.export_gds(),
-                ),
-                (
-                    os.path.join(self.plugin_dir, "img/import_hdf5.svg"),
-                    "Import from HDF5",
-                    lambda: self.import_hdf5(),
-                ),
-                (
-                    os.path.join(self.plugin_dir, "img/export_hdf5.svg"),
-                    "Export to HDF5",
-                    lambda: self.export_hdf5(),
-                ),
-                (
-                    os.path.join(self.plugin_dir, "img/import_ras.svg"),
-                    "Import RAS geometry",
-                    lambda: self.import_from_ras(),
-                )
             )
         )
 
@@ -510,16 +543,16 @@ class Flo2D(object):
             parent=self.iface.mainWindow()
         )
 
-        self.add_action(
-            os.path.join(self.plugin_dir, "img/hazus.svg"),
-            text=self.tr("HAZUS"),
-            callback=lambda: self.show_hazus_dialog(),
-            parent=self.iface.mainWindow(),
-        )
+        # self.add_action(
+        #     os.path.join(self.plugin_dir, "img/hazus.svg"),
+        #     text=self.tr("HAZUS"),
+        #     callback=lambda: self.show_hazus_dialog(),
+        #     parent=self.iface.mainWindow(),
+        # )
 
         self.add_action(
             os.path.join(self.plugin_dir, "img/issue.svg"),
-            text=self.tr("Warnings and Errors"),
+            text=self.tr("FLO-2D Warnings and Errors"),
             callback=lambda: self.show_errors_dialog(),
             parent=self.iface.mainWindow(),
         )
