@@ -1494,7 +1494,7 @@ CREATE TABLE "user_swmm_orifices" (
     "orifice_name" TEXT,                        -- [ORIFICES]
     "orifice_inlet" TEXT,                       -- [ORIFICES]
     "orifice_outlet" TEXT,                      -- [ORIFICES]
-    "orifice_type" TEXT,                        -- [ORIFICES]
+    "orifice_type" TEXT DEFAULT "SIDE",         -- [ORIFICES]
     "orifice_crest_height" REAL DEFAULT 0.0,    -- [ORIFICES]   
     "orifice_disch_coeff" REAL DEFAULT 0.0,     -- [ORIFICES]  
     "orifice_flap_gate" TEXT DEFAULT "NO",      -- [ORIFICES]
