@@ -21,7 +21,7 @@ from qgis.PyQt.QtWidgets import (
 
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
-from ..utils import is_number, is_true, m_fdata
+from ..utils import is_number, is_true, m_fdata, float_or_zero
 from .table_editor_widget import StandardItem, StandardItemModel
 from .ui_utils import center_canvas, load_ui, set_icon, try_disconnect, zoom
 
@@ -256,7 +256,7 @@ class PumpsDialog(qtBaseClass, uiDialog):
                 index = 0 if status == "ON" else 1
             self.pump_init_status_cbo.setCurrentIndex(index)
 
-            self.startup_depth_dbox.setValue(float(self.pumps_tblw.item(row, 5).text()))
+            self.startup_depth_dbox.setValue(float_or_zero(self.pumps_tblw.item(row, 5).text()))
             self.shutoff_depth_dbox.setValue(float(self.pumps_tblw.item(row, 6).text()))
 
             self.highlight_pump(self.pump_name_cbo.currentText())
