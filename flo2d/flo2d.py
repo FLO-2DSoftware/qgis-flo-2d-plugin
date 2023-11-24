@@ -60,6 +60,7 @@ from qgis.PyQt.QtWidgets import (
     QSpacerItem,
     qApp,
 )
+from qgis.utils import plugins
 from urllib3.contrib import _securetransport
 from .flo2d_ie.flo2dgeopackage import Flo2dGeoPackage
 from .flo2d_tools.channel_profile_tool import ChannelProfile
@@ -422,6 +423,11 @@ class Flo2D(object):
             parent=self.iface.mainWindow(),
             menu=(
                 (
+                    os.path.join(self.plugin_dir, "img/mActionOptions.svg"),
+                    "FLO-2D Settings",
+                    lambda: self.run_settings(),
+                ),
+                (
                     os.path.join(self.plugin_dir, "img/flo2d.svg"),
                     "Quick Run FLO-2D Pro",
                     lambda: self.quick_run_flopro(),
@@ -430,6 +436,11 @@ class Flo2D(object):
                     os.path.join(self.plugin_dir, "img/FLO.svg"),
                     "Run FLO-2D Pro",
                     self.run_flopro,
+                ),
+                (
+                    os.path.join(self.plugin_dir, "img/tailings dam breach.svg"),
+                    "Run Tailings Dam Tool ",
+                    self.run_tailingsdambreach,
                 ),
                 (
                     os.path.join(self.plugin_dir, "img/profile_run2.svg"),
@@ -447,15 +458,15 @@ class Flo2D(object):
                     self.run_maxplot,
                 ),
                 (
-                    os.path.join(self.plugin_dir, "img/mapper2.svg"),
-                    "Run Mapper",
-                    self.run_mapper,
+                    os.path.join(self.plugin_dir, "img/mapcrafter.svg"),
+                    "Run MapCrafter",
+                    self.run_mapcrafter,
                 ),
                 (
-                    os.path.join(self.plugin_dir, "img/tailings dam breach.svg"),
-                    "Run Tailings Dam Tool ",
-                    self.run_tailingsdambreach,
-                )
+                    os.path.join(self.plugin_dir, "img/rasterizor.svg"),
+                    "Run Rasterizor",
+                    self.run_rasterizor,
+                ),
             )
         )
 
@@ -533,15 +544,20 @@ class Flo2D(object):
                     "Channel Profile",
                     self.channel_profile,
                 ),
+                (
+                    os.path.join(self.plugin_dir, "img/issue.svg"),
+                    "Warnings and Errors",
+                    self.show_errors_dialog,
+                ),
             )
         )
 
-        self.add_action(
-            os.path.join(self.plugin_dir, "img/mActionOptions.svg"),
-            text=self.tr("FLO-2D Settings"),
-            callback=lambda: self.run_settings(),
-            parent=self.iface.mainWindow()
-        )
+        # self.add_action(
+        #     os.path.join(self.plugin_dir, "img/mActionOptions.svg"),
+        #     text=self.tr("FLO-2D Settings"),
+        #     callback=lambda: self.run_settings(),
+        #     parent=self.iface.mainWindow()
+        # )
 
         # self.add_action(
         #     os.path.join(self.plugin_dir, "img/hazus.svg"),
@@ -550,12 +566,12 @@ class Flo2D(object):
         #     parent=self.iface.mainWindow(),
         # )
 
-        self.add_action(
-            os.path.join(self.plugin_dir, "img/issue.svg"),
-            text=self.tr("FLO-2D Warnings and Errors"),
-            callback=lambda: self.show_errors_dialog(),
-            parent=self.iface.mainWindow(),
-        )
+        # self.add_action(
+        #     os.path.join(self.plugin_dir, "img/issue.svg"),
+        #     text=self.tr("FLO-2D Warnings and Errors"),
+        #     callback=lambda: self.show_errors_dialog(),
+        #     parent=self.iface.mainWindow(),
+        # )
 
         self.add_action(
             os.path.join(self.plugin_dir, "img/help_contents.svg"),
@@ -1153,9 +1169,29 @@ class Flo2D(object):
         self.uncheck_all_info_toggles()
         self.run_program("Tailings Dam Breach.exe")
 
-    def run_mapper(self):
+    def run_mapcrafter(self):
+        """
+        Function to call MapCrafter
+        """
         self.uncheck_all_info_toggles()
-        self.run_program("Mapper PRO.exe")
+        if 'flo2d_mapcrafter' not in plugins:
+            self.uc.show_info(
+                "FLO-2D MapCrafter not found! Please, use QGIS Official Plugin Repository to install MapCrafter.")
+        else:
+            mapcrafter = plugins['flo2d_mapcrafter']
+            mapcrafter.open()
+
+    def run_rasterizor(self):
+        """
+        Function to call Rasterizor
+        """
+        self.uncheck_all_info_toggles()
+        if 'rasterizor' not in plugins:
+            self.uc.show_info(
+                "FLO-2D Rasterizor not found! Please, use QGIS Official Plugin Repository to install Rasterizor.")
+        else:
+            rasterizor = plugins['rasterizor']
+            rasterizor.open()
 
     def run_profiles(self):
         self.uncheck_all_info_toggles()
