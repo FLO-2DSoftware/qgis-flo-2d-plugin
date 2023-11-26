@@ -437,7 +437,7 @@ class ContToler_JJ(qtBaseClass, uiDialog):
                     self.set_spinbox_JJ(key, widget)
                     widget.setValue(db_val)
                 else:
-                    widget.setCurrentIndex(db_val)
+                    widget.setCurrentIndex(int(db_val))
 
                 if key == "STARTIMTEP":
                     self._startimtep = float_or_zero(db_val)

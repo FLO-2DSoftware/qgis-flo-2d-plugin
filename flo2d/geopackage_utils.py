@@ -12,6 +12,7 @@ import traceback
 from collections import defaultdict
 from functools import wraps
 
+from qgis._core import QgsMessageLog
 from qgis.core import QgsGeometry
 from .user_communication import UserCommunication
 
@@ -310,6 +311,21 @@ class GeoPackageUtils(object):
             c.execute("SELECT * FROM gpkg_contents;")
             c.fetchone()
             return True
+        except Exception as e:
+            return False
+
+    def check_gpkg_version(self):
+        """
+        Check GeoPackage version.
+        """
+        try:
+            c = self.con.cursor()
+            c.execute("SELECT COUNT(*) FROM gpkg_contents;")
+            n_layers = c.fetchone()[0]
+            if n_layers == 157:
+                return True
+            else:
+                return False
         except Exception as e:
             return False
 

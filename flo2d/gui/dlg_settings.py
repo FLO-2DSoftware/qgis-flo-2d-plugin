@@ -25,6 +25,7 @@ from qgis.PyQt.QtWidgets import (
     QSpinBox,
 )
 
+from .dlg_update_gpkg import UpdateGpkg
 from ..errors import Flo2dQueryResultNull
 from ..flo2d_ie.flo2d_parser import ParseDAT
 from ..geopackage_utils import (
@@ -215,15 +216,16 @@ class SettingsDialog(qtBaseClass, uiDialog):
         self.gutils = GeoPackageUtils(self.con, self.iface)
         self.read()
 
-    def create_db(self):
+    def create_db(self, gpkg_path=None, crs=None):
         """
         Create FLO-2D model database (GeoPackage).
         """
         s = QSettings()
-        last_gpkg_dir = s.value("FLO-2D/lastGpkgDir", "")
-        gpkg_path, __ = QFileDialog.getSaveFileName(
-            None, "Create GeoPackage As...", directory=last_gpkg_dir, filter="*.gpkg"
-        )
+        if not gpkg_path:
+            last_gpkg_dir = s.value("FLO-2D/lastGpkgDir", "")
+            gpkg_path, __ = QFileDialog.getSaveFileName(
+                None, "Create GeoPackage As...", directory=last_gpkg_dir, filter="*.gpkg"
+            )
         if not gpkg_path:
             return
         else:
@@ -253,51 +255,59 @@ class SettingsDialog(qtBaseClass, uiDialog):
         QApplication.restoreOverrideCursor()
         self.uc.log_info("{0:.3f} seconds => create gutils ".format(time.time() - start_time))
         # CRS
-        self.projectionSelector.selectCrs()
         start_time = time.time()
-        if self.projectionSelector.crs().isValid():
-            self.crs = self.projectionSelector.crs()
-            auth, crsid = self.crs.authid().split(":")
-            self.proj_lab.setText(self.crs.description())
-            if self.crs.mapUnits() == QgsUnitTypes.DistanceMeters:
-                self.si_units = True
-                mu = "meters"
-            elif self.crs.mapUnits() == QgsUnitTypes.DistanceFeet:
-                self.si_units = False
-                mu = "feet"
+        if crs is None:
+            self.projectionSelector.selectCrs()
+            if self.projectionSelector.crs().isValid():
+                self.crs = self.projectionSelector.crs()
             else:
-                msg = "WARNING 060319.1654: Unknown map units. Choose a different projection!"
+                msg = "WARNING 060319.1655: Choose a valid CRS!"
                 self.uc.show_warn(msg)
                 return
-            self.unit_lab.setText(mu)
-            proj4 = self.crs.toProj()
-
-            # check if the CRS exist in the db
-            sql = "SELECT * FROM gpkg_spatial_ref_sys WHERE srs_id=?;"
-            rc = gutils.execute(sql, (crsid,))
-            rt = rc.fetchone()
-            if not rt:
-                sql = """INSERT INTO gpkg_spatial_ref_sys VALUES (?,?,?,?,?,?)"""
-                data = (self.crs.description(), crsid, auth, crsid, proj4, "")
-                rc = gutils.execute(sql, data)
-                del rc
-                srsid = crsid
-            else:
-                q = "There is a coordinate system defined in the GeoPackage.\n"
-                q += "Would you like to use it?\n\nDetails:\n"
-                q += "Name: {}\n".format(rt[0])
-                q += "SRS id: {}\n".format(rt[1])
-                q += "Organization: {}\n".format(rt[2])
-                q += "Organization id: {}\n".format(rt[3])
-                q += "Definition: {}".format(rt[4])
-                if self.uc.question(q):
-                    srsid = rt[1]
-                else:
-                    return
         else:
-            msg = "WARNING 060319.1655: Choose a valid CRS!"
+            if crs.isValid():
+                self.crs = crs
+            else:
+                msg = "The geopackage does not contain a valid CRS!"
+                self.uc.show_warn(msg)
+                return
+        auth, crsid = self.crs.authid().split(":")
+        self.proj_lab.setText(self.crs.description())
+        if self.crs.mapUnits() == QgsUnitTypes.DistanceMeters:
+            self.si_units = True
+            mu = "meters"
+        elif self.crs.mapUnits() == QgsUnitTypes.DistanceFeet:
+            self.si_units = False
+            mu = "feet"
+        else:
+            msg = "WARNING 060319.1654: Unknown map units. Choose a different projection!"
             self.uc.show_warn(msg)
             return
+        self.unit_lab.setText(mu)
+        proj4 = self.crs.toProj()
+
+        # check if the CRS exist in the db
+        sql = "SELECT * FROM gpkg_spatial_ref_sys WHERE srs_id=?;"
+        rc = gutils.execute(sql, (crsid,))
+        rt = rc.fetchone()
+        if not rt:
+            sql = """INSERT INTO gpkg_spatial_ref_sys VALUES (?,?,?,?,?,?)"""
+            data = (self.crs.description(), crsid, auth, crsid, proj4, "")
+            rc = gutils.execute(sql, data)
+            del rc
+            srsid = crsid
+        else:
+            q = "There is a coordinate system defined in the GeoPackage.\n"
+            q += "Would you like to use it?\n\nDetails:\n"
+            q += "Name: {}\n".format(rt[0])
+            q += "SRS id: {}\n".format(rt[1])
+            q += "Organization: {}\n".format(rt[2])
+            q += "Organization id: {}\n".format(rt[3])
+            q += "Definition: {}".format(rt[4])
+            if self.uc.question(q):
+                srsid = rt[1]
+            else:
+                return
         if self.con:
             database_disconnect(self.con)
         self.gpkg_path = gpkg_path
@@ -373,6 +383,7 @@ class SettingsDialog(qtBaseClass, uiDialog):
         self.uc.log_info("{0:.3f} seconds => connecting".format(time.time() - start_time))
         QApplication.setOverrideCursor(Qt.WaitCursor)
         self.gutils = GeoPackageUtils(self.con, self.iface)
+        # Check if file is GeoPackage.
         if self.gutils.check_gpkg():
             self.gutils.path = self.gpkg_path
             self.uc.bar_info("GeoPackage {} is OK".format(self.gutils.path))
@@ -389,6 +400,8 @@ class SettingsDialog(qtBaseClass, uiDialog):
         self.gpkgPathEdit.setText(self.gutils.path)
         self.read()
         QApplication.restoreOverrideCursor()
+
+        return True
 
     def set_other_global_defaults(self, con):
         qry = """INSERT INTO mult (wmc, wdrall, dmall, nodchansall, xnmultall, sslopemin, sslopemax, avuld50, simple_n) VALUES (?,?,?,?,?,?,?,?,?);"""
