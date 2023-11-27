@@ -179,7 +179,7 @@ class InfiltrationCalculator(object):
                 # calculate extent of concerned grid element
                 grid_elems = self.grid_lyr.getFeatures(request)
                 grid_elem_extent = QgsRectangle()
-                grid_elem_extent.setMinimal()
+                grid_elem_extent.setNull()
                 for grid_elem in grid_elems:
                     grid_elem_extent.combineExtentWith(grid_elem.geometry().boundingBox())
 
