@@ -258,14 +258,15 @@ class WeirsDialog(qtBaseClass, uiDialog):
             self.weir_to_node_txt.setText(self.weirs_tblw.item(row, 2).text())
 
             name = self.weirs_tblw.item(row, 0).text()
-            
+
             typ = self.weirs_tblw.item(row, 3).text()
             index = self.weir_type_cbo.findText(typ)
             if index == -1:
                 index = 0 # Select default "TRANSVERSE".
-                self.uc.bar_warn("WARNING 261123.0425: weir '" + name  + "' has wrong weir type '" + typ + "'. Changed to default 'TRANSVERSE'", 7)
+                self.weirs_tblw.item(row, 3).setText("TRANSVERSE")
+                self.uc.bar_warn("WARNING 261123.0425: weir '" + name  + "' has wrong weir type '" + typ + "'. Changed to default 'TRANSVERSE'")
             self.weir_type_cbo.setCurrentIndex(index)
-
+            
             self.weir_crest_height_dbox.setValue(float_or_zero(self.weirs_tblw.item(row, 4).text()))
             self.weir_discharge_coeff_dbox.setValue(float_or_zero(self.weirs_tblw.item(row, 5).text()))
 
@@ -273,7 +274,8 @@ class WeirsDialog(qtBaseClass, uiDialog):
             index = self.weir_flap_gate_cbo.findText(flap)
             if index == -1:
                 index = 1 # Select default "NO".
-                self.uc.bar_warn("WARNING 261123.0426: weir '" + name  + "' has wrong flap gate '" + flap + "'. Changed to default 'NO'", 7)
+                self.weirs_tblw.item(row, 6).setText("NO")
+                self.uc.bar_warn("WARNING 261123.0426: weir '" + name  + "' has wrong flap gate '" + flap + "'. Changed to default 'NO'")
             self.weir_flap_gate_cbo.setCurrentIndex(index)
                 
             contr = self.weirs_tblw.item(row, 7).text()
@@ -290,7 +292,8 @@ class WeirsDialog(qtBaseClass, uiDialog):
             index = self.weir_shape_cbo.findText(shape)
             if index == -1:
                 index = 2 # Select default "RECT_CLOSED".
-                self.uc.bar_warn("WARNING 261123.0427: weir '" + name  + "' has wrong shape '" + shape + "'. Changed to default 'RECT_CLOSED'", 7)                
+                self.weirs_tblw.item(row, 10).setText("RECT_CLOSED")
+                self.uc.bar_warn("WARNING 261123.0427: weir '" + name  + "' has wrong shape '" + shape + "'. Changed to default 'RECT_CLOSED'")                
             self.weir_shape_cbo.setCurrentIndex(index)
 
             self.weir_height_dbox.setValue(float_or_zero(self.weirs_tblw.item(row, 11).text()))
