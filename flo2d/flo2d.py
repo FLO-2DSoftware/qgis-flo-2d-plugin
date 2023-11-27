@@ -34,7 +34,8 @@ from subprocess import (
     run,
 )
 from PyQt5.QtWidgets import QApplication, QToolButton
-from qgis._core import QgsMessageLog, QgsCoordinateReferenceSystem
+from qgis._core import QgsMessageLog, QgsCoordinateReferenceSystem, QgsMapSettings, QgsProjectMetadata, \
+    QgsMapRendererParallelJob
 from qgis.core import NULL, QgsProject, QgsWkbTypes
 from qgis.gui import QgsDockWidget, QgsProjectionSelectionWidget
 from qgis.PyQt import QtCore
@@ -951,14 +952,8 @@ class Flo2D(object):
         gpkg_path = self.gutils.get_gpkg_path()
         proj_name = os.path.splitext(os.path.basename(gpkg_path))[0]
         uri = f'geopackage:{gpkg_path}?projectName={proj_name}'
+
         self.project.write(uri)
-
-        # Save on recent projects
-        QSettings().setValue('UI/recentProjects/1/crs', self.project.crs().authid())
-        QSettings().setValue('UI/recentProjects/1/path', uri)
-        QSettings().setValue('UI/recentProjects/1/previewImage', os.path.join(self.plugin_dir, "img/F2D 400 Transparent.png"))
-        QSettings().setValue('UI/recentProjects/1/title', proj_name)
-
         self.uc.show_info("FLO-2D-Project saved!")
 
     def run_settings(self):
