@@ -470,14 +470,15 @@ class InfiltrationCalculator(object):
             pass
         cmd = 'gdalwarp {} "{}" "{}"'.format(" ".join([opt for opt in opts]), self.raster_lyr, self.out_raster)
         # print(cmd)
-        proc = Popen(
-            cmd,
-            shell=True,
-            stdin=open(os.devnull),
-            stdout=PIPE,
-            stderr=STDOUT,
-            universal_newlines=True,
-        )
+        with open(os.devnull, 'r') as devnull:
+            proc = Popen(
+                cmd,
+                shell=True,
+                stdin=devnull,
+                stdout=PIPE,
+                stderr=STDOUT,
+                universal_newlines=True,
+            )
         out = proc.communicate()
         for line in out:
             self.uc.log_info(line)
@@ -542,14 +543,15 @@ class InfiltrationCalculator(object):
         # cmd = 'gdal_fillnodata {} "{}"'.format(" ".join([opt for opt in opts]), self.out_raster)
         cmd = f'gdal_fillnodata "{self.raster_lyr}" "{self.out_raster}"'
         self.uc.log_info(str(cmd))
-        proc = Popen(
-            cmd,
-            shell=True,
-            stdin=open(os.devnull),
-            stdout=PIPE,
-            stderr=STDOUT,
-            universal_newlines=True,
-        )
+        with open(os.devnull, 'r') as devnull:
+            proc = Popen(
+                cmd,
+                shell=True,
+                stdin=devnull,
+                stdout=PIPE,
+                stderr=STDOUT,
+                universal_newlines=True,
+            )
         out = proc.communicate()
         for line in out:
             self.uc.log_info(line)
