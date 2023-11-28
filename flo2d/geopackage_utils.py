@@ -230,11 +230,79 @@ class GeoPackageUtils(object):
         self.con = con
 
     def copy_from_other(self, other_gpkg):
+        """
+        Function to copy an old geopackage into the newest version
+        """
         tab_sql = """SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'gpkg_%' AND name NOT LIKE 'rtree_%';"""
         tabs = [row[0] for row in self.execute(tab_sql)]
         self.execute("ATTACH ? AS other;", (other_gpkg,))
-        insert_sql = """INSERT INTO {0} ({1}) SELECT {1} FROM other.{0};"""
         self.clear_tables(*tabs)
+
+        # Check if tables that changed internal structure are present TODO: make a function to automatize this to make easier for future implementations
+        # infil_areas_green
+        infil_areas_green_exists_sql = """SELECT name FROM other.sqlite_master WHERE type='table' AND name='infil_areas_green';"""
+        infil_areas_green_exists = bool(self.execute(infil_areas_green_exists_sql).fetchone())
+        if infil_areas_green_exists:
+            # Join infil_cells_green and infil_areas_green and copy to infil_cells_green
+            join_copy_sql = """
+                INSERT INTO infil_cells_green (fid, grid_fid, hydc, soils, dtheta, abstrinf, rtimpf, soil_depth)
+                SELECT infil_cells_green.fid, infil_cells_green.grid_fid, infil_areas_green.hydc, infil_areas_green.soils,
+                       infil_areas_green.dtheta, infil_areas_green.abstrinf, infil_areas_green.rtimpf, infil_areas_green.soil_depth
+                FROM other.infil_cells_green
+                JOIN other.infil_areas_green ON other.infil_cells_green.infil_area_fid = other.infil_areas_green.fid;
+            """
+            try:
+                self.execute(join_copy_sql)
+            except Exception as e:
+                self.uc.log_info(traceback.format_exc())
+        # infil_areas_scs
+        infil_areas_scs_exists_sql = """SELECT name FROM other.sqlite_master WHERE type='table' AND name='infil_areas_scs';"""
+        infil_areas_scs_exists = bool(self.execute(infil_areas_scs_exists_sql).fetchone())
+        if infil_areas_scs_exists:
+            # Join infil_cells_scs and infil_areas_scs and copy to infil_cells_scs
+            join_copy_sql = """
+                INSERT INTO infil_cells_scs (fid, grid_fid, scsn)
+                SELECT infil_cells_scs.fid, infil_cells_scs.grid_fid, infil_areas_scs.scsn
+                FROM other.infil_cells_scs
+                JOIN other.infil_areas_scs ON other.infil_cells_scs.infil_area_fid = other.infil_areas_scs.fid;
+            """
+            try:
+                self.execute(join_copy_sql)
+            except Exception as e:
+                self.uc.log_info(traceback.format_exc())
+        # infil_areas_horton
+        infil_areas_horton_exists_sql = """SELECT name FROM other.sqlite_master WHERE type='table' AND name='infil_areas_horton';"""
+        infil_areas_horton_exists = bool(self.execute(infil_areas_horton_exists_sql).fetchone())
+        if infil_areas_horton_exists:
+            # Join infil_cells_horton and infil_areas_horton and copy to infil_cells_horton
+            join_copy_sql = """
+                INSERT INTO infil_cells_horton (fid, grid_fid, fhorti, fhortf, deca)
+                SELECT infil_cells_horton.fid, infil_cells_horton.grid_fid, infil_areas_horton.fhorti, 
+                    infil_areas_horton.fhortf, infil_areas_horton.deca
+                FROM other.infil_cells_horton
+                JOIN other.infil_areas_horton ON other.infil_cells_horton.infil_area_fid = other.infil_areas_horton.fid;
+            """
+            try:
+                self.execute(join_copy_sql)
+            except Exception as e:
+                self.uc.log_info(traceback.format_exc())
+        # infil_areas_chan
+        infil_areas_chan_exists_sql = """SELECT name FROM other.sqlite_master WHERE type='table' AND name='infil_areas_chan';"""
+        infil_areas_chan_exists = bool(self.execute(infil_areas_chan_exists_sql).fetchone())
+        if infil_areas_chan_exists:
+            # Join infil_cells_chan and infil_areas_chan and copy to infil_cells_chan
+            join_copy_sql = """
+                INSERT INTO infil_chan_elems (fid, grid_fid, hydconch)
+                SELECT infil_chan_elems.fid, infil_chan_elems.grid_fid, infil_areas_chan.hydconch
+                FROM other.infil_chan_elems
+                JOIN other.infil_areas_chan ON other.infil_chan_elems.infil_area_fid = other.infil_areas_chan.fid;
+            """
+            try:
+                self.execute(join_copy_sql)
+            except Exception as e:
+                self.uc.log_info(traceback.format_exc())
+
+        insert_sql = """INSERT INTO {0} ({1}) SELECT {1} FROM other.{0};"""
         for tab in tabs:
             names_new = self.table_info(tab, only_columns=True)
             names_old = set(self.table_info(tab, only_columns=True, attached_db="other"))
@@ -245,6 +313,7 @@ class GeoPackageUtils(object):
                 self.execute(qry)
             except Exception as e:
                 self.uc.log_info(traceback.format_exc())
+
         self.execute("DETACH other;")
 
     def execute(self, statement, inputs=None, get_rowid=False):
