@@ -1407,7 +1407,7 @@ CREATE TABLE "swmm_time_series" (
     "time_series_name" TEXT, -- 
     "time_series_description" TEXT, -- 
     "time_series_file" TEXT,
-	"time_series_data" TEXT DEFAULT "False"-- 
+	"time_series_data" TEXT DEFAULT 'False'-- 
 );
 INSERT INTO gpkg_contents (table_name, data_type) VALUES ('swmm_time_series', 'aspatial');
 
@@ -1470,7 +1470,7 @@ CREATE TABLE "user_swmm_pumps" (
     "pump_inlet" TEXT,
     "pump_outlet" TEXT,
     "pump_curve" TEXT,
-    "pump_init_status" Text DEFAULT 'False',   
+    "pump_init_status" Text DEFAULT 'OFF',   
     "pump_startup_depth" REAL DEFAULT 0.0,  
     "pump_shutoff_depth" REAL DEFAULT 0.0
 );
@@ -1494,12 +1494,12 @@ CREATE TABLE "user_swmm_orifices" (
     "orifice_name" TEXT,                        -- [ORIFICES]
     "orifice_inlet" TEXT,                       -- [ORIFICES]
     "orifice_outlet" TEXT,                      -- [ORIFICES]
-    "orifice_type" TEXT DEFAULT "SIDE",         -- [ORIFICES]
+    "orifice_type" TEXT DEFAULT 'SIDE',         -- [ORIFICES]
     "orifice_crest_height" REAL DEFAULT 0.0,    -- [ORIFICES]   
     "orifice_disch_coeff" REAL DEFAULT 0.0,     -- [ORIFICES]  
-    "orifice_flap_gate" TEXT DEFAULT "NO",      -- [ORIFICES]
+    "orifice_flap_gate" TEXT DEFAULT 'NO',      -- [ORIFICES]
     "orifice_open_close_time" REAL DEFAULT 0.0, -- [ORIFICES]
-    "orifice_shape" TEXT DEFAULT "CIRCULAR",    -- [XSECTIONS] 
+    "orifice_shape" TEXT DEFAULT 'CIRCULAR',    -- [XSECTIONS] 
     "orifice_height" REAL DEFAULT 0.0,          -- [XSECTIONS] Geom1
     "orifice_width" REAL DEFAULT 0.0            -- [XSECTIONS] Geom2   
 );
@@ -1516,7 +1516,7 @@ CREATE TABLE "user_swmm_weirs" (
     "weir_type" TEXT,                          -- [WEIRS]
     "weir_crest_height" REAL DEFAULT 0.0,      -- [WEIRS] Inlet Offset in EPA SWMM
     "weir_disch_coeff" REAL DEFAULT 0.0,       -- [WEIRS] 
-    "weir_flap_gate" TEXT DEFAULT "NO",        -- [WEIRS]
+    "weir_flap_gate" TEXT DEFAULT 'NO',        -- [WEIRS]
     "weir_end_contrac" TEXT DEFAULT "0",       -- [WEIRS]
     "weir_end_coeff" REAL DEFAULT 0.0,         -- [WEIRS]
     "weir_shape" TEXT,                         -- [XSECTION] 

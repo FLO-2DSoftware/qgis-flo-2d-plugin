@@ -248,13 +248,32 @@ class PumpsDialog(qtBaseClass, uiDialog):
                 index = 0
             self.pump_curve_cbo.setCurrentIndex(index)
 
+
+
             status = self.pumps_tblw.item(row, 4).text()
-            if status.isdigit():
-                index = int(status) - 1
-                index = 1 if index > 1 else 0 if index < 0 else index
-            else:
-                index = 0 if status == "ON" else 1
+            index = self.pump_init_status_cbo.findText(status)
+            if index == -1:
+                index = 1 # Select default "OFF".
+                self.pumps_tblw.item(row, 4).setText("OFF")
+                self.uc.bar_warn("WARNING 261128.0542: pump '" + name  + "' has wrong status '" + status + "'. Changed to default 'OFF'")                
             self.pump_init_status_cbo.setCurrentIndex(index)
+
+
+
+
+            # status = self.pumps_tblw.item(row, 4).text()
+            # if status.isdigit():
+            #     index = int(status) - 1
+            #     index = 1 if index > 1 else 0 if index < 0 else index
+            # else:
+            #     index = 0 if status == "ON" else 1
+            # self.pump_init_status_cbo.setCurrentIndex(index)
+
+
+
+
+
+
 
             self.startup_depth_dbox.setValue(float_or_zero(self.pumps_tblw.item(row, 5).text()))
             self.shutoff_depth_dbox.setValue(float(self.pumps_tblw.item(row, 6).text()))
