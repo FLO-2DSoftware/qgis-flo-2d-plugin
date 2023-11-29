@@ -12,9 +12,13 @@ import traceback
 from collections import defaultdict
 from functools import wraps
 
+from PyQt5.QtWidgets import QProgressDialog, QApplication
 from qgis._core import QgsMessageLog
 from qgis.core import QgsGeometry
 from .user_communication import UserCommunication
+
+import sqlite3
+
 
 def connection_required(fn):
     """
@@ -233,9 +237,36 @@ class GeoPackageUtils(object):
         """
         Function to copy an old geopackage into the newest version
         """
+        new_gpkg_conn = self.con
+        new_gpkg_cur = new_gpkg_conn.cursor()
+        other_gpkg_conn = sqlite3.connect(other_gpkg)
+        other_gpkg_cur = other_gpkg_conn.cursor()
+
         tab_sql = """SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'gpkg_%' AND name NOT LIKE 'rtree_%';"""
         tabs = [row[0] for row in self.execute(tab_sql)]
         self.execute("ATTACH ? AS other;", (other_gpkg,))
+        other_tab_sql = """SELECT name FROM other.sqlite_master WHERE type='table' AND name NOT LIKE 'gpkg_%' AND name NOT LIKE 'rtree_%';"""
+        other_tabs = [row[0] for row in self.execute(other_tab_sql)]
+
+        tables_in_both = set(tabs) & set(other_tabs)
+        tables_only_in_db1 = set(tabs) - set(other_tabs)
+        tables_only_in_other_gpkg = set(other_tabs) - set(tabs)
+
+        # QgsMessageLog.logMessage(f"Tables in both databases: {tables_in_both}")
+        QgsMessageLog.logMessage(f"Tables only in 1: {tables_only_in_db1}")
+        QgsMessageLog.logMessage(f"Tables only in 2: {tables_only_in_other_gpkg}")
+
+        # Compare schema differences
+        for table in tables_in_both:
+            new_gpkg_cur.execute(f"PRAGMA table_info({table})")
+            columns_new_gpkg = set(column[1] for column in new_gpkg_cur.fetchall())
+
+            other_gpkg_cur.execute(f"PRAGMA table_info({table})")
+            columns_other_gpkg = set(column[1] for column in other_gpkg_cur.fetchall())
+
+            if columns_new_gpkg != columns_other_gpkg:
+                QgsMessageLog.logMessage(f'Schema in {table} is different.')
+
         self.clear_tables(*tabs)
 
         # Check if tables that changed internal structure are present TODO: make a function to automatize this to make easier for future implementations
@@ -302,8 +333,16 @@ class GeoPackageUtils(object):
             except Exception as e:
                 self.uc.log_info(traceback.format_exc())
 
+        pd = QProgressDialog("Updating tables...", None, 0, 157)
+        pd.setWindowTitle("Update GeoPackage")
+        pd.setModal(True)
+        pd.forceShow()
+        pd.setValue(0)
+        i = 0
+
         insert_sql = """INSERT INTO {0} ({1}) SELECT {1} FROM other.{0};"""
         for tab in tabs:
+            pd.setLabelText(f"Updating {tab}...")
             names_new = self.table_info(tab, only_columns=True)
             names_old = set(self.table_info(tab, only_columns=True, attached_db="other"))
             import_names = (name for name in names_new if name in names_old)
@@ -313,6 +352,9 @@ class GeoPackageUtils(object):
                 self.execute(qry)
             except Exception as e:
                 self.uc.log_info(traceback.format_exc())
+            i += 1
+            QApplication.processEvents()
+            pd.setValue(i)
 
         self.execute("DETACH other;")
 

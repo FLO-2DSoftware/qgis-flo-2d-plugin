@@ -12,6 +12,7 @@ import time
 from collections import OrderedDict
 from os.path import normpath
 
+from PyQt5.QtWidgets import QProgressDialog
 from qgis.core import (
     QgsDefaultValue,
     QgsEditorWidgetSetup,
@@ -2178,7 +2179,15 @@ class Layers(object):
         self.collapse_all_flo2d_groups()
         self.group = group
 
+        pd = QProgressDialog("Loading layers...", None, 0, len(self.data))
+        pd.setWindowTitle("Loading layers")
+        pd.setModal(True)
+        pd.forceShow()
+        pd.setValue(0)
+        i = 0
+
         for lyr in self.data:
+            pd.setLabelText(f"Loading {lyr}...")
             try:
                 start_time = time.time()
                 data = self.data[lyr]
@@ -2230,6 +2239,10 @@ class Layers(object):
                 QApplication.restoreOverrideCursor()
                 msg = "ERROR 270123.1137: Unable to load  layer {}.".format(lyr)
                 self.uc.bar_error(msg)
+
+            i += 1
+            QApplication.processEvents()
+            pd.setValue(i)
 
         # >>>>>>>>>>>>>>>>>111111111
 
