@@ -787,12 +787,6 @@ class Flo2D(object):
             qgis_v = dlg_settings.label_qv.text()
             flo2d_v = dlg_settings.label_fv.text()
 
-            sql = """SELECT srs_id FROM gpkg_contents WHERE table_name='grid';"""
-            rc = self.gutils.execute(sql)
-            rt = rc.fetchone()[0]
-            crs = QgsCoordinateReferenceSystem()
-            crs.createFromId(rt)
-
             self.gutils.set_metadata_par("PROJ_NAME", pn)
             self.gutils.set_metadata_par("CONTACT", contact)
             self.gutils.set_metadata_par("EMAIL", email)
@@ -801,7 +795,7 @@ class Flo2D(object):
             self.gutils.set_metadata_par("PLUGIN_V", plugin_v)
             self.gutils.set_metadata_par("QGIS_V", qgis_v)
             self.gutils.set_metadata_par("FLO-2D_V", flo2d_v)
-            self.gutils.set_metadata_par("CRS", crs.authid())
+            self.gutils.set_metadata_par("CRS", self.crs.authid())
 
             uri = f'geopackage:{gpkg_path}?projectName={pn}'
             self.project.write(uri)
@@ -838,11 +832,9 @@ class Flo2D(object):
                     QApplication.setOverrideCursor(Qt.WaitCursor)
                     # Create an updated geopackage and copy old package data to it
                     new_gpkg_path = gpkg_path[:-5] + "_v1.0.0.gpkg"
-                    sql = """SELECT srs_id FROM gpkg_contents WHERE table_name='grid';"""
-                    rc = self.gutils.execute(sql)
-                    rt = rc.fetchone()[0]
+                    proj = self.gutils.get_cont_par("PROJ")
                     crs = QgsCoordinateReferenceSystem()
-                    crs.createFromId(rt)
+                    crs.createFromProj(proj)
                     # create new geopackage TODO: This should be on the geopackage_utils and not on the settings
                     dlg_settings = SettingsDialog(self.con, self.iface, self.lyrs, self.gutils)
                     dlg_settings.create_db(new_gpkg_path, crs)
@@ -899,13 +891,10 @@ class Flo2D(object):
                     self.con = dlg_settings.con
                     self.iface.f2d["con"] = self.con
                     self.gutils = dlg_settings.gutils
-                    sql = """SELECT srs_id FROM gpkg_contents WHERE table_name='grid';"""
-                    rc = self.gutils.execute(sql)
-                    rt = rc.fetchone()[0]
+                    proj = self.gutils.get_cont_par("PROJ")
                     self.crs = QgsCoordinateReferenceSystem()
-                    self.crs.createFromId(rt)
+                    self.crs.createFromProj(proj)
                     self.setup_dock_widgets()
-
                     self.project.setCrs(self.crs)
                     gpkg_path_adj = gpkg_path.replace("\\", "/")
                     self.write_proj_entry("gpkg", gpkg_path_adj)
