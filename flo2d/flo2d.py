@@ -109,6 +109,8 @@ from .layers import Layers
 from .user_communication import UserCommunication
 from .utils import get_flo2dpro_version
 
+from PIL import Image, ImageDraw
+
 global GRID_INFO, GENERAL_INFO
 
 
@@ -939,7 +941,30 @@ class Flo2D(object):
         proj_name = os.path.splitext(os.path.basename(gpkg_path))[0]
         uri = f'geopackage:{gpkg_path}?projectName={proj_name}'
 
+        # Need to trigger the save button to add a project thumbnail to recent projects
+        self.iface.mainWindow().findChild(QAction, 'mActionSaveProject').trigger()
         self.project.write(uri)
+
+        thumbnail = QSettings().value('UI/recentProjects/1/previewImage')
+        picture = Image.open(thumbnail)
+
+        # Open the logo
+        # logo_path = r"C:\Users\robso\AppData\Roaming\QGIS\QGIS3\profiles\default\python\plugins\flo2d\img\F2D 400 Transparent.png"
+        logo_path = self.plugin_dir + "/img/F2D 400 Transparent.png"
+        logo = Image.open(logo_path)
+
+        # Resize the logo to your desired size
+        logo = logo.resize((100, 30))  # Adjust the size as needed
+
+        # Choose the position to paste the logo on the picture
+        position = (10, 10)  # Adjust the coordinates as needed
+
+        # Paste the logo on the picture
+        picture.paste(logo, position, logo)
+
+        # Save the result
+        picture.save(thumbnail)
+
         self.uc.show_info("FLO-2D-Project saved!")
 
     def run_settings(self):
