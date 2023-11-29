@@ -48,8 +48,6 @@ class UpdateGpkg(qtBaseClass, uiDialog):
         crs = QgsProject.instance().crs()
         self.proj_lab.setText(crs.description())
 
-        QgsMessageLog.logMessage("CRS -> " + str(crs.description()))
-
         if crs.mapUnits() == QgsUnitTypes.DistanceMeters:
             mu = "meters"
         elif crs.mapUnits() == QgsUnitTypes.DistanceFeet:

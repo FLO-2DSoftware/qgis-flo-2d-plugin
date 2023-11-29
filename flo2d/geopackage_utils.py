@@ -252,86 +252,55 @@ class GeoPackageUtils(object):
         tables_only_in_db1 = set(tabs) - set(other_tabs)
         tables_only_in_other_gpkg = set(other_tabs) - set(tabs)
 
-        # QgsMessageLog.logMessage(f"Tables in both databases: {tables_in_both}")
+        self.clear_tables(*tabs)
+
+        QgsMessageLog.logMessage(f"Tables in both databases: {tables_in_both}")
         QgsMessageLog.logMessage(f"Tables only in 1: {tables_only_in_db1}")
         QgsMessageLog.logMessage(f"Tables only in 2: {tables_only_in_other_gpkg}")
 
-        # Compare schema differences
-        for table in tables_in_both:
-            new_gpkg_cur.execute(f"PRAGMA table_info({table})")
-            columns_new_gpkg = set(column[1] for column in new_gpkg_cur.fetchall())
-
-            other_gpkg_cur.execute(f"PRAGMA table_info({table})")
-            columns_other_gpkg = set(column[1] for column in other_gpkg_cur.fetchall())
-
-            if columns_new_gpkg != columns_other_gpkg:
-                QgsMessageLog.logMessage(f'Schema in {table} is different.')
-
-        self.clear_tables(*tabs)
-
-        # Check if tables that changed internal structure are present TODO: make a function to automatize this to make easier for future implementations
-        # infil_areas_green
-        infil_areas_green_exists_sql = """SELECT name FROM other.sqlite_master WHERE type='table' AND name='infil_areas_green';"""
-        infil_areas_green_exists = bool(self.execute(infil_areas_green_exists_sql).fetchone())
-        if infil_areas_green_exists:
-            # Join infil_cells_green and infil_areas_green and copy to infil_cells_green
-            join_copy_sql = """
-                INSERT INTO infil_cells_green (fid, grid_fid, hydc, soils, dtheta, abstrinf, rtimpf, soil_depth)
-                SELECT infil_cells_green.fid, infil_cells_green.grid_fid, infil_areas_green.hydc, infil_areas_green.soils,
-                       infil_areas_green.dtheta, infil_areas_green.abstrinf, infil_areas_green.rtimpf, infil_areas_green.soil_depth
-                FROM other.infil_cells_green
-                JOIN other.infil_areas_green ON other.infil_cells_green.infil_area_fid = other.infil_areas_green.fid;
-            """
-            try:
-                self.execute(join_copy_sql)
-            except Exception as e:
-                self.uc.log_info(traceback.format_exc())
-        # infil_areas_scs
-        infil_areas_scs_exists_sql = """SELECT name FROM other.sqlite_master WHERE type='table' AND name='infil_areas_scs';"""
-        infil_areas_scs_exists = bool(self.execute(infil_areas_scs_exists_sql).fetchone())
-        if infil_areas_scs_exists:
-            # Join infil_cells_scs and infil_areas_scs and copy to infil_cells_scs
-            join_copy_sql = """
-                INSERT INTO infil_cells_scs (fid, grid_fid, scsn)
-                SELECT infil_cells_scs.fid, infil_cells_scs.grid_fid, infil_areas_scs.scsn
-                FROM other.infil_cells_scs
-                JOIN other.infil_areas_scs ON other.infil_cells_scs.infil_area_fid = other.infil_areas_scs.fid;
-            """
-            try:
-                self.execute(join_copy_sql)
-            except Exception as e:
-                self.uc.log_info(traceback.format_exc())
-        # infil_areas_horton
-        infil_areas_horton_exists_sql = """SELECT name FROM other.sqlite_master WHERE type='table' AND name='infil_areas_horton';"""
-        infil_areas_horton_exists = bool(self.execute(infil_areas_horton_exists_sql).fetchone())
-        if infil_areas_horton_exists:
-            # Join infil_cells_horton and infil_areas_horton and copy to infil_cells_horton
-            join_copy_sql = """
-                INSERT INTO infil_cells_horton (fid, grid_fid, fhorti, fhortf, deca)
-                SELECT infil_cells_horton.fid, infil_cells_horton.grid_fid, infil_areas_horton.fhorti, 
-                    infil_areas_horton.fhortf, infil_areas_horton.deca
-                FROM other.infil_cells_horton
-                JOIN other.infil_areas_horton ON other.infil_cells_horton.infil_area_fid = other.infil_areas_horton.fid;
-            """
-            try:
-                self.execute(join_copy_sql)
-            except Exception as e:
-                self.uc.log_info(traceback.format_exc())
-        # infil_areas_chan
-        infil_areas_chan_exists_sql = """SELECT name FROM other.sqlite_master WHERE type='table' AND name='infil_areas_chan';"""
-        infil_areas_chan_exists = bool(self.execute(infil_areas_chan_exists_sql).fetchone())
-        if infil_areas_chan_exists:
-            # Join infil_cells_chan and infil_areas_chan and copy to infil_cells_chan
-            join_copy_sql = """
-                INSERT INTO infil_chan_elems (fid, grid_fid, hydconch)
-                SELECT infil_chan_elems.fid, infil_chan_elems.grid_fid, infil_areas_chan.hydconch
-                FROM other.infil_chan_elems
-                JOIN other.infil_areas_chan ON other.infil_chan_elems.infil_area_fid = other.infil_areas_chan.fid;
-            """
-            try:
-                self.execute(join_copy_sql)
-            except Exception as e:
-                self.uc.log_info(traceback.format_exc())
+        # Update old tables
+        update_tables_sql = []
+        for table in tables_only_in_other_gpkg:
+            if table == "infil_areas_green":
+                sql = """
+                        INSERT INTO infil_cells_green (fid, grid_fid, hydc, soils, dtheta, abstrinf, rtimpf, soil_depth)
+                        SELECT infil_cells_green.fid, infil_cells_green.grid_fid, infil_areas_green.hydc, infil_areas_green.soils,
+                               infil_areas_green.dtheta, infil_areas_green.abstrinf, infil_areas_green.rtimpf, infil_areas_green.soil_depth
+                        FROM other.infil_cells_green
+                        JOIN other.infil_areas_green ON other.infil_cells_green.infil_area_fid = other.infil_areas_green.fid;
+                      """
+                update_tables_sql.append(sql)
+            if table == "infil_areas_scs":
+                sql = """
+                        INSERT INTO infil_cells_scs (fid, grid_fid, scsn)
+                        SELECT infil_cells_scs.fid, infil_cells_scs.grid_fid, infil_areas_scs.scsn
+                        FROM other.infil_cells_scs
+                        JOIN other.infil_areas_scs ON other.infil_cells_scs.infil_area_fid = other.infil_areas_scs.fid;
+                      """
+                update_tables_sql.append(sql)
+            if table == "infil_areas_horton":
+                sql = """
+                        INSERT INTO infil_cells_horton (fid, grid_fid, fhorti, fhortf, deca)
+                        SELECT infil_cells_horton.fid, infil_cells_horton.grid_fid, infil_areas_horton.fhorti, 
+                            infil_areas_horton.fhortf, infil_areas_horton.deca
+                        FROM other.infil_cells_horton
+                        JOIN other.infil_areas_horton ON other.infil_cells_horton.infil_area_fid = other.infil_areas_horton.fid;
+                      """
+                update_tables_sql.append(sql)
+            if table == "infil_areas_chan":
+                sql = """
+                        INSERT INTO infil_chan_elems (fid, grid_fid, hydconch)
+                        SELECT infil_chan_elems.fid, infil_chan_elems.grid_fid, infil_areas_chan.hydconch
+                        FROM other.infil_chan_elems
+                        JOIN other.infil_areas_chan ON other.infil_chan_elems.infil_area_fid = other.infil_areas_chan.fid;
+                      """
+                update_tables_sql.append(sql)
+        if len(update_tables_sql) != 0:
+            for sql in update_tables_sql:
+                try:
+                    self.execute(sql)
+                except Exception as e:
+                    self.uc.log_info(traceback.format_exc())
 
         pd = QProgressDialog("Updating tables...", None, 0, 157)
         pd.setWindowTitle("Update GeoPackage")
@@ -355,6 +324,42 @@ class GeoPackageUtils(object):
             i += 1
             QApplication.processEvents()
             pd.setValue(i)
+
+        # Compare schema differences
+        update_schema_sql = []
+        for table in tables_in_both:
+            new_gpkg_cur.execute(f"PRAGMA table_info({table})")
+            columns_new_gpkg = set(column[1] for column in new_gpkg_cur.fetchall())
+
+            other_gpkg_cur.execute(f"PRAGMA table_info({table})")
+            columns_other_gpkg = set(column[1] for column in other_gpkg_cur.fetchall())
+
+            # locate tables with different schemas
+            if columns_new_gpkg != columns_other_gpkg:
+                if table == "grid":
+                    sql = f'''
+                                    UPDATE grid
+                                    SET col = ST_X(ST_Centroid(geom)),
+                                        row = ST_Y(ST_Centroid(geom))
+                               '''
+                    update_schema_sql.append(sql)
+                if table == "outflow_cells":
+                    sql = f'''
+                                    UPDATE outflow_cells
+                                    SET geom_type = CASE 
+                                        WHEN EXISTS (SELECT 1 FROM user_bc_points WHERE user_bc_points.fid = outflow_cells.outflow_fid) THEN 'point'
+                                        WHEN EXISTS (SELECT 1 FROM user_bc_lines WHERE user_bc_lines.fid = outflow_cells.outflow_fid) THEN 'line'
+                                        WHEN EXISTS (SELECT 1 FROM user_bc_polygons WHERE user_bc_polygons.fid = outflow_cells.outflow_fid) THEN 'polygon'
+                                        ELSE 'Unknown'
+                                    END
+                               '''
+                    update_schema_sql.append(sql)
+        if len(update_schema_sql) != 0:
+            for sql in update_schema_sql:
+                try:
+                    self.execute(sql)
+                except Exception as e:
+                    self.uc.log_info(traceback.format_exc())
 
         self.execute("DETACH other;")
 
