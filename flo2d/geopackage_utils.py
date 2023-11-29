@@ -228,6 +228,45 @@ class GeoPackageUtils(object):
     for name, metadata in _metadata:
         METADATA_DESCRIPTION[name] = metadata
 
+    # Current geopackage tables -> add/modify/delete when gpkg is modified
+    current_gpkg_tables = [
+        'metadata', 'cont', 'trigger_control', 'grid', 'inflow', 'inflow_cells',
+        'reservoirs', 'inflow_time_series', 'inflow_time_series_data', 'outflow_time_series',
+        'outflow_time_series_data', 'rain_time_series', 'rain_time_series_data', 'outflow',
+        'outflow_cells', 'qh_params', 'qh_params_data', 'qh_table', 'qh_table_data',
+        'out_hydrographs', 'out_hydrographs_cells', 'rain', 'rain_arf_cells', 'chan',
+        'chan_elems', 'rbank', 'chan_r', 'chan_v', 'chan_t', 'chan_n', 'chan_confluences',
+        'user_noexchange_chan_areas', 'noexchange_chan_cells', 'chan_wsel', 'xsec_n_data',
+        'evapor', 'evapor_monthly', 'evapor_hourly', 'infil', 'infil_chan_seg',
+        'infil_cells_green', 'infil_cells_scs', 'infil_cells_horton', 'infil_chan_elems',
+        'struct', 'user_struct', 'rat_curves', 'repl_rat_curves', 'rat_table',
+        'culvert_equations', 'bridge_xs', 'storm_drains', 'bridge_variables',
+        'street_general', 'streets', 'street_seg', 'street_elems', 'user_blocked_areas',
+        'blocked_cells', 'mult', 'mult_cells', 'mult_areas', 'mult_lines',
+        'simple_mult_lines', 'simple_mult_cells', 'levee_general', 'levee_data',
+        'levee_failure', 'levee_fragility', 'fpxsec', 'fpxsec_cells', 'fpfroude',
+        'fpfroude_cells', 'user_swmm_nodes', 'swmm_inflows', 'swmm_inflow_patterns',
+        'swmm_time_series', 'swmm_time_series_data', 'swmm_tidal_curve',
+        'swmm_tidal_curve_data', 'user_swmm_conduits', 'user_swmm_pumps',
+        'swmm_pumps_curve_data', 'user_swmm_orifices', 'user_swmm_weirs', 'swmmflo',
+        'swmmflort', 'swmmflort_data', 'swmmflo_culvert', 'swmmoutf', 'swmm_export',
+        'spatialshallow', 'spatialshallow_cells', 'gutter_globals', 'gutter_areas',
+        'gutter_lines', 'gutter_cells', 'tailing_cells', 'tolspatial', 'tolspatial_cells',
+        'wsurf', 'wstime', 'breach_global', 'breach', 'breach_cells',
+        'breach_fragility_curves', 'mud', 'mud_areas', 'mud_cells', 'sed_group_areas',
+        'sed_groups', 'sed_group_frac', 'sed_group_frac_data', 'sed_group_cells',
+        'sed_rigid_areas', 'sed_rigid_cells', 'sed_supply_areas', 'sed_supply_cells',
+        'sed_supply_frac', 'sed_supply_frac_data', 'user_fpxsec', 'user_model_boundary',
+        'user_1d_domain', 'user_left_bank', 'user_right_bank', 'user_xsections',
+        'chan_elems_interp', 'user_chan_r', 'user_chan_v', 'user_chan_t', 'user_chan_n',
+        'user_xsec_n_data', 'user_elevation_points', 'user_levee_lines', 'user_streets',
+        'user_roughness', 'user_spatial_tolerance', 'user_spatial_froude',
+        'user_spatial_shallow_n', 'user_elevation_polygons', 'user_bc_points',
+        'user_bc_lines', 'user_bc_polygons', 'all_schem_bc', 'user_reservoirs',
+        'user_infiltration', 'user_effective_impervious_area', 'raincell',
+        'raincell_data', 'buildings_areas', 'buildings_stats', 'qgis_projects'
+    ]
+
     def __init__(self, con, iface):
         self.iface = iface
         self.uc = UserCommunication(iface, "FLO-2D")
@@ -253,10 +292,6 @@ class GeoPackageUtils(object):
         tables_only_in_other_gpkg = set(other_tabs) - set(tabs)
 
         self.clear_tables(*tabs)
-
-        QgsMessageLog.logMessage(f"Tables in both databases: {tables_in_both}")
-        QgsMessageLog.logMessage(f"Tables only in 1: {tables_only_in_db1}")
-        QgsMessageLog.logMessage(f"Tables only in 2: {tables_only_in_other_gpkg}")
 
         # Update old tables
         update_tables_sql = []
@@ -436,12 +471,14 @@ class GeoPackageUtils(object):
         """
         try:
             c = self.con.cursor()
-            c.execute("SELECT COUNT(*) FROM gpkg_contents;")
-            n_layers = c.fetchone()[0]
-            if n_layers == 157:
-                return True
-            else:
-                return False
+            # Check if all expected tables exist
+            for table in self.current_gpkg_tables:
+                c.execute(f"SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name='{table}';")
+                table_exists = c.fetchone()[0]
+                if not table_exists:
+                    return False
+            # If all checks pass, return True
+            return True
         except Exception as e:
             return False
 
