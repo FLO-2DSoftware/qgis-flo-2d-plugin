@@ -149,6 +149,7 @@ class Flo2D(object):
         # Declare instance attributes
         self.project = QgsProject.instance()
         self.actions = []
+        self.toolButtons = []
 
         self.files_used = ""
         self.files_not_used = ""
@@ -257,14 +258,12 @@ class Flo2D(object):
         icon = QIcon(icon_path)
         action = QAction(icon, text, parent)
 
-        # INFO: action.triggered pass False to callback if it is decorated!
         if callback is not None:
             action.triggered.connect(callback)
         action.setEnabled(enabled_flag)
 
         if menu is not None:
             popup = QMenu()
-
             for m in menu:
                 icon = QIcon(m[0])
                 act = QAction(icon, m[1], parent)
@@ -272,15 +271,9 @@ class Flo2D(object):
                 popup.addAction(act)
             action.setMenu(popup)
 
-        if text == "Grid Info Tool":
+        if text in ["FLO-2D Grid Info Tool", "FLO-2D Info Tool"]:
             action.setCheckable(True)
             action.setChecked(False)
-            pass
-
-        if text == "Info Tool":
-            action.setCheckable(True)
-            action.setChecked(False)
-            pass
 
         if status_tip is not None:
             action.setStatusTip(status_tip)
@@ -290,51 +283,29 @@ class Flo2D(object):
 
         if add_to_toolbar:
 
-            if text == "FLO-2D Project":
+            tool_button_mapping = {
+                "FLO-2D Project": ("/img/mGeoPackage.svg", "<b>FLO-2D Project</b>"),
+                "Run FLO-2D Pro": ("/img/flo2d.svg", "<b>Run FLO-2D Pro</b>"),
+                "FLO-2D Import/Export": ("/img/ie.svg", "<b>FLO-2D Import/Export</b>"),
+                "FLO-2D Info Tool": ("/img/info_tool.svg", "<b>FLO-2D Info Tool</b>", True),
+                "FLO-2D Project Review": ("/img/editmetadata.svg", "<b>FLO-2D Project Review</b>"),
+                "FLO-2D Parameters": ("/img/show_cont_table.svg", "<b>FLO-2D Parameters</b>")
+            }
+
+            if text in tool_button_mapping:
                 toolButton = QToolButton()
                 toolButton.setMenu(popup)
-                toolButton.setIcon(QIcon(self.plugin_dir + "/img/mGeoPackage.svg"))
+                toolButton.setIcon(QIcon(self.plugin_dir + tool_button_mapping[text][0]))
                 toolButton.setPopupMode(QToolButton.InstantPopup)
-                toolButton.setToolTip("<b>FLO-2D Project</b>")
+
+                if len(tool_button_mapping[text]) >= 3 and tool_button_mapping[text][2]:
+                    toolButton.setCheckable(True)
+
                 self.toolbar.addWidget(toolButton)
-            elif text == "Run FLO-2D Pro":
-                toolButton = QToolButton()
-                toolButton.setMenu(popup)
-                toolButton.setIcon(QIcon(self.plugin_dir + "/img/flo2d.svg"))
-                toolButton.setPopupMode(QToolButton.InstantPopup)
-                self.toolbar.addWidget(toolButton)
-                toolButton.setToolTip("<b>Run FLO-2D Pro</b>")
-            elif text == "FLO-2D Import/Export":
-                toolButton = QToolButton()
-                toolButton.setMenu(popup)
-                toolButton.setIcon(QIcon(self.plugin_dir + "/img/ie.svg"))
-                toolButton.setPopupMode(QToolButton.InstantPopup)
-                self.toolbar.addWidget(toolButton)
-                toolButton.setToolTip("<b>FLO-2D Import/Export</b>")
-            elif text == "FLO-2D Info Tool":
-                toolButton = QToolButton()
-                toolButton.setMenu(popup)
-                toolButton.setIcon(QIcon(self.plugin_dir + "/img/info_tool.svg"))
-                toolButton.setPopupMode(QToolButton.InstantPopup)
-                self.toolbar.addWidget(toolButton)
-                toolButton.setToolTip("<b>FLO-2D Info Tool</b>")
-            elif text == "FLO-2D Project Review":
-                toolButton = QToolButton()
-                toolButton.setMenu(popup)
-                toolButton.setIcon(QIcon(self.plugin_dir + "/img/editmetadata.svg"))
-                toolButton.setPopupMode(QToolButton.InstantPopup)
-                self.toolbar.addWidget(toolButton)
-                toolButton.setToolTip("<b>FLO-2D Project Review</b>")
-            elif text == "FLO-2D Parameters":
-                toolButton = QToolButton()
-                toolButton.setMenu(popup)
-                toolButton.setIcon(QIcon(self.plugin_dir + "/img/show_cont_table.svg"))
-                toolButton.setPopupMode(QToolButton.InstantPopup)
-                self.toolbar.addWidget(toolButton)
-                toolButton.setToolTip("<b>FLO-2D Parameters</b>")
+                toolButton.setToolTip(tool_button_mapping[text][1])
+                self.toolButtons.append(toolButton)
             else:
                 self.toolbar.addAction(action)
-
 
         if add_to_menu:
             self.iface.addPluginToMenu(self.menu, action)
@@ -507,7 +478,7 @@ class Flo2D(object):
         self.add_action(
             os.path.join(self.plugin_dir, "img/info_tool.svg"),
             text=self.tr("FLO-2D Info Tool"),
-            callback=None,
+            callback=self.uncheck_toolbutton(),
             parent=self.iface.mainWindow(),
             menu=(
                 (
@@ -551,27 +522,6 @@ class Flo2D(object):
                 ),
             )
         )
-
-        # self.add_action(
-        #     os.path.join(self.plugin_dir, "img/mActionOptions.svg"),
-        #     text=self.tr("FLO-2D Settings"),
-        #     callback=lambda: self.run_settings(),
-        #     parent=self.iface.mainWindow()
-        # )
-
-        # self.add_action(
-        #     os.path.join(self.plugin_dir, "img/hazus.svg"),
-        #     text=self.tr("HAZUS"),
-        #     callback=lambda: self.show_hazus_dialog(),
-        #     parent=self.iface.mainWindow(),
-        # )
-
-        # self.add_action(
-        #     os.path.join(self.plugin_dir, "img/issue.svg"),
-        #     text=self.tr("FLO-2D Warnings and Errors"),
-        #     callback=lambda: self.show_errors_dialog(),
-        #     parent=self.iface.mainWindow(),
-        # )
 
         self.add_action(
             os.path.join(self.plugin_dir, "img/help_contents.svg"),
@@ -1248,7 +1198,6 @@ class Flo2D(object):
         grid = self.lyrs.data["grid"]["qlyr"]
         if grid is not None:
             if self.f2d_widget.storm_drain_editor.create_SD_discharge_table_and_plots("Just assign FLO-2D settings"):
-                GENERAL_INFO.setChecked(True)
                 self.canvas.setMapTool(self.info_tool)
         else:
             self.uc.bar_warn("There is no grid layer to identify.")
@@ -2780,45 +2729,67 @@ class Flo2D(object):
             self.uc.show_error("ERROR 110618.1816: Could not save FLO-2D parameters!!", e)
 
     def activate_general_info_tool(self):
-        # GRID_INFO.setChecked(False)  
-        # GENERAL_INFO.setChecked(False)
-        # self.canvas.unsetMapTool(self.info_tool)  
-        # self.canvas.unsetMapTool(self.grid_info_tool)  
+        """
+        Function to activate the Info Tool
+        """
         grid = self.lyrs.data["grid"]["qlyr"]
         if grid is not None:
-            self.f2d_grid_info_dock.setUserVisible(True)
-            tool = self.canvas.mapTool()
-            if tool == self.info_tool:
-                self.canvas.unsetMapTool(self.info_tool)
-            else:
-                if tool is not None:
-                    self.canvas.unsetMapTool(tool)
-                self.canvas.setMapTool(self.info_tool)
-                # GRID_INFO.setChecked(False)
-                # GENERAL_INFO.setChecked(True)
+            for tb in self.toolButtons:
+                if tb.toolTip() == "<b>FLO-2D Info Tool</b>":
+                    tb.setIcon(QIcon(os.path.join(self.plugin_dir, "img/info_tool.svg")))
+                    if tb.isChecked():
+                        tb.setChecked(False)
+                        self.canvas.unsetMapTool(self.grid_info_tool)
+                        self.canvas.unsetMapTool(self.info_tool)
+                    else:
+                        tb.setChecked(True)
+                        self.f2d_grid_info_dock.setUserVisible(True)
+                        tool = self.canvas.mapTool()
+                        if tool == self.info_tool:
+                            self.canvas.unsetMapTool(self.grid_info_tool)
+                            self.canvas.unsetMapTool(self.info_tool)
+                        else:
+                            if tool is not None:
+                                self.canvas.unsetMapTool(self.grid_info_tool)
+                                self.canvas.unsetMapTool(self.info_tool)
+                            self.canvas.setMapTool(self.info_tool)
+                    break
+
         else:
             self.uc.bar_warn("Define a database connection first!")
-            # GENERAL_INFO.setChecked(False)
 
     @connection_required
     def activate_grid_info_tool(self):
         self.f2d_grid_info_dock.setUserVisible(True)
         grid = self.lyrs.data["grid"]["qlyr"]
         if grid is not None:
-            tool = self.canvas.mapTool()
-            if tool == self.grid_info_tool:
-                self.canvas.unsetMapTool(self.grid_info_tool)
-            else:
-                if tool is not None:
-                    self.canvas.unsetMapTool(tool)
-                self.grid_info_tool.grid = grid
-                self.f2d_grid_info.set_info_layer(grid)
-                self.f2d_grid_info.mann_default = self.gutils.get_cont_par("MANNING")
-                self.f2d_grid_info.cell_Edit = self.gutils.get_cont_par("CELLSIZE")
-                self.f2d_grid_info.n_cells = number_of_elements(self.gutils, grid)
-                self.f2d_grid_info.gutils = self.gutils
-                self.canvas.setMapTool(self.grid_info_tool)
-                # GENERAL_INFO.setChecked(False)
+            for tb in self.toolButtons:
+                if tb.toolTip() == "<b>FLO-2D Info Tool</b>":
+                    tb.setIcon(QIcon(os.path.join(self.plugin_dir, "img/grid_info_tool.svg")))
+                    if tb.isChecked():
+                        tb.setIcon(QIcon(os.path.join(self.plugin_dir, "img/info_tool.svg")))
+                        tb.setChecked(False)
+                        self.canvas.unsetMapTool(self.grid_info_tool)
+                        self.canvas.unsetMapTool(self.info_tool)
+                    else:
+                        tb.setChecked(True)
+                        tool = self.canvas.mapTool()
+                        if tool == self.grid_info_tool:
+                            self.canvas.unsetMapTool(self.grid_info_tool)
+                            self.canvas.unsetMapTool(self.info_tool)
+                        else:
+                            if tool is not None:
+                                self.canvas.unsetMapTool(self.grid_info_tool)
+                                self.canvas.unsetMapTool(self.info_tool)
+                            self.grid_info_tool.grid = grid
+                            self.f2d_grid_info.set_info_layer(grid)
+                            self.f2d_grid_info.mann_default = self.gutils.get_cont_par("MANNING")
+                            self.f2d_grid_info.cell_Edit = self.gutils.get_cont_par("CELLSIZE")
+                            self.f2d_grid_info.n_cells = number_of_elements(self.gutils, grid)
+                            self.f2d_grid_info.gutils = self.gutils
+                            self.canvas.setMapTool(self.grid_info_tool)
+                    break
+
         else:
             self.uc.bar_warn("There is no grid layer to identify.")
             # GRID_INFO.setChecked(False)
@@ -3415,4 +3386,12 @@ class Flo2D(object):
         # GRID_INFO.setChecked(False)
         # GENERAL_INFO.setChecked(False)
         self.canvas.unsetMapTool(self.grid_info_tool)
-        self.canvas.unsetMapTool(self.info_tool)  
+        self.canvas.unsetMapTool(self.info_tool)
+
+    def uncheck_toolbutton(self):
+        """
+        Function to uncheck the toolbutton
+        """
+        QgsMessageLog.logMessage("Chegou")
+
+
