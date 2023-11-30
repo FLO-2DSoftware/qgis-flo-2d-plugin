@@ -513,17 +513,17 @@ class Flo2D(object):
                 (
                     os.path.join(self.plugin_dir, "img/info_tool.svg"),
                     "Info Tool",
-                    self.activate_general_info_tool,
+                    lambda: self.activate_general_info_tool(),
                 ),
                 (
                     os.path.join(self.plugin_dir, "img/import_swmm.svg"),
                     "Select .RPT file",
-                    self.select_RPT_File,
+                    lambda: self.select_RPT_File(),
                 ),
                 (
                     os.path.join(self.plugin_dir, "img/grid_info_tool.svg"),
                     "Grid Info Tool",
-                    self.activate_grid_info_tool,
+                    lambda: self.activate_grid_info_tool(),
                 ),
             )
         )
@@ -537,17 +537,17 @@ class Flo2D(object):
                 (
                     os.path.join(self.plugin_dir, "img/hazus.svg"),
                     "HAZUS",
-                    self.show_hazus_dialog,
+                    lambda: self.show_hazus_dialog(),
                 ),
                 (
                     os.path.join(self.plugin_dir, "img/profile_tool.svg"),
                     "Channel Profile",
-                    self.channel_profile,
+                    lambda: self.channel_profile(),
                 ),
                 (
                     os.path.join(self.plugin_dir, "img/issue.svg"),
                     "Warnings and Errors",
-                    self.show_errors_dialog,
+                    lambda: self.show_errors_dialog(),
                 ),
             )
         )
