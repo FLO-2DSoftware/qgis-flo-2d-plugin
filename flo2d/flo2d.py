@@ -949,7 +949,6 @@ class Flo2D(object):
         picture = Image.open(thumbnail)
 
         # Open the logo
-        # logo_path = r"C:\Users\robso\AppData\Roaming\QGIS\QGIS3\profiles\default\python\plugins\flo2d\img\F2D 400 Transparent.png"
         logo_path = self.plugin_dir + "/img/F2D 400 Transparent.png"
         logo = Image.open(logo_path)
 
