@@ -101,6 +101,7 @@ from .gui.dlg_ras_import import RasImportDialog
 from .gui.dlg_schem_xs_info import SchemXsecEditorDialog
 from .gui.dlg_schema2user import Schema2UserDialog
 from .gui.dlg_settings import SettingsDialog
+from .gui.dlg_update_gpkg import UpdateGpkg
 from .gui.dlg_user2schema import User2SchemaDialog
 from .gui.f2d_main_widget import FLO2DWidget
 from .gui.grid_info_widget import GridInfoWidget
@@ -349,11 +350,11 @@ class Flo2D(object):
             callback=None,
             parent=self.iface.mainWindow(),
             menu=(
-                (
-                    os.path.join(self.plugin_dir, "img/gpkg2gpkg.svg"),
-                    "Import from GeoPackage",
-                    lambda: self.import_from_gpkg(),
-                ),
+                # (
+                #     os.path.join(self.plugin_dir, "img/gpkg2gpkg.svg"),
+                #     "Import from GeoPackage",
+                #     lambda: self.import_from_gpkg(),
+                # ),
                 (
                     os.path.join(self.plugin_dir, "img/import_gds.svg"),
                     "Import data (*.DAT) files",
@@ -782,6 +783,12 @@ class Flo2D(object):
             qgis_v = dlg_settings.label_qv.text()
             flo2d_v = dlg_settings.label_fv.text()
 
+            sql = """SELECT srs_id FROM gpkg_contents WHERE table_name='grid';"""
+            rc = self.gutils.execute(sql)
+            rt = rc.fetchone()[0]
+            crs = QgsCoordinateReferenceSystem()
+            crs.createFromId(rt)
+
             self.gutils.set_metadata_par("PROJ_NAME", pn)
             self.gutils.set_metadata_par("CONTACT", contact)
             self.gutils.set_metadata_par("EMAIL", email)
@@ -790,7 +797,7 @@ class Flo2D(object):
             self.gutils.set_metadata_par("PLUGIN_V", plugin_v)
             self.gutils.set_metadata_par("QGIS_V", qgis_v)
             self.gutils.set_metadata_par("FLO-2D_V", flo2d_v)
-            self.gutils.set_metadata_par("CRS", self.crs.authid())
+            self.gutils.set_metadata_par("CRS", crs.authid())
 
             uri = f'geopackage:{gpkg_path}?projectName={pn}'
             self.project.write(uri)
@@ -818,7 +825,62 @@ class Flo2D(object):
             proj_name = os.path.splitext(os.path.basename(gpkg_path))[0]
             uri = f'geopackage:{gpkg_path}?projectName={proj_name}'
 
+            self.con = database_connect(gpkg_path)
+            self.gutils = GeoPackageUtils(self.con, self.iface)
+
+            if not self.gutils.check_gpkg_version():
+                QApplication.restoreOverrideCursor()
+                if self.uc.question("This GeoPackage is outdated. Would you like to update it?"):
+                    QApplication.setOverrideCursor(Qt.WaitCursor)
+                    # Create an updated geopackage and copy old package data to it
+                    new_gpkg_path = gpkg_path[:-5] + "_v1.0.0.gpkg"
+                    sql = """SELECT srs_id FROM gpkg_contents WHERE table_name='grid';"""
+                    rc = self.gutils.execute(sql)
+                    rt = rc.fetchone()[0]
+                    crs = QgsCoordinateReferenceSystem()
+                    crs.createFromId(rt)
+                    # create new geopackage TODO: This should be on the geopackage_utils and not on the settings
+                    dlg_settings = SettingsDialog(self.con, self.iface, self.lyrs, self.gutils)
+                    dlg_settings.create_db(new_gpkg_path, crs)
+                    # disconnect from the outdated geopackage
+                    database_disconnect(self.con)
+                    # connect to the new geopackage
+                    self.con = database_connect(new_gpkg_path)
+                    self.gutils = GeoPackageUtils(self.con, self.iface)
+                    dlg_update_gpkg = UpdateGpkg(self.con, self.iface)
+                    dlg_update_gpkg.show()
+                    result = dlg_update_gpkg.exec_()
+                    if result:
+                        QApplication.setOverrideCursor(Qt.WaitCursor)
+                        dlg_update_gpkg.write()
+                        dlg_settings.set_default_controls(self.con) # TODO: This should be on the geopackage_utils and not on the settings
+                        self.gutils.copy_from_other(gpkg_path)
+                        contact = dlg_update_gpkg.lineEdit_au.text()
+                        email = dlg_update_gpkg.lineEdit_co.text()
+                        company = dlg_update_gpkg.lineEdit_em.text()
+                        phone = dlg_update_gpkg.lineEdit_te.text()
+                        pn = dlg_update_gpkg.label_pn.text()
+                        plugin_v = dlg_update_gpkg.label_pv.text()
+                        qgis_v = dlg_update_gpkg.label_qv.text()
+                        flo2d_v = dlg_update_gpkg.label_fv.text()
+                        self.gutils.set_metadata_par("PROJ_NAME", pn)
+                        self.gutils.set_metadata_par("CONTACT", contact)
+                        self.gutils.set_metadata_par("EMAIL", email)
+                        self.gutils.set_metadata_par("PHONE", phone)
+                        self.gutils.set_metadata_par("COMPANY", company)
+                        self.gutils.set_metadata_par("PLUGIN_V", plugin_v)
+                        self.gutils.set_metadata_par("QGIS_V", qgis_v)
+                        self.gutils.set_metadata_par("FLO-2D_V", flo2d_v)
+                        self.gutils.set_metadata_par("CRS", crs.authid())
+                        uri = f'geopackage:{new_gpkg_path}?projectName={proj_name + "_v1.0.0"}'
+                        gpkg_path = new_gpkg_path
+                else:
+                    self.uc.log_info("Connection closed")
+                    return False
+
             # No project inside the geopackage
+            QgsMessageLog.logMessage(uri)
+
             if not self.project.read(uri):
 
                 title = "Missing Project File"
@@ -826,21 +888,24 @@ class Flo2D(object):
                 text1 = "Create"
                 text2 = "Open"
 
+                QApplication.restoreOverrideCursor()
                 answer = self.uc.dialog_with_2_customized_buttons(title, msg, text1, text2)
                 # Create new project
                 if answer == QMessageBox.Yes:
                     dlg_settings = SettingsDialog(self.con, self.iface, self.lyrs, self.gutils)
-                    dlg_settings.connect(gpkg_path)
+                    if not dlg_settings.connect(gpkg_path):
+                        return
                     self.con = dlg_settings.con
                     self.iface.f2d["con"] = self.con
                     self.gutils = dlg_settings.gutils
-                    self.crs = dlg_settings.crs
+                    sql = """SELECT srs_id FROM gpkg_contents WHERE table_name='grid';"""
+                    rc = self.gutils.execute(sql)
+                    rt = rc.fetchone()[0]
+                    self.crs = QgsCoordinateReferenceSystem()
+                    self.crs.createFromId(rt)
                     self.setup_dock_widgets()
 
-                    proj = self.gutils.get_cont_par("PROJ")
-                    cs = QgsCoordinateReferenceSystem()
-                    cs.createFromProj(proj)
-                    self.project.setCrs(cs)
+                    self.project.setCrs(self.crs)
                     gpkg_path_adj = gpkg_path.replace("\\", "/")
                     self.write_proj_entry("gpkg", gpkg_path_adj)
                     self.project.write(uri)
@@ -1236,7 +1301,8 @@ class Flo2D(object):
                 QApplication.setOverrideCursor(Qt.WaitCursor)
                 qApp.processEvents()
                 dlg_settings = SettingsDialog(self.con, self.iface, self.lyrs, self.gutils)
-                dlg_settings.connect(old_gpkg)
+                if not dlg_settings.connect(old_gpkg):
+                    return
                 self.con = dlg_settings.con
                 self.iface.f2d["con"] = self.con
                 self.gutils = dlg_settings.gutils
@@ -1274,7 +1340,8 @@ class Flo2D(object):
                 QApplication.setOverrideCursor(Qt.WaitCursor)
                 qApp.processEvents()
                 dlg_settings = SettingsDialog(self.con, self.iface, self.lyrs, self.gutils)
-                dlg_settings.connect(new_gpkg)
+                if not dlg_settings.connect(new_gpkg):
+                    return
                 self.con = dlg_settings.con
                 self.iface.f2d["con"] = self.con
                 self.gutils = dlg_settings.gutils

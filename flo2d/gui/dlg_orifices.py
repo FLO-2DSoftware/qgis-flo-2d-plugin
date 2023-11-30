@@ -21,7 +21,7 @@ from qgis.PyQt.QtWidgets import (
 
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
-from ..utils import is_number, is_true, m_fdata
+from ..utils import is_number, is_true, m_fdata, float_or_zero
 from .table_editor_widget import StandardItem, StandardItemModel
 from .ui_utils import center_canvas, load_ui, set_icon, try_disconnect, zoom
 
@@ -42,16 +42,13 @@ class OrificesDialog(qtBaseClass, uiDialog):
         set_icon(self.find_orifice_btn, "eye-svgrepo-com.svg")
         set_icon(self.zoom_in_orifice_btn, "zoom_in.svg")
         set_icon(self.zoom_out_orifice_btn, "zoom_out.svg")
-
+        self.orifices_buttonBox.button(QDialogButtonBox.Save).setText("Save to 'Storm Drain Orifices' User Layer")
+        
         self.find_orifice_btn.clicked.connect(self.find_orifice)
         self.zoom_in_orifice_btn.clicked.connect(self.zoom_in_orifice)
         self.zoom_out_orifice_btn.clicked.connect(self.zoom_out_orifice)
-
-        self.orifices_buttonBox.button(QDialogButtonBox.Save).setText("Save to 'Storm Drain Orifices' User Layer")
         self.orifice_name_cbo.currentIndexChanged.connect(self.fill_individual_controls_with_current_orifice_in_table)
-
         self.orifices_buttonBox.accepted.connect(self.save_orifices)
-
         self.orifice_type_cbo.currentIndexChanged.connect(self.orifice_type_cbo_currentIndexChanged)
         self.orifice_flap_gate_cbo.currentIndexChanged.connect(self.orifice_flap_gate_cbo_currentIndexChanged)
         self.orifice_shape_cbo.currentIndexChanged.connect(self.orifice_shape_cbo_currentIndexChanged)
@@ -129,10 +126,10 @@ class OrificesDialog(qtBaseClass, uiDialog):
                             self.orifice_type_cbo.setCurrentIndex(index)
 
                         elif column == 5:
-                            self.orifice_crest_height_dbox.setValue(data)
+                            self.orifice_crest_height_dbox.setValue(float_or_zero(data))
 
                         elif column == 6:
-                            self.orifice_discharge_coeff_dbox.setValue(data)
+                            self.orifice_discharge_coeff_dbox.setValue(float_or_zero(data))
 
                         elif column == 7:
                             if data not in ("YES", "NO", "yes", "no", "Yes", "No"):
@@ -145,7 +142,7 @@ class OrificesDialog(qtBaseClass, uiDialog):
                             self.orifice_flap_gate_cbo.setCurrentIndex(index)
 
                         elif column == 8:
-                            self.orifice_open_close_time_dbox.setValue(data)
+                            self.orifice_open_close_time_dbox.setValue(float_or_zero(data))
 
                         elif column == 9:
                             if data not in (
@@ -165,10 +162,10 @@ class OrificesDialog(qtBaseClass, uiDialog):
                             self.orifice_shape_cbo.setCurrentIndex(index)
 
                         elif column == 10:
-                            self.orifice_height_dbox.setValue(data)
+                            self.orifice_height_dbox.setValue(float_or_zero(data))
 
                         elif column == 11:
-                            self.orifice_width_dbox.setValue(data)
+                            self.orifice_width_dbox.setValue(float_or_zero(data))
 
                     if column > 0:  # Omit fid number (in column = 0)
                         if column in (1, 2, 3, 4, 7, 9):
@@ -250,8 +247,8 @@ class OrificesDialog(qtBaseClass, uiDialog):
                 index = 0 if typ == "SIDE" else 1
             self.orifice_type_cbo.setCurrentIndex(index)
 
-            self.orifice_crest_height_dbox.setValue(float(self.orifices_tblw.item(row, 4).text()))
-            self.orifice_discharge_coeff_dbox.setValue(float(self.orifices_tblw.item(row, 5).text()))
+            self.orifice_crest_height_dbox.setValue(float_or_zero(self.orifices_tblw.item(row, 4).text()))
+            self.orifice_discharge_coeff_dbox.setValue(float_or_zero(self.orifices_tblw.item(row, 5).text()))
 
             flap = self.orifices_tblw.item(row, 6).text()
             if flap.isdigit():
@@ -261,7 +258,7 @@ class OrificesDialog(qtBaseClass, uiDialog):
                 index = 0 if flap == "YES" else 1
             self.orifice_flap_gate_cbo.setCurrentIndex(index)
 
-            self.orifice_open_close_time_dbox.setValue(float(self.orifices_tblw.item(row, 7).text()))
+            self.orifice_open_close_time_dbox.setValue(float_or_zero(self.orifices_tblw.item(row, 7).text()))
 
             shape = self.orifices_tblw.item(row, 8).text()
             if shape.isdigit():
@@ -271,8 +268,8 @@ class OrificesDialog(qtBaseClass, uiDialog):
                 index = 0 if shape == "CIRCULAR" else 1
             self.orifice_shape_cbo.setCurrentIndex(index)
 
-            self.orifice_height_dbox.setValue(float(self.orifices_tblw.item(row, 9).text()))
-            self.orifice_width_dbox.setValue(float(self.orifices_tblw.item(row, 10).text()))
+            self.orifice_height_dbox.setValue(float_or_zero(self.orifices_tblw.item(row, 9).text()))
+            self.orifice_width_dbox.setValue(float_or_zero(self.orifices_tblw.item(row, 10).text()))
 
             self.highlight_orifice(self.orifice_name_cbo.currentText())
 

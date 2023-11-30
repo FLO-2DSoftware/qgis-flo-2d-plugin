@@ -64,7 +64,7 @@ class WeirsDialog(qtBaseClass, uiDialog):
         self.weir_side_slope_dbox.valueChanged.connect(self.weir_side_slope_dbox_valueChanged)
 
         self.shape = ("TRIANGULAR", "TRAPEZOIDAL", "RECT_CLOSED")
-
+        self.type = ("TRANSVERSE", "SIDEFLOW", "V-NOTCH", "TRAPEZOIDAL")
         self.setup_connection()
         self.grid_lyr = self.lyrs.data["grid"]["qlyr"]
         self.weirs_lyr = self.lyrs.data["user_swmm_weirs"]["qlyr"]
@@ -119,12 +119,7 @@ class WeirsDialog(qtBaseClass, uiDialog):
                                 self.weir_to_node_txt.setText(str(data))
 
                             elif column == 4:
-                                if data.upper() not in (
-                                    "TRANSVERSE",
-                                    "SIDEFLOW",
-                                    "V-NOTCH",
-                                    "TRAPEZOIDAL",
-                                ):
+                                if str(data).upper() not in self.type:
                                     wrong_status += 1
                                     data = "TRANSVERSE"
                                     item.setData(Qt.DisplayRole, data)
@@ -140,7 +135,8 @@ class WeirsDialog(qtBaseClass, uiDialog):
                                 self.weir_discharge_coeff_dbox.setValue(float_or_zero(data))
 
                             elif column == 7:
-                                if data.upper() not in ("YES", "NO"):
+
+                                if str(data).upper() not in ("YES", "NO"):
                                     wrong_status += 1
                                     data = 1
                                     item.setData(Qt.DisplayRole, data)
@@ -166,7 +162,7 @@ class WeirsDialog(qtBaseClass, uiDialog):
                                 self.weir_side_slope_dbox.setValue(float_or_zero(data))
 
                             elif column == 11:
-                                if data.upper() not in self.shape:
+                                if str(data).upper() not in self.shape:
                                     wrong_status += 1
                                     data = "RECT_CLOSE"
                                     item.setData(Qt.DisplayRole, data)
@@ -261,42 +257,47 @@ class WeirsDialog(qtBaseClass, uiDialog):
             self.weir_from_node_txt.setText(self.weirs_tblw.item(row, 1).text())
             self.weir_to_node_txt.setText(self.weirs_tblw.item(row, 2).text())
 
+            name = self.weirs_tblw.item(row, 0).text()
+
             typ = self.weirs_tblw.item(row, 3).text()
             index = self.weir_type_cbo.findText(typ)
             if index == -1:
-                index = 0
-            else:
-                self.weir_type_cbo.setCurrentIndex(index)
-
-            self.weir_crest_height_dbox.setValue(float(self.weirs_tblw.item(row, 4).text()))
-            self.weir_discharge_coeff_dbox.setValue(float(self.weirs_tblw.item(row, 5).text()))
+                index = 0 # Select default "TRANSVERSE".
+                self.weirs_tblw.item(row, 3).setText("TRANSVERSE")
+                self.uc.bar_warn("WARNING 261123.0425: weir '" + name  + "' has wrong weir type '" + typ + "'. Changed to default 'TRANSVERSE'")
+            self.weir_type_cbo.setCurrentIndex(index)
+            
+            self.weir_crest_height_dbox.setValue(float_or_zero(self.weirs_tblw.item(row, 4).text()))
+            self.weir_discharge_coeff_dbox.setValue(float_or_zero(self.weirs_tblw.item(row, 5).text()))
 
             flap = self.weirs_tblw.item(row, 6).text()
             index = self.weir_flap_gate_cbo.findText(flap)
             if index == -1:
-                index = 0
-            else:
-                self.weir_flap_gate_cbo.setCurrentIndex(index)
+                index = 1 # Select default "NO".
+                self.weirs_tblw.item(row, 6).setText("NO")
+                self.uc.bar_warn("WARNING 261123.0426: weir '" + name  + "' has wrong flap gate '" + flap + "'. Changed to default 'NO'")
+            self.weir_flap_gate_cbo.setCurrentIndex(index)
+                
             contr = self.weirs_tblw.item(row, 7).text()
             index = self.weir_end_contrac_cbo.findText(contr)
             if index == -1:
                 index = 0
-            else:
-                self.weir_end_contrac_cbo.setCurrentIndex(index)
+            self.weir_end_contrac_cbo.setCurrentIndex(index)
 
-            self.weir_end_coeff_dbox.setValue(float(self.weirs_tblw.item(row, 8).text()))
+            self.weir_end_coeff_dbox.setValue(float_or_zero(self.weirs_tblw.item(row, 8).text()))
 
-            self.weir_side_slope_dbox.setValue(float(self.weirs_tblw.item(row, 9).text()))
+            self.weir_side_slope_dbox.setValue(float_or_zero(self.weirs_tblw.item(row, 9).text()))
 
             shape = self.weirs_tblw.item(row, 10).text()
             index = self.weir_shape_cbo.findText(shape)
             if index == -1:
-                index = 0
-            else:
-                self.weir_shape_cbo.setCurrentIndex(index)
+                index = 2 # Select default "RECT_CLOSED".
+                self.weirs_tblw.item(row, 10).setText("RECT_CLOSED")
+                self.uc.bar_warn("WARNING 261123.0427: weir '" + name  + "' has wrong shape '" + shape + "'. Changed to default 'RECT_CLOSED'")                
+            self.weir_shape_cbo.setCurrentIndex(index)
 
-            self.weir_height_dbox.setValue(float(self.weirs_tblw.item(row, 11).text()))
-            self.weir_length_dbox.setValue(float(self.weirs_tblw.item(row, 12).text()))
+            self.weir_height_dbox.setValue(float_or_zero(self.weirs_tblw.item(row, 11).text()))
+            self.weir_length_dbox.setValue(float_or_zero(self.weirs_tblw.item(row, 12).text()))
 
             self.highlight_weir(self.weir_name_cbo.currentText())
 
@@ -337,37 +338,57 @@ class WeirsDialog(qtBaseClass, uiDialog):
 
             item = self.weirs_tblw.item(row, 4)
             if item is not None:
-                self.weir_crest_height_dbox.setValue(float(str(item.text())))
+                self.weir_crest_height_dbox.setValue(float_or_zero(str(item.text())))
 
             item = self.weirs_tblw.item(row, 5)
             if item is not None:
-                self.weir_discharge_coeff_dbox.setValue(float(str(item.text())))
+                self.weir_discharge_coeff_dbox.setValue(float_or_zero(str(item.text())))
 
             item = self.weirs_tblw.item(row, 6)
             if item is not None:
-                if item.text() in ("YES", "yes", "Yes", "0"):
-                    self.weir_flap_gate_cbo.setCurrentIndex(0)
+                indx = self.weir_flap_gate_cbo.findText(item.text())
+                if indx != -1:
+                    self.weir_flap_gate_cbo.setCurrentIndex(indx)
                 else:
-                    self.weir_flap_gate_cbo.setCurrentIndex(1)
+                    self.uc.bar_warn("WARNING 261123.0547: weir flap gate not found.")
+            
+            
+            
+            
+            # if item is not None:
+            #     if item.text() in ("YES", "yes", "Yes", "0"):
+            #         self.weir_flap_gate_cbo.setCurrentIndex(0)
+            #     else:
+            #         self.weir_flap_gate_cbo.setCurrentIndex(1)
 
             item = self.weirs_tblw.item(row, 7)
             if item is not None:
-                self.weir_open_close_time_dbox.setValue(float(str(item.text())))
+                self.weir_open_close_time_dbox.setValue(float_or_zero(str(item.text())))
 
             item = self.weirs_tblw.item(row, 8)
             if item is not None:
-                if item.text() in ("CIRCULAR", "circular", "Circular", "0"):
-                    self.weir_shape_cbo.setCurrentIndex(0)
+                indx = self.weir_shape_cbo.findText(item.text())
+                if indx != -1:
+                    self.weir_shape_cbo.setCurrentIndex(indx)
                 else:
-                    self.weir_shape_cbo.setCurrentIndex(1)
+                    self.uc.bar_warn("WARNING 261123.0552: weir shape not found.")
+            
+            
+            
+            
+            # if item is not None:
+            #     if item.text() in ("CIRCULAR", "circular", "Circular", "0"):
+            #         self.weir_shape_cbo.setCurrentIndex(0)
+            #     else:
+            #         self.weir_shape_cbo.setCurrentIndex(1)
 
             item = self.weirs_tblw.item(row, 9)
             if item is not None:
-                self.weir_height_dbox.setValue(float(str(item.text())))
+                self.weir_height_dbox.setValue(float_or_zero(str(item.text())))
 
             item = self.weirs_tblw.item(row, 10)
             if item is not None:
-                self.weir_width_dbox.setValue(float(str(item.text())))
+                self.weir_width_dbox.setValue(float_or_zero(str(item.text())))
 
             self.highlight_weir(self.weir_name_cbo.currentText())
 
