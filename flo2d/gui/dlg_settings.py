@@ -284,7 +284,7 @@ class SettingsDialog(qtBaseClass, uiDialog):
             self.uc.show_warn(msg)
             return
         self.unit_lab.setText(mu)
-        proj4 = self.crs.toProj()
+        proj = self.crs.toProj()
 
         # check if the CRS exist in the db
         sql = "SELECT * FROM gpkg_spatial_ref_sys WHERE srs_id=?;"
@@ -292,7 +292,7 @@ class SettingsDialog(qtBaseClass, uiDialog):
         rt = rc.fetchone()
         if not rt:
             sql = """INSERT INTO gpkg_spatial_ref_sys VALUES (?,?,?,?,?,?)"""
-            data = (self.crs.description(), crsid, auth, crsid, proj4, "")
+            data = (self.crs.description(), crsid, auth, crsid, proj, "")
             rc = gutils.execute(sql, data)
             del rc
             srsid = crsid

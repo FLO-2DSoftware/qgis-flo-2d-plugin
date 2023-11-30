@@ -11,6 +11,13 @@ about=QGIS tools for FLO-2D
 changelog=
  <p>1.0.0
   - Modified the FLO-2D toolbar
+  - Added FLO-2D logo to recent projects thumbnail
+  - Progress bar for loading and updating geopackages
+  - Auto-porting outdated geopackages
+  - Fixed a bug when loading a copy of a project
+  - Fixed ResourceWarning on processes not being explicitly closed
+  - Fixed deprecated issues
+  - Improved tooltips
   - Create the SWMM export table into the geopackage
   - Added more fields on the Settings Dialog
   - Project saved inside the geopackage

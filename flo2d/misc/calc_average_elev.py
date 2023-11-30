@@ -32,7 +32,7 @@ if __name__ == "__main__":
     # args[5] = ymax
     # args[6] = raster rows
     # args[7] = raster columns
-    # args[8] = wkt or proj4 crs string
+    # args[8] = wkt or proj crs string
     # args[9] = true/false flag for dask dashboard
     # args[10] = process count
     # args[11] = thread count per process
@@ -130,7 +130,7 @@ if __name__ == "__main__":
         crs = osr.SpatialReference()
         wkt = srs
         try:
-            # check if srs is Proj4
+            # check if srs is Proj
             crs.ImportFromProj4(srs)
             wkt = crs.ExportToWkt()
         except:
