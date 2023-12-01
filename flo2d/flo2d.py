@@ -176,14 +176,6 @@ class Flo2D(object):
         self.cur_info_table = None
         self.new_gpkg = None
 
-        # if hasattr(QtCore.Qt, 'AA_EnableHighDpiScaling'):
-        #     QApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling, True)
-        #
-        # if hasattr(QtCore.Qt, 'AA_UseHighDpiPixmaps'):
-        #     QApplication.setAttribute(QtCore.Qt.AA_UseHighDpiPixmaps, True)
-        # else:
-        #     QApplication.setAttribute(QtCore.Qt.AA_UseHighDpiPixmaps, False)
-
         # connections
         self.project.readProject.connect(self.load_gpkg_from_proj)
 
@@ -816,6 +808,7 @@ class Flo2D(object):
         if not gpkg_path:
             return
         try:
+            QApplication.setOverrideCursor(Qt.WaitCursor)
             s.setValue("FLO-2D/lastGpkgDir", os.path.dirname(gpkg_path))
 
             self.new_gpkg = gpkg_path
@@ -844,6 +837,7 @@ class Flo2D(object):
                     self.gutils = GeoPackageUtils(self.con, self.iface)
                     dlg_update_gpkg = UpdateGpkg(self.con, self.iface)
                     dlg_update_gpkg.show()
+                    QApplication.restoreOverrideCursor()
                     result = dlg_update_gpkg.exec_()
                     if result:
                         QApplication.setOverrideCursor(Qt.WaitCursor)
@@ -869,6 +863,7 @@ class Flo2D(object):
                         self.gutils.set_metadata_par("CRS", crs.authid())
                         uri = f'geopackage:{new_gpkg_path}?projectName={proj_name + "_v1.0.0"}'
                         gpkg_path = new_gpkg_path
+                        QApplication.restoreOverrideCursor()
                 else:
                     self.uc.log_info("Connection closed")
                     return False
@@ -884,6 +879,7 @@ class Flo2D(object):
                 answer = self.uc.dialog_with_2_customized_buttons(title, msg, text1, text2)
                 # Create new project
                 if answer == QMessageBox.Yes:
+                    QApplication.setOverrideCursor(Qt.WaitCursor)
                     dlg_settings = SettingsDialog(self.con, self.iface, self.lyrs, self.gutils)
                     if not dlg_settings.connect(gpkg_path):
                         return
@@ -898,6 +894,7 @@ class Flo2D(object):
                     gpkg_path_adj = gpkg_path.replace("\\", "/")
                     self.write_proj_entry("gpkg", gpkg_path_adj)
                     self.project.write(uri)
+                    QApplication.restoreOverrideCursor()
                     self.uc.show_info("FLO-2D-Project created into the Geopackage.")
 
                 # Open existing project
@@ -914,6 +911,7 @@ class Flo2D(object):
 
                     self.project.read(qgz_path)
                     self.project.write(uri)
+                    QApplication.restoreOverrideCursor()
                     self.uc.show_info("FLO-2D-Project added into the Geopackage.")
 
                 # Cancel
@@ -934,6 +932,9 @@ class Flo2D(object):
         """
         Function to save a FLO-2D project into a geopackage
         """
+
+        QApplication.setOverrideCursor(Qt.WaitCursor)
+
         gpkg_path = self.gutils.get_gpkg_path()
         proj_name = os.path.splitext(os.path.basename(gpkg_path))[0]
         uri = f'geopackage:{gpkg_path}?projectName={proj_name}'
@@ -961,6 +962,7 @@ class Flo2D(object):
         # Save the result
         picture.save(thumbnail)
 
+        QApplication.restoreOverrideCursor()
         self.uc.show_info("FLO-2D-Project saved!")
 
     def run_settings(self):
@@ -1287,7 +1289,6 @@ class Flo2D(object):
             if uri.startswith("geopackage:"):
                 new_gpkg = uri[len("geopackage:"):].split('?')[0]
 
-        QApplication.setOverrideCursor(Qt.WaitCursor)
         # Geopackage associated with the project
         if old_gpkg:
             # Check if opening gpkg (new_gpkg) is the same as the project gpkg (old_gpkg)
@@ -1303,14 +1304,16 @@ class Flo2D(object):
                         msg += f" However there is a file with the same name at your project location:\n\n{_old_gpkg}\n\n"
                         msg += "Load the model?"
                         old_gpkg = _old_gpkg
+                        QApplication.restoreOverrideCursor()
                         answer = self.uc.customized_question("FLO-2D", msg)
                     else:
+
                         answer = self.uc.customized_question("FLO-2D", msg, QMessageBox.Cancel, QMessageBox.Cancel)
                 # Geopackage exists at the original path
                 else:
                     msg += "Load the model?"
-                    answer = self.uc.customized_question("FLO-2D", msg)
                     QApplication.restoreOverrideCursor()
+                    answer = self.uc.customized_question("FLO-2D", msg)
                 if answer == QMessageBox.Yes:
                     QApplication.setOverrideCursor(Qt.WaitCursor)
                     qApp.processEvents()
