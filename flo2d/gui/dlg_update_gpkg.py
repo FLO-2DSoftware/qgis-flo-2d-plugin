@@ -19,6 +19,9 @@ from .ui_utils import load_ui
 from ..geopackage_utils import GeoPackageUtils
 from ..utils import get_plugin_version, get_flo2dpro_version
 
+from ..user_communication import UserCommunication
+
+
 uiDialog, qtBaseClass = load_ui("update_gpkg")
 
 
@@ -30,6 +33,7 @@ class UpdateGpkg(qtBaseClass, uiDialog):
         self.con = con
         self.setupUi(self)
         self.gutils = GeoPackageUtils(con, iface)
+        self.uc = UserCommunication(iface, "FLO-2D")
 
         self.populate_gpgk_data()
 
@@ -52,6 +56,10 @@ class UpdateGpkg(qtBaseClass, uiDialog):
             mu = "meters"
         elif crs.mapUnits() == QgsUnitTypes.DistanceFeet:
             mu = "feet"
+        else:
+            msg = "WARNING 060319.1654: Unknown map units."
+            mu = ""
+            self.uc.show_warn(msg)
         self.unit_lab.setText(mu)
 
         contact = QgsProject.instance().metadata().author()

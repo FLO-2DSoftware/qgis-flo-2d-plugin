@@ -825,6 +825,7 @@ class Flo2D(object):
                     # Create an updated geopackage and copy old package data to it
                     new_gpkg_path = gpkg_path[:-5] + "_v1.0.0.gpkg"
                     proj = self.gutils.get_cont_par("PROJ")
+                    cell_size = int(float(self.gutils.get_cont_par("CELLSIZE")))
                     crs = QgsCoordinateReferenceSystem()
                     crs.createFromProj(proj)
                     # create new geopackage TODO: This should be on the geopackage_utils and not on the settings
@@ -836,6 +837,7 @@ class Flo2D(object):
                     self.con = database_connect(new_gpkg_path)
                     self.gutils = GeoPackageUtils(self.con, self.iface)
                     dlg_update_gpkg = UpdateGpkg(self.con, self.iface)
+                    dlg_update_gpkg.cellSizeDSpinBox.setValue(cell_size)
                     dlg_update_gpkg.show()
                     QApplication.restoreOverrideCursor()
                     result = dlg_update_gpkg.exec_()
@@ -844,6 +846,9 @@ class Flo2D(object):
                         dlg_update_gpkg.write()
                         dlg_settings.set_default_controls(self.con) # TODO: This should be on the geopackage_utils and not on the settings
                         self.gutils.copy_from_other(gpkg_path)
+                        # Old gpkg used float values for CELLSIZE, need to explicitly convert it
+                        cell_size = self.gutils.get_cont_par("CELLSIZE")
+                        self.gutils.set_cont_par("CELLSIZE", int(float(cell_size)))
                         contact = dlg_update_gpkg.lineEdit_au.text()
                         email = dlg_update_gpkg.lineEdit_co.text()
                         company = dlg_update_gpkg.lineEdit_em.text()
