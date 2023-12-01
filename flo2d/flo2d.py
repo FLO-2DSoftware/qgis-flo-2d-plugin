@@ -952,7 +952,8 @@ class Flo2D(object):
 
         for layer_id, layer in layers.items():
             uri_parts = layer.source().split('|')
-            if not uri_parts[0].endswith('.gpkg'):
+            uri_parts2 = layer.source().split(':')
+            if not uri_parts[0].endswith('.gpkg') and not uri_parts2[0].startswith('GPKG'):
                 if not checked_layers:
                     title = "User layers were added to the project. Would you like to save them into the geopackage?"
                     QApplication.restoreOverrideCursor()
@@ -960,6 +961,7 @@ class Flo2D(object):
                         QApplication.setOverrideCursor(Qt.WaitCursor)
                         checked_layers = True
                     else:
+                        QApplication.setOverrideCursor(Qt.WaitCursor)
                         break
                 # Check if it is vector or raster
                 if layer.type() == QgsMapLayer.VectorLayer:
@@ -985,18 +987,20 @@ class Flo2D(object):
                     self.project.removeMapLayer(layer_id)
                 elif layer.type() == QgsMapLayer.RasterLayer:
                     # Save to gpkg
+                    layer_name = layer.name().replace(" ", "_")
                     params = {'INPUT': f'{layer.dataProvider().dataSourceUri()}',
                               'TARGET_CRS': None,
                               'NODATA': None,
                               'COPY_SUBDATASETS': False,
                               'OPTIONS': '',
-                              'EXTRA': f'-co APPEND_SUBDATASET=YES -co RASTER_TABLE={layer.name()}',
+                              'EXTRA': f'-co APPEND_SUBDATASET=YES -co RASTER_TABLE={layer_name}',
                               'DATA_TYPE': 0,
                               'OUTPUT': f'{gpkg_path}'}
 
                     processing.run("gdal:translate", params)
 
-                    gpkg_layer = QgsRasterLayer(gpkg_path, layer.name(), "gdal")
+                    gpkg_uri = f"GPKG:{gpkg_path}:{layer_name}"
+                    gpkg_layer = QgsRasterLayer(gpkg_uri, layer_name, "gdal")
                     gpkg_layer.setRenderer(layer.renderer().clone())
                     gpkg_layer.triggerRepaint()
                     self.project.addMapLayer(gpkg_layer)
