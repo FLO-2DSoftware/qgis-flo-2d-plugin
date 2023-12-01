@@ -36,8 +36,10 @@ from subprocess import (
 
 from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QApplication, QToolButton
+from osgeo import gdal
 from qgis._core import QgsMessageLog, QgsCoordinateReferenceSystem, QgsMapSettings, QgsProjectMetadata, \
-    QgsMapRendererParallelJob
+    QgsMapRendererParallelJob, QgsLayerTreeLayer, QgsVectorLayerExporter, QgsVectorFileWriter, QgsVectorLayer, \
+    QgsMapLayer, QgsRasterFileWriter, QgsRasterLayer
 from qgis.core import NULL, QgsProject, QgsWkbTypes
 from qgis.gui import QgsDockWidget, QgsProjectionSelectionWidget
 from qgis.PyQt import QtCore
@@ -114,6 +116,7 @@ from .utils import get_flo2dpro_version
 
 from PIL import Image, ImageDraw
 
+import processing
 
 @contextmanager
 def cd(newdir):
@@ -943,6 +946,67 @@ class Flo2D(object):
         gpkg_path = self.gutils.get_gpkg_path()
         proj_name = os.path.splitext(os.path.basename(gpkg_path))[0]
         uri = f'geopackage:{gpkg_path}?projectName={proj_name}'
+
+        layers = self.project.mapLayers()
+        checked_layers = False
+
+        for layer_id, layer in layers.items():
+            uri_parts = layer.source().split('|')
+            if not uri_parts[0].endswith('.gpkg'):
+                if not checked_layers:
+                    title = "User layers were added to the project. Would you like to save them into the geopackage?"
+                    QApplication.restoreOverrideCursor()
+                    if self.uc.question(title):
+                        QApplication.setOverrideCursor(Qt.WaitCursor)
+                        checked_layers = True
+                    else:
+                        break
+                # Check if it is vector or raster
+                if layer.type() == QgsMapLayer.VectorLayer:
+                    # Save to gpkg
+                    options = QgsVectorFileWriter.SaveVectorOptions()
+                    options.driverName = "GPKG"
+                    options.includeZ = True
+                    options.overrideGeometryType = layer.wkbType()
+                    options.layerName = layer.name()
+                    options.actionOnExistingFile = QgsVectorFileWriter.CreateOrOverwriteLayer
+                    QgsVectorFileWriter.writeAsVectorFormatV3(
+                        layer,
+                        gpkg_path,
+                        QgsProject.instance().transformContext(),
+                        options)
+                    # Add back to the project
+                    gpkg_uri = f"{gpkg_path}|layername={layer.name()}"
+                    gpkg_layer = QgsVectorLayer(gpkg_uri, layer.name(), "ogr")
+                    gpkg_layer.setRenderer(layer.renderer().clone())
+                    gpkg_layer.triggerRepaint()
+                    self.project.addMapLayer(gpkg_layer)
+                    # Delete layer that is not in the gpkg
+                    self.project.removeMapLayer(layer_id)
+                elif layer.type() == QgsMapLayer.RasterLayer:
+                    # Save to gpkg
+                    params = {'INPUT': f'{layer.dataProvider().dataSourceUri()}',
+                              'TARGET_CRS': None,
+                              'NODATA': None,
+                              'COPY_SUBDATASETS': False,
+                              'OPTIONS': '',
+                              'EXTRA': f'-co APPEND_SUBDATASET=YES -co RASTER_TABLE={layer.name()}',
+                              'DATA_TYPE': 0,
+                              'OUTPUT': f'{gpkg_path}'}
+
+                    processing.run("gdal:translate", params)
+
+                    gpkg_layer = QgsRasterLayer(gpkg_path, layer.name(), "gdal")
+                    gpkg_layer.setRenderer(layer.renderer().clone())
+                    gpkg_layer.triggerRepaint()
+                    self.project.addMapLayer(gpkg_layer)
+                    # Delete layer that is not in the gpkg
+                    self.project.removeMapLayer(layer_id)
+
+                else:
+                    QApplication.restoreOverrideCursor()
+                    self.uc.show_warn("Your layer type is not Vector or Raster.")
+                    QApplication.setOverrideCursor(Qt.WaitCursor)
 
         # Need to trigger the save button to add a project thumbnail to recent projects
         self.iface.mainWindow().findChild(QAction, 'mActionSaveProject').trigger()
