@@ -4090,46 +4090,76 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         self.plot.clear()     
     
         idx = self.SD_type4_cbo.currentIndex()
-        rt_fid = self.SD_type4_cbo.itemData(idx)
-        rt_name = self.SD_type4_cbo.currentText()
-        if rt_fid is None:
-            #             self.uc.bar_warn("No rating table defined!")
+        fid = self.SD_type4_cbo.itemData(idx)
+        name = self.SD_type4_cbo.currentText()
+        if fid is None:
+            #             self.uc.bar_warn("No table defined!")
             return
 
-        self.inlet_series_data = self.inletRT.get_inlet_table_data(rt_fid)
-        if not self.inlet_series_data:
+        in_culvert = self.gutils.execute(
+            "SELECT cdiameter, typec, typeen, cubase, multbarrels FROM swmmflo_culvert WHERE name = ?;", (name,)
+            ).fetchone() 
+                                   
+        if in_culvert:
+        
             self.tview.undoStack.clear()
             self.tview.setModel(self.inlet_data_model)
-            self.inlet_data_model.clear()            
-            return
-        
-        self.create_rt_plot(rt_name)
-        
-        self.tview.undoStack.clear()
-        self.tview.setModel(self.inlet_data_model)
-        self.inlet_data_model.clear()
-        self.inlet_data_model.setHorizontalHeaderLabels(["Depth", "Q"])
-        self.d1, self.d2= [[], []]
-        
-        for row in self.inlet_series_data:
-            items = [StandardItem("{:.4f}".format(x)) if x is not None else StandardItem("") for x in row]
-            self.inlet_data_model.appendRow(items)
-            self.d1.append(row[0] if not row[0] is None else float("NaN"))
-            self.d2.append(row[1] if not row[1] is None else float("NaN"))
-
-        rc = self.inlet_data_model.rowCount()
-        if rc < 500:
-            for row in range(rc, 500 + 1):
-                items = [StandardItem(x) for x in ("",) * 2]
-                self.inlet_data_model.appendRow(items)
-                
-        self.tview.horizontalHeader().setStretchLastSection(True)
-        for col in range(2):
-            self.tview.setColumnWidth(col, 100)
-        for i in range(self.inlet_data_model.rowCount()):
-            self.tview.setRowHeight(i, 20)
+            self.inlet_data_model.clear()
+            self.inlet_data_model.setHorizontalHeaderLabels(["CDDIAMETER", "TYPEC", "TYPEEN", "CUBASE", "MULTBARRELS"])
+            self.d1, self.d2= [[], []]
             
-        self.update_rt_plot()
+            items = [StandardItem("{:.4f}".format(x)) if x is not None else StandardItem("") for x in in_culvert]
+            self.inlet_data_model.appendRow(items)
+            # self.d1.append(row[0] if not row[0] is None else float("NaN"))
+            # self.d2.append(row[1] if not row[1] is None else float("NaN"))
+            
+            rc = self.inlet_data_model.rowCount()
+            if rc < 500:
+                for row in range(rc, 500 + 1):
+                    items = [StandardItem(x) for x in ("",) * 2]
+                    self.inlet_data_model.appendRow(items)
+            
+            self.tview.horizontalHeader().setStretchLastSection(True)
+            for col in range(2):
+                self.tview.setColumnWidth(col, 100)
+            for i in range(self.inlet_data_model.rowCount()):
+                self.tview.setRowHeight(i, 20)
+
+        else:
+            self.inlet_series_data = self.inletRT.get_inlet_table_data(fid)
+            if not self.inlet_series_data:
+                self.tview.undoStack.clear()
+                self.tview.setModel(self.inlet_data_model)
+                self.inlet_data_model.clear()            
+                return
+            
+            self.create_rt_plot(name)
+            
+            self.tview.undoStack.clear()
+            self.tview.setModel(self.inlet_data_model)
+            self.inlet_data_model.clear()
+            self.inlet_data_model.setHorizontalHeaderLabels(["Depth", "Q"])
+            self.d1, self.d2= [[], []]
+            
+            for row in self.inlet_series_data:
+                items = [StandardItem("{:.4f}".format(x)) if x is not None else StandardItem("") for x in row]
+                self.inlet_data_model.appendRow(items)
+                self.d1.append(row[0] if not row[0] is None else float("NaN"))
+                self.d2.append(row[1] if not row[1] is None else float("NaN"))
+    
+            rc = self.inlet_data_model.rowCount()
+            if rc < 500:
+                for row in range(rc, 500 + 1):
+                    items = [StandardItem(x) for x in ("",) * 2]
+                    self.inlet_data_model.appendRow(items)
+                    
+            self.tview.horizontalHeader().setStretchLastSection(True)
+            for col in range(2):
+                self.tview.setColumnWidth(col, 100)
+            for i in range(self.inlet_data_model.rowCount()):
+                self.tview.setRowHeight(i, 20)
+                
+            self.update_rt_plot()
 
     def show_discharge_table_and_plot(self, node, units,
                                       RPTseries, 
