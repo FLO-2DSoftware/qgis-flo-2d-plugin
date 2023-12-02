@@ -253,7 +253,7 @@ class SamplingPointElevDialog(qtBaseClass, uiDialog):
         rows = int((ymax - ymin) / self.cell_size)
         cols = int((xmax - xmin) / self.cell_size)
         shape = (rows, cols)
-        crs_proj4 = self.grid.crs().toProj()
+        crs_proj = self.grid.crs().toProj()
         try:
             src_nodata = float(self.srcNoDataEdit.text())
         except:
@@ -263,7 +263,7 @@ class SamplingPointElevDialog(qtBaseClass, uiDialog):
             [
                 ("extents", output_bounds),
                 ("shape", shape),
-                ("srs", crs_proj4),
+                ("srs", crs_proj),
                 ("nodata", src_nodata),
             ]
         )
@@ -372,14 +372,15 @@ class SamplingPointElevDialog(qtBaseClass, uiDialog):
         self.log_message(">>> Filling nodata values")
         opts = ["-md {}".format(self.radiusSBox.value())]
         cmd = 'gdal_fillnodata {} "{}"'.format(" ".join([opt for opt in opts]), raster_file)
-        proc = Popen(
-            cmd,
-            shell=True,
-            stdin=open(os.devnull),
-            stdout=PIPE,
-            stderr=STDOUT,
-            universal_newlines=True,
-        )
+        with open(os.devnull, 'r') as devnull:
+            proc = Popen(
+                cmd,
+                shell=True,
+                stdin=devnull,
+                stdout=PIPE,
+                stderr=STDOUT,
+                universal_newlines=True,
+            )
         out = proc.communicate()
         for line in out:
             self.uc.log_info(line)
