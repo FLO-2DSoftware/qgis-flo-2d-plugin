@@ -12,6 +12,7 @@ from collections import OrderedDict
 from PyQt5.QtCore import QCoreApplication
 from qgis.PyQt import QtCore
 from qgis.PyQt.QtWidgets import QApplication, QCheckBox, QDoubleSpinBox, qApp
+from qgis._core import QgsMessageLog
 
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication

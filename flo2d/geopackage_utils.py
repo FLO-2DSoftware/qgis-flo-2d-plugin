@@ -12,9 +12,13 @@ import traceback
 from collections import defaultdict
 from functools import wraps
 
+from PyQt5.QtWidgets import QProgressDialog, QApplication
 from qgis._core import QgsMessageLog
 from qgis.core import QgsGeometry
 from .user_communication import UserCommunication
+
+import sqlite3
+
 
 def connection_required(fn):
     """
@@ -224,18 +228,125 @@ class GeoPackageUtils(object):
     for name, metadata in _metadata:
         METADATA_DESCRIPTION[name] = metadata
 
+    # Current geopackage tables -> add/modify/delete when gpkg is modified
+    current_gpkg_tables = [
+        'metadata', 'cont', 'trigger_control', 'grid', 'inflow', 'inflow_cells',
+        'reservoirs', 'inflow_time_series', 'inflow_time_series_data', 'outflow_time_series',
+        'outflow_time_series_data', 'rain_time_series', 'rain_time_series_data', 'outflow',
+        'outflow_cells', 'qh_params', 'qh_params_data', 'qh_table', 'qh_table_data',
+        'out_hydrographs', 'out_hydrographs_cells', 'rain', 'rain_arf_cells', 'chan',
+        'chan_elems', 'rbank', 'chan_r', 'chan_v', 'chan_t', 'chan_n', 'chan_confluences',
+        'user_noexchange_chan_areas', 'noexchange_chan_cells', 'chan_wsel', 'xsec_n_data',
+        'evapor', 'evapor_monthly', 'evapor_hourly', 'infil', 'infil_chan_seg',
+        'infil_cells_green', 'infil_cells_scs', 'infil_cells_horton', 'infil_chan_elems',
+        'struct', 'user_struct', 'rat_curves', 'repl_rat_curves', 'rat_table',
+        'culvert_equations', 'bridge_xs', 'storm_drains', 'bridge_variables',
+        'street_general', 'streets', 'street_seg', 'street_elems', 'user_blocked_areas',
+        'blocked_cells', 'mult', 'mult_cells', 'mult_areas', 'mult_lines',
+        'simple_mult_lines', 'simple_mult_cells', 'levee_general', 'levee_data',
+        'levee_failure', 'levee_fragility', 'fpxsec', 'fpxsec_cells', 'fpfroude',
+        'fpfroude_cells', 'user_swmm_nodes', 'swmm_inflows', 'swmm_inflow_patterns',
+        'swmm_time_series', 'swmm_time_series_data', 'swmm_tidal_curve',
+        'swmm_tidal_curve_data', 'user_swmm_conduits', 'user_swmm_pumps',
+        'swmm_pumps_curve_data', 'user_swmm_orifices', 'user_swmm_weirs', 'swmmflo',
+        'swmmflort', 'swmmflort_data', 'swmmflo_culvert', 'swmmoutf', 'swmm_export',
+        'spatialshallow', 'spatialshallow_cells', 'gutter_globals', 'gutter_areas',
+        'gutter_lines', 'gutter_cells', 'tailing_cells', 'tolspatial', 'tolspatial_cells',
+        'wsurf', 'wstime', 'breach_global', 'breach', 'breach_cells',
+        'breach_fragility_curves', 'mud', 'mud_areas', 'mud_cells', 'sed_group_areas',
+        'sed_groups', 'sed_group_frac', 'sed_group_frac_data', 'sed_group_cells',
+        'sed_rigid_areas', 'sed_rigid_cells', 'sed_supply_areas', 'sed_supply_cells',
+        'sed_supply_frac', 'sed_supply_frac_data', 'user_fpxsec', 'user_model_boundary',
+        'user_1d_domain', 'user_left_bank', 'user_right_bank', 'user_xsections',
+        'chan_elems_interp', 'user_chan_r', 'user_chan_v', 'user_chan_t', 'user_chan_n',
+        'user_xsec_n_data', 'user_elevation_points', 'user_levee_lines', 'user_streets',
+        'user_roughness', 'user_spatial_tolerance', 'user_spatial_froude',
+        'user_spatial_shallow_n', 'user_elevation_polygons', 'user_bc_points',
+        'user_bc_lines', 'user_bc_polygons', 'all_schem_bc', 'user_reservoirs',
+        'user_infiltration', 'user_effective_impervious_area', 'raincell',
+        'raincell_data', 'buildings_areas', 'buildings_stats', 'qgis_projects'
+    ]
+
     def __init__(self, con, iface):
         self.iface = iface
         self.uc = UserCommunication(iface, "FLO-2D")
         self.con = con
 
     def copy_from_other(self, other_gpkg):
+        """
+        Function to copy an old geopackage into the newest version
+        """
+        new_gpkg_conn = self.con
+        new_gpkg_cur = new_gpkg_conn.cursor()
+        other_gpkg_conn = sqlite3.connect(other_gpkg)
+        other_gpkg_cur = other_gpkg_conn.cursor()
+
         tab_sql = """SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'gpkg_%' AND name NOT LIKE 'rtree_%';"""
         tabs = [row[0] for row in self.execute(tab_sql)]
         self.execute("ATTACH ? AS other;", (other_gpkg,))
-        insert_sql = """INSERT INTO {0} ({1}) SELECT {1} FROM other.{0};"""
+        other_tab_sql = """SELECT name FROM other.sqlite_master WHERE type='table' AND name NOT LIKE 'gpkg_%' AND name NOT LIKE 'rtree_%';"""
+        other_tabs = [row[0] for row in self.execute(other_tab_sql)]
+
+        tables_in_both = set(tabs) & set(other_tabs)
+        tables_only_in_db1 = set(tabs) - set(other_tabs)
+        tables_only_in_other_gpkg = set(other_tabs) - set(tabs)
+
         self.clear_tables(*tabs)
+
+        # Update old tables
+        update_tables_sql = []
+        for table in tables_only_in_other_gpkg:
+            if table == "infil_areas_green":
+                sql = """
+                        INSERT INTO infil_cells_green (fid, grid_fid, hydc, soils, dtheta, abstrinf, rtimpf, soil_depth)
+                        SELECT infil_cells_green.fid, infil_cells_green.grid_fid, infil_areas_green.hydc, infil_areas_green.soils,
+                               infil_areas_green.dtheta, infil_areas_green.abstrinf, infil_areas_green.rtimpf, infil_areas_green.soil_depth
+                        FROM other.infil_cells_green
+                        JOIN other.infil_areas_green ON other.infil_cells_green.infil_area_fid = other.infil_areas_green.fid;
+                      """
+                update_tables_sql.append(sql)
+            if table == "infil_areas_scs":
+                sql = """
+                        INSERT INTO infil_cells_scs (fid, grid_fid, scsn)
+                        SELECT infil_cells_scs.fid, infil_cells_scs.grid_fid, infil_areas_scs.scsn
+                        FROM other.infil_cells_scs
+                        JOIN other.infil_areas_scs ON other.infil_cells_scs.infil_area_fid = other.infil_areas_scs.fid;
+                      """
+                update_tables_sql.append(sql)
+            if table == "infil_areas_horton":
+                sql = """
+                        INSERT INTO infil_cells_horton (fid, grid_fid, fhorti, fhortf, deca)
+                        SELECT infil_cells_horton.fid, infil_cells_horton.grid_fid, infil_areas_horton.fhorti, 
+                            infil_areas_horton.fhortf, infil_areas_horton.deca
+                        FROM other.infil_cells_horton
+                        JOIN other.infil_areas_horton ON other.infil_cells_horton.infil_area_fid = other.infil_areas_horton.fid;
+                      """
+                update_tables_sql.append(sql)
+            if table == "infil_areas_chan":
+                sql = """
+                        INSERT INTO infil_chan_elems (fid, grid_fid, hydconch)
+                        SELECT infil_chan_elems.fid, infil_chan_elems.grid_fid, infil_areas_chan.hydconch
+                        FROM other.infil_chan_elems
+                        JOIN other.infil_areas_chan ON other.infil_chan_elems.infil_area_fid = other.infil_areas_chan.fid;
+                      """
+                update_tables_sql.append(sql)
+        if len(update_tables_sql) != 0:
+            for sql in update_tables_sql:
+                try:
+                    self.execute(sql)
+                except Exception as e:
+                    self.uc.log_info(traceback.format_exc())
+
+        pd = QProgressDialog("Updating tables...", None, 0, 157)
+        pd.setWindowTitle("Update GeoPackage")
+        pd.setModal(True)
+        pd.forceShow()
+        pd.setValue(0)
+        i = 0
+
+        insert_sql = """INSERT INTO {0} ({1}) SELECT {1} FROM other.{0};"""
         for tab in tabs:
+            pd.setLabelText(f"Updating {tab}...")
             names_new = self.table_info(tab, only_columns=True)
             names_old = set(self.table_info(tab, only_columns=True, attached_db="other"))
             import_names = (name for name in names_new if name in names_old)
@@ -245,6 +356,46 @@ class GeoPackageUtils(object):
                 self.execute(qry)
             except Exception as e:
                 self.uc.log_info(traceback.format_exc())
+            i += 1
+            QApplication.processEvents()
+            pd.setValue(i)
+
+        # Compare schema differences
+        update_schema_sql = []
+        for table in tables_in_both:
+            new_gpkg_cur.execute(f"PRAGMA table_info({table})")
+            columns_new_gpkg = set(column[1] for column in new_gpkg_cur.fetchall())
+
+            other_gpkg_cur.execute(f"PRAGMA table_info({table})")
+            columns_other_gpkg = set(column[1] for column in other_gpkg_cur.fetchall())
+
+            # locate tables with different schemas
+            if columns_new_gpkg != columns_other_gpkg:
+                if table == "grid":
+                    sql = f'''
+                                    UPDATE grid
+                                    SET col = ST_X(ST_Centroid(geom)),
+                                        row = ST_Y(ST_Centroid(geom))
+                               '''
+                    update_schema_sql.append(sql)
+                if table == "outflow_cells":
+                    sql = f'''
+                                    UPDATE outflow_cells
+                                    SET geom_type = CASE 
+                                        WHEN EXISTS (SELECT 1 FROM user_bc_points WHERE user_bc_points.fid = outflow_cells.outflow_fid) THEN 'point'
+                                        WHEN EXISTS (SELECT 1 FROM user_bc_lines WHERE user_bc_lines.fid = outflow_cells.outflow_fid) THEN 'line'
+                                        WHEN EXISTS (SELECT 1 FROM user_bc_polygons WHERE user_bc_polygons.fid = outflow_cells.outflow_fid) THEN 'polygon'
+                                        ELSE 'Unknown'
+                                    END
+                               '''
+                    update_schema_sql.append(sql)
+        if len(update_schema_sql) != 0:
+            for sql in update_schema_sql:
+                try:
+                    self.execute(sql)
+                except Exception as e:
+                    self.uc.log_info(traceback.format_exc())
+
         self.execute("DETACH other;")
 
     def execute(self, statement, inputs=None, get_rowid=False):
@@ -320,12 +471,14 @@ class GeoPackageUtils(object):
         """
         try:
             c = self.con.cursor()
-            c.execute("SELECT COUNT(*) FROM gpkg_contents;")
-            n_layers = c.fetchone()[0]
-            if n_layers == 157:
-                return True
-            else:
-                return False
+            # Check if all expected tables exist
+            for table in self.current_gpkg_tables:
+                c.execute(f"SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name='{table}';")
+                table_exists = c.fetchone()[0]
+                if not table_exists:
+                    return False
+            # If all checks pass, return True
+            return True
         except Exception as e:
             return False
 

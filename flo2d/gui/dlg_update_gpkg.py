@@ -4,7 +4,7 @@ import os
 from PyQt5.QtCore import QSettings
 import qgis
 from PyQt5.QtWidgets import QLineEdit, QSpinBox, QDoubleSpinBox, QCheckBox
-from qgis._core import QgsProject, QgsCoordinateReferenceSystem, QgsUnitTypes
+from qgis._core import QgsProject, QgsCoordinateReferenceSystem, QgsUnitTypes, QgsMessageLog
 
 # FLO-2D Preprocessor tools for QGIS
 # Copyright © 2021 Lutra Consulting for FLO-2D
@@ -19,6 +19,9 @@ from .ui_utils import load_ui
 from ..geopackage_utils import GeoPackageUtils
 from ..utils import get_plugin_version, get_flo2dpro_version
 
+from ..user_communication import UserCommunication
+
+
 uiDialog, qtBaseClass = load_ui("update_gpkg")
 
 
@@ -30,6 +33,7 @@ class UpdateGpkg(qtBaseClass, uiDialog):
         self.con = con
         self.setupUi(self)
         self.gutils = GeoPackageUtils(con, iface)
+        self.uc = UserCommunication(iface, "FLO-2D")
 
         self.populate_gpgk_data()
 
@@ -45,17 +49,17 @@ class UpdateGpkg(qtBaseClass, uiDialog):
         proj_name = os.path.splitext(os.path.basename(geo_path))[0]
         self.label_pn.setText(proj_name)
 
-        sql = """SELECT srs_id FROM gpkg_contents WHERE table_name='grid';"""
-        rc = self.gutils.execute(sql)
-        rt = rc.fetchone()[0]
-        crs = QgsCoordinateReferenceSystem()
-        crs.createFromId(rt)
+        crs = QgsProject.instance().crs()
         self.proj_lab.setText(crs.description())
 
         if crs.mapUnits() == QgsUnitTypes.DistanceMeters:
             mu = "meters"
         elif crs.mapUnits() == QgsUnitTypes.DistanceFeet:
             mu = "feet"
+        else:
+            msg = "WARNING 060319.1654: Unknown map units."
+            mu = ""
+            self.uc.show_warn(msg)
         self.unit_lab.setText(mu)
 
         contact = QgsProject.instance().metadata().author()
@@ -76,11 +80,7 @@ class UpdateGpkg(qtBaseClass, uiDialog):
         """
 
         proj_name = self.label_pn.text()
-        sql = """SELECT srs_id FROM gpkg_contents WHERE table_name='grid';"""
-        rc = self.gutils.execute(sql)
-        rt = rc.fetchone()[0]
-        crs = QgsCoordinateReferenceSystem()
-        crs.createFromId(rt)
+        crs = QgsProject.instance().crs()
         units = self.unit_lab.text()
         contact = self.lineEdit_au.text()
         company = self.lineEdit_co.text()

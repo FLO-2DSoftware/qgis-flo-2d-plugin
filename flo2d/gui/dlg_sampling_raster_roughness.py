@@ -178,14 +178,15 @@ class SamplingRoughnessDialog(qtBaseClass, uiDialog):
             pass
         cmd = 'gdalwarp {} "{}" "{}"'.format(" ".join([opt for opt in opts]), self.src_raster, self.out_raster)
         print(cmd)
-        proc = Popen(
-            cmd,
-            shell=True,
-            stdin=open(os.devnull),
-            stdout=PIPE,
-            stderr=STDOUT,
-            universal_newlines=True,
-        )
+        with open(os.devnull, 'r') as devnull:
+            proc = Popen(
+                cmd,
+                shell=True,
+                stdin=devnull,
+                stdout=PIPE,
+                stderr=STDOUT,
+                universal_newlines=True,
+            )
         out = proc.communicate()
         for line in out:
             self.uc.log_info(line)
@@ -216,14 +217,15 @@ class SamplingRoughnessDialog(qtBaseClass, uiDialog):
     def fill_nodata(self):
         opts = ["-md {}".format(self.radiusSBox.value())]
         cmd = 'gdal_fillnodata {} "{}"'.format(" ".join([opt for opt in opts]), self.out_raster)
-        proc = Popen(
-            cmd,
-            shell=True,
-            stdin=open(os.devnull),
-            stdout=PIPE,
-            stderr=STDOUT,
-            universal_newlines=True,
-        )
+        with open(os.devnull, 'r') as devnull:
+            proc = Popen(
+                cmd,
+                shell=True,
+                stdin=devnull,
+                stdout=PIPE,
+                stderr=STDOUT,
+                universal_newlines=True,
+            )
         out = proc.communicate()
         for line in out:
             self.uc.log_info(line)

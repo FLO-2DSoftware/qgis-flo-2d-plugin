@@ -200,14 +200,15 @@ class ZonalStatistics(object):
         loop = 0
         out = None
         while success is False:
-            proc = Popen(
-                cmd,
-                shell=True,
-                stdin=open(os.devnull),
-                stdout=PIPE,
-                stderr=STDOUT,
-                universal_newlines=True,
-            )
+            with open(os.devnull, 'r') as devnull:
+                proc = Popen(
+                    cmd,
+                    shell=True,
+                    stdin=devnull,
+                    stdout=PIPE,
+                    stderr=STDOUT,
+                    universal_newlines=True,
+                )
             out = proc.communicate()
             if os.path.exists(self.gap_raster):
                 success = True
@@ -220,14 +221,15 @@ class ZonalStatistics(object):
     def fill_nodata(self):
         search = "-md {0}".format(self.search_distance) if self.search_distance > 0 else ""
         cmd = 'gdal_fillnodata {0} "{1}" "{2}"'.format(search, self.gap_raster, self.filled_raster)
-        proc = Popen(
-            cmd,
-            shell=True,
-            stdin=open(os.devnull),
-            stdout=PIPE,
-            stderr=STDOUT,
-            universal_newlines=True,
-        )
+        with open(os.devnull, 'r') as devnull:
+            proc = Popen(
+                cmd,
+                shell=True,
+                stdin=devnull,
+                stdout=PIPE,
+                stderr=STDOUT,
+                universal_newlines=True,
+            )
         out = proc.communicate()
         return cmd, out
 
@@ -376,14 +378,15 @@ class ZonalStatisticsOther(object):
         loop = 0
         out = None
         while success is False:
-            proc = Popen(
-                cmd,
-                shell=True,
-                stdin=open(os.devnull),
-                stdout=PIPE,
-                stderr=STDOUT,
-                universal_newlines=True,
-            )
+            with open(os.devnull, 'r') as devnull:
+                proc = Popen(
+                    cmd,
+                    shell=True,
+                    stdin=devnull,
+                    stdout=PIPE,
+                    stderr=STDOUT,
+                    universal_newlines=True,
+                )
             out = proc.communicate()
             if os.path.exists(self.gap_raster):
                 success = True
@@ -396,14 +399,15 @@ class ZonalStatisticsOther(object):
     def fill_nodata(self):
         search = "-md {0}".format(self.search_distance) if self.search_distance > 0 else ""
         cmd = 'gdal_fillnodata {0} "{1}" "{2}"'.format(search, self.gap_raster, self.filled_raster)
-        proc = Popen(
-            cmd,
-            shell=True,
-            stdin=open(os.devnull),
-            stdout=PIPE,
-            stderr=STDOUT,
-            universal_newlines=True,
-        )
+        with open(os.devnull, 'r') as devnull:
+            proc = Popen(
+                cmd,
+                shell=True,
+                stdin=devnull,
+                stdout=PIPE,
+                stderr=STDOUT,
+                universal_newlines=True,
+            )
         out = proc.communicate()
         return cmd, out
 

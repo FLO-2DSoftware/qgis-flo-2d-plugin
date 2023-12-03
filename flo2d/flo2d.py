@@ -33,8 +33,13 @@ from subprocess import (
     check_output,
     run,
 )
+
+from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QApplication, QToolButton
-from qgis._core import QgsMessageLog, QgsCoordinateReferenceSystem
+from osgeo import gdal
+from qgis._core import QgsMessageLog, QgsCoordinateReferenceSystem, QgsMapSettings, QgsProjectMetadata, \
+    QgsMapRendererParallelJob, QgsLayerTreeLayer, QgsVectorLayerExporter, QgsVectorFileWriter, QgsVectorLayer, \
+    QgsMapLayer, QgsRasterFileWriter, QgsRasterLayer
 from qgis.core import NULL, QgsProject, QgsWkbTypes
 from qgis.gui import QgsDockWidget, QgsProjectionSelectionWidget
 from qgis.PyQt import QtCore
@@ -58,6 +63,7 @@ from qgis.PyQt.QtWidgets import (
     QSpacerItem,
     qApp,
 )
+from qgis.utils import plugins
 from urllib3.contrib import _securetransport
 from .flo2d_ie.flo2dgeopackage import Flo2dGeoPackage
 from .flo2d_tools.channel_profile_tool import ChannelProfile
@@ -108,8 +114,9 @@ from .layers import Layers
 from .user_communication import UserCommunication
 from .utils import get_flo2dpro_version
 
-global GRID_INFO, GENERAL_INFO
+from PIL import Image, ImageDraw
 
+import processing
 
 @contextmanager
 def cd(newdir):
@@ -147,6 +154,7 @@ class Flo2D(object):
         # Declare instance attributes
         self.project = QgsProject.instance()
         self.actions = []
+        self.toolButtons = []
 
         self.files_used = ""
         self.files_not_used = ""
@@ -170,14 +178,6 @@ class Flo2D(object):
         self.crs = None
         self.cur_info_table = None
         self.new_gpkg = None
-
-        # if hasattr(QtCore.Qt, 'AA_EnableHighDpiScaling'):
-        #     QApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling, True)
-        #
-        # if hasattr(QtCore.Qt, 'AA_UseHighDpiPixmaps'):
-        #     QApplication.setAttribute(QtCore.Qt.AA_UseHighDpiPixmaps, True)
-        # else:
-        #     QApplication.setAttribute(QtCore.Qt.AA_UseHighDpiPixmaps, False)
 
         # connections
         self.project.readProject.connect(self.load_gpkg_from_proj)
@@ -270,15 +270,9 @@ class Flo2D(object):
                 popup.addAction(act)
             action.setMenu(popup)
 
-        if text == "Grid Info Tool":
+        if text in ["FLO-2D Grid Info Tool", "FLO-2D Info Tool"]:
             action.setCheckable(True)
             action.setChecked(False)
-            pass
-
-        if text == "Info Tool":
-            action.setCheckable(True)
-            action.setChecked(False)
-            pass
 
         if status_tip is not None:
             action.setStatusTip(status_tip)
@@ -288,21 +282,29 @@ class Flo2D(object):
 
         if add_to_toolbar:
 
-            if text == "Run Simulation":
+            tool_button_mapping = {
+                "FLO-2D Project": ("/img/mGeoPackage.svg", "<b>FLO-2D Project</b>"),
+                "Run FLO-2D Pro": ("/img/flo2d.svg", "<b>Run FLO-2D Pro</b>"),
+                "FLO-2D Import/Export": ("/img/ie.svg", "<b>FLO-2D Import/Export</b>"),
+                "FLO-2D Info Tool": ("/img/info_tool.svg", "<b>FLO-2D Info Tool</b>", True),
+                "FLO-2D Project Review": ("/img/editmetadata.svg", "<b>FLO-2D Project Review</b>", True),
+                "FLO-2D Parameters": ("/img/show_cont_table.svg", "<b>FLO-2D Parameters</b>")
+            }
+
+            if text in tool_button_mapping:
                 toolButton = QToolButton()
                 toolButton.setMenu(popup)
-                toolButton.setIcon(QIcon(self.plugin_dir + "/img/flo2d.svg"))
+                toolButton.setIcon(QIcon(self.plugin_dir + tool_button_mapping[text][0]))
                 toolButton.setPopupMode(QToolButton.InstantPopup)
+
+                if len(tool_button_mapping[text]) >= 3 and tool_button_mapping[text][2]:
+                    toolButton.setCheckable(True)
+
                 self.toolbar.addWidget(toolButton)
-            elif text == "Import/Export":
-                toolButton = QToolButton()
-                toolButton.setMenu(popup)
-                toolButton.setIcon(QIcon(self.plugin_dir + "/img/export.png"))
-                toolButton.setPopupMode(QToolButton.InstantPopup)
-                self.toolbar.addWidget(toolButton)
+                toolButton.setToolTip(tool_button_mapping[text][1])
+                self.toolButtons.append(toolButton)
             else:
                 self.toolbar.addAction(action)
-
 
         if add_to_menu:
             self.iface.addPluginToMenu(self.menu, action)
@@ -314,81 +316,35 @@ class Flo2D(object):
         """
         Create the menu entries and toolbar icons inside the QGIS GUI.
         """
-        global GRID_INFO, GENERAL_INFO
+        # global GRID_INFO, GENERAL_INFO
 
         self.add_action(
-            os.path.join(self.plugin_dir, "img/settings.svg"),
-            text=self.tr("Settings"),
-            callback=self.show_settings,
-            parent=self.iface.mainWindow()
-        )
-
-        self.add_action(
-            os.path.join(self.plugin_dir, "img/flo_open_project.svg"),
-            text=self.tr("Open FLO-2D geopackage"),
-            callback=lambda: self.flo_open_project(),
-            parent=self.iface.mainWindow()
-        )
-
-        self.add_action(
-            os.path.join(self.plugin_dir, "img/flo_save_project.svg"),
-            text=self.tr("Save FLO-2D geopackage"),
-            callback=lambda: self.flo_save_project(),
-            parent=self.iface.mainWindow()
-        )
-
-        self.add_action(
-            os.path.join(self.plugin_dir, "img/flo2d.svg"),
-            text=self.tr("Run Simulation"),
+            os.path.join(self.plugin_dir, "img/mGeoPackage.svg"),
+            text=self.tr("FLO-2D Project"),
             callback=None,
             parent=self.iface.mainWindow(),
             menu=(
                 (
-                    os.path.join(self.plugin_dir, "img/flo2d.svg"),
-                    "Quick Run FLO-2D Pro",
-                    lambda: self.quick_run_flopro(),
+                    os.path.join(self.plugin_dir, "img/mActionNewGeoPackageLayer.svg"),
+                    "New FLO-2D Project",
+                    lambda: self.show_settings(),
                 ),
                 (
-                    os.path.join(self.plugin_dir, "img/FLO.png"),
-                    "Run FLO-2D Pro",
-                    self.run_flopro,
+                    os.path.join(self.plugin_dir, "img/mActionAddGeoPackageLayer.svg"),
+                    "Open FLO-2D Project",
+                    lambda: self.flo_open_project(),
                 ),
                 (
-                    os.path.join(self.plugin_dir, "img/profile_run2.svg"),
-                    "Run Profiles",
-                    self.run_profiles,
-                ),
-                (
-                    os.path.join(self.plugin_dir, "img/hydrog.svg"),
-                    "Run Hydrog",
-                    self.run_hydrog,
-                ),
-                (
-                    os.path.join(self.plugin_dir, "img/maxplot.svg"),
-                    "Run MaxPlot",
-                    self.run_maxplot,
-                ),
-                (
-                    os.path.join(self.plugin_dir, "img/mapper2.svg"),
-                    "Run Mapper",
-                    self.run_mapper,
-                ),
-                (
-                    os.path.join(self.plugin_dir, "img/tailings dam breach.svg"),
-                    "Run Tailings Dam Tool ",
-                    self.run_tailingsdambreach,
-                ),
-                (
-                    os.path.join(self.plugin_dir, "img/settings2.svg"),
-                    "Run Settings",
-                    self.run_settings,
+                    os.path.join(self.plugin_dir, "img/mActionSaveGeoPackageLayer.svg"),
+                    "Save FLO-2D Project",
+                    lambda: self.flo_save_project(),
                 )
             )
         )
 
         self.add_action(
-            os.path.join(self.plugin_dir, "img/export.png"),
-            text=self.tr("Import/Export"),
+            os.path.join(self.plugin_dir, "img/ie.svg"),
+            text=self.tr("FLO-2D Import/Export"),
             callback=None,
             parent=self.iface.mainWindow(),
             menu=(
@@ -413,12 +369,12 @@ class Flo2D(object):
                     lambda: self.export_gds(),
                 ),
                 (
-                    os.path.join(self.plugin_dir, "img/import_hdf.svg"),
+                    os.path.join(self.plugin_dir, "img/import_hdf5.svg"),
                     "Import from HDF5",
                     lambda: self.import_hdf5(),
                 ),
                 (
-                    os.path.join(self.plugin_dir, "img/export_hdf.svg"),
+                    os.path.join(self.plugin_dir, "img/export_hdf5.svg"),
                     "Export to HDF5",
                     lambda: self.export_hdf5(),
                 ),
@@ -431,100 +387,139 @@ class Flo2D(object):
         )
 
         self.add_action(
+            os.path.join(self.plugin_dir, "img/flo2d.svg"),
+            text=self.tr("Run FLO-2D Pro"),
+            callback=None,
+            parent=self.iface.mainWindow(),
+            menu=(
+                (
+                    os.path.join(self.plugin_dir, "img/mActionOptions.svg"),
+                    "FLO-2D Settings",
+                    lambda: self.run_settings(),
+                ),
+                (
+                    os.path.join(self.plugin_dir, "img/flo2d.svg"),
+                    "Quick Run FLO-2D Pro",
+                    lambda: self.quick_run_flopro(),
+                ),
+                (
+                    os.path.join(self.plugin_dir, "img/FLO.svg"),
+                    "Run FLO-2D Pro",
+                    self.run_flopro,
+                ),
+                (
+                    os.path.join(self.plugin_dir, "img/tailings dam breach.svg"),
+                    "Run Tailings Dam Tool ",
+                    self.run_tailingsdambreach,
+                ),
+                (
+                    os.path.join(self.plugin_dir, "img/profile_run2.svg"),
+                    "Run Profiles",
+                    self.run_profiles,
+                ),
+                (
+                    os.path.join(self.plugin_dir, "img/hydrog.svg"),
+                    "Run Hydrog",
+                    self.run_hydrog,
+                ),
+                (
+                    os.path.join(self.plugin_dir, "img/maxplot.svg"),
+                    "Run MaxPlot",
+                    self.run_maxplot,
+                ),
+                (
+                    os.path.join(self.plugin_dir, "img/mapcrafter.svg"),
+                    "Run MapCrafter",
+                    self.run_mapcrafter,
+                ),
+                (
+                    os.path.join(self.plugin_dir, "img/rasterizor.svg"),
+                    "Run Rasterizor",
+                    self.run_rasterizor,
+                ),
+            )
+        )
+
+        self.add_action(
             os.path.join(self.plugin_dir, "img/show_cont_table.svg"),
-            text=self.tr("Set Control Parameters"),
-            callback=lambda: self.show_cont_toler(),
+            text=self.tr("FLO-2D Parameters"),
+            callback=None,
             parent=self.iface.mainWindow(),
+            menu=(
+                (
+                    os.path.join(self.plugin_dir, "img/show_cont_table.svg"),
+                    "Set Control Parameters (CONT.DAT)",
+                    lambda: self.show_cont_toler(),
+                ),
+                (
+                    os.path.join(self.plugin_dir, "img/landslide.svg"),
+                    "Mud and Sediment Transport (SED.DAT)",
+                    lambda: self.show_mud_and_sediment_dialog(),
+                ),
+                (
+                    os.path.join(self.plugin_dir, "img/schematic_to_user.svg"),
+                    "Convert Schematic Layers to User Layers",
+                    lambda: self.schematic2user(),
+                ),
+                (
+                    os.path.join(self.plugin_dir, "img/evaporation_editor.svg"),
+                    "Evaporation Editor",
+                    lambda: self.show_evap_editor(),
+                ),
+                (
+                    os.path.join(self.plugin_dir, "img/set_levee_elev.svg"),
+                    "Levee Elevation Tool",
+                    lambda: self.show_levee_elev_tool(),
+                ),
+            )
         )
 
         self.add_action(
-            os.path.join(self.plugin_dir, "img/schematic_to_user.svg"),
-            text=self.tr("Convert Schematic Layers to User Layers"),
-            callback=lambda: self.schematic2user(),
-            parent=self.iface.mainWindow(),
-        )
-
-        # self.add_action(
-        #     os.path.join(self.plugin_dir, "img/user_to_schematic.svg"),
-        #     text=self.tr("Convert User Layers to Schematic Layers"),
-        #     callback=lambda: self.user2schematic(),
-        #     parent=self.iface.mainWindow(),
-        # )
-
-        self.add_action(
-            os.path.join(self.plugin_dir, "img/profile_tool.svg"),
-            text=self.tr("Channel Profile"),
-            callback=self.channel_profile,
-            # Connects to 'init_channel_profile' method, via QAction triggered.connect(callback)
-            parent=self.iface.mainWindow(),
-        )
-
-        GENERAL_INFO = self.add_action(
             os.path.join(self.plugin_dir, "img/info_tool.svg"),
-            text=self.tr("Info Tool"),
-            callback=self.activate_general_info_tool,
+            text=self.tr("FLO-2D Info Tool"),
+            callback=None,
             parent=self.iface.mainWindow(),
             menu=(
                 (
                     os.path.join(self.plugin_dir, "img/info_tool.svg"),
                     "Info Tool",
-                    self.activate_general_info_tool ,
-                ),                
-                (
-                    os.path.join(self.plugin_dir, "img/flo2d.svg"),
-                    "Select .RPT file",
-                    self.select_RPT_File,
+                    lambda: self.activate_general_info_tool(),
                 ),
-            ),
-        )
-
-        GRID_INFO = self.add_action(
-            os.path.join(self.plugin_dir, "img/grid_info_tool.svg"),
-            text=self.tr("Grid Info Tool"),
-            callback=lambda: self.activate_grid_info_tool(),
-            parent=self.iface.mainWindow(),
-        )
-
-        self.add_action(
-            os.path.join(self.plugin_dir, "img/evaporation_editor.svg"),
-            text=self.tr("Evaporation Editor"),
-            callback=lambda: self.show_evap_editor(),
-            parent=self.iface.mainWindow(),
+                (
+                    os.path.join(self.plugin_dir, "img/import_swmm.svg"),
+                    "Select .RPT file",
+                    lambda: self.select_RPT_File(),
+                ),
+                (
+                    os.path.join(self.plugin_dir, "img/grid_info_tool.svg"),
+                    "Grid Info Tool",
+                    lambda: self.activate_grid_info_tool(),
+                ),
+            )
         )
 
         self.add_action(
-            os.path.join(self.plugin_dir, "img/set_levee_elev.svg"),
-            text=self.tr("Levee Elevation Tool"),
-            callback=lambda: self.show_levee_elev_tool(),
+            os.path.join(self.plugin_dir, "img/editmetadata.svg"),
+            text=self.tr("FLO-2D Project Review"),
+            callback=None,
             parent=self.iface.mainWindow(),
-        )
-
-        self.add_action(
-            os.path.join(self.plugin_dir, "img/hazus.svg"),
-            text=self.tr("HAZUS"),
-            callback=lambda: self.show_hazus_dialog(),
-            parent=self.iface.mainWindow(),
-        )
-
-        # self.add_action(
-        #     os.path.join(self.plugin_dir, "img/tailings dam breach.svg"),
-        #     text=self.tr("Tailings Dam Tool"),
-        #     callback=self.run_tailingsdambreach,
-        #     parent=self.iface.mainWindow(),
-        # )
-
-        self.add_action(
-            os.path.join(self.plugin_dir, "img/landslide.svg"),
-            text=self.tr("Mud and Sediment Transport"),
-            callback=lambda: self.show_mud_and_sediment_dialog(),
-            parent=self.iface.mainWindow(),
-        )
-
-        self.add_action(
-            os.path.join(self.plugin_dir, "img/issue.svg"),
-            text=self.tr("Warnings and Errors"),
-            callback=lambda: self.show_errors_dialog(),
-            parent=self.iface.mainWindow(),
+            menu=(
+                (
+                    os.path.join(self.plugin_dir, "img/hazus.svg"),
+                    "HAZUS",
+                    lambda: self.show_hazus_dialog(),
+                ),
+                (
+                    os.path.join(self.plugin_dir, "img/profile_tool.svg"),
+                    "Channel Profile",
+                    lambda: self.channel_profile(),
+                ),
+                (
+                    os.path.join(self.plugin_dir, "img/issue.svg"),
+                    "Warnings and Errors",
+                    lambda: self.show_errors_dialog(),
+                ),
+            )
         )
 
         self.add_action(
@@ -758,7 +753,7 @@ class Flo2D(object):
         """
         Function to create a new geopackage
         """
-        self.uncheck_all_info_toggles()
+        self.uncheck_all_info_tools()
         dlg_settings = SettingsDialog(self.con, self.iface, self.lyrs, self.gutils)
         dlg_settings.show()
         result = dlg_settings.exec_()
@@ -786,12 +781,6 @@ class Flo2D(object):
             qgis_v = dlg_settings.label_qv.text()
             flo2d_v = dlg_settings.label_fv.text()
 
-            sql = """SELECT srs_id FROM gpkg_contents WHERE table_name='grid';"""
-            rc = self.gutils.execute(sql)
-            rt = rc.fetchone()[0]
-            crs = QgsCoordinateReferenceSystem()
-            crs.createFromId(rt)
-
             self.gutils.set_metadata_par("PROJ_NAME", pn)
             self.gutils.set_metadata_par("CONTACT", contact)
             self.gutils.set_metadata_par("EMAIL", email)
@@ -800,7 +789,7 @@ class Flo2D(object):
             self.gutils.set_metadata_par("PLUGIN_V", plugin_v)
             self.gutils.set_metadata_par("QGIS_V", qgis_v)
             self.gutils.set_metadata_par("FLO-2D_V", flo2d_v)
-            self.gutils.set_metadata_par("CRS", crs.authid())
+            self.gutils.set_metadata_par("CRS", self.crs.authid())
 
             uri = f'geopackage:{gpkg_path}?projectName={pn}'
             self.project.write(uri)
@@ -822,6 +811,7 @@ class Flo2D(object):
         if not gpkg_path:
             return
         try:
+            QApplication.setOverrideCursor(Qt.WaitCursor)
             s.setValue("FLO-2D/lastGpkgDir", os.path.dirname(gpkg_path))
 
             self.new_gpkg = gpkg_path
@@ -837,11 +827,10 @@ class Flo2D(object):
                     QApplication.setOverrideCursor(Qt.WaitCursor)
                     # Create an updated geopackage and copy old package data to it
                     new_gpkg_path = gpkg_path[:-5] + "_v1.0.0.gpkg"
-                    sql = """SELECT srs_id FROM gpkg_contents WHERE table_name='grid';"""
-                    rc = self.gutils.execute(sql)
-                    rt = rc.fetchone()[0]
+                    proj = self.gutils.get_cont_par("PROJ")
+                    cell_size = int(float(self.gutils.get_cont_par("CELLSIZE")))
                     crs = QgsCoordinateReferenceSystem()
-                    crs.createFromId(rt)
+                    crs.createFromProj(proj)
                     # create new geopackage TODO: This should be on the geopackage_utils and not on the settings
                     dlg_settings = SettingsDialog(self.con, self.iface, self.lyrs, self.gutils)
                     dlg_settings.create_db(new_gpkg_path, crs)
@@ -851,13 +840,18 @@ class Flo2D(object):
                     self.con = database_connect(new_gpkg_path)
                     self.gutils = GeoPackageUtils(self.con, self.iface)
                     dlg_update_gpkg = UpdateGpkg(self.con, self.iface)
+                    dlg_update_gpkg.cellSizeDSpinBox.setValue(cell_size)
                     dlg_update_gpkg.show()
+                    QApplication.restoreOverrideCursor()
                     result = dlg_update_gpkg.exec_()
                     if result:
                         QApplication.setOverrideCursor(Qt.WaitCursor)
                         dlg_update_gpkg.write()
                         dlg_settings.set_default_controls(self.con) # TODO: This should be on the geopackage_utils and not on the settings
                         self.gutils.copy_from_other(gpkg_path)
+                        # Old gpkg used float values for CELLSIZE, need to explicitly convert it
+                        cell_size = self.gutils.get_cont_par("CELLSIZE")
+                        self.gutils.set_cont_par("CELLSIZE", int(float(cell_size)))
                         contact = dlg_update_gpkg.lineEdit_au.text()
                         email = dlg_update_gpkg.lineEdit_co.text()
                         company = dlg_update_gpkg.lineEdit_em.text()
@@ -877,12 +871,10 @@ class Flo2D(object):
                         self.gutils.set_metadata_par("CRS", crs.authid())
                         uri = f'geopackage:{new_gpkg_path}?projectName={proj_name + "_v1.0.0"}'
                         gpkg_path = new_gpkg_path
+                        QApplication.restoreOverrideCursor()
                 else:
                     self.uc.log_info("Connection closed")
                     return False
-
-            # No project inside the geopackage
-            QgsMessageLog.logMessage(uri)
 
             if not self.project.read(uri):
 
@@ -895,23 +887,22 @@ class Flo2D(object):
                 answer = self.uc.dialog_with_2_customized_buttons(title, msg, text1, text2)
                 # Create new project
                 if answer == QMessageBox.Yes:
+                    QApplication.setOverrideCursor(Qt.WaitCursor)
                     dlg_settings = SettingsDialog(self.con, self.iface, self.lyrs, self.gutils)
                     if not dlg_settings.connect(gpkg_path):
                         return
                     self.con = dlg_settings.con
                     self.iface.f2d["con"] = self.con
                     self.gutils = dlg_settings.gutils
-                    sql = """SELECT srs_id FROM gpkg_contents WHERE table_name='grid';"""
-                    rc = self.gutils.execute(sql)
-                    rt = rc.fetchone()[0]
+                    proj = self.gutils.get_cont_par("PROJ")
                     self.crs = QgsCoordinateReferenceSystem()
-                    self.crs.createFromId(rt)
+                    self.crs.createFromProj(proj)
                     self.setup_dock_widgets()
-
                     self.project.setCrs(self.crs)
                     gpkg_path_adj = gpkg_path.replace("\\", "/")
                     self.write_proj_entry("gpkg", gpkg_path_adj)
                     self.project.write(uri)
+                    QApplication.restoreOverrideCursor()
                     self.uc.show_info("FLO-2D-Project created into the Geopackage.")
 
                 # Open existing project
@@ -928,6 +919,7 @@ class Flo2D(object):
 
                     self.project.read(qgz_path)
                     self.project.write(uri)
+                    QApplication.restoreOverrideCursor()
                     self.uc.show_info("FLO-2D-Project added into the Geopackage.")
 
                 # Cancel
@@ -948,24 +940,109 @@ class Flo2D(object):
         """
         Function to save a FLO-2D project into a geopackage
         """
+
+        QApplication.setOverrideCursor(Qt.WaitCursor)
+
         gpkg_path = self.gutils.get_gpkg_path()
         proj_name = os.path.splitext(os.path.basename(gpkg_path))[0]
         uri = f'geopackage:{gpkg_path}?projectName={proj_name}'
+
+        layers = self.project.mapLayers()
+        checked_layers = False
+
+        for layer_id, layer in layers.items():
+            uri_parts = layer.source().split('|')
+            uri_parts2 = layer.source().split(':')
+            if not uri_parts[0].endswith('.gpkg') and not uri_parts2[0].startswith('GPKG'):
+                if not checked_layers:
+                    title = "User layers were added to the project. Would you like to save them into the geopackage?"
+                    QApplication.restoreOverrideCursor()
+                    if self.uc.question(title):
+                        QApplication.setOverrideCursor(Qt.WaitCursor)
+                        checked_layers = True
+                    else:
+                        QApplication.setOverrideCursor(Qt.WaitCursor)
+                        break
+                # Check if it is vector or raster
+                if layer.type() == QgsMapLayer.VectorLayer:
+                    # Save to gpkg
+                    options = QgsVectorFileWriter.SaveVectorOptions()
+                    options.driverName = "GPKG"
+                    options.includeZ = True
+                    options.overrideGeometryType = layer.wkbType()
+                    options.layerName = layer.name()
+                    options.actionOnExistingFile = QgsVectorFileWriter.CreateOrOverwriteLayer
+                    QgsVectorFileWriter.writeAsVectorFormatV3(
+                        layer,
+                        gpkg_path,
+                        QgsProject.instance().transformContext(),
+                        options)
+                    # Add back to the project
+                    gpkg_uri = f"{gpkg_path}|layername={layer.name()}"
+                    gpkg_layer = QgsVectorLayer(gpkg_uri, layer.name(), "ogr")
+                    gpkg_layer.setRenderer(layer.renderer().clone())
+                    gpkg_layer.triggerRepaint()
+                    self.project.addMapLayer(gpkg_layer)
+                    # Delete layer that is not in the gpkg
+                    self.project.removeMapLayer(layer_id)
+                elif layer.type() == QgsMapLayer.RasterLayer:
+                    # Save to gpkg
+                    layer_name = layer.name().replace(" ", "_")
+                    params = {'INPUT': f'{layer.dataProvider().dataSourceUri()}',
+                              'TARGET_CRS': None,
+                              'NODATA': None,
+                              'COPY_SUBDATASETS': False,
+                              'OPTIONS': '',
+                              'EXTRA': f'-co APPEND_SUBDATASET=YES -co RASTER_TABLE={layer_name}',
+                              'DATA_TYPE': 0,
+                              'OUTPUT': f'{gpkg_path}'}
+
+                    processing.run("gdal:translate", params)
+
+                    gpkg_uri = f"GPKG:{gpkg_path}:{layer_name}"
+                    gpkg_layer = QgsRasterLayer(gpkg_uri, layer_name, "gdal")
+                    gpkg_layer.setRenderer(layer.renderer().clone())
+                    gpkg_layer.triggerRepaint()
+                    self.project.addMapLayer(gpkg_layer)
+                    # Delete layer that is not in the gpkg
+                    self.project.removeMapLayer(layer_id)
+
+                else:
+                    QApplication.restoreOverrideCursor()
+                    self.uc.show_warn("Your layer type is not Vector or Raster.")
+                    QApplication.setOverrideCursor(Qt.WaitCursor)
+
+        # Need to trigger the save button to add a project thumbnail to recent projects
+        self.iface.mainWindow().findChild(QAction, 'mActionSaveProject').trigger()
         self.project.write(uri)
 
-        # Save on recent projects
-        QSettings().setValue('UI/recentProjects/1/crs', self.project.crs().authid())
-        QSettings().setValue('UI/recentProjects/1/path', uri)
-        QSettings().setValue('UI/recentProjects/1/previewImage', os.path.join(self.plugin_dir, "img/F2D 400 Transparent.png"))
-        QSettings().setValue('UI/recentProjects/1/title', proj_name)
+        thumbnail = QSettings().value('UI/recentProjects/1/previewImage')
+        picture = Image.open(thumbnail)
 
+        # Open the logo
+        logo_path = self.plugin_dir + "/img/F2D 400 Transparent.png"
+        logo = Image.open(logo_path)
+
+        # Resize the logo to your desired size
+        logo = logo.resize((100, 30))  # Adjust the size as needed
+
+        # Choose the position to paste the logo on the picture
+        position = (10, 10)  # Adjust the coordinates as needed
+
+        # Paste the logo on the picture
+        picture.paste(logo, position, logo)
+
+        # Save the result
+        picture.save(thumbnail)
+
+        QApplication.restoreOverrideCursor()
         self.uc.show_info("FLO-2D-Project saved!")
 
     def run_settings(self):
         """
         Function to set the run settings: FLO-2D and Project folders
         """
-        self.uncheck_all_info_toggles()
+        self.uncheck_all_info_tools()
         dlg = ExternalProgramFLO2D(self.iface, "Run Settings")
         dlg.debug_run_btn.setVisible(False)
         dlg.exec_folder_lbl.setText("FLO-2D Folder")
@@ -1040,7 +1117,6 @@ class Flo2D(object):
             s.setValue("FLO-2D/lastGdsDir", outdir)
 
             dlg_components = ComponentsDialog(self.con, self.iface, self.lyrs, "out")
-            QgsMessageLog.logMessage(str(dlg_components))
             ok = dlg_components.exec_()
             if ok:
                 if "Channels" not in dlg_components.components:
@@ -1177,37 +1253,57 @@ class Flo2D(object):
             self.run_program("FLOPRO.exe")
 
     def run_flopro(self):
-        self.uncheck_all_info_toggles()
+        self.uncheck_all_info_tools()
         s = QSettings()
         flo2d_v = get_flo2dpro_version(s.value("FLO-2D/last_flopro") + "/FLOPRO.exe")
         self.gutils.set_metadata_par("FLO-2D_V", flo2d_v)
         self.run_program("FLOPRO.exe")
 
     def run_tailingsdambreach(self):
-        self.uncheck_all_info_toggles()
+        self.uncheck_all_info_tools()
         self.run_program("Tailings Dam Breach.exe")
 
-    def run_mapper(self):
-        self.uncheck_all_info_toggles()
-        self.run_program("Mapper PRO.exe")
+    def run_mapcrafter(self):
+        """
+        Function to call MapCrafter
+        """
+        self.uncheck_all_info_tools()
+        if 'flo2d_mapcrafter' not in plugins:
+            self.uc.show_info(
+                "FLO-2D MapCrafter not found! Please, use QGIS Official Plugin Repository to install MapCrafter.")
+        else:
+            mapcrafter = plugins['flo2d_mapcrafter']
+            mapcrafter.open()
+
+    def run_rasterizor(self):
+        """
+        Function to call Rasterizor
+        """
+        self.uncheck_all_info_tools()
+        if 'rasterizor' not in plugins:
+            self.uc.show_info(
+                "FLO-2D Rasterizor not found! Please, use QGIS Official Plugin Repository to install Rasterizor.")
+        else:
+            rasterizor = plugins['rasterizor']
+            rasterizor.open()
 
     def run_profiles(self):
-        self.uncheck_all_info_toggles()
+        self.uncheck_all_info_tools()
         self.run_program("PROFILES.exe")
 
     def run_hydrog(self):
-        self.uncheck_all_info_toggles()
+        self.uncheck_all_info_tools()
         self.run_program("HYDROG.exe")
 
     def run_maxplot(self):
-        self.uncheck_all_info_toggles()
+        self.uncheck_all_info_tools()
         self.run_program("MAXPLOT.exe")
 
     def run_program(self, exe_name):
         """
         Function to run programs
         """
-        self.uncheck_all_info_toggles()
+        self.uncheck_all_info_tools()
         s = QSettings()
         # check if run was configured
         if not s.contains("FLO-2D/run_settings"):
@@ -1241,12 +1337,11 @@ class Flo2D(object):
             self.uc.bar_warn("Running " + exe_name + " failed!")
 
     def select_RPT_File(self):
-        self.uncheck_all_info_toggles()
+        self.uncheck_all_info_tools()
 
         grid = self.lyrs.data["grid"]["qlyr"]
         if grid is not None:
             if self.f2d_widget.storm_drain_editor.create_SD_discharge_table_and_plots("Just assign FLO-2D settings"):
-                GENERAL_INFO.setChecked(True)
                 self.canvas.setMapTool(self.info_tool)
         else:
             self.uc.bar_warn("There is no grid layer to identify.")
@@ -1261,52 +1356,91 @@ class Flo2D(object):
         qgs_file = QgsProject.instance().fileName()
         qgs_dir = os.path.dirname(qgs_file)
 
+        # File adjustment from loading recent projects
+        if new_gpkg is None:
+            uri = self.project.fileName()
+            if uri.startswith("geopackage:"):
+                new_gpkg = uri[len("geopackage:"):].split('?')[0]
+
         # Geopackage associated with the project
         if old_gpkg:
-            msg = f"This QGIS project uses the FLO-2D Plugin and the following database file:\n\n{old_gpkg}\n\n"
-            # Geopackage does not exist at original path
-            if not os.path.exists(old_gpkg):
-                msg += "Unfortunately it seems that database file doesn't exist at given location."
-                gpkg_dir, gpkg_file = os.path.split(old_gpkg)
-                _old_gpkg = os.path.join(qgs_dir, gpkg_file)
-                if os.path.exists(_old_gpkg):
-                    msg += f" However there is a file with the same name at your project location:\n\n{_old_gpkg}\n\n"
-                    msg += "Load the model?"
-                    old_gpkg = _old_gpkg
-                    answer = self.uc.customized_question("FLO-2D", msg)
+            # Check if opening gpkg (new_gpkg) is the same as the project gpkg (old_gpkg)
+            # Project gpkg is the same as the gpkg being opened or gpkg being opened is None (load from recent projects)
+            if old_gpkg == new_gpkg:
+                msg = f"This QGIS project uses the FLO-2D Plugin and the following database file:\n\n{old_gpkg}\n\n"
+                # Geopackage does not exist at original path
+                if not os.path.exists(old_gpkg):
+                    msg += "Unfortunately it seems that database file doesn't exist at given location."
+                    gpkg_dir, gpkg_file = os.path.split(old_gpkg)
+                    _old_gpkg = os.path.join(qgs_dir, gpkg_file)
+                    if os.path.exists(_old_gpkg):
+                        msg += f" However there is a file with the same name at your project location:\n\n{_old_gpkg}\n\n"
+                        msg += "Load the model?"
+                        old_gpkg = _old_gpkg
+                        QApplication.restoreOverrideCursor()
+                        answer = self.uc.customized_question("FLO-2D", msg)
+                    else:
+
+                        answer = self.uc.customized_question("FLO-2D", msg, QMessageBox.Cancel, QMessageBox.Cancel)
+                # Geopackage exists at the original path
                 else:
-                    answer = self.uc.customized_question("FLO-2D", msg, QMessageBox.Cancel, QMessageBox.Cancel)
-            # Geopackage exists at the original path
+                    msg += "Load the model?"
+                    QApplication.restoreOverrideCursor()
+                    answer = self.uc.customized_question("FLO-2D", msg)
+                if answer == QMessageBox.Yes:
+                    QApplication.setOverrideCursor(Qt.WaitCursor)
+                    qApp.processEvents()
+                    dlg_settings = SettingsDialog(self.con, self.iface, self.lyrs, self.gutils)
+                    if not dlg_settings.connect(old_gpkg):
+                        return
+                    self.con = dlg_settings.con
+                    self.iface.f2d["con"] = self.con
+                    self.gutils = dlg_settings.gutils
+                    self.crs = dlg_settings.crs
+                    self.setup_dock_widgets()
+
+                    s = QSettings()
+                    s.setValue("FLO-2D/last_flopro_project", qgs_file)
+                    s.setValue("FLO-2D/lastGdsDir", os.path.dirname(old_gpkg))
+                    window_title = s.value("FLO-2D/last_flopro_project", "")
+                    self.iface.mainWindow().setWindowTitle(window_title)
+                    QApplication.restoreOverrideCursor()
+                else:
+                    return
+            # Project gpkg is not the same as the gpkg being opened
             else:
+                msg = f"This QGIS project uses the FLO-2D Plugin and the following database file:\n\n{new_gpkg}\n\n"
+                # Geopackage exists at the original path
                 msg += "Load the model?"
                 QApplication.restoreOverrideCursor()
                 answer = self.uc.customized_question("FLO-2D", msg)
-            if answer == QMessageBox.Yes:
-                QApplication.setOverrideCursor(Qt.WaitCursor)
-                qApp.processEvents()
-                dlg_settings = SettingsDialog(self.con, self.iface, self.lyrs, self.gutils)
-                if not dlg_settings.connect(old_gpkg):
-                    return
-                self.con = dlg_settings.con
-                self.iface.f2d["con"] = self.con
-                self.gutils = dlg_settings.gutils
-                self.crs = dlg_settings.crs
-                self.setup_dock_widgets()
+                if answer == QMessageBox.Yes:
+                    QApplication.setOverrideCursor(Qt.WaitCursor)
+                    qApp.processEvents()
+                    dlg_settings = SettingsDialog(self.con, self.iface, self.lyrs, self.gutils)
+                    if not dlg_settings.connect(new_gpkg):
+                        return
+                    self.con = dlg_settings.con
+                    self.iface.f2d["con"] = self.con
+                    self.gutils = dlg_settings.gutils
+                    self.crs = dlg_settings.crs
+                    self.setup_dock_widgets()
 
-                s = QSettings()
-                s.setValue("FLO-2D/last_flopro_project", qgs_file)
-                s.setValue("FLO-2D/lastGdsDir", os.path.dirname(old_gpkg))
-                window_title = s.value("FLO-2D/last_flopro_project", "")
-                self.iface.mainWindow().setWindowTitle(window_title)
-                QApplication.restoreOverrideCursor()
-            else:
-                return
+                    s = QSettings()
+                    s.setValue("FLO-2D/last_flopro_project", qgs_file)
+                    s.setValue("FLO-2D/lastGdsDir", os.path.dirname(new_gpkg))
+                    window_title = s.value("FLO-2D/last_flopro_project", "")
+                    self.iface.mainWindow().setWindowTitle(window_title)
+                    QApplication.restoreOverrideCursor()
+                else:
+                    return
 
         # Geopackage not associated with the project -> This is not going to happen in the future because the project
         # is now located inside the geopackage
         else:
             msg = f"This QGIS project uses the FLO-2D Plugin but does not have a database associated.\n\n"
             msg += "Would you like to load the geopackage?"
+            QApplication.restoreOverrideCursor()
             answer = self.uc.customized_question("FLO-2D", msg)
             if answer == QMessageBox.Yes:
                 s = QSettings()
@@ -1343,9 +1477,6 @@ class Flo2D(object):
         proj_name = os.path.splitext(os.path.basename(gpkg_path))[0]
         uri = f'geopackage:{gpkg_path}?projectName={proj_name}'
         self.project.write(uri)
-
-        GRID_INFO.setChecked(False)
-        GENERAL_INFO.setChecked(False)
 
     def call_IO_methods(self, calls, debug, *args):
         if self.f2g.parsed_format == Flo2dGeoPackage.FORMAT_DAT:
@@ -1444,7 +1575,7 @@ class Flo2D(object):
         """
         Import traditional GDS files into FLO-2D database (GeoPackage).
         """
-        self.uncheck_all_info_toggles()
+        self.uncheck_all_info_tools()
         self.gutils.disable_geom_triggers()
         self.f2g = Flo2dGeoPackage(self.con, self.iface)
         import_calls = [
@@ -1836,7 +1967,7 @@ class Flo2D(object):
         """
         Import HDF5 datasets into FLO-2D database (GeoPackage).
         """
-        self.uncheck_all_info_toggles()
+        self.uncheck_all_info_tools()
         self.gutils.disable_geom_triggers()
         self.f2g = Flo2dGeoPackage(self.con, self.iface)
         import_calls = [
@@ -2005,7 +2136,7 @@ class Flo2D(object):
                 self.call_IO_methods(import_calls, True)
 
                 # save CRS to table cont
-                self.gutils.set_cont_par("PROJ", self.crs.toProj4())
+                self.gutils.set_cont_par("PROJ", self.crs.toProj())
 
                 # load layers and tables
                 self.load_layers()
@@ -2084,7 +2215,7 @@ class Flo2D(object):
         """
         Import selected traditional GDS files into FLO-2D database (GeoPackage).
         """
-        self.uncheck_all_info_toggles()
+        self.uncheck_all_info_tools()
         imprt = self.uc.dialog_with_2_customized_buttons(
             "Select import method", "", " Several Components", " One Single Component "
         )
@@ -2237,7 +2368,7 @@ class Flo2D(object):
                         # FLO-2D .DAT files
 
                         # save CRS to table cont
-                        self.gutils.set_cont_par("PROJ", self.crs.toProj4())
+                        self.gutils.set_cont_par("PROJ", self.crs.toProj())
 
                         # load layers and tables
                         self.load_layers()
@@ -2457,7 +2588,7 @@ class Flo2D(object):
         """
         Export traditional GDS files into FLO-2D database (GeoPackage).
         """
-        self.uncheck_all_info_toggles()
+        self.uncheck_all_info_tools()
         if self.gutils.is_table_empty("grid"):
             self.uc.bar_warn("There is no grid! Please create it before running tool.")
             return
@@ -2663,7 +2794,7 @@ class Flo2D(object):
         """
         Export FLO-2D database (GeoPackage) data into HDF5 format.
         """
-        self.uncheck_all_info_toggles()
+        self.uncheck_all_info_tools()
         if self.gutils.is_table_empty("grid"):
             self.uc.bar_warn("There is no grid! Please create it before running tool.")
             return
@@ -2701,7 +2832,7 @@ class Flo2D(object):
 
     @connection_required
     def import_from_gpkg(self):
-        self.uncheck_all_info_toggles()
+        self.uncheck_all_info_tools()
         s = QSettings()
         last_dir = s.value("FLO-2D/lastGpkgDir", "")
         attached_gpkg, __ = QFileDialog.getOpenFileName(
@@ -2723,7 +2854,7 @@ class Flo2D(object):
 
     @connection_required
     def import_from_ras(self):
-        self.uncheck_all_info_toggles()
+        self.uncheck_all_info_tools()
         dlg = RasImportDialog(self.con, self.iface, self.lyrs)
         ok = dlg.exec_()
         if ok:
@@ -2760,7 +2891,7 @@ class Flo2D(object):
 
     @connection_required
     def show_cont_toler(self):
-        self.uncheck_all_info_toggles()
+        self.uncheck_all_info_tools()
         try:
             dlg_control = ContToler_JJ(self.con, self.iface, self.lyrs)
             while True:
@@ -2780,48 +2911,65 @@ class Flo2D(object):
             self.uc.show_error("ERROR 110618.1816: Could not save FLO-2D parameters!!", e)
 
     def activate_general_info_tool(self):
-        # GRID_INFO.setChecked(False)  
-        # GENERAL_INFO.setChecked(False)
-        # self.canvas.unsetMapTool(self.info_tool)  
-        # self.canvas.unsetMapTool(self.grid_info_tool)  
+        """
+        Function to activate the Info Tool
+        """
         grid = self.lyrs.data["grid"]["qlyr"]
         if grid is not None:
-            self.f2d_grid_info_dock.setUserVisible(True)
-            tool = self.canvas.mapTool()
-            if tool == self.info_tool:
-                self.canvas.unsetMapTool(self.info_tool)
-            else:
-                if tool is not None:
-                    self.canvas.unsetMapTool(tool)
-                self.canvas.setMapTool(self.info_tool)
-                GRID_INFO.setChecked(False)
-                GENERAL_INFO.setChecked(True)
+            self.uncheck_toolbar_tb("<b>FLO-2D Info Tool</b>")
+            self.uncheck_all_info_tools()
+            for tb in self.toolButtons:
+                if tb.toolTip() == "<b>FLO-2D Info Tool</b>":
+                    tb.setIcon(QIcon(os.path.join(self.plugin_dir, "img/info_tool.svg")))
+                    if tb.isChecked():
+                        tb.setChecked(False)
+                        self.uncheck_all_info_tools()
+                    else:
+                        tb.setChecked(True)
+                        self.f2d_grid_info_dock.setUserVisible(True)
+                        tool = self.canvas.mapTool()
+                        if tool == self.info_tool:
+                            self.uncheck_all_info_tools()
+                        else:
+                            if tool is not None:
+                                self.uncheck_all_info_tools()
+                            self.canvas.setMapTool(self.info_tool)
+                    break
         else:
             self.uc.bar_warn("Define a database connection first!")
-            GENERAL_INFO.setChecked(False)
 
     @connection_required
     def activate_grid_info_tool(self):
         self.f2d_grid_info_dock.setUserVisible(True)
         grid = self.lyrs.data["grid"]["qlyr"]
         if grid is not None:
-            tool = self.canvas.mapTool()
-            if tool == self.grid_info_tool:
-                self.canvas.unsetMapTool(self.grid_info_tool)
-            else:
-                if tool is not None:
-                    self.canvas.unsetMapTool(tool)
-                self.grid_info_tool.grid = grid
-                self.f2d_grid_info.set_info_layer(grid)
-                self.f2d_grid_info.mann_default = self.gutils.get_cont_par("MANNING")
-                self.f2d_grid_info.cell_Edit = self.gutils.get_cont_par("CELLSIZE")
-                self.f2d_grid_info.n_cells = number_of_elements(self.gutils, grid)
-                self.f2d_grid_info.gutils = self.gutils
-                self.canvas.setMapTool(self.grid_info_tool)
-                GENERAL_INFO.setChecked(False)
+            self.uncheck_toolbar_tb("<b>FLO-2D Info Tool</b>")
+            for tb in self.toolButtons:
+                if tb.toolTip() == "<b>FLO-2D Info Tool</b>":
+                    tb.setIcon(QIcon(os.path.join(self.plugin_dir, "img/grid_info_tool.svg")))
+                    if tb.isChecked():
+                        tb.setIcon(QIcon(os.path.join(self.plugin_dir, "img/info_tool.svg")))
+                        tb.setChecked(False)
+                        self.uncheck_all_info_tools()
+                    else:
+                        tb.setChecked(True)
+                        tool = self.canvas.mapTool()
+                        if tool == self.grid_info_tool:
+                            self.uncheck_all_info_tools()
+                        else:
+                            if tool is not None:
+                                self.uncheck_all_info_tools()
+                            self.grid_info_tool.grid = grid
+                            self.f2d_grid_info.set_info_layer(grid)
+                            self.f2d_grid_info.mann_default = self.gutils.get_cont_par("MANNING")
+                            self.f2d_grid_info.cell_Edit = self.gutils.get_cont_par("CELLSIZE")
+                            self.f2d_grid_info.n_cells = number_of_elements(self.gutils, grid)
+                            self.f2d_grid_info.gutils = self.gutils
+                            self.canvas.setMapTool(self.grid_info_tool)
+                    break
+
         else:
             self.uc.bar_warn("There is no grid layer to identify.")
-            GRID_INFO.setChecked(False)
 
     @connection_required
     def show_user_profile(self, fid=None):
@@ -2893,7 +3041,7 @@ class Flo2D(object):
         """
         Show evaporation editor.
         """
-        self.uncheck_all_info_toggles()
+        self.uncheck_all_info_tools()
         try:
             self.dlg_evap_editor = EvapEditorDialog(self.con, self.iface)
             self.dlg_evap_editor.show()
@@ -2905,7 +3053,7 @@ class Flo2D(object):
         """
         Show levee elevation tool.
         """
-        self.uncheck_all_info_toggles()
+        self.uncheck_all_info_tools()
         if self.gutils.is_table_empty("grid"):
             self.uc.bar_warn("There is no grid! Please create it before running tool.")
             return
@@ -3209,7 +3357,7 @@ class Flo2D(object):
 
     @connection_required
     def show_hazus_dialog(self):
-        self.uncheck_all_info_toggles()
+        self.uncheck_all_info_tools()
         if self.gutils.is_table_empty("grid"):
             self.uc.bar_warn("There is no grid! Please create it before running tool.")
             return
@@ -3246,7 +3394,7 @@ class Flo2D(object):
 
     @connection_required
     def show_errors_dialog(self):
-        self.uncheck_all_info_toggles()
+        self.uncheck_all_info_tools()
         if self.gutils.is_table_empty("grid"):
             self.uc.bar_warn("There is no grid! Please create it before running tool.")
             return
@@ -3262,7 +3410,7 @@ class Flo2D(object):
 
     @connection_required
     def show_mud_and_sediment_dialog(self):
-        self.uncheck_all_info_toggles()
+        self.uncheck_all_info_tools()
         if self.gutils.is_table_empty("grid"):
             self.uc.bar_warn("There is no grid! Please create it before running tool.")
             return
@@ -3313,7 +3461,7 @@ class Flo2D(object):
 
     @connection_required
     def schematic2user(self):
-        self.uncheck_all_info_toggles()
+        self.uncheck_all_info_tools()
         converter_dlg = Schema2UserDialog(self.con, self.iface, self.lyrs, self.uc)
         ok = converter_dlg.exec_()
         if ok:
@@ -3338,7 +3486,7 @@ class Flo2D(object):
 
     @connection_required
     def user2schematic(self):
-        self.uncheck_all_info_toggles
+        self.uncheck_all_info_tools
         converter_dlg = User2SchemaDialog(self.con, self.iface, self.lyrs, self.uc)
         ok = converter_dlg.exec_()
         if ok:
@@ -3372,15 +3520,25 @@ class Flo2D(object):
         show_editor(fid)
 
     def channel_profile(self):
-        self.uncheck_all_info_toggles()
-        self.canvas.setMapTool(
-            self.channel_profile_tool
-        )  # 'channel_profile_tool' is an instance of ChannelProfile class,
-        # created on loading the plugin, and to be used to plot channel
-        # profiles using a subtool in the FLO-2D tool bar.
-        # The plots will be based on data from the 'chan', 'cham_elems'
-        # schematic layers.
-        self.channel_profile_tool.update_lyrs_list()
+        self.uncheck_all_info_tools()
+        self.uncheck_toolbar_tb("<b>FLO-2D Project Review</b>")
+        for tb in self.toolButtons:
+            if tb.toolTip() == "<b>FLO-2D Project Review</b>":
+                if tb.isChecked():
+                    tb.setIcon(QIcon(os.path.join(self.plugin_dir, "img/editmetadata.svg")))
+                    tb.setChecked(False)
+                    self.canvas.unsetMapTool(self.channel_profile_tool)
+                else:
+                    tb.setIcon(QIcon(os.path.join(self.plugin_dir, "img/profile.svg")))
+                    tb.setChecked(True)
+                    self.canvas.setMapTool(
+                        self.channel_profile_tool
+                    )  # 'channel_profile_tool' is an instance of ChannelProfile class,
+                    # created on loading the plugin, and to be used to plot channel
+                    # profiles using a subtool in the FLO-2D tool bar.
+                    # The plots will be based on data from the 'chan', 'cham_elems'
+                    # schematic layers.
+                    self.channel_profile_tool.update_lyrs_list()
 
     def get_feature_profile(self, table, fid):
         try:
@@ -3411,9 +3569,22 @@ class Flo2D(object):
 
     def grid_info_tool_clicked(self):
         self.uc.bar_info("grid info tool clicked.")
-        
-    def uncheck_all_info_toggles(self):
-        GRID_INFO.setChecked(False)
-        GENERAL_INFO.setChecked(False)
+
+    def uncheck_toolbar_tb(self, tool_button):
+        """
+        Function to uncheck the toolbar toolbuttons
+        """
+        for tb in self.toolButtons:
+            if not tb.toolTip() == tool_button:
+                tb.setChecked(False)
+
+    def uncheck_all_info_tools(self):
+        """
+        Function to uncheck the info tools
+        """
         self.canvas.unsetMapTool(self.grid_info_tool)
-        self.canvas.unsetMapTool(self.info_tool)  
+        self.canvas.unsetMapTool(self.info_tool)
+        self.canvas.unsetMapTool(self.channel_profile_tool)
+
+
+
