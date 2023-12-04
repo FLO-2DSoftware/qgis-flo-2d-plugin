@@ -4542,24 +4542,46 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
     def save_SD_table_data(self):
         model = self.tview.model()
         if model == self.inlet_data_model:
-            self.save_rtables_data()
+            self.save_type4_tables_data()
         elif model == self.pumps_data_model:
             self.save_pump_curve_data()
 
-    def save_rtables_data(self):
+    def save_type4_tables_data(self):
         idx = self.SD_type4_cbo.currentIndex()
-        rt_fid = self.SD_type4_cbo.itemData(idx)
-        self.update_rt_plot()
-        rt_data = []
-        for i in range(self.inlet_data_model.rowCount()):
-            # save only rows with a number in the first column
-            if is_number(m_fdata(self.inlet_data_model, i, 0)) and not isnan(m_fdata(self.inlet_data_model, i, 0)):
-                rt_data.append((rt_fid, m_fdata(self.inlet_data_model, i, 0), m_fdata(self.inlet_data_model, i, 1)))
-            else:
-                pass
-        data_name = self.SD_type4_cbo.currentText()
-        self.inletRT.set_rating_table_data(rt_fid, data_name, rt_data)
-        self.update_rt_plot()
+        fid = self.SD_type4_cbo.itemData(idx)
+        if fid is None:
+            #             self.uc.bar_warn("No table defined!")
+            return
+        name = self.SD_type4_cbo.currentText()
+        
+        in_culvert = self.gutils.execute(
+            "SELECT cdiameter, typec, typeen, cubase, multbarrels FROM swmmflo_culvert WHERE name = ?;", (name,)
+            ).fetchone() 
+        
+        if in_culvert:         
+            
+            sql = "UPDATE swmmflo_culvert SET cdiameter=?, typec=?, typeen=?, cubase=?, multbarrels=? WHERE name = ?;"
+            
+            cdiameter = self.inlet_data_model.data(self.inlet_data_model.index(0, 0), Qt.DisplayRole)
+            typec = self.inlet_data_model.data(self.inlet_data_model.index(0, 1), Qt.DisplayRole)
+            typeen = self.inlet_data_model.data(self.inlet_data_model.index(0, 2), Qt.DisplayRole)
+            cubase = self.inlet_data_model.data(self.inlet_data_model.index(0, 3), Qt.DisplayRole)
+            multbarrels = self.inlet_data_model.data(self.inlet_data_model.index(0, 4), Qt.DisplayRole)
+            
+            self.gutils.execute(sql , (cdiameter ,typec ,typeen ,cubase ,multbarrels, name))
+            
+        else:
+        
+            self.update_rt_plot()
+            rt_data = []
+            for i in range(self.inlet_data_model.rowCount()):
+                # save only rows with a number in the first column
+                if is_number(m_fdata(self.inlet_data_model, i, 0)) and not isnan(m_fdata(self.inlet_data_model, i, 0)):
+                    rt_data.append((fid, m_fdata(self.inlet_data_model, i, 0), m_fdata(self.inlet_data_model, i, 1)))
+                else:
+                    pass
+            self.inletRT.set_rating_table_data(fid, name, rt_data)
+            self.update_rt_plot()
 
     def create_rt_plot(self, name):
         self.plot.clear()
@@ -4573,19 +4595,6 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         self.plot_item_name = "Rating Table:   " + name
         self.plot.add_item(self.plot_item_name, [self.d1, self.d2], col=QColor("#0018d4"))
 
-    # def create_discharge_plot(self, name):
-    #     self.plot.clear()
-    #     if self.plot.plot.legend is not None:
-    #         plot_scene = self.plot.plot.legend.scene()
-    #         if plot_scene is not None:
-    #             plot_scene.removeItem(self.plot.plot.legend)
-    #
-    #     self.plot.plot.addLegend()
-    #     self.plot.plot.setTitle("Discharge for node :   " + name)
-    #     self.plot.add_item("Inflow", [[],[]], col=QColor(Qt.black))
-    #     self.plot.add_item("Flooding", [[],[]], col=QColor(Qt.red))
-    #     self.plot.plot.setLabel("bottom", text="Time")
-    #     self.plot.plot.setLabel("left", text="Inflow / Flooding")
      
     def update_rt_plot(self):
         if not self.plot_item_name:
