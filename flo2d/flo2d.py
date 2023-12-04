@@ -993,7 +993,7 @@ class Flo2D(object):
                               'NODATA': None,
                               'COPY_SUBDATASETS': False,
                               'OPTIONS': '',
-                              'EXTRA': f'-co APPEND_SUBDATASET=YES -co RASTER_TABLE={layer_name}',
+                              'EXTRA': f'-co APPEND_SUBDATASET=YES -co RASTER_TABLE={layer_name} -ot Float32',
                               'DATA_TYPE': 0,
                               'OUTPUT': f'{gpkg_path}'}
 
