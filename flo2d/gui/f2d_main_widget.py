@@ -10,6 +10,7 @@
 
 from qgis.PyQt.QtCore import QSize
 
+from .bc_editor_widget_new import BCEditorWidgetNew
 from ..user_communication import UserCommunication
 from .bc_editor_widget import BCEditorWidget
 from .channels_editor_widget import ChannelsEditorWidget
@@ -44,6 +45,7 @@ class FLO2DWidget(qtBaseClass, uiDialog):
         self.uc = UserCommunication(iface, "FLO-2D")
         self.setup_grid_tools()
         self.setup_bc_editor()
+        self.setup_bc_editor_new()
         self.setup_ic_editor()
         self.setup_street_editor()
         self.setup_struct_editor()
@@ -115,6 +117,10 @@ class FLO2DWidget(qtBaseClass, uiDialog):
     def setup_bc_editor(self):
         self.bc_editor = BCEditorWidget(self.iface, self.plot, self.table, self.lyrs)
         self.bc_editor_lout.addWidget(self.bc_editor)
+
+    def setup_bc_editor_new(self):
+        self.bc_editor_new = BCEditorWidgetNew(self.iface, self.plot, self.table, self.lyrs)
+        self.bc_editor_new_lout.addWidget(self.bc_editor_new)
 
     def setup_struct_editor(self):
         self.struct_editor = StructEditorWidget(self.iface, self.plot, self.table, self.lyrs)
