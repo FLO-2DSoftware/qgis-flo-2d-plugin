@@ -79,22 +79,16 @@ class FLO2DWidget(qtBaseClass, uiDialog):
 
         # connections
         self.collapse_groups_btn.clicked.connect(self.collapse_all_groups)
-        self.expand_groups_btn.clicked.connect(self.expand_all_groups)
 
         # clear rubberband when collapsing the BC editor
         self.bc_editor_grp.collapsedStateChanged.connect(self.lyrs.clear_rubber)
 
         # set icons
         set_icon(self.collapse_groups_btn, "collapse_groups.svg")
-        set_icon(self.expand_groups_btn, "expand_groups.svg")
 
     def collapse_all_groups(self):
         for grp in self.cgroups:
             grp.setCollapsed(True)
-
-    def expand_all_groups(self):
-        for grp in self.cgroups:
-            grp.setCollapsed(False)
 
     def setSizeHint(self, width, height):
         self._sizehint = QSize(width, height)
