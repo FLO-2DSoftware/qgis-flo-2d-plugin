@@ -1047,7 +1047,7 @@ class Flo2D(object):
         QApplication.restoreOverrideCursor()
         self.uc.bar_info("FLO-2D-Project saved!")
 
-    #@connection_required
+    @connection_required
     def gpkg_management(self):
         """
         Function to run the GeoPackage Management

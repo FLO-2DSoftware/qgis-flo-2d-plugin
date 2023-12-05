@@ -41,17 +41,22 @@ class GpkgManagementDialog(qtBaseClass, uiDialog):
         """
         Function to populate the user layers in the list view
         """
+        self.setWindowTitle("FLO-2D GeoPackage Management")
         layers = []
         for l in QgsProject.instance().mapLayers().values():
             source = str(l.source())
             if l.type() == QgsMapLayerType.VectorLayer:
-                layername = source.split("=")[-1]
-                if layername not in GeoPackageUtils.current_gpkg_tables:
-                    layers.append(l)
-            if l.type() == QgsMapLayerType.RasterLayer:
-                layername = source.split(":")[-1]
-                if layername not in GeoPackageUtils.current_gpkg_tables:
-                    layers.append(l)
+                layername_parts = source.split("=")
+                if len(layername_parts) > 1:
+                    layername = layername_parts[-1]
+                    if layername not in GeoPackageUtils.current_gpkg_tables:
+                        layers.append(l)
+            elif l.type() == QgsMapLayerType.RasterLayer:
+                layername_parts = source.split(":")
+                if len(layername_parts) > 1:
+                    layername = layername_parts[-1]
+                    if layername not in GeoPackageUtils.current_gpkg_tables:
+                        layers.append(l)
 
         items = [f'{i.name()}' for i in layers]
         for s in items:
