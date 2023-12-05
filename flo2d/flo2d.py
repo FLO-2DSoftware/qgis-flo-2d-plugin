@@ -927,9 +927,14 @@ class Flo2D(object):
             uri_parts2 = layer.source().split(':')
             if not uri_parts[0].endswith('.gpkg') and not uri_parts2[0].startswith('GPKG'):
                 if not checked_layers:
-                    title = "External layers were added to the project. Would you like to save them into the geopackage?"
+                    msg = f"External layers were added to the project.\n\n"
+                    msg += "Click Yes to save the external data to the GeoPackage.\n"
+                    msg += "    Yes results in a larger GeoPackage, but eliminates the need to reconnect data paths.\n\n"
+                    msg += "Click No to save the external paths to the GeoPackage.\n"
+                    msg += "    No is faster and has a smaller GeoPackage, but if the paths change, the external data must be reloaded."
                     QApplication.restoreOverrideCursor()
-                    if self.uc.question(title):
+                    answer = self.uc.customized_question("FLO-2D", msg)
+                    if answer == QMessageBox.Yes:
                         QApplication.setOverrideCursor(Qt.WaitCursor)
                         checked_layers = True
                     else:
