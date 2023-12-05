@@ -39,7 +39,7 @@ from PyQt5.QtWidgets import QApplication, QToolButton
 from osgeo import gdal
 from qgis._core import QgsMessageLog, QgsCoordinateReferenceSystem, QgsMapSettings, QgsProjectMetadata, \
     QgsMapRendererParallelJob, QgsLayerTreeLayer, QgsVectorLayerExporter, QgsVectorFileWriter, QgsVectorLayer, \
-    QgsMapLayer, QgsRasterFileWriter, QgsRasterLayer
+    QgsMapLayer, QgsRasterFileWriter, QgsRasterLayer, QgsLayerTreeGroup
 from qgis.core import NULL, QgsProject, QgsWkbTypes
 from qgis.gui import QgsDockWidget, QgsProjectionSelectionWidget
 from qgis.PyQt import QtCore
@@ -117,6 +117,7 @@ from .utils import get_flo2dpro_version
 from PIL import Image, ImageDraw
 
 import processing
+
 
 @contextmanager
 def cd(newdir):
@@ -794,7 +795,7 @@ class Flo2D(object):
             uri = f'geopackage:{gpkg_path}?projectName={pn}'
             self.project.write(uri)
 
-            self.uc.show_info("FLO-2D-Project sucessfully created.")
+            self.uc.bar_info("FLO-2D-Project sucessfully created.")
 
     def flo_open_project(self):
         """
@@ -847,7 +848,8 @@ class Flo2D(object):
                     if result:
                         QApplication.setOverrideCursor(Qt.WaitCursor)
                         dlg_update_gpkg.write()
-                        dlg_settings.set_default_controls(self.con) # TODO: This should be on the geopackage_utils and not on the settings
+                        dlg_settings.set_default_controls(
+                            self.con)  # TODO: This should be on the geopackage_utils and not on the settings
                         self.gutils.copy_from_other(gpkg_path)
                         # Old gpkg used float values for CELLSIZE, need to explicitly convert it
                         cell_size = self.gutils.get_cont_par("CELLSIZE")
@@ -878,59 +880,29 @@ class Flo2D(object):
 
             if not self.project.read(uri):
 
-                title = "Missing Project File"
-                msg = "No FLO-2D-Project file (*.qgz) was found in the geopackage. Would you like to create a new one or open an existing?"
-                text1 = "Create"
-                text2 = "Open"
-
-                QApplication.restoreOverrideCursor()
-                answer = self.uc.dialog_with_2_customized_buttons(title, msg, text1, text2)
-                # Create new project
-                if answer == QMessageBox.Yes:
-                    QApplication.setOverrideCursor(Qt.WaitCursor)
-                    dlg_settings = SettingsDialog(self.con, self.iface, self.lyrs, self.gutils)
-                    if not dlg_settings.connect(gpkg_path):
-                        return
-                    self.con = dlg_settings.con
-                    self.iface.f2d["con"] = self.con
-                    self.gutils = dlg_settings.gutils
-                    proj = self.gutils.get_cont_par("PROJ")
-                    self.crs = QgsCoordinateReferenceSystem()
-                    self.crs.createFromProj(proj)
-                    self.setup_dock_widgets()
-                    self.project.setCrs(self.crs)
-                    gpkg_path_adj = gpkg_path.replace("\\", "/")
-                    self.write_proj_entry("gpkg", gpkg_path_adj)
-                    self.project.write(uri)
-                    QApplication.restoreOverrideCursor()
-                    self.uc.show_info("FLO-2D-Project created into the Geopackage.")
-
-                # Open existing project
-                elif answer == QMessageBox.No:
-                    # Open the project and geopackage and then save the project into the geopackage
-                    qgz_path, __ = QFileDialog.getOpenFileName(
-                        None,
-                        "Select FLO-2D-Project (*.qgz) to import",
-                        directory=last_dir,
-                        filter="*.qgz",
-                    )
-                    if not qgz_path:
-                        return
-
-                    self.project.read(qgz_path)
-                    self.project.write(uri)
-                    QApplication.restoreOverrideCursor()
-                    self.uc.show_info("FLO-2D-Project added into the Geopackage.")
-
-                # Cancel
-                else:
-                    QApplication.restoreOverrideCursor()
-                    self.uc.show_info("FLO-2D-Project opening cancelled.")
+                QApplication.setOverrideCursor(Qt.WaitCursor)
+                dlg_settings = SettingsDialog(self.con, self.iface, self.lyrs, self.gutils)
+                if not dlg_settings.connect(gpkg_path):
                     return
+                self.con = dlg_settings.con
+                self.iface.f2d["con"] = self.con
+                self.gutils = dlg_settings.gutils
+                proj = self.gutils.get_cont_par("PROJ")
+                self.crs = QgsCoordinateReferenceSystem()
+                self.crs.createFromProj(proj)
+                self.setup_dock_widgets()
+                self.project.setCrs(self.crs)
+                gpkg_path_adj = gpkg_path.replace("\\", "/")
+                self.write_proj_entry("gpkg", gpkg_path_adj)
+                # uri = f'geopackage:{gpkg_path_adj}?projectName={proj_name + "_v1.0.0"}'
+                # # self.project.write(uri)
+                self.flo_save_project()
+                QApplication.restoreOverrideCursor()
+                self.uc.bar_info("FLO-2D-Project created into the Geopackage.")
 
             else:
                 QApplication.restoreOverrideCursor()
-                self.uc.show_info("FLO-2D-Project successfully loaded.")
+                self.uc.bar_info("FLO-2D-Project successfully loaded.")
 
         finally:
             QApplication.restoreOverrideCursor()
@@ -955,7 +927,7 @@ class Flo2D(object):
             uri_parts2 = layer.source().split(':')
             if not uri_parts[0].endswith('.gpkg') and not uri_parts2[0].startswith('GPKG'):
                 if not checked_layers:
-                    title = "User layers were added to the project. Would you like to save them into the geopackage?"
+                    title = "External layers were added to the project. Would you like to save them into the geopackage?"
                     QApplication.restoreOverrideCursor()
                     if self.uc.question(title):
                         QApplication.setOverrideCursor(Qt.WaitCursor)
@@ -980,9 +952,23 @@ class Flo2D(object):
                     # Add back to the project
                     gpkg_uri = f"{gpkg_path}|layername={layer.name()}"
                     gpkg_layer = QgsVectorLayer(gpkg_uri, layer.name(), "ogr")
+                    self.project.addMapLayer(gpkg_layer, False)
                     gpkg_layer.setRenderer(layer.renderer().clone())
                     gpkg_layer.triggerRepaint()
-                    self.project.addMapLayer(gpkg_layer)
+                    root = self.project.layerTreeRoot()
+                    flo2d_name = f"FLO-2D_{self.gutils.get_metadata_par('PROJ_NAME')}"
+                    group_name = "External Layers"
+                    flo2d_grp = root.findGroup(flo2d_name)
+                    if flo2d_grp.findGroup(group_name):
+                        group = flo2d_grp.findGroup(group_name)
+                    else:
+                        group = flo2d_grp.insertGroup(-1, group_name)
+                    group.insertLayer(0, gpkg_layer)
+
+                    layer = self.project.mapLayersByName(gpkg_layer.name())[0]
+                    myLayerNode = root.findLayer(layer.id())
+                    myLayerNode.setExpanded(False)
+
                     # Delete layer that is not in the gpkg
                     self.project.removeMapLayer(layer_id)
                 elif layer.type() == QgsMapLayer.RasterLayer:
@@ -993,7 +979,7 @@ class Flo2D(object):
                               'NODATA': None,
                               'COPY_SUBDATASETS': False,
                               'OPTIONS': '',
-                              'EXTRA': f'-co APPEND_SUBDATASET=YES -co RASTER_TABLE={layer_name}',
+                              'EXTRA': f'-co APPEND_SUBDATASET=YES -co RASTER_TABLE={layer_name} -ot Float32',
                               'DATA_TYPE': 0,
                               'OUTPUT': f'{gpkg_path}'}
 
@@ -1001,12 +987,24 @@ class Flo2D(object):
 
                     gpkg_uri = f"GPKG:{gpkg_path}:{layer_name}"
                     gpkg_layer = QgsRasterLayer(gpkg_uri, layer_name, "gdal")
+                    self.project.addMapLayer(gpkg_layer, False)
                     gpkg_layer.setRenderer(layer.renderer().clone())
                     gpkg_layer.triggerRepaint()
-                    self.project.addMapLayer(gpkg_layer)
+                    root = self.project.layerTreeRoot()
+                    flo2d_name = f"FLO-2D_{self.gutils.get_metadata_par('PROJ_NAME')}"
+                    group_name = "External Layers"
+                    flo2d_grp = root.findGroup(flo2d_name)
+                    if flo2d_grp.findGroup(group_name):
+                        group = flo2d_grp.findGroup(group_name)
+                    else:
+                        group = flo2d_grp.insertGroup(-1, group_name)
+                    group.insertLayer(0, gpkg_layer)
                     # Delete layer that is not in the gpkg
                     self.project.removeMapLayer(layer_id)
 
+                    layer = self.project.mapLayersByName(gpkg_layer.name())[0]
+                    myLayerNode = root.findLayer(layer.id())
+                    myLayerNode.setExpanded(False)
                 else:
                     QApplication.restoreOverrideCursor()
                     self.uc.show_warn("Your layer type is not Vector or Raster.")
@@ -1024,10 +1022,10 @@ class Flo2D(object):
         logo = Image.open(logo_path)
 
         # Resize the logo to your desired size
-        logo = logo.resize((100, 30))  # Adjust the size as needed
+        logo = logo.resize((100, 30))
 
         # Choose the position to paste the logo on the picture
-        position = (10, 10)  # Adjust the coordinates as needed
+        position = (10, 10)
 
         # Paste the logo on the picture
         picture.paste(logo, position, logo)
@@ -1036,7 +1034,7 @@ class Flo2D(object):
         picture.save(thumbnail)
 
         QApplication.restoreOverrideCursor()
-        self.uc.show_info("FLO-2D-Project saved!")
+        self.uc.bar_info("FLO-2D-Project saved!")
 
     def run_settings(self):
         """
@@ -1328,7 +1326,8 @@ class Flo2D(object):
                         program.perform()
                         self.uc.bar_info(exe_name + " started!", dur=3)
                     else:
-                        self.uc.show_warn("CONT.DAT is not in directory:\n\n" + f"{project_dir}\n\n" + f"Select the correct directory.")
+                        self.uc.show_warn(
+                            "CONT.DAT is not in directory:\n\n" + f"{project_dir}\n\n" + f"Select the correct directory.")
                         self.run_settings()
             else:
                 self.uc.show_warn("WARNING 241020.0424: Program " + exe_name + " is not in directory\n\n" + flo2d_dir)
@@ -1351,6 +1350,8 @@ class Flo2D(object):
         If QGIS project has a gpkg path saved ask user if it should be loaded.
         """
         old_gpkg = self.read_proj_entry("gpkg")
+        if '%20' in old_gpkg:
+            old_gpkg = old_gpkg.replace('%20', ' ')
         new_gpkg = self.new_gpkg
 
         qgs_file = QgsProject.instance().fileName()
@@ -1361,6 +1362,9 @@ class Flo2D(object):
             uri = self.project.fileName()
             if uri.startswith("geopackage:"):
                 new_gpkg = uri[len("geopackage:"):].split('?')[0]
+
+        if '%20' in new_gpkg:
+            new_gpkg = new_gpkg.replace('%20', ' ')
 
         # Geopackage associated with the project
         if old_gpkg:
@@ -3009,7 +3013,7 @@ class Flo2D(object):
         if self.gutils.is_table_empty("grid"):
             self.uc.bar_warn("There is no grid! Please create it before running tool.")
             return
-                
+
         name, grid = self.gutils.execute("SELECT name, grid FROM user_swmm_nodes WHERE fid = ?", (fid,)).fetchone()
         self.f2d_dock.setUserVisible(True)
         self.f2d_widget.storm_drain_editor_grp.setCollapsed(False)
