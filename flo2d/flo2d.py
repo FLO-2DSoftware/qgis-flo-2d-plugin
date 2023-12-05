@@ -96,6 +96,7 @@ from .gui.dlg_components import ComponentsDialog
 from .gui.dlg_cont_toler_jj import ContToler_JJ
 from .gui.dlg_evap_editor import EvapEditorDialog
 from .gui.dlg_flopro import ExternalProgramFLO2D
+from .gui.dlg_gpkg_management import GpkgManagementDialog
 from .gui.dlg_hazus import HazusDialog
 from .gui.dlg_issues import ErrorsDialog
 from .gui.dlg_levee_elev import LeveesToolDialog
@@ -339,6 +340,11 @@ class Flo2D(object):
                     os.path.join(self.plugin_dir, "img/mActionSaveGeoPackageLayer.svg"),
                     "Save FLO-2D Project",
                     lambda: self.flo_save_project(),
+                ),
+                (
+                    os.path.join(self.plugin_dir, "img/gpkg.svg"),
+                    "FLO-2D GeoPackage Management",
+                    lambda: self.gpkg_management(),
                 )
             )
         )
@@ -1040,6 +1046,16 @@ class Flo2D(object):
 
         QApplication.restoreOverrideCursor()
         self.uc.bar_info("FLO-2D-Project saved!")
+
+    #@connection_required
+    def gpkg_management(self):
+        """
+        Function to run the GeoPackage Management
+        """
+        self.uncheck_all_info_tools()
+        self.dlg_gpkg_management = GpkgManagementDialog(self.iface, self.lyrs, self.gutils)
+        self.dlg_gpkg_management.show()
+
 
     def run_settings(self):
         """
