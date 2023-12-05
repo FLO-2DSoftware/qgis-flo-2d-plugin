@@ -1251,15 +1251,21 @@ class Flo2D(object):
                         self.uc.show_info(info)
 
             QApplication.restoreOverrideCursor()
-            flo2d_v = get_flo2dpro_version(s.value("FLO-2D/last_flopro") + "/FLOPRO.exe")
-            self.gutils.set_metadata_par("FLO-2D_V", flo2d_v)
+            if s.value("FLO-2D/last_flopro") is not None:
+                flo2d_v = get_flo2dpro_version(s.value("FLO-2D/last_flopro") + "/FLOPRO.exe")
+                self.gutils.set_metadata_par("FLO-2D_V", flo2d_v)
+            else:
+                self.run_settings()
             self.run_program("FLOPRO.exe")
 
     def run_flopro(self):
         self.uncheck_all_info_tools()
         s = QSettings()
-        flo2d_v = get_flo2dpro_version(s.value("FLO-2D/last_flopro") + "/FLOPRO.exe")
-        self.gutils.set_metadata_par("FLO-2D_V", flo2d_v)
+        if s.value("FLO-2D/last_flopro") is not None:
+            flo2d_v = get_flo2dpro_version(s.value("FLO-2D/last_flopro") + "/FLOPRO.exe")
+            self.gutils.set_metadata_par("FLO-2D_V", flo2d_v)
+        else:
+            self.run_settings()
         self.run_program("FLOPRO.exe")
 
     def run_tailingsdambreach(self):
@@ -3594,6 +3600,4 @@ class Flo2D(object):
         self.canvas.unsetMapTool(self.grid_info_tool)
         self.canvas.unsetMapTool(self.info_tool)
         self.canvas.unsetMapTool(self.channel_profile_tool)
-
-
 
