@@ -34,7 +34,7 @@ from qgis.core import (
     QgsWkbTypes,
 )
 from qgis.PyQt.QtCore import QSettings, Qt, QTime, QVariant, pyqtSignal
-from qgis.PyQt.QtGui import QColor
+from qgis.PyQt.QtGui import QColor, QIcon
 from qgis.PyQt.QtWidgets import (
     QApplication,
     QCheckBox,
@@ -52,11 +52,13 @@ from qgis.PyQt.QtWidgets import (
     QSpacerItem,
     QVBoxLayout,
     QWidget,
+    QAction,
+    QMenu,
+    QToolButton,
     qApp,
 )
 
 import pyqtgraph as pg
-# from pyqtgraph.Qt import QtCore, QtGui
 
 from ..flo2d_ie.swmm_io import StormDrainProject
 from ..flo2d_tools.grid_tools import spatial_index
@@ -132,6 +134,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         qtBaseClass.__init__(self)
         uiDialog.__init__(self)
         self.iface = iface
+        self.plugin_dir = os.path.dirname(__file__)
         self.plot = plot
         self.SD_table = table
         self.tview = table.tview
@@ -219,6 +222,20 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         set_icon(self.remove_pump_curve_btn, "mActionDeleteSelected.svg")
         set_icon(self.rename_pump_curve_btn, "change_name.svg")
 
+        # Add submenus to 'Add inlet type 4 data' (SD_add_one_type4_btn) button:
+        menu = QMenu()
+        action1 = QAction("Add Rating Table", self)
+        action1.setStatusTip("Add inlet type 4 rating table")
+        action1.setIcon(QIcon(os.path.join(self.plugin_dir, "img/add_table_data.svg")))
+        action2 = QAction("Add Culvert Equation", self)
+        action1.setStatusTip("Add inlet type 4 Culvert equation")
+        action1.setIcon(QIcon(os.path.join(self.plugin_dir, "img/add_table_data.svg"))) 
+        menu.addAction(action1)
+        menu.addAction(action2)
+        menu.triggered.connect(lambda action: self.add_type4_data(action.text()))
+        self.SD_add_one_type4_btn.setMenu(menu)
+        self.SD_add_one_type4_btn.setPopupMode(QToolButton.InstantPopup)
+
         self.grid_lyr = self.lyrs.data["grid"]["qlyr"]
         self.user_swmm_nodes_lyr = self.lyrs.data["user_swmm_nodes"]["qlyr"]
         self.user_swmm_conduits_lyr = self.lyrs.data["user_swmm_conduits"]["qlyr"]
@@ -249,7 +266,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         self.schema_storm_drain_btn.clicked.connect(self.schematize_swmm)
 
         self.SD_show_type4_btn.clicked.connect(self.SD_show_type4_table_and_plot)
-        self.SD_add_one_type4_btn.clicked.connect(self.SD_add_one_type4)
+        # self.SD_add_one_type4_btn.clicked.connect(self.SD_add_one_type4)
         self.SD_add_predefined_type4_btn.clicked.connect(self.SD_import_type4)
         self.SD_remove_type4_btn.clicked.connect(self.SD_delete_type4)
         self.SD_rename_type4_btn.clicked.connect(self.SD_rename_type4)
@@ -1131,8 +1148,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
 
                 # Outfalls:
                 outfall_type = values["out_type"].upper() if "out_type" in values else "NORMAL"
-                if outfall_type in ["TIDAL", "TIMESERIES"]:
-                    JJXX = 0
+
                 outfall_invert_elev = (
                     float_or_zero(values["outfall_invert_elev"]) if "outfall_invert_elev" in values else 0
                 )
@@ -1981,8 +1997,8 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             and len(new_nodes) == 0
             and len(new_conduits) == 0
             and len(new_pumps) == 0
-            and len(new_orifices == 0
-            and len(new_weirs) == 0)
+            and len(new_orifices) == 0
+            and len(new_weirs) == 0
         ):
             error_msg += "\nThere are no nodes or links inside the domain of this project."
 
@@ -3575,7 +3591,10 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                     if t4:
                         lst_no_type4.append(t4)
                         str_no_type4 += "\n" + t4
-
+            
+            self.SD_type4_cbo.setCurrentIndex(0)
+            self.SD_show_type4_table_and_plot()
+        
             txt2 = ""
             answer = True
             if lst_no_type4:
@@ -3744,7 +3763,6 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
 
 
             )
-            pass
 
         except Exception as e:
             QApplication.restoreOverrideCursor()
@@ -4054,7 +4072,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             self.tview.undoStack.push(command)
             return True
 
-    def populate_rtables_and_data(self):
+    def populate_type4_and_data(self):
         self.populate_type4_combo()
         self.SD_show_type4_table_and_plot()
 
@@ -4077,7 +4095,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         if culverts:
             for culv in culverts:
                 fid, grid_fid, name, cdiameter, typec, typeen, cubase, multbarrels = culv
-                if name != "":
+                if name and name != "":
                     if self.SD_type4_cbo.findText(name) == -1:
                         self.SD_type4_cbo.addItem(name, 9999 + fid)
                     else:
@@ -4086,7 +4104,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
     def SD_show_type4_table_and_plot(self):
         self.SD_table.after_delete.disconnect()
         self.SD_table.after_delete.connect(self.save_SD_table_data)
-
+    
         self.plot.clear()     
     
         idx = self.SD_type4_cbo.currentIndex()
@@ -4095,36 +4113,36 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         if fid is None:
             #             self.uc.bar_warn("No table defined!")
             return
-
+    
         in_culvert = self.gutils.execute(
             "SELECT cdiameter, typec, typeen, cubase, multbarrels FROM swmmflo_culvert WHERE name = ?;", (name,)
             ).fetchone() 
-                                   
+    
         if in_culvert:
-        
+    
             self.tview.undoStack.clear()
             self.tview.setModel(self.inlet_data_model)
             self.inlet_data_model.clear()
             self.inlet_data_model.setHorizontalHeaderLabels(["CDDIAMETER", "TYPEC", "TYPEEN", "CUBASE", "MULTBARRELS"])
             self.d1, self.d2= [[], []]
-            
+    
             items = [StandardItem("{:.4f}".format(x)) if x is not None else StandardItem("") for x in in_culvert]
             self.inlet_data_model.appendRow(items)
             # self.d1.append(row[0] if not row[0] is None else float("NaN"))
             # self.d2.append(row[1] if not row[1] is None else float("NaN"))
-            
+    
             rc = self.inlet_data_model.rowCount()
             if rc < 500:
                 for row in range(rc, 500 + 1):
                     items = [StandardItem(x) for x in ("",) * 2]
                     self.inlet_data_model.appendRow(items)
-            
+    
             self.tview.horizontalHeader().setStretchLastSection(True)
             for col in range(2):
                 self.tview.setColumnWidth(col, 100)
             for i in range(self.inlet_data_model.rowCount()):
                 self.tview.setRowHeight(i, 20)
-
+    
         else:
             self.inlet_series_data = self.inletRT.get_inlet_table_data(fid)
             if not self.inlet_series_data:
@@ -4132,15 +4150,15 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 self.tview.setModel(self.inlet_data_model)
                 self.inlet_data_model.clear()            
                 return
-            
+    
             self.create_rt_plot(name)
-            
+    
             self.tview.undoStack.clear()
             self.tview.setModel(self.inlet_data_model)
             self.inlet_data_model.clear()
             self.inlet_data_model.setHorizontalHeaderLabels(["Depth", "Q"])
             self.d1, self.d2= [[], []]
-            
+    
             for row in self.inlet_series_data:
                 items = [StandardItem("{:.4f}".format(x)) if x is not None else StandardItem("") for x in row]
                 self.inlet_data_model.appendRow(items)
@@ -4152,13 +4170,13 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 for row in range(rc, 500 + 1):
                     items = [StandardItem(x) for x in ("",) * 2]
                     self.inlet_data_model.appendRow(items)
-                    
+    
             self.tview.horizontalHeader().setStretchLastSection(True)
             for col in range(2):
                 self.tview.setColumnWidth(col, 100)
             for i in range(self.inlet_data_model.rowCount()):
                 self.tview.setRowHeight(i, 20)
-                
+    
             self.update_rt_plot()
 
     def show_discharge_table_and_plot(self, node, units,
@@ -4400,13 +4418,14 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         if not self.inletRT:
             return
         newRT = self.inletRT.add_rating_table(name)
+        
         self.populate_type4_combo()
         newIdx = self.SD_type4_cbo.findText(newRT)
         if newIdx == -1:
             self.SD_type4_cbo.setCurrentIndex(self.SD_type4_cbo.count() - 1)
         else:
             self.SD_type4_cbo.setCurrentIndex(newIdx)
-            self.SD_show_type4_table_and_plot()
+        self.SD_show_type4_table_and_plot()
 
     def add_type4(self, condition, name=None):
         newRT = name
@@ -4420,6 +4439,31 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             self.SD_type4_cbo.setCurrentIndex(self.SD_type4_cbo.count() - 1)
         else:
             self.SD_type4_cbo.setCurrentIndex(newIdx)
+
+    def add_type4_data(self, what):
+        if what == "Add Rating Table":
+            self.add_single_rtable()
+            
+        elif what == "Add Culvert Equation":
+            name = None
+            qry = "INSERT INTO swmmflo_culvert (name) VALUES (?);"
+            rowid = self.gutils.execute(qry, (name,), get_rowid=True)
+            name_qry = "UPDATE swmmflo_culvert SET name =  'CulvertEq' || cast(fid as text) WHERE fid = ?;"
+            self.gutils.execute(name_qry, (rowid,))
+            qry = "UPDATE swmmflo_culvert SET cdiameter = ?, typec = ?, typeen = ?, cubase = ?, multbarrels = ? WHERE fid = ?;"
+            self.gutils.execute(qry, (0,0,0,0,0,rowid))
+            
+            newCulvert= "Culvert Eq. {}".format(rowid)
+            self.populate_type4_combo()
+            newIdx = self.SD_type4_cbo.findText(newCulvert)
+            if newIdx == -1:
+                self.SD_type4_cbo.setCurrentIndex(self.SD_type4_cbo.count() - 1)
+            else:
+                self.SD_type4_cbo.setCurrentIndex(newIdx) 
+            self.SD_show_type4_table_and_plot()
+      
+        else:
+            self.uc.show_warn("ERROR 041203.1542: wrong menu item!") 
 
     def SD_delete_type4(self):
         if not self.inletRT:
@@ -4475,12 +4519,14 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 if not self.uc.question(q):
                     return
                 idx = self.SD_type4_cbo.currentIndex()
+                name = self.SD_type4_cbo.currentText()
                 fid = self.SD_type4_cbo.itemData(idx)
 
-                qry = "UPDATE user_swmm_nodes SET rt_fid = ? WHERE rt_fid = ?;"
-                self.execute(qry, (None, fid))
-                qry = "DELETE FROM swmmflo_culvert WHERE fid = ?;"
-                self.execute(qry, (fid,))
+                qry = "UPDATE user_swmm_nodes SET rt_fid = ?, rt_name = ? WHERE name = ?;"
+                self.gutils.execute(qry, (None, None, name))
+                qry = "DELETE FROM swmmflo_culvert WHERE name = ?;"
+                self.gutils.execute(qry, (name,))            
+                
             else:
                 if self.uc.question(
                     "WARNING 250622.9519:\n\nCulvert Equation '"
@@ -4504,7 +4550,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                         qry = "DELETE FROM swmmflo_culvert WHERE name = ?;"
                         self.gutils.execute(qry, (name,))
 
-        self.populate_rtables_and_data()
+        self.populate_type4_and_data()
 
         if self.SD_type4_cbo.currentIndex() == -1:
             self.plot.clear()
