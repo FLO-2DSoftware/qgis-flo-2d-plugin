@@ -148,16 +148,6 @@ class SamplingElevDialog(qtBaseClass, uiDialog):
         Resample raster to be aligned with the grid, then probe values and update elements elevation attr.
         """
         self.src_raster = self.srcRasterCbo.itemData(self.srcRasterCbo.currentIndex())
-        # self.out_raster = "{}_interp.tif".format(self.src_raster[:-4])  # Raster name with suffix '_interp.tif'
-        # try:
-        #     if os.path.isfile(self.out_raster):
-        #         os.remove(self.out_raster)
-        # except OSError:
-        #     msg = "WARNING 060319.1651: Couldn't remove existing raster:\n{}\nChoose another filename.".format(
-        #         self.out_raster
-        #     )
-        #     self.uc.show_warn(msg)
-        #     return False
         self.get_worp_opts_data()
         opts = [
             "-of GTiff",
@@ -200,22 +190,11 @@ class SamplingElevDialog(qtBaseClass, uiDialog):
             pass
         sampler = raster2grid(self.grid, temp_file_path)
 
-        # qryIndex = """CREATE INDEX if not exists grid_FIDTemp ON grid (fid);"""
-        # self.con.execute(qryIndex)
-        # self.con.commit()
-        #
-        # print ("Writing elevations to geopackage")
-
         qry = "UPDATE grid SET elevation=? WHERE fid=?;"
         self.con.executemany(qry, sampler)
         self.con.commit()
 
         os.remove(temp_file_path)
-
-        # print ("Done Writing elevs to geopackage")
-        # qryIndex = """DROP INDEX if exists grid_FIDTemp;"""
-        # self.con.execute(qryIndex)
-        # self.con.commit()
 
         return True
 
