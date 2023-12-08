@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>458</width>
-    <height>415</height>
+    <width>503</width>
+    <height>457</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -66,23 +66,194 @@
           <property name="sizeConstraint">
            <enum>QLayout::SetDefaultConstraint</enum>
           </property>
-          <item row="0" column="6">
-           <widget class="QToolButton" name="delete_bc_btn">
-            <property name="toolTip">
-             <string>Delete current BC</string>
+          <item row="1" column="9">
+           <widget class="QToolButton" name="clear_inflow_rubberband_btn">
+            <property name="text">
+             <string>...</string>
+            </property>
+            <property name="icon">
+             <iconset>
+              <normaloff>../img/broom.png</normaloff>../img/broom.png</iconset>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="7" colspan="2">
+           <widget class="QRadioButton" name="ifc_fplain_radio">
+            <property name="text">
+             <string>Fplain</string>
+            </property>
+            <property name="checked">
+             <bool>false</bool>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="7">
+           <widget class="QToolButton" name="change_inflow_bc_name_btn">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="layoutDirection">
+             <enum>Qt::LeftToRight</enum>
             </property>
             <property name="text">
              <string>...</string>
             </property>
             <property name="icon">
              <iconset>
-              <normaloff>../img/mActionDeleteSelected.svg</normaloff>../img/mActionDeleteSelected.svg</iconset>
+              <normaloff>../img/change_name.svg</normaloff>../img/change_name.svg</iconset>
+            </property>
+           </widget>
+          </item>
+          <item row="3" column="1" colspan="8">
+           <widget class="QComboBox" name="inflow_tseries_cbo"/>
+          </item>
+          <item row="0" column="1">
+           <widget class="QToolButton" name="create_inflow_point_bc_btn">
+            <property name="toolTip">
+             <string>Add point BC</string>
+            </property>
+            <property name="text">
+             <string/>
+            </property>
+            <property name="icon">
+             <iconset>
+              <normaloff>../img/mActionCapturePoint.svg</normaloff>../img/mActionCapturePoint.svg</iconset>
             </property>
             <property name="iconSize">
              <size>
               <width>24</width>
               <height>24</height>
              </size>
+            </property>
+            <property name="checkable">
+             <bool>false</bool>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="0">
+           <widget class="QLabel" name="label_10">
+            <property name="text">
+             <string>Type</string>
+            </property>
+           </widget>
+          </item>
+          <item row="3" column="0">
+           <widget class="QLabel" name="label_11">
+            <property name="text">
+             <string>Time series</string>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="1" colspan="6">
+           <widget class="QComboBox" name="inflow_type_cbo">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="minimumSize">
+             <size>
+              <width>100</width>
+              <height>0</height>
+             </size>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>9999</width>
+              <height>16777215</height>
+             </size>
+            </property>
+            <item>
+             <property name="text">
+              <string>Inflow hydrograph</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Channel outflow or diversion</string>
+             </property>
+            </item>
+           </widget>
+          </item>
+          <item row="3" column="9">
+           <widget class="QToolButton" name="add_inflow_data_btn">
+            <property name="toolTip">
+             <string>Add data series/table for current BC</string>
+            </property>
+            <property name="text">
+             <string>+</string>
+            </property>
+            <property name="icon">
+             <iconset>
+              <normaloff>../img/add_table_data.svg</normaloff>../img/add_table_data.svg</iconset>
+            </property>
+            <property name="iconSize">
+             <size>
+              <width>16</width>
+              <height>16</height>
+             </size>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="9" colspan="2">
+           <widget class="QRadioButton" name="ifc_chan_radio">
+            <property name="text">
+             <string>Chan.</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="1" colspan="6">
+           <widget class="QComboBox" name="inflow_bc_name_cbo"/>
+          </item>
+          <item row="4" column="0" colspan="11">
+           <widget class="QCheckBox" name="interval_ckbx">
+            <property name="toolTip">
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;IHOURDAILY:Daily if checked&lt;br/&gt;Hourly if unchecked&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            </property>
+            <property name="layoutDirection">
+             <enum>Qt::LeftToRight</enum>
+            </property>
+            <property name="text">
+             <string>Hydrograph (hours/days)</string>
+            </property>
+           </widget>
+          </item>
+          <item row="3" column="10">
+           <widget class="QToolButton" name="change_inflow_data_name_btn">
+            <property name="text">
+             <string>...</string>
+            </property>
+            <property name="icon">
+             <iconset>
+              <normaloff>../img/change_name.svg</normaloff>../img/change_name.svg</iconset>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="10">
+           <widget class="QToolButton" name="inflow_bc_center_btn">
+            <property name="text">
+             <string>...</string>
+            </property>
+            <property name="icon">
+             <iconset>
+              <normaloff>../img/eye-svgrepo-com.svg</normaloff>../img/eye-svgrepo-com.svg</iconset>
+            </property>
+            <property name="checkable">
+             <bool>true</bool>
+            </property>
+            <property name="checked">
+             <bool>false</bool>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="0">
+           <widget class="QLabel" name="label_8">
+            <property name="text">
+             <string>Create</string>
             </property>
            </widget>
           </item>
@@ -106,28 +277,37 @@
             </property>
            </widget>
           </item>
-          <item row="1" column="7">
-           <widget class="QToolButton" name="clear_rubberband_btn">
+          <item row="1" column="8">
+           <widget class="QToolButton" name="delete_inflow_bc_btn">
+            <property name="toolTip">
+             <string>Delete current BC</string>
+            </property>
             <property name="text">
              <string>...</string>
             </property>
             <property name="icon">
              <iconset>
-              <normaloff>../img/broom.png</normaloff>../img/broom.png</iconset>
+              <normaloff>../img/mActionDeleteSelected.svg</normaloff>../img/mActionDeleteSelected.svg</iconset>
+            </property>
+            <property name="iconSize">
+             <size>
+              <width>16</width>
+              <height>16</height>
+             </size>
             </property>
            </widget>
           </item>
-          <item row="0" column="7">
-           <widget class="QToolButton" name="add_data_btn">
+          <item row="0" column="2">
+           <widget class="QToolButton" name="create_inflow_line_bc_btn">
             <property name="toolTip">
-             <string>Add data series/table for current BC</string>
+             <string>Add line BC</string>
             </property>
             <property name="text">
-             <string>+</string>
+             <string>...</string>
             </property>
             <property name="icon">
              <iconset>
-              <normaloff>../img/add_table_data.svg</normaloff>../img/add_table_data.svg</iconset>
+              <normaloff>../img/mActionCaptureLine.svg</normaloff>../img/mActionCaptureLine.svg</iconset>
             </property>
             <property name="iconSize">
              <size>
@@ -162,245 +342,18 @@
             </property>
            </widget>
           </item>
-          <item row="0" column="2">
-           <widget class="QToolButton" name="create_inflow_line_bc_btn">
-            <property name="toolTip">
-             <string>Add line BC</string>
+          <item row="0" column="4" colspan="7">
+           <spacer name="horizontalSpacer_4">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
             </property>
-            <property name="text">
-             <string>...</string>
-            </property>
-            <property name="icon">
-             <iconset>
-              <normaloff>../img/mActionCaptureLine.svg</normaloff>../img/mActionCaptureLine.svg</iconset>
-            </property>
-            <property name="iconSize">
+            <property name="sizeHint" stdset="0">
              <size>
-              <width>24</width>
-              <height>24</height>
+              <width>40</width>
+              <height>20</height>
              </size>
             </property>
-           </widget>
-          </item>
-          <item row="2" column="0">
-           <widget class="QLabel" name="label_10">
-            <property name="text">
-             <string>Type</string>
-            </property>
-           </widget>
-          </item>
-          <item row="1" column="8">
-           <widget class="QToolButton" name="toolButton_12">
-            <property name="text">
-             <string>...</string>
-            </property>
-            <property name="icon">
-             <iconset>
-              <normaloff>../img/eye-svgrepo-com.svg</normaloff>../img/eye-svgrepo-com.svg</iconset>
-            </property>
-           </widget>
-          </item>
-          <item row="1" column="1" colspan="5">
-           <widget class="QComboBox" name="comboBox"/>
-          </item>
-          <item row="0" column="4">
-           <widget class="QToolButton" name="save_changes_btn">
-            <property name="toolTip">
-             <string>Save current BC</string>
-            </property>
-            <property name="text">
-             <string>...</string>
-            </property>
-            <property name="icon">
-             <iconset>
-              <normaloff>../img/mActionSaveAllEdits.svg</normaloff>../img/mActionSaveAllEdits.svg</iconset>
-            </property>
-            <property name="iconSize">
-             <size>
-              <width>24</width>
-              <height>24</height>
-             </size>
-            </property>
-           </widget>
-          </item>
-          <item row="0" column="0">
-           <widget class="QLabel" name="label_8">
-            <property name="text">
-             <string>Create</string>
-            </property>
-           </widget>
-          </item>
-          <item row="0" column="1">
-           <widget class="QToolButton" name="create_inflow_point_bc_btn">
-            <property name="toolTip">
-             <string>Add point BC</string>
-            </property>
-            <property name="text">
-             <string/>
-            </property>
-            <property name="icon">
-             <iconset>
-              <normaloff>../img/mActionCapturePoint.svg</normaloff>../img/mActionCapturePoint.svg</iconset>
-            </property>
-            <property name="iconSize">
-             <size>
-              <width>24</width>
-              <height>24</height>
-             </size>
-            </property>
-            <property name="checkable">
-             <bool>false</bool>
-            </property>
-           </widget>
-          </item>
-          <item row="1" column="6">
-           <widget class="QToolButton" name="change_bc_name_btn">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
-            <property name="layoutDirection">
-             <enum>Qt::LeftToRight</enum>
-            </property>
-            <property name="text">
-             <string>...</string>
-            </property>
-            <property name="icon">
-             <iconset>
-              <normaloff>../img/change_name.svg</normaloff>../img/change_name.svg</iconset>
-            </property>
-           </widget>
-          </item>
-          <item row="0" column="8">
-           <widget class="QToolButton" name="schem_bc_btn">
-            <property name="toolTip">
-             <string>Schematize boundary conditions</string>
-            </property>
-            <property name="text">
-             <string>...</string>
-            </property>
-            <property name="icon">
-             <iconset>
-              <normaloff>../img/schematize_bc.svg</normaloff>../img/schematize_bc.svg</iconset>
-            </property>
-            <property name="iconSize">
-             <size>
-              <width>24</width>
-              <height>24</height>
-             </size>
-            </property>
-           </widget>
-          </item>
-          <item row="0" column="5">
-           <widget class="QToolButton" name="revert_changes_btn">
-            <property name="maximumSize">
-             <size>
-              <width>16777215</width>
-              <height>16777215</height>
-             </size>
-            </property>
-            <property name="toolTip">
-             <string>Revert unsaved changes for current BC</string>
-            </property>
-            <property name="text">
-             <string/>
-            </property>
-            <property name="icon">
-             <iconset>
-              <normaloff>../img/mActionUndo.svg</normaloff>../img/mActionUndo.svg</iconset>
-            </property>
-            <property name="iconSize">
-             <size>
-              <width>24</width>
-              <height>24</height>
-             </size>
-            </property>
-           </widget>
-          </item>
-          <item row="3" column="0">
-           <widget class="QLabel" name="label_11">
-            <property name="text">
-             <string>Time series</string>
-            </property>
-           </widget>
-          </item>
-          <item row="2" column="1" colspan="4">
-           <widget class="QComboBox" name="inflow_type_cbo">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
-            <property name="minimumSize">
-             <size>
-              <width>100</width>
-              <height>0</height>
-             </size>
-            </property>
-            <property name="maximumSize">
-             <size>
-              <width>9999</width>
-              <height>16777215</height>
-             </size>
-            </property>
-            <item>
-             <property name="text">
-              <string>Inflow hydrograph</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>Channel outflow or diversion</string>
-             </property>
-            </item>
-           </widget>
-          </item>
-          <item row="2" column="7" colspan="2">
-           <widget class="QRadioButton" name="ifc_chan_radio">
-            <property name="text">
-             <string>Channel</string>
-            </property>
-           </widget>
-          </item>
-          <item row="2" column="5" colspan="2">
-           <widget class="QRadioButton" name="ifc_fplain_radio">
-            <property name="text">
-             <string>Floodplain</string>
-            </property>
-            <property name="checked">
-             <bool>false</bool>
-            </property>
-           </widget>
-          </item>
-          <item row="3" column="8">
-           <widget class="QToolButton" name="change_inflow_data_name_btn">
-            <property name="text">
-             <string>...</string>
-            </property>
-            <property name="icon">
-             <iconset>
-              <normaloff>../img/change_name.svg</normaloff>../img/change_name.svg</iconset>
-            </property>
-           </widget>
-          </item>
-          <item row="3" column="1" colspan="7">
-           <widget class="QComboBox" name="comboBox_2"/>
-          </item>
-          <item row="4" column="0" colspan="9">
-           <widget class="QCheckBox" name="interval_ckbx">
-            <property name="toolTip">
-             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;IHOURDAILY:Daily if checked&lt;br/&gt;Hourly if unchecked&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-            </property>
-            <property name="layoutDirection">
-             <enum>Qt::LeftToRight</enum>
-            </property>
-            <property name="text">
-             <string>Hydrograph (hours/days)</string>
-            </property>
-           </widget>
+           </spacer>
           </item>
          </layout>
         </item>
@@ -409,6 +362,9 @@
      </item>
      <item row="1" column="0">
       <widget class="QGroupBox" name="outflow_grpbox">
+       <property name="enabled">
+        <bool>true</bool>
+       </property>
        <property name="sizePolicy">
         <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
          <horstretch>0</horstretch>
@@ -426,13 +382,10 @@
        </property>
        <layout class="QGridLayout" name="gridLayout_5">
         <item row="0" column="0">
-         <layout class="QGridLayout" name="gridLayout_4" columnstretch="0,0,0,0,0,0,0,0,0,0">
+         <layout class="QGridLayout" name="gridLayout_4" columnstretch="0,0,0,0,0,0,0,0,0">
           <property name="sizeConstraint">
            <enum>QLayout::SetMaximumSize</enum>
           </property>
-          <item row="4" column="1" colspan="7">
-           <widget class="QComboBox" name="comboBox_5"/>
-          </item>
           <item row="4" column="8">
            <widget class="QToolButton" name="change_outflow_data_name_btn">
             <property name="text">
@@ -445,33 +398,13 @@
            </widget>
           </item>
           <item row="0" column="2">
-           <widget class="QToolButton" name="toolButton_2">
+           <widget class="QToolButton" name="create_outflow_line_bc_btn">
             <property name="text">
              <string>...</string>
             </property>
             <property name="icon">
              <iconset>
               <normaloff>../img/mActionCaptureLine.svg</normaloff>../img/mActionCaptureLine.svg</iconset>
-            </property>
-            <property name="iconSize">
-             <size>
-              <width>24</width>
-              <height>24</height>
-             </size>
-            </property>
-           </widget>
-          </item>
-          <item row="1" column="1" colspan="5">
-           <widget class="QComboBox" name="comboBox_3"/>
-          </item>
-          <item row="0" column="4">
-           <widget class="QToolButton" name="toolButton_4">
-            <property name="text">
-             <string>...</string>
-            </property>
-            <property name="icon">
-             <iconset>
-              <normaloff>../img/mActionSaveAllEdits.svg</normaloff>../img/mActionSaveAllEdits.svg</iconset>
             </property>
             <property name="iconSize">
              <size>
@@ -488,14 +421,14 @@
             </property>
            </widget>
           </item>
-          <item row="0" column="7">
-           <widget class="QToolButton" name="toolButton_7">
+          <item row="0" column="1">
+           <widget class="QToolButton" name="create_outflow_point_bc_btn">
             <property name="text">
              <string>...</string>
             </property>
             <property name="icon">
              <iconset>
-              <normaloff>../img/add_table_data.svg</normaloff>../img/add_table_data.svg</iconset>
+              <normaloff>../img/mActionCapturePoint.svg</normaloff>../img/mActionCapturePoint.svg</iconset>
             </property>
             <property name="iconSize">
              <size>
@@ -506,7 +439,7 @@
            </widget>
           </item>
           <item row="1" column="7">
-           <widget class="QToolButton" name="toolButton_10">
+           <widget class="QToolButton" name="clear_outflow_rubberband_btn">
             <property name="sizePolicy">
              <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
               <horstretch>0</horstretch>
@@ -522,75 +455,23 @@
             </property>
            </widget>
           </item>
-          <item row="1" column="8">
-           <widget class="QToolButton" name="toolButton_11">
-            <property name="text">
-             <string>...</string>
-            </property>
-            <property name="icon">
-             <iconset>
-              <normaloff>../img/eye-svgrepo-com.svg</normaloff>../img/eye-svgrepo-com.svg</iconset>
-            </property>
-           </widget>
-          </item>
-          <item row="0" column="5">
-           <widget class="QToolButton" name="toolButton_5">
-            <property name="text">
-             <string>...</string>
-            </property>
-            <property name="icon">
-             <iconset>
-              <normaloff>../img/mActionUndo.svg</normaloff>../img/mActionUndo.svg</iconset>
-            </property>
-            <property name="iconSize">
-             <size>
-              <width>24</width>
-              <height>24</height>
-             </size>
-            </property>
-           </widget>
-          </item>
-          <item row="3" column="1" colspan="8">
-           <widget class="QComboBox" name="comboBox_4"/>
-          </item>
-          <item row="0" column="8">
-           <widget class="QToolButton" name="toolButton_8">
-            <property name="text">
-             <string>...</string>
-            </property>
-            <property name="icon">
-             <iconset>
-              <normaloff>../img/schematize_bc.svg</normaloff>../img/schematize_bc.svg</iconset>
-            </property>
-            <property name="iconSize">
-             <size>
-              <width>24</width>
-              <height>24</height>
-             </size>
-            </property>
-           </widget>
-          </item>
-          <item row="0" column="6">
-           <widget class="QToolButton" name="toolButton_6">
-            <property name="text">
-             <string>...</string>
-            </property>
-            <property name="icon">
-             <iconset>
-              <normaloff>../img/mActionDeleteSelected.svg</normaloff>../img/mActionDeleteSelected.svg</iconset>
-            </property>
-            <property name="iconSize">
-             <size>
-              <width>24</width>
-              <height>24</height>
-             </size>
-            </property>
-           </widget>
-          </item>
           <item row="3" column="0">
            <widget class="QLabel" name="label_5">
             <property name="text">
              <string>Hydrograph </string>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="0">
+           <widget class="QLabel" name="label_3">
+            <property name="maximumSize">
+             <size>
+              <width>80</width>
+              <height>16777215</height>
+             </size>
+            </property>
+            <property name="text">
+             <string>Create</string>
             </property>
            </widget>
           </item>
@@ -601,14 +482,99 @@
             </property>
            </widget>
           </item>
-          <item row="1" column="6">
-           <widget class="QToolButton" name="toolButton_9">
+          <item row="5" column="0" colspan="9">
+           <widget class="QCheckBox" name="checkBox">
+            <property name="text">
+             <string>Hydrograph (hours/days)</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="0">
+           <widget class="QLabel" name="label_7">
+            <property name="text">
+             <string>Name</string>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="3">
+           <widget class="QToolButton" name="create_outflow_polygon_bc_btn">
+            <property name="text">
+             <string>...</string>
+            </property>
+            <property name="icon">
+             <iconset>
+              <normaloff>../img/mActionCapturePolygon.svg</normaloff>../img/mActionCapturePolygon.svg</iconset>
+            </property>
+            <property name="iconSize">
+             <size>
+              <width>24</width>
+              <height>24</height>
+             </size>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="8">
+           <widget class="QToolButton" name="outflow_bc_center_btn">
+            <property name="text">
+             <string>...</string>
+            </property>
+            <property name="icon">
+             <iconset>
+              <normaloff>../img/eye-svgrepo-com.svg</normaloff>../img/eye-svgrepo-com.svg</iconset>
+            </property>
+            <property name="checkable">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+          <item row="3" column="1" colspan="8">
+           <widget class="QComboBox" name="comboBox_4"/>
+          </item>
+          <item row="1" column="5">
+           <widget class="QToolButton" name="change_outflow_bc_name_btn">
             <property name="text">
              <string>...</string>
             </property>
             <property name="icon">
              <iconset>
               <normaloff>../img/change_name.svg</normaloff>../img/change_name.svg</iconset>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="6">
+           <widget class="QToolButton" name="delete_outflow_bc_btn">
+            <property name="text">
+             <string>...</string>
+            </property>
+            <property name="icon">
+             <iconset>
+              <normaloff>../img/mActionDeleteSelected.svg</normaloff>../img/mActionDeleteSelected.svg</iconset>
+            </property>
+            <property name="iconSize">
+             <size>
+              <width>16</width>
+              <height>16</height>
+             </size>
+            </property>
+           </widget>
+          </item>
+          <item row="4" column="1" colspan="6">
+           <widget class="QComboBox" name="comboBox_5"/>
+          </item>
+          <item row="4" column="7">
+           <widget class="QToolButton" name="add_outflow_data_btn">
+            <property name="text">
+             <string>...</string>
+            </property>
+            <property name="icon">
+             <iconset>
+              <normaloff>../img/add_table_data.svg</normaloff>../img/add_table_data.svg</iconset>
+            </property>
+            <property name="iconSize">
+             <size>
+              <width>16</width>
+              <height>16</height>
+             </size>
             </property>
            </widget>
           </item>
@@ -634,66 +600,21 @@
             </property>
            </widget>
           </item>
-          <item row="0" column="3">
-           <widget class="QToolButton" name="toolButton_3">
-            <property name="text">
-             <string>...</string>
+          <item row="1" column="1" colspan="4">
+           <widget class="QComboBox" name="outflow_bc_name_cbo"/>
+          </item>
+          <item row="0" column="4" colspan="5">
+           <spacer name="horizontalSpacer_3">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
             </property>
-            <property name="icon">
-             <iconset>
-              <normaloff>../img/mActionCapturePolygon.svg</normaloff>../img/mActionCapturePolygon.svg</iconset>
-            </property>
-            <property name="iconSize">
+            <property name="sizeHint" stdset="0">
              <size>
-              <width>24</width>
-              <height>24</height>
+              <width>40</width>
+              <height>20</height>
              </size>
             </property>
-           </widget>
-          </item>
-          <item row="1" column="0">
-           <widget class="QLabel" name="label_7">
-            <property name="text">
-             <string>Name</string>
-            </property>
-           </widget>
-          </item>
-          <item row="0" column="0">
-           <widget class="QLabel" name="label_3">
-            <property name="maximumSize">
-             <size>
-              <width>80</width>
-              <height>16777215</height>
-             </size>
-            </property>
-            <property name="text">
-             <string>Create</string>
-            </property>
-           </widget>
-          </item>
-          <item row="0" column="1">
-           <widget class="QToolButton" name="toolButton">
-            <property name="text">
-             <string>...</string>
-            </property>
-            <property name="icon">
-             <iconset>
-              <normaloff>../img/mActionCapturePoint.svg</normaloff>../img/mActionCapturePoint.svg</iconset>
-            </property>
-            <property name="iconSize">
-             <size>
-              <width>24</width>
-              <height>24</height>
-             </size>
-            </property>
-           </widget>
-          </item>
-          <item row="5" column="0" colspan="9">
-           <widget class="QCheckBox" name="checkBox">
-            <property name="text">
-             <string>Hydrograph (hours/days)</string>
-            </property>
-           </widget>
+           </spacer>
           </item>
          </layout>
         </item>
@@ -701,6 +622,51 @@
       </widget>
      </item>
     </layout>
+   </item>
+   <item>
+    <widget class="QGroupBox" name="groupBox">
+     <property name="enabled">
+      <bool>true</bool>
+     </property>
+     <property name="title">
+      <string>Schematize Boundary Conditions</string>
+     </property>
+     <layout class="QGridLayout" name="gridLayout_7">
+      <item row="0" column="0">
+       <widget class="QToolButton" name="schem_bc_btn">
+        <property name="toolTip">
+         <string>Schematize boundary conditions</string>
+        </property>
+        <property name="text">
+         <string>...</string>
+        </property>
+        <property name="icon">
+         <iconset>
+          <normaloff>../img/schematize_bc.svg</normaloff>../img/schematize_bc.svg</iconset>
+        </property>
+        <property name="iconSize">
+         <size>
+          <width>24</width>
+          <height>24</height>
+         </size>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="1">
+       <spacer name="horizontalSpacer">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>40</width>
+          <height>20</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+     </layout>
+    </widget>
    </item>
   </layout>
  </widget>

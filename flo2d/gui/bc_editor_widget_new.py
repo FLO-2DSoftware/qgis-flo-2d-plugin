@@ -1,12 +1,27 @@
 # -*- coding: utf-8 -*-
-from qgis._core import QgsMessageLog, QgsProject, QgsVectorLayer, QgsMapLayer
+from math import isnan
 
+from PyQt5.QtGui import QColor
+from PyQt5.QtWidgets import QInputDialog, QApplication
+from qgis._core import QgsMessageLog, QgsProject, QgsVectorLayer, QgsMapLayer, QgsFeatureRequest
+from qgis._gui import QgsRubberBand
+
+from .table_editor_widget import StandardItem, StandardItemModel
 # FLO-2D Preprocessor tools for QGIS
 # Copyright © 2021 Lutra Consulting for FLO-2D
 
-from .ui_utils import load_ui
+from .ui_utils import load_ui, center_canvas
+from ..flo2dobjects import Inflow
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
+
+from ..utils import is_number, m_fdata, set_BC_Border
+
+from ..flo2d_tools.grid_tools import get_adjacent_cell, is_boundary_cell
+
+from qgis.PyQt.QtCore import Qt
+
+import traceback
 
 uiDialog, qtBaseClass = load_ui("bc_editor_new")
 
@@ -22,13 +37,27 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
 
         self.lyrs = lyrs
         self.project = QgsProject.instance()
+        self.bc_table = table
+        self.bc_data_model = StandardItemModel()
+        self.plot = plot
+        self.table_dock = table
+        self.bc_tview = table.tview
+        self.bc_tview.setModel(self.bc_data_model)
         self.con = None
         self.gutils = None
         self.setup_connection()
 
+        self.user_bc_tables = ["user_bc_points", "user_bc_lines", "user_bc_polygons"]
+
         self.bc_points_lyr = self.lyrs.data["user_bc_points"]["qlyr"]
         self.bc_lines_lyr = self.lyrs.data["user_bc_lines"]["qlyr"]
         self.bc_polygons_lyr = self.lyrs.data["user_bc_polygons"]["qlyr"]
+
+        # inflow plot data variables
+        self.t, self.d, self.m = [[], [], []]
+        self.ot, self.od, self.om = [[], [], []]
+        # outflow plot data variables
+        self.d1, self.d2 = [[], []]
 
         self.bc_points_lyr.setFlags(QgsMapLayer.Private)
         self.bc_lines_lyr.setFlags(QgsMapLayer.Private)
@@ -37,12 +66,71 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
         # Connections
         self.inflow_grpbox.toggled.connect(self.add_shapes)
         self.outflow_grpbox.toggled.connect(self.add_shapes)
+
         # Inflow
-        self.create_inflow_point_bc_btn.clicked.connect(self.create_inflow_point_bc)
-        self.create_inflow_line_bc_btn.clicked.connect(self.create_inflow_line_bc)
-        self.create_inflow_polygon_bc_btn.clicked.connect(self.create_inflow_polygon_bc)
+        self.inflow_bc_name_cbo.activated.connect(
+            self.inflow_changed)
+        self.create_inflow_point_bc_btn.clicked.connect(
+            lambda: self.create_bc("user_bc_points", "inflow", self.create_inflow_point_bc_btn))
+        self.create_inflow_line_bc_btn.clicked.connect(
+            lambda: self.create_bc("user_bc_lines", "inflow", self.create_inflow_line_bc_btn))
+        self.create_inflow_polygon_bc_btn.clicked.connect(
+            lambda: self.create_bc("user_bc_polygons", "inflow", self.create_inflow_polygon_bc_btn))
+        self.add_inflow_data_btn.clicked.connect(
+            lambda: self.add_data("inflow"))
+        self.change_inflow_bc_name_btn.clicked.connect(
+            lambda: self.change_bc_name(self.inflow_bc_name_cbo, "inflow"))
+        self.delete_inflow_bc_btn.clicked.connect(
+            lambda: self.delete_bc(self.inflow_bc_name_cbo, "inflow"))
+        self.clear_inflow_rubberband_btn.clicked.connect(
+            self.clear_rubberband)
+        self.inflow_bc_center_btn.clicked.connect(
+            self.inflow_bc_center)
+        self.ifc_fplain_radio.clicked.connect(
+            self.inflow_bc_changed)
+        self.ifc_chan_radio.clicked.connect(
+            self.inflow_bc_changed)
+        self.inflow_type_cbo.activated.connect(
+            self.inflow_bc_changed)
+        self.inflow_tseries_cbo.activated.connect(
+            self.inflow_data_changed)
+        self.change_inflow_data_name_btn.clicked.connect(
+            lambda: self.change_bc_data_name(self.inflow_bc_name_cbo, "inflow"))
 
         # Outflow
+        self.create_outflow_point_bc_btn.clicked.connect(
+            lambda: self.create_bc("user_bc_points", "outflow", self.create_outflow_point_bc_btn))
+        self.create_outflow_line_bc_btn.clicked.connect(
+            lambda: self.create_bc("user_bc_lines", "outflow", self.create_outflow_line_bc_btn))
+        self.create_outflow_polygon_bc_btn.clicked.connect(
+            lambda: self.create_bc("user_bc_polygons", "outflow", self.create_outflow_polygon_bc_btn))
+        self.add_outflow_data_btn.clicked.connect(
+            lambda: self.add_data("outflow"))
+
+        self.change_outflow_bc_name_btn.clicked.connect(
+            lambda: self.change_bc_name(self.outflow_bc_name_cbo, "outflow"))
+        self.delete_outflow_bc_btn.clicked.connect(
+            lambda: self.delete_bc(self.outflow_bc_name_cbo, "outflow"))
+        self.clear_inflow_rubberband_btn.clicked.connect(
+            self.clear_rubberband)
+        self.outflow_bc_center_btn.clicked.connect(self.outflow_bc_center)
+
+        self.schem_bc_btn.clicked.connect(self.schematize_bc)
+
+        (
+            out_deleted,
+            time_stage_1,
+            time_stage_2,
+            border,
+        ) = self.select_outflows_according_to_type()
+
+        for layer in self.user_bc_tables:
+            for feature in self.lyrs.data[layer]["qlyr"].getFeatures():
+                type_value = feature['type']
+                if type_value == 'inflow':
+                    self.inflow_grpbox.setChecked(True)
+                elif type_value == 'outflow':
+                    self.outflow_grpbox.setChecked(True)
 
     def setup_connection(self):
         """
@@ -60,6 +148,7 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
         Function to add the BC shapes
         """
         if self.inflow_grpbox.isChecked() or self.outflow_grpbox.isChecked():
+            self.populate_inflows()
             self.bc_points_lyr.setFlags(self.bc_points_lyr.flags() & ~QgsMapLayer.LayerFlag(QgsMapLayer.Private))
             self.bc_lines_lyr.setFlags(self.bc_lines_lyr.flags() & ~QgsMapLayer.LayerFlag(QgsMapLayer.Private))
             self.bc_polygons_lyr.setFlags(self.bc_polygons_lyr.flags() & ~QgsMapLayer.LayerFlag(QgsMapLayer.Private))
@@ -68,21 +157,859 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
             self.bc_lines_lyr.setFlags(QgsMapLayer.Private)
             self.bc_polygons_lyr.setFlags(QgsMapLayer.Private)
 
-    def create_inflow_point_bc(self):
+    def save_changes(self):
         """
-        Function to create inflow point bc
+        Function to save inflow changes
         """
-        pass
+        if not self.gutils or not self.lyrs.any_lyr_in_edit(*self.user_bc_tables):
+            return
+        self.delete_imported_bcs()
+        # try to save user bc layers (geometry additions/changes)
+        user_bc_edited = self.lyrs.save_lyrs_edits(*self.user_bc_tables)
+        # if user bc layers were edited
+        if user_bc_edited:
+            # Update inflow or outflow names:
+            self.gutils.fill_empty_inflow_names()
+            self.gutils.fill_empty_outflow_names()
 
-    def create_inflow_line_bc(self):
-        """
-        Function to create inflow line bc
-        """
-        pass
+            # populate widgets and show last edited bc
+            self.populate_bcs(show_last_edited=True)
+        self.repaint_bcs()
+        self.uncheck_btns()
 
-    def create_inflow_polygon_bc(self):
+    def discard_changes(self):
         """
-        Function to create inflow polygon bc
+        Function to discard changes in a layer in edit mode
         """
-        pass
+        for layer in self.user_bc_tables:
+            if self.lyrs.data[layer]["qlyr"].isEditable():
+                self.lyrs.data[layer]["qlyr"].rollBack()
+
+    def delete_imported_bcs(self):
+        """
+        Function to delete imported inflow bcs
+        """
+        if self.inflow_grpbox.isChecked():
+            self.gutils.delete_all_imported_inflows()
+        if self.outflow_grpbox.isChecked():
+            self.gutils.delete_all_imported_outflows()
+
+    def repaint_bcs(self):
+        """
+        Function to repaint the bcs
+        """
+        self.lyrs.lyrs_to_repaint = [
+            self.lyrs.data["all_schem_bc"]["qlyr"],
+            self.lyrs.data["user_bc_points"]["qlyr"],
+            self.lyrs.data["user_bc_lines"]["qlyr"],
+            self.lyrs.data["user_bc_polygons"]["qlyr"],
+        ]
+        self.lyrs.repaint_layers()
+
+    def create_bc(self, table, type, btn):
+        """
+        Function to create the bcs
+        """
+        if self.lyrs.any_lyr_in_edit(*self.user_bc_tables):
+            if self.uc.question("Would you like to save the Boundary Condition?"):
+                self.save_changes()
+                self.uncheck_btns()
+                return
+            else:
+                self.discard_changes()
+                self.uncheck_btns()
+                return
+
+        btn.setCheckable(True)
+        btn.setChecked(True)
+
+        if not self.lyrs.enter_edit_mode(f"{table}", {"type": f"'{type}'"}):
+            return
+
+    def uncheck_btns(self):
+        """
+        Function to uncheck the checked buttons
+        """
+        self.create_inflow_point_bc_btn.setChecked(False)
+        self.create_inflow_line_bc_btn.setChecked(False)
+        self.create_inflow_polygon_bc_btn.setChecked(False)
+        self.create_outflow_point_bc_btn.setChecked(False)
+        self.create_outflow_line_bc_btn.setChecked(False)
+        self.create_outflow_polygon_bc_btn.setChecked(False)
+
+    def populate_bcs(self, bc_fid=None, show_last_edited=False, widget_setup=False):
+        """
+        Function to populate data into the
+        """
+        self.lyrs.clear_rubber()
+        if self.inflow_grpbox.isChecked():
+            self.populate_inflows(
+                inflow_fid=bc_fid,
+                show_last_edited=show_last_edited,
+                widget_setup=widget_setup,
+            )
+        elif self.outflow_grpbox.isChecked():
+            self.populate_outflows(
+                outflow_fid=bc_fid,
+                show_last_edited=show_last_edited,
+                widget_setup=widget_setup,
+            )
+        else:
+            pass
+
+    def get_user_bc_lyr_for_geomtype(self, geom_type):
+        table_name = "user_bc_{}s".format(geom_type)
+        return self.lyrs.data[table_name]["qlyr"]
+
+    def save_bc_data(self):
+        self.update_plot()
+        if self.bc_type_inflow_radio.isChecked():
+            self.save_inflow_data()
+        else:
+            self.save_outflow_data()
+
+    def highlight_time_stage_cells(self, time_stage_1, time_stage_2):
+        if not self.gutils.is_table_empty("outflow_cells"):
+            for rb in self.rb_tidal:
+                self.canvas.scene().removeItem(rb)
+                del rb
+
+            grid = self.lyrs.data["grid"]["qlyr"]
+            lyr = self.lyrs.get_layer_tree_item(grid.id()).layer()
+            gt = lyr.geometryType()
+
+            if time_stage_1:
+                for cell in time_stage_1:
+                    rb = QgsRubberBand(self.canvas, gt)
+                    rb.setColor(QColor(Qt.cyan))
+                    fill_color = QColor(Qt.yellow)
+                    fill_color.setAlpha(0)
+                    rb.setFillColor(fill_color)
+                    rb.setWidth(2)
+                    try:
+                        feat = next(lyr.getFeatures(QgsFeatureRequest(cell)))
+                    except StopIteration:
+                        return
+                    rb.setToGeometry(feat.geometry(), lyr)
+                    self.rb_tidal.append(rb)
+
+            if time_stage_2:
+                for cell in time_stage_2:
+                    rb = QgsRubberBand(self.canvas, gt)
+                    rb.setColor(QColor(Qt.red))
+                    fill_color = QColor(Qt.red)
+                    fill_color.setAlpha(0)
+                    rb.setFillColor(fill_color)
+                    rb.setWidth(2)
+                    try:
+                        feat = next(lyr.getFeatures(QgsFeatureRequest(cell)))
+                    except StopIteration:
+                        return
+                    rb.setToGeometry(feat.geometry(), lyr)
+                    self.rb_tidal.append(rb)
+
+    def change_bc_data_name(self, cb, type):
+        """
+        Function to change the name of the BC Time Series
+        """
+        new_name, ok = QInputDialog.getText(None, "Change data name", "New name:")
+        if not ok or not new_name:
+            return
+        # inflow
+        if type == "inflow":
+            if not cb.findText(new_name) == -1:
+                msg = f"WARNING 060319.1620: Time series with name {new_name} already exists in the database. Please, choose another name."
+                self.uc.show_warn(msg)
+                return
+            self.inflow.set_time_series_data_name(new_name)
+            self.populate_inflows(inflow_fid=self.inflow.fid)
+        # outflow
+        else:
+            if type == "outflow":
+                msg = f"WARNING 060319.1621: Data series with name {new_name} already exists in the database. Please, choose another name."
+                self.uc.show_warn(msg)
+                return
+            self.outflow.set_data_name(new_name)
+            self.populate_outflows(outflow_fid=self.outflow.fid)
+
+    # INFLOWS
+    def populate_inflows(self, inflow_fid=None, show_last_edited=False, widget_setup=False):
+        """
+        Read inflow and inflow_time_series tables, populate proper combo boxes.
+        """
+        self.reset_inflow_gui()
+        all_inflows = self.gutils.get_inflows_list()
+        if not all_inflows and not widget_setup:
+            self.uc.bar_info("There is no inflow defined in the database...")
+            self.change_inflow_bc_name_btn.setDisabled(True)
+            self.clear_inflow_rubberband_btn.setDisabled(True)
+            return
+        else:
+            self.change_inflow_bc_name_btn.setDisabled(False)
+            self.clear_inflow_rubberband_btn.setDisabled(False)
+        cur_name_idx = 0
+        inflows_skipped = 0
+        for i, row in enumerate(all_inflows):
+            row = [x if x is not None else "" for x in row]
+            fid, name, geom_type, ts_fid = row
+            if not geom_type:
+                inflows_skipped += 1
+                continue
+            if not name:
+                name = "Inflow {}".format(fid)
+            self.inflow_bc_name_cbo.addItem(name, [fid, ts_fid])
+            if inflow_fid and fid == inflow_fid:
+                cur_name_idx = i - inflows_skipped
+        if not self.inflow_bc_name_cbo.count():
+            if not widget_setup:
+                self.uc.bar_info("There is no inflow defined in the database...")
+            return
+        if show_last_edited:
+            cur_name_idx = i - inflows_skipped
+        self.in_fid, self.ts_fid = self.inflow_bc_name_cbo.itemData(cur_name_idx)
+        self.inflow = Inflow(self.in_fid, self.iface.f2d["con"], self.iface)
+        self.inflow.get_row()
+        self.inflow_bc_name_cbo.setCurrentIndex(cur_name_idx)
+        self.inflow_changed()
+
+    def inflow_changed(self):
+        bc_idx = self.inflow_bc_name_cbo.currentIndex()
+        cur_data = self.inflow_bc_name_cbo.itemData(bc_idx)
+        if cur_data:
+            self.in_fid, self.ts_fid = cur_data
+        else:
+            return
+        self.inflow = Inflow(self.in_fid, self.iface.f2d["con"], self.iface)
+        self.inflow.get_row()
+        if not is_number(self.ts_fid) or self.ts_fid == -1:
+            self.ts_fid = 0
+        else:
+            self.ts_fid = int(self.ts_fid)
+        self.inflow_tseries_cbo.setCurrentIndex(self.ts_fid)
+
+        if self.inflow.ident == "F":
+            self.ifc_fplain_radio.setChecked(1)
+            self.ifc_chan_radio.setChecked(0)
+        elif self.inflow.ident == "C":
+            self.ifc_fplain_radio.setChecked(0)
+            self.ifc_chan_radio.setChecked(1)
+        else:
+            self.ifc_fplain_radio.setChecked(0)
+            self.ifc_chan_radio.setChecked(0)
+        if not self.inflow.inoutfc == "":
+            self.inflow_type_cbo.setCurrentIndex(self.inflow.inoutfc)
+        else:
+            self.inflow_type_cbo.setCurrentIndex(0)
+        if not self.inflow.geom_type:
+            return
+        self.bc_lyr = self.get_user_bc_lyr_for_geomtype(self.inflow.geom_type)
+        self.show_inflow_rb()
+        if self.inflow_bc_center_btn.isChecked():
+            feat = next(self.bc_lyr.getFeatures(QgsFeatureRequest(self.inflow.bc_fid)))
+            x, y = feat.geometry().centroid().asPoint()
+            center_canvas(self.iface, x, y)
+        self.populate_inflow_data_cbo()
+
+    def populate_inflow_data_cbo(self):
+        """
+        Read and set inflow properties.
+        """
+        self.time_series = self.inflow.get_time_series()
+        if not self.time_series:
+            self.uc.bar_warn("No data series for this inflow.")
+            return
+        self.inflow_tseries_cbo.clear()
+        cur_idx = 0
+        for i, row in enumerate(self.time_series):
+            row = [x if x is not None else "" for x in row]
+            ts_fid, ts_name = row
+            if not ts_name:
+                ts_name = "Time Series {}".format(ts_fid)
+            self.inflow_tseries_cbo.addItem(ts_name, str(ts_fid))
+            if ts_fid == self.inflow.time_series_fid:
+                cur_idx = i
+        self.inflow.time_series_fid = self.inflow_tseries_cbo.itemData(cur_idx)
+        self.inflow_tseries_cbo.setCurrentIndex(cur_idx)
+        self.inflow_data_changed()
+
+    def inflow_data_changed(self):
+        """
+        Get current time series data, populate data table and create plot.
+        """
+
+        self.bc_table.after_delete.disconnect()
+        self.bc_table.after_delete.connect(self.save_bc_data)
+
+        cur_ts_idx = self.inflow_tseries_cbo.currentIndex()
+        cur_ts_fid = self.inflow_tseries_cbo.itemData(cur_ts_idx)
+        self.create_inflow_plot()
+
+        self.bc_tview.undoStack.clear()
+        self.bc_tview.setModel(self.bc_data_model)
+        self.inflow.time_series_fid = cur_ts_fid
+
+        self.infow_tseries_data = self.inflow.get_time_series_data()
+        self.bc_data_model.clear()
+        self.bc_data_model.setHorizontalHeaderLabels(["Time", "Discharge", "Mud"])
+        self.ot, self.od, self.om = [[], [], []]
+        if not self.infow_tseries_data:
+            self.uc.bar_warn("No time series data defined for that inflow.")
+            return
+        for row in self.infow_tseries_data:
+            items = [StandardItem(str(x)) if x is not None else StandardItem("") for x in row]
+            self.bc_data_model.appendRow(items)
+            self.ot.append(row[0] if not row[0] is None else float("NaN"))
+            self.od.append(row[1] if not row[1] is None else float("NaN"))
+            self.om.append(row[2] if not row[2] is None else float("NaN"))
+        rc = self.bc_data_model.rowCount()
+
+        if rc < 500:
+            for row in range(rc, 500 + 1):
+                items = [StandardItem(x) for x in ("",) * 3]
+                self.bc_data_model.appendRow(items)
+
+        self.bc_tview.resizeColumnsToContents()
+
+        for i in range(self.bc_data_model.rowCount()):
+            self.bc_tview.setRowHeight(i, 20)
+
+        self.bc_tview.horizontalHeader().setStretchLastSection(True)
+
+        for i in range(3):
+            self.bc_tview.setColumnWidth(i, 90)
+
+        self.save_inflow()
+        self.create_inflow_plot()
+
+    def show_inflow_rb(self):
+        self.lyrs.show_feat_rubber(self.bc_lyr.id(), self.inflow.bc_fid)
+
+    def reset_inflow_gui(self):
+        """
+        Function to reset the inflow gui
+        """
+        self.inflow_bc_name_cbo.clear()
+        self.inflow_tseries_cbo.clear()
+        # self.bc_data_model.clear()
+        # self.plot.clear()
+
+    def inflow_bc_center(self):
+        """
+        Function to check the inflow eye button
+        """
+        if self.inflow_bc_center_btn.isChecked():
+            self.inflow_bc_center_btn.setChecked(True)
+            return
+        else:
+            self.inflow_bc_center_btn.setChecked(False)
+            return
+
+    def create_inflow_plot(self):
+        """
+        Create initial plot.
+        """
+        self.plot.clear()
+        if self.plot.plot.legend is not None:
+            plot_scene = self.plot.plot.legend.scene()
+            if plot_scene is not None:
+                plot_scene.removeItem(self.plot.plot.legend)
+        self.plot.plot.addLegend()
+
+        self.plot.add_item(
+            "Original Discharge",
+            [self.ot, self.od],
+            col=QColor("#7dc3ff"),
+            sty=Qt.DotLine,
+        )
+        self.plot.add_item("Current Discharge", [self.ot, self.od], col=QColor("#0018d4"))
+        self.plot.add_item("Original Mud", [self.ot, self.om], col=QColor("#cd904b"), sty=Qt.DotLine)
+        self.plot.add_item("Current Mud", [self.ot, self.om], col=QColor("#884800"))
+
+    def save_inflow(self):
+        """
+        Get inflow and time series data from table view and save them to gpkg.
+        """
+        new_name = self.inflow_bc_name_cbo.currentText()
+        # check if the name was changed
+        if not self.inflow.name == new_name:
+            if new_name in self.gutils.get_inflow_names():
+                msg = "WARNING 060319.1622: Inflow with name {} already exists in the database. Please, choose another name.".format(
+                    self.inflow.name
+                )
+                self.uc.show_warn(msg)
+                return False
+            else:
+                self.inflow.name = new_name
+        # save current inflow parameters
+        self.inflow.set_row()
+        self.save_inflow_data()
+
+    def save_inflow_data(self):
+        ts_data = []
+        for i in range(self.bc_data_model.rowCount()):
+            # save only rows with a number in the first column
+            if is_number(m_fdata(self.bc_data_model, i, 0)) and not isnan(m_fdata(self.bc_data_model, i, 0)):
+                ts_data.append(
+                    (
+                        self.inflow.time_series_fid,
+                        m_fdata(self.bc_data_model, i, 0),
+                        m_fdata(self.bc_data_model, i, 1),
+                        m_fdata(self.bc_data_model, i, 2),
+                    )
+                )
+            else:
+                pass
+        data_name = self.inflow_tseries_cbo.currentText()
+        self.inflow.set_time_series_data(data_name, ts_data)
+        self.update_inflow_plot()
+
+    def update_inflow_plot(self):
+        """
+        When time series data for plot change, update the plot.
+        """
+        self.t, self.d, self.m = [[], [], []]
+        for i in range(self.bc_data_model.rowCount()):
+            self.t.append(m_fdata(self.bc_data_model, i, 0))
+            self.d.append(m_fdata(self.bc_data_model, i, 1))
+            self.m.append(m_fdata(self.bc_data_model, i, 2))
+        self.plot.update_item("Current Discharge", [self.t, self.d])
+        self.plot.update_item("Current Mud", [self.t, self.m])
+
+    def change_bc_name(self, cb, type):
+        """
+        Function to change the inflow name
+        """
+        if not cb.count():
+            return
+        new_name, ok = QInputDialog.getText(None, "Change name", "New name:")
+        if not ok or not new_name:
+            return
+        if not cb.findText(new_name) == -1:
+            msg = f"WARNING 060319.1619: Boundary condition with name {new_name} already exists in the database. Please, choose another name."
+            self.uc.show_warn(msg)
+            return
+        # inflow
+        if type == "inflow":
+            self.inflow.name = new_name
+            self.inflow.set_row()
+            self.populate_inflows(inflow_fid=self.inflow.fid)
+        # outflow
+        if type == "outflow":
+            self.outflow.name = new_name
+            self.outflow.set_row()
+            self.populate_outflows(outflow_fid=self.outflow.fid)
+
+    def delete_bc(self, cb, type):
+        """
+        Delete the current boundary condition from user layer and schematic tables.
+        """
+        if not cb.count():
+            return
+        q = "Are you sure, you want delete the current BC?"
+        if not self.uc.question(q):
+            return
+        fid = None
+        bc_idx = cb.currentIndex()
+        cur_data = cb.itemData(bc_idx)
+        if cur_data:
+            fid = cur_data[0]
+        else:
+            return
+        if fid and type == "inflow":
+            self.inflow.del_row()
+        elif fid and type == "outflow":
+            self.outflow.del_row()
+        else:
+            pass
+        self.repaint_bcs()
+        # try to set current bc to the last before the deleted one
+        try:
+            self.populate_bcs(bc_fid=fid - 1)
+        except Exception as e:
+            self.populate_bcs()
+
+    def clear_rubberband(self):
+        """
+        Function to clear the rubberbands
+        """
+        self.lyrs.clear_rubber()
+
+    def add_data(self, type):
+        if not self.gutils:
+            return
+        if type == "inflow":
+            if not self.inflow:
+                return
+            if not self.inflow.time_series_fid:
+                return
+            self.inflow.add_time_series()
+            self.populate_inflow_data_cbo()
+        elif type == "outflow":
+            if not self.outflow:
+                return
+            self.outflow.add_data()
+            self.populate_outflow_data_cbo()
+        else:
+            pass
+
+    def schematize_bc(self):
+        in_inserted, out_inserted, out_deleted = 0, 0, 0
+        border = []
+        exist_user_bc = self.gutils.execute("SELECT * FROM all_user_bc;").fetchone()
+        if not exist_user_bc:
+            self.uc.show_info("There are no User Boundary Conditions (points, lines, or polygons) defined.")
+        if not self.gutils.is_table_empty("all_schem_bc"):
+            if not self.uc.question(
+                "There are some boundary conditions grid cells defined already.\n\n Overwrite them?"
+            ):
+                return
+
+        QApplication.setOverrideCursor(Qt.WaitCursor)
+
+        out_inserted = self.schematize_outflows()
+        in_inserted = self.schematize_inflows()
+
+        (
+            out_deleted,
+            time_stage_1,
+            time_stage_2,
+            border,
+        ) = self.select_outflows_according_to_type()
+        self.highlight_time_stage_cells(time_stage_1, time_stage_2)
+
+        if time_stage_1:
+            set_BC_Border(border)
+
+        self.lyrs.lyrs_to_repaint = [self.lyrs.data["all_schem_bc"]["qlyr"]]
+        self.lyrs.repaint_layers()
+
+        QApplication.restoreOverrideCursor()
+        self.uc.show_info(
+            str(in_inserted)
+            + " inflows and "
+            + str(out_inserted - out_deleted)
+            + " outflows boundary conditions schematized!"
+        )
+
+    def schematize_outflows(self):
+        QApplication.setOverrideCursor(Qt.WaitCursor)
+        try:
+            msg = ""
+
+            self.gutils.execute("DELETE FROM outflow_cells;")
+            self.gutils.execute("DELETE FROM inflow_cells;")
+
+            #             all_user_bc = self.gutils.execute("SELECT * FROM all_user_bc;").fetchall()
+
+            ins_qry = """
+                INSERT INTO outflow_cells (outflow_fid, grid_fid, geom_type, area_factor)
+                SELECT
+                    abc.bc_fid, g.fid, abc.geom_type, CAST(abc.bc_fid AS INT)
+                FROM
+                    grid AS g, all_user_bc AS abc
+                WHERE
+                    abc.type = 'outflow' AND
+                    ST_Intersects(CastAutomagic(g.geom), CastAutomagic(abc.geom));
+                    """
+            inserted = self.gutils.execute(ins_qry)
+
+            outflow_cells = self.gutils.execute("SELECT * FROM outflow_cells ORDER BY fid;").fetchall()
+            # Fix outflow_cells:
+            for oc in outflow_cells:
+                grid = oc[2]
+                geom_type = oc[3]
+                area_factor = oc[4]
+                fid = self.gutils.execute(
+                    "SELECT fid FROM outflow WHERE geom_type = ? AND bc_fid = ?;",
+                    (
+                        geom_type,
+                        area_factor,
+                    ),
+                ).fetchone()
+                if fid:
+                    self.gutils.execute(
+                        "UPDATE outflow_cells SET outflow_fid = ? WHERE geom_type = ? AND area_factor = ?;",
+                        (fid[0], geom_type, area_factor),
+                    )
+                else:
+                    tab_bc_fid = self.gutils.execute(
+                        "SELECT tab_bc_fid FROM all_schem_bc WHERE grid_fid = ?;",
+                        (grid,),
+                    ).fetchone()
+                    if tab_bc_fid:
+                        self.gutils.execute(
+                            "UPDATE outflow_cells SET outflow_fid = ? WHERE geom_type = ? AND area_factor = ?;",
+                            (tab_bc_fid[0], geom_type, area_factor),
+                        )
+
+                    else:
+                        msg += "\nNo fid for " + str(grid)
+
+            if msg:
+                self.uc.show_warn(msg)
+
+            QApplication.restoreOverrideCursor()
+            return inserted.rowcount
+            #             self.uc.show_info("Outflows schematized!")
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.uc.show_error("ERROR 180319.1434: Schematizing of outflows aborted!\n", e)
+            self.uc.log_info(traceback.format_exc())
+            return 0
+
+    def schematize_inflows(self):
+        QApplication.setOverrideCursor(Qt.WaitCursor)
+        try:
+            outflow = self.gutils.execute("SELECT * FROM outflow;").fetchall()
+            inflow = self.gutils.execute("SELECT * FROM inflow;").fetchall()
+
+            del_qry = "DELETE FROM inflow_cells;"
+            ins_qry = """INSERT INTO inflow_cells (inflow_fid, grid_fid, area_factor)
+                   SELECT
+                       abc.bc_fid, g.fid, CAST(abc.bc_fid AS INT)
+                   FROM
+                       grid AS g, all_user_bc AS abc
+                   WHERE
+                       abc.type = 'inflow' AND
+                       ST_Intersects(CastAutomagic(g.geom), CastAutomagic(abc.geom));"""
+            self.gutils.execute(del_qry)
+
+            inserted = self.gutils.execute(ins_qry)
+            QApplication.restoreOverrideCursor()
+            return inserted.rowcount
+        #             self.uc.show_info("Inflows schematized!")
+        except Exception:
+            QApplication.restoreOverrideCursor()
+            self.uc.show_warn("WARNING 180319.1431: Schematizing of inflow aborted!")
+            self.uc.log_info(traceback.format_exc())
+            return 0
+
+    def select_outflows_according_to_type(self):
+        no_outflow, time_stage_1, time_stage_2, border = [], [], [], []
+        try:
+            cell_side = self.gutils.get_cont_par("CELLSIZE")
+            if cell_side:
+                cell_size = float(cell_side)
+                if not self.gutils.is_table_empty("outflow_cells"):
+                    grid_lyr = self.lyrs.data["grid"]["qlyr"]
+                    cells = self.gutils.execute("SELECT grid_fid, outflow_fid, geom_type FROM outflow_cells").fetchall()
+                    if cells:
+                        for cell in cells:
+                            grid_fid, outflow_fid, geom_type = cell
+                            if geom_type == "polygon":
+                                row = self.gutils.execute(
+                                    "SELECT type FROM outflow WHERE geom_type = ? AND fid = ?;",
+                                    (
+                                        geom_type,
+                                        outflow_fid,
+                                    ),
+                                ).fetchone()
+
+                                if row:
+                                    if row[0] == 0:  # Outflow type selected as 'No Outflow'. Tag it to remove it,
+                                        no_outflow.append(grid_fid)
+                                    elif row[0] in [0, 1, 4, 5, 7]:
+                                        if is_boundary_cell(self.gutils, grid_lyr, grid_fid, cell_size):
+                                            # Remove diagonals:
+
+                                            currentCell = next(grid_lyr.getFeatures(QgsFeatureRequest(grid_fid)))
+                                            (
+                                                n_grid,
+                                                ne_grid,
+                                                e_grid,
+                                                se_grid,
+                                                s_grid,
+                                                sw_grid,
+                                                w_grid,
+                                                nw_grid,
+                                            ) = self.adjacent_grids(currentCell, cell_size)
+
+                                            a = nw_grid is None and n_grid and w_grid
+                                            b = sw_grid is None and w_grid and s_grid
+                                            c = se_grid is None and e_grid and s_grid
+                                            d = ne_grid is None and n_grid and e_grid
+                                            if a or b or c or d:
+                                                # It is a diagonal cell, remove it:
+                                                no_outflow.append(grid_fid)
+                                            else:  # Find addjacent inner cells:
+                                                border.append(grid_fid)
+                                                if row[0] == 5:  # Time stage => select adjacent inner cells
+                                                    this = None
+                                                    if w_grid and e_grid and s_grid:
+                                                        this = s_grid
+                                                    elif n_grid and s_grid and w_grid:
+                                                        this = w_grid
+                                                    elif w_grid and e_grid and n_grid:
+                                                        this = n_grid
+                                                    elif n_grid and s_grid and e_grid:
+                                                        this = e_grid
+
+                                                    if this is not None:
+                                                        if this not in time_stage_1:
+                                                            time_stage_1.append(this)
+
+                                                    if False:
+                                                        pass
+                                                    elif w_grid and not e_grid and s_grid:
+                                                        this = s_grid
+                                                    elif n_grid and not s_grid and w_grid:
+                                                        this = w_grid
+                                                    elif w_grid and not e_grid and n_grid and ne_grid:
+                                                        this = n_grid
+                                                    elif n_grid and not s_grid and e_grid:
+                                                        this = e_grid
+                                                    elif not n_grid and not w_grid and e_grid:
+                                                        this = e_grid
+
+                                                    if this is not None:
+                                                        if this not in time_stage_1 + time_stage_2:
+                                                            adj_cell = get_adjacent_cell(
+                                                                self.gutils,
+                                                                grid_lyr,
+                                                                this,
+                                                                "N",
+                                                                cell_size,
+                                                            )
+                                                            if adj_cell is not None:
+                                                                adj_cell = get_adjacent_cell(
+                                                                    self.gutils,
+                                                                    grid_lyr,
+                                                                    this,
+                                                                    "E",
+                                                                    cell_size,
+                                                                )
+                                                                if adj_cell is not None:
+                                                                    adj_cell = get_adjacent_cell(
+                                                                        self.gutils,
+                                                                        grid_lyr,
+                                                                        this,
+                                                                        "S",
+                                                                        cell_size,
+                                                                    )
+                                                                    if adj_cell is not None:
+                                                                        adj_cell = get_adjacent_cell(
+                                                                            self.gutils,
+                                                                            grid_lyr,
+                                                                            this,
+                                                                            "W",
+                                                                            cell_size,
+                                                                        )
+                                                                        if adj_cell is not None:
+                                                                            time_stage_2.append(this)
+
+                                        else:
+                                            no_outflow.append(grid_fid)
+
+                            elif geom_type == "line" or geom_type == "point":
+                                rows = self.gutils.execute(
+                                    "SELECT type FROM outflow WHERE geom_type = ? AND bc_fid = ?;",
+                                    (
+                                        geom_type,
+                                        outflow_fid,
+                                    ),
+                                ).fetchall()
+                                if rows:
+                                    for row in rows:
+                                        if row[0] == 0:  # No outflow
+                                            no_outflow.append(grid_fid)
+                        if no_outflow:
+                            if time_stage_1:
+                                for cell in time_stage_1:
+                                    if cell in no_outflow:
+                                        no_outflow.remove(cell)
+
+                            if time_stage_2:
+                                for cell in time_stage_2:
+                                    if cell in no_outflow:
+                                        no_outflow.remove(cell)
+
+                            for cell in no_outflow:
+                                self.gutils.execute(
+                                    "DELETE FROM outflow_cells WHERE grid_fid = ?;",
+                                    (cell,),
+                                )
+
+                return (
+                    len(no_outflow),
+                    list(set(time_stage_1 + time_stage_2)),
+                    [],
+                    border,
+                )
+
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.uc.show_error(
+                "ERROR 280522.0729: error selecting outflows according to type!!"
+                + "\n__________________________________________________",
+                e,
+            )
+        finally:
+            return len(no_outflow), list(set(time_stage_1 + time_stage_2)), [], border
+
+    def adjacent_grids(self, currentCell, cell_size):
+        xx, yy = currentCell.geometry().centroid().asPoint()
+
+        # North cell:
+        y = yy + cell_size
+        x = xx
+        n_grid = self.gutils.grid_on_point(x, y)
+
+        # NorthEast cell
+        y = yy + cell_size
+        x = xx + cell_size
+        ne_grid = self.gutils.grid_on_point(x, y)
+
+        # East cell:
+        x = xx + cell_size
+        y = yy
+        e_grid = self.gutils.grid_on_point(x, y)
+
+        # SouthEast cell:
+        y = yy - cell_size
+        x = xx + cell_size
+        se_grid = self.gutils.grid_on_point(x, y)
+
+        # South cell:
+        y = yy - cell_size
+        x = xx
+        s_grid = self.gutils.grid_on_point(x, y)
+
+        # SouthWest cell:
+        y = yy - cell_size
+        x = xx - cell_size
+        sw_grid = self.gutils.grid_on_point(x, y)
+
+        # West cell:
+        y = yy
+        x = xx - cell_size
+        w_grid = self.gutils.grid_on_point(x, y)
+
+        # NorthWest cell:
+        y = yy + cell_size
+        x = xx - cell_size
+        nw_grid = self.gutils.grid_on_point(x, y)
+
+        return n_grid, ne_grid, e_grid, se_grid, s_grid, sw_grid, w_grid, nw_grid
+
+    def inflow_bc_changed(self):
+        """
+        Function to save changes on the floodplain/channel and on inflow type
+        """
+        if self.ifc_fplain_radio.isChecked():
+            self.inflow.ident = "F"
+        else:
+            self.inflow.ident = "C"
+        self.inflow.inoutfc = self.inflow_type_cbo.currentIndex()
+        self.save_inflow()
+
+    def outflow_bc_center(self):
+        """
+        Function to check the outflow eye button
+        """
+        if self.outflow_bc_center_btn.isChecked():
+            self.outflow_bc_center_btn.setChecked(True)
+            return
+        else:
+            self.outflow_bc_center_btn.setChecked(False)
+            return
 
