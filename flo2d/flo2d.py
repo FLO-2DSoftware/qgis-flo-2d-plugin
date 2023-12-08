@@ -183,6 +183,7 @@ class Flo2D(object):
 
         # connections
         self.project.readProject.connect(self.load_gpkg_from_proj)
+        self.project.writeProject.connect(self.flo_save_project)
 
         self.uc.clear_bar_messages()
         QApplication.restoreOverrideCursor()
@@ -336,11 +337,11 @@ class Flo2D(object):
                     "Open FLO-2D Project",
                     lambda: self.flo_open_project(),
                 ),
-                (
-                    os.path.join(self.plugin_dir, "img/mActionSaveGeoPackageLayer.svg"),
-                    "Save FLO-2D Project",
-                    lambda: self.flo_save_project(),
-                ),
+                # (
+                #     os.path.join(self.plugin_dir, "img/mActionSaveGeoPackageLayer.svg"),
+                #     "Save FLO-2D Project",
+                #     lambda: self.flo_save_project(),
+                # ),
                 (
                     os.path.join(self.plugin_dir, "img/gpkg.svg"),
                     "FLO-2D GeoPackage Management",
@@ -902,7 +903,7 @@ class Flo2D(object):
                 self.write_proj_entry("gpkg", gpkg_path_adj)
                 # uri = f'geopackage:{gpkg_path_adj}?projectName={proj_name + "_v1.0.0"}'
                 # # self.project.write(uri)
-                self.flo_save_project()
+                self.iface.mainWindow().findChild(QAction, 'mActionSaveProject').trigger()
                 QApplication.restoreOverrideCursor()
                 self.uc.bar_info("FLO-2D-Project created into the Geopackage.")
 
@@ -913,13 +914,13 @@ class Flo2D(object):
         finally:
             QApplication.restoreOverrideCursor()
 
-    @connection_required
+    # @connection_required
     def flo_save_project(self):
         """
         Function to save a FLO-2D project into a geopackage
         """
 
-        QApplication.setOverrideCursor(Qt.WaitCursor)
+        # QApplication.setOverrideCursor(Qt.WaitCursor)
 
         gpkg_path = self.gutils.get_gpkg_path()
         proj_name = os.path.splitext(os.path.basename(gpkg_path))[0]
@@ -1021,9 +1022,9 @@ class Flo2D(object):
                     self.uc.show_warn("Your layer type is not Vector or Raster.")
                     QApplication.setOverrideCursor(Qt.WaitCursor)
 
-        # Need to trigger the save button to add a project thumbnail to recent projects
-        self.iface.mainWindow().findChild(QAction, 'mActionSaveProject').trigger()
-        self.project.write(uri)
+        # # Need to trigger the save button to add a project thumbnail to recent projects
+        # self.iface.mainWindow().findChild(QAction, 'mActionSaveProject').trigger()
+        # self.project.write(uri)
 
         thumbnail = QSettings().value('UI/recentProjects/1/previewImage')
         picture = Image.open(thumbnail)
