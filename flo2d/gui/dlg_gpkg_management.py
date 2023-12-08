@@ -37,23 +37,27 @@ class GpkgManagementDialog(qtBaseClass, uiDialog):
         self.delete_btn.clicked.connect(self.delete_user_lyrs)
         self.cancel_btn.clicked.connect(self.close_dlg)
 
+        self.listWidget.itemSelectionChanged.connect(self.check_items)
+
     def populate_user_lyrs(self):
         """
         Function to populate the user layers in the list view
         """
         self.setWindowTitle("FLO-2D GeoPackage Management")
         layers = []
+        gpkg_path = self.gutils.get_gpkg_path()
+        gpkg_path_adj = gpkg_path.replace("\\", "/")
+
         for l in QgsProject.instance().mapLayers().values():
-            source = str(l.source())
-            if l.type() == QgsMapLayerType.VectorLayer:
-                layername_parts = source.split("=")
-                if len(layername_parts) > 1:
+            layer_source_adj = l.source().replace("\\", "/")
+            if gpkg_path_adj in layer_source_adj:
+                if l.type() == QgsMapLayerType.VectorLayer:
+                    layername_parts = l.source().split("=")
                     layername = layername_parts[-1]
                     if layername not in GeoPackageUtils.current_gpkg_tables:
                         layers.append(l)
-            elif l.type() == QgsMapLayerType.RasterLayer:
-                layername_parts = source.split(":")
-                if len(layername_parts) > 1:
+                elif l.type() == QgsMapLayerType.RasterLayer:
+                    layername_parts = l.source().split(":")
                     layername = layername_parts[-1]
                     if layername not in GeoPackageUtils.current_gpkg_tables:
                         layers.append(l)
@@ -90,6 +94,15 @@ class GpkgManagementDialog(qtBaseClass, uiDialog):
         self.listWidget.clear()
         self.populate_user_lyrs()
         QApplication.restoreOverrideCursor()
+
+    def check_items(self):
+        """
+        Function to check the ListWidget item if clicked
+        """
+        for item in self.listWidget.selectedItems():
+
+            current_state = item.checkState()
+            item.setCheckState(Qt.Checked if current_state == Qt.Unchecked else Qt.Unchecked)
 
     def close_dlg(self):
         """
