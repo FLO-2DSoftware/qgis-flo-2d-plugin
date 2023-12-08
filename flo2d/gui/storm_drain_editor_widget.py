@@ -4451,7 +4451,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             name_qry = "UPDATE swmmflo_culvert SET name =  'CulvertEq' || cast(fid as text) WHERE fid = ?;"
             self.gutils.execute(name_qry, (rowid,))
             qry = "UPDATE swmmflo_culvert SET cdiameter = ?, typec = ?, typeen = ?, cubase = ?, multbarrels = ? WHERE fid = ?;"
-            self.gutils.execute(qry, (0,0,0,0,0,rowid))
+            self.gutils.execute(qry, (0,0,0,0,1,rowid))
             
             newCulvert= "Culvert Eq. {}".format(rowid)
             self.populate_type4_combo()
@@ -4567,18 +4567,28 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
     def SD_rename_type4(self):
         if not self.inletRT:
             return
-        new_name, ok = QInputDialog.getText(None, "Change rating table name", "New name:")
+        new_name, ok = QInputDialog.getText(None, "Change table name", "New name:")
         if not ok or not new_name:
             return
         if not self.SD_type4_cbo.findText(new_name) == -1:
-            msg = "WARNING 060319.1735: Rating table with name {} already exists in the database. Please, choose another name.".format(
+            msg = "WARNING 060319.1735: Table with name {} already exists. Please, choose another name.".format(
                 new_name
             )
             self.uc.show_warn(msg)
             return
         idx = self.SD_type4_cbo.currentIndex()
         rt_fid = self.SD_type4_cbo.itemData(idx)
-        self.inletRT.set_rating_table_data_name(rt_fid, new_name)
+        name = self.SD_type4_cbo.currentText()
+        
+        in_culvert = self.gutils.execute(
+            "SELECT fid FROM swmmflo_culvert WHERE name = ?;", (name,)
+            ).fetchone()  
+        
+        if in_culvert:         
+            qry = "UPDATE swmmflo_culvert SET name=? WHERE name=?;"
+            self.gutils.execute(qry,(new_name, name,),)
+        else:
+            self.inletRT.set_rating_table_data_name(rt_fid, new_name)
 
         self.populate_type4_combo()
         idx = self.SD_type4_cbo.findText(new_name)
