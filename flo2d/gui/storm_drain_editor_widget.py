@@ -2054,6 +2054,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 "NOTE: the 'Schematize Storm Drain Components' button  in the Storm Drain Editor widget will update the 'Storm Drain' layer group, required to "
                 "later export the .DAT files used by the FLO-2D model."
             )
+            
         elif show_end_message:
             QApplication.restoreOverrideCursor()
             self.uc.show_info(
