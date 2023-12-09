@@ -1744,10 +1744,10 @@ class InletRatingTable(GeoPackageUtils):
         if name == None:
             qry = """INSERT INTO swmmflort (name) VALUES (?);"""
             rowid = self.execute(qry, (name,), get_rowid=True)
-            name_qry = """UPDATE swmmflort SET name =  'Rating Table ' || cast(fid as text) WHERE fid = ?;"""
+            name_qry = """UPDATE swmmflort SET name =  'RatingTable' || cast(fid as text) WHERE fid = ?;"""
             self.execute(name_qry, (rowid,))
             if not name:
-                self.name = "Rating Table {}".format(rowid)
+                self.name = "RatingTable{}".format(rowid)
             return self.name
         else:
             sel_qry = "SELECT fid FROM swmmflort WHERE name = ?;"
@@ -1780,9 +1780,9 @@ class InletRatingTable(GeoPackageUtils):
     def get_inlet_table_data(self, rt_fid):
         qryRT = "SELECT depth, q FROM swmmflort_data WHERE swmm_rt_fid = ? ORDER BY depth;"
         rating_table_data = self.execute(qryRT, (rt_fid,)).fetchall()      
-        # if not rating_table_data:
-        #     # add a new time series
-        #     rating_table_data = self.add_rating_table_data(rt_fid, fetch=True)
+        if not rating_table_data:
+            # add a new time series
+            rating_table_data = self.add_rating_table_data(rt_fid, fetch=True)
         return rating_table_data
 
     def add_rating_table_data(self, rt_fid, rows=5, fetch=False):
