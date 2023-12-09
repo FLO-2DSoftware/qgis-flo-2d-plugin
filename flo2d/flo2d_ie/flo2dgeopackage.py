@@ -3395,14 +3395,14 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     if gid is not None:
                         if str(gid).strip() != "":
                             if rtname is None or rtname == "":
-                                errors += "Grid element " + str(gid) + " has an empty rating table name.\n"
+                                errors += "* Grid element " + str(gid) + " has an empty rating table name.\n"
                             else:
                                 inlet_type_qry = "SELECT intype FROM swmmflo WHERE swmm_jt = ?;"
                                 inlet_type = self.execute(inlet_type_qry, (gid,)).fetchall()
                                 if inlet_type is not None:
                                     # TODO: there may be more than one record. Why? Some may have intype = 4.
                                     if len(inlet_type) > 1:
-                                        errors += "Grid element " + str(gid) + " has has more than one inlet.\n"
+                                        errors += "* Grid element " + str(gid) + " has has more than one inlet.\n"
                                     # See if there is a type 4:
                                     inlet_type_qry2 = "SELECT intype FROM swmmflo WHERE swmm_jt = ? AND intype = '4';"
                                     inlet_type = self.execute(inlet_type_qry2, (gid,)).fetchone()
@@ -3449,7 +3449,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                                                                 s.write(line2.format(*row))
                                                         else:
                                                             errors += (
-                                                                "Could not find data for rating table '"
+                                                                "* Could not find data for rating table '"
                                                                 + rtname
                                                                 + "' for grid element "
                                                                 + str(gid)
@@ -3459,7 +3459,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
                                                 if not error_mentioned:
                                                     errors += "Storm Drain Nodes layer in User Layers is empty.\nSWMMFLORT.DAT may be incomplete!"
                                                     error_mentioned = True
-
+                    else:
+                        errors += "* Unknown grid element in Rating Table.\n"                                   
                 culverts = self.gutils.execute(
                     "SELECT grid_fid, name, cdiameter, typec, typeen, cubase, multbarrels FROM swmmflo_culvert ORDER BY fid;"
                 ).fetchall()
@@ -3474,10 +3475,16 @@ class Flo2dGeoPackage(GeoPackageUtils):
                             cubase,
                             multbarrels,
                         ) = culv
-                        s.write("S " + str(grid_fid) + " " + name + " " + str(cdiameter) + "\n")
-                        s.write(
-                            "F " + str(typec) + " " + str(typeen) + " " + str(cubase) + " " + str(multbarrels) + "\n"
-                        )
+                        if grid_fid:
+                            s.write("S " + str(grid_fid) + " " + name + " " + str(cdiameter) + "\n")
+                            s.write(
+                                "F " + str(typec) + " " + str(typeen) + " " + str(cubase) + " " + str(multbarrels) + "\n"
+                            )
+                        else:
+                            if name:
+                                errors += "* Unknown grid element for Culverts eq. " + name +".\n"
+                            else:    
+                                errors += "* Unknown grid element in Culverts eq. table.\n"
             if errors:
                 QApplication.restoreOverrideCursor()
                 self.uc.show_info("WARNING 040319.0521:\n\n" + errors)
