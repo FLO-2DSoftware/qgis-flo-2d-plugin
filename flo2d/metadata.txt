@@ -31,6 +31,7 @@ changelog=
   - Storm Drain: (Issue #1031) Do not duplicate conduits when importing .INP file.
   - Grouped import/export buttons
   - Storm Drain: (#issue #1042) Add "Keep existing and complete" functionality to pumps, orifices, and weirds.
+     - Add type4 Rating Table and Culvert Eq.
  <p>0.10.116
   - Convert schematic hydraulic structures to user structure lines.
  <p>0.10.115
