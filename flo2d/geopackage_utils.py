@@ -254,7 +254,7 @@ class GeoPackageUtils(object):
         'gutter_lines', 'gutter_cells', 'tailing_cells', 'tolspatial', 'tolspatial_cells',
         'wsurf', 'wstime', 'breach_global', 'breach', 'breach_cells',
         'breach_fragility_curves', 'mud', 'mud_areas', 'mud_cells', 'sed_group_areas',
-        'sed_groups', 'sed_group_frac', 'sed_group_frac_data', 'sed_group_cells',
+        'sed_groups', 'sed_group_frac', 'sed_group_frac_data', 'sed_group_cells', 'sed',
         'sed_rigid_areas', 'sed_rigid_cells', 'sed_supply_areas', 'sed_supply_cells',
         'sed_supply_frac', 'sed_supply_frac_data', 'user_fpxsec', 'user_model_boundary',
         'user_1d_domain', 'user_left_bank', 'user_right_bank', 'user_xsections',
