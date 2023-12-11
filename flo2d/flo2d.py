@@ -183,6 +183,8 @@ class Flo2D(object):
 
         # connections
         self.project.readProject.connect(self.load_gpkg_from_proj)
+        self.project.writeProject.connect(self.flo_save_project)
+        # self.project.projectSaved.connect(self.add_flo2d_logo)
 
         self.uc.clear_bar_messages()
         QApplication.restoreOverrideCursor()
@@ -336,11 +338,11 @@ class Flo2D(object):
                     "Open FLO-2D Project",
                     lambda: self.flo_open_project(),
                 ),
-                (
-                    os.path.join(self.plugin_dir, "img/mActionSaveGeoPackageLayer.svg"),
-                    "Save FLO-2D Project",
-                    lambda: self.flo_save_project(),
-                ),
+                # (
+                #     os.path.join(self.plugin_dir, "img/mActionSaveGeoPackageLayer.svg"),
+                #     "Save FLO-2D Project",
+                #     lambda: self.flo_save_project(),
+                # ),
                 (
                     os.path.join(self.plugin_dir, "img/gpkg.svg"),
                     "FLO-2D GeoPackage Management",
@@ -902,7 +904,7 @@ class Flo2D(object):
                 self.write_proj_entry("gpkg", gpkg_path_adj)
                 # uri = f'geopackage:{gpkg_path_adj}?projectName={proj_name + "_v1.0.0"}'
                 # # self.project.write(uri)
-                self.flo_save_project()
+                self.iface.mainWindow().findChild(QAction, 'mActionSaveProject').trigger()
                 QApplication.restoreOverrideCursor()
                 self.uc.bar_info("FLO-2D-Project created into the Geopackage.")
 
@@ -913,13 +915,13 @@ class Flo2D(object):
         finally:
             QApplication.restoreOverrideCursor()
 
-    @connection_required
+    # @connection_required
     def flo_save_project(self):
         """
         Function to save a FLO-2D project into a geopackage
         """
 
-        QApplication.setOverrideCursor(Qt.WaitCursor)
+        # QApplication.setOverrideCursor(Qt.WaitCursor)
 
         gpkg_path = self.gutils.get_gpkg_path()
         proj_name = os.path.splitext(os.path.basename(gpkg_path))[0]
@@ -927,11 +929,10 @@ class Flo2D(object):
 
         layers = self.project.mapLayers()
         checked_layers = False
+        not_added = []
 
         for layer_id, layer in layers.items():
-            uri_parts = layer.source().split('|')
-            uri_parts2 = layer.source().split(':')
-            if not uri_parts[0].endswith('.gpkg') and not uri_parts2[0].startswith('GPKG'):
+            if self.check_layer_source(layer, gpkg_path):
                 if not checked_layers:
                     msg = f"External layers were added to the project.\n\n"
                     msg += "Click Yes to save the external data to the GeoPackage.\n"
@@ -947,7 +948,7 @@ class Flo2D(object):
                         QApplication.setOverrideCursor(Qt.WaitCursor)
                         break
                 # Check if it is vector or raster
-                if layer.type() == QgsMapLayer.VectorLayer:
+                if layer.type() == QgsMapLayer.VectorLayer and layer.isSpatial():
                     # Save to gpkg
                     options = QgsVectorFileWriter.SaveVectorOptions()
                     options.driverName = "GPKG"
@@ -983,6 +984,9 @@ class Flo2D(object):
                     # Delete layer that is not in the gpkg
                     self.project.removeMapLayer(layer_id)
                 elif layer.type() == QgsMapLayer.RasterLayer:
+                    if layer.dataProvider().bandCount() > 1:
+                        not_added.append(layer.name())
+                        continue
                     # Save to gpkg
                     layer_name = layer.name().replace(" ", "_")
                     params = {'INPUT': f'{layer.dataProvider().dataSourceUri()}',
@@ -1017,34 +1021,14 @@ class Flo2D(object):
                     myLayerNode = root.findLayer(layer.id())
                     myLayerNode.setExpanded(False)
                 else:
-                    QApplication.restoreOverrideCursor()
-                    self.uc.show_warn("Your layer type is not Vector or Raster.")
-                    QApplication.setOverrideCursor(Qt.WaitCursor)
-
-        # Need to trigger the save button to add a project thumbnail to recent projects
-        self.iface.mainWindow().findChild(QAction, 'mActionSaveProject').trigger()
-        self.project.write(uri)
-
-        thumbnail = QSettings().value('UI/recentProjects/1/previewImage')
-        picture = Image.open(thumbnail)
-
-        # Open the logo
-        logo_path = self.plugin_dir + "/img/F2D 400 Transparent.png"
-        logo = Image.open(logo_path)
-
-        # Resize the logo to your desired size
-        logo = logo.resize((100, 30))
-
-        # Choose the position to paste the logo on the picture
-        position = (10, 10)
-
-        # Paste the logo on the picture
-        picture.paste(logo, position, logo)
-
-        # Save the result
-        picture.save(thumbnail)
+                    not_added.append(layer.name())
 
         QApplication.restoreOverrideCursor()
+
+        if len(not_added) > 0:
+            layers_not_added = ', '.join(map(str, not_added))
+            self.uc.show_info(f"The following layers were not added to the GeoPackage: \n\n {layers_not_added}")
+
         self.uc.bar_info("FLO-2D-Project saved!")
 
     @connection_required
@@ -1504,10 +1488,10 @@ class Flo2D(object):
                 self.iface.mainWindow().setWindowTitle(window_title)
                 QApplication.restoreOverrideCursor()
 
-        gpkg_path = self.gutils.get_gpkg_path()
-        proj_name = os.path.splitext(os.path.basename(gpkg_path))[0]
-        uri = f'geopackage:{gpkg_path}?projectName={proj_name}'
-        self.project.write(uri)
+        # gpkg_path = self.gutils.get_gpkg_path()
+        # proj_name = os.path.splitext(os.path.basename(gpkg_path))[0]
+        # uri = f'geopackage:{gpkg_path}?projectName={proj_name}'
+        # self.project.write(uri)
 
     def call_IO_methods(self, calls, debug, *args):
         if self.f2g.parsed_format == Flo2dGeoPackage.FORMAT_DAT:
@@ -3616,4 +3600,54 @@ class Flo2D(object):
         self.canvas.unsetMapTool(self.grid_info_tool)
         self.canvas.unsetMapTool(self.info_tool)
         self.canvas.unsetMapTool(self.channel_profile_tool)
+
+    def check_layer_source(self, layer, gpkg_path):
+        """
+        Function to check if the layer source is on the geopackage or not
+        """
+        gpkg_path_adj = gpkg_path.replace("\\", "/")
+        layer_source_adj = layer.source().replace("\\", "/")
+
+        # Check 1: Path cannot be equal to gpkg_path
+        if gpkg_path_adj in layer_source_adj:
+            return False
+
+        # Check 2: Check if it is an online raster
+        if "type=xyz" in layer.source():
+            return False
+
+        # Check 3: If the file is a raster
+        if isinstance(layer, QgsVectorLayer):
+            return True
+
+        # Check 4: If the file is a vector
+        if isinstance(layer, QgsRasterLayer):
+            return True
+
+        return False
+
+    def add_flo2d_logo(self):
+        """
+        Function to add the flo2d logo to recent projects
+        """
+
+        thumbnail = QSettings().value('UI/recentProjects/1/previewImage')
+
+        picture = Image.open(thumbnail)
+
+        # Open the logo
+        logo_path = self.plugin_dir + "/img/F2D 400 Transparent.png"
+        logo = Image.open(logo_path)
+
+        # Resize the logo to your desired size
+        logo = logo.resize((100, 30))
+
+        # Choose the position to paste the logo on the picture
+        position = (10, 10)
+
+        # Paste the logo on the picture
+        picture.paste(logo, position, logo)
+
+        # Save the result
+        picture.save(thumbnail)
 

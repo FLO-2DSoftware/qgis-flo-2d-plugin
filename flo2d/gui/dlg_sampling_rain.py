@@ -8,6 +8,7 @@
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 import os
+import tempfile
 from subprocess import PIPE, STDOUT, Popen
 
 from qgis.core import QgsRasterLayer
@@ -128,16 +129,6 @@ class SamplingRainDialog(qtBaseClass, uiDialog):
         Resample raster to be aligned with the grid, then probe values and update elements elevation attr.
         """
         self.src_raster = self.srcRasterCbo.itemData(self.srcRasterCbo.currentIndex())
-        self.out_raster = "{}_interp.tif".format(self.src_raster[:-4])
-        try:
-            if os.path.isfile(self.out_raster):
-                os.remove(self.out_raster)
-        except OSError:
-            msg = "WARNING 060319.1652: Couldn't remove existing raster:\n{}\nChoose another filename.".format(
-                self.out_raster
-            )
-            self.uc.show_warn(msg)
-            return False
         self.get_worp_opts_data()
         opts = [
             "-of GTiff",
@@ -160,7 +151,9 @@ class SamplingRainDialog(qtBaseClass, uiDialog):
             opts.append("-multi -wo NUM_THREADS=ALL_CPUS")
         else:
             pass
-        cmd = 'gdalwarp {} "{}" "{}"'.format(" ".join([opt for opt in opts]), self.src_raster, self.out_raster)
+        temp_dir = tempfile.gettempdir()
+        temp_file_path = os.path.join(temp_dir, "rain_interpolated.tif")
+        cmd = 'gdalwarp {} "{}" "{}"'.format(" ".join([opt for opt in opts]), self.src_raster, temp_file_path)
         with open(os.devnull, 'r') as devnull:
             proc = Popen(
                 cmd,
@@ -178,7 +171,7 @@ class SamplingRainDialog(qtBaseClass, uiDialog):
             self.fill_nodata()
         else:
             pass
-        sampler = raster2grid(self.grid, self.out_raster)
+        sampler = raster2grid(self.grid, temp_file_path)
 
         qry = """INSERT INTO rain_arf_cells (arf, grid_fid) VALUES (?,?);"""
         self.con.executemany(qry, sampler)
@@ -188,6 +181,7 @@ class SamplingRainDialog(qtBaseClass, uiDialog):
             qry = """UPDATE rain_arf_cells SET arf = arf/{0};""".format(max_val)
             self.con.execute(qry)
         self.con.commit()
+        os.remove(temp_file_path)
         return True
 
     def fill_nodata(self):
