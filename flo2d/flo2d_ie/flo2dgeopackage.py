@@ -1541,12 +1541,16 @@ class Flo2dGeoPackage(GeoPackageUtils):
             for i, row in enumerate(data, 1):
                 if row[0] == "D" and len(row) == 3:  # old D line for Rating Table: D  7545
                     gid, params = row[1:]
-                    name = "Rating Table {}".format(i)
+                    name = "RatingTable{}".format(i)
                 elif row[0] == "D" and len(row) == 4:  # D line for Rating Table: D  7545  I4-38
                     gid, inlet_name, params = row[1:]
                     name = inlet_name
                 elif row[0] == "S":
-                    gid, inlet_name, cdiameter, params = row[1:]
+                    try:
+                        gid, inlet_name, cdiameter, params = row[1:]
+                    except ValueError as e:
+                        raise ValueError("Wrong Culvert Eq. definition in line 'S' of SWMMFLORT.DAT")
+                        continue  
 
                 if row[0] == "D":  # Rating Table
                     swmmflort_rows.append((gid, name))
@@ -1555,16 +1559,21 @@ class Flo2dGeoPackage(GeoPackageUtils):
                         rt_data_rows.append(((i,) + tuple(params[j])))
 
                 elif row[0] == "S":  # Culvert Eq.
-                    culvert_rows.append(
-                        (
-                            gid,
-                            inlet_name,
-                            cdiameter,
-                            row[4][0][0],
-                            row[4][0][1],
-                            row[4][0][2],
-                            row[4][0][3],
-                        )
+                    if gid in (None, "", 'None'):
+                        pass
+                    elif int(gid) < 1:
+                        pass
+                    else:    
+                        culvert_rows.append(
+                            (
+                                gid,
+                                inlet_name,
+                                cdiameter,
+                                row[4][0][0],
+                                row[4][0][1],
+                                row[4][0][2],
+                                row[4][0][3],
+                            )
                     )
 
             if swmmflort_rows:
@@ -3345,7 +3354,10 @@ class Flo2dGeoPackage(GeoPackageUtils):
                         # "O" or "o" for outfalls.
                         for i, item in enumerate(row, 1):
                             new_row.append(item if item is not None else 0)
-                        s.write(line1.format(*new_row))
+                        if new_row[1] < 1:
+                            self.uc.bar_warn("WARNING: invalid grid number in 'swmmflo' (Storm Drain. SD Inlets) layer !")  
+                        else:
+                            s.write(line1.format(*new_row))
 
             return True
 
@@ -3357,22 +3369,21 @@ class Flo2dGeoPackage(GeoPackageUtils):
     def export_swmmflort(self, outdir):
         # check if there is any SWMM rating data defined.
         try:
-            if self.is_table_empty("swmmflort"):
+            if self.is_table_empty("swmmflort") and self.is_table_empty("swmmflo_culvert"):
                 if os.path.isfile(outdir + r"\SWMMFLORT.DAT"):
-                    m = "* There are no SWMM Rating Tables defined in the project, but there is\n"
+                    m = "* There are no SWMM Rating Tables or Culvert Equations defined in the project, but there is\n"
                     m += "an old SWMMFLORT.DAT in the project directory\n  " + outdir + "\n\n"
                     self.export_messages += m
                     return False
 
-            swmmflort_sql = """SELECT fid, grid_fid, name FROM swmmflort ORDER BY grid_fid;"""
-            data_sql = """SELECT depth, q FROM swmmflort_data WHERE swmm_rt_fid = ? ORDER BY depth;"""
-
+            swmmflort_sql = "SELECT fid, grid_fid, name FROM swmmflort ORDER BY grid_fid;"
+            data_sql = "SELECT depth, q FROM swmmflort_data WHERE swmm_rt_fid = ? ORDER BY depth;"
             #             line1 = 'D {0}\n'
             line1 = "D {0}  {1}\n"
             line2 = "N {0}  {1}\n"
             errors = ""
             swmmflort_rows = self.execute(swmmflort_sql).fetchall()
-            if not swmmflort_rows:
+            if not swmmflort_rows and self.is_table_empty("swmmflo_culvert") :
                 return False
             else:
                 pass
@@ -3384,14 +3395,14 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     if gid is not None:
                         if str(gid).strip() != "":
                             if rtname is None or rtname == "":
-                                errors += "Grid element " + str(gid) + " has an empty rating table name.\n"
+                                errors += "* Grid element " + str(gid) + " has an empty rating table name.\n"
                             else:
                                 inlet_type_qry = "SELECT intype FROM swmmflo WHERE swmm_jt = ?;"
                                 inlet_type = self.execute(inlet_type_qry, (gid,)).fetchall()
                                 if inlet_type is not None:
                                     # TODO: there may be more than one record. Why? Some may have intype = 4.
                                     if len(inlet_type) > 1:
-                                        errors += "Grid element " + str(gid) + " has has more than one inlet.\n"
+                                        errors += "* Grid element " + str(gid) + " has has more than one inlet.\n"
                                     # See if there is a type 4:
                                     inlet_type_qry2 = "SELECT intype FROM swmmflo WHERE swmm_jt = ? AND intype = '4';"
                                     inlet_type = self.execute(inlet_type_qry2, (gid,)).fetchone()
@@ -3430,15 +3441,15 @@ class Flo2dGeoPackage(GeoPackageUtils):
                                                 if inlet_name != None:
                                                     if inlet_name[0] != "":
                                                         s.write(line1.format(gid, inlet_name[0]))
-                                                        #                                                         s.write(line1.format(gid))
-                                                        #                                                         s.write(line1.format(gid, rtname, inlet_name[0]))
+                                                        # s.write(line1.format(gid))
+                                                        # s.write(line1.format(gid, rtname, inlet_name[0]))
                                                         table = self.execute(data_sql, (fid,)).fetchall()
                                                         if table:
                                                             for row in table:
                                                                 s.write(line2.format(*row))
                                                         else:
                                                             errors += (
-                                                                "Could not find data for rating table '"
+                                                                "* Could not find data for rating table '"
                                                                 + rtname
                                                                 + "' for grid element "
                                                                 + str(gid)
@@ -3448,7 +3459,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
                                                 if not error_mentioned:
                                                     errors += "Storm Drain Nodes layer in User Layers is empty.\nSWMMFLORT.DAT may be incomplete!"
                                                     error_mentioned = True
-
+                    else:
+                        errors += "* Unknown grid element in Rating Table.\n"                                   
                 culverts = self.gutils.execute(
                     "SELECT grid_fid, name, cdiameter, typec, typeen, cubase, multbarrels FROM swmmflo_culvert ORDER BY fid;"
                 ).fetchall()
@@ -3463,10 +3475,16 @@ class Flo2dGeoPackage(GeoPackageUtils):
                             cubase,
                             multbarrels,
                         ) = culv
-                        s.write("S " + str(grid_fid) + " " + name + " " + str(cdiameter) + "\n")
-                        s.write(
-                            "F " + str(typec) + " " + str(typeen) + " " + str(cubase) + " " + str(multbarrels) + "\n"
-                        )
+                        if grid_fid:
+                            s.write("S " + str(grid_fid) + " " + name + " " + str(cdiameter) + "\n")
+                            s.write(
+                                "F " + str(typec) + " " + str(typeen) + " " + str(cubase) + " " + str(multbarrels) + "\n"
+                            )
+                        else:
+                            if name:
+                                errors += "* Unknown grid element for Culverts eq. " + name +".\n"
+                            else:    
+                                errors += "* Unknown grid element in Culverts eq. table.\n"
             if errors:
                 QApplication.restoreOverrideCursor()
                 self.uc.show_info("WARNING 040319.0521:\n\n" + errors)

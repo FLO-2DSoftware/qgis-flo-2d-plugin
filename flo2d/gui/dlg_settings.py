@@ -25,7 +25,7 @@ from qgis.PyQt.QtWidgets import (
     QSpinBox,
 )
 
-from .dlg_update_gpkg import UpdateGpkg
+from .dlg_flopro import ExternalProgramFLO2D
 from ..errors import Flo2dQueryResultNull
 from ..flo2d_ie.flo2d_parser import ParseDAT
 from ..geopackage_utils import (
@@ -284,7 +284,7 @@ class SettingsDialog(qtBaseClass, uiDialog):
             self.uc.show_warn(msg)
             return
         self.unit_lab.setText(mu)
-        proj4 = self.crs.toProj()
+        proj = self.crs.toProj()
 
         # check if the CRS exist in the db
         sql = "SELECT * FROM gpkg_spatial_ref_sys WHERE srs_id=?;"
@@ -292,7 +292,7 @@ class SettingsDialog(qtBaseClass, uiDialog):
         rt = rc.fetchone()
         if not rt:
             sql = """INSERT INTO gpkg_spatial_ref_sys VALUES (?,?,?,?,?,?)"""
-            data = (self.crs.description(), crsid, auth, crsid, proj4, "")
+            data = (self.crs.description(), crsid, auth, crsid, proj, "")
             rc = gutils.execute(sql, data)
             del rc
             srsid = crsid
@@ -342,7 +342,22 @@ class SettingsDialog(qtBaseClass, uiDialog):
         contact = QgsProject.instance().metadata().author()
         plugin_v = get_plugin_version()
         qgis_v = qgis.core.Qgis.QGIS_VERSION
-        flo2d_v = get_flo2dpro_version(s.value("FLO-2D/last_flopro") + "/FLOPRO.exe")
+        if s.value("FLO-2D/last_flopro") is not None:
+            flo2d_v = get_flo2dpro_version(s.value("FLO-2D/last_flopro") + "/FLOPRO.exe")
+        else:
+            dlg = ExternalProgramFLO2D(self.iface, "Run Settings")
+            dlg.debug_run_btn.setVisible(False)
+            ok = dlg.exec_()
+            if not ok:
+                return
+            flo2d_dir, project_dir = dlg.get_parameters()
+            s = QSettings()
+            s.setValue("FLO-2D/lastGdsDir", project_dir)
+            s.setValue("FLO-2D/last_flopro", flo2d_dir)
+
+            if project_dir != "" and flo2d_dir != "":
+                s.setValue("FLO-2D/run_settings", True)
+                flo2d_v = get_flo2dpro_version(s.value("FLO-2D/last_flopro") + "/FLOPRO.exe")
 
         self.lineEdit_au.setText(contact)
         self.lineEdit_co.setText("")
