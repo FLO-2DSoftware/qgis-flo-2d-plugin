@@ -11,7 +11,7 @@ from .table_editor_widget import StandardItem, StandardItemModel
 # Copyright © 2021 Lutra Consulting for FLO-2D
 
 from .ui_utils import load_ui, center_canvas
-from ..flo2dobjects import Inflow
+from ..flo2dobjects import Inflow, Outflow
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
 
@@ -45,7 +45,12 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
         self.bc_tview.setModel(self.bc_data_model)
         self.con = None
         self.gutils = None
+        self.inflow = None
+        self.outflow = None
         self.setup_connection()
+        self.define_outflow_types()
+        self.populate_outflow_type_cbo()
+        self.populate_hydrograph_cbo()
 
         self.user_bc_tables = ["user_bc_points", "user_bc_lines", "user_bc_polygons"]
 
@@ -98,6 +103,8 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
             lambda: self.change_bc_data_name(self.inflow_bc_name_cbo, "inflow"))
 
         # Outflow
+        self.outflow_bc_name_cbo.activated.connect(
+            self.outflow_changed)
         self.create_outflow_point_bc_btn.clicked.connect(
             lambda: self.create_bc("user_bc_points", "outflow", self.create_outflow_point_bc_btn))
         self.create_outflow_line_bc_btn.clicked.connect(
@@ -106,14 +113,18 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
             lambda: self.create_bc("user_bc_polygons", "outflow", self.create_outflow_polygon_bc_btn))
         self.add_outflow_data_btn.clicked.connect(
             lambda: self.add_data("outflow"))
-
         self.change_outflow_bc_name_btn.clicked.connect(
             lambda: self.change_bc_name(self.outflow_bc_name_cbo, "outflow"))
         self.delete_outflow_bc_btn.clicked.connect(
             lambda: self.delete_bc(self.outflow_bc_name_cbo, "outflow"))
-        self.clear_inflow_rubberband_btn.clicked.connect(
+        self.clear_outflow_rubberband_btn.clicked.connect(
             self.clear_rubberband)
-        self.outflow_bc_center_btn.clicked.connect(self.outflow_bc_center)
+        self.outflow_bc_center_btn.clicked.connect(
+            self.outflow_bc_center)
+        self.outflow_type_cbo.activated.connect(
+            self.outflow_type_changed)
+        self.outflow_hydro_cbo.activated.connect(
+            self.outflow_hydrograph_changed)
 
         self.schem_bc_btn.clicked.connect(self.schematize_bc)
 
@@ -149,6 +160,7 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
         """
         if self.inflow_grpbox.isChecked() or self.outflow_grpbox.isChecked():
             self.populate_inflows()
+            self.populate_outflows()
             self.bc_points_lyr.setFlags(self.bc_points_lyr.flags() & ~QgsMapLayer.LayerFlag(QgsMapLayer.Private))
             self.bc_lines_lyr.setFlags(self.bc_lines_lyr.flags() & ~QgsMapLayer.LayerFlag(QgsMapLayer.Private))
             self.bc_polygons_lyr.setFlags(self.bc_polygons_lyr.flags() & ~QgsMapLayer.LayerFlag(QgsMapLayer.Private))
@@ -223,7 +235,7 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
         btn.setCheckable(True)
         btn.setChecked(True)
 
-        if not self.lyrs.enter_edit_mode(f"{table}", {"type": f"'{type}'"}):
+        if not self.lyrs.enter_edit_mode(table, {"type": type}):
             return
 
     def uncheck_btns(self):
@@ -1012,4 +1024,356 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
         else:
             self.outflow_bc_center_btn.setChecked(False)
             return
+
+    def populate_outflows(self, outflow_fid=None, show_last_edited=False, widget_setup=False):
+        """
+        Read outflow table, populate the cbo and set proper outflow.
+        """
+        self.reset_outflow_gui()
+        all_outflows = self.gutils.get_outflows_list()
+        if not all_outflows and not widget_setup:
+            self.uc.bar_info("There is no outflow defined in the database...")
+            self.change_outflow_bc_name_btn.setDisabled(True)
+            self.clear_outflow_rubberband_btn.setDisabled(True)
+            return
+        else:
+            self.change_outflow_bc_name_btn.setDisabled(False)
+            self.clear_outflow_rubberband_btn.setDisabled(False)
+        cur_out_idx = 0
+        outflows_skipped = 0
+        for i, row in enumerate(all_outflows):
+            row = [x if x is not None else "" for x in row]
+            fid, name, typ, geom_type = row
+            if not geom_type:
+                outflows_skipped += 1
+                continue
+            if not name:
+                name = "Outflow {}".format(fid)
+            self.outflow_bc_name_cbo.addItem(name, [fid, typ, geom_type])
+            if fid == outflow_fid:
+                cur_out_idx = i - outflows_skipped
+
+        if not self.outflow_bc_name_cbo.count():
+            if not widget_setup:
+                self.uc.bar_info("There is no outflow defined in the database...")
+            return
+        if show_last_edited:
+            cur_out_idx = i - outflows_skipped
+        self.out_fid, self.type_fid, self.geom_type = self.outflow_bc_name_cbo.itemData(cur_out_idx)
+        self.outflow = Outflow(self.out_fid, self.iface.f2d["con"], self.iface)
+        self.outflow.get_row()
+
+        if not self.outflow.geom_type:
+            return
+        self.bc_lyr = self.get_user_bc_lyr_for_geomtype(self.outflow.geom_type)
+        self.show_outflow_rb()
+        if self.outflow.hydro_out:
+            self.outflow_hydro_cbo.setCurrentIndex(self.outflow.hydro_out)
+        self.outflow_bc_name_cbo.setCurrentIndex(cur_out_idx)
+        self.outflow_changed()
+
+    def reset_outflow_gui(self):
+        """
+        Function to reset the outflow gui
+        """
+        self.outflow_bc_name_cbo.clear()
+        self.outflow_data_cbo.clear()
+        self.outflow_type_cbo.setCurrentIndex(0)
+        self.outflow_hydro_cbo.setCurrentIndex(0)
+        self.outflow_hydro_cbo.setDisabled(True)
+        self.outflow_data_cbo.setDisabled(True)
+        self.change_outflow_data_name_btn.setDisabled(True)
+        self.add_outflow_data_btn.setDisabled(True)
+        self.bc_data_model.clear()
+        self.plot.clear()
+
+    def show_outflow_rb(self):
+        """
+        Function to show the outflow rubberband
+        """
+        self.lyrs.show_feat_rubber(self.bc_lyr.id(), self.outflow.bc_fid)
+
+    def outflow_changed(self):
+        self.enable_outflow_types()
+        bc_idx = self.outflow_bc_name_cbo.currentIndex()
+        cur_data = self.outflow_bc_name_cbo.itemData(bc_idx)
+        self.bc_data_model.clear()
+        if cur_data:
+            self.out_fid, self.type_fid, self.geom_type = cur_data
+        else:
+            return
+        self.outflow = Outflow(self.out_fid, self.iface.f2d["con"], self.iface)
+        self.outflow.get_row()
+        if not is_number(self.outflow.typ):
+            self.type_fid = 0
+        else:
+            self.type_fid = int(self.outflow.typ)
+        if not self.outflow.geom_type:
+            return
+        self.bc_lyr = self.get_user_bc_lyr_for_geomtype(self.outflow.geom_type)
+        self.show_outflow_rb()
+        if self.outflow_bc_center_btn.isChecked():
+            feat = next(self.bc_lyr.getFeatures(QgsFeatureRequest(self.outflow.bc_fid)))
+            x, y = feat.geometry().centroid().asPoint()
+            center_canvas(self.iface, x, y)
+        self.outflow_type_cbo.setCurrentIndex(self.type_fid)
+        self.outflow_type_changed()
+        if self.geom_type == "polygon":
+            self.disable_outflow_types()
+
+        self.outflow_type_cbo.model().item(10).setEnabled(False)
+
+    def enable_outflow_types(self):
+        for idx in range(0, self.outflow_type_cbo.count()):
+            self.outflow_type_cbo.model().item(idx).setEnabled(True)
+
+    def outflow_type_changed(self):
+        self.bc_data_model.clear()
+        typ_idx = self.outflow_type_cbo.currentIndex()
+        self.set_outflow_widgets(typ_idx)
+        self.outflow.set_type_data(typ_idx)
+        self.outflow.set_row()
+        self.populate_outflow_data_cbo()
+        self.outflow_type_cbo.model().item(10).setEnabled(False)
+
+    def set_outflow_widgets(self, outflow_type):
+        self.outflow_data_cbo.clear()
+        self.outflow_data_cbo.setDisabled(True)
+        self.outflow_data_label.setDisabled(True)
+        self.add_outflow_data_btn.setDisabled(True)
+        self.change_outflow_data_name_btn.setDisabled(True)
+        if not outflow_type == 4:
+            self.outflow_hydro_cbo.setCurrentIndex(0)
+            self.outflow_hydro_cbo.setDisabled(True)
+            self.outflow_hydro_label.setDisabled(True)
+        self.bc_data_model.clear()
+        self.plot.clear()
+        if outflow_type == -1:
+            outflow_type = 0
+        out_par = self.outflow_types[outflow_type]
+        for wid in out_par["wids"]:
+            wid.setEnabled(True)
+        # self.outflow_data_label.setText(out_par["data_label"])
+        self.outflow_tab_head = out_par["tab_head"]
+
+    def define_outflow_types(self):
+        self.outflow_types = {
+            0: {"name": "No outflow", "wids": [], "data_label": "", "tab_head": None},
+            1: {
+                "name": "Floodplain outflow (no hydrograph)",
+                "wids": [],
+                "data_label": "",
+                "tab_head": None,
+            },
+            2: {
+                "name": "Channel outflow (no hydrograph)",
+                "wids": [],
+                "data_label": "",
+                "tab_head": None,
+            },
+            3: {
+                "name": "Floodplain and channel outflow (no hydrograph)",
+                "wids": [],
+                "data_label": "",
+                "tab_head": None,
+            },
+            4: {
+                "name": "Outflow with hydrograph",
+                "wids": [self.outflow_hydro_cbo],
+                "data_label": "",
+                "tab_head": None,
+            },
+            5: {
+                "name": "Time-stage for floodplain",
+                "wids": [
+                    self.outflow_data_cbo,
+                    self.change_outflow_data_name_btn,
+                    self.add_outflow_data_btn,
+                    self.plot,
+                ],
+                "data_label": "Time series",
+                "tab_head": ["Time", "Stage"],
+            },
+            6: {
+                "name": "Time-stage for channel",
+                "wids": [
+                    self.outflow_data_cbo,
+                    self.change_outflow_data_name_btn,
+                    self.add_outflow_data_btn,
+                    self.plot,
+                ],
+                "data_label": "Time series",
+                "tab_head": ["Time", "Stage"],
+            },
+            7: {
+                "name": "Time-stage for floodplain and free floodplain and channel",
+                "wids": [
+                    self.outflow_data_cbo,
+                    self.change_outflow_data_name_btn,
+                    self.add_outflow_data_btn,
+                    self.plot,
+                ],
+                "data_label": "Time series",
+                "tab_head": ["Time", "Stage"],
+            },
+            8: {
+                "name": "Time-stage for channel and free floodplain and channel",
+                "wids": [
+                    self.outflow_data_cbo,
+                    self.change_outflow_data_name_btn,
+                    self.add_outflow_data_btn,
+                    self.plot,
+                ],
+                "data_label": "Time series",
+                "tab_head": ["Time", "Stage"],
+            },
+            9: {
+                "name": "Channel Depth-Discharge Power Regression (Q(h)) params)",
+                "wids": [self.outflow_data_cbo, self.change_outflow_data_name_btn, self.add_outflow_data_btn,],
+                "data_label": "Q(h) parameters",
+                "tab_head": ["Hmax", "Coef", "Exponent"],
+            },
+            10: {
+                "name": "Channel depth-discharge (Q(h) parameters)",
+                "wids": [self.outflow_data_cbo, self.change_outflow_data_name_btn, self.add_outflow_data_btn,],
+                "data_label": "Q(h) parameters",
+                "tab_head": ["Hmax", "Coef", "Exponent"],
+            },
+            11: {
+                "name": "Channel depth-discharge (Q(h) table)",
+                "wids": [
+                    self.outflow_data_cbo,
+                    self.change_outflow_data_name_btn,
+                    self.add_outflow_data_btn,
+                    self.plot,
+                ],
+                "data_label": "Q(h) table",
+                "tab_head": ["Depth", "Discharge"],
+            },
+        }
+
+    def populate_outflow_data_cbo(self):
+        self.series = None
+        if self.outflow.typ == 4:
+            self.outflow_hydro_label.setDisabled(False)
+            if self.outflow.hydro_out:
+                self.outflow_hydro_cbo.setCurrentIndex(self.outflow.hydro_out)
+            else:
+                self.outflow_hydro_cbo.setCurrentIndex(1)
+                self.outflow_hydrograph_changed()
+            return
+        elif self.outflow.typ > 4:
+            self.create_outflow_plot()
+            self.series = self.outflow.get_data_fid_name()
+        else:
+            return
+        if not self.series:
+            self.uc.bar_warn("No data series for this type of outflow.")
+            return
+        self.outflow_data_cbo.clear()
+        self.outflow_data_cbo.setEnabled(True)
+        self.outflow_data_label.setDisabled(False)
+        cur_idx = 0
+        for i, row in enumerate(self.series):
+            row = [x if x is not None else "" for x in row]
+            s_fid, name = row
+            if not name:
+                name = self.outflow.get_new_data_name(s_fid)
+            self.outflow_data_cbo.addItem(name, s_fid)
+            if s_fid == self.outflow.get_cur_data_fid():
+                cur_idx = i
+        data_fid = self.outflow_data_cbo.itemData(cur_idx)
+        self.outflow.set_new_data_fid(data_fid)
+        self.outflow_data_cbo.setCurrentIndex(cur_idx)
+        self.outflow_data_changed()
+
+    def outflow_data_changed(self):
+        self.outflow.get_cur_data_fid()
+        out_nr = self.outflow_data_cbo.count()
+        if not out_nr:
+            return
+        data_idx = self.outflow_data_cbo.currentIndex()
+        data_fid = self.outflow_data_cbo.itemData(data_idx)
+        self.outflow.set_new_data_fid(data_fid)
+        self.create_outflow_plot()
+        self.bc_tview.undoStack.clear()
+        self.bc_tview.setModel(self.bc_data_model)
+        head = self.outflow_tab_head
+        series_data = self.outflow.get_data()
+        self.d1, self.d2 = [[], []]
+        self.bc_data_model.clear()
+        self.bc_data_model.setHorizontalHeaderLabels(head)
+        for row in series_data:
+            items = [StandardItem(str(x)) if x is not None else StandardItem("") for x in row]
+            self.d1.append(row[0] if not row[0] is None else float("NaN"))
+            self.d2.append(row[1] if not row[1] is None else float("NaN"))
+            self.bc_data_model.appendRow(items)
+        rc = self.bc_data_model.rowCount()
+        if rc < 500:
+            for row in range(rc, 500 + 1):
+                items = [StandardItem(x) for x in ("",) * self.bc_data_model.columnCount()]
+                self.bc_data_model.appendRow(items)
+        self.bc_tview.setEnabled(True)
+        cols = len(head)
+        for col in range(cols):
+            self.bc_tview.setColumnWidth(col, int(230 / cols))
+        self.bc_tview.horizontalHeader().setStretchLastSection(True)
+        for i in range(self.bc_data_model.rowCount()):
+            self.bc_tview.setRowHeight(i, 20)
+        self.outflow.set_row()
+        self.update_outflow_plot()
+
+    def update_outflow_plot(self):
+        """
+        When time series data for plot change, update the plot.
+        """
+        if not self.plot_item_name:
+            return
+        self.d1, self.d2 = [[], []]
+        for i in range(self.bc_data_model.rowCount()):
+            self.d1.append(m_fdata(self.bc_data_model, i, 0))
+            self.d2.append(m_fdata(self.bc_data_model, i, 1))
+        self.plot.update_item(self.plot_item_name, [self.d1, self.d2])
+
+    def populate_outflow_type_cbo(self):
+        """
+        Populate outflow types cbo and set current type.
+        """
+        self.outflow_type_cbo.clear()
+        type_name = "{}. {}"
+        for typnr in sorted(self.outflow_types.keys()):
+            outflow_type = type_name.format(typnr, self.outflow_types[typnr]["name"]).strip()
+            self.outflow_type_cbo.addItem(outflow_type, typnr)
+
+    def populate_hydrograph_cbo(self):
+        self.outflow_hydro_cbo.clear()
+        self.outflow_hydro_cbo.addItem("", 0)
+        for i in range(1, 10):
+            h_name = "O{}".format(i)
+            self.outflow_hydro_cbo.addItem(h_name, i)
+
+    def outflow_hydrograph_changed(self):
+        self.outflow.hydro_out = self.outflow_hydro_cbo.currentIndex()
+        self.outflow.set_row()
+
+    def create_outflow_plot(self):
+        """
+        Create initial plot for the current outflow type.
+        """
+        self.plot.clear()
+        if self.plot.plot.legend is not None:
+            plot_scene = self.plot.plot.legend.scene()
+            if plot_scene is not None:
+                plot_scene.removeItem(self.plot.plot.legend)
+        self.plot.plot.addLegend()
+
+        self.plot_item_name = None
+        if self.outflow.typ in [5, 6, 7, 8]:
+            self.plot_item_name = "Time"
+        elif self.outflow.typ == 11:
+            self.plot_item_name = "Q(h) table"
+        else:
+            pass
+        self.plot.add_item(self.plot_item_name, [self.d1, self.d2], col=QColor("#0018d4"))
+
 
