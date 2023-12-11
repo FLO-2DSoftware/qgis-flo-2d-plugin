@@ -4,6 +4,7 @@
 # Copyright © 2021 Lutra Consulting for FLO-2D
 
 import os
+import tempfile
 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -435,20 +436,11 @@ class InfiltrationCalculator(object):
                 "ERROR: SCS infiltration failed!",
                 e,
             )
+
     def scs_infiltration_raster(self):
         """
         Resample raster to be aligned with the grid, then probe values and update elements scs attr.
         """
-        self.out_raster = "{}_interp_cn.tif".format(self.raster_lyr[:-4])  # Raster name with suffix '_interp_cn.tif'
-        try:
-            if os.path.isfile(self.out_raster):
-                os.remove(self.out_raster)
-        except OSError:
-            msg = "WARNING 060319.1651: Couldn't remove existing raster:\n{}\nChoose another filename.".format(
-                self.out_raster
-            )
-            self.uc.show_warn(msg)
-            return False
         self.get_worp_opts_data()
         opts = [
             "-of GTiff",
@@ -468,8 +460,10 @@ class InfiltrationCalculator(object):
             opts.append("-multi -wo NUM_THREADS=ALL_CPUS")
         else:
             pass
-        cmd = 'gdalwarp {} "{}" "{}"'.format(" ".join([opt for opt in opts]), self.raster_lyr, self.out_raster)
-        # print(cmd)
+        temp_dir = tempfile.gettempdir()
+        temp_file_path = os.path.join(temp_dir, "cn_interpolated.tif")
+        cmd = 'gdalwarp {} "{}" "{}"'.format(" ".join([opt for opt in opts]), self.raster_lyr, temp_file_path)
+        print(cmd)
         with open(os.devnull, 'r') as devnull:
             proc = Popen(
                 cmd,
@@ -487,7 +481,7 @@ class InfiltrationCalculator(object):
             self.fill_nodata()
         else:
             pass
-        sampler = raster2grid(self.grid_lyr, self.out_raster)
+        sampler = raster2grid(self.grid_lyr, temp_file_path)
 
         grid_params = {}
         for cn, gid in sampler:
@@ -495,6 +489,8 @@ class InfiltrationCalculator(object):
                 grid_params[gid] = {"scsn": int(round(cn, 0))}
             except ValueError as e:
                 raise ValueError("Calculation failed for grid cell with fid: {}".format(gid))
+
+        os.remove(temp_file_path)
 
         return grid_params
 
