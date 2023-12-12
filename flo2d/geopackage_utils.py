@@ -337,6 +337,8 @@ class GeoPackageUtils(object):
                 except Exception as e:
                     self.uc.log_info(traceback.format_exc())
 
+        tables_manually_updated = ['infil_cells_green']
+
         pd = QProgressDialog("Updating tables...", None, 0, 157)
         pd.setWindowTitle("Update GeoPackage")
         pd.setModal(True)
@@ -344,16 +346,19 @@ class GeoPackageUtils(object):
         pd.setValue(0)
         i = 0
 
-        insert_sql = """INSERT INTO {0} ({1}) SELECT {1} FROM other.{0};"""
         for tab in tabs:
+            if tab in tables_manually_updated:
+                continue
             pd.setLabelText(f"Updating {tab}...")
             names_new = self.table_info(tab, only_columns=True)
             names_old = set(self.table_info(tab, only_columns=True, attached_db="other"))
             import_names = (name for name in names_new if name in names_old)
             columns = ", ".join(import_names)
             try:
-                qry = insert_sql.format(tab, columns)
-                self.execute(qry)
+                # If there are values on columns, the table exists. Otherwise, just create the table.
+                if columns:
+                    qry = f"""INSERT OR IGNORE INTO {tab} ({columns}) SELECT {columns} FROM other.{tab};"""
+                    self.execute(qry)
             except Exception as e:
                 self.uc.log_info(traceback.format_exc())
             i += 1
