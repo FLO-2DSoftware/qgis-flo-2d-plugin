@@ -57,6 +57,10 @@ class OrificesDialog(qtBaseClass, uiDialog):
         self.orifice_open_close_time_dbox.valueChanged.connect(self.orifice_open_close_time_dbox_valueChanged)
         self.orifice_height_dbox.valueChanged.connect(self.orifice_height_dbox_valueChanged)
         self.orifice_width_dbox.valueChanged.connect(self.orifice_width_dbox_valueChanged)
+        
+        self.shape = ("CIRCULAR","RECT_CLOSED")
+        self.type = ("SIDE", "BOTTOM")
+        self.gate = ("YES", "NO")
 
         self.setup_connection()
         self.grid_lyr = self.lyrs.data["grid"]["qlyr"]
@@ -109,14 +113,7 @@ class OrificesDialog(qtBaseClass, uiDialog):
                             self.orifice_to_node_txt.setText(str(data))
 
                         elif column == 4:
-                            if data not in (
-                                "SIDE",
-                                "BOTTOM",
-                                "side",
-                                "botton",
-                                "Side",
-                                "Bottom",
-                            ):
+                            if data not in self.type:
                                 wrong_status += 1
                                 data = "SIDE"
                                 item.setData(Qt.DisplayRole, data)
@@ -132,7 +129,7 @@ class OrificesDialog(qtBaseClass, uiDialog):
                             self.orifice_discharge_coeff_dbox.setValue(float_or_zero(data))
 
                         elif column == 7:
-                            if data not in ("YES", "NO", "yes", "no", "Yes", "No"):
+                            if data not in self.gate:
                                 wrong_status += 1
                                 data = "YES"
                                 item.setData(Qt.DisplayRole, data)
@@ -145,14 +142,7 @@ class OrificesDialog(qtBaseClass, uiDialog):
                             self.orifice_open_close_time_dbox.setValue(float_or_zero(data))
 
                         elif column == 9:
-                            if data not in (
-                                "CIRCULAR",
-                                "RECT_CLOSED",
-                                "Circular",
-                                "Rect_Closed",
-                                "circular",
-                                "rect_closed",
-                            ):
+                            if data not in self.shape:
                                 wrong_status += 1
                                 data = "CIRCULAR"
                                 item.setData(Qt.DisplayRole, data)
@@ -239,34 +229,36 @@ class OrificesDialog(qtBaseClass, uiDialog):
             self.orifice_from_node_txt.setText(self.orifices_tblw.item(row, 1).text())
             self.orifice_to_node_txt.setText(self.orifices_tblw.item(row, 2).text())
 
+            name = self.orifices_tblw.item(row, 0).text()
+            
             typ = self.orifices_tblw.item(row, 3).text()
-            if typ.isdigit():
-                index = int(typ) - 1
-                index = 1 if index > 1 else 0 if index < 0 else index
-            else:
-                index = 0 if typ == "SIDE" else 1
-            self.orifice_type_cbo.setCurrentIndex(index)
+            index = self.orifice_type_cbo.findText(typ)
+            if index == -1:
+                index = 0 # Select default "SIDE".
+                self.orifices_tblw.item(row, 3).setText("SIDE")
+                self.uc.bar_warn("WARNING 111203.1058: orifice '" + name  + "' has wrong orifice type '" + typ + "'. Changed to default 'SIDE'")
+            self.orifice_type_cbo.setCurrentIndex(index)            
 
             self.orifice_crest_height_dbox.setValue(float_or_zero(self.orifices_tblw.item(row, 4).text()))
             self.orifice_discharge_coeff_dbox.setValue(float_or_zero(self.orifices_tblw.item(row, 5).text()))
 
             flap = self.orifices_tblw.item(row, 6).text()
-            if flap.isdigit():
-                index = int(flap) - 1
-                index = 1 if index > 1 else 0 if index < 0 else index
-            else:
-                index = 0 if flap == "YES" else 1
-            self.orifice_flap_gate_cbo.setCurrentIndex(index)
-
+            index = self.orifice_flap_gate_cbo.findText(flap)
+            if index == -1:
+                index = 1 # Select default "NO".
+                self.orifices_tblw.item(row, 6).setText("NO")
+                self.uc.bar_warn("WARNING 111203.1059: orifice '" + name  + "' has wrong flap gate '" + flap + "'. Changed to default 'NO'")       
+            self.orifice_flap_gate_cbo.setCurrentIndex(index)             
+            
             self.orifice_open_close_time_dbox.setValue(float_or_zero(self.orifices_tblw.item(row, 7).text()))
 
             shape = self.orifices_tblw.item(row, 8).text()
-            if shape.isdigit():
-                index = int(shape) - 1
-                index = 1 if index > 1 else 0 if index < 0 else index
-            else:
-                index = 0 if shape == "CIRCULAR" else 1
-            self.orifice_shape_cbo.setCurrentIndex(index)
+            index = self.orifice_shape_cbo.findText(shape)
+            if index == -1:
+                index = 0 # Select default "CIRCULAR".
+                self.orifices_tblw.item(row, 8).setText("CIRCULAR")
+                self.uc.bar_warn("WARNING 111203.1100: orifice '" + name  + "' has wrong shape '" + shape + "'. Changed to default 'CIRCULAR'")       
+            self.orifice_shape_cbo.setCurrentIndex(index) 
 
             self.orifice_height_dbox.setValue(float_or_zero(self.orifices_tblw.item(row, 9).text()))
             self.orifice_width_dbox.setValue(float_or_zero(self.orifices_tblw.item(row, 10).text()))
@@ -318,7 +310,7 @@ class OrificesDialog(qtBaseClass, uiDialog):
 
             item = self.orifices_tblw.item(row, 6)
             if item is not None:
-                if item.text() in ("YES", "yes", "Yes", "0"):
+                if item.text() in self.gate:
                     self.orifice_flap_gate_cbo.setCurrentIndex(0)
                 else:
                     self.orifice_flap_gate_cbo.setCurrentIndex(1)
@@ -329,7 +321,7 @@ class OrificesDialog(qtBaseClass, uiDialog):
 
             item = self.orifices_tblw.item(row, 8)
             if item is not None:
-                if item.text() in ("CIRCULAR", "circular", "Circular", "0"):
+                if item.text() in self.shape:
                     self.orifice_shape_cbo.setCurrentIndex(0)
                 else:
                     self.orifice_shape_cbo.setCurrentIndex(1)
@@ -457,7 +449,7 @@ class OrificesDialog(qtBaseClass, uiDialog):
             item = self.orifices_tblw.item(row, 3)
             if item is not None:
                 typ = str(item.text())
-                orifice_type = typ if typ in ["SIDE", "BOTTOM"] else "SIDE"
+                orifice_type = typ if typ in self.type else "SIDE"
 
             item = self.orifices_tblw.item(row, 4)
             if item is not None:
@@ -470,7 +462,7 @@ class OrificesDialog(qtBaseClass, uiDialog):
             item = self.orifices_tblw.item(row, 6)
             if item is not None:
                 gate = str(item.text())
-                orifice_flap_gate = gate if gate in ["YES", "NO"] else "YES"
+                orifice_flap_gate = gate if gate in self.gate else "YES"
 
             item = self.orifices_tblw.item(row, 7)
             if item is not None:
@@ -479,7 +471,7 @@ class OrificesDialog(qtBaseClass, uiDialog):
             item = self.orifices_tblw.item(row, 8)
             if item is not None:
                 shape = str(item.text())
-                orifice_shape = shape if shape in ["CIRCULAR", "RECT_CLOSED"] else "CIRCULAR"
+                orifice_shape = shape if shape in self.shape else "CIRCULAR"
 
             item = self.orifices_tblw.item(row, 9)
             if item is not None:

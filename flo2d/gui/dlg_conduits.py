@@ -209,6 +209,8 @@ class ConduitsDialog(qtBaseClass, uiDialog):
             self.from_node_txt.setText(self.conduits_tblw.item(row, 1).text())
             self.to_node_txt.setText(self.conduits_tblw.item(row, 2).text())
 
+            name = self.conduits_tblw.item(row, 0).text()
+            
             value = self.conduits_tblw.item(row, 3).text()
             value = 0 if value == "" else float(value)
             self.inlet_offset_dbox.setValue(value)
@@ -218,14 +220,12 @@ class ConduitsDialog(qtBaseClass, uiDialog):
             self.outlet_offset_dbox.setValue(value)
 
             shape = self.conduits_tblw.item(row, 5).text()
-            if shape.isdigit():
-                index = int(shape) - 1
-                index = 21 if index > 21 else 0 if index < 0 else index
-                self.conduit_shape_cbo.setCurrentIndex(index)
-            else:
-                #                 shape = shape.title().strip()
-                index = self.shape.index(shape) if shape in self.shape else 0
-                self.conduit_shape_cbo.setCurrentIndex(index)
+            index = self.conduit_shape_cbo.findText(shape)
+            if index == -1:
+                index = 0 # Select default "CIRCULAR".
+                self.conduits_tblw.item(row, 5).setText("CIRCULAR")
+                self.uc.bar_warn("WARNING 121203.0541: conduit '" + name  + "' has wrong shape '" + shape + "'. Changed to default 'CIRCULAR'")       
+            self.conduit_shape_cbo.setCurrentIndex(index) 
 
             self.barrels_sbox.setValue(float(self.conduits_tblw.item(row, 6).text()))
             self.max_depth_dbox.setValue(float(self.conduits_tblw.item(row, 7).text()))
@@ -241,6 +241,10 @@ class ConduitsDialog(qtBaseClass, uiDialog):
             self.inlet_losses_dbox.setValue(float(self.conduits_tblw.item(row, 15).text()))
             self.outlet_losses_dbox.setValue(float(self.conduits_tblw.item(row, 16).text()))
             self.average_losses_dbox.setValue(float(self.conduits_tblw.item(row, 17).text()))
+            
+            if self.conduits_tblw.item(row, 18).text() not in ["True", "False"]:
+                self.conduits_tblw.item(row, 18).setText("False")
+                self.uc.bar_warn("WARNING 121203.0610: conduit '" + name  + "' has wrong flap gate. Changed to default 'False'")       
             self.flap_gate_chbox.setChecked(True if self.conduits_tblw.item(row, 18).text() == "True" else False)
 
             self.highlight_conduit(self.conduit_name_cbo.currentText())
@@ -273,7 +277,8 @@ class ConduitsDialog(qtBaseClass, uiDialog):
                         losses_average,
                         losses_flapgate
                 FROM user_swmm_conduits;"""
-
+                
+        wrong_status = 0
         try:
             rows = self.gutils.execute(qry).fetchall()
             self.conduits_tblw.setRowCount(0)
@@ -304,12 +309,15 @@ class ConduitsDialog(qtBaseClass, uiDialog):
                             self.outlet_offset_dbox.setValue(data if data is not None else 0)
 
                         elif element == 6:
-                            if data.isdigit():
-                                self.conduit_shape_cbo.setCurrentIndex(data - 1)
-                            else:
-                                #                                 data = data.title().strip()
-                                index = self.shape.index(data) if data in self.shape else -1
-                                self.conduit_shape_cbo.setCurrentIndex(index)
+
+                            if data not in self.shape:
+                                wrong_status += 1
+                                data = "CIRCULAR"
+                                item.setData(Qt.DisplayRole, data)
+                            index = self.conduit_shape_cbo.findText(data)
+                            if index == -1:
+                                index = 0
+                            self.conduit_shape_cbo.setCurrentIndex(index)
 
                         elif element == 7:
                             self.barrels_sbox.setValue(data if data is not None else 1)
@@ -356,6 +364,13 @@ class ConduitsDialog(qtBaseClass, uiDialog):
                         self.conduits_tblw.setItem(row_number, element - 1, item)
 
             self.highlight_conduit(self.conduit_name_cbo.currentText())
+            QApplication.restoreOverrideCursor()
+            if wrong_status > 0:
+                self.uc.show_info(
+                    "WARNING 121203.0547: there are some conduits with wrong shape, or flap gate!\n\n"
+                    + "All wrong values were changed to their defaults.\n\n"
+                    + "Edit them as wished and then 'Save' to replace the values in the 'Storm Drain Conduits' User layers."
+                )            
 
         except Exception as e:
             QApplication.restoreOverrideCursor()
@@ -593,7 +608,8 @@ class ConduitsDialog(qtBaseClass, uiDialog):
 
             item = self.conduits_tblw.item(row, 5)
             if item is not None:
-                xsections_shape = str(item.text())
+                shape = str(item.text())
+                xsections_shape = shape if shape in self.shape else "CIRCULAR"
 
             item = self.conduits_tblw.item(row, 6)
             if item is not None:
@@ -643,9 +659,11 @@ class ConduitsDialog(qtBaseClass, uiDialog):
             if item is not None:
                 losses_average = str(item.text())
 
+
             item = self.conduits_tblw.item(row, 18)
             if item is not None:
-                losses_flapgate = str(item.text())
+                gate = str(item.text())
+                losses_flapgate = gate if gate in ["True", "False"] else "False"
 
             self.gutils.execute(
                 update_qry,
