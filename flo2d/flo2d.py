@@ -836,10 +836,14 @@ class Flo2D(object):
                     QApplication.setOverrideCursor(Qt.WaitCursor)
                     # Create an updated geopackage and copy old package data to it
                     new_gpkg_path = gpkg_path[:-5] + "_v1.0.0.gpkg"
-                    proj = self.gutils.get_cont_par("PROJ")
-                    cell_size = int(float(self.gutils.get_cont_par("CELLSIZE")))
                     crs = QgsCoordinateReferenceSystem()
-                    crs.createFromProj(proj)
+                    proj = self.gutils.get_grid_crs()
+                    if proj:
+                        crs.createFromUserInput(proj)
+                    else:
+                        proj = self.gutils.get_cont_par("PROJ")
+                        crs.createFromProj(proj)
+                    cell_size = int(float(self.gutils.get_cont_par("CELLSIZE")))
                     # create new geopackage TODO: This should be on the geopackage_utils and not on the settings
                     dlg_settings = SettingsDialog(self.con, self.iface, self.lyrs, self.gutils)
                     dlg_settings.create_db(new_gpkg_path, crs)
@@ -895,9 +899,13 @@ class Flo2D(object):
                 self.con = dlg_settings.con
                 self.iface.f2d["con"] = self.con
                 self.gutils = dlg_settings.gutils
-                proj = self.gutils.get_cont_par("PROJ")
                 self.crs = QgsCoordinateReferenceSystem()
-                self.crs.createFromProj(proj)
+                proj = self.gutils.get_grid_crs()
+                if proj:
+                    self.crs.createFromUserInput(proj)
+                else:
+                    proj = self.gutils.get_cont_par("PROJ")
+                    self.crs.createFromProj(proj)
                 self.setup_dock_widgets()
                 self.project.setCrs(self.crs)
                 gpkg_path_adj = gpkg_path.replace("\\", "/")

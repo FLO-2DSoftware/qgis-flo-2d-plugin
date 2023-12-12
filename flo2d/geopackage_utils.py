@@ -487,6 +487,24 @@ class GeoPackageUtils(object):
         except Exception as e:
             return False
 
+    def get_grid_crs(self):
+        """
+        Function to retrieve the grid crs
+        """
+        try:
+            qry = f"""SELECT crs.organization, crs.srs_id
+                       FROM gpkg_contents AS content
+                       JOIN gpkg_spatial_ref_sys AS crs ON content.srs_id = crs.srs_id
+                       WHERE content.table_name = 'grid';
+                   """
+            crs_data = self.execute(qry).fetchone()
+            if crs_data:
+                organization, srs_id = crs_data
+                projectCrs = f"{organization}:{srs_id}"
+                return projectCrs
+        except Exception as e:
+            return False
+
     def is_table_empty(self, table):
         r = self.execute("""SELECT rowid FROM {0};""".format(table))
         if r.fetchone():
