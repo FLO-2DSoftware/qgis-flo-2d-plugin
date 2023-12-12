@@ -134,14 +134,14 @@
            </widget>
           </item>
           <item row="2" column="0">
-           <widget class="QLabel" name="label_10">
+           <widget class="QLabel" name="inflow_type_label">
             <property name="text">
              <string>Type</string>
             </property>
            </widget>
           </item>
           <item row="3" column="0">
-           <widget class="QLabel" name="label_11">
+           <widget class="QLabel" name="inflow_tseries_label">
             <property name="text">
              <string>Time series</string>
             </property>
@@ -210,7 +210,7 @@
            <widget class="QComboBox" name="inflow_bc_name_cbo"/>
           </item>
           <item row="4" column="0" colspan="11">
-           <widget class="QCheckBox" name="interval_ckbx">
+           <widget class="QCheckBox" name="inflow_interval_ckbx">
             <property name="toolTip">
              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;IHOURDAILY:Daily if checked&lt;br/&gt;Hourly if unchecked&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
             </property>
@@ -387,7 +387,7 @@
            <enum>QLayout::SetMaximumSize</enum>
           </property>
           <item row="2" column="0">
-           <widget class="QLabel" name="label_9">
+           <widget class="QLabel" name="outflow_type_label">
             <property name="text">
              <string>Type</string>
             </property>
@@ -435,7 +435,7 @@
            </spacer>
           </item>
           <item row="5" column="0" colspan="9">
-           <widget class="QCheckBox" name="checkBox">
+           <widget class="QCheckBox" name="outflow_interval_ckbx">
             <property name="text">
              <string>Hydrograph (hours/days)</string>
             </property>
@@ -611,6 +611,9 @@
           </item>
           <item row="4" column="0">
            <widget class="QLabel" name="outflow_data_label">
+            <property name="enabled">
+             <bool>false</bool>
+            </property>
             <property name="text">
              <string>Time series</string>
             </property>

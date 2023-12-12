@@ -92,11 +92,11 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
         self.inflow_bc_center_btn.clicked.connect(
             self.inflow_bc_center)
         self.ifc_fplain_radio.clicked.connect(
-            self.inflow_bc_changed)
+            lambda: self.inflow_bc_changed(self.inflow_bc_name_cbo))
         self.ifc_chan_radio.clicked.connect(
-            self.inflow_bc_changed)
+            lambda: self.inflow_bc_changed(self.inflow_bc_name_cbo))
         self.inflow_type_cbo.activated.connect(
-            self.inflow_bc_changed)
+            lambda: self.inflow_bc_changed(self.inflow_bc_name_cbo))
         self.inflow_tseries_cbo.activated.connect(
             self.inflow_data_changed)
         self.change_inflow_data_name_btn.clicked.connect(
@@ -352,13 +352,7 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
         self.reset_inflow_gui()
         all_inflows = self.gutils.get_inflows_list()
         if not all_inflows and not widget_setup:
-            self.uc.bar_info("There is no inflow defined in the database...")
-            self.change_inflow_bc_name_btn.setDisabled(True)
-            self.clear_inflow_rubberband_btn.setDisabled(True)
             return
-        else:
-            self.change_inflow_bc_name_btn.setDisabled(False)
-            self.clear_inflow_rubberband_btn.setDisabled(False)
         cur_name_idx = 0
         inflows_skipped = 0
         for i, row in enumerate(all_inflows):
@@ -592,6 +586,10 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
         Function to change the inflow name
         """
         if not cb.count():
+            if type == "inflow":
+                self.no_bc_disable("inflow")
+            if type == "outflow":
+                self.no_bc_disable("outflow")
             return
         new_name, ok = QInputDialog.getText(None, "Change name", "New name:")
         if not ok or not new_name:
@@ -616,6 +614,10 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
         Delete the current boundary condition from user layer and schematic tables.
         """
         if not cb.count():
+            if type == "inflow":
+                self.no_bc_disable("inflow")
+            if type == "outflow":
+                self.no_bc_disable("outflow")
             return
         q = "Are you sure, you want delete the current BC?"
         if not self.uc.question(q):
@@ -1003,16 +1005,27 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
 
         return n_grid, ne_grid, e_grid, se_grid, s_grid, sw_grid, w_grid, nw_grid
 
-    def inflow_bc_changed(self):
+    def inflow_bc_changed(self, cb):
         """
         Function to save changes on the floodplain/channel and on inflow type
         """
-        if self.ifc_fplain_radio.isChecked():
-            self.inflow.ident = "F"
+        if cb.count():
+            if self.ifc_fplain_radio.isChecked():
+                self.inflow.ident = "F"
+            else:
+                self.inflow.ident = "C"
+            self.inflow.inoutfc = self.inflow_type_cbo.currentIndex()
+            self.save_inflow()
         else:
-            self.inflow.ident = "C"
-        self.inflow.inoutfc = self.inflow_type_cbo.currentIndex()
-        self.save_inflow()
+            self.inflow_type_label.setDisabled(True)
+            self.inflow_type_cbo.setDisabled(True)
+            self.ifc_fplain_radio.setDisabled(True)
+            self.ifc_chan_radio.setDisabled(True)
+            self.inflow_tseries_label.setDisabled(True)
+            self.inflow_tseries_cbo.setDisabled(True)
+            self.add_inflow_data_btn.setDisabled(True)
+            self.change_inflow_data_name_btn.setDisabled(True)
+            self.interval_ckbx.setDisabled(True)
 
     def outflow_bc_center(self):
         """
@@ -1032,13 +1045,7 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
         self.reset_outflow_gui()
         all_outflows = self.gutils.get_outflows_list()
         if not all_outflows and not widget_setup:
-            self.uc.bar_info("There is no outflow defined in the database...")
-            self.change_outflow_bc_name_btn.setDisabled(True)
-            self.clear_outflow_rubberband_btn.setDisabled(True)
             return
-        else:
-            self.change_outflow_bc_name_btn.setDisabled(False)
-            self.clear_outflow_rubberband_btn.setDisabled(False)
         cur_out_idx = 0
         outflows_skipped = 0
         for i, row in enumerate(all_outflows):
@@ -1375,5 +1382,30 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
         else:
             pass
         self.plot.add_item(self.plot_item_name, [self.d1, self.d2], col=QColor("#0018d4"))
+
+    def no_bc_disable(self, type):
+        """
+        Disable elements when there is not BC
+        """
+        if type == "inflow":
+            self.inflow_type_label.setDisabled(True)
+            self.inflow_type_cbo.setDisabled(True)
+            self.ifc_fplain_radio.setDisabled(True)
+            self.ifc_chan_radio.setDisabled(True)
+            self.inflow_tseries_label.setDisabled(True)
+            self.inflow_tseries_cbo.setDisabled(True)
+            self.add_inflow_data_btn.setDisabled(True)
+            self.change_inflow_data_name_btn.setDisabled(True)
+            self.inflow_interval_ckbx.setDisabled(True)
+        else:
+            self.outflow_type_label.setDisabled(True)
+            self.outflow_type_cbo.setDisabled(True)
+            self.outflow_hydro_label.setDisabled(True)
+            self.outflow_hydro_cbo.setDisabled(True)
+            self.outflow_data_label.setDisabled(True)
+            self.outflow_data_cbo.setDisabled(True)
+            self.add_outflow_data_btn.setDisabled(True)
+            self.change_outflow_data_name_btn.setDisabled(True)
+            self.outflow_interval_ckbx.setDisabled(True)
 
 
