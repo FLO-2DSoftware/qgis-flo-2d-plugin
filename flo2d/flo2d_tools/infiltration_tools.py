@@ -12,7 +12,7 @@ import tempfile
 # of the License, or (at your option) any later version
 from math import exp, log, log10, sqrt
 
-from qgis._core import QgsRasterLayer
+from qgis._core import QgsRasterLayer, QgsApplication, QgsMessageLog, Qgis
 from qgis.core import (
     QgsFeature,
     QgsFeatureRequest,
@@ -180,10 +180,14 @@ class InfiltrationCalculator(object):
                 # calculate extent of concerned grid element
                 grid_elems = self.grid_lyr.getFeatures(request)
                 grid_elem_extent = QgsRectangle()
-                grid_elem_extent.setNull()
+
+                if Qgis.QGIS_VERSION_INT >= 33400:
+                    grid_elem_extent.setNull()
+                else:
+                    grid_elem_extent.setMinimal()
+
                 for grid_elem in grid_elems:
                     grid_elem_extent.combineExtentWith(grid_elem.geometry().boundingBox())
-
                 grid_elem_extent.grow(grid_elem_extent.width() / 20.0)
                 soil_and_land_request = QgsFeatureRequest()
                 soil_and_land_request.setFilterRect(grid_elem_extent)
