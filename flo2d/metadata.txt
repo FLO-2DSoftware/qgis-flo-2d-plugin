@@ -10,6 +10,7 @@ about=QGIS tools for FLO-2D
 
 changelog=
  <p>1.0.0
+  - Reading the projection from grid layer
   - Saving user layers into the geopackage
   - Modified the FLO-2D toolbar
   - Added FLO-2D logo to recent projects thumbnail

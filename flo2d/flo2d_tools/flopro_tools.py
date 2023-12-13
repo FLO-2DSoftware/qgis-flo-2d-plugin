@@ -9,6 +9,7 @@
 # of the License, or (at your option) any later version
 import os
 import time
+import warnings
 from contextlib import contextmanager
 from subprocess import (
     CREATE_NO_WINDOW,
@@ -230,7 +231,9 @@ class ProgramExecutor(object):
 
     def execute_exe(self):
         with cd(self.project_dir):
-            Popen(self.exe)
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore", ResourceWarning)
+                Popen(self.exe)
 
     def perform(self):
         return self.execute_exe()

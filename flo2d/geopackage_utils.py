@@ -264,7 +264,7 @@ class GeoPackageUtils(object):
         'user_spatial_shallow_n', 'user_elevation_polygons', 'user_bc_points',
         'user_bc_lines', 'user_bc_polygons', 'all_schem_bc', 'user_reservoirs',
         'user_infiltration', 'user_effective_impervious_area', 'raincell',
-        'raincell_data', 'buildings_areas', 'buildings_stats', 'qgis_projects'
+        'raincell_data', 'buildings_areas', 'buildings_stats'
     ]
 
     def __init__(self, con, iface):
@@ -337,6 +337,8 @@ class GeoPackageUtils(object):
                 except Exception as e:
                     self.uc.log_info(traceback.format_exc())
 
+        tables_manually_updated = ['infil_cells_green']
+
         pd = QProgressDialog("Updating tables...", None, 0, 157)
         pd.setWindowTitle("Update GeoPackage")
         pd.setModal(True)
@@ -344,16 +346,19 @@ class GeoPackageUtils(object):
         pd.setValue(0)
         i = 0
 
-        insert_sql = """INSERT INTO {0} ({1}) SELECT {1} FROM other.{0};"""
         for tab in tabs:
+            if tab in tables_manually_updated:
+                continue
             pd.setLabelText(f"Updating {tab}...")
             names_new = self.table_info(tab, only_columns=True)
             names_old = set(self.table_info(tab, only_columns=True, attached_db="other"))
             import_names = (name for name in names_new if name in names_old)
             columns = ", ".join(import_names)
             try:
-                qry = insert_sql.format(tab, columns)
-                self.execute(qry)
+                # If there are values on columns, the table exists. Otherwise, just create the table.
+                if columns:
+                    qry = f"""INSERT OR IGNORE INTO {tab} ({columns}) SELECT {columns} FROM other.{tab};"""
+                    self.execute(qry)
             except Exception as e:
                 self.uc.log_info(traceback.format_exc())
             i += 1
@@ -479,6 +484,24 @@ class GeoPackageUtils(object):
                     return False
             # If all checks pass, return True
             return True
+        except Exception as e:
+            return False
+
+    def get_grid_crs(self):
+        """
+        Function to retrieve the grid crs
+        """
+        try:
+            qry = f"""SELECT crs.organization, crs.srs_id
+                       FROM gpkg_contents AS content
+                       JOIN gpkg_spatial_ref_sys AS crs ON content.srs_id = crs.srs_id
+                       WHERE content.table_name = 'grid';
+                   """
+            crs_data = self.execute(qry).fetchone()
+            if crs_data:
+                organization, srs_id = crs_data
+                projectCrs = f"{organization}:{srs_id}"
+                return projectCrs
         except Exception as e:
             return False
 
