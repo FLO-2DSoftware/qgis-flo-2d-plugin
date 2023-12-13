@@ -164,9 +164,13 @@ class SettingsDialog(qtBaseClass, uiDialog):
                     pass
             else:
                 pass
-        proj = self.gutils.get_cont_par("PROJ")
         cs = QgsCoordinateReferenceSystem()
-        cs.createFromProj(proj)
+        proj = self.gutils.get_grid_crs()
+        if proj:
+            cs.createFromUserInput(proj)
+        else:
+            proj = self.gutils.get_cont_par("PROJ")
+            cs.createFromProj(proj)
         self.projectionSelector.setCrs(cs)
         self.crs = self.projectionSelector.crs()
         if self.gutils.get_cont_par("METRIC") == "1":
