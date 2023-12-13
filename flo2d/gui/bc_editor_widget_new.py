@@ -51,6 +51,7 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
         self.define_outflow_types()
         self.populate_outflow_type_cbo()
         self.populate_hydrograph_cbo()
+        self.rb_tidal = []
 
         self.user_bc_tables = ["user_bc_points", "user_bc_lines", "user_bc_polygons"]
 
@@ -153,6 +154,17 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
         else:
             self.con = con
             self.gutils = GeoPackageUtils(self.con, self.iface)
+            interval = self.gutils.get_cont_par("IHOURDAILY")
+            if interval is None:
+                interval = 0
+            else:
+                interval = int(interval)
+            self.inflow_interval_ckbx.setChecked(interval)
+            self.inflow_interval_ckbx.stateChanged.connect(self.set_interval)
+
+    def set_interval(self):
+        state = str(int(self.inflow_interval_ckbx.isChecked()))
+        self.gutils.set_cont_par("IHOURDAILY", state)
 
     def add_shapes(self):
         """
@@ -1407,5 +1419,10 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
             self.add_outflow_data_btn.setDisabled(True)
             self.change_outflow_data_name_btn.setDisabled(True)
             self.outflow_interval_ckbx.setDisabled(True)
+
+    def disable_outflow_types(self):
+        for idx in [2, 3, 6, 8, 9, 10, 11]:
+            self.outflow_type_cbo.model().item(idx).setEnabled(False)
+        self.outflow_type_cbo.model().item(10).setEnabled(False)
 
 
