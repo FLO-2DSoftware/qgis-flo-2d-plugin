@@ -1049,7 +1049,7 @@ class Layers(object):
                     "inflow",
                     {
                         "name": "Inflow",
-                        "sgroup": "Tables",
+                        "sgroup": "Boundary Conditions Tables",
                         "styles": ["inflow.qml"],
                         "attrs_edit_widgets": {},
                         "readonly": False,
@@ -1059,7 +1059,7 @@ class Layers(object):
                     "outflow",
                     {
                         "name": "Outflow",
-                        "sgroup": "Tables",
+                        "sgroup": "Boundary Conditions Tables",
                         "styles": None,
                         "attrs_edit_widgets": {},
                         "readonly": False,
@@ -1069,7 +1069,7 @@ class Layers(object):
                     "inflow_cells",
                     {
                         "name": "Inflow Cells",
-                        "sgroup": "Tables",
+                        "sgroup": "Boundary Conditions Tables",
                         "styles": None,
                         "attrs_edit_widgets": {},
                         "readonly": True,
@@ -1079,7 +1079,7 @@ class Layers(object):
                     "outflow_cells",
                     {
                         "name": "Outflow Cells",
-                        "sgroup": "Tables",
+                        "sgroup": "Boundary Conditions Tables",
                         "styles": None,
                         "attrs_edit_widgets": {},
                         "readonly": True,
@@ -1089,7 +1089,7 @@ class Layers(object):
                     "qh_params",
                     {
                         "name": "QH Parameters",
-                        "sgroup": "Tables",
+                        "sgroup": "Boundary Conditions Tables",
                         "styles": None,
                         "attrs_edit_widgets": {},
                         "readonly": False,
@@ -1099,7 +1099,7 @@ class Layers(object):
                     "qh_params_data",
                     {
                         "name": "QH Parameters Data",
-                        "sgroup": "Tables",
+                        "sgroup": "Boundary Conditions Tables",
                         "styles": None,
                         "attrs_edit_widgets": {},
                         "readonly": False,
@@ -1109,7 +1109,7 @@ class Layers(object):
                     "qh_table",
                     {
                         "name": "QH Tables",
-                        "sgroup": "Tables",
+                        "sgroup": "Boundary Conditions Tables",
                         "styles": None,
                         "attrs_edit_widgets": {},
                         "readonly": False,
@@ -1119,7 +1119,7 @@ class Layers(object):
                     "qh_table_data",
                     {
                         "name": "QH Tables Data",
-                        "sgroup": "Tables",
+                        "sgroup": "Boundary Conditions Tables",
                         "styles": None,
                         "attrs_edit_widgets": {},
                         "readonly": False,
@@ -1129,7 +1129,7 @@ class Layers(object):
                     "inflow_time_series",
                     {
                         "name": "Inflow Time Series",
-                        "sgroup": "Tables",
+                        "sgroup": "Boundary Conditions Tables",
                         "styles": None,
                         "attrs_edit_widgets": {},
                         "readonly": False,
@@ -1139,7 +1139,7 @@ class Layers(object):
                     "inflow_time_series_data",
                     {
                         "name": "Inflow Time Series Data",
-                        "sgroup": "Tables",
+                        "sgroup": "Boundary Conditions Tables",
                         "styles": None,
                         "attrs_edit_widgets": {},
                         "readonly": False,
@@ -1149,7 +1149,7 @@ class Layers(object):
                     "outflow_time_series",
                     {
                         "name": "Outflow Time Series",
-                        "sgroup": "Tables",
+                        "sgroup": "Boundary Conditions Tables",
                         "styles": None,
                         "attrs_edit_widgets": {},
                         "readonly": False,
@@ -1159,7 +1159,7 @@ class Layers(object):
                     "outflow_time_series_data",
                     {
                         "name": "Outflow Time Series Data",
-                        "sgroup": "Tables",
+                        "sgroup": "Boundary Conditions Tables",
                         "styles": None,
                         "attrs_edit_widgets": {},
                         "readonly": False,

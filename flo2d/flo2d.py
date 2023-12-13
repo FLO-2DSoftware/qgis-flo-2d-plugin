@@ -184,7 +184,6 @@ class Flo2D(object):
         # connections
         self.project.readProject.connect(self.load_gpkg_from_proj)
         self.project.writeProject.connect(self.flo_save_project)
-        # self.project.projectSaved.connect(self.add_flo2d_logo)
 
         self.uc.clear_bar_messages()
         QApplication.restoreOverrideCursor()
