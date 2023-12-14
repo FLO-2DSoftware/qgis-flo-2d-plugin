@@ -145,6 +145,11 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
                 elif type_value == 'outflow':
                     self.outflow_grpbox.setChecked(True)
 
+        if not self.inflow_bc_name_cbo.count():
+            self.no_bc_disable("inflow")
+        if not self.outflow_bc_name_cbo.count():
+            self.no_bc_disable("outflow")
+
     def setup_connection(self):
         """
         Function to set up connection
@@ -391,6 +396,18 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
         self.inflow_bc_name_cbo.setCurrentIndex(cur_name_idx)
         self.inflow_changed()
 
+        if self.inflow_bc_name_cbo.count():
+            self.inflow_type_label.setDisabled(False)
+            self.inflow_type_cbo.setDisabled(False)
+            self.ifc_fplain_radio.setDisabled(False)
+            self.ifc_chan_radio.setDisabled(False)
+            self.inflow_tseries_label.setDisabled(False)
+            self.inflow_tseries_cbo.setDisabled(False)
+            self.add_inflow_data_btn.setDisabled(False)
+            self.change_inflow_data_name_btn.setDisabled(False)
+            self.inflow_interval_ckbx.setDisabled(False)
+
+
     def inflow_changed(self):
         bc_idx = self.inflow_bc_name_cbo.currentIndex()
         cur_data = self.inflow_bc_name_cbo.itemData(bc_idx)
@@ -627,10 +644,6 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
         Delete the current boundary condition from user layer and schematic tables.
         """
         if not cb.count():
-            if type == "inflow":
-                self.no_bc_disable("inflow")
-            if type == "outflow":
-                self.no_bc_disable("outflow")
             return
         q = "Are you sure, you want delete the current BC?"
         if not self.uc.question(q):
@@ -654,6 +667,12 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
             self.populate_bcs(bc_fid=fid - 1)
         except Exception as e:
             self.populate_bcs()
+
+        if not cb.count():
+            if type == "inflow":
+                self.no_bc_disable("inflow")
+            if type == "outflow":
+                self.no_bc_disable("outflow")
 
     def clear_rubberband(self):
         """
@@ -1008,51 +1027,6 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
         finally:
             return len(no_outflow), list(set(time_stage_1 + time_stage_2)), [], border
 
-    def adjacent_grids(self, currentCell, cell_size):
-        xx, yy = currentCell.geometry().centroid().asPoint()
-
-        # North cell:
-        y = yy + cell_size
-        x = xx
-        n_grid = self.gutils.grid_on_point(x, y)
-
-        # NorthEast cell
-        y = yy + cell_size
-        x = xx + cell_size
-        ne_grid = self.gutils.grid_on_point(x, y)
-
-        # East cell:
-        x = xx + cell_size
-        y = yy
-        e_grid = self.gutils.grid_on_point(x, y)
-
-        # SouthEast cell:
-        y = yy - cell_size
-        x = xx + cell_size
-        se_grid = self.gutils.grid_on_point(x, y)
-
-        # South cell:
-        y = yy - cell_size
-        x = xx
-        s_grid = self.gutils.grid_on_point(x, y)
-
-        # SouthWest cell:
-        y = yy - cell_size
-        x = xx - cell_size
-        sw_grid = self.gutils.grid_on_point(x, y)
-
-        # West cell:
-        y = yy
-        x = xx - cell_size
-        w_grid = self.gutils.grid_on_point(x, y)
-
-        # NorthWest cell:
-        y = yy + cell_size
-        x = xx - cell_size
-        nw_grid = self.gutils.grid_on_point(x, y)
-
-        return n_grid, ne_grid, e_grid, se_grid, s_grid, sw_grid, w_grid, nw_grid
-
     def inflow_bc_changed(self, cb):
         """
         Function to save changes on the floodplain/channel and on inflow type
@@ -1073,7 +1047,7 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
             self.inflow_tseries_cbo.setDisabled(True)
             self.add_inflow_data_btn.setDisabled(True)
             self.change_inflow_data_name_btn.setDisabled(True)
-            self.interval_ckbx.setDisabled(True)
+            self.inflow_interval_ckbx.setDisabled(True)
 
     def outflow_bc_center(self):
         """
@@ -1208,7 +1182,6 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
         out_par = self.outflow_types[outflow_type]
         for wid in out_par["wids"]:
             wid.setEnabled(True)
-        # self.outflow_data_label.setText(out_par["data_label"])
         self.outflow_tab_head = out_par["tab_head"]
 
     def define_outflow_types(self):
@@ -1454,7 +1427,6 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
             self.outflow_data_cbo.setDisabled(True)
             self.add_outflow_data_btn.setDisabled(True)
             self.change_outflow_data_name_btn.setDisabled(True)
-            self.outflow_interval_ckbx.setDisabled(True)
 
     def disable_outflow_types(self):
         for idx in [2, 3, 6, 8, 9, 10, 11]:
