@@ -119,7 +119,6 @@ from PIL import Image, ImageDraw
 
 import processing
 
-
 @contextmanager
 def cd(newdir):
     prevdir = os.getcwd()
@@ -179,6 +178,7 @@ class Flo2D(object):
         self.create_map_tools()
         self.crs = None
         self.cur_info_table = None
+        self.infoToolCalled = False
         self.new_gpkg = None
 
         # connections
@@ -204,7 +204,10 @@ class Flo2D(object):
         self.add_docks_to_iface()
         self.set_editors_map()
 
-        self.info_tool.feature_picked.connect(self.get_feature_info)
+        if not self.infoToolCalled: 
+            self.info_tool.feature_picked.connect(self.get_feature_info)
+            self.infoToolCalled = True
+            
         self.channel_profile_tool.feature_picked.connect(self.get_feature_profile)
         self.grid_info_tool.grid_elem_picked.connect(self.f2d_grid_info.update_fields)
 
