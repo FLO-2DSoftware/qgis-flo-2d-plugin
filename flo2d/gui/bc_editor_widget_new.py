@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import time
 from math import isnan
 
 from PyQt5.QtGui import QColor
@@ -835,30 +836,65 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
                                     if row[0] == 0:  # Outflow type selected as 'No Outflow'. Tag it to remove it,
                                         no_outflow.append(grid_fid)
                                     elif row[0] in [0, 1, 4, 5, 7]:
-                                        if is_boundary_cell(self.gutils, grid_lyr, grid_fid, cell_size):
-                                            # Remove diagonals:
 
-                                            currentCell = next(grid_lyr.getFeatures(QgsFeatureRequest(grid_fid)))
-                                            (
-                                                n_grid,
-                                                ne_grid,
-                                                e_grid,
-                                                se_grid,
-                                                s_grid,
-                                                sw_grid,
-                                                w_grid,
-                                                nw_grid,
-                                            ) = self.adjacent_grids(currentCell, cell_size)
+                                        currentCell = next(grid_lyr.getFeatures(QgsFeatureRequest(grid_fid)))
+                                        xx, yy = currentCell.geometry().centroid().asPoint()
 
-                                            a = nw_grid is None and n_grid and w_grid
-                                            b = sw_grid is None and w_grid and s_grid
-                                            c = se_grid is None and e_grid and s_grid
-                                            d = ne_grid is None and n_grid and e_grid
-                                            if a or b or c or d:
-                                                # It is a diagonal cell, remove it:
+                                        # North cell:
+                                        y = yy + cell_size
+                                        x = xx
+                                        n_grid = self.gutils.grid_on_point(x, y)
+
+                                        # NorthEast cell
+                                        y = yy + cell_size
+                                        x = xx + cell_size
+                                        ne_grid = self.gutils.grid_on_point(x, y)
+
+                                        # East cell:
+                                        y = yy
+                                        x = xx + cell_size
+                                        e_grid = self.gutils.grid_on_point(x, y)
+
+                                        # SouthEast cell:
+                                        y = yy - cell_size
+                                        x = xx + cell_size
+                                        se_grid = self.gutils.grid_on_point(x, y)
+
+                                        # South cell:
+                                        y = yy - cell_size
+                                        x = xx
+                                        s_grid = self.gutils.grid_on_point(x, y)
+
+                                        # SouthWest cell:
+                                        y = yy - cell_size
+                                        x = xx - cell_size
+                                        sw_grid = self.gutils.grid_on_point(x, y)
+
+                                        # West cell:
+                                        y = yy
+                                        x = xx - cell_size
+                                        w_grid = self.gutils.grid_on_point(x, y)
+
+                                        # NorthWest cell:
+                                        y = yy + cell_size
+                                        x = xx - cell_size
+                                        nw_grid = self.gutils.grid_on_point(x, y)
+
+                                        a = nw_grid is None and n_grid and w_grid
+                                        b = sw_grid is None and w_grid and s_grid
+                                        c = se_grid is None and e_grid and s_grid
+                                        d = ne_grid is None and n_grid and e_grid
+
+                                        if a or b or c or d:
+                                            # It is a diagonal cell, remove it:
+                                            no_outflow.append(grid_fid)
+                                        else:  # Find adjacent inner cells:
+                                            if all([n_grid, ne_grid, e_grid, se_grid, s_grid, sw_grid, w_grid,
+                                                    nw_grid]):
                                                 no_outflow.append(grid_fid)
-                                            else:  # Find addjacent inner cells:
+                                            else:
                                                 border.append(grid_fid)
+
                                                 if row[0] == 5:  # Time stage => select adjacent inner cells
                                                     this = None
                                                     if w_grid and e_grid and s_grid:
@@ -923,8 +959,8 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
                                                                         if adj_cell is not None:
                                                                             time_stage_2.append(this)
 
-                                        else:
-                                            no_outflow.append(grid_fid)
+                                        # else:
+                                        #     no_outflow.append(grid_fid)
 
                             elif geom_type == "line" or geom_type == "point":
                                 rows = self.gutils.execute(
