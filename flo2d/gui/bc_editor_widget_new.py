@@ -2,9 +2,11 @@
 import time
 from math import isnan
 
+from PyQt5.QtCore import QSettings
 from PyQt5.QtGui import QColor
-from PyQt5.QtWidgets import QInputDialog, QApplication
-from qgis._core import QgsMessageLog, QgsProject, QgsVectorLayer, QgsMapLayer, QgsFeatureRequest
+from PyQt5.QtWidgets import QInputDialog, QApplication, QFileDialog, QProgressDialog, QMessageBox
+from qgis._core import QgsMessageLog, QgsProject, QgsVectorLayer, QgsMapLayer, QgsFeatureRequest, QgsPoint, QgsFeature, \
+    QgsGeometry, QgsPointXY
 from qgis._gui import QgsRubberBand
 
 from .table_editor_widget import StandardItem, StandardItemModel
@@ -23,6 +25,8 @@ from ..flo2d_tools.grid_tools import get_adjacent_cell, is_boundary_cell
 from qgis.PyQt.QtCore import Qt
 
 import traceback
+
+from ..flo2d_ie.flo2d_parser import ParseDAT
 
 uiDialog, qtBaseClass = load_ui("bc_editor_new")
 
@@ -83,6 +87,8 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
             lambda: self.create_bc("user_bc_lines", "inflow", self.create_inflow_line_bc_btn))
         self.create_inflow_polygon_bc_btn.clicked.connect(
             lambda: self.create_bc("user_bc_polygons", "inflow", self.create_inflow_polygon_bc_btn))
+        self.open_inflow_btn.clicked.connect(
+            lambda: self.open_data("inflow"))
         self.add_inflow_data_btn.clicked.connect(
             lambda: self.add_data("inflow"))
         self.change_inflow_bc_name_btn.clicked.connect(
@@ -407,7 +413,6 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
             self.change_inflow_data_name_btn.setDisabled(False)
             self.inflow_interval_ckbx.setDisabled(False)
 
-
     def inflow_changed(self):
         bc_idx = self.inflow_bc_name_cbo.currentIndex()
         cur_data = self.inflow_bc_name_cbo.itemData(bc_idx)
@@ -680,6 +685,133 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
         """
         self.lyrs.clear_rubber()
 
+    def open_data(self, type):
+        """
+        Function to open the INFLOW.DAT and OUTFLOW.DAT
+        """
+        if type == "inflow":
+            s = QSettings()
+            last_dir = s.value("FLO-2D/lastGpkgDir", "")
+            inflow_dat_path, __ = QFileDialog.getOpenFileName(
+                None,
+                "Select INFLOW.DAT with data to import",
+                directory=last_dir,
+                filter="INFLOW.DAT",
+            )
+            if not inflow_dat_path:
+                return
+
+            parser = ParseDAT()
+            head, inf, res = parser.parse_inflow(inflow_dat_path)
+
+            if head is not None:
+
+                current_bc_cells = []
+
+                current_bc_cells_sql = """SELECT * FROM inflow_cells"""
+                bc_cells = self.gutils.execute(current_bc_cells_sql).fetchall()
+                for cell in bc_cells:
+                    current_bc_cells.append(str(cell[2]))
+
+                insert_inflow_sql = [
+                    """INSERT INTO inflow (name, time_series_fid, ident, inoutfc, geom_type, bc_fid) VALUES""",
+                    6]
+                insert_cells_sql = [
+                    """INSERT INTO inflow_cells (inflow_fid, grid_fid, area_factor) VALUES""",
+                    3]
+                insert_ts_sql = [
+                    """INSERT INTO inflow_time_series (fid, name) VALUES""",
+                    2]
+                insert_tsd_sql = [
+                    """INSERT INTO inflow_time_series_data (series_fid, time, value, value2) VALUES""",
+                    4]
+
+                update_all_schem_sql = []
+
+                current_ts_fid = self.gutils.execute("""SELECT MAX(fid) FROM inflow_time_series;""").fetchone()[0]
+                if current_ts_fid is not None:
+                    idx = int(current_ts_fid) + 1
+                else:
+                    idx = 1
+
+                new_bc_cells = []
+
+                for i, gid in enumerate(inf, idx):
+                    row = inf[gid]["row"]
+                    # insert
+                    if gid not in current_bc_cells:
+                        insert_inflow_sql += [(f'Inflow Cell {gid}', i, row[0], row[1], 'point', i)]
+                        insert_cells_sql += [(i, gid, 1)]
+                        new_bc_cells.append(gid)
+                        if inf[gid]["time_series"]:
+                            insert_ts_sql += [(i, "Time series " + str(i))]
+                            for n in inf[gid]["time_series"]:
+                                insert_tsd_sql += [(i,) + tuple(n[1:])]
+                    # update
+                    else:
+                        # get the inflow fid
+                        inflow_fid = self.gutils.execute(
+                            f"SELECT inflow_fid FROM inflow_cells WHERE grid_fid = '{gid}'").fetchone()[0]
+                        # UPDATE INFLOW
+                        self.gutils.execute(
+                            f"""UPDATE inflow SET 
+                             ident = '{row[0][0]}',
+                             inoutfc = False
+                             WHERE fid = {inflow_fid}"""
+                        )
+                        if inf[gid]["time_series"]:
+                            inflow_data = self.gutils.execute(
+                                f"SELECT time_series_fid FROM inflow WHERE fid = '{inflow_fid}'").fetchone()
+                            time_series_fid = inflow_data[0]
+                            # DELETE the existing series
+                            self.gutils.execute(
+                                f"DELETE FROM inflow_time_series WHERE fid = {time_series_fid}")
+                            insert_ts_sql += [(time_series_fid, "Time series " + str(time_series_fid))]
+                            for n in inf[gid]["time_series"]:
+                                self.gutils.execute(
+                                    f"DELETE FROM inflow_time_series_data WHERE series_fid = {time_series_fid}")
+                                # INSERT the new series
+                                insert_tsd_sql += [(time_series_fid,) + tuple(n[1:])]
+
+                    update_all_schem_sql.append(f"UPDATE all_schem_bc SET tab_bc_fid = {i} WHERE grid_fid = '{gid}'")
+
+                # self.delete_all_inflow_data()
+                self.gutils.batch_execute(insert_ts_sql, insert_inflow_sql, insert_cells_sql, insert_tsd_sql)
+
+                if len(update_all_schem_sql) > 0:
+                    for qry in update_all_schem_sql:
+                        self.gutils.execute(qry)
+
+                # FIX THE NAME
+                # ALLOW THE USER TO DELETE ALL INFLOW BCS
+                # IMPROVE THE TIME SERIES
+
+                schem_bc = self.lyrs.data['all_schem_bc']["qlyr"]
+                user_bc = self.lyrs.data['user_bc_points']["qlyr"]
+
+                for feature in schem_bc.getFeatures():
+                    if feature['type'] == "inflow":
+                        geometry = feature.geometry()
+                        centroid = geometry.centroid().asPoint()
+                        centroid_point = QgsPointXY(centroid.x(), centroid.y())
+                        points_feature = QgsFeature(user_bc.fields())
+                        points_feature.setAttribute('fid', feature['tab_bc_fid'])
+                        points_feature.setAttribute('type', feature['type'])
+                        points_feature.setGeometry(QgsGeometry.fromPointXY(centroid_point))
+                        existing_features = [f for f in user_bc.getFeatures() if
+                                             f.geometry().equals(points_feature.geometry())]
+                        if not existing_features:
+                            user_bc.dataProvider().addFeature(points_feature)
+                user_bc.updateExtents()
+                user_bc.triggerRepaint()
+
+                self.populate_inflows()
+
+                self.uc.bar_info("Importing INFLOW.DAT completed!")
+
+        else:
+            pass
+
     def add_data(self, type):
         if not self.gutils:
             return
@@ -699,6 +831,8 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
             pass
 
     def schematize_bc(self):
+
+        start_time = time.time()
         in_inserted, out_inserted, out_deleted = 0, 0, 0
         border = []
         exist_user_bc = self.gutils.execute("SELECT * FROM all_user_bc;").fetchone()
@@ -706,7 +840,7 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
             self.uc.show_info("There are no User Boundary Conditions (points, lines, or polygons) defined.")
         if not self.gutils.is_table_empty("all_schem_bc"):
             if not self.uc.question(
-                "There are some boundary conditions grid cells defined already.\n\n Overwrite them?"
+                    "There are some boundary conditions grid cells defined already.\n\n Overwrite them?"
             ):
                 return
 
@@ -736,6 +870,8 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
             + str(out_inserted - out_deleted)
             + " outflows boundary conditions schematized!"
         )
+
+        QgsMessageLog.logMessage(f"Time taken: {time.time() - start_time} seconds")
 
     def schematize_outflows(self):
         QApplication.setOverrideCursor(Qt.WaitCursor)
@@ -840,7 +976,15 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
                     grid_lyr = self.lyrs.data["grid"]["qlyr"]
                     cells = self.gutils.execute("SELECT grid_fid, outflow_fid, geom_type FROM outflow_cells").fetchall()
                     if cells:
+                        # pd = QProgressDialog("Finding boundary cells...", None, 0, len(cells))
+                        # pd.setModal(True)
+                        # pd.setValue(0)
+                        # pd.forceShow()
+                        # i = 0
                         for cell in cells:
+                            # i += 1
+                            # pd.setValue(i)
+                            # QApplication.processEvents()
                             grid_fid, outflow_fid, geom_type = cell
                             if geom_type == "polygon":
                                 row = self.gutils.execute(
@@ -978,9 +1122,6 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
                                                                         if adj_cell is not None:
                                                                             time_stage_2.append(this)
 
-                                        # else:
-                                        #     no_outflow.append(grid_fid)
-
                             elif geom_type == "line" or geom_type == "point":
                                 rows = self.gutils.execute(
                                     "SELECT type FROM outflow WHERE geom_type = ? AND bc_fid = ?;",
@@ -993,6 +1134,7 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
                                     for row in rows:
                                         if row[0] == 0:  # No outflow
                                             no_outflow.append(grid_fid)
+
                         if no_outflow:
                             if time_stage_1:
                                 for cell in time_stage_1:
@@ -1100,6 +1242,16 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
             self.outflow_hydro_cbo.setCurrentIndex(self.outflow.hydro_out)
         self.outflow_bc_name_cbo.setCurrentIndex(cur_out_idx)
         self.outflow_changed()
+
+        if self.outflow_bc_name_cbo.count():
+            self.outflow_type_label.setDisabled(False)
+            self.outflow_type_cbo.setDisabled(False)
+            self.outflow_hydro_label.setDisabled(False)
+            self.outflow_hydro_cbo.setDisabled(False)
+            self.outflow_data_label.setDisabled(False)
+            self.outflow_data_cbo.setDisabled(False)
+            self.add_outflow_data_btn.setDisabled(False)
+            self.change_outflow_data_name_btn.setDisabled(False)
 
     def reset_outflow_gui(self):
         """
@@ -1257,13 +1409,13 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
             },
             9: {
                 "name": "Channel Depth-Discharge Power Regression (Q(h)) params)",
-                "wids": [self.outflow_data_cbo, self.change_outflow_data_name_btn, self.add_outflow_data_btn,],
+                "wids": [self.outflow_data_cbo, self.change_outflow_data_name_btn, self.add_outflow_data_btn, ],
                 "data_label": "Q(h) parameters",
                 "tab_head": ["Hmax", "Coef", "Exponent"],
             },
             10: {
                 "name": "Channel depth-discharge (Q(h) parameters)",
-                "wids": [self.outflow_data_cbo, self.change_outflow_data_name_btn, self.add_outflow_data_btn,],
+                "wids": [self.outflow_data_cbo, self.change_outflow_data_name_btn, self.add_outflow_data_btn, ],
                 "data_label": "Q(h) parameters",
                 "tab_head": ["Hmax", "Coef", "Exponent"],
             },
@@ -1433,4 +1585,20 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
             self.outflow_type_cbo.model().item(idx).setEnabled(False)
         self.outflow_type_cbo.model().item(10).setEnabled(False)
 
+    def delete_all_inflow_data(self):
+        """
+        Function to delete all inflow data in the geopackage
+        """
+        sql_commands = [
+            "DELETE FROM user_bc_points",
+            "DELETE FROM user_bc_lines",
+            "DELETE FROM user_bc_polygons",
+            "DELETE FROM all_schem_bc",
+            "DELETE FROM inflow",
+            "DELETE FROM inflow_cells",
+            "DELETE FROM inflow_time_series",
+            "DELETE FROM inflow_time_series_data",
+        ]
 
+        for sql in sql_commands:
+            self.gutils.execute(sql)

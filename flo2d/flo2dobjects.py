@@ -681,6 +681,8 @@ class Inflow(GeoPackageUtils):
             # this is for inflow rows without geometry
         qry = "DELETE FROM inflow WHERE fid=?"
         self.execute(qry, (self.fid,))
+        qry = "DELETE FROM inflow_cells WHERE inflow_fid=?"
+        self.execute(qry, (self.fid,))
 
     def add_time_series(self, name=None, fetch=False):
         qry = "INSERT INTO inflow_time_series (name) VALUES (?);"

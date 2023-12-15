@@ -403,8 +403,9 @@ class ParseDAT(object):
         results = self.double_parser(mannings_n, topo)
         return results
 
-    def parse_inflow(self):
-        inflow = self.dat_files["INFLOW.DAT"]
+    def parse_inflow(self, inflow=None):
+        if inflow is None:
+            inflow = self.dat_files["INFLOW.DAT"]
         par = self.single_parser(inflow)
         nxt = next(par)
         if not nxt[0] == "R":
