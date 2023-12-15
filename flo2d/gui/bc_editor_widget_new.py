@@ -9,11 +9,11 @@ from qgis._core import QgsMessageLog, QgsProject, QgsVectorLayer, QgsMapLayer, Q
     QgsGeometry, QgsPointXY
 from qgis._gui import QgsRubberBand
 
-from .table_editor_widget import StandardItem, StandardItemModel
+from .table_editor_widget import StandardItem, StandardItemModel, CommandItemEdit
 # FLO-2D Preprocessor tools for QGIS
 # Copyright © 2021 Lutra Consulting for FLO-2D
 
-from .ui_utils import load_ui, center_canvas
+from .ui_utils import load_ui, center_canvas, try_disconnect
 from ..flo2dobjects import Inflow, Outflow
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
@@ -136,6 +136,12 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
 
         self.schem_bc_btn.clicked.connect(self.schematize_bc)
 
+        self.bc_table.before_paste.connect(self.block_saving)
+        self.bc_table.after_paste.connect(self.unblock_saving)
+        self.bc_table.after_delete.connect(self.save_bc_data)
+        self.bc_data_model.dataChanged.connect(self.save_bc_data)
+        self.bc_data_model.itemDataChanged.connect(self.itemDataChangedSlot)
+
         (
             out_deleted,
             time_stage_1,
@@ -173,6 +179,12 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
                 interval = int(interval)
             self.inflow_interval_ckbx.setChecked(interval)
             self.inflow_interval_ckbx.stateChanged.connect(self.set_interval)
+
+    def block_saving(self):
+        try_disconnect(self.bc_data_model.dataChanged, self.save_bc_data)
+
+    def unblock_saving(self):
+        self.bc_data_model.dataChanged.connect(self.save_bc_data)
 
     def set_interval(self):
         state = str(int(self.inflow_interval_ckbx.isChecked()))
@@ -296,13 +308,6 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
     def get_user_bc_lyr_for_geomtype(self, geom_type):
         table_name = "user_bc_{}s".format(geom_type)
         return self.lyrs.data[table_name]["qlyr"]
-
-    def save_bc_data(self):
-        self.update_plot()
-        if self.bc_type_inflow_radio.isChecked():
-            self.save_inflow_data()
-        else:
-            self.save_outflow_data()
 
     def highlight_time_stage_cells(self, time_stage_1, time_stage_2):
         if not self.gutils.is_table_empty("outflow_cells"):
@@ -1274,6 +1279,29 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
         """
         self.lyrs.show_feat_rubber(self.bc_lyr.id(), self.outflow.bc_fid)
 
+    def show_editor(self, user_bc_table=None, bc_fid=None):
+        typ = "inflow"
+        fid = None
+        geom_type_map = {
+            "user_bc_points": "point",
+            "user_bc_lines": "line",
+            "user_bc_polygons": "polygon",
+        }
+        if user_bc_table:
+            qry = """SELECT
+                        fid, type
+                    FROM
+                        in_and_outflows
+                    WHERE
+                        bc_fid = ? and
+                        geom_type = ? and
+                        type = (SELECT type FROM {} WHERE fid = ?);""".format(
+                user_bc_table
+            )
+            data = (bc_fid, geom_type_map[user_bc_table], bc_fid)
+            fid, typ = self.gutils.execute(qry, data).fetchone()
+        self.change_bc_type(typ, fid)
+
     def outflow_changed(self):
         self.enable_outflow_types()
         bc_idx = self.outflow_bc_name_cbo.currentIndex()
@@ -1602,3 +1630,43 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
 
         for sql in sql_commands:
             self.gutils.execute(sql)
+
+    def itemDataChangedSlot(self, item, oldValue, newValue, role, save=True):
+        """
+        Slot used to push changes of existing items onto undoStack.
+        """
+        if role == Qt.EditRole:
+            command = CommandItemEdit(
+                self,
+                item,
+                oldValue,
+                newValue,
+                "Text changed from '{0}' to '{1}'".format(oldValue, newValue),
+            )
+            self.bc_tview.undoStack.push(command)
+            return True
+
+    def create_plot(self):
+        """
+        Create initial plot.
+        """
+        if self.inflow_grpbox.isChecked():
+            self.create_inflow_plot()
+        elif self.outflow_grpbox.isChecked():
+            self.create_outflow_plot()
+
+    def update_plot(self):
+        """
+        When data model data change, update the plot.
+        """
+        if self.inflow_grpbox.isChecked():
+            self.update_inflow_plot()
+        elif self.outflow_grpbox.isChecked():
+            self.update_outflow_plot()
+
+    def save_bc_data(self):
+        self.update_plot()
+        if self.inflow_grpbox.isChecked():
+            self.save_inflow_data()
+        elif self.outflow_grpbox.isChecked():
+            self.save_outflow_data()
