@@ -308,6 +308,14 @@ class StructEditorWidget(qtBaseClass, uiDialog):
         self.lyrs.lyrs_to_repaint = [self.lyrs.data["struct"]["qlyr"]]
         self.lyrs.repaint_layers()
 
+        if structs:  
+            self.uc.show_info(
+                "Schematizing Hydraulic Structures finished!\n\n"
+                + str(len(structs)) + " structures were updated in the Hydraulic Structures table."
+            ) 
+        else: 
+            self.uc.show_warn("WARNING 151203.0646: Error during Hydraulic Structures schematization!")              
+
     def clear_structs_data_widgets(self):
         self.storm_drain_cap_sbox.clear()
         self.ref_head_elev_sbox.clear()
