@@ -109,6 +109,8 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
             self.inflow_data_changed)
         self.change_inflow_data_name_btn.clicked.connect(
             lambda: self.change_bc_data_name(self.inflow_bc_name_cbo, "inflow"))
+        self.delete_inflow_ts_btn.clicked.connect(
+            lambda: self.delete_ts_data(self.inflow_tseries_cbo, "inflow"))
 
         # Outflow
         self.outflow_bc_name_cbo.activated.connect(
@@ -123,6 +125,8 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
             lambda: self.add_data("outflow"))
         self.change_outflow_bc_name_btn.clicked.connect(
             lambda: self.change_bc_name(self.outflow_bc_name_cbo, "outflow"))
+        self.delete_outflow_ts_btn.clicked.connect(
+            lambda: self.delete_ts_data(self.outflow_data_cbo, "outflow"))
         self.delete_outflow_bc_btn.clicked.connect(
             lambda: self.delete_bc(self.outflow_bc_name_cbo, "outflow"))
         self.clear_outflow_rubberband_btn.clicked.connect(
@@ -683,6 +687,30 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
                 self.no_bc_disable("inflow")
             if type == "outflow":
                 self.no_bc_disable("outflow")
+
+    def delete_ts_data(self, cb, type):
+        """
+        Function to delete/clear the time series
+        """
+        q = "Are you sure, you want delete the current Time Series?"
+        if not self.uc.question(q):
+            return
+        bc_idx = cb.currentIndex() + 1
+        QgsMessageLog.logMessage(str(bc_idx))
+        if type == "inflow":
+            qry = f"""
+                    UPDATE inflow_time_series_data
+                    SET time = 0,
+                    value = 0,
+                    value2 = NULL
+                    WHERE series_fid = {bc_idx}
+                    """
+            self.gutils.execute(qry)
+            self.inflow_data_changed()
+        if type == "outflow":
+            QgsMessageLog.logMessage("Not implemented yet")
+
+
 
     def clear_rubberband(self):
         """
