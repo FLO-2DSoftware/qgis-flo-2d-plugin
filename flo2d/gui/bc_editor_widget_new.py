@@ -87,6 +87,8 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
             lambda: self.create_bc("user_bc_lines", "inflow", self.create_inflow_line_bc_btn))
         self.create_inflow_polygon_bc_btn.clicked.connect(
             lambda: self.create_bc("user_bc_polygons", "inflow", self.create_inflow_polygon_bc_btn))
+        self.rollback_inflow_btn.clicked.connect(
+            lambda: self.cancel_bc_lyrs_edits("inflow"))
         self.open_inflow_btn.clicked.connect(
             lambda: self.open_data("inflow"))
         self.add_inflow_data_btn.clicked.connect(
@@ -121,6 +123,8 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
             lambda: self.create_bc("user_bc_lines", "outflow", self.create_outflow_line_bc_btn))
         self.create_outflow_polygon_bc_btn.clicked.connect(
             lambda: self.create_bc("user_bc_polygons", "outflow", self.create_outflow_polygon_bc_btn))
+        self.rollback_outflow_btn.clicked.connect(
+            lambda: self.cancel_bc_lyrs_edits("outflow"))
         self.add_outflow_data_btn.clicked.connect(
             lambda: self.add_data("outflow"))
         self.change_outflow_bc_name_btn.clicked.connect(
@@ -138,7 +142,7 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
         self.outflow_hydro_cbo.activated.connect(
             self.outflow_hydrograph_changed)
 
-        self.schem_bc_btn.clicked.connect(self.schematize_bc)
+        self.schem_inflow_bc_btn.clicked.connect(self.schematize_inflow_bc)
 
         self.bc_table.before_paste.connect(self.block_saving)
         self.bc_table.after_paste.connect(self.unblock_saving)
@@ -862,6 +866,37 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
             self.populate_outflow_data_cbo()
         else:
             pass
+
+    def schematize_inflow_bc(self):
+        """
+        Function to schematize the inflow boundary conditions
+        """
+        # Code to test the performance
+        start_time = time.time()
+
+        exist_user_bc = self.gutils.execute("SELECT * FROM all_user_bc WHERE type = 'inflow';").fetchone()
+        if not exist_user_bc:
+            self.uc.show_info("There are no inflow User Boundary Conditions (points, lines, or polygons) defined.")
+        if not self.gutils.is_table_empty("all_schem_bc"):
+            if not self.uc.question(
+                    "There are some boundary conditions grid cells defined already.\n\n Overwrite them?"
+            ):
+                return
+
+        QApplication.setOverrideCursor(Qt.WaitCursor)
+
+        in_inserted = self.schematize_inflows()
+
+        self.lyrs.lyrs_to_repaint = [self.lyrs.data["all_schem_bc"]["qlyr"]]
+        self.lyrs.repaint_layers()
+
+        QApplication.restoreOverrideCursor()
+        self.uc.bar_info(
+            str(in_inserted)
+            + " inflows boundary conditions schematized!"
+        )
+
+        QgsMessageLog.logMessage(f"Time taken to schematize: {(round(time.time() - start_time), 2)} seconds")
 
     def schematize_bc(self):
 
@@ -1698,3 +1733,32 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
             self.save_inflow_data()
         elif self.outflow_grpbox.isChecked():
             self.save_outflow_data()
+
+    def cancel_bc_lyrs_edits(self, type):
+        """
+        Function to rollback
+        """
+        # if user bc layers are edited
+        if not self.gutils:
+            return
+        user_bc_edited = self.lyrs.rollback_lyrs_edits(*self.user_bc_tables)
+        if user_bc_edited:
+            self.populate_bcs()
+        if type == "inflow":
+            self.create_inflow_point_bc_btn.setChecked(False)
+            self.create_inflow_line_bc_btn.setChecked(False)
+            self.create_inflow_polygon_bc_btn.setChecked(False)
+            try:
+                self.populate_bcs(self.inflow.fid)
+            except AttributeError:
+                self.populate_bcs()
+        if type == "outflow":
+            self.create_outflow_point_bc_btn.setChecked(False)
+            self.create_outflow_line_bc_btn.setChecked(False)
+            self.create_outflow_polygon_bc_btn.setChecked(False)
+            try:
+                self.populate_bcs(self.outflow.fid)
+            except AttributeError:
+                self.populate_bcs()
+
+        self.uc.bar_info("Boundary Conditions edits rolled back.")
