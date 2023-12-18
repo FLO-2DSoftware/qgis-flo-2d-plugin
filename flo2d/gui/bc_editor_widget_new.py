@@ -1933,6 +1933,7 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
                 + "\n__________________________________________________",
                 e,
             )
+
         QApplication.restoreOverrideCursor()
 
 
