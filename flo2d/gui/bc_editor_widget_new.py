@@ -91,6 +91,8 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
             lambda: self.cancel_bc_lyrs_edits("inflow"))
         self.open_inflow_btn.clicked.connect(
             lambda: self.open_data("inflow"))
+        self.delete_schem_inflow_bc_btn.clicked.connect(
+            lambda: self.delete_schematized_data("inflow"))
         self.add_inflow_data_btn.clicked.connect(
             lambda: self.add_data("inflow"))
         self.change_inflow_bc_name_btn.clicked.connect(
@@ -125,6 +127,9 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
             lambda: self.create_bc("user_bc_polygons", "outflow", self.create_outflow_polygon_bc_btn))
         self.rollback_outflow_btn.clicked.connect(
             lambda: self.cancel_bc_lyrs_edits("outflow"))
+
+        self.delete_schem_outflow_bc_btn.clicked.connect(
+            lambda: self.delete_schematized_data("outflow"))
         self.add_outflow_data_btn.clicked.connect(
             lambda: self.add_data("outflow"))
         self.change_outflow_bc_name_btn.clicked.connect(
@@ -424,7 +429,10 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
             self.inflow_tseries_cbo.setDisabled(False)
             self.add_inflow_data_btn.setDisabled(False)
             self.change_inflow_data_name_btn.setDisabled(False)
+            self.delete_inflow_ts_btn.setDisabled(False)
             self.inflow_interval_ckbx.setDisabled(False)
+            self.schematize_inflow_label.setDisabled(False)
+            self.schem_inflow_bc_btn.setDisabled(False)
 
     def inflow_changed(self):
         bc_idx = self.inflow_bc_name_cbo.currentIndex()
@@ -891,7 +899,7 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
         self.lyrs.repaint_layers()
 
         QApplication.restoreOverrideCursor()
-        self.uc.bar_info(
+        self.uc.show_info(
             str(in_inserted)
             + " inflows boundary conditions schematized!"
         )
@@ -1257,7 +1265,10 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
             self.inflow_tseries_cbo.setDisabled(True)
             self.add_inflow_data_btn.setDisabled(True)
             self.change_inflow_data_name_btn.setDisabled(True)
+            self.delete_inflow_ts_btn.setDisabled(True)
             self.inflow_interval_ckbx.setDisabled(True)
+            self.schematize_inflow_label.setDisabled(True)
+            self.schem_inflow_bc_btn.setDisabled(True)
 
     def outflow_bc_center(self):
         """
@@ -1660,7 +1671,10 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
             self.inflow_tseries_cbo.setDisabled(True)
             self.add_inflow_data_btn.setDisabled(True)
             self.change_inflow_data_name_btn.setDisabled(True)
+            self.delete_inflow_ts_btn.setDisabled(True)
             self.inflow_interval_ckbx.setDisabled(True)
+            self.schematize_inflow_label.setDisabled(True)
+            self.schem_inflow_bc_btn.setDisabled(True)
         else:
             self.outflow_type_label.setDisabled(True)
             self.outflow_type_cbo.setDisabled(True)
@@ -1762,3 +1776,36 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
                 self.populate_bcs()
 
         self.uc.bar_info("Boundary Conditions edits rolled back.")
+
+    def delete_schematized_data(self, type):
+        """
+        Function to delete the schematized data
+        """
+        exist_user_bc = self.gutils.execute("SELECT * FROM all_schem_bc WHERE type = 'inflow';").fetchone()
+        if not exist_user_bc:
+            self.uc.bar_info("There are no schematized inflow Boundary Conditions defined.")
+            return
+
+        msg = "Are you sure? This will delete all schematized inflow data, including all time series."
+        if not self.uc.question(msg):
+            return
+        else:
+            try:
+                QApplication.setOverrideCursor(Qt.WaitCursor)
+                if type == "inflow":
+                    self.gutils.execute(f"DELETE FROM all_schem_bc WHERE type = 'inflow'")
+                    self.gutils.execute(f"DELETE FROM inflow_cells")
+
+                if type == "outflow":
+                    self.gutils.execute(f"DELETE FROM all_schem_bc WHERE type = 'outflow'")
+                    self.gutils.execute(f"DELETE FROM outflow_cells")
+
+            except Exception as e:
+                QApplication.restoreOverrideCursor()
+                self.uc.show_error(
+                    "ERROR:"
+                    + "\n__________________________________________________",
+                    e,
+                )
+            QApplication.restoreOverrideCursor()
+            self.uc.bar_info(f"Schematized {type} deleted.")
