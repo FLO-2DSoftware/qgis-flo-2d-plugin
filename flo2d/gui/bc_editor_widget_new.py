@@ -148,6 +148,7 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
             self.outflow_hydrograph_changed)
 
         self.schem_inflow_bc_btn.clicked.connect(self.schematize_inflow_bc)
+        self.schem_outflow_bc_btn.clicked.connect(self.schematize_outflow_bc)
 
         self.bc_table.before_paste.connect(self.block_saving)
         self.bc_table.after_paste.connect(self.unblock_saving)
@@ -906,6 +907,48 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
 
         QgsMessageLog.logMessage(f"Time taken to schematize: {(round(time.time() - start_time), 2)} seconds")
 
+    def schematize_outflow_bc(self):
+        """
+        Function to schematize the outflow boundary conditions
+        """
+        # Code to test the performance
+        start_time = time.time()
+
+        exist_user_bc = self.gutils.execute("SELECT * FROM all_user_bc WHERE type = 'outflow';").fetchone()
+        if not exist_user_bc:
+            self.uc.show_info("There are no outflow User Boundary Conditions (points, lines, or polygons) defined.")
+        if not self.gutils.is_table_empty("all_schem_bc"):
+            if not self.uc.question(
+                    "There are some boundary conditions grid cells defined already.\n\n Overwrite them?"
+            ):
+                return
+
+        QApplication.setOverrideCursor(Qt.WaitCursor)
+
+        out_inserted = self.schematize_outflows()
+
+        (
+            out_deleted,
+            time_stage_1,
+            time_stage_2,
+            border,
+        ) = self.select_outflows_according_to_type()
+        self.highlight_time_stage_cells(time_stage_1, time_stage_2)
+
+        if time_stage_1:
+            set_BC_Border(border)
+
+        self.lyrs.lyrs_to_repaint = [self.lyrs.data["all_schem_bc"]["qlyr"]]
+        self.lyrs.repaint_layers()
+
+        QApplication.restoreOverrideCursor()
+        self.uc.show_info(
+            str(out_inserted - out_deleted)
+            + " outflows boundary conditions schematized!"
+        )
+
+        QgsMessageLog.logMessage(f"Time taken to schematize: {(round(time.time() - start_time), 2)} seconds")
+
     def schematize_bc(self):
 
         start_time = time.time()
@@ -1331,6 +1374,10 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
             self.outflow_data_cbo.setDisabled(False)
             self.add_outflow_data_btn.setDisabled(False)
             self.change_outflow_data_name_btn.setDisabled(False)
+            self.delete_outflow_ts_btn.setDisabled(False)
+            self.schematize_outflow_label.setDisabled(False)
+            self.schem_outflow_bc_btn.setDisabled(False)
+
 
     def reset_outflow_gui(self):
         """
@@ -1684,6 +1731,9 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
             self.outflow_data_cbo.setDisabled(True)
             self.add_outflow_data_btn.setDisabled(True)
             self.change_outflow_data_name_btn.setDisabled(True)
+            self.delete_outflow_ts_btn.setDisabled(True)
+            self.schematize_outflow_label.setDisabled(True)
+            self.schem_outflow_bc_btn.setDisabled(True)
 
     def disable_outflow_types(self):
         for idx in [2, 3, 6, 8, 9, 10, 11]:
@@ -1781,12 +1831,12 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
         """
         Function to delete the schematized data
         """
-        exist_user_bc = self.gutils.execute("SELECT * FROM all_schem_bc WHERE type = 'inflow';").fetchone()
+        exist_user_bc = self.gutils.execute(f"SELECT * FROM all_schem_bc WHERE type = '{type}';").fetchone()
         if not exist_user_bc:
-            self.uc.bar_info("There are no schematized inflow Boundary Conditions defined.")
+            self.uc.bar_info(f"There are no schematized {type} Boundary Conditions.")
             return
 
-        msg = "Are you sure? This will delete all schematized inflow data, including all time series."
+        msg = f"Are you sure? This will delete all {type} schematized data."
         if not self.uc.question(msg):
             return
         else:
@@ -1809,3 +1859,11 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
                 )
             QApplication.restoreOverrideCursor()
             self.uc.bar_info(f"Schematized {type} deleted.")
+
+
+
+    def create_all_border_outflow_bc(self):
+        """
+        Function to create outflow bc into the whole outside grid cells
+        """
+        pass
