@@ -28,6 +28,8 @@ import traceback
 
 from ..flo2d_ie.flo2d_parser import ParseDAT
 
+import processing
+
 uiDialog, qtBaseClass = load_ui("bc_editor_new")
 
 
@@ -128,6 +130,9 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
         self.rollback_outflow_btn.clicked.connect(
             lambda: self.cancel_bc_lyrs_edits("outflow"))
 
+        self.create_all_border_outflow_bc_btn.clicked.connect(
+            self.create_all_border_outflow_bc
+        )
         self.delete_schem_outflow_bc_btn.clicked.connect(
             lambda: self.delete_schematized_data("outflow"))
         self.add_outflow_data_btn.clicked.connect(
@@ -723,8 +728,6 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
         if type == "outflow":
             QgsMessageLog.logMessage("Not implemented yet")
 
-
-
     def clear_rubberband(self):
         """
         Function to clear the rubberbands
@@ -881,7 +884,7 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
         Function to schematize the inflow boundary conditions
         """
         # Code to test the performance
-        start_time = time.time()
+        # start_time = time.time()
 
         exist_user_bc = self.gutils.execute("SELECT * FROM all_user_bc WHERE type = 'inflow';").fetchone()
         if not exist_user_bc:
@@ -905,14 +908,14 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
             + " inflows boundary conditions schematized!"
         )
 
-        QgsMessageLog.logMessage(f"Time taken to schematize: {(round(time.time() - start_time), 2)} seconds")
+        # QgsMessageLog.logMessage(f"Time taken to schematize: {round(time.time() - start_time, 2)} seconds")
 
     def schematize_outflow_bc(self):
         """
         Function to schematize the outflow boundary conditions
         """
         # Code to test the performance
-        start_time = time.time()
+        # start_time = time.time()
 
         exist_user_bc = self.gutils.execute("SELECT * FROM all_user_bc WHERE type = 'outflow';").fetchone()
         if not exist_user_bc:
@@ -947,7 +950,7 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
             + " outflows boundary conditions schematized!"
         )
 
-        QgsMessageLog.logMessage(f"Time taken to schematize: {(round(time.time() - start_time), 2)} seconds")
+        # QgsMessageLog.logMessage(f"Time taken to schematize: {round(time.time() - start_time, 2)} seconds")
 
     def schematize_bc(self):
 
@@ -1857,13 +1860,79 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
                     + "\n__________________________________________________",
                     e,
                 )
+
+            schem_bc = self.lyrs.data['all_schem_bc']["qlyr"]
+            schem_bc.triggerRepaint()
             QApplication.restoreOverrideCursor()
             self.uc.bar_info(f"Schematized {type} deleted.")
-
-
 
     def create_all_border_outflow_bc(self):
         """
         Function to create outflow bc into the whole outside grid cells
         """
-        pass
+
+        msg = "This boundary method applies a normal depth boundary to every grid element on the outer edge " \
+              "of the computational domain. Please review the grid element elevation modification that happens " \
+              "when this method applied. \n\n" \
+              "Would you like to proceed?"
+        if not self.uc.question(msg):
+            return
+
+        QApplication.setOverrideCursor(Qt.WaitCursor)
+
+        try:
+            grid = self.lyrs.data["grid"]["qlyr"]
+
+            dissolved_grid = processing.run("native:dissolve",
+                                            {'INPUT': grid,
+                                             'FIELD': [],
+                                             'SEPARATE_DISJOINT': False,
+                                             'OUTPUT': 'TEMPORARY_OUTPUT'})['OUTPUT']
+
+            cell_size = float(self.gutils.get_cont_par("CELLSIZE"))
+            buffer = processing.run("native:buffer",
+                                    {'INPUT': dissolved_grid,
+                                     'DISTANCE': (-cell_size / 2),
+                                     'SEGMENTS': 1,
+                                     'END_CAP_STYLE': 0,
+                                     'JOIN_STYLE': 0,
+                                     'MITER_LIMIT': 2,
+                                     'DISSOLVE': False,
+                                     'SEPARATE_DISJOINT': False,
+                                     'OUTPUT': 'TEMPORARY_OUTPUT'})['OUTPUT']
+
+            lines = processing.run("native:polygonstolines", {
+                'INPUT': buffer,
+                'OUTPUT': 'TEMPORARY_OUTPUT'})['OUTPUT']
+
+            user_bc_lines = self.lyrs.data["user_bc_lines"]["qlyr"]
+            features = []
+            for feature in lines.getFeatures():
+                temp_feature = QgsFeature()
+                temp_feature.setFields(user_bc_lines.fields())
+                temp_feature['type'] = 'outflow'
+                temp_feature.setGeometry(feature.geometry())
+                features.append(temp_feature)
+            user_bc_lines.startEditing()
+            data_provider = user_bc_lines.dataProvider()
+            data_provider.addFeatures(features)
+            user_bc_lines.commitChanges()
+
+            idx = self.gutils.execute(
+                """SELECT MAX(fid) FROM user_bc_lines WHERE type = 'outflow';""").fetchone()[0]
+
+            self.gutils.execute(
+                f"UPDATE outflow SET name = 'Whole Boundary Cells' WHERE geom_type = 'line' AND bc_fid = {idx};")
+
+            self.populate_outflows()
+
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.uc.show_error(
+                "ERROR:"
+                + "\n__________________________________________________",
+                e,
+            )
+        QApplication.restoreOverrideCursor()
+
+
