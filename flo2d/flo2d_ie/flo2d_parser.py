@@ -441,8 +441,9 @@ class ParseDAT(object):
         data = [row for row in par]
         return data
 
-    def parse_outflow(self):
-        outflow = self.dat_files["OUTFLOW.DAT"]
+    def parse_outflow(self, outflow=None):
+        if outflow is None:
+            outflow = self.dat_files["OUTFLOW.DAT"]
         par = self.single_parser(outflow)
         data = OrderedDict()
         cur_gid = None

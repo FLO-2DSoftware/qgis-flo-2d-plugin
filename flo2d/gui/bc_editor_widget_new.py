@@ -129,10 +129,10 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
             lambda: self.create_bc("user_bc_polygons", "outflow", self.create_outflow_polygon_bc_btn))
         self.rollback_outflow_btn.clicked.connect(
             lambda: self.cancel_bc_lyrs_edits("outflow"))
-
+        self.open_outflow_btn.clicked.connect(
+            lambda: self.open_data("outflow"))
         self.create_all_border_outflow_bc_btn.clicked.connect(
-            self.create_all_border_outflow_bc
-        )
+            self.create_all_border_outflow_bc)
         self.delete_schem_outflow_bc_btn.clicked.connect(
             lambda: self.delete_schematized_data("outflow"))
         self.add_outflow_data_btn.clicked.connect(
@@ -738,6 +738,7 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
         """
         Function to open the INFLOW.DAT and OUTFLOW.DAT
         """
+
         if type == "inflow":
             s = QSettings()
             last_dir = s.value("FLO-2D/lastGpkgDir", "")
@@ -824,22 +825,18 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
 
                     update_all_schem_sql.append(f"UPDATE all_schem_bc SET tab_bc_fid = {i} WHERE grid_fid = '{gid}'")
 
-                # self.delete_all_inflow_data()
                 self.gutils.batch_execute(insert_ts_sql, insert_inflow_sql, insert_cells_sql, insert_tsd_sql)
 
                 if len(update_all_schem_sql) > 0:
                     for qry in update_all_schem_sql:
                         self.gutils.execute(qry)
 
-                # FIX THE NAME
-                # ALLOW THE USER TO DELETE ALL INFLOW BCS
-                # IMPROVE THE TIME SERIES
-
                 schem_bc = self.lyrs.data['all_schem_bc']["qlyr"]
                 user_bc = self.lyrs.data['user_bc_points']["qlyr"]
 
+                new_features = []
                 for feature in schem_bc.getFeatures():
-                    if feature['type'] == "inflow":
+                    if feature['type'] == "inflow" and str(feature['grid_fid']) not in current_bc_cells:
                         geometry = feature.geometry()
                         centroid = geometry.centroid().asPoint()
                         centroid_point = QgsPointXY(centroid.x(), centroid.y())
@@ -850,13 +847,258 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
                         existing_features = [f for f in user_bc.getFeatures() if
                                              f.geometry().equals(points_feature.geometry())]
                         if not existing_features:
-                            user_bc.dataProvider().addFeature(points_feature)
+                            new_features.append(points_feature)
+                user_bc.dataProvider().addFeatures(new_features)
                 user_bc.updateExtents()
                 user_bc.triggerRepaint()
 
                 self.populate_inflows()
 
                 self.uc.bar_info("Importing INFLOW.DAT completed!")
+
+        if type == "outflow":
+            s = QSettings()
+            last_dir = s.value("FLO-2D/lastGpkgDir", "")
+            outflow_dat_path, __ = QFileDialog.getOpenFileName(
+                None,
+                "Select OUTFLOW.DAT with data to import",
+                directory=last_dir,
+                filter="OUTFLOW.DAT",
+            )
+            if not outflow_dat_path:
+                return
+
+            parser = ParseDAT()
+            data = parser.parse_outflow(outflow_dat_path)
+
+            if data is not None:
+
+                current_bc_cells = []
+
+                current_bc_cells_sql = """SELECT * FROM outflow_cells"""
+                bc_cells = self.gutils.execute(current_bc_cells_sql).fetchall()
+                for cell in bc_cells:
+                    current_bc_cells.append(str(cell[2]))
+
+                outflow_sql = [
+                    """INSERT INTO outflow (chan_out, fp_out, hydro_out, chan_tser_fid, chan_qhpar_fid,
+                                                    chan_qhtab_fid, fp_tser_fid, geom_type, bc_fid) VALUES""",
+                    9,
+                ]
+
+                cells_sql = ["""INSERT INTO outflow_cells (outflow_fid, grid_fid, geom_type, area_factor) VALUES""", 4]
+
+                qh_params_sql = ["""INSERT INTO qh_params (fid) VALUES""", 1]
+
+                qh_params_data_sql = [
+                    """INSERT INTO qh_params_data (params_fid, hmax, coef, exponent) VALUES""",
+                    4,
+                ]
+
+                qh_tab_sql = ["""INSERT INTO qh_table (fid) VALUES""", 1]
+
+                qh_tab_data_sql = [
+                    """INSERT INTO qh_table_data (table_fid, depth, q) VALUES""",
+                    3,
+                ]
+
+                ts_sql = ["""INSERT INTO outflow_time_series (fid) VALUES""", 1]
+
+                ts_data_sql = [
+                    """INSERT INTO outflow_time_series_data (series_fid, time, value) VALUES""",
+                    3,
+                ]
+
+                qh_params_fid = 0
+                qh_tab_fid = 0
+                ts_fid = 0
+                outflow_cells_fid = self.gutils.execute("""SELECT MAX(outflow_fid) FROM outflow_cells;""").fetchone()[0]
+                outflow_fid = self.gutils.execute("""SELECT MAX(fid) FROM outflow_cells;""").fetchone()[0]
+
+                if outflow_cells_fid is not None:
+                    outflow_cells_fid = int(outflow_cells_fid) + 1
+                else:
+                    outflow_cells_fid = 1
+
+                if outflow_fid is not None:
+                    outflow_fid = int(outflow_fid) + 1
+                else:
+                    outflow_fid = 1
+
+                for gid, values in data.items():
+                    chan_out = values["K"]
+                    fp_out = values["O"]
+                    hydro_out = values["hydro_out"]
+                    chan_tser_fid, chan_qhpar_fid, chan_qhtab_fid, fp_tser_fid = [0] * 4
+                    # Insert the outflow BC's
+                    if str(gid) not in current_bc_cells:
+                        if values["qh_params"]:
+                            qh_params_fid += 1
+                            chan_qhpar_fid = qh_params_fid
+                            qh_params_sql += [(qh_params_fid,)]
+                            for row in values["qh_params"]:
+                                qh_params_data_sql += [(qh_params_fid,) + tuple(row)]
+
+                        if values["qh_data"]:
+                            qh_tab_fid += 1
+                            chan_qhtab_fid = qh_tab_fid
+                            qh_tab_sql += [(qh_tab_fid,)]
+                            for row in values["qh_data"]:
+                                qh_tab_data_sql += [(qh_tab_fid,) + tuple(row)]
+
+                        if values["time_series"]:
+                            ts_fid += 1
+                            if values["N"] == 1:
+                                fp_tser_fid = ts_fid
+                            elif values["N"] == 2:
+                                chan_tser_fid = ts_fid
+                            else:
+                                pass
+                            ts_sql += [(ts_fid,)]
+                            for row in values["time_series"]:
+                                ts_data_sql += [(ts_fid,) + tuple(row)]
+
+                        outflow_sql += [
+                            (
+                                chan_out,
+                                fp_out,
+                                hydro_out,
+                                chan_tser_fid,
+                                chan_qhpar_fid,
+                                chan_qhtab_fid,
+                                fp_tser_fid,
+                                'point',
+                                outflow_fid,
+                            )
+                        ]
+
+                        cells_sql += [(outflow_cells_fid, gid, 'point', 1)]
+
+                        outflow_cells_fid += 1
+                        outflow_fid += 1
+
+                    else:
+
+                        pass
+                        #consider only points
+                        #
+                        # # get the outflow fid
+                        # outflow_fid = self.gutils.execute(
+                        #     f"SELECT outflow_fid FROM outflow_cells WHERE grid_fid = '{gid}'").fetchone()[0]
+                        # # UPDATE INFLOW
+                        # self.gutils.execute(
+                        #     f"""UPDATE outflow SET
+                        #                              chan_out = '{chan_out}',
+                        #                              fp_out = '{fp_out}',
+                        #                              hydro_out = '{hydro_out}',
+                        #                              chan_tser_fid = '{chan_tser_fid}',
+                        #                              chan_qhpar_fid = '{chan_qhpar_fid}',
+                        #                              chan_qhtab_fid = '{chan_qhtab_fid}',
+                        #                              fp_tser_fid = '{fp_tser_fid}',
+                        #                              geom_type = 'point'
+                        #                              WHERE fid = {outflow_fid}"""
+                        # )
+                        # # if values["qh_params"]:
+                        # #     for row in values["qh_params"]:
+                        #         # self.gutils.execute(
+                        #         # f"""UPDATE qh_params_data SET
+                        #         #         hmax = {},
+                        #         #         coef = {},
+                        #         #         exponent = {}
+                        #         # WHERE params_fid = {chan_qhpar_fid}"""
+                        #         # )
+                        #         # qh_params_data_sql += [(qh_params_fid,) + tuple(row)]
+                        # # else:
+                        # #     pass
+                        # # if values["qh_data"]:
+                        # #     qh_tab_fid = chan_qhtab_fid
+                        # #     qh_tab_sql += [(qh_tab_fid,)]
+                        # #     for row in values["qh_data"]:
+                        # #         qh_tab_data_sql += [(qh_tab_fid,) + tuple(row)]
+                        # # else:
+                        # #     pass
+                        # if values["time_series"]:
+                        #     ts_fid += 1
+                        #     if values["N"] == 1:
+                        #         fp_tser_fid = ts_fid
+                        #     elif values["N"] == 2:
+                        #         chan_tser_fid = ts_fid
+                        #     else:
+                        #         pass
+                        #     ts_sql += [(ts_fid,)]
+                        #     for row in values["time_series"]:
+                        #         ts_data_sql += [(ts_fid,) + tuple(row)]
+                        # else:
+                        #     pass
+
+                self.gutils.batch_execute(
+                    outflow_sql,
+                    cells_sql,
+                    qh_params_sql,
+                    qh_params_data_sql,
+                    qh_tab_sql,
+                    qh_tab_data_sql,
+                    ts_sql,
+                    ts_data_sql,
+                )
+
+                type_qry = f"""UPDATE outflow SET type = (CASE
+                                            WHEN (fp_out > 0 AND chan_out = 0 AND fp_tser_fid = 0) THEN 1
+                                            WHEN (fp_out = 0 AND chan_out > 0 AND chan_tser_fid = 0 AND
+                                                  chan_qhpar_fid = 0 AND chan_qhtab_fid = 0) THEN 2
+                                            WHEN (fp_out > 0 AND chan_out > 0) THEN 3
+                                            WHEN (hydro_out > 0) THEN 4
+                                            WHEN (fp_out = 0 AND fp_tser_fid > 0) THEN 5
+                                            WHEN (chan_out = 0 AND chan_tser_fid > 0) THEN 6
+                                            WHEN (fp_out > 0 AND fp_tser_fid > 0) THEN 7
+                                            WHEN (chan_out > 0 AND chan_tser_fid > 0) THEN 8
+                                            -- WHEN (chan_qhpar_fid > 0) THEN 9 -- stage-disscharge qhpar
+                                            WHEN (chan_qhpar_fid > 0) THEN 10 -- depth-discharge qhpar
+                                            WHEN (chan_qhtab_fid > 0) THEN 11
+                                            ELSE 0
+                                            END),
+                                            name = 'Outflow ' ||  cast(fid as text)
+                                            WHERE name IS NULL;"""
+                self.gutils.execute(type_qry)
+                # update series and tables names
+                ts_name_qry = """UPDATE outflow_time_series SET name = 'Time series ' ||  cast(fid as text);"""
+                self.gutils.execute(ts_name_qry)
+                qhpar_name_qry = """UPDATE qh_params SET name = 'Q(h) parameters ' ||  cast(fid as text);"""
+                self.gutils.execute(qhpar_name_qry)
+                qhtab_name_qry = """UPDATE qh_table SET name = 'Q(h) table ' ||  cast(fid as text);"""
+                self.gutils.execute(qhtab_name_qry)
+
+                schem_bc = self.lyrs.data['all_schem_bc']["qlyr"]
+                user_bc = self.lyrs.data['user_bc_points']["qlyr"]
+
+                QgsMessageLog.logMessage(str(current_bc_cells))
+
+                new_features = []
+                for feature in schem_bc.getFeatures():
+                    if feature['type'] == "outflow":
+                        if str(feature['grid_fid']) not in current_bc_cells:
+                            geometry = feature.geometry()
+                            centroid = geometry.centroid().asPoint()
+                            centroid_point = QgsPointXY(centroid.x(), centroid.y())
+                            points_feature = QgsFeature(user_bc.fields())
+                            points_feature.setAttribute('fid', feature['tab_bc_fid'])
+                            points_feature.setAttribute('type', feature['type'])
+                            points_feature.setGeometry(QgsGeometry.fromPointXY(centroid_point))
+                            existing_features = [f for f in user_bc.getFeatures() if
+                                                 f.geometry().equals(points_feature.geometry())]
+                            if not existing_features:
+                                new_features.append(points_feature)
+                user_bc.dataProvider().addFeatures(new_features)
+                user_bc.updateExtents()
+                user_bc.triggerRepaint()
+                schem_bc.updateExtents()
+                schem_bc.triggerRepaint()
+
+                self.gutils.execute("DELETE FROM outflow WHERE type = 0;")
+
+                self.populate_outflows()
+
+                self.uc.bar_info("Importing OUTFLOW.DAT completed!")
 
         else:
             pass
@@ -1001,39 +1243,36 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
             msg = ""
 
             self.gutils.execute("DELETE FROM outflow_cells;")
-            self.gutils.execute("DELETE FROM inflow_cells;")
-
-            #             all_user_bc = self.gutils.execute("SELECT * FROM all_user_bc;").fetchall()
 
             ins_qry = """
-                INSERT INTO outflow_cells (outflow_fid, grid_fid, geom_type, area_factor)
-                SELECT
-                    abc.bc_fid, g.fid, abc.geom_type, CAST(abc.bc_fid AS INT)
-                FROM
-                    grid AS g, all_user_bc AS abc
-                WHERE
-                    abc.type = 'outflow' AND
-                    ST_Intersects(CastAutomagic(g.geom), CastAutomagic(abc.geom));
-                    """
+                            INSERT INTO outflow_cells (outflow_fid, grid_fid, geom_type)
+                            SELECT
+                                abc.bc_fid, g.fid, abc.geom_type
+                            FROM
+                                grid AS g, all_user_bc AS abc
+                            WHERE
+                                abc.type = 'outflow' AND
+                                ST_Intersects(CastAutomagic(g.geom), CastAutomagic(abc.geom));
+                                """
             inserted = self.gutils.execute(ins_qry)
 
             outflow_cells = self.gutils.execute("SELECT * FROM outflow_cells ORDER BY fid;").fetchall()
             # Fix outflow_cells:
             for oc in outflow_cells:
+                outflow_fid = oc[1]
                 grid = oc[2]
                 geom_type = oc[3]
-                area_factor = oc[4]
                 fid = self.gutils.execute(
                     "SELECT fid FROM outflow WHERE geom_type = ? AND bc_fid = ?;",
                     (
                         geom_type,
-                        area_factor,
+                        outflow_fid
                     ),
                 ).fetchone()
                 if fid:
                     self.gutils.execute(
-                        "UPDATE outflow_cells SET outflow_fid = ? WHERE geom_type = ? AND area_factor = ?;",
-                        (fid[0], geom_type, area_factor),
+                        "UPDATE outflow_cells SET area_factor = ? WHERE fid = ?;",
+                        (1, oc[0]),
                     )
                 else:
                     tab_bc_fid = self.gutils.execute(
@@ -1042,8 +1281,8 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
                     ).fetchone()
                     if tab_bc_fid:
                         self.gutils.execute(
-                            "UPDATE outflow_cells SET outflow_fid = ? WHERE geom_type = ? AND area_factor = ?;",
-                            (tab_bc_fid[0], geom_type, area_factor),
+                            "UPDATE outflow_cells SET outflow_fid = ? WHERE geom_type = ?;",
+                            (tab_bc_fid[0], geom_type),
                         )
 
                     else:
@@ -1051,6 +1290,17 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
 
             if msg:
                 self.uc.show_warn(msg)
+
+            self.gutils.execute(f"""
+                                UPDATE outflow
+                                SET chan_out = COALESCE(chan_out, 0),
+                                fp_out = COALESCE(fp_out, 0),
+                                hydro_out = COALESCE(hydro_out, 0),
+                                chan_tser_fid = COALESCE(chan_tser_fid, 0),
+                                chan_qhpar_fid = COALESCE(chan_qhpar_fid, 0),
+                                chan_qhtab_fid = COALESCE(chan_qhtab_fid, 0),
+                                fp_tser_fid = COALESCE(fp_tser_fid, 0)
+            """)
 
             QApplication.restoreOverrideCursor()
             return inserted.rowcount
@@ -1064,7 +1314,7 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
     def schematize_inflows(self):
         QApplication.setOverrideCursor(Qt.WaitCursor)
         try:
-            outflow = self.gutils.execute("SELECT * FROM outflow;").fetchall()
+            # outflow = self.gutils.execute("SELECT * FROM outflow;").fetchall()
             inflow = self.gutils.execute("SELECT * FROM inflow;").fetchall()
 
             del_qry = "DELETE FROM inflow_cells;"
@@ -1098,15 +1348,7 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
                     grid_lyr = self.lyrs.data["grid"]["qlyr"]
                     cells = self.gutils.execute("SELECT grid_fid, outflow_fid, geom_type FROM outflow_cells").fetchall()
                     if cells:
-                        # pd = QProgressDialog("Finding boundary cells...", None, 0, len(cells))
-                        # pd.setModal(True)
-                        # pd.setValue(0)
-                        # pd.forceShow()
-                        # i = 0
                         for cell in cells:
-                            # i += 1
-                            # pd.setValue(i)
-                            # QApplication.processEvents()
                             grid_fid, outflow_fid, geom_type = cell
                             if geom_type == "polygon":
                                 row = self.gutils.execute(
@@ -1371,16 +1613,16 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
         if self.outflow_bc_name_cbo.count():
             self.outflow_type_label.setDisabled(False)
             self.outflow_type_cbo.setDisabled(False)
-            self.outflow_hydro_label.setDisabled(False)
-            self.outflow_hydro_cbo.setDisabled(False)
-            self.outflow_data_label.setDisabled(False)
-            self.outflow_data_cbo.setDisabled(False)
-            self.add_outflow_data_btn.setDisabled(False)
-            self.change_outflow_data_name_btn.setDisabled(False)
-            self.delete_outflow_ts_btn.setDisabled(False)
             self.schematize_outflow_label.setDisabled(False)
             self.schem_outflow_bc_btn.setDisabled(False)
-
+            if self.outflow_type_cbo.currentIndex() == 0 or self.outflow_type_cbo.currentIndex() == 1:
+                self.outflow_hydro_label.setDisabled(True)
+                self.outflow_hydro_cbo.setDisabled(True)
+                self.outflow_data_label.setDisabled(True)
+                self.outflow_data_cbo.setDisabled(True)
+                self.add_outflow_data_btn.setDisabled(True)
+                self.change_outflow_data_name_btn.setDisabled(True)
+                self.delete_outflow_ts_btn.setDisabled(True)
 
     def reset_outflow_gui(self):
         """
@@ -1394,6 +1636,7 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
         self.outflow_data_cbo.setDisabled(True)
         self.change_outflow_data_name_btn.setDisabled(True)
         self.add_outflow_data_btn.setDisabled(True)
+        self.delete_outflow_ts_btn.setDisabled(True)
         self.bc_data_model.clear()
         self.plot.clear()
 
@@ -1475,6 +1718,7 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
         self.outflow_data_label.setDisabled(True)
         self.add_outflow_data_btn.setDisabled(True)
         self.change_outflow_data_name_btn.setDisabled(True)
+        self.delete_outflow_ts_btn.setDisabled(True)
         if not outflow_type == 4:
             self.outflow_hydro_cbo.setCurrentIndex(0)
             self.outflow_hydro_cbo.setDisabled(True)
@@ -1605,6 +1849,7 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
         self.outflow_data_cbo.clear()
         self.outflow_data_cbo.setEnabled(True)
         self.outflow_data_label.setDisabled(False)
+        self.delete_outflow_ts_btn.setDisabled(False)
         cur_idx = 0
         for i, row in enumerate(self.series):
             row = [x if x is not None else "" for x in row]
@@ -1935,5 +2180,18 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
             )
 
         QApplication.restoreOverrideCursor()
+
+    def save_outflow_data(self):
+        data = []
+        for i in range(self.bc_data_model.rowCount()):
+            # save only rows with a number in the first column
+            if is_number(m_fdata(self.bc_data_model, i, 0)) and not isnan(m_fdata(self.bc_data_model, i, 0)):
+                data.append([m_fdata(self.bc_data_model, i, j) for j in range(self.bc_data_model.columnCount())])
+            else:
+                pass
+        data_name = self.outflow_data_cbo.currentText()
+        self.outflow.set_data(data_name, data)
+        self.outflow.set_time_series_data(data_name, data)
+        self.update_outflow_plot()
 
 
