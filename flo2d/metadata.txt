@@ -10,9 +10,11 @@ about=QGIS tools for FLO-2D
 
 changelog=
  <p>1.0.0
+  - Storm Drain: 
+		Allow change name of RT/Culvert eq. and check existing inlets with same name (Issue #1088).
   - Hydraulic Structures schematization:
-       - Shows message at end of schematization.
-       - Checks several potential errors and warns user.
+		Shows message at end of schematization.
+		Checks several potential errors and warns use
   - Reading the projection from grid layer
   - Saving user layers into the geopackage
   - Modified the FLO-2D toolbar
@@ -35,7 +37,7 @@ changelog=
   - Storm Drain: (Issue #1031) Do not duplicate conduits when importing .INP file.
   - Grouped import/export buttons
   - Storm Drain: (#issue #1042) Add "Keep existing and complete" functionality to pumps, orifices, and weirds.
-     - Add type4 Rating Table and Culvert Eq.
+		Add type4 Rating Table and Culvert Eq.	
  <p>0.10.116
   - Convert schematic hydraulic structures to user structure lines.
  <p>0.10.115
