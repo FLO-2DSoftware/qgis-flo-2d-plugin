@@ -935,8 +935,6 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
                 else:
                     outflow_fid = 1
 
-                QgsMessageLog.logMessage(str(data))
-
                 for gid, values in data.items():
                     chan_out = values["K"]
                     fp_out = values["O"]
