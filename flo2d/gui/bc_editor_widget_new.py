@@ -910,10 +910,15 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
                 ]
 
                 qh_params_fid = 0
-                qh_tab_fid = 0
+                qh_tab_fid = self.gutils.execute("""SELECT MAX(fid) FROM qh_table;""").fetchone()[0]
                 ts_fid = self.gutils.execute("""SELECT MAX(fid) FROM outflow_time_series;""").fetchone()[0]
                 outflow_cells_fid = self.gutils.execute("""SELECT MAX(outflow_fid) FROM outflow_cells;""").fetchone()[0]
                 outflow_fid = self.gutils.execute("""SELECT MAX(fid) FROM outflow_cells;""").fetchone()[0]
+
+                if qh_tab_fid is not None:
+                    qh_tab_fid = int(qh_tab_fid)
+                else:
+                    qh_tab_fid = 1
 
                 if ts_fid is not None:
                     ts_fid = int(ts_fid)
@@ -1022,7 +1027,7 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
                                 # Channel
                                 elif values["N"] == 2:
                                     chan_tser_fid = self.gutils.execute(
-                                        f"SELECT chan_tser_fid FROM outflow WHERE fid = '{outflow_fid}'").fetchone()[0] + 1
+                                        f"SELECT chan_tser_fid FROM outflow WHERE fid = '{outflow_fid}'").fetchone()[0]
                                     if chan_tser_fid is None or chan_tser_fid == 0:
                                         chan_tser_fid = self.gutils.execute("""
                                             SELECT MAX(series_fid) FROM outflow_time_series_data;""").fetchone()[0]
@@ -1044,6 +1049,36 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
                                                     ('{chan_tser_fid}','{row[0]}' ,'{row[1]}')""")
                                 else:
                                     pass
+
+                            if values["qh_data"]:
+                                qh_tab_fid = self.gutils.execute(
+                                    f"SELECT chan_qhtab_fid FROM outflow WHERE fid = '{outflow_fid}'").fetchone()[0]
+                                if qh_tab_fid == '' or qh_tab_fid == 0:
+                                    QgsMessageLog.logMessage("1")
+                                    qh_tab_data_fid = self.gutils.execute("""
+                                        SELECT MAX(table_fid) FROM qh_table_data;""").fetchone()[0]
+                                    if qh_tab_data_fid is None:
+                                        qh_tab_fid = 1
+                                    else:
+                                        qh_tab_fid = int(qh_tab_data_fid) + 1
+                                    self.gutils.execute(f"""
+                                        INSERT INTO qh_table (fid) VALUES ({qh_tab_fid})""")
+                                    for row in values["qh_data"]:
+                                        self.gutils.execute(f"""
+                                        INSERT INTO qh_table_data 
+                                        (table_fid, depth, q) VALUES 
+                                        ('{qh_tab_fid}','{row[0]}' ,'{row[1]}')""")
+                                    chan_tser_fid, chan_qhpar_fid, fp_tser_fid = [0] * 3
+                                else:
+                                    QgsMessageLog.logMessage("2")
+                                    self.gutils.execute(
+                                        f"DELETE FROM qh_table_data WHERE table_fid = '{qh_tab_fid}'")
+                                    for row in values["qh_data"]:
+                                        self.gutils.execute(f"""
+                                        INSERT INTO qh_table_data 
+                                        (table_fid, depth, q) VALUES 
+                                        ('{qh_tab_fid}','{row[0]}' ,'{row[1]}')""")
+                                chan_qhtab_fid = qh_tab_fid
 
                             self.gutils.execute(
                                 f"""UPDATE outflow SET
@@ -1078,6 +1113,7 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
                         # #     pass
 
                         outflow_fid += 1
+                        # qh_tab_fid += 1
 
                 self.gutils.batch_execute(
                     outflow_sql,
@@ -2237,7 +2273,7 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
                 pass
         data_name = self.outflow_data_cbo.currentText()
         self.outflow.set_data(data_name, data)
-        self.outflow.set_time_series_data(data_name, data)
+        if len(data) == 2:
+            self.outflow.set_time_series_data(data_name, data)
         self.update_outflow_plot()
-
 
