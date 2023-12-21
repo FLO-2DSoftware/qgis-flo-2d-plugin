@@ -1054,7 +1054,6 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
                                 qh_tab_fid = self.gutils.execute(
                                     f"SELECT chan_qhtab_fid FROM outflow WHERE fid = '{outflow_fid}'").fetchone()[0]
                                 if qh_tab_fid == '' or qh_tab_fid == 0:
-                                    QgsMessageLog.logMessage("1")
                                     qh_tab_data_fid = self.gutils.execute("""
                                         SELECT MAX(table_fid) FROM qh_table_data;""").fetchone()[0]
                                     if qh_tab_data_fid is None:
@@ -1070,7 +1069,6 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
                                         ('{qh_tab_fid}','{row[0]}' ,'{row[1]}')""")
                                     chan_tser_fid, chan_qhpar_fid, fp_tser_fid = [0] * 3
                                 else:
-                                    QgsMessageLog.logMessage("2")
                                     self.gutils.execute(
                                         f"DELETE FROM qh_table_data WHERE table_fid = '{qh_tab_fid}'")
                                     for row in values["qh_data"]:
@@ -1080,40 +1078,59 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
                                         ('{qh_tab_fid}','{row[0]}' ,'{row[1]}')""")
                                 chan_qhtab_fid = qh_tab_fid
 
+                            if values["qh_params"]:
+                                qh_params_fid = self.gutils.execute(
+                                    f"SELECT chan_qhpar_fid FROM outflow WHERE fid = '{outflow_fid}'").fetchone()[0]
+                                if qh_params_fid == '' or qh_params_fid == 0:
+                                    qh_params_data_fid = self.gutils.execute("""
+                                        SELECT MAX(params_fid) FROM qh_params_data;""").fetchone()[0]
+                                    if qh_params_data_fid is None:
+                                        qh_params_fid = 1
+                                    else:
+                                        qh_params_fid = int(qh_params_data_fid) + 1
+                                    self.gutils.execute(f"""
+                                        INSERT INTO qh_params (fid) VALUES ({qh_params_fid})""")
+                                    for row in values["qh_params"]:
+                                        self.gutils.execute(f"""
+                                        INSERT INTO qh_params_data 
+                                        (params_fid, hmax, coef, exponent) VALUES 
+                                        ('{qh_params_fid}','{row[0]}' ,'{row[1]}', '{row[2]}')""")
+                                    chan_tser_fid, chan_qhtab_fid, fp_tser_fid = [0] * 3
+                                else:
+                                    self.gutils.execute(
+                                        f"DELETE FROM qh_params_data WHERE params_fid = '{qh_params_fid}'")
+                                    for row in values["qh_params"]:
+                                        self.gutils.execute(f"""
+                                            INSERT INTO qh_params_data 
+                                            (params_fid, hmax, coef, exponent) VALUES 
+                                            ('{qh_params_fid}','{row[0]}' ,'{row[1]}', '{row[2]}')""")
+                                chan_qhpar_fid = qh_params_fid
+
                             self.gutils.execute(
                                 f"""UPDATE outflow SET
-                                             chan_out = '{chan_out}',
-                                             fp_out = '{fp_out}',
-                                             hydro_out = '{hydro_out}',
-                                             chan_tser_fid = '{chan_tser_fid}',
-                                             chan_qhpar_fid = '{chan_qhpar_fid}',
-                                             chan_qhtab_fid = '{chan_qhtab_fid}',
-                                             fp_tser_fid = '{fp_tser_fid}',
-                                             geom_type = 'point'
-                                             WHERE fid = {outflow_fid}"""
+                                         chan_out = '{chan_out}',
+                                         fp_out = '{fp_out}',
+                                         hydro_out = '{hydro_out}',
+                                         chan_tser_fid = '{chan_tser_fid}',
+                                         chan_qhpar_fid = '{chan_qhpar_fid}',
+                                         chan_qhtab_fid = '{chan_qhtab_fid}',
+                                         fp_tser_fid = '{fp_tser_fid}',
+                                         geom_type = 'point'
+                                         WHERE fid = {outflow_fid}"""
                             )
 
-                            # if values["qh_params"]:
-                            #     for row in values["qh_params"]:
-                            #         self.gutils.execute(
-                            #         f"""UPDATE qh_params_data SET
-                            #                 hmax = {},
-                            #                 coef = {},
-                            #                 exponent = {}
-                            #         WHERE params_fid = {chan_qhpar_fid}"""
-                            #         )
-                            #         qh_params_data_sql += [(qh_params_fid,) + tuple(row)]
-
-                        # # if values["qh_data"]:
-                        # #     qh_tab_fid = chan_qhtab_fid
-                        # #     qh_tab_sql += [(qh_tab_fid,)]
-                        # #     for row in values["qh_data"]:
-                        # #         qh_tab_data_sql += [(qh_tab_fid,) + tuple(row)]
-                        # # else:
-                        # #     pass
+                            QgsMessageLog.logMessage(f"""UPDATE outflow SET
+                                         chan_out = '{chan_out}',
+                                         fp_out = '{fp_out}',
+                                         hydro_out = '{hydro_out}',
+                                         chan_tser_fid = '{chan_tser_fid}',
+                                         chan_qhpar_fid = '{chan_qhpar_fid}',
+                                         chan_qhtab_fid = '{chan_qhtab_fid}',
+                                         fp_tser_fid = '{fp_tser_fid}',
+                                         geom_type = 'point'
+                                         WHERE fid = {outflow_fid}""")
 
                         outflow_fid += 1
-                        # qh_tab_fid += 1
 
                 self.gutils.batch_execute(
                     outflow_sql,
@@ -1136,9 +1153,8 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
                                             WHEN (chan_out = 0 AND chan_tser_fid > 0) THEN 6
                                             WHEN (fp_out > 0 AND fp_tser_fid > 0) THEN 7
                                             WHEN (chan_out > 0 AND chan_tser_fid > 0) THEN 8
-                                            -- WHEN (chan_qhpar_fid > 0) THEN 9 -- stage-disscharge qhpar
-                                            WHEN (chan_qhpar_fid > 0) THEN 10 -- depth-discharge qhpar
-                                            WHEN (chan_qhtab_fid > 0) THEN 11
+                                            WHEN (chan_qhpar_fid > 0) THEN 9
+                                            WHEN (chan_qhtab_fid > 0) THEN 10
                                             ELSE 0
                                             END);"""
                 self.gutils.execute(type_qry)
@@ -1779,8 +1795,6 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
         if self.geom_type == "polygon":
             self.disable_outflow_types()
 
-        self.outflow_type_cbo.model().item(10).setEnabled(False)
-
     def enable_outflow_types(self):
         for idx in range(0, self.outflow_type_cbo.count()):
             self.outflow_type_cbo.model().item(idx).setEnabled(True)
@@ -1792,7 +1806,6 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
         self.outflow.set_type_data(typ_idx)
         self.outflow.set_row()
         self.populate_outflow_data_cbo()
-        self.outflow_type_cbo.model().item(10).setEnabled(False)
 
     def set_outflow_widgets(self, outflow_type):
         self.outflow_data_cbo.clear()
@@ -1891,13 +1904,13 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
                 "data_label": "Q(h) parameters",
                 "tab_head": ["Hmax", "Coef", "Exponent"],
             },
+            # 10: {
+            #     "name": "Channel depth-discharge (Q(h) parameters)",
+            #     "wids": [self.outflow_data_cbo, self.change_outflow_data_name_btn, self.add_outflow_data_btn, ],
+            #     "data_label": "Q(h) parameters",
+            #     "tab_head": ["Hmax", "Coef", "Exponent"],
+            # },
             10: {
-                "name": "Channel depth-discharge (Q(h) parameters)",
-                "wids": [self.outflow_data_cbo, self.change_outflow_data_name_btn, self.add_outflow_data_btn, ],
-                "data_label": "Q(h) parameters",
-                "tab_head": ["Hmax", "Coef", "Exponent"],
-            },
-            11: {
                 "name": "Channel depth-discharge (Q(h) table)",
                 "wids": [
                     self.outflow_data_cbo,
@@ -2066,9 +2079,8 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
             self.schem_outflow_bc_btn.setDisabled(True)
 
     def disable_outflow_types(self):
-        for idx in [2, 3, 6, 8, 9, 10, 11]:
+        for idx in [2, 3, 6, 8, 9, 10]:
             self.outflow_type_cbo.model().item(idx).setEnabled(False)
-        self.outflow_type_cbo.model().item(10).setEnabled(False)
 
     def delete_all_inflow_data(self):
         """
