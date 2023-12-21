@@ -875,10 +875,10 @@ class Outflow(GeoPackageUtils):
         self.execute(qry, (self.fid,))
 
     def clear_type_data(self):
-        self.typ = None
-        self.chan_out = None
-        self.fp_out = None
-        self.hydro_out = None
+        self.typ = 0
+        self.chan_out = 0
+        self.fp_out = 0
+        self.hydro_out = 0
 
     def set_type_data(self, typ):
         if typ == 4:
@@ -1121,10 +1121,10 @@ class Outflow(GeoPackageUtils):
         return next((val for val in data_fid_vals if val), None)
 
     def clear_data_fids(self):
-        self.chan_tser_fid = None
-        self.fp_tser_fid = None
-        self.chan_qhpar_fid = None
-        self.chan_qhtab_fid = None
+        self.chan_tser_fid = 0
+        self.fp_tser_fid = 0
+        self.chan_qhpar_fid = 0
+        self.chan_qhtab_fid = 0
 
     def set_new_data_fid(self, fid):
         """

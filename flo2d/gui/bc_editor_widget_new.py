@@ -1157,6 +1157,7 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
                                             WHEN (chan_qhtab_fid > 0) THEN 10
                                             ELSE 0
                                             END);"""
+
                 self.gutils.execute(type_qry)
                 # update series and tables names
                 outflow_name_qry = """UPDATE outflow SET name = 'Outflow ' ||  cast(fid as text) WHERE name IS NULL;"""
