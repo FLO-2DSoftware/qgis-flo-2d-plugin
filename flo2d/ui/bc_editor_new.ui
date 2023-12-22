@@ -76,7 +76,7 @@
           <item row="5" column="1">
            <widget class="QToolButton" name="schem_inflow_bc_btn">
             <property name="toolTip">
-             <string>Schematize boundary conditions</string>
+             <string>Schematize inflow boundary conditions</string>
             </property>
             <property name="text">
              <string>...</string>
@@ -146,7 +146,11 @@
            </widget>
           </item>
           <item row="1" column="1" colspan="8">
-           <widget class="QComboBox" name="inflow_bc_name_cbo"/>
+           <widget class="QComboBox" name="inflow_bc_name_cbo">
+            <property name="toolTip">
+             <string>Inflow boundary condition name</string>
+            </property>
+           </widget>
           </item>
           <item row="1" column="9">
            <widget class="QToolButton" name="change_inflow_bc_name_btn">
@@ -155,6 +159,9 @@
               <horstretch>0</horstretch>
               <verstretch>0</verstretch>
              </sizepolicy>
+            </property>
+            <property name="toolTip">
+             <string>Rename inflow boundary condition</string>
             </property>
             <property name="layoutDirection">
              <enum>Qt::LeftToRight</enum>
@@ -171,7 +178,7 @@
           <item row="1" column="10">
            <widget class="QToolButton" name="delete_inflow_bc_btn">
             <property name="toolTip">
-             <string>Delete current BC</string>
+             <string>Delete inflow boundary condition</string>
             </property>
             <property name="text">
              <string>...</string>
@@ -190,6 +197,9 @@
           </item>
           <item row="1" column="11">
            <widget class="QToolButton" name="clear_inflow_rubberband_btn">
+            <property name="toolTip">
+             <string>Clear the inflow rubberband</string>
+            </property>
             <property name="text">
              <string>Inflow hydrograph intervals (hours/days)</string>
             </property>
@@ -201,6 +211,9 @@
           </item>
           <item row="1" column="12">
            <widget class="QToolButton" name="inflow_bc_center_btn">
+            <property name="toolTip">
+             <string>Lock into the selected inflow boundary condition</string>
+            </property>
             <property name="text">
              <string>...</string>
             </property>
@@ -236,6 +249,9 @@
               <height>16777215</height>
              </size>
             </property>
+            <property name="toolTip">
+             <string>Inflow boundary condition type</string>
+            </property>
             <item>
              <property name="text">
               <string>Inflow hydrograph</string>
@@ -250,6 +266,9 @@
           </item>
           <item row="2" column="9" colspan="2">
            <widget class="QRadioButton" name="ifc_fplain_radio">
+            <property name="toolTip">
+             <string>Flooplain</string>
+            </property>
             <property name="text">
              <string>Fplain</string>
             </property>
@@ -260,16 +279,26 @@
           </item>
           <item row="2" column="11" colspan="2">
            <widget class="QRadioButton" name="ifc_chan_radio">
+            <property name="toolTip">
+             <string>Channel</string>
+            </property>
             <property name="text">
              <string>Chan.</string>
             </property>
            </widget>
           </item>
           <item row="3" column="1" colspan="8">
-           <widget class="QComboBox" name="inflow_tseries_cbo"/>
+           <widget class="QComboBox" name="inflow_tseries_cbo">
+            <property name="toolTip">
+             <string>Inflow time series boundary condition</string>
+            </property>
+           </widget>
           </item>
           <item row="3" column="9">
            <widget class="QToolButton" name="change_inflow_data_name_btn">
+            <property name="toolTip">
+             <string>Rename inflow time series</string>
+            </property>
             <property name="text">
              <string>...</string>
             </property>
@@ -281,6 +310,9 @@
           </item>
           <item row="3" column="10">
            <widget class="QToolButton" name="delete_inflow_ts_btn">
+            <property name="toolTip">
+             <string>Delete inflow time series</string>
+            </property>
             <property name="text">
              <string>...</string>
             </property>
@@ -293,7 +325,7 @@
           <item row="3" column="11">
            <widget class="QToolButton" name="add_inflow_data_btn">
             <property name="toolTip">
-             <string>Add data series/table for current BC</string>
+             <string>Add inflow time series</string>
             </property>
             <property name="text">
              <string>+</string>
@@ -353,6 +385,9 @@
            <layout class="QHBoxLayout" name="horizontalLayout_2">
             <item>
              <widget class="QToolButton" name="create_inflow_point_bc_btn">
+              <property name="toolTip">
+               <string>Add point inflow boundary condition</string>
+              </property>
               <property name="text">
                <string>...</string>
               </property>
@@ -371,7 +406,7 @@
             <item>
              <widget class="QToolButton" name="create_inflow_line_bc_btn">
               <property name="toolTip">
-               <string>Add line BC</string>
+               <string>Add line inflow boundary condition</string>
               </property>
               <property name="text">
                <string>...</string>
@@ -391,7 +426,7 @@
             <item>
              <widget class="QToolButton" name="create_inflow_polygon_bc_btn">
               <property name="toolTip">
-               <string>Add polygon BC</string>
+               <string>Add polygon inflow boundary condition</string>
               </property>
               <property name="text">
                <string>...</string>
@@ -410,6 +445,9 @@
             </item>
             <item>
              <widget class="QToolButton" name="rollback_inflow_btn">
+              <property name="toolTip">
+               <string>Rollback edits in inflow boundary conditions</string>
+              </property>
               <property name="text">
                <string>...</string>
               </property>
@@ -440,6 +478,9 @@
             </item>
             <item>
              <widget class="QToolButton" name="open_inflow_btn">
+              <property name="toolTip">
+               <string>Open INFLOW.DAT</string>
+              </property>
               <property name="text">
                <string>...</string>
               </property>
@@ -457,6 +498,9 @@
             </item>
             <item>
              <widget class="QToolButton" name="delete_schem_inflow_bc_btn">
+              <property name="toolTip">
+               <string>Delete schematized inflow boundary conditions</string>
+              </property>
               <property name="text">
                <string>...</string>
               </property>
@@ -519,7 +563,11 @@
            </spacer>
           </item>
           <item row="4" column="1" colspan="9">
-           <widget class="QComboBox" name="outflow_data_cbo"/>
+           <widget class="QComboBox" name="outflow_data_cbo">
+            <property name="toolTip">
+             <string>Outflow time series boundary condition</string>
+            </property>
+           </widget>
           </item>
           <item row="4" column="0">
            <widget class="QLabel" name="outflow_data_label">
@@ -535,6 +583,9 @@
            <layout class="QHBoxLayout" name="horizontalLayout_3">
             <item>
              <widget class="QToolButton" name="create_outflow_point_bc_btn">
+              <property name="toolTip">
+               <string>Add point outflow boundary condition</string>
+              </property>
               <property name="text">
                <string>...</string>
               </property>
@@ -552,6 +603,9 @@
             </item>
             <item>
              <widget class="QToolButton" name="create_outflow_line_bc_btn">
+              <property name="toolTip">
+               <string>Add line outflow boundary condition</string>
+              </property>
               <property name="text">
                <string>...</string>
               </property>
@@ -569,6 +623,9 @@
             </item>
             <item>
              <widget class="QToolButton" name="create_outflow_polygon_bc_btn">
+              <property name="toolTip">
+               <string>Add polygon outflow boundary condition</string>
+              </property>
               <property name="text">
                <string>...</string>
               </property>
@@ -586,6 +643,9 @@
             </item>
             <item>
              <widget class="QToolButton" name="rollback_outflow_btn">
+              <property name="toolTip">
+               <string>Rollback edits in outflow boundary conditions</string>
+              </property>
               <property name="text">
                <string>...</string>
               </property>
@@ -603,6 +663,9 @@
             </item>
             <item>
              <widget class="QToolButton" name="create_all_border_outflow_bc_btn">
+              <property name="toolTip">
+               <string>Add outflow boundary conditions to the whole grid boundary cells</string>
+              </property>
               <property name="text">
                <string>...</string>
               </property>
@@ -633,6 +696,9 @@
             </item>
             <item>
              <widget class="QToolButton" name="open_outflow_btn">
+              <property name="toolTip">
+               <string>Open OUTFLOW.DAT</string>
+              </property>
               <property name="text">
                <string>...</string>
               </property>
@@ -650,6 +716,12 @@
             </item>
             <item>
              <widget class="QToolButton" name="delete_schem_outflow_bc_btn">
+              <property name="acceptDrops">
+               <bool>true</bool>
+              </property>
+              <property name="toolTip">
+               <string>Delete schematized outflow boundary conditions</string>
+              </property>
               <property name="text">
                <string>...</string>
               </property>
@@ -681,6 +753,9 @@
               <height>0</height>
              </size>
             </property>
+            <property name="toolTip">
+             <string>Outflow boundary condition type</string>
+            </property>
             <property name="maxVisibleItems">
              <number>15</number>
             </property>
@@ -691,6 +766,9 @@
           </item>
           <item row="6" column="1">
            <widget class="QToolButton" name="schem_outflow_bc_btn">
+            <property name="toolTip">
+             <string>Schematize outflow boundary conditions</string>
+            </property>
             <property name="text">
              <string>...</string>
             </property>
@@ -708,6 +786,9 @@
           </item>
           <item row="4" column="10">
            <widget class="QToolButton" name="change_outflow_data_name_btn">
+            <property name="toolTip">
+             <string>Rename outflow time series</string>
+            </property>
             <property name="text">
              <string>...</string>
             </property>
@@ -719,6 +800,9 @@
           </item>
           <item row="1" column="11">
            <widget class="QToolButton" name="delete_outflow_bc_btn">
+            <property name="toolTip">
+             <string>Delete outflow boundary condition</string>
+            </property>
             <property name="text">
              <string>...</string>
             </property>
@@ -736,6 +820,9 @@
           </item>
           <item row="4" column="12">
            <widget class="QToolButton" name="add_outflow_data_btn">
+            <property name="toolTip">
+             <string>Add outflow time series</string>
+            </property>
             <property name="text">
              <string>...</string>
             </property>
@@ -760,6 +847,9 @@
           </item>
           <item row="1" column="10">
            <widget class="QToolButton" name="change_outflow_bc_name_btn">
+            <property name="toolTip">
+             <string>Rename outflow boundary condition</string>
+            </property>
             <property name="text">
              <string>...</string>
             </property>
@@ -777,6 +867,9 @@
               <verstretch>0</verstretch>
              </sizepolicy>
             </property>
+            <property name="toolTip">
+             <string>Clear the outflow rubberband</string>
+            </property>
             <property name="text">
              <string>...</string>
             </property>
@@ -787,7 +880,11 @@
            </widget>
           </item>
           <item row="1" column="1" colspan="9">
-           <widget class="QComboBox" name="outflow_bc_name_cbo"/>
+           <widget class="QComboBox" name="outflow_bc_name_cbo">
+            <property name="toolTip">
+             <string>Outflow boundary condition name</string>
+            </property>
+           </widget>
           </item>
           <item row="6" column="0">
            <widget class="QLabel" name="schematize_outflow_label">
@@ -818,6 +915,9 @@
           </item>
           <item row="1" column="13">
            <widget class="QToolButton" name="outflow_bc_center_btn">
+            <property name="toolTip">
+             <string>Lock into the selected outflow boundary condition</string>
+            </property>
             <property name="text">
              <string>...</string>
             </property>
@@ -845,6 +945,9 @@
           </item>
           <item row="4" column="11">
            <widget class="QToolButton" name="delete_outflow_ts_btn">
+            <property name="toolTip">
+             <string>Delete outflow time series</string>
+            </property>
             <property name="text">
              <string>...</string>
             </property>
@@ -862,7 +965,11 @@
            </widget>
           </item>
           <item row="5" column="1">
-           <widget class="QComboBox" name="outflow_hydro_cbo"/>
+           <widget class="QComboBox" name="outflow_hydro_cbo">
+            <property name="toolTip">
+             <string>Outflow output hydrograph</string>
+            </property>
+           </widget>
           </item>
           <item row="5" column="2" colspan="12">
            <spacer name="horizontalSpacer_5">
