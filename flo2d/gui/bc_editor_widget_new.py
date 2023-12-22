@@ -881,9 +881,9 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
                     current_bc_cells.append(str(cell[2]))
 
                 outflow_sql = [
-                    """INSERT INTO outflow (chan_out, fp_out, hydro_out, chan_tser_fid, chan_qhpar_fid,
+                    """INSERT INTO outflow (fid, chan_out, fp_out, hydro_out, chan_tser_fid, chan_qhpar_fid,
                                                     chan_qhtab_fid, fp_tser_fid, geom_type, bc_fid) VALUES""",
-                    9,
+                    10,
                 ]
 
                 cells_sql = ["""INSERT INTO outflow_cells (outflow_fid, grid_fid, geom_type, area_factor) VALUES""", 4]
@@ -914,6 +914,11 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
                 ts_fid = self.gutils.execute("""SELECT MAX(fid) FROM outflow_time_series;""").fetchone()[0]
                 outflow_cells_fid = self.gutils.execute("""SELECT MAX(outflow_fid) FROM outflow_cells;""").fetchone()[0]
                 outflow_fid = self.gutils.execute("""SELECT MAX(fid) FROM outflow_cells;""").fetchone()[0]
+                bc_fid = self.gutils.execute(f"SELECT MAX(fid) FROM user_bc_points").fetchone()[0]
+                if bc_fid is None:
+                    bc_fid = 1
+                else:
+                    bc_fid = int(bc_fid) + 1
 
                 if qh_tab_fid is not None:
                     qh_tab_fid = int(qh_tab_fid)
@@ -934,6 +939,8 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
                     outflow_fid = int(outflow_fid) + 1
                 else:
                     outflow_fid = 1
+
+                update_all_schem_sql = []
 
                 for gid, values in data.items():
                     chan_out = values["K"]
@@ -968,6 +975,7 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
 
                         outflow_sql += [
                             (
+                                outflow_fid,
                                 chan_out,
                                 fp_out,
                                 hydro_out,
@@ -976,7 +984,7 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
                                 chan_qhtab_fid,
                                 fp_tser_fid,
                                 'point',
-                                outflow_fid,
+                                bc_fid,
                             )
                         ]
 
@@ -989,146 +997,148 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
                     else:
                         # get the outflow fid
                         outflow = self.gutils.execute(
-                            f"SELECT outflow_fid, geom_type FROM outflow_cells WHERE grid_fid = '{gid}'").fetchone()
+                            f"SELECT outflow_fid, geom_type, fid FROM outflow_cells WHERE grid_fid = '{gid}'").fetchone()
 
                         outflow_fid = outflow[0]
                         geom_type = outflow[1]
+                        bc_fid = outflow[2]
 
                         if geom_type != 'point':
-                            pass
-                        else:
-                            # UPDATE INFLOW
-                            if values["time_series"]:
-                                # Floodplain
-                                if values["N"] == 1:
-                                    fp_tser_fid = self.gutils.execute(
-                                        f"SELECT fp_tser_fid FROM outflow WHERE fid = '{outflow_fid}'").fetchone()[0]
-                                    if fp_tser_fid is None or fp_tser_fid == 0:
-                                        fp_tser_fid = self.gutils.execute("""
-                                            SELECT MAX(series_fid) FROM outflow_time_series_data;""").fetchone()[0] + 1
-                                        self.gutils.execute(f"""
-                                        INSERT INTO outflow_time_series (fid) VALUES ('{fp_tser_fid}')""")
-                                        for row in values["time_series"]:
-                                            self.gutils.execute(f"""
-                                                INSERT INTO outflow_time_series_data 
-                                                (series_fid, time, value) VALUES 
-                                                ('{fp_tser_fid}','{row[0]}' ,'{row[1]}')""")
-                                        chan_tser_fid, chan_qhpar_fid, chan_qhtab_fid = [0] * 3
-                                    else:
-                                        self.gutils.execute(
-                                            f"DELETE FROM outflow_time_series_data WHERE series_fid = {fp_tser_fid}")
-                                        for row in values["time_series"]:
-                                            self.gutils.execute(f"""
-                                                INSERT INTO outflow_time_series_data 
-                                                (series_fid, time, value) VALUES 
-                                                ('{fp_tser_fid}','{row[0]}' ,'{row[1]}')""")
-                                # Channel
-                                elif values["N"] == 2:
-                                    chan_tser_fid = self.gutils.execute(
-                                        f"SELECT chan_tser_fid FROM outflow WHERE fid = '{outflow_fid}'").fetchone()[0]
-                                    if chan_tser_fid is None or chan_tser_fid == 0:
-                                        chan_tser_fid = self.gutils.execute("""
-                                            SELECT MAX(series_fid) FROM outflow_time_series_data;""").fetchone()[0]
-                                        self.gutils.execute(f"""
-                                                    INSERT INTO outflow_time_series (fid) VALUES ('{chan_tser_fid}')""")
-                                        for row in values["time_series"]:
-                                            self.gutils.execute(f"""
-                                                    INSERT INTO outflow_time_series_data 
-                                                    (series_fid, time, value) VALUES 
-                                                    ('{chan_tser_fid}','{row[0]}' ,'{row[1]}')""")
-                                        chan_qhpar_fid, chan_qhtab_fid, fp_tser_fid = [0] * 3
-                                    else:
-                                        self.gutils.execute(
-                                            f"DELETE FROM outflow_time_series_data WHERE series_fid = {chan_tser_fid}")
-                                        for row in values["time_series"]:
-                                            self.gutils.execute(f"""
-                                                    INSERT INTO outflow_time_series_data 
-                                                    (series_fid, time, value) VALUES 
-                                                    ('{chan_tser_fid}','{row[0]}' ,'{row[1]}')""")
-                                else:
-                                    pass
-
-                            if values["qh_data"]:
-                                qh_tab_fid = self.gutils.execute(
-                                    f"SELECT chan_qhtab_fid FROM outflow WHERE fid = '{outflow_fid}'").fetchone()[0]
-                                if qh_tab_fid == '' or qh_tab_fid == 0:
-                                    qh_tab_data_fid = self.gutils.execute("""
-                                        SELECT MAX(table_fid) FROM qh_table_data;""").fetchone()[0]
-                                    if qh_tab_data_fid is None:
-                                        qh_tab_fid = 1
-                                    else:
-                                        qh_tab_fid = int(qh_tab_data_fid) + 1
+                            outflow_fid = self.gutils.execute("""
+                                        SELECT MAX(fid) FROM outflow;""").fetchone()[0] + 1
+                            self.gutils.execute(f"""UPDATE outflow_cells SET
+                                                geom_type = 'point',
+                                                outflow_fid = '{outflow_fid}'
+                                                WHERE grid_fid = '{gid}'""")
+                            self.gutils.execute(f"""INSERT INTO outflow 
+                                                    (chan_out, fp_out, hydro_out, chan_tser_fid, chan_qhpar_fid,
+                                                    chan_qhtab_fid, fp_tser_fid, geom_type, bc_fid) VALUES
+                                                    (0,0,0,0,0,0,0,'point', {bc_fid})""")
+                            current_bc_cells.remove(gid)
+                        if values["time_series"]:
+                            # Floodplain
+                            if values["N"] == 1:
+                                fp_tser_fid = self.gutils.execute(
+                                    f"SELECT fp_tser_fid FROM outflow WHERE fid = '{outflow_fid}'").fetchone()[0]
+                                if fp_tser_fid is None or fp_tser_fid == 0:
+                                    fp_tser_fid = self.gutils.execute("""
+                                        SELECT MAX(series_fid) FROM outflow_time_series_data;""").fetchone()[0] + 1
                                     self.gutils.execute(f"""
-                                        INSERT INTO qh_table (fid) VALUES ({qh_tab_fid})""")
-                                    for row in values["qh_data"]:
+                                    INSERT INTO outflow_time_series (fid) VALUES ('{fp_tser_fid}')""")
+                                    for row in values["time_series"]:
                                         self.gutils.execute(f"""
-                                        INSERT INTO qh_table_data 
-                                        (table_fid, depth, q) VALUES 
-                                        ('{qh_tab_fid}','{row[0]}' ,'{row[1]}')""")
-                                    chan_tser_fid, chan_qhpar_fid, fp_tser_fid = [0] * 3
+                                            INSERT INTO outflow_time_series_data 
+                                            (series_fid, time, value) VALUES 
+                                            ('{fp_tser_fid}','{row[0]}' ,'{row[1]}')""")
+                                    chan_tser_fid, chan_qhpar_fid, chan_qhtab_fid = [0] * 3
                                 else:
                                     self.gutils.execute(
-                                        f"DELETE FROM qh_table_data WHERE table_fid = '{qh_tab_fid}'")
-                                    for row in values["qh_data"]:
+                                        f"DELETE FROM outflow_time_series_data WHERE series_fid = {fp_tser_fid}")
+                                    for row in values["time_series"]:
                                         self.gutils.execute(f"""
-                                        INSERT INTO qh_table_data 
-                                        (table_fid, depth, q) VALUES 
-                                        ('{qh_tab_fid}','{row[0]}' ,'{row[1]}')""")
-                                chan_qhtab_fid = qh_tab_fid
-
-                            if values["qh_params"]:
-                                qh_params_fid = self.gutils.execute(
-                                    f"SELECT chan_qhpar_fid FROM outflow WHERE fid = '{outflow_fid}'").fetchone()[0]
-                                if qh_params_fid == '' or qh_params_fid == 0:
-                                    qh_params_data_fid = self.gutils.execute("""
-                                        SELECT MAX(params_fid) FROM qh_params_data;""").fetchone()[0]
-                                    if qh_params_data_fid is None:
-                                        qh_params_fid = 1
-                                    else:
-                                        qh_params_fid = int(qh_params_data_fid) + 1
+                                            INSERT INTO outflow_time_series_data 
+                                            (series_fid, time, value) VALUES 
+                                            ('{fp_tser_fid}','{row[0]}' ,'{row[1]}')""")
+                            # Channel
+                            elif values["N"] == 2:
+                                chan_tser_fid = self.gutils.execute(
+                                    f"SELECT chan_tser_fid FROM outflow WHERE fid = '{outflow_fid}'").fetchone()[0]
+                                if chan_tser_fid is None or chan_tser_fid == 0:
+                                    chan_tser_fid = self.gutils.execute("""
+                                        SELECT MAX(series_fid) FROM outflow_time_series_data;""").fetchone()[0]
                                     self.gutils.execute(f"""
-                                        INSERT INTO qh_params (fid) VALUES ({qh_params_fid})""")
-                                    for row in values["qh_params"]:
+                                                INSERT INTO outflow_time_series (fid) VALUES ('{chan_tser_fid}')""")
+                                    for row in values["time_series"]:
                                         self.gutils.execute(f"""
+                                                INSERT INTO outflow_time_series_data 
+                                                (series_fid, time, value) VALUES 
+                                                ('{chan_tser_fid}','{row[0]}' ,'{row[1]}')""")
+                                    chan_qhpar_fid, chan_qhtab_fid, fp_tser_fid = [0] * 3
+                                else:
+                                    self.gutils.execute(
+                                        f"DELETE FROM outflow_time_series_data WHERE series_fid = {chan_tser_fid}")
+                                    for row in values["time_series"]:
+                                        self.gutils.execute(f"""
+                                                INSERT INTO outflow_time_series_data 
+                                                (series_fid, time, value) VALUES 
+                                                ('{chan_tser_fid}','{row[0]}' ,'{row[1]}')""")
+                            else:
+                                pass
+
+                        if values["qh_data"]:
+                            qh_tab_fid = self.gutils.execute(
+                                f"SELECT chan_qhtab_fid FROM outflow WHERE fid = '{outflow_fid}'").fetchone()[0]
+                            if qh_tab_fid == '' or qh_tab_fid == 0:
+                                qh_tab_data_fid = self.gutils.execute("""
+                                    SELECT MAX(table_fid) FROM qh_table_data;""").fetchone()[0]
+                                if qh_tab_data_fid is None:
+                                    qh_tab_fid = 1
+                                else:
+                                    qh_tab_fid = int(qh_tab_data_fid) + 1
+                                self.gutils.execute(f"""
+                                    INSERT INTO qh_table (fid) VALUES ({qh_tab_fid})""")
+                                for row in values["qh_data"]:
+                                    self.gutils.execute(f"""
+                                    INSERT INTO qh_table_data 
+                                    (table_fid, depth, q) VALUES 
+                                    ('{qh_tab_fid}','{row[0]}' ,'{row[1]}')""")
+                                chan_tser_fid, chan_qhpar_fid, fp_tser_fid = [0] * 3
+                            else:
+                                self.gutils.execute(
+                                    f"DELETE FROM qh_table_data WHERE table_fid = '{qh_tab_fid}'")
+                                for row in values["qh_data"]:
+                                    self.gutils.execute(f"""
+                                    INSERT INTO qh_table_data 
+                                    (table_fid, depth, q) VALUES 
+                                    ('{qh_tab_fid}','{row[0]}' ,'{row[1]}')""")
+                            chan_qhtab_fid = qh_tab_fid
+
+                        if values["qh_params"]:
+                            qh_params_fid = self.gutils.execute(
+                                f"SELECT chan_qhpar_fid FROM outflow WHERE fid = '{outflow_fid}'").fetchone()[0]
+                            if qh_params_fid == '' or qh_params_fid == 0:
+                                qh_params_data_fid = self.gutils.execute("""
+                                    SELECT MAX(params_fid) FROM qh_params_data;""").fetchone()[0]
+                                if qh_params_data_fid is None:
+                                    qh_params_fid = 1
+                                else:
+                                    qh_params_fid = int(qh_params_data_fid) + 1
+                                self.gutils.execute(f"""
+                                    INSERT INTO qh_params (fid) VALUES ({qh_params_fid})""")
+                                for row in values["qh_params"]:
+                                    self.gutils.execute(f"""
+                                    INSERT INTO qh_params_data 
+                                    (params_fid, hmax, coef, exponent) VALUES 
+                                    ('{qh_params_fid}','{row[0]}' ,'{row[1]}', '{row[2]}')""")
+                                chan_tser_fid, chan_qhtab_fid, fp_tser_fid = [0] * 3
+                            else:
+                                self.gutils.execute(
+                                    f"DELETE FROM qh_params_data WHERE params_fid = '{qh_params_fid}'")
+                                for row in values["qh_params"]:
+                                    self.gutils.execute(f"""
                                         INSERT INTO qh_params_data 
                                         (params_fid, hmax, coef, exponent) VALUES 
                                         ('{qh_params_fid}','{row[0]}' ,'{row[1]}', '{row[2]}')""")
-                                    chan_tser_fid, chan_qhtab_fid, fp_tser_fid = [0] * 3
-                                else:
-                                    self.gutils.execute(
-                                        f"DELETE FROM qh_params_data WHERE params_fid = '{qh_params_fid}'")
-                                    for row in values["qh_params"]:
-                                        self.gutils.execute(f"""
-                                            INSERT INTO qh_params_data 
-                                            (params_fid, hmax, coef, exponent) VALUES 
-                                            ('{qh_params_fid}','{row[0]}' ,'{row[1]}', '{row[2]}')""")
-                                chan_qhpar_fid = qh_params_fid
+                            chan_qhpar_fid = qh_params_fid
 
-                            self.gutils.execute(
-                                f"""UPDATE outflow SET
-                                         chan_out = '{chan_out}',
-                                         fp_out = '{fp_out}',
-                                         hydro_out = '{hydro_out}',
-                                         chan_tser_fid = '{chan_tser_fid}',
-                                         chan_qhpar_fid = '{chan_qhpar_fid}',
-                                         chan_qhtab_fid = '{chan_qhtab_fid}',
-                                         fp_tser_fid = '{fp_tser_fid}',
-                                         geom_type = 'point'
-                                         WHERE fid = {outflow_fid}"""
-                            )
-
-                            QgsMessageLog.logMessage(f"""UPDATE outflow SET
-                                         chan_out = '{chan_out}',
-                                         fp_out = '{fp_out}',
-                                         hydro_out = '{hydro_out}',
-                                         chan_tser_fid = '{chan_tser_fid}',
-                                         chan_qhpar_fid = '{chan_qhpar_fid}',
-                                         chan_qhtab_fid = '{chan_qhtab_fid}',
-                                         fp_tser_fid = '{fp_tser_fid}',
-                                         geom_type = 'point'
-                                         WHERE fid = {outflow_fid}""")
+                        self.gutils.execute(
+                            f"""UPDATE outflow SET
+                                     chan_out = '{chan_out}',
+                                     fp_out = '{fp_out}',
+                                     hydro_out = '{hydro_out}',
+                                     chan_tser_fid = '{chan_tser_fid}',
+                                     chan_qhpar_fid = '{chan_qhpar_fid}',
+                                     chan_qhtab_fid = '{chan_qhtab_fid}',
+                                     fp_tser_fid = '{fp_tser_fid}',
+                                     geom_type = 'point',
+                                     bc_fid = {bc_fid}
+                                     WHERE fid = {outflow_fid}"""
+                        )
 
                         outflow_fid += 1
+                    update_all_schem_sql.append(
+                        f"UPDATE all_schem_bc SET tab_bc_fid = {bc_fid} WHERE grid_fid = '{gid}'")
+                    bc_fid += 1
 
                 self.gutils.batch_execute(
                     outflow_sql,
@@ -1141,6 +1151,15 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
                     ts_data_sql,
                 )
 
+                self.gutils.execute("""UPDATE outflow
+                                        SET chan_out = COALESCE(chan_out, 0),
+                                            fp_out = COALESCE(fp_out, 0),
+                                            hydro_out = COALESCE(hydro_out, 0),
+                                            chan_tser_fid = COALESCE(chan_tser_fid, 0),
+                                            chan_qhpar_fid = COALESCE(chan_qhpar_fid, 0),
+                                            chan_qhtab_fid = COALESCE(chan_qhtab_fid, 0),
+                                            fp_tser_fid = COALESCE(fp_tser_fid, 0);""")
+
                 type_qry = f"""UPDATE outflow SET type = (CASE
                                             WHEN (fp_out > 0 AND chan_out = 0 AND fp_tser_fid = 0) THEN 1
                                             WHEN (fp_out = 0 AND chan_out > 0 AND chan_tser_fid = 0 AND
@@ -1151,7 +1170,7 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
                                             WHEN (chan_out = 0 AND chan_tser_fid > 0) THEN 6
                                             WHEN (fp_out > 0 AND fp_tser_fid > 0) THEN 7
                                             WHEN (chan_out > 0 AND chan_tser_fid > 0) THEN 8
-                                            WHEN (chan_qhpar_fid > 0) THEN 9
+                                            WHEN (chan_qhpar_fid > 0) THEN 9 
                                             WHEN (chan_qhtab_fid > 0) THEN 10
                                             ELSE 0
                                             END);"""
@@ -1167,6 +1186,10 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
                 qhtab_name_qry = """UPDATE qh_table SET name = 'Q(h) table ' ||  cast(fid as text);"""
                 self.gutils.execute(qhtab_name_qry)
 
+                if len(update_all_schem_sql) > 0:
+                    for qry in update_all_schem_sql:
+                        self.gutils.execute(qry)
+
                 schem_bc = self.lyrs.data['all_schem_bc']["qlyr"]
                 user_bc = self.lyrs.data['user_bc_points']["qlyr"]
 
@@ -1174,6 +1197,7 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
                 for feature in schem_bc.getFeatures():
                     if feature['type'] == "outflow":
                         if str(feature['grid_fid']) not in current_bc_cells:
+
                             geometry = feature.geometry()
                             centroid = geometry.centroid().asPoint()
                             centroid_point = QgsPointXY(centroid.x(), centroid.y())
