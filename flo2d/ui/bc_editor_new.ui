@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>420</width>
-    <height>457</height>
+    <width>424</width>
+    <height>466</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -108,7 +108,7 @@
            </widget>
           </item>
           <item row="1" column="0">
-           <widget class="QLabel" name="label_4">
+           <widget class="QLabel" name="inflow_name_label">
             <property name="sizePolicy">
              <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
               <horstretch>0</horstretch>
@@ -810,7 +810,7 @@
            </spacer>
           </item>
           <item row="1" column="0">
-           <widget class="QLabel" name="label_7">
+           <widget class="QLabel" name="outflow_name_label">
             <property name="text">
              <string>Name</string>
             </property>

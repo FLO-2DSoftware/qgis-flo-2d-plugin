@@ -427,6 +427,12 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
         self.inflow_changed()
 
         if self.inflow_bc_name_cbo.count():
+            self.inflow_name_label.setDisabled(False)
+            self.inflow_bc_name_cbo.setDisabled(False)
+            self.change_inflow_bc_name_btn.setDisabled(False)
+            self.delete_inflow_bc_btn.setDisabled(False)
+            self.clear_inflow_rubberband_btn.setDisabled(False)
+            self.inflow_bc_center_btn.setDisabled(False)
             self.inflow_type_label.setDisabled(False)
             self.inflow_type_cbo.setDisabled(False)
             self.ifc_fplain_radio.setDisabled(False)
@@ -1666,6 +1672,12 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
             self.inflow.inoutfc = self.inflow_type_cbo.currentIndex()
             self.save_inflow()
         else:
+            self.inflow_name_label.setDisabled(True)
+            self.inflow_bc_name_cbo.setDisabled(True)
+            self.change_inflow_bc_name_btn.setDisabled(True)
+            self.delete_inflow_bc_btn.setDisabled(True)
+            self.clear_inflow_rubberband_btn.setDisabled(True)
+            self.inflow_bc_center_btn.setDisabled(True)
             self.inflow_type_label.setDisabled(True)
             self.inflow_type_cbo.setDisabled(True)
             self.ifc_fplain_radio.setDisabled(True)
@@ -1732,6 +1744,12 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
         self.outflow_changed()
 
         if self.outflow_bc_name_cbo.count():
+            self.outflow_name_label.setDisabled(False)
+            self.outflow_bc_name_cbo.setDisabled(False)
+            self.change_outflow_bc_name_btn.setDisabled(False)
+            self.delete_outflow_bc_btn.setDisabled(False)
+            self.clear_outflow_rubberband_btn.setDisabled(False)
+            self.outflow_bc_center_btn.setDisabled(False)
             self.outflow_type_label.setDisabled(False)
             self.outflow_type_cbo.setDisabled(False)
             self.schematize_outflow_label.setDisabled(False)
@@ -2076,6 +2094,12 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
         Disable elements when there is not BC
         """
         if type == "inflow":
+            self.inflow_name_label.setDisabled(True)
+            self.inflow_bc_name_cbo.setDisabled(True)
+            self.change_inflow_bc_name_btn.setDisabled(True)
+            self.delete_inflow_bc_btn.setDisabled(True)
+            self.clear_inflow_rubberband_btn.setDisabled(True)
+            self.inflow_bc_center_btn.setDisabled(True)
             self.inflow_type_label.setDisabled(True)
             self.inflow_type_cbo.setDisabled(True)
             self.ifc_fplain_radio.setDisabled(True)
@@ -2089,6 +2113,12 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
             self.schematize_inflow_label.setDisabled(True)
             self.schem_inflow_bc_btn.setDisabled(True)
         else:
+            self.outflow_name_label.setDisabled(True)
+            self.outflow_bc_name_cbo.setDisabled(True)
+            self.change_outflow_bc_name_btn.setDisabled(True)
+            self.delete_outflow_bc_btn.setDisabled(True)
+            self.clear_outflow_rubberband_btn.setDisabled(True)
+            self.outflow_bc_center_btn.setDisabled(True)
             self.outflow_type_label.setDisabled(True)
             self.outflow_type_cbo.setDisabled(True)
             self.outflow_hydro_label.setDisabled(True)
