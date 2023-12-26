@@ -47,9 +47,6 @@ class FLOPROExecutor(object):
 
     def execute_flopro(self):
         with cd(self.project_dir):
-            #             proc = subprocess.call(self.tailings_exe, shell=True)
-            #             proc = Popen(self.tailings_exe, shell=True, stdin=open(os.devnull), stdout=PIPE, stderr=STDOUT, universal_newlines=True)
-
             try:
                 self.uc.clear_bar_messages()
 
@@ -71,32 +68,43 @@ class FLOPROExecutor(object):
                 # 22222
 
                 # self.flo2d_exe = "C:/TRACKS/FLOPROCore/FLOPROCore/bin/Debug/net6.0-windows/FLOPROCore.exe"
-                result = Popen(
-                    args=self.flo2d_exe,
-                    bufsize=-1,
-                    executable=None,
-                    stdin=None,
-                    stdout=None,
-                    stderr=None,
-                    preexec_fn=None,
-                    close_fds=True,
-                    shell=False,
-                    cwd=None,
-                    env=None,
-                    universal_newlines=None,
-                    startupinfo=None,
-                    creationflags=0,
-                    restore_signals=True,
-                    start_new_session=False,
-                    pass_fds=(),
-                    group=None,
-                    extra_groups=None,
-                    user=None,
-                    umask=-1,
-                    encoding=None,
-                    errors=None,
-                    text=None,
-                )
+
+                with open(os.devnull, 'r') as devnull:
+                    result = Popen(
+                        args=self.flo2d_exe,
+                        shell=False,
+                        stdin=devnull,
+                        stdout=PIPE,
+                        stderr=STDOUT
+                    )
+                    output, _ = result.communicate()
+
+                # result = Popen(
+                #     args=self.flo2d_exe,
+                #     bufsize=-1,
+                #     executable=None,
+                #     stdin=None,
+                #     stdout=None,
+                #     stderr=None,
+                #     preexec_fn=None,
+                #     close_fds=True,
+                #     shell=False,
+                #     cwd=None,
+                #     env=None,
+                #     universal_newlines=None,
+                #     startupinfo=None,
+                #     creationflags=0,
+                #     restore_signals=True,
+                #     start_new_session=False,
+                #     pass_fds=(),
+                #     group=None,
+                #     extra_groups=None,
+                #     user=None,
+                #     umask=-1,
+                #     encoding=None,
+                #     errors=None,
+                #     text=None,
+                # )
                 # out = result.communicate()
                 # for line in out:
                 #     self.uc.bar_info(line)

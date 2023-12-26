@@ -1047,22 +1047,23 @@ class Flo2D(object):
         """
         self.uncheck_all_info_tools()
         dlg = ExternalProgramFLO2D(self.iface, "Run Settings")
-        dlg.debug_run_btn.setVisible(False)
+        # dlg.debug_run_btn.setVisible(False)
         dlg.exec_folder_lbl.setText("FLO-2D Folder")
         ok = dlg.exec_()
         if not ok:
             return
-        flo2d_dir, project_dir = dlg.get_parameters()
-        s = QSettings()
-        s.setValue("FLO-2D/lastGdsDir", project_dir)
-        s.setValue("FLO-2D/last_flopro", flo2d_dir)
+        else:
+            flo2d_dir, project_dir = dlg.get_parameters()
+            s = QSettings()
+            s.setValue("FLO-2D/lastGdsDir", project_dir)
+            s.setValue("FLO-2D/last_flopro", flo2d_dir)
 
-        if project_dir != "" and flo2d_dir != "":
-            s.setValue("FLO-2D/run_settings", True)
-            flo2d_v = get_flo2dpro_version(s.value("FLO-2D/last_flopro") + "/FLOPRO.exe")
-            self.gutils.set_metadata_par("FLO-2D_V", flo2d_v)
+            if project_dir != "" and flo2d_dir != "":
+                s.setValue("FLO-2D/run_settings", True)
+                flo2d_v = get_flo2dpro_version(s.value("FLO-2D/last_flopro") + "/FLOPRO.exe")
+                self.gutils.set_metadata_par("FLO-2D_V", flo2d_v)
 
-        self.uc.show_info("Run Settings saved!")
+            self.uc.show_info("Run Settings saved!")
 
     @connection_required
     def quick_run_flopro(self):

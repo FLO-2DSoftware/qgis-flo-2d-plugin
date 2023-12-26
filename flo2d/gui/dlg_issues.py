@@ -12,6 +12,8 @@ import os
 import time
 from multiprocessing.pool import ApplyResult
 
+from PyQt5.QtWidgets import QDockWidget, QAction
+from qgis._gui import QgsDockWidget
 from qgis.core import *
 from qgis.core import (
     Qgis,
@@ -103,103 +105,83 @@ class ErrorsDialog(qtBaseClass, uiDialog):
         s.setValue("FLO-2D/last_DEBUG", DEBUG_dir)
 
     def errors_OK(self):
+        """
+        Opens the dock widgets
+        """
+        QApplication.setOverrideCursor(Qt.WaitCursor)
+
         if self.current_project_radio.isChecked():
             try:
-                QApplication.setOverrideCursor(Qt.WaitCursor)
-                dlg_conflicts = CurrentConflictsDialog(self.con, self.iface, self.lyrs, "1000000", "All", "All")
-                QApplication.restoreOverrideCursor()
-                dlg_conflicts.exec_()
+                debug_file_dw = self.iface.mainWindow().findChild(QDockWidget, "DebugFile")
+                if debug_file_dw:
+                    if debug_file_dw.isVisible():
+                        debug_file_dw.close()
+                levee_crests_dw = self.iface.mainWindow().findChild(QDockWidget, "LeveeCrests")
+                if levee_crests_dw:
+                    if levee_crests_dw.isVisible():
+                        levee_crests_dw.close()
+
+                dlg_conflicts = CurrentConflictsDialog(self.con, self.iface, self.lyrs, 1000000, "All", "All")
+                dlg_conflicts.dock_widget.setFloating(False)
+                self.iface.addDockWidget(Qt.BottomDockWidgetArea, dlg_conflicts.dock_widget)
+                dlg_conflicts.dock_widget.show()
                 self.lyrs.clear_rubber()
+                QApplication.restoreOverrideCursor()
                 return True
             except ValueError:
-                # Forced error during contructor to stop showing dialog.
+                QApplication.restoreOverrideCursor()
                 pass
 
         elif self.debug_file_radio.isChecked():
             try:
-                dlg_issues = IssuesFromDEBUGDialog(self.con, self.iface, self.lyrs)
+                current_conflicts_dw = self.iface.mainWindow().findChild(QDockWidget, "CurrentConflicts")
+                if current_conflicts_dw:
+                    if current_conflicts_dw.isVisible():
+                        current_conflicts_dw.close()
+                levee_crests_dw = self.iface.mainWindow().findChild(QDockWidget, "LeveeCrests")
+                if levee_crests_dw:
+                    if levee_crests_dw.isVisible():
+                        levee_crests_dw.close()
 
+                dlg_issues = IssuesFromDEBUGDialog(self.con, self.iface, self.lyrs)
                 if dlg_issues.cells_out > 0:
                     self.uc.show_warn(
                         "The complementary files you selected have "
                         + str(dlg_issues.cells_out)
                         + " cells references that are outside the grid !"
                     )
-                ok = dlg_issues.exec_()
-                if ok:
-                    pass
-
-                # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-                # try:
-                #     for lyr in QgsProject.instance().mapLayers().values():
-                #         if lyr.name() == "DEBUG":
-                #             QgsProject.instance().removeMapLayers([lyr.id()])
-                #
-                #     lyr = QgsProject.instance().mapLayersByName(name)
-                #     if lyr:
-                #         QgsProject.instance().removeMapLayers([lyr[0].id()])
-                #
-                #     QgsProject.instance().reloadAllLayers()
-                #
-                #
-                #
-                #
-                #     for fname in glob.glob(self.debug_directory + "DEBUG.*"):
-                #         os.remove(fname)
-                #
-                #     self.iface.mapCanvas().refresh()
-                #
-                #     if os.path.isfile(self.debug_directory + "/DEBUG.cpg"):
-                #         os.remove(self.debug_directory + "/DEBUG.cpg")
-                #
-                #     if os.path.isfile(self.debug_directory + "/DEBUG.prj"):
-                #         os.remove(self.debug_directory + "/DEBUG.prj")
-                #
-                #     if os.path.isfile(self.debug_directory + "/DEBUG.shx"):
-                #         os.remove(self.debug_directory + "/DEBUG.shx")
-                #
-                #     if os.path.isfile(self.debug_directory + "/DEBUG.shp"):
-                #         os.remove(self.debug_directory + "/DEBUG.shp")
-                #
-                #     if os.path.isfile(self.debug_directory + "/DEBUG.dbf"):
-                #         os.remove(self.debug_directory + "/DEBUG.dbf")
-                #
-                #
-                #
-                #     if not QgsVectorFileWriter.deleteShapeFile(shapefile):
-                #         QApplication.restoreOverrideCursor()
-                #         self.uc.show_warn("WARNING 051222.0631: could not delete previous shapefile:\n\n" + shapefile)
-                #         QApplication.setOverrideCursor(Qt.WaitCursor)
-                #     if not QgsVectorFileWriter.deleteShapeFile(shapefile):
-                #         QApplication.restoreOverrideCursor()
-                #         self.uc.show_warn("WARNING 071222.0617: could not delete previous shapefile:\n\n" + shapefile)
-                #         QApplication.setOverrideCursor(Qt.WaitCursor)
-                # except Exception as e:
-                #     self.uc.show_error("ERROR 141222.1629: error deleting previous layers!", e)
-                #     QApplication.restoreOverrideCursor()
-
-                # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-
+                dlg_issues.dock_widget.setFloating(False)
+                self.iface.addDockWidget(Qt.BottomDockWidgetArea, dlg_issues.dock_widget)
+                dlg_issues.dock_widget.show()
                 self.lyrs.clear_rubber()
                 QApplication.restoreOverrideCursor()
-
-            except ValueError:
-                # Forced error during contructor to stop showing dialog.
-                QApplication.restoreOverrideCursor()
-                pass
-
-        else:  # Levee crests:
-            try:
-                QApplication.setOverrideCursor(Qt.WaitCursor)
-                dlg_levee_crests = LeveeCrestsDialog(self.con, self.iface, self.lyrs)
-                QApplication.restoreOverrideCursor()
-                dlg_levee_crests.exec_()
-                self.lyrs.clear_rubber()
                 return True
-            except ValueError:
-                # Forced error during contructor to stop showing dialog.
-                pass
 
+            except ValueError:
+                QApplication.restoreOverrideCursor()
+                pass
+        else:
+            try:
+                current_conflicts_dw = self.iface.mainWindow().findChild(QDockWidget, "CurrentConflicts")
+                if current_conflicts_dw:
+                    if current_conflicts_dw.isVisible():
+                        current_conflicts_dw.close()
+                debug_file_dw = self.iface.mainWindow().findChild(QDockWidget, "DebugFile")
+                if debug_file_dw:
+                    if debug_file_dw.isVisible():
+                        debug_file_dw.close()
+
+                dlg_levee_crests = LeveeCrestsDialog(self.con, self.iface, self.lyrs)
+                dlg_levee_crests.dock_widget.setFloating(False)
+                self.iface.addDockWidget(Qt.BottomDockWidgetArea, dlg_levee_crests.dock_widget)
+                dlg_levee_crests.dock_widget.show()
+                self.lyrs.clear_rubber()
+                QApplication.restoreOverrideCursor()
+                return True
+
+            except ValueError:
+                QApplication.restoreOverrideCursor()
+                pass
 
 uiDialog, qtBaseClass = load_ui("issues")
 
@@ -223,7 +205,7 @@ class IssuesFromDEBUGDialog(qtBaseClass, uiDialog):
         self.fail = []
         self.currentCell = None
         self.debug_directory = ""
-        set_icon(self.find_cell_btn, "eye-svgrepo-com.svg")
+        # set_icon(self.find_cell_btn, "eye-svgrepo-com.svg")
         set_icon(self.zoom_in_btn, "zoom_in.svg")
         set_icon(self.zoom_out_btn, "zoom_out.svg")
         set_icon(self.previous_grid_issues_btn, "arrow_4.svg")
@@ -237,7 +219,7 @@ class IssuesFromDEBUGDialog(qtBaseClass, uiDialog):
         self.issues_codes_cbo.activated.connect(self.codes_cbo_activated)
         self.errors_cbo.activated.connect(self.errors_cbo_activated)
         self.elements_cbo.activated.connect(self.elements_cbo_activated)
-        self.find_cell_btn.clicked.connect(self.find_cell_clicked)
+        # self.find_cell_btn.clicked.connect(self.find_cell_clicked)
         self.description_tblw.cellClicked.connect(self.description_tblw_cell_clicked)
         self.zoom_in_btn.clicked.connect(self.zoom_in)
         self.zoom_out_btn.clicked.connect(self.zoom_out)
@@ -252,6 +234,11 @@ class IssuesFromDEBUGDialog(qtBaseClass, uiDialog):
         self.description_tblw.setSortingEnabled(False)
         self.description_tblw.setColumnWidth(2, 550)
         self.description_tblw.resizeRowsToContents()
+
+        # Create a dock widget
+        self.dock_widget = QDockWidget("Warnings and Errors: DEBUG File", self.iface.mainWindow())
+        self.dock_widget.setObjectName("DebugFile")
+        self.dock_widget.setWidget(self)
 
         if not self.populate_issues():
             raise ValueError("Not a legal file!")
@@ -346,65 +333,11 @@ class IssuesFromDEBUGDialog(qtBaseClass, uiDialog):
                 return False
             else:
                 QApplication.setOverrideCursor(Qt.WaitCursor)
-                # qApp.processEvents()
                 s.setValue("FLO-2D/lastDEBUGDir", os.path.dirname(debug_file))
                 self.debug_directory = os.path.dirname(debug_file)
 
                 name = "DEBUG"
                 shapefile = self.debug_directory + "/DEBUG.shp"
-
-                # 111111111111111111
-                # try:
-                #
-                #     for lyr in QgsProject.instance().mapLayers().values():
-                #         if lyr.name() == "DEBUG":
-                #             QgsProject.instance().removeMapLayers([lyr.id()])
-                #
-                #     lyr = QgsProject.instance().mapLayersByName(name)
-                #     if lyr:
-                #         QgsProject.instance().removeMapLayers([lyr[0].id()])
-                #
-                #     QgsProject.instance().reloadAllLayers()
-                #
-                #
-                #
-                #
-                #     for fname in glob.glob(self.debug_directory + "DEBUG.*"):
-                #         os.remove(fname)
-                #
-                #     self.iface.mapCanvas().refresh()
-                #
-                #     if os.path.isfile(self.debug_directory + "/DEBUG.cpg"):
-                #         os.remove(self.debug_directory + "/DEBUG.cpg")
-                #
-                #     if os.path.isfile(self.debug_directory + "/DEBUG.prj"):
-                #         os.remove(self.debug_directory + "/DEBUG.prj")
-                #
-                #     if os.path.isfile(self.debug_directory + "/DEBUG.shx"):
-                #         os.remove(self.debug_directory + "/DEBUG.shx")
-                #
-                #     if os.path.isfile(self.debug_directory + "/DEBUG.shp"):
-                #         os.remove(self.debug_directory + "/DEBUG.shp")
-                #
-                #     if os.path.isfile(self.debug_directory + "/DEBUG.dbf"):
-                #         os.remove(self.debug_directory + "/DEBUG.dbf")
-                #
-                #
-                #
-                #     if not QgsVectorFileWriter.deleteShapeFile(shapefile):
-                #         QApplication.restoreOverrideCursor()
-                #         self.uc.show_warn("WARNING 051222.0631: could not delete previous shapefile:\n\n" + shapefile)
-                #         QApplication.setOverrideCursor(Qt.WaitCursor)
-                #     if not QgsVectorFileWriter.deleteShapeFile(shapefile):
-                #         QApplication.restoreOverrideCursor()
-                #         self.uc.show_warn("WARNING 071222.0617: could not delete previous shapefile:\n\n" + shapefile)
-                #         QApplication.setOverrideCursor(Qt.WaitCursor)
-                #
-                # except Exception as e:
-                #     self.uc.show_error("ERROR 141222.1630: error deleting previous layers!", e)
-                #     QApplication.restoreOverrideCursor()
-
-                # 1111111111111111111111111111
 
                 features = []
                 self.elements_cbo.clear()
@@ -439,7 +372,7 @@ class IssuesFromDEBUGDialog(qtBaseClass, uiDialog):
                 if self.create_points_shapefile(shapefile, name, fields, features):
                     try:
                         vlayer = self.iface.addVectorLayer(shapefile, name, "ogr")
-                        QgsMapLayerRegistry.instance().addMapLayer(vlayer)
+                        QgsProject.instance().instance().addMapLayer(vlayer)
                     except:
                         pass
                 else:
@@ -485,10 +418,10 @@ class IssuesFromDEBUGDialog(qtBaseClass, uiDialog):
             self.errors_cbo.addItem(str(error))
 
     def import_other_issues_files(self):
+        QApplication.restoreOverrideCursor()
         dlg_issues_files = IssuesFiles(self.con, self.iface, self.lyrs)
         ok = dlg_issues_files.exec_()
         # QApplication.setOverrideCursor(Qt.WaitCursor)
-        QApplication.restoreOverrideCursor()
         if ok:
             for lyr in QgsProject.instance().mapLayers().values():
                 if lyr.name() == "Depressed Elements":
@@ -1276,8 +1209,6 @@ class IssuesFromDEBUGDialog(qtBaseClass, uiDialog):
             mapCanvas = self.iface.mapCanvas()
             my_crs = mapCanvas.mapSettings().destinationCrs()
 
-            QgsVectorFileWriter.deleteShapeFile(shapefile)
-
             try:
                 writer = QgsVectorFileWriter(shapefile, "system", f, QgsWkbTypes.Point, my_crs, "ESRI Shapefile")
             except:
@@ -1317,51 +1248,6 @@ class IssuesFromDEBUGDialog(qtBaseClass, uiDialog):
             QApplication.restoreOverrideCursor()
             self.uc.show_error("ERROR 190519.0441: error while creating layer  " + name + "!\n", e)
             return False
-
-    # def create_current_conflicts_points_shapefile(self, shapefile, name, fields, features):
-    #     try:
-    #         self.uc.clear_bar_messages()
-    #         lyr = QgsProject.instance().mapLayersByName(name)
-    #
-    #         if lyr:
-    #             QgsProject.instance().removeMapLayers([lyr[0].id()])
-    #
-    #         # define fields for feature attributes. A QgsFields object is needed
-    #         f = QgsFields()
-    #         f.append(QgsField(fields[2][0], QVariant.Int))
-    #         f.append(QgsField(fields[3][0], QVariant.String))
-    #
-    #         mapCanvas = self.iface.mapCanvas()
-    #         my_crs = mapCanvas.mapSettings().destinationCrs()
-    #         QgsVectorFileWriter.deleteShapeFile(shapefile)
-    #         writer = QgsVectorFileWriter(shapefile, "system", f, QgsWkbTypes.Point, my_crs, "ESRI Shapefile")
-    #         if writer.hasError() != QgsVectorFileWriter.NoError:
-    #         #     QApplication.restoreOverrideCursor()
-    #         #     self.uc.show_critical("ERROR 201919.0451: Error when creating shapefile: " + shapefile + "\n\n" + writer.errorMessage())
-    #
-    #         # add features:
-    #             for feat in features:
-    #                 attr = []
-    #                 fet = QgsFeature()
-    #                 fet.setGeometry(QgsGeometry.fromPointXY(QgsPointXY(float(feat[0]), float(feat[1]))))
-    #                 non_coord_feats = []
-    #                 non_coord_feats.append(feat[2])
-    #                 non_coord_feats.append(feat[3])
-    #                 fet.setAttributes(non_coord_feats)
-    #                 writer.addFeature(fet)
-    #
-    #             # delete the writer to flush features to disk
-    #             del writer
-    #             return True
-    #         else:
-    #             # delete the writer to flush features to disk
-    #             del writer
-    #             return False
-    #
-    #     except Exception as e:
-    #         QApplication.restoreOverrideCursor()
-    #         self.uc.show_error("ERROR 190519.0442: error while creating layer  " + name + "!\n", e)
-    #         return False
 
     def load_shapefile(self, shapefile, layerName):
         try:
@@ -1471,7 +1357,7 @@ class CurrentConflictsDialog(qtBaseClass, uiDialog):
         self.ext = self.iface.mapCanvas().extent()
         self.currentCell = None
         self.debug_directory = ""
-        set_icon(self.find_cell_btn, "eye-svgrepo-com.svg")
+        # set_icon(self.find_cell_btn, "eye-svgrepo-com.svg")
         set_icon(self.zoom_in_btn, "zoom_in.svg")
         set_icon(self.zoom_out_btn, "zoom_out.svg")
         set_icon(self.copy_btn, "copy.svg")
@@ -1481,7 +1367,7 @@ class CurrentConflictsDialog(qtBaseClass, uiDialog):
         self.component2_cbo.activated.connect(self.component2_cbo_activated)
         self.errors_cbo.activated.connect(self.errors_cbo_activated)
         self.elements_cbo.activated.connect(self.elements_cbo_activated)
-        self.find_cell_btn.clicked.connect(self.find_cell_clicked)
+        # self.find_cell_btn.clicked.connect(self.find_cell_clicked)
         self.copy_btn.clicked.connect(self.copy_to_clipboard)
         self.description_tblw.cellClicked.connect(self.description_tblw_cell_clicked)
         self.zoom_in_btn.clicked.connect(self.zoom_in)
@@ -1499,6 +1385,11 @@ class CurrentConflictsDialog(qtBaseClass, uiDialog):
 
         self.component1_cbo.setCurrentIndex(1)
         self.loadIssuePairs()
+
+        # Create a dock widget
+        self.dock_widget = QDockWidget("Warnings and Errors: Current Project", self.iface.mainWindow())
+        self.dock_widget.setObjectName("CurrentConflicts")
+        self.dock_widget.setWidget(self)
 
         if self.currentCell:
             x, y = self.currentCell.geometry().centroid().asPoint()
@@ -2231,10 +2122,10 @@ class CurrentConflictsDialog(qtBaseClass, uiDialog):
                 pt = QgsGeometry().fromWkt(pnt).asPoint()
                 features.append([pt.x(), pt.y(), e[0], e[3]])
 
-        shpefile = os.path.join(lastDir, "Current Conflicts.shp")
+        shapefile = os.path.join(lastDir, "Current Conflicts.shp")
         name = "Current Conflicts"
         fields = [["X", "I"], ["Y", "I"], ["cell", "I"], ["description", "S"]]
-        if self.create_current_conflicts_points_shapefile(shpefile, name, fields, features):
+        if self.create_current_conflicts_points_shapefile(shapefile, name, fields, features):
             try:
                 vlayer = self.iface.addVectorLayer(shapefile, name, "ogr")
             except:
@@ -2413,7 +2304,7 @@ class CurrentConflictsDialog(qtBaseClass, uiDialog):
                 if grid:
                     if cell != "":
                         cell = int(cell)
-                        if len(grid) >= cell and cell > 0:
+                        if cell > 0:
                             self.lyrs.show_feat_rubber(grid.id(), cell, QColor(Qt.yellow))
                             self.currentCell = next(grid.getFeatures(QgsFeatureRequest(cell)))
                             x, y = self.currentCell.geometry().centroid().asPoint()
@@ -2839,7 +2730,7 @@ class LeveeCrestsDialog(qtBaseClass, uiDialog):
         self.ext = self.iface.mapCanvas().extent()
         self.currentCell = None
         self.debug_directory = ""
-        set_icon(self.find_cell_btn, "eye-svgrepo-com.svg")
+        # set_icon(self.find_cell_btn, "eye-svgrepo-com.svg")
         set_icon(self.zoom_in_btn, "zoom_in.svg")
         set_icon(self.zoom_out_btn, "zoom_out.svg")
         set_icon(self.copy_btn, "copy.svg")
@@ -2847,7 +2738,7 @@ class LeveeCrestsDialog(qtBaseClass, uiDialog):
         self.setup_connection()
 
         self.elements_cbo.activated.connect(self.elements_cbo_activated)
-        self.find_cell_btn.clicked.connect(self.find_cell_clicked)
+        # self.find_cell_btn.clicked.connect(self.find_cell_clicked)
         self.copy_btn.clicked.connect(self.copy_to_clipboard)
         self.crest_tblw.cellClicked.connect(self.description_tblw_cell_clicked)
         self.zoom_in_btn.clicked.connect(self.zoom_in)
@@ -2859,6 +2750,11 @@ class LeveeCrestsDialog(qtBaseClass, uiDialog):
         self.populate_levee_crests()
         self.populate_elements_cbo()
         self.loadLeveeCrests()
+
+        # Create a dock widget
+        self.dock_widget = QDockWidget("Warnings and Errors: Levee Crests", self.iface.mainWindow())
+        self.dock_widget.setObjectName("LeveeCrests")
+        self.dock_widget.setWidget(self)
 
         if self.currentCell:
             x, y = self.currentCell.geometry().centroid().asPoint()
@@ -2885,7 +2781,15 @@ class LeveeCrestsDialog(qtBaseClass, uiDialog):
             grid_lyr = self.lyrs.data["grid"]["qlyr"]
             cellsize = float(self.gutils.get_cont_par("CELLSIZE"))
 
-            for i in range(len(levees)):
+            n_levees = len(levees)
+            pd = QProgressDialog("Finding levees...", None, 0, n_levees)
+            pd.setWindowTitle("Warnings and Errors")
+            pd.setModal(True)
+            pd.forceShow()
+            pd.setValue(0)
+            i = 0
+
+            for i in range(n_levees):
                 cell = levees[i][0]
                 dir = levees[i][1]
                 crest = levees[i][2]
@@ -2896,6 +2800,9 @@ class LeveeCrestsDialog(qtBaseClass, uiDialog):
                 if adj_cell is not None and adj_elev != -999:
                     if crest < elev or crest < adj_cell:
                         self.levee_crests.append([str(i), cell, dir, crest, elev, adj_cell, adj_elev])
+
+                i += 1
+                pd.setValue(i)
 
         self.setWindowTitle("Levee Crests lower than cell elevations")
 
@@ -3010,6 +2917,13 @@ class LeveeCrestsDialog(qtBaseClass, uiDialog):
         QApplication.setOverrideCursor(Qt.WaitCursor)
         self.crest_tblw.setRowCount(0)
 
+        pd = QProgressDialog("Checking levees errors...", None, 0, len(self.levee_crests))
+        pd.setWindowTitle("Warnings and Errors")
+        pd.setModal(True)
+        pd.forceShow()
+        pd.setValue(0)
+        i = 0
+
         color1 = Qt.white
         element = -999
         for item in self.levee_crests:
@@ -3065,6 +2979,9 @@ class LeveeCrestsDialog(qtBaseClass, uiDialog):
                 self.crest_tblw.selectRow(0)
                 cell = self.crest_tblw.item(0, 0).text()
                 self.find_cell(cell)
+
+            i += 1
+            pd.setValue(i)
 
         QApplication.restoreOverrideCursor()
 
