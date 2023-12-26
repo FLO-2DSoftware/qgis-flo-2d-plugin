@@ -236,7 +236,7 @@ class IssuesFromDEBUGDialog(qtBaseClass, uiDialog):
         self.description_tblw.resizeRowsToContents()
 
         # Create a dock widget
-        self.dock_widget = QDockWidget("Warnings and Errors: DEBUG File", self.iface.mainWindow())
+        self.dock_widget = QDockWidget("FLO-2D Warnings and Errors: DEBUG File", self.iface.mainWindow())
         self.dock_widget.setObjectName("DebugFile")
         self.dock_widget.setWidget(self)
 
@@ -1209,20 +1209,14 @@ class IssuesFromDEBUGDialog(qtBaseClass, uiDialog):
             mapCanvas = self.iface.mapCanvas()
             my_crs = mapCanvas.mapSettings().destinationCrs()
 
-            try:
-                writer = QgsVectorFileWriter(shapefile, "system", f, QgsWkbTypes.Point, my_crs, "ESRI Shapefile")
-            except:
-                pass
+            layer = QgsVectorLayer("Point?crs=" + my_crs.authid(), name, "memory")
+            layer_data = layer.dataProvider()
 
-            if not writer.hasError() == QgsVectorFileWriter.NoError:
-                if self.errors_msg == "":
-                    self.errors_msg = "The following shapefiles could not be created:" + "\n\n"
-                self.errors_msg += name + "\n"
-                # delete the writer to flush features to disk
-                del writer
-                return False
+            # add fields to the layer
+            layer_data.addAttributes(f)
+            layer.updateFields()
 
-            # add features:
+            # add features to the layer
             for feat in features:
                 attr = []
                 fet = QgsFeature()
@@ -1238,10 +1232,17 @@ class IssuesFromDEBUGDialog(qtBaseClass, uiDialog):
                     )
 
                 fet.setAttributes(non_coord_feats)
-                writer.addFeature(fet)
+                layer_data.addFeature(fet)
 
-            # delete the writer to flush features to disk
-            del writer
+            # Save to a file
+            options = QgsVectorFileWriter.SaveVectorOptions()
+            options.driverName = "ESRI Shapefile"
+            options.fileEncoding = "UTF-8"
+            options.actionOnExistingFile = QgsVectorFileWriter.CreateOrOverwriteFile
+
+            QgsVectorFileWriter.writeAsVectorFormatV3(layer, shapefile,
+                                                      QgsCoordinateTransformContext(), options)
+
             return True
 
         except Exception as e:
@@ -1387,7 +1388,7 @@ class CurrentConflictsDialog(qtBaseClass, uiDialog):
         self.loadIssuePairs()
 
         # Create a dock widget
-        self.dock_widget = QDockWidget("Warnings and Errors: Current Project", self.iface.mainWindow())
+        self.dock_widget = QDockWidget("FLO-2D Warnings and Errors: Current Project", self.iface.mainWindow())
         self.dock_widget.setObjectName("CurrentConflicts")
         self.dock_widget.setWidget(self)
 
@@ -2136,9 +2137,10 @@ class CurrentConflictsDialog(qtBaseClass, uiDialog):
         try:
             self.uc.clear_bar_messages()
             lyr = QgsProject.instance().mapLayersByName(name)
-
             if lyr:
                 QgsProject.instance().removeMapLayers([lyr[0].id()])
+
+            QgsVectorFileWriter.deleteShapeFile(shapefile)
 
             # define fields for feature attributes. A QgsFields object is needed
             f = QgsFields()
@@ -2147,30 +2149,32 @@ class CurrentConflictsDialog(qtBaseClass, uiDialog):
 
             mapCanvas = self.iface.mapCanvas()
             my_crs = mapCanvas.mapSettings().destinationCrs()
-            QgsVectorFileWriter.deleteShapeFile(shapefile)
-            writer = QgsVectorFileWriter(shapefile, "system", f, QgsWkbTypes.Point, my_crs, "ESRI Shapefile")
-            if writer.hasError() != QgsVectorFileWriter.NoError:
-                #     QApplication.restoreOverrideCursor()
-                #     self.uc.show_critical("ERROR 201919.0451: Error when creating shapefile: " + shapefile + "\n\n" + writer.errorMessage())
 
-                # add features:
-                for feat in features:
-                    attr = []
-                    fet = QgsFeature()
-                    fet.setGeometry(QgsGeometry.fromPointXY(QgsPointXY(float(feat[0]), float(feat[1]))))
-                    non_coord_feats = []
-                    non_coord_feats.append(feat[2])
-                    non_coord_feats.append(feat[3])
-                    fet.setAttributes(non_coord_feats)
-                    writer.addFeature(fet)
+            layer = QgsVectorLayer("Point?crs=" + my_crs.authid(), name, "memory")
+            layer_data = layer.dataProvider()
 
-                # delete the writer to flush features to disk
-                del writer
-                return True
-            else:
-                # delete the writer to flush features to disk
-                del writer
-                return False
+            # add fields to the layer
+            layer_data.addAttributes(f)
+            layer.updateFields()
+
+            # add features:
+            for feat in features:
+                attr = []
+                fet = QgsFeature()
+                fet.setGeometry(QgsGeometry.fromPointXY(QgsPointXY(float(feat[0]), float(feat[1]))))
+                non_coord_feats = [feat[2], feat[3]]
+                fet.setAttributes(non_coord_feats)
+                layer_data.addFeature(fet)
+
+            # Save to a file
+            options = QgsVectorFileWriter.SaveVectorOptions()
+            options.driverName = "ESRI Shapefile"
+            options.fileEncoding = "UTF-8"
+            options.actionOnExistingFile = QgsVectorFileWriter.CreateOrOverwriteFile
+
+            QgsVectorFileWriter.writeAsVectorFormatV3(layer, shapefile,
+                                                      QgsCoordinateTransformContext(), options)
+            return True
 
         except Exception as e:
             QApplication.restoreOverrideCursor()
@@ -2752,7 +2756,7 @@ class LeveeCrestsDialog(qtBaseClass, uiDialog):
         self.loadLeveeCrests()
 
         # Create a dock widget
-        self.dock_widget = QDockWidget("Warnings and Errors: Levee Crests", self.iface.mainWindow())
+        self.dock_widget = QDockWidget("FLO-2D Warnings and Errors: Levee Crests", self.iface.mainWindow())
         self.dock_widget.setObjectName("LeveeCrests")
         self.dock_widget.setWidget(self)
 
@@ -2842,7 +2846,6 @@ class LeveeCrestsDialog(qtBaseClass, uiDialog):
     def create_levee_crests_conflicts_points_shapefile(self, shapefile, name, fields, features):
         try:
             lyr = QgsProject.instance().mapLayersByName(name)
-
             if lyr:
                 QgsProject.instance().removeMapLayers([lyr[0].id()])
 
@@ -2860,29 +2863,30 @@ class LeveeCrestsDialog(qtBaseClass, uiDialog):
             mapCanvas = self.iface.mapCanvas()
             my_crs = mapCanvas.mapSettings().destinationCrs()
 
-            writer = QgsVectorFileWriter(shapefile, "system", f, QgsWkbTypes.Point, my_crs, "ESRI Shapefile")
+            layer = QgsVectorLayer("Point?crs=" + my_crs.authid(), name, "memory")
+            layer_data = layer.dataProvider()
 
-            if writer.hasError() != QgsVectorFileWriter.NoError:
-                self.uc.bar_error("ERROR 140619.0922: Error when creating shapefile: " + shapefile)
+            # add fields to the layer
+            layer_data.addAttributes(f)
+            layer.updateFields()
 
             # Add features:
             for feat in features:
                 attr = []
                 fet = QgsFeature()
                 fet.setGeometry(QgsGeometry.fromPointXY(QgsPointXY(float(feat[0]), float(feat[1]))))
-                non_coord_feats = []
-                non_coord_feats.append(feat[2])
-                non_coord_feats.append(feat[3])
-                non_coord_feats.append(feat[4])
-                non_coord_feats.append(feat[5])
-                non_coord_feats.append(feat[6])
-                non_coord_feats.append(feat[7])
-
+                non_coord_feats = [feat[2], feat[3], feat[4], feat[5], feat[6], feat[7]]
                 fet.setAttributes(non_coord_feats)
-                writer.addFeature(fet)
+                layer_data.addFeature(fet)
 
-            # delete the writer to flush features to disk
-            del writer
+            # Save to a file
+            options = QgsVectorFileWriter.SaveVectorOptions()
+            options.driverName = "ESRI Shapefile"
+            options.fileEncoding = "UTF-8"
+            options.actionOnExistingFile = QgsVectorFileWriter.CreateOrOverwriteFile
+
+            QgsVectorFileWriter.writeAsVectorFormatV3(layer, shapefile,
+                                                      QgsCoordinateTransformContext(), options)
             return True
 
         except Exception as e:
