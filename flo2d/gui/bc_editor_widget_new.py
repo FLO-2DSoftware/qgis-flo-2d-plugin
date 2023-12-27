@@ -16,6 +16,7 @@ from .table_editor_widget import StandardItem, StandardItemModel, CommandItemEdi
 from .ui_utils import load_ui, center_canvas, try_disconnect
 from ..flo2dobjects import Inflow, Outflow
 from ..geopackage_utils import GeoPackageUtils
+from ..misc.invisible_lyrs_grps import InvisibleLayersAndGroups
 from ..user_communication import UserCommunication
 
 from ..utils import is_number, m_fdata, set_BC_Border
@@ -40,6 +41,7 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
         self.iface = iface
         self.canvas = iface.mapCanvas()
         self.uc = UserCommunication(iface, "FLO-2D")
+        self.ilg = InvisibleLayersAndGroups(self.iface)
         self.setupUi(self)
 
         self.lyrs = lyrs
@@ -72,9 +74,9 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
         # outflow plot data variables
         self.d1, self.d2 = [[], []]
 
-        self.bc_points_lyr.setFlags(QgsMapLayer.Private)
-        self.bc_lines_lyr.setFlags(QgsMapLayer.Private)
-        self.bc_polygons_lyr.setFlags(QgsMapLayer.Private)
+        # self.bc_points_lyr.setFlags(QgsMapLayer.Private)
+        # self.bc_lines_lyr.setFlags(QgsMapLayer.Private)
+        # self.bc_polygons_lyr.setFlags(QgsMapLayer.Private)
 
         # Connections
         self.inflow_grpbox.toggled.connect(self.add_shapes)
@@ -216,13 +218,26 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
         if self.inflow_grpbox.isChecked() or self.outflow_grpbox.isChecked():
             self.populate_inflows()
             self.populate_outflows()
-            self.bc_points_lyr.setFlags(self.bc_points_lyr.flags() & ~QgsMapLayer.LayerFlag(QgsMapLayer.Private))
-            self.bc_lines_lyr.setFlags(self.bc_lines_lyr.flags() & ~QgsMapLayer.LayerFlag(QgsMapLayer.Private))
-            self.bc_polygons_lyr.setFlags(self.bc_polygons_lyr.flags() & ~QgsMapLayer.LayerFlag(QgsMapLayer.Private))
+
+            self.ilg.unhideLayer(self.bc_points_lyr)
+            self.ilg.unhideLayer(self.bc_lines_lyr)
+            self.ilg.unhideLayer(self.bc_polygons_lyr)
+
+            self.ilg.unhideGroup('Boundary Conditions Tables')
+
+            # self.bc_points_lyr.setFlags(self.bc_points_lyr.flags() & ~QgsMapLayer.LayerFlag(QgsMapLayer.Private))
+            # self.bc_lines_lyr.setFlags(self.bc_lines_lyr.flags() & ~QgsMapLayer.LayerFlag(QgsMapLayer.Private))
+            # self.bc_polygons_lyr.setFlags(self.bc_polygons_lyr.flags() & ~QgsMapLayer.LayerFlag(QgsMapLayer.Private))
         else:
-            self.bc_points_lyr.setFlags(QgsMapLayer.Private)
-            self.bc_lines_lyr.setFlags(QgsMapLayer.Private)
-            self.bc_polygons_lyr.setFlags(QgsMapLayer.Private)
+            self.ilg.hideLayer(self.bc_points_lyr)
+            self.ilg.hideLayer(self.bc_lines_lyr)
+            self.ilg.hideLayer(self.bc_polygons_lyr)
+
+            self.ilg.hideGroup('Boundary Conditions Tables')
+
+            # self.bc_points_lyr.setFlags(QgsMapLayer.Private)
+            # self.bc_lines_lyr.setFlags(QgsMapLayer.Private)
+            # self.bc_polygons_lyr.setFlags(QgsMapLayer.Private)
 
     def save_changes(self):
         """
