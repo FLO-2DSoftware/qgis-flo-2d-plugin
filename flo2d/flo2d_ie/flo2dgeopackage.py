@@ -21,7 +21,7 @@ from qgis.PyQt.QtWidgets import QApplication, QProgressDialog
 
 from ..flo2d_tools.grid_tools import grid_compas_neighbors
 from ..geopackage_utils import GeoPackageUtils
-from ..gui.bc_editor_widget import BCEditorWidget
+# from ..gui.bc_editor_widget import BCEditorWidget
 from ..layers import Layers
 from ..utils import BC_BORDER, float_or_zero, get_BC_Border
 from .flo2d_parser import ParseDAT, ParseHDF5
