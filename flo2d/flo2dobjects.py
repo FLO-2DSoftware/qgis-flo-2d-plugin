@@ -873,6 +873,8 @@ class Outflow(GeoPackageUtils):
         # this is for outflow rows without geometry
         qry = "DELETE FROM outflow WHERE fid=?"
         self.execute(qry, (self.fid,))
+        qry = "DELETE FROM outflow_cells WHERE outflow_fid=?"
+        self.execute(qry, (self.fid,))
 
     def clear_type_data(self):
         self.typ = None

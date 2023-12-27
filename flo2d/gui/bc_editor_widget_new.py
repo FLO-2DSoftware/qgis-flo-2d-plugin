@@ -315,14 +315,12 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
                 show_last_edited=show_last_edited,
                 widget_setup=widget_setup,
             )
-        elif self.outflow_grpbox.isChecked():
+        if self.outflow_grpbox.isChecked():
             self.populate_outflows(
                 outflow_fid=bc_fid,
                 show_last_edited=show_last_edited,
                 widget_setup=widget_setup,
             )
-        else:
-            pass
 
     def get_user_bc_lyr_for_geomtype(self, geom_type):
         table_name = "user_bc_{}s".format(geom_type)
@@ -816,9 +814,10 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
                              WHERE fid = {inflow_fid}"""
                         )
                         if inf[gid]["time_series"]:
+                            QgsMessageLog.logMessage(f"SELECT time_series_fid FROM inflow WHERE fid = '{inflow_fid}'")
                             inflow_data = self.gutils.execute(
-                                f"SELECT time_series_fid FROM inflow WHERE fid = '{inflow_fid}'").fetchone()
-                            time_series_fid = inflow_data[0]
+                                f"SELECT time_series_fid FROM inflow WHERE fid = '{inflow_fid}'").fetchone()[0]
+                            time_series_fid = inflow_data
                             # DELETE the existing series
                             self.gutils.execute(
                                 f"DELETE FROM inflow_time_series WHERE fid = {time_series_fid}")
@@ -2091,7 +2090,7 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
 
     def no_bc_disable(self, type):
         """
-        Disable elements when there is not BC
+        Disable elements when there is no BC
         """
         if type == "inflow":
             self.inflow_name_label.setDisabled(True)
@@ -2112,7 +2111,7 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
             self.inflow_interval_ckbx.setDisabled(True)
             self.schematize_inflow_label.setDisabled(True)
             self.schem_inflow_bc_btn.setDisabled(True)
-        else:
+        if type == "outflow":
             self.outflow_name_label.setDisabled(True)
             self.outflow_bc_name_cbo.setDisabled(True)
             self.change_outflow_bc_name_btn.setDisabled(True)
