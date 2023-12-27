@@ -644,8 +644,11 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
             self.t.append(m_fdata(self.bc_data_model, i, 0))
             self.d.append(m_fdata(self.bc_data_model, i, 1))
             self.m.append(m_fdata(self.bc_data_model, i, 2))
-        self.plot.update_item("Current Discharge", [self.t, self.d])
-        self.plot.update_item("Current Mud", [self.t, self.m])
+        try:
+            self.plot.update_item("Current Discharge", [self.t, self.d])
+            self.plot.update_item("Current Mud", [self.t, self.m])
+        except:
+            pass
 
     def change_bc_name(self, cb, type):
         """
@@ -782,42 +785,59 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
 
                 update_all_schem_sql = []
 
+                current_inflow_fid = self.gutils.execute("""SELECT MAX(fid) FROM inflow;""").fetchone()[0]
+                if current_inflow_fid is not None:
+                    current_inflow_fid = int(current_inflow_fid) + 1
+                else:
+                    current_inflow_fid = 1
+
                 current_ts_fid = self.gutils.execute("""SELECT MAX(fid) FROM inflow_time_series;""").fetchone()[0]
                 if current_ts_fid is not None:
-                    idx = int(current_ts_fid) + 1
+                    current_ts_fid = int(current_ts_fid) + 1
                 else:
-                    idx = 1
+                    current_ts_fid = 1
+
+                bc_fid = self.gutils.execute(f"SELECT MAX(fid) FROM user_bc_points").fetchone()[0]
+                if bc_fid is None:
+                    bc_fid = 1
+                else:
+                    bc_fid = int(bc_fid) + 1
 
                 new_bc_cells = []
 
-                for i, gid in enumerate(inf, idx):
+                for i, gid in enumerate(inf, 1):
                     row = inf[gid]["row"]
                     # insert
                     if gid not in current_bc_cells:
-                        insert_inflow_sql += [(f'Inflow Cell {gid}', i, row[0], row[1], 'point', i)]
-                        insert_cells_sql += [(i, gid, 1)]
+                        insert_inflow_sql += [(f'Inflow Cell {gid}', current_ts_fid, row[0], row[1], 'point', bc_fid)]
+                        insert_cells_sql += [(current_inflow_fid, gid, 1)]
                         new_bc_cells.append(gid)
                         if inf[gid]["time_series"]:
-                            insert_ts_sql += [(i, "Time series " + str(i))]
+                            insert_ts_sql += [(current_ts_fid, "Time series " + str(current_ts_fid))]
                             for n in inf[gid]["time_series"]:
-                                insert_tsd_sql += [(i,) + tuple(n[1:])]
+                                insert_tsd_sql += [(current_ts_fid,) + tuple(n[1:])]
+                            current_ts_fid += 1
+                        current_inflow_fid += 1
+
                     # update
                     else:
                         # get the inflow fid
                         inflow_fid = self.gutils.execute(
                             f"SELECT inflow_fid FROM inflow_cells WHERE grid_fid = '{gid}'").fetchone()[0]
                         # UPDATE INFLOW
+                        # if int(row[1]) == 0:
+                        #     inoutfc = False
+                        # else:
+                        #     inoutfc = True
                         self.gutils.execute(
                             f"""UPDATE inflow SET 
                              ident = '{row[0][0]}',
-                             inoutfc = False
+                             inoutfc = '{row[1]}'
                              WHERE fid = {inflow_fid}"""
                         )
                         if inf[gid]["time_series"]:
-                            QgsMessageLog.logMessage(f"SELECT time_series_fid FROM inflow WHERE fid = '{inflow_fid}'")
-                            inflow_data = self.gutils.execute(
+                            time_series_fid = self.gutils.execute(
                                 f"SELECT time_series_fid FROM inflow WHERE fid = '{inflow_fid}'").fetchone()[0]
-                            time_series_fid = inflow_data
                             # DELETE the existing series
                             self.gutils.execute(
                                 f"DELETE FROM inflow_time_series WHERE fid = {time_series_fid}")
@@ -828,7 +848,8 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
                                 # INSERT the new series
                                 insert_tsd_sql += [(time_series_fid,) + tuple(n[1:])]
 
-                    update_all_schem_sql.append(f"UPDATE all_schem_bc SET tab_bc_fid = {i} WHERE grid_fid = '{gid}'")
+                    update_all_schem_sql.append(f"UPDATE all_schem_bc SET tab_bc_fid = {bc_fid} WHERE grid_fid = '{gid}'")
+                    bc_fid += 1
 
                 self.gutils.batch_execute(insert_ts_sql, insert_inflow_sql, insert_cells_sql, insert_tsd_sql)
 
