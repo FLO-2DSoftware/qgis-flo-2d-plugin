@@ -825,10 +825,6 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
                         inflow_fid = self.gutils.execute(
                             f"SELECT inflow_fid FROM inflow_cells WHERE grid_fid = '{gid}'").fetchone()[0]
                         # UPDATE INFLOW
-                        # if int(row[1]) == 0:
-                        #     inoutfc = False
-                        # else:
-                        #     inoutfc = True
                         self.gutils.execute(
                             f"""UPDATE inflow SET 
                              ident = '{row[0][0]}',
@@ -1018,6 +1014,7 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
 
                         outflow_cells_fid += 1
                         outflow_fid += 1
+                        bc_fid += 1
 
                     # Update the outflow BC's
                     else:
@@ -1027,7 +1024,9 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
 
                         outflow_fid = outflow[0]
                         geom_type = outflow[1]
-                        bc_fid = outflow[2]
+
+                        bc_fid = self.gutils.execute(
+                            f"SELECT bc_fid FROM outflow WHERE fid = '{outflow_fid}'").fetchone()[0]
 
                         if geom_type != 'point':
                             outflow_fid = self.gutils.execute("""
@@ -1163,8 +1162,7 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
 
                         outflow_fid += 1
                     update_all_schem_sql.append(
-                        f"UPDATE all_schem_bc SET tab_bc_fid = {bc_fid} WHERE grid_fid = '{gid}'")
-                    bc_fid += 1
+                        f"UPDATE all_schem_bc SET tab_bc_fid = {bc_fid - 1} WHERE grid_fid = '{gid}'")
 
                 self.gutils.batch_execute(
                     outflow_sql,
@@ -1221,25 +1219,21 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
 
                 new_features = []
                 for feature in schem_bc.getFeatures():
-                    if feature['type'] == "outflow":
-                        if str(feature['grid_fid']) not in current_bc_cells:
-
-                            geometry = feature.geometry()
-                            centroid = geometry.centroid().asPoint()
-                            centroid_point = QgsPointXY(centroid.x(), centroid.y())
-                            points_feature = QgsFeature(user_bc.fields())
-                            points_feature.setAttribute('fid', feature['tab_bc_fid'])
-                            points_feature.setAttribute('type', feature['type'])
-                            points_feature.setGeometry(QgsGeometry.fromPointXY(centroid_point))
-                            existing_features = [f for f in user_bc.getFeatures() if
-                                                 f.geometry().equals(points_feature.geometry())]
-                            if not existing_features:
-                                new_features.append(points_feature)
+                    if feature['type'] == "outflow" and str(feature['grid_fid']) not in current_bc_cells:
+                        geometry = feature.geometry()
+                        centroid = geometry.centroid().asPoint()
+                        centroid_point = QgsPointXY(centroid.x(), centroid.y())
+                        points_feature = QgsFeature(user_bc.fields())
+                        points_feature.setAttribute('fid', feature['tab_bc_fid'])
+                        points_feature.setAttribute('type', feature['type'])
+                        points_feature.setGeometry(QgsGeometry.fromPointXY(centroid_point))
+                        existing_features = [f for f in user_bc.getFeatures() if
+                                             f.geometry().equals(points_feature.geometry())]
+                        if not existing_features:
+                            new_features.append(points_feature)
                 user_bc.dataProvider().addFeatures(new_features)
                 user_bc.updateExtents()
                 user_bc.triggerRepaint()
-                schem_bc.updateExtents()
-                schem_bc.triggerRepaint()
 
                 self.gutils.execute("DELETE FROM outflow WHERE type = 0;")
 
