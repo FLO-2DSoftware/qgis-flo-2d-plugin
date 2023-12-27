@@ -818,6 +818,9 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
                                 insert_tsd_sql += [(current_ts_fid,) + tuple(n[1:])]
                             current_ts_fid += 1
                         current_inflow_fid += 1
+                        update_all_schem_sql.append(
+                            f"UPDATE all_schem_bc SET tab_bc_fid = {bc_fid} WHERE grid_fid = '{gid}'")
+                        bc_fid += 1
 
                     # update
                     else:
@@ -843,9 +846,8 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
                                     f"DELETE FROM inflow_time_series_data WHERE series_fid = {time_series_fid}")
                                 # INSERT the new series
                                 insert_tsd_sql += [(time_series_fid,) + tuple(n[1:])]
-
-                    update_all_schem_sql.append(f"UPDATE all_schem_bc SET tab_bc_fid = {bc_fid} WHERE grid_fid = '{gid}'")
-                    bc_fid += 1
+                        # update_all_schem_sql.append(
+                        #     f"UPDATE all_schem_bc SET tab_bc_fid = {bc_fid} WHERE grid_fid = '{gid}'")
 
                 self.gutils.batch_execute(insert_ts_sql, insert_inflow_sql, insert_cells_sql, insert_tsd_sql)
 
@@ -1014,6 +1016,8 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
 
                         outflow_cells_fid += 1
                         outflow_fid += 1
+                        update_all_schem_sql.append(
+                            f"UPDATE all_schem_bc SET tab_bc_fid = {bc_fid} WHERE grid_fid = '{gid}'")
                         bc_fid += 1
 
                     # Update the outflow BC's
@@ -1159,10 +1163,6 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
                                      bc_fid = {bc_fid}
                                      WHERE fid = {outflow_fid}"""
                         )
-
-                        outflow_fid += 1
-                    update_all_schem_sql.append(
-                        f"UPDATE all_schem_bc SET tab_bc_fid = {bc_fid - 1} WHERE grid_fid = '{gid}'")
 
                 self.gutils.batch_execute(
                     outflow_sql,
@@ -1381,56 +1381,47 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
     def schematize_outflows(self):
         QApplication.setOverrideCursor(Qt.WaitCursor)
         try:
-            msg = ""
-
             self.gutils.execute("DELETE FROM outflow_cells;")
-
-            ins_qry = """
-                            INSERT INTO outflow_cells (outflow_fid, grid_fid, geom_type)
-                            SELECT
-                                abc.bc_fid, g.fid, abc.geom_type
-                            FROM
-                                grid AS g, all_user_bc AS abc
-                            WHERE
-                                abc.type = 'outflow' AND
-                                ST_Intersects(CastAutomagic(g.geom), CastAutomagic(abc.geom));
-                                """
+            ins_qry = """INSERT INTO outflow_cells (outflow_fid, grid_fid, geom_type)
+                        SELECT outflow.fid as outflow_fid, g.fid as grid_fid, abc.geom_type
+                        FROM
+                            grid AS g
+                        JOIN
+                            all_user_bc AS abc ON ST_Intersects(CastAutomagic(g.geom), CastAutomagic(abc.geom))
+                        JOIN
+                            outflow ON abc.bc_fid = outflow.bc_fid
+                        WHERE
+                            abc.type = 'outflow';"""
             inserted = self.gutils.execute(ins_qry)
 
-            outflow_cells = self.gutils.execute("SELECT * FROM outflow_cells ORDER BY fid;").fetchall()
-            # Fix outflow_cells:
-            for oc in outflow_cells:
-                outflow_fid = oc[1]
-                grid = oc[2]
-                geom_type = oc[3]
-                fid = self.gutils.execute(
-                    "SELECT fid FROM outflow WHERE geom_type = ? AND bc_fid = ?;",
-                    (
-                        geom_type,
-                        outflow_fid
-                    ),
-                ).fetchone()
-                if fid:
-                    self.gutils.execute(
-                        "UPDATE outflow_cells SET area_factor = ? WHERE fid = ?;",
-                        (1, oc[0]),
-                    )
-                else:
-                    tab_bc_fid = self.gutils.execute(
-                        "SELECT tab_bc_fid FROM all_schem_bc WHERE grid_fid = ?;",
-                        (grid,),
-                    ).fetchone()
-                    if tab_bc_fid:
-                        self.gutils.execute(
-                            "UPDATE outflow_cells SET outflow_fid = ? WHERE geom_type = ?;",
-                            (tab_bc_fid[0], geom_type),
-                        )
-
-                    else:
-                        msg += "\nNo fid for " + str(grid)
-
-            if msg:
-                self.uc.show_warn(msg)
+            # outflow_cells = self.gutils.execute("SELECT * FROM outflow_cells ORDER BY fid;").fetchall()
+            # # Fix outflow_cells:
+            # for oc in outflow_cells:
+            #     outflow_fid = oc[1]
+            #     grid = oc[2]
+            #     geom_type = oc[3]
+            #     fid = self.gutils.execute(
+            #         "SELECT fid FROM outflow WHERE geom_type = ? AND bc_fid = ?;",
+            #         (
+            #             geom_type,
+            #             outflow_fid
+            #         ),
+            #     ).fetchone()
+            #     if fid:
+            #         self.gutils.execute(
+            #             "UPDATE outflow_cells SET area_factor = ? WHERE fid = ?;",
+            #             (1, oc[0]),
+            #         )
+            #     else:
+            #         tab_bc_fid = self.gutils.execute(
+            #             "SELECT tab_bc_fid FROM all_schem_bc WHERE grid_fid = ?;",
+            #             (grid,),
+            #         ).fetchone()
+            #         if tab_bc_fid:
+            #             self.gutils.execute(
+            #                 "UPDATE outflow_cells SET outflow_fid = ? WHERE geom_type = ?;",
+            #                 (tab_bc_fid[0], geom_type),
+            #             )
 
             self.gutils.execute(f"""
                                 UPDATE outflow
@@ -1455,24 +1446,23 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
     def schematize_inflows(self):
         QApplication.setOverrideCursor(Qt.WaitCursor)
         try:
-            # outflow = self.gutils.execute("SELECT * FROM outflow;").fetchall()
-            inflow = self.gutils.execute("SELECT * FROM inflow;").fetchall()
-
             del_qry = "DELETE FROM inflow_cells;"
-            ins_qry = """INSERT INTO inflow_cells (inflow_fid, grid_fid, area_factor)
-                   SELECT
-                       abc.bc_fid, g.fid, CAST(abc.bc_fid AS INT)
-                   FROM
-                       grid AS g, all_user_bc AS abc
-                   WHERE
-                       abc.type = 'inflow' AND
-                       ST_Intersects(CastAutomagic(g.geom), CastAutomagic(abc.geom));"""
+            ins_qry = """INSERT INTO inflow_cells (inflow_fid, grid_fid)
+                        SELECT inflow.fid as inflow_fid, g.fid as grid_fid
+                        FROM
+                            grid AS g
+                        JOIN
+                            all_user_bc AS abc ON ST_Intersects(CastAutomagic(g.geom), CastAutomagic(abc.geom))
+                        JOIN
+                            inflow ON abc.bc_fid = inflow.bc_fid
+                        WHERE
+                            abc.type = 'inflow'"""
             self.gutils.execute(del_qry)
 
             inserted = self.gutils.execute(ins_qry)
             QApplication.restoreOverrideCursor()
             return inserted.rowcount
-        #             self.uc.show_info("Inflows schematized!")
+
         except Exception:
             QApplication.restoreOverrideCursor()
             self.uc.show_warn("WARNING 180319.1431: Schematizing of inflow aborted!")
