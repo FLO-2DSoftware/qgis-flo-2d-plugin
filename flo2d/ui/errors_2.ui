@@ -48,7 +48,7 @@
      <item row="0" column="0">
       <widget class="QRadioButton" name="debug_file_radio">
        <property name="text">
-        <string>DEBUG file        </string>
+        <string>DEBUG File        </string>
        </property>
        <property name="checked">
         <bool>true</bool>
@@ -58,14 +58,14 @@
      <item row="1" column="0">
       <widget class="QRadioButton" name="current_project_radio">
        <property name="text">
-        <string>Current project</string>
+        <string>Current Project</string>
        </property>
       </widget>
      </item>
      <item row="2" column="0">
       <widget class="QRadioButton" name="levee_crest_radio">
        <property name="text">
-        <string>Levee crests</string>
+        <string>Levee Crests</string>
        </property>
       </widget>
      </item>
