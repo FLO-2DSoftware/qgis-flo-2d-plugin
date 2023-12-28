@@ -1,5 +1,5 @@
-Schematic to User Converter
-===========================
+Convert Schematic Layers to User Layers
+========================================
 
 Convert Schematic Layers to User Layers
 ----------------------------------------
@@ -7,7 +7,7 @@ Convert Schematic Layers to User Layers
 This tool will convert imported \*.dat files to editable user layers.
 Use it after performing an Import FLO-2D \*.DAT files.
 
-.. image:: ../img/Buttons/schematicgreen.png
+.. image:: ../../img/Buttons/schematicgreen.png
 
 
 1. This tool will convert imported project data into User Layers so they
@@ -34,4 +34,4 @@ Use it after performing an Import FLO-2D \*.DAT files.
 
    - Boundary Conditions
 
-.. image:: ../img/Schema-2-User/schema2user2.png
+.. image:: ../../img/Schema-2-User/schema2user2.png

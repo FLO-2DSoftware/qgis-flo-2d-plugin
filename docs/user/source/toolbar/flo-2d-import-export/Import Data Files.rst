@@ -1,5 +1,5 @@
-Import FLO-2D Data Files
-=========================
+Import data (\*.DAT) files
+===========================
 
 Import the FLO-2D \*.DAT files into the Project
 -------------------------------------------------
@@ -7,7 +7,7 @@ Import the FLO-2D \*.DAT files into the Project
 If a project already exists but it does not have \*.qgz or \*.gpkg file,
 create one and import the project using this process.
 
-.. image:: ../img/Buttons/importdata.png
+.. image:: ../../img/Buttons/importdata.png
 
 
 Before performing this task, set up a GeoPackage using `FLO-2D Plugin
@@ -28,20 +28,20 @@ Settings <toolbar/FLO-2D%20Settings.html>`__.
 5. All FLO-2D files are
    imported to the Plugin with this option.
 
-.. image:: ../img/Import-Data/importdata2.png
+.. image:: ../../img/Import-Data/importdata2.png
 
 
 6. Choose the \*.DAT files
    to import and click OK.
 
-.. image:: ../img/Import-Data/importdata3.png
+.. image:: ../../img/Import-Data/importdata3.png
 
 
 7. Once the project import is complete,
    this message will appear. Click OK to
    close the message.
 
-.. image:: ../img/Import-Data/importdata4.png
+.. image:: ../../img/Import-Data/importdata4.png
 
 
 8. The final step is to convert

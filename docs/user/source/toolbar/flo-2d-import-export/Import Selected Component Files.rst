@@ -1,7 +1,7 @@
-Import Selected Component Files
+Import selected component files
 ================================
 
-.. image:: ../img/Buttons/importdatared.png
+.. image:: ../../img/Buttons/importdatared.png
 
 1. Click the
    Import FLO-2D Component Files button.
@@ -18,10 +18,10 @@ Import Selected Component Files
 5. The GeoPackage
    will not be overwritten.
 
-.. image:: ../img/Imported-Selected-Component-Files/import002.png
+.. image:: ../../img/Imported-Selected-Component-Files/import002.png
 
 
 6. Select the
    FLO-2D Components to load into the project.
 
-.. image:: ../img/Imported-Selected-Component-Files/import003.png
+.. image:: ../../img/Imported-Selected-Component-Files/import003.png

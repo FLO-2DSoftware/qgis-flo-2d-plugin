@@ -3,7 +3,7 @@ Tailings Dam Tool
 
 The tailings dam tool button will load the tailings dam executable in the Project Folder.
 
-.. image:: ../img/Run-Flo2d/run006.png
+.. image:: ../../img/Run-Flo2d/run006.png
 
 Assign the FLO-2D Pro folder to the first field.  This is where the Tailings Dam Tool program should be located.
 If it is not there, please install Build 21.

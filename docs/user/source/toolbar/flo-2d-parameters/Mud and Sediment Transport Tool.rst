@@ -1,5 +1,5 @@
-Mud and Sediment Transport Tool
-================================
+Mud and Sediment Transport (SED.DAT)
+=====================================
 
 Mud / Debris Transport
 ----------------------
@@ -10,9 +10,9 @@ Mudflow behavior is a function of the fluid matrix properties, channel geometry,
 The fluid matrix consists of water and fine sediments.
 At sufficiently high concentrations, the fine sediments alter the properties of the fluid including density, viscosity, and yield stress.
 
-.. image:: ../img/Mud/mud004.png
+.. image:: ../../img/Mud/mud004.png
 
-.. image:: ../img/Mud/mud002.png
+.. image:: ../../img/Mud/mud002.png
 
 Hyperconcentrated Sediment Flow Parameters
 
@@ -27,11 +27,11 @@ Debris Basin Parameters
 
 In the Control Variables, the Mud/Debris/Sediment switch under Physical Processes must be set to Mud/Debris for a Mudflow simulation.
 
-.. image:: ../img/Mud/mud007.png
+.. image:: ../../img/Mud/mud007.png
 
 When exported, the CONT.DAT file must have the MUD switch set to 1 for a Mudflow simulation.
 
-.. image:: ../img/Mud/mud008.png
+.. image:: ../../img/Mud/mud008.png
 
 Sediment Transport
 ------------------
@@ -40,9 +40,9 @@ FLO-2D has a sediment transport component that can compute sediment scour or dep
 Within a grid element, sediment transport capacity is computed for either channel, street or overland flow based on the flow hydraulics.
 The sediment transport capacity is then compared with the sediment supply and the resulting sediment excess or deficit is uniformly distributed over the grid element potential flow surface using the bed porosity based on the dry weight of sediment.
 
-.. image:: ../img/Mud/mud005.png
+.. image:: ../../img/Mud/mud005.png
 
-.. image:: ../img/Mud/mud003.png
+.. image:: ../../img/Mud/mud003.png
 
 - Sediment transport equations. FLO-2D has eleven sediment transport capacity equations. Each sediment transport formula was derived from unique river or flume conditions and the user is encouraged to research the applicability of a selected equation for a particular project.
 - Specific gravity is the density of sediment divided by the density of water.
@@ -59,11 +59,11 @@ The sediment transport capacity is then compared with the sediment supply and th
 
 In the Control Variables, the Mud/Debris/Sediment switch under Physical Processes must be set to Sediment Transport for a Sediment Transport simulation.
 
-.. image:: ../img/Mud/mud011.png
+.. image:: ../../img/Mud/mud011.png
 
 When exported, the CONT.DAT file must have the ISED switch set to 1 for a Sediment Transport simulation.
 
-.. image:: ../img/Mud/mud012.png
+.. image:: ../../img/Mud/mud012.png
 
 Two Phase
 ---------
@@ -72,12 +72,12 @@ To apply the FLO-2D two-phase flow component, the sediment transport and mudflow
 The flood hydraulics for conventional sediment transport is first computed and then the mudflow hydraulics are computed in a second loop.
 Water and sediment volume conservation is tracked in both components separately on a grid element basis.
 
-.. image:: ../img/Mud/mud006.png
+.. image:: ../../img/Mud/mud006.png
 
 In the Control Variables, the Mud/Debris/Sediment switch under Physical Processes must be set to Two Phase for a Two Phase simulation.
 
-.. image:: ../img/Mud/mud009.png
+.. image:: ../../img/Mud/mud009.png
 
 When exported, the CONT.DAT file must have the MUD switch set to 2 for a Two Phase simulation.
 
-.. image:: ../img/Mud/mud010.png
+.. image:: ../../img/Mud/mud010.png

@@ -3,10 +3,7 @@ Run FLO-2D
 
 The Run FLO-2D button is used to run FLO-2D and other processing programs.
 
-.. image:: ../img/Run-Flo2d/Run002.png
-  
-
-.. image:: ../img/Run-Flo2d/Run003.png
+.. image:: ../../img/Buttons/runflo2d.png
   
 
 1. Run FLO-2D Click
@@ -24,7 +21,7 @@ The Run FLO-2D button is used to run FLO-2D and other processing programs.
 5. It is necessary to export .DAT files before running FLO-2D.
    See `Export FLO-2D .DAT files <#_Export_FLO-2D_*.DAT>`__ below.
 
-.. image:: ../img/Run-Flo2d/Run004.png
+.. image:: ../../img/Run-Flo2d/Run004.png
   
 
 6.  Use the
@@ -42,5 +39,5 @@ The Run FLO-2D button is used to run FLO-2D and other processing programs.
 10. Mapper.exe
     is a tool to create shapefiles for FLO-2D results.
 
-.. image:: ../img/Run-Flo2d/Run005.png
+.. image:: ../../img/Run-Flo2d/Run005.png
 
