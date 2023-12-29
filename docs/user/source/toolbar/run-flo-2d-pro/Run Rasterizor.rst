@@ -19,7 +19,7 @@ It is installed on your computer with the software.
 Run Rasterizor
 -----------------------------
 
-1. Click on Run Rasterizor
+1. Click on Run Rasterizor.
 
 .. image:: ../../img/Buttons/run_rasterizor.png
 
