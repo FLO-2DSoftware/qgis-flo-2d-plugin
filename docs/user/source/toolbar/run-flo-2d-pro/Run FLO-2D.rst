@@ -27,17 +27,30 @@ The Run FLO-2D button is used to run FLO-2D and other processing programs.
 6.  Use the
     alternate options to run these processing programs.
 
-7.  Profiles.exe is a channel editing and review tool.
+7. Tailings Dam Tool is designed to estimate the potential release volume of tailings dam.
+
+.. image:: ../../img/Buttons/run_tailings_dam.png
+
+8.  Profiles is a channel editing and review tool.
     See Workshop Lesson 5 for instructions.
 
-8.  Hydrog.exe
+.. image:: ../../img/Buttons/run_profiles.png
+
+9.  Hydrog
     is a tool to review channel and floodplain cross sections.
 
-9.  MaxPlot.exe
-    is a tool to make simple plots of the FLO-2D results such as depth and velocity.
+.. image:: ../../img/Buttons/run_hydrog.png
 
-10. Mapper.exe
-    is a tool to create shapefiles for FLO-2D results.
+10.  MaxPlot
+     is a tool to make simple plots of the FLO-2D results such as depth and velocity.
 
-.. image:: ../../img/Run-Flo2d/Run005.png
+.. image:: ../../img/Buttons/run_maxplot.png
+
+11. MapCrafter is a QGIS plugin designed to transform FLO-2D output files into comprehensive visualizations.
+
+.. image:: ../../img/Buttons/run_mapcrafter.png
+
+12. Rasterizor is a QGIS plugin used to rasterize FLO-2D output data.
+
+.. image:: ../../img/Buttons/run_rasterizor.png
 
