@@ -60,7 +60,7 @@ Table of Contents
    /toolbar/run-flo-2d-pro/FLO-2D Settings
    /toolbar/run-flo-2d-pro/Quick Run FLO-2D Pro
    /toolbar/run-flo-2d-pro/Run FLO-2D
-   /toolbar/run-flo-2d-pro/Tailings Dam Tool
+   /toolbar/run-flo-2d-pro/Run Tailings Dam Tool
    /toolbar/run-flo-2d-pro/Run Profiles
    /toolbar/run-flo-2d-pro/Run Hydrog
    /toolbar/run-flo-2d-pro/Run MaxPlot
