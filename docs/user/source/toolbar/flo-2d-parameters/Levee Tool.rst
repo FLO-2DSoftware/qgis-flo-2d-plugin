@@ -1,14 +1,19 @@
 Levee Elevation Tool
 =====================
 
+The Levee Elevation Tool will create levees, berms, walls and dams.
+
+Levee Elevation Tool
+---------------------
+
+1. Click on the Levee Elevation Tool.
+
 .. image:: ../../img/Buttons/Leveetool.png
 
- 
-The Levee Elevation Tool will create levees, berms, walls and dams. It
+2. The Levee Elevation Tool will create levees, berms, walls and dams. It
 uses data from 5 sources:
 
 .. image:: ../../img/Levee-Tool/leveetool2.png
-
 
 The levee crest elevation sources have a hierarchy.
 
@@ -20,7 +25,6 @@ The following image shows that if points are applied to a levee line, the line e
 elevation is applied until the line crosses a polygon.  The polygon elevation is used in that case.
 
 .. image:: ../../img/Levee-Tool/leveetool2a.png
-
 
 The method to create levees or dams from each source is outlined below.
 
