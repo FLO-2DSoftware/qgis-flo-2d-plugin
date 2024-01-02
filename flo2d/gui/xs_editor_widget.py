@@ -1600,7 +1600,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
             return
 
         dlg = ExternalProgramFLO2D(self.iface, "Run interpolation of channel n-values")
-        dlg.debug_run_btn.setVisible(False)
+        # dlg.debug_run_btn.setVisible(False)
         dlg.exec_folder_lbl.setText("FLO-2D Folder (of interpolation executable)")
         ok = dlg.exec_()
         if not ok:
