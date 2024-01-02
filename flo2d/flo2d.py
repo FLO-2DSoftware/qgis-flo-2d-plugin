@@ -343,7 +343,7 @@ class Flo2D(object):
                 ),
                 # (
                 #     os.path.join(self.plugin_dir, "img/mActionSaveGeoPackageLayer.svg"),
-                #     "Save FLO-2D Project",
+                #     "Save-FLO-2D-Project",
                 #     lambda: self.flo_save_project(),
                 # ),
                 (

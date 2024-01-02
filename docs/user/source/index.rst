@@ -40,6 +40,7 @@ Table of Contents
 
    /toolbar/flo-2d-project/New FLO-2D Project
    /toolbar/flo-2d-project/Open FLO-2D Project
+   /toolbar/flo-2d-project/Save FLO-2D Project
    /toolbar/flo-2d-project/FLO-2D GeoPackage Management
 
 .. toctree::
