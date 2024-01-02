@@ -1,49 +1,44 @@
 Import data (\*.DAT) files
 ===========================
 
+This tool imports existing FLO-2D \*.DAT files into the FLO-2D GeoPackage.
+
 Import the FLO-2D \*.DAT files into the Project
 -------------------------------------------------
 
-If a project already exists but it does not have \*.qgz or \*.gpkg file,
-create one and import the project using this process.
+.. note:: Before performing this task, set up a FLO-2D Project GeoPackage using `New FLO-2D Project
+          <../flo-2d-project/New%20FLO-2D%20Project.html>`__.
+
+1. Click the
+   Import data (\*.DAT) files.
 
 .. image:: ../../img/Buttons/importdata.png
 
-
-Before performing this task, set up a GeoPackage using `FLO-2D Plugin
-Settings <toolbar/FLO-2D%20Settings.html>`__.
-
-1. To import a FLO-2D data
-   files into a GeoPackage:
-
-2. Click the
-   Import FLO-2D Data Files
-
-3. Navigate to
+2. Navigate to
    the FLO-2D \*.DAT files
 
-4. Select CONT.DAT
+3. Select CONT.DAT
    and click Open.
 
-5. All FLO-2D files are
+4. All FLO-2D files are
    imported to the Plugin with this option.
 
 .. image:: ../../img/Import-Data/importdata2.png
 
 
-6. Choose the \*.DAT files
+5. Choose the \*.DAT files
    to import and click OK.
 
 .. image:: ../../img/Import-Data/importdata3.png
 
 
-7. Once the project import is complete,
+6. Once the project import is complete,
    this message will appear. Click OK to
    close the message.
 
 .. image:: ../../img/Import-Data/importdata4.png
 
 
-8. The final step is to convert
+7. The final step is to convert
    the new layers to User Layers. See
-   `Convert Schematic Layers to User Layers. <Schema%202%20User.html>`__
+   `Convert Schematic Layers to User Layers. <../flo-2d-parameters/Schematic%20to%20User%20Converter.html>`__
