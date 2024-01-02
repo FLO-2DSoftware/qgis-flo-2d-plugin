@@ -1,14 +1,23 @@
 Mud and Sediment Transport (SED.DAT)
 =====================================
 
+1. Click on the Mud and Sediment Transport (SED.DAT).
+
+.. image:: ../../img/Buttons/mud.png
+
+
 Mud / Debris Transport
 ----------------------
 
 Very viscous, hyperconcentrated sediment flows are generally referred to as either mud or debris flows.
-Mudflows are non-homogeneous, nonNewtonian, transient flood events whose fluid properties change significantly as they flow down steep watershed channels or across alluvial fans.
+Mudflows are non-homogeneous, nonNewtonian, transient flood events whose fluid properties change significantly
+as they flow down steep watershed channels or across alluvial fans.
 Mudflow behavior is a function of the fluid matrix properties, channel geometry, slope, and roughness.
 The fluid matrix consists of water and fine sediments.
-At sufficiently high concentrations, the fine sediments alter the properties of the fluid including density, viscosity, and yield stress.
+At sufficiently high concentrations, the fine sediments alter the properties of the fluid including density,
+viscosity, and yield stress.
+
+2. Select the Mud / Debris Transport.
 
 .. image:: ../../img/Mud/mud004.png
 
@@ -39,6 +48,8 @@ Sediment Transport
 FLO-2D has a sediment transport component that can compute sediment scour or deposition.
 Within a grid element, sediment transport capacity is computed for either channel, street or overland flow based on the flow hydraulics.
 The sediment transport capacity is then compared with the sediment supply and the resulting sediment excess or deficit is uniformly distributed over the grid element potential flow surface using the bed porosity based on the dry weight of sediment.
+
+2. Select the Sediment Transport.
 
 .. image:: ../../img/Mud/mud005.png
 
@@ -71,6 +82,8 @@ Two Phase
 To apply the FLO-2D two-phase flow component, the sediment transport and mudflow model components must run concurrently, exchanging sediment between them.
 The flood hydraulics for conventional sediment transport is first computed and then the mudflow hydraulics are computed in a second loop.
 Water and sediment volume conservation is tracked in both components separately on a grid element basis.
+
+2. Select the Two-phase.
 
 .. image:: ../../img/Mud/mud006.png
 
