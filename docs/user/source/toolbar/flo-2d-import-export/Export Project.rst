@@ -1,43 +1,39 @@
 Export data (\*.DAT) files
 ===========================
 
+This tool exports the FLO-2D \*.DAT files.
+
 Export FLO-2D \*.DAT Files
 ---------------------------
 
-Export the project files with this button.
+.. note:: Set the Control Variables switches before running the Export tool.
+          See `Set Control Parameters (CONT.DAT) <../flo-2d-parameters/Control%20Variables.html>`__.
+
+
+1. Click
+   the Export data (\*.DAT) files button.
 
 .. image:: ../../img/Buttons/exportproject.png
 
-
-1. Set the Control Data switches before running the Export tool.
-   See `Setup the FLO-2D Control Data <../toolbar/Setup%20Control%20Variables.html>`__ step.
-
-
-2. Click
-   the FLO-2D Data Export button.
-
-3. Select the
-   components that require an export.
-
-**Important Note: It is not necessary to export all files every time.
-Export large files like INFIL.DAT or TOPO.DAT only when needed.**
-
-.. image:: ../../img/Export-Project/exportproject2.png
-
-
-4. Navigate to
+2. Navigate to
    the project folder and click Select Folder.
 
 .. image:: ../../img/Export-Project/exportproject3.png
 
-
-5. Check or uncheck the
+3. Select the
+   components that will be exported by checking or unchecking the
    files to be exported and click OK.
+
+.. image:: ../../img/Export-Project/exportproject2.png
+
+.. note:: It is not necessary to export all files every time.
+          Export large files like INFIL.DAT or TOPO.DAT only when needed.
+
 
 Troubleshooting
 ---------------
 
-1. If data is missing from the grid table, this message will appear.  This happens when the elevation raster, roughness
+1. If data is missing from the grid table, this message will appear. This happens when the elevation raster, roughness
    polygon, or roughness raster do not cover the whole grid.
 
 .. image:: ../../img/Export-Project/exportproject4.png
