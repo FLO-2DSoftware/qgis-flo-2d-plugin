@@ -41,3 +41,8 @@ FLO-2D Plugin Settings
 
 .. note:: The FLO-2D Project folder is updated everytime that files are exported. Double check the FLO-2D Project folder
           prior running a simulation.
+
+FLO-2D Plugin Settings
+------------------------
+
+See `Debug Tool <../flo-2d-project-review/Debug%20Tool.html>`__ for the Debug Run.

@@ -1,7 +1,7 @@
 Debug Tool
 ===========
 
-.. image:: ../img/Buttons/debug.png
+.. image:: ../../img/Buttons/debug.png
 
 Warnings and Errors
 -------------------
@@ -11,15 +11,15 @@ and identifying data conflicts. To utilize this tool effectively, follow the ste
 
 1. Open the FLO-2D Settings
 
-.. image:: ../img/Buttons/settings.png
+.. image:: ../../img/Buttons/settings.png
 
 2. Perform a debug run
 
-.. image:: ../img/Debug/debug2.png
+.. image:: ../../img/Debug/debug2.png
 
-.. image:: ../img/Debug/debug4.png
+.. image:: ../../img/Debug/debug4.png
 
-.. image:: ../img/Debug/debug3.png
+.. image:: ../../img/Debug/debug3.png
 
 3. This will automatically trigger the FLO-2D check system performed by
    the engine FLOPRO.EXE.
@@ -33,15 +33,15 @@ and identifying data conflicts. To utilize this tool effectively, follow the ste
    automatically shut down. Every time the debug is executed, a new
    debug file with a timestamp is saved to the project folder.
 
-.. image:: ../img/Debug/debug5.png
+.. image:: ../../img/Debug/debug5.png
 
 
 5. Click the Error and
    Warning button to open the import dialog box.
 
-.. image:: ../img/Buttons/debug.png
+.. image:: ../../img/Buttons/debug.png
 
-.. image:: ../img/Debug/debug6.png
+.. image:: ../../img/Debug/debug6.png
 
 .. note:: The Errors and Warnings shows all Errors, Conflicts, and
           Warnings created by the file checking program. All of these boxes can be
@@ -53,21 +53,21 @@ DEBUG File
 1. To import the Debug files, click the Import DEBUG File button. The
    DEBUG file will have a date and timestamp to track progress.
 
-.. image:: ../img/Debug/debug7.png
+.. image:: ../../img/Debug/debug7.png
 
 2. The import process will include several files that can be used to
    help users review surface features such as rim elevations, depressed
    elements and channel – floodplain interface. Click Yes to load the
    Errors and Warning Dialog box and import the review files.
 
-.. image:: ../img/Debug/debug8.png
+.. image:: ../../img/Debug/debug8.png
 
 3. The FLO-2D Warnings and Errors: DEBUG File will initially appear docked at the
    bottom but can be freely repositioned. The Errors/Warnings can be filtered
    by code and grid element using the comboboxes on the top. It is possible
    to zoom in or out to locate the grid element that contains the Error/Warning.
 
-.. image:: ../img/Debug/debug9.png
+.. image:: ../../img/Debug/debug9.png
 
 
 Current Project
@@ -84,7 +84,7 @@ Current Project
    to zoom in or out to locate the grid element that contains the Error/Warning and
    copy the cell contents.
 
-.. image:: ../img/Debug/debug10.png
+.. image:: ../../img/Debug/debug10.png
 
 Levee Crests
 ------------
@@ -98,7 +98,7 @@ Levee Crests
    to zoom in or out to locate the grid element that contains the Error/Warning and
    copy the cell contents.
 
-.. image:: ../img/Debug/debug11.png
+.. image:: ../../img/Debug/debug11.png
 
 
 Debug Layers
@@ -109,9 +109,9 @@ Debug Layers
    depressed elements and levee crest elevations. In this example, the
    layers are grouped using a QGIS standard layer grouping procedure.
 
-.. image:: ../img/Debug/debug12.png
+.. image:: ../../img/Debug/debug12.png
 
 2. Each layer has an attribute table that can be sorted and used to find
    grid elements that may need elevation edits.
 
-.. image:: ../img/Debug/debug13.png
+.. image:: ../../img/Debug/debug13.png
