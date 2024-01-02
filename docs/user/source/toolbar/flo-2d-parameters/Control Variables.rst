@@ -1,16 +1,15 @@
 Set Control Parameters (CONT.DAT)
 ==================================
 
+This button allows the user to set up the control variables.
+
 Setup the FLO-2D Control Data
 -----------------------------
 
-This button allows the user to set up the control variables.
+1. Click the
+   Set Control Parameters (CONT.DAT) button.
 
 .. image:: ../../img/Buttons/controlparameters.png
-
-
-1. Click the
-   Set Control Parameters button.
 
 2. The dialog box is used to set the control data for the CONT.DAT and
    TOLER.DAT files.
