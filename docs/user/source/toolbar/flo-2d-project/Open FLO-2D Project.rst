@@ -4,12 +4,12 @@ Open FLO-2D Project
 This button is used to open an existing FLO-2D GeoPackage. If the FLO-2D GeoPackage is not updated, the FLO-2D Plugin
 automatically updates the GeoPackage to the latest version.
 
-.. image:: ../../img/Buttons/openflo2dproject.png
-
 Open an existing FLO-2D GeoPackage
 -----------------------------------
 
 1. Click on the Open FLO-2D Project button.
+
+.. image:: ../../img/Buttons/openflo2dproject.png
 
 2. Select the desired GeoPackage.
 
