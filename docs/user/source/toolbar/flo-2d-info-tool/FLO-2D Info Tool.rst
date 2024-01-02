@@ -19,6 +19,11 @@ Layers that work with this tool:
 
 -  Levee layers
 
+.. note:: This tool stays active on the FLO-2D toolbar until manually deactivated.
+
+    .. image:: ../../img/Flo-2D-Info-Tool/Flo019.png
+
+
 Load the Data
 -------------
 
@@ -35,13 +40,15 @@ Load the Data
 3. Make sure the Elevation raster
    is in the Layers group.  If it is missing, drag Elevation.tif onto the map from QGIS Lesson 1 folder.
 
+4. Ensure the tool is deactivated after use.
+
 Channel Profiles
 ----------------
 
 1. Click  
    the FLO-2D Info Tool.
 
-.. image:: ../../img/Flo-2D-Info-Tool/Flo002.png
+.. image:: ../../img/Buttons/floinfo.png
 
 2. Click
    any left bank line.
@@ -74,6 +81,8 @@ Channel Profiles
 
 .. image:: ../../img/Flo-2D-Info-Tool/Flo011.png
 
+9. Ensure the tool is deactivated after use.
+
 Channel User Layer Cross Sections
 --------------------------------------
 
@@ -82,7 +91,7 @@ The FLO-2D info tool can be used to activate a specific user cross section.
 1. Click the FLO-2D
    Info tool.
 
-.. image:: ../../img/Flo-2D-Info-Tool/Flo002.png
+.. image:: ../../img/Buttons/floinfo.png
 
 2. Click and select
    a User Layer cross section.
@@ -99,6 +108,8 @@ The FLO-2D info tool can be used to activate a specific user cross section.
 
 .. image:: ../../img/Flo-2D-Info-Tool/Flo016.png
 
+5. Ensure the tool is deactivated after use.
+
 Channel Schematic Layer Cross Sections
 --------------------------------------
 
@@ -107,7 +118,7 @@ The FLO-2D Info Tool can be used to review schematized cross sections.
 1. Click the FLO-2D
    Info tool.
 
-.. image:: ../../img/Flo-2D-Info-Tool/Flo002.png
+.. image:: ../../img/Buttons/floinfo.png
 
 2. Click and
    select a Schematic Layer cross section.
@@ -119,6 +130,8 @@ The FLO-2D Info Tool can be used to review schematized cross sections.
 
 .. image:: ../../img/Flo-2D-Info-Tool/Flo013.png
 
+4. Ensure the tool is deactivated after use.
+
 Structure Layers
 ----------------
 
@@ -127,7 +140,7 @@ The FLO-2D info tool can be used to load and activate hydraulic structures.
 1. Click
    the FLO-2D Info tool.
 
-.. image:: ../../img/Flo-2D-Info-Tool/Flo002.png
+.. image:: ../../img/Buttons/floinfo.png
 
 2. Click and
    select a structure line.
@@ -136,6 +149,8 @@ The FLO-2D info tool can be used to load and activate hydraulic structures.
    into its editor and plotted.
 
 .. image:: ../../img/Flo-2D-Info-Tool/Flo006.png
+
+4. Ensure the tool is deactivated after use.
 
 Levee Layers
 ------------
@@ -146,7 +161,7 @@ The FLO-2D info tool can be used to load the raster and levee schematized data p
 1. Click
    the FLO-2D Info tool.
 
-.. image:: ../../img/Flo-2D-Info-Tool/Flo002.png
+.. image:: ../../img/Buttons/floinfo.png
 
 2. Click
    and select a Levee Line.
@@ -163,4 +178,6 @@ The FLO-2D info tool can be used to load the raster and levee schematized data p
    schematized profile case, the levcrest field is plotted.
 
 .. image:: ../../img/Flo-2D-Info-Tool/Flo018.png
+
+6. Ensure the tool is deactivated after use.
 
