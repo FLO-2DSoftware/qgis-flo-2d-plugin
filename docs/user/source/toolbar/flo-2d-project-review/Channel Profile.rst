@@ -11,7 +11,7 @@ Channel Profile
 
 .. image:: ../../img/Buttons/profiletool.png
 
-.. note:: Similar to other tools within FLO-2D Project Review, the Channel Profile will stay selected throughout its use. Ensure the tool is deactivated after use.
+.. note:: The Channel Profile will stay selected throughout its use. Ensure the tool is deactivated after use.
 
     .. image:: ../../img/Channel-Profile/channelprofile7.png
 
