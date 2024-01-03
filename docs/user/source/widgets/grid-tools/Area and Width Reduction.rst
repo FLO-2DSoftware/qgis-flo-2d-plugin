@@ -1,8 +1,5 @@
-Area and Width Reduction – Buildings
-=====================================
-
-Overview
---------
+Calculate Reduction Factors (ARF and WRF)
+==========================================
 
 The black polygons below are polygons that represent buildings or other features that displace and
 redirect the flow as it moves over an area.  The blocked areas or external shapefiles are converted
@@ -17,12 +14,12 @@ If Buildings are not available, Tax Boundary polygons are available for all citi
 .. image:: ../../img/Area-and-Width-Reduction-Factor-Buildings/Area002.png
 
 
-Calculate ARF and WRF layers
-----------------------------
+Calculate Reduction Factors (ARF and WRF)
+------------------------------------------
 
 .. image:: ../../img/Area-and-Width-Reduction-Factor-Buildings/Area003.png
 
-1. Click the Evaluate Reduction Factors (ARF and WRF) button.
+1. Click the Calculate Reduction Factors (ARF and WRF).
    There are two options.
    Use the Blocked Areas Layer if constructing polygons from the digitizing tools.
    Use the external polygon layer if building polygons are in another layer.
@@ -39,7 +36,7 @@ Calculate ARF and WRF layers
 
 .. image:: ../../img/Area-and-Width-Reduction-Factor-Buildings/Area006.png
 
-4. Click on the Set Control Parameters button, and then on the Control Variables (CONT.DAT) tab Check on Area Reduction Factors (ARF) and then click
+4. Click on the Set Control Parameters (CONT.DAT), and then on the Control Variables (CONT.DAT) tab Check on Area Reduction Factors (ARF) and then click
    Save.
 
 .. image:: ../../img/Area-and-Width-Reduction-Factor-Buildings/Area007.png
