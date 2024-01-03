@@ -1,8 +1,5 @@
-Elevation Correction Tool
+Correct Grid Elevation
 ==========================
-
-Overview
---------
 
 This tool is used to correct elevation data for polygons, points or polylines.
 
@@ -36,9 +33,9 @@ Tin from Points and Polygon
    In this example, a section of the dam is removed from the grid element elevation so the dam can be breached.
    Most of the dam is left in place so the volume displacement is still occurring.
 
-**Note: The elevation image in this example is not the grid element.
-It is a hillshade of the raw raster data.
-The tool corrects the grid elevation only.**
+.. note:: The elevation image in this example is not the grid element.
+          It is a hillshade of the raw raster data.
+          The tool corrects the grid elevation only.
 
 .. image:: ../../img/Elevation-Correction-from-Polygons/Elevat004.png
 
