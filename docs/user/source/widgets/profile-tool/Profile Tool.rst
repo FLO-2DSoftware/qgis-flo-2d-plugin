@@ -5,23 +5,45 @@ The profile tool is primarily used to review the channel profile but can also be
 
 .. image:: ../../img/Profile-Tool/profil001.png
 
-Raster Profile
---------------
+Method 1: Create an Elevation Raster using MapCrafter (Recommended)
+--------------------------------------------------------------------
 
-Create a Raster
+.. note:: To use this method, the TOPO.DAT file must be previously exported.
 
-1. Set up the raster in the Profile Tool widget.
-   In this example, the grid elevation raster is used.
-   To create a grid elevation raster, use the Saga-Rasterize tool.
-   On the Main QGIS Menu, click Processing>Toolbox.
+1. Open FLO-2D MapCrafter Plugin.
+
+.. image:: ../../img/Buttons/run_mapcrafter.png
+
+2. Select the export folder and follow the figure below to create the Elevation Raster.
+
+.. image:: ../../img/Profile-Tool/profil010.png
+
+3. Click OK on the message.
+
+.. image:: ../../img/Profile-Tool/profil011.png
+
+4. The GROUND_ELEVATION raster is added to the project.
+
+.. image:: ../../img/Profile-Tool/profil012.png
+
+.. note:: For more information on MapCrafter, check the FLO-2D-MapCrafter Wiki_
+
+          .. _Wiki:  https://github.com/FLO-2DSoftware/FLO-2DMapCrafter/wiki
+
+Method 2: Create an Elevation Raster using SAGA provider
+--------------------------------------------------------------------
+
+1. On the Main QGIS Menu, click Processing>Toolbox.
 
 .. image:: ../../img/Profile-Tool/profil002.png
-  
+
 2. Enter the search term Rasterize in the Processing Toolbox search feature.
    Double click the Saga Rasterize tool.
 
 .. image:: ../../img/Profile-Tool/profil003.png
 
+.. note:: In some QGIS installations, the SAGA provider may not be active.
+          Visit the QGIS Official Plugin Repository to install/activate the provider.
 
 3. Change the dialog box as shown below and click Run.
    Cell size is the grid element size.
@@ -30,7 +52,6 @@ Create a Raster
    QGIS has many raster generators, and they all work slightly differently.
 
 .. image:: ../../img/Profile-Tool/profil004.png
-
 
 The raster that is created is a temporary layer called Rasterize.
 This layer should be saved to a permanent layer using the QGIS Save As feature.
@@ -49,7 +70,6 @@ This example will test it on a channel polyline.
    This example uses Grid Elevation raster.
 
 .. image:: ../../img/Profile-Tool/profil006.png
- 
 
 2. Click the FLO-2D Info Tool and click on a channel
    segment.
