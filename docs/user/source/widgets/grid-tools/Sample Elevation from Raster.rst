@@ -1,5 +1,5 @@
-Sample Elevation from Raster
-=============================
+Sampling grid elevation from raster layer
+=========================================
 
 To interpolate the elevation to a grid layer from a raster layer, use
 the Sampling Grid Elevation from Raster Layer button.
@@ -34,10 +34,12 @@ Sample Elevation
 
 2. Select the Fill
    NODATA option to set the elevation of empty grid elements from
-   neighbors.  This is only necessary if there are empty raster pixels.
-   It happens where LiDAR data is rasterized and only bare ground is added.
+   neighbors.
 
-3. Click OK.  When the elevation sampling is complete Close the Sampling Done box.
+.. note:: This is only necessary if there are empty raster pixels.
+          It happens where LiDAR data is rasterized and only bare ground is added.
+
+3. Click OK.  When the elevation sampling is completed, close the Sampling Done box.
 
 .. image:: ../../img/Sample-Elevation-From-Raster/sampleraster2.png
 

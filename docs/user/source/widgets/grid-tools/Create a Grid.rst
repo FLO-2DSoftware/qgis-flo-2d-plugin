@@ -1,4 +1,4 @@
-Create a Grid
+Create Grid
 =============
 
 The system is limited to one domain.
