@@ -3,7 +3,8 @@ Create a Grid
 
 The system is limited to one domain.
 The limits of the grid are defined by a single polygon.
-This polygon can be digitized in the Computational Domain layer or it can be added from an external polygon layer such as an Area of Interest
+This polygon can be digitized in the Computational Domain layer or
+it can be added from an external polygon layer such as an Area of Interest
 shapefile with a single polygon.
 Both methods are described below.
 
@@ -77,10 +78,10 @@ Method 2: Grid from the Computational Domain
 7. If the grid system is not as expected,
    edit the Computational Domain layer and repeat the Create Grid process.
 
-8. Each time the grid system is replaced,
-   the elevation and roughness data are also reset and must be recalculated.
+.. note:: Each time the grid system is replaced,
+          the elevation and roughness data are also reset and must be recalculated.
 
-9. The grid system data is
+8. The grid system data is
    saved to the Grid Schematic Layer as shown below.
 
 .. image:: ../../img/Create-a-Grid/create007.png
