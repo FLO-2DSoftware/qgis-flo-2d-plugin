@@ -1,11 +1,9 @@
 Sample Roughness
 ================
 
-Overview
---------
-
-In this task, the spatially variable manning’s roughness is calculated from a polygon shapefile.
-The polygons represent roughness associated with different LandUse categories such as building, street, grass, desert brush and many others.
+This tool calculates the the spatially variable manning’s roughness from a polygon shapefile.
+The polygons represent roughness associated with different LandUse categories such as building, street, grass,
+desert brush and many others.
 
 .. image:: ../../img/Sample-Roughness-Data/img2.png
 
@@ -60,8 +58,7 @@ The roughness values are assigned to the Grid layer in the Schematized Layers gr
 Troubleshooting
 ----------------
 
-1. The Roughness layer must be a polygon layer.
-   It is usually a shapefile.
+1. The Roughness layer must be a polygon layer for this tool.
 
 2. The layer
    CRS must match the project CRS.
