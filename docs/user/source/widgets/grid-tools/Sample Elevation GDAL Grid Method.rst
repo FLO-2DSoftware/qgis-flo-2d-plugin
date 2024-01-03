@@ -1,7 +1,7 @@
-Sample Elevation GDAL Grid Method
-==================================
+Sampling Grid Elevation from Point or Raster GDAL Grid Method
+=============================================================
 
-To interpolate the elevation to a grid layer from a using the GDAL Grid method.
+To interpolate the elevation to a grid layer from Point or Raster GDAL Grid Method, use this tool.
 
 .. image:: ../../img/Sample-Elevation-Data-GDL-Grid-Method/Sample002.png
 
@@ -19,16 +19,9 @@ Sample Elevation
 
 .. image:: ../../img/Sample-Elevation-Data-GDL-Grid-Method/Sample003.png
 
-1. Learn more about the
-   GDAL Grid method with the help buttons.
+.. note:: Use the help buttons to learn more about the GDAL Grid method. Click the button once to load a GDAL page with interpolation algorithm data and click the button again to load a GDAL grid tutorial.
 
-2. Click the button once
-   to load a GDAL page with interpolation algorithm data.
-
-3. Click the button again
-   to load a GDAL grid tutorial.
-
-.. image:: ../../img/Sample-Elevation-Data-GDL-Grid-Method/Sample004.png
+    .. image:: ../../img/Sample-Elevation-Data-GDL-Grid-Method/Sample004.png
 
 4. When the interpolation process
    is complete, several new elevation files are written to the project elevation directory.
@@ -63,7 +56,7 @@ Troubleshooting
 
 1. This process can be slow if the project has high resolution elevation data.
    If LiDAR point data is being used, try the LiDAR processor instead.
-   If a high-resolution raster is being used.
+   If a high-resolution raster is being used,
    try the Sample Elevation from Raster instead.
 
 2. If the elevation data has the wrong CRS or does not have complete coverage, calculation may still be performed but the elevation will be no good.

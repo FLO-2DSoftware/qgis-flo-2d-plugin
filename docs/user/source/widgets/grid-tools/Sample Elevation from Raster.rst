@@ -1,4 +1,4 @@
-Sampling grid elevation from raster layer
+Sampling Grid Elevation from Raster Layer
 =========================================
 
 To interpolate the elevation to a grid layer from a raster layer, use
