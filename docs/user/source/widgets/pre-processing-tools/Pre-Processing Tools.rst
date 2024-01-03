@@ -2,15 +2,18 @@ Pre-Processing Tools
 ========================
 
 The Pre-Processing Tools is a set of tools designed to modify Digital Elevation Models (DEMs) for various applications.
-These tools provide efficient pre-processing solutions for removing artificial barriers such as dams, bridges, and levees, allowing users to create more realistic and valuable terrain representations.
-To date, the only available tool is the Dam Removal.
-Bridge & Levee removal tools are expected in future updates.
+These tools provide efficient pre-processing solutions for removing artificial barriers such as dams, bridges, and
+levees, allowing users to create more realistic and valuable terrain representations.
+
+.. note:: To date, the only available tool is the Dam Removal.
+          Bridge & Levee removal tools are expected in future updates.
 
 
 Dam removal
 ------------
 
-The Dam Removal Tool is a specialized utility designed to process Digital Elevation Models (DEMs) and remove the representation of dams or artificial barriers within the elevation data.
+The Dam Removal Tool is a specialized utility designed to process Digital Elevation Models (DEMs) and remove the
+representation of dams or artificial barriers within the elevation data.
 
 1.  Click on Dam area.
 
