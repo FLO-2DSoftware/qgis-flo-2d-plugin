@@ -4,19 +4,23 @@ Cross Sections Editor
 This section will cover many of the tools available to develop channels for FLO-2D.
 This is not a step-by-step procedure.
 It is a compilation and detailed outline of the tools available and how to use them.
-For step-by-step instructions, see the workshop lessons.
 
 Channels
 --------
 
-Identify the Channel
----------------------
+The elevation raster symbology can be edited so that the channel is well defined.
 
-The elevation raster style can be edited so that the channel is well defined.
-Adjust the min / max view setting to enhance the channel depth.
+1. Right click on the Elevation Raster and click on properties.
+
+.. image:: ../../img/User-Cross-Sections-Widget/User001.png
+
+2. Select the Symbology tab and Adjust the min / max view setting to enhance the channel depth.
 
 .. image:: ../../img/User-Cross-Sections-Widget/User002.png
 
+.. image:: ../../img/User-Cross-Sections-Widget/User057.png
+
+.. note:: Using the Hillshade symbology also helps to identify the channel.
 
 Left Bank
 ----------
@@ -101,16 +105,10 @@ To create natural cross sections, the cross sections should be numbered consecut
 
 The cross sections shown in the following image have been digitized.
 
-**Important Notes:**
-
--  **Draw polylines from left bank to right bank looking downstream.**
-
--  **The first cross section must cross the left and right bank and be inside the same grid elements.**
-
--  **The subsequent cross sections can cross the left and right bank and be wider than the channel.**
-
--  **Place-holder data is added to the cross section station elevation data.
-   It is replaced after all cross sections are ready.**
+.. note:: Draw polylines from left bank to right bank looking downstream.
+          The first cross section must cross the left and right bank and be inside the same grid elements.
+          The subsequent cross sections can cross the left and right bank and be wider than the channel.
+          Place-holder data is added to the cross section station elevation data and it is replaced after all cross sections are ready.
 
 The finished product will look something like the following image.
 
@@ -124,13 +122,12 @@ The preferred and easiest way to sample elevation data for a cross section is by
 Once the cross sections are digitized onto the map, the Sample Elevation tools are used to sample elevation data from a raster into Stations/Elevation
 data sets for all or individual cross sections.
 
-This section will focus on N type or natural channel geometry.
+This section will focus on natural channel geometry (N type).
 
 1. Set the elevation raster as  
    the Source Raster Layer and use either button to sample one or all cross sections.
 
 .. image:: ../../img/User-Cross-Sections-Widget/User011.png
-
 
 2. The station elevation data is  
    limited to the point where the left and right bank intersect the cross section.
@@ -193,6 +190,9 @@ Interpolate Natural Channel
 
 1. Inspect the cross section n-value field to ensure all n-values are present.
    If missing, fill the required n-value to the field.
+   Right click on the Cross Sections layer to open the Attribute Table.
+
+.. image:: ../../img/User-Cross-Sections-Widget/User058.png
 
 .. image:: ../../img/User-Cross-Sections-Widget/User020.png
 
@@ -320,8 +320,6 @@ Schematize Rectangular and Trapezoidal Channel Segment
 
 .. image:: ../../img/User-Cross-Sections-Widget/User056.png
 
-
-
 2. Click the Schematize button.
 
 .. image:: ../../img/User-Cross-Sections-Widget/User035.png
@@ -365,7 +363,7 @@ The Grid method should only be used if a good raster is not available.
 2. Click the channel profile tool 
    and the left bank to check the profile of the channel.
 
-.. image:: ../../img/User-Cross-Sections-Widget/User039.png
+.. image:: ../../img/Buttons/profiletool.png
   
 
 .. image:: ../../img/User-Cross-Sections-Widget/User040.png
@@ -412,7 +410,7 @@ Interpolate Prismatic Channel Data
 4. Click the channel profile tool  
    and the left bank to check the profile of the channel.
 
-.. image:: ../../img/User-Cross-Sections-Widget/User039.png
+.. image:: ../../img/Buttons/profiletool.png
 
 
 .. image:: ../../img/User-Cross-Sections-Widget/User046.png
