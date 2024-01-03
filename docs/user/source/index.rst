@@ -116,6 +116,7 @@ Table of Contents
    /widgets/grid-tools/Sample Elevation from Points and LiDAR
    /widgets/grid-tools/Elevation Correction Tool
    /widgets/grid-tools/Sample Roughness
+   /widgets/grid-tools/Sampling Roughness from Raster
    /widgets/grid-tools/Area and Width Reduction
    /widgets/grid-tools/Spatial TOL
    /widgets/grid-tools/Spatial Limiting Froude

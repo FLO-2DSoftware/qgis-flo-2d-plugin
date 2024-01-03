@@ -1,5 +1,5 @@
-Sample Roughness
-================
+Sampling Roughness
+===================
 
 This tool calculates the the spatially variable manning’s roughness from a polygon shapefile.
 The polygons represent roughness associated with different LandUse categories such as building, street, grass,
