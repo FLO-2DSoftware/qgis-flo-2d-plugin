@@ -3049,6 +3049,8 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                     + "\t[CONDUITS]\n"
                     + str(len(pumps_rows))
                     + "\t[PUMPS]\n"
+                    + str(len(pump_curves_rows))
+                    + "\t[CURVES]\n"                    
                     + str(len(orifices_rows))
                     + "\t[ORIFICES]\n"
                     + str(len(weirs_rows))
