@@ -4,18 +4,23 @@ Multiple Channels Editor
 Multiple channel system is used to represent rill and gully flow in an effort make the time of concentration more effective
 on a floodplain.
 
-An overview of the tool is discussed below but see the tutorial for a more detailed description of how to set up the data
-using QGIS.
-https://documentation.flo-2d.com/Advanced-Lessons/Module%205%20Part%203.html
+.. image:: ../../img/Widgets/multiplechannels.png
 
--The Build 22 Data Input Manual has detailed instructions on each variable.
+.. note::
 
--The Build 22 FLO-2D Reference Manual has specific information on how FLO-2D models rill and gully flow.
+    An overview of the tool is discussed below but see this
+    `tutorial <https://documentation.flo-2d.com/Advanced-Lessons/Module%205%20Part%203.html>`__
+    for a more detailed description of how to set up the data
+    using QGIS.
 
-The manuals are installed on the computer along with
-the Build 22 Update and can be found here:
+    - The Build 22 Data Input Manual has detailed instructions on each variable.
 
-C:\\Users\\Public\\Documents\\FLO-2D PRO Documentation\\flo_help\\Manuals
+    - The Build 22 FLO-2D Reference Manual has specific information on how FLO-2D models rill and gully flow.
+
+    The manuals are installed on the computer along with
+    the Build 22 Update and can be found at:
+
+    C:\\Users\\Public\\Documents\\FLO-2D PRO Documentation\\flo_help\\Manuals
 
 Global Data
 ------------
@@ -54,7 +59,7 @@ This layer is in the User Layers group.
 .. image:: ../../img/Multiple-Channel-Editor/mutipl005.png
  
 
-4. Save and close the editor to commit the data to the geopackage using a sql trigger.
+4. Save and close the editor to commit the data to the geopackage.
    This will automatically write the data to the Multiple Tables and assign the grid elements.
 
 .. image:: ../../img/Multiple-Channel-Editor/mutipl004.png
@@ -85,7 +90,7 @@ This layer is also in the User Layers group.
 .. image:: ../../img/Multiple-Channel-Editor/mutipl012.png
 
 
-4. Save and close the editor to commit the data to the geopackage using a sql trigger.
+4. Save and close the editor to commit the data to the geopackage.
    This will automatically write the data to the Multiple Tables and assign the grid elements.
 
 .. image:: ../../img/Multiple-Channel-Editor/mutipl013.png
@@ -96,8 +101,9 @@ This layer is also in the User Layers group.
 Multiple Channel Areas
 ----------------------
 
-This layer is activated when data is imported into the geopackage from an existing MULTCHAN.DAT file.  It is not used
-for editorial purposes.
+This layer is activated when data is imported into the geopackage from an existing MULTCHAN.DAT file.
+
+.. important:: This layer is not used for editing purposes.
 
 .. image:: ../../img/Multiple-Channel-Editor/mutipl014.png
 
