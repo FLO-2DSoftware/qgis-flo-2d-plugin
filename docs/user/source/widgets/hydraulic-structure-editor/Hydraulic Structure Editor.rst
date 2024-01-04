@@ -1,10 +1,10 @@
-Hydraulic Structure Editor
+Structures Editor
 ==========================
 
-The hydraulic structures editor is used to set up the data for the HYSTRUCT.DAT file.
+The structures editor is used to set up the data for the HYSTRUCT.DAT file.
 This section will describe how to set up each of the different types of hydraulic structures.
 
-.. image:: ../../img/Hydraulic-Structure-Editor/Hydrau002.png
+.. image:: ../../img/Widgets/structures.png
 
 Channel to Channel Structure
 ----------------------------
@@ -190,9 +190,8 @@ Bridge parameters can be defined for a structure.
 
 
 The USGS bridge tables are used to define the flow though a bridge with bridge geometry and discharge coefficients.
-See Bridge tutorial and Bridge guidelines for a detailed guide.
 
-https://documentation.flo-2d.com/Advanced-Lessons/Module%202%20Part%203.html
+.. note:: See `Bridge tutorial and Bridge guidelines <https://documentation.flo-2d.com/Advanced-Lessons/Module%202%20Part%203.html>`__ for a detailed guide.
 
 .. image:: ../../img/Hydraulic-Structure-Editor/Hydrau021.png
 
