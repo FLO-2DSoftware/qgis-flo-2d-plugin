@@ -16,13 +16,35 @@ Select .RPT File
 
 .. image:: ../../img/Select-Rpt-File/selectrptfile002.png
 
-3. Click on the Storm Drain node and select it.
+3. Select the ‘Info Tool’ command.
 
-.. image:: ../../img/Select-Rpt-File/selectrptfile003.png
+.. image:: ../../img/Buttons/floinfo.png
 
-4. The details associated with this node will be displayed on the FLO-2D Plot.
+4. Click on a desired Storm Drain node to select it.
 
-.. image:: ../../img/Select-Rpt-File/selectrptfile004.png
+.. image:: ../../img/Select-Rpt-File/selectrptfile005.png
 
+5. The details associated with this node will be displayed in a FLO-2D plot.
 
+.. image:: ../../img/Select-Rpt-File/selectrptfile006.png
+
+.. note:: In the above example 5 plots are displayed:
+
+          - Total Inflow
+          - Flooding
+          - Inflow Discharge to Storm Drain
+          - Return Discharge to FLO-2D
+          - Discharge to FLO-2D
+
+          The ‘Total Inflow’ and ‘Flooding’ plots are constructed from data in the .RPT file.
+          The ‘Inflow Discharge to Storm Drain’ and ‘Return Discharge to FLO-2D’ plots are built from
+          time series data in the SWMMQIN.OUT file (if it exists).
+          The ‘Discharge to FLO-2D’ plot is created from time series data in the SWMMOUTFIN.OUT file (if it exists).
+
+6. Turn plots on and off by left clicking anywhere on the FLO-2D plot.
+   It is possible to turn on/off each individual plot and legend.
+
+.. image:: ../../img/Select-Rpt-File/selectrptfile007.png
+
+.. image:: ../../img/Select-Rpt-File/selectrptfile008.png
 
