@@ -1,6 +1,16 @@
 Initial Condition Editor
 ========================
 
+The Initial Condition Editor is used to set the FLO-2D Initial conditions. This editor is user to set the following
+initial conditions:
+
+- Reservoirs
+- Channel Initial Depth
+- Tailings Stack
+
+.. image:: ../../img/Widgets/initialconditions.png
+
+
 Reservoir Node
 --------------
 
