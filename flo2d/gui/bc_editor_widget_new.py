@@ -116,7 +116,7 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
         self.inflow_tseries_cbo.activated.connect(
             self.inflow_data_changed)
         self.change_inflow_data_name_btn.clicked.connect(
-            lambda: self.change_bc_data_name(self.inflow_bc_name_cbo, "inflow"))
+            lambda: self.change_bc_data_name(self.inflow_tseries_cbo, "inflow"))
         self.delete_inflow_ts_btn.clicked.connect(
             lambda: self.delete_ts_data(self.inflow_tseries_cbo, "inflow"))
 
@@ -137,6 +137,8 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
             self.create_all_border_outflow_bc)
         self.delete_schem_outflow_bc_btn.clicked.connect(
             lambda: self.delete_schematized_data("outflow"))
+        self.change_outflow_data_name_btn.clicked.connect(
+            lambda: self.change_bc_data_name(self.outflow_data_cbo, "outflow"))
         self.add_outflow_data_btn.clicked.connect(
             lambda: self.add_data("outflow"))
         self.change_outflow_bc_name_btn.clicked.connect(
@@ -391,15 +393,17 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
         # inflow
         if type == "inflow":
             if not cb.findText(new_name) == -1:
-                msg = f"WARNING 060319.1620: Time series with name {new_name} already exists in the database. Please, choose another name."
+                msg = f"WARNING 060319.1620: Time series with name {new_name} " \
+                      f"already exists in the database. Please, choose another name."
                 self.uc.show_warn(msg)
                 return
             self.inflow.set_time_series_data_name(new_name)
             self.populate_inflows(inflow_fid=self.inflow.fid)
         # outflow
-        else:
-            if type == "outflow":
-                msg = f"WARNING 060319.1621: Data series with name {new_name} already exists in the database. Please, choose another name."
+        if type == "outflow":
+            if not cb.findText(new_name) == -1:
+                msg = f"WARNING 060319.1621: Data series with name {new_name} " \
+                      f"already exists in the database. Please, choose another name."
                 self.uc.show_warn(msg)
                 return
             self.outflow.set_data_name(new_name)
