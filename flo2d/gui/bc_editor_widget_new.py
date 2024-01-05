@@ -74,10 +74,6 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
         # outflow plot data variables
         self.d1, self.d2 = [[], []]
 
-        # self.bc_points_lyr.setFlags(QgsMapLayer.Private)
-        # self.bc_lines_lyr.setFlags(QgsMapLayer.Private)
-        # self.bc_polygons_lyr.setFlags(QgsMapLayer.Private)
-
         # Connections
         self.inflow_grpbox.toggled.connect(self.add_shapes)
         self.outflow_grpbox.toggled.connect(self.add_shapes)
@@ -155,6 +151,8 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
             self.outflow_type_changed)
         self.outflow_hydro_cbo.activated.connect(
             self.outflow_hydrograph_changed)
+        self.outflow_data_cbo.activated.connect(
+            self.outflow_data_changed)
 
         self.schem_inflow_bc_btn.clicked.connect(self.schematize_inflow_bc)
         self.schem_outflow_bc_btn.clicked.connect(self.schematize_outflow_bc)
@@ -739,20 +737,26 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
         q = "Are you sure, you want delete the current Time Series?"
         if not self.uc.question(q):
             return
-        bc_idx = cb.currentIndex() + 1
-        QgsMessageLog.logMessage(str(bc_idx))
         if type == "inflow":
+            inflow_bc_idx = cb.currentIndex() + 1
             qry = f"""
                     UPDATE inflow_time_series_data
                     SET time = 0,
                     value = 0,
                     value2 = NULL
-                    WHERE series_fid = {bc_idx}
+                    WHERE series_fid = {inflow_bc_idx}
                     """
             self.gutils.execute(qry)
             self.inflow_data_changed()
         if type == "outflow":
-            QgsMessageLog.logMessage("Not implemented yet")
+            # delete data and rename to Time Series 1
+            if cb.count() == 1:
+                self.outflow.get_cur_data_fid()
+                QgsMessageLog.logMessage(str(self.outflow.get_cur_data_fid()))
+            # delete everything
+            else:
+                self.outflow.get_cur_data_fid()
+                QgsMessageLog.logMessage(str(self.outflow.get_cur_data_fid()))
 
     def clear_rubberband(self):
         """
