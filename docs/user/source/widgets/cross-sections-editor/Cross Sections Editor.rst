@@ -5,6 +5,8 @@ This section will cover many of the tools available to develop channels for FLO-
 This is not a step-by-step procedure.
 It is a compilation and detailed outline of the tools available and how to use them.
 
+.. image:: ../../img/Widgets/crosssections.png
+
 Channels
 --------
 

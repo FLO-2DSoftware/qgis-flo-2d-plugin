@@ -4,6 +4,8 @@ Boundary Condition Editor
 The boundary condition editor is used to define the inflow and outflow boundaries.
 The data is written to the INFLOW.DAT and OUTFLOW.DAT files.
 
+.. image:: ../../img/Widgets/boundarycondition.png
+
 Boundary Condition Editor
 -------------------------
 
