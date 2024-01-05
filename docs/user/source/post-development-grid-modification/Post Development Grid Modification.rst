@@ -2,135 +2,153 @@ Post Development Grid Modification
 ==================================
 
 This section outlines a process to port data after the domain has been changed or the grid elements size has been changed.
-The process will be outlined based on the available layers and procedures in the QGIS FLO-2D Plugin order.
-If the user data does not have a section below, skip that bullet.
 
+.. note:: The process will be outlined based on the available layers and procedures in the QGIS FLO-2D Plugin order.
+          If the user data does not have a section below, skip that bullet.
 
--  Computational Domain Layer
+1. Computational Domain Layer
+------------------------------
 
-   -  Update polygon to cover complete project extent.
+-  Update polygon to cover complete project extent.
 
-   -  Set cell size.
+-  Set cell size.
 
--  Grid
+2. Grid
+--------
 
-   -  Create the grid.
+-  Create the grid.
 
--  Interpolate Elevation
+3. Interpolate Elevation
+---------------------------
 
-   -  Import full coverage raster.
+-  Import full coverage raster.
 
-      -  If a new area is needed, it is easy to create a mosaic of the two rasters.
+   -  If a new area is needed, it is easy to create a mosaic of the two rasters.
 
-      -  Export the grid layer as a raster and use a mosaic tool to combine the two rasters.
+   -  Export the grid layer as a raster and use a mosaic tool to combine the two rasters.
 
-      -  It is a good idea to use the new grid element resolution and alignment as the extent and size for the raster.
+   -  It is a good idea to use the new grid element resolution and alignment as the extent and size for the raster.
 
-   -  Sample full coverage raster with the Sampling grid elevation from raster layer.
+-  Sample full coverage raster with the Sampling grid elevation from raster layer.
 
--  Roughness
+4. Roughness
+--------------
 
-   -  Recalculate from a full coverage shapefile.
+-  Recalculate from a full coverage shapefile/raster.
 
-   -  If shapefile is not available,
+-  If shapefile is not available,
 
-      -  Export the old grid and intersect it with roughness polygons for the new grid.
+   -  Export the old grid and intersect it with roughness polygons for the new grid.
 
-      -  Use a Dissolve tool to simplify the shapefile so it combines like polygons with the same n-value.
+   -  Use a Dissolve tool to simplify the shapefile so it combines like polygons with the same n-value.
 
--  Buildings
+5. Buildings
+-------------
 
-   -  Recalculate from Blocked Areas layer.
+-  Recalculate from Blocked Areas layer.
 
-   -  It may be necessary to add buildings from additional area.
+-  It may be necessary to add buildings from additional area.
 
--  Extra Grid features
+6. Extra Grid features
+-----------------------
 
-   -  Run separate tools for Spatial Tol, Spatial Froude, Spatial Shallow n, and Gutters.
+-  Run separate tools for Spatial Tol, Spatial Froude, Spatial Shallow n, and Gutters.
 
--  Infiltration
+7. Infiltration
+-----------------
 
-   -  Recalculate from external layers.
+-  Recalculate from external layers.
 
-   -  It may be necessary to add infiltration areas to the infiltration shapefile.
+-  It may be necessary to add infiltration areas to the infiltration shapefile.
 
-      -  If extra data is needed, intersect the new data into the Soil and Landuse shapefiles.
+   -  If extra data is needed, intersect the new data into the Soil and Landuse shapefiles.
 
--  Hydraulic Structures
+8. Hydraulic Structures
+-------------------------
 
-   -  Copy polyline features from Structures Schematic Layer.
+-  Copy polyline features from Structures Schematic Layer.
 
-   -  Paste into Structures User Layer.
+-  Paste into Structures User Layer.
 
-   -  Run structures schematize tool to refresh data.
+-  Run structures schematize tool to refresh data.
 
-   -  Add new structures using the editor tool and table editor after refreshing the data.
+-  Add new structures using the editor tool and table editor after refreshing the data.
 
-   -  Rerun schematize tool to add new data to final Schematic Layer.
+-  Rerun schematize tool to add new data to final Schematic Layer.
 
--  Levees
+9. Levees
+----------
 
-   -  If User Layers Levee Lines are available, use them to recalculate the levees.
+-  If User Layers Levee Lines are available, use them to recalculate the levees.
 
-   -  If Levee Lines User Layer is not present, use this simple process to copy them from the Schematized Levees.
-      (This does not work for walls)
+-  If Levee Lines User Layer is not present, use this simple process to copy them from the Schematized Levees.
 
-      -  Create levee lines the center of the levee.
-         This is just the standard create levee polyline using the editor add polyline process.
+   -  Create levee lines the center of the levee.
+      This is just the standard create levee polyline using the editor add polyline process.
 
-      -  Make certain these lines cross the Schematic Levees frequently.
+   -  Make certain these lines cross the Schematic Levees frequently.
 
-      -  Intersect the Levee Lines Layer and Levees Layer to generate a point file with crest elevation.
+   -  Intersect the Levee Lines Layer and Levees Layer to generate a point file with crest elevation.
 
-      -  Copy that to the Elevation Points Layer.
+   -  Copy that to the Elevation Points Layer.
 
-      -  Run the Levee Calc tool with Levee Lines and Points.
+   -  Run the Levee Calc tool with Levee Lines and Points.
 
-      -  The idea is to intersect the schema lines and get the crest elevation for the points layer.
+   -  The idea is to intersect the schema lines and get the crest elevation for the points layer.
 
-   -  Walls
+   .. note:: This does not work for walls.
 
-      -  Recalculate walls from wall data.
+-  Walls
 
--  Boundary Conditions
+   -  Recalculate walls from wall data.
 
-   -  Run schematize button.
+10. Boundary Conditions
+-----------------------
 
-   -  The downstream boundary might need to be edited or repositioned.
+-  Run schematize button.
 
--  Rain
+-  The downstream boundary might need to be edited or repositioned.
 
-   -  Rerun depth Area Reduction sampler if used.
+11. Rain
+--------
+
+-  Rerun depth Area Reduction sampler if used.
 
 -  Save and export data.
 
--  Channels
+12. Channels
+-------------
 
-   -  Rerun schematize.
+-  Rerun schematize.
 
-   -  Export .DAT files.
+-  Export .DAT files.
 
-   -  Run Interpolator.
+-  Run Interpolator.
 
-   -  Import interpolated channels.
+-  Import interpolated channels.
 
-   -  It may be necessary to make left and right bank alignment corrections.
+-  It may be necessary to make left and right bank alignment corrections.
 
--  Floodplain cross sections
+13. Floodplain cross sections
+------------------------------
 
-   -  Rerun schematize.
+-  Rerun schematize.
 
-   -  It may be necessary to add new cross sections.
+-  It may be necessary to add new cross sections.
 
--  Storm Drain
+Storm Drain
+------------
 
-   -  Add new data to the storm drain shapefiles.
+-  Add new data to the storm drain shapefiles.
 
-   -  Rerun storm drain calculator tool to convert to the FLO-2D User layers.
+-  Rerun storm drain calculator tool to convert to the FLO-2D User layers.
 
-   -  Run schematize.
+-  Run schematize.
 
-   -  Export swmm.inp.
+-  Export swmm.inp.
+
+FLO-2D Pro
+-----------
 
 -  Export Data
 

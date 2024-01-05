@@ -8,7 +8,11 @@
 FLO-2D Plugin User Manual
 ============================================
 
-
+The FLO-2D Plugin for QGIS is a tool to develop, format, analyze, and display data used by the FLO-2D Flood Model.
+The Plugin can import project data, generate data and export appropriately formatted FLO-2D data input files for a
+FLO-2D Project. This website serves as the comprehensive documentation for the FLO-2D Plugin, encompassing all features
+available in the current version. However, it's important to note that this documentation does not cover the
+functionality and usage of the FLO-2D model, which has a separate set of reference manuals.
 
 Table of Contents
 ----------------------
