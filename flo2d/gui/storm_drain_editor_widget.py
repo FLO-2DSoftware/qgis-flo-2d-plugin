@@ -2782,6 +2782,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                             swmm_inp_file.write("\n;;Name           Type       X-Value    Y-Value")
                             swmm_inp_file.write("\n;;-------------- ---------- ---------- ----------")
 
+                            # Write curves of type 'PumpN' (N being 1,2,3, or 4):
                             line1 = "\n{0:16} {1:<10} {2:<10.2f} {3:<10.2f}"
                             name = ""
                             for row in pump_curves_rows:
@@ -2794,6 +2795,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                                     name = lrow[0]
                                 swmm_inp_file.write(line1.format(*lrow))
 
+                            # Write curves of type 'Tidal'
                             line2 = "\n{0:16} {1:<10} {2:<10} {3:<10}"
                             name = ""
                             for row in tidal_curves_rows:
@@ -2805,6 +2807,8 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                                     swmm_inp_file.write("\n;Description")
                                     name = lrow[0]
                                 swmm_inp_file.write(line2.format(*lrow))
+                                
+                            # Write all other curves in storm_drain.INP_curves:  
 
                     except Exception as e:
                         QApplication.restoreOverrideCursor()

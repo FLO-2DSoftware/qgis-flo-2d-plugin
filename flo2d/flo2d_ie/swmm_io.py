@@ -778,10 +778,13 @@ class StormDrainProject(object):
             if inflows:
                 for infl in inflows:
                     if not infl or infl[0] in self.ignore:
-                        continue
-                    inflow_dict = dict(zip_longest(inflows_cols, infl.split()))
-                    inflow = inflow_dict.pop("node_name")
-                    self.INP_inflows[inflow] = inflow_dict
+                       continue                   
+                    elif infl.split()[0] not in self.INP_nodes:
+                        self.status_report += "Undefined Node (?) reference at \n[INFLOW]\n" + infl + "\n\n"      
+                    else:
+                        inflow_dict = dict(zip_longest(inflows_cols, infl.split()))
+                        inflow = inflow_dict.pop("node_name")
+                        self.INP_inflows[inflow] = inflow_dict
         except Exception as e:
             self.uc.bar_warn("WARNING 221121.1021: Reading inflows from SWMM input data failed!")
 
