@@ -1360,7 +1360,6 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
 
     def schematize_bc(self):
 
-        start_time = time.time()
         in_inserted, out_inserted, out_deleted = 0, 0, 0
         border = []
         exist_user_bc = self.gutils.execute("SELECT * FROM all_user_bc;").fetchone()
@@ -1398,8 +1397,6 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
             + str(out_inserted - out_deleted)
             + " outflows boundary conditions schematized!"
         )
-
-        QgsMessageLog.logMessage(f"Time taken: {time.time() - start_time} seconds")
 
     def schematize_outflows(self):
         QApplication.setOverrideCursor(Qt.WaitCursor)

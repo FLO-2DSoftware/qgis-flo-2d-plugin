@@ -2678,14 +2678,18 @@ CREATE TRIGGER "update_all_schem_bc_on_inflow_cell_insert"
     AFTER INSERT ON "inflow_cells"
     BEGIN
         INSERT INTO "all_schem_bc" (type, tab_bc_fid, grid_fid, geom)
-        SELECT 'inflow', NEW."fid", NEW."grid_fid", (SELECT geom from grid WHERE fid = NEW.grid_fid);
+        SELECT 'inflow', inflow.bc_fid, NEW."grid_fid", (SELECT geom from grid WHERE fid = NEW.grid_fid)
+        FROM inflow
+        WHERE inflow.fid = NEW.inflow_fid;
     END;
 
 CREATE TRIGGER "update_all_schem_bc_on_outflow_cell_insert"
     AFTER INSERT ON "outflow_cells"
     BEGIN
         INSERT INTO "all_schem_bc" (type, tab_bc_fid, grid_fid, geom)
-        SELECT 'outflow', NEW."fid", NEW."grid_fid", (SELECT geom from grid WHERE fid = NEW.grid_fid);
+        SELECT 'outflow', outflow.bc_fid, NEW."grid_fid", (SELECT geom from grid WHERE fid = NEW.grid_fid)
+        FROM outflow
+        WHERE outflow.fid = NEW.outflow_fid;
     END;
 
 CREATE TRIGGER "update_all_schem_bc_on_inflow_cell_delete"
