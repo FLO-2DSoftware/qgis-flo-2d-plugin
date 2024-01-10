@@ -2110,7 +2110,9 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
         self.plot_item_name = None
         if self.outflow.typ in [5, 6, 7, 8]:
             self.plot_item_name = "Time"
-        elif self.outflow.typ == 11:
+        elif self.outflow.typ == 9:
+            self.plot_item_name = "Q(h) parameters"
+        elif self.outflow.typ == 10:
             self.plot_item_name = "Q(h) table"
         else:
             pass
@@ -2364,8 +2366,15 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
             else:
                 pass
         data_name = self.outflow_data_cbo.currentText()
-        self.outflow.set_data(data_name, data)
-        if len(data) == 2:
+        typ_idx = self.outflow_type_cbo.currentIndex()
+        if typ_idx in [5,6,7,8]:
             self.outflow.set_time_series_data(data_name, data)
+        elif typ_idx in [9]:
+            self.outflow.set_qh_params_data(data_name, data)
+        elif typ_idx in [10]:
+            self.outflow.set_qh_table_data(data_name, data)
+        else:
+            pass
+
         self.update_outflow_plot()
 
