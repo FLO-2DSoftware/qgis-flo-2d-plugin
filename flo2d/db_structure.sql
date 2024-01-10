@@ -1423,7 +1423,7 @@ INSERT INTO gpkg_contents (table_name, data_type) VALUES ('swmm_time_series_data
 CREATE TABLE "swmm_tidal_curve" (
     "fid" INTEGER NOT NULL PRIMARY KEY,
     "tidal_curve_name" TEXT UNIQUE ON CONFLICT REPLACE, -- 
-    "tidal_curve_description" TEXT
+    "tidal_curve_description" TEXT DEFAULT ""
 );
 INSERT INTO gpkg_contents (table_name, data_type) VALUES ('swmm_tidal_curve', 'aspatial');
 
@@ -1482,11 +1482,21 @@ CREATE TABLE "swmm_pumps_curve_data" (
     "fid" INTEGER NOT NULL PRIMARY KEY,
     "pump_curve_name" TEXT, 
     "pump_curve_type" TEXT,
-    "description" TEXT,
+    "description" TEXT DEFAULT "",
     "x_value" REAL DEFAULT 0.0,
     "y_value" REAL DEFAULT 0.0
 );
 INSERT INTO gpkg_contents (table_name, data_type) VALUES ('swmm_pumps_curve_data', 'aspatial');
+
+CREATE TABLE "swmm_other_curves" (
+    "fid" INTEGER NOT NULL PRIMARY KEY,
+    "name" TEXT, 
+    "type" TEXT,
+    "description" TEXT DEFAULT "",
+    "x_value" REAL DEFAULT 0.0,
+    "y_value" REAL DEFAULT 0.0
+);
+INSERT INTO gpkg_contents (table_name, data_type) VALUES ('swmm_other_curves', 'aspatial');
 
 CREATE TABLE "user_swmm_orifices" (
     "fid" INTEGER PRIMARY KEY NOT NULL,
