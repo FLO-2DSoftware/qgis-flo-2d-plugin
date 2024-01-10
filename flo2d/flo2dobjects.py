@@ -988,9 +988,9 @@ class Outflow(GeoPackageUtils):
         """
         if self.typ in [5, 6, 7, 8]:
             return self.get_time_series()
-        elif self.typ in [9, 10]:
+        elif self.typ == 9:
             return self.get_qh_params()
-        elif self.typ == 11:
+        elif self.typ == 10:
             return self.get_qh_tables()
         else:
             pass
