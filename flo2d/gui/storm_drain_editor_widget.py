@@ -2783,7 +2783,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                     # INP CURVES ###################################################
                     try:
                         all_curves = self.select_this_INP_group(INP_groups, "curves")
-                        SD_pump_curves_sql = """SELECT pump_curve_name, pump_curve_type, x_value, y_value
+                        SD_pump_curves_sql = """SELECT pump_curve_name, pump_curve_type, x_value, y_value, description
                                           FROM swmm_pumps_curve_data ORDER BY fid;"""
                         pump_curves_rows = self.gutils.execute(SD_pump_curves_sql).fetchall()
 
@@ -2808,7 +2808,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                                     lrow[1] = "     "
                                 else:
                                     swmm_inp_file.write("\n")
-                                    swmm_inp_file.write("\n;Description")
+                                    swmm_inp_file.write("\n;" + lrow[4])
                                     name = lrow[0]
                                 swmm_inp_file.write(line1.format(*lrow))
 
