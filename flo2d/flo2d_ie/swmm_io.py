@@ -874,13 +874,26 @@ class StormDrainProject(object):
             if curves:
                 for c in curves:
                     if not c or c[0] in self.ignore:
-                        continue
+                        if c:
+                            description = ""
+                            if c[1]:
+                                if c[1] != ";": # This is a description:
+                                    description = c[1:]
+                                    continue
+                                else:
+                                    continue 
+                        else:
+                            description = ""
+                            continue    
+                           
                     items = c.split()
                     if len(items) == 4:
                         prev_type = items[1]
+                        items.insert(len(items),description)
                         self.INP_curves.append(items)
                     elif len(items) == 3:
                         items.insert(1, prev_type)
+                        items.insert(len(items),description)
                         self.INP_curves.append(items)
                     else:
                         msg += c + "\n"
