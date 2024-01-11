@@ -753,23 +753,64 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
         if type == "inflow":
             inflow_bc_idx = cb.currentIndex() + 1
             qry = f"""
-                    UPDATE inflow_time_series_data
-                    SET time = 0,
-                    value = 0,
-                    value2 = NULL
-                    WHERE series_fid = {inflow_bc_idx}
-                    """
+                    DELETE FROM inflow_time_series_data
+                    WHERE series_fid = {inflow_bc_idx};
+                   """
             self.gutils.execute(qry)
+            qry = f"""
+                    DELETE FROM inflow_time_series
+                    WHERE fid = {inflow_bc_idx};
+                   """
+            self.gutils.execute(qry)
+            self.populate_inflow_data_cbo()
             self.inflow_data_changed()
         if type == "outflow":
-            # delete data and rename to Time Series 1
-            if cb.count() == 1:
-                self.outflow.get_cur_data_fid()
-                QgsMessageLog.logMessage(str(self.outflow.get_cur_data_fid()))
-            # delete everything
-            else:
-                self.outflow.get_cur_data_fid()
-                QgsMessageLog.logMessage(str(self.outflow.get_cur_data_fid()))
+            outflow_bc_idx = self.outflow.get_cur_data_fid()
+            if self.outflow.typ in [5, 6, 7, 8]:
+                qry = f"""
+                        DELETE FROM outflow_time_series_data
+                        WHERE series_fid = {outflow_bc_idx};
+                       """
+                self.gutils.execute(qry)
+                qry = f"""
+                        DELETE FROM outflow_time_series
+                        WHERE fid = {outflow_bc_idx};
+                       """
+                self.gutils.execute(qry)
+            if self.outflow.typ == 9:
+                qry = f"""
+                        DELETE FROM qh_params_data
+                        WHERE params_fid = {outflow_bc_idx};
+                       """
+                self.gutils.execute(qry)
+                qry = f"""
+                        DELETE FROM qh_params
+                        WHERE fid = {outflow_bc_idx};
+                       """
+                self.gutils.execute(qry)
+            if self.outflow.typ == 10:
+                qry = f"""
+                        DELETE FROM qh_table_data
+                        WHERE table_fid = {outflow_bc_idx};
+                       """
+                self.gutils.execute(qry)
+                qry = f"""
+                        DELETE FROM qh_table
+                        WHERE fid = {outflow_bc_idx};
+                       """
+                self.gutils.execute(qry)
+
+            self.populate_outflow_data_cbo()
+            self.outflow_data_changed()
+
+            # # delete data and rename to Time Series 1
+            # if cb.count() == 1:
+            #     self.outflow.get_cur_data_fid()
+            #     QgsMessageLog.logMessage(str(self.outflow.get_cur_data_fid()))
+            # # delete everything
+            # else:
+            #     self.outflow.get_cur_data_fid()
+            #     QgsMessageLog.logMessage(str(self.outflow.get_cur_data_fid()))
 
     def clear_rubberband(self):
         """
