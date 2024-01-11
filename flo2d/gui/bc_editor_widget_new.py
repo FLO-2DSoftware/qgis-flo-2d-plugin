@@ -4,10 +4,10 @@ from math import isnan
 
 from PyQt5.QtCore import QSettings
 from PyQt5.QtGui import QColor
-from PyQt5.QtWidgets import QInputDialog, QApplication, QFileDialog, QProgressDialog, QMessageBox
+from PyQt5.QtWidgets import QInputDialog, QApplication, QFileDialog, QProgressDialog, QMessageBox, QMainWindow
 from qgis._core import QgsMessageLog, QgsProject, QgsVectorLayer, QgsMapLayer, QgsFeatureRequest, QgsPoint, QgsFeature, \
     QgsGeometry, QgsPointXY
-from qgis._gui import QgsRubberBand
+from qgis._gui import QgsRubberBand, QgsDockWidget
 
 from .table_editor_widget import StandardItem, StandardItemModel, CommandItemEdit
 # FLO-2D Preprocessor tools for QGIS
@@ -48,7 +48,9 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
         self.project = QgsProject.instance()
         self.bc_table = table
         self.bc_data_model = StandardItemModel()
+        self.bc_data_model.clear()
         self.plot = plot
+        self.plot.clear()
         self.table_dock = table
         self.bc_tview = table.tview
         self.bc_tview.setModel(self.bc_data_model)
@@ -61,6 +63,9 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
         self.populate_outflow_type_cbo()
         self.populate_hydrograph_cbo()
         self.rb_tidal = []
+
+        # Variable to catch the outflow or inflow changes
+        self.bc_type = ""
 
         self.user_bc_tables = ["user_bc_points", "user_bc_lines", "user_bc_polygons"]
 
@@ -292,6 +297,7 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
         """
         Function to create the bcs
         """
+        self.bc_type = type
         if self.lyrs.any_lyr_in_edit(*self.user_bc_tables):
             if self.uc.question("Would you like to save the Boundary Condition?"):
                 self.save_changes()
@@ -388,6 +394,7 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
         new_name, ok = QInputDialog.getText(None, "Change data name", "New name:")
         if not ok or not new_name:
             return
+        self.bc_type = type
         # inflow
         if type == "inflow":
             if not cb.findText(new_name) == -1:
@@ -462,6 +469,7 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
             self.schem_inflow_bc_btn.setDisabled(False)
 
     def inflow_changed(self):
+        self.bc_type = "inflow"
         bc_idx = self.inflow_bc_name_cbo.currentIndex()
         cur_data = self.inflow_bc_name_cbo.itemData(bc_idx)
         if cur_data:
@@ -525,6 +533,7 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
         """
         Get current time series data, populate data table and create plot.
         """
+        self.bc_type = "inflow"
 
         self.bc_table.after_delete.disconnect()
         self.bc_table.after_delete.connect(self.save_bc_data)
@@ -579,13 +588,14 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
         """
         self.inflow_bc_name_cbo.clear()
         self.inflow_tseries_cbo.clear()
-        # self.bc_data_model.clear()
-        # self.plot.clear()
+        self.bc_data_model.clear()
+        self.plot.clear()
 
     def inflow_bc_center(self):
         """
         Function to check the inflow eye button
         """
+        self.bc_type = "inflow"
         if self.inflow_bc_center_btn.isChecked():
             self.inflow_bc_center_btn.setChecked(True)
             return
@@ -671,6 +681,7 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
         """
         Function to change the inflow name
         """
+        self.bc_type = type
         if not cb.count():
             if type == "inflow":
                 self.no_bc_disable("inflow")
@@ -711,6 +722,7 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
             fid = cur_data[0]
         else:
             return
+        self.bc_type = type
         if fid and type == "inflow":
             self.inflow.del_row()
         elif fid and type == "outflow":
@@ -737,6 +749,7 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
         q = "Are you sure, you want delete the current Time Series?"
         if not self.uc.question(q):
             return
+        self.bc_type = type
         if type == "inflow":
             inflow_bc_idx = cb.currentIndex() + 1
             qry = f"""
@@ -768,7 +781,7 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
         """
         Function to open the INFLOW.DAT and OUTFLOW.DAT
         """
-
+        self.bc_type = type
         if type == "inflow":
             s = QSettings()
             last_dir = s.value("FLO-2D/lastGpkgDir", "")
@@ -1270,6 +1283,9 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
     def add_data(self, type):
         if not self.gutils:
             return
+        self.bc_type = type
+        self.bc_data_model.clear()
+        self.plot.clear()
         if type == "inflow":
             if not self.inflow:
                 return
@@ -1301,6 +1317,7 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
             ):
                 return
 
+        self.bc_type = "inflow"
         QApplication.setOverrideCursor(Qt.WaitCursor)
 
         in_inserted = self.schematize_inflows()
@@ -1332,6 +1349,7 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
             ):
                 return
 
+        self.bc_type = "outflow"
         QApplication.setOverrideCursor(Qt.WaitCursor)
 
         out_inserted = self.schematize_outflows()
@@ -1688,6 +1706,7 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
         """
         Function to save changes on the floodplain/channel and on inflow type
         """
+        self.bc_type = "inflow"
         if cb.count():
             if self.ifc_fplain_radio.isChecked():
                 self.inflow.ident = "F"
@@ -1719,6 +1738,7 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
         """
         Function to check the outflow eye button
         """
+        self.bc_type = "outflow"
         if self.outflow_bc_center_btn.isChecked():
             self.outflow_bc_center_btn.setChecked(True)
             return
@@ -1833,10 +1853,14 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
         self.change_bc_type(typ, fid)
 
     def outflow_changed(self):
+        self.bc_type = "outflow"
         self.enable_outflow_types()
         bc_idx = self.outflow_bc_name_cbo.currentIndex()
         cur_data = self.outflow_bc_name_cbo.itemData(bc_idx)
+        self.bc_tview.undoStack.clear()
+        self.bc_tview.setModel(self.bc_data_model)
         self.bc_data_model.clear()
+        self.plot.clear()
         if cur_data:
             self.out_fid, self.type_fid, self.geom_type = cur_data
         else:
@@ -1865,6 +1889,7 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
             self.outflow_type_cbo.model().item(idx).setEnabled(True)
 
     def outflow_type_changed(self):
+        self.bc_type = "outflow"
         self.bc_data_model.clear()
         typ_idx = self.outflow_type_cbo.currentIndex()
         self.set_outflow_widgets(typ_idx)
@@ -2025,6 +2050,7 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
         self.outflow_data_changed()
 
     def outflow_data_changed(self):
+        self.bc_type = "outflow"
         self.outflow.get_cur_data_fid()
         out_nr = self.outflow_data_cbo.count()
         if not out_nr:
@@ -2090,6 +2116,7 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
             self.outflow_hydro_cbo.addItem(h_name, i)
 
     def outflow_hydrograph_changed(self):
+        self.bc_type = "outflow"
         self.outflow.hydro_out = self.outflow_hydro_cbo.currentIndex()
         self.outflow.set_row()
 
@@ -2119,6 +2146,7 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
         """
         Disable elements when there is no BC
         """
+        self.bc_type = type
         if type == "inflow":
             self.inflow_name_label.setDisabled(True)
             self.inflow_bc_name_cbo.setDisabled(True)
@@ -2198,25 +2226,30 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
         """
         Create initial plot.
         """
-        if self.inflow_grpbox.isChecked():
+        if self.bc_type == "inflow":
             self.create_inflow_plot()
-        elif self.outflow_grpbox.isChecked():
+        if self.bc_type == "outflow":
             self.create_outflow_plot()
 
     def update_plot(self):
         """
         When data model data change, update the plot.
         """
-        if self.inflow_grpbox.isChecked():
+        if self.bc_type == "inflow":
             self.update_inflow_plot()
-        elif self.outflow_grpbox.isChecked():
+        if self.bc_type == "outflow":
             self.update_outflow_plot()
 
     def save_bc_data(self):
+        """
+        Save the boundary condition data.
+        """
         self.update_plot()
-        if self.inflow_grpbox.isChecked():
+
+        if self.bc_type == "inflow":
             self.save_inflow_data()
-        elif self.outflow_grpbox.isChecked():
+
+        if self.bc_type == "outflow":
             self.save_outflow_data()
 
     def cancel_bc_lyrs_edits(self, type):
@@ -2226,6 +2259,7 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
         # if user bc layers are edited
         if not self.gutils:
             return
+        self.bc_type = type
         user_bc_edited = self.lyrs.rollback_lyrs_edits(*self.user_bc_tables)
         if user_bc_edited:
             self.populate_bcs()
@@ -2261,6 +2295,7 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
         if not self.uc.question(msg):
             return
         else:
+            self.bc_type = type
             try:
                 QApplication.setOverrideCursor(Qt.WaitCursor)
                 if type == "inflow":
@@ -2288,7 +2323,6 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
         """
         Function to create outflow bc into the whole outside grid cells
         """
-
         msg = "This boundary method applies a normal depth boundary to every grid element on the outer edge " \
               "of the computational domain. Please review the grid element elevation modification that happens " \
               "when this method applied. \n\n" \
@@ -2296,6 +2330,7 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
         if not self.uc.question(msg):
             return
 
+        self.bc_type = "outflow"
         QApplication.setOverrideCursor(Qt.WaitCursor)
 
         try:
