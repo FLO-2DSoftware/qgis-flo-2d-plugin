@@ -2787,11 +2787,11 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                                           FROM swmm_pumps_curve_data ORDER BY fid;"""
                         pump_curves_rows = self.gutils.execute(SD_pump_curves_sql).fetchall()
 
-                        SD_tidal_curves_sql = """SELECT tidal_curve_name, hour, stage
+                        SD_tidal_curves_data_sql = """SELECT tidal_curve_name, hour, stage
                                           FROM swmm_tidal_curve_data ORDER BY fid;"""
-                        tidal_curves_rows = self.gutils.execute(SD_tidal_curves_sql).fetchall()
+                        tidal_curves_data_rows = self.gutils.execute(SD_tidal_curves_data_sql).fetchall()
                         
-                        if not all_curves and not pump_curves_rows and not tidal_curves_rows:
+                        if not all_curves and not pump_curves_rows and not tidal_curves_data_rows:
                             pass
                         else:
                             swmm_inp_file.write("\n")
@@ -2813,15 +2813,18 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                                 swmm_inp_file.write(line1.format(*lrow))
 
                             # Write curves of type 'Tidal'
+                            qry_SD_tidal_curve = """SELECT tidal_curve_description
+                                          FROM swmm_tidal_curve WHERE tidal_curve_name = ?;"""
                             line2 = "\n{0:16} {1:<10} {2:<10} {3:<10}"
                             name = ""
-                            for row in tidal_curves_rows:
+                            for row in tidal_curves_data_rows:
                                 lrow = [row[0], "Tidal", row[1], row[2]]
                                 if lrow[0] == name:
                                     lrow[1] = "     "
                                 else:
+                                    descr = self.gutils.execute(qry_SD_tidal_curve, (lrow[0],)).fetchone()
                                     swmm_inp_file.write("\n")
-                                    swmm_inp_file.write("\n;Description")
+                                    swmm_inp_file.write("\n;" + descr[0])
                                     name = lrow[0]
                                 swmm_inp_file.write(line2.format(*lrow))
                                 

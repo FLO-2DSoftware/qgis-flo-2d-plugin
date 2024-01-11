@@ -626,6 +626,8 @@ class BCEditorWidget(qtBaseClass, uiDialog):
             plot_scene = self.plot.plot.legend.scene()
             if plot_scene is not None:
                 plot_scene.removeItem(self.plot.plot.legend)
+                
+        self.plot.plot.legend = None
         self.plot.plot.addLegend()
 
         self.plot.add_item(
@@ -873,6 +875,8 @@ class BCEditorWidget(qtBaseClass, uiDialog):
             plot_scene = self.plot.plot.legend.scene()
             if plot_scene is not None:
                 plot_scene.removeItem(self.plot.plot.legend)
+                
+        self.plot.plot.legend = None                
         self.plot.plot.addLegend()
 
         self.plot_item_name = None
