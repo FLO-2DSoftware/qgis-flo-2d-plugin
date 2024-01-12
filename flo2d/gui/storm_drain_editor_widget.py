@@ -159,6 +159,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         self.swmm_pumps_curve_data_lyr = None
         self.swmm_tidal_curve_lyr = None
         self.swmm_tidal_curve_data_lyr = None
+        self.swmm_other_curves_lyr = None
         self.swmm_inflows_lyr = None
         self.swmm_inflow_patterns_lyr = None
         self.swmm_time_series_lyr = None
@@ -197,6 +198,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         ]
         self.outlet_columns = ["swmm_allow_discharge"]
 
+        self.other_curve_types = ["Control", "Diversion", "Rating", "Shape", "Storage"]
         self.inletRT = None
         self.plot_item_name = None
         self.inlet_series_data = None
@@ -244,6 +246,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         self.user_swmm_weirs_lyr = self.lyrs.data["user_swmm_weirs"]["qlyr"]
         self.swmm_pumps_curve_data_lyr = self.lyrs.data["swmm_pumps_curve_data"]["qlyr"]
         self.swmm_tidal_curve_lyr = self.lyrs.data["swmm_tidal_curve"]["qlyr"]
+        self.swmm_other_curves_lyr = self.lyrs.data["swmm_other_curves"]["qlyr"]
         self.swmm_tidal_curve_data_lyr = self.lyrs.data["swmm_tidal_curve_data"]["qlyr"]
         self.swmm_inflows_lyr = self.lyrs.data["swmm_inflows"]["qlyr"]
         self.swmm_inflow_patterns_lyr = self.lyrs.data["swmm_inflow_patterns"]["qlyr"]
@@ -1027,16 +1030,17 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                         e,
                     )
 
-                # Pump curves into table swmm_pumps_curve_data:
+                # Curves into pump, tidal, and other curve tables:
                 storm_drain.create_INP_curves_list_with_curves()
                 try:
                     insert_pump_curves_sql = """INSERT INTO swmm_pumps_curve_data
                                             (   pump_curve_name, 
                                                 pump_curve_type, 
                                                 x_value,
-                                                y_value
+                                                y_value,
+                                                description
                                             ) 
-                                            VALUES (?, ?, ?, ?);"""
+                                            VALUES (?, ?, ?, ?, ?);"""
 
                     insert_tidal_curves_sql = """INSERT OR REPLACE INTO swmm_tidal_curve
                                             (   tidal_curve_name, 
@@ -1050,17 +1054,29 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                                                 stage
                                             ) 
                                             VALUES (?, ?, ?);"""
+                                            
+                    insert_other_curves_sql = """INSERT INTO swmm_other_curves
+                                            (   name, 
+                                                type, 
+                                                description,
+                                                x_value,
+                                                y_value
+                                            ) 
+                                            VALUES (?, ?, ?, ?, ?);"""                                            
 
                     remove_features(self.swmm_pumps_curve_data_lyr)
                     remove_features(self.swmm_tidal_curve_lyr)
                     remove_features(self.swmm_tidal_curve_data_lyr)
-
+                    remove_features(self.swmm_other_curves_lyr)
+                    
                     for curve in storm_drain.INP_curves:
                         if curve[1][0:4] in ["Pump", "PUMP"]:
-                            self.gutils.execute(insert_pump_curves_sql, (curve[0], curve[1], curve[2], curve[3]))
+                            self.gutils.execute(insert_pump_curves_sql, (curve[0], curve[1], curve[2], curve[3], curve[4]))
                         elif curve[1][0:5].upper() == "TIDAL":
-                            self.gutils.execute(insert_tidal_curves_sql, (curve[0], curve[1]))
+                            self.gutils.execute(insert_tidal_curves_sql, (curve[0], curve[4]))
                             self.gutils.execute(insert_tidal_curves_data_sql, (curve[0], curve[2], curve[3]))
+                        else:
+                            self.gutils.execute(insert_other_curves_sql, (curve[0], curve[1], curve[4], curve[2], curve[3]))     
 
                 except Exception as e:
                     QApplication.restoreOverrideCursor()
@@ -2766,15 +2782,22 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
 
                     # INP CURVES ###################################################
                     try:
-                        SD_pump_curves_sql = """SELECT pump_curve_name, pump_curve_type, x_value, y_value
+                        # Pumps:
+                        SD_pump_curves_sql = """SELECT pump_curve_name, pump_curve_type, x_value, y_value, description
                                           FROM swmm_pumps_curve_data ORDER BY fid;"""
                         pump_curves_rows = self.gutils.execute(SD_pump_curves_sql).fetchall()
 
-                        SD_tidal_curves_sql = """SELECT tidal_curve_name, hour, stage
+                        # Tidal:
+                        SD_tidal_curves_data_sql = """SELECT tidal_curve_name, hour, stage
                                           FROM swmm_tidal_curve_data ORDER BY fid;"""
-                        tidal_curves_rows = self.gutils.execute(SD_tidal_curves_sql).fetchall()
-
-                        if not pump_curves_rows and not tidal_curves_rows:
+                        tidal_curves_data_rows = self.gutils.execute(SD_tidal_curves_data_sql).fetchall()
+                        
+                        # Other:
+                        SD_other_curves_sql = """SELECT name, type, x_value, y_value, description
+                                          FROM swmm_other_curves ORDER BY fid;"""
+                        other_curves_rows = self.gutils.execute(SD_other_curves_sql).fetchall()                        
+                        
+                        if not other_curves_rows and not pump_curves_rows and not tidal_curves_data_rows:
                             pass
                         else:
                             swmm_inp_file.write("\n")
@@ -2782,6 +2805,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                             swmm_inp_file.write("\n;;Name           Type       X-Value    Y-Value")
                             swmm_inp_file.write("\n;;-------------- ---------- ---------- ----------")
 
+                            # Write curves of type 'PumpN' (N being 1,2,3, or 4):
                             line1 = "\n{0:16} {1:<10} {2:<10.2f} {3:<10.2f}"
                             name = ""
                             for row in pump_curves_rows:
@@ -2790,21 +2814,40 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                                     lrow[1] = "     "
                                 else:
                                     swmm_inp_file.write("\n")
-                                    swmm_inp_file.write("\n;Description")
+                                    if lrow[4]: 
+                                        swmm_inp_file.write("\n;" + lrow[4])
                                     name = lrow[0]
                                 swmm_inp_file.write(line1.format(*lrow))
 
+                            # Write curves of type 'Tidal'
+                            qry_SD_tidal_curve = """SELECT tidal_curve_description
+                                          FROM swmm_tidal_curve WHERE tidal_curve_name = ?;"""
                             line2 = "\n{0:16} {1:<10} {2:<10} {3:<10}"
                             name = ""
-                            for row in tidal_curves_rows:
+                            for row in tidal_curves_data_rows:
                                 lrow = [row[0], "Tidal", row[1], row[2]]
                                 if lrow[0] == name:
                                     lrow[1] = "     "
                                 else:
+                                    descr = self.gutils.execute(qry_SD_tidal_curve, (lrow[0],)).fetchone()
                                     swmm_inp_file.write("\n")
-                                    swmm_inp_file.write("\n;Description")
+                                    if descr[0]:
+                                        swmm_inp_file.write("\n;" + descr[0])
                                     name = lrow[0]
                                 swmm_inp_file.write(line2.format(*lrow))
+                                
+                            # Write all other curves in storm_drain.INP_curves:
+                            name = ""
+                            for row in other_curves_rows:
+                                lrow = list(row)
+                                if lrow[0] == name:
+                                    lrow[1] = "     "
+                                else:
+                                    swmm_inp_file.write("\n")
+                                    if lrow[4]:
+                                        swmm_inp_file.write("\n;" + lrow[4])
+                                    name = lrow[0]
+                                swmm_inp_file.write(line1.format(*lrow))                            
 
                     except Exception as e:
                         QApplication.restoreOverrideCursor()
@@ -3049,6 +3092,8 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                     + "\t[CONDUITS]\n"
                     + str(len(pumps_rows))
                     + "\t[PUMPS]\n"
+                    + str(len(pump_curves_rows))
+                    + "\t[CURVES]\n"                    
                     + str(len(orifices_rows))
                     + "\t[ORIFICES]\n"
                     + str(len(weirs_rows))

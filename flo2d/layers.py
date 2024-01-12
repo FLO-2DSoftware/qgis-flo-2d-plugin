@@ -927,6 +927,16 @@ class Layers(object):
                         "readonly": False,
                     },
                 ),
+                (
+                    "swmm_other_curves",
+                    {
+                        "name": "Storm Drain Other Curves",
+                        "sgroup": "Storm Drain",
+                        "styles": None,
+                        "attrs_edit_widgets": {},
+                        "readonly": False,
+                    },
+                ),                
                 # Infiltration Layers
                 (
                     "infil",

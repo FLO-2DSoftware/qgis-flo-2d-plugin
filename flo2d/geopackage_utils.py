@@ -249,6 +249,7 @@ class GeoPackageUtils(object):
         'swmm_time_series', 'swmm_time_series_data', 'swmm_tidal_curve',
         'swmm_tidal_curve_data', 'user_swmm_conduits', 'user_swmm_pumps',
         'swmm_pumps_curve_data', 'user_swmm_orifices', 'user_swmm_weirs', 'swmmflo',
+        'swmm_other_curves',
         'swmmflort', 'swmmflort_data', 'swmmflo_culvert', 'swmmoutf', 'swmm_export',
         'spatialshallow', 'spatialshallow_cells', 'gutter_globals', 'gutter_areas',
         'gutter_lines', 'gutter_cells', 'tailing_cells', 'tolspatial', 'tolspatial_cells',

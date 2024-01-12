@@ -778,10 +778,13 @@ class StormDrainProject(object):
             if inflows:
                 for infl in inflows:
                     if not infl or infl[0] in self.ignore:
-                        continue
-                    inflow_dict = dict(zip_longest(inflows_cols, infl.split()))
-                    inflow = inflow_dict.pop("node_name")
-                    self.INP_inflows[inflow] = inflow_dict
+                       continue                   
+                    elif infl.split()[0] not in self.INP_nodes:
+                        self.status_report += "Undefined Node (?) reference at \n[INFLOW]\n" + infl + "\n\n"      
+                    else:
+                        inflow_dict = dict(zip_longest(inflows_cols, infl.split()))
+                        inflow = inflow_dict.pop("node_name")
+                        self.INP_inflows[inflow] = inflow_dict
         except Exception as e:
             self.uc.bar_warn("WARNING 221121.1021: Reading inflows from SWMM input data failed!")
 
@@ -871,13 +874,26 @@ class StormDrainProject(object):
             if curves:
                 for c in curves:
                     if not c or c[0] in self.ignore:
-                        continue
+                        if c:
+                            description = ""
+                            if c[1]:
+                                if c[1] != ";": # This is a description:
+                                    description = c[1:]
+                                    continue
+                                else:
+                                    continue 
+                        else:
+                            description = ""
+                            continue    
+                           
                     items = c.split()
                     if len(items) == 4:
                         prev_type = items[1]
+                        items.insert(len(items),description)
                         self.INP_curves.append(items)
                     elif len(items) == 3:
                         items.insert(1, prev_type)
+                        items.insert(len(items),description)
                         self.INP_curves.append(items)
                     else:
                         msg += c + "\n"
