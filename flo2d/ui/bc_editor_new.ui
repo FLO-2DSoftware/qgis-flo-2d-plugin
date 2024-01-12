@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>428</width>
+    <width>369</width>
     <height>475</height>
    </rect>
   </property>
@@ -116,6 +116,12 @@
           </item>
           <item row="5" column="1">
            <widget class="QToolButton" name="schem_inflow_bc_btn">
+            <property name="minimumSize">
+             <size>
+              <width>31</width>
+              <height>0</height>
+             </size>
+            </property>
             <property name="toolTip">
              <string>Schematize inflow boundary conditions</string>
             </property>
@@ -143,6 +149,12 @@
           </item>
           <item row="3" column="9">
            <widget class="QToolButton" name="change_inflow_data_name_btn">
+            <property name="minimumSize">
+             <size>
+              <width>23</width>
+              <height>0</height>
+             </size>
+            </property>
             <property name="toolTip">
              <string>Rename inflow time series</string>
             </property>
@@ -205,6 +217,12 @@
           </item>
           <item row="1" column="11">
            <widget class="QToolButton" name="clear_inflow_rubberband_btn">
+            <property name="minimumSize">
+             <size>
+              <width>23</width>
+              <height>0</height>
+             </size>
+            </property>
             <property name="toolTip">
              <string>Clear the inflow rubberband</string>
             </property>
@@ -232,6 +250,12 @@
           </item>
           <item row="3" column="11">
            <widget class="QToolButton" name="add_inflow_data_btn">
+            <property name="minimumSize">
+             <size>
+              <width>23</width>
+              <height>0</height>
+             </size>
+            </property>
             <property name="toolTip">
              <string>Add inflow time series</string>
             </property>
@@ -257,6 +281,12 @@
               <horstretch>0</horstretch>
               <verstretch>0</verstretch>
              </sizepolicy>
+            </property>
+            <property name="minimumSize">
+             <size>
+              <width>23</width>
+              <height>0</height>
+             </size>
             </property>
             <property name="toolTip">
              <string>Rename inflow boundary condition</string>
@@ -284,6 +314,12 @@
            <layout class="QHBoxLayout" name="horizontalLayout_2">
             <item>
              <widget class="QToolButton" name="create_inflow_point_bc_btn">
+              <property name="minimumSize">
+               <size>
+                <width>31</width>
+                <height>0</height>
+               </size>
+              </property>
               <property name="toolTip">
                <string>Add point inflow boundary condition</string>
               </property>
@@ -399,6 +435,12 @@
           </item>
           <item row="1" column="10">
            <widget class="QToolButton" name="delete_inflow_bc_btn">
+            <property name="minimumSize">
+             <size>
+              <width>23</width>
+              <height>0</height>
+             </size>
+            </property>
             <property name="toolTip">
              <string>Delete inflow boundary condition</string>
             </property>
@@ -419,6 +461,12 @@
           </item>
           <item row="3" column="10">
            <widget class="QToolButton" name="delete_inflow_ts_btn">
+            <property name="minimumSize">
+             <size>
+              <width>23</width>
+              <height>0</height>
+             </size>
+            </property>
             <property name="toolTip">
              <string>Delete inflow time series</string>
             </property>
@@ -477,6 +525,12 @@
           </item>
           <item row="1" column="12">
            <widget class="QToolButton" name="inflow_bc_center_btn">
+            <property name="minimumSize">
+             <size>
+              <width>23</width>
+              <height>0</height>
+             </size>
+            </property>
             <property name="toolTip">
              <string>Lock into the selected inflow boundary condition</string>
             </property>
@@ -539,7 +593,7 @@
         <bool>true</bool>
        </property>
        <property name="sizePolicy">
-        <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+        <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
          <horstretch>0</horstretch>
          <verstretch>0</verstretch>
         </sizepolicy>
@@ -557,7 +611,7 @@
         <item row="0" column="0">
          <layout class="QGridLayout" name="gridLayout_4" columnstretch="0,0,0,0,0,0,0,0,0,0,0,0,0,0">
           <property name="sizeConstraint">
-           <enum>QLayout::SetMaximumSize</enum>
+           <enum>QLayout::SetDefaultConstraint</enum>
           </property>
           <item row="6" column="2" colspan="12">
            <spacer name="horizontalSpacer_3">
@@ -593,6 +647,12 @@
            <layout class="QHBoxLayout" name="horizontalLayout_3">
             <item>
              <widget class="QToolButton" name="create_outflow_point_bc_btn">
+              <property name="minimumSize">
+               <size>
+                <width>29</width>
+                <height>0</height>
+               </size>
+              </property>
               <property name="toolTip">
                <string>Add point outflow boundary condition</string>
               </property>
@@ -613,6 +673,12 @@
             </item>
             <item>
              <widget class="QToolButton" name="create_outflow_line_bc_btn">
+              <property name="minimumSize">
+               <size>
+                <width>28</width>
+                <height>0</height>
+               </size>
+              </property>
               <property name="toolTip">
                <string>Add line outflow boundary condition</string>
               </property>
@@ -633,6 +699,12 @@
             </item>
             <item>
              <widget class="QToolButton" name="create_outflow_polygon_bc_btn">
+              <property name="minimumSize">
+               <size>
+                <width>28</width>
+                <height>0</height>
+               </size>
+              </property>
               <property name="toolTip">
                <string>Add polygon outflow boundary condition</string>
               </property>
@@ -653,6 +725,12 @@
             </item>
             <item>
              <widget class="QToolButton" name="rollback_outflow_btn">
+              <property name="minimumSize">
+               <size>
+                <width>27</width>
+                <height>0</height>
+               </size>
+              </property>
               <property name="toolTip">
                <string>Rollback edits in outflow boundary conditions</string>
               </property>
@@ -673,6 +751,12 @@
             </item>
             <item>
              <widget class="QToolButton" name="create_all_border_outflow_bc_btn">
+              <property name="minimumSize">
+               <size>
+                <width>28</width>
+                <height>0</height>
+               </size>
+              </property>
               <property name="toolTip">
                <string>Add outflow boundary conditions to the whole grid boundary cells</string>
               </property>
@@ -706,6 +790,12 @@
             </item>
             <item>
              <widget class="QToolButton" name="open_outflow_btn">
+              <property name="minimumSize">
+               <size>
+                <width>28</width>
+                <height>0</height>
+               </size>
+              </property>
               <property name="toolTip">
                <string>Open OUTFLOW.DAT</string>
               </property>
@@ -726,6 +816,12 @@
             </item>
             <item>
              <widget class="QToolButton" name="delete_schem_outflow_bc_btn">
+              <property name="minimumSize">
+               <size>
+                <width>27</width>
+                <height>0</height>
+               </size>
+              </property>
               <property name="acceptDrops">
                <bool>true</bool>
               </property>
@@ -776,6 +872,12 @@
           </item>
           <item row="6" column="1">
            <widget class="QToolButton" name="schem_outflow_bc_btn">
+            <property name="minimumSize">
+             <size>
+              <width>31</width>
+              <height>0</height>
+             </size>
+            </property>
             <property name="toolTip">
              <string>Schematize outflow boundary conditions</string>
             </property>
@@ -796,6 +898,12 @@
           </item>
           <item row="4" column="10">
            <widget class="QToolButton" name="change_outflow_data_name_btn">
+            <property name="minimumSize">
+             <size>
+              <width>23</width>
+              <height>0</height>
+             </size>
+            </property>
             <property name="toolTip">
              <string>Rename outflow time series</string>
             </property>
@@ -810,6 +918,12 @@
           </item>
           <item row="1" column="11">
            <widget class="QToolButton" name="delete_outflow_bc_btn">
+            <property name="minimumSize">
+             <size>
+              <width>23</width>
+              <height>0</height>
+             </size>
+            </property>
             <property name="toolTip">
              <string>Delete outflow boundary condition</string>
             </property>
@@ -830,6 +944,12 @@
           </item>
           <item row="4" column="12">
            <widget class="QToolButton" name="add_outflow_data_btn">
+            <property name="minimumSize">
+             <size>
+              <width>23</width>
+              <height>0</height>
+             </size>
+            </property>
             <property name="toolTip">
              <string>Add outflow time series</string>
             </property>
@@ -857,6 +977,12 @@
           </item>
           <item row="1" column="10">
            <widget class="QToolButton" name="change_outflow_bc_name_btn">
+            <property name="minimumSize">
+             <size>
+              <width>23</width>
+              <height>0</height>
+             </size>
+            </property>
             <property name="toolTip">
              <string>Rename outflow boundary condition</string>
             </property>
@@ -876,6 +1002,12 @@
               <horstretch>0</horstretch>
               <verstretch>0</verstretch>
              </sizepolicy>
+            </property>
+            <property name="minimumSize">
+             <size>
+              <width>23</width>
+              <height>0</height>
+             </size>
             </property>
             <property name="toolTip">
              <string>Clear the outflow rubberband</string>
@@ -925,6 +1057,12 @@
           </item>
           <item row="1" column="13">
            <widget class="QToolButton" name="outflow_bc_center_btn">
+            <property name="minimumSize">
+             <size>
+              <width>23</width>
+              <height>0</height>
+             </size>
+            </property>
             <property name="toolTip">
              <string>Lock into the selected outflow boundary condition</string>
             </property>
@@ -955,6 +1093,12 @@
           </item>
           <item row="4" column="11">
            <widget class="QToolButton" name="delete_outflow_ts_btn">
+            <property name="minimumSize">
+             <size>
+              <width>23</width>
+              <height>0</height>
+             </size>
+            </property>
             <property name="toolTip">
              <string>Delete outflow time series</string>
             </property>
