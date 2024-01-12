@@ -90,8 +90,6 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
             lambda: self.create_bc("user_bc_points", "inflow", self.create_inflow_point_bc_btn))
         self.create_inflow_line_bc_btn.clicked.connect(
             lambda: self.create_bc("user_bc_lines", "inflow", self.create_inflow_line_bc_btn))
-        self.create_inflow_polygon_bc_btn.clicked.connect(
-            lambda: self.create_bc("user_bc_polygons", "inflow", self.create_inflow_polygon_bc_btn))
         self.rollback_inflow_btn.clicked.connect(
             lambda: self.cancel_bc_lyrs_edits("inflow"))
         self.open_inflow_btn.clicked.connect(
@@ -320,7 +318,6 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
         """
         self.create_inflow_point_bc_btn.setChecked(False)
         self.create_inflow_line_bc_btn.setChecked(False)
-        self.create_inflow_polygon_bc_btn.setChecked(False)
         self.create_outflow_point_bc_btn.setChecked(False)
         self.create_outflow_line_bc_btn.setChecked(False)
         self.create_outflow_polygon_bc_btn.setChecked(False)
@@ -2307,7 +2304,6 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
         if type == "inflow":
             self.create_inflow_point_bc_btn.setChecked(False)
             self.create_inflow_line_bc_btn.setChecked(False)
-            self.create_inflow_polygon_bc_btn.setChecked(False)
             try:
                 self.populate_bcs(self.inflow.fid)
             except AttributeError:
