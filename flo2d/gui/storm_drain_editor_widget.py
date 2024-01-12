@@ -2782,16 +2782,22 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
 
                     # INP CURVES ###################################################
                     try:
-                        all_curves = self.select_this_INP_group(INP_groups, "curves")
+                        # Pumps:
                         SD_pump_curves_sql = """SELECT pump_curve_name, pump_curve_type, x_value, y_value, description
                                           FROM swmm_pumps_curve_data ORDER BY fid;"""
                         pump_curves_rows = self.gutils.execute(SD_pump_curves_sql).fetchall()
 
+                        # Tidal:
                         SD_tidal_curves_data_sql = """SELECT tidal_curve_name, hour, stage
                                           FROM swmm_tidal_curve_data ORDER BY fid;"""
                         tidal_curves_data_rows = self.gutils.execute(SD_tidal_curves_data_sql).fetchall()
                         
-                        if not all_curves and not pump_curves_rows and not tidal_curves_data_rows:
+                        # Other:
+                        SD_other_curves_sql = """SELECT name, type, x_value, y_value, description
+                                          FROM swmm_other_curves ORDER BY fid;"""
+                        other_curves_rows = self.gutils.execute(SD_other_curves_sql).fetchall()                        
+                        
+                        if not other_curves_rows and not pump_curves_rows and not tidal_curves_data_rows:
                             pass
                         else:
                             swmm_inp_file.write("\n")
@@ -2808,7 +2814,8 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                                     lrow[1] = "     "
                                 else:
                                     swmm_inp_file.write("\n")
-                                    swmm_inp_file.write("\n;" + lrow[4])
+                                    if lrow[4]: 
+                                        swmm_inp_file.write("\n;" + lrow[4])
                                     name = lrow[0]
                                 swmm_inp_file.write(line1.format(*lrow))
 
@@ -2824,64 +2831,23 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                                 else:
                                     descr = self.gutils.execute(qry_SD_tidal_curve, (lrow[0],)).fetchone()
                                     swmm_inp_file.write("\n")
-                                    swmm_inp_file.write("\n;" + descr[0])
+                                    if descr[0]:
+                                        swmm_inp_file.write("\n;" + descr[0])
                                     name = lrow[0]
                                 swmm_inp_file.write(line2.format(*lrow))
                                 
                             # Write all other curves in storm_drain.INP_curves:
-                            if all_curves:
-                                if all_curves[1]:
-                                    # name = ""
-                                    # for curve in all_curves:
-                                    #         swmm_inp_file.write(curve)                                         
-                                    #         if ";" in curve:
-                                    #             # This is a description line: 
-                                    #             name = ""                                               
-                                    #         else:    
-                                    #             if name == "":
-                                    #                 items = curve.split()  
-                                    #                 name = items[0]  
-                                                                                       
-                                    
-                                    name = ""
-                                    previous = ""
-                                    description = ""
-                                    # Create 2 lists, second one shifted by one:
-                                    the_curves = all_curves[3:]
+                            name = ""
+                            for row in other_curves_rows:
+                                lrow = list(row)
+                                if lrow[0] == name:
+                                    lrow[1] = "     "
+                                else:
                                     swmm_inp_file.write("\n")
-                                    for curve1, curve2 in zip(the_curves, the_curves[1:]):
-                                        if curve1 == previous:
-                                            continue 
-                                        else:
-                                            previous = curve2                                         
-                                        if curve1:
-                                            items1 = curve1.split()
-                                            if curve2:
-                                                items2 = curve2.split()                                            
-                                            if ";" in curve1:
-                                                # There is a description line:
-                                                if items2[1] in self.other_curve_types:
-                                                    swmm_inp_file.write(curve1 + "\n")                                          
-                                                    swmm_inp_file.write(curve2 + "\n")
-                                                    name = items2[0]
-                                            else: 
-                                                if items1[0] == name:
-                                                    swmm_inp_file.write(curve1 + "\n")
-                                                    if curve2:
-                                                        swmm_inp_file.write(curve2 + "\n")
-                                                    else:
-                                                        swmm_inp_file.write("\n")  
-                                                elif items1[1] in self.other_curve_types:
-                                                    if description:
-                                                        swmm_inp_file.write("\n" + description) 
-                                                        description = ""
-                                                    swmm_inp_file.write("\n" + curve1 + "\n") 
-                                                    swmm_inp_file.write(curve2 + "\n") 
-                                                    name = items1[0]   
-                                        else:
-                                            description = curve2
-
-
+                                    if lrow[4]:
+                                        swmm_inp_file.write("\n;" + lrow[4])
+                                    name = lrow[0]
+                                swmm_inp_file.write(line1.format(*lrow))                            
 
                     except Exception as e:
                         QApplication.restoreOverrideCursor()
