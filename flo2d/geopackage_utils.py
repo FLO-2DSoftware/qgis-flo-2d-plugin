@@ -878,11 +878,11 @@ class GeoPackageUtils(object):
         return [row[0] for row in rows]
 
     def get_inflows_list(self):
-        qry = "SELECT fid, name, geom_type, time_series_fid FROM inflow ORDER BY LOWER(name);"
+        qry = "SELECT fid, name, geom_type, time_series_fid FROM inflow ORDER BY LOWER(fid);"
         return self.execute(qry).fetchall()
 
     def get_outflows_list(self):
-        qry = "SELECT fid, name, type, geom_type FROM outflow ORDER BY LOWER(name);"
+        qry = "SELECT fid, name, type, geom_type FROM outflow ORDER BY LOWER(fid);"
         return self.execute(qry).fetchall()
 
     def get_structs_list(self):
