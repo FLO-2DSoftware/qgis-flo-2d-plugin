@@ -1545,7 +1545,7 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
                         JOIN
                             inflow ON abc.bc_fid = inflow.bc_fid
                         WHERE
-                            abc.type = 'inflow'"""
+                            abc.type = 'inflow' AND abc.geom_type = inflow.geom_type"""
             self.gutils.execute(del_qry)
 
             inserted = self.gutils.execute(ins_qry)
