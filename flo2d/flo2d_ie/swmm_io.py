@@ -813,6 +813,7 @@ class StormDrainProject(object):
                     type = pattSplit[1].upper().strip()
                     if type in ["HOURLY", "MONTHLY", "DAILY", "WEEKEND"]:
                         pattern_list = list(zip_longest(pattern_cols, pattSplit))
+                        name = pattSplit[0].strip()
                     else:
                         pattSplit.insert(1, pattern_list[2][1])
                         pattern_list = list(zip_longest(pattern_cols, pattSplit))
@@ -826,7 +827,7 @@ class StormDrainProject(object):
             time_cols_file = ["time_series_name", "file", "file_name"]
             time_cols_date = ["name", "date", "time", "value"]
             times = self.select_this_INP_group("timeseries")
-            warn = ""
+            warn = "WARNING 310323.0507:"
             descr = ""
             if times:
                 for time in times:
@@ -843,15 +844,17 @@ class StormDrainProject(object):
                         time_list = list(zip_longest(time_cols_file, timeSplit))
                     else:
                         if len(timeSplit) < 4:
-                            if warn == "":
-                                if timeSplit[0] != name:
-                                    warn = "WARNING 310323.0507: Wrong data in [TIMESERIES] group!"
-                                    continue
-                                else:
-                                    time = timeSplit[1]
-                                    value = timeSplit[2]
-                                    timeSplit = [name, date, time, value]
-                                    time_list = list(zip_longest(time_cols_date, timeSplit))
+                            warn += "\nWrong [TIMESERIES] line: " + time
+                            continue
+                            # if warn == "":
+                            #     if timeSplit[0] != name:
+                            #         warn = "WARNING 310323.0507: Wrong data in [TIMESERIES] group!"
+                            #         continue
+                            #     else:
+                            #         time = timeSplit[1]
+                            #         value = timeSplit[2]
+                            #         timeSplit = [name, date, time, value]
+                            #         time_list = list(zip_longest(time_cols_date, timeSplit))
                         else:
                             name = timeSplit[0]
                             date = timeSplit[1]
@@ -862,7 +865,7 @@ class StormDrainProject(object):
                     time_list.insert(0, ["description", descr if descr is not None else ""])
                     self.INP_timeseries.append(time_list)
             if warn != "":
-                self.uc.bar_warn(warn)
+                self.uc.show_warn(warn)
         except Exception as e:
             self.uc.bar_warn("WARNING 221121.1022: Reading time series from SWMM input data failed!")
 

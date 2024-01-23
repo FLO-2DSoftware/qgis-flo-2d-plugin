@@ -952,13 +952,13 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                                             VALUES (?, ?, ?, ?);"""
                     i = 0
                     for pattern in storm_drain.INP_patterns:
-                        if pattern[2][1] == "HOURLY":
+                        if pattern[2][1] == "HOURLY" :
                             name = pattern[1][1]
                             description = pattern[0][1]
-                            for j in range(1, 7):
+                            for j in range(0, 6):
                                 i += 1
                                 hour = str(i)
-                                multiplier = pattern[j + 2][1]
+                                multiplier = pattern[j + 3][1]
                                 self.gutils.execute(insert_patterns_sql, (name, description, hour, multiplier))
                             if i == 24:
                                 i = 0
@@ -974,9 +974,12 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 # Inflow time series into table swmm_time_series:
                 storm_drain.create_INP_time_series_list_with_time_series()
 
-                if complete_or_create == "Create New":
-                    remove_features(self.swmm_time_series_lyr)
-                    remove_features(self.swmm_time_series_data_lyr)
+                remove_features(self.swmm_time_series_lyr)
+                remove_features(self.swmm_time_series_data_lyr)
+                
+                # if complete_or_create == "Create New":
+                #     remove_features(self.swmm_time_series_lyr)
+                #     remove_features(self.swmm_time_series_data_lyr)
 
                 try:
                     insert_times_from_file_sql = """INSERT INTO swmm_time_series 
