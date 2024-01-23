@@ -864,7 +864,7 @@ class StormDrainProject(object):
                             time_list = list(zip_longest(time_cols_date, timeSplit))
                     time_list.insert(0, ["description", descr if descr is not None else ""])
                     self.INP_timeseries.append(time_list)
-            if warn != "":
+            if warn != "WARNING 310323.0507:":
                 self.uc.show_warn(warn)
         except Exception as e:
             self.uc.bar_warn("WARNING 221121.1022: Reading time series from SWMM input data failed!")
