@@ -135,11 +135,21 @@ class ParseHDF5:
         return group
 
     @property
+    def bc_group(self):
+        group_name = "Boundary Conditions"
+        group_datasets = ["Inflow", "Outflow"]
+        group = HDF5Group(group_name)
+        for dataset_name in group_datasets:
+            group.create_dataset(dataset_name, [])
+        return group
+
+    @property
     def groups(self):
         grouped_datasets_list = [
             self.control_group,
             self.grid_group,
             self.neighbors_group,
+            self.bc_group
         ]
         return grouped_datasets_list
 

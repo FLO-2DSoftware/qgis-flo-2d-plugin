@@ -15,6 +15,7 @@ from math import isclose
 from operator import itemgetter
 
 import numpy as np
+from qgis._core import QgsMessageLog
 from qgis.core import NULL, QgsApplication
 from qgis.PyQt.QtCore import Qt
 from qgis.PyQt.QtWidgets import QApplication, QProgressDialog
@@ -1907,7 +1908,124 @@ class Flo2dGeoPackage(GeoPackageUtils):
             QApplication.setOverrideCursor(Qt.WaitCursor)
             return False
 
-    def export_inflow(self, outdir):
+    def export_inflow(self, output=None):
+        if self.parsed_format == self.FORMAT_DAT:
+            return self.export_inflow_dat(output)
+        elif self.parsed_format == self.FORMAT_HDF5:
+            return self.export_inflow_hdf5()
+
+    def export_inflow_hdf5(self):
+        """
+        Function to export inflow data to hdf5
+        """
+        if self.is_table_empty("inflow") and self.is_table_empty("reservoirs"):
+            return False
+        cont_sql = """SELECT value FROM cont WHERE name = ?;"""
+        inflow_sql = """SELECT fid, time_series_fid, ident, inoutfc FROM inflow WHERE bc_fid = ?;"""
+        inflow_cells_sql = """SELECT inflow_fid, grid_fid FROM inflow_cells ORDER BY inflow_fid, grid_fid;"""
+        ts_data_sql = (
+            """SELECT time, value, value2 FROM inflow_time_series_data WHERE series_fid = ? ORDER BY fid;"""
+        )
+
+        head_line = " {0: <15} {1}"
+        inf_line = "{0: <15} {1: <15} {2}"
+        tsd_line = "H   {0: <15} {1: <15} {2}"
+
+        ideplt = self.execute(cont_sql, ("IDEPLT",)).fetchone()
+        ihourdaily = self.execute(cont_sql, ("IHOURDAILY",)).fetchone()
+
+        # TODO: Need to implement correct export for ideplt and ihourdaily parameters
+        if ihourdaily is None:
+            ihourdaily = (0,)
+        if ideplt is None:
+            first_gid = self.execute("""SELECT grid_fid FROM inflow_cells ORDER BY fid LIMIT 1;""").fetchone()
+            ideplt = first_gid if first_gid is not None else (0,)
+
+        previous_iid = -1
+        row = None
+
+        warning = ""
+        inflow_lines = []
+
+        if not self.is_table_empty("inflow"):
+            for iid, gid in self.execute(inflow_cells_sql):
+                if previous_iid != iid:
+                    row = self.execute(inflow_sql, (iid,)).fetchone()
+                    if row:
+                        row = [x if x is not None and x != "" else 0 for x in row]
+                        if previous_iid == -1:
+                            inflow_lines.append(head_line.format(ihourdaily[0], ideplt[0]))
+                        previous_iid = iid
+                    else:
+                        warning += (
+                                "Data for inflow in cell "
+                                + str(gid)
+                                + " not found in 'Inflow' table (wrong inflow 'id' "
+                                + str(iid)
+                                + " in 'Inflow Cells' table).\n\n"
+                        )
+                        continue
+                else:
+                    pass
+
+                fid, ts_fid, ident, inoutfc = row  # ident is 'F' or 'C'
+                inflow_lines.append(inf_line.format(ident, inoutfc, gid))
+                series = self.execute(ts_data_sql, (ts_fid,))
+                for tsd_row in series:
+                    tsd_row = [x if x is not None else "" for x in tsd_row]
+                    inflow_lines.append(tsd_line.format(*tsd_row).rstrip())
+
+        if not self.is_table_empty("reservoirs"):
+            schematic_reservoirs_sql = (
+                """SELECT grid_fid, wsel, n_value, use_n_value, tailings FROM reservoirs ORDER BY fid;"""
+            )
+
+            res_line1a = "R   {0: <15} {1:<10.2f} {2:<10.2f}"
+            res_line1at = "R   {0: <15} {1:<10.2f} {4:<10.2f} {2:<10.2f}"
+
+            res_line1b = "R   {0: <15} {1:<10.2f}"
+            res_line1bt = "R   {0: <15} {1:<10.2f} {2:<10.2f}"
+
+            res_line2a = "R     {0: <15} {1:<10.2f} {2:<10.2f}"
+            res_line2at = "R     {0: <15} {1:<10.2f} {4:<10.2f} {2:<10.2f}"
+
+            res_line2b = "R     {0: <15} {1:<10.2f}"
+            res_line2bt = "R     {0: <15} {1:<10.2f} {4:<10.2f}"
+
+            for res in self.execute(schematic_reservoirs_sql):
+                res = [x if x is not None else "" for x in res]
+
+                if res[3] == 1:  # write n value
+                    if res[4] == -1.0:
+                        # Do not write tailings
+                        inflow_lines.append(res_line2a.format(*res))
+                    else:
+                        # Write tailings:
+                        inflow_lines.append(res_line2at.format(*res))
+                else:  # do not write n value
+                    if res[4] == -1.0:
+                        # Do not write tailings:
+                        inflow_lines.append(res_line2b.format(*res))
+                    else:
+                        # Write tailings:
+                        inflow_lines.append(res_line2bt.format(*res))
+
+        if inflow_lines:
+            bc_group = self.parser.bc_group
+            for line in inflow_lines:
+                if line:
+                    values = line.split()
+                    c1 = values[0]
+                    c2 = values[1]
+                    c3 = values[2] if len(values) == 3 else ""
+                    data_array = np.array([c1, c2, c3], dtype=np.string_)
+                    bc_group.datasets["Inflow"].data.append(data_array)
+
+            self.parser.write_groups(bc_group)
+
+        return True
+
+    def export_inflow_dat(self, outdir):
         # check if there are any inflows defined
         try:
             if self.is_table_empty("inflow") and self.is_table_empty("reservoirs"):
@@ -2384,7 +2502,22 @@ class Flo2dGeoPackage(GeoPackageUtils):
             self.uc.show_error("ERROR 101218.1544: exporting EVAPOR.DAT failed!.\n", e)
             return False
 
-    def export_chan(self, outdir):
+    def export_chan(self, output = None):
+        if self.parsed_format == self.FORMAT_DAT:
+            return self.export_chan_dat(output)
+        elif self.parsed_format == self.FORMAT_HDF5:
+            return self.export_chan_hdf5()
+
+    def export_chan_hdf5(self):
+        """
+        Function to export channel data to hdf5
+        """
+
+        if self.is_table_empty("chan"):
+            return False
+        pass
+
+    def export_chan_dat(self, outdir):
         # check if there are any channels defined.
         #         try:
         if self.is_table_empty("chan"):
