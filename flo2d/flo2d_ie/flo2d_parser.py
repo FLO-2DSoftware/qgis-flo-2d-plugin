@@ -18,6 +18,7 @@ from qgis.core import NULL
 from qgis.PyQt.QtCore import QSettings
 from qgis.PyQt.QtWidgets import QMessageBox
 
+from ..flo2d_hdf5.hdf5_descriptions import CONTROL, GRID, NEIGHBORS
 from ..utils import Msge
 
 try:
@@ -151,7 +152,13 @@ class ParseHDF5:
     def write_group_datasets(hdf5_file, group):
         hdf5_group = hdf5_file.create_group(group.name)
         for dataset in sorted(group.datasets.values(), key=attrgetter("name")):
-            hdf5_group.create_dataset(dataset.name, data=dataset.data)
+            ds = hdf5_group.create_dataset(dataset.name, data=dataset.data)
+            if dataset.name in CONTROL:
+                ds.attrs[dataset.name] = CONTROL[dataset.name]
+            if dataset.name in GRID:
+                ds.attrs[dataset.name] = GRID[dataset.name]
+            if dataset.name in NEIGHBORS:
+                ds.attrs[dataset.name] = NEIGHBORS[dataset.name]
 
     def write_groups(self, *groups):
         with h5py.File(self.hdf5_filepath, self.write_mode) as f:
