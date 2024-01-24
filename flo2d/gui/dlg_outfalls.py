@@ -777,24 +777,30 @@ class OutfallTimeSeriesDialog(qtBaseClass, uiDialog):
                         for col, data in enumerate(row_data):
                             if col == 0:
                                 if data:
-                                    a, b, c = data.split("/")
-                                    if len(a) < 2:
-                                        a = "0" * (2 - len(a)) + a
-                                    if len(b) < 2:
-                                        b = "0" * (2 - len(b)) + b
-                                    if len(c) < 4:
-                                        c = "0" * (4 - len(c)) + c
-                                    data = a + "/" + b + "/" + c
+                                    try:
+                                        a, b, c = data.split("/")
+                                        if len(a) < 2:
+                                            a = "0" * (2 - len(a)) + a
+                                        if len(b) < 2:
+                                            b = "0" * (2 - len(b)) + b
+                                        if len(c) < 4:
+                                            c = "0" * (4 - len(c)) + c
+                                        data = a + "/" + b + "/" + c
+                                    except:
+                                        data = "00/00/0000"
                                 else:
                                     data = "00/00/0000"
                             if col == 1:
                                 if data:
-                                    a, b = data.split(":")
-                                    if len(a) == 1:
-                                        a = "0" + a
-                                    data = a + ":" + b
+                                    try:
+                                        a, b = data.split(":")
+                                        if len(a) == 1:
+                                            a = "0" + a
+                                        data = a + ":" + b
+                                    except:
+                                        data = "00:00"    
                                 else:
-                                    data = "00:00"
+                                    data = "00:00"   
                             if col == 2:
                                 data = str(data)
                             item = QTableWidgetItem()
