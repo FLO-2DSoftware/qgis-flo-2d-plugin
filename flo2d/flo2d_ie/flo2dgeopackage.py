@@ -33,7 +33,7 @@ def create_array(line_format, max_columns, *args):
         values = line_format.format(*args[0]).split()
     else:
         values = line_format.format(*args).split()
-    array = np.array(values[:max_columns] + [""] * (max_columns - len(values) - 1), dtype=np.string_)
+    array = np.array(values[:max_columns] + [""] * (max_columns - len(values)), dtype=np.string_)
     return array
 
 
@@ -2607,106 +2607,108 @@ class Flo2dGeoPackage(GeoPackageUtils):
             self.uc.show_error("ERROR 101218.1559: exporting INFIL.DAT failed!.\n", e)
             return False
 
-    def export_infil_hdf5(self, outdir):
+    def export_infil_hdf5(self):
         """
         Function to export infiltration data to HDF5
         """
         pass
-        # # check if there is any infiltration defined.
+        # check if there is any infiltration defined.
         # try:
-        #     if self.is_table_empty("infil"):
-        #         return False
-        #     infil_sql = """SELECT * FROM infil;"""
-        #     infil_r_sql = """SELECT hydcx, hydcxfinal, soildepthcx FROM infil_chan_seg ORDER BY chan_seg_fid, fid;"""
-        #     green_sql = """SELECT grid_fid, hydc, soils, dtheta, abstrinf, rtimpf, soil_depth FROM infil_cells_green ORDER by grid_fid;"""
-        #     scs_sql = """SELECT grid_fid,scsn FROM infil_cells_scs ORDER BY grid_fid;"""
-        #     horton_sql = """SELECT grid_fid,fhorti, fhortf, deca FROM infil_cells_horton ORDER BY grid_fid;"""
-        #     chan_sql = """SELECT grid_fid, hydconch FROM infil_chan_elems ORDER by grid_fid;"""
-        #
-        #     line1 = "{0}"
-        #     line2 = "\n" + "  {}" * 6
-        #     line3 = "\n" + "  {}" * 3
-        #     line4 = "\n{0}"
-        #     line4ab = "\nR  {0}  {1}  {2}"
-        #     line5 = "\n{0}  {1}"
-        #     line6 = "\nF {0:<8} {1:<7.4f} {2:<7.4f} {3:<7.4f} {4:<7.4f} {5:<7.4f} {6:<7.4f}"
-        #     #         line6 = '\n' + 'F' + '  {}' * 7
-        #     line7 = "\nS  {0}  {1}"
-        #     line8 = "\nC  {0}  {1}"
-        #     line9 = "\nI {0:<7.4f} {1:<7.4f} {2:<7.4f}"
-        #     line10 = "\nH  {0:<8} {1:<7.4f} {2:<7.4f} {3:<7.4f}"
-        #
-        #     infil_row = self.execute(infil_sql).fetchone()
-        #     if infil_row is None:
-        #         return False
-        #     else:
-        #         pass
-        #     # infil = os.path.join(outdir, "INFIL.DAT")
-        #     infil_group = self.parser.infil_group
-        #     infil_group.create_dataset('Infiltration', [])
-        #
-        #     # values = k_line.format(gid).split()
-        #     # c1 = values[0]
-        #     # c2 = values[1]
-        #     # c3 = ""
-        #     # c4 = ""
-        #     # k_line_array = np.array([c1, c2, c3, c4], dtype=np.string_)
-        #     # bc_group.datasets["Outflow"].data.append(k_line_array)
-        #
-        #     gen = [x if x is not None else "" for x in infil_row[1:]]
-        #     v1, v2, v3, v4, v5, v9 = (
-        #         gen[0],
-        #         gen[1:7],
-        #         gen[7:10],
-        #         gen[10:11],
-        #         gen[11:13],
-        #         gen[13:],
-        #     )
-        #     # i.write(line1.format(v1))
-        #     values = line1.format(v1).split()
-        #     c1 = values[0]
-        #     c2 = ""
-        #     c3 = ""
-        #     c4 = ""
-        #     c5 = ""
-        #     c6 = ""
-        #     c7 = ""
-        #     line1_array = np.array([c1, c2, c3, c4, c5, c6, c7], dtype=np.string_)
-        #     infil_group.datasets["Infiltration"].data.append(line1_array)
-        #     if v1 == 1 or v1 == 3:
-        #         i.write(line2.format(*v2))
-        #         i.write(line3.format(*v3))
-        #         if v2[5] == 1:
-        #             i.write(line4.format(*v4))
-        #         #                     for val, line in zip([v2, v3, v4], [line2, line3, line4]):
-        #         # #                         if any(val) is True:
-        #         #                             i.write(line.format(*val))
-        #         # #                         else:
-        #         # #                             pass
-        #         for row in self.execute(infil_r_sql):
-        #             row = [x if x is not None else "" for x in row]
-        #             i.write(line4ab.format(*row))
-        #     if v1 == 2 or v1 == 3:
-        #         if any(v5) is True:
-        #             i.write(line5.format(*v5))
-        #         else:
-        #             pass
-        #     for row in self.execute(green_sql):
-        #         i.write(line6.format(*row))
-        #     for row in self.execute(scs_sql):
-        #         i.write(line7.format(*row))
-        #     for row in self.execute(chan_sql):
-        #         i.write(line8.format(*row))
-        #     if any(v9) is True:
-        #         i.write(line9.format(*v9))
-        #     else:
-        #         pass
-        #     for row in self.execute(horton_sql):
-        #         i.write(line10.format(*row))
-        #
-        #     self.parser.write_groups(infil_group)
-        #     return True
-        #
+        if self.is_table_empty("infil"):
+            return False
+        infil_sql = """SELECT * FROM infil;"""
+        infil_r_sql = """SELECT hydcx, hydcxfinal, soildepthcx FROM infil_chan_seg ORDER BY chan_seg_fid, fid;"""
+        green_sql = """SELECT grid_fid, hydc, soils, dtheta, abstrinf, rtimpf, soil_depth FROM infil_cells_green ORDER by grid_fid;"""
+        scs_sql = """SELECT grid_fid,scsn FROM infil_cells_scs ORDER BY grid_fid;"""
+        horton_sql = """SELECT grid_fid,fhorti, fhortf, deca FROM infil_cells_horton ORDER BY grid_fid;"""
+        chan_sql = """SELECT grid_fid, hydconch FROM infil_chan_elems ORDER by grid_fid;"""
+
+        line1 = "{0}"
+        line2 = "\n" + "  {}" * 6
+        line3 = "\n" + "  {}" * 3
+        line4 = "\n{0}"
+        line4ab = "\nR  {0}  {1}  {2}"
+        line5 = "\n{0}  {1}"
+        line6 = "\nF {0:<8} {1:<7.4f} {2:<7.4f} {3:<7.4f} {4:<7.4f} {5:<7.4f} {6:<7.4f}"
+        #         line6 = '\n' + 'F' + '  {}' * 7
+        line7 = "\nS  {0}  {1}"
+        line8 = "\nC  {0}  {1}"
+        line9 = "\nI {0:<7.4f} {1:<7.4f} {2:<7.4f}"
+        line10 = "\nH  {0:<8} {1:<7.4f} {2:<7.4f} {3:<7.4f}"
+
+        infil_row = self.execute(infil_sql).fetchone()
+        if infil_row is None:
+            return False
+        else:
+            pass
+        # infil = os.path.join(outdir, "INFIL.DAT")
+        infil_group = self.parser.infil_group
+        infil_group.create_dataset('Infiltration', [])
+
+        # values = k_line.format(gid).split()
+        # c1 = values[0]
+        # c2 = values[1]
+        # c3 = ""
+        # c4 = ""
+        # k_line_array = np.array([c1, c2, c3, c4], dtype=np.string_)
+        # bc_group.datasets["Outflow"].data.append(k_line_array)
+
+        gen = [x if x is not None else "" for x in infil_row[1:]]
+        v1, v2, v3, v4, v5, v9 = (
+            gen[0],
+            gen[1:7],
+            gen[7:10],
+            gen[10:11],
+            gen[11:13],
+            gen[13:],
+        )
+        # values = line1.format(v1).split()
+        # # line1_array = np.array([c1, c2, c3, c4, c5, c6, c7], dtype=np.string_)
+
+        infil_group.datasets["Infiltration"].data.append(create_array(line1, 7, v1))
+        if v1 == 1 or v1 == 3:
+            infil_group.datasets["Infiltration"].data.append(create_array(line2, 7, tuple(v2)))
+            infil_group.datasets["Infiltration"].data.append(create_array(line3, 7, tuple(v3)))
+            # i.write(line2.format(*v2))
+            # i.write(line3.format(*v3))
+            if v2[5] == 1:
+                # i.write(line4.format(*v4))
+                infil_group.datasets["Infiltration"].data.append(create_array(line4, 7, tuple(v4)))
+            #                     for val, line in zip([v2, v3, v4], [line2, line3, line4]):
+            # #                         if any(val) is True:
+            #                             i.write(line.format(*val))
+            # #                         else:
+            # #                             pass
+            for row in self.execute(infil_r_sql):
+                row = [x if x is not None else "" for x in row]
+                # i.write(line4ab.format(*row))
+                infil_group.datasets["Infiltration"].data.append(create_array(line4ab, 7, row))
+        if v1 == 2 or v1 == 3:
+            if any(v5) is True:
+                # i.write(line5.format(*v5))
+                infil_group.datasets["Infiltration"].data.append(create_array(line5, 7, tuple(v5)))
+            else:
+                pass
+        for row in self.execute(green_sql):
+            # i.write(line6.format(*row))
+            infil_group.datasets["Infiltration"].data.append(create_array(line6, 7, row))
+        for row in self.execute(scs_sql):
+            # i.write(line7.format(*row))
+            infil_group.datasets["Infiltration"].data.append(create_array(line7, 7, row))
+        for row in self.execute(chan_sql):
+            # i.write(line8.format(*row))
+            infil_group.datasets["Infiltration"].data.append(create_array(line8, 7, row))
+        if any(v9) is True:
+            # i.write(line9.format(*v9))
+            infil_group.datasets["Infiltration"].data.append(create_array(line9, 7, tuple(v9)))
+        else:
+            pass
+        for row in self.execute(horton_sql):
+            # i.write(line10.format(*row))
+            infil_group.datasets["Infiltration"].data.append(create_array(line10, 7, row))
+        self.parser.write_groups(infil_group)
+        return True
+
         # except Exception as e:
         #     QApplication.restoreOverrideCursor()
         #     self.uc.show_error("ERROR 101218.1559: exporting INFIL.DAT failed!.\n", e)
