@@ -1683,18 +1683,18 @@ class Flo2dGeoPackage(GeoPackageUtils):
             return self.export_cont_toler_hdf5()
 
     def export_cont_toler_hdf5(self):
-        try:
-            sql = """SELECT name, value FROM cont;"""
-            cont_group = self.parser.control_group
-            for option_name, option_value in self.execute(sql).fetchall():
-                dataset_data = np.string_([option_value]) if option_value is not None else np.string_([""])
-                cont_group.create_dataset(option_name, dataset_data)
-            self.parser.write_groups(cont_group)
-            return True
-        except Exception as e:
-            QApplication.restoreOverrideCursor()
-            self.uc.show_error("ERROR 101218.1535: exporting Control data failed!.\n", e)
-            return False
+        # try:
+        sql = """SELECT name, value FROM cont;"""
+        cont_group = self.parser.control_group
+        for option_name, option_value in self.execute(sql).fetchall():
+            dataset_data = np.string_([option_value]) if option_value is not None else np.string_([""])
+            cont_group.create_dataset(option_name, dataset_data)
+        self.parser.write_groups(cont_group)
+        return True
+        # except Exception as e:
+        #     QApplication.restoreOverrideCursor()
+        #     self.uc.show_error("ERROR 101218.1535: exporting Control data failed!.\n", e)
+        #     return False
 
     def export_cont_toler_dat(self, outdir):
         try:
@@ -2611,7 +2611,6 @@ class Flo2dGeoPackage(GeoPackageUtils):
         """
         Function to export infiltration data to HDF5
         """
-        pass
         # check if there is any infiltration defined.
         # try:
         if self.is_table_empty("infil"):
@@ -2641,17 +2640,9 @@ class Flo2dGeoPackage(GeoPackageUtils):
             return False
         else:
             pass
-        # infil = os.path.join(outdir, "INFIL.DAT")
+
         infil_group = self.parser.infil_group
         infil_group.create_dataset('Infiltration', [])
-
-        # values = k_line.format(gid).split()
-        # c1 = values[0]
-        # c2 = values[1]
-        # c3 = ""
-        # c4 = ""
-        # k_line_array = np.array([c1, c2, c3, c4], dtype=np.string_)
-        # bc_group.datasets["Outflow"].data.append(k_line_array)
 
         gen = [x if x is not None else "" for x in infil_row[1:]]
         v1, v2, v3, v4, v5, v9 = (
@@ -2662,50 +2653,33 @@ class Flo2dGeoPackage(GeoPackageUtils):
             gen[11:13],
             gen[13:],
         )
-        # values = line1.format(v1).split()
-        # # line1_array = np.array([c1, c2, c3, c4, c5, c6, c7], dtype=np.string_)
 
-        infil_group.datasets["Infiltration"].data.append(create_array(line1, 7, v1))
+        infil_group.datasets["Infiltration"].data.append(create_array(line1, 8, v1))
         if v1 == 1 or v1 == 3:
-            infil_group.datasets["Infiltration"].data.append(create_array(line2, 7, tuple(v2)))
-            infil_group.datasets["Infiltration"].data.append(create_array(line3, 7, tuple(v3)))
-            # i.write(line2.format(*v2))
-            # i.write(line3.format(*v3))
+            infil_group.datasets["Infiltration"].data.append(create_array(line2, 8, tuple(v2)))
+            infil_group.datasets["Infiltration"].data.append(create_array(line3, 8, tuple(v3)))
             if v2[5] == 1:
-                # i.write(line4.format(*v4))
-                infil_group.datasets["Infiltration"].data.append(create_array(line4, 7, tuple(v4)))
-            #                     for val, line in zip([v2, v3, v4], [line2, line3, line4]):
-            # #                         if any(val) is True:
-            #                             i.write(line.format(*val))
-            # #                         else:
-            # #                             pass
+                infil_group.datasets["Infiltration"].data.append(create_array(line4, 8, tuple(v4)))
             for row in self.execute(infil_r_sql):
                 row = [x if x is not None else "" for x in row]
-                # i.write(line4ab.format(*row))
-                infil_group.datasets["Infiltration"].data.append(create_array(line4ab, 7, row))
+                infil_group.datasets["Infiltration"].data.append(create_array(line4ab, 8, row))
         if v1 == 2 or v1 == 3:
             if any(v5) is True:
-                # i.write(line5.format(*v5))
-                infil_group.datasets["Infiltration"].data.append(create_array(line5, 7, tuple(v5)))
+                infil_group.datasets["Infiltration"].data.append(create_array(line5, 8, tuple(v5)))
             else:
                 pass
         for row in self.execute(green_sql):
-            # i.write(line6.format(*row))
-            infil_group.datasets["Infiltration"].data.append(create_array(line6, 7, row))
+            infil_group.datasets["Infiltration"].data.append(create_array(line6, 8, row))
         for row in self.execute(scs_sql):
-            # i.write(line7.format(*row))
-            infil_group.datasets["Infiltration"].data.append(create_array(line7, 7, row))
+            infil_group.datasets["Infiltration"].data.append(create_array(line7, 8, row))
         for row in self.execute(chan_sql):
-            # i.write(line8.format(*row))
-            infil_group.datasets["Infiltration"].data.append(create_array(line8, 7, row))
+            infil_group.datasets["Infiltration"].data.append(create_array(line8, 8, row))
         if any(v9) is True:
-            # i.write(line9.format(*v9))
-            infil_group.datasets["Infiltration"].data.append(create_array(line9, 7, tuple(v9)))
+            infil_group.datasets["Infiltration"].data.append(create_array(line9, 8, tuple(v9)))
         else:
             pass
         for row in self.execute(horton_sql):
-            # i.write(line10.format(*row))
-            infil_group.datasets["Infiltration"].data.append(create_array(line10, 7, row))
+            infil_group.datasets["Infiltration"].data.append(create_array(line10, 8, row))
         self.parser.write_groups(infil_group)
         return True
 
@@ -3098,8 +3072,16 @@ class Flo2dGeoPackage(GeoPackageUtils):
             self.uc.show_error("ERROR 101218.1609: exporting STREET.DAT failed!.\n", e)
             return False
 
-    def export_arf(self, outdir):
-        # check if there are any grid cells with ARF defined.
+    def export_arf(self, output=None):
+        if self.parsed_format == self.FORMAT_DAT:
+            return self.export_arf_dat(output)
+        elif self.parsed_format == self.FORMAT_HDF5:
+            return self.export_arf_hdf5()
+
+    def export_arf_dat(self, outdir):
+        """
+        Function to export arf data to HDF5 file
+        """
         try:
             if self.is_table_empty("blocked_cells"):
                 return False
@@ -3120,6 +3102,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 option = ("IARFBLOCKMOD", 0)
 
             arf = os.path.join(outdir, "ARF.DAT")
+
             with open(arf, "w") as a:
                 head = option[-1]
                 if head is not None:
@@ -3159,6 +3142,79 @@ class Flo2dGeoPackage(GeoPackageUtils):
                         a.write(line3.format(cell, arf_value, *row[3:]))
             #                     a.write(line3.format(*row))
 
+            return True
+
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.uc.show_error("ERROR 101218.1610: exporting ARF.DAT failed!.", e)
+            return False
+
+
+    def export_arf_hdf5(self):
+        # check if there are any grid cells with ARF defined.
+        try:
+            if self.is_table_empty("blocked_cells"):
+                return False
+            cont_sql = """SELECT name, value FROM cont WHERE name = 'IARFBLOCKMOD';"""
+            tbc_sql = """SELECT grid_fid, area_fid FROM blocked_cells WHERE arf = 1 ORDER BY grid_fid;"""
+
+            pbc_sql = """SELECT grid_fid, area_fid,  arf, wrf1, wrf2, wrf3, wrf4, wrf5, wrf6, wrf7, wrf8
+                         FROM blocked_cells WHERE arf < 1 ORDER BY grid_fid;"""
+            collapse_sql = """SELECT collapse FROM user_blocked_areas WHERE fid = ?;"""
+
+            line1 = "S  {}\n"
+            line2 = " T   {}\n"
+            line3 = "{0:<8} {1:<5.2f} {2:<5.2f} {3:<5.2f} {4:<5.2f} {5:<5.2f} {6:<5.2f} {7:<5.2f} {8:5.2f} {9:<5.2f}\n"
+            option = self.execute(cont_sql).fetchone()
+            if option is None:
+                # TODO: We need to implement correct export of 'IARFBLOCKMOD'
+                option = ("IARFBLOCKMOD", 0)
+
+            # arf = os.path.join(outdir, "ARF.DAT")
+            arfwrf_group = self.parser.arfwrf_group
+            arfwrf_group.create_dataset('ARF', [])
+
+            # with open(arf, "w") as a:
+            head = option[-1]
+            if head is not None:
+                arfwrf_group.datasets["ARF"].data.append(create_array(line1, 10, head))
+                # a.write(line1.format(head))
+            else:
+                pass
+
+            # Totally blocked grid elements:
+            for row in self.execute(tbc_sql):
+                collapse = self.execute(collapse_sql, (row[1],)).fetchone()
+                if collapse:
+                    cll = collapse[0]
+                else:
+                    cll = 0
+                cll = [cll if cll is not None else 0]
+                cell = row[0]
+                if cll[0] == 1:
+                    cell = -cell
+                arfwrf_group.datasets["ARF"].data.append(create_array(line2, 10, cell))
+                # a.write(line2.format(cell))
+
+            # Partially blocked grid elements:
+            for row in self.execute(pbc_sql):
+                row = [x if x is not None else "" for x in row]
+                # Is there any side blocked? If not omit it:
+                any_blocked = sum(row) - row[0] - row[1]
+                if any_blocked > 0:
+                    collapse = self.execute(collapse_sql, (row[1],)).fetchone()
+                    if collapse:
+                        cll = collapse[0]
+                    else:
+                        cll = 0
+                    cll = [cll if cll is not None else 0]
+                    cell = row[0]
+                    arf_value = row[2]
+                    if cll[0] == 1:
+                        arf_value = -arf_value
+                    # a.write(line3.format(cell, arf_value, *row[3:]))
+                    arfwrf_group.datasets["ARF"].data.append(create_array(line3, 10, cell, arf_value, *row[3:]))
+            self.parser.write_groups(arfwrf_group)
             return True
 
         except Exception as e:

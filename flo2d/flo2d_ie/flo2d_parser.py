@@ -147,6 +147,12 @@ class ParseHDF5:
         return group
 
     @property
+    def arfwrf_group(self):
+        group_name = "Reduction Factors"
+        group = HDF5Group(group_name)
+        return group
+
+    @property
     def groups(self):
         grouped_datasets_list = [
             self.control_group,
