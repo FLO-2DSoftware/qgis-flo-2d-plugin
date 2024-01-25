@@ -137,10 +137,7 @@ class ParseHDF5:
     @property
     def bc_group(self):
         group_name = "Boundary Conditions"
-        group_datasets = ["Inflow", "Outflow"]
         group = HDF5Group(group_name)
-        for dataset_name in group_datasets:
-            group.create_dataset(dataset_name, [])
         return group
 
     @property
@@ -160,8 +157,10 @@ class ParseHDF5:
 
     @staticmethod
     def write_group_datasets(hdf5_file, group):
-        hdf5_group = hdf5_file.create_group(group.name)
+        if group.name not in hdf5_file:
+            hdf5_file.create_group(group.name)
         for dataset in sorted(group.datasets.values(), key=attrgetter("name")):
+            hdf5_group = hdf5_file[group.name]
             ds = hdf5_group.create_dataset(dataset.name, data=dataset.data)
             if dataset.name in CONTROL:
                 ds.attrs[dataset.name] = CONTROL[dataset.name]

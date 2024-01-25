@@ -2012,6 +2012,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
         if inflow_lines:
             bc_group = self.parser.bc_group
+            bc_group.create_dataset('Inflow', [])
             for line in inflow_lines:
                 if line:
                     values = line.split()
@@ -2020,7 +2021,6 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     c3 = values[2] if len(values) == 3 else ""
                     data_array = np.array([c1, c2, c3], dtype=np.string_)
                     bc_group.datasets["Inflow"].data.append(data_array)
-
             self.parser.write_groups(bc_group)
 
         return True
@@ -2167,7 +2167,13 @@ class Flo2dGeoPackage(GeoPackageUtils):
             self.uc.show_error("ERROR 040822.0442: exporting TAILINGS.DAT failed!.\n", e)
             return False
 
-    def export_outflow(self, outdir):
+    def export_outflow(self, output=None):
+        if self.parsed_format == self.FORMAT_DAT:
+            return self.export_outflow_dat(output)
+        elif self.parsed_format == self.FORMAT_HDF5:
+            return self.export_outflow_hdf5()
+
+    def export_outflow_dat(self, outdir):
         # check if there are any outflows defined.
         try:
             if self.is_table_empty("outflow") or self.is_table_empty("outflow_cells"):
@@ -2277,6 +2283,176 @@ class Flo2dGeoPackage(GeoPackageUtils):
             QApplication.restoreOverrideCursor()
             self.uc.show_error("ERROR 101218.1543: exporting OUTFLOW.DAT failed!.\n", e)
             return False
+
+    def export_outflow_hdf5(self):
+        """
+        Function to export outflow data to HDF5 file
+        """
+
+        # check if there are any outflows defined.
+        # try:
+        if self.is_table_empty("outflow") or self.is_table_empty("outflow_cells"):
+            return False
+
+        outflow_sql = """
+        SELECT fid, fp_out, chan_out, hydro_out, chan_tser_fid, chan_qhpar_fid, chan_qhtab_fid, fp_tser_fid
+        FROM outflow WHERE fid = ?;"""
+        outflow_cells_sql = """SELECT outflow_fid, grid_fid FROM outflow_cells ORDER BY outflow_fid, grid_fid;"""
+        qh_params_data_sql = """SELECT hmax, coef, exponent FROM qh_params_data WHERE params_fid = ?;"""
+        qh_table_data_sql = """SELECT depth, q FROM qh_table_data WHERE table_fid = ? ORDER BY fid;"""
+        ts_data_sql = """SELECT time, value FROM outflow_time_series_data WHERE series_fid = ? ORDER BY fid;"""
+
+        k_line = "K  {0}\n"
+        qh_params_line = "H  {0}  {1}  {2}\n"
+        qh_table_line = "T  {0}  {1}\n"
+        n_line = "N     {0}  {1}\n"
+        ts_line = "S  {0}  {1}\n"
+        o_line = "{0}  {1}\n"
+
+        out_cells = self.execute(outflow_cells_sql).fetchall()
+        if not out_cells:
+            return False
+        else:
+            pass
+        # outflow = os.path.join(outdir, "OUTFLOW.DAT")
+
+        bc_group = self.parser.bc_group
+        bc_group.create_dataset('Outflow', [])
+
+        floodplains = {}
+        previous_oid = -1
+        row = None
+        border = get_BC_Border()
+
+        warning = ""
+
+        for oid, gid in out_cells:
+            if previous_oid != oid:
+                row = self.execute(outflow_sql, (oid,)).fetchone()
+                if row is not None:
+                    row = [x if x is not None and x != "" else 0 for x in row]
+                    previous_oid = oid
+                else:
+                    warning += (
+                        "<br>* Cell " + str(gid) + " in 'outflow_cells' table points to 'outflow' table with"
+                    )
+                    warning += "<br> 'outflow_fid' = " + str(oid) + ".<br>"
+                    continue
+            else:
+                pass
+
+            if row is not None:
+                (
+                    fid,
+                    fp_out,
+                    chan_out,
+                    hydro_out,
+                    chan_tser_fid,
+                    chan_qhpar_fid,
+                    chan_qhtab_fid,
+                    fp_tser_fid,
+                ) = row
+                if gid not in floodplains and (fp_out == 1 or hydro_out > 0):
+                    floodplains[gid] = hydro_out
+                if chan_out == 1:
+                    values = k_line.format(gid).split()
+                    QgsMessageLog.logMessage(str(values))
+                    c1 = values[0]
+                    c2 = values[1]
+                    c3 = ""
+                    c4 = ""
+                    k_line_array = np.array([c1, c2, c3, c4], dtype=np.string_)
+                    bc_group.datasets["Outflow"].data.append(k_line_array)
+                    # o.write(k_line.format(gid))
+                    for qh_params_values in self.execute(qh_params_data_sql, (chan_qhpar_fid,)):
+                        values = qh_params_line.format(*qh_params_values).split()
+                        c1 = values[0]
+                        c2 = values[1]
+                        c3 = values[2]
+                        c4 = values[3]
+                        qh_params_line_array = np.array([c1, c2, c3, c4], dtype=np.string_)
+                        bc_group.datasets["Outflow"].data.append(qh_params_line_array)
+                        # o.write(qh_params_line.format(*values))
+                    for qh_table_values in self.execute(qh_table_data_sql, (chan_qhtab_fid,)):
+                        values = qh_table_line.format(*qh_table_values).split()
+                        c1 = values[0]
+                        c2 = values[1]
+                        c3 = values[2]
+                        c4 = ""
+                        qh_table_line_array = np.array([c1, c2, c3, c4], dtype=np.string_)
+                        bc_group.datasets["Outflow"].data.append(qh_table_line_array)
+                        # o.write(qh_table_line.format(*values))
+                else:
+                    pass
+
+                if chan_tser_fid > 0 or fp_tser_fid > 0:
+                    if border is not None:
+                        if gid in border:
+                            continue
+                    nostacfp = 1 if chan_tser_fid == 1 else 0
+                    values = n_line.format(gid, nostacfp).split()
+                    c1 = values[0]
+                    c2 = values[1]
+                    c3 = values[2]
+                    c4 = ""
+                    n_line_array = np.array([c1, c2, c3, c4], dtype=np.string_)
+                    bc_group.datasets["Outflow"].data.append(n_line_array)
+                    # o.write(n_line.format(gid, nostacfp))
+                    series_fid = chan_tser_fid if chan_tser_fid > 0 else fp_tser_fid
+                    for ts_line_values in self.execute(ts_data_sql, (series_fid,)):
+                        values = ts_line.format(*ts_line_values).split()
+                        c1 = values[0]
+                        c2 = values[1]
+                        c3 = values[2]
+                        c4 = ""
+                        ts_line_array = np.array([c1, c2, c3, c4], dtype=np.string_)
+                        bc_group.datasets["Outflow"].data.append(ts_line_array)
+                        # o.write(ts_line.format(*values))
+                else:
+                    pass
+
+        # Write O1, O2, ... lines:
+        for gid, hydro_out in sorted(iter(floodplains.items()), key=lambda items: (items[1], items[0])):
+            #                     if border is not None:
+            #                         if gid in border:
+            #                             continue
+            ident = "O{0}".format(hydro_out) if hydro_out > 0 else "O"
+            values = o_line.format(ident, gid).split()
+            c1 = values[0]
+            c2 = values[1]
+            c3 = ""
+            c4 = ""
+            o_line_array = np.array([c1, c2, c3, c4], dtype=np.string_)
+            bc_group.datasets["Outflow"].data.append(o_line_array)
+            # o.write(o_line.format(ident, gid))
+            if border is not None:
+                if gid in border:
+                    border.remove(gid)
+
+        # Write lines 'O cell_id':
+        if border is not None:
+            for b in border:
+                values = o_line.format("0", b).split()
+                c1 = values[0]
+                c2 = values[1]
+                c3 = ""
+                c4 = ""
+                o_line_array = np.array([c1, c2, c3, c4], dtype=np.string_)
+                bc_group.datasets["Outflow"].data.append(o_line_array)
+                # o.write(o_line.format("O", b))
+
+        self.parser.write_groups(bc_group)
+        QApplication.restoreOverrideCursor()
+        if warning != "":
+            msg = "ERROR 170319.2018: error while exporting OUTFLOW.DAT!<br><br>" + warning
+            msg += "<br><br><FONT COLOR=red>Did you schematize the Boundary Conditions?</FONT>"
+            self.uc.show_warn(msg)
+        return True
+
+        # except Exception as e:
+        #     QApplication.restoreOverrideCursor()
+        #     self.uc.show_error("ERROR 101218.1543: exporting OUTFLOW.DAT failed!.\n", e)
+        #     return False
 
     def export_rain(self, outdir):
         # check if there is any rain defined.
