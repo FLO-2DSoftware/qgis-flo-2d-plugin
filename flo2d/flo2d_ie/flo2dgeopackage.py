@@ -28,6 +28,15 @@ from ..utils import BC_BORDER, float_or_zero, get_BC_Border
 from .flo2d_parser import ParseDAT, ParseHDF5
 
 
+def create_array(line_format, max_columns, *args):
+    if len(args) == 1 and isinstance(args[0], tuple):
+        values = line_format.format(*args[0]).split()
+    else:
+        values = line_format.format(*args).split()
+    array = np.array(values[:max_columns] + [""] * (max_columns - len(values) - 1), dtype=np.string_)
+    return array
+
+
 class Flo2dGeoPackage(GeoPackageUtils):
     """
     Class for proper import and export FLO-2D data.
@@ -2314,8 +2323,6 @@ class Flo2dGeoPackage(GeoPackageUtils):
             return False
         else:
             pass
-        # outflow = os.path.join(outdir, "OUTFLOW.DAT")
-
         bc_group = self.parser.bc_group
         bc_group.create_dataset('Outflow', [])
 
@@ -2355,33 +2362,11 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 if gid not in floodplains and (fp_out == 1 or hydro_out > 0):
                     floodplains[gid] = hydro_out
                 if chan_out == 1:
-                    values = k_line.format(gid).split()
-                    QgsMessageLog.logMessage(str(values))
-                    c1 = values[0]
-                    c2 = values[1]
-                    c3 = ""
-                    c4 = ""
-                    k_line_array = np.array([c1, c2, c3, c4], dtype=np.string_)
-                    bc_group.datasets["Outflow"].data.append(k_line_array)
-                    # o.write(k_line.format(gid))
+                    bc_group.datasets["Outflow"].data.append(create_array(k_line, 4, gid))
                     for qh_params_values in self.execute(qh_params_data_sql, (chan_qhpar_fid,)):
-                        values = qh_params_line.format(*qh_params_values).split()
-                        c1 = values[0]
-                        c2 = values[1]
-                        c3 = values[2]
-                        c4 = values[3]
-                        qh_params_line_array = np.array([c1, c2, c3, c4], dtype=np.string_)
-                        bc_group.datasets["Outflow"].data.append(qh_params_line_array)
-                        # o.write(qh_params_line.format(*values))
+                        bc_group.datasets["Outflow"].data.append(create_array(qh_params_line, 4, qh_params_values))
                     for qh_table_values in self.execute(qh_table_data_sql, (chan_qhtab_fid,)):
-                        values = qh_table_line.format(*qh_table_values).split()
-                        c1 = values[0]
-                        c2 = values[1]
-                        c3 = values[2]
-                        c4 = ""
-                        qh_table_line_array = np.array([c1, c2, c3, c4], dtype=np.string_)
-                        bc_group.datasets["Outflow"].data.append(qh_table_line_array)
-                        # o.write(qh_table_line.format(*values))
+                        bc_group.datasets["Outflow"].data.append(create_array(qh_table_line, 4, qh_table_values))
                 else:
                     pass
 
@@ -2390,24 +2375,10 @@ class Flo2dGeoPackage(GeoPackageUtils):
                         if gid in border:
                             continue
                     nostacfp = 1 if chan_tser_fid == 1 else 0
-                    values = n_line.format(gid, nostacfp).split()
-                    c1 = values[0]
-                    c2 = values[1]
-                    c3 = values[2]
-                    c4 = ""
-                    n_line_array = np.array([c1, c2, c3, c4], dtype=np.string_)
-                    bc_group.datasets["Outflow"].data.append(n_line_array)
-                    # o.write(n_line.format(gid, nostacfp))
+                    bc_group.datasets["Outflow"].data.append(create_array(n_line, 4, gid, nostacfp))
                     series_fid = chan_tser_fid if chan_tser_fid > 0 else fp_tser_fid
                     for ts_line_values in self.execute(ts_data_sql, (series_fid,)):
-                        values = ts_line.format(*ts_line_values).split()
-                        c1 = values[0]
-                        c2 = values[1]
-                        c3 = values[2]
-                        c4 = ""
-                        ts_line_array = np.array([c1, c2, c3, c4], dtype=np.string_)
-                        bc_group.datasets["Outflow"].data.append(ts_line_array)
-                        # o.write(ts_line.format(*values))
+                        bc_group.datasets["Outflow"].data.append(create_array(ts_line, 4, ts_line_values))
                 else:
                     pass
 
@@ -2417,14 +2388,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             #                         if gid in border:
             #                             continue
             ident = "O{0}".format(hydro_out) if hydro_out > 0 else "O"
-            values = o_line.format(ident, gid).split()
-            c1 = values[0]
-            c2 = values[1]
-            c3 = ""
-            c4 = ""
-            o_line_array = np.array([c1, c2, c3, c4], dtype=np.string_)
-            bc_group.datasets["Outflow"].data.append(o_line_array)
-            # o.write(o_line.format(ident, gid))
+            bc_group.datasets["Outflow"].data.append(create_array(o_line, 4, ident, gid))
             if border is not None:
                 if gid in border:
                     border.remove(gid)
@@ -2432,14 +2396,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
         # Write lines 'O cell_id':
         if border is not None:
             for b in border:
-                values = o_line.format("0", b).split()
-                c1 = values[0]
-                c2 = values[1]
-                c3 = ""
-                c4 = ""
-                o_line_array = np.array([c1, c2, c3, c4], dtype=np.string_)
-                bc_group.datasets["Outflow"].data.append(o_line_array)
-                # o.write(o_line.format("O", b))
+                bc_group.datasets["Outflow"].data.append(create_array(o_line, 4, "0", b))
 
         self.parser.write_groups(bc_group)
         QApplication.restoreOverrideCursor()
@@ -2564,7 +2521,13 @@ class Flo2dGeoPackage(GeoPackageUtils):
         finally:
             QApplication.restoreOverrideCursor()
 
-    def export_infil(self, outdir):
+    def export_infil(self, output=None):
+        if self.parsed_format == self.FORMAT_DAT:
+            return self.export_infil_dat(output)
+        elif self.parsed_format == self.FORMAT_HDF5:
+            return self.export_infil_hdf5()
+
+    def export_infil_dat(self, outdir):
         # check if there is any infiltration defined.
         try:
             if self.is_table_empty("infil"):
@@ -2643,6 +2606,111 @@ class Flo2dGeoPackage(GeoPackageUtils):
             QApplication.restoreOverrideCursor()
             self.uc.show_error("ERROR 101218.1559: exporting INFIL.DAT failed!.\n", e)
             return False
+
+    def export_infil_hdf5(self, outdir):
+        """
+        Function to export infiltration data to HDF5
+        """
+        pass
+        # # check if there is any infiltration defined.
+        # try:
+        #     if self.is_table_empty("infil"):
+        #         return False
+        #     infil_sql = """SELECT * FROM infil;"""
+        #     infil_r_sql = """SELECT hydcx, hydcxfinal, soildepthcx FROM infil_chan_seg ORDER BY chan_seg_fid, fid;"""
+        #     green_sql = """SELECT grid_fid, hydc, soils, dtheta, abstrinf, rtimpf, soil_depth FROM infil_cells_green ORDER by grid_fid;"""
+        #     scs_sql = """SELECT grid_fid,scsn FROM infil_cells_scs ORDER BY grid_fid;"""
+        #     horton_sql = """SELECT grid_fid,fhorti, fhortf, deca FROM infil_cells_horton ORDER BY grid_fid;"""
+        #     chan_sql = """SELECT grid_fid, hydconch FROM infil_chan_elems ORDER by grid_fid;"""
+        #
+        #     line1 = "{0}"
+        #     line2 = "\n" + "  {}" * 6
+        #     line3 = "\n" + "  {}" * 3
+        #     line4 = "\n{0}"
+        #     line4ab = "\nR  {0}  {1}  {2}"
+        #     line5 = "\n{0}  {1}"
+        #     line6 = "\nF {0:<8} {1:<7.4f} {2:<7.4f} {3:<7.4f} {4:<7.4f} {5:<7.4f} {6:<7.4f}"
+        #     #         line6 = '\n' + 'F' + '  {}' * 7
+        #     line7 = "\nS  {0}  {1}"
+        #     line8 = "\nC  {0}  {1}"
+        #     line9 = "\nI {0:<7.4f} {1:<7.4f} {2:<7.4f}"
+        #     line10 = "\nH  {0:<8} {1:<7.4f} {2:<7.4f} {3:<7.4f}"
+        #
+        #     infil_row = self.execute(infil_sql).fetchone()
+        #     if infil_row is None:
+        #         return False
+        #     else:
+        #         pass
+        #     # infil = os.path.join(outdir, "INFIL.DAT")
+        #     infil_group = self.parser.infil_group
+        #     infil_group.create_dataset('Infiltration', [])
+        #
+        #     # values = k_line.format(gid).split()
+        #     # c1 = values[0]
+        #     # c2 = values[1]
+        #     # c3 = ""
+        #     # c4 = ""
+        #     # k_line_array = np.array([c1, c2, c3, c4], dtype=np.string_)
+        #     # bc_group.datasets["Outflow"].data.append(k_line_array)
+        #
+        #     gen = [x if x is not None else "" for x in infil_row[1:]]
+        #     v1, v2, v3, v4, v5, v9 = (
+        #         gen[0],
+        #         gen[1:7],
+        #         gen[7:10],
+        #         gen[10:11],
+        #         gen[11:13],
+        #         gen[13:],
+        #     )
+        #     # i.write(line1.format(v1))
+        #     values = line1.format(v1).split()
+        #     c1 = values[0]
+        #     c2 = ""
+        #     c3 = ""
+        #     c4 = ""
+        #     c5 = ""
+        #     c6 = ""
+        #     c7 = ""
+        #     line1_array = np.array([c1, c2, c3, c4, c5, c6, c7], dtype=np.string_)
+        #     infil_group.datasets["Infiltration"].data.append(line1_array)
+        #     if v1 == 1 or v1 == 3:
+        #         i.write(line2.format(*v2))
+        #         i.write(line3.format(*v3))
+        #         if v2[5] == 1:
+        #             i.write(line4.format(*v4))
+        #         #                     for val, line in zip([v2, v3, v4], [line2, line3, line4]):
+        #         # #                         if any(val) is True:
+        #         #                             i.write(line.format(*val))
+        #         # #                         else:
+        #         # #                             pass
+        #         for row in self.execute(infil_r_sql):
+        #             row = [x if x is not None else "" for x in row]
+        #             i.write(line4ab.format(*row))
+        #     if v1 == 2 or v1 == 3:
+        #         if any(v5) is True:
+        #             i.write(line5.format(*v5))
+        #         else:
+        #             pass
+        #     for row in self.execute(green_sql):
+        #         i.write(line6.format(*row))
+        #     for row in self.execute(scs_sql):
+        #         i.write(line7.format(*row))
+        #     for row in self.execute(chan_sql):
+        #         i.write(line8.format(*row))
+        #     if any(v9) is True:
+        #         i.write(line9.format(*v9))
+        #     else:
+        #         pass
+        #     for row in self.execute(horton_sql):
+        #         i.write(line10.format(*row))
+        #
+        #     self.parser.write_groups(infil_group)
+        #     return True
+        #
+        # except Exception as e:
+        #     QApplication.restoreOverrideCursor()
+        #     self.uc.show_error("ERROR 101218.1559: exporting INFIL.DAT failed!.\n", e)
+        #     return False
 
     def export_evapor(self, outdir):
         # check if there is any evaporation defined.
@@ -3891,3 +3959,4 @@ class Flo2dGeoPackage(GeoPackageUtils):
             QApplication.restoreOverrideCursor()
             self.uc.show_error("ERROR 101218.1622: exporting WSTIME.DAT failed!.\n", e)
             return False
+

@@ -2843,7 +2843,9 @@ class Flo2D(object):
                 "export_mannings_n_topo",
                 "export_neighbours",
                 "export_inflow",
-                "export_outflow"
+                "export_outflow",
+                "export_infil"
+
             ]
             try:
                 s = QSettings()
