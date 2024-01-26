@@ -2845,7 +2845,8 @@ class Flo2D(object):
                 "export_inflow",
                 "export_outflow",
                 "export_infil",
-                "export_arf"
+                "export_arf",
+                "export_rain"
 
             ]
             try:
