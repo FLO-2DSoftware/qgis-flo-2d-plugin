@@ -3399,7 +3399,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                             else:
                                 inlet_type_qry = "SELECT intype FROM swmmflo WHERE swmm_jt = ?;"
                                 inlet_type = self.execute(inlet_type_qry, (gid,)).fetchall()
-                                if inlet_type is not None:
+                                if inlet_type is not None and len(inlet_type) != 0:
                                     # TODO: there may be more than one record. Why? Some may have intype = 4.
                                     if len(inlet_type) > 1:
                                         errors += "* Grid element " + str(gid) + " has has more than one inlet.\n"
@@ -3457,10 +3457,14 @@ class Flo2dGeoPackage(GeoPackageUtils):
                                                             )
                                             else:
                                                 if not error_mentioned:
-                                                    errors += "Storm Drain Nodes layer in User Layers is empty.\nSWMMFLORT.DAT may be incomplete!"
+                                                    errors += "Storm Drain Nodes layer in User Layers is empty.\nSWMMFLORT.DAT may be incomplete!\n"
                                                     error_mentioned = True
+                                else:
+                                    errors += (
+                                        "* Rating table " + rtname + " doesn't have an inlet associated with node " + str(gid)+ ".\n"
+                                    )                                                        
                     else:
-                        errors += "* Unknown grid element in Rating Table.\n"                                   
+                        errors += "* Unknown grid element for Rating Table " + rtname + ".\n"                                   
                 culverts = self.gutils.execute(
                     "SELECT grid_fid, name, cdiameter, typec, typeen, cubase, multbarrels FROM swmmflo_culvert ORDER BY fid;"
                 ).fetchall()
