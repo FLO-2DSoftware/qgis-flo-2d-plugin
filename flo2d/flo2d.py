@@ -35,7 +35,7 @@ from subprocess import (
 )
 
 from PyQt5.QtGui import QFont
-from PyQt5.QtWidgets import QApplication, QToolButton
+from PyQt5.QtWidgets import QApplication, QToolButton, QProgressDialog
 from osgeo import gdal
 from qgis._core import QgsMessageLog, QgsCoordinateReferenceSystem, QgsMapSettings, QgsProjectMetadata, \
     QgsMapRendererParallelJob, QgsLayerTreeLayer, QgsVectorLayerExporter, QgsVectorFileWriter, QgsVectorLayer, \
@@ -1513,7 +1513,18 @@ class Flo2D(object):
 
     def call_IO_methods_hdf5(self, calls, debug, *args):
         self.f2g.parser.write_mode = "w"
+
+        progDialog = QProgressDialog("Exporting to HDF5...", None, 0, len(calls))
+        progDialog.setModal(True)
+        progDialog.setValue(0)
+        progDialog.show()
+        i = 0
+
         for call in calls:
+            i += 1
+            progDialog.setValue(i)
+            progDialog.setLabelText(call)
+            QApplication.processEvents()
             method = getattr(self.f2g, call)
             try:
                 method(*args)
@@ -1523,6 +1534,7 @@ class Flo2D(object):
                     self.uc.log_info(traceback.format_exc())
                 else:
                     raise
+
         self.f2g.parser.write_mode = "w"
 
     def call_IO_methods_dat(self, calls, debug, *args):
