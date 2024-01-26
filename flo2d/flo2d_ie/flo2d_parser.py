@@ -179,7 +179,7 @@ class ParseHDF5:
             hdf5_file.create_group(group.name)
         for dataset in sorted(group.datasets.values(), key=attrgetter("name")):
             hdf5_group = hdf5_file[group.name]
-            ds = hdf5_group.create_dataset(dataset.name, data=dataset.data)
+            ds = hdf5_group.create_dataset(dataset.name, data=dataset.data, compression="gzip")
             if dataset.name in CONTROL:
                 ds.attrs[dataset.name] = CONTROL[dataset.name]
             if dataset.name in GRID:
