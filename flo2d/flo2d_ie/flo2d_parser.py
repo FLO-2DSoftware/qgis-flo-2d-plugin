@@ -159,6 +159,12 @@ class ParseHDF5:
         return group
 
     @property
+    def levee_group(self):
+        group_name = "Levee"
+        group = HDF5Group(group_name)
+        return group
+
+    @property
     def groups(self):
         grouped_datasets_list = [
             self.control_group,

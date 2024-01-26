@@ -2454,8 +2454,6 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
         rain_group.datasets["Rain"].data.append(create_array(rain_line1, 4, rain_row[1:3]))
         rain_group.datasets["Rain"].data.append(create_array(rain_line2, 4, rain_row[3:7]))
-        # r.write(rain_line1.format(*rain_row[1:3]))  # irainreal, irainbuilding
-        # r.write(rain_line2.format(*rain_row[3:7]))  # tot_rainfall (RTT), rainabs, irainarf, movingstorm
 
         fid = rain_row[
             0
@@ -2463,7 +2461,6 @@ class Flo2dGeoPackage(GeoPackageUtils):
         for row in self.execute(ts_data_sql, (fid,)):
             if None not in row:  # Writes 3rd. lines if rain_time_series_data exists (Rainfall distribution).
                 rain_group.datasets["Rain"].data.append(create_array(tsd_line3, 4, row))
-                # r.write(tsd_line3.format(*row))  # Writes 'R time value (i.e. distribution)' (i.e. 'R  R_TIME R_DISTR' in FLO-2D jargon).
                 # This is a time series created from the Rainfall Distribution tool in the Rain Editor,
                 # selected from a list
 
@@ -2473,7 +2470,6 @@ class Flo2dGeoPackage(GeoPackageUtils):
             ):  # row[-1] is the last value of tuple (time_series_fid, irainreal, irainbuilding, tot_rainfall,
                 # rainabs, irainarf, movingstorm, rainspeed, iraindir).
                 rain_group.datasets["Rain"].data.append(create_array(rain_line4, 4, rain_row[-2:]))
-                # r.write(rain_line4.format(*rain_row[-2:]))  # Write the last 2 values (-2 means 2 from last): rainspeed and iraindir.
             else:
                 pass
         else:
@@ -2482,7 +2478,6 @@ class Flo2dGeoPackage(GeoPackageUtils):
         if rain_row[5] == 1:  # if irainarf from rain = 0, omit this line.
             for row in self.execute(rain_cells_sql):
                 rain_group.datasets["Rain"].data.append(create_array(cell_line5, 4, row[0], "{0:.3f}".format(row[1])))
-                # r.write(cell_line5.format(row[0], "{0:.3f}".format(row[1])))
 
         self.parser.write_groups(rain_group)
         return True
@@ -3585,7 +3580,83 @@ class Flo2dGeoPackage(GeoPackageUtils):
             self.uc.show_error("ERROR 101218.1612: exporting SED.DAT failed!.\n", e)
             return False
 
-    def export_levee(self, outdir):
+    def export_levee(self, output=None):
+        if self.parsed_format == self.FORMAT_DAT:
+            return self.export_levee_dat(output)
+        elif self.parsed_format == self.FORMAT_HDF5:
+            return self.export_levee_hdf5()
+
+    def export_levee_hdf5(self):
+        """
+        Function to export levee data to HDF5 file
+        """
+        # check if there are any levees defined.
+        # try:
+        if self.is_table_empty("levee_data"):
+            return False
+        levee_gen_sql = """SELECT raiselev, ilevfail, gfragchar, gfragprob FROM levee_general;"""
+        levee_data_sql = """SELECT grid_fid, ldir, levcrest FROM levee_data ORDER BY grid_fid, fid;"""
+        levee_fail_sql = """SELECT * FROM levee_failure ORDER BY grid_fid, fid;"""
+        levee_frag_sql = """SELECT grid_fid, levfragchar, levfragprob FROM levee_fragility ORDER BY grid_fid;"""
+
+        line1 = "{0}  {1}\n"
+        line2 = "L  {0}\n"
+        line3 = "D  {0}  {1}\n"
+        line4 = "F  {0}\n"
+        line5 = "W  {0}  {1}  {2}  {3}  {4}  {5}  {6}\n"
+        line6 = "C  {0}  {1}\n"
+        line7 = "P  {0}  {1}  {2}\n"
+
+        general = self.execute(levee_gen_sql).fetchone()
+        if general is None:
+            # TODO: Need to implement correct export for levee_general, levee_failure and levee_fragility
+            general = (0, 0, None, None)
+        head = general[:2]
+        glob_frag = general[2:]
+
+        levee_group = self.parser.levee_group
+        levee_group.create_dataset('Levee', [])
+
+        levee_group.datasets["Levee"].data.append(create_array(line1, 8, head))
+        # l.write(line1.format(*head))
+        levee_rows = groupby(self.execute(levee_data_sql), key=itemgetter(0))
+        for gid, directions in levee_rows:
+            levee_group.datasets["Levee"].data.append(create_array(line2, 8, gid))
+            # l.write(line2.format(gid))
+            for row in directions:
+                levee_group.datasets["Levee"].data.append(create_array(line3, 8, row[1:]))
+                # l.write(line3.format(*row[1:]))
+        if head[1] == 1:
+            fail_rows = groupby(self.execute(levee_fail_sql), key=itemgetter(1))
+            for gid, directions in fail_rows:
+                levee_group.datasets["Levee"].data.append(create_array(line4, 8, gid))
+                # l.write(line4.format(gid))
+                for row in directions:
+                    rowl = list(row)
+                    for i in range(0, len(rowl)):
+                        rowl[i] = rowl[i] if rowl[i] is not None else 0
+                        rowl[i] = rowl[i] if rowl[i] != "None" else 0
+                    row = tuple(rowl)
+                    levee_group.datasets["Levee"].data.append(create_array(line5, 8, row[2:]))
+                    # l.write(line5.format(*row[2:]))
+        if None not in glob_frag:
+            levee_group.datasets["Levee"].data.append(create_array(line6, 8, glob_frag))
+            # l.write(line6.format(*glob_frag))
+        else:
+            pass
+        for row in self.execute(levee_frag_sql):
+            levee_group.datasets["Levee"].data.append(create_array(line7, 8, row))
+            # l.write(line7.format(*row))
+
+        self.parser.write_groups(levee_group)
+        return True
+
+        # except Exception as e:
+        #     QApplication.restoreOverrideCursor()
+        #     self.uc.show_error("ERROR 101218.1614: exporting LEVEE.DAT failed!.\n", e)
+        #     return False
+
+    def export_levee_dat(self, outdir):
         # check if there are any levees defined.
         try:
             if self.is_table_empty("levee_data"):

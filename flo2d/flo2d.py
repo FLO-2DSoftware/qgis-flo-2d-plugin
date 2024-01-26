@@ -2858,8 +2858,8 @@ class Flo2D(object):
                 "export_outflow",
                 "export_infil",
                 "export_arf",
-                "export_rain"
-
+                "export_rain",
+                "export_levee",
             ]
             try:
                 s = QSettings()
