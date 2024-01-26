@@ -2957,7 +2957,123 @@ class Flo2dGeoPackage(GeoPackageUtils):
             self.uc.show_error("ERROR 101218.1607:  exporting XSEC.DAT  failed!.\n", e)
             return False
 
-    def export_hystruc(self, outdir):
+    def export_hystruc(self, output = None):
+        if self.parsed_format == self.FORMAT_DAT:
+            return self.export_hystruc_dat(output)
+        elif self.parsed_format == self.FORMAT_HDF5:
+            return self.export_hystruc_hdf5()
+
+    def export_hystruc_hdf5(self):
+        """
+        Function to export Hydraulic Structure data to HDF5 file
+        """
+        # try:
+        # check if there is any hydraulic structure defined.
+        if self.is_table_empty("struct"):
+            return False
+        else:
+            nodes = self.execute("SELECT outflonod, outflonod FROM struct;").fetchall()
+            for nod in nodes:
+                if nod[0] in [NULL, 0, ""] or nod[1] in [NULL, 0, ""]:
+                    QApplication.restoreOverrideCursor()
+                    self.uc.bar_warn(
+                        "WARNING: some structures have no cells assigned.\nDid you schematize the structures?"
+                    )
+                    break
+
+        hystruct_sql = """SELECT * FROM struct ORDER BY fid;"""
+        ratc_sql = """SELECT * FROM rat_curves WHERE struct_fid = ? ORDER BY fid;"""
+        repl_ratc_sql = """SELECT * FROM repl_rat_curves WHERE struct_fid = ? ORDER BY fid;"""
+        ratt_sql = """SELECT * FROM rat_table WHERE struct_fid = ? ORDER BY fid;"""
+        culvert_sql = """SELECT * FROM culvert_equations WHERE struct_fid = ? ORDER BY fid;"""
+        storm_sql = """SELECT * FROM storm_drains WHERE struct_fid = ? ORDER BY fid;"""
+        bridge_a_sql = """SELECT fid, struct_fid, IBTYPE, COEFF, C_PRIME_USER, KF_COEF, KWW_COEF,  KPHI_COEF, KY_COEF, KX_COEF, KJ_COEF 
+                            FROM bridge_variables WHERE struct_fid = ? ORDER BY fid;"""
+        bridge_b_sql = """SELECT fid, struct_fid, BOPENING, BLENGTH, BN_VALUE, UPLENGTH12, LOWCHORD,
+                                 DECKHT, DECKLENGTH, PIERWIDTH, SLUICECOEFADJ, ORIFICECOEFADJ, 
+                                COEFFWEIRB, WINGWALL_ANGLE, PHI_ANGLE, LBTOEABUT, RBTOEABUT 
+                              FROM bridge_variables WHERE struct_fid = ? ORDER BY fid;"""
+
+        line1 = "S" + "  {}" * 9 + "\n"
+        line2 = "C" + "  {}" * 5 + "\n"
+        line3 = "R" + "  {}" * 5 + "\n"
+        line4 = "T" + "  {}" * 3 + "\n"
+        line5 = "F" + "  {}" * 6 + "\n"
+        line6 = "D" + "  {}" * 2 + "\n"
+        line7a = "B" + "  {}" * 9 + "\n"
+        line7b = "B" + "  {}" * 15 + "\n"
+
+        pairs = [
+            [ratc_sql, line2],  # rating curve  ('C' lines)
+            [repl_ratc_sql, line3],  # rating curve replacement ('R' lines)
+            [ratt_sql, line4],  # rating table ('T' lines)
+            [culvert_sql, line5],  # culvert equation ('F' lines)
+            [bridge_a_sql, line7a],  # bridge ('B' lines a)
+            [bridge_b_sql, line7b],  # bridge ('B' lines b)
+            [storm_sql, line6],  # storm drains ('D' lines)
+        ]
+
+        hystruc_rows = self.execute(hystruct_sql).fetchall()
+        if not hystruc_rows:
+            return False
+        else:
+            pass
+
+        # hystruc = os.path.join(outdir, "HYSTRUC.DAT")
+        hystruc_group = self.parser.hystruc_group
+        hystruc_group.create_dataset('Hystruct', [])
+
+        d_lines = []
+        for stru in hystruc_rows:
+            fid = stru[0]
+            vals1 = [x if x is not None and x != "" else 0 for x in stru[2:8]]
+            vals2 = [x if x is not None and x != "" else 0.0 for x in stru[8:11]]
+            vals = vals1 + vals2
+            hystruc_group.datasets["Hystruct"].data.append(create_array(line1, 16, tuple(vals)))
+            # h.write(line1.format(*vals))
+            type = stru[4]  #  0: rating curve
+            #  1: rating table
+            #  2: culvert equation
+            #  3: bridge routine
+            for i, (qry, line) in enumerate(pairs):
+                if (
+                    (type == 0 and i == 0)  # rating curve line 'C'
+                    or (type == 0 and i == 1)  # rating curve line 'R'
+                    or (type == 1 and i == 2)  # rating table
+                    or (type == 2 and i == 3)  # culvert equation
+                    or (type == 3 and i == 4)  # bridge routine lines a
+                    or (type == 3 and i == 5)  # bridge routine lines b
+                    or i == 6  # storm drains
+                ):
+                    for row in self.execute(qry, (fid,)):
+                        if row:
+                            subvals = [x if x is not None else "0.0" for x in row[2:]]
+                            if i == 3:  # Culvert equation.
+                                subvals[-1] = subvals[-1] if subvals[-1] not in [None, "0", "0.0"] else 1
+                            if i == 4:  # bridge routine lines a. Assign correct bridge type configuration.
+                                t = subvals[0]
+                                t = 1 if t == 1 else 2 if (t == 2 or t == 3) else 3 if (t == 4 or t == 5) else 4
+                                subvals[0] = t
+                            if i == 6:
+                                d_lines.append(line.format(*subvals))
+                            else:
+                                hystruc_group.datasets["Hystruct"].data.append(create_array(line, 16, tuple(subvals)))
+                                # h.write(line.format(*subvals))
+
+        # TODO: Fix the D lines for HDF5
+        # if d_lines:
+        #     for dl in d_lines:
+        #         h.write(dl)
+
+        self.parser.write_groups(hystruc_group)
+        return True
+
+        # except Exception as e:
+        #     QApplication.restoreOverrideCursor()
+        #     self.uc.show_error("ERROR 101218.1608: exporting HYSTRUC.DAT failed!.\n", e)
+        #     return False
+
+    def export_hystruc_dat(self, outdir):
         try:
             # check if there is any hydraulic structure defined.
             if self.is_table_empty("struct"):
@@ -3618,19 +3734,15 @@ class Flo2dGeoPackage(GeoPackageUtils):
         levee_group.create_dataset('Levee', [])
 
         levee_group.datasets["Levee"].data.append(create_array(line1, 8, head))
-        # l.write(line1.format(*head))
         levee_rows = groupby(self.execute(levee_data_sql), key=itemgetter(0))
         for gid, directions in levee_rows:
             levee_group.datasets["Levee"].data.append(create_array(line2, 8, gid))
-            # l.write(line2.format(gid))
             for row in directions:
                 levee_group.datasets["Levee"].data.append(create_array(line3, 8, row[1:]))
-                # l.write(line3.format(*row[1:]))
         if head[1] == 1:
             fail_rows = groupby(self.execute(levee_fail_sql), key=itemgetter(1))
             for gid, directions in fail_rows:
                 levee_group.datasets["Levee"].data.append(create_array(line4, 8, gid))
-                # l.write(line4.format(gid))
                 for row in directions:
                     rowl = list(row)
                     for i in range(0, len(rowl)):
@@ -3638,15 +3750,12 @@ class Flo2dGeoPackage(GeoPackageUtils):
                         rowl[i] = rowl[i] if rowl[i] != "None" else 0
                     row = tuple(rowl)
                     levee_group.datasets["Levee"].data.append(create_array(line5, 8, row[2:]))
-                    # l.write(line5.format(*row[2:]))
         if None not in glob_frag:
             levee_group.datasets["Levee"].data.append(create_array(line6, 8, glob_frag))
-            # l.write(line6.format(*glob_frag))
         else:
             pass
         for row in self.execute(levee_frag_sql):
             levee_group.datasets["Levee"].data.append(create_array(line7, 8, row))
-            # l.write(line7.format(*row))
 
         self.parser.write_groups(levee_group)
         return True
