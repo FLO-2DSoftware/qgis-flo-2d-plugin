@@ -14,6 +14,7 @@ from _ast import Pass
 from collections import OrderedDict
 from datetime import date, datetime, time, timedelta
 from math import floor, isnan, modf
+from pathlib import Path
 
 from qgis.core import (
     NULL,
@@ -844,6 +845,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
 
             """
             subcatchments = None
+            skipped_inlets = 0
             storm_drain = StormDrainProject(self.iface, swmm_file)
 
             ret = storm_drain.split_INP_groups_dictionary_by_tags()
@@ -1130,7 +1132,8 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
 
             new_nodes = []
             updated_nodes = 0
-            for name, values in list(storm_drain.INP_nodes.items()):
+            list_INP_nodes = list(storm_drain.INP_nodes.items())
+            for name, values in list_INP_nodes:
                 # "INP_nodes dictionary contains attributes names and
                 # values taken from the .INP file.
                 if subcatchments is not None:
@@ -1139,7 +1142,8 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                     elif "out_type" in values:
                         sd_type = "O"
                     elif name[0] in ["I", "i"]:
-                        continue  # Only consider inlets in [SUBCATCHMENTS]
+                        skipped_inlets += 1
+                        continue  # Skip inlets defined by initial "I" or "i". Only consider inlets in [SUBCATCHMENTS]
                     else:
                         sd_type = "J"
 
@@ -2158,6 +2162,11 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         if storm_drain.status_report:
             result2 = ScrollMessageBox2(QMessageBox.Warning, "Storm Drain import status", storm_drain.status_report)
             result2.exec_()
+            
+        if skipped_inlets != 0:
+            self.uc.show_warn("File " + Path(swmm_file).name + " has [SUBCATCHMENTS].\n\n" + 
+                              str(skipped_inlets) + " inlets with 'I' or 'i' name prefix were skipped.\n\n"
+                              "WARNING: there may be conduits that reference those inlets.")                
 
         self.populate_pump_curves_combo(False)
         self.pump_curve_cbo.blockSignals(True)
