@@ -780,7 +780,7 @@ class StormDrainProject(object):
                     if not infl or infl[0] in self.ignore:
                        continue                   
                     elif infl.split()[0] not in self.INP_nodes:
-                        self.status_report += "Undefined Node (?) reference at \n[INFLOW]\n" + infl + "\n\n"      
+                        self.status_report += "Undefined Node reference (" + infl.split()[0] + ") at \n[INFLOW]\n" + infl + "\n\n"      
                     else:
                         inflow_dict = dict(zip_longest(inflows_cols, infl.split()))
                         inflow = inflow_dict.pop("node_name")

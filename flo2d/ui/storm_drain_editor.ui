@@ -396,6 +396,11 @@
               <string>Outfalls</string>
              </property>
             </item>
+            <item>
+             <property name="text">
+              <string>Storage Units</string>
+             </property>
+            </item>
            </widget>
           </item>
          </layout>

@@ -3251,6 +3251,49 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
 
         self.lyrs.clear_rubber()
 
+    def show_storage_units(self):
+        """
+        Shows storage_units_dialog dialog.
+
+        """
+        # See if table is empty:
+        if self.gutils.is_table_empty("user_swmm_storage_units"):
+            self.uc.show_warn(
+                'User Layer "Storm Drain Nodes" is empty!\n\n'
+                + "Please import components from .INP file or shapefile, or convert from schematized Storm Drains."
+            )
+            return
+
+        #  See if there are any Inlet nodes:
+        qry = """SELECT * FROM user_swmm_nodes WHERE sd_type = 'I' or sd_type = 'J';"""
+        rows = self.gutils.execute(qry).fetchall()
+        if not rows:
+            self.uc.show_info(
+                "WARNING 280920.0422: No inlets/junctions defined (of type 'I' or 'J') in 'Storm Drain Nodes' User Layer!"
+            )
+            return
+
+        QApplication.setOverrideCursor(Qt.WaitCursor)
+        dlg_inlets = InletNodesDialog(self.iface, self.plot, self.SD_table, self.lyrs)
+        dlg_inlets.setWindowFlag(Qt.WindowMinimizeButtonHint, True)
+        dlg_inlets.setWindowFlag(Qt.WindowMaximizeButtonHint, True)
+        QApplication.restoreOverrideCursor()
+
+        save = dlg_inlets.exec_()
+        if save:
+            self.uc.show_info(
+                "Inlets saved to 'Storm Drain-Inlets' User Layer!\n\n"
+                + "Schematize it from the 'Storm Drain Editor' widget before saving into SWMMOUTF.DAT"
+            )
+            self.populate_type4_combo()
+
+        elif not save:
+            pass
+        else:
+            self.uc.bar_warn("Could not save Inlets! Please check if they are correct.")
+
+        self.lyrs.clear_rubber()
+
     def show_conduits(self):
         """
         Shows conduits dialog.
@@ -4438,6 +4481,8 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             self.show_inlets()
         elif idx == 2:
             self.show_outfalls()
+        elif idex == 3:
+            self.show_storage_units()                
 
         self.SD_nodes_components_cbo.setCurrentIndex(0)
 
