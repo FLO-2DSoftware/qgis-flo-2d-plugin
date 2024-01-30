@@ -2808,10 +2808,113 @@ class Flo2dGeoPackage(GeoPackageUtils):
         """
         Function to export channel data to hdf5
         """
-
         if self.is_table_empty("chan"):
             return False
-        pass
+
+        chan_sql = """SELECT fid, depinitial, froudc, roughadj, isedn FROM chan ORDER BY fid;"""
+        chan_elems_sql = (
+            """SELECT fid, rbankgrid, fcn, xlen, type FROM chan_elems WHERE seg_fid = ? ORDER BY nr_in_seg;"""
+        )
+
+        chan_r_sql = """SELECT elem_fid, bankell, bankelr, fcw, fcd FROM chan_r WHERE elem_fid = ?;"""
+        chan_v_sql = """SELECT elem_fid, bankell, bankelr, fcd, a1, a2, b1, b2, c1, c2,
+                                   excdep, a11, a22, b11, b22, c11, c22 FROM chan_v WHERE elem_fid = ?;"""
+        chan_t_sql = """SELECT elem_fid, bankell, bankelr, fcw, fcd, zl, zr FROM chan_t WHERE elem_fid = ?;"""
+        chan_n_sql = """SELECT elem_fid, nxsecnum FROM chan_n WHERE elem_fid = ?;"""
+
+        chan_wsel_sql = """SELECT istart, wselstart, iend, wselend FROM chan_wsel ORDER BY fid;"""
+        chan_conf_sql = """SELECT chan_elem_fid FROM chan_confluences ORDER BY fid;"""
+        chan_e_sql = """SELECT grid_fid FROM noexchange_chan_cells ORDER BY fid;"""
+
+        segment = "   {0:.2f}   {1:.2f}   {2:.2f}   {3}\n"
+        chan_r = "R" + "  {}" * 7 + "\n"
+        chan_v = "V" + "  {}" * 19 + "\n"
+        chan_t = "T" + "  {}" * 9 + "\n"
+        chan_n = "N" + "  {}" * 4 + "\n"
+        chanbank = " {0: <10} {1}\n"
+        wsel = "{0} {1:.2f}\n"
+        conf = " C {0}  {1}\n"
+        chan_e = " E {0}\n"
+
+        sqls = {
+            "R": [chan_r_sql, chan_r, 3, 6],
+            "V": [chan_v_sql, chan_v, 3, 5],
+            "T": [chan_t_sql, chan_t, 3, 6],
+            "N": [chan_n_sql, chan_n, 1, 2],
+        }
+
+        chan_rows = self.execute(chan_sql).fetchall()
+        if not chan_rows:
+            return False
+        else:
+            pass
+
+        channel_group = self.parser.channel_group
+        channel_group.create_dataset('Chan', [])
+        channel_group.create_dataset('Chanbank', [])
+
+        ISED = self.gutils.get_cont_par("ISED")
+
+        for row in chan_rows:
+            row = [x if x is not None else "0" for x in row]
+            fid = row[0]
+            if ISED == "0":
+                row[4] = ""
+            channel_group.datasets["Chan"].data.append(create_array(segment, 20, tuple(row[1:5])))
+            # Writes depinitial, froudc, roughadj, isedn from 'chan' table (schematic layer).
+            # A single line for each channel segment. The next lines will be the grid elements of
+            # this channel segment.
+            for elems in self.execute(
+                chan_elems_sql, (fid,)
+            ):  # each 'elems' is a list [(fid, rbankgrid, fcn, xlen, type)] from
+                # 'chan_elems' table (the cross sections in the schematic layer),
+                #  that has the 'fid' value indicated (the channel segment id).
+                elems = [
+                    x if x is not None else "" for x in elems
+                ]  # If 'elems' has a None in any of above values of list, replace it by ''
+                (
+                    eid,
+                    rbank,
+                    fcn,
+                    xlen,
+                    typ,
+                ) = elems  # Separates values of list into individual variables.
+                sql, line, fcn_idx, xlen_idx = sqls[
+                    typ
+                ]  # depending on 'typ' (R,V,T, or N) select sql (the SQLite SELECT statement to execute),
+                # line (format to write), fcn_idx (?), and xlen_idx (?)
+                res = [
+                    x if x is not None else "" for x in self.execute(sql, (eid,)).fetchone()
+                ]  # 'res' is a list of values depending on 'typ' (R,V,T, or N).
+
+                res.insert(
+                    fcn_idx, fcn
+                )  # Add 'fcn' (coming from table ´chan_elems' (cross sections) to 'res' list) in position 'fcn_idx'.
+                res.insert(
+                    xlen_idx, xlen
+                )  # Add ´xlen' (coming from table ´chan_elems' (cross sections) to 'res' list in position 'xlen_idx'.
+                channel_group.datasets["Chan"].data.append(create_array(line, 20, tuple(res)))
+                channel_group.datasets["Chanbank"].data.append(create_array(chanbank, 20, eid, rbank))
+
+        for row in self.execute(chan_wsel_sql):
+            channel_group.datasets["Chan"].data.append(create_array(wsel, 20, tuple(row[:2])))
+            channel_group.datasets["Chan"].data.append(create_array(wsel, 20, tuple(row[2:])))
+
+        pairs = []
+        for row in self.execute(chan_conf_sql):
+            chan_elem = row[0]
+            if not pairs:
+                pairs.append(chan_elem)
+            else:
+                pairs.append(chan_elem)
+                channel_group.datasets["Chan"].data.append(create_array(conf, 20, pairs))
+                del pairs[:]
+
+        for row in self.execute(chan_e_sql):
+            channel_group.datasets["Chan"].data.append(create_array(chan_e, 20, row[0]))
+
+        self.parser.write_groups(channel_group)
+        return True
 
     def export_chan_dat(self, outdir):
         # check if there are any channels defined.

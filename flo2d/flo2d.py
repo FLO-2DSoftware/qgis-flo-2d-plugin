@@ -2861,6 +2861,7 @@ class Flo2D(object):
                 "export_rain",
                 "export_levee",
                 "export_hystruc",
+                "export_chan",
             ]
             try:
                 s = QSettings()

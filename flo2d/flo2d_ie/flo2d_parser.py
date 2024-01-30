@@ -171,6 +171,12 @@ class ParseHDF5:
         return group
 
     @property
+    def channel_group(self):
+        group_name = "Channels"
+        group = HDF5Group(group_name)
+        return group
+
+    @property
     def groups(self):
         grouped_datasets_list = [
             self.control_group,
