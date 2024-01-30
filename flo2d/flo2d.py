@@ -2862,6 +2862,7 @@ class Flo2D(object):
                 "export_levee",
                 "export_hystruc",
                 "export_chan",
+                "export_bridge_coeff_data",
             ]
             try:
                 s = QSettings()

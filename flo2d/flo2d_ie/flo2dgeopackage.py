@@ -3313,7 +3313,39 @@ class Flo2dGeoPackage(GeoPackageUtils):
             self.uc.show_error("ERROR 101122.0753: exporting BRIDGE_XSEC.DAT failed!.\n", e)
             return False
 
-    def export_bridge_coeff_data(self, outdir):
+    def export_bridge_coeff_data(self, output = None):
+        if self.parsed_format == self.FORMAT_DAT:
+            return self.export_bridge_coeff_data_dat(output)
+        elif self.parsed_format == self.FORMAT_HDF5:
+            return self.export_bridge_coeff_data_hdf5()
+
+    def export_bridge_coeff_data_hdf5(self):
+        """
+        Export bridge coefficient data to the hdf5 file
+        """
+        # try:
+        if self.is_table_empty("struct"):
+            return False
+        hystruc_group = self.parser.hystruc_group
+        hystruc_group.create_dataset('Bridge Coefficientt Data', [])
+
+        src = os.path.dirname(os.path.abspath(__file__)) + "/bridge_coeff_data.dat"''
+        data = []
+        with open(src, 'r') as bridge_coeff_data:
+            for line in bridge_coeff_data:
+                hystruc_group.datasets["Bridge Coefficientt Data"].data.append(create_array(line, 13))
+
+        self.parser.write_groups(hystruc_group)
+        # data_array = np.array(data, dtype=np.string_)
+        # hystruc_group.create_dataset('Bridge Coefficient Data', data=data_array)
+        return True
+
+        # except Exception as e:
+        #     QApplication.restoreOverrideCursor()
+        #     self.uc.show_error("ERROR 101122.0754: exporting BRIDGE_COEFF_DATA.DAT failed!.\n", e)
+        #     return False
+
+    def export_bridge_coeff_data_dat(self, outdir):
         try:
             # check if there is any hydraulic structure defined.
             if self.is_table_empty("struct"):
