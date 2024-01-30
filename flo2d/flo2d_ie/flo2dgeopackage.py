@@ -3323,27 +3323,25 @@ class Flo2dGeoPackage(GeoPackageUtils):
         """
         Export bridge coefficient data to the hdf5 file
         """
-        # try:
-        if self.is_table_empty("struct"):
+        try:
+            if self.is_table_empty("struct"):
+                return False
+            hystruc_group = self.parser.hystruc_group
+            hystruc_group.create_dataset('Bridge Coefficientt Data', [])
+
+            src = os.path.dirname(os.path.abspath(__file__)) + "/bridge_coeff_data.dat"''
+            data = []
+            with open(src, 'r') as bridge_coeff_data:
+                for line in bridge_coeff_data:
+                    hystruc_group.datasets["Bridge Coefficientt Data"].data.append(create_array(line, 13))
+
+            self.parser.write_groups(hystruc_group)
+            return True
+
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.uc.show_error("ERROR 101122.0754: exporting BRIDGE_COEFF_DATA.DAT failed!.\n", e)
             return False
-        hystruc_group = self.parser.hystruc_group
-        hystruc_group.create_dataset('Bridge Coefficientt Data', [])
-
-        src = os.path.dirname(os.path.abspath(__file__)) + "/bridge_coeff_data.dat"''
-        data = []
-        with open(src, 'r') as bridge_coeff_data:
-            for line in bridge_coeff_data:
-                hystruc_group.datasets["Bridge Coefficientt Data"].data.append(create_array(line, 13))
-
-        self.parser.write_groups(hystruc_group)
-        # data_array = np.array(data, dtype=np.string_)
-        # hystruc_group.create_dataset('Bridge Coefficient Data', data=data_array)
-        return True
-
-        # except Exception as e:
-        #     QApplication.restoreOverrideCursor()
-        #     self.uc.show_error("ERROR 101122.0754: exporting BRIDGE_COEFF_DATA.DAT failed!.\n", e)
-        #     return False
 
     def export_bridge_coeff_data_dat(self, outdir):
         try:
