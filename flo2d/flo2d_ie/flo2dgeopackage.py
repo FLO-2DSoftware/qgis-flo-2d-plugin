@@ -5007,7 +5007,44 @@ class Flo2dGeoPackage(GeoPackageUtils):
             self.uc.show_error("ERROR 101218.1619: exporting SWMMFLORT.DAT failed!.\n", e)
             return False
 
-    def export_swmmoutf(self, outdir):
+    def export_swmmoutf(self, output=None):
+        if self.parsed_format == self.FORMAT_DAT:
+            return self.export_swmmoutf_dat(output)
+        elif self.parsed_format == self.FORMAT_HDF5:
+            return self.export_swmmoutf_hdf5()
+
+    def export_swmmoutf_hdf5(self):
+        """
+        Function to export the swmmoutf to hdf5 file
+        """
+        try:
+            if self.is_table_empty("swmmoutf"):
+                return False
+            swmmoutf_sql = """SELECT name, grid_fid, outf_flo FROM swmmoutf ORDER BY fid;"""
+
+            line1 = "{0}  {1}  {2}\n"
+
+            swmmoutf_rows = self.execute(swmmoutf_sql).fetchall()
+            if not swmmoutf_rows:
+                return False
+            else:
+                pass
+            stormdrain_group = self.parser.stormdrain_group
+            stormdrain_group.create_dataset('SWMMOUTF', [])
+
+            for row in swmmoutf_rows:
+                stormdrain_group.datasets["SWMMOUTF"].data.append(create_array(line1, 3, row))
+                # s.write(line1.format(*row))
+
+            self.parser.write_groups(stormdrain_group)
+            return True
+
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.uc.show_error("ERROR 101218.1620: exporting SWMMOUTF.DAT failed!.\n", e)
+            return False
+
+    def export_swmmoutf_dat(self, outdir):
         # check if there is any SWMM data defined.
         try:
             if self.is_table_empty("swmmoutf"):
