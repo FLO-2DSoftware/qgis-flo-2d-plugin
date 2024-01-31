@@ -181,6 +181,11 @@ class ParseHDF5:
         group_name = "Floodplain"
         group = HDF5Group(group_name)
         return group
+    @property
+    def sed_group(self):
+        group_name = "Sediment"
+        group = HDF5Group(group_name)
+        return group
 
     @property
     def groups(self):

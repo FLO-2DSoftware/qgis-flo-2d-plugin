@@ -2867,7 +2867,8 @@ class Flo2D(object):
                 "export_breach",
                 "export_mult",
                 "export_fpxsec",
-                "export_fpfroude"
+                "export_fpfroude",
+                "export_sed",
             ]
             try:
                 s = QSettings()

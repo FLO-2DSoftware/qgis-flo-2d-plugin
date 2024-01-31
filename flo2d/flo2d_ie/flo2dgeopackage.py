@@ -3890,7 +3890,126 @@ class Flo2dGeoPackage(GeoPackageUtils):
             QApplication.restoreOverrideCursor()
             return False
 
-    def export_sed(self, outdir):
+    def export_sed(self, output=None):
+        if self.parsed_format == self.FORMAT_DAT:
+            return self.export_sed_dat(output)
+        elif self.parsed_format == self.FORMAT_HDF5:
+            return self.export_sed_hdf5()
+
+    def export_sed_hdf5(self):
+        """
+        Function to export sediment data to hdf5 file
+        """
+        try:
+            # check if there is any sedimentation data defined.
+            if self.is_table_empty("mud") and self.is_table_empty("sed"):
+                return False
+
+            ISED = self.gutils.get_cont_par("ISED")
+            MUD = self.gutils.get_cont_par("MUD")
+
+            if ISED == "0" and MUD == "0":
+                return False
+
+            sed_m_sql = """SELECT va, vb, ysa, ysb, sgsm, xkx FROM mud ORDER BY fid;"""
+            sed_ce_sql = """SELECT isedeqg, isedsizefrac, dfifty, sgrad, sgst, dryspwt, cvfg, isedsupply, isedisplay, scourdep
+                            FROM sed ORDER BY fid;"""
+            sed_z_sql = """SELECT dist_fid, isedeqi, bedthick, cvfi FROM sed_groups ORDER BY dist_fid;"""
+            sed_p_sql = """SELECT sediam, sedpercent FROM sed_group_frac_data WHERE dist_fid = ? ORDER BY sedpercent;"""
+            areas_d_sql = """SELECT fid, debrisv FROM mud_areas ORDER BY fid;"""
+            cells_d_sql = """SELECT grid_fid FROM mud_cells WHERE area_fid = ? ORDER BY grid_fid;"""
+            cells_r_sql = """SELECT grid_fid FROM sed_rigid_cells ORDER BY grid_fid;"""
+            areas_s_sql = """SELECT fid, dist_fid, isedcfp, ased, bsed FROM sed_supply_areas ORDER BY dist_fid;"""
+            cells_s_sql = """SELECT grid_fid FROM sed_supply_cells WHERE area_fid = ?;"""
+            data_n_sql = (
+                """SELECT ssediam, ssedpercent FROM sed_supply_frac_data WHERE dist_fid = ? ORDER BY ssedpercent;"""
+            )
+            areas_g_sql = """SELECT fid, group_fid FROM sed_group_areas ORDER BY fid;"""
+            cells_g_sql = """SELECT grid_fid FROM sed_group_cells WHERE area_fid = ? ORDER BY grid_fid;"""
+
+            line1 = "M  {0}  {1}  {2}  {3}  {4}  {5}\n"
+            line2 = "C  {0}  {1}  {2}  {3}  {4}  {5}  {6} {7}  {8}\n"
+            line3 = "Z  {0}  {1}  {2}\n"
+            line4 = "P  {0}  {1}\n"
+            line5 = "D  {0}  {1}\n"
+            line6 = "E  {0}\n"
+            line7 = "R  {0}\n"
+            line8 = "S  {0}  {1}  {2}  {3}\n"
+            line9 = "N  {0}  {1}\n"
+            line10 = "G  {0}  {1}\n"
+
+            m_data = self.execute(sed_m_sql).fetchone()
+            ce_data = self.execute(sed_ce_sql).fetchone()
+            if m_data is None and ce_data is None:
+                return False
+
+            # sed = os.path.join(outdir, "SED.DAT")
+            sed_group = self.parser.sed_group
+            sed_group.create_dataset('Sediment Data', [])
+
+            if MUD in ["1", "2"] and m_data is not None:
+                # Mud/debris transport or 2 phase flow:
+                sed_group.datasets["Sediment Data"].data.append(create_array(line1, 10, m_data))
+                # s.write(line1.format(*m_data))
+
+                if int(self.gutils.get_cont_par("IDEBRV")) == 1:
+                    for aid, debrisv in self.execute(areas_d_sql):
+                        gid = self.execute(cells_d_sql, (aid,)).fetchone()[0]
+                        sed_group.datasets["Sediment Data"].data.append(create_array(line5, 10, gid, debrisv))
+                        # s.write(line5.format(gid, debrisv))
+                e_data = None
+
+            if (ISED == "1" or MUD == "2") and ce_data is not None:
+                # Sediment Transport or 2 phase flow:
+                e_data = ce_data[-1]
+
+                sed_group.datasets["Sediment Data"].data.append(create_array(line2, 10, tuple(ce_data[:-1])))
+                # s.write(line2.format(*ce_data[:-1]))
+
+                for row in self.execute(sed_z_sql):
+                    dist_fid = row[0]
+                    sed_group.datasets["Sediment Data"].data.append(create_array(line3, 10, tuple(row[1:])))
+                    # s.write(line3.format(*row[1:]))
+                    for prow in self.execute(sed_p_sql, (dist_fid,)):
+                        sed_group.datasets["Sediment Data"].data.append(create_array(line4, 10, prow))
+                        # s.write(line4.format(*prow))
+
+                if e_data is not None:
+                    sed_group.datasets["Sediment Data"].data.append(create_array(line6, 10, e_data))
+                    # s.write(line6.format(e_data))
+
+                for row in self.execute(cells_r_sql):
+                    sed_group.datasets["Sediment Data"].data.append(create_array(line7, 10, row))
+                    # s.write(line7.format(*row))
+
+                for row in self.execute(areas_s_sql):
+                    aid = row[0]
+                    dist_fid = row[1]
+                    gid = self.execute(cells_s_sql, (aid,)).fetchone()[0]
+                    sed_group.datasets["Sediment Data"].data.append(create_array(line8, 10, gid, tuple(row[2:])))
+                    # s.write(line8.format(gid, *row[2:]))
+                    for nrow in self.execute(data_n_sql, (dist_fid,)):
+                        sed_group.datasets["Sediment Data"].data.append(create_array(line9, 10, nrow))
+                        # s.write(line9.format(*nrow))
+
+                areas_g = self.execute(areas_g_sql)
+                if areas_g:
+                    for aid, group_fid in areas_g:
+                        gids = self.execute(cells_g_sql, (aid,)).fetchall()
+                        if gids:
+                            for g in gids:
+                                sed_group.datasets["Sediment Data"].data.append(create_array(line10, 10, tuple(g[0]), group_fid))
+                                # s.write(line10.format(g[0], group_fid))
+
+            self.parser.write_groups(sed_group)
+            return True
+
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.uc.show_error("ERROR 101218.1612: exporting SED.DAT failed!.\n", e)
+            return False
+
+    def export_sed_dat(self, outdir):
         try:
             # check if there is any sedimentation data defined.
             if self.is_table_empty("mud") and self.is_table_empty("sed"):
