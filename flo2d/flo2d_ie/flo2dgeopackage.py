@@ -3615,7 +3615,96 @@ class Flo2dGeoPackage(GeoPackageUtils):
             self.uc.show_error("ERROR 101218.1610: exporting ARF.DAT failed!.", e)
             return False
 
-    def export_mult(self, outdir):
+    def export_mult(self, output=None):
+        if self.parsed_format == self.FORMAT_DAT:
+            return self.export_mult_dat(output)
+        elif self.parsed_format == self.FORMAT_HDF5:
+            return self.export_mult_hdf5()
+
+    def export_mult_hdf5(self):
+        """
+        Function to export mult data to hdf5 file
+        """
+
+        rtrn = True
+        if self.is_table_empty("mult_cells") and self.is_table_empty("simple_mult_cells"):
+            return False
+
+        if self.is_table_empty("mult"):
+            # Assign defaults to multiple channels globals:
+            self.gutils.fill_empty_mult_globals()
+
+        mult_sql = """SELECT * FROM mult;"""
+        head = self.execute(mult_sql).fetchone()
+        mults = []
+
+        channel_group = self.parser.channel_group
+        # Check if there is any multiple channel cells defined.
+        if not self.is_table_empty("mult_cells"):
+            try:
+                # Multiple Channels (not simplified):
+                mult_cell_sql = """SELECT grid_fid, wdr, dm, nodchns, xnmult FROM mult_cells ORDER BY grid_fid ;"""
+                line1 = " {}" * 8 + "\n"
+                line2 = " {}" * 5 + "\n"
+
+                channel_group.create_dataset('Mult', [])
+
+                channel_group.datasets["Mult"].data.append(create_array(line1, 8, head[1:]))
+                # m.write(line1.format(*head[1:]).replace("None", ""))
+
+                mult_cells = self.execute(mult_cell_sql).fetchall()
+
+                seen = set()
+                for a, b, c, d, e in mult_cells:
+                    if not a in seen:
+                        seen.add(a)
+                        mults.append((a, b, c, d, e))
+
+                for row in mults:
+                    vals = [x if x is not None else "" for x in row]
+                    channel_group.datasets["Mult"].data.append(create_array(line2, 8, tuple(vals)))
+                    # m.write(line2.format(*vals))
+
+            except Exception as e:
+                QApplication.restoreOverrideCursor()
+                self.uc.show_error("ERROR 101218.1611: exporting MULT.DAT failed!.\n", e)
+                return False
+
+        if not self.is_table_empty("simple_mult_cells"):
+            try:
+                # Simplified Multiple Channels:
+                simple_mult_cell_sql = """SELECT DISTINCT grid_fid FROM simple_mult_cells ORDER BY grid_fid;"""
+                line1 = "{}" + "\n"
+                line2 = "{}" + "\n"
+
+                isany = self.execute(simple_mult_cell_sql).fetchone()
+                if isany:
+                    channel_group.create_dataset('Simple Mult', [])
+                    repeats = ""
+
+                    channel_group.datasets["Simple Mult"].data.append(create_array(line1, 1, head[9]))
+                    # sm.write(line1.format(head[9]))
+                    for row in self.execute(simple_mult_cell_sql):
+                        # See if grid number in row is any grid element in mults:
+                        if [item for item in mults if item[0] == row[0]]:
+                            repeats += str(row[0]) + "  "
+                        else:
+                            vals = [x if x is not None else "" for x in row]
+                            channel_group.datasets["Simple Mult"].data.append(create_array(line2, 1, tuple(vals)))
+                            # sm.write(line2.format(*vals))
+                if repeats:
+                    self.uc.log_info("Cells repeated in simple mult cells: " + repeats)
+                self.parser.write_groups(channel_group)
+                return True
+
+            except Exception as e:
+                QApplication.restoreOverrideCursor()
+                self.uc.show_error("ERROR 101218.1611: exporting SIMPLE_MULT.DAT failed!.\n", e)
+                return False
+
+        return rtrn
+
+    def export_mult_dat(self, outdir):
         rtrn = True
         if self.is_table_empty("mult_cells") and self.is_table_empty("simple_mult_cells"):
             return False
