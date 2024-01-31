@@ -4427,7 +4427,44 @@ class Flo2dGeoPackage(GeoPackageUtils):
             self.uc.show_error("ERROR 101218.1616: exporting BREACH.DAT failed!.\n", e)
             return False
 
-    def export_fpfroude(self, outdir):
+    def export_fpfroude(self, output=None):
+        if self.parsed_format == self.FORMAT_DAT:
+            return self.export_fpfroude_dat(output)
+        elif self.parsed_format == self.FORMAT_HDF5:
+            return self.export_fpfroude_hdf5()
+
+    def export_fpfroude_hdf5(self):
+        # check if there is any limiting Froude number defined.
+        # try:
+        if self.is_table_empty("fpfroude"):
+            return False
+        fpfroude_sql = """SELECT fid, froudefp FROM fpfroude ORDER BY fid;"""
+        cell_sql = """SELECT grid_fid FROM fpfroude_cells WHERE area_fid = ? ORDER BY grid_fid;"""
+
+        line1 = "F {0} {1}\n"
+
+        fpfroude_rows = self.execute(fpfroude_sql).fetchall()
+        if not fpfroude_rows:
+            return False
+        else:
+            pass
+        floodplain_group = self.parser.floodplain_group
+        floodplain_group.create_dataset('Floodplain Froude', [])
+
+        for fid, froudefp in fpfroude_rows:
+            for row in self.execute(cell_sql, (fid,)):
+                gid = row[0]
+                floodplain_group.datasets["Floodplain Froude"].data.append(create_array(line1, 3, gid, froudefp))
+
+        self.parser.write_groups(floodplain_group)
+        return True
+
+        # except Exception as e:
+        #     QApplication.restoreOverrideCursor()
+        #     self.uc.show_error("ERROR 101218.1617: exporting FPFROUDE.DAT failed!.\n", e)
+        #     return False
+
+    def export_fpfroude_dat(self, outdir):
         # check if there is any limiting Froude number defined.
         try:
             if self.is_table_empty("fpfroude"):
