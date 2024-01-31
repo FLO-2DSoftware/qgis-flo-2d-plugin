@@ -2869,6 +2869,9 @@ class Flo2D(object):
                 "export_fpxsec",
                 "export_fpfroude",
                 "export_sed",
+                "export_swmmflo",
+                # "export_swmmflort",
+                # "export_swmmoutf",
             ]
             try:
                 s = QSettings()

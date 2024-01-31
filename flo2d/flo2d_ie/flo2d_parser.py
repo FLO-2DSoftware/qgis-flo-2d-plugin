@@ -188,6 +188,12 @@ class ParseHDF5:
         return group
 
     @property
+    def stormdrain_group(self):
+        group_name = "Storm Drain"
+        group = HDF5Group(group_name)
+        return group
+
+    @property
     def groups(self):
         grouped_datasets_list = [
             self.control_group,

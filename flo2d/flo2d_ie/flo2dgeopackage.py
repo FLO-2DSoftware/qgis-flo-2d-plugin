@@ -4641,7 +4641,57 @@ class Flo2dGeoPackage(GeoPackageUtils):
             self.uc.show_error("ERROR 101218.1901: exporting SHALLOWN_SPATIAL.DAT failed!", e)
             return False
 
-    def export_swmmflo(self, outdir):
+    def export_swmmflo(self, output=None):
+        if self.parsed_format == self.FORMAT_DAT:
+            return self.export_swmmflo_dat(output)
+        elif self.parsed_format == self.FORMAT_HDF5:
+            return self.export_swmmflo_hdf5()
+
+    def export_swmmflo_hdf5(self):
+        """
+        Function to export the swmm flo to the hdf5 file
+        """
+        try:
+            if self.is_table_empty("swmmflo"):
+                return False
+
+            swmmflo_sql = """SELECT swmmchar, swmm_jt, swmm_iden, intype, swmm_length, swmm_width, 
+                                    swmm_height, swmm_coeff, swmm_feature, curbheight
+                             FROM swmmflo ORDER BY fid;"""
+            line1 = "{0}  {1} {2} {3} {4} {5} {6} {7} {8} {9}\n"
+
+            swmmflo_rows = self.execute(swmmflo_sql).fetchall()
+            if not swmmflo_rows:
+                return False
+            else:
+                pass
+
+            stormdrain_group = self.parser.stormdrain_group
+            stormdrain_group.create_dataset('SWMMFLO', [])
+
+            for row in swmmflo_rows:
+                new_row = []
+                if row[2][0] in ["I", "i"]:  # First letter of name (swmm_iden) is
+                    # "I" or "i" for inlet,
+                    # "IM" or "im" for manhole
+                    # "j" or "J" for junctions
+                    # "O" or "o" for outfalls.
+                    for i, item in enumerate(row, 1):
+                        new_row.append(item if item is not None else 0)
+                    if new_row[1] < 1:
+                        self.uc.bar_warn("WARNING: invalid grid number in 'swmmflo' (Storm Drain. SD Inlets) layer !")
+                    else:
+                        stormdrain_group.datasets["SWMMFLO"].data.append(create_array(line1, 10, tuple(new_row)))
+
+            self.parser.write_groups(stormdrain_group)
+            return True
+
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.uc.show_error("ERROR 101218.1618: exporting SWMMFLO.DAT failed!.\n", e)
+            return False
+
+    def export_swmmflo_dat(self, outdir):
         # check if there is any SWMM data defined.
         try:
             if self.is_table_empty("swmmflo"):
