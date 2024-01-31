@@ -2870,7 +2870,7 @@ class Flo2D(object):
                 "export_fpfroude",
                 "export_sed",
                 "export_swmmflo",
-                # "export_swmmflort",
+                "export_swmmflort",
                 # "export_swmmoutf",
             ]
             try:
