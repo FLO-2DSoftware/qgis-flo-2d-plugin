@@ -73,3 +73,34 @@ NEIGHBORS = {
     "SW": "Soutwest neighbor",
     "W": "West neighbor",
 }
+
+STORMDRAIN = {
+    "SWMMFLO": "Storm Drain Data File",
+    "SWMMFLORT": "Storm Drain Type 4 Rating Table File",
+    "SWMMOUTF": "Storm Drain Outfall ID Data File",
+}
+
+BC = {
+    "INFLOW": "Inflow Hydrograph Data",
+    "OUTFLOW": "Outflow Hydrograph Data"
+}
+
+CHANNEL = {
+    "CHAN": "Channel Data",
+    "CHANBANK": "Channel Bank Data",
+    "XSEC": "Cross Section Data",
+}
+
+HYSTRUCT = {
+    "HYSTRUC": "Hydraulic Structure Data",
+    "BRIDGE_COEFF_DATA": "Bridge Coefficient Data"
+}
+
+INFIL = {
+    "INFIL": "Infiltration Data"
+}
+
+RAIN = {
+    "RAIN": "Rainfall Data"
+}
+

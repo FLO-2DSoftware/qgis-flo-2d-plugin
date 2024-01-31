@@ -18,7 +18,7 @@ from qgis.core import NULL
 from qgis.PyQt.QtCore import QSettings
 from qgis.PyQt.QtWidgets import QMessageBox
 
-from ..flo2d_hdf5.hdf5_descriptions import CONTROL, GRID, NEIGHBORS
+from ..flo2d_hdf5.hdf5_descriptions import CONTROL, GRID, NEIGHBORS, STORMDRAIN, BC, CHANNEL, HYSTRUCT, INFIL, RAIN
 from ..utils import Msge
 
 try:
@@ -221,6 +221,18 @@ class ParseHDF5:
                 ds.attrs[dataset.name] = GRID[dataset.name]
             if dataset.name in NEIGHBORS:
                 ds.attrs[dataset.name] = NEIGHBORS[dataset.name]
+            if dataset.name in STORMDRAIN:
+                ds.attrs[dataset.name] = STORMDRAIN[dataset.name]
+            if dataset.name in BC:
+                ds.attrs[dataset.name] = BC[dataset.name]
+            if dataset.name in CHANNEL:
+                ds.attrs[dataset.name] = CHANNEL[dataset.name]
+            if dataset.name in HYSTRUCT:
+                ds.attrs[dataset.name] = HYSTRUCT[dataset.name]
+            if dataset.name in INFIL:
+                ds.attrs[dataset.name] = INFIL[dataset.name]
+            if dataset.name in RAIN:
+                ds.attrs[dataset.name] = RAIN[dataset.name]
 
     def write_groups(self, *groups):
         with h5py.File(self.hdf5_filepath, self.write_mode) as f:
