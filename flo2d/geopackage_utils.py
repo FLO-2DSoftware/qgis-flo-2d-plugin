@@ -247,7 +247,7 @@ class GeoPackageUtils(object):
         'levee_failure', 'levee_fragility', 'fpxsec', 'fpxsec_cells', 'fpfroude',
         'fpfroude_cells', 'user_swmm_nodes', 'swmm_inflows', 'swmm_inflow_patterns',
         'swmm_time_series', 'swmm_time_series_data', 'swmm_tidal_curve',
-        'swmm_tidal_curve_data', 'user_swmm_conduits', 'user_swmm_pumps',
+        'swmm_tidal_curve_data', 'user_swmm_storage_units', 'user_swmm_conduits', 'user_swmm_pumps',
         'swmm_pumps_curve_data', 'user_swmm_orifices', 'user_swmm_weirs', 'swmmflo',
         'swmm_other_curves',
         'swmmflort', 'swmmflort_data', 'swmmflo_culvert', 'swmmoutf', 'swmm_export',

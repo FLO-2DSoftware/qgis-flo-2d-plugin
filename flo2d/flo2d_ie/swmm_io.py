@@ -25,6 +25,7 @@ class StormDrainProject(object):
         self.INP_groups = OrderedDict()  # ".INP_groups" will contain all groups [xxxx] in .INP file,
         # ordered as entered.
         self.INP_nodes = {}
+        self.INP_storages = {}
         self.INP_inflows = {}
         self.INP_patterns = []
         self.INP_timeseries = []
@@ -361,7 +362,7 @@ class StormDrainProject(object):
         # Finally update keyed element 'XSECTIONS' of INP_groups dictionary:
         self.update_tag_in_INP_groups("xsec", new_xsections)
 
-    def create_INP_nodes_dictionary_with_coordinates(self):
+    def add_coordinates_INP_nodes_dictionary(self):
         try:
             coord_cols = ["node", "x", "y"]
             coord_list = self.select_this_INP_group(
@@ -375,15 +376,81 @@ class StormDrainProject(object):
                         zip_longest(coord_cols, coord.split())
                     )  # Creates one dictionary element {'node', x, y}
                     node = coord_dict.pop("node")
-                    self.INP_nodes[node] = coord_dict  # Inserts one new element to dictionary with key "node".
-                    # At the end, it will have all elements from the [COORDINATES] group in .INP file.
-                    # E.g:
-                    # "self.INP_nodes":
-                    # {'I1': {'x': '366976.000', 'y': '1185380.000'},
-                    #  'I3': {'x': '366875.000', 'y': '1185664.000'},
-                    #  'I2': {'x': '366969.000', 'y': '1185492.000'}, etc.
+                    if node in self.INP_nodes:
+                        self.INP_nodes[node].update(coord_dict)  # Inserts one new element to dictionary with key "node".
+                        # At the end, it will have all elements from the [COORDINATES] group in .INP file.
+                        # E.g:
+                        # "self.INP_nodes":
+                        # {'I1': {'x': '366976.000', 'y': '1185380.000'},
+                        #  'I3': {'x': '366875.000', 'y': '1185664.000'},
+                        #  'I2': {'x': '366969.000', 'y': '1185492.000'}, etc.
 
             return len(coord_list)
+
+        except Exception as e:
+            self.uc.bar_warn("WARNING 221121.1017: Reading coordinates from SWMM input data failed!")
+            return 0
+
+    def create_INP_storage_dictionary_with_storage(self):
+        try:
+            storage_cols = [
+                "name",
+                "invert_elev",
+                "max_depth" ,
+                "init_depth" ,
+                "storage_curve",
+                "coefficient",
+                "exponent",
+                "constant",  
+                "ponded_area",
+                "evap_factor",
+                "suction_head",
+                "conductivity",
+                "initial_deficit"                              
+            ]
+            storage = self.select_this_INP_group("stora")
+            if storage:
+                for strg in storage:
+                    if not strg or strg[0] in self.ignore:
+                        continue
+                    storage_dict = dict(zip_longest(storage_cols, strg.split()))
+                    storage = storage_dict.pop("name")
+                    self.INP_storages[storage] = storage_dict
+
+        except Exception as e:
+            self.uc.bar_warn("WARNING 290124.1840: Reading storage units from SWMM input data failed!")
+
+    def add_coordinates_to_INP_storages_dictionary(self):
+        try:
+            coord_cols = ["node", "x", "y"]
+            coord_list = self.select_this_INP_group(
+                "coor"
+            )  # coord_list is a copy of the whole [COORDINATES] group of .INP file.
+            if len(coord_list) > 0:
+                for coord in coord_list:
+                    if not coord or coord[0] in self.ignore:
+                        continue
+                    coord_dict = dict(
+                        zip_longest(coord_cols, coord.split())
+                    )  # Creates one dictionary element {'node', x, y}
+                    node = coord_dict.pop("node")
+                    if node in self.INP_storages:
+                        self.INP_storages[node].update(coord_dict)  # Inserts one new element to dictionary with key "node".
+                        # At the end, it will have all elements from the [COORDINATES] group in .INP file.
+                        # E.g:
+                        # "self.INP_storages":
+                        # {'I1': {'x': '366976.000', 'y': '1185380.000'},
+                        #  'I3': {'x': '366875.000', 'y': '1185664.000'},
+                        #  'I2': {'x': '366969.000', 'y': '1185492.000'}, etc.  
+            
+            # Remove storage units without coordinates:
+            new_storages = {}
+            for key, inner_dict in self.INP_storages.items():
+                if "x" in inner_dict:
+                    new_storages[key] = inner_dict
+
+            self.INP_storages = new_storages
+            return len(self.INP_storages)
 
         except Exception as e:
             self.uc.bar_warn("WARNING 221121.1017: Reading coordinates from SWMM input data failed!")
@@ -724,7 +791,7 @@ class StormDrainProject(object):
                     items = [i0, i1, i2, i3, i4]
                     out_dict = dict(zip_longest(out_cols, items))
                     outfall = out_dict.pop("outfall")
-                    self.INP_nodes[outfall].update(out_dict)
+                    self.INP_nodes[outfall] = out_dict
         except Exception as e:
             self.uc.show_error(
                 "ERROR 170618.0700: couldn't create a [OUTFALLS] group from storm drain .INP file!",
@@ -751,9 +818,7 @@ class StormDrainProject(object):
                     jun_dict = dict(zip_longest(jun_cols, jun.split()))
                     junction = jun_dict.pop("junction")
                     if junction is not None:
-                        self.INP_nodes[junction].update(
-                            jun_dict
-                        )  # Adds to the key 'junction' the values in 'jun_dict' in dictionary 'INP_nodes'.
+                        self.INP_nodes[junction]= jun_dict  # Adds to the key 'junction' the values in 'jun_dict' in dictionary 'INP_nodes'.
         except Exception as e:
             self.uc.show_error(
                 "ERROR 170618.0701: couldn't create a [JUNCTIONS] group from storm drain .INP file!\n"

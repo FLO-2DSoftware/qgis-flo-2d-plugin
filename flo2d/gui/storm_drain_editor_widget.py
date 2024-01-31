@@ -68,6 +68,7 @@ from ..flo2dobjects import InletRatingTable, PumpCurves
 from ..geopackage_utils import GeoPackageUtils
 from ..gui.dlg_conduits import ConduitsDialog
 from ..gui.dlg_inlets import InletNodesDialog
+from ..gui.dlg_storage_units import StorageUnitsDialog
 from ..gui.dlg_orifices import OrificesDialog
 from ..gui.dlg_outfalls import OutfallNodesDialog
 from ..gui.dlg_pumps import PumpsDialog
@@ -155,6 +156,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
 
         self.grid_lyr = None
         self.user_swmm_nodes_lyr = None
+        self.user_swmm_storage_units_lyr = None
         self.user_swmm_conduits_lyr = None
         self.user_swmm_pumps_lyr = None
         self.swmm_pumps_curve_data_lyr = None
@@ -241,6 +243,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
 
         self.grid_lyr = self.lyrs.data["grid"]["qlyr"]
         self.user_swmm_nodes_lyr = self.lyrs.data["user_swmm_nodes"]["qlyr"]
+        self.user_swmm_storage_units_lyr = self.lyrs.data["user_swmm_storage_units"]["qlyr"]
         self.user_swmm_conduits_lyr = self.lyrs.data["user_swmm_conduits"]["qlyr"]
         self.user_swmm_pumps_lyr = self.lyrs.data["user_swmm_pumps"]["qlyr"]
         self.user_swmm_orifices_lyr = self.lyrs.data["user_swmm_orifices"]["qlyr"]
@@ -815,6 +818,10 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         outside_nodes = ""
         updated_nodes = 0
 
+        new_storages = []
+        outside_storages = ""
+        updated_storages = 0
+
         new_conduits = []
         outside_conduits = ""
         updated_conduits = 0
@@ -859,8 +866,19 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             elif ret == 0:
                 return False
 
+            # if self.select_this_INP_group(INP_groups, "coor") > 0: 
+            #     QApplication.restoreOverrideCursor()
+            #     self.uc.show_warn(
+            #         "WARNING 060319.1730: SWMM input file\n\n " + swmm_file + "\n\n has no coordinates defined!"
+            #     )
+            #     return False                
+
             # Build Nodes:
-            if storm_drain.create_INP_nodes_dictionary_with_coordinates() == 0:
+            storm_drain.add_JUNCTIONS_to_INP_nodes_dictionary()
+            subcatchments = storm_drain.add_SUBCATCHMENTS_to_INP_nodes_dictionary()
+            storm_drain.add_OUTFALLS_to_INP_nodes_dictionary() 
+                      
+            if storm_drain.add_coordinates_INP_nodes_dictionary() == 0:
                 QApplication.restoreOverrideCursor()
                 self.uc.show_warn(
                     "WARNING 060319.1730: SWMM input file\n\n " + swmm_file + "\n\n has no coordinates defined!"
@@ -880,10 +898,13 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                             return False
 
                 QApplication.setOverrideCursor(Qt.WaitCursor)
-                subcatchments = storm_drain.add_SUBCATCHMENTS_to_INP_nodes_dictionary()
-                storm_drain.add_OUTFALLS_to_INP_nodes_dictionary()
-                storm_drain.add_JUNCTIONS_to_INP_nodes_dictionary()
 
+                
+
+                # Storage units:
+                storm_drain.create_INP_storage_dictionary_with_storage()
+                storm_drain.add_coordinates_to_INP_storages_dictionary()
+                
                 # Conduits:
                 storm_drain.create_INP_conduits_dictionary_with_conduits()
                 storm_drain.add_LOSSES_to_INP_conduits_dictionary()
@@ -1367,6 +1388,266 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 e,
             )
             return False
+
+
+
+
+
+
+
+
+
+# 4444444444444444444444444444
+
+
+
+
+        # STORAGE: Create User Storage layer:
+        try:
+            """
+            Creates Storm Drain Storage Units layer (Users layers).
+        
+            Creates "user_swmm_storage_units" layer with attributes taken from
+            the [COORDINATES] and [STORAGE] groups.
+        
+            """
+        
+            # Transfer data from "storm_drain.INP_dict" to "user_swmm_storage_units" layer:
+        
+            replace_user_swmm_storage_sql = """UPDATE user_swmm_storage_units
+                             SET    geom = ?,
+                                    "invert_elev" = ?,
+                                    "max_depth" = ?,
+                                    "init_depth" = ?,
+                                    "external_inflow" = ?,
+                                    "treatment" = ?,
+                                    "ponded_area" = ?,
+                                    "evap_factor" = ?,
+                                    "infiltration" = ?,
+                                    "infil_method" = ?,
+                                    "suction_head" = ?,
+                                    "conductivity" = ?,
+                                    "initial_deficit" = ?,
+                                    "storage_curve" = ?,
+                                    "coefficient" = ?,
+                                    "exponent" = ?,
+                                    "constant" = ?,
+                                    "curve_name" = ?                             
+                             WHERE name = ?;"""
+                             
+            new_storages = []
+            updated_storages = 0
+            list_INP_storages = list(storm_drain.INP_storages.items())
+            if list_INP_storages:
+                for name, values in list_INP_storages:
+                    # "INP_storages dictionary contains attributes names and
+                    # values taken from the .INP file.
+                    
+                    invert_elev = float_or_zero(values["invert_elev"]) if "invert_elev" in values else 0
+                    max_depth = float_or_zero(values["max_depth"]) if "max_depth" in values else 0
+                    init_depth = float_or_zero(values["init_depth"]) if "init_depth" in values else 0
+                    external_inflow = int(values["external_inflow"]) if "external_inflow" in values else 0
+                    treatment = int(values["treatment"]) if "treatment" in values else 0                
+                    ponded_area = float_or_zero(values["ponded_area"]) if "ponded_area" in values else 0
+                    evap_factor = float_or_zero(values["evap_factor"]) if "evap_factor" in values else 0
+                    infiltration = int(values["infiltration"]) if "infiltration" in values else 0
+                    infil_method = values["infil_method"].upper() if "infil_method" in values else "GREAN_AMPT"
+                    suction_head = float_or_zero(values["suction_head"]) if "suction_head" in values else 0
+                    conductivity = float_or_zero(values["conductivity"]) if "conductivity" in values else 0
+                    initial_deficit = float_or_zero(values["initial_deficit"]) if "initial_deficit" in values else 0
+                    storage_curve = values["storage_curve"].upper() if "storage_curve" in values else "FUNCTIONAL"
+                    coefficient = float_or_zero(values["coefficient"]) if "coefficient" in values else 0
+                    exponent = float_or_zero(values["exponent"]) if "exponent" in values else 0
+                    constant = float_or_zero(values["constant"]) if "constant" in values else 0
+                    curve_name = values["curve_name"] if "curve_name" in values else "*"
+        
+        
+                    x = float(values["x"])
+                    y = float(values["y"])
+                    grid = self.gutils.grid_on_point(x, y)
+                    if grid is None:
+                        outside_storages += name + "\n"
+                        continue
+        
+                    if complete_or_create == "Create New":
+                        geom = QgsGeometry.fromPointXY(QgsPointXY(x, y))
+                        fields = self.user_swmm_storage_units_lyr.fields()
+                        feat = QgsFeature()
+                        feat.setFields(fields)
+                        feat.setGeometry(geom)
+                        feat.setAttribute("grid", grid)
+                        feat.setAttribute("name", name)
+                        feat.setAttribute("invert_elev", invert_elev)
+                        feat.setAttribute("max_depth", max_depth)
+                        feat.setAttribute("init_depth", init_depth)
+                        feat.setAttribute("external_inflow", external_inflow)
+                        feat.setAttribute("treatment", treatment)
+                        feat.setAttribute("ponded_area", ponded_area)
+                        feat.setAttribute("evap_factor", evap_factor)
+                        feat.setAttribute("infiltration", infiltration)
+                        feat.setAttribute("infil_method", infil_method)
+                        feat.setAttribute("suction_head", suction_head)
+                        feat.setAttribute("conductivity", conductivity)
+                        feat.setAttribute("initial_deficit", initial_deficit)
+                        feat.setAttribute("storage_curve", storage_curve)
+                        feat.setAttribute("coefficient", coefficient)
+                        feat.setAttribute("exponent", exponent)
+                        feat.setAttribute("constant", constant)
+                        feat.setAttribute("curve_name", curve_name)
+        
+                        # The following attributes are not defined in .INP files,
+                        # assign them zero as default values:
+                        # feat.setAttribute("swmm_length", 0)
+                        # feat.setAttribute("swmm_width", 0)
+                        # feat.setAttribute("swmm_height", 0)
+                        # feat.setAttribute("swmm_coeff", 0)
+                        # feat.setAttribute("swmm_feature", 0)
+                        # feat.setAttribute("curbheight", 0)
+                        # feat.setAttribute("swmm_clogging_factor", 0)
+                        # feat.setAttribute("swmm_time_for_clogging", 0)
+                        # feat.setAttribute("rt_fid", 0)
+                        # feat.setAttribute("outf_flo", 0)
+        
+                        new_storages.append(feat)
+        
+                    else:  # Keep some existing data in user_swmm_storage_unit.
+                        fid = self.gutils.execute("SELECT fid FROM user_swmm_storage_units WHERE name = ?;", (name,)).fetchone()
+                        if fid:  # name already in user_swmm_storage_units
+                            try:
+                                fid, wkt_geom = self.gutils.execute(
+                                    "SELECT fid, ST_AsText(ST_Centroid(GeomFromGPB(geom))) FROM user_swmm_storage_units WHERE name = ?;",
+                                    (name,),
+                                ).fetchone()
+                            except Exception:
+                                continue
+                            if fid:
+                                geom = "POINT({0} {1})".format(x, y)
+                                geom = self.gutils.wkt_to_gpb(geom)
+        
+                                self.gutils.execute(
+                                    replace_user_swmm_storage_sql,
+                                    (
+                                        geom,
+                                        invert_elev,
+                                        max_depth,
+                                        init_depth,
+                                        external_inflow,
+                                        treatment,                
+                                        ponded_area,
+                                        evap_factor,
+                                        infiltration,
+                                        infil_method,
+                                        suction_head,
+                                        conductivity,
+                                        initial_deficit,
+                                        storage_curve,
+                                        coefficient,
+                                        exponent,
+                                        constant,
+                                        curve_name,
+                                        name,
+                                    ),
+                                )
+                                updated_storages += 1
+        
+                        else:  # this name is not in user_swmm_nodes, include it:
+                            geom = QgsGeometry.fromPointXY(QgsPointXY(x, y))
+                            fields = self.user_swmm_storage_units_lyr.fields()
+                            feat = QgsFeature()
+                            feat.setFields(fields)
+                            feat.setGeometry(geom)
+                            feat.setAttribute("grid", grid)
+        
+                            feat.setAttribute("invert_elev", invert_elev)
+                            feat.setAttribute("max_depth", max_depth)
+                            feat.setAttribute("init_depth", init_depth)
+                            feat.setAttribute("external_inflow", external_inflow)
+                            feat.setAttribute("treatment", treatment)
+                            feat.setAttribute("ponded_area", ponded_area)
+                            feat.setAttribute("evap_factor", evap_factor)
+                            feat.setAttribute("infiltration", infiltration)
+                            feat.setAttribute("infil_method", infil_method)
+                            feat.setAttribute("suction_head", suction_head)
+                            feat.setAttribute("conductivity", conductivity)
+                            feat.setAttribute("initial_deficit", initial_deficit)
+                            feat.setAttribute("storage_curve", storage_curve)
+                            feat.setAttribute("coefficient", coefficient)
+                            feat.setAttribute("exponent", exponent)
+                            feat.setAttribute("constant", constant)
+                            feat.setAttribute("curve_name", curve_name)                        
+        
+        
+                            # The following attributes are not defined in .INP files,
+                            # assign them zero as default values:
+                            # feat.setAttribute("swmm_length", 0)
+                            # feat.setAttribute("swmm_width", 0)
+                            # feat.setAttribute("swmm_height", 0)
+                            # feat.setAttribute("swmm_coeff", 0)
+                            # feat.setAttribute("swmm_feature", 0)
+                            # feat.setAttribute("curbheight", 0)
+                            # feat.setAttribute("swmm_clogging_factor", 0)
+                            # feat.setAttribute("swmm_time_for_clogging", 0)
+                            # feat.setAttribute("rt_fid", 0)
+                            # feat.setAttribute("outf_flo", 0)
+        
+                            new_storages.append(feat)
+                            updated_storages += 1
+        
+                if complete_or_create == "Create New" and len(new_storages) != 0:
+                    remove_features(self.user_swmm_storage_units_lyr)
+                    self.user_swmm_storage_units_lyr.startEditing()
+                    self.user_swmm_storage_units_lyr.addFeatures(new_storages)
+                    self.user_swmm_storage_units_lyr.commitChanges()
+                    self.user_swmm_storage_units_lyr.updateExtents()
+                    self.user_swmm_storage_units_lyr.triggerRepaint()
+                    self.user_swmm_storage_units_lyr.removeSelection()
+                else:
+                    # The option 'Keep existing and complete' already updated values taken from the .INP file.
+                    # but include new ones:
+                    if len(new_storages) != 0:
+                        self.user_swmm_storage_units_lyr.startEditing()
+                        self.user_swmm_storage_units_lyr.addFeatures(new_storages)
+                        self.user_swmm_storage_units_lyr.commitChanges()
+                        self.user_swmm_storage_units_lyr.updateExtents()
+                        self.user_swmm_storage_units_lyr.triggerRepaint()
+                        self.user_swmm_storage_units_lyr.removeSelection()
+        
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.uc.show_error(
+                "ERROR 300124.1109: Creating Storm Drain Storage Units layer failed!\n\n"
+                + "Please check your SWMM input data.\nAre the nodes coordinates inside the computational domain?",
+                e,
+            )
+            return False
+
+
+# 44444444444444444444444444444
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
         # CONDUITS: Create User Conduits layer:
         if complete_or_create == "Create New":
@@ -2018,6 +2299,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         if (
             complete_or_create == "Create New"
             and len(new_nodes) == 0
+            and len(new_storages) == 0
             and len(new_conduits) == 0
             and len(new_pumps) == 0
             and len(new_orifices) == 0
@@ -2062,6 +2344,9 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 + str(len(new_nodes))
                 + " Nodes (inlets, junctions, and outfalls) were created in the 'Storm Drain Nodes' layer ('User Layers' group), and\n\n"
                 + "* "
+                + str(len(new_storages))
+                + " Storage Units in the 'Storm Drain Storage Units' layer ('User Layers' group), and\n\n"
+                + "* "                
                 + str(len(new_conduits))
                 + " Conduits in the 'Storm Drain Conduits' layer ('User Layers' group), and\n\n"
                 + "* "
@@ -2088,6 +2373,9 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 + str(updated_nodes)
                 + " Nodes (inlets, junctions, and outfalls) in the 'Storm Drain Nodes' layer ('User Layers' group) were updated, and\n\n"
                 + "* "
+                + str(updated_storages)
+                + " Nodes (inlets, junctions, and outfalls) in the 'Storm Drain Nodes' layer ('User Layers' group) were updated, and\n\n"
+                + "* "                
                 + str(updated_conduits)
                 + " Conduits in the 'Storm Drain Conduits' layer ('User Layers' group) were updated, and\n"
                 + "  " + str(len(new_conduits)) + " new conduits created.\n\n"
@@ -2115,6 +2403,16 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             msgBox.setText("WARNING 221220.0336:")
             msgBox.setInformativeText("The following Storm Drain points are outside the domain:")
             msgBox.setDetailedText(outside_nodes)
+            msgBox.setStandardButtons(QMessageBox.Ok)
+            msgBox.exec_()
+
+        if outside_storages != "":
+            msgBox = QMessageBox()
+            msgBox.setIcon(QMessageBox.Warning)
+            msgBox.setWindowTitle("Storm Drain Storages outside domain")
+            msgBox.setText("WARNING 300124.1129:")
+            msgBox.setInformativeText("The following Storm Drain storages are outside the domain:")
+            msgBox.setDetailedText(outside_storages)
             msgBox.setStandardButtons(QMessageBox.Ok)
             msgBox.exec_()
 
@@ -3259,40 +3557,31 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         # See if table is empty:
         if self.gutils.is_table_empty("user_swmm_storage_units"):
             self.uc.show_warn(
-                'User Layer "Storm Drain Nodes" is empty!\n\n'
+                'User Layer "Storm Storage Units" is empty!\n\n'
                 + "Please import components from .INP file or shapefile, or convert from schematized Storm Drains."
             )
             return
 
-        #  See if there are any Inlet nodes:
-        qry = """SELECT * FROM user_swmm_nodes WHERE sd_type = 'I' or sd_type = 'J';"""
-        rows = self.gutils.execute(qry).fetchall()
-        if not rows:
-            self.uc.show_info(
-                "WARNING 280920.0422: No inlets/junctions defined (of type 'I' or 'J') in 'Storm Drain Nodes' User Layer!"
-            )
-            return
-
         QApplication.setOverrideCursor(Qt.WaitCursor)
-        dlg_inlets = InletNodesDialog(self.iface, self.plot, self.SD_table, self.lyrs)
-        dlg_inlets.setWindowFlag(Qt.WindowMinimizeButtonHint, True)
-        dlg_inlets.setWindowFlag(Qt.WindowMaximizeButtonHint, True)
-        QApplication.restoreOverrideCursor()
-
-        save = dlg_inlets.exec_()
-        if save:
-            self.uc.show_info(
-                "Inlets saved to 'Storm Drain-Inlets' User Layer!\n\n"
-                + "Schematize it from the 'Storm Drain Editor' widget before saving into SWMMOUTF.DAT"
-            )
-            self.populate_type4_combo()
-
-        elif not save:
-            pass
-        else:
-            self.uc.bar_warn("Could not save Inlets! Please check if they are correct.")
-
-        self.lyrs.clear_rubber()
+        dlg_storage = StorageUnitsDialog(self.iface, self.plot, self.SD_table, self.lyrs)
+        # dlg_storage.setWindowFlag(Qt.WindowMinimizeButtonHint, True)
+        # dlg_storage.setWindowFlag(Qt.WindowMaximizeButtonHint, True)
+        # QApplication.restoreOverrideCursor()
+        #
+        # save = dlg_storage.exec_()
+        # if save:
+        #     self.uc.show_info(
+        #         "Inlets saved to 'Storm Drain-Inlets' User Layer!\n\n"
+        #         + "Schematize it from the 'Storm Drain Editor' widget before saving into SWMMOUTF.DAT"
+        #     )
+        #     self.populate_type4_combo()
+        #
+        # elif not save:
+        #     pass
+        # else:
+        #     self.uc.bar_warn("Could not save Inlets! Please check if they are correct.")
+        #
+        # self.lyrs.clear_rubber()
 
     def show_conduits(self):
         """
@@ -4481,7 +4770,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             self.show_inlets()
         elif idx == 2:
             self.show_outfalls()
-        elif idex == 3:
+        elif idx == 3:
             self.show_storage_units()                
 
         self.SD_nodes_components_cbo.setCurrentIndex(0)
