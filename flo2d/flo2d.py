@@ -2863,6 +2863,7 @@ class Flo2D(object):
                 "export_hystruc",
                 "export_chan",
                 "export_bridge_coeff_data",
+                "export_xsec"
             ]
             try:
                 s = QSettings()

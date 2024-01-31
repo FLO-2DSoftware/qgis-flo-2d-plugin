@@ -3031,7 +3031,75 @@ class Flo2dGeoPackage(GeoPackageUtils):
     #             self.uc.show_error("ERROR 101218.1623: exporting CHAN.DAT failed!.\n", e)
     #             return False
 
-    def export_xsec(self, outdir):
+    def export_xsec(self, output = None):
+        if self.parsed_format == self.FORMAT_DAT:
+            return self.export_xsec_data(output)
+        elif self.parsed_format == self.FORMAT_HDF5:
+            return self.export_xsec_hdf5()
+
+    def export_xsec_hdf5(self):
+        """
+        Function to export xsection data to hdf5 file
+        """
+        try:
+            chan_n_sql = """SELECT nxsecnum, xsecname FROM chan_n ORDER BY nxsecnum;"""
+            xsec_sql = """SELECT xi, yi FROM xsec_n_data WHERE chan_n_nxsecnum = ? ORDER BY fid;"""
+
+            xsec_line = """X     {0}  {1}\n"""
+            pkt_line = """ {0:<10} {1: >10}\n"""
+            nr = "{0:.2f}"
+
+            chan_n = self.execute(chan_n_sql).fetchall()
+            if not chan_n:
+                return False
+            else:
+                pass
+
+            channel_group = self.parser.channel_group
+            channel_group.create_dataset('Cross Sections', [])
+            for nxecnum, xsecname in chan_n:
+                channel_group.datasets["Cross Sections"].data.append(create_array(xsec_line, 3, nxecnum, xsecname))
+                for xi, yi in self.execute(xsec_sql, (nxecnum,)):
+                    channel_group.datasets["Cross Sections"].data.append(create_array(pkt_line, 3, xi, yi))
+
+            self.parser.write_groups(channel_group)
+            return True
+
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.uc.show_error("ERROR 101218.1607:  exporting XSEC.DAT  failed!.\n", e)
+            return False
+
+    def export_xsec_dat(self, outdir):
+        try:
+            chan_n_sql = """SELECT nxsecnum, xsecname FROM chan_n ORDER BY nxsecnum;"""
+            xsec_sql = """SELECT xi, yi FROM xsec_n_data WHERE chan_n_nxsecnum = ? ORDER BY fid;"""
+
+            xsec_line = """X     {0}  {1}\n"""
+            pkt_line = """ {0:<10} {1: >10}\n"""
+            nr = "{0:.2f}"
+
+            chan_n = self.execute(chan_n_sql).fetchall()
+            if not chan_n:
+                return False
+            else:
+                pass
+
+            xsec = os.path.join(outdir, "XSEC.DAT")
+            with open(xsec, "w") as x:
+                for nxecnum, xsecname in chan_n:
+                    x.write(xsec_line.format(nxecnum, xsecname))
+                    for xi, yi in self.execute(xsec_sql, (nxecnum,)):
+                        x.write(pkt_line.format(nr.format(xi), nr.format(yi)))
+
+            return True
+
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.uc.show_error("ERROR 101218.1607:  exporting XSEC.DAT  failed!.\n", e)
+            return False
+
+    def export_xsec_dat(self, outdir):
         try:
             chan_n_sql = """SELECT nxsecnum, xsecname FROM chan_n ORDER BY nxsecnum;"""
             xsec_sql = """SELECT xi, yi FROM xsec_n_data WHERE chan_n_nxsecnum = ? ORDER BY fid;"""
