@@ -4058,7 +4058,124 @@ class Flo2dGeoPackage(GeoPackageUtils):
             self.uc.show_error("ERROR 101218.1613: exporting FPXSEC.DAT failed!.\n", e)
             return False
 
-    def export_breach(self, outdir):
+    def export_breach(self, output=None):
+        if self.parsed_format == self.FORMAT_DAT:
+            return self.export_breach_dat(output)
+        elif self.parsed_format == self.FORMAT_HDF5:
+            return self.export_breach_hdf5()
+
+    def export_breach_hdf5(self):
+        """
+        Function to export brach data to hdf5
+        """
+        # check if there is any breach defined.
+        try:
+            # Check conditions to save BREACH.DAT:
+            if self.is_table_empty("levee_data"):
+                return False
+            ilevfail_sql = """SELECT ilevfail FROM levee_general;"""
+            ilevfail = self.execute(ilevfail_sql).fetchone()
+            if ilevfail is None:
+                return False
+            if ilevfail[0] != 2:
+                return False
+            if self.is_table_empty("breach"):
+                return False
+
+            # Writes BREACH.DAT if ILEVFAIL = 2.
+
+            global_sql = """SELECT * FROM breach_global ORDER BY fid;"""
+            local_sql = """SELECT * FROM breach ORDER BY fid;"""
+            cells_sql = """SELECT grid_fid FROM breach_cells WHERE breach_fid = ?;"""
+            frag_sql = """SELECT fragchar, prfail, prdepth FROM breach_fragility_curves ORDER BY fid;"""
+
+            b1, g1, g2, g3, g4 = (
+                slice(1, 5),
+                slice(6, 14),
+                slice(14, 21),
+                slice(21, 28),
+                slice(28, 34),
+            )
+            b2, d1, d2, d3, d4 = (
+                slice(0, 2),
+                slice(2, 11),
+                slice(11, 18),
+                slice(18, 25),
+                slice(25, 33),
+            )
+
+            bline = "B{0} {1}\n"
+            line_1 = "{0}1 {1}\n"
+            line_2 = "{0}2 {1}\n"
+            line_3 = "{0}3 {1}\n"
+            line_4 = "{0}4 {1}\n"
+            fline = "F {0} {1} {2}\n"
+
+            parts = [
+                [g1, d1, line_1],
+                [g2, d2, line_2],
+                [g3, d3, line_3],
+                [g4, d4, line_4],
+            ]
+
+            global_rows = self.execute(global_sql).fetchall()
+            local_rows = self.execute(local_sql).fetchall()
+            fragility_rows = self.execute(frag_sql)
+
+            if not global_rows and not local_rows:
+                return False
+            else:
+                pass
+
+            levee_group = self.parser.levee_group
+            levee_group.create_dataset('Breach', [])
+
+            c = 1
+
+            for row in global_rows:
+                # Write 'B1' line (general variables):
+                row_slice = [str(x) if x is not None else "" for x in row[b1]]
+                levee_group.datasets["Breach"].data.append(create_array(bline, 10, c, " ".join(row_slice)))
+
+                # Write G1,G2,G3,G4 lines if 'Use Global Data' checkbox is selected in Global Breach Data dialog:
+                if not local_rows:
+                    if row[5] == 1:  # useglobaldata
+                        for gslice, dslice, line in parts:
+                            row_slice = [str(x) if x is not None else "" for x in row[gslice]]
+                            if any(row_slice) is True:
+                                levee_group.datasets["Breach"].data.append(create_array(line, 10, "G", "  ".join(row_slice)))
+                            else:
+                                pass
+
+            c += 1
+
+            for row in local_rows:
+                fid = row[0]
+                gid = self.execute(cells_sql, (fid,)).fetchone()[0]
+                row_slice = [str(x) if x is not None else "" for x in row[b2]]
+                row_slice[0] = str(gid)
+                row_slice[1] = str(int(row_slice[1]))
+                levee_group.datasets["Breach"].data.append(create_array(bline, 10, c, " ".join(row_slice)))
+                for gslice, dslice, line in parts:
+                    row_slice = [str(x) if x is not None else "" for x in row[dslice]]
+                    if any(row_slice) is True:
+                        levee_group.datasets["Breach"].data.append(create_array(line, 10, "D", "  ".join(row_slice)))
+                    else:
+                        pass
+            c += 1
+
+            for row in fragility_rows:
+                levee_group.datasets["Breach"].data.append(create_array(fline, 10, row))
+
+            self.parser.write_groups(levee_group)
+            return True
+
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.uc.show_error("ERROR 101218.1616: exporting BREACH.DAT failed!.\n", e)
+            return False
+
+    def export_breach_dat(self, outdir):
         # check if there is any breach defined.
         try:
             # Check conditions to save BREACH.DAT:
