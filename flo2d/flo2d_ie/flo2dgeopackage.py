@@ -4112,7 +4112,64 @@ class Flo2dGeoPackage(GeoPackageUtils):
             self.uc.show_error("ERROR 101218.1614: exporting LEVEE.DAT failed!.\n", e)
             return False
 
-    def export_fpxsec(self, outdir):
+    def export_fpxsec(self, output=None):
+        if self.parsed_format == self.FORMAT_DAT:
+            return self.export_fpxsec_dat(output)
+        elif self.parsed_format == self.FORMAT_HDF5:
+            return self.export_fpxsec_hdf5()
+
+    def export_fpxsec_hdf5(self):
+        """
+        Function to export floodplain cross-section data to hdf5 file
+        """
+        # try:
+        if self.is_table_empty("fpxsec"):
+            return False
+        cont_sql = """SELECT name, value FROM cont WHERE name = 'NXPRT';"""
+        fpxsec_sql = """SELECT fid, iflo, nnxsec FROM fpxsec ORDER BY fid;"""
+        cell_sql = """SELECT grid_fid FROM fpxsec_cells WHERE fpxsec_fid = ? ORDER BY grid_fid;"""
+
+        line1 = "P  {}\n"
+        line2 = "X {0} {1} {2}\n"
+
+        option = self.execute(cont_sql).fetchone()
+        if option is None:
+            return False
+        else:
+            pass
+
+        max_grid = 0
+        for row in self.execute(fpxsec_sql):
+            fid, iflo, nnxsec = row
+            grids = self.execute(cell_sql, (fid,)).fetchall()
+            if len(grids) > max_grid:
+                max_grid = len(grids)
+        max_grid += 3
+
+        floodplain_group = self.parser.floodplain_group
+        floodplain_group.create_dataset('Floodplain Cross-Sections', [])
+        # fpxsec = os.path.join(outdir, "FPXSEC.DAT")
+
+        head = option[-1]
+        floodplain_group.datasets["Floodplain Cross-Sections"].data.append(create_array(line1, max_grid, head))
+        # f.write(line1.format(head))
+
+        for row in self.execute(fpxsec_sql):
+            fid, iflo, nnxsec = row
+            grids = self.execute(cell_sql, (fid,))
+            grids_txt = " ".join(["{}".format(x[0]) for x in grids])
+            floodplain_group.datasets["Floodplain Cross-Sections"].data.append(create_array(line2, max_grid, iflo, nnxsec, grids_txt))
+            # f.write(line2.format(iflo, nnxsec, grids_txt))
+
+        self.parser.write_groups(floodplain_group)
+        return True
+
+        # except Exception as e:
+        #     QApplication.restoreOverrideCursor()
+        #     self.uc.show_error("ERROR 101218.1613: exporting FPXSEC.DAT failed!.\n", e)
+        #     return False
+
+    def export_fpxsec_dat(self, outdir):
         # check if there are any floodplain cross section defined.
         try:
             if self.is_table_empty("fpxsec"):
