@@ -19,7 +19,7 @@ from qgis.PyQt.QtCore import QSettings
 from qgis.PyQt.QtWidgets import QMessageBox
 
 from ..flo2d_hdf5.hdf5_descriptions import CONTROL, GRID, NEIGHBORS, STORMDRAIN, BC, CHANNEL, HYSTRUCT, INFIL, RAIN, \
-    REDUCTION_FACTORS, TOLER
+    REDUCTION_FACTORS, TOLER, LEVEE, EVAPOR
 from ..utils import Msge
 
 try:
@@ -201,6 +201,12 @@ class ParseHDF5:
         return group
 
     @property
+    def evap_group(self):
+        group_name = "Input/Evaporation"
+        group = HDF5Group(group_name)
+        return group
+
+    @property
     def groups(self):
         grouped_datasets_list = [
             self.control_group,
@@ -244,6 +250,10 @@ class ParseHDF5:
                 ds.attrs[dataset.name] = REDUCTION_FACTORS[dataset.name]
             if dataset.name in TOLER:
                 ds.attrs[dataset.name] = TOLER[dataset.name]
+            if dataset.name in LEVEE:
+                ds.attrs[dataset.name] = LEVEE[dataset.name]
+            if dataset.name in EVAPOR:
+                ds.attrs[dataset.name] = EVAPOR[dataset.name]
 
     def write_groups(self, *groups):
         with h5py.File(self.hdf5_filepath, self.write_mode) as f:

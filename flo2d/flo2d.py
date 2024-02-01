@@ -2873,6 +2873,7 @@ class Flo2D(object):
                 "export_swmmflo",
                 "export_swmmflort",
                 "export_swmmoutf",
+                "export_evapor"
             ]
 
             s.setValue("FLO-2D/lastGdsDir", outdir)
@@ -2918,8 +2919,8 @@ class Flo2D(object):
                 if "Mudflow and Sediment Transport" not in dlg_components.components:
                     export_calls.remove("export_sed")
 
-                # if "Evaporation" not in dlg_components.components:
-                #     export_calls.remove("export_evapor")
+                if "Evaporation" not in dlg_components.components:
+                    export_calls.remove("export_evapor")
 
                 if "Hydraulic  Structures" not in dlg_components.components:
                     export_calls.remove("export_hystruc")

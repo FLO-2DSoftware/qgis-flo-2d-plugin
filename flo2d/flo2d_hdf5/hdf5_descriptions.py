@@ -114,3 +114,11 @@ TOLER = {
     "TOLER": "Numerical Stability Control Data"
 }
 
+LEVEE = {
+    "LEVEE": "Levee and Failure Data",
+}
+
+EVAPOR = {
+    "EVAPOR": "Evaporation Data"
+}
+

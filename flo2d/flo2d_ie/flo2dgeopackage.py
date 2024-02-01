@@ -2786,7 +2786,56 @@ class Flo2dGeoPackage(GeoPackageUtils):
         #     self.uc.show_error("ERROR 101218.1559: exporting INFIL.DAT failed!.\n", e)
         #     return False
 
-    def export_evapor(self, outdir):
+    def export_evapor(self, output=None):
+        if self.parsed_format == self.FORMAT_DAT:
+            return self.export_evapor_dat(output)
+        elif self.parsed_format == self.FORMAT_HDF5:
+            return self.export_evapor_hdf5()
+
+    def export_evapor_hdf5(self):
+        """
+        Function to export evaporation data to hdf5 file
+        """
+        try:
+            if self.is_table_empty("evapor"):
+                return False
+            evapor_sql = """SELECT ievapmonth, iday, clocktime FROM evapor;"""
+            evapor_month_sql = """SELECT month, monthly_evap FROM evapor_monthly ORDER BY fid;"""
+            evapor_hour_sql = """SELECT hourly_evap FROM evapor_hourly WHERE month = ? ORDER BY fid;"""
+
+            head = "{0}   {1}   {2:.2f}\n"
+            monthly = "  {0}  {1:.2f}\n"
+            hourly = "    {0:.4f}\n"
+
+            evapor_row = self.execute(evapor_sql).fetchone()
+            if evapor_row is None:
+                return False
+            else:
+                pass
+
+            evap_group = self.parser.evap_group
+            evap_group.create_dataset('EVAPOR', [])
+            # evapor = os.path.join(outdir, "EVAPOR.DAT")
+
+            evap_group.datasets["EVAPOR"].data.append(create_array(head, 3, evapor_row))
+            # e.write(head.format(*evapor_row))
+            for mrow in self.execute(evapor_month_sql):
+                month = mrow[0]
+                evap_group.datasets["EVAPOR"].data.append(create_array(monthly, 3, mrow))
+                # e.write(monthly.format(*mrow))
+                for hrow in self.execute(evapor_hour_sql, (month,)):
+                    evap_group.datasets["EVAPOR"].data.append(create_array(hourly, 3, hrow))
+                    # e.write(hourly.format(*hrow))
+
+            self.parser.write_groups(evap_group)
+            return True
+
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.uc.show_error("ERROR 101218.1544: exporting EVAPOR.DAT failed!.\n", e)
+            return False
+
+    def export_evapor_dat(self, outdir):
         # check if there is any evaporation defined.
         try:
             if self.is_table_empty("evapor"):
@@ -4214,31 +4263,31 @@ class Flo2dGeoPackage(GeoPackageUtils):
         glob_frag = general[2:]
 
         levee_group = self.parser.levee_group
-        levee_group.create_dataset('Levee', [])
+        levee_group.create_dataset('LEVEE', [])
 
-        levee_group.datasets["Levee"].data.append(create_array(line1, 8, head))
+        levee_group.datasets["LEVEE"].data.append(create_array(line1, 8, head))
         levee_rows = groupby(self.execute(levee_data_sql), key=itemgetter(0))
         for gid, directions in levee_rows:
-            levee_group.datasets["Levee"].data.append(create_array(line2, 8, gid))
+            levee_group.datasets["LEVEE"].data.append(create_array(line2, 8, gid))
             for row in directions:
-                levee_group.datasets["Levee"].data.append(create_array(line3, 8, row[1:]))
+                levee_group.datasets["LEVEE"].data.append(create_array(line3, 8, row[1:]))
         if head[1] == 1:
             fail_rows = groupby(self.execute(levee_fail_sql), key=itemgetter(1))
             for gid, directions in fail_rows:
-                levee_group.datasets["Levee"].data.append(create_array(line4, 8, gid))
+                levee_group.datasets["LEVEE"].data.append(create_array(line4, 8, gid))
                 for row in directions:
                     rowl = list(row)
                     for i in range(0, len(rowl)):
                         rowl[i] = rowl[i] if rowl[i] is not None else 0
                         rowl[i] = rowl[i] if rowl[i] != "None" else 0
                     row = tuple(rowl)
-                    levee_group.datasets["Levee"].data.append(create_array(line5, 8, row[2:]))
+                    levee_group.datasets["LEVEE"].data.append(create_array(line5, 8, row[2:]))
         if None not in glob_frag:
-            levee_group.datasets["Levee"].data.append(create_array(line6, 8, glob_frag))
+            levee_group.datasets["LEVEE"].data.append(create_array(line6, 8, glob_frag))
         else:
             pass
         for row in self.execute(levee_frag_sql):
-            levee_group.datasets["Levee"].data.append(create_array(line7, 8, row))
+            levee_group.datasets["LEVEE"].data.append(create_array(line7, 8, row))
 
         self.parser.write_groups(levee_group)
         return True
