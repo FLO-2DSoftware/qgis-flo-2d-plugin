@@ -1684,12 +1684,34 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
     def export_cont_toler_hdf5(self):
         # try:
-        sql = """SELECT name, value FROM cont;"""
         cont_group = self.parser.control_group
+
+        sql = """SELECT name, value FROM cont;"""
         for option_name, option_value in self.execute(sql).fetchall():
             dataset_data = np.string_([option_value]) if option_value is not None else np.string_([""])
             cont_group.create_dataset(option_name, dataset_data)
-        self.parser.write_groups(cont_group)
+
+        tol_group = self.parser.tol_group
+        tol_group.create_dataset('TOLER', [])
+        parser = ParseDAT()
+        options = {o: v if v is not None else "" for o, v in self.execute(sql).fetchall()}
+        rline = " {0}"
+        for row in parser.toler_rows:
+            lst = ""
+            for o in row:
+                if o not in options:
+                    continue
+                val = options[o]
+                lst += rline.format(val)  # Second line 'C' (Courant values) writes 1, 2, or 3 values depending
+                # if channels and/or streets are simulated
+            lst += "\n"
+            if lst.isspace() is False:
+                tol_group.datasets["TOLER"].data.append(create_array(lst, 4))
+                # t.write(lst)
+            else:
+                pass
+
+        self.parser.write_groups(cont_group, tol_group)
         return True
         # except Exception as e:
         #     QApplication.restoreOverrideCursor()
@@ -1825,7 +1847,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 x, y = [float(coord) for coord in geom.strip("POINT()").split()]
                 grid_group.datasets["GRIDCODE"].data.append(fid)
                 grid_group.datasets["MANNING"].data.append(man)
-                grid_group.datasets["Z"].data.append(elev)
+                grid_group.datasets["ELEVATION"].data.append(elev)
                 grid_group.datasets["X"].data.append(x)
                 grid_group.datasets["Y"].data.append(y)
             self.parser.write_groups(grid_group)

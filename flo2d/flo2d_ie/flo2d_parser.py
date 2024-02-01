@@ -19,7 +19,7 @@ from qgis.PyQt.QtCore import QSettings
 from qgis.PyQt.QtWidgets import QMessageBox
 
 from ..flo2d_hdf5.hdf5_descriptions import CONTROL, GRID, NEIGHBORS, STORMDRAIN, BC, CHANNEL, HYSTRUCT, INFIL, RAIN, \
-    REDUCTION_FACTORS
+    REDUCTION_FACTORS, TOLER
 from ..utils import Msge
 
 try:
@@ -118,9 +118,15 @@ class ParseHDF5:
         return group
 
     @property
+    def tol_group(self):
+        group_name = "Input/Tolerance"
+        group = HDF5Group(group_name)
+        return group
+
+    @property
     def grid_group(self):
         group_name = "Input/Grid"
-        group_datasets = ["GRIDCODE", "MANNING", "X", "Y", "Z"]
+        group_datasets = ["GRIDCODE", "MANNING", "X", "Y", "ELEVATION"]
         group = HDF5Group(group_name)
         for dataset_name in group_datasets:
             group.create_dataset(dataset_name, [])
@@ -128,7 +134,7 @@ class ParseHDF5:
 
     @property
     def neighbors_group(self):
-        group_name = "Input/Neighbors"
+        group_name = "Input/Grid/Neighbors"
         group_datasets = ["N", "E", "S", "W", "NE", "SE", "SW", "NW"]
         group = HDF5Group(group_name)
         for dataset_name in group_datasets:
@@ -236,6 +242,8 @@ class ParseHDF5:
                 ds.attrs[dataset.name] = RAIN[dataset.name]
             if dataset.name in REDUCTION_FACTORS:
                 ds.attrs[dataset.name] = REDUCTION_FACTORS[dataset.name]
+            if dataset.name in TOLER:
+                ds.attrs[dataset.name] = TOLER[dataset.name]
 
     def write_groups(self, *groups):
         with h5py.File(self.hdf5_filepath, self.write_mode) as f:

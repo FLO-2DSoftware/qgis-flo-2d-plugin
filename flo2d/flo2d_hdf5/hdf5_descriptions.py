@@ -60,7 +60,7 @@ GRID = {
     "MANNING": "Global n Value Adjustment",
     "X": "Longitude",
     "Y": "Latitude",
-    "Z": "Elevation",
+    "ELEVATION": "Elevation",
 }
 
 NEIGHBORS = {
@@ -108,5 +108,9 @@ RAIN = {
 REDUCTION_FACTORS = {
     "ARF": "Floodplain Area Reduction",
     "WRF": "Floodplain Width Reduction",
+}
+
+TOLER = {
+    "TOLER": "Numerical Stability Control Data"
 }
 
