@@ -89,6 +89,7 @@ CHANNEL = {
     "CHAN": "Channel Data",
     "CHANBANK": "Channel Bank Data",
     "XSEC": "Cross Section Data",
+    "STREET": "Street Data"
 }
 
 HYSTRUCT = {

@@ -3549,7 +3549,61 @@ class Flo2dGeoPackage(GeoPackageUtils):
             self.uc.show_error("ERROR 101122.0754: exporting BRIDGE_COEFF_DATA.DAT failed!.\n", e)
             return False
 
-    def export_street(self, outdir):
+    def export_street(self, output = None):
+        if self.parsed_format == self.FORMAT_DAT:
+            return self.export_street_dat(output)
+        elif self.parsed_format == self.FORMAT_HDF5:
+            return self.export_street_hdf5()
+
+    def export_street_hdf5(self):
+        """
+        Function to export street data to hdf5 file
+        """
+        try:
+            if self.is_table_empty("streets"):
+                return False
+            street_gen_sql = """SELECT * FROM street_general ORDER BY fid;"""
+            streets_sql = """SELECT stname FROM streets ORDER BY fid;"""
+            streets_seg_sql = """SELECT igridn, depex, stman, elstr FROM street_seg WHERE str_fid = ? ORDER BY fid;"""
+            streets_elem_sql = """SELECT istdir, widr FROM street_elems WHERE seg_fid = ? ORDER BY fid;"""
+
+            line1 = "  {}" * 5 + "\n"
+            line2 = " N {}\n"
+            line3 = " S" + "  {}" * 4 + "\n"
+            line4 = " W" + "  {}" * 2 + "\n"
+
+            head = self.execute(street_gen_sql).fetchone()
+            if head is None:
+                return False
+            else:
+                pass
+            # street = os.path.join(outdir, "STREET.DAT")
+            channel_group = self.parser.channel_group
+            channel_group.create_dataset('STREET', [])
+
+            channel_group.datasets["STREET"].data.append(create_array(line1, 5, tuple(head[1:])))
+            # s.write(line1.format(*head[1:]))
+            seg_fid = 1
+            for i, sts in enumerate(self.execute(streets_sql), 1):
+                channel_group.datasets["STREET"].data.append(create_array(line2, 5, sts))
+                # s.write(line2.format(*sts))
+                for seg in self.execute(streets_seg_sql, (i,)):
+                    channel_group.datasets["STREET"].data.append(create_array(line3, 5, seg))
+                    # s.write(line3.format(*seg))
+                    for elem in self.execute(streets_elem_sql, (seg_fid,)):
+                        channel_group.datasets["STREET"].data.append(create_array(line4, 5, elem))
+                        # s.write(line4.format(*elem))
+                    seg_fid += 1
+
+            self.parser.write_groups(channel_group)
+            return True
+
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.uc.show_error("ERROR 101218.1609: exporting STREET.DAT failed!.\n", e)
+            return False
+
+    def export_street_dat(self, outdir):
         # check if there is any street defined.
         try:
             if self.is_table_empty("streets"):

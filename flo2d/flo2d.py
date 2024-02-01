@@ -2873,7 +2873,8 @@ class Flo2D(object):
                 "export_swmmflo",
                 "export_swmmflort",
                 "export_swmmoutf",
-                "export_evapor"
+                "export_evapor",
+                "export_street",
             ]
 
             s.setValue("FLO-2D/lastGdsDir", outdir)
