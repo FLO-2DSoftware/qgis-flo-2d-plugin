@@ -105,3 +105,8 @@ RAIN = {
     "RAIN": "Rainfall Data"
 }
 
+REDUCTION_FACTORS = {
+    "ARF": "Floodplain Area Reduction",
+    "WRF": "Floodplain Width Reduction",
+}
+

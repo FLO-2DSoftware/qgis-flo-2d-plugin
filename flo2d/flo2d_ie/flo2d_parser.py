@@ -18,7 +18,8 @@ from qgis.core import NULL
 from qgis.PyQt.QtCore import QSettings
 from qgis.PyQt.QtWidgets import QMessageBox
 
-from ..flo2d_hdf5.hdf5_descriptions import CONTROL, GRID, NEIGHBORS, STORMDRAIN, BC, CHANNEL, HYSTRUCT, INFIL, RAIN
+from ..flo2d_hdf5.hdf5_descriptions import CONTROL, GRID, NEIGHBORS, STORMDRAIN, BC, CHANNEL, HYSTRUCT, INFIL, RAIN, \
+    REDUCTION_FACTORS
 from ..utils import Msge
 
 try:
@@ -62,7 +63,7 @@ class ParseHDF5:
 
     @property
     def control_group(self):
-        group_name = "Control"
+        group_name = "Input/Control"
         group_datasets = [
             "SIMUL",
             "TOUT",
@@ -118,7 +119,7 @@ class ParseHDF5:
 
     @property
     def grid_group(self):
-        group_name = "Grid"
+        group_name = "Input/Grid"
         group_datasets = ["GRIDCODE", "MANNING", "X", "Y", "Z"]
         group = HDF5Group(group_name)
         for dataset_name in group_datasets:
@@ -127,7 +128,7 @@ class ParseHDF5:
 
     @property
     def neighbors_group(self):
-        group_name = "Neighbors"
+        group_name = "Input/Neighbors"
         group_datasets = ["N", "E", "S", "W", "NE", "SE", "SW", "NW"]
         group = HDF5Group(group_name)
         for dataset_name in group_datasets:
@@ -136,60 +137,60 @@ class ParseHDF5:
 
     @property
     def bc_group(self):
-        group_name = "Boundary Conditions"
+        group_name = "Input/Boundary Conditions"
         group = HDF5Group(group_name)
         return group
 
     @property
     def infil_group(self):
-        group_name = "Infiltration"
+        group_name = "Input/Infiltration"
         group = HDF5Group(group_name)
         return group
 
     @property
     def arfwrf_group(self):
-        group_name = "Reduction Factors"
+        group_name = "Input/Reduction Factors"
         group = HDF5Group(group_name)
         return group
 
     @property
     def rain_group(self):
-        group_name = "Rainfall"
+        group_name = "Input/Rainfall"
         group = HDF5Group(group_name)
         return group
 
     @property
     def levee_group(self):
-        group_name = "Levee"
+        group_name = "Input/Levee"
         group = HDF5Group(group_name)
         return group
 
     @property
     def hystruc_group(self):
-        group_name = "Hydraulic Structures"
+        group_name = "Input/Hydraulic Structures"
         group = HDF5Group(group_name)
         return group
 
     @property
     def channel_group(self):
-        group_name = "Channels"
+        group_name = "Input/Channels"
         group = HDF5Group(group_name)
         return group
 
     @property
     def floodplain_group(self):
-        group_name = "Floodplain"
+        group_name = "Input/Floodplain"
         group = HDF5Group(group_name)
         return group
     @property
     def sed_group(self):
-        group_name = "Sediment"
+        group_name = "Input/Sediment"
         group = HDF5Group(group_name)
         return group
 
     @property
     def stormdrain_group(self):
-        group_name = "Storm Drain"
+        group_name = "Input/Storm Drain"
         group = HDF5Group(group_name)
         return group
 
@@ -233,6 +234,8 @@ class ParseHDF5:
                 ds.attrs[dataset.name] = INFIL[dataset.name]
             if dataset.name in RAIN:
                 ds.attrs[dataset.name] = RAIN[dataset.name]
+            if dataset.name in REDUCTION_FACTORS:
+                ds.attrs[dataset.name] = REDUCTION_FACTORS[dataset.name]
 
     def write_groups(self, *groups):
         with h5py.File(self.hdf5_filepath, self.write_mode) as f:
