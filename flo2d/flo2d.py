@@ -2863,6 +2863,7 @@ class Flo2D(object):
                 "export_hystruc",
                 "export_chan",
                 "export_bridge_coeff_data",
+                "export_bridge_xsec",
                 "export_xsec",
                 "export_breach",
                 "export_mult",
@@ -2873,6 +2874,100 @@ class Flo2D(object):
                 "export_swmmflort",
                 "export_swmmoutf",
             ]
+
+            s.setValue("FLO-2D/lastGdsDir", outdir)
+
+            dlg_components = ComponentsDialog(self.con, self.iface, self.lyrs, "out")
+            ok = dlg_components.exec_()
+            if ok:
+                if "Channels" not in dlg_components.components:
+                    export_calls.remove("export_chan")
+                    export_calls.remove("export_xsec")
+
+                if "Reduction Factors" not in dlg_components.components:
+                    export_calls.remove("export_arf")
+
+                # if "Streets" not in dlg_components.components:
+                #     export_calls.remove("export_street")
+
+                if "Outflow Elements" not in dlg_components.components:
+                    export_calls.remove("export_outflow")
+
+                if "Inflow Elements" not in dlg_components.components:
+                    export_calls.remove("export_inflow")
+                    # export_calls.remove("export_tailings")
+
+                if "Levees" not in dlg_components.components:
+                    export_calls.remove("export_levee")
+
+                if "Multiple Channels" not in dlg_components.components:
+                    export_calls.remove("export_mult")
+
+                if "Breach" not in dlg_components.components:
+                    export_calls.remove("export_breach")
+
+                # if "Gutters" not in dlg_components.components:
+                #     export_calls.remove("export_gutter")
+
+                if "Infiltration" not in dlg_components.components:
+                    export_calls.remove("export_infil")
+
+                if "Floodplain Cross Sections" not in dlg_components.components:
+                    export_calls.remove("export_fpxsec")
+
+                if "Mudflow and Sediment Transport" not in dlg_components.components:
+                    export_calls.remove("export_sed")
+
+                # if "Evaporation" not in dlg_components.components:
+                #     export_calls.remove("export_evapor")
+
+                if "Hydraulic  Structures" not in dlg_components.components:
+                    export_calls.remove("export_hystruc")
+                    export_calls.remove("export_bridge_xsec")
+                    export_calls.remove("export_bridge_coeff_data")
+                else:
+                    # if not self.uc.question("Did you schematize Hydraulic Structures? Do you want to export Hydraulic Structures files?"):
+                    #     export_calls.remove("export_hystruc")
+                    #     export_calls.remove("export_bridge_xsec")
+                    #     export_calls.remove("export_bridge_coeff_data")
+                    # else:
+                    xsecs = self.gutils.execute("SELECT fid FROM struct WHERE icurvtable = 3").fetchone()
+                    if not xsecs:
+                        if os.path.isfile(outdir + r"\BRIDGE_XSEC.DAT"):
+                            os.remove(outdir + r"\BRIDGE_XSEC.DAT")
+                        export_calls.remove("export_bridge_xsec")
+                        export_calls.remove("export_bridge_coeff_data")
+
+                if "Rain" not in dlg_components.components:
+                    export_calls.remove("export_rain")
+
+                if "Storm Drain" not in dlg_components.components:
+                    export_calls.remove("export_swmmflo")
+                    export_calls.remove("export_swmmflort")
+                    export_calls.remove("export_swmmoutf")
+
+                # if "Spatial Shallow-n" not in dlg_components.components:
+                #     export_calls.remove("export_shallowNSpatial")
+
+                # if "Spatial Tolerance" not in dlg_components.components:
+                #     export_calls.remove("export_tolspatial")
+
+                if "Spatial Froude" not in dlg_components.components:
+                    export_calls.remove("export_fpfroude")
+
+                # if "Manning's n and Topo" not in dlg_components.components:
+                #     export_calls.remove("export_mannings_n_topo")
+
+                if "export_swmmflort" in export_calls:
+                    if not self.uc.question(
+                            "Did you schematize Storm Drains? Do you want to export Storm Drain files?"
+                    ):
+                        export_calls.remove("export_swmmflo")
+                        export_calls.remove("export_swmmflort")
+                        export_calls.remove("export_swmmoutf")
+
+                QApplication.setOverrideCursor(Qt.WaitCursor)
+
             try:
                 s = QSettings()
                 s.setValue("FLO-2D/lastGdsDir", outdir)

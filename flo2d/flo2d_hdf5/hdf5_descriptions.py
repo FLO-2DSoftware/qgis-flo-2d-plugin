@@ -93,7 +93,8 @@ CHANNEL = {
 
 HYSTRUCT = {
     "HYSTRUC": "Hydraulic Structure Data",
-    "BRIDGE_COEFF_DATA": "Bridge Coefficient Data"
+    "BRIDGE_COEFF_DATA": "Bridge Coefficient Data",
+    "BRIDGE_XSEC": "Bridge Cross Sections Data"
 }
 
 INFIL = {
