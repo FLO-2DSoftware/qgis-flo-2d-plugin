@@ -3564,24 +3564,24 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
 
         QApplication.setOverrideCursor(Qt.WaitCursor)
         dlg_storage = StorageUnitsDialog(self.iface, self.plot, self.SD_table, self.lyrs)
-        # dlg_storage.setWindowFlag(Qt.WindowMinimizeButtonHint, True)
-        # dlg_storage.setWindowFlag(Qt.WindowMaximizeButtonHint, True)
-        # QApplication.restoreOverrideCursor()
-        #
-        # save = dlg_storage.exec_()
-        # if save:
-        #     self.uc.show_info(
-        #         "Inlets saved to 'Storm Drain-Inlets' User Layer!\n\n"
-        #         + "Schematize it from the 'Storm Drain Editor' widget before saving into SWMMOUTF.DAT"
-        #     )
-        #     self.populate_type4_combo()
-        #
-        # elif not save:
-        #     pass
-        # else:
-        #     self.uc.bar_warn("Could not save Inlets! Please check if they are correct.")
-        #
-        # self.lyrs.clear_rubber()
+        dlg_storage.setWindowFlag(Qt.WindowMinimizeButtonHint, True)
+        dlg_storage.setWindowFlag(Qt.WindowMaximizeButtonHint, True)
+        QApplication.restoreOverrideCursor()
+        
+        save = dlg_storage.exec_()
+        if save:
+            self.uc.show_info(
+                "Inlets saved to 'Storm Drain-Inlets' User Layer!\n\n"
+                + "Schematize it from the 'Storm Drain Editor' widget before saving into SWMMOUTF.DAT"
+            )
+            self.populate_type4_combo()
+        
+        elif not save:
+            pass
+        else:
+            self.uc.bar_warn("Could not save Inlets! Please check if they are correct.")
+        
+        self.lyrs.clear_rubber()
 
     def show_conduits(self):
         """
