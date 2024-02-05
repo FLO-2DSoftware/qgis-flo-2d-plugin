@@ -3983,7 +3983,100 @@ class Flo2dGeoPackage(GeoPackageUtils):
             self.uc.show_error("ERROR 101218.1539: exporting TOLSPATIAL.DAT failed!", e)
             return False
 
-    def export_gutter(self, outdir):
+    def export_gutter(self, output=None):
+        if self.parsed_format == self.FORMAT_DAT:
+            return self.export_gutter_dat(output)
+        elif self.parsed_format == self.FORMAT_HDF5:
+            return self.export_gutter_hdf5()
+
+    def export_gutter_hdf5(self):
+        """
+        Export guttter data to the hdf5 file
+        """
+
+        # check if there are any gutters defined:
+        if self.is_table_empty("gutter_cells"):
+            return False
+        if self.is_table_empty("gutter_globals"):
+            self.uc.show_info("Gutter Global values are missing!.\n\nDefault values will be assigned.")
+            update_qry = """INSERT INTO gutter_globals (height, width, n_value) VALUES (?,?,?);"""
+            self.gutils.execute(update_qry, ("0.88", "0.99", "0.77"))
+
+        gutter_globals_sql = """SELECT * FROM gutter_globals LIMIT 1;"""
+        gutter_poly_sql = """SELECT fid, width, height, n_value, direction FROM gutter_areas ORDER BY fid;"""
+        gutter_line_sql = """SELECT fid, width, height, n_value, direction FROM gutter_lines ORDER BY fid;"""
+        gutter_area_cells_sql = (
+            """SELECT grid_fid, area_fid FROM gutter_cells WHERE area_fid = ? ORDER BY grid_fid;"""
+        )
+        gutter_line_cells_sql = (
+            """SELECT grid_fid, line_fid FROM gutter_cells WHERE line_fid = ? ORDER BY grid_fid;"""
+        )
+
+        line1 = "{0} {1} {2}\n"
+        line2 = "G  " + "   {}" * 5 + "\n"
+
+        head = self.execute(gutter_globals_sql).fetchone()
+
+        # A list of tuples (areafid,  width, height, n_value, direction) for each gutter polygon:
+        gutter_poly_rows = self.execute(gutter_poly_sql).fetchall()
+
+        # A list of tuples (areafid,  width, height, n_value, direction) for each gutter line:
+        gutter_line_rows = self.execute(gutter_line_sql).fetchall()
+
+        if not gutter_poly_rows and not gutter_line_rows:
+            return False
+        else:
+            pass
+
+        gutter_group = self.parser.gutter_group
+        gutter_group.create_dataset('GUTTER', [])
+
+        gutter_group.datasets["GUTTER"].data.append(create_array(line1, 6, tuple(head[1:])))
+        # g.write(line1.format(*head[1:]))
+
+        if gutter_poly_rows:
+            for (
+                    fid,
+                    width,
+                    height,
+                    n_value,
+                    direction,
+            ) in (
+                    gutter_poly_rows
+            ):  # One tuple for each polygon.                    # self.uc.show_info("fid %s, width: %s, height: %s , heign_value: %s, direction: %s" % (fid, width, height, n_value, direction))
+                for row in self.execute(
+                        gutter_area_cells_sql, (fid,)
+                ):  # Gets each cell number that pairs with area_fid.
+                    grid_ID = row[0]
+                    area = row[1]
+                    if area:
+                        gutter_group.datasets["GUTTER"].data.append(create_array(line2, 6, grid_ID, width, height, n_value, direction))
+                        # g.write(line2.format(grid_ID, width, height, n_value, direction))
+
+        if gutter_line_rows:
+            for (
+                    fid,
+                    width,
+                    height,
+                    n_value,
+                    direction,
+            ) in (
+                    gutter_line_rows
+            ):  # One tuple for each line.                    # self.uc.show_info("fid %s, width: %s, height: %s , heign_value: %s, direction: %s" % (fid, width, height, n_value, direction))
+                for row in self.execute(
+                        gutter_line_cells_sql, (fid,)
+                ):  # Gets each cell number that pairs with line_fid.
+                    grid_ID = row[0]
+                    line = row[1]
+                    if line:
+                        gutter_group.datasets["GUTTER"].data.append(
+                            create_array(line2, 6, grid_ID, width, height, n_value, direction))
+                        # g.write(line2.format(grid_ID, width, height, n_value, direction))
+
+        self.parser.write_groups(gutter_group)
+        return True
+
+    def export_gutter_dat(self, outdir):
         try:
             # check if there are any gutters defined:
             if self.is_table_empty("gutter_cells"):
@@ -4120,7 +4213,6 @@ class Flo2dGeoPackage(GeoPackageUtils):
             if m_data is None and ce_data is None:
                 return False
 
-            # sed = os.path.join(outdir, "SED.DAT")
             sed_group = self.parser.sed_group
             sed_group.create_dataset('Sediment Data', [])
 

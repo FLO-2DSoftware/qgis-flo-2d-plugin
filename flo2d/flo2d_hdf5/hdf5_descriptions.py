@@ -128,3 +128,7 @@ FLOODPLAIN = {
     "FPXSEC": "Floodplain Cross-Sections",
     "FPFROUDE": "Floodplain Limiting Froude Numbers"
 }
+
+GUTTER = {
+    "GUTTER": "Floodplain Street Element Gutter Area"
+}

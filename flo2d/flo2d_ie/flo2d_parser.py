@@ -19,7 +19,7 @@ from qgis.PyQt.QtCore import QSettings
 from qgis.PyQt.QtWidgets import QMessageBox
 
 from ..flo2d_hdf5.hdf5_descriptions import CONTROL, GRID, NEIGHBORS, STORMDRAIN, BC, CHANNEL, HYSTRUCT, INFIL, RAIN, \
-    REDUCTION_FACTORS, TOLER, LEVEE, EVAPOR, FLOODPLAIN
+    REDUCTION_FACTORS, TOLER, LEVEE, EVAPOR, FLOODPLAIN, GUTTER
 from ..utils import Msge
 
 try:
@@ -207,6 +207,12 @@ class ParseHDF5:
         return group
 
     @property
+    def gutter_group(self):
+        group_name = "Input/Guttters"
+        group = HDF5Group(group_name)
+        return group
+
+    @property
     def groups(self):
         grouped_datasets_list = [
             self.control_group,
@@ -256,6 +262,8 @@ class ParseHDF5:
                 ds.attrs[dataset.name] = EVAPOR[dataset.name]
             if dataset.name in FLOODPLAIN:
                 ds.attrs[dataset.name] = FLOODPLAIN[dataset.name]
+            if dataset.name in GUTTER:
+                ds.attrs[dataset.name] = GUTTER[dataset.name]
 
     def write_groups(self, *groups):
         with h5py.File(self.hdf5_filepath, self.write_mode) as f:
