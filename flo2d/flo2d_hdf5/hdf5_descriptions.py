@@ -123,3 +123,8 @@ EVAPOR = {
     "EVAPOR": "Evaporation Data"
 }
 
+FLOODPLAIN = {
+    "SHALLOWN_SPATIAL": "Array of Grid Elements for Spatially Variable Shallow N",
+    "FPXSEC": "Floodplain Cross-Sections",
+    "FPFROUDE": "Floodplain Limiting Froude Numbers"
+}

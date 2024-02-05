@@ -4443,18 +4443,18 @@ class Flo2dGeoPackage(GeoPackageUtils):
         max_grid += 3
 
         floodplain_group = self.parser.floodplain_group
-        floodplain_group.create_dataset('Floodplain Cross-Sections', [])
+        floodplain_group.create_dataset('FPXSEC', [])
         # fpxsec = os.path.join(outdir, "FPXSEC.DAT")
 
         head = option[-1]
-        floodplain_group.datasets["Floodplain Cross-Sections"].data.append(create_array(line1, max_grid, head))
+        floodplain_group.datasets["FPXSEC"].data.append(create_array(line1, max_grid, head))
         # f.write(line1.format(head))
 
         for row in self.execute(fpxsec_sql):
             fid, iflo, nnxsec = row
             grids = self.execute(cell_sql, (fid,))
             grids_txt = " ".join(["{}".format(x[0]) for x in grids])
-            floodplain_group.datasets["Floodplain Cross-Sections"].data.append(create_array(line2, max_grid, iflo, nnxsec, grids_txt))
+            floodplain_group.datasets["FPXSEC"].data.append(create_array(line2, max_grid, iflo, nnxsec, grids_txt))
             # f.write(line2.format(iflo, nnxsec, grids_txt))
 
         self.parser.write_groups(floodplain_group)
@@ -4731,34 +4731,34 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
     def export_fpfroude_hdf5(self):
         # check if there is any limiting Froude number defined.
-        # try:
-        if self.is_table_empty("fpfroude"):
+        try:
+            if self.is_table_empty("fpfroude"):
+                return False
+            fpfroude_sql = """SELECT fid, froudefp FROM fpfroude ORDER BY fid;"""
+            cell_sql = """SELECT grid_fid FROM fpfroude_cells WHERE area_fid = ? ORDER BY grid_fid;"""
+
+            line1 = "F {0} {1}\n"
+
+            fpfroude_rows = self.execute(fpfroude_sql).fetchall()
+            if not fpfroude_rows:
+                return False
+            else:
+                pass
+            floodplain_group = self.parser.floodplain_group
+            floodplain_group.create_dataset('FPFROUDE', [])
+
+            for fid, froudefp in fpfroude_rows:
+                for row in self.execute(cell_sql, (fid,)):
+                    gid = row[0]
+                    floodplain_group.datasets["FPFROUDE"].data.append(create_array(line1, 3, gid, froudefp))
+
+            self.parser.write_groups(floodplain_group)
+            return True
+
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.uc.show_error("ERROR 101218.1617: exporting FPFROUDE failed!.\n", e)
             return False
-        fpfroude_sql = """SELECT fid, froudefp FROM fpfroude ORDER BY fid;"""
-        cell_sql = """SELECT grid_fid FROM fpfroude_cells WHERE area_fid = ? ORDER BY grid_fid;"""
-
-        line1 = "F {0} {1}\n"
-
-        fpfroude_rows = self.execute(fpfroude_sql).fetchall()
-        if not fpfroude_rows:
-            return False
-        else:
-            pass
-        floodplain_group = self.parser.floodplain_group
-        floodplain_group.create_dataset('Floodplain Froude', [])
-
-        for fid, froudefp in fpfroude_rows:
-            for row in self.execute(cell_sql, (fid,)):
-                gid = row[0]
-                floodplain_group.datasets["Floodplain Froude"].data.append(create_array(line1, 3, gid, froudefp))
-
-        self.parser.write_groups(floodplain_group)
-        return True
-
-        # except Exception as e:
-        #     QApplication.restoreOverrideCursor()
-        #     self.uc.show_error("ERROR 101218.1617: exporting FPFROUDE.DAT failed!.\n", e)
-        #     return False
 
     def export_fpfroude_dat(self, outdir):
         # check if there is any limiting Froude number defined.
@@ -4789,7 +4789,47 @@ class Flo2dGeoPackage(GeoPackageUtils):
             self.uc.show_error("ERROR 101218.1617: exporting FPFROUDE.DAT failed!.\n", e)
             return False
 
-    def export_shallowNSpatial(self, outdir):
+    def export_shallowNSpatial(self, output=None):
+        if self.parsed_format == self.FORMAT_DAT:
+            return self.export_shallowNSpatial_dat(output)
+        elif self.parsed_format == self.FORMAT_HDF5:
+            return self.export_shallowNSpatial_hdf5()
+
+    def export_shallowNSpatial_hdf5(self):
+        """
+        Function to export shallow n values to hdf5 file
+        """
+        try:
+            if self.is_table_empty("spatialshallow"):
+                return False
+            shallow_sql = """SELECT fid, shallow_n FROM spatialshallow ORDER BY fid;"""
+            cell_sql = """SELECT grid_fid FROM spatialshallow_cells WHERE area_fid = ? ORDER BY grid_fid;"""
+
+            line1 = "{0} {1}\n"
+
+            shallow_rows = self.execute(shallow_sql).fetchall()
+            if not shallow_rows:
+                return False
+            else:
+                pass
+
+            floodplain_group = self.parser.floodplain_group
+            floodplain_group.create_dataset('SHALLOWN_SPATIAL', [])
+
+            for fid, shallow_n in shallow_rows:
+                for row in self.execute(cell_sql, (fid,)):
+                    gid = row[0]
+                    floodplain_group.datasets["SHALLOWN_SPATIAL"].data.append(create_array(line1, 2, gid, shallow_n))
+
+            self.parser.write_groups(floodplain_group)
+            return True
+
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.uc.show_error("ERROR 101218.1901: exporting SHALLOWN_SPATIAL failed!", e)
+            return False
+
+    def export_shallowNSpatial_dat(self, outdir):
         # check if there is any shallow-n defined.
         try:
             if self.is_table_empty("spatialshallow"):
