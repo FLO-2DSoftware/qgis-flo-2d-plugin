@@ -204,10 +204,10 @@ class Flo2D(object):
         self.add_docks_to_iface()
         self.set_editors_map()
 
-        if not self.infoToolCalled: 
+        if not self.infoToolCalled:
             self.info_tool.feature_picked.connect(self.get_feature_info)
             self.infoToolCalled = True
-            
+
         self.channel_profile_tool.feature_picked.connect(self.get_feature_profile)
         self.grid_info_tool.grid_elem_picked.connect(self.f2d_grid_info.update_fields)
 
@@ -926,15 +926,17 @@ class Flo2D(object):
         finally:
             QApplication.restoreOverrideCursor()
 
-    # @connection_required
     def flo_save_project(self):
         """
         Function to save a FLO-2D project into a geopackage
         """
 
         # QApplication.setOverrideCursor(Qt.WaitCursor)
+        try:
+            gpkg_path = self.gutils.get_gpkg_path()
+        except AttributeError:
+            return
 
-        gpkg_path = self.gutils.get_gpkg_path()
         proj_name = os.path.splitext(os.path.basename(gpkg_path))[0]
         uri = f'geopackage:{gpkg_path}?projectName={proj_name}'
 
