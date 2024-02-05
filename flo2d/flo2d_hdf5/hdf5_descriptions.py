@@ -112,7 +112,8 @@ REDUCTION_FACTORS = {
 }
 
 TOLER = {
-    "TOLER": "Numerical Stability Control Data"
+    "TOLER": "Numerical Stability Control Data",
+    "TOLSPATIAL": "Spatially Variable Tolerance Values"
 }
 
 LEVEE = {

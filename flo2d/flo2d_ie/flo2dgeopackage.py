@@ -3993,7 +3993,51 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
         return rtrn
 
-    def export_tolspatial(self, outdir):
+    def export_tolspatial(self, output=None):
+        if self.parsed_format == self.FORMAT_DAT:
+            return self.export_tolspatial_dat(output)
+        elif self.parsed_format == self.FORMAT_HDF5:
+            return self.export_tolspatial_hdf5()
+
+    def export_tolspatial_hdf5(self):
+        """
+        Function to export tolspatial to hdf5 file
+        """
+        # check if there is any tolerance data defined.
+        try:
+            if self.is_table_empty("tolspatial"):
+                return False
+            tol_poly_sql = """SELECT fid, tol FROM tolspatial ORDER BY fid;"""
+            tol_cells_sql = """SELECT grid_fid FROM tolspatial_cells WHERE area_fid = ? ORDER BY grid_fid;"""
+
+            line1 = "{0}  {1}\n"
+
+            tol_poly_rows = self.execute(tol_poly_sql).fetchall()  # A list of pairs (fid number, tolerance value),
+            # one for each tolerance polygon.                                                       #(fid, tol), that is, (polygon fid, tolerance value)
+            if not tol_poly_rows:
+                return False
+            else:
+                pass
+
+            tol_group = self.parser.tol_group
+            tol_group.create_dataset('TOLSPATIAL', [])
+            # tolspatial_dat = os.path.join(outdir, "TOLSPATIAL.DAT")  # path and name of file to write
+
+            for fid, tol in tol_poly_rows:
+                for row in self.execute(tol_cells_sql, (fid,)):
+                    gid = row[0]
+                    tol_group.datasets["TOLSPATIAL"].data.append(create_array(line1, 2, gid, tol))
+                    # t.write(line1.format(gid, tol))
+
+            self.parser.write_groups(tol_group)
+            return True
+
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.uc.show_error("ERROR 101218.1539: exporting TOLSPATIAL.DAT failed!", e)
+            return False
+
+    def export_tolspatial_dat(self, outdir):
         # check if there is any tolerance data defined.
         try:
             if self.is_table_empty("tolspatial"):
