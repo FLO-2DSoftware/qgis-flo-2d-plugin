@@ -190,7 +190,7 @@ class Layers(object):
                 (
                     "user_swmm_storage_units",
                     {
-                        "name": "Storm Storage Units",
+                        "name": "Storm Drain Storage Units",
                         "sgroup": "User Layers",
                         "styles": ["user_swmm_nodes.qml"],
                         "attrs_edit_widgets": {},

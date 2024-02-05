@@ -79,7 +79,7 @@ class StorageUnitsDialog(qtBaseClass, uiDialog):
         self.zoom_in_storage_btn.clicked.connect(self.zoom_in_storage_cell)
         self.zoom_out_storage_btn.clicked.connect(self.zoom_out_storage_cell)
     
-        # self.inlets_buttonBox.accepted.connect(self.save_inlets)
+        self.storages_buttonBox.accepted.connect(self.save_storages)
         # self.save_this_storage_btn.clicked.connect(self.save_inlets)
 
         # Connections from individual controls to particular cell in storages_tblw table widget:
@@ -100,7 +100,7 @@ class StorageUnitsDialog(qtBaseClass, uiDialog):
         # self.curb_height_dbox.valueChanged.connect(self.curb_height_dbox_valueChanged)
         # self.clogging_factor_dbox.valueChanged.connect(self.clogging_factor_dbox_valueChanged)
         # self.time_for_clogging_dbox.valueChanged.connect(self.time_for_clogging_dbox_valueChanged)
-        # self.storages_tblw.cellClicked.connect(self.inlets_tblw_cell_clicked)
+        # self.storages_tblw.cellClicked.connect(self.storages_tblw_cell_clicked)
         #
         # self.storages_tblw.verticalHeader().sectionClicked.connect(self.onVerticalSectionClicked)
 
@@ -153,122 +153,62 @@ class StorageUnitsDialog(qtBaseClass, uiDialog):
         self.block = True
 
         self.storages_tblw.setRowCount(0)
-        no_rt = ""
-        existing_rts = []
-        duplicates = []
-        wrong_type = ""
-
         for row_number, row_data in enumerate(rows):
-            name = row_data[0].strip()
-            # typ = str(row_data[7]).strip()
-            #
-            # if name[0:2] in ["I1", "I2", "I3", "I4", "I5"]:
-            #     if name[1] != typ:
-            #         if len(wrong_type) < 1500:
-            #             wrong_type += name + "\tWrong type " + typ + ". Should be " + name[1] + ".\n"
-            # if name[0:2] == "IM":
-            #     if name[2] != typ:
-            #         if len(wrong_type) < 1500:
-            #             wrong_type += name + "\tWrong type " + typ + ". Should be " + name[2] + ".\n"
-            #
-            # #
-            # # if not () or
-            # #         (name()[1] == "M" and name()[2] == "5"):
-            # self.storages_tblw.insertRow(row_number)
-            # for cell, data in enumerate(row_data):
-            #     item = QTableWidgetItem()
-            #     if cell == 0 or cell == 1 or cell == 6 or cell == 7 or cell == 16:
-            #         # item.setFlags(Qt.ItemIsSelectable | Qt.ItemIsEnabled)
-            #         item.setFlags(item.flags() & ~Qt.ItemIsEditable)
-            #
-            #     # item.setData(Qt.DisplayRole, data)
-            #     # Fill the list of inlet names:
-            #     if cell == 0:
-            #         self.storages_cbo.addItem(data)
-            #
-            #     # Fill all text boxes with data of first feature of query (first cell in table user_swmm_nodes):
-            #     if row_number == 0:
-            #         if cell == 1:
-            #             self.grid_element_le.setText(str(data))
-            #         elif cell == 2:
-            #             self.invert_elevation_dbox.setValue(data if data is not None else 0)
-            #         elif cell == 3:
-            #             self.max_depth_dbox.setValue(data if data is not None else 0)
-            #         elif cell == 4:
-            #             self.initial_depth_dbox.setValue(data if data is not None else 0)
-            #         elif cell == 5:
-            #             self.surcharge_depth_dbox.setValue(data if data is not None else 0)
-            #         # elif cell == 6:
-            #         #     self.ponded_area_dbox.setValue(data if data is not None else 0)
-            #         elif cell == 7:
-            #             self.inlet_drain_type_cbo.setCurrentIndex(data - 1)
-            #         elif cell == 8:
-            #             self.length_dbox.setValue(data if data is not None else 0)
-            #         elif cell == 9:
-            #             self.width_dbox.setValue(data if data is not None else 0)
-            #         elif cell == 10:
-            #             self.height_dbox.setValue(data if data is not None else 0)
-            #         elif cell == 11:
-            #             self.weir_coeff_dbox.setValue(data if data is not None else 0)
-            #         elif cell == 12:
-            #             self.feature_sbox.setValue(data if data is not None else 0)
-            #         elif cell == 13:
-            #             self.curb_height_dbox.setValue(data if data is not None else 0)
-            #         elif cell == 14:
-            #             self.clogging_factor_dbox.setValue(data if data is not None else 0)
-            #         elif cell == 15:
-            #             self.time_for_clogging_dbox.setValue(data if data is not None else 0)
-            #
-            #     # See if rating tables or Culvert eq. exist:
-            #     if cell == 0:
-            #         inlet = data
-            #     if cell == 16:
-            #         if data:  # data is the rating table or Culvert eq. name for cell 16.
-            #             data = data.strip()
-            #             if data != "":
-            #                 fid_rt = self.gutils.execute("SELECT fid FROM swmmflort WHERE name = ?", (data,)).fetchone()
-            #                 if not fid_rt:
-            #                     fid_c = self.gutils.execute(
-            #                         "SELECT fid FROM swmmflo_culvert WHERE name = ?",
-            #                         (data,),
-            #                     ).fetchone()
-            #                     if not fid_c:
-            #                         no_rt += data + "\t   for inlet   " + inlet + "\n"
-            #                         # data = ""
-            #                     if data in existing_rts:
-            #                         if data not in duplicates:
-            #                             duplicates.append(data)
-            #                     else:
-            #                         existing_rts.append(data)
-            #
-            #                 # if data in existing_rts:
-            #                 #     if data not in duplicates:
-            #                 #         duplicates.append(data)
-            #                 # else:
-            #                 #     existing_rts.append(data)
-            #
-            #     item.setData(Qt.EditRole, data)
-            #     self.storages_tblw.setItem(row_number, cell, item)
+            self.storages_tblw.insertRow(row_number)
+            for cell, data in enumerate(row_data):
+                item = QTableWidgetItem()
+                if cell == 0 or cell == 1 or cell == 6 or cell == 7 or cell == 16:
+                    # item.setFlags(Qt.ItemIsSelectable | Qt.ItemIsEnabled)
+                    item.setFlags(item.flags() & ~Qt.ItemIsEditable)
+            
+                # Fill the list of inlet names:
+                if cell == 0:
+                    self.storages_cbo.addItem(data)
+            
+                # Fill all text boxes with data of first feature of query (first cell in table user_swmm_storage_units):
+                if row_number == 0:
+                    if cell == 1:
+                        self.grid_element_le.setText(str(data))
+                    elif cell == 2:
+                        self.invert_elevation_dbox.setValue(data if data is not None else 0)
+                    elif cell == 3:
+                        self.max_depth_dbox.setValue(data if data is not None else 0)
+                    elif cell == 4:
+                        self.initial_depth_dbox.setValue(data if data is not None else 0)
+                    elif cell == 5:
+                        self.external_inflow_chbox.setChecked(data if data is not None else 0)
+                    elif cell == 6:
+                        self.ponded_area_dbox.setValue(data if data is not None else 0)
+                    elif cell == 7:
+                        self.evap_factor_dbox.setValue(data if data is not None else 0)
+                    elif cell == 8:
+                        self.treatment_cbo.setCurrentIndex(data if data is not None else 0)
+                    elif cell == 9:
+                        self.infiltration_grp.setChecked(True)
+                    elif cell == 10:
+                        self.method_cbo.setCurrentIndex(0)
+                    elif cell == 11:
+                        self.suction_head_dbox.setValue(data if data is not None else 0)
+                    elif cell == 12:
+                        self.conductivity_dbox.setValue(data if data is not None else 0)
+                    elif cell == 13:
+                        self.initial_deficit_dbox.setValue(data if data is not None else 0)
+                    # elif cell == 14:
+                    #     self.storage_curve.setValue(data if data is not None else 0)
+                    elif cell == 15:
+                        self.coefficient_dbox.setValue(data if data is not None else 0)
+                    elif cell == 16:
+                        self.exponent_dbox.setValue(data if data is not None else 0)
+                    elif cell == 17:
+                        self.constant_dbox.setValue(data if data is not None else 0)
+                    elif cell == 18:
+                        self.tabular_grp.setChecked(True)
+                        
+                                   
+                item.setData(Qt.EditRole, data)
+                self.storages_tblw.setItem(row_number, cell, item)
 
         QApplication.restoreOverrideCursor()
-        # if no_rt != "":
-        #     self.uc.show_info(
-        #         "WARNING 070120.1048:\nThe following rating tables/Culvert eq. were not found!:\n\n" + no_rt
-        #     )
-        #
-        # if duplicates:
-        #     txt = ""
-        #     for d in duplicates:
-        #         txt += "\n" + d + ""
-        #     self.uc.show_info(
-        #         "WARNING 080120.0814:\nThe following rating tables/Culvert eq. are assigned to more than one inlet:\n"
-        #         + txt
-        #     )
-
-        # if wrong_type:
-        #     self.uc.show_info(
-        #         "WARNING 250622.1627:\nThe following inlets have wrong type:\n\n" + wrong_type
-        #     )
 
         QApplication.setOverrideCursor(Qt.WaitCursor)
         self.storages_cbo.model().sort(0)
@@ -284,7 +224,7 @@ class StorageUnitsDialog(qtBaseClass, uiDialog):
         # self.highlight_inlet_cell(self.grid_element_le.text())
 
     def onVerticalSectionClicked(self, logicalIndex):
-        self.inlets_tblw_cell_clicked(logicalIndex, 0)
+        self.storages_tblw_cell_clicked(logicalIndex, 0)
 
     def set_header(self):
         self.storages_tblw.setHorizontalHeaderLabels(
@@ -367,7 +307,7 @@ class StorageUnitsDialog(qtBaseClass, uiDialog):
         row = self.inlet_cbo.currentIndex()
         item = QTableWidgetItem()
         item.setData(Qt.EditRole, self.inlet_drain_type_cbo.currentIndex() + 1)
-        self.inlets_tblw.setItem(row, 7, item)
+        self.storages_tblw.setItem(row, 7, item)
 
         if self.inlet_drain_type_cbo.currentIndex() + 1 in [4, 5]:
             self.label_17.setEnabled(True)
@@ -422,36 +362,36 @@ class StorageUnitsDialog(qtBaseClass, uiDialog):
         if not self.block:
             inlet = self.inlet_cbo.currentText()
             row = 0
-            for i in range(1, self.inlets_tblw.rowCount() - 1):
-                name = self.inlets_tblw.item(i, 0).text()
+            for i in range(1, self.storages_tblw.rowCount() - 1):
+                name = self.storages_tblw.item(i, 0).text()
                 if name == inlet:
                     row = i
                     break
             item = QTableWidgetItem()
             item.setData(Qt.EditRole, widget.value())
-            self.inlets_tblw.setItem(row, col, item)
+            self.storages_tblw.setItem(row, col, item)
 
-    def inlets_tblw_valueChanged(self, I, J):
+    def storages_tblw_valueChanged(self, I, J):
         self.uc.show_info("TABLE CHANGED in " + str(I) + "  " + str(J))
 
-    def inlets_tblw_cell_clicked(self, row, column):
+    def storages_tblw_cell_clicked(self, row, column):
         QApplication.setOverrideCursor(Qt.WaitCursor)
         self.inlet_cbo.blockSignals(True)
-        name = self.inlets_tblw.item(row, 0).text().strip()
+        name = self.storages_tblw.item(row, 0).text().strip()
         idx = self.inlet_cbo.findText(name)
         self.inlet_cbo.setCurrentIndex(idx)
         self.inlet_cbo.blockSignals(False)
 
         self.block = True
 
-        self.grid_element_le.setText(self.inlets_tblw.item(row, 1).text())
-        self.invert_elevation_dbox.setValue(float_or_zero(self.inlets_tblw.item(row, 2)))
-        self.max_depth_dbox.setValue(float_or_zero(self.inlets_tblw.item(row, 3)))
-        self.initial_depth_dbox.setValue(float_or_zero(self.inlets_tblw.item(row, 4)))
-        self.surcharge_depth_dbox.setValue(float_or_zero(self.inlets_tblw.item(row, 5)))
-        # self.ponded_area_dbox.setValue(float_or_zero(self.inlets_tblw.item(row, 6)))
+        self.grid_element_le.setText(self.storages_tblw.item(row, 1).text())
+        self.invert_elevation_dbox.setValue(float_or_zero(self.storages_tblw.item(row, 2)))
+        self.max_depth_dbox.setValue(float_or_zero(self.storages_tblw.item(row, 3)))
+        self.initial_depth_dbox.setValue(float_or_zero(self.storages_tblw.item(row, 4)))
+        self.surcharge_depth_dbox.setValue(float_or_zero(self.storages_tblw.item(row, 5)))
+        # self.ponded_area_dbox.setValue(float_or_zero(self.storages_tblw.item(row, 6)))
 
-        val = self.inlets_tblw.item(row, 7).text().strip()
+        val = self.storages_tblw.item(row, 7).text().strip()
         # Check that type and name are consistent:
         if (name[0:2] in ["I1", "I2", "I3", "I4", "I5"] and name[1] != val) or (name[0:3] == "IM5" and name[2] != val):
             self.uc.bar_warn("Inlet name " + name + " and type '" + val + "' do not correspond!")
@@ -463,16 +403,16 @@ class StorageUnitsDialog(qtBaseClass, uiDialog):
 
         self.inlet_drain_type_cbo.setCurrentIndex(index)
 
-        self.length_dbox.setValue(float_or_zero(self.inlets_tblw.item(row, 8)))
-        self.width_dbox.setValue(float_or_zero(self.inlets_tblw.item(row, 9)))
-        self.height_dbox.setValue(float_or_zero(self.inlets_tblw.item(row, 10)))
-        self.weir_coeff_dbox.setValue(float_or_zero(self.inlets_tblw.item(row, 11)))
-        self.feature_sbox.setValue(float_or_zero(self.inlets_tblw.item(row, 12)))
-        self.curb_height_dbox.setValue(float_or_zero(self.inlets_tblw.item(row, 13)))
-        self.clogging_factor_dbox.setValue(float_or_zero(self.inlets_tblw.item(row, 14)))
-        self.time_for_clogging_dbox.setValue(float_or_zero(self.inlets_tblw.item(row, 15)))
+        self.length_dbox.setValue(float_or_zero(self.storages_tblw.item(row, 8)))
+        self.width_dbox.setValue(float_or_zero(self.storages_tblw.item(row, 9)))
+        self.height_dbox.setValue(float_or_zero(self.storages_tblw.item(row, 10)))
+        self.weir_coeff_dbox.setValue(float_or_zero(self.storages_tblw.item(row, 11)))
+        self.feature_sbox.setValue(float_or_zero(self.storages_tblw.item(row, 12)))
+        self.curb_height_dbox.setValue(float_or_zero(self.storages_tblw.item(row, 13)))
+        self.clogging_factor_dbox.setValue(float_or_zero(self.storages_tblw.item(row, 14)))
+        self.time_for_clogging_dbox.setValue(float_or_zero(self.storages_tblw.item(row, 15)))
 
-        rt_name = self.inlets_tblw.item(row, 16).text().strip()
+        rt_name = self.storages_tblw.item(row, 16).text().strip()
         rt_name = rt_name if rt_name is not None else ""
 
         self.enable_external_inflow()
@@ -487,14 +427,14 @@ class StorageUnitsDialog(qtBaseClass, uiDialog):
         # Highlight row in table:
         row = self.inlet_cbo.currentIndex()
 
-        rows = self.inlets_tblw.rowCount()
+        rows = self.storages_tblw.rowCount()
         if rows <= 1:
             return
 
         inlet = self.inlet_cbo.currentText()
         found = False
         for i in range(0, rows):
-            if self.inlets_tblw.item(i, 0).text() == inlet:
+            if self.storages_tblw.item(i, 0).text() == inlet:
                 # We have found our value so we can update 'i' row
                 found = True
                 break
@@ -502,34 +442,34 @@ class StorageUnitsDialog(qtBaseClass, uiDialog):
         if found:
             QApplication.setOverrideCursor(Qt.WaitCursor)
             row = i
-            self.inlets_tblw.selectRow(row)
+            self.storages_tblw.selectRow(row)
             inlet_type_index = -1
             # Load controls with selected row in table:
             item = QTableWidgetItem()
-            item = self.inlets_tblw.item(row, 1)
+            item = self.storages_tblw.item(row, 1)
             if item is not None:
                 self.grid_element_le.setText(str(item.text()))
-            self.invert_elevation_dbox.setValue(float_or_zero(self.inlets_tblw.item(row, 2)))
-            self.max_depth_dbox.setValue(float_or_zero(self.inlets_tblw.item(row, 3)))
-            self.initial_depth_dbox.setValue(float_or_zero(self.inlets_tblw.item(row, 4)))
-            self.surcharge_depth_dbox.setValue(float_or_zero(self.inlets_tblw.item(row, 5)))
-            # self.ponded_area_dbox.setValue(float_or_zero(self.inlets_tblw.item(row, 6)))
-            item = self.inlets_tblw.item(row, 7)  # Inlet type
+            self.invert_elevation_dbox.setValue(float_or_zero(self.storages_tblw.item(row, 2)))
+            self.max_depth_dbox.setValue(float_or_zero(self.storages_tblw.item(row, 3)))
+            self.initial_depth_dbox.setValue(float_or_zero(self.storages_tblw.item(row, 4)))
+            self.surcharge_depth_dbox.setValue(float_or_zero(self.storages_tblw.item(row, 5)))
+            # self.ponded_area_dbox.setValue(float_or_zero(self.storages_tblw.item(row, 6)))
+            item = self.storages_tblw.item(row, 7)  # Inlet type
             if item is not None:
                 inlet_type_index = int(item.text() if item.text() != "" else 1)
                 inlet_type_index = 5 if inlet_type_index > 5 else 0 if inlet_type_index < 0 else inlet_type_index - 1
                 self.inlet_drain_type_cbo.setCurrentIndex(inlet_type_index)
-            self.length_dbox.setValue(float_or_zero(self.inlets_tblw.item(row, 8)))
-            self.width_dbox.setValue(float_or_zero(self.inlets_tblw.item(row, 9)))
-            self.height_dbox.setValue(float_or_zero(self.inlets_tblw.item(row, 10)))
-            self.weir_coeff_dbox.setValue(float_or_zero(self.inlets_tblw.item(row, 11)))
-            self.feature_sbox.setValue(int_or_zero(self.inlets_tblw.item(row, 12)))
-            self.curb_height_dbox.setValue(float_or_zero(self.inlets_tblw.item(row, 13)))
-            self.clogging_factor_dbox.setValue(float_or_zero(self.inlets_tblw.item(row, 14)))
-            self.time_for_clogging_dbox.setValue(float_or_zero(self.inlets_tblw.item(row, 15)))
+            self.length_dbox.setValue(float_or_zero(self.storages_tblw.item(row, 8)))
+            self.width_dbox.setValue(float_or_zero(self.storages_tblw.item(row, 9)))
+            self.height_dbox.setValue(float_or_zero(self.storages_tblw.item(row, 10)))
+            self.weir_coeff_dbox.setValue(float_or_zero(self.storages_tblw.item(row, 11)))
+            self.feature_sbox.setValue(int_or_zero(self.storages_tblw.item(row, 12)))
+            self.curb_height_dbox.setValue(float_or_zero(self.storages_tblw.item(row, 13)))
+            self.clogging_factor_dbox.setValue(float_or_zero(self.storages_tblw.item(row, 14)))
+            self.time_for_clogging_dbox.setValue(float_or_zero(self.storages_tblw.item(row, 15)))
 
             if inlet_type_index == 3:
-                rt_name = self.inlets_tblw.item(row, 16)
+                rt_name = self.storages_tblw.item(row, 16)
                 rt_name = rt_name.text() if rt_name.text() is not None else ""
 
             self.enable_external_inflow()
@@ -607,162 +547,87 @@ class StorageUnitsDialog(qtBaseClass, uiDialog):
             # self.update_extent()
             QApplication.restoreOverrideCursor()
 
-    def save_inlets(self):
+    def save_storages(self):
         """
         Save changes of user_swmm_nodes layer.
         """
         try:
-            inlets = []
-            t4_but_rt_name = []
-
-            for row in range(0, self.inlets_tblw.rowCount()):
+            storages = []
+            for row in range(0, self.storages_tblw.rowCount()):
                 item = QTableWidgetItem()
 
                 fid = row + 1
 
-                item = self.inlets_tblw.item(row, 0)
+                item = self.storages_tblw.item(row, 0)
                 if item is not None:
                     name = str(item.text()) if str(item.text()) != "" else " "
 
-                item = self.inlets_tblw.item(row, 1)
+                item = self.storages_tblw.item(row, 1)
                 if item is not None:
                     grid = str(item.text()) if str(item.text()) != "" else " "
 
-                item = self.inlets_tblw.item(row, 2)
+                item = self.storages_tblw.item(row, 2)
                 if item is not None:
                     invert_elev = str(item.text()) if str(item.text()) != "" else "0"
 
-                item = self.inlets_tblw.item(row, 3)
+                item = self.storages_tblw.item(row, 3)
                 if item is not None:
                     max_depth = str(item.text()) if str(item.text()) != "" else "0"
 
-                item = self.inlets_tblw.item(row, 4)
+                item = self.storages_tblw.item(row, 4)
                 if item is not None:
                     init_depth = str(item.text()) if str(item.text()) != "" else "0"
 
-                item = self.inlets_tblw.item(row, 5)
+                item = self.storages_tblw.item(row, 5)
                 if item is not None:
                     surcharge_depth = str(item.text()) if str(item.text()) != "" else "0"
 
-                item = self.inlets_tblw.item(row, 6)
+                item = self.storages_tblw.item(row, 6)
                 if item is not None:
                     # ponded_area = str(item.text()) if str(item.text()) != "" else "0"
                     ponded_area = "0"
 
-                item = self.inlets_tblw.item(row, 7)
+                item = self.storages_tblw.item(row, 7)
                 if item is not None:
                     intype = str(item.text()) if str(item.text()) != "" else "1"
 
-                item = self.inlets_tblw.item(row, 8)
+                item = self.storages_tblw.item(row, 8)
                 if item is not None:
                     swmm_length = str(item.text()) if str(item.text()) != "" else "0"
 
-                item = self.inlets_tblw.item(row, 9)
+                item = self.storages_tblw.item(row, 9)
                 if item is not None:
                     swmm_width = str(item.text()) if str(item.text()) != "" else "0"
 
-                item = self.inlets_tblw.item(row, 10)
+                item = self.storages_tblw.item(row, 10)
                 if item is not None:
                     swmm_height = str(item.text()) if str(item.text()) != "" else "0"
 
-                item = self.inlets_tblw.item(row, 11)
+                item = self.storages_tblw.item(row, 11)
                 if item is not None:
                     swmm_coeff = str(item.text()) if str(item.text()) != "" else "0"
 
-                item = self.inlets_tblw.item(row, 12)
+                item = self.storages_tblw.item(row, 12)
                 if item is not None:
                     swmm_feature = str(item.text()) if str(item.text()) != "" else "0"
 
-                item = self.inlets_tblw.item(row, 13)
+                item = self.storages_tblw.item(row, 13)
                 if item is not None:
                     curbheight = str(item.text()) if str(item.text()) != "" else "0"
 
-                item = self.inlets_tblw.item(row, 14)
+                item = self.storages_tblw.item(row, 14)
                 if item is not None:
                     swmm_clogging_factor = str(item.text()) if str(item.text()) != "" else "0"
 
-                item = self.inlets_tblw.item(row, 15)
+                item = self.storages_tblw.item(row, 15)
                 if item is not None:
                     swmm_time_for_clogging = str(item.text()) if str(item.text()) != "" else "0"
 
-                item = self.inlets_tblw.item(row, 16)
+                item = self.storages_tblw.item(row, 16)
                 if item is not None:
                     rt_name = str(item.text())
 
-                # See if rating table exists in swmmflort:
-                rt_fid = 0
-                if intype == "4" and rt_name != "":
-                    #  See if there is rating table data for this inlet (Type 4 and rating table name defined):
-                    swmmflort_fid = self.gutils.execute(
-                        "SELECT fid FROM swmmflort WHERE grid_fid = ? AND name = ?",
-                        (
-                            grid,
-                            rt_name,
-                        ),
-                    ).fetchone()
-                    if swmmflort_fid:
-                        # See if data exists:
-                        data = self.gutils.execute(
-                            "SELECT fid FROM swmmflort_data WHERE swmm_rt_fid = ?",
-                            (swmmflort_fid[0],),
-                        ).fetchone()
-                        if data:
-                            # All Rating table data exists for this inlet.
-                            rt_fid = swmmflort_fid[0]
-                        else:
-                            self.uc.show_info(
-                                "WARNING 050121.0354:\n\nThere is no data (depth, q) for rating table  '"
-                                + rt_name
-                                + "'  for inlet  '"
-                                + name
-                                + "'"
-                            )
-                            self.gutils.execute(
-                                "DELETE FROM swmmflort WHERE grid_fid = ? AND name = ?",
-                                (
-                                    grid,
-                                    rt_name,
-                                ),
-                            )
-                    else:
-                        # Thre is no Rating Table associated with this RT name and grid. See if there is for the RT name (no matter the grid number):
-                        swmmflort_fid = self.gutils.execute(
-                            "SELECT fid FROM swmmflort WHERE name = ?", (rt_name,)
-                        ).fetchone()
-                        if swmmflort_fid:
-                            data = self.gutils.execute(
-                                "SELECT fid FROM swmmflort_data WHERE swmm_rt_fid = ?",
-                                (swmmflort_fid[0],),
-                            ).fetchone()
-                            if data:
-                                self.gutils.execute(
-                                    "UPDATE swmmflort SET grid_fid = ? WHERE name = ?",
-                                    (grid, rt_name),
-                                )
-                                rt_fid = swmmflort_fid[0]
-                            else:
-                                self.uc.show_info(
-                                    "WARNING 050121.0354:\n\nThere is no data (depth, q) for rating table  '"
-                                    + rt_name
-                                    + "'  for inlet  '"
-                                    + name
-                                    + "'"
-                                )
-                                self.gutils.execute("DELETE FROM swmmflort WHERE name = ?", (rt_name,))
-
-                elif intype == "4" and rt_name == "":
-                    # Not rating table: make NULL all grid_fid fields in items of swmmflort
-                    # that have this grid number:
-                    rows = self.gutils.execute("SELECT fid FROM swmmflort WHERE grid_fid = ?", (grid,)).fetchall()
-                    if rows:  # There may be at least one item in swmmflort for this grid, set grid to NULL:
-                        for r in rows:
-                            self.gutils.execute(
-                                "UPDATE swmmflort SET grid_fid = ? WHERE fid = ?",
-                                (None, r[0]),
-                            )
-                    t4_but_rt_name.append([name, grid])
-
-                inlets.append(
+                storages.append(
                     (
                         name,
                         grid,
@@ -786,49 +651,36 @@ class StorageUnitsDialog(qtBaseClass, uiDialog):
                     )
                 )
 
-            # Update 'user_swmm_nodes' table:
+            # Update 'user_swmm_storage_units' table:
             update_qry = """
-            UPDATE user_swmm_nodes
-            SET
-                name = ?, 
+            UPDATE user_swmm_storage_units
+            SET name= ?, 
                 grid = ?, 
-                junction_invert_elev = ?,
+                invert_elev = ?,
                 max_depth = ?, 
                 init_depth = ?, 
-                surcharge_depth = ?, 
+                external_inflow = ?, 
+                treatment
                 ponded_area = ?, 
-                intype = ?, 
-                swmm_length = ?, 
-                swmm_width = ?, 
-                swmm_height = ?,
-                swmm_coeff = ?,
-                swmm_feature = ?,
-                curbheight = ?,
-                swmm_clogging_factor = ?,
-                swmm_time_for_clogging = ?,
-                rt_fid = ?,
-                rt_name = ?
+                evap_factor = ?, 
+                infiltration = ?, 
+                infil_method = ?, 
+                suction_head = ?,
+                conductivity = ?,
+                initial_deficit = ?,
+                storage_curve = ?,
+                coefficient = ?,
+                exponent = ?,
+                constant = ?,
+                curve_name = ?
             WHERE name = ?;"""
 
-            self.gutils.execute_many(update_qry, inlets)
-
-            if len(t4_but_rt_name) > 0:
-                QApplication.restoreOverrideCursor()
-                t4_but_rt_name.sort()
-                no_rt_names = ""
-                for inl, gr in t4_but_rt_name:
-                    no_rt_names += "\n" + inl + "\t(grid " + gr + ")"
-                self.uc.show_info(
-                    "WARNING 020219.1836:\n\nThe following "
-                    + str(len(t4_but_rt_name))
-                    + " inlet(s) are of type 4 (stage discharge with rating table or Culvert equation) but don't have data assigned:\n"
-                    + no_rt_names
-                )
+            self.gutils.execute_many(update_qry, storages)
 
         except Exception as e:
             QApplication.restoreOverrideCursor()
             self.uc.show_error(
-                "ERROR 020219.0812: couldn't save inlets/junction into User Storm Drain Nodes!"
+                "ERROR 030224.1736: couldn't save storage units into User Layer 'Storm Drain Storage Units'!"
                 + "\n__________________________________________________",
                 e,
             )
