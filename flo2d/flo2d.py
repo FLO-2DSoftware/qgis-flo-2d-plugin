@@ -2876,7 +2876,8 @@ class Flo2D(object):
                 "export_evapor",
                 "export_street",
                 "export_shallowNSpatial",
-                "export_gutter"
+                "export_gutter",
+                "export_tailings"
             ]
 
             s.setValue("FLO-2D/lastGdsDir", outdir)

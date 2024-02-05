@@ -132,3 +132,7 @@ FLOODPLAIN = {
 GUTTER = {
     "GUTTER": "Floodplain Street Element Gutter Area"
 }
+
+TAILINGS = {
+    "TAILINGS": "Tailings Depth Data"
+}

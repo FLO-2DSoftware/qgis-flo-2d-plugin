@@ -2173,7 +2173,46 @@ class Flo2dGeoPackage(GeoPackageUtils):
             self.uc.show_error("ERROR 101218.1542: exporting INFLOW.DAT failed!.\n", e)
             return False
 
-    def export_tailings(self, outdir):
+    def export_tailings(self, output=None):
+        if self.parsed_format == self.FORMAT_DAT:
+            return self.export_tailings_dat(output)
+        elif self.parsed_format == self.FORMAT_HDF5:
+            return self.export_tailings_hdf5()
+
+    def export_tailings_hdf5(self):
+        """
+        Function to export tailings to a hdf5 file
+        """
+        try:
+            if self.is_table_empty("tailing_cells"):
+                return False
+
+            tailings_sql = """SELECT grid_fid, thickness FROM tailing_cells ORDER BY grid_fid;"""
+            line1 = "{0}  {1}\n"
+
+            rows = self.execute(tailings_sql).fetchall()
+            if not rows:
+                return False
+            else:
+                pass
+
+            tailings_group = self.parser.tailings_group
+            tailings_group.create_dataset('TAILINGS', [])
+            # tailingsf = os.path.join(outdir, "TAILINGS.DAT")
+
+            for row in rows:
+                # t.write(line1.format(*row))
+                tailings_group.datasets["TAILINGS"].data.append(create_array(line1, 2, tuple(row)))
+
+            self.parser.write_groups(tailings_group)
+            return True
+
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.uc.show_error("ERROR 040822.0442: exporting TAILINGS.DAT failed!.\n", e)
+            return False
+
+    def export_tailings_dat(self, outdir):
         try:
             if self.is_table_empty("tailing_cells"):
                 return False

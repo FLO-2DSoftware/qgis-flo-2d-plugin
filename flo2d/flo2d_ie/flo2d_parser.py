@@ -19,7 +19,7 @@ from qgis.PyQt.QtCore import QSettings
 from qgis.PyQt.QtWidgets import QMessageBox
 
 from ..flo2d_hdf5.hdf5_descriptions import CONTROL, GRID, NEIGHBORS, STORMDRAIN, BC, CHANNEL, HYSTRUCT, INFIL, RAIN, \
-    REDUCTION_FACTORS, TOLER, LEVEE, EVAPOR, FLOODPLAIN, GUTTER
+    REDUCTION_FACTORS, TOLER, LEVEE, EVAPOR, FLOODPLAIN, GUTTER, TAILINGS
 from ..utils import Msge
 
 try:
@@ -208,7 +208,13 @@ class ParseHDF5:
 
     @property
     def gutter_group(self):
-        group_name = "Input/Guttters"
+        group_name = "Input/Gutters"
+        group = HDF5Group(group_name)
+        return group
+
+    @property
+    def tailings_group(self):
+        group_name = "Input/Tailings"
         group = HDF5Group(group_name)
         return group
 
@@ -234,36 +240,12 @@ class ParseHDF5:
         for dataset in sorted(group.datasets.values(), key=attrgetter("name")):
             hdf5_group = hdf5_file[group.name]
             ds = hdf5_group.create_dataset(dataset.name, data=dataset.data, compression="gzip")
-            if dataset.name in CONTROL:
-                ds.attrs[dataset.name] = CONTROL[dataset.name]
-            if dataset.name in GRID:
-                ds.attrs[dataset.name] = GRID[dataset.name]
-            if dataset.name in NEIGHBORS:
-                ds.attrs[dataset.name] = NEIGHBORS[dataset.name]
-            if dataset.name in STORMDRAIN:
-                ds.attrs[dataset.name] = STORMDRAIN[dataset.name]
-            if dataset.name in BC:
-                ds.attrs[dataset.name] = BC[dataset.name]
-            if dataset.name in CHANNEL:
-                ds.attrs[dataset.name] = CHANNEL[dataset.name]
-            if dataset.name in HYSTRUCT:
-                ds.attrs[dataset.name] = HYSTRUCT[dataset.name]
-            if dataset.name in INFIL:
-                ds.attrs[dataset.name] = INFIL[dataset.name]
-            if dataset.name in RAIN:
-                ds.attrs[dataset.name] = RAIN[dataset.name]
-            if dataset.name in REDUCTION_FACTORS:
-                ds.attrs[dataset.name] = REDUCTION_FACTORS[dataset.name]
-            if dataset.name in TOLER:
-                ds.attrs[dataset.name] = TOLER[dataset.name]
-            if dataset.name in LEVEE:
-                ds.attrs[dataset.name] = LEVEE[dataset.name]
-            if dataset.name in EVAPOR:
-                ds.attrs[dataset.name] = EVAPOR[dataset.name]
-            if dataset.name in FLOODPLAIN:
-                ds.attrs[dataset.name] = FLOODPLAIN[dataset.name]
-            if dataset.name in GUTTER:
-                ds.attrs[dataset.name] = GUTTER[dataset.name]
+            attributes_dicts = [CONTROL, GRID, NEIGHBORS, STORMDRAIN, BC, CHANNEL, HYSTRUCT, INFIL, RAIN,
+                                REDUCTION_FACTORS, TOLER, LEVEE, EVAPOR, FLOODPLAIN, GUTTER, TAILINGS]
+
+            for attributes_dict in attributes_dicts:
+                if dataset.name in attributes_dict:
+                    ds.attrs[dataset.name] = attributes_dict[dataset.name]
 
     def write_groups(self, *groups):
         with h5py.File(self.hdf5_filepath, self.write_mode) as f:
