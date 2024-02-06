@@ -17,7 +17,7 @@ from collections import OrderedDict
 
 from qgis.core import QgsFeatureRequest, QgsWkbTypes
 from qgis.gui import QgsMapToolIdentify, QgsRubberBand
-from qgis.PyQt.QtCore import QPoint, pyqtSignal
+from qgis.PyQt.QtCore import QPoint, pyqtSignal, Qt
 from qgis.PyQt.QtGui import QColor, QCursor, QPixmap
 from qgis.PyQt.QtWidgets import QAction, QMenu
 
@@ -33,6 +33,7 @@ class ChannelProfile(QgsMapToolIdentify):
         self.lyrs = lyrs
         self.rb = None
         self.profile_tabs = ["chan"]
+        self.canvas.setCursor(Qt.CrossCursor)
         QgsMapToolIdentify.__init__(self, self.canvas)
 
     def update_lyrs_list(self):
@@ -113,9 +114,7 @@ class ChannelProfile(QgsMapToolIdentify):
                     self.rb.reset(QgsWkbTypes.PolygonGeometry)
 
     def activate(self):
-        self.canvas.setCursor(
-            QCursor(QPixmap(os.path.join(os.path.dirname(__file__), "img/profile_tool_icon.svg")))
-        )  # Apparently set a particular cursor pointer, but it doesn't!
+        self.canvas.setCursor(Qt.CrossCursor)
         self.update_lyrs_list()  # self.lyrs_list gets current data from 'chan' layer (schematic left bank).
         self.lyrs.root.visibilityChanged.connect(self.update_lyrs_list)
 

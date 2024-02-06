@@ -3546,8 +3546,6 @@ class Flo2D(object):
         show_editor(fid)
 
     def channel_profile(self):
-        # self.uncheck_all_info_tools()
-        # self.uncheck_toolbar_tb("<b>FLO-2D Project Review</b>")
         for tb in self.toolButtons:
             if tb.toolTip() == "<b>FLO-2D Project Review</b>":
                 review_tb = tb
@@ -3619,6 +3617,8 @@ class Flo2D(object):
 
         for tb in self.toolButtons:
             tb.setChecked(False)
+            if tb.toolTip() == "<b>FLO-2D Project Review</b>":
+                tb.setIcon(QIcon(os.path.join(self.plugin_dir, "img/editmetadata.svg")))
 
         for ac in self.toolActions:
             ac.setChecked(False)
