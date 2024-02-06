@@ -156,6 +156,7 @@ class Flo2D(object):
         self.project = QgsProject.instance()
         self.actions = []
         self.toolButtons = []
+        self.toolActions = []
 
         self.files_used = ""
         self.files_not_used = ""
@@ -184,7 +185,6 @@ class Flo2D(object):
         # connections
         self.project.readProject.connect(self.load_gpkg_from_proj)
         self.project.writeProject.connect(self.flo_save_project)
-        # self.project.projectSaved.connect(self.add_flo2d_logo)
 
         self.uc.clear_bar_messages()
         QApplication.restoreOverrideCursor()
@@ -312,6 +312,7 @@ class Flo2D(object):
                 self.toolButtons.append(toolButton)
             else:
                 self.toolbar.addAction(action)
+                self.toolActions.append(action)
 
         if add_to_menu:
             self.iface.addPluginToMenu(self.menu, action)
@@ -502,12 +503,19 @@ class Flo2D(object):
                     "Select .RPT file",
                     lambda: self.select_RPT_File(),
                 ),
-                (
-                    os.path.join(self.plugin_dir, "img/grid_info_tool.svg"),
-                    "Grid Info Tool",
-                    lambda: self.activate_grid_info_tool(),
-                ),
+                # (
+                #     os.path.join(self.plugin_dir, "img/grid_info_tool.svg"),
+                #     "Grid Info Tool",
+                #     lambda: self.activate_grid_info_tool(),
+                # ),
             )
+        )
+
+        self.add_action(
+            os.path.join(self.plugin_dir, "img/grid_info_tool.svg"),
+            text=self.tr("FLO-2D Grid Info Tool"),
+            callback=lambda: self.activate_grid_info_tool(),
+            parent=self.iface.mainWindow(),
         )
 
         self.add_action(
@@ -2937,64 +2945,55 @@ class Flo2D(object):
             QApplication.restoreOverrideCursor()
             self.uc.show_error("ERROR 110618.1816: Could not save FLO-2D parameters!!", e)
 
+    @connection_required
     def activate_general_info_tool(self):
         """
         Function to activate the Info Tool
         """
+        for tb in self.toolButtons:
+            if tb.toolTip() == "<b>FLO-2D Info Tool</b>":
+                info_tb = tb
+
         grid = self.lyrs.data["grid"]["qlyr"]
         if grid is not None:
-            self.uncheck_toolbar_tb("<b>FLO-2D Info Tool</b>")
-            self.uncheck_all_info_tools()
-            for tb in self.toolButtons:
-                if tb.toolTip() == "<b>FLO-2D Info Tool</b>":
-                    tb.setIcon(QIcon(os.path.join(self.plugin_dir, "img/info_tool.svg")))
-                    if tb.isChecked():
-                        tb.setChecked(False)
-                        self.uncheck_all_info_tools()
-                    else:
-                        tb.setChecked(True)
-                        self.f2d_grid_info_dock.setUserVisible(True)
-                        tool = self.canvas.mapTool()
-                        if tool == self.info_tool:
-                            self.uncheck_all_info_tools()
-                        else:
-                            if tool is not None:
-                                self.uncheck_all_info_tools()
-                            self.canvas.setMapTool(self.info_tool)
-                    break
-        else:
-            self.uc.bar_warn("Define a database connection first!")
+            tool = self.canvas.mapTool()
+            if tool == self.info_tool:
+                info_tb.setChecked(False)
+                self.uncheck_all_info_tools()
+            else:
+                if tool is not None:
+                    self.uncheck_all_info_tools()
+                    info_tb.setChecked(False)
+                self.canvas.setMapTool(self.info_tool)
+                info_tb.setChecked(True)
 
     @connection_required
     def activate_grid_info_tool(self):
-        self.f2d_grid_info_dock.setUserVisible(True)
+        """
+        Function to activate the Grid Info Tool
+        """
+        for ac in self.toolActions:
+            if ac.toolTip() == "<b>FLO-2D Grid Info Tool</b>":
+                info_ac = ac
+
         grid = self.lyrs.data["grid"]["qlyr"]
         if grid is not None:
-            self.uncheck_toolbar_tb("<b>FLO-2D Info Tool</b>")
-            for tb in self.toolButtons:
-                if tb.toolTip() == "<b>FLO-2D Info Tool</b>":
-                    tb.setIcon(QIcon(os.path.join(self.plugin_dir, "img/grid_info_tool.svg")))
-                    if tb.isChecked():
-                        tb.setIcon(QIcon(os.path.join(self.plugin_dir, "img/info_tool.svg")))
-                        tb.setChecked(False)
-                        self.uncheck_all_info_tools()
-                    else:
-                        tb.setChecked(True)
-                        tool = self.canvas.mapTool()
-                        if tool == self.grid_info_tool:
-                            self.uncheck_all_info_tools()
-                        else:
-                            if tool is not None:
-                                self.uncheck_all_info_tools()
-                            self.grid_info_tool.grid = grid
-                            self.f2d_grid_info.set_info_layer(grid)
-                            self.f2d_grid_info.mann_default = self.gutils.get_cont_par("MANNING")
-                            self.f2d_grid_info.cell_Edit = self.gutils.get_cont_par("CELLSIZE")
-                            self.f2d_grid_info.n_cells = number_of_elements(self.gutils, grid)
-                            self.f2d_grid_info.gutils = self.gutils
-                            self.canvas.setMapTool(self.grid_info_tool)
-                    break
-
+            tool = self.canvas.mapTool()
+            if tool == self.grid_info_tool:
+                self.uncheck_all_info_tools()
+                info_ac.setChecked(False)
+            else:
+                if tool is not None:
+                    self.uncheck_all_info_tools()
+                    info_ac.setChecked(False)
+                self.grid_info_tool.grid = grid
+                self.f2d_grid_info.set_info_layer(grid)
+                self.f2d_grid_info.mann_default = self.gutils.get_cont_par("MANNING")
+                self.f2d_grid_info.cell_Edit = self.gutils.get_cont_par("CELLSIZE")
+                self.f2d_grid_info.n_cells = number_of_elements(self.gutils, grid)
+                self.f2d_grid_info.gutils = self.gutils
+                self.canvas.setMapTool(self.grid_info_tool)
+                info_ac.setChecked(True)
         else:
             self.uc.bar_warn("There is no grid layer to identify.")
 
@@ -3547,25 +3546,30 @@ class Flo2D(object):
         show_editor(fid)
 
     def channel_profile(self):
-        self.uncheck_all_info_tools()
-        self.uncheck_toolbar_tb("<b>FLO-2D Project Review</b>")
+        # self.uncheck_all_info_tools()
+        # self.uncheck_toolbar_tb("<b>FLO-2D Project Review</b>")
         for tb in self.toolButtons:
             if tb.toolTip() == "<b>FLO-2D Project Review</b>":
-                if tb.isChecked():
-                    tb.setIcon(QIcon(os.path.join(self.plugin_dir, "img/editmetadata.svg")))
-                    tb.setChecked(False)
-                    self.canvas.unsetMapTool(self.channel_profile_tool)
-                else:
-                    tb.setIcon(QIcon(os.path.join(self.plugin_dir, "img/profile.svg")))
-                    tb.setChecked(True)
-                    self.canvas.setMapTool(
-                        self.channel_profile_tool
-                    )  # 'channel_profile_tool' is an instance of ChannelProfile class,
-                    # created on loading the plugin, and to be used to plot channel
-                    # profiles using a subtool in the FLO-2D tool bar.
-                    # The plots will be based on data from the 'chan', 'cham_elems'
-                    # schematic layers.
-                    self.channel_profile_tool.update_lyrs_list()
+                review_tb = tb
+
+        tool = self.canvas.mapTool()
+        if tool == self.channel_profile_tool:
+            review_tb.setIcon(QIcon(os.path.join(self.plugin_dir, "img/editmetadata.svg")))
+            review_tb.setChecked(False)
+            self.uncheck_all_info_tools()
+        else:
+            if tool is not None:
+                self.uncheck_all_info_tools()
+                review_tb.setChecked(False)
+            review_tb.setIcon(QIcon(os.path.join(self.plugin_dir, "img/profile.svg")))
+            self.canvas.setMapTool(self.channel_profile_tool)
+            # 'channel_profile_tool' is an instance of ChannelProfile class,
+            # created on loading the plugin, and to be used to plot channel
+            # profiles using a subtool in the FLO-2D tool bar.
+            # The plots will be based on data from the 'chan', 'cham_elems'
+            # schematic layers.
+            self.channel_profile_tool.update_lyrs_list()
+            review_tb.setChecked(True)
 
     def get_feature_profile(self, table, fid):
         try:
@@ -3612,6 +3616,12 @@ class Flo2D(object):
         self.canvas.unsetMapTool(self.grid_info_tool)
         self.canvas.unsetMapTool(self.info_tool)
         self.canvas.unsetMapTool(self.channel_profile_tool)
+
+        for tb in self.toolButtons:
+            tb.setChecked(False)
+
+        for ac in self.toolActions:
+            ac.setChecked(False)
 
     def check_layer_source(self, layer, gpkg_path):
         """
