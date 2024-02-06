@@ -97,8 +97,9 @@ class StorageUnitsDialog(qtBaseClass, uiDialog):
         self.suction_head_dbox.valueChanged.connect(self.suction_head_dbox_valueChanged)          
         self.conductivity_dbox.valueChanged.connect(self.conductivity_dbox_valueChanged)                
         self.initial_deficit_dbox.valueChanged.connect(self.initial_deficit_dbox_valueChanged) 
-        self.functional_grp.toggled.connect(self.functional_grp_checked)
-        self.tabular_grp.toggled.connect(self.tabular_grp_checked)                 
+        self.functional_radio.toggled.connect(self.functional_radio_toggled)
+        # self.functional_grp.toggled.connect(self.functional_grp_checked)
+        # self.tabular_grp.toggled.connect(self.tabular_grp_checked)                 
         self.coefficient_dbox.valueChanged.connect(self.coefficient_dbox_valueChanged)                  
         self.exponent_dbox.valueChanged.connect(self.exponent_dbox_valueChanged)                
         self.constant_dbox.valueChanged.connect(self.constant_dbox_valueChanged)       
@@ -285,15 +286,40 @@ class StorageUnitsDialog(qtBaseClass, uiDialog):
     def initial_deficit_dbox_valueChanged(self):
         self.box_valueChanged(self.initial_deficit_dbox, 13) 
 
-    def functional_grp_checked(self):
-        if self.functional_grp.isChecked():
-            row = self.storages_cbo.currentIndex()
+    def functional_radio_toggled(self):
+        row = self.storages_cbo.currentIndex()
+        if self.functional_radio.isChecked():
             self.storages_tblw.item(row, 14).setText("FUNCTIONAL")  
-     
-    def tabular_grp_checked(self):
-        if self.tabular_grp.isChecked():
-            row = self.storages_cbo.currentIndex()
+            self.functional_grp.setEnabled(True)
+            self.tabular_grp.setEnabled(False)
+        else:
+            self.storages_tblw.item(row, 14).setText("TABULAR") 
+            self.functional_grp.setEnabled(False)
+            self.tabular_grp.setEnabled(True)
+
+    def tabular_radio_toggled(self):
+        row = self.storages_cbo.currentIndex()
+        if self.tabular_radio.isChecked():
             self.storages_tblw.item(row, 14).setText("TABULAR")  
+            self.tabular_grp.setEnabled(True)
+            self.functional_grp.setEnabled(False)
+            
+        else:
+            self.storages_tblw.item(row, 14).setText("TABULAR") 
+            self.tabular_grp.setEnabled(False)
+            self.functional_grp.setEnabled(True)
+            
+    # def functional_grp_checked(self):
+    #     if self.functional_grp.isChecked():
+    #         row = self.storages_cbo.currentIndex()
+    #         self.storages_tblw.item(row, 14).setText("FUNCTIONAL")  
+    #         self.tabular_grp.setChecked(False)
+    #
+    # def tabular_grp_checked(self):
+    #     if self.tabular_grp.isChecked():
+    #         row = self.storages_cbo.currentIndex()
+    #         self.storages_tblw.item(row, 14).setText("TABULAR")
+    #         self.functional_grp.setChecked(False)  
   
     def coefficient_dbox_valueChanged(self):
         self.box_valueChanged(self.coefficient_dbox, 15) 
