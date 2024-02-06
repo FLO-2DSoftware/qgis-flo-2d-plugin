@@ -40,6 +40,8 @@ from ..utils import (
 )
 from .table_editor_widget import CommandItemEdit, StandardItem, StandardItemModel
 from .ui_utils import center_canvas, load_ui, set_icon, zoom
+# from Cython.Includes.libcpp import functional
+from fontTools.cu2qu.cu2qu import curve_to_quadratic
 
 uiDialog, qtBaseClass = load_ui("storage_units")
 class StorageUnitsDialog(qtBaseClass, uiDialog):
@@ -84,28 +86,27 @@ class StorageUnitsDialog(qtBaseClass, uiDialog):
 
         # Connections from individual controls to particular cell in storages_tblw table widget:
         
-        # self.invert_elevation_dbox.valueChanged.connect(self.invert_elevation_dbox_valueChanged)
-        # self.max_depth_dbox.valueChanged.connect(self.max_depth_dbox_valueChanged)
-        # self.initial_depth_dbox.valueChanged.connect(self.initial_depth_dbox_valueChanged)
-        # self.surcharge_depth_dbox.valueChanged.connect(self.surcharge_depth_dbox_valueChanged)
-        # # self.ponded_area_dbox.valueChanged.connect(self.ponded_area_dbox_valueChanged)
-        # self.external_inflow_chbox.stateChanged.connect(self.external_inflow_checked)
-        # self.external_inflow_btn.clicked.connect(self.show_external_inflow_dlg)
-        # self.inlet_drain_type_cbo.currentIndexChanged.connect(self.inlet_drain_type_cbo_currentIndexChanged)
-        # self.length_dbox.valueChanged.connect(self.length_dbox_valueChanged)
-        # self.width_dbox.valueChanged.connect(self.width_dbox_valueChanged)
-        # self.height_dbox.valueChanged.connect(self.height_dbox_valueChanged)
-        # self.weir_coeff_dbox.valueChanged.connect(self.weir_coeff_dbox_valueChanged)
-        # self.feature_sbox.valueChanged.connect(self.feature_sbox_valueChanged)
-        # self.curb_height_dbox.valueChanged.connect(self.curb_height_dbox_valueChanged)
-        # self.clogging_factor_dbox.valueChanged.connect(self.clogging_factor_dbox_valueChanged)
-        # self.time_for_clogging_dbox.valueChanged.connect(self.time_for_clogging_dbox_valueChanged)
-        # self.storages_tblw.cellClicked.connect(self.storages_tblw_cell_clicked)
-        #
-        # self.storages_tblw.verticalHeader().sectionClicked.connect(self.onVerticalSectionClicked)
+        self.invert_elevation_dbox.valueChanged.connect(self.invert_elevation_dbox_valueChanged)
+        self.max_depth_dbox.valueChanged.connect(self.max_depth_dbox_valueChanged)
+        self.initial_depth_dbox.valueChanged.connect(self.initial_depth_dbox_valueChanged)
+        self.external_inflow_chbox.stateChanged.connect(self.external_inflow_checked)
+        self.external_inflow_btn.clicked.connect(self.show_external_inflow_dlg)
+        self.ponded_area_dbox.valueChanged.connect(self.ponded_area_dbox_valueChanged)
+        self.evap_factor_dbox.valueChanged.connect(self.evap_factor_dbox_valueChanged)
+        self.infiltration_grp.toggled.connect(self.infiltration_grp_checked)
+        self.suction_head_dbox.valueChanged.connect(self.suction_head_dbox_valueChanged)          
+        self.conductivity_dbox.valueChanged.connect(self.conductivity_dbox_valueChanged)                
+        self.initial_deficit_dbox.valueChanged.connect(self.initial_deficit_dbox_valueChanged) 
+        self.functional_grp.toggled.connect(self.functional_grp_checked)
+        self.tabular_grp.toggled.connect(self.tabular_grp_checked)                 
+        self.coefficient_dbox.valueChanged.connect(self.coefficient_dbox_valueChanged)                  
+        self.exponent_dbox.valueChanged.connect(self.exponent_dbox_valueChanged)                
+        self.constant_dbox.valueChanged.connect(self.constant_dbox_valueChanged)       
+        self.tabular_curves_cbo.currentIndexChanged.connect(self.tabular_curves_cbo_currentIndexChanged)             
+        self.storages_tblw.cellClicked.connect(self.storages_tblw_cell_clicked)
 
+        self.storages_tblw.verticalHeader().sectionClicked.connect(self.onVerticalSectionClicked)
         self.set_header()
-        # self.inlets_note_lbl.setText("Values for files: (1) SWMMFLO.DAT     (2) SWMMFLORT.DAT     (3) SDCLOGGING.DAT")
 
         self.populate_storages()
 
@@ -127,9 +128,9 @@ class StorageUnitsDialog(qtBaseClass, uiDialog):
                         max_depth,
                         init_depth,
                         external_inflow,
-                        treatment,
                         ponded_area,
                         evap_factor,
+                        treatment,
                         infiltration,
                         infil_method,
                         suction_head,
@@ -157,8 +158,8 @@ class StorageUnitsDialog(qtBaseClass, uiDialog):
             self.storages_tblw.insertRow(row_number)
             for cell, data in enumerate(row_data):
                 item = QTableWidgetItem()
-                if cell == 0 or cell == 1 or cell == 6 or cell == 7 or cell == 16:
-                    # item.setFlags(Qt.ItemIsSelectable | Qt.ItemIsEnabled)
+                if cell in [0, 1, 5, 8, 9, 10, 14, 18]:
+                # if cell == 0 or cell == 1 or cell == 5 or cell == 8 or cell == 9  or cell == 10 or cell == 14 or cell == 18:
                     item.setFlags(item.flags() & ~Qt.ItemIsEditable)
             
                 # Fill the list of inlet names:
@@ -176,13 +177,13 @@ class StorageUnitsDialog(qtBaseClass, uiDialog):
                     elif cell == 4:
                         self.initial_depth_dbox.setValue(data if data is not None else 0)
                     elif cell == 5:
-                        self.external_inflow_chbox.setChecked(data if data is not None else 0)
-                    elif cell == 6:
+                        self.external_inflow_chbox.setChecked(True if is_true(data) else False)
+                    elif cell == 6:    
                         self.ponded_area_dbox.setValue(data if data is not None else 0)
                     elif cell == 7:
-                        self.evap_factor_dbox.setValue(data if data is not None else 0)
+                        self.evap_factor_dbox.setValue(data if data is not None else 0) 
                     elif cell == 8:
-                        self.treatment_cbo.setCurrentIndex(data if data is not None else 0)
+                        self.treatment_cbo.setCurrentIndex(0)                                 
                     elif cell == 9:
                         self.infiltration_grp.setChecked(True)
                     elif cell == 10:
@@ -217,11 +218,11 @@ class StorageUnitsDialog(qtBaseClass, uiDialog):
         self.storages_tblw.sortItems(0, Qt.AscendingOrder)
         self.storages_tblw.selectRow(0)
 
-        # self.enable_external_inflow()
+        self.enable_external_inflow()
 
         self.block = False
 
-        # self.highlight_inlet_cell(self.grid_element_le.text())
+        self.highlight_storage_cell(self.grid_element_le.text())
 
     def onVerticalSectionClicked(self, logicalIndex):
         self.storages_tblw_cell_clicked(logicalIndex, 0)
@@ -243,11 +244,11 @@ class StorageUnitsDialog(qtBaseClass, uiDialog):
                 "Suction Head",
                 "Conductivity",
                 "Initial Deficit",
+                "Storage Curve",
                 "Coefficient",
                 "Exponent",
                 "Constant",
                 "Curve Name", 
-                "Storage Curve",
             ]
         )
 
@@ -263,14 +264,51 @@ class StorageUnitsDialog(qtBaseClass, uiDialog):
     def initial_depth_dbox_valueChanged(self):
         self.box_valueChanged(self.initial_depth_dbox, 4)
 
-    def surcharge_depth_dbox_valueChanged(self):
-        self.box_valueChanged(self.surcharge_depth_dbox, 5)
+    def external_inflow_chbox_stateChanged(self):
+        self.checkbox_valueChanged(self.external_inflow_chbox, 5)
+        
+    def ponded_area_dbox_valueChanged(self):
+        self.box_valueChanged(self.ponded_area_dbox, 6)  
+        
+    def evap_factor_dbox_valueChanged(self):
+        self.box_valueChanged(self.evap_factor_dbox, 7) 
+ 
+    def infiltration_grp_checked(self):
+        self.checkbox_valueChanged(self.infiltration_grp, 9)
+        
+    def suction_head_dbox_valueChanged(self):
+        self.box_valueChanged(self.suction_head_dbox, 11) 
+              
+    def conductivity_dbox_valueChanged(self):
+        self.box_valueChanged(self.conductivity_dbox, 12) 
+                
+    def initial_deficit_dbox_valueChanged(self):
+        self.box_valueChanged(self.initial_deficit_dbox, 13) 
 
+    def functional_grp_checked(self):
+        if self.functional_grp.isChecked():
+            row = self.storages_cbo.currentIndex()
+            self.storages_tblw.item(row, 14).setText("FUNCTIONAL")  
+     
+    def tabular_grp_checked(self):
+        if self.tabular_grp.isChecked():
+            row = self.storages_cbo.currentIndex()
+            self.storages_tblw.item(row, 14).setText("TABULAR")  
+  
+    def coefficient_dbox_valueChanged(self):
+        self.box_valueChanged(self.coefficient_dbox, 15) 
+                   
+    def exponent_dbox_valueChanged(self):
+        self.box_valueChanged(self.exponent_dbox, 16) 
+                  
+    def constant_dbox_valueChanged(self):
+        self.box_valueChanged(self.constant_dbox, 17) 
+        
     def external_inflow_checked(self):
         if not self.block:
             # Is there an external inflow for this node?
             inflow_sql = "SELECT * FROM swmm_inflows WHERE node_name = ?;"
-            node = self.inlet_cbo.currentText()
+            node = self.storages_cbo.currentText()
             inflow = self.gutils.execute(inflow_sql, (node,)).fetchone()
 
             enabled = self.external_inflow_chbox.isChecked()
@@ -295,44 +333,13 @@ class StorageUnitsDialog(qtBaseClass, uiDialog):
     def enable_external_inflow(self):
         # Is there an external inflow for this node?
         inflow_sql = "SELECT * FROM swmm_inflows WHERE node_name = ?;"
-        inflow = self.gutils.execute(inflow_sql, (self.inlet_cbo.currentText(),)).fetchone()
+        inflow = self.gutils.execute(inflow_sql, (self.storages_cbo.currentText(),)).fetchone()
         if inflow:
             self.external_inflow_chbox.setChecked(True)
             self.external_inflow_btn.setEnabled(True)
         else:
             self.external_inflow_chbox.setChecked(False)
             self.external_inflow_btn.setEnabled(False)
-
-    def inlet_drain_type_cbo_currentIndexChanged(self):
-        row = self.inlet_cbo.currentIndex()
-        item = QTableWidgetItem()
-        item.setData(Qt.EditRole, self.inlet_drain_type_cbo.currentIndex() + 1)
-        self.storages_tblw.setItem(row, 7, item)
-
-        if self.inlet_drain_type_cbo.currentIndex() + 1 in [4, 5]:
-            self.label_17.setEnabled(True)
-
-            # Variables related with SWMMFLO.DAT and SDCLOGGING.DAT:
-            self.length_dbox.setEnabled(False)
-            self.width_dbox.setEnabled(False)
-            self.height_dbox.setEnabled(False)
-            self.weir_coeff_dbox.setEnabled(False)
-            self.feature_sbox.setEnabled(False)
-            self.curb_height_dbox.setEnabled(False)
-            self.clogging_factor_dbox.setEnabled(False)
-            self.time_for_clogging_dbox.setEnabled(False)
-
-        else:
-            self.label_17.setEnabled(False)
-            # Variables related with SWMMFLO.DAT and SDCLOGGING.DAT:
-            self.length_dbox.setEnabled(True)
-            self.width_dbox.setEnabled(True)
-            self.height_dbox.setEnabled(True)
-            self.weir_coeff_dbox.setEnabled(True)
-            self.feature_sbox.setEnabled(True)
-            self.curb_height_dbox.setEnabled(True)
-            self.clogging_factor_dbox.setEnabled(True)
-            self.time_for_clogging_dbox.setEnabled(True)
 
     def length_dbox_valueChanged(self):
         self.box_valueChanged(self.length_dbox, 8)
@@ -343,44 +350,44 @@ class StorageUnitsDialog(qtBaseClass, uiDialog):
     def height_dbox_valueChanged(self):
         self.box_valueChanged(self.height_dbox, 10)
 
-    def weir_coeff_dbox_valueChanged(self):
-        self.box_valueChanged(self.weir_coeff_dbox, 11)
-
-    def feature_sbox_valueChanged(self):
-        self.box_valueChanged(self.feature_sbox, 12)
-
-    def curb_height_dbox_valueChanged(self):
-        self.box_valueChanged(self.curb_height_dbox, 13)
-
-    def clogging_factor_dbox_valueChanged(self):
-        self.box_valueChanged(self.clogging_factor_dbox, 14)
-
-    def time_for_clogging_dbox_valueChanged(self):
-        self.box_valueChanged(self.time_for_clogging_dbox, 15)
-
     def box_valueChanged(self, widget, col):
         if not self.block:
-            inlet = self.inlet_cbo.currentText()
+            storage = self.storages_cbo.currentText()
             row = 0
             for i in range(1, self.storages_tblw.rowCount() - 1):
                 name = self.storages_tblw.item(i, 0).text()
-                if name == inlet:
+                if name == storage:
                     row = i
                     break
             item = QTableWidgetItem()
             item.setData(Qt.EditRole, widget.value())
             self.storages_tblw.setItem(row, col, item)
 
+    def checkbox_valueChanged(self, widget, col):
+        row = self.storages_cbo.currentIndex()
+        item = QTableWidgetItem()
+        if col in (0, 1):
+            item.setFlags(Qt.ItemIsSelectable | Qt.ItemIsEnabled)
+        self.storages_tblw.setItem(row, col, item)
+        self.storages_tblw.item(row, col).setText("True" if widget.isChecked() else "False")
+
+
+    def tabular_curves_cbo_currentIndexChanged(self):
+        row = self.storages_cbo.currentIndex()
+        item = QTableWidgetItem()
+        item.setData(Qt.EditRole, self.tabular_curves_cbo.currentIndex() + 1)
+        self.storages_tblw.setItem(row, 18, item)
+
     def storages_tblw_valueChanged(self, I, J):
         self.uc.show_info("TABLE CHANGED in " + str(I) + "  " + str(J))
 
     def storages_tblw_cell_clicked(self, row, column):
         QApplication.setOverrideCursor(Qt.WaitCursor)
-        self.inlet_cbo.blockSignals(True)
+        self.storages_cbo.blockSignals(True)
         name = self.storages_tblw.item(row, 0).text().strip()
-        idx = self.inlet_cbo.findText(name)
-        self.inlet_cbo.setCurrentIndex(idx)
-        self.inlet_cbo.blockSignals(False)
+        idx = self.storages_cbo.findText(name)
+        self.storages_cbo.setCurrentIndex(idx)
+        self.storages_cbo.blockSignals(False)
 
         self.block = True
 
@@ -388,50 +395,42 @@ class StorageUnitsDialog(qtBaseClass, uiDialog):
         self.invert_elevation_dbox.setValue(float_or_zero(self.storages_tblw.item(row, 2)))
         self.max_depth_dbox.setValue(float_or_zero(self.storages_tblw.item(row, 3)))
         self.initial_depth_dbox.setValue(float_or_zero(self.storages_tblw.item(row, 4)))
-        self.surcharge_depth_dbox.setValue(float_or_zero(self.storages_tblw.item(row, 5)))
-        # self.ponded_area_dbox.setValue(float_or_zero(self.storages_tblw.item(row, 6)))
-
-        val = self.storages_tblw.item(row, 7).text().strip()
-        # Check that type and name are consistent:
-        if (name[0:2] in ["I1", "I2", "I3", "I4", "I5"] and name[1] != val) or (name[0:3] == "IM5" and name[2] != val):
-            self.uc.bar_warn("Inlet name " + name + " and type '" + val + "' do not correspond!")
-        index = int(val) - 1 if val != "" else 0
-        index = 5 if index == 4 else index
-        if index > 5:
-            self.uc.bar_warn("Inlet " + name + " has incorrect drain type!")
-        # index = 5 if index > 5 else 0 if index < 0 else index
-
-        self.inlet_drain_type_cbo.setCurrentIndex(index)
-
-        self.length_dbox.setValue(float_or_zero(self.storages_tblw.item(row, 8)))
-        self.width_dbox.setValue(float_or_zero(self.storages_tblw.item(row, 9)))
-        self.height_dbox.setValue(float_or_zero(self.storages_tblw.item(row, 10)))
-        self.weir_coeff_dbox.setValue(float_or_zero(self.storages_tblw.item(row, 11)))
-        self.feature_sbox.setValue(float_or_zero(self.storages_tblw.item(row, 12)))
-        self.curb_height_dbox.setValue(float_or_zero(self.storages_tblw.item(row, 13)))
-        self.clogging_factor_dbox.setValue(float_or_zero(self.storages_tblw.item(row, 14)))
-        self.time_for_clogging_dbox.setValue(float_or_zero(self.storages_tblw.item(row, 15)))
-
-        rt_name = self.storages_tblw.item(row, 16).text().strip()
-        rt_name = rt_name if rt_name is not None else ""
+        self.external_inflow_chbox.setChecked(True if self.storages_tblw.item(row, 5).text() == "True" else False)
+        self.ponded_area_dbox.setValue(float_or_zero(self.storages_tblw.item(row, 6)))
+        self.evap_factor_dbox.setValue(float_or_zero(self.storages_tblw.item(row, 7)))
+        self.infiltration_grp.setChecked(True if self.storages_tblw.item(row, 9).text() == "True" else False)
+        self.suction_head_dbox.setValue(float_or_zero(self.storages_tblw.item(row, 11)))
+        self.conductivity_dbox.setValue(float_or_zero(self.storages_tblw.item(row, 12)))
+        self.initial_deficit_dbox.setValue(float_or_zero(self.storages_tblw.item(row, 13)))
+        self.functional_grp.setChecked(True if self.storages_tblw.item(row, 14) == "FUNCTIONAL" else False)
+        self.tabular_grp.setChecked(True if self.storages_tblw.item(row, 14) == "TABULAR" else False)
+        self.coefficient_dbox.setValue(float_or_zero(self.storages_tblw.item(row, 15)))
+        self.exponent_dbox.setValue(float_or_zero(self.storages_tblw.item(row, 16)))
+        self.constant_dbox.setValue(float_or_zero(self.storages_tblw.item(row, 17)))
+        
+        curve = self.storages_tblw.item(row, 18).text().strip()
+        index = self.tabular_curves_cbo.findText(curve)
+        if index == -1:
+            index = 0
+        self.tabular_curves_cbo.setCurrentIndex(index)
 
         self.enable_external_inflow()
 
         self.block = False
 
-        self.highlight_inlet_cell(self.grid_element_le.text())
+        self.highlight_storage_cell(self.grid_element_le.text())
 
         QApplication.restoreOverrideCursor()
 
     def fill_individual_controls_with_current_storage_in_table(self):
         # Highlight row in table:
-        row = self.inlet_cbo.currentIndex()
+        row = self.storages_cbo.currentIndex()
 
         rows = self.storages_tblw.rowCount()
         if rows <= 1:
             return
 
-        inlet = self.inlet_cbo.currentText()
+        inlet = self.storages_cbo.currentText()
         found = False
         for i in range(0, rows):
             if self.storages_tblw.item(i, 0).text() == inlet:
@@ -443,7 +442,6 @@ class StorageUnitsDialog(qtBaseClass, uiDialog):
             QApplication.setOverrideCursor(Qt.WaitCursor)
             row = i
             self.storages_tblw.selectRow(row)
-            inlet_type_index = -1
             # Load controls with selected row in table:
             item = QTableWidgetItem()
             item = self.storages_tblw.item(row, 1)
@@ -452,29 +450,30 @@ class StorageUnitsDialog(qtBaseClass, uiDialog):
             self.invert_elevation_dbox.setValue(float_or_zero(self.storages_tblw.item(row, 2)))
             self.max_depth_dbox.setValue(float_or_zero(self.storages_tblw.item(row, 3)))
             self.initial_depth_dbox.setValue(float_or_zero(self.storages_tblw.item(row, 4)))
-            self.surcharge_depth_dbox.setValue(float_or_zero(self.storages_tblw.item(row, 5)))
-            # self.ponded_area_dbox.setValue(float_or_zero(self.storages_tblw.item(row, 6)))
-            item = self.storages_tblw.item(row, 7)  # Inlet type
-            if item is not None:
-                inlet_type_index = int(item.text() if item.text() != "" else 1)
-                inlet_type_index = 5 if inlet_type_index > 5 else 0 if inlet_type_index < 0 else inlet_type_index - 1
-                self.inlet_drain_type_cbo.setCurrentIndex(inlet_type_index)
-            self.length_dbox.setValue(float_or_zero(self.storages_tblw.item(row, 8)))
-            self.width_dbox.setValue(float_or_zero(self.storages_tblw.item(row, 9)))
-            self.height_dbox.setValue(float_or_zero(self.storages_tblw.item(row, 10)))
-            self.weir_coeff_dbox.setValue(float_or_zero(self.storages_tblw.item(row, 11)))
-            self.feature_sbox.setValue(int_or_zero(self.storages_tblw.item(row, 12)))
-            self.curb_height_dbox.setValue(float_or_zero(self.storages_tblw.item(row, 13)))
-            self.clogging_factor_dbox.setValue(float_or_zero(self.storages_tblw.item(row, 14)))
-            self.time_for_clogging_dbox.setValue(float_or_zero(self.storages_tblw.item(row, 15)))
-
-            if inlet_type_index == 3:
-                rt_name = self.storages_tblw.item(row, 16)
-                rt_name = rt_name.text() if rt_name.text() is not None else ""
-
+            self.external_inflow_chbox.setChecked(True if self.storages_tblw.item(row, 5).text() == "True" else False)
+            self.ponded_area_dbox.setValue(float_or_zero(self.storages_tblw.item(row, 6)))
+            self.evap_factor_dbox.setValue(float_or_zero(self.storages_tblw.item(row, 7)))
+            self.treatment_cbo.setCurrentIndex(0)
+            self.infiltration_grp.setChecked(True if self.storages_tblw.item(row, 9).text() == "True" else False)
+            self.method_cbo.setCurrentIndex(0)
+            self.suction_head_dbox.setValue(int_or_zero(self.storages_tblw.item(row, 11)))
+            self.conductivity_dbox.setValue(float_or_zero(self.storages_tblw.item(row, 12)))
+            self.initial_deficit_dbox.setValue(float_or_zero(self.storages_tblw.item(row, 13)))
+            self.functional_grp.setChecked(True if self.storages_tblw.item(row, 14).text() == "True" else False)
+            self.tabular_grp.setChecked(True if self.storages_tblw.item(row, 14).text() == "True" else False)
+            self.coefficient_dbox.setValue(float_or_zero(self.storages_tblw.item(row, 16)))
+            self.exponent_dbox.setValue(float_or_zero(self.storages_tblw.item(row, 17)))
+            self.constant_dbox.setValue(float_or_zero(self.storages_tblw.item(row, 18)))
+            
+            curve = self.storages_tblw.item(row, 18)
+            index = self.tabular_curves_cbo.findText(curve)
+            if index == -1:
+                index = 0
+            self.tabular_curves_cbo.setCurrentIndex(index)            
+            
             self.enable_external_inflow()
 
-            self.highlight_inlet_cell(self.grid_element_le.text())
+            self.highlight_storage_cell(self.grid_element_le.text())
             QApplication.restoreOverrideCursor()
         else:
             self.uc.bar_warn("Inlet/Junction not found!")
@@ -497,7 +496,7 @@ class StorageUnitsDialog(qtBaseClass, uiDialog):
         finally:
             QApplication.restoreOverrideCursor()
 
-    def highlight_inlet_cell(self, cell):
+    def highlight_storage_cell(self, cell):
         QApplication.setOverrideCursor(Qt.WaitCursor)
         try:
             if self.grid_lyr is not None:
@@ -686,12 +685,12 @@ class StorageUnitsDialog(qtBaseClass, uiDialog):
             )
 
     def show_external_inflow_dlg(self):
-        dlg_external_inflow = ExternalInflowsDialog(self.iface, self.inlet_cbo.currentText())
-        dlg_external_inflow.setWindowTitle("Inlet/Junction " + self.inlet_cbo.currentText())
+        dlg_external_inflow = ExternalInflowsDialog(self.iface, self.storages_cbo.currentText())
+        dlg_external_inflow.setWindowTitle("Inlet/Junction " + self.storages_cbo.currentText())
         save = dlg_external_inflow.exec_()
         if save:
             inflow_sql = "SELECT baseline, pattern_name, time_series_name FROM swmm_inflows WHERE node_name = ?;"
-            inflow = self.gutils.execute(inflow_sql, (self.inlet_cbo.currentText(),)).fetchone()
+            inflow = self.gutils.execute(inflow_sql, (self.storages_cbo.currentText(),)).fetchone()
             if inflow:
                 baseline = inflow[0]
                 pattern_name = inflow[1]
@@ -701,7 +700,7 @@ class StorageUnitsDialog(qtBaseClass, uiDialog):
                 else:
                     self.external_inflow_chbox.setChecked(True)
 
-            self.uc.bar_info("Storm Drain external inflow saved for inlet " + self.inlet_cbo.currentText())
+            self.uc.bar_info("Storm Drain external inflow saved for storage unit " + self.storages_cbo.currentText())
 
 
 uiDialog, qtBaseClass = load_ui("storm_drain_external_inflows")

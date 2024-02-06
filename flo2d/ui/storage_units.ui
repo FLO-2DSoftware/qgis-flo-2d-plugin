@@ -29,6 +29,119 @@
    <bool>true</bool>
   </property>
   <layout class="QGridLayout" name="gridLayout_7">
+   <item row="2" column="0">
+    <widget class="QTableWidget" name="storages_tblw">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <property name="editTriggers">
+      <set>QAbstractItemView::AnyKeyPressed|QAbstractItemView::DoubleClicked|QAbstractItemView::EditKeyPressed</set>
+     </property>
+     <property name="dragEnabled">
+      <bool>false</bool>
+     </property>
+     <property name="dragDropMode">
+      <enum>QAbstractItemView::NoDragDrop</enum>
+     </property>
+     <property name="alternatingRowColors">
+      <bool>false</bool>
+     </property>
+     <property name="selectionMode">
+      <enum>QAbstractItemView::SingleSelection</enum>
+     </property>
+     <property name="selectionBehavior">
+      <enum>QAbstractItemView::SelectRows</enum>
+     </property>
+     <property name="sortingEnabled">
+      <bool>false</bool>
+     </property>
+     <property name="rowCount">
+      <number>5</number>
+     </property>
+     <property name="columnCount">
+      <number>19</number>
+     </property>
+     <attribute name="verticalHeaderVisible">
+      <bool>true</bool>
+     </attribute>
+     <row/>
+     <row/>
+     <row/>
+     <row/>
+     <row/>
+     <column/>
+     <column/>
+     <column/>
+     <column/>
+     <column/>
+     <column/>
+     <column/>
+     <column/>
+     <column/>
+     <column/>
+     <column/>
+     <column/>
+     <column/>
+     <column/>
+     <column/>
+     <column/>
+     <column/>
+     <column/>
+     <column/>
+     <item row="0" column="12">
+      <property name="font">
+       <font>
+        <italic>true</italic>
+       </font>
+      </property>
+     </item>
+     <item row="1" column="13">
+      <property name="font">
+       <font>
+        <italic>true</italic>
+       </font>
+      </property>
+     </item>
+     <item row="2" column="9">
+      <property name="font">
+       <font>
+        <italic>true</italic>
+       </font>
+      </property>
+     </item>
+     <item row="2" column="10">
+      <property name="font">
+       <font>
+        <italic>true</italic>
+       </font>
+      </property>
+     </item>
+     <item row="2" column="11">
+      <property name="font">
+       <font>
+        <italic>true</italic>
+       </font>
+      </property>
+     </item>
+     <item row="3" column="7">
+      <property name="font">
+       <font>
+        <italic>true</italic>
+       </font>
+      </property>
+     </item>
+     <item row="3" column="8">
+      <property name="font">
+       <font>
+        <italic>true</italic>
+       </font>
+      </property>
+     </item>
+    </widget>
+   </item>
    <item row="0" column="0">
     <widget class="QFrame" name="frame_2">
      <property name="sizePolicy">
@@ -290,6 +403,56 @@
      </layout>
     </widget>
    </item>
+   <item row="3" column="0">
+    <widget class="QFrame" name="frame_3">
+     <property name="maximumSize">
+      <size>
+       <width>16777215</width>
+       <height>50</height>
+      </size>
+     </property>
+     <property name="frameShape">
+      <enum>QFrame::StyledPanel</enum>
+     </property>
+     <property name="frameShadow">
+      <enum>QFrame::Raised</enum>
+     </property>
+     <layout class="QHBoxLayout" name="horizontalLayout_22">
+      <item>
+       <widget class="QPushButton" name="save_this_storage_btn">
+        <property name="enabled">
+         <bool>false</bool>
+        </property>
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="text">
+         <string>Save this Storage Unit</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QDialogButtonBox" name="storages_buttonBox">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+        <property name="standardButtons">
+         <set>QDialogButtonBox::Close|QDialogButtonBox::Save</set>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
    <item row="1" column="0">
     <widget class="QFrame" name="frame">
      <property name="sizePolicy">
@@ -488,7 +651,7 @@
                  </size>
                 </property>
                 <property name="decimals">
-                 <number>3</number>
+                 <number>2</number>
                 </property>
                 <property name="maximum">
                  <double>100000.000000000000000</double>
@@ -1361,167 +1524,6 @@
           </spacer>
          </item>
         </layout>
-       </widget>
-      </item>
-     </layout>
-    </widget>
-   </item>
-   <item row="2" column="0">
-    <widget class="QTableWidget" name="storages_tblw">
-     <property name="sizePolicy">
-      <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
-       <horstretch>0</horstretch>
-       <verstretch>0</verstretch>
-      </sizepolicy>
-     </property>
-     <property name="editTriggers">
-      <set>QAbstractItemView::AnyKeyPressed|QAbstractItemView::DoubleClicked|QAbstractItemView::EditKeyPressed</set>
-     </property>
-     <property name="dragEnabled">
-      <bool>false</bool>
-     </property>
-     <property name="dragDropMode">
-      <enum>QAbstractItemView::NoDragDrop</enum>
-     </property>
-     <property name="alternatingRowColors">
-      <bool>false</bool>
-     </property>
-     <property name="selectionMode">
-      <enum>QAbstractItemView::SingleSelection</enum>
-     </property>
-     <property name="selectionBehavior">
-      <enum>QAbstractItemView::SelectRows</enum>
-     </property>
-     <property name="sortingEnabled">
-      <bool>false</bool>
-     </property>
-     <property name="rowCount">
-      <number>5</number>
-     </property>
-     <property name="columnCount">
-      <number>17</number>
-     </property>
-     <attribute name="verticalHeaderVisible">
-      <bool>true</bool>
-     </attribute>
-     <row/>
-     <row/>
-     <row/>
-     <row/>
-     <row/>
-     <column/>
-     <column/>
-     <column/>
-     <column/>
-     <column/>
-     <column/>
-     <column/>
-     <column/>
-     <column/>
-     <column/>
-     <column/>
-     <column/>
-     <column/>
-     <column/>
-     <column/>
-     <column/>
-     <column/>
-     <item row="0" column="12">
-      <property name="font">
-       <font>
-        <italic>true</italic>
-       </font>
-      </property>
-     </item>
-     <item row="1" column="13">
-      <property name="font">
-       <font>
-        <italic>true</italic>
-       </font>
-      </property>
-     </item>
-     <item row="2" column="9">
-      <property name="font">
-       <font>
-        <italic>true</italic>
-       </font>
-      </property>
-     </item>
-     <item row="2" column="10">
-      <property name="font">
-       <font>
-        <italic>true</italic>
-       </font>
-      </property>
-     </item>
-     <item row="2" column="11">
-      <property name="font">
-       <font>
-        <italic>true</italic>
-       </font>
-      </property>
-     </item>
-     <item row="3" column="7">
-      <property name="font">
-       <font>
-        <italic>true</italic>
-       </font>
-      </property>
-     </item>
-     <item row="3" column="8">
-      <property name="font">
-       <font>
-        <italic>true</italic>
-       </font>
-      </property>
-     </item>
-    </widget>
-   </item>
-   <item row="3" column="0">
-    <widget class="QFrame" name="frame_3">
-     <property name="maximumSize">
-      <size>
-       <width>16777215</width>
-       <height>50</height>
-      </size>
-     </property>
-     <property name="frameShape">
-      <enum>QFrame::StyledPanel</enum>
-     </property>
-     <property name="frameShadow">
-      <enum>QFrame::Raised</enum>
-     </property>
-     <layout class="QHBoxLayout" name="horizontalLayout_22">
-      <item>
-       <widget class="QPushButton" name="save_this_storage_btn">
-        <property name="enabled">
-         <bool>false</bool>
-        </property>
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-          <horstretch>0</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
-        </property>
-        <property name="text">
-         <string>Save this Storage Unit</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QDialogButtonBox" name="storages_buttonBox">
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-          <horstretch>0</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
-        </property>
-        <property name="orientation">
-         <enum>Qt::Horizontal</enum>
-        </property>
-        <property name="standardButtons">
-         <set>QDialogButtonBox::Close|QDialogButtonBox::Save</set>
-        </property>
        </widget>
       </item>
      </layout>
