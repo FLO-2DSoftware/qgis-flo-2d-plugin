@@ -45,6 +45,8 @@ class TableEditorWidget(qtBaseClass, uiDialog):
         self.undo_btn.clicked.connect(self.undo)
         self.redo_btn.clicked.connect(self.redo)
         self.connect_delete(True)
+        self.eventFilter = TableEditorEventFilter()
+        self.tview.installEventFilter(self.eventFilter)
 
     def connect_delete(self, connect=True):
         if connect:
@@ -142,7 +144,6 @@ class TableEditorWidget(qtBaseClass, uiDialog):
         if indices:
             self.after_delete.emit()
 
-
 class CommandItemEdit(QUndoCommand):
     """
     Command for undoing/redoing text edit changes, to be placed in undostack.
@@ -185,15 +186,19 @@ class CommandItemEdit(QUndoCommand):
 
 class TableEditorEventFilter(QObject):
     def eventFilter(self, receiver, event):
-        if event.type() == QEvent.KeyPress and event.matches(QKeySequence.Copy):
-            receiver.copy_selection()
-            return True
-        elif event.type() == QEvent.KeyPress and event.matches(QKeySequence.Paste):
-            receiver.paste()
-            return True
-        else:
-            return super(TableEditorEventFilter, self).eventFilter(receiver, event)
-
+        if event.type() == QEvent.KeyPress:
+            if event.modifiers() & Qt.ControlModifier:
+                if event.key() == Qt.Key_C:
+                    table_editor_widget = receiver.parent()
+                    if isinstance(table_editor_widget, TableEditorWidget):
+                        table_editor_widget.copy_selection()
+                    return True
+                elif event.key() == Qt.Key_V:
+                    table_editor_widget = receiver.parent()
+                    if isinstance(table_editor_widget, TableEditorWidget):
+                        table_editor_widget.paste()
+                    return True
+        return super(TableEditorEventFilter, self).eventFilter(receiver, event)
 
 class StandardItemModel(QStandardItemModel):
     """
