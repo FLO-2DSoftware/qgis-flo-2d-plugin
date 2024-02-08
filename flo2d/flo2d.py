@@ -277,7 +277,7 @@ class Flo2D(object):
                 popup.addAction(act)
             action.setMenu(popup)
 
-        if text in ["FLO-2D Grid Info Tool", "FLO-2D Info Tool"]:
+        if text in ["FLO-2D Grid Info Tool", "FLO-2D Info Tool", "FLO-2D Results"]:
             action.setCheckable(True)
             action.setChecked(False)
 
@@ -293,7 +293,6 @@ class Flo2D(object):
                 "FLO-2D Project": ("/img/mGeoPackage.svg", "<b>FLO-2D Project</b>"),
                 "Run FLO-2D Pro": ("/img/flo2d.svg", "<b>Run FLO-2D Pro</b>"),
                 "FLO-2D Import/Export": ("/img/ie.svg", "<b>FLO-2D Import/Export</b>"),
-                "FLO-2D Info Tool": ("/img/info_tool.svg", "<b>FLO-2D Info Tool</b>", True),
                 "FLO-2D Project Review": ("/img/editmetadata.svg", "<b>FLO-2D Project Review</b>", True),
                 "FLO-2D Parameters": ("/img/show_cont_table.svg", "<b>FLO-2D Parameters</b>")
             }
@@ -487,34 +486,48 @@ class Flo2D(object):
             )
         )
 
-        self.add_action(
-            os.path.join(self.plugin_dir, "img/info_tool.svg"),
-            text=self.tr("FLO-2D Info Tool"),
-            callback=None,
-            parent=self.iface.mainWindow(),
-            menu=(
-                (
-                    os.path.join(self.plugin_dir, "img/info_tool.svg"),
-                    "Info Tool",
-                    lambda: self.activate_general_info_tool(),
-                ),
-                (
-                    os.path.join(self.plugin_dir, "img/import_swmm.svg"),
-                    "Select .RPT file",
-                    lambda: self.select_RPT_File(),
-                ),
-                # (
-                #     os.path.join(self.plugin_dir, "img/grid_info_tool.svg"),
-                #     "Grid Info Tool",
-                #     lambda: self.activate_grid_info_tool(),
-                # ),
-            )
-        )
+        # self.add_action(
+        #     os.path.join(self.plugin_dir, "img/info_tool.svg"),
+        #     text=self.tr("FLO-2D Info Tool"),
+        #     callback=None,
+        #     parent=self.iface.mainWindow(),
+        #     menu=(
+        #         (
+        #             os.path.join(self.plugin_dir, "img/info_tool.svg"),
+        #             "Info Tool",
+        #             lambda: self.activate_general_info_tool(),
+        #         ),
+        #         (
+        #             os.path.join(self.plugin_dir, "img/import_swmm.svg"),
+        #             "Select .RPT file",
+        #             lambda: self.select_RPT_File(),
+        #         ),
+        #         # (
+        #         #     os.path.join(self.plugin_dir, "img/grid_info_tool.svg"),
+        #         #     "Grid Info Tool",
+        #         #     lambda: self.activate_grid_info_tool(),
+        #         # ),
+        #     )
+        # )
 
         self.add_action(
             os.path.join(self.plugin_dir, "img/grid_info_tool.svg"),
             text=self.tr("FLO-2D Grid Info Tool"),
             callback=lambda: self.activate_grid_info_tool(),
+            parent=self.iface.mainWindow(),
+        )
+
+        self.add_action(
+            os.path.join(self.plugin_dir, "img/info_tool.svg"),
+            text=self.tr("FLO-2D Info Tool"),
+            callback=lambda: self.activate_general_info_tool(),
+            parent=self.iface.mainWindow(),
+        )
+
+        self.add_action(
+            os.path.join(self.plugin_dir, "img/results.svg"),
+            text=self.tr("FLO-2D Results"),
+            callback=lambda: self.activate_results_info_tool(),
             parent=self.iface.mainWindow(),
         )
 
@@ -529,11 +542,11 @@ class Flo2D(object):
                     "HAZUS",
                     lambda: self.show_hazus_dialog(),
                 ),
-                (
-                    os.path.join(self.plugin_dir, "img/profile_tool.svg"),
-                    "Channel Profile",
-                    lambda: self.channel_profile(),
-                ),
+                # (
+                #     os.path.join(self.plugin_dir, "img/profile_tool.svg"),
+                #     "Channel Profile",
+                #     lambda: self.channel_profile(),
+                # ),
                 (
                     os.path.join(self.plugin_dir, "img/issue.svg"),
                     "Warnings and Errors",
@@ -2952,22 +2965,22 @@ class Flo2D(object):
         """
         Function to activate the Info Tool
         """
-        for tb in self.toolButtons:
-            if tb.toolTip() == "<b>FLO-2D Info Tool</b>":
-                info_tb = tb
+        for ac in self.toolActions:
+            if ac.toolTip() == "<b>FLO-2D Info Tool</b>":
+                info_ac = ac
 
         grid = self.lyrs.data["grid"]["qlyr"]
         if grid is not None:
             tool = self.canvas.mapTool()
             if tool == self.info_tool:
-                info_tb.setChecked(False)
+                info_ac.setChecked(False)
                 self.uncheck_all_info_tools()
             else:
                 if tool is not None:
                     self.uncheck_all_info_tools()
-                    info_tb.setChecked(False)
+                    info_ac.setChecked(False)
                 self.canvas.setMapTool(self.info_tool)
-                info_tb.setChecked(True)
+                info_ac.setChecked(True)
 
     @connection_required
     def activate_grid_info_tool(self):
@@ -2998,6 +3011,32 @@ class Flo2D(object):
                 info_ac.setChecked(True)
         else:
             self.uc.bar_warn("There is no grid layer to identify.")
+
+    @connection_required
+    def activate_results_info_tool(self):
+        """
+        Function to activate the Results Tool
+        """
+        for ac in self.toolActions:
+            if ac.toolTip() == "<b>FLO-2D Results</b>":
+                info_ac = ac
+
+        tool = self.canvas.mapTool()
+        if tool == self.channel_profile_tool:
+            info_ac.setChecked(False)
+            self.uncheck_all_info_tools()
+        else:
+            if tool is not None:
+                self.uncheck_all_info_tools()
+                info_ac.setChecked(False)
+            self.canvas.setMapTool(self.channel_profile_tool)
+            # 'channel_profile_tool' is an instance of ChannelProfile class,
+            # created on loading the plugin, and to be used to plot channel
+            # profiles using a subtool in the FLO-2D tool bar.
+            # The plots will be based on data from the 'chan', 'cham_elems'
+            # schematic layers.
+            self.channel_profile_tool.update_lyrs_list()
+            info_ac.setChecked(True)
 
     @connection_required
     def show_user_profile(self, fid=None):
