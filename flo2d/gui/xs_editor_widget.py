@@ -1486,6 +1486,16 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
             with open(hychan_file, "r") as myfile:
                 try:
                     while True:
+                        velocity_list = []
+                        froude_list = []
+                        flow_area_list = []
+                        w_perimeter_list = []
+                        hyd_radius_list = []
+                        top_width_list = []
+                        width_depth_list = []
+                        energy_slope_list = []
+                        shear_stress_list = []
+                        surf_area_list = []
                         line = next(myfile)
                         if "CHANNEL HYDROGRAPH FOR ELEMENT NO:" in line:
                             grid = line.split("CHANNEL HYDROGRAPH FOR ELEMENT NO:")[1].rstrip()
@@ -1494,8 +1504,61 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
                             peak_discharge = line.split("MAXIMUM DISCHARGE (CFS) =")[1].split()[0]
                             line = next(myfile)
                             max_water_elev = line.split("MAXIMUM STAGE = ")[1].split()[0]
-                            peaks_dict[grid] = [max_water_elev, peak_discharge]
-                            peaks_list.append((grid, max_water_elev, peak_discharge))
+                            for _ in range(4):
+                                line = next(myfile)
+                            while True:
+                                line = next(myfile)
+                                if not line.strip():  # If the line is empty, exit the loop
+                                    break
+                                line = line.split()
+                                velocity_list.append(float(line[3]))
+                                froude_list.append(float(line[5]))
+                                flow_area_list.append(float(line[6]))
+                                w_perimeter_list.append(float(line[7]))
+                                hyd_radius_list.append(float(line[8]))
+                                top_width_list.append(float(line[9]))
+                                width_depth_list.append(float(line[10]))
+                                energy_slope_list.append(float(line[11]))
+                                shear_stress_list.append(float(line[12]))
+                                surf_area_list.append(float(line[13]))
+                            max_velocity = max(velocity_list)
+                            max_froude = max(froude_list)
+                            max_flow_area = max(flow_area_list)
+                            max_w_perimeter = max(w_perimeter_list)
+                            max_hyd_radius = max(hyd_radius_list)
+                            max_top_width = max(top_width_list)
+                            max_width_depth = max(width_depth_list)
+                            max_energy_slope = max(energy_slope_list)
+                            max_shear_stress = max(shear_stress_list)
+                            max_surf_area = max(surf_area_list)
+
+                            peaks_dict[grid] = [max_water_elev,
+                                                peak_discharge,
+                                                max_velocity,
+                                                max_froude,
+                                                max_flow_area,
+                                                max_w_perimeter,
+                                                max_hyd_radius,
+                                                max_top_width,
+                                                max_width_depth,
+                                                max_energy_slope,
+                                                max_shear_stress,
+                                                max_surf_area,
+                                                ]
+                            peaks_list.append((grid,
+                                               max_water_elev,
+                                               peak_discharge,
+                                               max_velocity,
+                                               max_froude,
+                                               max_flow_area,
+                                               max_w_perimeter,
+                                               max_hyd_radius,
+                                               max_top_width,
+                                               max_width_depth,
+                                               max_energy_slope,
+                                               max_shear_stress,
+                                               max_surf_area,
+                                               ))
 
                         else:
                             pass
@@ -1503,9 +1566,33 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
                     pass
 
             # Assign max_water_elev and peak_discharge to features of chan_elems table (schematized layer).
-            qry = "UPDATE chan_elems SET max_water_elev = ?, peak_discharge = ? WHERE fid = ?;"
             for peak in peaks_list:
-                self.gutils.execute(qry, (peak[1], peak[2], peak[0]))
+                qry = """UPDATE chan_elems SET max_water_elev = ?,
+                                           peak_discharge = ?,
+                                           max_velocity = ?,
+                                           max_froude = ?,
+                                           max_flow_area = ?,
+                                           max_w_perimeter = ?,
+                                           max_hyd_radius = ?,
+                                           max_top_width = ?,
+                                           max_width_depth = ?,
+                                           max_energy_slope = ?,
+                                           max_shear_stress = ?,
+                                           max_surf_area = ?
+                                           WHERE fid = ?;"""
+                self.gutils.execute(qry, (peak[1],
+                                          peak[2],
+                                          peak[3],
+                                          peak[4],
+                                          peak[5],
+                                          peak[6],
+                                          peak[7],
+                                          peak[8],
+                                          peak[9],
+                                          peak[10],
+                                          peak[11],
+                                          peak[12],
+                                          peak[0]))
 
             self.uc.bar_info(
                 "HYCHAN.OUT file imported. Channel Cross Sections updated with max. surface water elevations and peak discharge data."

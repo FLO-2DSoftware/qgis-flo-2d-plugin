@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-
+import os
 # FLO-2D Preprocessor tools for QGIS
 # Copyright © 2021 Lutra Consulting for FLO-2D
 
@@ -10,6 +10,8 @@
 
 from operator import itemgetter
 
+from PyQt5.QtCore import QSettings
+from qgis._core import QgsMessageLog
 from qgis.core import QgsFeatureRequest, QgsProject, QgsRaster
 from qgis.PyQt.QtCore import Qt
 from qgis.PyQt.QtGui import QColor, QStandardItem, QStandardItemModel
@@ -18,6 +20,7 @@ from ..flo2dobjects import ChannelSegment
 from ..user_communication import UserCommunication
 from ..utils import Msge, is_number
 from .ui_utils import load_ui
+from .xs_editor_widget import XsecEditorWidget
 
 uiDialog, qtBaseClass = load_ui("profile_tool")
 
@@ -121,23 +124,37 @@ class ProfileTool(qtBaseClass, uiDialog):
             return
         self.plot.clear()
         sta, lb, rb, bed, water, peak = [], [], [], [], [], []
+        velocity = []
+        froude = []
+        flow_area = []
+        w_perim = []
+        hyd_radius = []
+        top_w = []
+        width_depth = []
+        energy_slope = []
+        shear_stress = []
+        surf_area = []
 
         for st, data in self.chan_seg.profiles.items():
-            if data["water"] is not None:
-                sta.append(data["station"])
-                lb.append(data["lbank_elev"])
-                rb.append(data["rbank_elev"])
-                bed.append(data["bed_elev"])
-                if data["water"] == 0:
-                    water.append(data["bed_elev"])
-                else:
-                    water.append(data["water"])
-                peak.append(data["peak"] + data["bed_elev"])
+            sta.append(data["station"])
+            lb.append(data["lbank_elev"])
+            rb.append(data["rbank_elev"])
+            bed.append(data["bed_elev"])
+            if data["water"] == 0:
+                water.append(data["bed_elev"])
             else:
-                sta.append(data["station"])
-                lb.append(data["lbank_elev"])
-                rb.append(data["rbank_elev"])
-                bed.append(data["bed_elev"])
+                water.append(data["water"])
+            peak.append(data["peak"] + data["bed_elev"])
+            velocity.append(data["velocity"])
+            froude.append(data["froude"])
+            flow_area.append(data["flow_area"])
+            w_perim.append(data["w_perim"])
+            hyd_radius.append(data["hyd_radius"])
+            top_w.append(data["top_w"])
+            width_depth.append(data["width_depth"])
+            energy_slope.append(data["energy_slope"])
+            shear_stress.append(data["shear_stress"])
+            surf_area.append(data["surf_area"])
 
         if self.plot.plot.legend is not None:
             plot_scene = self.plot.plot.legend.scene()
@@ -145,14 +162,33 @@ class ProfileTool(qtBaseClass, uiDialog):
                 plot_scene.removeItem(self.plot.plot.legend)
 
         if data["water"] is not None:
-            self.plot.plot.addLegend()
+            self.plot.plot.legend = None
+            self.plot.plot.addLegend(offset=(0, 30))
+            self.plot.plot.setTitle(title="Channel Profile - {}".format(self.chan_seg.name))
+            self.plot.plot.setLabel("bottom", text="Channel length")
+            self.plot.plot.setLabel("left", text="")
             self.plot.add_item("Bed elevation", [sta, bed], col=QColor(Qt.black), sty=Qt.SolidLine)
             self.plot.add_item("Left bank", [sta, lb], col=QColor(Qt.darkGreen), sty=Qt.SolidLine)
             self.plot.add_item("Right bank", [sta, rb], col=QColor(Qt.darkYellow), sty=Qt.SolidLine)
             self.plot.add_item("Max. Water", [sta, water], col=QColor(Qt.blue), sty=Qt.SolidLine)
-            self.plot.plot.setTitle(title="Channel Profile - {}".format(self.chan_seg.name))
-            self.plot.plot.setLabel("bottom", text="Channel length")
-            self.plot.plot.setLabel("left", text="Elevation")
+            self.plot.add_item("Velocity (fps)", [sta, velocity], col=QColor(Qt.green), sty=Qt.SolidLine)
+            self.plot.add_item("Froude", [sta, froude], col=QColor(Qt.gray), sty=Qt.SolidLine)
+            self.plot.add_item("Flow area (sq. ft)", [sta, flow_area], col=QColor(Qt.red), sty=Qt.SolidLine)
+            self.plot.add_item("Wetted perimeter (ft)", [sta, w_perim], col=QColor(Qt.yellow), sty=Qt.SolidLine)
+            self.plot.add_item("Hydraulic radius (ft)", [sta, hyd_radius], col=QColor(Qt.darkBlue), sty=Qt.SolidLine)
+            self.plot.add_item("Top width (ft)", [sta, top_w], col=QColor(Qt.darkRed), sty=Qt.SolidLine)
+            self.plot.add_item("Width/Depth", [sta, width_depth], col=QColor(Qt.darkCyan), sty=Qt.SolidLine)
+            self.plot.add_item("Energy slope", [sta, energy_slope], col=QColor(Qt.magenta), sty=Qt.SolidLine)
+            self.plot.add_item("Shear stress (lb/sq. ft)", [sta, shear_stress], col=QColor(Qt.darkYellow))
+            self.plot.add_item("Surface Area (sq. ft)", [sta, surf_area], col=QColor(Qt.darkMagenta))
+
+            for i in range(0, 14):
+                if i in [0, 1, 2]:
+                    self.plot.plot.legend.items[i][1].show()
+                    self.plot.plot.items[i].show()
+                else:
+                    self.plot.plot.legend.items[i][1].hide()
+                    self.plot.plot.items[i].hide()
         else:
             self.plot.plot.addLegend()
             self.plot.add_item("Bed elevation", [sta, bed], col=QColor(Qt.black), sty=Qt.SolidLine)
@@ -161,37 +197,6 @@ class ProfileTool(qtBaseClass, uiDialog):
             self.plot.plot.setTitle(title="Channel Profile - {}".format(self.chan_seg.name))
             self.plot.plot.setLabel("bottom", text="Channel length")
             self.plot.plot.setLabel("left", text="Elevation")
-
-    # def show_channel(self, table, fid):
-    #     self.chan_seg = ChannelSegment(fid, self.iface.f2d["con"], self.iface)
-    #     self.chan_seg.get_row()  # Assigns to self.chan_seg all field values of the selected schematized channel:
-    #     # 'name', 'depinitial',  'froudc',  'roughadj', 'isedn', 'notes', 'user_lbank_fid', 'rank'
-    #     if self.chan_seg.get_profiles():
-    #         self.plot_channel_data()
-    #
-    # def plot_channel_data(self):
-    #     if not self.chan_seg:
-    #         return
-    #     self.plot.clear()
-    #     sta, lb, rb, bed, water, peak = [], [], [], [], [], []
-    #     for st, data in self.chan_seg.profiles.items():
-    #         sta.append(data["station"])
-    #         lb.append(data["lbank_elev"])
-    #         rb.append(data["rbank_elev"])
-    #         bed.append(data["bed_elev"])
-    #         water.append(data["water"])
-    #         peak.append(data["peak"] + data["bed_elev"])
-    #
-    #     if self.plot.plot.legend is not None:
-    #         self.plot.plot.legend.scene().removeItem(self.plot.plot.legend)
-    #
-    #     self.plot.plot.addLegend()
-    #     self.plot.add_item("Bed elevation", [sta, bed], col=QColor(Qt.black), sty=Qt.SolidLine)
-    #     self.plot.add_item("Left bank", [sta, lb], col=QColor(Qt.blue), sty=Qt.SolidLine)
-    #     self.plot.add_item("Right bank", [sta, rb], col=QColor(Qt.red), sty=Qt.SolidLine)
-    #     self.plot.add_item("Max. Water", [sta, water], col=QColor(Qt.yellow), sty=Qt.SolidLine)
-    #     self.plot.plot.setTitle(title="Channel Profile - {}".format(self.chan_seg.name))
-    #     self.plot.plot.setLabel("bottom", text="Channel length")
 
     def check_mode(self):
         """

@@ -489,7 +489,17 @@ CREATE TABLE "chan_elems" (
     "user_xs_fid" INTEGER,
     "interpolated" INTEGER,
     "max_water_elev" REAL DEFAULT 0, -- output from HYCHAN.OUT
-    "peak_discharge" REAL DEFAULT 0 -- output from HYCHAN.OUT
+    "peak_discharge" REAL DEFAULT 0, -- output from HYCHAN.OUT
+    "max_velocity" REAL DEFAULT 0, -- output from HYCHAN.OUT
+    "max_froude" REAL DEFAULT 0, -- output from HYCHAN.OUT
+    "max_flow_area" REAL DEFAULT 0, -- output from HYCHAN.OUT
+    "max_w_perimeter" REAL DEFAULT 0, -- output from HYCHAN.OUT
+    "max_hyd_radius" REAL DEFAULT 0, -- output from HYCHAN.OUT
+    "max_top_width" REAL DEFAULT 0, -- output from HYCHAN.OUT
+    "max_width_depth" REAL DEFAULT 0, -- output from HYCHAN.OUT
+    "max_energy_slope" REAL DEFAULT 0, -- output from HYCHAN.OUT
+    "max_shear_stress" REAL DEFAULT 0, -- output from HYCHAN.OUT
+    "max_surf_area" REAL DEFAULT 0 -- output from HYCHAN.OUT
 );
 INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('chan_elems', 'features', 4326);
 SELECT gpkgAddGeometryColumn('chan_elems', 'geom', 'LINESTRING', 0, 0, 0);

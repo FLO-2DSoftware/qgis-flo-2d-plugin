@@ -12,6 +12,7 @@ from qgis.PyQt.QtCore import QSize, Qt, QPoint
 from qgis.PyQt.QtGui import QColor
 from qgis.PyQt.QtWidgets import *
 from PyQt5.QtWidgets import QMenu, QApplication, QCheckBox, QWidgetAction
+from qgis._core import QgsMessageLog
 
 from ..deps import safe_pyqtgraph as pg
 from ..utils import Msge
@@ -27,17 +28,17 @@ class PlotWidget(QWidget):
     def __init__(self):
         QWidget.__init__(self)
         self.items = {}
-        self.org_bed_plot = None
-        self.new_bed_plot = None
-        self.org_plot = None
-        self.new_plot = None
+        # self.org_bed_plot = None
+        # self.new_bed_plot = None
+        # self.org_plot = None
+        # self.new_plot = None
         self.layout = QVBoxLayout()
         self.pw = pg.PlotWidget()
         self.plot = self.pw.getPlotItem()
         self.plot.showGrid(x=True, y=True)
         self.layout.addWidget(self.pw)
         self.setLayout(self.layout)
-        self.plot.scene().sigMouseClicked.connect(self.mouse_clicked)     
+        self.plot.scene().sigMouseClicked.connect(self.mouse_clicked)
 
     def setSizeHint(self, width, height):
         self._sizehint = QSize(width, height)
@@ -80,42 +81,57 @@ class PlotWidget(QWidget):
     #     self.updateSize()
 
     def mouse_clicked(self, mouseClickEvent):
-            # mouseClickEvent is a pyqtgraph.GraphicsScene.mouseEvents.MouseClickEvent
-            print('clicked plot 0x{:x}, event: {}'.format(id(self),mouseClickEvent ))
-            actions = []
-            if mouseClickEvent.button() == 1:
-                title = self.plot.titleLabel.text
-                if "Discharge" in title:
-                    menu = QMenu()
-              
-                    n_items = len(self.plot.legend.items)
-                    if n_items > 0:
-                        self.chbox = []
-                        for i in range(0,n_items):
-                            a_chbox = QCheckBox(" " + self.plot.legend.items[i][1].text)
-                            checkableAction = QWidgetAction(menu)
-                            checkableAction.setDefaultWidget(a_chbox)
-                            action = menu.addAction(checkableAction) 
-                            a_chbox.setChecked(True)
-                            a_chbox.stateChanged.connect(self.checkboxChanged)                            
-                            self.chbox.append([a_chbox,action])
-                            
-                            self.plot.legend.items[i][1].show()
-                            self.plot.items[i].show()                            
-                            
-                        selected_action = menu.exec_(QPoint(mouseClickEvent.screenPos().x(), mouseClickEvent.screenPos().y()))
+
+        not_checked = [
+            "Max. Water",
+            "Velocity (fps)",
+            "Froude",
+            "Flow area (sq. ft)",
+            "Wetted perimeter (ft)",
+            "Hydraulic radius (ft)",
+            "Top width (ft)",
+            "Width/Depth",
+            "Energy slope",
+            "Shear stress (lb/sq. ft)",
+            "Surface Area (sq. ft)"
+        ]
+        none_checked = True
+        if mouseClickEvent.button() == 1:
+            title = self.plot.titleLabel.text
+            if "Discharge" in title or "Channel" in title:
+                menu = QMenu()
+                n_items = len(self.plot.legend.items)
+                if n_items > 0:
+                    self.chbox = []
+                    for i in range(0, n_items):
+                        name = self.plot.legend.items[i][1].text
+                        a_chbox = QCheckBox(" " + name)
+                        checkableAction = QWidgetAction(menu)
+                        checkableAction.setDefaultWidget(a_chbox)
+                        action = menu.addAction(checkableAction)
+                        a_chbox.stateChanged.connect(self.checkboxChanged)
+                        self.chbox.append([a_chbox, action])
+                        a_chbox.setChecked(False)
+                        self.plot.legend.items[i][1].hide()
+                        self.plot.items[i].hide()
+
+                    selected_action = menu.exec_(QPoint(int(mouseClickEvent.screenPos().x()), int(mouseClickEvent.screenPos().y())))
+
+        # self.plot.autoRange()
                     
     def checkboxChanged(self, state):
         n_chboxes = len(self.chbox)
-        if  n_chboxes > 0:
+        if n_chboxes > 0:
             # Redraw plot with checked/unchecked variables:
             for i in range(0, n_chboxes):
+                QgsMessageLog.logMessage(str(self.plot.legend.items[i]))
                 if not self.chbox[i][0].isChecked():
                     self.plot.legend.items[i][1].hide()
                     self.plot.items[i].hide()
                 else:
                     self.plot.legend.items[i][1].show()
                     self.plot.items[i].show()
+            self.plot.autoRange()
         else:
             print("No checkboxes")         
 
@@ -127,7 +143,6 @@ class PlotWidget(QWidget):
  
         # print the message
         print("Mouse Double Click Event")
-
 
     def update_item(self, name, data):
         x, y = data
