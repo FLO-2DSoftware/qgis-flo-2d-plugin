@@ -3851,8 +3851,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         # else:
         #     self.uc.bar_warn("Storm drain components not saved!")
 
-
-    def create_SD_discharge_table_and_plots(self, intersection=None ):
+    def create_SD_discharge_table_and_plots(self, intersection=None):
         """
         Export Storm Drain Discharge plots.
         """
@@ -3863,213 +3862,223 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
 
         s = QSettings()
         RPT_file = s.value("FLO-2D/lastRPTFile", "")
-        if not os.path.isfile(RPT_file): 
-            self.uc.bar_info("Please select a .RPT file to read storm drain discharge data.")
-            RPT_file = ""
- 
-        if intersection is False or not RPT_file or intersection == "Just assign FLO-2D settings": 
-            last_RPT_dir = s.value("FLO-2D/lastRPTDir", "")
-            RPT_file, _ = QFileDialog.getOpenFileName(
-                None,
-                "Select .RPT file",
-                directory=last_RPT_dir,
-                filter="RPT file (*.rpt; *.RPT)",
-            )
-        else:
-           last_RPT_dir = os.path.dirname(RPT_file) 
-        if not RPT_file:
-            return False
-        else:   
-            if os.path.getsize(RPT_file) == 0:
-                QApplication.restoreOverrideCursor()
-                self.uc.bar_warn("File  '" + os.path.basename(RPT_file) + "'  is empty! Select a valid .RPT file.") 
-                self.uc.show_warn("WARNING 111123.1744: File  '" + os.path.basename(RPT_file) + "'  is empty!\n" +
-                                    "Select a valid .RPT file.") 
-                RPT_file, _ = QFileDialog.getOpenFileName(
-                    None,
-                    "Select .RPT file",
-                    directory=last_RPT_dir,
-                    filter="RPT file (*.rpt; *.RPT)",
-                )
-                self.uc.clear_bar_messages() 
-                if not  RPT_file:              
-                    return False
-                else:
-                    s.setValue("FLO-2D/lastRPTFile", RPT_file)
-                    last_RPT_dir = os.path.dirname(RPT_file) 
-                    s.setValue("FLO-2D/lastRPTDir", last_RPT_dir) 
-                                        
-            if intersection == "Just assign FLO-2D settings":
-                s.setValue("FLO-2D/lastRPTFile", RPT_file)
-                last_RPT_dir = os.path.dirname(RPT_file)                 
-                s.setValue("FLO-2D/lastRPTDir", last_RPT_dir) 
-                return True         
+        GDS_dir = s.value("FLO-2D/lastGdsDir", "")
+        # Check if there is an RPT file on the FLO-2D QSettings
+        if not os.path.isfile(RPT_file):
+            RPT_file = GDS_dir + r"\swmm.RPT"
+            # Check if there is an RPT file on the export folder
+            if not os.path.isfile(RPT_file):
+                self.uc.show_warn("No swmm.RPT file found. Please ensure the simulation has completed and verify the project export folder.")
+                return
+        # if intersection is False or not RPT_file or intersection == "Just assign FLO-2D settings":
+        #     last_RPT_dir = s.value("FLO-2D/lastRPTDir", "")
+        #     RPT_file, _ = QFileDialog.getOpenFileName(
+        #         None,
+        #         "Select .RPT file",
+        #         directory=last_RPT_dir,
+        #         filter="RPT file (*.rpt; *.RPT)",
+        #     )
+        # else:
+        #    last_RPT_dir = os.path.dirname(RPT_file)
+        # if not RPT_file:
+        #     return False
+        # else:
 
-            if intersection:
-                with open(RPT_file) as f:
-                   if not intersection in f.read():
-                        self.uc.bar_error("Node " + intersection + " not found in file " + RPT_file)
-                        QApplication.restoreOverrideCursor()
-                        self.uc.show_warn("WARNING 111123.1742: Node " + intersection + " not found in file\n\n" + RPT_file +
-                                            "\n\nSelect a valid .RPT file.") 
-                        RPT_file, _ = QFileDialog.getOpenFileName(
-                            None,
-                            "Select .RPT file",
-                            directory=last_RPT_dir,
-                            filter="RPT file (*.rpt; *.RPT)",
-                        ) 
-                        self.uc.clear_bar_messages()
-                        if not RPT_file:              
-                            return False 
-                        else:
-                            s.setValue("FLO-2D/lastRPTFile", RPT_file)
-                            last_RPT_dir = os.path.dirname(RPT_file) 
-                            s.setValue("FLO-2D/lastRPTDir", last_RPT_dir)                           
-                     
-            data = OrderedDict()            
-            try: # Read RPT file.
-                QApplication.setOverrideCursor(Qt.WaitCursor)
+        # Check if the swmm.RPT has data on it
+        if os.path.getsize(RPT_file) == 0:
+            QApplication.restoreOverrideCursor()
+            self.uc.bar_warn("File  '" + os.path.basename(RPT_file) + "'  is empty!")
+            self.uc.show_warn("WARNING 111123.1744: File  '" + os.path.basename(RPT_file) + "'  is empty!\n" +
+                                "Select a valid .RPT file.")
+            return
+            # RPT_file, _ = QFileDialog.getOpenFileName(
+            #     None,
+            #     "Select .RPT file",
+            #     directory=last_RPT_dir,
+            #     filter="RPT file (*.rpt; *.RPT)",
+            # )
+            # self.uc.clear_bar_messages()
+            # if not  RPT_file:
+            #     return False
+            # else:
+            #     s.setValue("FLO-2D/lastRPTFile", RPT_file)
+            #     last_RPT_dir = os.path.dirname(RPT_file)
+            #     s.setValue("FLO-2D/lastRPTDir", last_RPT_dir)
 
-                pd = ParseDAT()
-                par = pd.single_parser(RPT_file)
-                
-                previous = []
-                units = "CMS"
-                for row in par:
-                    if "Flow" in row and "Units" in row:
-                        units = "CMS" if "CMS" in row else "CFS" if "CFS" in row else "CMS"
-                    if previous:
-                        cell = previous[2]
-                        for _ in range(3):
-                            next(par)                     
-                    if "<<<" in row and "Node" in row:
-                        cell = row[2]
-                        for _ in range(4):
-                            next(par)  
-                    if previous or ("<<<" in row and "Node" in row): 
-                        previous = []                                            
-                        data[cell] = [] 
-                        for row2 in par:
-                            if "<<<" in row2 and "Node" in row2:
-                                previous = row2
+        # if intersection == "Just assign FLO-2D settings":
+        #     s.setValue("FLO-2D/lastRPTFile", RPT_file)
+        #     last_RPT_dir = os.path.dirname(RPT_file)
+        #     s.setValue("FLO-2D/lastRPTDir", last_RPT_dir)
+        #     return True
+
+        if intersection:
+            with open(RPT_file) as f:
+               if not intersection in f.read():
+                    self.uc.bar_error("Node " + intersection + " not found in file " + RPT_file)
+                    # QApplication.restoreOverrideCursor()
+                    self.uc.show_warn("WARNING 111123.1742: Node " + intersection + " not found in file\n\n" + RPT_file +
+                                        "\n\nSelect a valid .RPT file.")
+                    return
+                    # RPT_file, _ = QFileDialog.getOpenFileName(
+                    #     None,
+                    #     "Select .RPT file",
+                    #     directory=last_RPT_dir,
+                    #     filter="RPT file (*.rpt; *.RPT)",
+                    # )
+                    # self.uc.clear_bar_messages()
+                    # if not RPT_file:
+                    #     return False
+                    # else:
+                    #     s.setValue("FLO-2D/lastRPTFile", RPT_file)
+                    #     last_RPT_dir = os.path.dirname(RPT_file)
+                    #     s.setValue("FLO-2D/lastRPTDir", last_RPT_dir)
+
+        data = OrderedDict()
+        # Read RPT file.
+        try:
+            QApplication.setOverrideCursor(Qt.WaitCursor)
+
+            pd = ParseDAT()
+            par = pd.single_parser(RPT_file)
+
+            previous = []
+            units = "CMS"
+            for row in par:
+                if "Flow" in row and "Units" in row:
+                    units = "CMS" if "CMS" in row else "CFS" if "CFS" in row else "CMS"
+                if previous:
+                    cell = previous[2]
+                    for _ in range(3):
+                        next(par)
+                if "<<<" in row and "Node" in row:
+                    cell = row[2]
+                    for _ in range(4):
+                        next(par)
+                if previous or ("<<<" in row and "Node" in row):
+                    previous = []
+                    data[cell] = []
+                    for row2 in par:
+                        if "<<<" in row2 and "Node" in row2:
+                            previous = row2
+                            break
+                        if row2:
+                            if len(row2) == 6:
+                                data[cell].append(list(row2))
+                            else:
                                 break
-                            if row2:
-                                if len(row2) == 6:  
-                                    data[cell].append(list(row2))
-                                else:
-                                    break    
-                
-                if data:
-                    if intersection is False:
-                        intersection = next(iter(data.items()))[0] 
-                    if not intersection in data:
-                        QApplication.restoreOverrideCursor()
-                        self.plot.clear()
-                        self.tview.model().setRowCount(0) 
-                        self.uc.bar_error("Node " + intersection + " not found in file  '" + RPT_file + "'") 
-                        
-                        QApplication.restoreOverrideCursor()
-                        self.uc.show_warn("WARNING 111123.1743: Node " + intersection + " not found in file\n\n" + RPT_file +
-                                            "\n\nSelect a valid .RPT file.") 
-                        RPT_file, _ = QFileDialog.getOpenFileName(
-                            None,
-                            "Select .RPT file",
-                            directory=last_RPT_dir,
-                            filter="RPT file (*.rpt; *.RPT)",
-                        ) 
-                        self.uc.clear_bar_messages() 
-                        if not RPT_file:              
-                            return False                                   
-                        else: 
-                            s.setValue("FLO-2D/lastRPTFile", RPT_file)
-                            last_RPT_dir = os.path.dirname(RPT_file) 
-                            s.setValue("FLO-2D/lastRPTDir", last_RPT_dir) 
-                            return True
-                               
-                    node_series = data[intersection]
-                    I = 1
-                    day = 0
-                    previousHour = -1
-                    RPTtimeSeries = []
-                    inflow_discharge_to_SD = []
-                    outfall_discharge_to_FLO_2D = []
-                    SWMMQINtimeSeries = []
-                    SWMMOUTFINtimeSeries = []
-                    
-                    for nextTime in node_series:
-                        time = nextTime[1]
-                        inflow = float(nextTime[2])
-                        flooding = float(nextTime[3])
-                        currentHour, minutes, seconds = time.split(":")
-                        currentHour = int(currentHour)
-                        minutes = int(minutes) / 60
-                        seconds = int(seconds) / 3600
-                        if currentHour < previousHour:
-                            day = day + 24
-                        previousHour = currentHour 
-                        hour = day + currentHour + minutes + seconds 
-                        RPTtimeSeries.append([hour, inflow, flooding])  
 
-                    # See if there are aditional .DAT files with SD data:
-                    SWMMQIN_file =last_RPT_dir + r"\SWMMQIN.OUT"
-                    if not os.path.isfile(SWMMQIN_file): 
-                        self.uc.bar_info("There is no SWMMQIN.OUT file")
-                    else:  
-                        inflow_discharge_to_SD = self.get_SWMMQIN(SWMMQIN_file)
-                        if intersection in inflow_discharge_to_SD:
-                            node_series = inflow_discharge_to_SD[intersection]
+            if data:
+                if intersection is False:
+                    intersection = next(iter(data.items()))[0]
+                if not intersection in data:
+                    QApplication.restoreOverrideCursor()
+                    self.plot.clear()
+                    self.tview.model().setRowCount(0)
+                    self.uc.bar_error("Node " + intersection + " not found in file  '" + RPT_file + "'")
+
+                    QApplication.restoreOverrideCursor()
+                    self.uc.show_warn("WARNING 111123.1743: Node " + intersection + " not found in file\n\n" + RPT_file +
+                                        "\n\nSelect a valid .RPT file.")
+                    return
+                    # RPT_file, _ = QFileDialog.getOpenFileName(
+                    #     None,
+                    #     "Select .RPT file",
+                    #     directory=last_RPT_dir,
+                    #     filter="RPT file (*.rpt; *.RPT)",
+                    # )
+                    # self.uc.clear_bar_messages()
+                    # if not RPT_file:
+                    #     return False
+                    # else:
+                    #     s.setValue("FLO-2D/lastRPTFile", RPT_file)
+                    #     last_RPT_dir = os.path.dirname(RPT_file)
+                    #     s.setValue("FLO-2D/lastRPTDir", last_RPT_dir)
+                    #     return True
+
+                node_series = data[intersection]
+                I = 1
+                day = 0
+                previousHour = -1
+                RPTtimeSeries = []
+                inflow_discharge_to_SD = []
+                outfall_discharge_to_FLO_2D = []
+                SWMMQINtimeSeries = []
+                SWMMOUTFINtimeSeries = []
+
+                for nextTime in node_series:
+                    time = nextTime[1]
+                    inflow = float(nextTime[2])
+                    flooding = float(nextTime[3])
+                    currentHour, minutes, seconds = time.split(":")
+                    currentHour = int(currentHour)
+                    minutes = int(minutes) / 60
+                    seconds = int(seconds) / 3600
+                    if currentHour < previousHour:
+                        day = day + 24
+                    previousHour = currentHour
+                    hour = day + currentHour + minutes + seconds
+                    RPTtimeSeries.append([hour, inflow, flooding])
+
+                # See if there are aditional .DAT files with SD data:
+                SWMMQIN_file = GDS_dir + r"\SWMMQIN.OUT"
+                if not os.path.isfile(SWMMQIN_file):
+                    self.uc.bar_info("There is no SWMMQIN.OUT file")
+                else:
+                    inflow_discharge_to_SD = self.get_SWMMQIN(SWMMQIN_file)
+                    if intersection in inflow_discharge_to_SD:
+                        node_series = inflow_discharge_to_SD[intersection]
+                        I = 1
+                        day = 0
+                        previousHour = -1
+
+                        for nextTime in node_series:
+                            hour = float(nextTime[0])
+                            discharge = float(nextTime[1])
+                            return_flow = float(nextTime[2])
+                            SWMMQINtimeSeries.append([hour, discharge, return_flow])
+                    else:
+                        self.uc.bar_info("Node " + intersection + " is not in file SWMMQIN.OUT")
+
+                SWMMOUTFIN_file = GDS_dir + r"\SWMMOUTFIN.OUT"
+                if not os.path.isfile(SWMMOUTFIN_file):
+                    self.uc.bar_info("There is no SWMMOUTFIN.OUT file")
+                else:
+                    outfall_discharge_to_FLO_2D = self.get_SWMMOUTFIN(SWMMOUTFIN_file)
+                    grid_sql = "SELECT grid FROM user_swmm_nodes WHERE name = ?;"
+                    grid = self.gutils.execute(grid_sql,(intersection,)).fetchone()
+                    if grid:
+                        grid = str(grid[0])
+                        if grid in outfall_discharge_to_FLO_2D:
+                            node_series = outfall_discharge_to_FLO_2D[grid]
                             I = 1
                             day = 0
                             previousHour = -1
-                            
+
                             for nextTime in node_series:
                                 hour = float(nextTime[0])
                                 discharge = float(nextTime[1])
-                                return_flow = float(nextTime[2])
-                                SWMMQINtimeSeries.append([hour, discharge, return_flow])  
+                                SWMMOUTFINtimeSeries.append([hour, discharge])
                         else:
-                            self.uc.bar_info("Node " + intersection + " is not in file SWMMQIN.OUT")
+                            self.uc.bar_info("Node " + intersection + " is not in file SWMMOUTFIN.OUT")
+                    else:
+                        self.uc.bar_info("Grid " + grid + " not found in Storm Drain Nodes!")
 
-                    SWMMOUTFIN_file = last_RPT_dir + r"\SWMMOUTFIN.OUT"   
-                    if not os.path.isfile(SWMMOUTFIN_file): 
-                        self.uc.bar_info("There is no SWMMOUTFIN.OUT file")
-                    else:                         
-                        outfall_discharge_to_FLO_2D = self.get_SWMMOUTFIN(SWMMOUTFIN_file)
-                        grid_sql = "SELECT grid FROM user_swmm_nodes WHERE name = ?;"
-                        grid = self.gutils.execute(grid_sql,(intersection,)).fetchone()
-                        if grid:
-                            grid = str(grid[0])
-                            if grid in outfall_discharge_to_FLO_2D:
-                                node_series = outfall_discharge_to_FLO_2D[grid]
-                                I = 1
-                                day = 0
-                                previousHour = -1
-                                
-                                for nextTime in node_series:
-                                    hour = float(nextTime[0])
-                                    discharge = float(nextTime[1])
-                                    SWMMOUTFINtimeSeries.append([hour, discharge])  
-                            else:
-                                self.uc.bar_info("Node " + intersection + " is not in file SWMMOUTFIN.OUT")                            
-                        else:
-                            self.uc.bar_info("Grid " + grid + " not found in Storm Drain Nodes!")                       
-  
-                    # Plot discharge graph:
-                    self.uc.bar_info("Discharge for node " + intersection + " from file  '" + RPT_file + "'")
-                    self.show_discharge_table_and_plot(intersection, units, RPTtimeSeries, 
-                                                       SWMMQINtimeSeries,
-                                                       SWMMOUTFINtimeSeries)
-                else:
-                    QApplication.restoreOverrideCursor()
-                    self.uc.bar_error("No time series found in file " + RPT_file +" for node " + intersection)    
-                
-                QApplication.restoreOverrideCursor()    
-                return True
-            
-            except Exception as e:
+                # Plot discharge graph:
+                self.uc.bar_info("Discharge for node " + intersection + " from file  '" + RPT_file + "'")
+                self.show_discharge_table_and_plot(intersection, units, RPTtimeSeries,
+                                                   SWMMQINtimeSeries,
+                                                   SWMMOUTFINtimeSeries)
+            else:
                 QApplication.restoreOverrideCursor()
-                self.uc.show_error("Reading .RPT file failed !!", e)
-                return False
+                self.uc.bar_error("No time series found in file " + RPT_file + " for node " + intersection)
+
+            QApplication.restoreOverrideCursor()
+            return True
+
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.uc.show_error("Reading .RPT file failed !!", e)
+            return False
 
     def block_saving(self):
         model = self.tview.model()

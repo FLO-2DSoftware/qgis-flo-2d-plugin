@@ -83,6 +83,7 @@ from .flo2d_tools.grid_tools import (
     number_of_elements,
 )
 from .flo2d_tools.info_tool import InfoTool
+from .flo2d_tools.results_tool import ResultsTool
 from .flo2d_tools.schematic_tools import (
     delete_redundant_levee_directions_np,
     generate_schematic_levees,
@@ -208,7 +209,7 @@ class Flo2D(object):
             self.info_tool.feature_picked.connect(self.get_feature_info)
             self.infoToolCalled = True
 
-        self.channel_profile_tool.feature_picked.connect(self.get_feature_profile)
+        self.results_tool.feature_picked.connect(self.get_feature_profile)
         self.grid_info_tool.grid_elem_picked.connect(self.f2d_grid_info.update_fields)
 
         self.f2d_widget.grid_tools.setup_connection()
@@ -674,7 +675,7 @@ class Flo2D(object):
 
         self.lyrs.clear_rubber()
         # remove maptools
-        del self.info_tool, self.grid_info_tool, self.channel_profile_tool
+        del self.info_tool, self.grid_info_tool, self.results_tool
         # others
         del self.uc
         database_disconnect(self.con)
@@ -3022,20 +3023,20 @@ class Flo2D(object):
                 info_ac = ac
 
         tool = self.canvas.mapTool()
-        if tool == self.channel_profile_tool:
+        if tool == self.results_tool:
             info_ac.setChecked(False)
             self.uncheck_all_info_tools()
         else:
             if tool is not None:
                 self.uncheck_all_info_tools()
                 info_ac.setChecked(False)
-            self.canvas.setMapTool(self.channel_profile_tool)
+            self.canvas.setMapTool(self.results_tool)
             # 'channel_profile_tool' is an instance of ChannelProfile class,
             # created on loading the plugin, and to be used to plot channel
             # profiles using a subtool in the FLO-2D tool bar.
             # The plots will be based on data from the 'chan', 'cham_elems'
             # schematic layers.
-            self.channel_profile_tool.update_lyrs_list()
+            self.results_tool.update_lyrs_list()
             info_ac.setChecked(True)
 
     @connection_required
@@ -3079,7 +3080,7 @@ class Flo2D(object):
 
         name, grid = self.gutils.execute("SELECT name, grid FROM user_swmm_nodes WHERE fid = ?", (fid,)).fetchone()
         self.f2d_dock.setUserVisible(True)
-        self.f2d_widget.storm_drain_editor_grp.setCollapsed(False)
+        # self.f2d_widget.storm_drain_editor_grp.setCollapsed(False)
         self.f2d_widget.storm_drain_editor.create_SD_discharge_table_and_plots(name)
 
     @connection_required
@@ -3575,7 +3576,7 @@ class Flo2D(object):
         self.canvas = self.iface.mapCanvas()
         self.info_tool = InfoTool(self.canvas, self.lyrs)
         self.grid_info_tool = GridInfoTool(self.uc, self.canvas, self.lyrs)
-        self.channel_profile_tool = ChannelProfile(self.canvas, self.lyrs)
+        self.results_tool = ResultsTool(self.canvas, self.lyrs)
 
     def get_feature_info(self, table, fid):
         try:
@@ -3586,37 +3587,45 @@ class Flo2D(object):
             return
         show_editor(fid)
 
-    def channel_profile(self):
-        for tb in self.toolButtons:
-            if tb.toolTip() == "<b>FLO-2D Project Review</b>":
-                review_tb = tb
-
-        tool = self.canvas.mapTool()
-        if tool == self.channel_profile_tool:
-            review_tb.setIcon(QIcon(os.path.join(self.plugin_dir, "img/editmetadata.svg")))
-            review_tb.setChecked(False)
-            self.uncheck_all_info_tools()
-        else:
-            if tool is not None:
-                self.uncheck_all_info_tools()
-                review_tb.setChecked(False)
-            review_tb.setIcon(QIcon(os.path.join(self.plugin_dir, "img/profile.svg")))
-            self.canvas.setMapTool(self.channel_profile_tool)
-            # 'channel_profile_tool' is an instance of ChannelProfile class,
-            # created on loading the plugin, and to be used to plot channel
-            # profiles using a subtool in the FLO-2D tool bar.
-            # The plots will be based on data from the 'chan', 'cham_elems'
-            # schematic layers.
-            self.channel_profile_tool.update_lyrs_list()
-            review_tb.setChecked(True)
+    # def channel_profile(self):
+    #
+    #     for tb in self.toolButtons:
+    #         if tb.toolTip() == "<b>FLO-2D Project Review</b>":
+    #             review_tb = tb
+    #
+    #     tool = self.canvas.mapTool()
+    #     if tool == self.channel_profile_tool:
+    #         review_tb.setIcon(QIcon(os.path.join(self.plugin_dir, "img/editmetadata.svg")))
+    #         review_tb.setChecked(False)
+    #         self.uncheck_all_info_tools()
+    #     else:
+    #         if tool is not None:
+    #             self.uncheck_all_info_tools()
+    #             review_tb.setChecked(False)
+    #         review_tb.setIcon(QIcon(os.path.join(self.plugin_dir, "img/profile.svg")))
+    #         self.canvas.setMapTool(self.channel_profile_tool)
+    #         # 'channel_profile_tool' is an instance of ChannelProfile class,
+    #         # created on loading the plugin, and to be used to plot channel
+    #         # profiles using a subtool in the FLO-2D tool bar.
+    #         # The plots will be based on data from the 'chan', 'cham_elems'
+    #         # schematic layers.
+    #         self.channel_profile_tool.update_lyrs_list()
+    #         review_tb.setChecked(True)
 
     def get_feature_profile(self, table, fid):
-        try:
-            self.cur_profile_table = table  # Currently 'table' only gets 'chan' table name
-        except KeyError:
-            self.uc.bar_info("Channel Profile tool not implemented for selected features.")
-            return
-        self.show_profile(fid)
+        # try:
+        if table == 'chan':
+            self.cur_profile_table = table
+            self.show_profile(fid)
+        if table == 'user_swmm_nodes':
+            show_editor = self.editors_map[table]
+            self.cur_info_table = table
+            show_editor(fid)
+
+        # except KeyError:
+        #     self.uc.bar_info("Channel Profile tool not implemented for selected features.")
+        #     return
+
 
     def set_editors_map(self):
         self.editors_map = {
@@ -3654,7 +3663,7 @@ class Flo2D(object):
         """
         self.canvas.unsetMapTool(self.grid_info_tool)
         self.canvas.unsetMapTool(self.info_tool)
-        self.canvas.unsetMapTool(self.channel_profile_tool)
+        self.canvas.unsetMapTool(self.results_tool)
 
         for tb in self.toolButtons:
             tb.setChecked(False)
