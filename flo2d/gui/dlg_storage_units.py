@@ -340,8 +340,10 @@ class StorageUnitsDialog(qtBaseClass, uiDialog):
         self.box_valueChanged(self.constant_dbox, 17) 
         
     def external_inflow_checked(self):
+        self.checkbox_valueChanged(self.external_inflow_chbox, 5)
+            
         if not self.block:
-            # Is there an external inflow for this node?
+            # Is there an external inflow for this storage?
             inflow_sql = "SELECT * FROM swmm_inflows WHERE node_name = ?;"
             node = self.storages_cbo.currentText()
             inflow = self.gutils.execute(inflow_sql, (node,)).fetchone()
@@ -366,7 +368,7 @@ class StorageUnitsDialog(qtBaseClass, uiDialog):
                     self.gutils.execute(delete_sql, (node,))
 
     def enable_external_inflow(self):
-        # Is there an external inflow for this node?
+        # Is there an external inflow for this storage?
         inflow_sql = "SELECT * FROM swmm_inflows WHERE node_name = ?;"
         inflow = self.gutils.execute(inflow_sql, (self.storages_cbo.currentText(),)).fetchone()
         if inflow:
@@ -427,11 +429,11 @@ class StorageUnitsDialog(qtBaseClass, uiDialog):
     def storages_tblw_cell_clicked(self, row, column):
         QApplication.setOverrideCursor(Qt.WaitCursor)
         self.storages_cbo.blockSignals(True)
+        self.block = True
+
         name = self.storages_tblw.item(row, 0).text().strip()
         idx = self.storages_cbo.findText(name)
         self.storages_cbo.setCurrentIndex(idx)
-
-        self.block = True
 
         self.grid_element_le.setText(self.storages_tblw.item(row, 1).text())
         self.invert_elevation_dbox.setValue(float_or_zero(self.storages_tblw.item(row, 2)))
@@ -584,7 +586,7 @@ class StorageUnitsDialog(qtBaseClass, uiDialog):
 
     def zoom_out_storage_cell(self):
         if self.grid_element_le.text() != "":        
-            self.currentCell = next(self.grid_lyr.getFeatures(QgsFeatureRequest(int(self.grid_element_le.text()))))
+            currentCell = next(self.grid_lyr.getFeatures(QgsFeatureRequest(int(self.grid_element_le.text()))))
             QApplication.setOverrideCursor(Qt.WaitCursor)
             x, y = currentCell.geometry().centroid().asPoint()
             center_canvas(self.iface, x, y)

@@ -386,8 +386,8 @@ class PumpsDialog(qtBaseClass, uiDialog):
 
     def zoom_in_pump(self):
         QApplication.setOverrideCursor(Qt.WaitCursor)
-        conduit = self.pump_name_cbo.currentText()
-        fid = self.gutils.execute("SELECT fid FROM user_swmm_pumps WHERE pump_name = ?;", (conduit,)).fetchone()
+        pump = self.pump_name_cbo.currentText()
+        fid = self.gutils.execute("SELECT fid FROM user_swmm_pumps WHERE pump_name = ?;", (pump,)).fetchone()
         self.lyrs.show_feat_rubber(self.pumps_lyr.id(), fid[0], QColor(Qt.yellow))
         feat = next(self.pumps_lyr.getFeatures(QgsFeatureRequest(fid[0])))
         x, y = feat.geometry().centroid().asPoint()
@@ -397,8 +397,8 @@ class PumpsDialog(qtBaseClass, uiDialog):
 
     def zoom_out_pump(self):
         QApplication.setOverrideCursor(Qt.WaitCursor)
-        conduit = self.pump_name_cbo.currentText()
-        fid = self.gutils.execute("SELECT fid FROM user_swmm_pumps WHERE pump_name = ?;", (conduit,)).fetchone()
+        pump = self.pump_name_cbo.currentText()
+        fid = self.gutils.execute("SELECT fid FROM user_swmm_pumps WHERE pump_name = ?;", (pump,)).fetchone()
         self.lyrs.show_feat_rubber(self.pumps_lyr.id(), fid[0], QColor(Qt.yellow))
         feat = next(self.pumps_lyr.getFeatures(QgsFeatureRequest(fid[0])))
         x, y = feat.geometry().centroid().asPoint()
