@@ -3566,6 +3566,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         dlg_storage = StorageUnitsDialog(self.iface, self.plot, self.SD_table, self.lyrs)
         dlg_storage.setWindowFlag(Qt.WindowMinimizeButtonHint, True)
         dlg_storage.setWindowFlag(Qt.WindowMaximizeButtonHint, True)
+        dlg_storage.select_curve_type()
         QApplication.restoreOverrideCursor()
         
         save = dlg_storage.exec_()

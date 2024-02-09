@@ -24,11 +24,12 @@ from qgis.PyQt.QtWidgets import (
     QLineEdit,
     QStyledItemDelegate,
     QTableWidgetItem,
+    QMessageBox
 )
 
 from ..flo2dobjects import InletRatingTable
 from ..geopackage_utils import GeoPackageUtils
-from ..user_communication import UserCommunication
+from ..user_communication import UserCommunication, ScrollMessageBox, ScrollMessageBox2
 from ..utils import (
     NumericDelegate,
     TimeSeriesDelegate,
@@ -62,6 +63,7 @@ class StorageUnitsDialog(qtBaseClass, uiDialog):
         set_icon(self.external_inflow_btn, "external_inflow.svg")
         set_icon(self.zoom_in_storage_btn, "zoom_in.svg")
         set_icon(self.zoom_out_storage_btn, "zoom_out.svg")
+        set_icon(self.open_tabular_curve_btn, "external_inflow.svg")
 
         self.save_this_storage_btn.setVisible(False)
         self.plot = plot
@@ -96,7 +98,8 @@ class StorageUnitsDialog(qtBaseClass, uiDialog):
         self.suction_head_dbox.valueChanged.connect(self.suction_head_dbox_valueChanged)          
         self.conductivity_dbox.valueChanged.connect(self.conductivity_dbox_valueChanged)                
         self.initial_deficit_dbox.valueChanged.connect(self.initial_deficit_dbox_valueChanged) 
-        self.functional_radio.toggled.connect(self.functional_radio_toggled)
+        self.functional_radio.toggled.connect(self.select_curve_type)
+        self.tabular_radio.toggled.connect(self.select_curve_type)
         # self.functional_grp.toggled.connect(self.functional_grp_checked)
         # self.tabular_grp.toggled.connect(self.tabular_grp_checked)                 
         self.coefficient_dbox.valueChanged.connect(self.coefficient_dbox_valueChanged)                  
@@ -109,8 +112,8 @@ class StorageUnitsDialog(qtBaseClass, uiDialog):
         self.set_header()
 
         self.warnings = ""
-        self.populate_storages()          
-
+        self.populate_storages()    
+               
     def setup_connection(self):
         con = self.iface.f2d["con"]
         if con is None:
@@ -158,7 +161,7 @@ class StorageUnitsDialog(qtBaseClass, uiDialog):
         for row_number, row_data in enumerate(rows):
             self.storages_tblw.insertRow(row_number)
             for cell, data in enumerate(row_data):
-                data = self.validate(data,row_number, cell )
+                data = self.validate_user_swmm_storage_units_cell(data,row_number, cell )
                 item = QTableWidgetItem()
                 if cell in [0, 1, 5, 8, 9, 10, 14, 18]:
                 # if cell == 0 or cell == 1 or cell == 5 or cell == 8 or cell == 9  or cell == 10 or cell == 14 or cell == 18:
@@ -198,6 +201,7 @@ class StorageUnitsDialog(qtBaseClass, uiDialog):
                         self.initial_deficit_dbox.setValue(data if data is not None else 0)
                     elif cell == 14:
                         self.functional_radio.setChecked(True if data == "FUNCTIONAL" else False)
+                        self.tabular_radio.setChecked(True if data == "TABULAR" else False)
                     elif cell == 15:
                         self.coefficient_dbox.setValue(data if data is not None else 0)
                     elif cell == 16:
@@ -206,8 +210,7 @@ class StorageUnitsDialog(qtBaseClass, uiDialog):
                         self.constant_dbox.setValue(data if data is not None else 0)
                     elif cell == 18:
                         self.tabular_grp.setEnabled(True)
-                        
-                                   
+                                        
                 item.setData(Qt.EditRole, data)
                 self.storages_tblw.setItem(row_number, cell, item)
 
@@ -221,16 +224,18 @@ class StorageUnitsDialog(qtBaseClass, uiDialog):
         self.storages_tblw.selectRow(0)
 
         self.enable_external_inflow()
-
+ 
         self.block = False
         
         if self.warnings != "":
             QApplication.restoreOverrideCursor()
-            self.uc.show_warn("WARNING 070224.1902: wrong values found:\n" + self.warnings)        
+            result = ScrollMessageBox2(QMessageBox.Warning,"Issues found!", "WARNING 070224.1902: wrong values found:\n" + self.warnings)      
+            result.exec_()  
 
+        # self.select_curve_type()  
         self.highlight_storage_cell(self.grid_element_le.text())
-
-    def validate(self, data, row_number, cell):
+        
+    def validate_user_swmm_storage_units_cell(self, data, row_number, cell):
         if cell == 14:
             if data not in ["FUNCTIONAL", "TABULAR"]:
                 self.warnings += "\n'" + data + "' in (row, column) (" + str(row_number + 1) + ", " + str(cell +1 ) + "). Changed to 'FUNCTIONAL'\n"
@@ -313,6 +318,17 @@ class StorageUnitsDialog(qtBaseClass, uiDialog):
         else:
             self.tabular_grp.setEnabled(False)
             self.functional_grp.setEnabled(True)
+
+    def select_curve_type(self):
+        if not self.block:
+            self.tabular_grp.setEnabled(self.tabular_radio.isChecked())
+            self.functional_grp.setEnabled(self.functional_radio.isChecked()) 
+    
+            row = self.storages_cbo.currentIndex()
+            item = QTableWidgetItem()
+            item.setData(Qt.EditRole, "FUNCTIONAL" if self.functional_radio.isChecked() else "TABULAR")
+            item.setFlags(Qt.ItemIsSelectable | Qt.ItemIsEnabled)
+            self.storages_tblw.setItem(row, 14, item)           
   
     def coefficient_dbox_valueChanged(self):
         self.box_valueChanged(self.coefficient_dbox, 15) 
@@ -414,7 +430,6 @@ class StorageUnitsDialog(qtBaseClass, uiDialog):
         name = self.storages_tblw.item(row, 0).text().strip()
         idx = self.storages_cbo.findText(name)
         self.storages_cbo.setCurrentIndex(idx)
-        self.storages_cbo.blockSignals(False)
 
         self.block = True
 
@@ -430,7 +445,7 @@ class StorageUnitsDialog(qtBaseClass, uiDialog):
         self.conductivity_dbox.setValue(float_or_zero(self.storages_tblw.item(row, 12)))
         self.initial_deficit_dbox.setValue(float_or_zero(self.storages_tblw.item(row, 13)))
         self.functional_radio.setChecked(True if self.storages_tblw.item(row, 14).text() == "FUNCTIONAL" else False)
-        # self.tabular_grp.setEnabled(True if self.storages_tblw.item(row, 14) == "TABULAR" else False)
+        self.tabular_radio.setChecked(True if self.storages_tblw.item(row, 14).text() == "TABULAR" else False)
         self.coefficient_dbox.setValue(float_or_zero(self.storages_tblw.item(row, 15)))
         self.exponent_dbox.setValue(float_or_zero(self.storages_tblw.item(row, 16)))
         self.constant_dbox.setValue(float_or_zero(self.storages_tblw.item(row, 17)))
@@ -442,69 +457,72 @@ class StorageUnitsDialog(qtBaseClass, uiDialog):
         self.tabular_curves_cbo.setCurrentIndex(index)
 
         self.enable_external_inflow()
-
+        # self.select_curve_type()
+        
         self.block = False
-
+        self.storages_cbo.blockSignals(False)
+        
         self.highlight_storage_cell(self.grid_element_le.text())
 
         QApplication.restoreOverrideCursor()
 
     def fill_individual_controls_with_current_storage_in_table(self):
-        
-        # Highlight row in table:
-        row = self.storages_cbo.currentIndex()
-        self.storages_tblw.selectRow(row)        
-        
-        rows = self.storages_tblw.rowCount()
-        if rows <= 1:
-            return
-        
-        storage = self.storages_cbo.currentText()
-        found = False
-        for row in range(0, rows):
-            if self.storages_tblw.item(row, 0).text() == storage:
-                # We have found our value so we can update 'row' row
-                found = True
-                break
-
-        if found:
-            QApplication.setOverrideCursor(Qt.WaitCursor)
-            self.storages_tblw.selectRow(row)
-            # Load controls with selected row in table:
-            item = QTableWidgetItem()
-            item = self.storages_tblw.item(row, 1)
-            if item is not None:
-                self.grid_element_le.setText(str(item.text()))
-            self.invert_elevation_dbox.setValue(float_or_zero(self.storages_tblw.item(row, 2)))
-            self.max_depth_dbox.setValue(float_or_zero(self.storages_tblw.item(row, 3)))
-            self.initial_depth_dbox.setValue(float_or_zero(self.storages_tblw.item(row, 4)))
-            self.external_inflow_chbox.setChecked(True if self.storages_tblw.item(row, 5).text() == "True" else False)
-            self.ponded_area_dbox.setValue(float_or_zero(self.storages_tblw.item(row, 6)))
-            self.evap_factor_dbox.setValue(float_or_zero(self.storages_tblw.item(row, 7)))
-            self.treatment_cbo.setCurrentIndex(0)
-            self.infiltration_grp.setChecked(True if self.storages_tblw.item(row, 9).text() == "True" else False)
-            self.method_cbo.setCurrentIndex(0)
-            self.suction_head_dbox.setValue(int_or_zero(self.storages_tblw.item(row, 11)))
-            self.conductivity_dbox.setValue(float_or_zero(self.storages_tblw.item(row, 12)))
-            self.initial_deficit_dbox.setValue(float_or_zero(self.storages_tblw.item(row, 13)))
-            self.functional_radio.setChecked(True if self.storages_tblw.item(row, 14).text() == "FUNCTIONAL" else False)
-            # self.tabular_grp.setEnabled(True if self.storages_tblw.item(row, 14).text() == "True" else False)
-            self.coefficient_dbox.setValue(float_or_zero(self.storages_tblw.item(row, 16)))
-            self.exponent_dbox.setValue(float_or_zero(self.storages_tblw.item(row, 17)))
-            self.constant_dbox.setValue(float_or_zero(self.storages_tblw.item(row, 18)))
+        if not self.block:
+            # Highlight row in table:
+            row = self.storages_cbo.currentIndex()
+            self.storages_tblw.selectRow(row)        
             
-            curve = self.storages_tblw.item(row, 18).text()
-            index = self.tabular_curves_cbo.findText(curve)
-            if index == -1:
-                index = 0
-            self.tabular_curves_cbo.setCurrentIndex(index)            
+            rows = self.storages_tblw.rowCount()
+            if rows <= 1:
+                return
             
-            self.enable_external_inflow()
-            
-            self.highlight_storage_cell(self.grid_element_le.text())
-            QApplication.restoreOverrideCursor()
-        else:
-            self.uc.bar_warn("Storage Unit not found not found!")
+            storage = self.storages_cbo.currentText()
+            found = False
+            for row in range(0, rows):
+                if self.storages_tblw.item(row, 0).text() == storage:
+                    # We have found our value so we can update 'row' row
+                    found = True
+                    break
+    
+            if found:
+                QApplication.setOverrideCursor(Qt.WaitCursor)
+                self.storages_tblw.selectRow(row)
+                # Load controls with selected row in table:
+                item = QTableWidgetItem()
+                item = self.storages_tblw.item(row, 1)
+                if item is not None:
+                    self.grid_element_le.setText(str(item.text()))
+                self.invert_elevation_dbox.setValue(float_or_zero(self.storages_tblw.item(row, 2)))
+                self.max_depth_dbox.setValue(float_or_zero(self.storages_tblw.item(row, 3)))
+                self.initial_depth_dbox.setValue(float_or_zero(self.storages_tblw.item(row, 4)))
+                self.external_inflow_chbox.setChecked(True if self.storages_tblw.item(row, 5).text() == "True" else False)
+                self.ponded_area_dbox.setValue(float_or_zero(self.storages_tblw.item(row, 6)))
+                self.evap_factor_dbox.setValue(float_or_zero(self.storages_tblw.item(row, 7)))
+                self.treatment_cbo.setCurrentIndex(0)
+                self.infiltration_grp.setChecked(True if self.storages_tblw.item(row, 9).text() == "True" else False)
+                self.method_cbo.setCurrentIndex(0)
+                self.suction_head_dbox.setValue(int_or_zero(self.storages_tblw.item(row, 11)))
+                self.conductivity_dbox.setValue(float_or_zero(self.storages_tblw.item(row, 12)))
+                self.initial_deficit_dbox.setValue(float_or_zero(self.storages_tblw.item(row, 13)))
+                self.functional_radio.setChecked(True if self.storages_tblw.item(row, 14).text() == "FUNCTIONAL" else False)
+                # self.tabular_grp.setEnabled(True if self.storages_tblw.item(row, 14).text() == "True" else False)
+                self.coefficient_dbox.setValue(float_or_zero(self.storages_tblw.item(row, 16)))
+                self.exponent_dbox.setValue(float_or_zero(self.storages_tblw.item(row, 17)))
+                self.constant_dbox.setValue(float_or_zero(self.storages_tblw.item(row, 18)))
+                
+                curve = self.storages_tblw.item(row, 18).text()
+                index = self.tabular_curves_cbo.findText(curve)
+                if index == -1:
+                    index = 0
+                self.tabular_curves_cbo.setCurrentIndex(index)            
+                
+                self.enable_external_inflow()
+                # self.select_curve_type()
+                
+                self.highlight_storage_cell(self.grid_element_le.text())
+                QApplication.restoreOverrideCursor()
+            else:
+                self.uc.bar_warn("Storage Unit not found not found!")
 
     def find_storage(self):
         try:
