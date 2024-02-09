@@ -38,7 +38,11 @@ class ResultsTool(QgsMapToolIdentify):
 
     def update_lyrs_list(self):
         # lyrs_list = self.lyrs.list_group_vlayers(self.lyrs.group, skip_views=True)
-        self.lyrs_list = [self.lyrs.data["chan"]["qlyr"], self.lyrs.data["user_swmm_nodes"]["qlyr"]]
+        self.lyrs_list = [
+            self.lyrs.data["chan"]["qlyr"],
+            self.lyrs.data["chan_elems"]["qlyr"],
+            self.lyrs.data["user_swmm_nodes"]["qlyr"]
+        ]
 
     def canvasPressEvent(self, dummy):
         self.clear_rubber()
@@ -49,6 +53,7 @@ class ResultsTool(QgsMapToolIdentify):
         """
         implemented = [
             "chan",
+            "chan_elems",
             "user_swmm_nodes",
         ]
         # Overrides inherited method from QgsMapToolIdentify.

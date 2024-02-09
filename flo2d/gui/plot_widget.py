@@ -98,7 +98,7 @@ class PlotWidget(QWidget):
         none_checked = True
         if mouseClickEvent.button() == 1:
             title = self.plot.titleLabel.text
-            if "Discharge" in title or "Channel" in title:
+            if "Discharge" in title or "Channel" in title or "Cross":
                 menu = QMenu()
                 n_items = len(self.plot.legend.items)
                 if n_items > 0:

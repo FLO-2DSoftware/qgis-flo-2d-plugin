@@ -3052,6 +3052,14 @@ class Flo2D(object):
         self.cur_profile_table = None
 
     @connection_required
+    def show_xsec_hydrograph(self, fid=None):
+        """
+        Show the cross-section hydrograph from HYCHAN.OUT
+        """
+        self.f2d_widget.xs_editor.show_hydrograph(self.cur_profile_table, fid)
+        self.cur_profile_table = None
+
+    @connection_required
     def show_xsec_editor(self, fid=None):
         """
         Show Cross-section editor.
@@ -3617,6 +3625,9 @@ class Flo2D(object):
         if table == 'chan':
             self.cur_profile_table = table
             self.show_profile(fid)
+        if table == 'chan_elems':
+            self.cur_profile_table = table
+            self.show_xsec_hydrograph(fid)
         if table == 'user_swmm_nodes':
             show_editor = self.editors_map[table]
             self.cur_info_table = table

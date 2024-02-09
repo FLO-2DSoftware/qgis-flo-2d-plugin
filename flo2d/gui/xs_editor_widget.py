@@ -15,6 +15,7 @@ import traceback
 from collections import OrderedDict
 from math import isnan
 
+from qgis._core import QgsMessageLog
 from qgis.core import (
     NULL,
     QgsCoordinateTransform,
@@ -1600,6 +1601,104 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
 
         except Exception as e:
             self.uc.show_error("ERROR 050818.0618: couln't process HYCHAN.OUT !", e)
+
+    def show_hydrograph(self, table, fid):
+        """
+        Function to load the hydrograph data from HYCHAN.OUT
+        """
+        self.uc.clear_bar_messages()
+        if self.gutils.is_table_empty("grid"):
+            self.uc.bar_warn("There is no grid! Please create it before running tool.")
+            return False
+
+        s = QSettings()
+        HYCHAN_file = s.value("FLO-2D/lastHYCHANFile", "")
+        GDS_dir = s.value("FLO-2D/lastGdsDir", "")
+        # Check if there is an HYCHAN.OUT file on the FLO-2D QSettings
+        if not os.path.isfile(HYCHAN_file):
+            HYCHAN_file = GDS_dir + r"/HYCHAN.OUT"
+            # Check if there is an HYCHAN.OUT file on the export folder
+            if not os.path.isfile(HYCHAN_file):
+                self.uc.bar_warn(
+                    "No HYCHAN.OUT file found. Please ensure the simulation has completed and verify the project export folder.")
+                return
+        # Check if the HYCHAN.OUT has data on it
+        if os.path.getsize(HYCHAN_file) == 0:
+            QApplication.restoreOverrideCursor()
+            self.uc.bar_warn("File  '" + os.path.basename(HYCHAN_file) + "'  is empty!")
+            return
+
+        xc_fid = str(self.gutils.execute(f"SELECT fid FROM chan_elems WHERE id = '{fid}'").fetchone()[0])
+        with open(HYCHAN_file, "r") as myfile:
+            time_list = []
+            thalweg_list = []
+            discharge_list = []
+            velocity_list = []
+            froude_list = []
+            flow_area_list = []
+            w_perimeter_list = []
+            hyd_radius_list = []
+            top_width_list = []
+            width_depth_list = []
+            energy_slope_list = []
+            shear_stress_list = []
+            surf_area_list = []
+            while True:
+                line = next(myfile)
+                if "CHANNEL HYDROGRAPH FOR ELEMENT NO:" in line and line.split()[-1] == xc_fid:
+                    for _ in range(7):
+                        line = next(myfile)
+                    while True:
+                        line = next(myfile)
+                        if not line.strip():  # If the line is empty, exit the loop
+                            break
+                        line = line.split()
+                        time_list.append(float(line[0]))
+                        thalweg_list.append(float(line[2]))
+                        velocity_list.append(float(line[3]))
+                        discharge_list.append(float(line[4]))
+                        froude_list.append(float(line[5]))
+                        flow_area_list.append(float(line[6]))
+                        w_perimeter_list.append(float(line[7]))
+                        hyd_radius_list.append(float(line[8]))
+                        top_width_list.append(float(line[9]))
+                        width_depth_list.append(float(line[10]))
+                        energy_slope_list.append(float(line[11]))
+                        shear_stress_list.append(float(line[12]))
+                        surf_area_list.append(float(line[13]))
+                    break
+
+        self.plot.clear()
+        if self.plot.plot.legend is not None:
+            plot_scene = self.plot.plot.legend.scene()
+            if plot_scene is not None:
+                plot_scene.removeItem(self.plot.plot.legend)
+
+        self.plot.plot.legend = None
+        self.plot.plot.addLegend(offset=(0, 30))
+        self.plot.plot.setTitle(title=f"Cross Section - {xc_fid}")
+        self.plot.plot.setLabel("bottom", text="Time (hrs)")
+        self.plot.plot.setLabel("left", text="")
+        self.plot.add_item("Discharge (cfs)", [time_list, discharge_list], col=QColor(Qt.darkYellow), sty=Qt.SolidLine)
+        self.plot.add_item("Thalweg depth (ft)", [time_list, thalweg_list], col=QColor(Qt.black), sty=Qt.SolidLine)
+        self.plot.add_item("Velocity (fps)", [time_list, velocity_list], col=QColor(Qt.darkGreen), sty=Qt.SolidLine)
+        self.plot.add_item("Froude", [time_list, froude_list], col=QColor(Qt.blue), sty=Qt.SolidLine)
+        self.plot.add_item("Flow area (sq. ft)", [time_list, flow_area_list], col=QColor(Qt.red), sty=Qt.SolidLine)
+        self.plot.add_item("Wetted perimeter (ft)", [time_list, w_perimeter_list], col=QColor(Qt.yellow), sty=Qt.SolidLine)
+        self.plot.add_item("Hydraulic radius (ft)", [time_list, hyd_radius_list], col=QColor(Qt.darkBlue), sty=Qt.SolidLine)
+        self.plot.add_item("Top width (ft)", [time_list, top_width_list], col=QColor(Qt.darkRed), sty=Qt.SolidLine)
+        self.plot.add_item("Width/Depth", [time_list, width_depth_list], col=QColor(Qt.darkCyan), sty=Qt.SolidLine)
+        self.plot.add_item("Energy slope", [time_list, energy_slope_list], col=QColor(Qt.magenta), sty=Qt.SolidLine)
+        self.plot.add_item("Shear stress (lb/sq. ft)", [time_list, shear_stress_list], col=QColor(Qt.darkYellow))
+        self.plot.add_item("Surface Area (sq. ft)", [time_list, surf_area_list], col=QColor(Qt.darkMagenta))
+
+        for i in range(0, 12):
+            if i == 0:
+                self.plot.plot.legend.items[i][1].show()
+                self.plot.plot.items[i].show()
+            else:
+                self.plot.plot.legend.items[i][1].hide()
+                self.plot.plot.items[i].hide()
 
     def reassign_xs_rightbanks_grid_id_from_schematized_rbanks(self, xs_seg_fid, right_bank_fid):
         """Takes all schematized left bank cross sections (from 'cham_elems' layer) identified by 'xs_seg_fid', and
