@@ -124,7 +124,6 @@ class PlotWidget(QWidget):
         if n_chboxes > 0:
             # Redraw plot with checked/unchecked variables:
             for i in range(0, n_chboxes):
-                QgsMessageLog.logMessage(str(self.plot.legend.items[i]))
                 if not self.chbox[i][0].isChecked():
                     self.plot.legend.items[i][1].hide()
                     self.plot.items[i].hide()

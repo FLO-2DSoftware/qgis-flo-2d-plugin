@@ -139,6 +139,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
     def __init__(self, iface, plot, table, lyrs):
         qtBaseClass.__init__(self)
         uiDialog.__init__(self)
+        self.chan_seg = None
         self.iface = iface
         self.plot = plot
         self.xs_table = table
@@ -173,7 +174,6 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         set_icon(self.schematize_right_bank_btn, "schematize_right_bank.svg")
         set_icon(self.save_channel_DAT_files_btn, "export_channels.svg")
         set_icon(self.reassign_rightbanks_btn, "import_right_banks.svg")
-        set_icon(self.import_HYCHAN_OUT_btn, "import_channel_peaks.svg")
         set_icon(self.interpolate_xs_btn, "interpolate_xsec.svg")
         set_icon(self.confluences_btn, "schematize_confluence.svg")
         set_icon(self.interpolate_channel_n_btn, "interpolate_channel_n.svg")
@@ -197,10 +197,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         self.save_channel_DAT_files_btn.clicked.connect(self.save_channel_DAT_and_XSEC_files)
         self.interpolate_xs_btn.clicked.connect(self.interpolate_xs_values)
         self.reassign_rightbanks_btn.clicked.connect(self.reassign_rightbanks_from_CHANBANK_file)
-        self.import_HYCHAN_OUT_btn.clicked.connect(self.import_channel_peaks_from_HYCHAN_OUT)
-        #         self.interpolate_xs_btn.clicked.connect(self.interpolate_xs_values_externally)
         self.confluences_btn.clicked.connect(self.create_confluences)
-        # self.confluences_btn.clicked.connect(self.schematize_confluences)
         self.interpolate_channel_n_btn.clicked.connect(self.interpolate_channel_n)
         self.rename_xs_btn.clicked.connect(self.change_xs_name)
         self.sample_elevation_current_natural_btn.clicked.connect(self.sample_elevation_current_natural_cross_sections)
@@ -1469,138 +1466,205 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
                 e,
             )
 
-    def import_channel_peaks_from_HYCHAN_OUT(self):
+    def show_channel_peaks(self, table, fid):
+        """
+        Function to show the channel peaks
+        """
         if self.gutils.is_table_empty("grid"):
             self.uc.bar_warn("There is no grid! Please create it before running tool.")
             return
+
         s = QSettings()
-        last_dir = s.value("FLO-2D/lastGdsDir", "")
-        hychan_file, __ = QFileDialog.getOpenFileName(
-            None, "Select HYCHAN.OUT to read", directory=last_dir, filter="HYCHAN.OUT"
-        )
-        if not hychan_file:
+        HYCHAN_file = s.value("FLO-2D/lastHYCHANFile", "")
+        GDS_dir = s.value("FLO-2D/lastGdsDir", "")
+        # Check if there is an HYCHAN.OUT file on the FLO-2D QSettings
+        if not os.path.isfile(HYCHAN_file):
+            HYCHAN_file = GDS_dir + r"/HYCHAN.OUT"
+            # Check if there is an HYCHAN.OUT file on the export folder
+            if not os.path.isfile(HYCHAN_file):
+                self.uc.bar_warn(
+                    "No HYCHAN.OUT file found. Please ensure the simulation has completed and verify the project export folder.")
+                return
+        # Check if the HYCHAN.OUT has data on it
+        if os.path.getsize(HYCHAN_file) == 0:
+            QApplication.restoreOverrideCursor()
+            self.uc.bar_warn("File  '" + os.path.basename(HYCHAN_file) + "'  is empty!")
             return
-        try:
-            # Read HYCHAN.OUT and create a dictionary of grid: [max_water_elev, peak_discharge].
-            peaks_dict = {}
-            peaks_list = []
-            with open(hychan_file, "r") as myfile:
+
+        # Read HYCHAN.OUT and create a dictionary of grid: [max_water_elev, peak_discharge].
+        peaks_dict = {}
+        peaks_list = []
+        with open(HYCHAN_file, "r") as myfile:
+            while True:
                 try:
-                    while True:
-                        velocity_list = []
-                        froude_list = []
-                        flow_area_list = []
-                        w_perimeter_list = []
-                        hyd_radius_list = []
-                        top_width_list = []
-                        width_depth_list = []
-                        energy_slope_list = []
-                        shear_stress_list = []
-                        surf_area_list = []
+                    velocity_list = []
+                    froude_list = []
+                    flow_area_list = []
+                    w_perimeter_list = []
+                    hyd_radius_list = []
+                    top_width_list = []
+                    width_depth_list = []
+                    energy_slope_list = []
+                    shear_stress_list = []
+                    surf_area_list = []
+                    line = next(myfile)
+                    if "CHANNEL HYDROGRAPH FOR ELEMENT NO:" in line:
+                        grid = line.split()[-1]
                         line = next(myfile)
-                        if "CHANNEL HYDROGRAPH FOR ELEMENT NO:" in line:
-                            grid = line.split("CHANNEL HYDROGRAPH FOR ELEMENT NO:")[1].rstrip()
+                        line = next(myfile)
+                        peak_discharge = line.split("MAXIMUM DISCHARGE (CFS) =")[1].split()[0]
+                        line = next(myfile)
+                        max_water_elev = line.split("MAXIMUM STAGE = ")[1].split()[0]
+                        for _ in range(4):
                             line = next(myfile)
+                        while True:
                             line = next(myfile)
-                            peak_discharge = line.split("MAXIMUM DISCHARGE (CFS) =")[1].split()[0]
-                            line = next(myfile)
-                            max_water_elev = line.split("MAXIMUM STAGE = ")[1].split()[0]
-                            for _ in range(4):
-                                line = next(myfile)
-                            while True:
-                                line = next(myfile)
-                                if not line.strip():  # If the line is empty, exit the loop
-                                    break
-                                line = line.split()
-                                velocity_list.append(float(line[3]))
-                                froude_list.append(float(line[5]))
-                                flow_area_list.append(float(line[6]))
-                                w_perimeter_list.append(float(line[7]))
-                                hyd_radius_list.append(float(line[8]))
-                                top_width_list.append(float(line[9]))
-                                width_depth_list.append(float(line[10]))
-                                energy_slope_list.append(float(line[11]))
-                                shear_stress_list.append(float(line[12]))
-                                surf_area_list.append(float(line[13]))
-                            max_velocity = max(velocity_list)
-                            max_froude = max(froude_list)
-                            max_flow_area = max(flow_area_list)
-                            max_w_perimeter = max(w_perimeter_list)
-                            max_hyd_radius = max(hyd_radius_list)
-                            max_top_width = max(top_width_list)
-                            max_width_depth = max(width_depth_list)
-                            max_energy_slope = max(energy_slope_list)
-                            max_shear_stress = max(shear_stress_list)
-                            max_surf_area = max(surf_area_list)
+                            if not line.strip():  # If the line is empty, exit the loop
+                                break
+                            line = line.split()
+                            velocity_list.append(float(line[3]))
+                            froude_list.append(float(line[5]))
+                            flow_area_list.append(float(line[6]))
+                            w_perimeter_list.append(float(line[7]))
+                            hyd_radius_list.append(float(line[8]))
+                            top_width_list.append(float(line[9]))
+                            width_depth_list.append(float(line[10]))
+                            energy_slope_list.append(float(line[11]))
+                            shear_stress_list.append(float(line[12]))
+                            surf_area_list.append(float(line[13]))
+                        max_velocity = max(velocity_list)
+                        max_froude = max(froude_list)
+                        max_flow_area = max(flow_area_list)
+                        max_w_perimeter = max(w_perimeter_list)
+                        max_hyd_radius = max(hyd_radius_list)
+                        max_top_width = max(top_width_list)
+                        max_width_depth = max(width_depth_list)
+                        max_energy_slope = max(energy_slope_list)
+                        max_shear_stress = max(shear_stress_list)
+                        max_surf_area = max(surf_area_list)
 
-                            peaks_dict[grid] = [max_water_elev,
-                                                peak_discharge,
-                                                max_velocity,
-                                                max_froude,
-                                                max_flow_area,
-                                                max_w_perimeter,
-                                                max_hyd_radius,
-                                                max_top_width,
-                                                max_width_depth,
-                                                max_energy_slope,
-                                                max_shear_stress,
-                                                max_surf_area,
-                                                ]
-                            peaks_list.append((grid,
-                                               max_water_elev,
-                                               peak_discharge,
-                                               max_velocity,
-                                               max_froude,
-                                               max_flow_area,
-                                               max_w_perimeter,
-                                               max_hyd_radius,
-                                               max_top_width,
-                                               max_width_depth,
-                                               max_energy_slope,
-                                               max_shear_stress,
-                                               max_surf_area,
-                                               ))
+                        peaks_dict[grid] = [max_water_elev,
+                                            peak_discharge,
+                                            max_velocity,
+                                            max_froude,
+                                            max_flow_area,
+                                            max_w_perimeter,
+                                            max_hyd_radius,
+                                            max_top_width,
+                                            max_width_depth,
+                                            max_energy_slope,
+                                            max_shear_stress,
+                                            max_surf_area,
+                                            ]
+                        peaks_list.append((grid,
+                                           max_water_elev,
+                                           peak_discharge,
+                                           max_velocity,
+                                           max_froude,
+                                           max_flow_area,
+                                           max_w_perimeter,
+                                           max_hyd_radius,
+                                           max_top_width,
+                                           max_width_depth,
+                                           max_energy_slope,
+                                           max_shear_stress,
+                                           max_surf_area,
+                                           ))
+                    else:
+                        pass
+                except StopIteration:
+                    break
 
-                        else:
-                            pass
-                except Exception as e:
-                    pass
+        if self.plot.plot.legend is not None:
+            plot_scene = self.plot.plot.legend.scene()
+            if plot_scene is not None:
+                plot_scene.removeItem(self.plot.plot.legend)
 
-            # Assign max_water_elev and peak_discharge to features of chan_elems table (schematized layer).
-            for peak in peaks_list:
-                qry = """UPDATE chan_elems SET max_water_elev = ?,
-                                           peak_discharge = ?,
-                                           max_velocity = ?,
-                                           max_froude = ?,
-                                           max_flow_area = ?,
-                                           max_w_perimeter = ?,
-                                           max_hyd_radius = ?,
-                                           max_top_width = ?,
-                                           max_width_depth = ?,
-                                           max_energy_slope = ?,
-                                           max_shear_stress = ?,
-                                           max_surf_area = ?
-                                           WHERE fid = ?;"""
-                self.gutils.execute(qry, (peak[1],
-                                          peak[2],
-                                          peak[3],
-                                          peak[4],
-                                          peak[5],
-                                          peak[6],
-                                          peak[7],
-                                          peak[8],
-                                          peak[9],
-                                          peak[10],
-                                          peak[11],
-                                          peak[12],
-                                          peak[0]))
+        self.chan_seg = ChannelSegment(fid, self.iface.f2d["con"], self.iface)
+        self.chan_seg.get_row()  # Assigns to self.chan_seg all field values of the selected schematized channel:
+        # 'name', 'depinitial',  'froudc',  'roughadj', 'isedn', 'notes', 'user_lbank_fid', 'rank'
+        if not self.chan_seg.get_profiles():
+            return
+        self.plot.clear()
+        sta, lb, rb, bed = [], [], [], []
+        max_water_elev = []
+        peak_discharge = []
+        max_velocity = []
+        max_froude = []
+        max_flow_area = []
+        max_w_perimeter = []
+        max_hyd_radius = []
+        max_top_width = []
+        max_width_depth = []
+        max_energy_slope = []
+        max_shear_stress = []
+        max_surf_area = []
 
-            self.uc.bar_info(
-                "HYCHAN.OUT file imported. Channel Cross Sections updated with max. surface water elevations and peak discharge data."
-            )
+        ordered_dict = self.chan_seg.profiles.items()
 
-        except Exception as e:
-            self.uc.show_error("ERROR 050818.0618: couln't process HYCHAN.OUT !", e)
+        for item in ordered_dict:
+            key = str(item[0])
+            if key in peaks_dict:
+                item[1].update({'max_water_elev': float(peaks_dict[key][0]),
+                                'peak_discharge': float(peaks_dict[key][1]),
+                                'max_velocity': float(peaks_dict[key][2]),
+                                'max_froude': float(peaks_dict[key][3]),
+                                'max_flow_area': float(peaks_dict[key][4]),
+                                'max_w_perimeter': float(peaks_dict[key][5]),
+                                'max_hyd_radius': float(peaks_dict[key][6]),
+                                'max_top_width': float(peaks_dict[key][7]),
+                                'max_width_depth': float(peaks_dict[key][8]),
+                                'max_energy_slope': float(peaks_dict[key][9]),
+                                'max_shear_stress': float(peaks_dict[key][10]),
+                                'max_surf_area': float(peaks_dict[key][11])}
+                               )
+
+        for st, data in ordered_dict:
+            if "max_water_elev" in data.keys():
+                sta.append(data["station"])
+                lb.append(data["lbank_elev"])
+                rb.append(data["rbank_elev"])
+                bed.append(data["bed_elev"])
+                max_water_elev.append(data["max_water_elev"])
+                peak_discharge.append(data["peak_discharge"])
+                max_velocity.append(data["max_velocity"])
+                max_froude.append(data["max_froude"])
+                max_flow_area .append(data["max_flow_area"])
+                max_w_perimeter.append(data["max_w_perimeter"])
+                max_hyd_radius.append(data["max_hyd_radius"])
+                max_top_width.append(data["max_top_width"])
+                max_width_depth.append(data["max_width_depth"])
+                max_energy_slope.append(data["max_energy_slope"])
+                max_shear_stress.append(data["max_shear_stress"])
+                max_surf_area.append(data["max_surf_area"])
+
+        self.plot.plot.legend = None
+        self.plot.plot.addLegend(offset=(0, 30))
+        self.plot.plot.setTitle(title=f"Channel Profile - {fid}")
+        self.plot.plot.setLabel("bottom", text="Channel length")
+        self.plot.plot.setLabel("left", text="")
+        self.plot.add_item("Bed elevation", [sta, bed], col=QColor(Qt.black), sty=Qt.SolidLine)
+        self.plot.add_item("Left bank", [sta, lb], col=QColor(Qt.darkGreen), sty=Qt.SolidLine)
+        self.plot.add_item("Right bank", [sta, rb], col=QColor(Qt.darkYellow), sty=Qt.SolidLine)
+        self.plot.add_item("Max. Water", [sta, max_water_elev], col=QColor(Qt.blue), sty=Qt.SolidLine)
+        self.plot.add_item("Velocity (fps)", [sta, max_velocity], col=QColor(Qt.green), sty=Qt.SolidLine)
+        self.plot.add_item("Froude", [sta, max_froude], col=QColor(Qt.gray), sty=Qt.SolidLine)
+        self.plot.add_item("Flow area (sq. ft)", [sta, max_flow_area], col=QColor(Qt.red), sty=Qt.SolidLine)
+        self.plot.add_item("Wetted perimeter (ft)", [sta, max_w_perimeter], col=QColor(Qt.yellow), sty=Qt.SolidLine)
+        self.plot.add_item("Hydraulic radius (ft)", [sta, max_hyd_radius], col=QColor(Qt.darkBlue), sty=Qt.SolidLine)
+        self.plot.add_item("Top width (ft)", [sta, max_top_width], col=QColor(Qt.darkRed), sty=Qt.SolidLine)
+        self.plot.add_item("Width/Depth", [sta, max_width_depth], col=QColor(Qt.darkCyan), sty=Qt.SolidLine)
+        self.plot.add_item("Energy slope", [sta, max_energy_slope], col=QColor(Qt.magenta), sty=Qt.SolidLine)
+        self.plot.add_item("Shear stress (lb/sq. ft)", [sta, max_shear_stress], col=QColor(Qt.darkYellow), sty=Qt.SolidLine)
+        self.plot.add_item("Surface Area (sq. ft)", [sta, max_surf_area], col=QColor(Qt.darkMagenta), sty=Qt.SolidLine)
+
+        for i in range(0, 14):
+            if i in [0, 1, 2]:
+                self.plot.plot.legend.items[i][1].show()
+                self.plot.plot.items[i].show()
+            else:
+                self.plot.plot.legend.items[i][1].hide()
+                self.plot.plot.items[i].hide()
 
     def show_hydrograph(self, table, fid):
         """

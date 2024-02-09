@@ -3048,7 +3048,7 @@ class Flo2D(object):
 
     @connection_required
     def show_profile(self, fid=None):
-        self.f2d_widget.profile_tool.show_channel(self.cur_profile_table, fid)
+        self.f2d_widget.xs_editor.show_channel_peaks(self.cur_profile_table, fid)
         self.cur_profile_table = None
 
     @connection_required
