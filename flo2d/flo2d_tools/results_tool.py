@@ -41,6 +41,7 @@ class ResultsTool(QgsMapToolIdentify):
         self.lyrs_list = [
             self.lyrs.data["chan"]["qlyr"],
             self.lyrs.data["chan_elems"]["qlyr"],
+            self.lyrs.data["struct"]["qlyr"],
             self.lyrs.data["user_swmm_nodes"]["qlyr"]
         ]
 
@@ -55,6 +56,7 @@ class ResultsTool(QgsMapToolIdentify):
             "chan",
             "chan_elems",
             "user_swmm_nodes",
+            "struct"
         ]
         # Overrides inherited method from QgsMapToolIdentify.
         # Creates a submenu and shows it where the user clicks the canvas.
