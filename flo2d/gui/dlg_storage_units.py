@@ -44,6 +44,8 @@ from .ui_utils import center_canvas, load_ui, set_icon, zoom
 # from Cython.Includes.libcpp import functional
 from fontTools.cu2qu.cu2qu import curve_to_quadratic
 
+from .dlg_outfalls import OutfallTidalCurveDialog
+
 uiDialog, qtBaseClass = load_ui("storage_units")
 class StorageUnitsDialog(qtBaseClass, uiDialog):
     def __init__(self, iface, plot, table, lyrs):
@@ -105,7 +107,8 @@ class StorageUnitsDialog(qtBaseClass, uiDialog):
         self.coefficient_dbox.valueChanged.connect(self.coefficient_dbox_valueChanged)                  
         self.exponent_dbox.valueChanged.connect(self.exponent_dbox_valueChanged)                
         self.constant_dbox.valueChanged.connect(self.constant_dbox_valueChanged)       
-        self.tabular_curves_cbo.currentIndexChanged.connect(self.tabular_curves_cbo_currentIndexChanged)             
+        self.tabular_curves_cbo.currentIndexChanged.connect(self.tabular_curves_cbo_currentIndexChanged) 
+        self.open_tabular_curve_btn.clicked.connect(self.open_tabular_curve)        
         self.storages_tblw.cellClicked.connect(self.storages_tblw_cell_clicked)
 
         self.storages_tblw.verticalHeader().sectionClicked.connect(self.onVerticalSectionClicked)
@@ -424,12 +427,42 @@ class StorageUnitsDialog(qtBaseClass, uiDialog):
         self.storages_tblw.setItem(row, col, item)
         self.storages_tblw.item(row, col).setText("True" if widget.isChecked() else "False")
 
-
     def tabular_curves_cbo_currentIndexChanged(self):
         row = self.storages_cbo.currentIndex()
         item = QTableWidgetItem()
         item.setData(Qt.EditRole, self.tabular_curves_cbo.currentText())
         self.storages_tblw.setItem(row, 18, item)
+
+    def open_tabular_curve(self):
+        tabular_curve_name = self.tabular_curves_cbo.currentText()
+        dlg = OutfallTidalCurveDialog(self.iface, tabular_curve_name)
+        while True:
+            ok = dlg.exec_()
+            if ok:
+                if dlg.values_ok:
+                    dlg.save_tidal_curve()
+                    tabular_curve_name = dlg.get_tidal_name()
+                    if tabular_curve_name != "":
+                        # Reload tidal curve list and select the one saved:
+                        time_curve_names_sql = (
+                            "SELECT DISTINCT tidal_curve_name FROM swmm_tidal_curve GROUP BY tidal_curve_name"
+                        )
+                        names = self.gutils.execute(time_curve_names_sql).fetchall()
+                        if names:
+                            self.tidal_curve_cbo.clear()
+                            for name in names:
+                                self.tidal_curve_cbo.addItem(name[0])
+                            self.tidal_curve_cbo.addItem("")
+
+                            idx = self.tidal_curve_cbo.findText(tabular_curve_name)
+                            self.tidal_curve_cbo.setCurrentIndex(idx)
+
+                        # self.uc.bar_info("Storm Drain external tidal curve saved for inlet " + "?????")
+                        break
+                    else:
+                        break
+            else:
+                break
 
     def storages_tblw_valueChanged(self, I, J):
         self.uc.show_info("TABLE CHANGED in " + str(I) + "  " + str(J))
