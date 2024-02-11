@@ -156,7 +156,7 @@ class StorageUnitsDialog(qtBaseClass, uiDialog):
             return
 
         self.block = True
-
+        self.populate_tabular_curves()
         self.storages_tblw.setRowCount(0)
         for row_number, row_data in enumerate(rows):
             self.storages_tblw.insertRow(row_number)
@@ -234,6 +234,14 @@ class StorageUnitsDialog(qtBaseClass, uiDialog):
 
         # self.select_curve_type()  
         self.highlight_storage_cell(self.grid_element_le.text())
+    
+    def populate_tabular_curves(self):
+        self.tabular_curves_cbo.clear()
+        self.tabular_curves_cbo.addItem("*")
+        curve = self.gutils.execute("SELECT DISTINCT name FROM swmm_other_curves WHERE type = 'Storage'")
+        for c in curve:
+            self.tabular_curves_cbo.addItem(c[0])
+        
         
     def validate_user_swmm_storage_units_cell(self, data, row_number, cell):
         if cell == 14:
@@ -420,7 +428,7 @@ class StorageUnitsDialog(qtBaseClass, uiDialog):
     def tabular_curves_cbo_currentIndexChanged(self):
         row = self.storages_cbo.currentIndex()
         item = QTableWidgetItem()
-        item.setData(Qt.EditRole, self.tabular_curves_cbo.currentIndex() + 1)
+        item.setData(Qt.EditRole, self.tabular_curves_cbo.currentText())
         self.storages_tblw.setItem(row, 18, item)
 
     def storages_tblw_valueChanged(self, I, J):
