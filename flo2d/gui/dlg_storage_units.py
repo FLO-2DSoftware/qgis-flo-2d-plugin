@@ -44,7 +44,7 @@ from .ui_utils import center_canvas, load_ui, set_icon, zoom
 # from Cython.Includes.libcpp import functional
 from fontTools.cu2qu.cu2qu import curve_to_quadratic
 
-from .dlg_outfalls import OutfallTidalCurveDialog, CurveEditorDialog
+from .dlg_outfalls import CurveEditorDialog
 
 uiDialog, qtBaseClass = load_ui("storage_units")
 class StorageUnitsDialog(qtBaseClass, uiDialog):

@@ -351,13 +351,13 @@ class OutfallNodesDialog(qtBaseClass, uiDialog):
 
     def open_tidal_curve(self):
         tidal_curve_name = self.tidal_curve_cbo.currentText()
-        dlg = OutfallsTidalCurveDialog(self.iface, tidal_curve_name)
+        dlg = OutfallTidalCurveDialog(self.iface, tidal_curve_name)
         while True:
             ok = dlg.exec_()
             if ok:
                 if dlg.values_ok:
-                    dlg.save_tidal_curve()
-                    tidal_curve_name = dlg.get_tidal_name()
+                    dlg.save_curve()
+                    tidal_curve_name = dlg.get_curve_name()
                     if tidal_curve_name != "":
                         # Reload tidal curve list and select the one saved:
                         time_curve_names_sql = (
@@ -954,309 +954,6 @@ class OutfallTimeSeriesDialog(qtBaseClass, uiDialog):
         self.outfall_time_series_tblw.selectRow(0)
         self.outfall_time_series_tblw.setFocus()
 
-
-uiDialog, qtBaseClass = load_ui("storm_drain_outfall_tidal_curve")
-class OutfallTidalCurveDialog(qtBaseClass, uiDialog):
-    before_paste = pyqtSignal()
-    after_paste = pyqtSignal()
-    after_delete = pyqtSignal()
-
-    def __init__(self, iface, tidal_curve_name):
-        qtBaseClass.__init__(self)
-
-        uiDialog.__init__(self)
-        self.iface = iface
-        self.tidal_curve_name = tidal_curve_name
-        self.setupUi(self)
-        self.uc = UserCommunication(iface, "FLO-2D")
-        self.con = None
-        self.gutils = None
-
-        self.values_ok = False
-        self.loading = True
-        set_icon(self.add_tidal_data_btn, "add.svg")
-        set_icon(self.delete_tidal_data_btn, "remove.svg")
-
-        self.setup_connection()
-
-        self.outfall_tidal_curve_tblw.setItemDelegate(FloatDelegate(3, self.outfall_tidal_curve_tblw))
-
-        self.tidal_curve_buttonBox.accepted.connect(self.is_ok_to_save_tidal)
-        self.outfall_tidal_curve_tblw.itemChanged.connect(self.otc_tblw_changed)
-        self.add_tidal_data_btn.clicked.connect(self.add_tidal)
-        self.delete_tidal_data_btn.clicked.connect(self.delete_tidal)
-        self.load_tidal_btn.clicked.connect(self.load_tidal_file)
-        self.save_tidal_btn.clicked.connect(self.save_tidal_file)
-        self.copy_btn.clicked.connect(self.copy_to_clipboard)
-        self.paste_btn.clicked.connect(self.paste_from_clipboard)
-
-        self.populate_tidal_curve_dialog()
-
-    def setup_connection(self):
-        con = self.iface.f2d["con"]
-        if con is None:
-            return
-        else:
-            self.con = con
-            self.gutils = GeoPackageUtils(self.con, self.iface)
-
-    def populate_tidal_curve_dialog(self):
-        self.loading = True
-        if self.tidal_curve_name == "":
-            pass
-        else:
-            tidal_sql = "SELECT * FROM swmm_tidal_curve WHERE tidal_curve_name = ?"
-            row = self.gutils.execute(tidal_sql, (self.tidal_curve_name,)).fetchone()
-            if row:
-                self.name_le.setText(row[1])
-                self.description_le.setText(row[2])
-
-                data_qry = """SELECT
-                                hour, 
-                                stage
-                        FROM swmm_tidal_curve_data WHERE tidal_curve_name = ? ORDER BY hour;"""
-                rows = self.gutils.execute(data_qry, (self.tidal_curve_name,)).fetchall()
-                if rows:
-                    # Convert items of first column to float to sort them in ascending order:
-                    rws = []
-                    for row in rows:
-                        rws.append([float(row[0]), row[1]])
-                    rws.sort()
-                    # Restore items of first column to string:
-                    rows = []
-                    for row in rws:
-                        rows.append([str(row[0]), row[1]])
-
-                    self.outfall_tidal_curve_tblw.setRowCount(0)
-
-                    for row_number, row_data in enumerate(rows):
-                        self.outfall_tidal_curve_tblw.insertRow(row_number)
-                        for cell, data in enumerate(row_data):
-                            # if cell == 0:
-                            #     if ":" in data:
-                            #         a, b = data.split(":")
-                            #         b = float(b)/60
-                            #         data = float(a) + b
-                            #     else:
-                            #         data = float(data)
-                            self.outfall_tidal_curve_tblw.setItem(row_number, cell, QTableWidgetItem(str(data)))
-
-            else:
-                self.name_le.setText(self.tidal_curve_name)
-
-        QApplication.restoreOverrideCursor()
-        self.loading = False
-
-    def is_ok_to_save_tidal(self):
-        if self.name_le.text() == "" or self.name_le.text() == "...":
-            self.uc.bar_warn("Tidal Name name required!", 2)
-            self.tidal_curve_name = ""
-            self.values_ok = False
-
-        elif " " in self.name_le.text():
-            self.uc.bar_warn("Tidal Name with spaces not allowed!", 2)
-            self.tidal_curve_name = ""
-            self.values_ok = False
-
-        elif self.description_le.text() == "":
-            self.uc.bar_warn("Tidal Curve description required!", 2)
-            self.values_ok = False
-
-        elif self.outfall_tidal_curve_tblw.rowCount() == 0:
-            self.uc.bar_warn("Tidal Curve table can't be empty!", 2)
-            self.values_ok = False
-
-        else:
-            self.values_ok = True
-
-    def save_tidal_curve(self):
-        delete_sql = "DELETE FROM swmm_tidal_curve WHERE tidal_curve_name = ?"
-        self.gutils.execute(delete_sql, (self.name_le.text(),))
-        insert_sql = "INSERT INTO swmm_tidal_curve (tidal_curve_name, tidal_curve_description) VALUES (?, ?);"
-        self.gutils.execute(
-            insert_sql,
-            (self.name_le.text(), self.description_le.text()),
-        )
-
-        delete_data_sql = "DELETE FROM swmm_tidal_curve_data WHERE tidal_curve_name = ?"
-        self.gutils.execute(delete_data_sql, (self.name_le.text(),))
-
-        insert_data_sql = [
-            """INSERT INTO swmm_tidal_curve_data (tidal_curve_name, hour, stage) VALUES""",
-            3,
-        ]
-        for row in range(0, self.outfall_tidal_curve_tblw.rowCount()):
-            hour = self.outfall_tidal_curve_tblw.item(row, 0)
-            if hour:
-                hour = hour.text()
-
-            stage = self.outfall_tidal_curve_tblw.item(row, 1)
-            if stage:
-                stage = stage.text()
-
-            insert_data_sql += [(self.name_le.text(), hour, stage)]
-        self.gutils.batch_execute(insert_data_sql)
-
-        self.uc.bar_info("Outflow tidal curve " + self.name_le.text() + " saved.", 2)
-        self.tidal_curve_name = self.name_le.text()
-        self.close()
-
-    def get_tidal_name(self):
-        return self.tidal_curve_name
-
-    def otc_tblw_changed(self, Qitem):
-        try:
-            text = float(Qitem.text())
-            Qitem.setText(str(text))
-        except ValueError:
-            Qitem.setText("0.0")
-
-    def add_tidal(self):
-        self.outfall_tidal_curve_tblw.insertRow(self.outfall_tidal_curve_tblw.rowCount())
-        row_number = self.outfall_tidal_curve_tblw.rowCount() - 1
-
-        item = QTableWidgetItem()
-        item.setData(Qt.DisplayRole, "0.0")
-        self.outfall_tidal_curve_tblw.setItem(row_number, 0, item)
-
-        item = QTableWidgetItem()
-        item.setData(Qt.DisplayRole, "0.0")
-        self.outfall_tidal_curve_tblw.setItem(row_number, 1, item)
-
-        self.outfall_tidal_curve_tblw.selectRow(row_number)
-        self.outfall_tidal_curve_tblw.setFocus()
-
-    def delete_tidal(self):
-        self.outfall_tidal_curve_tblw.removeRow(self.outfall_tidal_curve_tblw.currentRow())
-        self.outfall_tidal_curve_tblw.selectRow(0)
-        self.outfall_tidal_curve_tblw.setFocus()
-
-    def load_tidal_file(self):
-        self.uc.clear_bar_messages()
-
-        s = QSettings()
-        last_dir = s.value("FLO-2D/lastSWMMDir", "")
-        tidal_file, __ = QFileDialog.getOpenFileName(
-            None,
-            "Select file with tidal data to load",
-            directory=last_dir,
-            filter="Text files (*.txt *.TXT*);;All files(*.*)",
-        )
-        if not tidal_file:
-            return
-        s.setValue("FLO-2D/lastSWMMDir", os.path.dirname(tidal_file))
-
-        QApplication.setOverrideCursor(Qt.WaitCursor)
-        # Load file into table:
-        try:
-            with open(tidal_file, "r") as f1:
-                lines = f1.readlines()
-            if len(lines) > 0:
-                self.outfall_tidal_curve_tblw.setRowCount(0)
-                j = -1
-                for i in range(1, len(lines)):
-                    if i == 1:
-                        desc = lines[i]
-                    else:
-                        if lines[i].strip() != "":
-                            nxt = lines[i].split()
-                            if len(nxt) == 2:
-                                j += 1
-                                self.outfall_tidal_curve_tblw.insertRow(j)
-                                hour, stage = nxt[0], nxt[1]
-                                self.outfall_tidal_curve_tblw.setItem(j, 0, QTableWidgetItem(hour))
-                                self.outfall_tidal_curve_tblw.setItem(j, 1, QTableWidgetItem(stage))
-                            else:
-                                self.uc.bar_warn("Wrong data in line " + str(j + 4) + " of tidal file!")
-                        else:
-                            self.uc.bar_warn("Wrong data in line " + str(j + 4) + " of tidal file!")
-                self.description_le.setText(desc)
-        except Exception as e:
-            QApplication.restoreOverrideCursor()
-            self.uc.show_error("ERROR 090422.0435: importing Outfall Curve File failed!.\n", e)
-
-        QApplication.restoreOverrideCursor()
-
-    def save_tidal_file(self):
-        self.uc.clear_bar_messages()
-
-        if self.outfall_tidal_curve_tblw.rowCount() == 0:
-            self.uc.bar_warn("Tidal table is empty. There is nothing to save!", 2)
-            return
-        elif self.description_le.text() == "":
-            self.uc.bar_warn("Tidal Curve description required!", 2)
-            return
-
-        s = QSettings()
-        last_dir = s.value("FLO-2D/lastSWMMDir", "")
-
-        tidal_file, __ = QFileDialog.getSaveFileName(
-            None,
-            "Save tidal table as file...",
-            directory=last_dir,
-            filter="Text files (*.txt *.TXT*);;All files(*.*)",
-        )
-
-        if not tidal_file:
-            return
-
-        s.setValue("FLO-2D/lastSWMMDir", os.path.dirname(tidal_file))
-
-        QApplication.setOverrideCursor(Qt.WaitCursor)
-        with open(tidal_file, "w") as tfile:
-            tfile.write("EPASWMM Curve Data")
-            tfile.write("\n" + self.description_le.text())
-
-            for row in range(0, self.outfall_tidal_curve_tblw.rowCount()):
-                hour = self.outfall_tidal_curve_tblw.item(row, 0)
-                if hour:
-                    hour = hour.text()
-                else:
-                    hour = "0.0"
-                stage = self.outfall_tidal_curve_tblw.item(row, 1)
-                if stage:
-                    stage = stage.text()
-                else:
-                    stage = "0.0"
-                tfile.write("\n" + hour + "    " + stage)
-
-        QApplication.restoreOverrideCursor()
-        self.uc.bar_info("Tidal curve data saved as " + tidal_file, 4)
-
-    def copy_to_clipboard(self):
-        copy_tablewidget_selection(self.outfall_tidal_curve_tblw)
-
-    def paste_from_clipboard(self):
-        QApplication.setOverrideCursor(Qt.WaitCursor)
-        self.before_paste.emit()
-
-        paste_str = QApplication.clipboard().text()
-        rows = paste_str.split("\n")
-        num_rows = len(rows) - 1
-        if num_rows > 0:
-            num_cols = rows[0].count("\t") + 1
-            if num_cols > 2:
-                self.uc.bar_info("Too many columns (" + str(num_cols) + ") to paste!")
-            elif num_cols < 2:
-                self.uc.bar_info("Two columns needed. Only (" + str(num_cols) + ") given!")
-            else:
-                for row in rows:
-                    if row:
-                        data = row.split()
-                        j = self.outfall_tidal_curve_tblw.rowCount()
-                        self.outfall_tidal_curve_tblw.insertRow(j)
-                        hour, stage = data[0], data[1]
-                        self.outfall_tidal_curve_tblw.setItem(j, 0, QTableWidgetItem(hour))
-                        self.outfall_tidal_curve_tblw.setItem(j, 1, QTableWidgetItem(stage))
-                self.outfall_tidal_curve_tblw.selectRow(self.outfall_tidal_curve_tblw.rowCount() - 1)
-                self.outfall_tidal_curve_tblw.setFocus()
-        else:
-            self.uc.bar_info("No complete rows with two columns to paste!")
-
-        self.after_paste.emit()
-        QApplication.restoreOverrideCursor()
-
-
 class TidalHourDelegate(QStyledItemDelegate):
     def createEditor(self, parent, option, index):
         editor = super(TidalHourDelegate, self).createEditor(parent, option, index)
@@ -1497,12 +1194,15 @@ class CurveEditorDialog(qtBaseClass, uiDialog):
         self.after_paste.emit()
         QApplication.restoreOverrideCursor()
         
-class OutfallsTidalCurveDialog(CurveEditorDialog):    
+class OutfallTidalCurveDialog(CurveEditorDialog):    
     def populate_curve_dialog(self):
         self.loading = True
         if self.curve_name == "":
             pass
         else:
+            self.setWindowTitle("Outfall Tidal Curve Editor")
+            self.label_2.setText("Tidal Curve Name")
+            self.curve_tblw.setHorizontalHeaderLabels(["Hour", "Stage"])       
             tidal_sql = "SELECT * FROM swmm_tidal_curve WHERE tidal_curve_name = ?"
             row = self.gutils.execute(tidal_sql, (self.curve_name,)).fetchone()
             if row:
