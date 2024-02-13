@@ -1027,7 +1027,7 @@
                     </property>
                     <property name="icon">
                      <iconset>
-                      <normaloff>../AppData/Roaming/QGIS/QGIS3/profiles/default/python/plugins/flo2d/img/external_inflow.svg</normaloff>../AppData/Roaming/QGIS/QGIS3/profiles/default/python/plugins/flo2d/img/external_inflow.svg</iconset>
+                      <normaloff>../AppData/Roaming/QGIS/QGIS3/profiles/default/python/plugins/flo2d/img/open_dialog.svg</normaloff>../AppData/Roaming/QGIS/QGIS3/profiles/default/python/plugins/flo2d/img/open_dialog.svg</iconset>
                     </property>
                     <property name="checkable">
                      <bool>true</bool>

@@ -59,7 +59,7 @@ class InletNodesDialog(qtBaseClass, uiDialog):
             "Save Inlet/Junctions to 'Storm Drain Nodes-Inlets/Junctions' User Layer"
         )
         set_icon(self.find_inlet_cell_btn, "eye-svgrepo-com.svg")
-        set_icon(self.external_inflow_btn, "external_inflow.svg")
+        set_icon(self.external_inflow_btn, "open_dialog.svg")
         set_icon(self.zoom_in_inlet_btn, "zoom_in.svg")
         set_icon(self.zoom_out_inlet_btn, "zoom_out.svg")
 

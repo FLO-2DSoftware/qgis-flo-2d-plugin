@@ -44,7 +44,7 @@ from .ui_utils import center_canvas, load_ui, set_icon, zoom
 # from Cython.Includes.libcpp import functional
 from fontTools.cu2qu.cu2qu import curve_to_quadratic
 
-from .dlg_outfalls import OutfallTidalCurveDialog
+from .dlg_outfalls import OutfallTidalCurveDialog, CurveEditorDialog
 
 uiDialog, qtBaseClass = load_ui("storage_units")
 class StorageUnitsDialog(qtBaseClass, uiDialog):
@@ -62,10 +62,10 @@ class StorageUnitsDialog(qtBaseClass, uiDialog):
             "Save storage units to 'Storm Drain Storage Units' User Layer"
         )
         set_icon(self.find_storage_cell_btn, "eye-svgrepo-com.svg")
-        set_icon(self.external_inflow_btn, "external_inflow.svg")
+        set_icon(self.external_inflow_btn, "open_dialog.svg")
         set_icon(self.zoom_in_storage_btn, "zoom_in.svg")
         set_icon(self.zoom_out_storage_btn, "zoom_out.svg")
-        set_icon(self.open_tabular_curve_btn, "external_inflow.svg")
+        set_icon(self.open_tabular_curve_btn, "open_dialog.svg")
 
         self.save_this_storage_btn.setVisible(False)
         self.plot = plot
@@ -435,7 +435,7 @@ class StorageUnitsDialog(qtBaseClass, uiDialog):
 
     def open_tabular_curve(self):
         tabular_curve_name = self.tabular_curves_cbo.currentText()
-        dlg = OutfallTidalCurveDialog(self.iface, tabular_curve_name)
+        dlg = CurveEditorDialog(self.iface, tabular_curve_name)
         while True:
             ok = dlg.exec_()
             if ok:
