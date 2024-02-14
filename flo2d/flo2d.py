@@ -533,6 +533,13 @@ class Flo2D(object):
         )
 
         self.add_action(
+            os.path.join(self.plugin_dir, "img/grid_info_tool.svg"),
+            text=self.tr("FLO-2D Grid Info Tool"),
+            callback=lambda: self.activate_grid_info_tool(),
+            parent=self.iface.mainWindow(),
+        )
+
+        self.add_action(
             os.path.join(self.plugin_dir, "img/editmetadata.svg"),
             text=self.tr("FLO-2D Project Review"),
             callback=None,
@@ -1082,7 +1089,6 @@ class Flo2D(object):
         """
         self.uncheck_all_info_tools()
         dlg = ExternalProgramFLO2D(self.iface, "Run Settings")
-        # dlg.debug_run_btn.setVisible(False)
         dlg.exec_folder_lbl.setText("FLO-2D Folder")
         ok = dlg.exec_()
         if not ok:
@@ -1098,7 +1104,8 @@ class Flo2D(object):
                 flo2d_v = get_flo2dpro_version(s.value("FLO-2D/last_flopro") + "/FLOPRO.exe")
                 self.gutils.set_metadata_par("FLO-2D_V", flo2d_v)
 
-            self.uc.show_info("Run Settings saved!")
+            self.uc.bar_info("Run Settings saved!")
+            self.uc.log_info(f"Run Settings saved!\nProject Folder: {project_dir}\nFLO-2D Folder: {flo2d_dir}")
 
     @connection_required
     def quick_run_flopro(self):
@@ -3686,6 +3693,14 @@ class Flo2D(object):
         self.canvas.unsetMapTool(self.grid_info_tool)
         self.canvas.unsetMapTool(self.info_tool)
         self.canvas.unsetMapTool(self.results_tool)
+
+        for tb in self.toolButtons:
+            tb.setChecked(False)
+            if tb.toolTip() == "<b>FLO-2D Project Review</b>":
+                tb.setIcon(QIcon(os.path.join(self.plugin_dir, "img/editmetadata.svg")))
+
+        for ac in self.toolActions:
+            ac.setChecked(False)
 
         for tb in self.toolButtons:
             tb.setChecked(False)
