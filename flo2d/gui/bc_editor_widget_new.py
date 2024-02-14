@@ -295,6 +295,9 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
         """
         Function to create the bcs
         """
+        self.inflow_bc_center_btn.setChecked(False)
+        self.outflow_bc_center_btn.setChecked(False)
+
         self.bc_type = type
         if self.lyrs.any_lyr_in_edit(*self.user_bc_tables):
             if self.uc.question("Would you like to save the Boundary Condition?"):
@@ -308,19 +311,6 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
 
         btn.setCheckable(True)
         btn.setChecked(True)
-
-        # if type == "inflow":
-        #     inflow_data = self.gutils.execute("""SELECT name, fid, time_series_fid
-        #                             FROM inflow
-        #                             ORDER BY fid DESC
-        #                             LIMIT 1;""")
-        #     self.inflow_bc_name_cbo.addItem(inflow_data[0], [inflow_data[1], inflow_data[2]])
-        # if type == "outflow":
-        #     bc_fid = self.gutils.execute("""SELECT fid
-        #                             FROM outflow
-        #                             ORDER BY fid DESC
-        #                             LIMIT 1;""")
-        #     self.populate_outflows(outflow_fid=bc_fid)
 
         if not self.lyrs.enter_edit_mode(table, {"type": type}):
             return
