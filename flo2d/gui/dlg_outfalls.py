@@ -69,6 +69,8 @@ class OutfallNodesDialog(qtBaseClass, uiDialog):
         set_icon(self.find_outfall_cell_btn, "eye-svgrepo-com.svg")
         set_icon(self.zoom_in_outfall_btn, "zoom_in.svg")
         set_icon(self.zoom_out_outfall_btn, "zoom_out.svg")
+        set_icon(self.open_tidal_curve_btn, "open_dialog.svg")
+        set_icon(self.open_time_series_btn, "open_dialog.svg")
 
         self.outfalls_tuple = ("FIXED", "FREE", "NORMAL", "TIDAL", "TIMESERIES")
 
