@@ -28,6 +28,7 @@ class PlotWidget(QWidget):
     def __init__(self):
         QWidget.__init__(self)
         self.items = {}
+        self.chbox = []
         # self.org_bed_plot = None
         # self.new_bed_plot = None
         # self.org_plot = None
@@ -82,20 +83,6 @@ class PlotWidget(QWidget):
 
     def mouse_clicked(self, mouseClickEvent):
 
-        not_checked = [
-            "Max. Water",
-            "Velocity (fps)",
-            "Froude",
-            "Flow area (sq. ft)",
-            "Wetted perimeter (ft)",
-            "Hydraulic radius (ft)",
-            "Top width (ft)",
-            "Width/Depth",
-            "Energy slope",
-            "Shear stress (lb/sq. ft)",
-            "Surface Area (sq. ft)"
-        ]
-        none_checked = True
         if mouseClickEvent.button() == 1:
             title = self.plot.titleLabel.text
             if "Discharge" in title or "Channel" in title or "Cross":
@@ -121,18 +108,21 @@ class PlotWidget(QWidget):
                     
     def checkboxChanged(self, state):
         n_chboxes = len(self.chbox)
-        if n_chboxes > 0:
-            # Redraw plot with checked/unchecked variables:
-            for i in range(0, n_chboxes):
-                if not self.chbox[i][0].isChecked():
-                    self.plot.legend.items[i][1].hide()
-                    self.plot.items[i].hide()
-                else:
-                    self.plot.legend.items[i][1].show()
-                    self.plot.items[i].show()
-            self.plot.autoRange()
-        else:
-            print("No checkboxes")         
+        try:
+            if n_chboxes > 0:
+                # Redraw plot with checked/unchecked variables:
+                for i in range(0, n_chboxes):
+                    if not self.chbox[i][0].isChecked():
+                        self.plot.legend.items[i][1].hide()
+                        self.plot.items[i].hide()
+                    else:
+                        self.plot.legend.items[i][1].show()
+                        self.plot.items[i].show()
+                self.plot.autoRange()
+            else:
+                print("No checkboxes")
+        except:
+            return
 
     def mouseDoubleClickEvent(self, e):
  
