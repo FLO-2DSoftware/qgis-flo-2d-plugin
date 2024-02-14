@@ -533,13 +533,6 @@ class Flo2D(object):
         )
 
         self.add_action(
-            os.path.join(self.plugin_dir, "img/grid_info_tool.svg"),
-            text=self.tr("FLO-2D Grid Info Tool"),
-            callback=lambda: self.activate_grid_info_tool(),
-            parent=self.iface.mainWindow(),
-        )
-
-        self.add_action(
             os.path.join(self.plugin_dir, "img/editmetadata.svg"),
             text=self.tr("FLO-2D Project Review"),
             callback=None,
