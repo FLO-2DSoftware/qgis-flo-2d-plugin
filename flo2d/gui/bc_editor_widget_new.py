@@ -1278,7 +1278,14 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
 
                 self.gutils.execute(type_qry)
                 # update series and tables names
-                outflow_name_qry = """UPDATE outflow SET name = 'Outflow ' ||  cast(fid as text) WHERE name IS NULL;"""
+                # outflow_name_qry = """UPDATE outflow SET name = 'Outflow ' ||  cast(fid as text) WHERE name IS NULL;"""
+                outflow_name_qry = """
+                                   UPDATE outflow
+                                   SET name = 'Outflow ' || CAST(outflow_cells.grid_fid AS TEXT)
+                                   FROM outflow_cells
+                                   WHERE outflow.name IS NULL
+                                   AND outflow.fid = outflow_cells.outflow_fid
+                                   """
                 self.gutils.execute(outflow_name_qry)
                 ts_name_qry = """UPDATE outflow_time_series SET name = 'Time series ' ||  cast(fid as text);"""
                 self.gutils.execute(ts_name_qry)
