@@ -1285,16 +1285,19 @@ class StorageUnitTabularCurveDialog(CurveEditorDialog):
         if self.curve_name == "":
             pass
         else:
-            tidal_sql = "SELECT * FROM swmm_tidal_curve WHERE tidal_curve_name = ?"
-            row = self.gutils.execute(tidal_sql, (self.curve_name,)).fetchone()
+            self.setWindowTitle("Storage Unit Tabular Curve Editor")
+            self.label_2.setText("Tabular Curve Name")
+            self.curve_tblw.setHorizontalHeaderLabels(["Depth", "Area"])       
+            curve_sql = "SELECT * FROM swmm_other_curves WHERE name = ? AND type = 'Storage'"
+            row = self.gutils.execute(curve_sql, (self.curve_name,)).fetchone()
             if row:
                 self.name_le.setText(row[1])
-                self.description_le.setText(row[2])
+                self.description_le.setText(row[3])
 
                 data_qry = """SELECT
-                                hour, 
-                                stage
-                        FROM swmm_tidal_curve_data WHERE tidal_curve_name = ? ORDER BY hour;"""
+                                x_value, 
+                                y_value
+                        FROM swmm_other_curves WHERE name = ? and type = 'Storage' ORDER BY x_value;"""
                 rows = self.gutils.execute(data_qry, (self.curve_name,)).fetchall()
                 if rows:
                     # Convert items of first column to float to sort them in ascending order:
@@ -1312,49 +1315,33 @@ class StorageUnitTabularCurveDialog(CurveEditorDialog):
                     for row_number, row_data in enumerate(rows):
                         self.curve_tblw.insertRow(row_number)
                         for cell, data in enumerate(row_data):
-                            # if cell == 0:
-                            #     if ":" in data:
-                            #         a, b = data.split(":")
-                            #         b = float(b)/60
-                            #         data = float(a) + b
-                            #     else:
-                            #         data = float(data)
                             self.curve_tblw.setItem(row_number, cell, QTableWidgetItem(str(data)))
-
             else:
                 self.name_le.setText(self.curve_name)
 
         QApplication.restoreOverrideCursor()
-        self.loading = False  
+        self.loading = False   
         
     def save_curve(self):
-        delete_sql = "DELETE FROM swmm_tidal_curve WHERE tidal_curve_name = ?"
-        self.gutils.execute(delete_sql, (self.name_le.text(),))
-        insert_sql = "INSERT INTO swmm_tidal_curve (tidal_curve_name, tidal_curve_description) VALUES (?, ?);"
-        self.gutils.execute(
-            insert_sql,
-            (self.name_le.text(), self.description_le.text()),
-        )
-
-        delete_data_sql = "DELETE FROM swmm_tidal_curve_data WHERE tidal_curve_name = ?"
+        delete_data_sql = "DELETE FROM swmm_other_curves WHERE name = ? and type = 'Storage'"
         self.gutils.execute(delete_data_sql, (self.name_le.text(),))
 
         insert_data_sql = [
-            """INSERT INTO swmm_tidal_curve_data (tidal_curve_name, hour, stage) VALUES""",
-            3,
+            """INSERT INTO swmm_other_curves (name, type,  description, x_value, y_value) VALUES""",
+            5,
         ]
         for row in range(0, self.curve_tblw.rowCount()):
-            hour = self.curve_tblw.item(row, 0)
-            if hour:
-                hour = hour.text()
+            x = self.curve_tblw.item(row, 0)
+            if x:
+                x = x.text()
 
-            stage = self.curve_tblw.item(row, 1)
-            if stage:
-                stage = stage.text()
+            y = self.curve_tblw.item(row, 1)
+            if y:
+                y = y.text()
 
-            insert_data_sql += [(self.name_le.text(), hour, stage)]
+            insert_data_sql += [(self.name_le.text(), 'Storage',  self.description_le.text(), x, y)]
         self.gutils.batch_execute(insert_data_sql)
 
         self.uc.bar_info("Curve " + self.name_le.text() + " saved.", 2)
         self.curve_name = self.name_le.text()
-        self.close()
+        self.close()  

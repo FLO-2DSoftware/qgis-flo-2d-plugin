@@ -1296,7 +1296,7 @@
                     <normaloff>../AppData/Roaming/QGIS/QGIS3/profiles/default/python/plugins/flo2d/img/open_dialog.svg</normaloff>../AppData/Roaming/QGIS/QGIS3/profiles/default/python/plugins/flo2d/img/open_dialog.svg</iconset>
                   </property>
                   <property name="checkable">
-                   <bool>true</bool>
+                   <bool>false</bool>
                   </property>
                  </widget>
                 </item>
