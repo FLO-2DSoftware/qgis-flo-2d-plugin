@@ -1646,25 +1646,17 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         self.plot.add_item("Bed elevation", [sta, bed], col=QColor(Qt.black), sty=Qt.SolidLine)
         self.plot.add_item("Left bank", [sta, lb], col=QColor(Qt.darkGreen), sty=Qt.SolidLine)
         self.plot.add_item("Right bank", [sta, rb], col=QColor(Qt.darkYellow), sty=Qt.SolidLine)
-        self.plot.add_item("Max. Water", [sta, max_water_elev], col=QColor(Qt.blue), sty=Qt.SolidLine)
-        self.plot.add_item("Velocity (fps)", [sta, max_velocity], col=QColor(Qt.green), sty=Qt.SolidLine)
-        self.plot.add_item("Froude", [sta, max_froude], col=QColor(Qt.gray), sty=Qt.SolidLine)
-        self.plot.add_item("Flow area (sq. ft)", [sta, max_flow_area], col=QColor(Qt.red), sty=Qt.SolidLine)
-        self.plot.add_item("Wetted perimeter (ft)", [sta, max_w_perimeter], col=QColor(Qt.yellow), sty=Qt.SolidLine)
-        self.plot.add_item("Hydraulic radius (ft)", [sta, max_hyd_radius], col=QColor(Qt.darkBlue), sty=Qt.SolidLine)
-        self.plot.add_item("Top width (ft)", [sta, max_top_width], col=QColor(Qt.darkRed), sty=Qt.SolidLine)
-        self.plot.add_item("Width/Depth", [sta, max_width_depth], col=QColor(Qt.darkCyan), sty=Qt.SolidLine)
-        self.plot.add_item("Energy slope", [sta, max_energy_slope], col=QColor(Qt.magenta), sty=Qt.SolidLine)
-        self.plot.add_item("Shear stress (lb/sq. ft)", [sta, max_shear_stress], col=QColor(Qt.darkYellow), sty=Qt.SolidLine)
-        self.plot.add_item("Surface Area (sq. ft)", [sta, max_surf_area], col=QColor(Qt.darkMagenta), sty=Qt.SolidLine)
-
-        for i in range(0, 14):
-            if i in [0, 1, 2]:
-                self.plot.plot.legend.items[i][1].show()
-                self.plot.plot.items[i].show()
-            else:
-                self.plot.plot.legend.items[i][1].hide()
-                self.plot.plot.items[i].hide()
+        self.plot.add_item("Max. Water", [sta, max_water_elev], col=QColor(Qt.blue), sty=Qt.SolidLine, hide=True)
+        self.plot.add_item("Velocity (fps)", [sta, max_velocity], col=QColor(Qt.green), sty=Qt.SolidLine, hide=True)
+        self.plot.add_item("Froude", [sta, max_froude], col=QColor(Qt.gray), sty=Qt.SolidLine, hide=True)
+        self.plot.add_item("Flow area (sq. ft)", [sta, max_flow_area], col=QColor(Qt.red), sty=Qt.SolidLine, hide=True)
+        self.plot.add_item("Wetted perimeter (ft)", [sta, max_w_perimeter], col=QColor(Qt.yellow), sty=Qt.SolidLine, hide=True)
+        self.plot.add_item("Hydraulic radius (ft)", [sta, max_hyd_radius], col=QColor(Qt.darkBlue), sty=Qt.SolidLine, hide=True)
+        self.plot.add_item("Top width (ft)", [sta, max_top_width], col=QColor(Qt.darkRed), sty=Qt.SolidLine, hide=True)
+        self.plot.add_item("Width/Depth", [sta, max_width_depth], col=QColor(Qt.darkCyan), sty=Qt.SolidLine, hide=True)
+        self.plot.add_item("Energy slope", [sta, max_energy_slope], col=QColor(Qt.magenta), sty=Qt.SolidLine, hide=True)
+        self.plot.add_item("Shear stress (lb/sq. ft)", [sta, max_shear_stress], col=QColor(Qt.darkYellow), sty=Qt.SolidLine, hide=True)
+        self.plot.add_item("Surface Area (sq. ft)", [sta, max_surf_area], col=QColor(Qt.darkMagenta), sty=Qt.SolidLine, hide=True)
 
     def show_hydrograph(self, table, fid):
         """
@@ -1744,25 +1736,17 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         self.plot.plot.setLabel("bottom", text="Time (hrs)")
         self.plot.plot.setLabel("left", text="")
         self.plot.add_item("Discharge (cfs)", [time_list, discharge_list], col=QColor(Qt.darkYellow), sty=Qt.SolidLine)
-        self.plot.add_item("Thalweg depth (ft)", [time_list, thalweg_list], col=QColor(Qt.black), sty=Qt.SolidLine)
-        self.plot.add_item("Velocity (fps)", [time_list, velocity_list], col=QColor(Qt.darkGreen), sty=Qt.SolidLine)
-        self.plot.add_item("Froude", [time_list, froude_list], col=QColor(Qt.blue), sty=Qt.SolidLine)
-        self.plot.add_item("Flow area (sq. ft)", [time_list, flow_area_list], col=QColor(Qt.red), sty=Qt.SolidLine)
-        self.plot.add_item("Wetted perimeter (ft)", [time_list, w_perimeter_list], col=QColor(Qt.yellow), sty=Qt.SolidLine)
-        self.plot.add_item("Hydraulic radius (ft)", [time_list, hyd_radius_list], col=QColor(Qt.darkBlue), sty=Qt.SolidLine)
-        self.plot.add_item("Top width (ft)", [time_list, top_width_list], col=QColor(Qt.darkRed), sty=Qt.SolidLine)
-        self.plot.add_item("Width/Depth", [time_list, width_depth_list], col=QColor(Qt.darkCyan), sty=Qt.SolidLine)
-        self.plot.add_item("Energy slope", [time_list, energy_slope_list], col=QColor(Qt.magenta), sty=Qt.SolidLine)
-        self.plot.add_item("Shear stress (lb/sq. ft)", [time_list, shear_stress_list], col=QColor(Qt.darkYellow))
-        self.plot.add_item("Surface Area (sq. ft)", [time_list, surf_area_list], col=QColor(Qt.darkMagenta))
-
-        for i in range(0, 12):
-            if i == 0:
-                self.plot.plot.legend.items[i][1].show()
-                self.plot.plot.items[i].show()
-            else:
-                self.plot.plot.legend.items[i][1].hide()
-                self.plot.plot.items[i].hide()
+        self.plot.add_item("Thalweg depth (ft)", [time_list, thalweg_list], col=QColor(Qt.black), sty=Qt.SolidLine, hide=True)
+        self.plot.add_item("Velocity (fps)", [time_list, velocity_list], col=QColor(Qt.darkGreen), sty=Qt.SolidLine, hide=True)
+        self.plot.add_item("Froude", [time_list, froude_list], col=QColor(Qt.blue), sty=Qt.SolidLine, hide=True)
+        self.plot.add_item("Flow area (sq. ft)", [time_list, flow_area_list], col=QColor(Qt.red), sty=Qt.SolidLine, hide=True)
+        self.plot.add_item("Wetted perimeter (ft)", [time_list, w_perimeter_list], col=QColor(Qt.yellow), sty=Qt.SolidLine, hide=True)
+        self.plot.add_item("Hydraulic radius (ft)", [time_list, hyd_radius_list], col=QColor(Qt.darkBlue), sty=Qt.SolidLine, hide=True)
+        self.plot.add_item("Top width (ft)", [time_list, top_width_list], col=QColor(Qt.darkRed), sty=Qt.SolidLine, hide=True)
+        self.plot.add_item("Width/Depth", [time_list, width_depth_list], col=QColor(Qt.darkCyan), sty=Qt.SolidLine, hide=True)
+        self.plot.add_item("Energy slope", [time_list, energy_slope_list], col=QColor(Qt.magenta), sty=Qt.SolidLine, hide=True)
+        self.plot.add_item("Shear stress (lb/sq. ft)", [time_list, shear_stress_list], col=QColor(Qt.darkYellow), hide=True)
+        self.plot.add_item("Surface Area (sq. ft)", [time_list, surf_area_list], col=QColor(Qt.darkMagenta), hide=True)
 
     def reassign_xs_rightbanks_grid_id_from_schematized_rbanks(self, xs_seg_fid, right_bank_fid):
         """Takes all schematized left bank cross sections (from 'cham_elems' layer) identified by 'xs_seg_fid', and

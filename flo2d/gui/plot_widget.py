@@ -29,10 +29,6 @@ class PlotWidget(QWidget):
         QWidget.__init__(self)
         self.items = {}
         self.chbox = []
-        # self.org_bed_plot = None
-        # self.new_bed_plot = None
-        # self.org_plot = None
-        # self.new_plot = None
         self.layout = QVBoxLayout()
         self.pw = pg.PlotWidget()
         self.plot = self.pw.getPlotItem()
@@ -45,7 +41,6 @@ class PlotWidget(QWidget):
         self._sizehint = QSize(width, height)
 
     def sizeHint(self):
-        # print('sizeHint:', self._sizehint)
         if self._sizehint is not None:
             return self._sizehint
         return super(PlotWidget, self).sizeHint()
@@ -57,29 +52,15 @@ class PlotWidget(QWidget):
         self.plot.setLabel("left", text="")
         self.items = {}
 
-    def add_item(self, name, data, col=QColor("#0000aa"), sty=Qt.SolidLine):
+    def add_item(self, name, data, col=QColor("#0000aa"), sty=Qt.SolidLine, hide=False):
         x, y = data
         pen = pg.mkPen(color=col, width=2, style=sty, cosmetic=True)
         self.items[name] = self.plot.plot(x=x, y=y, connect="finite", pen=pen, name=name)
 
-    # def addItem(self, item, name):
-    #     widget = QRadioButton(name)
-    #     palette = widget.palette()
-    #     # palette.setColor(QPalette.Window, Qt.transparent)
-    #     # palette.setColor(QPalette.WindowText, Qt.white)
-    #     widget.setPalette(palette)
-    #     # self._group.addButton(widget)
-    #     # row = self.layout.rowCount()
-    #     # widget.clicked.connect(lambda: self.clicked.emit(row))
-    #     proxy = item.scene().addWidget(widget)
-    #     if isinstance(item, ItemSample):
-    #         sample = item
-    #     else:
-    #         sample = ItemSample(item)
-    #     self.layout.addItem(proxy, row, 0)
-    #     self.layout.addItem(sample, row, 1)
-    #     self.items.append((proxy, sample))
-    #     self.updateSize()
+        if not hide:
+            self.items[name].show()
+        else:
+            self.items[name].hide()
 
     def mouse_clicked(self, mouseClickEvent):
 
@@ -103,8 +84,6 @@ class PlotWidget(QWidget):
                         self.plot.items[i].hide()
 
                     selected_action = menu.exec_(QPoint(int(mouseClickEvent.screenPos().x()), int(mouseClickEvent.screenPos().y())))
-
-        # self.plot.autoRange()
                     
     def checkboxChanged(self, state):
         n_chboxes = len(self.chbox)
@@ -125,11 +104,7 @@ class PlotWidget(QWidget):
             return
 
     def mouseDoubleClickEvent(self, e):
- 
-        # increase the scale of the graph
-        # x-axis by 2 and y-axis by 2
-        # self.scale(2, 2)
- 
+
         # print the message
         print("Mouse Double Click Event")
 
@@ -141,14 +116,3 @@ class PlotWidget(QWidget):
         if self.plot.legend:
             if name in self.items:
                 self.plot.removeItem(self.items[name])
-                # self.plot.plot.legend.scene().removeItem(self.items[name])
-
-    # def add_org_bed_plot(self, data):
-    #     x, y = data
-    #     pen = pg.mkPen(color=QColor("#000000"), width=1, cosmetic=True)
-    #     self.items["org_bed"] = self.plot.plot(x=x, y=y, connect="finite", pen=pen, name="Original Bed")
-    #
-    # def add_new_bed_plot(self, data):
-    #     x, y = data
-    #     pen = pg.mkPen(color=QColor("#17874e"), width=2, cosmetic=True)
-    #     self.items["new_bed"] = self.plot.plot(x=x, y=y, connect="finite", pen=pen, name="Current Bed")
