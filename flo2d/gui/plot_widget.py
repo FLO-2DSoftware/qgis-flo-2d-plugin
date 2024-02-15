@@ -36,6 +36,15 @@ class PlotWidget(QWidget):
         self.layout.addWidget(self.pw)
         self.setLayout(self.layout)
         self.plot.scene().sigMouseClicked.connect(self.mouse_clicked)
+        self.plot.scene().sigPrepareForPaint.connect(self.prepareForPaint)
+
+    def prepareForPaint(self):
+        """
+        Function to update the axis when changing the plots
+        """
+        any_checked = any(self.plot.legend.items[i][1].isVisible() for i in range(0, len(self.plot.legend.items)))
+        if any_checked:
+            self.plot.autoRange()
 
     def setSizeHint(self, width, height):
         self._sizehint = QSize(width, height)
