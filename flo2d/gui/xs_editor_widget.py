@@ -172,9 +172,9 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         set_icon(self.revert_changes_btn, "mActionUndo.svg")
         set_icon(self.schematize_xs_btn, "schematize_xsec.svg")
         # set_icon(self.schematize_right_bank_btn, "schematize_right_bank.svg")
-        set_icon(self.save_channel_DAT_files_btn, "export_channels.svg")
-        set_icon(self.reassign_rightbanks_btn, "import_right_banks.svg")
-        set_icon(self.interpolate_xs_btn, "interpolate_xsec.svg")
+        # set_icon(self.save_channel_DAT_files_btn, "export_channels.svg")
+        # set_icon(self.reassign_rightbanks_btn, "import_right_banks.svg")
+        # set_icon(self.interpolate_xs_btn, "interpolate_xsec.svg")
         set_icon(self.confluences_btn, "schematize_confluence.svg")
         set_icon(self.interpolate_channel_n_btn, "interpolate_channel_n.svg")
         set_icon(self.rename_xs_btn, "change_name.svg")
@@ -195,9 +195,9 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         self.delete_schema_btn.clicked.connect(self.delete_schematize_data)
         self.schematize_xs_btn.clicked.connect(self.schematize_channels)
         # self.schematize_right_bank_btn.clicked.connect(self.schematize_right_banks)
-        self.save_channel_DAT_files_btn.clicked.connect(self.save_channel_DAT_and_XSEC_files)
-        self.interpolate_xs_btn.clicked.connect(self.interpolate_xs_values)
-        self.reassign_rightbanks_btn.clicked.connect(self.reassign_rightbanks_from_CHANBANK_file)
+        # self.save_channel_DAT_files_btn.clicked.connect(self.save_channel_DAT_and_XSEC_files)
+        # self.interpolate_xs_btn.clicked.connect(self.interpolate_xs_values)
+        # self.reassign_rightbanks_btn.clicked.connect(self.reassign_rightbanks_from_CHANBANK_file)
         self.confluences_btn.clicked.connect(self.create_confluences)
         self.interpolate_channel_n_btn.clicked.connect(self.interpolate_channel_n)
         self.rename_xs_btn.clicked.connect(self.change_xs_name)
@@ -833,12 +833,16 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         current_fid = self.xs_cbo.currentData()
         self.current_xsec_changed(current_fid)
 
-        # self.uc.show_info('Left Banks, Right Banks, and Cross Sections schematized!')
-        #
         info = ShematizedChannelsInfo(self.iface)
         close = info.exec_()
 
         self.populate_xsec_cbo()
+
+        if self.uc.question("Left Banks, Right Banks, and Cross Sections schematized!\n\nWould you like to "
+                            "interpolate the Cross-Sections?"):
+            self.save_temp_channel_DAT_files()
+            # self.interpolate_xs_btn.clicked.connect(self.interpolate_xs_values)
+            # self.reassign_rightbanks_btn.clicked.connect(self.reassign_rightbanks_from_CHANBANK_file)
 
     def schematize_right_banks(self):
         if self.gutils.is_table_empty("grid"):
@@ -878,6 +882,75 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         rbank = self.lyrs.data["rbank"]["qlyr"]
         self.lyrs.lyrs_to_repaint = [rbank]
         self.lyrs.repaint_layers()
+
+    def save_temp_channel_DAT_files(self):
+        """
+        Function to save the DAT and XSEC files into a temporary folder
+        """
+        xs_survey = self.save_chan_dot_dat_with_zero_natural_cross_sections()
+        if xs_survey:
+            if self.save_xsec_dot_dat_with_only_user_cross_sections():
+                if self.save_CHANBANK():
+                    QApplication.restoreOverrideCursor()
+                    # self.uc.show_info("Files CHAN.DAT, XSEC.DAT, and CHANBANK.DAT saved.")
+                    rtrn = -2
+                    while rtrn == -2:
+                        rtrn = self.run_INTERPOLATE(xs_survey)
+                        if rtrn == 0:
+                            s = QSettings()
+                            outdir = s.value("FLO-2D/lastGdsDir", "")
+
+                            msg = QMessageBox()
+
+                            q = "Cross sections interpolation performed!.\n"
+                            q += "(in Directory: " + outdir + ")\n\n"
+                            q += "CHAN.DAT and XSEC.DAT updated with the interpolated cross section data.\n\n"
+                            q += "Now select:\n\n"
+                            q += "      Import CHAN.DAT, CHANBANK.DAT, and XSEC.DAT files.\n\n"
+                            q += "      or\n\n"
+                            q += "      Run CHANRIGHTBANK.EXE to identify right bank cells.\n"
+                            q += "      (It requires the CHAN.DAT, XSEC.DAT, and TOPO.DAT files).\n"
+                            msg.setWindowTitle("Interpolation Performed")
+                            msg.setText(q)
+                            #                     msg.setStandardButtons(
+                            #                         QMessageBox().Ok | QMessageBox().Cancel)
+                            msg.addButton(
+                                QPushButton("Import CHAN.DAT, CHANBANK.DAT, and XSEC.DAT files"),
+                                QMessageBox.YesRole,
+                            )
+                            msg.addButton(QPushButton("Run CHANRIGHTBANK.EXE"), QMessageBox.NoRole)
+                            msg.addButton(QPushButton("Cancel"), QMessageBox.RejectRole)
+                            msg.setDefaultButton(QMessageBox().Cancel)
+                            msg.setIcon(QMessageBox.Question)
+                            ret = msg.exec_()
+                            if ret == 0:
+                                s = QSettings()
+                                last_dir = s.value("FLO-2D/lastGdsDir", "")
+                                fname = last_dir + "\\CONT.DAT"
+                                if not fname:
+                                    return
+                                self.parser.scan_project_dir(fname)
+                                self.import_chan()
+                                zero, few = self.import_xsec()
+                                m = "Files CHAN.DAT, CHANBANK.DAT, and XSEC.DAT imported."
+                                if zero > 0:
+                                    m += "\n\nWARNING: There are " + str(zero) + " cross sections with no stations."
+                                if few > 0:
+                                    m += (
+                                            "\n\nWARNING: There are "
+                                            + str(few)
+                                            + " cross sections with less than 6 stations."
+                                    )
+                                if zero > 0 or few > 0:
+                                    m += "\n\nIncrement the number of stations in the problematic cross sections."
+                                self.uc.show_info(m)
+                            if ret == 1:
+                                self.uc.show_warn("WARNING 060319.1747: CHANRIGHTBANK.EXE execution is disabled!")
+                            #                         self.run_CHANRIGHTBANK()
+                            if ret == 2:
+                                pass
+
+        QApplication.restoreOverrideCursor()
 
     def save_channel_DAT_and_XSEC_files(self):
         if self.gutils.is_table_empty("grid"):
@@ -1156,112 +1229,111 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
 
         s = QSettings()
         last_dir = s.value("FLO-2D/lastGdsDir", "")
-        outdir = QFileDialog.getExistingDirectory(
-            None,
-            "Select directory where CHAN.DAT, CHANBANK.DAT, and XSEC.DAT files will be exported",
-            directory=last_dir,
-        )
+        # Create a temporary directory on the export folder
+        outdir = last_dir + "/temp/"
+        if not os.path.exists(outdir):
+            os.mkdir(outdir)
+
         if outdir:
             QApplication.setOverrideCursor(Qt.WaitCursor)
-            s.setValue("FLO-2D/lastGdsDir", outdir)
             chan = os.path.join(outdir, "CHAN.DAT")
+            if os.path.isfile(chan):
+                os.remove(chan)
+            # try:
+            with open(chan, "w") as c:
+                surveyed = 0
+                non_surveyed = 0
 
-            try:
-                with open(chan, "w") as c:
-                    surveyed = 0
-                    non_surveyed = 0
+                ISED = self.gutils.get_cont_par("ISED")
 
-                    ISED = self.gutils.get_cont_par("ISED")
+                for row in chan_rows:
+                    row = [x if x is not None else "0" for x in row]
+                    fid = row[0]
+                    if ISED == "0":
+                        row[4] = ""
+                    c.write(
+                        segment.format(*row[1:5])
+                    )  # Writes depinitial, froudc, roughadj, isedn from 'chan' table (schematic layer).
+                    # A single line for each channel segment. The next lines will be the grid elements of
+                    # this channel segment.
+                    previous_xs = -999
 
-                    for row in chan_rows:
-                        row = [x if x is not None else "0" for x in row]
-                        fid = row[0]
-                        if ISED == "0":
-                            row[4] = ""
-                        c.write(
-                            segment.format(*row[1:5])
-                        )  # Writes depinitial, froudc, roughadj, isedn from 'chan' table (schematic layer).
-                        # A single line for each channel segment. The next lines will be the grid elements of
-                        # this channel segment.
-                        previous_xs = -999
+                    for elems in self.gutils.execute(
+                        chan_elems_sql, (fid,)
+                    ):  # each 'elems' is a list [(fid, rbankgrid, fcn, xlen, type)] from
+                        # 'chan_elems' table (the cross sections in the schematic layer),
+                        #  that has the 'fid' value indicated (the channel segment id).
 
-                        for elems in self.gutils.execute(
-                            chan_elems_sql, (fid,)
-                        ):  # each 'elems' is a list [(fid, rbankgrid, fcn, xlen, type)] from
-                            # 'chan_elems' table (the cross sections in the schematic layer),
-                            #  that has the 'fid' value indicated (the channel segment id).
+                        elems = [
+                            x if x is not None else "" for x in elems
+                        ]  # If 'elems' has a None in any of above values of list, replace it by ''
+                        (
+                            eid,
+                            rbank,
+                            fcn,
+                            xlen,
+                            typ,
+                            usr_xs_fid,
+                        ) = elems  # Separates values of list into individual variables.
+                        sql, line, fcn_idx, xlen_idx = sqls[
+                            typ
+                        ]  # depending on 'typ' (R,V,T, or N) select sql (the SQLite SELECT statement to execute),
+                        # line (format to write), fcn_idx (?), and xlen_idx (?)
+                        res = [
+                            x if x is not None else "" for x in self.gutils.execute(sql, (eid,)).fetchone()
+                        ]  # 'res' is a list of values depending on 'typ' (R,V,T, or N).
 
-                            elems = [
-                                x if x is not None else "" for x in elems
-                            ]  # If 'elems' has a None in any of above values of list, replace it by ''
-                            (
-                                eid,
-                                rbank,
-                                fcn,
-                                xlen,
-                                typ,
-                                usr_xs_fid,
-                            ) = elems  # Separates values of list into individual variables.
-                            sql, line, fcn_idx, xlen_idx = sqls[
-                                typ
-                            ]  # depending on 'typ' (R,V,T, or N) select sql (the SQLite SELECT statement to execute),
-                            # line (format to write), fcn_idx (?), and xlen_idx (?)
-                            res = [
-                                x if x is not None else "" for x in self.gutils.execute(sql, (eid,)).fetchone()
-                            ]  # 'res' is a list of values depending on 'typ' (R,V,T, or N).
-
-                            if typ == "N":
-                                res.insert(
-                                    1, fcn
-                                )  # Add 'fcn' (coming from table Â´chan_elems' (cross sections) to 'res' list) in position 'fcn_idx'.
-                                res.insert(
-                                    2, xlen
-                                )  # Add Â´xlen' (coming from table Â´chan_elems' (cross sections) to 'res' list in position 'xlen_idx'.
-                                if usr_xs_fid == previous_xs:
-                                    res.insert(3, 0)
-                                    non_surveyed += 1
-                                else:
-                                    res.insert(
-                                        3,
-                                        natural_channel_section_number_dict[usr_xs_fid],
-                                    )
-                                    surveyed += 1
-                                    previous_xs = usr_xs_fid
+                        if typ == "N":
+                            res.insert(
+                                1, fcn
+                            )  # Add 'fcn' (coming from table Â´chan_elems' (cross sections) to 'res' list) in position 'fcn_idx'.
+                            res.insert(
+                                2, xlen
+                            )  # Add Â´xlen' (coming from table Â´chan_elems' (cross sections) to 'res' list in position 'xlen_idx'.
+                            if usr_xs_fid == previous_xs:
+                                res.insert(3, 0)
+                                non_surveyed += 1
                             else:
                                 res.insert(
-                                    fcn_idx, fcn
-                                )  # Add 'fcn' (coming from table Â´chan_elems' (cross sections) to 'res' list) in position 'fcn_idx'.
-                                res.insert(
-                                    xlen_idx, xlen
-                                )  # Add Â´xlen' (coming from table Â´chan_elems' (cross sections) to 'res' list in position 'xlen_idx'.
-
-                            c.write(line.format(*res))
-
-                    for row in self.gutils.execute(chan_wsel_sql):
-                        c.write(wsel.format(*row[:2]))
-                        c.write(wsel.format(*row[2:]))
-
-                    pairs = []
-                    for row in self.gutils.execute(chan_conf_sql):
-                        chan_elem = row[0]
-                        if not pairs:
-                            pairs.append(chan_elem)
+                                    3,
+                                    natural_channel_section_number_dict[usr_xs_fid],
+                                )
+                                surveyed += 1
+                                previous_xs = usr_xs_fid
                         else:
-                            pairs.append(chan_elem)
-                            c.write(conf.format(*pairs))
-                            del pairs[:]
+                            res.insert(
+                                fcn_idx, fcn
+                            )  # Add 'fcn' (coming from table Â´chan_elems' (cross sections) to 'res' list) in position 'fcn_idx'.
+                            res.insert(
+                                xlen_idx, xlen
+                            )  # Add Â´xlen' (coming from table Â´chan_elems' (cross sections) to 'res' list in position 'xlen_idx'.
 
-                    for row in self.gutils.execute(chan_e_sql):
-                        c.write(chan_e.format(row[0]))
+                        c.write(line.format(*res))
 
-                self.uc.bar_info("CHAN.DAT file exported to " + outdir, dur=5)
-                QApplication.restoreOverrideCursor()
-                return [surveyed, non_surveyed]
+                for row in self.gutils.execute(chan_wsel_sql):
+                    c.write(wsel.format(*row[:2]))
+                    c.write(wsel.format(*row[2:]))
 
-            except Exception as e:
-                QApplication.restoreOverrideCursor()
-                self.uc.show_error("ERROR 190521.1733: couln't export CHAN.DAT and/or XSEC.DAT !", e)
-                return []
+                pairs = []
+                for row in self.gutils.execute(chan_conf_sql):
+                    chan_elem = row[0]
+                    if not pairs:
+                        pairs.append(chan_elem)
+                    else:
+                        pairs.append(chan_elem)
+                        c.write(conf.format(*pairs))
+                        del pairs[:]
+
+                for row in self.gutils.execute(chan_e_sql):
+                    c.write(chan_e.format(row[0]))
+
+            QApplication.restoreOverrideCursor()
+            return [surveyed, non_surveyed]
+
+            # except Exception as e:
+            #     QApplication.restoreOverrideCursor()
+            #     self.uc.show_error("ERROR 190521.1733: couln't export CHAN.DAT and/or XSEC.DAT !", e)
+            #     return []
 
         else:
             return []

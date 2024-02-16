@@ -32,50 +32,7 @@
        </property>
       </spacer>
      </item>
-     <item row="0" column="2">
-      <widget class="QToolButton" name="save_channel_DAT_files_btn">
-       <property name="toolTip">
-        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Create CHAN.DAT XSEC.DAT, and CHANBANK.DAT&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-       </property>
-       <property name="statusTip">
-        <string>Create CHAN.DAT XSEC.DAT, and CHANBANK.DAT</string>
-       </property>
-       <property name="text">
-        <string>...</string>
-       </property>
-       <property name="icon">
-        <iconset>
-         <normaloff>../img/export_channels.svg</normaloff>../img/export_channels.svg</iconset>
-       </property>
-       <property name="iconSize">
-        <size>
-         <width>24</width>
-         <height>24</height>
-        </size>
-       </property>
-      </widget>
-     </item>
-     <item row="0" column="4">
-      <widget class="QToolButton" name="interpolate_xs_btn">
-       <property name="toolTip">
-        <string>Interpolate bed elevation data</string>
-       </property>
-       <property name="text">
-        <string>...</string>
-       </property>
-       <property name="icon">
-        <iconset>
-         <normaloff>../img/interpolate_xsec.svg</normaloff>../img/interpolate_xsec.svg</iconset>
-       </property>
-       <property name="iconSize">
-        <size>
-         <width>24</width>
-         <height>24</height>
-        </size>
-       </property>
-      </widget>
-     </item>
-     <item row="0" column="6">
+     <item row="0" column="3">
       <widget class="QToolButton" name="confluences_btn">
        <property name="toolTip">
         <string>Find confluences</string>
@@ -95,30 +52,7 @@
        </property>
       </widget>
      </item>
-     <item row="0" column="3">
-      <widget class="QToolButton" name="reassign_rightbanks_btn">
-       <property name="toolTip">
-        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Import right banks (CHANBANK.DAT)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-       </property>
-       <property name="statusTip">
-        <string>Import right banks (CHANBANK.DAT)</string>
-       </property>
-       <property name="text">
-        <string>...</string>
-       </property>
-       <property name="icon">
-        <iconset>
-         <normaloff>../img/import_right_banks.svg</normaloff>../img/import_right_banks.svg</iconset>
-       </property>
-       <property name="iconSize">
-        <size>
-         <width>24</width>
-         <height>24</height>
-        </size>
-       </property>
-      </widget>
-     </item>
-     <item row="0" column="7">
+     <item row="0" column="4">
       <spacer name="horizontalSpacer_2">
        <property name="orientation">
         <enum>Qt::Horizontal</enum>
@@ -131,7 +65,7 @@
        </property>
       </spacer>
      </item>
-     <item row="0" column="5">
+     <item row="0" column="2">
       <widget class="QToolButton" name="interpolate_channel_n_btn">
        <property name="toolTip">
         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Interpolate channel n-values&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
