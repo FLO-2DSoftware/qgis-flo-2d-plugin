@@ -451,6 +451,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
 
         if fid is None or fid == -1:
             fid = self.xs_cbo.itemData(0)
+
         self.xs = UserCrossSection(fid, self.con, self.iface)
         row = self.xs.get_row()
         self.lyrs.clear_rubber()
@@ -708,6 +709,9 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
                 confluences = self.lyrs.data["chan_confluences"]["qlyr"]
                 self.lyrs.lyrs_to_repaint = [chan_schem, chan_elems, rbank, confluences]
                 self.lyrs.repaint_layers()
+                current_fid = self.xs_cbo.currentData()
+                self.current_xsec_changed(current_fid)
+                self.populate_xsec_cbo()
             return
 
     def schematize_channels(self):
