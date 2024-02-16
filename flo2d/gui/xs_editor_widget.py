@@ -9,6 +9,7 @@
 # of the License, or (at your option) any later version
 
 import os
+import shutil
 import subprocess
 import sys
 import traceback
@@ -840,6 +841,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         if self.uc.question("Left Banks, Right Banks, and Cross Sections schematized!\n\nWould you like to "
                             "interpolate the Cross-Sections?"):
             self.save_temp_channel_DAT_files()
+
             # self.interpolate_xs_btn.clicked.connect(self.interpolate_xs_values)
             # self.reassign_rightbanks_btn.clicked.connect(self.reassign_rightbanks_from_CHANBANK_file)
 
@@ -941,6 +943,8 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
                                 )
                             if zero > 0 or few > 0:
                                 m += "\n\nIncrement the number of stations in the problematic cross sections."
+
+                            shutil.rmtree(last_dir)
                             self.uc.bar_info(m)
 
         QApplication.restoreOverrideCursor()
