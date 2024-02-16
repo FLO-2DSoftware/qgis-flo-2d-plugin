@@ -65,60 +65,60 @@ from .ui_utils import (
     try_disconnect,
 )
 
-uiDialog, qtBaseClass = load_ui("schematized_channels_info")
-
-
-class ShematizedChannelsInfo(qtBaseClass, uiDialog):
-    def __init__(self, iface):
-        qtBaseClass.__init__(self)
-        uiDialog.__init__(self)
-        self.iface = iface
-        self.uc = UserCommunication(iface, "FLO-2D")
-        self.setupUi(self)
-        self.con = self.iface.f2d["con"]
-        self.gutils = GeoPackageUtils(self.con, self.iface)
-        self.schematized_summary_tblw.horizontalHeader().setStretchLastSection(True)
-        self.populate_schematized_dialog()
-
-    def populate_schematized_dialog(self):
-        try:
-            qry_chan_names = """SELECT name FROM user_left_bank"""
-            chan_names = self.gutils.execute(qry_chan_names).fetchall()
-
-            qry_count_xs = """SELECT COUNT(seg_fid) FROM chan_elems GROUP BY seg_fid;"""
-            total_xs = self.gutils.execute(qry_count_xs).fetchall()
-
-            qry_interpolated = """SELECT COUNT(interpolated) FROM chan_elems WHERE interpolated = 1 GROUP BY seg_fid;"""
-            interpolated_xs = self.gutils.execute(qry_interpolated).fetchall()
-
-            self.schematized_summary_tblw.setRowCount(0)
-            for row_number, name in enumerate(chan_names):
-                self.schematized_summary_tblw.insertRow(row_number)
-                item = QTableWidgetItem()
-                if interpolated_xs:
-                    if row_number <= len(interpolated_xs) - 1:
-                        n_interpolated_xs = interpolated_xs[row_number][0]
-                    else:
-                        n_interpolated_xs = 0
-                else:
-                    n_interpolated_xs = 0
-                #                 n_interpolated_xs = interpolated_xs[row_number][0] if interpolated_xs else 0
-                original_xs = total_xs[row_number][0] - n_interpolated_xs
-                item.setData(Qt.DisplayRole, name[0] + " (" + str(original_xs) + " xsecs)")
-                self.schematized_summary_tblw.setItem(row_number, 0, item)
-                item = QTableWidgetItem()
-                item.setData(Qt.DisplayRole, total_xs[row_number][0])
-                self.schematized_summary_tblw.setItem(row_number, 1, item)
-                item = QTableWidgetItem()
-                item.setData(
-                    Qt.DisplayRole,
-                    str(total_xs[row_number][0]) + " (" + str(n_interpolated_xs) + " interpolated)",
-                )
-                self.schematized_summary_tblw.setItem(row_number, 2, item)
-        except Exception as e:
-            QApplication.restoreOverrideCursor()
-            self.uc.show_error("ERROR 130718.0831: schematized dialog failed to show!", e)
-            return
+# uiDialog, qtBaseClass = load_ui("schematized_channels_info")
+#
+#
+# class ShematizedChannelsInfo(qtBaseClass, uiDialog):
+#     def __init__(self, iface):
+#         qtBaseClass.__init__(self)
+#         uiDialog.__init__(self)
+#         self.iface = iface
+#         self.uc = UserCommunication(iface, "FLO-2D")
+#         self.setupUi(self)
+#         self.con = self.iface.f2d["con"]
+#         self.gutils = GeoPackageUtils(self.con, self.iface)
+#         self.schematized_summary_tblw.horizontalHeader().setStretchLastSection(True)
+#         self.populate_schematized_dialog()
+#
+#     def populate_schematized_dialog(self):
+#         try:
+#             qry_chan_names = """SELECT name FROM user_left_bank"""
+#             chan_names = self.gutils.execute(qry_chan_names).fetchall()
+#
+#             qry_count_xs = """SELECT COUNT(seg_fid) FROM chan_elems GROUP BY seg_fid;"""
+#             total_xs = self.gutils.execute(qry_count_xs).fetchall()
+#
+#             qry_interpolated = """SELECT COUNT(interpolated) FROM chan_elems WHERE interpolated = 1 GROUP BY seg_fid;"""
+#             interpolated_xs = self.gutils.execute(qry_interpolated).fetchall()
+#
+#             self.schematized_summary_tblw.setRowCount(0)
+#             for row_number, name in enumerate(chan_names):
+#                 self.schematized_summary_tblw.insertRow(row_number)
+#                 item = QTableWidgetItem()
+#                 if interpolated_xs:
+#                     if row_number <= len(interpolated_xs) - 1:
+#                         n_interpolated_xs = interpolated_xs[row_number][0]
+#                     else:
+#                         n_interpolated_xs = 0
+#                 else:
+#                     n_interpolated_xs = 0
+#                 #                 n_interpolated_xs = interpolated_xs[row_number][0] if interpolated_xs else 0
+#                 original_xs = total_xs[row_number][0] - n_interpolated_xs
+#                 item.setData(Qt.DisplayRole, name[0] + " (" + str(original_xs) + " xsecs)")
+#                 self.schematized_summary_tblw.setItem(row_number, 0, item)
+#                 item = QTableWidgetItem()
+#                 item.setData(Qt.DisplayRole, total_xs[row_number][0])
+#                 self.schematized_summary_tblw.setItem(row_number, 1, item)
+#                 item = QTableWidgetItem()
+#                 item.setData(
+#                     Qt.DisplayRole,
+#                     str(total_xs[row_number][0]) + " (" + str(n_interpolated_xs) + " interpolated)",
+#                 )
+#                 self.schematized_summary_tblw.setItem(row_number, 2, item)
+#         except Exception as e:
+#             QApplication.restoreOverrideCursor()
+#             self.uc.show_error("ERROR 130718.0831: schematized dialog failed to show!", e)
+#             return
 
 
 uiDialog, qtBaseClass = load_ui("xs_editor")
@@ -833,8 +833,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         current_fid = self.xs_cbo.currentData()
         self.current_xsec_changed(current_fid)
 
-        info = ShematizedChannelsInfo(self.iface)
-        close = info.exec_()
+        self.log_schematized_info()
 
         self.populate_xsec_cbo()
 
@@ -843,6 +842,32 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
             self.save_temp_channel_DAT_files()
             # self.interpolate_xs_btn.clicked.connect(self.interpolate_xs_values)
             # self.reassign_rightbanks_btn.clicked.connect(self.reassign_rightbanks_from_CHANBANK_file)
+
+    def log_schematized_info(self):
+        """
+        Function to log the schematized info
+        """
+        qry_chan_names = """SELECT name FROM user_left_bank"""
+
+        chan_names = self.gutils.execute(qry_chan_names).fetchall()
+
+        qry_count_xs = """SELECT COUNT(seg_fid) FROM chan_elems GROUP BY seg_fid;"""
+        total_xs = self.gutils.execute(qry_count_xs).fetchall()
+
+        qry_interpolated = """SELECT COUNT(interpolated) FROM chan_elems WHERE interpolated = 1 GROUP BY seg_fid;"""
+        interpolated_xs = self.gutils.execute(qry_interpolated).fetchall()
+
+        for row_number, name in enumerate(chan_names):
+            if interpolated_xs:
+                if row_number <= len(interpolated_xs) - 1:
+                    n_interpolated_xs = interpolated_xs[row_number][0]
+                else:
+                    n_interpolated_xs = 0
+            else:
+                n_interpolated_xs = 0
+            original_xs = total_xs[row_number][0] - n_interpolated_xs
+            log_msg = f"Interpolation of {name[0]}: {total_xs[row_number][0]} ({original_xs} xsecs & {n_interpolated_xs} interpolated)"
+            self.uc.log_info(log_msg)
 
     def schematize_right_banks(self):
         if self.gutils.is_table_empty("grid"):
@@ -898,57 +923,25 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
                         rtrn = self.run_INTERPOLATE(xs_survey)
                         if rtrn == 0:
                             s = QSettings()
-                            outdir = s.value("FLO-2D/lastGdsDir", "")
-
-                            msg = QMessageBox()
-
-                            q = "Cross sections interpolation performed!.\n"
-                            q += "(in Directory: " + outdir + ")\n\n"
-                            q += "CHAN.DAT and XSEC.DAT updated with the interpolated cross section data.\n\n"
-                            q += "Now select:\n\n"
-                            q += "      Import CHAN.DAT, CHANBANK.DAT, and XSEC.DAT files.\n\n"
-                            q += "      or\n\n"
-                            q += "      Run CHANRIGHTBANK.EXE to identify right bank cells.\n"
-                            q += "      (It requires the CHAN.DAT, XSEC.DAT, and TOPO.DAT files).\n"
-                            msg.setWindowTitle("Interpolation Performed")
-                            msg.setText(q)
-                            #                     msg.setStandardButtons(
-                            #                         QMessageBox().Ok | QMessageBox().Cancel)
-                            msg.addButton(
-                                QPushButton("Import CHAN.DAT, CHANBANK.DAT, and XSEC.DAT files"),
-                                QMessageBox.YesRole,
-                            )
-                            msg.addButton(QPushButton("Run CHANRIGHTBANK.EXE"), QMessageBox.NoRole)
-                            msg.addButton(QPushButton("Cancel"), QMessageBox.RejectRole)
-                            msg.setDefaultButton(QMessageBox().Cancel)
-                            msg.setIcon(QMessageBox.Question)
-                            ret = msg.exec_()
-                            if ret == 0:
-                                s = QSettings()
-                                last_dir = s.value("FLO-2D/lastGdsDir", "")
-                                fname = last_dir + "\\CONT.DAT"
-                                if not fname:
-                                    return
-                                self.parser.scan_project_dir(fname)
-                                self.import_chan()
-                                zero, few = self.import_xsec()
-                                m = "Files CHAN.DAT, CHANBANK.DAT, and XSEC.DAT imported."
-                                if zero > 0:
-                                    m += "\n\nWARNING: There are " + str(zero) + " cross sections with no stations."
-                                if few > 0:
-                                    m += (
-                                            "\n\nWARNING: There are "
-                                            + str(few)
-                                            + " cross sections with less than 6 stations."
-                                    )
-                                if zero > 0 or few > 0:
-                                    m += "\n\nIncrement the number of stations in the problematic cross sections."
-                                self.uc.show_info(m)
-                            if ret == 1:
-                                self.uc.show_warn("WARNING 060319.1747: CHANRIGHTBANK.EXE execution is disabled!")
-                            #                         self.run_CHANRIGHTBANK()
-                            if ret == 2:
-                                pass
+                            last_dir = s.value("FLO-2D/lastGdsDir", "") + "/temp/"
+                            fname = last_dir + "\\CONT.DAT"
+                            if not fname:
+                                return
+                            self.parser.scan_project_dir(fname)
+                            self.import_chan(temp=last_dir)
+                            zero, few = self.import_xsec()
+                            m = "Files CHAN.DAT, CHANBANK.DAT, and XSEC.DAT imported."
+                            if zero > 0:
+                                m += "\n\nWARNING: There are " + str(zero) + " cross sections with no stations."
+                            if few > 0:
+                                m += (
+                                        "\n\nWARNING: There are "
+                                        + str(few)
+                                        + " cross sections with less than 6 stations."
+                                )
+                            if zero > 0 or few > 0:
+                                m += "\n\nIncrement the number of stations in the problematic cross sections."
+                            self.uc.bar_info(m)
 
         QApplication.restoreOverrideCursor()
 
@@ -1011,7 +1004,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
                                 self.parser.scan_project_dir(fname)
                                 self.import_chan()
                                 zero, few = self.import_xsec()
-                                m = "Files CHAN.DAT, CHANBANK.DAT, and XSEC.DAT imported."
+                                m = "Interpolation completed! Check log for more information."
                                 if zero > 0:
                                     m += "\n\nWARNING: There are " + str(zero) + " cross sections with no stations."
                                 if few > 0:
@@ -1031,12 +1024,18 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
 
         QApplication.restoreOverrideCursor()
 
-    def import_chan(self):
+    def import_chan(self, temp=False):
         s = QSettings()
-        last_dir = s.value("FLO-2D/lastGdsDir", "")
-        if not os.path.isfile(last_dir + "\\CHAN.DAT"):
-            self.uc.show_warn("WARNING 060319.1748: Can't import channels!.\nCHAN.DAT doesn't exist.")
-            return
+        if temp:
+            last_dir = s.value("FLO-2D/lastGdsDir", "") + "/temp/"
+            if not os.path.isfile(last_dir + "\\CHAN.DAT"):
+                self.uc.show_warn("WARNING 060319.1748: Can't import channels!.\nCHAN.DAT doesn't exist.")
+                return
+        else:
+            last_dir = s.value("FLO-2D/lastGdsDir", "")
+            if not os.path.isfile(last_dir + "\\CHAN.DAT"):
+                self.uc.show_warn("WARNING 060319.1748: Can't import channels!.\nCHAN.DAT doesn't exist.")
+                return
 
         cont_file = last_dir + "\\CHAN.DAT"
 
@@ -1368,11 +1367,15 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
             pass
 
         s = QSettings()
-        outdir = s.value("FLO-2D/lastGdsDir", "")
+        last_dir = s.value("FLO-2D/lastGdsDir", "")
+        # Create a temporary directory on the export folder
+        outdir = last_dir + "/temp/"
+        if not os.path.exists(outdir):
+            os.mkdir(outdir)
+
         if outdir:
             try:
                 QApplication.setOverrideCursor(Qt.WaitCursor)
-                s.setValue("FLO-2D/lastGdsDir", outdir)
                 xsec = os.path.join(outdir, "XSEC.DAT")
                 with open(xsec, "w") as x:
                     for fid, nxsecnum, name in chan_n:
@@ -1394,10 +1397,13 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
             rbanks = self.gutils.execute("SELECT fid, rbankgrid FROM chan_elems;").fetchall()
             if rbanks:
                 s = QSettings()
-                outdir = s.value("FLO-2D/lastGdsDir", "")
+                last_dir = s.value("FLO-2D/lastGdsDir", "")
+                # Create a temporary directory on the export folder
+                outdir = last_dir + "/temp/"
+                if not os.path.exists(outdir):
+                    os.mkdir(outdir)
                 if outdir:
                     QApplication.setOverrideCursor(Qt.WaitCursor)
-                    s.setValue("FLO-2D/lastGdsDir", outdir)
                     chanbank = os.path.join(outdir, "CHANBANK.DAT")
                     with open(chanbank, "w") as cb:
                         for rb in rbanks:
@@ -1413,19 +1419,23 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
             self.uc.bar_warn("Could not run interpolation under current operation system!")
             return -1
 
-        try:  # Show dialog to interpolate
-            dlg = XSecInterpolationDialog(self.iface, xs_survey)
-            ok = dlg.exec_()
-            if not ok:
-                return -1
-        except Exception as e:
-            self.uc.log_info(repr(e))
-            self.uc.bar_error("ERROR 280318.0530: Cross sections interpolation dialog could not be loaded!")
-            return -1
+        # try:  # Show dialog to interpolate
+        #     dlg = XSecInterpolationDialog(self.iface, xs_survey)
+        #     ok = dlg.exec_()
+        #     if not ok:
+        #         return -1
+        # except Exception as e:
+        #     self.uc.log_info(repr(e))
+        #     self.uc.bar_error("ERROR 280318.0530: Cross sections interpolation dialog could not be loaded!")
+        #     return -1
 
         try:
             QApplication.setOverrideCursor(Qt.WaitCursor)
-            self.exe_dir, self.project_dir = dlg.get_parameters()
+            s = QSettings()
+            self.project_dir = s.value("FLO-2D/lastGdsDir", "") + "/temp/"
+            self.exe_dir = s.value("FLO-2D/last_flopro", "")
+
+            # self.exe_dir, self.project_dir = dlg.get_parameters()
             if os.path.isfile(self.exe_dir + "\\INTERPOLATE.EXE"):
                 interpolate = XSECInterpolatorExecutor(self.exe_dir, self.project_dir)
                 return_code = interpolate.run()
@@ -1491,14 +1501,6 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
             self.uc.bar_warn("CHANRIGHTBANK.EXE failed!")
 
     def interpolate_xs_values(self):
-        if self.gutils.is_table_empty("grid"):
-            self.uc.bar_warn("WARNING 060319.1754: There is no grid! Please create it before running tool.")
-            return
-        if self.gutils.is_table_empty("chan"):
-            self.uc.bar_warn(
-                "WARNING 060319.1755: There are no cross-sections! Please create them before running tool."
-            )
-            return
         if not self.interp_bed_and_banks():
             QApplication.restoreOverrideCursor()
             self.uc.show_warn(
