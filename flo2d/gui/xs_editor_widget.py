@@ -192,6 +192,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         self.save_xs_changes_btn.clicked.connect(self.save_user_xsections_lyr_edits)
         self.revert_changes_btn.clicked.connect(self.cancel_user_lyr_edits)
         self.delete_btn.clicked.connect(self.delete_xs)
+        self.delete_schema_btn.clicked.connect(self.delete_schematize_data)
         self.schematize_xs_btn.clicked.connect(self.schematize_channels)
         self.schematize_right_bank_btn.clicked.connect(self.schematize_right_banks)
         self.save_channel_DAT_files_btn.clicked.connect(self.save_channel_DAT_and_XSEC_files)
@@ -674,6 +675,40 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         except Exception as e:
             self.populate_xsec_cbo()
         self.repaint_xs()
+
+    def delete_schematize_data(self):
+        """
+        Function to delete the schematized channel data
+        """
+        if self.gutils.is_table_empty("grid"):
+            self.uc.bar_warn("There is no grid! Please create it before running tool.")
+            return
+        if self.gutils.is_table_empty("chan"):
+            self.uc.bar_info("There are no schematized channel data. ")
+            return
+        else:
+            if self.uc.question("Are you sure you want to delete all schematized channel data?"):
+                self.gutils.clear_tables(
+                    "chan",
+                    "rbank",
+                    "chan_elems",
+                    "chan_r",
+                    "chan_v",
+                    "chan_t",
+                    "chan_n",
+                    "chan_confluences",
+                    "user_noexchange_chan_areas",
+                    "noexchange_chan_cells",
+                    "chan_wsel",
+                )
+                self.uc.bar_info("Schematized channel data deleted!")
+                chan_schem = self.lyrs.data["chan"]["qlyr"]
+                chan_elems = self.lyrs.data["chan_elems"]["qlyr"]
+                rbank = self.lyrs.data["rbank"]["qlyr"]
+                confluences = self.lyrs.data["chan_confluences"]["qlyr"]
+                self.lyrs.lyrs_to_repaint = [chan_schem, chan_elems, rbank, confluences]
+                self.lyrs.repaint_layers()
+            return
 
     def schematize_channels(self):
         if self.gutils.is_table_empty("grid"):
