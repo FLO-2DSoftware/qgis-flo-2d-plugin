@@ -445,12 +445,14 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         if not self.xs_cbo.count():
             return
 
-        #         self.setup_plot()
-        #         self.plot = PlotWidget()
-        #         create_f2d_plot_dock()
-
         if fid is None or fid == -1:
             fid = self.xs_cbo.itemData(0)
+
+        channel_names = self.gutils.execute("SELECT name FROM user_left_bank").fetchall()
+        channel_names_list = [item[0] for item in channel_names]
+
+        if self.xs_cbo.currentText() in channel_names_list:
+            return
 
         self.xs = UserCrossSection(fid, self.con, self.iface)
         row = self.xs.get_row()
