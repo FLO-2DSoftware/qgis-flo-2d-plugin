@@ -841,8 +841,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         if self.uc.question("Left Banks, Right Banks, and Cross Sections schematized!\n\nWould you like to "
                             "interpolate the Cross-Sections?"):
             self.save_temp_channel_DAT_files()
-
-            # self.interpolate_xs_btn.clicked.connect(self.interpolate_xs_values)
+            self.interpolate_xs_values()
             # self.reassign_rightbanks_btn.clicked.connect(self.reassign_rightbanks_from_CHANBANK_file)
 
     def log_schematized_info(self):
@@ -945,7 +944,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
                                 m += "\n\nIncrement the number of stations in the problematic cross sections."
 
                             shutil.rmtree(last_dir)
-                            self.uc.bar_info(m)
+                            self.uc.log_info(m)
 
         QApplication.restoreOverrideCursor()
 
@@ -1505,6 +1504,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
             self.uc.bar_warn("CHANRIGHTBANK.EXE failed!")
 
     def interpolate_xs_values(self):
+        QApplication.setOverrideCursor(Qt.WaitCursor)
         if not self.interp_bed_and_banks():
             QApplication.restoreOverrideCursor()
             self.uc.show_warn(
@@ -1515,7 +1515,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
             current_fid = self.xs_cbo.currentData()
             self.current_xsec_changed(current_fid)
             QApplication.restoreOverrideCursor()
-            self.uc.show_info("Interpolation of cross-sections values finished!")
+            self.uc.bar_info("Interpolation of cross-sections values finished!")
 
     def interpolate_xs_values_externally(self):
         os.chdir("C:/Users/Juan Jose Rodriguez/Desktop/XSEC Interpolated")
