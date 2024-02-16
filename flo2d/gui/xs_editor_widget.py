@@ -699,10 +699,17 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
                     "chan_v",
                     "chan_t",
                     "chan_n",
+                    "user_chan_r",
+                    "user_chan_v",
+                    "user_chan_t",
+                    "user_chan_n",
                     "chan_confluences",
+                    "user_xsec_n_data",
+                    "xsec_n_data",
                     "user_noexchange_chan_areas",
                     "noexchange_chan_cells",
                     "chan_wsel",
+                    "chan_elems_interp"
                 )
                 self.uc.bar_info("Schematized channel data deleted!")
                 chan_schem = self.lyrs.data["chan"]["qlyr"]
