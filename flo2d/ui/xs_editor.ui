@@ -19,53 +19,20 @@
   <layout class="QGridLayout" name="gridLayout_3">
    <item row="1" column="0">
     <layout class="QGridLayout" name="gridLayout_6">
-     <item row="0" column="6">
-      <widget class="QToolButton" name="interpolate_channel_n_btn">
-       <property name="toolTip">
-        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Interpolate channel n-values&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+     <item row="0" column="0">
+      <spacer name="horizontalSpacer">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
        </property>
-       <property name="statusTip">
-        <string>Interpolate channel n-values</string>
-       </property>
-       <property name="text">
-        <string>...</string>
-       </property>
-       <property name="icon">
-        <iconset>
-         <normaloff>../img/interpolate_channel_n.svg</normaloff>../img/interpolate_channel_n.svg</iconset>
-       </property>
-       <property name="iconSize">
+       <property name="sizeHint" stdset="0">
         <size>
-         <width>24</width>
-         <height>24</height>
+         <width>40</width>
+         <height>20</height>
         </size>
        </property>
-      </widget>
+      </spacer>
      </item>
-     <item row="0" column="4">
-      <widget class="QToolButton" name="reassign_rightbanks_btn">
-       <property name="toolTip">
-        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Import right banks (CHANBANK.DAT)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-       </property>
-       <property name="statusTip">
-        <string>Import right banks (CHANBANK.DAT)</string>
-       </property>
-       <property name="text">
-        <string>...</string>
-       </property>
-       <property name="icon">
-        <iconset>
-         <normaloff>../img/import_right_banks.svg</normaloff>../img/import_right_banks.svg</iconset>
-       </property>
-       <property name="iconSize">
-        <size>
-         <width>24</width>
-         <height>24</height>
-        </size>
-       </property>
-      </widget>
-     </item>
-     <item row="0" column="3">
+     <item row="0" column="2">
       <widget class="QToolButton" name="save_channel_DAT_files_btn">
        <property name="toolTip">
         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Create CHAN.DAT XSEC.DAT, and CHANBANK.DAT&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
@@ -88,8 +55,71 @@
        </property>
       </widget>
      </item>
-     <item row="0" column="0">
-      <spacer name="horizontalSpacer">
+     <item row="0" column="4">
+      <widget class="QToolButton" name="interpolate_xs_btn">
+       <property name="toolTip">
+        <string>Interpolate bed elevation data</string>
+       </property>
+       <property name="text">
+        <string>...</string>
+       </property>
+       <property name="icon">
+        <iconset>
+         <normaloff>../img/interpolate_xsec.svg</normaloff>../img/interpolate_xsec.svg</iconset>
+       </property>
+       <property name="iconSize">
+        <size>
+         <width>24</width>
+         <height>24</height>
+        </size>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="6">
+      <widget class="QToolButton" name="confluences_btn">
+       <property name="toolTip">
+        <string>Find confluences</string>
+       </property>
+       <property name="text">
+        <string>...</string>
+       </property>
+       <property name="icon">
+        <iconset>
+         <normaloff>../img/schematize_confluence.svg</normaloff>../img/schematize_confluence.svg</iconset>
+       </property>
+       <property name="iconSize">
+        <size>
+         <width>24</width>
+         <height>24</height>
+        </size>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="3">
+      <widget class="QToolButton" name="reassign_rightbanks_btn">
+       <property name="toolTip">
+        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Import right banks (CHANBANK.DAT)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+       </property>
+       <property name="statusTip">
+        <string>Import right banks (CHANBANK.DAT)</string>
+       </property>
+       <property name="text">
+        <string>...</string>
+       </property>
+       <property name="icon">
+        <iconset>
+         <normaloff>../img/import_right_banks.svg</normaloff>../img/import_right_banks.svg</iconset>
+       </property>
+       <property name="iconSize">
+        <size>
+         <width>24</width>
+         <height>24</height>
+        </size>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="7">
+      <spacer name="horizontalSpacer_2">
        <property name="orientation">
         <enum>Qt::Horizontal</enum>
        </property>
@@ -100,6 +130,29 @@
         </size>
        </property>
       </spacer>
+     </item>
+     <item row="0" column="5">
+      <widget class="QToolButton" name="interpolate_channel_n_btn">
+       <property name="toolTip">
+        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Interpolate channel n-values&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+       </property>
+       <property name="statusTip">
+        <string>Interpolate channel n-values</string>
+       </property>
+       <property name="text">
+        <string>...</string>
+       </property>
+       <property name="icon">
+        <iconset>
+         <normaloff>../img/interpolate_channel_n.svg</normaloff>../img/interpolate_channel_n.svg</iconset>
+       </property>
+       <property name="iconSize">
+        <size>
+         <width>24</width>
+         <height>24</height>
+        </size>
+       </property>
+      </widget>
      </item>
      <item row="0" column="1">
       <widget class="QToolButton" name="schematize_xs_btn">
@@ -120,79 +173,6 @@
         </size>
        </property>
       </widget>
-     </item>
-     <item row="0" column="5">
-      <widget class="QToolButton" name="interpolate_xs_btn">
-       <property name="toolTip">
-        <string>Interpolate bed elevation data</string>
-       </property>
-       <property name="text">
-        <string>...</string>
-       </property>
-       <property name="icon">
-        <iconset>
-         <normaloff>../img/interpolate_xsec.svg</normaloff>../img/interpolate_xsec.svg</iconset>
-       </property>
-       <property name="iconSize">
-        <size>
-         <width>24</width>
-         <height>24</height>
-        </size>
-       </property>
-      </widget>
-     </item>
-     <item row="0" column="2">
-      <widget class="QToolButton" name="schematize_right_bank_btn">
-       <property name="toolTip">
-        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Schematize user right bank&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-       </property>
-       <property name="text">
-        <string>...</string>
-       </property>
-       <property name="icon">
-        <iconset>
-         <normaloff>../img/schematize_right_bank.svg</normaloff>../img/schematize_right_bank.svg</iconset>
-       </property>
-       <property name="iconSize">
-        <size>
-         <width>24</width>
-         <height>24</height>
-        </size>
-       </property>
-      </widget>
-     </item>
-     <item row="0" column="7">
-      <widget class="QToolButton" name="confluences_btn">
-       <property name="toolTip">
-        <string>Find confluences</string>
-       </property>
-       <property name="text">
-        <string>...</string>
-       </property>
-       <property name="icon">
-        <iconset>
-         <normaloff>../img/schematize_confluence.svg</normaloff>../img/schematize_confluence.svg</iconset>
-       </property>
-       <property name="iconSize">
-        <size>
-         <width>24</width>
-         <height>24</height>
-        </size>
-       </property>
-      </widget>
-     </item>
-     <item row="0" column="8">
-      <spacer name="horizontalSpacer_2">
-       <property name="orientation">
-        <enum>Qt::Horizontal</enum>
-       </property>
-       <property name="sizeHint" stdset="0">
-        <size>
-         <width>40</width>
-         <height>20</height>
-        </size>
-       </property>
-      </spacer>
      </item>
     </layout>
    </item>
@@ -421,7 +401,7 @@
      <layout class="QGridLayout" name="gridLayout_2">
       <item row="0" column="0">
        <layout class="QGridLayout" name="gridLayout">
-        <item row="0" column="1">
+        <item row="0" column="2">
          <widget class="QToolButton" name="save_xs_changes_btn">
           <property name="toolTip">
            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Save current cross-section (Users Layers)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
@@ -441,7 +421,7 @@
           </property>
          </widget>
         </item>
-        <item row="0" column="2">
+        <item row="0" column="3">
          <widget class="QToolButton" name="revert_changes_btn">
           <property name="maximumSize">
            <size>
@@ -467,7 +447,7 @@
           </property>
          </widget>
         </item>
-        <item row="0" column="4">
+        <item row="0" column="5">
          <spacer name="horizontalSpacer_4">
           <property name="orientation">
            <enum>Qt::Horizontal</enum>
@@ -480,7 +460,7 @@
           </property>
          </spacer>
         </item>
-        <item row="0" column="3">
+        <item row="0" column="4">
          <widget class="QToolButton" name="delete_btn">
           <property name="focusPolicy">
            <enum>Qt::StrongFocus</enum>
@@ -503,7 +483,7 @@
           </property>
          </widget>
         </item>
-        <item row="0" column="0">
+        <item row="0" column="1">
          <widget class="QToolButton" name="digitize_btn">
           <property name="toolTip">
            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Add &amp;quot;Cross-sections&amp;quot;  lines  (Users Layer)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
@@ -523,7 +503,7 @@
           </property>
          </widget>
         </item>
-        <item row="0" column="5">
+        <item row="0" column="6">
          <widget class="QToolButton" name="delete_schema_btn">
           <property name="minimumSize">
            <size>
@@ -545,6 +525,19 @@
            </size>
           </property>
          </widget>
+        </item>
+        <item row="0" column="0">
+         <spacer name="horizontalSpacer_3">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>40</width>
+            <height>20</height>
+           </size>
+          </property>
+         </spacer>
         </item>
        </layout>
       </item>
