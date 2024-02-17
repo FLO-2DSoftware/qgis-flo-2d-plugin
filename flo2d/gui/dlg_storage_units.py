@@ -44,7 +44,7 @@ from .ui_utils import center_canvas, load_ui, set_icon, zoom
 # from Cython.Includes.libcpp import functional
 from fontTools.cu2qu.cu2qu import curve_to_quadratic
 
-from .dlg_outfalls import CurveEditorDialog
+from .dlg_outfalls import StorageUnitTabularCurveDialog
 
 uiDialog, qtBaseClass = load_ui("storage_units")
 class StorageUnitsDialog(qtBaseClass, uiDialog):
@@ -148,7 +148,7 @@ class StorageUnitsDialog(qtBaseClass, uiDialog):
                         exponent,
                         constant,
                         curve_name           
-                FROM user_swmm_storage_units;"""
+                FROM user_swmm_storage_units ORDER BY name ASC;"""
                 
         rows = self.gutils.execute(qry).fetchall()
         if not rows:
@@ -212,7 +212,10 @@ class StorageUnitsDialog(qtBaseClass, uiDialog):
                     elif cell == 17:
                         self.constant_dbox.setValue(data if data is not None else 0)
                     elif cell == 18:
-                        self.tabular_grp.setEnabled(True)
+                        index = self.tabular_curves_cbo.findText(data)
+                        if index == -1:
+                            index = 0
+                        self.tabular_curves_cbo.setCurrentIndex(index)                      
                                         
                 item.setData(Qt.EditRole, data)
                 self.storages_tblw.setItem(row_number, cell, item)
@@ -220,12 +223,13 @@ class StorageUnitsDialog(qtBaseClass, uiDialog):
         QApplication.restoreOverrideCursor()
 
         QApplication.setOverrideCursor(Qt.WaitCursor)
-        self.storages_cbo.model().sort(0)
+        self.storages_cbo.model().sort(Qt.AscendingOrder)
         self.storages_cbo.setCurrentIndex(0)
 
         self.storages_tblw.sortItems(0, Qt.AscendingOrder)
         self.storages_tblw.selectRow(0)
-
+        self.storages_tblw.setStyleSheet("QTableWidget::item:selected { background-color: lightblue; color: black; }")
+    
         self.enable_external_inflow()
  
         self.block = False
@@ -435,29 +439,27 @@ class StorageUnitsDialog(qtBaseClass, uiDialog):
 
     def open_tabular_curve(self):
         tabular_curve_name = self.tabular_curves_cbo.currentText()
-        dlg = CurveEditorDialog(self.iface, tabular_curve_name)
+        dlg = StorageUnitTabularCurveDialog(self.iface, tabular_curve_name)
         while True:
             ok = dlg.exec_()
             if ok:
                 if dlg.values_ok:
-                    dlg.save_tidal_curve()
-                    tabular_curve_name = dlg.get_tidal_name()
+                    dlg.save_curve()
+                    tabular_curve_name = dlg.get_curve_name()
                     if tabular_curve_name != "":
-                        # Reload tidal curve list and select the one saved:
-                        time_curve_names_sql = (
-                            "SELECT DISTINCT tidal_curve_name FROM swmm_tidal_curve GROUP BY tidal_curve_name"
+                        # Reload tabular curve list and select the one saved:
+                        curves_sql = (
+                            "SELECT DISTINCT name FROM swmm_other_curves WHERE type = 'Storage' GROUP BY name"
                         )
-                        names = self.gutils.execute(time_curve_names_sql).fetchall()
+                        names = self.gutils.execute(curves_sql).fetchall()
                         if names:
-                            self.tidal_curve_cbo.clear()
+                            self.tabular_curves_cbo.clear()
                             for name in names:
-                                self.tidal_curve_cbo.addItem(name[0])
-                            self.tidal_curve_cbo.addItem("")
+                                self.tabular_curves_cbo.addItem(name[0])
+                            self.tabular_curves_cbo.addItem("*")
 
-                            idx = self.tidal_curve_cbo.findText(tabular_curve_name)
-                            self.tidal_curve_cbo.setCurrentIndex(idx)
-
-                        # self.uc.bar_info("Storm Drain external tidal curve saved for inlet " + "?????")
+                            idx = self.tabular_curves_cbo.findText(tabular_curve_name)
+                            self.tabular_curves_cbo.setCurrentIndex(idx)
                         break
                     else:
                         break
@@ -507,6 +509,7 @@ class StorageUnitsDialog(qtBaseClass, uiDialog):
         
         self.highlight_storage_cell(self.grid_element_le.text())
 
+        # self.storages_tblw.setStyleSheet("QTableWidget::item:selected { background: rgb(135, 206, 255); }")
         QApplication.restoreOverrideCursor()
 
     def fill_individual_controls_with_current_storage_in_table(self):
@@ -530,6 +533,7 @@ class StorageUnitsDialog(qtBaseClass, uiDialog):
             if found:
                 QApplication.setOverrideCursor(Qt.WaitCursor)
                 self.storages_tblw.selectRow(row)
+                self.storages_tblw.setStyleSheet("QTableWidget::item:selected { background-color: lightblue; color: black; }")
                 # Load controls with selected row in table:
                 item = QTableWidgetItem()
                 item = self.storages_tblw.item(row, 1)
@@ -637,7 +641,7 @@ class StorageUnitsDialog(qtBaseClass, uiDialog):
 
     def save_storages(self):
         """
-        Save changes of user_swmm_nodes layer.
+        Save changes of user_swmm_storage_units layer.
         """
         try:
             storages = []
@@ -668,52 +672,59 @@ class StorageUnitsDialog(qtBaseClass, uiDialog):
 
                 item = self.storages_tblw.item(row, 5)
                 if item is not None:
-                    surcharge_depth = str(item.text()) if str(item.text()) != "" else "0"
-
+                    external_inflow = str(item.text()) if str(item.text()) in ["True", "False"]  else "False"
+                    
                 item = self.storages_tblw.item(row, 6)
                 if item is not None:
-                    # ponded_area = str(item.text()) if str(item.text()) != "" else "0"
-                    ponded_area = "0"
+                    ponded_area = str(item.text()) if str(item.text()) != "" else "0"
 
                 item = self.storages_tblw.item(row, 7)
                 if item is not None:
-                    intype = str(item.text()) if str(item.text()) != "" else "1"
+                    evap_fact = str(item.text()) if str(item.text()) != "" else "0"
 
                 item = self.storages_tblw.item(row, 8)
                 if item is not None:
-                    swmm_length = str(item.text()) if str(item.text()) != "" else "0"
+                    treatment = str(item.text()) if str(item.text()) == "NO" else "NO"                   
 
                 item = self.storages_tblw.item(row, 9)
                 if item is not None:
-                    swmm_width = str(item.text()) if str(item.text()) != "" else "0"
+                    infiltration = str(item.text()) if str(item.text()) in ["True", "False"]  else "False"
 
                 item = self.storages_tblw.item(row, 10)
                 if item is not None:
-                    swmm_height = str(item.text()) if str(item.text()) != "" else "0"
+                    infil_method = str(item.text()) if str(item.text()) == "GREEN_AMPT" else "GREEN_AMPT"    
 
                 item = self.storages_tblw.item(row, 11)
                 if item is not None:
-                    swmm_coeff = str(item.text()) if str(item.text()) != "" else "0"
+                    suction_head = str(item.text()) if str(item.text()) != "" else "0"
 
                 item = self.storages_tblw.item(row, 12)
                 if item is not None:
-                    swmm_feature = str(item.text()) if str(item.text()) != "" else "0"
+                    conductivity = str(item.text()) if str(item.text()) != "" else "0"
 
                 item = self.storages_tblw.item(row, 13)
                 if item is not None:
-                    curbheight = str(item.text()) if str(item.text()) != "" else "0"
+                    initial_deficit = str(item.text()) if str(item.text()) != "" else "0"
 
                 item = self.storages_tblw.item(row, 14)
                 if item is not None:
-                    swmm_clogging_factor = str(item.text()) if str(item.text()) != "" else "0"
+                    storage_curve = str(item.text()) if str(item.text()) in ["FUNCTIONAL", "TABULAR"] else "FUNCTIONAL"
 
                 item = self.storages_tblw.item(row, 15)
                 if item is not None:
-                    swmm_time_for_clogging = str(item.text()) if str(item.text()) != "" else "0"
+                    coefficient = str(item.text()) if str(item.text()) != "" else "0"
 
                 item = self.storages_tblw.item(row, 16)
                 if item is not None:
-                    rt_name = str(item.text())
+                    exponent = str(item.text()) if str(item.text()) != "" else "0"
+
+                item = self.storages_tblw.item(row, 17)
+                if item is not None:
+                    constant = str(item.text()) if str(item.text()) != "" else "0"
+                    
+                item = self.storages_tblw.item(row, 18)
+                if item is not None:
+                    curve_name = str(item.text()) if str(item.text()) != "" else "*"                    
 
                 storages.append(
                     (
@@ -722,19 +733,20 @@ class StorageUnitsDialog(qtBaseClass, uiDialog):
                         invert_elev,
                         max_depth,
                         init_depth,
-                        surcharge_depth,
+                        external_inflow,
+                        treatment,
                         ponded_area,
-                        intype,
-                        swmm_length,
-                        swmm_width,
-                        swmm_height,
-                        swmm_coeff,
-                        swmm_feature,
-                        curbheight,
-                        swmm_clogging_factor,
-                        swmm_time_for_clogging,
-                        rt_fid,
-                        rt_name,
+                        evap_fact,
+                        infiltration,
+                        infil_method,
+                        suction_head,
+                        conductivity,
+                        initial_deficit,
+                        storage_curve,
+                        coefficient,
+                        exponent,
+                        constant,
+                        curve_name,
                         name,
                     )
                 )
@@ -748,7 +760,7 @@ class StorageUnitsDialog(qtBaseClass, uiDialog):
                 max_depth = ?, 
                 init_depth = ?, 
                 external_inflow = ?, 
-                treatment
+                treatment = ?,
                 ponded_area = ?, 
                 evap_factor = ?, 
                 infiltration = ?, 
