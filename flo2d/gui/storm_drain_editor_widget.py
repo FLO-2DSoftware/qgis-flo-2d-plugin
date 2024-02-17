@@ -1389,19 +1389,6 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             )
             return False
 
-
-
-
-
-
-
-
-
-# 4444444444444444444444444444
-
-
-
-
         # STORAGE: Create User Storage layer:
         try:
             """
@@ -1620,34 +1607,6 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 e,
             )
             return False
-
-
-# 44444444444444444444444444444
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
         # CONDUITS: Create User Conduits layer:
         if complete_or_create == "Create New":
@@ -2337,64 +2296,64 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         if error_msg != "ERROR 050322.9423: error(s) importing file\n\n" + swmm_file:
             self.uc.show_critical(error_msg)
 
-        # if complete_or_create == "Create New":
-        #     self.uc.show_info(
-        #         "Importing Storm Drain data finished!\n\n"
-        #         + "* "
-        #         + str(len(new_nodes))
-        #         + " Nodes (inlets, junctions, and outfalls) were created in the 'Storm Drain Nodes' layer ('User Layers' group), and\n\n"
-        #         + "* "
-        #         + str(len(new_storages))
-        #         + " Storage Units in the 'Storm Drain Storage Units' layer ('User Layers' group), and\n\n"
-        #         + "* "                
-        #         + str(len(new_conduits))
-        #         + " Conduits in the 'Storm Drain Conduits' layer ('User Layers' group), and\n\n"
-        #         + "* "
-        #         + str(len(new_pumps))
-        #         + " Pumps in the 'Storm Drain Pumps' layer ('User Layers' group). \n\n"
-        #         + "* "
-        #         + str(len(new_orifices))
-        #         + " Orifices in the 'Storm Drain Orifices' layer ('User Layers' group). \n\n"
-        #         + "* "
-        #         + str(len(new_weirs))
-        #         + " Weirs in the 'Storm Drain Weirs' layer ('User Layers' group). \n\n"
-        #         "Click the 'Inlets/Junctions', 'Outfalls', 'Conduits', 'Pumps', 'Orifices', and 'Weirs' buttons in the Storm Drain Editor widget to see or edit their attributes.\n\n"
-        #         "NOTE: the 'Schematize Storm Drain Components' button  in the Storm Drain Editor widget will update the 'Storm Drain' layer group, required to "
-        #         "later export the .DAT files used by the FLO-2D model."
-        #     )
-        #
-        # elif show_end_message:
-        #     QApplication.restoreOverrideCursor()
-        #     self.uc.show_info(
-        #         "Storm Drain data was updated from file\n"
-        #         + swmm_file
-        #         + "\n\n"
-        #         + "* "
-        #         + str(updated_nodes)
-        #         + " Nodes (inlets, junctions, and outfalls) in the 'Storm Drain Nodes' layer ('User Layers' group) were updated, and\n\n"
-        #         + "* "
-        #         + str(updated_storages)
-        #         + " Nodes (inlets, junctions, and outfalls) in the 'Storm Drain Nodes' layer ('User Layers' group) were updated, and\n\n"
-        #         + "* "                
-        #         + str(updated_conduits)
-        #         + " Conduits in the 'Storm Drain Conduits' layer ('User Layers' group) were updated, and\n"
-        #         + "  " + str(len(new_conduits)) + " new conduits created.\n\n"
-        #         + "* "
-        #         + str(updated_pumps)
-        #         + " Pumps in the 'Storm Drain Pumps' layer ('User Layers' group) were updated, and\n"
-        #         + "  " + str(len(new_pumps)) + " new pumps created.\n\n"
-        #         + "* "
-        #         + str(updated_orifices)
-        #         + " Orifices in the 'Storm Drain Orifices' layer ('User Layers' group) were updated, and\n"
-        #         + "  " + str(len(new_orifices)) + " new orifices created.\n\n"
-        #         + "* "                
-        #         + str(updated_weirs)
-        #         + " Weirs in the 'Storm Drain Weirs' layer ('User Layers' group) were updated, and\n"
-        #         + "  " + str(len(new_weirs)) + " new weirs created.\n\n"                
-        #         "Click the 'Inlets/Junctions', 'Outfalls', 'Conduits', 'Pumps', 'Orifices', and 'Weirs' buttons in the Storm Drain Editor widget to see or edit their attributes.\n\n"
-        #         "NOTE: the 'Schematize Storm Drain Components' button  in the Storm Drain Editor widget will update the 'Storm Drain' layer group, required to "
-        #         "later export the .DAT files used by the FLO-2D model."
-        #     )
+        if complete_or_create == "Create New":
+            self.uc.show_info(
+                "Importing Storm Drain data finished!\n\n"
+                + "* "
+                + str(len(new_nodes))
+                + " Nodes (inlets, junctions, and outfalls) were created in the 'Storm Drain Nodes' layer ('User Layers' group), and\n\n"
+                + "* "
+                + str(len(new_storages))
+                + " Storage Units in the 'Storm Drain Storage Units' layer ('User Layers' group), and\n\n"
+                + "* "                
+                + str(len(new_conduits))
+                + " Conduits in the 'Storm Drain Conduits' layer ('User Layers' group), and\n\n"
+                + "* "
+                + str(len(new_pumps))
+                + " Pumps in the 'Storm Drain Pumps' layer ('User Layers' group). \n\n"
+                + "* "
+                + str(len(new_orifices))
+                + " Orifices in the 'Storm Drain Orifices' layer ('User Layers' group). \n\n"
+                + "* "
+                + str(len(new_weirs))
+                + " Weirs in the 'Storm Drain Weirs' layer ('User Layers' group). \n\n"
+                "Click the 'Inlets/Junctions', 'Outfalls', 'Conduits', 'Pumps', 'Orifices', and 'Weirs' buttons in the Storm Drain Editor widget to see or edit their attributes.\n\n"
+                "NOTE: the 'Schematize Storm Drain Components' button  in the Storm Drain Editor widget will update the 'Storm Drain' layer group, required to "
+                "later export the .DAT files used by the FLO-2D model."
+            )
+        
+        elif show_end_message:
+            QApplication.restoreOverrideCursor()
+            self.uc.show_info(
+                "Storm Drain data was updated from file\n"
+                + swmm_file
+                + "\n\n"
+                + "* "
+                + str(updated_nodes)
+                + " Nodes (inlets, junctions, and outfalls) in the 'Storm Drain Nodes' layer ('User Layers' group) were updated, and\n\n"
+                + "* "
+                + str(updated_storages)
+                + " Nodes (inlets, junctions, and outfalls) in the 'Storm Drain Nodes' layer ('User Layers' group) were updated, and\n\n"
+                + "* "                
+                + str(updated_conduits)
+                + " Conduits in the 'Storm Drain Conduits' layer ('User Layers' group) were updated, and\n"
+                + "  " + str(len(new_conduits)) + " new conduits created.\n\n"
+                + "* "
+                + str(updated_pumps)
+                + " Pumps in the 'Storm Drain Pumps' layer ('User Layers' group) were updated, and\n"
+                + "  " + str(len(new_pumps)) + " new pumps created.\n\n"
+                + "* "
+                + str(updated_orifices)
+                + " Orifices in the 'Storm Drain Orifices' layer ('User Layers' group) were updated, and\n"
+                + "  " + str(len(new_orifices)) + " new orifices created.\n\n"
+                + "* "                
+                + str(updated_weirs)
+                + " Weirs in the 'Storm Drain Weirs' layer ('User Layers' group) were updated, and\n"
+                + "  " + str(len(new_weirs)) + " new weirs created.\n\n"                
+                "Click the 'Inlets/Junctions', 'Outfalls', 'Conduits', 'Pumps', 'Orifices', and 'Weirs' buttons in the Storm Drain Editor widget to see or edit their attributes.\n\n"
+                "NOTE: the 'Schematize Storm Drain Components' button  in the Storm Drain Editor widget will update the 'Storm Drain' layer group, required to "
+                "later export the .DAT files used by the FLO-2D model."
+            )
 
         if outside_nodes != "":
             msgBox = QMessageBox()
@@ -2712,6 +2671,51 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                     except Exception as e:
                         QApplication.restoreOverrideCursor()
                         self.uc.show_error("ERROR 070618.1619: error while exporting [OUTFALLS] to .INP file!", e)
+                        return
+
+                    # INP STORAGE ###################################################
+                    try:
+                        SD_storages_sql = """SELECT name, invert_elev, max_depth, init_depth, storage_curve,
+                                                    coefficient, exponent, constant, ponded_area, 
+                                                    evap_factor, suction_head, conductivity, initial_deficit
+                                             FROM user_swmm_storage_units;"""
+
+                        storages_rows = self.gutils.execute(SD_storages_sql).fetchall()
+                        if not storages_rows:
+                            pass
+                        else:
+                            swmm_inp_file.write("\n")
+                            swmm_inp_file.write("\n[STORAGE]")
+                            swmm_inp_file.write("\n;;               Invert   Max.     Init.    Storage    Curve                      Ponded   Evap.")
+                            swmm_inp_file.write("\n;;Name           Elev.    Depth    Depth    Curve      Params                     Area     Frac.    Infiltration Parameters")
+                            swmm_inp_file.write("\n;;-------------- -------- -------- -------- ---------- -------- -------- -------- -------- -------- -----------------------")
+
+                            line = "\n{0:16} {1:<8} {2:<8} {3:<8} {4:<10} {5:<8} {6:<8} {7:<8} {8:<8} {9:<8} {10:<8} {11:<8} {12:<8}"
+
+                            for row in storages_rows:
+                                lrow = list(row)
+                                lrow = [
+                                    lrow[0],
+                                    0 if lrow[1] is None else '%g'%lrow[1],
+                                    0 if lrow[2] is None else '%g'%lrow[2],
+                                    0 if lrow[3] is None else '%g'%lrow[3],
+                                    "FUNCTIONAL" if lrow[4] is None else lrow[4],
+                                    0 if lrow[5] is None else '%g'%lrow[5],
+                                    0 if lrow[6] is None else '%g'%lrow[6],
+                                    0 if lrow[7] is None else '%g'%lrow[7],
+                                    0 if lrow[8] is None else '%g'%lrow[8],
+                                    0 if lrow[9] is None else '%g'%lrow[9],
+                                    0 if lrow[10] is None else '%g'%lrow[10],
+                                    0 if lrow[11] is None else '%g'%lrow[11],
+                                    0 if lrow[12] is None else '%g'%lrow[12],                                    
+                                ]
+                                swmm_inp_file.write(line.format(lrow[0], lrow[1], lrow[2], lrow[3], lrow[4], lrow[5],
+                                                                lrow[6], lrow[7], lrow[8], lrow[9], lrow[10],
+                                                                lrow[11], lrow[12]))
+
+                    except Exception as e:
+                        QApplication.restoreOverrideCursor()
+                        self.uc.show_error("ERROR 160224.0541: error while exporting [STORAGE] to .INP file!", e)
                         return
 
                     # INP CONDUITS ###################################################
@@ -3359,7 +3363,6 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                         "GROUNDWATER",
                         "SNOWPACKS",
                         "DIVIDERS",
-                        "STORAGE",
                         "OUTLETS",
                         "TRANSECTS",
                         "POLLUTANTS",
@@ -3398,6 +3401,8 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                     + "\t[JUNCTIONS]\n"
                     + str(len(outfalls_rows))
                     + "\t[OUTFALLS]\n"
+                    + str(len(storages_rows))
+                    + "\t[STORAGE]\n"                    
                     + str(len(conduits_rows))
                     + "\t[CONDUITS]\n"
                     + str(len(pumps_rows))
@@ -3557,7 +3562,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         # See if table is empty:
         if self.gutils.is_table_empty("user_swmm_storage_units"):
             self.uc.show_warn(
-                'User Layer "Storm Storage Units" is empty!\n\n'
+                'User Layer "Storm Drain Storage Units" is empty!\n\n'
                 + "Please import components from .INP file or shapefile, or convert from schematized Storm Drains."
             )
             return
@@ -3571,12 +3576,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         
         save = dlg_storage.exec_()
         if save:
-            self.uc.show_info(
-                "Inlets saved to 'Storm Drain-Inlets' User Layer!\n\n"
-                + "Schematize it from the 'Storm Drain Editor' widget before saving into SWMMOUTF.DAT"
-            )
-            self.populate_type4_combo()
-        
+            self.uc.bar_info("Storage Units saved to 'Storm Drain Storage Units' User Layer.")
         elif not save:
             pass
         else:
