@@ -87,16 +87,19 @@ class FPXsecEditorWidget(qtBaseClass, uiDialog):
         self.fpxs_cbo.clear()
         qry = """SELECT fid, name, iflo FROM user_fpxsec ORDER BY name COLLATE NOCASE"""
         rows = self.gutils.execute(qry).fetchall()
-        max_fid = self.gutils.get_max("user_fpxsec")
-        cur_idx = 0
-        for i, row in enumerate(rows):
-            self.fpxs_cbo.addItem(row[1], row)
-            if fid and row[0] == fid:
-                cur_idx = i
-            elif show_last_edited and row[0] == max_fid:
-                cur_idx = i
-        self.fpxs_cbo.setCurrentIndex(cur_idx)
-        self.cur_fpxs_changed()
+        if rows:
+            max_fid = self.gutils.get_max("user_fpxsec")
+            cur_idx = 0
+            for i, row in enumerate(rows):
+                self.fpxs_cbo.addItem(row[1], row)
+                if fid and row[0] == fid:
+                    cur_idx = i
+                elif show_last_edited and row[0] == max_fid:
+                    cur_idx = i
+            self.fpxs_cbo.setCurrentIndex(cur_idx)
+            self.cur_fpxs_changed()
+        else:
+          self.lyrs.clear_rubber()      
 
     def cur_fpxs_changed(self):
         row = self.fpxs_cbo.itemData(self.fpxs_cbo.currentIndex())
@@ -172,7 +175,7 @@ class FPXsecEditorWidget(qtBaseClass, uiDialog):
                     fid,
                 ),
             )
-        self.populate_cbos(fid=fid)
+        self.populate_cbos(fid=fid, show_last_edited=False)
 
     def schematize_fpxs(self):
         if self.gutils.is_table_empty("grid"):
@@ -182,6 +185,7 @@ class FPXsecEditorWidget(qtBaseClass, uiDialog):
             self.uc.bar_warn(
                 "There is no any user floodplain cross sections! " "Please digitize them before running the tool."
             )
+            self.lyrs.clear_rubber()
             return
         try:
             fpxs = FloodplainXS(self.con, self.iface, self.lyrs)
