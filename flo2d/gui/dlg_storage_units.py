@@ -548,7 +548,7 @@ class StorageUnitsDialog(qtBaseClass, uiDialog):
                 self.treatment_cbo.setCurrentIndex(0)
                 self.infiltration_grp.setChecked(True if self.storages_tblw.item(row, 9).text() == "True" else False)
                 self.method_cbo.setCurrentIndex(0)
-                self.suction_head_dbox.setValue(int_or_zero(self.storages_tblw.item(row, 11)))
+                self.suction_head_dbox.setValue(float_or_zero(self.storages_tblw.item(row, 11)))
                 self.conductivity_dbox.setValue(float_or_zero(self.storages_tblw.item(row, 12)))
                 self.initial_deficit_dbox.setValue(float_or_zero(self.storages_tblw.item(row, 13)))
                 self.functional_radio.setChecked(True if self.storages_tblw.item(row, 14).text() == "FUNCTIONAL" else False)

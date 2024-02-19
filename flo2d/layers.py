@@ -192,7 +192,7 @@ class Layers(object):
                     {
                         "name": "Storm Drain Storage Units",
                         "sgroup": "User Layers",
-                        "styles": ["user_swmm_nodes.qml"],
+                        "styles": ["user_swmm_storage_units.qml"],
                         "attrs_edit_widgets": {},
                         "module": ["all"],
                         "readonly": False,
