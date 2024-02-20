@@ -448,6 +448,9 @@ class StormDrainProject(object):
             for key, inner_dict in self.INP_storages.items():
                 if "x" in inner_dict:
                     new_storages[key] = inner_dict
+                else:
+                    self.status_report += "\u25E6 Storage unit '" + key + "' in [STORAGE] group without coordinates in [COORDINATES] group.\n\n"    
+
 
             self.INP_storages = new_storages
             return len(self.INP_storages)
@@ -479,7 +482,7 @@ class StormDrainProject(object):
                     self.INP_conduits[conduit] = conduit_dict
 
                     if conduit_dict["conduit_inlet"] == "?" or conduit_dict["conduit_outlet"] == "?":
-                        self.status_report += "Undefined Node (?) reference at \n[CONDUITS]\n" + cond + "\n\n"
+                        self.status_report += "\u25E6 Undefined Node (?) reference at \n   [CONDUITS]\n   " + cond + "\n\n"
 
         except Exception as e:
             self.uc.bar_warn("WARNING 221121.1018: Reading conduits from SWMM input data failed!")
@@ -606,7 +609,7 @@ class StormDrainProject(object):
                         )  # Adds new values (from "losses_dict" , that include the "losses_cols") to
                         # an already existing key in dictionary INP_conduits.
                     else:
-                        self.status_report += "Undefined Link (" + loss + ") reference at \n[LOSSES]\n" + lo + "\n\n"
+                        self.status_report += "\u25E6 Undefined Link (" + loss + ") reference at \n   [LOSSES]\n" + lo + "\n\n"
         except Exception as e:
             self.uc.show_error(
                 "ERROR 010422.0513: couldn't create a [LOSSES] group from storm drain .INP file!",
@@ -642,7 +645,7 @@ class StormDrainProject(object):
                     elif xsec in self.INP_weirs:
                         pass
                     else:
-                        self.status_report += "Undefined Link (" + xsec + ") reference at  [XSECTIONS]\n" + xs + "\n\n"
+                        self.status_report += "\u25E6 Undefined Link (" + xsec + ") reference in [XSECTIONS] group\n   " + xs + "\n\n"
 
         except Exception as e:
             self.uc.show_error(
@@ -845,7 +848,7 @@ class StormDrainProject(object):
                     if not infl or infl[0] in self.ignore:
                        continue                   
                     elif infl.split()[0] not in self.INP_nodes:
-                        self.status_report += "Undefined Node reference (" + infl.split()[0] + ") at \n[INFLOW]\n" + infl + "\n\n"      
+                        self.status_report += "\u25E6 Undefined Node reference (" + infl.split()[0] + ") at \n   [INFLOW]\n   " + infl + "\n\n"      
                     else:
                         inflow_dict = dict(zip_longest(inflows_cols, infl.split()))
                         inflow = inflow_dict.pop("node_name")
