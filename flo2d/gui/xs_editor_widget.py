@@ -854,18 +854,42 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         # 3 BOUNDARY CONDITION ERRORS
 
         # 3.1 Outflow last cross-section must be lower than adjacent upstream neighbor by 0.1 ft
+        # Verify if there is Channel Outflow BC (outflow table)
+        error_outflow_bc_grid = []
+        outflow_bc_channel_grid_elements = self.gutils.execute(r"SELECT grid_fid FROM outflow_cells JOIN outflow ON "
+                                                       r"outflow_cells.outflow_fid = outflow.fid WHERE "
+                                                       r"outflow.chan_out = '1'").fetchall()
+
+        for bc in outflow_bc_channel_grid_elements:
+            bc_grid = bc[0]
+            # Get the Channel Outflow Grid Element (chan_* table) TODO: Do this for all types of cross sections
+            nxsecnum = self.gutils.execute(f"SELECT nxsecnum FROM chan_n WHERE elem_fid = '{bc_grid}'").fetchone()
+            if nxsecnum:
+                # Get the xc number
+                xc = nxsecnum[0]
+                # Get the downstream xc number
+                upstream_xc = xc - 1
+                # Compare the minimum elevations (xsec_n_data table)
+                xc_min_elev = self.gutils.execute(f"SELECT MIN(yi) FROM xsec_n_data WHERE chan_n_nxsecnum = '{xc}'").fetchone()[0]
+                upstream_xc_min_elev = self.gutils.execute(f"SELECT MIN(yi) FROM xsec_n_data WHERE chan_n_nxsecnum = '{upstream_xc}'").fetchone()[0]
+
+                # TODO: Check the units
+
+                if upstream_xc_min_elev - xc_min_elev < 0.1:
+                    error_outflow_bc_grid.append(bc_grid)
+
+        if len(error_outflow_bc_grid) > 0:
+            msg += "ERROR: CHANNEL OUTFLOW CROSS SECTION MUST BE LOWER THAN ADJACENT UPSTREAM NEIGHBOR BY 0.1.\n" \
+                   f"Grid Element(s): {'-'.join(map(str, error_outflow_bc_grid))}\n\n"
 
         # 3.2 Upstream inflow boundary must be positive slope in the downstream direction
-        # Outer Loop
         # Verify if there is Channel Inflow BC (inflow table)
-        error_bc_grid = []
-        bc_channel_grid_elements = self.gutils.execute(r"SELECT grid_fid FROM inflow_cells JOIN inflow ON inflow_cells.inflow_fid = "
+        error_inflow_bc_grid = []
+        inflow_bc_channel_grid_elements = self.gutils.execute(r"SELECT grid_fid FROM inflow_cells JOIN inflow ON inflow_cells.inflow_fid = "
                                r"inflow.fid WHERE inflow.ident = 'C'").fetchall()
-        for bc in bc_channel_grid_elements:
+        for bc in inflow_bc_channel_grid_elements:
             bc_grid = bc[0]
-
-            # Inner Loop
-            # Get the Channel Inflow Grid Element (chan_* table)
+            # Get the Channel Inflow Grid Element (chan_* table) TODO: Do this for all types of cross sections
             nxsecnum = self.gutils.execute(f"SELECT nxsecnum FROM chan_n WHERE elem_fid = '{bc_grid}'").fetchone()
             if nxsecnum:
                 # Get the xc number
@@ -876,13 +900,13 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
                 xc_min_elev = self.gutils.execute(f"SELECT MIN(yi) FROM xsec_n_data WHERE chan_n_nxsecnum = '{xc}'").fetchone()[0]
                 downstream_xc_min_elev = self.gutils.execute(f"SELECT MIN(yi) FROM xsec_n_data WHERE chan_n_nxsecnum = '{downstream_xc}'").fetchone()[0]
                 if downstream_xc_min_elev >= xc_min_elev:
-                    error_bc_grid.append(bc_grid)
+                    error_inflow_bc_grid.append(bc_grid)
 
-        if len(error_bc_grid) > 0:
+        if len(error_inflow_bc_grid) > 0:
             msg += "ERROR: THE FOLLOWING CHANNEL INFLOW NODES HAVE AN ADVERSE (NEGATIVE BED SLOPE) OR ABSOLUTELY FLAT BED "\
                    "SLOPE (ZERO SLOPE) TO THE NEXT DOWNSTREAM CHANNEL ELEMENT: \n(EITHER RAISE THE INFLOW NODE BED " \
                    "ELEVATION OR LOWER THE DOWNSTREAM CHANNEL ELEMENT BED ELEVATION).\n" \
-                   f"{'-'.join(map(str, error_bc_grid))}\n\n"
+                   f"Grid Element(s): {'-'.join(map(str, error_inflow_bc_grid))}\n\n"
 
         dlg_channel_report = ChannelCheckReportDialog(self.iface)
         dlg_channel_report.report_te.insertPlainText(msg)
