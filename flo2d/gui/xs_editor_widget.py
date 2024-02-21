@@ -41,6 +41,7 @@ from qgis.PyQt.QtWidgets import (
     QTableWidgetItem,
 )
 
+from .dlg_channel_check_report import ChannelCheckReportDialog
 from ..flo2d_ie.flo2d_parser import ParseDAT
 from ..flo2d_tools.flopro_tools import (
     ChannelNInterpolatorExecutor,
@@ -176,6 +177,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         self.delete_btn.clicked.connect(self.delete_xs)
         self.delete_schema_btn.clicked.connect(self.delete_schematize_data)
         self.schematize_xs_btn.clicked.connect(self.schematize_channels)
+        self.check_schematized_channel_btn.clicked.connect(self.check_schematized_channel)
         self.interpolate_channel_elevation_btn.clicked.connect(self.interpolate_channel_elevation)
         # self.schematize_right_bank_btn.clicked.connect(self.schematize_right_banks)
         # self.save_channel_DAT_files_btn.clicked.connect(self.save_channel_DAT_and_XSEC_files)
@@ -825,10 +827,68 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
 
         self.populate_xsec_cbo()
 
-        # if self.uc.question("Left Banks, Right Banks, and Cross Sections schematized!\n\nWould you like to "
-        #                     "interpolate the Cross-Sections?"):
-        #     self.save_temp_channel_DAT_files()
-        # else:
+    def check_schematized_channel(self):
+        """
+        Function to check the schematized channel. FLO-2D Engine does that, but this tries to remove the necessity
+        of a FLO-2D Engine run to check the schematized channel data.
+        """
+        if self.gutils.is_table_empty("grid"):
+            self.uc.bar_warn("There is no grid! Please create it before running tool.")
+            return
+        if self.gutils.is_table_empty("chan"):
+            self.uc.bar_warn("There is no schematized data! Please schematize the channel data before running tool.")
+            return
+
+        msg = ""
+
+        # 1 CHANNEL WIDTH ERROR
+
+        # 1.1 Cross-section is wider than the distance between two left and right bank elements
+
+        # 1.2 Area on the bank elements is less than 5%
+
+        # 2 RIGHT BANK ERROR
+
+        # 2.1 Right bank is inside the two bank lines
+
+        # 3 BOUNDARY CONDITION ERRORS
+
+        # 3.1 Outflow last cross-section must be lower than adjacent upstream neighbor by 0.1 ft
+
+        # 3.2 Upstream inflow boundary must be positive slope in the downstream direction
+        # Outer Loop
+        # Verify if there is Channel Inflow BC (inflow table)
+        error_bc_grid = []
+        bc_channel_grid_elements = self.gutils.execute(r"SELECT grid_fid FROM inflow_cells JOIN inflow ON inflow_cells.inflow_fid = "
+                               r"inflow.fid WHERE inflow.ident = 'C'").fetchall()
+        for bc in bc_channel_grid_elements:
+            bc_grid = bc[0]
+
+            # Inner Loop
+            # Get the Channel Inflow Grid Element (chan_* table)
+            nxsecnum = self.gutils.execute(f"SELECT nxsecnum FROM chan_n WHERE elem_fid = '{bc_grid}'").fetchone()
+            if nxsecnum:
+                # Get the xc number
+                xc = nxsecnum[0]
+                # Get the downstream xc number
+                downstream_xc = xc + 1
+                # Compare the minimum elevations (xsec_n_data table)
+                xc_min_elev = self.gutils.execute(f"SELECT MIN(yi) FROM xsec_n_data WHERE chan_n_nxsecnum = '{xc}'").fetchone()[0]
+                downstream_xc_min_elev = self.gutils.execute(f"SELECT MIN(yi) FROM xsec_n_data WHERE chan_n_nxsecnum = '{downstream_xc}'").fetchone()[0]
+                if downstream_xc_min_elev >= xc_min_elev:
+                    error_bc_grid.append(bc_grid)
+
+        if len(error_bc_grid) > 0:
+            msg += "ERROR: THE FOLLOWING CHANNEL INFLOW NODES HAVE AN ADVERSE (NEGATIVE BED SLOPE) OR ABSOLUTELY FLAT BED "\
+                   "SLOPE (ZERO SLOPE) TO THE NEXT DOWNSTREAM CHANNEL ELEMENT: \n(EITHER RAISE THE INFLOW NODE BED " \
+                   "ELEVATION OR LOWER THE DOWNSTREAM CHANNEL ELEMENT BED ELEVATION).\n" \
+                   f"{'-'.join(map(str, error_bc_grid))}\n\n"
+
+        dlg_channel_report = ChannelCheckReportDialog(self.iface)
+        dlg_channel_report.report_te.insertPlainText(msg)
+        dlg_channel_report.exec_()
+
+        self.uc.log_info(msg)
 
     def log_schematized_info(self):
         """

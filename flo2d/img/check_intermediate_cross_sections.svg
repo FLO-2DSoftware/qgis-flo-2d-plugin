@@ -25,6 +25,15 @@
      id="title3062">ring fill</title>
   <defs
      id="defs5694">
+    <inkscape:path-effect
+       effect="powerclip"
+       id="path-effect4"
+       is_visible="true"
+       lpeversion="1"
+       inverse="true"
+       flatten="false"
+       hide_clip="false"
+       message="Use fill-rule evenodd on &lt;b&gt;fill and stroke&lt;/b&gt; dialog if no flatten result after convert clip to paths." />
     <linearGradient
        id="linearGradient3657">
       <stop
@@ -1005,6 +1014,17 @@
        id="linearGradient4423"
        xlink:href="#linearGradient4137"
        inkscape:collect="always" />
+    <clipPath
+       clipPathUnits="userSpaceOnUse"
+       id="clipPath4">
+      <rect
+         style="display:block;fill:#f9f9f9;stroke:#fffffb;stroke-width:0;stroke-dasharray:none"
+         id="rect4"
+         width="4.9674253"
+         height="8.000001"
+         x="28.252514"
+         y="23" />
+    </clipPath>
   </defs>
   <sodipodi:namedview
      id="base"
@@ -1013,9 +1033,9 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="20"
-     inkscape:cx="24.675"
-     inkscape:cy="11.475"
+     inkscape:zoom="64"
+     inkscape:cx="21.914062"
+     inkscape:cy="19.554687"
      inkscape:current-layer="layer4"
      showgrid="true"
      inkscape:grid-bbox="true"
@@ -1172,20 +1192,37 @@
        id="rect10"
        style="stroke-width:0.6923" />
     <path
-       d="M 19.50005,30.20002 22,25 M 19.50005,30.20002 17,25"
-       fill="#ffffff"
-       stroke="#ffffff"
-       stroke-linecap="round"
-       stroke-linejoin="round"
-       stroke-width="1.79998"
-       id="path10-7"
-       style="fill-rule:evenodd"
-       sodipodi:nodetypes="cccc" />
-    <path
        d="m 15.90009,27.50005 h 7.19992 v -1.79998 c 0,-1.79998 -0.449995,-1.79998 -3.59996,-1.79998 -3.149965,0 -3.59996,0 -3.59996,1.79998 z"
        fill="#fcffff"
        opacity="0.3"
        id="path11-6"
        style="fill-rule:evenodd;stroke-width:0.6923" />
+    <rect
+       style="fill:#f9f9f9;stroke:#fffffb;stroke-width:0;stroke-dasharray:none"
+       id="rect5"
+       width="3.0228815"
+       height="0.082827389"
+       x="29.769196"
+       y="17.917171" />
+    <path
+       d="m 31.40004,30.10001 2.49995,-5.20002 m -2.49995,5.20002 -2.5313,-2.59996"
+       fill="#ffffff"
+       stroke="#ffffff"
+       stroke-linecap="round"
+       stroke-linejoin="round"
+       stroke-width="1.79998"
+       id="path10-7-4"
+       style="display:inline;fill-rule:evenodd"
+       sodipodi:nodetypes="cccc" />
+    <path
+       d="M 19.50005,30.20002 22,25 m -2.49995,5.20002 -2.5313,-2.59996"
+       fill="#ffffff"
+       stroke="#ffffff"
+       stroke-linecap="round"
+       stroke-linejoin="round"
+       stroke-width="1.79998"
+       id="path10-7-4-6"
+       style="display:inline;fill-rule:evenodd"
+       sodipodi:nodetypes="cccc" />
   </g>
 </svg>

@@ -46,7 +46,7 @@
          </widget>
         </item>
         <item row="0" column="2">
-         <widget class="QToolButton" name="toolButton">
+         <widget class="QToolButton" name="check_schematized_channel_btn">
           <property name="toolTip">
            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Check Schematized Channel&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
           </property>
