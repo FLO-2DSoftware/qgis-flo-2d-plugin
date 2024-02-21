@@ -167,25 +167,6 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         self.xs_data_model = StandardItemModel()
         self.tview.setModel(self.xs_data_model)
         self.uc = UserCommunication(iface, "FLO-2D")
-        set_icon(self.digitize_btn, "mActionCaptureLine.svg")
-        set_icon(self.save_xs_changes_btn, "mActionSaveAllEdits.svg")
-        set_icon(self.delete_btn, "mActionDeleteSelected.svg")
-        set_icon(self.revert_changes_btn, "mActionUndo.svg")
-        set_icon(self.schematize_xs_btn, "schematize_xsec.svg")
-        # set_icon(self.schematize_right_bank_btn, "schematize_right_bank.svg")
-        # set_icon(self.save_channel_DAT_files_btn, "export_channels.svg")
-        # set_icon(self.reassign_rightbanks_btn, "import_right_banks.svg")
-        # set_icon(self.interpolate_xs_btn, "interpolate_xsec.svg")
-        set_icon(self.confluences_btn, "schematize_confluence.svg")
-        set_icon(self.interpolate_channel_n_btn, "interpolate_channel_n.svg")
-        set_icon(self.rename_xs_btn, "change_name.svg")
-        set_icon(self.sample_elevation_current_R_T_V_btn, "sample_channel_current_RTV.svg")
-        set_icon(self.sample_elevation_all_R_T_V_btn, "sample_channel_all_RTV.svg")
-        set_icon(
-            self.sample_elevation_current_natural_btn,
-            "sample_channel_current_natural.svg",
-        )
-        set_icon(self.sample_elevation_all_natural_btn, "sample_channel_all_natural.svg")
         # Connections:
 
         # Buttons connections:
@@ -195,6 +176,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         self.delete_btn.clicked.connect(self.delete_xs)
         self.delete_schema_btn.clicked.connect(self.delete_schematize_data)
         self.schematize_xs_btn.clicked.connect(self.schematize_channels)
+        self.interpolate_channel_elevation_btn.clicked.connect(self.interpolate_channel_elevation)
         # self.schematize_right_bank_btn.clicked.connect(self.schematize_right_banks)
         # self.save_channel_DAT_files_btn.clicked.connect(self.save_channel_DAT_and_XSEC_files)
         # self.interpolate_xs_btn.clicked.connect(self.interpolate_xs_values)
@@ -398,7 +380,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         self.xs_cbo.setEnabled(enable)
         self.rename_xs_btn.setEnabled(enable)
         self.xs_type_cbo.setEnabled(enable)
-        self.xs_center_chbox.setEnabled(enable)
+        self.xs_center_btn.setEnabled(enable)
         self.n_sbox.setEnabled(enable)
 
     def cancel_user_lyr_edits(self, i):
@@ -458,7 +440,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         self.xs = UserCrossSection(fid, self.con, self.iface)
         row = self.xs.get_row()
         self.lyrs.clear_rubber()
-        if self.xs_center_chbox.isChecked():
+        if self.xs_center_btn.isChecked():
             self.lyrs.show_feat_rubber(self.user_xs_lyr.id(), int(fid))
             feat = next(self.user_xs_lyr.getFeatures(QgsFeatureRequest(int(self.xs.fid))))
             x, y = feat.geometry().centroid().asPoint()
@@ -712,7 +694,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
                     "chan_wsel",
                     "chan_elems_interp"
                 )
-                self.uc.bar_info("Schematized channel data deleted!")
+                self.uc.bar_info("Schematized Cross Sections deleted!")
                 chan_schem = self.lyrs.data["chan"]["qlyr"]
                 chan_elems = self.lyrs.data["chan_elems"]["qlyr"]
                 rbank = self.lyrs.data["rbank"]["qlyr"]
@@ -739,9 +721,6 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
                 else:
                     if self.uc.question("Are you sure you want to delete all channel data?"):
                         self.gutils.clear_tables(
-                            "user_left_bank",
-                            "user_right_bank",
-                            "user_xsections",
                             "chan",
                             "rbank",
                             "chan_elems",
@@ -749,10 +728,17 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
                             "chan_v",
                             "chan_t",
                             "chan_n",
+                            "user_chan_r",
+                            "user_chan_v",
+                            "user_chan_t",
+                            "user_chan_n",
                             "chan_confluences",
+                            "user_xsec_n_data",
+                            "xsec_n_data",
                             "user_noexchange_chan_areas",
                             "noexchange_chan_cells",
                             "chan_wsel",
+                            "chan_elems_interp"
                         )
                     return
             else:
@@ -838,11 +824,10 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
 
         self.populate_xsec_cbo()
 
-        if self.uc.question("Left Banks, Right Banks, and Cross Sections schematized!\n\nWould you like to "
-                            "interpolate the Cross-Sections?"):
-            self.save_temp_channel_DAT_files()
-            self.interpolate_xs_values()
-            # self.reassign_rightbanks_btn.clicked.connect(self.reassign_rightbanks_from_CHANBANK_file)
+        # if self.uc.question("Left Banks, Right Banks, and Cross Sections schematized!\n\nWould you like to "
+        #                     "interpolate the Cross-Sections?"):
+        #     self.save_temp_channel_DAT_files()
+        # else:
 
     def log_schematized_info(self):
         """
@@ -909,19 +894,18 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         self.lyrs.lyrs_to_repaint = [rbank]
         self.lyrs.repaint_layers()
 
-    def save_temp_channel_DAT_files(self):
+    def interpolate_channel_elevation(self):
         """
-        Function to save the DAT and XSEC files into a temporary folder
+        Function to interpolate channel elevation
         """
         xs_survey = self.save_chan_dot_dat_with_zero_natural_cross_sections()
         if xs_survey:
             if self.save_xsec_dot_dat_with_only_user_cross_sections():
                 if self.save_CHANBANK():
                     QApplication.restoreOverrideCursor()
-                    # self.uc.show_info("Files CHAN.DAT, XSEC.DAT, and CHANBANK.DAT saved.")
                     rtrn = -2
                     while rtrn == -2:
-                        rtrn = self.run_INTERPOLATE(xs_survey)
+                        rtrn = self.run_INTERPOLATE()
                         if rtrn == 0:
                             s = QSettings()
                             last_dir = s.value("FLO-2D/lastGdsDir", "") + "/temp/"
@@ -931,7 +915,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
                             self.parser.scan_project_dir(fname)
                             self.import_chan(temp=last_dir)
                             zero, few = self.import_xsec()
-                            m = "Files CHAN.DAT, CHANBANK.DAT, and XSEC.DAT imported."
+                            m = "Elevation Cross Section Interpolated!"
                             if zero > 0:
                                 m += "\n\nWARNING: There are " + str(zero) + " cross sections with no stations."
                             if few > 0:
@@ -944,6 +928,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
                                 m += "\n\nIncrement the number of stations in the problematic cross sections."
 
                             shutil.rmtree(last_dir)
+                            self.uc.bar_info(m)
                             self.uc.log_info(m)
 
         QApplication.restoreOverrideCursor()
@@ -1386,7 +1371,6 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
                         for xi, yi in self.gutils.execute(xsec_sql, (fid,)):
                             x.write(pkt_line.format(nr.format(xi), nr.format(yi)))
                 QApplication.restoreOverrideCursor()
-                self.uc.bar_info("XSEC.DAT model exported to " + outdir, dur=5)
                 return True
             except Exception as e:
                 QApplication.restoreOverrideCursor()
@@ -1417,28 +1401,16 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
             self.uc.show_error("ERROR 260521.1207: Couldn't export CHANBANK.DAT!", e)
             return False
 
-    def run_INTERPOLATE(self, xs_survey):
+    def run_INTERPOLATE(self):
         if sys.platform != "win32":
             self.uc.bar_warn("Could not run interpolation under current operation system!")
             return -1
-
-        # try:  # Show dialog to interpolate
-        #     dlg = XSecInterpolationDialog(self.iface, xs_survey)
-        #     ok = dlg.exec_()
-        #     if not ok:
-        #         return -1
-        # except Exception as e:
-        #     self.uc.log_info(repr(e))
-        #     self.uc.bar_error("ERROR 280318.0530: Cross sections interpolation dialog could not be loaded!")
-        #     return -1
-
         try:
             QApplication.setOverrideCursor(Qt.WaitCursor)
             s = QSettings()
             self.project_dir = s.value("FLO-2D/lastGdsDir", "") + "/temp/"
             self.exe_dir = s.value("FLO-2D/last_flopro", "")
 
-            # self.exe_dir, self.project_dir = dlg.get_parameters()
             if os.path.isfile(self.exe_dir + "\\INTERPOLATE.EXE"):
                 interpolate = XSECInterpolatorExecutor(self.exe_dir, self.project_dir)
                 return_code = interpolate.run()
@@ -1591,6 +1563,47 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
                 "ERROR 260618.0416: couln't read CHANBANK.DAT or reassign right bank coordinates !",
                 e,
             )
+
+    def show_channel(self, fid):
+        """
+        Function to show the channel schematized data
+        """
+        if self.gutils.is_table_empty("grid"):
+            self.uc.bar_warn("There is no grid! Please create it before running tool.")
+            return
+
+        if self.plot.plot.legend is not None:
+            plot_scene = self.plot.plot.legend.scene()
+            if plot_scene is not None:
+                plot_scene.removeItem(self.plot.plot.legend)
+
+        self.chan_seg = ChannelSegment(fid, self.iface.f2d["con"], self.iface)
+        self.chan_seg.get_row()  # Assigns to self.chan_seg all field values of the selected schematized channel:
+        # 'name', 'depinitial',  'froudc',  'roughadj', 'isedn', 'notes', 'user_lbank_fid', 'rank'
+        if not self.chan_seg.get_profiles():
+            return
+        self.plot.clear()
+        sta, lb, rb, bed = [], [], [], []
+
+        ordered_dict = self.chan_seg.profiles.items()
+
+        for item in ordered_dict:
+            key = str(item[0])
+
+        for st, data in ordered_dict:
+            sta.append(data["station"])
+            lb.append(data["lbank_elev"])
+            rb.append(data["rbank_elev"])
+            bed.append(data["bed_elev"])
+
+        self.plot.plot.legend = None
+        self.plot.plot.addLegend(offset=(0, 30))
+        self.plot.plot.setTitle(title=f"Channel Profile - {fid}")
+        self.plot.plot.setLabel("bottom", text="Channel length")
+        self.plot.plot.setLabel("left", text="")
+        self.plot.add_item("Bed elevation", [sta, bed], col=QColor(Qt.black), sty=Qt.SolidLine)
+        self.plot.add_item("Left bank", [sta, lb], col=QColor(Qt.darkGreen), sty=Qt.SolidLine)
+        self.plot.add_item("Right bank", [sta, rb], col=QColor(Qt.darkYellow), sty=Qt.SolidLine)
 
     def show_channel_peaks(self, table, fid):
         """

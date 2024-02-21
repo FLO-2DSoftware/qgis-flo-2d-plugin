@@ -3052,6 +3052,11 @@ class Flo2D(object):
         self.cur_profile_table = None
 
     @connection_required
+    def show_channel_profile(self, fid=None):
+        self.f2d_widget.xs_editor.show_channel(fid)
+        self.cur_profile_table = None
+
+    @connection_required
     def show_xsec_hydrograph(self, fid=None):
         """
         Show the cross-section hydrograph from HYCHAN.OUT
@@ -3651,12 +3656,14 @@ class Flo2D(object):
 
     def set_editors_map(self):
         self.editors_map = {
+            "chan": self.show_channel_profile,
             "user_levee_lines": self.show_user_profile,
             "user_xsections": self.show_xsec_editor,
             "user_streets": self.show_user_profile,
             "user_centerline": self.show_user_profile,
             "chan_elems": self.show_schem_xsec_info,
             "user_left_bank": self.show_user_profile,
+            "user_right_bank": self.show_user_profile,
             "user_bc_points": self.show_bc_editor,
             "user_bc_lines": self.show_bc_editor,
             "user_bc_polygons": self.show_bc_editor,

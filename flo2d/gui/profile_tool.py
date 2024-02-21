@@ -46,6 +46,11 @@ class ProfileTool(qtBaseClass, uiDialog):
             "schema_tab": "chan_elems",
             "schema_fid": "seg_fid",
         },
+        "user_right_bank": {
+            "user_name": "Right Bank Line",
+            "schema_tab": "chan_elems",
+            "schema_fid": "seg_fid",
+        },
     }
 
     def __init__(self, iface, plot, table, lyrs):
