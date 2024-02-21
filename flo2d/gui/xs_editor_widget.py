@@ -182,6 +182,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         # self.interpolate_xs_btn.clicked.connect(self.interpolate_xs_values)
         # self.reassign_rightbanks_btn.clicked.connect(self.reassign_rightbanks_from_CHANBANK_file)
         self.confluences_btn.clicked.connect(self.create_confluences)
+        self.delete_confluences_btn.clicked.connect(self.delete_confluences)
         self.interpolate_channel_n_btn.clicked.connect(self.interpolate_channel_n)
         self.rename_xs_btn.clicked.connect(self.change_xs_name)
         self.sample_elevation_current_natural_btn.clicked.connect(self.sample_elevation_current_natural_cross_sections)
@@ -2141,6 +2142,21 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
             QApplication.restoreOverrideCursor()
             self.uc.log_info(traceback.format_exc())
             self.uc.show_error("ERROR 160921.0937: Creation of confluences aborted!\n,", e)
+
+    def delete_confluences(self):
+        """
+        Function to delete confluences
+        """
+        if self.gutils.is_table_empty("grid"):
+            self.uc.bar_warn("WARNING 160821.0930: There is no grid! Please create it before running tool.")
+            return
+        if self.gutils.is_table_empty("chan_elems"):
+            self.uc.bar_warn("WARNING 160821.0931: There are no schematized channel cross sections.")
+            return
+
+        self.gutils.clear_tables("chan_confluences")
+        self.lyrs.data["chan_confluences"]["qlyr"].triggerRepaint()
+        self.uc.bar_info("Confluences deleted!")
 
     def effective_user_cross_section(self, fid, name):
         """Return the cross section split between banks"""

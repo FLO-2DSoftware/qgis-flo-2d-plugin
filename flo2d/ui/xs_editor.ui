@@ -710,7 +710,7 @@
          </spacer>
         </item>
         <item row="0" column="2">
-         <widget class="QToolButton" name="toolButton_3">
+         <widget class="QToolButton" name="delete_confluences_btn">
           <property name="toolTip">
            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Delete Confluence&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
           </property>
