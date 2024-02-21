@@ -491,6 +491,9 @@ class StorageUnitsDialog(qtBaseClass, uiDialog):
         self.initial_deficit_dbox.setValue(float_or_zero(self.storages_tblw.item(row, 13)))
         self.functional_radio.setChecked(True if self.storages_tblw.item(row, 14).text() == "FUNCTIONAL" else False)
         self.tabular_radio.setChecked(True if self.storages_tblw.item(row, 14).text() == "TABULAR" else False)
+    
+        self.functional_radio_toggled()
+        
         self.coefficient_dbox.setValue(float_or_zero(self.storages_tblw.item(row, 15)))
         self.exponent_dbox.setValue(float_or_zero(self.storages_tblw.item(row, 16)))
         self.constant_dbox.setValue(float_or_zero(self.storages_tblw.item(row, 17)))
@@ -552,10 +555,9 @@ class StorageUnitsDialog(qtBaseClass, uiDialog):
                 self.conductivity_dbox.setValue(float_or_zero(self.storages_tblw.item(row, 12)))
                 self.initial_deficit_dbox.setValue(float_or_zero(self.storages_tblw.item(row, 13)))
                 self.functional_radio.setChecked(True if self.storages_tblw.item(row, 14).text() == "FUNCTIONAL" else False)
-                # self.tabular_grp.setEnabled(True if self.storages_tblw.item(row, 14).text() == "True" else False)
-                self.coefficient_dbox.setValue(float_or_zero(self.storages_tblw.item(row, 16)))
-                self.exponent_dbox.setValue(float_or_zero(self.storages_tblw.item(row, 17)))
-                self.constant_dbox.setValue(float_or_zero(self.storages_tblw.item(row, 18)))
+                self.coefficient_dbox.setValue(float_or_zero(self.storages_tblw.item(row, 15)))
+                self.exponent_dbox.setValue(float_or_zero(self.storages_tblw.item(row, 16)))
+                self.constant_dbox.setValue(float_or_zero(self.storages_tblw.item(row, 17)))
                 
                 curve = self.storages_tblw.item(row, 18).text()
                 index = self.tabular_curves_cbo.findText(curve)

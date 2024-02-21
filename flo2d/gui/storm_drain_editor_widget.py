@@ -2666,7 +2666,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                     try:
                         SD_storages_sql = """SELECT name, invert_elev, max_depth, init_depth, storage_curve,
                                                     coefficient, exponent, constant, ponded_area, 
-                                                    evap_factor, suction_head, conductivity, initial_deficit
+                                                    evap_factor, suction_head, conductivity, initial_deficit, curve_name
                                              FROM user_swmm_storage_units;"""
 
                         storages_rows = self.gutils.execute(SD_storages_sql).fetchall()
@@ -2679,7 +2679,8 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                             swmm_inp_file.write("\n;;Name           Elev.    Depth    Depth    Curve      Params                     Area     Frac.    Infiltration Parameters")
                             swmm_inp_file.write("\n;;-------------- -------- -------- -------- ---------- -------- -------- -------- -------- -------- -----------------------")
 
-                            line = "\n{0:16} {1:<8} {2:<8} {3:<8} {4:<10} {5:<8} {6:<8} {7:<8} {8:<8} {9:<8} {10:<8} {11:<8} {12:<8}"
+                            line_functional = "\n{0:16} {1:<8} {2:<8} {3:<8} {4:<10} {5:<8} {6:<8} {7:<8} {8:<8} {9:<8} {10:<8} {11:<8} {12:<8}"
+                            line_tabular = "\n{0:16} {1:<8} {2:<8} {3:<8} {4:<10} {5:<26} {6:<8} {7:<8} {8:<8} {9:<8} {10:<8}"
 
                             for row in storages_rows:
                                 lrow = list(row)
@@ -2696,11 +2697,18 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                                     0 if lrow[9] is None else '%g'%lrow[9],
                                     0 if lrow[10] is None else '%g'%lrow[10],
                                     0 if lrow[11] is None else '%g'%lrow[11],
-                                    0 if lrow[12] is None else '%g'%lrow[12],                                    
+                                    0 if lrow[12] is None else '%g'%lrow[12],
+                                    lrow[13]
                                 ]
-                                swmm_inp_file.write(line.format(lrow[0], lrow[1], lrow[2], lrow[3], lrow[4], lrow[5],
+                                if lrow[4] == "FUNCTIONAL":   
+                                    swmm_inp_file.write(line_functional.format(lrow[0], lrow[1], lrow[2], lrow[3], lrow[4], lrow[5],
                                                                 lrow[6], lrow[7], lrow[8], lrow[9], lrow[10],
                                                                 lrow[11], lrow[12]))
+                                else:
+                                    swmm_inp_file.write(line_tabular.format(lrow[0], lrow[1], lrow[2], lrow[3], lrow[4],
+                                                                lrow[13], lrow[8], lrow[9], lrow[10],
+                                                                lrow[11], lrow[12]))
+                                        
 
                     except Exception as e:
                         QApplication.restoreOverrideCursor()

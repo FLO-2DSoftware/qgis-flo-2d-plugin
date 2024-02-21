@@ -393,7 +393,7 @@ class StormDrainProject(object):
 
     def create_INP_storage_dictionary_with_storage(self):
         try:
-            storage_cols = [
+            funct_storage_cols = [
                 "name",
                 "invert_elev",
                 "max_depth" ,
@@ -408,12 +408,33 @@ class StormDrainProject(object):
                 "conductivity",
                 "initial_deficit"                              
             ]
+            
+            tab_storage_cols = [
+                "name",
+                "invert_elev",
+                "max_depth" ,
+                "init_depth" ,
+                "storage_curve",
+                "curve_name", 
+                "ponded_area",
+                "evap_factor",
+                "suction_head",
+                "conductivity",
+                "initial_deficit"                              
+            ]            
             storage = self.select_this_INP_group("stora")
             if storage:
                 for strg in storage:
                     if not strg or strg[0] in self.ignore:
                         continue
-                    storage_dict = dict(zip_longest(storage_cols, strg.split()))
+                    split = strg.split()
+                    if split[4] == "FUNCTIONAL":
+                        storage_dict = dict(zip_longest(funct_storage_cols, split ))
+                    elif split[4] == "TABULAR":
+                        storage_dict = dict(zip_longest(tab_storage_cols, split))
+                    else:
+                       self.status_report += "\u25E6 Wrong Storage unit '" + split[0] + "' in [STORAGE] group.\n\n"   
+                       continue          
                     storage = storage_dict.pop("name")
                     self.INP_storages[storage] = storage_dict
 
