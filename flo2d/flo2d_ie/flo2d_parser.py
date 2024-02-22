@@ -403,8 +403,9 @@ class ParseDAT(object):
         results = self.double_parser(mannings_n, topo)
         return results
 
-    def parse_inflow(self):
-        inflow = self.dat_files["INFLOW.DAT"]
+    def parse_inflow(self, inflow=None):
+        if inflow is None:
+            inflow = self.dat_files["INFLOW.DAT"]
         par = self.single_parser(inflow)
         nxt = next(par)
         if not nxt[0] == "R":
@@ -440,8 +441,9 @@ class ParseDAT(object):
         data = [row for row in par]
         return data
 
-    def parse_outflow(self):
-        outflow = self.dat_files["OUTFLOW.DAT"]
+    def parse_outflow(self, outflow=None):
+        if outflow is None:
+            outflow = self.dat_files["OUTFLOW.DAT"]
         par = self.single_parser(outflow)
         data = OrderedDict()
         cur_gid = None

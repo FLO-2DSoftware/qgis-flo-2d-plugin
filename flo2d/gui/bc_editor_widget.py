@@ -649,8 +649,8 @@ class BCEditorWidget(qtBaseClass, uiDialog):
             self.t.append(m_fdata(self.bc_data_model, i, 0))
             self.d.append(m_fdata(self.bc_data_model, i, 1))
             self.m.append(m_fdata(self.bc_data_model, i, 2))
-        self.plot.update_item("Current Discharge", [self.t, self.d])
-        self.plot.update_item("Current Mud", [self.t, self.m])
+        # self.plot.update_item("Current Discharge", [self.t, self.d])
+        # self.plot.update_item("Current Mud", [self.t, self.m])
 
     def add_inflow_data(self):
         if not self.inflow:
