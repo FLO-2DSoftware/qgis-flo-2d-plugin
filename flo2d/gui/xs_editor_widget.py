@@ -841,9 +841,41 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
 
         msg = ""
 
-        # 1 CHANNEL WIDTH ERROR
+        # Add relevant data to the channel dict
+        # Channel dict: {'nxsecnum': ['left_grid', 'right_grid', channel_top_width, channel_grid_element_width}
+        channel_dict = {}
 
-        # 1.1 Cross-section is wider than the distance between two left and right bank elements
+        # Calculate the Channel Top Width
+        left_bank_grids = self.gutils.execute("SELECT elem_fid, nxsecnum FROM chan_n").fetchall()
+        cell_size = int(float(self.gutils.get_cont_par("CELLSIZE")))
+
+        for data in left_bank_grids:
+            nxsecnum = data[1]
+            left_bank_grid = data[0]
+            right_bank_grid = self.gutils.execute(f"SELECT rbankgrid FROM chan_elems WHERE fid = '{left_bank_grid}'").fetchone()[0]
+            channel_top_width = self.gutils.execute(f"SELECT (MAX(xi) - MIN(xi)) FROM xsec_n_data WHERE chan_n_nxsecnum = '{nxsecnum}'").fetchone()[0]
+            lb_centroid = self.gutils.single_centroid(left_bank_grid)
+            rb_centroid = self.gutils.single_centroid(right_bank_grid)
+            lb_qgsPoint = QgsGeometry().fromWkt(lb_centroid).asPoint()
+            rb_qgsPoint = QgsGeometry().fromWkt(rb_centroid).asPoint()
+            channel_grid_element_width = round(QgsGeometry().fromPointXY(lb_qgsPoint).distance(QgsGeometry().fromPointXY(rb_qgsPoint)) + cell_size, 2)
+            channel_dict[nxsecnum] = [left_bank_grid, right_bank_grid, channel_top_width, channel_grid_element_width]
+
+        # 1 CHANNEL WIDTH ERROR
+        close_elements = []
+        for data in channel_dict.values():
+            # 1.1 Cross-section is wider than the distance between two left and right bank elements
+            if data[2] > data[3]:
+                close_elements.append(data[0])
+
+        if len(close_elements) > 0:
+            msg += "BANK ELEMENTS ARE TOO CLOSE TOGETHER - " \
+                   "MOVE RIGHT BANK ELEMENT FARTHER FROM LEFT BANK ELEMENT.\n" \
+                   f"Grid Element(s): {'-'.join(map(str, close_elements))}\n\n"
+
+
+
+
 
         # 1.2 Area on the bank elements is less than 5%
 
@@ -908,11 +940,13 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
                    "ELEVATION OR LOWER THE DOWNSTREAM CHANNEL ELEMENT BED ELEVATION).\n" \
                    f"Grid Element(s): {'-'.join(map(str, error_inflow_bc_grid))}\n\n"
 
-        dlg_channel_report = ChannelCheckReportDialog(self.iface)
-        dlg_channel_report.report_te.insertPlainText(msg)
-        dlg_channel_report.exec_()
-
-        self.uc.log_info(msg)
+        if msg is not "":
+            dlg_channel_report = ChannelCheckReportDialog(self.iface)
+            dlg_channel_report.report_te.insertPlainText(msg)
+            dlg_channel_report.exec_()
+            self.uc.log_info(msg)
+        else:
+            self.uc.show_info("The schematized channel has passed all required checks!")
 
     def log_schematized_info(self):
         """
