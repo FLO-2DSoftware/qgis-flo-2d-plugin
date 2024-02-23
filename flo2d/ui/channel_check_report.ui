@@ -6,12 +6,12 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>878</width>
-    <height>300</height>
+    <width>882</width>
+    <height>309</height>
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Dialog</string>
+   <string>Channel Check Report </string>
   </property>
   <layout class="QGridLayout" name="gridLayout_2">
    <item row="0" column="0">

@@ -11,12 +11,14 @@
 import os
 import shutil
 import subprocess
+import processing
 import sys
 import traceback
 from collections import OrderedDict
 from math import isnan
 
-from qgis._core import QgsMessageLog
+from PyQt5.QtWidgets import QProgressDialog
+from qgis._core import QgsMessageLog, QgsProcessingFeatureSourceDefinition
 from qgis.core import (
     NULL,
     QgsCoordinateTransform,
@@ -839,6 +841,8 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
             self.uc.bar_warn("There is no schematized data! Please schematize the channel data before running tool.")
             return
 
+        QApplication.setOverrideCursor(Qt.WaitCursor)
+
         msg = ""
 
         # Add relevant data to the channel dict
@@ -861,23 +865,53 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
             channel_grid_element_width = round(QgsGeometry().fromPointXY(lb_qgsPoint).distance(QgsGeometry().fromPointXY(rb_qgsPoint)) + cell_size, 2)
             channel_dict[nxsecnum] = [left_bank_grid, right_bank_grid, channel_top_width, channel_grid_element_width]
 
+        pd = QProgressDialog("Checking potential width errors", None, 0, len(channel_dict))
+        pd.setWindowTitle("Checking Channel Data...")
+        pd.setModal(True)
+        pd.forceShow()
+        pd.setValue(0)
+        i = 0
+
         # 1 CHANNEL WIDTH ERROR
         close_elements = []
+        area_elements = []
         for data in channel_dict.values():
+
+            left_grid = data[0]
+            channel_top_width = data[2]
+            channel_grid_element_width = data[3]
+
             # 1.1 Cross-section is wider than the distance between two left and right bank elements
-            if data[2] > data[3]:
-                close_elements.append(data[0])
+            if channel_top_width > channel_grid_element_width:
+                close_elements.append(left_grid)
 
-        if len(close_elements) > 0:
-            msg += "BANK ELEMENTS ARE TOO CLOSE TOGETHER - " \
-                   "MOVE RIGHT BANK ELEMENT FARTHER FROM LEFT BANK ELEMENT.\n" \
-                   f"Grid Element(s): {'-'.join(map(str, close_elements))}\n\n"
+            # 1.2 Area on the bank elements is less than 5%
+            grid_lyr = self.lyrs.get_layer_by_name("Grid", self.lyrs.group).layer()
+            chan_elems_lyr = self.lyrs.get_layer_by_name("Channel Cross Sections", self.lyrs.group).layer()
+            chan_elems_source = QgsProcessingFeatureSourceDefinition(
+                chan_elems_lyr.source(),
+                selectedFeaturesOnly=False,
+                featureLimit=-1,
+                filterExpression=f'"fid" = {left_grid}',
+                geometryCheck=QgsFeatureRequest.GeometryAbortOnInvalid
+            )
+            # Run the select by location algorithm
+            selected_grids = processing.run("native:selectbylocation", {
+                'INPUT': grid_lyr,
+                'PREDICATE': [0],
+                'INTERSECT': chan_elems_source,
+                'METHOD': 0
+            })['OUTPUT']
+            selected_count = selected_grids.selectedFeatureCount()
+            channel_surface_area = channel_top_width * cell_size
+            grid_area = selected_count * cell_size ** 2
+            ratio = round(channel_surface_area / grid_area, 2)
 
+            if ratio > 0.95:
+                area_elements.append(left_grid)
 
-
-
-
-        # 1.2 Area on the bank elements is less than 5%
+            i += 1
+            pd.setValue(i)
 
         # 2 RIGHT BANK ERROR
 
@@ -887,6 +921,9 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
 
         # 3.1 Outflow last cross-section must be lower than adjacent upstream neighbor by 0.1 ft
         # Verify if there is Channel Outflow BC (outflow table)
+        pd = QProgressDialog("Checking potential outflow boundary conditions errors", None, 0, len(channel_dict))
+        pd.setValue(0)
+        i = 0
         error_outflow_bc_grid = []
         outflow_bc_channel_grid_elements = self.gutils.execute(r"SELECT grid_fid FROM outflow_cells JOIN outflow ON "
                                                        r"outflow_cells.outflow_fid = outflow.fid WHERE "
@@ -910,12 +947,15 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
                 if upstream_xc_min_elev - xc_min_elev < 0.1:
                     error_outflow_bc_grid.append(bc_grid)
 
-        if len(error_outflow_bc_grid) > 0:
-            msg += "ERROR: CHANNEL OUTFLOW CROSS SECTION MUST BE LOWER THAN ADJACENT UPSTREAM NEIGHBOR BY 0.1.\n" \
-                   f"Grid Element(s): {'-'.join(map(str, error_outflow_bc_grid))}\n\n"
+            i += 1
+            pd.setValue(i)
 
         # 3.2 Upstream inflow boundary must be positive slope in the downstream direction
         # Verify if there is Channel Inflow BC (inflow table)
+        pd = QProgressDialog("Checking potential outflow boundary conditions errors", None, 0, len(channel_dict))
+        pd.setValue(0)
+        i = 0
+
         error_inflow_bc_grid = []
         inflow_bc_channel_grid_elements = self.gutils.execute(r"SELECT grid_fid FROM inflow_cells JOIN inflow ON inflow_cells.inflow_fid = "
                                r"inflow.fid WHERE inflow.ident = 'C'").fetchall()
@@ -934,13 +974,31 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
                 if downstream_xc_min_elev >= xc_min_elev:
                     error_inflow_bc_grid.append(bc_grid)
 
+            i += 1
+            pd.setValue(i)
+
+        if len(close_elements) > 0:
+            msg += "BANK ELEMENTS ARE TOO CLOSE TOGETHER - " \
+                   "MOVE RIGHT BANK ELEMENT FARTHER FROM LEFT BANK ELEMENT. " \
+                   f"GRID ELEMENTS(S): \n{'-'.join(map(str, close_elements))}\n\n"
+
+        if len(area_elements) > 0:
+            msg += "THE REMAINING FLOODPLAIN SURFACE AREA ON THE CHANNEL BANK ELEMENTS NEEDS TO BE LARGER FOR LEFT BANK ELEMENT: " \
+                    f"GRID ELEMENTS(S): \n{'-'.join(map(str, area_elements))}\n\n"
+
+        if len(error_outflow_bc_grid) > 0:
+            msg += "ERROR: CHANNEL OUTFLOW CROSS SECTION MUST BE LOWER THAN ADJACENT UPSTREAM NEIGHBOR BY 0.1. " \
+                   f"GRID ELEMENTS(S): \n{'-'.join(map(str, error_outflow_bc_grid))}\n\n"
+
         if len(error_inflow_bc_grid) > 0:
             msg += "ERROR: THE FOLLOWING CHANNEL INFLOW NODES HAVE AN ADVERSE (NEGATIVE BED SLOPE) OR ABSOLUTELY FLAT BED "\
                    "SLOPE (ZERO SLOPE) TO THE NEXT DOWNSTREAM CHANNEL ELEMENT: \n(EITHER RAISE THE INFLOW NODE BED " \
-                   "ELEVATION OR LOWER THE DOWNSTREAM CHANNEL ELEMENT BED ELEVATION).\n" \
-                   f"Grid Element(s): {'-'.join(map(str, error_inflow_bc_grid))}\n\n"
+                   "ELEVATION OR LOWER THE DOWNSTREAM CHANNEL ELEMENT BED ELEVATION). " \
+                   f"GRID ELEMENTS(S): \n{'-'.join(map(str, error_inflow_bc_grid))}\n\n"
 
-        if msg is not "":
+        QApplication.restoreOverrideCursor()
+
+        if msg != "":
             dlg_channel_report = ChannelCheckReportDialog(self.iface)
             dlg_channel_report.report_te.insertPlainText(msg)
             dlg_channel_report.exec_()
