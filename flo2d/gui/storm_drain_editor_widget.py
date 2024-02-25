@@ -3186,7 +3186,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                                                             date, 
                                                             time,
                                                             value
-                                          FROM swmm_time_series_data WHERE time_series_name = ? ORDER BY fid;"""
+                                          FROM swmm_time_series_data WHERE time_series_name = ?;"""
 
                         line1 = "\n;{0:16}"
                         line2 = "\n{0:16} {1:<10} {2:<50}"
@@ -3217,7 +3217,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                                         description = [row[1]]
                                         swmm_inp_file.write(line1.format(*description))
                                         for data in time_series_data:
-                                            date = data[0] if data[0] is not None else "00/00/0000"
+                                            date = data[0] if data[0] is not None else "          "
                                             swmm_inp_file.write(
                                                 line3.format(
                                                     name if name is not None else " ",

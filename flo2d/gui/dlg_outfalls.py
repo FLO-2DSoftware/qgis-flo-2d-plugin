@@ -768,14 +768,14 @@ class OutfallTimeSeriesDialog(qtBaseClass, uiDialog):
                                 date, 
                                 time, 
                                 value
-                        FROM swmm_time_series_data WHERE time_series_name = ? ORDER BY date, time"""
+                        FROM swmm_time_series_data WHERE time_series_name = ?"""
                 rows = self.gutils.execute(data_qry, (self.time_series_name,)).fetchall()
                 if rows:
                     self.outfall_time_series_tblw.setRowCount(0)
                     for row_number, row_data in enumerate(rows):
                         self.outfall_time_series_tblw.insertRow(row_number)
                         for col, data in enumerate(row_data):
-                            if col == 0:
+                            if col == 0: # Date
                                 if data:
                                     try:
                                         a, b, c = data.split("/")
@@ -787,10 +787,10 @@ class OutfallTimeSeriesDialog(qtBaseClass, uiDialog):
                                             c = "0" * (4 - len(c)) + c
                                         data = a + "/" + b + "/" + c
                                     except:
-                                        data = "00/00/0000"
+                                        data = "          "
                                 else:
-                                    data = "00/00/0000"
-                            if col == 1:
+                                    data = "          "
+                            if col == 1: # Time
                                 if data:
                                     try:
                                         a, b = data.split(":")
@@ -801,7 +801,7 @@ class OutfallTimeSeriesDialog(qtBaseClass, uiDialog):
                                         data = "00:00"    
                                 else:
                                     data = "00:00"   
-                            if col == 2:
+                            if col == 2: # Value
                                 data = str(data)
                             item = QTableWidgetItem()
                             item.setData(Qt.DisplayRole, data)
