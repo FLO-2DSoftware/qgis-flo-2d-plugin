@@ -13,6 +13,7 @@ from collections import OrderedDict
 from os.path import normpath
 
 from PyQt5.QtWidgets import QProgressDialog
+from qgis._core import QgsMessageLog
 from qgis.core import (
     QgsDefaultValue,
     QgsEditorWidgetSetup,
@@ -856,7 +857,7 @@ class Layers(object):
                     "inflow",
                     {
                         "name": "Inflow",
-                        "sgroup": "Tables",
+                        "sgroup": "Boundary Conditions Tables",
                         "styles": ["inflow.qml"],
                         "attrs_edit_widgets": {},
                         "readonly": False,
@@ -866,7 +867,7 @@ class Layers(object):
                     "outflow",
                     {
                         "name": "Outflow",
-                        "sgroup": "Tables",
+                        "sgroup": "Boundary Conditions Tables",
                         "styles": None,
                         "attrs_edit_widgets": {},
                         "readonly": False,
@@ -876,7 +877,7 @@ class Layers(object):
                     "inflow_cells",
                     {
                         "name": "Inflow Cells",
-                        "sgroup": "Tables",
+                        "sgroup": "Boundary Conditions Tables",
                         "styles": None,
                         "attrs_edit_widgets": {},
                         "readonly": True,
@@ -886,7 +887,7 @@ class Layers(object):
                     "outflow_cells",
                     {
                         "name": "Outflow Cells",
-                        "sgroup": "Tables",
+                        "sgroup": "Boundary Conditions Tables",
                         "styles": None,
                         "attrs_edit_widgets": {},
                         "readonly": True,
@@ -896,7 +897,7 @@ class Layers(object):
                     "qh_params",
                     {
                         "name": "QH Parameters",
-                        "sgroup": "Tables",
+                        "sgroup": "Boundary Conditions Tables",
                         "styles": None,
                         "attrs_edit_widgets": {},
                         "readonly": False,
@@ -906,7 +907,7 @@ class Layers(object):
                     "qh_params_data",
                     {
                         "name": "QH Parameters Data",
-                        "sgroup": "Tables",
+                        "sgroup": "Boundary Conditions Tables",
                         "styles": None,
                         "attrs_edit_widgets": {},
                         "readonly": False,
@@ -916,7 +917,7 @@ class Layers(object):
                     "qh_table",
                     {
                         "name": "QH Tables",
-                        "sgroup": "Tables",
+                        "sgroup": "Boundary Conditions Tables",
                         "styles": None,
                         "attrs_edit_widgets": {},
                         "readonly": False,
@@ -926,7 +927,7 @@ class Layers(object):
                     "qh_table_data",
                     {
                         "name": "QH Tables Data",
-                        "sgroup": "Tables",
+                        "sgroup": "Boundary Conditions Tables",
                         "styles": None,
                         "attrs_edit_widgets": {},
                         "readonly": False,
@@ -936,7 +937,7 @@ class Layers(object):
                     "inflow_time_series",
                     {
                         "name": "Inflow Time Series",
-                        "sgroup": "Tables",
+                        "sgroup": "Boundary Conditions Tables",
                         "styles": None,
                         "attrs_edit_widgets": {},
                         "readonly": False,
@@ -946,7 +947,7 @@ class Layers(object):
                     "inflow_time_series_data",
                     {
                         "name": "Inflow Time Series Data",
-                        "sgroup": "Tables",
+                        "sgroup": "Boundary Conditions Tables",
                         "styles": None,
                         "attrs_edit_widgets": {},
                         "readonly": False,
@@ -956,7 +957,7 @@ class Layers(object):
                     "outflow_time_series",
                     {
                         "name": "Outflow Time Series",
-                        "sgroup": "Tables",
+                        "sgroup": "Boundary Conditions Tables",
                         "styles": None,
                         "attrs_edit_widgets": {},
                         "readonly": False,
@@ -966,7 +967,7 @@ class Layers(object):
                     "outflow_time_series_data",
                     {
                         "name": "Outflow Time Series Data",
-                        "sgroup": "Tables",
+                        "sgroup": "Boundary Conditions Tables",
                         "styles": None,
                         "attrs_edit_widgets": {},
                         "readonly": False,
@@ -1686,26 +1687,27 @@ class Layers(object):
             msg = "Connect to a GeoPackage!"
             self.uc.bar_warn(msg)
             return None
-        try:
-            lyr = self.data[table_name]["qlyr"]
-            self.iface.setActiveLayer(lyr)
-            lyr_fields = lyr.fields()
-            if not default_attr_exp:
-                for idx in lyr_fields.allAttributesList():
-                    field = lyr_fields.field(idx)
-                    field.setDefaultValueDefinition(QgsDefaultValue(""))
-            else:
-                for attr, exp in default_attr_exp.items():
-                    idx = lyr_fields.lookupField(attr)
-                    field = lyr_fields.field(idx)
-                    field.setDefaultValueDefinition(QgsDefaultValue(exp))
-            lyr.startEditing()
-            self.iface.actionAddFeature().trigger()
-            return True
-        except Exception as e:
-            msg = "Could'n start edit mode for table {}. Is it loaded into QGIS project?".format(table_name)
-            self.uc.bar_warn(msg)
-            return None
+        # try:
+        lyr = self.data[table_name]["qlyr"]
+        self.iface.setActiveLayer(lyr)
+        lyr_fields = lyr.fields()
+        if not default_attr_exp:
+            for idx in lyr_fields.allAttributesList():
+                field = lyr_fields.field(idx)
+                field.setDefaultValueDefinition(QgsDefaultValue(""))
+        else:
+            for attr, exp in default_attr_exp.items():
+                idx = lyr_fields.lookupField(attr)
+                default_value = QgsDefaultValue()
+                default_value.setExpression(f"'{exp}'")
+                lyr.setDefaultValueDefinition(idx, default_value)
+        lyr.startEditing()
+        self.iface.actionAddFeature().trigger()
+        return True
+        # except Exception as e:
+        #     msg = "Could'n start edit mode for table {}. Is it loaded into QGIS project?".format(table_name)
+        #     self.uc.bar_warn(msg)
+        #     return None
 
     def any_lyr_in_edit(self, *table_name_list):
         """

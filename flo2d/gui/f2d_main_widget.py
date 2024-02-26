@@ -10,8 +10,9 @@
 
 from qgis.PyQt.QtCore import QSize
 
+from .bc_editor_widget_new import BCEditorWidgetNew
 from ..user_communication import UserCommunication
-from .bc_editor_widget import BCEditorWidget
+# from .bc_editor_widget import BCEditorWidget
 from .channels_editor_widget import ChannelsEditorWidget
 from .fpxsec_editor_widget import FPXsecEditorWidget
 from .grid_tools_widget import GridToolsWidget
@@ -43,7 +44,8 @@ class FLO2DWidget(qtBaseClass, uiDialog):
         self.setupUi(self)
         self.uc = UserCommunication(iface, "FLO-2D")
         self.setup_grid_tools()
-        self.setup_bc_editor()
+        # self.setup_bc_editor()
+        self.setup_bc_editor_new()
         self.setup_ic_editor()
         self.setup_street_editor()
         self.setup_struct_editor()
@@ -60,7 +62,7 @@ class FLO2DWidget(qtBaseClass, uiDialog):
 
         self.cgroups = [
             self.grid_tools_grp,
-            self.bc_editor_grp,
+            self.bc_editor_new_grp,
             self.fpxsec_editor_grp,
             self.infil_editor_grp,
             self.storm_drain_editor_grp,
@@ -81,7 +83,7 @@ class FLO2DWidget(qtBaseClass, uiDialog):
         self.collapse_groups_btn.clicked.connect(self.collapse_all_groups)
 
         # clear rubberband when collapsing the BC editor
-        self.bc_editor_grp.collapsedStateChanged.connect(self.lyrs.clear_rubber)
+        self.bc_editor_new_grp.collapsedStateChanged.connect(self.lyrs.clear_rubber)
 
         # set icons
         set_icon(self.collapse_groups_btn, "collapse_groups.svg")
@@ -106,9 +108,13 @@ class FLO2DWidget(qtBaseClass, uiDialog):
         self.xs_editor = XsecEditorWidget(self.iface, self.plot, self.table, self.lyrs)
         self.xs_editor_lout.addWidget(self.xs_editor)
 
-    def setup_bc_editor(self):
-        self.bc_editor = BCEditorWidget(self.iface, self.plot, self.table, self.lyrs)
-        self.bc_editor_lout.addWidget(self.bc_editor)
+    # def setup_bc_editor(self):
+    #     self.bc_editor = BCEditorWidget(self.iface, self.plot, self.table, self.lyrs)
+    #     self.bc_editor_lout.addWidget(self.bc_editor)
+
+    def setup_bc_editor_new(self):
+        self.bc_editor_new = BCEditorWidgetNew(self.iface, self.plot, self.table, self.lyrs)
+        self.bc_editor_new_lout.addWidget(self.bc_editor_new)
 
     def setup_struct_editor(self):
         self.struct_editor = StructEditorWidget(self.iface, self.plot, self.table, self.lyrs)

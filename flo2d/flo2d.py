@@ -217,8 +217,8 @@ class Flo2D(object):
         self.f2d_widget.rain_editor.setup_connection()
         self.f2d_widget.rain_editor.rain_properties()
 
-        self.f2d_widget.bc_editor.setup_connection()
-        self.f2d_widget.bc_editor.populate_bcs(widget_setup=True)
+        self.f2d_widget.bc_editor_new.setup_connection()
+        self.f2d_widget.bc_editor_new.populate_bcs(widget_setup=True)
 
         self.f2d_widget.ic_editor.populate_cbos()
 
@@ -682,9 +682,9 @@ class Flo2D(object):
             self.iface.removeDockWidget(self.f2d_grid_info_dock)
             del self.f2d_grid_info_dock
         if self.f2d_widget is not None:
-            if self.f2d_widget.bc_editor is not None:
-                self.f2d_widget.bc_editor.close()
-                del self.f2d_widget.bc_editor
+            # if self.f2d_widget.bc_editor is not None:
+            #     self.f2d_widget.bc_editor.close()
+            #     del self.f2d_widget.bc_editor
 
             if self.f2d_widget.profile_tool is not None:
                 self.f2d_widget.profile_tool.close()
@@ -1068,7 +1068,6 @@ class Flo2D(object):
         """
         self.uncheck_all_info_tools()
         dlg = ExternalProgramFLO2D(self.iface, "Run Settings")
-        # dlg.debug_run_btn.setVisible(False)
         dlg.exec_folder_lbl.setText("FLO-2D Folder")
         ok = dlg.exec_()
         if not ok:
@@ -1084,7 +1083,8 @@ class Flo2D(object):
                 flo2d_v = get_flo2dpro_version(s.value("FLO-2D/last_flopro") + "/FLOPRO.exe")
                 self.gutils.set_metadata_par("FLO-2D_V", flo2d_v)
 
-            self.uc.show_info("Run Settings saved!")
+            self.uc.bar_info("Run Settings saved!")
+            self.uc.log_info(f"Run Settings saved!\nProject Folder: {project_dir}\nFLO-2D Folder: {flo2d_dir}")
 
     @connection_required
     def quick_run_flopro(self):
@@ -3070,8 +3070,8 @@ class Flo2D(object):
         Show boundary editor.
         """
         self.f2d_dock.setUserVisible(True)
-        self.f2d_widget.bc_editor_grp.setCollapsed(False)
-        self.f2d_widget.bc_editor.show_editor(self.cur_info_table, fid)
+        self.f2d_widget.bc_editor_new_grp.setCollapsed(False)
+        self.f2d_widget.bc_editor_new.show_editor(self.cur_info_table, fid)
         self.cur_info_table = None
 
     @connection_required

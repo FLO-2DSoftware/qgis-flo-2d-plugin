@@ -21,7 +21,7 @@ from qgis.PyQt.QtWidgets import QApplication, QProgressDialog
 
 from ..flo2d_tools.grid_tools import grid_compas_neighbors
 from ..geopackage_utils import GeoPackageUtils
-from ..gui.bc_editor_widget import BCEditorWidget
+# from ..gui.bc_editor_widget import BCEditorWidget
 from ..layers import Layers
 from ..utils import BC_BORDER, float_or_zero, get_BC_Border
 from .flo2d_parser import ParseDAT, ParseHDF5
@@ -1913,7 +1913,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             if self.is_table_empty("inflow") and self.is_table_empty("reservoirs"):
                 return False
             cont_sql = """SELECT value FROM cont WHERE name = ?;"""
-            inflow_sql = """SELECT fid, time_series_fid, ident, inoutfc FROM inflow WHERE bc_fid = ?;"""
+            inflow_sql = """SELECT fid, time_series_fid, ident, inoutfc FROM inflow WHERE fid = ?;"""
             inflow_cells_sql = """SELECT inflow_fid, grid_fid FROM inflow_cells ORDER BY inflow_fid, grid_fid;"""
             ts_data_sql = (
                 """SELECT time, value, value2 FROM inflow_time_series_data WHERE series_fid = ? ORDER BY fid;"""

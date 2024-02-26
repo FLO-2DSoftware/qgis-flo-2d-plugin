@@ -131,7 +131,8 @@ class PlotWidget(QWidget):
 
     def update_item(self, name, data):
         x, y = data
-        self.items[name].setData(x, y)
+        if name in self.items:
+            self.items[name].setData(x, y)
 
     def remove_item(self, name):
         if self.plot.legend:
