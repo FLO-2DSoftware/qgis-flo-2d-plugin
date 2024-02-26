@@ -891,9 +891,6 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
             else:
                 topw = data[1]
 
-            # lb_qgsPoint = QgsGeometry().fromWkt(lb_centroid).asPoint()
-            # rb_qgsPoint = QgsGeometry().fromWkt(rb_centroid).asPoint()
-            # xdistt = round(QgsGeometry().fromPointXY(lb_qgsPoint).distance(QgsGeometry().fromPointXY(rb_qgsPoint)))
             if xcaddist < 1 or ycaddist < 1:
                 xdistshort = xdistt + cell_size
                 xdistlong = xdistt - cell_size * 1.10
@@ -922,14 +919,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
             arf_left = data[6]
             arf_right = data[7]
 
-            # self.uc.log_info(str(left_grid))
-            # self.uc.log_info(str(topw))
-            # self.uc.log_info(str(xdistt))
-            # self.uc.log_info(str(xdistshort))
-            # self.uc.log_info(str(xdistlong))
-            # self.uc.log_info(str(xlen))
             acf = topw * xlen
-            # self.uc.log_info(str(acf))
 
             # 1.1 Cross-section is wider than the distance between two left and right bank elements
 
@@ -949,10 +939,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
                 area_elements.append(left_grid)
 
             # Available area is less than 5% of the floodplain surface
-            self.uc.log_info(str(arealft))
-            self.uc.log_info(str(arf_left))
             apf_left = arealft * 0.5 * arf_left
-            #apf_right = arealft * 0.5 * arf_right
 
             areapercent = apf_left / (cell_size * cell_size)
             if (areapercent < 0.05) and (arf_left > 0.999):
@@ -960,7 +947,6 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
 
             # Check storage on the left bank floodplain area
             if (areapercent < 0.05) and (arf_left < 0.999):
-               # arf_left = 1
                 apf_left = arealft * 0.5
                 areapercent = apf_left / (cell_size * cell_size)
                 if areapercent < 0.05:
@@ -972,36 +958,11 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
 
             # Check storage on the right bank floodplain area
             if (areapercent < 0.05) and (arf_right < 0.999):
-                #arf_right = 1
                 apf_right = arealft * 0.5
                 areapercent = apf_right / (cell_size * cell_size)
                 if areapercent < 0.05:
                     if left_grid not in area_elements: area_elements.append(left_grid)
 
-            # grid_lyr = self.lyrs.get_layer_by_name("Grid", self.lyrs.group).layer()
-            # chan_elems_lyr = self.lyrs.get_layer_by_name("Channel Cross Sections", self.lyrs.group).layer()
-            # chan_elems_source = QgsProcessingFeatureSourceDefinition(
-            #     chan_elems_lyr.source(),
-            #     selectedFeaturesOnly=False,
-            #     featureLimit=-1,
-            #     filterExpression=f'"fid" = {left_grid}',
-            #     geometryCheck=QgsFeatureRequest.GeometryAbortOnInvalid
-            # )
-            # # Run the select by location algorithm
-            # selected_grids = processing.run("native:selectbylocation", {
-            #     'INPUT': grid_lyr,
-            #     'PREDICATE': [0],
-            #     'INTERSECT': chan_elems_source,
-            #     'METHOD': 0
-            # })['OUTPUT']
-            # selected_count = selected_grids.selectedFeatureCount()
-            # channel_surface_area = channel_top_width * cell_size
-            # grid_area = selected_count * cell_size ** 2
-            # ratio = round(channel_surface_area / grid_area, 2)
-            #
-            # if ratio > 0.95:
-            #     area_elements.append(left_grid)
-            #
             i += 1
             pd.setValue(i)
 
@@ -1097,7 +1058,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         QApplication.restoreOverrideCursor()
 
         if msg != "":
-            dlg_channel_report = ChannelCheckReportDialog(self.iface, self.lyrs)
+            dlg_channel_report = ChannelCheckReportDialog(self.iface, self.lyrs, self.gutils)
             dlg_channel_report.report_te.insertPlainText(msg)
 
             grid_errors = list(set(

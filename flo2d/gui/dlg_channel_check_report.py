@@ -9,22 +9,24 @@ from qgis._core import QgsFeatureRequest
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 
-from flo2d.gui.ui_utils import load_ui, center_canvas, zoom
+from flo2d.gui.ui_utils import load_ui, center_canvas, zoom, zoom_show_n_cells
 
 uiDialog, qtBaseClass = load_ui("channel_check_report")
 
 
 class ChannelCheckReportDialog(qtBaseClass, uiDialog):
 
-    def __init__(self, iface, lyrs):
+    def __init__(self, iface, lyrs, gutils):
         qtBaseClass.__init__(self)
         uiDialog.__init__(self)
         self.currentCell = None
+        self.gutils = gutils
         self.iface = iface
         self.lyrs = lyrs
         self.setupUi(self)
         self.close_btn.clicked.connect(self.close_dialog)
         self.grid = self.lyrs.data["grid"]["qlyr"]
+        self.cell_size = self.gutils.get_cont_par("CELLSIZE")
 
         # connections
         self.previous_btn.clicked.connect(self.show_prev)
@@ -51,7 +53,7 @@ class ChannelCheckReportDialog(qtBaseClass, uiDialog):
             self.currentCell = next(self.grid.getFeatures(QgsFeatureRequest(int(self.error_grids_cbo.currentText()))))
             x, y = self.currentCell.geometry().centroid().asPoint()
             center_canvas(self.iface, x, y)
-            zoom(self.iface, +0.4)
+            zoom_show_n_cells(self.iface, int(self.cell_size), 30)
             self.lyrs.show_feat_rubber(self.grid.id(), int(self.error_grids_cbo.currentText()), QColor(Qt.yellow))
 
     def show_next(self):
@@ -67,7 +69,7 @@ class ChannelCheckReportDialog(qtBaseClass, uiDialog):
             self.currentCell = next(self.grid.getFeatures(QgsFeatureRequest(int(self.error_grids_cbo.currentText()))))
             x, y = self.currentCell.geometry().centroid().asPoint()
             center_canvas(self.iface, x, y)
-            zoom(self.iface, +0.4)
+            zoom_show_n_cells(self.iface, int(self.cell_size), 30)
             self.lyrs.show_feat_rubber(self.grid.id(), int(self.error_grids_cbo.currentText()), QColor(Qt.yellow))
 
     def show_grid(self):
@@ -77,15 +79,17 @@ class ChannelCheckReportDialog(qtBaseClass, uiDialog):
         if self.error_grids_cbo.currentIndex() == 0:
             self.previous_btn.setEnabled(False)
             self.next_btn.setEnabled(True)
-
-        if self.error_grids_cbo.currentIndex() == self.error_grids_cbo.count() - 1:
+        elif self.error_grids_cbo.currentIndex() == self.error_grids_cbo.count() - 1:
             self.next_btn.setEnabled(False)
             self.previous_btn.setEnabled(True)
+        else:
+            self.previous_btn.setEnabled(True)
+            self.next_btn.setEnabled(True)
 
         self.currentCell = next(self.grid.getFeatures(QgsFeatureRequest(int(self.error_grids_cbo.currentText()))))
         x, y = self.currentCell.geometry().centroid().asPoint()
         center_canvas(self.iface, x, y)
-        zoom(self.iface, +0.4)
+        zoom_show_n_cells(self.iface, int(self.cell_size), 30)
         self.lyrs.show_feat_rubber(self.grid.id(), int(self.error_grids_cbo.currentText()), QColor(Qt.yellow))
 
 
