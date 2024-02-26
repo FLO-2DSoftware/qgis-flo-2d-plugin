@@ -1638,7 +1638,6 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 conduit_outlets_not_found = ""
         
                 for name, values in list(storm_drain.INP_conduits.items()):
-                    go_go = True
         
                     conduit_inlet = values["conduit_inlet"] if "conduit_inlet" in values else None
                     conduit_outlet = values["conduit_outlet"] if "conduit_outlet" in values else None
@@ -1683,21 +1682,22 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         
                     feat = QgsFeature()
                     feat.setFields(fields)
-        
-                    if not conduit_inlet in storm_drain.INP_nodes:
+                    
+                    # Unpack and merge storm_drain.INP_nodes and storm_drain.INP_storages:
+                    all_nodes = {**storm_drain.INP_nodes, **storm_drain.INP_storages} 
+                    
+                    if not conduit_inlet in all_nodes:
                         conduit_inlets_not_found += name + "\n"
-                        go_go = False
-                    if not conduit_outlet in storm_drain.INP_nodes:
+                        continue # Force execution of next iteration, skip rest of code.
+                     
+                    if not conduit_outlet in all_nodes:
                         conduit_outlets_not_found += name + "\n"
-                        go_go = False
-        
-                    if not go_go:
-                        continue
-        
-                    x1 = float(storm_drain.INP_nodes[conduit_inlet]["x"])
-                    y1 = float(storm_drain.INP_nodes[conduit_inlet]["y"])
-                    x2 = float(storm_drain.INP_nodes[conduit_outlet]["x"])
-                    y2 = float(storm_drain.INP_nodes[conduit_outlet]["y"])
+                        continue # Force execution of next iteration, skip rest of code. 
+                    
+                    x1 = float(all_nodes[conduit_inlet]["x"])
+                    y1 = float(all_nodes[conduit_inlet]["y"])
+                    x2 = float(all_nodes[conduit_outlet]["x"])
+                    y2 = float(all_nodes[conduit_outlet]["y"])
         
                     grid = self.gutils.grid_on_point(x1, y1)
                     if grid is None:
