@@ -718,9 +718,9 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         if self.gutils.is_table_empty("user_left_bank"):
             if not self.gutils.is_table_empty("chan"):
                 if not self.uc.question(
-                    "There are no user left bank lines.\n\n"
-                    + "But there are schematized left banks and cross sections.\n"
-                    + "Would you like to delete them?"
+                        "There are no user left bank lines.\n\n"
+                        + "But there are schematized left banks and cross sections.\n"
+                        + "Would you like to delete them?"
                 ):
                     return
                 else:
@@ -754,7 +754,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
             return
         if not self.gutils.is_table_empty("chan"):
             if not self.uc.question(
-                "There are already Schematized Channel Segments (Left Banks) and Cross Sections. Overwrite them?"
+                    "There are already Schematized Channel Segments (Left Banks) and Cross Sections. Overwrite them?"
             ):
                 return
 
@@ -846,24 +846,61 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         msg = ""
 
         # Add relevant data to the channel dict
-        # Channel dict: {'nxsecnum': ['left_grid', 'right_grid', channel_top_width, channel_grid_element_width}
+        # Channel dict: {'left_grid': ['right_grid', topw, distt, xdistshort, xdistlong, xlen, arf_left, arf_right}
         channel_dict = {}
 
         # Calculate the Channel Top Width
-        left_bank_grids = self.gutils.execute("SELECT elem_fid, nxsecnum FROM chan_n").fetchall()
-        cell_size = int(float(self.gutils.get_cont_par("CELLSIZE")))
+        left_bank_grids_r = self.gutils.execute("SELECT elem_fid, fcw FROM chan_r").fetchall()
+        # left_bank_grids_v = self.gutils.execute("SELECT elem_fid, nxsecnum FROM chan_n").fetchall() # TODO variable area
+        left_bank_grids_t = self.gutils.execute("SELECT elem_fid, fcw FROM chan_t").fetchall()
+        left_bank_grids_n = self.gutils.execute("SELECT elem_fid, nxsecnum FROM chan_n").fetchall()
+        cell_size = int(float(self.gutils.get_cont_par("CELLSIZE")))  # Assuming that it is the SIDE on JIM's code
 
-        for data in left_bank_grids:
-            nxsecnum = data[1]
+        for data in left_bank_grids_n + left_bank_grids_r + left_bank_grids_t:
             left_bank_grid = data[0]
-            right_bank_grid = self.gutils.execute(f"SELECT rbankgrid FROM chan_elems WHERE fid = '{left_bank_grid}'").fetchone()[0]
-            channel_top_width = self.gutils.execute(f"SELECT (MAX(xi) - MIN(xi)) FROM xsec_n_data WHERE chan_n_nxsecnum = '{nxsecnum}'").fetchone()[0]
+            arf_left = self.gutils.execute(f"SELECT arf FROM blocked_cells WHERE grid_fid = '{left_bank_grid}'").fetchone()
+            if not arf_left:
+                arf_left = 0
+            else:
+                arf_left = arf_left[0]
+            chan_elems = self.gutils.execute(f"SELECT rbankgrid, xlen FROM chan_elems WHERE fid = '{left_bank_grid}'").fetchone()
+            right_bank_grid = chan_elems[0]
+            arf_right = self.gutils.execute(f"SELECT arf FROM blocked_cells WHERE grid_fid = '{right_bank_grid}'").fetchone()
+            if not arf_right:
+                arf_right = 0
+            else:
+                arf_right = arf_right[0]
+            xlen = chan_elems[1]
+
             lb_centroid = self.gutils.single_centroid(left_bank_grid)
             rb_centroid = self.gutils.single_centroid(right_bank_grid)
-            lb_qgsPoint = QgsGeometry().fromWkt(lb_centroid).asPoint()
-            rb_qgsPoint = QgsGeometry().fromWkt(rb_centroid).asPoint()
-            channel_grid_element_width = round(QgsGeometry().fromPointXY(lb_qgsPoint).distance(QgsGeometry().fromPointXY(rb_qgsPoint)) + cell_size, 2)
-            channel_dict[nxsecnum] = [left_bank_grid, right_bank_grid, channel_top_width, channel_grid_element_width]
+            lb_x = QgsGeometry().fromWkt(lb_centroid).asPoint().x()
+            lb_y = QgsGeometry().fromWkt(lb_centroid).asPoint().y()
+            rb_x = QgsGeometry().fromWkt(rb_centroid).asPoint().x()
+            rb_y = QgsGeometry().fromWkt(rb_centroid).asPoint().y()
+
+            xcaddist = lb_x - rb_x
+            ycaddist = lb_y - rb_y
+
+            xdistt = (xcaddist ** 2 + ycaddist ** 2) ** 0.5
+
+            if data in left_bank_grids_n:
+                nxsecnum = data[1]
+                topw = self.gutils.execute(
+                    f"SELECT (MAX(xi) - MIN(xi)) FROM xsec_n_data WHERE chan_n_nxsecnum = '{nxsecnum}'").fetchone()[0]
+            else:
+                topw = data[1]
+
+            # lb_qgsPoint = QgsGeometry().fromWkt(lb_centroid).asPoint()
+            # rb_qgsPoint = QgsGeometry().fromWkt(rb_centroid).asPoint()
+            # xdistt = round(QgsGeometry().fromPointXY(lb_qgsPoint).distance(QgsGeometry().fromPointXY(rb_qgsPoint)))
+            if xcaddist < 1 or ycaddist < 1:
+                xdistshort = xdistt + cell_size
+                xdistlong = xdistt - cell_size * 1.10
+            else:
+                xdistshort = xdistt + cell_size * 1.41412
+                xdistlong = xdistt - cell_size * 1.41412 * 1.10
+            channel_dict[left_bank_grid] = [right_bank_grid, topw, xdistt, xdistshort, xdistlong, xlen, arf_left, arf_right]
 
         pd = QProgressDialog("Checking potential width errors", None, 0, len(channel_dict))
         pd.setWindowTitle("Checking Channel Data...")
@@ -875,41 +912,96 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         # 1 CHANNEL WIDTH ERROR
         close_elements = []
         area_elements = []
-        for data in channel_dict.values():
+        for left_grid, data in channel_dict.items():
 
-            left_grid = data[0]
-            channel_top_width = data[2]
-            channel_grid_element_width = data[3]
+            topw = data[1]
+            xdistt = data[2]
+            xdistshort = data[3]
+            xdistlong = data[4]
+            xlen = data[5]
+            arf_left = data[6]
+            arf_right = data[7]
+
+            # self.uc.log_info(str(left_grid))
+            # self.uc.log_info(str(topw))
+            # self.uc.log_info(str(xdistt))
+            # self.uc.log_info(str(xdistshort))
+            # self.uc.log_info(str(xdistlong))
+            # self.uc.log_info(str(xlen))
+            acf = topw * xlen
+            # self.uc.log_info(str(acf))
 
             # 1.1 Cross-section is wider than the distance between two left and right bank elements
-            if channel_top_width > channel_grid_element_width:
+
+            # Distance is shorter than the top width
+            if xdistshort < topw:
                 close_elements.append(left_grid)
 
-            # 1.2 Area on the bank elements is less than 5%
-            grid_lyr = self.lyrs.get_layer_by_name("Grid", self.lyrs.group).layer()
-            chan_elems_lyr = self.lyrs.get_layer_by_name("Channel Cross Sections", self.lyrs.group).layer()
-            chan_elems_source = QgsProcessingFeatureSourceDefinition(
-                chan_elems_lyr.source(),
-                selectedFeaturesOnly=False,
-                featureLimit=-1,
-                filterExpression=f'"fid" = {left_grid}',
-                geometryCheck=QgsFeatureRequest.GeometryAbortOnInvalid
-            )
-            # Run the select by location algorithm
-            selected_grids = processing.run("native:selectbylocation", {
-                'INPUT': grid_lyr,
-                'PREDICATE': [0],
-                'INTERSECT': chan_elems_source,
-                'METHOD': 0
-            })['OUTPUT']
-            selected_count = selected_grids.selectedFeatureCount()
-            channel_surface_area = channel_top_width * cell_size
-            grid_area = selected_count * cell_size ** 2
-            ratio = round(channel_surface_area / grid_area, 2)
+            # Distance is longer than the top width
+            if (topw > 2 * xdistt) and (xdistlong > topw):
+                close_elements.append(left_grid)
 
-            if ratio > 0.95:
+            # 1.2 Area on the bank elements is less than 5% - JIM's code translated to python
+
+            # Floodplain surface area needs to be larger for the left bank element
+            arealft = xdistshort * xlen - acf
+            if arealft < 0:
                 area_elements.append(left_grid)
 
+            # Available area is less than 5% of the floodplain surface
+            self.uc.log_info(str(arealft))
+            self.uc.log_info(str(arf_left))
+            apf_left = arealft * 0.5 * arf_left
+            #apf_right = arealft * 0.5 * arf_right
+
+            areapercent = apf_left / (cell_size * cell_size)
+            if (areapercent < 0.05) and (arf_left > 0.999):
+                if left_grid not in area_elements: area_elements.append(left_grid)
+
+            # Check storage on the left bank floodplain area
+            if (areapercent < 0.05) and (arf_left < 0.999):
+               # arf_left = 1
+                apf_left = arealft * 0.5
+                areapercent = apf_left / (cell_size * cell_size)
+                if areapercent < 0.05:
+                    if left_grid not in area_elements: area_elements.append(left_grid)
+
+            # Check storage on the right bank floodplain area
+            if (areapercent < 0.05) and (arf_right > 0.999):
+                if left_grid not in area_elements: area_elements.append(left_grid)
+
+            # Check storage on the right bank floodplain area
+            if (areapercent < 0.05) and (arf_right < 0.999):
+                #arf_right = 1
+                apf_right = arealft * 0.5
+                areapercent = apf_right / (cell_size * cell_size)
+                if areapercent < 0.05:
+                    if left_grid not in area_elements: area_elements.append(left_grid)
+
+            # grid_lyr = self.lyrs.get_layer_by_name("Grid", self.lyrs.group).layer()
+            # chan_elems_lyr = self.lyrs.get_layer_by_name("Channel Cross Sections", self.lyrs.group).layer()
+            # chan_elems_source = QgsProcessingFeatureSourceDefinition(
+            #     chan_elems_lyr.source(),
+            #     selectedFeaturesOnly=False,
+            #     featureLimit=-1,
+            #     filterExpression=f'"fid" = {left_grid}',
+            #     geometryCheck=QgsFeatureRequest.GeometryAbortOnInvalid
+            # )
+            # # Run the select by location algorithm
+            # selected_grids = processing.run("native:selectbylocation", {
+            #     'INPUT': grid_lyr,
+            #     'PREDICATE': [0],
+            #     'INTERSECT': chan_elems_source,
+            #     'METHOD': 0
+            # })['OUTPUT']
+            # selected_count = selected_grids.selectedFeatureCount()
+            # channel_surface_area = channel_top_width * cell_size
+            # grid_area = selected_count * cell_size ** 2
+            # ratio = round(channel_surface_area / grid_area, 2)
+            #
+            # if ratio > 0.95:
+            #     area_elements.append(left_grid)
+            #
             i += 1
             pd.setValue(i)
 
@@ -926,8 +1018,8 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         i = 0
         error_outflow_bc_grid = []
         outflow_bc_channel_grid_elements = self.gutils.execute(r"SELECT grid_fid FROM outflow_cells JOIN outflow ON "
-                                                       r"outflow_cells.outflow_fid = outflow.fid WHERE "
-                                                       r"outflow.chan_out = '1'").fetchall()
+                                                               r"outflow_cells.outflow_fid = outflow.fid WHERE "
+                                                               r"outflow.chan_out = '1'").fetchall()
 
         for bc in outflow_bc_channel_grid_elements:
             bc_grid = bc[0]
@@ -939,8 +1031,10 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
                 # Get the downstream xc number
                 upstream_xc = xc - 1
                 # Compare the minimum elevations (xsec_n_data table)
-                xc_min_elev = self.gutils.execute(f"SELECT MIN(yi) FROM xsec_n_data WHERE chan_n_nxsecnum = '{xc}'").fetchone()[0]
-                upstream_xc_min_elev = self.gutils.execute(f"SELECT MIN(yi) FROM xsec_n_data WHERE chan_n_nxsecnum = '{upstream_xc}'").fetchone()[0]
+                xc_min_elev = \
+                    self.gutils.execute(f"SELECT MIN(yi) FROM xsec_n_data WHERE chan_n_nxsecnum = '{xc}'").fetchone()[0]
+                upstream_xc_min_elev = self.gutils.execute(
+                    f"SELECT MIN(yi) FROM xsec_n_data WHERE chan_n_nxsecnum = '{upstream_xc}'").fetchone()[0]
 
                 # TODO: Check the units
 
@@ -957,8 +1051,9 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         i = 0
 
         error_inflow_bc_grid = []
-        inflow_bc_channel_grid_elements = self.gutils.execute(r"SELECT grid_fid FROM inflow_cells JOIN inflow ON inflow_cells.inflow_fid = "
-                               r"inflow.fid WHERE inflow.ident = 'C'").fetchall()
+        inflow_bc_channel_grid_elements = self.gutils.execute(
+            r"SELECT grid_fid FROM inflow_cells JOIN inflow ON inflow_cells.inflow_fid = "
+            r"inflow.fid WHERE inflow.ident = 'C'").fetchall()
         for bc in inflow_bc_channel_grid_elements:
             bc_grid = bc[0]
             # Get the Channel Inflow Grid Element (chan_* table) TODO: Do this for all types of cross sections
@@ -969,8 +1064,10 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
                 # Get the downstream xc number
                 downstream_xc = xc + 1
                 # Compare the minimum elevations (xsec_n_data table)
-                xc_min_elev = self.gutils.execute(f"SELECT MIN(yi) FROM xsec_n_data WHERE chan_n_nxsecnum = '{xc}'").fetchone()[0]
-                downstream_xc_min_elev = self.gutils.execute(f"SELECT MIN(yi) FROM xsec_n_data WHERE chan_n_nxsecnum = '{downstream_xc}'").fetchone()[0]
+                xc_min_elev = \
+                    self.gutils.execute(f"SELECT MIN(yi) FROM xsec_n_data WHERE chan_n_nxsecnum = '{xc}'").fetchone()[0]
+                downstream_xc_min_elev = self.gutils.execute(
+                    f"SELECT MIN(yi) FROM xsec_n_data WHERE chan_n_nxsecnum = '{downstream_xc}'").fetchone()[0]
                 if downstream_xc_min_elev >= xc_min_elev:
                     error_inflow_bc_grid.append(bc_grid)
 
@@ -978,30 +1075,43 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
             pd.setValue(i)
 
         if len(close_elements) > 0:
-            msg += "BANK ELEMENTS ARE TOO CLOSE TOGETHER - " \
-                   "MOVE RIGHT BANK ELEMENT FARTHER FROM LEFT BANK ELEMENT. " \
+            msg += "CHANNEL RIGHT BANK ELEMENTS NEED SOME ADJUSTMENT DUE TO THE CHANNEL WIDTH.  " \
+                   "SET THE RIGHT BANK EITHER CLOSER OR FARTHER AWAY FROM THE LEFT BANK ELEMENT. " \
                    f"GRID ELEMENTS(S): \n{'-'.join(map(str, close_elements))}\n\n"
 
         if len(area_elements) > 0:
-            msg += "THE REMAINING FLOODPLAIN SURFACE AREA ON THE CHANNEL BANK ELEMENTS NEEDS TO BE LARGER FOR LEFT BANK ELEMENT: " \
-                    f"GRID ELEMENTS(S): \n{'-'.join(map(str, area_elements))}\n\n"
+            msg += "THE REMAINING FLOODPLAIN SURFACE AREA ON THE CHANNEL BANK ELEMENTS NEEDS TO BE LARGER FOR LEFT BANK ELEMENT. " \
+                   f"GRID ELEMENTS(S): \n{'-'.join(map(str, area_elements))}\n\n"
 
         if len(error_outflow_bc_grid) > 0:
             msg += "ERROR: CHANNEL OUTFLOW CROSS SECTION MUST BE LOWER THAN ADJACENT UPSTREAM NEIGHBOR BY 0.1. " \
                    f"GRID ELEMENTS(S): \n{'-'.join(map(str, error_outflow_bc_grid))}\n\n"
 
         if len(error_inflow_bc_grid) > 0:
-            msg += "ERROR: THE FOLLOWING CHANNEL INFLOW NODES HAVE AN ADVERSE (NEGATIVE BED SLOPE) OR ABSOLUTELY FLAT BED "\
+            msg += "ERROR: THE FOLLOWING CHANNEL INFLOW NODES HAVE AN ADVERSE (NEGATIVE BED SLOPE) OR ABSOLUTELY FLAT BED " \
                    "SLOPE (ZERO SLOPE) TO THE NEXT DOWNSTREAM CHANNEL ELEMENT: \n(EITHER RAISE THE INFLOW NODE BED " \
                    "ELEVATION OR LOWER THE DOWNSTREAM CHANNEL ELEMENT BED ELEVATION). " \
                    f"GRID ELEMENTS(S): \n{'-'.join(map(str, error_inflow_bc_grid))}\n\n"
 
+        pd.close()
         QApplication.restoreOverrideCursor()
 
         if msg != "":
-            dlg_channel_report = ChannelCheckReportDialog(self.iface)
+            dlg_channel_report = ChannelCheckReportDialog(self.iface, self.lyrs)
             dlg_channel_report.report_te.insertPlainText(msg)
-            dlg_channel_report.exec_()
+
+            grid_errors = list(set(
+                str(item) for sublist in [close_elements, area_elements, error_outflow_bc_grid, error_inflow_bc_grid]
+                for item in sublist))
+            dlg_channel_report.error_grids_cbo.addItems(grid_errors)
+            dlg_channel_report.show()
+            while True:
+                ok = dlg_channel_report.exec_()
+                if ok:
+                    break
+                else:
+                    return
+
             self.uc.log_info(msg)
         else:
             self.uc.show_info("The schematized channel has passed all required checks!")
@@ -1174,9 +1284,9 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
                                     m += "\n\nWARNING: There are " + str(zero) + " cross sections with no stations."
                                 if few > 0:
                                     m += (
-                                        "\n\nWARNING: There are "
-                                        + str(few)
-                                        + " cross sections with less than 6 stations."
+                                            "\n\nWARNING: There are "
+                                            + str(few)
+                                            + " cross sections with less than 6 stations."
                                     )
                                 if zero > 0 or few > 0:
                                     m += "\n\nIncrement the number of stations in the problematic cross sections."
@@ -1423,7 +1533,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
                     previous_xs = -999
 
                     for elems in self.gutils.execute(
-                        chan_elems_sql, (fid,)
+                            chan_elems_sql, (fid,)
                     ):  # each 'elems' is a list [(fid, rbankgrid, fcn, xlen, type)] from
                         # 'chan_elems' table (the cross sections in the schematic layer),
                         #  that has the 'fid' value indicated (the channel segment id).
@@ -1596,13 +1706,13 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
                     self.uc.show_warn(
                         "WARNING 280119.0631 : Cross sections interpolation failed!\n\n"
                         "Interpolation program finished with return code " + str(return_code) + "."
-                        "\n\nCheck content and format of CHAN.DAT and XSEC.DAT files."
-                        "\n\n For natural cross sections:"
-                        "\n\n      - Cross section numbers sequence in CHAN.DAT must be consecutive."
-                        "\n\n      - Total number of cross sections in CHAN.DAT and XSEC.DAT must be equal."
-                        "\n\n      - Each cross section must have at least 6 station pairs (distance, elevation)."
-                        "\n              (use the Cross Sections Editor widget to define the"
-                        "\n               cross sections stations, and then schematize them)"
+                                                                                                "\n\nCheck content and format of CHAN.DAT and XSEC.DAT files."
+                                                                                                "\n\n For natural cross sections:"
+                                                                                                "\n\n      - Cross section numbers sequence in CHAN.DAT must be consecutive."
+                                                                                                "\n\n      - Total number of cross sections in CHAN.DAT and XSEC.DAT must be equal."
+                                                                                                "\n\n      - Each cross section must have at least 6 station pairs (distance, elevation)."
+                                                                                                "\n              (use the Cross Sections Editor widget to define the"
+                                                                                                "\n               cross sections stations, and then schematize them)"
                     )
 
                 return return_code
@@ -1945,7 +2055,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
                 peak_discharge.append(data["peak_discharge"])
                 max_velocity.append(data["max_velocity"])
                 max_froude.append(data["max_froude"])
-                max_flow_area .append(data["max_flow_area"])
+                max_flow_area.append(data["max_flow_area"])
                 max_w_perimeter.append(data["max_w_perimeter"])
                 max_hyd_radius.append(data["max_hyd_radius"])
                 max_top_width.append(data["max_top_width"])
@@ -1966,13 +2076,17 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         self.plot.add_item("Velocity (fps)", [sta, max_velocity], col=QColor(Qt.green), sty=Qt.SolidLine, hide=True)
         self.plot.add_item("Froude", [sta, max_froude], col=QColor(Qt.gray), sty=Qt.SolidLine, hide=True)
         self.plot.add_item("Flow area (sq. ft)", [sta, max_flow_area], col=QColor(Qt.red), sty=Qt.SolidLine, hide=True)
-        self.plot.add_item("Wetted perimeter (ft)", [sta, max_w_perimeter], col=QColor(Qt.yellow), sty=Qt.SolidLine, hide=True)
-        self.plot.add_item("Hydraulic radius (ft)", [sta, max_hyd_radius], col=QColor(Qt.darkBlue), sty=Qt.SolidLine, hide=True)
+        self.plot.add_item("Wetted perimeter (ft)", [sta, max_w_perimeter], col=QColor(Qt.yellow), sty=Qt.SolidLine,
+                           hide=True)
+        self.plot.add_item("Hydraulic radius (ft)", [sta, max_hyd_radius], col=QColor(Qt.darkBlue), sty=Qt.SolidLine,
+                           hide=True)
         self.plot.add_item("Top width (ft)", [sta, max_top_width], col=QColor(Qt.darkRed), sty=Qt.SolidLine, hide=True)
         self.plot.add_item("Width/Depth", [sta, max_width_depth], col=QColor(Qt.darkCyan), sty=Qt.SolidLine, hide=True)
         self.plot.add_item("Energy slope", [sta, max_energy_slope], col=QColor(Qt.magenta), sty=Qt.SolidLine, hide=True)
-        self.plot.add_item("Shear stress (lb/sq. ft)", [sta, max_shear_stress], col=QColor(Qt.darkYellow), sty=Qt.SolidLine, hide=True)
-        self.plot.add_item("Surface Area (sq. ft)", [sta, max_surf_area], col=QColor(Qt.darkMagenta), sty=Qt.SolidLine, hide=True)
+        self.plot.add_item("Shear stress (lb/sq. ft)", [sta, max_shear_stress], col=QColor(Qt.darkYellow),
+                           sty=Qt.SolidLine, hide=True)
+        self.plot.add_item("Surface Area (sq. ft)", [sta, max_surf_area], col=QColor(Qt.darkMagenta), sty=Qt.SolidLine,
+                           hide=True)
 
     def show_hydrograph(self, table, fid):
         """
@@ -2052,16 +2166,25 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         self.plot.plot.setLabel("bottom", text="Time (hrs)")
         self.plot.plot.setLabel("left", text="")
         self.plot.add_item("Discharge (cfs)", [time_list, discharge_list], col=QColor(Qt.darkYellow), sty=Qt.SolidLine)
-        self.plot.add_item("Thalweg depth (ft)", [time_list, thalweg_list], col=QColor(Qt.black), sty=Qt.SolidLine, hide=True)
-        self.plot.add_item("Velocity (fps)", [time_list, velocity_list], col=QColor(Qt.darkGreen), sty=Qt.SolidLine, hide=True)
+        self.plot.add_item("Thalweg depth (ft)", [time_list, thalweg_list], col=QColor(Qt.black), sty=Qt.SolidLine,
+                           hide=True)
+        self.plot.add_item("Velocity (fps)", [time_list, velocity_list], col=QColor(Qt.darkGreen), sty=Qt.SolidLine,
+                           hide=True)
         self.plot.add_item("Froude", [time_list, froude_list], col=QColor(Qt.blue), sty=Qt.SolidLine, hide=True)
-        self.plot.add_item("Flow area (sq. ft)", [time_list, flow_area_list], col=QColor(Qt.red), sty=Qt.SolidLine, hide=True)
-        self.plot.add_item("Wetted perimeter (ft)", [time_list, w_perimeter_list], col=QColor(Qt.yellow), sty=Qt.SolidLine, hide=True)
-        self.plot.add_item("Hydraulic radius (ft)", [time_list, hyd_radius_list], col=QColor(Qt.darkBlue), sty=Qt.SolidLine, hide=True)
-        self.plot.add_item("Top width (ft)", [time_list, top_width_list], col=QColor(Qt.darkRed), sty=Qt.SolidLine, hide=True)
-        self.plot.add_item("Width/Depth", [time_list, width_depth_list], col=QColor(Qt.darkCyan), sty=Qt.SolidLine, hide=True)
-        self.plot.add_item("Energy slope", [time_list, energy_slope_list], col=QColor(Qt.magenta), sty=Qt.SolidLine, hide=True)
-        self.plot.add_item("Shear stress (lb/sq. ft)", [time_list, shear_stress_list], col=QColor(Qt.darkYellow), hide=True)
+        self.plot.add_item("Flow area (sq. ft)", [time_list, flow_area_list], col=QColor(Qt.red), sty=Qt.SolidLine,
+                           hide=True)
+        self.plot.add_item("Wetted perimeter (ft)", [time_list, w_perimeter_list], col=QColor(Qt.yellow),
+                           sty=Qt.SolidLine, hide=True)
+        self.plot.add_item("Hydraulic radius (ft)", [time_list, hyd_radius_list], col=QColor(Qt.darkBlue),
+                           sty=Qt.SolidLine, hide=True)
+        self.plot.add_item("Top width (ft)", [time_list, top_width_list], col=QColor(Qt.darkRed), sty=Qt.SolidLine,
+                           hide=True)
+        self.plot.add_item("Width/Depth", [time_list, width_depth_list], col=QColor(Qt.darkCyan), sty=Qt.SolidLine,
+                           hide=True)
+        self.plot.add_item("Energy slope", [time_list, energy_slope_list], col=QColor(Qt.magenta), sty=Qt.SolidLine,
+                           hide=True)
+        self.plot.add_item("Shear stress (lb/sq. ft)", [time_list, shear_stress_list], col=QColor(Qt.darkYellow),
+                           hide=True)
         self.plot.add_item("Surface Area (sq. ft)", [time_list, surf_area_list], col=QColor(Qt.darkMagenta), hide=True)
 
     def reassign_xs_rightbanks_grid_id_from_schematized_rbanks(self, xs_seg_fid, right_bank_fid):
@@ -2411,8 +2534,8 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
 
     def sample_bank_elevation_all_RTV_cross_sections(self):
         if not self.uc.question(
-            "After this action, all bank elevations from cross sections R, T and V will be lost.\n"
-            "Do you want to proceed?"
+                "After this action, all bank elevations from cross sections R, T and V will be lost.\n"
+                "Do you want to proceed?"
         ):
             return
 
@@ -2427,7 +2550,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
 
     def sample_bank_elevation_current_RTV_cross_sections(self):
         if not self.uc.question(
-            "After this action, bank elevations from current cross sections will be lost.\n" "Do you want to proceed?"
+                "After this action, bank elevations from current cross sections will be lost.\n" "Do you want to proceed?"
         ):
             return
 
@@ -2458,7 +2581,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
 
     def sample_elevation_all_natural_cross_sections(self):
         if not self.uc.question(
-            "After this action, all current natural cross section profiles will be lost.\n" "Do you want to proceed?"
+                "After this action, all current natural cross section profiles will be lost.\n" "Do you want to proceed?"
         ):
             return
         request = QgsFeatureRequest()
@@ -2473,7 +2596,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
 
     def sample_elevation_current_natural_cross_sections(self):
         if not self.uc.question(
-            "After this action, current natural cross section profile will be lost.\n" "Do you want to proceed?"
+                "After this action, current natural cross section profile will be lost.\n" "Do you want to proceed?"
         ):
             return
         fid = int(self.xs_cbo.currentData())
