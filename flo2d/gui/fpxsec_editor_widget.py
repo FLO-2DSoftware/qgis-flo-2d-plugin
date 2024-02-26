@@ -11,6 +11,9 @@
 import os
 import traceback
 
+from PyQt5.QtCore import QSettings, Qt
+from PyQt5.QtGui import QColor
+from PyQt5.QtWidgets import QApplication
 from qgis.core import QgsFeatureRequest
 from qgis.PyQt.QtGui import QIcon
 from qgis.PyQt.QtWidgets import QInputDialog
@@ -24,7 +27,7 @@ uiDialog, qtBaseClass = load_ui("fpxsec_editor")
 
 
 class FPXsecEditorWidget(qtBaseClass, uiDialog):
-    def __init__(self, iface, lyrs):
+    def __init__(self, iface, lyrs, plot):
         qtBaseClass.__init__(self)
         uiDialog.__init__(self)
         self.iface = iface
@@ -33,6 +36,7 @@ class FPXsecEditorWidget(qtBaseClass, uiDialog):
         self.con = None
         self.gutils = None
         self.fpxsec_lyr = None
+        self.plot = plot
         self.uc = UserCommunication(iface, "FLO-2D")
 
         # set button icons
@@ -200,3 +204,75 @@ class FPXsecEditorWidget(qtBaseClass, uiDialog):
             self.gutils.set_cont_par("NXPRT", "1")
         else:
             self.gutils.set_cont_par("NXPRT", "0")
+
+    def show_hydrograph(self, table, fid):
+        """
+        Function to load the hydrograph and flododplain hydraulics from HYCROSS.OUT
+        """
+        self.uc.clear_bar_messages()
+        if self.gutils.is_table_empty("grid"):
+            self.uc.bar_warn("There is no grid! Please create it before running tool.")
+            return False
+
+        s = QSettings()
+
+        # HERE
+
+        HYCROSS_file = s.value("FLO-2D/lastHYCROSSFile", "")
+        GDS_dir = s.value("FLO-2D/lastGdsDir", "")
+        # Check if there is an HYCROSS.OUT file on the FLO-2D QSettings
+        if not os.path.isfile(HYCROSS_file):
+            HYCROSS_file = GDS_dir + r"/HYCROSS.OUT"
+            # Check if there is an HYCROSS.OUT file on the export folder
+            if not os.path.isfile(HYCROSS_file):
+                self.uc.bar_warn(
+                    "No HYCROSS.OUT file found. Please ensure the simulation has completed and verify the project export folder.")
+                return
+        # Check if the HYCROSS.OUT has data on it
+        if os.path.getsize(HYCROSS_file) == 0:
+            QApplication.restoreOverrideCursor()
+            self.uc.bar_warn("File  '" + os.path.basename(HYCROSS_file) + "'  is empty!")
+            return
+
+        # fpxsec_fid = str(self.gutils.execute(f"SELECT fid FROM fpxsec WHERE fid = '{fid}'").fetchone()[0])
+
+        with open(HYCROSS_file, "r") as myfile:
+            while True:
+                time_list = []
+                discharge_list = []
+                flow_width_list = []
+                wse_list = []
+                line = next(myfile)
+                if "THE MAXIMUM DISCHARGE FROM CROSS SECTION" in line:
+                    if line.split()[6] == str(fid):
+                        for _ in range(9):
+                            line = next(myfile)
+                        while True:
+                            try:
+                                line = next(myfile)
+                                if not line.strip():
+                                    break
+                                line = line.split()
+                                time_list.append(float(line[0]))
+                                discharge_list.append(float(line[5]))
+                                flow_width_list.append(float(line[1]))
+                                wse_list.append(float(line[3]))
+                            except StopIteration:
+                                break
+                        break
+
+        self.plot.clear()
+        if self.plot.plot.legend is not None:
+            plot_scene = self.plot.plot.legend.scene()
+            if plot_scene is not None:
+                plot_scene.removeItem(self.plot.plot.legend)
+
+        self.plot.plot.legend = None
+        self.plot.plot.addLegend(offset=(0, 30))
+        self.plot.plot.setTitle(title=f"Floodplain Cross Section - {fid}")
+        self.plot.plot.setLabel("bottom", text="Time (hrs)")
+        self.plot.plot.setLabel("left", text="")
+        self.plot.add_item("Discharge (cfs)", [time_list, discharge_list], col=QColor(Qt.darkYellow), sty=Qt.SolidLine)
+        self.plot.add_item("Flow Width (ft)", [time_list, flow_width_list], col=QColor(Qt.black), sty=Qt.SolidLine, hide=True)
+        self.plot.add_item("Water Surface Elevation (ft)", [time_list, wse_list], col=QColor(Qt.darkGreen), sty=Qt.SolidLine, hide=True)
+

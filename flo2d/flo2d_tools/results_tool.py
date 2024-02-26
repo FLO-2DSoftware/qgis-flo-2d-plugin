@@ -41,6 +41,7 @@ class ResultsTool(QgsMapToolIdentify):
         self.lyrs_list = [
             self.lyrs.data["chan"]["qlyr"],
             self.lyrs.data["chan_elems"]["qlyr"],
+            self.lyrs.data["fpxsec"]["qlyr"],
             self.lyrs.data["struct"]["qlyr"],
             self.lyrs.data["user_swmm_nodes"]["qlyr"]
         ]
@@ -55,6 +56,7 @@ class ResultsTool(QgsMapToolIdentify):
         implemented = [
             "chan",
             "chan_elems",
+            "fpxsec",
             "user_swmm_nodes",
             "struct"
         ]
