@@ -3984,8 +3984,8 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                     self.plot.plot.setLabel("bottom", text="Time (hours)")
                     self.plot.add_item(f"Flow ({units})", [timeRPT, flowRPT], col=QColor(Qt.darkGreen), sty=Qt.SolidLine)
                     self.plot.add_item(f"Velocity {units}", [timeRPT, velocityRPT], col=QColor(Qt.red), sty=Qt.SolidLine, hide=True)
-                    self.plot.add_item(f"Depth {units}", [timeRPT, depthRPT], col=QColor(Qt.red), sty=Qt.SolidLine, hide=True)
-                    self.plot.add_item(f"Percent Full {units}", [timeRPT, percent_fullRPT], col=QColor(Qt.red), sty=Qt.SolidLine, hide=True)
+                    self.plot.add_item(f"Depth {units}", [timeRPT, depthRPT], col=QColor(Qt.darkMagenta), sty=Qt.SolidLine, hide=True)
+                    self.plot.add_item(f"Percent Full {units}", [timeRPT, percent_fullRPT], col=QColor(Qt.darkGray), sty=Qt.SolidLine, hide=True)
 
                     self.plot.plot.setLabel("left", text="Units of measurement: " + units)
 
@@ -4105,6 +4105,8 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                     time = nextTime[1]
                     inflow = float(nextTime[2])
                     flooding = float(nextTime[3])
+                    depth = float(nextTime[4])
+                    head = float(nextTime[5])
                     currentHour, minutes, seconds = time.split(":")
                     currentHour = int(currentHour)
                     minutes = int(minutes) / 60
@@ -4113,7 +4115,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                         day = day + 24
                     previousHour = currentHour
                     hour = day + currentHour + minutes + seconds
-                    RPTtimeSeries.append([hour, inflow, flooding])
+                    RPTtimeSeries.append([hour, inflow, flooding, depth, head])
 
                 # See if there are aditional .DAT files with SD data:
                 SWMMQIN_file = GDS_dir + r"\SWMMQIN.OUT"
@@ -4347,7 +4349,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
 
             try: # Build plot.
                 self.plot.clear()
-                timeRPT, inflowRPT, floodingRPT = [], [], []
+                timeRPT, inflowRPT, floodingRPT, depthRPT, headRPT = [], [], [], [], []
                 timeInToSD, dischargeInToSD, returnInToSD = [], [], []
                 timeOutToFLO, dischargeOutToFLO = [], []
                 
@@ -4355,6 +4357,8 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                     timeRPT.append(row[0] if not row[0] is None else float("NaN"))
                     inflowRPT.append(row[1] if not row[1] is None else float("NaN"))
                     floodingRPT.append(row[2] if not row[2] is None else float("NaN"))
+                    depthRPT.append(row[3] if not row[3] is None else float("NaN"))
+                    headRPT.append(row[4] if not row[4] is None else float("NaN"))
                 
                 if SWMMQINtimeSeries:
                     for row in SWMMQINtimeSeries:
@@ -4377,14 +4381,16 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 self.plot.plot.setTitle(title="Discharge " + node + " (grid " + grid + ")")
                 self.plot.plot.setLabel("bottom", text="Time (hours)")
                 self.plot.add_item("Total Inflow", [timeRPT, inflowRPT], col=QColor(Qt.darkGreen), sty=Qt.SolidLine)
-                self.plot.add_item("Flooding", [timeRPT, floodingRPT], col=QColor(Qt.red), sty=Qt.SolidLine)
+                self.plot.add_item("Flooding", [timeRPT, floodingRPT], col=QColor(Qt.red), sty=Qt.SolidLine, hide=True)
+                self.plot.add_item("Depth", [timeRPT, depthRPT], col=QColor(Qt.darkMagenta), sty=Qt.SolidLine, hide=True)
+                self.plot.add_item("Head", [timeRPT, headRPT], col=QColor(Qt.darkGray), sty=Qt.SolidLine, hide=True)
                 
                 if SWMMQINtimeSeries:
-                    self.plot.add_item("Inflow Discharge to Storm Drain", [timeInToSD, dischargeInToSD], col=QColor(Qt.blue), sty=Qt.SolidLine)
-                    self.plot.add_item("Return Discharge to FLO-2D", [timeInToSD, returnInToSD], col=QColor(Qt.darkYellow), sty=Qt.SolidLine)                    
+                    self.plot.add_item("Inflow Discharge to Storm Drain", [timeInToSD, dischargeInToSD], col=QColor(Qt.blue), sty=Qt.SolidLine, hide=True)
+                    self.plot.add_item("Return Discharge to FLO-2D", [timeInToSD, returnInToSD], col=QColor(Qt.darkYellow), sty=Qt.SolidLine, hide=True)
                 
                 if SWMMOUTFINtimeseries:
-                    self.plot.add_item("Discharge to FLO-2D", [timeOutToFLO, dischargeOutToFLO], col=QColor(Qt.black), sty=Qt.SolidLine)                
+                    self.plot.add_item("Discharge to FLO-2D", [timeOutToFLO, dischargeOutToFLO], col=QColor(Qt.black), sty=Qt.SolidLine, hide=True)
                 
                 self.plot.plot.setLabel("left", text="Discharge (" + units + ")") 
                 
