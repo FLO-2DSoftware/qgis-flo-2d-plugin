@@ -44,7 +44,8 @@ class ResultsTool(QgsMapToolIdentify):
             self.lyrs.data["fpxsec"]["qlyr"],
             self.lyrs.data["fpxsec_cells"]["qlyr"],
             self.lyrs.data["struct"]["qlyr"],
-            self.lyrs.data["user_swmm_nodes"]["qlyr"]
+            self.lyrs.data["user_swmm_nodes"]["qlyr"],
+            self.lyrs.data["user_swmm_conduits"]["qlyr"]
         ]
 
     def canvasPressEvent(self, dummy):
@@ -60,6 +61,7 @@ class ResultsTool(QgsMapToolIdentify):
             "fpxsec",
             "fpxsec_cells",
             "user_swmm_nodes",
+            "user_swmm_conduits",
             "struct"
         ]
         # Overrides inherited method from QgsMapToolIdentify.
@@ -93,6 +95,11 @@ class ResultsTool(QgsMapToolIdentify):
                     name = feat["name"]
                     grid = feat["grid"]
                     actions[i][j] = QAction(name + " (" + str(grid) + ")", None)
+                elif ln == "Storm Drain Conduits":
+                    sd_layer = self.lyrs.get_layer_by_name("Storm Drain Conduits", group=self.lyrs.group).layer()
+                    feat = next(sd_layer.getFeatures(QgsFeatureRequest(fid)))
+                    name = feat["conduit_name"]
+                    actions[i][j] = QAction(name, None)
                 elif ln == "Floodplain Cross Sections Cells":
                     fp_cells_layer = self.lyrs.get_layer_by_name("Floodplain Cross Sections Cells", group=self.lyrs.group).layer()
                     feat = next(fp_cells_layer.getFeatures(QgsFeatureRequest(fid)))

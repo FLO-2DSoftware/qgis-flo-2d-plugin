@@ -3117,6 +3117,19 @@ class Flo2D(object):
         self.f2d_widget.storm_drain_editor.create_SD_discharge_table_and_plots(name)
 
     @connection_required
+    def show_conduit_discharge(self, fid=None):
+        """
+        Show storm drain discharge for a given conduit link.
+        """
+        if self.gutils.is_table_empty("grid"):
+            self.uc.bar_warn("There is no grid! Please create it before running tool.")
+            return
+
+        name = self.gutils.execute(f"SELECT conduit_name FROM user_swmm_conduits WHERE fid = '{fid}'").fetchone()[0]
+        self.f2d_dock.setUserVisible(True)
+        self.f2d_widget.storm_drain_editor.create_conduit_discharge_table_and_plots(name)
+
+    @connection_required
     def show_schem_xsec_info(self, fid=None):
         """
         Show schematic cross-section info.
@@ -3666,6 +3679,10 @@ class Flo2D(object):
             show_editor = self.editors_map[table]
             self.cur_info_table = table
             show_editor(fid)
+        if table == 'user_swmm_conduits':
+            show_editor = self.editors_map[table]
+            self.cur_info_table = table
+            show_editor(fid)
 
         # except KeyError:
         #     self.uc.bar_info("Channel Profile tool not implemented for selected features.")
@@ -3686,6 +3703,7 @@ class Flo2D(object):
             "user_struct": self.show_struct_editor,
             "struct": self.show_struct_editor,
             "user_swmm_nodes": self.show_sd_discharge,
+            "user_swmm_conduits": self.show_conduit_discharge,
         }
 
     def restore_settings(self):
