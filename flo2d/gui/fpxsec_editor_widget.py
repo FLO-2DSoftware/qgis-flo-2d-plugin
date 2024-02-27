@@ -216,8 +216,6 @@ class FPXsecEditorWidget(qtBaseClass, uiDialog):
 
         s = QSettings()
 
-        # HERE
-
         HYCROSS_file = s.value("FLO-2D/lastHYCROSSFile", "")
         GDS_dir = s.value("FLO-2D/lastGdsDir", "")
         # Check if there is an HYCROSS.OUT file on the FLO-2D QSettings
@@ -233,8 +231,6 @@ class FPXsecEditorWidget(qtBaseClass, uiDialog):
             QApplication.restoreOverrideCursor()
             self.uc.bar_warn("File  '" + os.path.basename(HYCROSS_file) + "'  is empty!")
             return
-
-        # fpxsec_fid = str(self.gutils.execute(f"SELECT fid FROM fpxsec WHERE fid = '{fid}'").fetchone()[0])
 
         with open(HYCROSS_file, "r") as myfile:
             while True:
@@ -275,4 +271,65 @@ class FPXsecEditorWidget(qtBaseClass, uiDialog):
         self.plot.add_item("Discharge (cfs)", [time_list, discharge_list], col=QColor(Qt.darkYellow), sty=Qt.SolidLine)
         self.plot.add_item("Flow Width (ft)", [time_list, flow_width_list], col=QColor(Qt.black), sty=Qt.SolidLine, hide=True)
         self.plot.add_item("Water Surface Elevation (ft)", [time_list, wse_list], col=QColor(Qt.darkGreen), sty=Qt.SolidLine, hide=True)
+
+    def show_cells_hydrograph(self, table, fid):
+        """
+        Function to load the floodplain cells hydrograph from CROSSQ.OUT
+        """
+        self.uc.clear_bar_messages()
+        if self.gutils.is_table_empty("grid"):
+            self.uc.bar_warn("There is no grid! Please create it before running tool.")
+            return False
+
+        s = QSettings()
+
+        CROSSQ_file = s.value("FLO-2D/lastCROSSQFile", "")
+        GDS_dir = s.value("FLO-2D/lastGdsDir", "")
+        # Check if there is a CROSSQ.OUT file on the FLO-2D QSettings
+        if not os.path.isfile(CROSSQ_file):
+            CROSSQ_file = GDS_dir + r"/CROSSQ.OUT"
+            # Check if there is a CROSSQ.OUT file on the export folder
+            if not os.path.isfile(CROSSQ_file):
+                self.uc.bar_warn(
+                    "No CROSSQ.OUT file found. Please ensure the simulation has completed and verify the project export folder.")
+                return
+        # Check if the CROSSQ.OUT has data on it
+        if os.path.getsize(CROSSQ_file) == 0:
+            QApplication.restoreOverrideCursor()
+            self.uc.bar_warn("File  '" + os.path.basename(CROSSQ_file) + "'  is empty!")
+            return
+
+        grid_fid = self.gutils.execute(f"SELECT grid_fid FROM fpxsec_cells WHERE fid = '{fid}'").fetchone()[0]
+
+        with open(CROSSQ_file, "r") as myfile:
+            while True:
+                time_list = []
+                discharge_list = []
+                line = next(myfile)
+                if len(line.split()) == 3 and line.split()[0] == str(grid_fid):
+                    time_list.append(float(line.split()[1]))
+                    discharge_list.append(float(line.split()[2]))
+                    while True:
+                        try:
+                            line = next(myfile)
+                            if len(line.split()) == 3:
+                                break
+                            time_list.append(float(line.split()[0]))
+                            discharge_list.append(float(line.split()[1]))
+                        except StopIteration:
+                            break
+                    break
+
+        self.plot.clear()
+        if self.plot.plot.legend is not None:
+            plot_scene = self.plot.plot.legend.scene()
+            if plot_scene is not None:
+                plot_scene.removeItem(self.plot.plot.legend)
+
+        self.plot.plot.legend = None
+        self.plot.plot.addLegend(offset=(0, 30))
+        self.plot.plot.setTitle(title=f"Floodplain Cell - {grid_fid}")
+        self.plot.plot.setLabel("bottom", text="Time (hrs)")
+        self.plot.plot.setLabel("left", text="")
+        self.plot.add_item("Discharge (cfs)", [time_list, discharge_list], col=QColor(Qt.darkYellow), sty=Qt.SolidLine)
 

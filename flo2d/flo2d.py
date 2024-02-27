@@ -1097,6 +1097,7 @@ class Flo2D(object):
                 flo2d_v = get_flo2dpro_version(s.value("FLO-2D/last_flopro") + "/FLOPRO.exe")
                 self.gutils.set_metadata_par("FLO-2D_V", flo2d_v)
 
+            self.f2d_plot.clear()
             self.uc.bar_info("Run Settings saved!")
             self.uc.log_info(f"Run Settings saved!\nProject Folder: {project_dir}\nFLO-2D Folder: {flo2d_dir}")
 
@@ -3068,6 +3069,14 @@ class Flo2D(object):
         self.cur_profile_table = None
 
     @connection_required
+    def show_fpxsec_cells_hydrograph(self, fid=None):
+        """
+        Show the floodplain cross-section hydrograph from HYCROSS.OUT
+        """
+        self.f2d_widget.fpxsec_editor.show_cells_hydrograph(self.cur_profile_table, fid)
+        self.cur_profile_table = None
+
+    @connection_required
     def show_xsec_editor(self, fid=None):
         """
         Show Cross-section editor.
@@ -3647,6 +3656,9 @@ class Flo2D(object):
         if table == 'fpxsec':
             self.cur_profile_table = table
             self.show_fpxsec_hydrograph(fid)
+        if table == 'fpxsec_cells':
+            self.cur_profile_table = table
+            self.show_fpxsec_cells_hydrograph(fid)
         if table == 'struct':
             self.cur_profile_table = table
             self.show_struct_hydrograph(fid)

@@ -3870,19 +3870,6 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             if not os.path.isfile(RPT_file):
                 self.uc.bar_warn("No swmm.RPT file found. Please ensure the simulation has completed and verify the project export folder.")
                 return
-        # if intersection is False or not RPT_file or intersection == "Just assign FLO-2D settings":
-        #     last_RPT_dir = s.value("FLO-2D/lastRPTDir", "")
-        #     RPT_file, _ = QFileDialog.getOpenFileName(
-        #         None,
-        #         "Select .RPT file",
-        #         directory=last_RPT_dir,
-        #         filter="RPT file (*.rpt; *.RPT)",
-        #     )
-        # else:
-        #    last_RPT_dir = os.path.dirname(RPT_file)
-        # if not RPT_file:
-        #     return False
-        # else:
 
         # Check if the swmm.RPT has data on it
         if os.path.getsize(RPT_file) == 0:
@@ -3891,25 +3878,6 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             self.uc.bar_warn("WARNING 111123.1744: File  '" + os.path.basename(RPT_file) + "'  is empty!\n" +
                                 "Select a valid .RPT file.")
             return
-            # RPT_file, _ = QFileDialog.getOpenFileName(
-            #     None,
-            #     "Select .RPT file",
-            #     directory=last_RPT_dir,
-            #     filter="RPT file (*.rpt; *.RPT)",
-            # )
-            # self.uc.clear_bar_messages()
-            # if not  RPT_file:
-            #     return False
-            # else:
-            #     s.setValue("FLO-2D/lastRPTFile", RPT_file)
-            #     last_RPT_dir = os.path.dirname(RPT_file)
-            #     s.setValue("FLO-2D/lastRPTDir", last_RPT_dir)
-
-        # if intersection == "Just assign FLO-2D settings":
-        #     s.setValue("FLO-2D/lastRPTFile", RPT_file)
-        #     last_RPT_dir = os.path.dirname(RPT_file)
-        #     s.setValue("FLO-2D/lastRPTDir", last_RPT_dir)
-        #     return True
 
         if intersection:
             with open(RPT_file) as f:
@@ -3919,19 +3887,6 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                     self.uc.bar_warn("WARNING 111123.1742: Node " + intersection + " not found in file\n\n" + RPT_file +
                                         "\n\nSelect a valid .RPT file.")
                     return
-                    # RPT_file, _ = QFileDialog.getOpenFileName(
-                    #     None,
-                    #     "Select .RPT file",
-                    #     directory=last_RPT_dir,
-                    #     filter="RPT file (*.rpt; *.RPT)",
-                    # )
-                    # self.uc.clear_bar_messages()
-                    # if not RPT_file:
-                    #     return False
-                    # else:
-                    #     s.setValue("FLO-2D/lastRPTFile", RPT_file)
-                    #     last_RPT_dir = os.path.dirname(RPT_file)
-                    #     s.setValue("FLO-2D/lastRPTDir", last_RPT_dir)
 
         data = OrderedDict()
         # Read RPT file.
@@ -3980,20 +3935,6 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                     self.uc.bar_warn("WARNING 111123.1743: Node " + intersection + " not found in file\n\n" + RPT_file +
                                         "\n\nSelect a valid .RPT file.")
                     return
-                    # RPT_file, _ = QFileDialog.getOpenFileName(
-                    #     None,
-                    #     "Select .RPT file",
-                    #     directory=last_RPT_dir,
-                    #     filter="RPT file (*.rpt; *.RPT)",
-                    # )
-                    # self.uc.clear_bar_messages()
-                    # if not RPT_file:
-                    #     return False
-                    # else:
-                    #     s.setValue("FLO-2D/lastRPTFile", RPT_file)
-                    #     last_RPT_dir = os.path.dirname(RPT_file)
-                    #     s.setValue("FLO-2D/lastRPTDir", last_RPT_dir)
-                    #     return True
 
                 node_series = data[intersection]
                 I = 1
