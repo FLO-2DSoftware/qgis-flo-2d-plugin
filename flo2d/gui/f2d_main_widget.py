@@ -135,7 +135,7 @@ class FLO2DWidget(qtBaseClass, uiDialog):
         self.profile_tool_lout.addWidget(self.profile_tool)
 
     def setup_fpxsec_editor(self):
-        self.fpxsec_editor = FPXsecEditorWidget(self.iface, self.lyrs, self.plot)
+        self.fpxsec_editor = FPXsecEditorWidget(self.iface, self.lyrs, self.plot, self.table)
         self.fpxsec_editor_lout.addWidget(self.fpxsec_editor)
 
     def setup_infil_editor(self):

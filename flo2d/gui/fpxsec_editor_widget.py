@@ -18,6 +18,7 @@ from qgis.core import QgsFeatureRequest
 from qgis.PyQt.QtGui import QIcon
 from qgis.PyQt.QtWidgets import QInputDialog
 
+from .table_editor_widget import StandardItemModel, StandardItem
 from ..flo2d_tools.schematic_tools import FloodplainXS
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
@@ -27,7 +28,7 @@ uiDialog, qtBaseClass = load_ui("fpxsec_editor")
 
 
 class FPXsecEditorWidget(qtBaseClass, uiDialog):
-    def __init__(self, iface, lyrs, plot):
+    def __init__(self, iface, lyrs, plot, table):
         qtBaseClass.__init__(self)
         uiDialog.__init__(self)
         self.iface = iface
@@ -38,6 +39,13 @@ class FPXsecEditorWidget(qtBaseClass, uiDialog):
         self.fpxsec_lyr = None
         self.plot = plot
         self.uc = UserCommunication(iface, "FLO-2D")
+        self.table = table
+        self.tview = table.tview
+
+        self.system_units = {
+            "CMS": ["m", "mps", "cms"],
+            "CFS": ["ft", "fps", "cfs"]
+             }
 
         # set button icons
         set_icon(self.add_user_fpxs_btn, "add_fpxs.svg")
@@ -281,6 +289,8 @@ class FPXsecEditorWidget(qtBaseClass, uiDialog):
             self.uc.bar_warn("There is no grid! Please create it before running tool.")
             return False
 
+        units = "CMS" if self.gutils.get_cont_par("METRIC") == "1" else "CFS"
+
         s = QSettings()
 
         CROSSQ_file = s.value("FLO-2D/lastCROSSQFile", "")
@@ -333,3 +343,27 @@ class FPXsecEditorWidget(qtBaseClass, uiDialog):
         self.plot.plot.setLabel("left", text="")
         self.plot.add_item("Discharge (cfs)", [time_list, discharge_list], col=QColor(Qt.darkYellow), sty=Qt.SolidLine)
 
+        try:  # Build table.
+            discharge_data_model = StandardItemModel()
+            self.tview.undoStack.clear()
+            self.tview.setModel(discharge_data_model)
+            discharge_data_model.clear()
+            discharge_data_model.setHorizontalHeaderLabels(["Time (hours)",
+                                                            f"Discharge ({self.system_units[units][2]})"])
+
+            data = zip(time_list, discharge_list)
+            for time, discharge in data:
+                time_item = StandardItem("{:.2f}".format(time)) if time is not None else StandardItem("")
+                discharge_item = StandardItem("{:.2f}".format(discharge)) if discharge is not None else StandardItem("")
+                discharge_data_model.appendRow([time_item, discharge_item])
+
+            self.tview.horizontalHeader().setStretchLastSection(True)
+            for col in range(3):
+                self.tview.setColumnWidth(col, 100)
+            for i in range(discharge_data_model.rowCount()):
+                self.tview.setRowHeight(i, 20)
+            return
+        except:
+            QApplication.restoreOverrideCursor()
+            self.uc.bar_warn("Error while building table for hydraulic structure discharge!")
+            return
