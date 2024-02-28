@@ -222,6 +222,8 @@ class FPXsecEditorWidget(qtBaseClass, uiDialog):
             self.uc.bar_warn("There is no grid! Please create it before running tool.")
             return False
 
+        units = "CMS" if self.gutils.get_cont_par("METRIC") == "1" else "CFS"
+
         s = QSettings()
 
         HYCROSS_file = s.value("FLO-2D/lastHYCROSSFile", "")
@@ -276,9 +278,38 @@ class FPXsecEditorWidget(qtBaseClass, uiDialog):
         self.plot.plot.setTitle(title=f"Floodplain Cross Section - {fid}")
         self.plot.plot.setLabel("bottom", text="Time (hrs)")
         self.plot.plot.setLabel("left", text="")
-        self.plot.add_item("Discharge (cfs)", [time_list, discharge_list], col=QColor(Qt.darkYellow), sty=Qt.SolidLine)
-        self.plot.add_item("Flow Width (ft)", [time_list, flow_width_list], col=QColor(Qt.black), sty=Qt.SolidLine, hide=True)
-        self.plot.add_item("Water Surface Elevation (ft)", [time_list, wse_list], col=QColor(Qt.darkGreen), sty=Qt.SolidLine, hide=True)
+        self.plot.add_item(f"Discharge ({self.system_units[units][2]})", [time_list, discharge_list], col=QColor(Qt.darkYellow), sty=Qt.SolidLine)
+        self.plot.add_item(f"Flow Width ({self.system_units[units][0]})", [time_list, flow_width_list], col=QColor(Qt.black), sty=Qt.SolidLine, hide=True)
+        self.plot.add_item(f"Water Surface Elevation ({self.system_units[units][0]})", [time_list, wse_list], col=QColor(Qt.darkGreen), sty=Qt.SolidLine, hide=True)
+
+        try:  # Build table.
+            discharge_data_model = StandardItemModel()
+            self.tview.undoStack.clear()
+            self.tview.setModel(discharge_data_model)
+            discharge_data_model.clear()
+            discharge_data_model.setHorizontalHeaderLabels(["Time (hours)",
+                                                            f"Discharge ({self.system_units[units][2]})",
+                                                            f"Flow Width ({self.system_units[units][0]})",
+                                                            f"Water Surface Elevation ({self.system_units[units][0]})"])
+
+            data = zip(time_list, discharge_list, flow_width_list, wse_list)
+            for time, discharge, flow, wse in data:
+                time_item = StandardItem("{:.2f}".format(time)) if time is not None else StandardItem("")
+                discharge_item = StandardItem("{:.2f}".format(discharge)) if discharge is not None else StandardItem("")
+                flow_item = StandardItem("{:.2f}".format(flow)) if flow is not None else StandardItem("")
+                wse_item = StandardItem("{:.2f}".format(wse)) if wse is not None else StandardItem("")
+                discharge_data_model.appendRow([time_item, discharge_item, flow_item, wse_item])
+
+            self.tview.horizontalHeader().setStretchLastSection(True)
+            for col in range(3):
+                self.tview.setColumnWidth(col, 100)
+            for i in range(discharge_data_model.rowCount()):
+                self.tview.setRowHeight(i, 20)
+            return
+        except:
+            QApplication.restoreOverrideCursor()
+            self.uc.bar_warn("Error while building table for hydraulic structure discharge!")
+            return
 
     def show_cells_hydrograph(self, table, fid):
         """
@@ -341,7 +372,7 @@ class FPXsecEditorWidget(qtBaseClass, uiDialog):
         self.plot.plot.setTitle(title=f"Floodplain Cell - {grid_fid}")
         self.plot.plot.setLabel("bottom", text="Time (hrs)")
         self.plot.plot.setLabel("left", text="")
-        self.plot.add_item("Discharge (cfs)", [time_list, discharge_list], col=QColor(Qt.darkYellow), sty=Qt.SolidLine)
+        self.plot.add_item(f"Discharge ({self.system_units[units][2]})", [time_list, discharge_list], col=QColor(Qt.darkYellow), sty=Qt.SolidLine)
 
         try:  # Build table.
             discharge_data_model = StandardItemModel()
