@@ -308,7 +308,7 @@ class FPXsecEditorWidget(qtBaseClass, uiDialog):
             return
         except:
             QApplication.restoreOverrideCursor()
-            self.uc.bar_warn("Error while building table for hydraulic structure discharge!")
+            self.uc.bar_warn("Error while building table for floodplain cross section!")
             return
 
     def show_cells_hydrograph(self, table, fid):
@@ -396,5 +396,5 @@ class FPXsecEditorWidget(qtBaseClass, uiDialog):
             return
         except:
             QApplication.restoreOverrideCursor()
-            self.uc.bar_warn("Error while building table for hydraulic structure discharge!")
+            self.uc.bar_warn("Error while building table for floodplain cells!")
             return

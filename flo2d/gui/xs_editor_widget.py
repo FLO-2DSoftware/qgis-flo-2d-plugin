@@ -1479,6 +1479,8 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
             self.uc.bar_warn("There is no grid! Please create it before running tool.")
             return
 
+        units = "CMS" if self.gutils.get_cont_par("METRIC") == "1" else "CFS"
+
         s = QSettings()
         HYCHAN_file = s.value("FLO-2D/lastHYCHANFile", "")
         GDS_dir = s.value("FLO-2D/lastGdsDir", "")
@@ -1648,24 +1650,87 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         self.plot.plot.setTitle(title=f"Channel Profile - {fid}")
         self.plot.plot.setLabel("bottom", text="Channel length")
         self.plot.plot.setLabel("left", text="")
-        self.plot.add_item("Bed elevation", [sta, bed], col=QColor(Qt.black), sty=Qt.SolidLine)
-        self.plot.add_item("Left bank", [sta, lb], col=QColor(Qt.darkGreen), sty=Qt.SolidLine)
-        self.plot.add_item("Right bank", [sta, rb], col=QColor(Qt.darkYellow), sty=Qt.SolidLine)
-        self.plot.add_item("Max. Water", [sta, max_water_elev], col=QColor(Qt.blue), sty=Qt.SolidLine, hide=True)
-        self.plot.add_item("Velocity (fps)", [sta, max_velocity], col=QColor(Qt.green), sty=Qt.SolidLine, hide=True)
-        self.plot.add_item("Froude", [sta, max_froude], col=QColor(Qt.gray), sty=Qt.SolidLine, hide=True)
-        self.plot.add_item("Flow area (sq. ft)", [sta, max_flow_area], col=QColor(Qt.red), sty=Qt.SolidLine, hide=True)
-        self.plot.add_item("Wetted perimeter (ft)", [sta, max_w_perimeter], col=QColor(Qt.yellow), sty=Qt.SolidLine,
-                           hide=True)
-        self.plot.add_item("Hydraulic radius (ft)", [sta, max_hyd_radius], col=QColor(Qt.darkBlue), sty=Qt.SolidLine,
-                           hide=True)
-        self.plot.add_item("Top width (ft)", [sta, max_top_width], col=QColor(Qt.darkRed), sty=Qt.SolidLine, hide=True)
-        self.plot.add_item("Width/Depth", [sta, max_width_depth], col=QColor(Qt.darkCyan), sty=Qt.SolidLine, hide=True)
-        self.plot.add_item("Energy slope", [sta, max_energy_slope], col=QColor(Qt.magenta), sty=Qt.SolidLine, hide=True)
-        self.plot.add_item("Shear stress (lb/sq. ft)", [sta, max_shear_stress], col=QColor(Qt.darkYellow),
-                           sty=Qt.SolidLine, hide=True)
-        self.plot.add_item("Surface Area (sq. ft)", [sta, max_surf_area], col=QColor(Qt.darkMagenta), sty=Qt.SolidLine,
-                           hide=True)
+        self.plot.add_item(f"Bed elevation ({self.system_units[units][0]})", [sta, bed], col=QColor(Qt.black), sty=Qt.SolidLine)
+        self.plot.add_item(f"Left bank ({self.system_units[units][0]})", [sta, lb], col=QColor(Qt.darkGreen), sty=Qt.SolidLine)
+        self.plot.add_item(f"Right bank ({self.system_units[units][0]})", [sta, rb], col=QColor(Qt.darkYellow), sty=Qt.SolidLine)
+        self.plot.add_item(f"Max. Water ({self.system_units[units][0]})", [sta, max_water_elev], col=QColor(Qt.blue), sty=Qt.SolidLine, hide=True)
+        self.plot.add_item(f"Velocity ({self.system_units[units][1]})", [sta, max_velocity], col=QColor(Qt.green), sty=Qt.SolidLine, hide=True)
+        self.plot.add_item(f"Froude", [sta, max_froude], col=QColor(Qt.gray), sty=Qt.SolidLine, hide=True)
+        self.plot.add_item(f"Flow area ({self.system_units[units][3]})", [sta, max_flow_area], col=QColor(Qt.red), sty=Qt.SolidLine, hide=True)
+        self.plot.add_item(f"Wetted perimeter ({self.system_units[units][0]})", [sta, max_w_perimeter], col=QColor(Qt.yellow), sty=Qt.SolidLine, hide=True)
+        self.plot.add_item(f"Hydraulic radius ({self.system_units[units][0]})", [sta, max_hyd_radius], col=QColor(Qt.darkBlue), sty=Qt.SolidLine, hide=True)
+        self.plot.add_item(f"Top width ({self.system_units[units][0]})", [sta, max_top_width], col=QColor(Qt.darkRed), sty=Qt.SolidLine, hide=True)
+        self.plot.add_item(f"Width/Depth", [sta, max_width_depth], col=QColor(Qt.darkCyan), sty=Qt.SolidLine, hide=True)
+        self.plot.add_item(f"Energy slope", [sta, max_energy_slope], col=QColor(Qt.magenta), sty=Qt.SolidLine, hide=True)
+        self.plot.add_item(f"Shear stress ({self.system_units[units][4]})", [sta, max_shear_stress], col=QColor(Qt.darkYellow), hide=True)
+        self.plot.add_item(f"Surface area ({self.system_units[units][3]})", [sta, max_surf_area], col=QColor(Qt.darkMagenta), hide=True)
+
+        try:  # Build table.
+            data_model = StandardItemModel()
+            self.tview.undoStack.clear()
+            self.tview.setModel(data_model)
+            data_model.clear()
+            data_model.setHorizontalHeaderLabels([f"Station ({self.system_units[units][0]})",
+                                                  f"Bed elevation ({self.system_units[units][0]})",
+                                                  f"Left bank ({self.system_units[units][0]})",
+                                                  f"Right bank ({self.system_units[units][0]})",
+                                                  f"Max. Water ({self.system_units[units][0]})",
+                                                  f"Velocity ({self.system_units[units][1]})",
+                                                  f"Froude",
+                                                  f"Flow area ({self.system_units[units][3]})",
+                                                  f"Wetted perimeter ({self.system_units[units][0]})",
+                                                  f"Hydraulic radius ({self.system_units[units][0]})",
+                                                  f"Top width ({self.system_units[units][0]})",
+                                                  f"Width/Depth",
+                                                  f"Energy slope",
+                                                  f"Shear stress ({self.system_units[units][4]})",
+                                                  f"Surface area ({self.system_units[units][3]})"])
+
+            data = zip(sta, bed, lb, rb, max_water_elev, max_velocity, max_froude, max_flow_area, max_w_perimeter, max_hyd_radius, max_top_width, max_width_depth,
+                       max_energy_slope, max_shear_stress, max_surf_area)
+            for station, bed_elev, left_bank, right_bank, mw, vel, fr, fa, wp, hr, tw, wd, es, ss, sa in data:
+                station_item = StandardItem("{:.2f}".format(station)) if station is not None else StandardItem("")
+                bed_item = StandardItem("{:.2f}".format(bed_elev)) if bed_elev is not None else StandardItem("")
+                left_bank_item = StandardItem("{:.2f}".format(left_bank)) if left_bank is not None else StandardItem("")
+                right_bank_item = StandardItem("{:.2f}".format(right_bank)) if right_bank is not None else StandardItem(
+                    "")
+                max_water_item = StandardItem("{:.2f}".format(mw)) if mw is not None else StandardItem("")
+                velocity_item = StandardItem("{:.2f}".format(vel)) if vel is not None else StandardItem("")
+                froude_item = StandardItem("{:.2f}".format(fr)) if fr is not None else StandardItem("")
+                flow_area_item = StandardItem("{:.2f}".format(fa)) if fa is not None else StandardItem("")
+                wet_perim_item = StandardItem("{:.2f}".format(wp)) if wp is not None else StandardItem("")
+                h_radius_item = StandardItem("{:.2f}".format(hr)) if hr is not None else StandardItem("")
+                top_width_item = StandardItem("{:.2f}".format(tw)) if tw is not None else StandardItem("")
+                widthdepth_item = StandardItem("{:.2f}".format(wd)) if wd is not None else StandardItem("")
+                ener_slo_item = StandardItem("{:.2f}".format(es)) if es is not None else StandardItem("")
+                shearstress_item = StandardItem("{:.2f}".format(ss)) if ss is not None else StandardItem("")
+                surfacearea_item = StandardItem("{:.2f}".format(sa)) if sa is not None else StandardItem("")
+                data_model.appendRow([station_item,
+                                      bed_item,
+                                      left_bank_item,
+                                      right_bank_item,
+                                      max_water_item,
+                                      velocity_item,
+                                      froude_item,
+                                      flow_area_item,
+                                      wet_perim_item,
+                                      h_radius_item,
+                                      top_width_item,
+                                      widthdepth_item,
+                                      ener_slo_item,
+                                      shearstress_item,
+                                      surfacearea_item,
+                                      ])
+
+            self.tview.horizontalHeader().setStretchLastSection(True)
+            for col in range(3):
+                self.tview.setColumnWidth(col, 100)
+            for i in range(data_model.rowCount()):
+                self.tview.setRowHeight(i, 20)
+            return
+        except:
+            self.uc.bar_warn("Error while building table for channel!")
+            return
 
     def show_hydrograph(self, table, fid):
         """
