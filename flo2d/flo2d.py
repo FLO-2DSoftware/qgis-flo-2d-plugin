@@ -34,6 +34,7 @@ from subprocess import (
     run,
 )
 
+from qgis.PyQt import QtCore, QtGui
 from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QApplication, QToolButton
 from osgeo import gdal
@@ -1543,7 +1544,8 @@ class Flo2D(object):
         self.files_not_used = ""
         if calls[0] == "export_cont_toler":
             self.files_used = "CONT.DAT\n"
-
+            
+        QApplication.setOverrideCursor(Qt.WaitCursor)
         for call in calls:
             if call == "export_bridge_xsec":
                 dat = "BRIDGE_XSEC.DAT"
@@ -1955,7 +1957,7 @@ class Flo2D(object):
                     else:
                         cell = self.gutils.execute("SELECT col FROM grid WHERE fid = 1").fetchone()
                         if cell[0] == NULL:
-                            QApplication.restoreOverrideCursor()
+                            QApplication.setOverrideCursor(QtGui.QCursor(QtCore.Qt.ArrowCursor))
                             proceed = self.uc.question(
                                 "Grid layer's fields 'col' and 'row' have NULL values!\n\nWould you like to assign them?"
                             )
@@ -1966,13 +1968,13 @@ class Flo2D(object):
                             else:
                                 return
 
-                    QApplication.restoreOverrideCursor()
+                    QApplication.setOverrideCursor(QtGui.QCursor(QtCore.Qt.ArrowCursor))
 
                 except Exception as e:
-                    QApplication.restoreOverrideCursor()
+                    QApplication.setOverrideCursor(QtGui.QCursor(QtCore.Qt.ArrowCursor))
                     self.uc.show_error("ERROR 050521.0349: importing .DAT files!.\n", e)
                 finally:
-                    QApplication.restoreOverrideCursor()
+                    QApplication.setOverrideCursor(QtGui.QCursor(QtCore.Qt.ArrowCursor))
                     if self.files_used != "" or self.files_not_used != "":
                         self.uc.show_info(
                             "Files read by this project:\n\n"
@@ -2221,7 +2223,7 @@ class Flo2D(object):
                 else:
                     cell = self.gutils.execute("SELECT col FROM grid WHERE fid = 1").fetchone()
                     if cell is None:
-                        QApplication.restoreOverrideCursor()
+                        QApplication.setOverrideCursor(QtGui.QCursor(QtCore.Qt.ArrowCursor))
                         proceed = self.uc.question(
                             "Grid layer's fields 'col' and 'row' have NULL values!\n\nWould you like to assign them?"
                         )
@@ -2458,7 +2460,7 @@ class Flo2D(object):
                         self.uc.show_info("No component was selected!")
 
                 finally:
-                    QApplication.restoreOverrideCursor()
+                    QApplication.setOverrideCursor(QtGui.QCursor(QtCore.Qt.ArrowCursor))
                     if self.files_used != "" or self.files_not_used != "":
                         self.uc.show_info(
                             "Files read by this project:\n\n"
@@ -2793,10 +2795,8 @@ class Flo2D(object):
                     # FLO-2D .DAT files
 
                     self.uc.bar_info("Flo2D model exported to " + outdir, dur=3)
-                    QApplication.restoreOverrideCursor()
 
                 finally:
-                    QApplication.restoreOverrideCursor()
 
                     if "export_swmmflo" in export_calls:
                         self.f2d_widget.storm_drain_editor.export_storm_drain_INP_file()
@@ -2807,6 +2807,7 @@ class Flo2D(object):
                             new_files_used = self.files_used.replace("SIMPLE_MULT.DAT\n", "")
                             self.files_used = new_files_used
                             if os.path.isfile(outdir + r"\SIMPLE_MULT.DAT"):
+                                QApplication.restoreOverrideCursor()
                                 if self.uc.question(
                                         "There are no simple multiple channel cells in the project but\n"
                                         + "there is a SIMPLE_MULT.DAT file in the directory.\n"
@@ -2814,11 +2815,12 @@ class Flo2D(object):
                                         + "Delete SIMPLE_MULT.DAT?"
                                 ):
                                     os.remove(outdir + r"\SIMPLE_MULT.DAT")
-
+                                QApplication.setOverrideCursor(Qt.WaitCursor)
                         if self.gutils.is_table_empty("mult_cells"):
                             new_files_used = self.files_used.replace("\nMULT.DAT\n", "\n")
                             self.files_used = new_files_used
                             if os.path.isfile(outdir + r"\MULT.DAT"):
+                                QApplication.restoreOverrideCursor()
                                 if self.uc.question(
                                         "There are no multiple channel cells in the project but\n"
                                         + "there is a MULT.DAT file in the directory.\n"
@@ -2826,7 +2828,7 @@ class Flo2D(object):
                                         + "Delete MULT.DAT?"
                                 ):
                                     os.remove(outdir + r"\MULT.DAT")
-
+                                QApplication.setOverrideCursor(Qt.WaitCursor)
                     if self.files_used != "":
                         self.uc.show_info("Files exported to\n" + outdir + "\n\n" + self.files_used)
 

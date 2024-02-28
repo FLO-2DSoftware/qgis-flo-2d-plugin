@@ -34,6 +34,7 @@ from qgis.core import (
     QgsVectorLayer,
     QgsWkbTypes,
 )
+from qgis.PyQt import QtCore, QtGui
 from qgis.PyQt.QtCore import QSettings, Qt, QTime, QVariant, pyqtSignal
 from qgis.PyQt.QtGui import QColor, QIcon
 from qgis.PyQt.QtWidgets import (
@@ -1220,9 +1221,12 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 grid = self.gutils.grid_on_point(x, y)
                 if grid is None:
                     outside_nodes += name + "\n"
-                    continue
+                    # continue
 
-                elev = self.gutils.grid_value(grid, "elevation")
+                if grid:
+                    elev = self.gutils.grid_value(grid, "elevation")
+                else:
+                    elev = 0
                 difference = elev - rim_elev if elev and rim_elev else 0
 
                 if complete_or_create == "Create New":
@@ -1688,28 +1692,28 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                     
                     if not conduit_inlet in all_nodes:
                         conduit_inlets_not_found += name + "\n"
-                        continue # Force execution of next iteration, skip rest of code.
-                     
+                        # continue # Force execution of next iteration, skip rest of code.
+                    else:
+                        x1 = float(all_nodes[conduit_inlet]["x"])
+                        y1 = float(all_nodes[conduit_inlet]["y"])                        
+                        grid = self.gutils.grid_on_point(x1, y1)
+                        if grid is None:
+                            outside_conduits += name + "\n"
+                                    
                     if not conduit_outlet in all_nodes:
                         conduit_outlets_not_found += name + "\n"
-                        continue # Force execution of next iteration, skip rest of code. 
-                    
-                    x1 = float(all_nodes[conduit_inlet]["x"])
-                    y1 = float(all_nodes[conduit_inlet]["y"])
-                    x2 = float(all_nodes[conduit_outlet]["x"])
-                    y2 = float(all_nodes[conduit_outlet]["y"])
+                        # continue # Force execution of next iteration, skip rest of code. 
+                    else:
+                        x2 = float(all_nodes[conduit_outlet]["x"])
+                        y2 = float(all_nodes[conduit_outlet]["y"])
+                        grid = self.gutils.grid_on_point(x2, y2)
+                        if grid is None:
+                            outside_conduits += name + "\n"
         
-                    grid = self.gutils.grid_on_point(x1, y1)
-                    if grid is None:
-                        outside_conduits += name + "\n"
+                    if conduit_inlet in all_nodes and conduit_outlet in all_nodes:
+                        geom = QgsGeometry.fromPolylineXY([QgsPointXY(x1, y1), QgsPointXY(x2, y2)])
+                    else:
                         continue
-        
-                    grid = self.gutils.grid_on_point(x2, y2)
-                    if grid is None:
-                        outside_conduits += name + "\n"
-                        continue
-        
-                    geom = QgsGeometry.fromPolylineXY([QgsPointXY(x1, y1), QgsPointXY(x2, y2)])
                     
                     if complete_or_create == "Create New":
                         feat.setGeometry(geom)
@@ -2242,8 +2246,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 QApplication.restoreOverrideCursor()
                 self.uc.show_error("ERROR 080422.1115: creation of Storm Drain Weirs layer failed!", e)
 
-        QApplication.restoreOverrideCursor()
-
+        QApplication.setOverrideCursor(QtGui.QCursor(QtCore.Qt.ArrowCursor))
         if (
             complete_or_create == "Create New"
             and len(new_nodes) == 0
@@ -2312,7 +2315,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             )
         
         elif show_end_message:
-            QApplication.restoreOverrideCursor()
+            QApplication.setOverrideCursor(QtGui.QCursor(QtCore.Qt.ArrowCursor))
             self.uc.show_info(
                 "Storm Drain data was updated from file\n"
                 + swmm_file
@@ -2344,6 +2347,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 "later export the .DAT files used by the FLO-2D model."
             )
 
+        QApplication.setOverrideCursor(QtGui.QCursor(QtCore.Qt.ArrowCursor))
         if outside_nodes != "":
             msgBox = QMessageBox()
             msgBox.setIcon(QMessageBox.Warning)
@@ -2478,6 +2482,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
 
             swmm_file = swmm_dir + r"\SWMM.INP"
             if os.path.isfile(swmm_file):
+                QApplication.setOverrideCursor(QtGui.QCursor(QtCore.Qt.ArrowCursor))
                 if not self.uc.question("SWMM.INP already exists.\n\n" + "Would you like to replace it?"):
                     return
                 else:
