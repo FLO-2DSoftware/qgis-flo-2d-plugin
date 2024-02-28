@@ -142,6 +142,11 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         self.con = None
         self.gutils = None
 
+        self.system_units = {
+            "CMS": ["m", "mps", "cms"],
+            "CFS": ["ft", "fps", "cfs"]
+             }
+
         self.setupUi(self)
         self.uc = UserCommunication(iface, "FLO-2D")
 
@@ -3938,10 +3943,6 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 day = 0
                 previousHour = -1
                 RPTtimeSeries = []
-                inflow_discharge_to_conduit = []
-                outfall_discharge_to_FLO_conduit = []
-                SWMMQINtimeSeries = []
-                SWMMOUTFINtimeSeries = []
 
                 for nextTime in node_series:
                     time = nextTime[1]
@@ -3982,16 +3983,42 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                     self.plot.plot.addLegend()
                     self.plot.plot.setTitle(title="Results for " + intersection)
                     self.plot.plot.setLabel("bottom", text="Time (hours)")
-                    self.plot.add_item(f"Flow ({units})", [timeRPT, flowRPT], col=QColor(Qt.darkGreen), sty=Qt.SolidLine)
-                    self.plot.add_item(f"Velocity {units}", [timeRPT, velocityRPT], col=QColor(Qt.red), sty=Qt.SolidLine, hide=True)
-                    self.plot.add_item(f"Depth {units}", [timeRPT, depthRPT], col=QColor(Qt.darkMagenta), sty=Qt.SolidLine, hide=True)
-                    self.plot.add_item(f"Percent Full {units}", [timeRPT, percent_fullRPT], col=QColor(Qt.darkGray), sty=Qt.SolidLine, hide=True)
+                    self.plot.add_item(f"Flow ({self.system_units[units][2]})", [timeRPT, flowRPT], col=QColor(Qt.darkGreen), sty=Qt.SolidLine)
+                    self.plot.add_item(f"Velocity ({self.system_units[units][1]})", [timeRPT, velocityRPT], col=QColor(Qt.red), sty=Qt.SolidLine, hide=True)
+                    self.plot.add_item(f"Depth ({self.system_units[units][0]})", [timeRPT, depthRPT], col=QColor(Qt.darkMagenta), sty=Qt.SolidLine, hide=True)
+                    self.plot.add_item(f"Percent Full (%)", [timeRPT, percent_fullRPT], col=QColor(Qt.darkGray), sty=Qt.SolidLine, hide=True)
 
-                    self.plot.plot.setLabel("left", text="Units of measurement: " + units)
+                    # self.plot.plot.setLabel("left", text="Units of measurement: " + units)
+                    QApplication.restoreOverrideCursor()
 
                 except:
                     QApplication.restoreOverrideCursor()
                     self.uc.bar_warn("Error while building plot for SD discharge!")
+                    return
+
+                try:  # Build table.
+                    discharge_data_model = StandardItemModel()
+                    self.tview.undoStack.clear()
+                    self.tview.setModel(discharge_data_model)
+                    discharge_data_model.clear()
+                    discharge_data_model.setHorizontalHeaderLabels(["Time (hours)",
+                                                                    f"Flow ({self.system_units[units][2]})",
+                                                                    f"Velocity ({self.system_units[units][1]})",
+                                                                    f"Depth ({self.system_units[units][0]})",
+                                                                    f"Percent Full (%)"])
+                    for row in RPTtimeSeries:
+                        items = [StandardItem("{:.2f}".format(x)) if x is not None else StandardItem("") for x in row]
+                        discharge_data_model.appendRow(items)
+                    self.tview.horizontalHeader().setStretchLastSection(True)
+                    for col in range(3):
+                        self.tview.setColumnWidth(col, 100)
+                    for i in range(discharge_data_model.rowCount()):
+                        self.tview.setRowHeight(i, 20)
+                    QApplication.restoreOverrideCursor()
+                    return
+                except:
+                    QApplication.restoreOverrideCursor()
+                    self.uc.bar_warn("Error while building table for SD discharge!")
                     return
 
             else:
@@ -4016,10 +4043,8 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             return False
 
         s = QSettings()
-        # RPT_file = s.value("FLO-2D/lastRPTFile", "")
         GDS_dir = s.value("FLO-2D/lastGdsDir", "")
         # Check if there is an RPT file on the FLO-2D QSettings
-        # if not os.path.isfile(RPT_file):
         RPT_file = GDS_dir + r"\swmm.RPT"
         # Check if there is an RPT file on the export folder
         if not os.path.isfile(RPT_file):
@@ -4380,46 +4405,48 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 self.plot.plot.addLegend()
                 self.plot.plot.setTitle(title="Discharge " + node + " (grid " + grid + ")")
                 self.plot.plot.setLabel("bottom", text="Time (hours)")
-                self.plot.add_item("Total Inflow", [timeRPT, inflowRPT], col=QColor(Qt.darkGreen), sty=Qt.SolidLine)
-                self.plot.add_item("Flooding", [timeRPT, floodingRPT], col=QColor(Qt.red), sty=Qt.SolidLine, hide=True)
-                self.plot.add_item("Depth", [timeRPT, depthRPT], col=QColor(Qt.darkMagenta), sty=Qt.SolidLine, hide=True)
-                self.plot.add_item("Head", [timeRPT, headRPT], col=QColor(Qt.darkGray), sty=Qt.SolidLine, hide=True)
+                self.plot.add_item(f"Total Inflow ({self.system_units[units][2]})", [timeRPT, inflowRPT], col=QColor(Qt.darkGreen), sty=Qt.SolidLine)
+                self.plot.add_item(f"Flooding ({self.system_units[units][2]})", [timeRPT, floodingRPT], col=QColor(Qt.red), sty=Qt.SolidLine, hide=True)
+                self.plot.add_item(f"Depth ({self.system_units[units][0]})", [timeRPT, depthRPT], col=QColor(Qt.darkMagenta), sty=Qt.SolidLine, hide=True)
+                self.plot.add_item(f"Head ({self.system_units[units][0]})", [timeRPT, headRPT], col=QColor(Qt.darkGray), sty=Qt.SolidLine, hide=True)
                 
                 if SWMMQINtimeSeries:
-                    self.plot.add_item("Inflow Discharge to Storm Drain", [timeInToSD, dischargeInToSD], col=QColor(Qt.blue), sty=Qt.SolidLine, hide=True)
-                    self.plot.add_item("Return Discharge to FLO-2D", [timeInToSD, returnInToSD], col=QColor(Qt.darkYellow), sty=Qt.SolidLine, hide=True)
+                    self.plot.add_item(f"Inflow Discharge to Storm Drain ({self.system_units[units][2]})", [timeInToSD, dischargeInToSD], col=QColor(Qt.blue), sty=Qt.SolidLine, hide=True)
+                    self.plot.add_item(f"Return Discharge to FLO-2D ({self.system_units[units][2]})", [timeInToSD, returnInToSD], col=QColor(Qt.darkYellow), sty=Qt.SolidLine, hide=True)
                 
                 if SWMMOUTFINtimeseries:
-                    self.plot.add_item("Discharge to FLO-2D", [timeOutToFLO, dischargeOutToFLO], col=QColor(Qt.black), sty=Qt.SolidLine, hide=True)
+                    self.plot.add_item(f"Discharge to FLO-2D ({self.system_units[units][2]})", [timeOutToFLO, dischargeOutToFLO], col=QColor(Qt.black), sty=Qt.SolidLine, hide=True)
                 
-                self.plot.plot.setLabel("left", text="Discharge (" + units + ")") 
+                # self.plot.plot.setLabel("left", text="Discharge (" + units + ")")
                 
             except:
                 QApplication.restoreOverrideCursor()
                 self.uc.bar_warn("Error while building plot for SD discharge!")
                 return
-            
-            # try: # Build table.
-            #     discharge_data_model = StandardItemModel()
-            #     self.tview.undoStack.clear()
-            #     self.tview.setModel(discharge_data_model)
-            #     discharge_data_model.clear()
-            #     discharge_data_model.setHorizontalHeaderLabels(["Time", "Inflow", "Flooding"]) 
-            #     for row in RPTseries:
-            #         items = [StandardItem("{:.4f}".format(x)) if x is not None else StandardItem("") for x in row]
-            #         discharge_data_model.appendRow(items) 
-            #     self.tview.horizontalHeader().setStretchLastSection(True)
-            #     for col in range(3):
-            #         self.tview.setColumnWidth(col, 100)
-            #     for i in range(discharge_data_model.rowCount()):
-            #         self.tview.setRowHeight(i, 20) 
-            #
-            #     # self.plot.plot.getViewBox().state['viewRange'] = [[0,1],[0,1]]
-            #     return
-            # except:
-            #     QApplication.restoreOverrideCursor()
-            #     self.uc.bar_warn("Error while building table for SD discharge!")
-            #     return                
+
+            try: # Build table.
+                discharge_data_model = StandardItemModel()
+                self.tview.undoStack.clear()
+                self.tview.setModel(discharge_data_model)
+                discharge_data_model.clear()
+                discharge_data_model.setHorizontalHeaderLabels(["Time (hours)",
+                                                                f"Inflow ({self.system_units[units][2]})",
+                                                                f"Flooding ({self.system_units[units][2]})",
+                                                                f"Depth ({self.system_units[units][0]})",
+                                                                f"Head ({self.system_units[units][0]})"])
+                for row in RPTseries:
+                    items = [StandardItem("{:.2f}".format(x)) if x is not None else StandardItem("") for x in row]
+                    discharge_data_model.appendRow(items)
+                self.tview.horizontalHeader().setStretchLastSection(True)
+                for col in range(3):
+                    self.tview.setColumnWidth(col, 100)
+                for i in range(discharge_data_model.rowCount()):
+                    self.tview.setRowHeight(i, 20)
+                return
+            except:
+                QApplication.restoreOverrideCursor()
+                self.uc.bar_warn("Error while building table for SD discharge!")
+                return
             
         except Exception as e:
             QApplication.restoreOverrideCursor()
