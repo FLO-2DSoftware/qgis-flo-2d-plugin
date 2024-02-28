@@ -148,6 +148,11 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         self.con = None
         self.gutils = None
 
+        self.system_units = {
+            "CMS": ["m", "mps", "cms", "sq. m", "Pa"],
+            "CFS": ["ft", "fps", "cfs", "sq. ft", "lb/sq. ft"]
+        }
+
         self.user_xs_lyr = None
         self.xs = None
         self.cur_xs_fid = None
@@ -682,9 +687,9 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         if self.gutils.is_table_empty("user_left_bank"):
             if not self.gutils.is_table_empty("chan"):
                 if not self.uc.question(
-                    "There are no user left bank lines.\n\n"
-                    + "But there are schematized left banks and cross sections.\n"
-                    + "Would you like to delete them?"
+                        "There are no user left bank lines.\n\n"
+                        + "But there are schematized left banks and cross sections.\n"
+                        + "Would you like to delete them?"
                 ):
                     return
                 else:
@@ -714,7 +719,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
             return
         if not self.gutils.is_table_empty("chan"):
             if not self.uc.question(
-                "There are already Schematized Channel Segments (Left Banks) and Cross Sections. Overwrite them?"
+                    "There are already Schematized Channel Segments (Left Banks) and Cross Sections. Overwrite them?"
             ):
                 return
 
@@ -895,9 +900,9 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
                                     m += "\n\nWARNING: There are " + str(zero) + " cross sections with no stations."
                                 if few > 0:
                                     m += (
-                                        "\n\nWARNING: There are "
-                                        + str(few)
-                                        + " cross sections with less than 6 stations."
+                                            "\n\nWARNING: There are "
+                                            + str(few)
+                                            + " cross sections with less than 6 stations."
                                     )
                                 if zero > 0 or few > 0:
                                     m += "\n\nIncrement the number of stations in the problematic cross sections."
@@ -1138,7 +1143,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
                         previous_xs = -999
 
                         for elems in self.gutils.execute(
-                            chan_elems_sql, (fid,)
+                                chan_elems_sql, (fid,)
                         ):  # each 'elems' is a list [(fid, rbankgrid, fcn, xlen, type)] from
                             # 'chan_elems' table (the cross sections in the schematic layer),
                             #  that has the 'fid' value indicated (the channel segment id).
@@ -1314,13 +1319,13 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
                     self.uc.show_warn(
                         "WARNING 280119.0631 : Cross sections interpolation failed!\n\n"
                         "Interpolation program finished with return code " + str(return_code) + "."
-                        "\n\nCheck content and format of CHAN.DAT and XSEC.DAT files."
-                        "\n\n For natural cross sections:"
-                        "\n\n      - Cross section numbers sequence in CHAN.DAT must be consecutive."
-                        "\n\n      - Total number of cross sections in CHAN.DAT and XSEC.DAT must be equal."
-                        "\n\n      - Each cross section must have at least 6 station pairs (distance, elevation)."
-                        "\n              (use the Cross Sections Editor widget to define the"
-                        "\n               cross sections stations, and then schematize them)"
+                                                                                                "\n\nCheck content and format of CHAN.DAT and XSEC.DAT files."
+                                                                                                "\n\n For natural cross sections:"
+                                                                                                "\n\n      - Cross section numbers sequence in CHAN.DAT must be consecutive."
+                                                                                                "\n\n      - Total number of cross sections in CHAN.DAT and XSEC.DAT must be equal."
+                                                                                                "\n\n      - Each cross section must have at least 6 station pairs (distance, elevation)."
+                                                                                                "\n              (use the Cross Sections Editor widget to define the"
+                                                                                                "\n               cross sections stations, and then schematize them)"
                     )
 
                 return return_code
@@ -1629,7 +1634,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
                 peak_discharge.append(data["peak_discharge"])
                 max_velocity.append(data["max_velocity"])
                 max_froude.append(data["max_froude"])
-                max_flow_area .append(data["max_flow_area"])
+                max_flow_area.append(data["max_flow_area"])
                 max_w_perimeter.append(data["max_w_perimeter"])
                 max_hyd_radius.append(data["max_hyd_radius"])
                 max_top_width.append(data["max_top_width"])
@@ -1650,13 +1655,17 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         self.plot.add_item("Velocity (fps)", [sta, max_velocity], col=QColor(Qt.green), sty=Qt.SolidLine, hide=True)
         self.plot.add_item("Froude", [sta, max_froude], col=QColor(Qt.gray), sty=Qt.SolidLine, hide=True)
         self.plot.add_item("Flow area (sq. ft)", [sta, max_flow_area], col=QColor(Qt.red), sty=Qt.SolidLine, hide=True)
-        self.plot.add_item("Wetted perimeter (ft)", [sta, max_w_perimeter], col=QColor(Qt.yellow), sty=Qt.SolidLine, hide=True)
-        self.plot.add_item("Hydraulic radius (ft)", [sta, max_hyd_radius], col=QColor(Qt.darkBlue), sty=Qt.SolidLine, hide=True)
+        self.plot.add_item("Wetted perimeter (ft)", [sta, max_w_perimeter], col=QColor(Qt.yellow), sty=Qt.SolidLine,
+                           hide=True)
+        self.plot.add_item("Hydraulic radius (ft)", [sta, max_hyd_radius], col=QColor(Qt.darkBlue), sty=Qt.SolidLine,
+                           hide=True)
         self.plot.add_item("Top width (ft)", [sta, max_top_width], col=QColor(Qt.darkRed), sty=Qt.SolidLine, hide=True)
         self.plot.add_item("Width/Depth", [sta, max_width_depth], col=QColor(Qt.darkCyan), sty=Qt.SolidLine, hide=True)
         self.plot.add_item("Energy slope", [sta, max_energy_slope], col=QColor(Qt.magenta), sty=Qt.SolidLine, hide=True)
-        self.plot.add_item("Shear stress (lb/sq. ft)", [sta, max_shear_stress], col=QColor(Qt.darkYellow), sty=Qt.SolidLine, hide=True)
-        self.plot.add_item("Surface Area (sq. ft)", [sta, max_surf_area], col=QColor(Qt.darkMagenta), sty=Qt.SolidLine, hide=True)
+        self.plot.add_item("Shear stress (lb/sq. ft)", [sta, max_shear_stress], col=QColor(Qt.darkYellow),
+                           sty=Qt.SolidLine, hide=True)
+        self.plot.add_item("Surface Area (sq. ft)", [sta, max_surf_area], col=QColor(Qt.darkMagenta), sty=Qt.SolidLine,
+                           hide=True)
 
     def show_hydrograph(self, table, fid):
         """
@@ -1666,6 +1675,8 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         if self.gutils.is_table_empty("grid"):
             self.uc.bar_warn("There is no grid! Please create it before running tool.")
             return False
+
+        units = "CMS" if self.gutils.get_cont_par("METRIC") == "1" else "CFS"
 
         s = QSettings()
         HYCHAN_file = s.value("FLO-2D/lastHYCHANFile", "")
@@ -1735,18 +1746,111 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         self.plot.plot.setTitle(title=f"Cross Section - {xc_fid}")
         self.plot.plot.setLabel("bottom", text="Time (hrs)")
         self.plot.plot.setLabel("left", text="")
-        self.plot.add_item("Discharge (cfs)", [time_list, discharge_list], col=QColor(Qt.darkYellow), sty=Qt.SolidLine)
-        self.plot.add_item("Thalweg depth (ft)", [time_list, thalweg_list], col=QColor(Qt.black), sty=Qt.SolidLine, hide=True)
-        self.plot.add_item("Velocity (fps)", [time_list, velocity_list], col=QColor(Qt.darkGreen), sty=Qt.SolidLine, hide=True)
-        self.plot.add_item("Froude", [time_list, froude_list], col=QColor(Qt.blue), sty=Qt.SolidLine, hide=True)
-        self.plot.add_item("Flow area (sq. ft)", [time_list, flow_area_list], col=QColor(Qt.red), sty=Qt.SolidLine, hide=True)
-        self.plot.add_item("Wetted perimeter (ft)", [time_list, w_perimeter_list], col=QColor(Qt.yellow), sty=Qt.SolidLine, hide=True)
-        self.plot.add_item("Hydraulic radius (ft)", [time_list, hyd_radius_list], col=QColor(Qt.darkBlue), sty=Qt.SolidLine, hide=True)
-        self.plot.add_item("Top width (ft)", [time_list, top_width_list], col=QColor(Qt.darkRed), sty=Qt.SolidLine, hide=True)
-        self.plot.add_item("Width/Depth", [time_list, width_depth_list], col=QColor(Qt.darkCyan), sty=Qt.SolidLine, hide=True)
-        self.plot.add_item("Energy slope", [time_list, energy_slope_list], col=QColor(Qt.magenta), sty=Qt.SolidLine, hide=True)
-        self.plot.add_item("Shear stress (lb/sq. ft)", [time_list, shear_stress_list], col=QColor(Qt.darkYellow), hide=True)
-        self.plot.add_item("Surface Area (sq. ft)", [time_list, surf_area_list], col=QColor(Qt.darkMagenta), hide=True)
+        self.plot.add_item(f"Discharge ({self.system_units[units][2]})", [time_list, discharge_list],
+                           col=QColor(Qt.darkYellow), sty=Qt.SolidLine)
+        self.plot.add_item(f"Thalweg depth ({self.system_units[units][0]})", [time_list, thalweg_list],
+                           col=QColor(Qt.black), sty=Qt.SolidLine,
+                           hide=True)
+        self.plot.add_item(f"Velocity ({self.system_units[units][1]})", [time_list, velocity_list],
+                           col=QColor(Qt.darkGreen), sty=Qt.SolidLine,
+                           hide=True)
+        self.plot.add_item(f"Froude", [time_list, froude_list], col=QColor(Qt.blue), sty=Qt.SolidLine, hide=True)
+        self.plot.add_item(f"Flow area ({self.system_units[units][3]})", [time_list, flow_area_list],
+                           col=QColor(Qt.red), sty=Qt.SolidLine,
+                           hide=True)
+        self.plot.add_item(f"Wetted perimeter ({self.system_units[units][0]})", [time_list, w_perimeter_list],
+                           col=QColor(Qt.yellow),
+                           sty=Qt.SolidLine, hide=True)
+        self.plot.add_item(f"Hydraulic radius ({self.system_units[units][0]})", [time_list, hyd_radius_list],
+                           col=QColor(Qt.darkBlue),
+                           sty=Qt.SolidLine, hide=True)
+        self.plot.add_item(f"Top width ({self.system_units[units][0]})", [time_list, top_width_list],
+                           col=QColor(Qt.darkRed), sty=Qt.SolidLine,
+                           hide=True)
+        self.plot.add_item(f"Width/Depth", [time_list, width_depth_list], col=QColor(Qt.darkCyan), sty=Qt.SolidLine,
+                           hide=True)
+        self.plot.add_item(f"Energy slope", [time_list, energy_slope_list], col=QColor(Qt.magenta), sty=Qt.SolidLine,
+                           hide=True)
+        self.plot.add_item(f"Shear stress ({self.system_units[units][4]})", [time_list, shear_stress_list],
+                           col=QColor(Qt.darkYellow),
+                           hide=True)
+        self.plot.add_item(f"Surface Area ({self.system_units[units][3]})", [time_list, surf_area_list],
+                           col=QColor(Qt.darkMagenta), hide=True)
+
+        try:  # Build table.
+            data_model = StandardItemModel()
+            self.tview.undoStack.clear()
+            self.tview.setModel(data_model)
+            data_model.clear()
+            data_model.setHorizontalHeaderLabels(["Time (hours)",
+                                                  f"Thalweg depth ({self.system_units[units][0]})",
+                                                  f"Velocity ({self.system_units[units][1]})",
+                                                  f"Discharge ({self.system_units[units][2]})",
+                                                  f"Froude",
+                                                  f"Flow area ({self.system_units[units][2]})",
+                                                  f"Wetted perimeter ({self.system_units[units][0]})",
+                                                  f"Hydraulic radius ({self.system_units[units][0]})",
+                                                  f"Top width ({self.system_units[units][0]})",
+                                                  f"Width/Depth",
+                                                  f"Energy slope",
+                                                  f"Shear stress ({self.system_units[units][4]})",
+                                                  f"Surface Area ({self.system_units[units][3]})",
+                                                  ])
+
+            data = zip(time_list,
+                       thalweg_list,
+                       velocity_list,
+                       discharge_list,
+                       froude_list,
+                       flow_area_list,
+                       w_perimeter_list,
+                       hyd_radius_list,
+                       top_width_list,
+                       width_depth_list,
+                       energy_slope_list,
+                       shear_stress_list,
+                       surf_area_list)
+
+            for time, thalweg, velocity, discharge, froude, flow_area, w_perimeter, hyd_radius, top_width, width_depth, energy_slope, shear_stress, surf_area in data:
+                time_item = StandardItem("{:.2f}".format(time)) if time is not None else StandardItem("")
+                thalweg_item = StandardItem("{:.2f}".format(thalweg)) if thalweg is not None else StandardItem("")
+                velocity_item = StandardItem("{:.2f}".format(velocity)) if velocity is not None else StandardItem("")
+                discharge_item = StandardItem("{:.2f}".format(discharge)) if discharge is not None else StandardItem("")
+                froude_item = StandardItem("{:.2f}".format(froude)) if froude is not None else StandardItem("")
+                flow_area_item = StandardItem("{:.2f}".format(flow_area)) if flow_area is not None else StandardItem("")
+                w_perimeter_item = StandardItem("{:.2f}".format(w_perimeter)) if w_perimeter is not None else StandardItem("")
+                hyd_radius_item = StandardItem("{:.2f}".format(hyd_radius)) if hyd_radius is not None else StandardItem("")
+                top_width_item = StandardItem("{:.2f}".format(top_width)) if top_width is not None else StandardItem("")
+                width_depth_item = StandardItem("{:.2f}".format(width_depth)) if width_depth is not None else StandardItem("")
+                energy_slope_item = StandardItem("{:.2f}".format(energy_slope)) if energy_slope is not None else StandardItem("")
+                shear_stress_item = StandardItem("{:.2f}".format(shear_stress)) if shear_stress is not None else StandardItem("")
+                surf_area_item = StandardItem("{:.2f}".format(surf_area)) if surf_area is not None else StandardItem("")
+
+
+                data_model.appendRow([time_item,
+                                      thalweg_item,
+                                      velocity_item,
+                                      discharge_item,
+                                      froude_item,
+                                      flow_area_item,
+                                      w_perimeter_item,
+                                      hyd_radius_item,
+                                      top_width_item,
+                                      width_depth_item,
+                                      energy_slope_item,
+                                      shear_stress_item,
+                                      surf_area_item])
+
+            self.tview.horizontalHeader().setStretchLastSection(True)
+            for col in range(3):
+                self.tview.setColumnWidth(col, 100)
+            for i in range(data_model.rowCount()):
+                self.tview.setRowHeight(i, 20)
+            return
+        except:
+            QApplication.restoreOverrideCursor()
+            self.uc.bar_warn("Error while building table for hydraulic structure discharge!")
+            return
 
     def reassign_xs_rightbanks_grid_id_from_schematized_rbanks(self, xs_seg_fid, right_bank_fid):
         """Takes all schematized left bank cross sections (from 'cham_elems' layer) identified by 'xs_seg_fid', and
@@ -2080,8 +2184,8 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
 
     def sample_bank_elevation_all_RTV_cross_sections(self):
         if not self.uc.question(
-            "After this action, all bank elevations from cross sections R, T and V will be lost.\n"
-            "Do you want to proceed?"
+                "After this action, all bank elevations from cross sections R, T and V will be lost.\n"
+                "Do you want to proceed?"
         ):
             return
 
@@ -2096,7 +2200,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
 
     def sample_bank_elevation_current_RTV_cross_sections(self):
         if not self.uc.question(
-            "After this action, bank elevations from current cross sections will be lost.\n" "Do you want to proceed?"
+                "After this action, bank elevations from current cross sections will be lost.\n" "Do you want to proceed?"
         ):
             return
 
@@ -2127,7 +2231,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
 
     def sample_elevation_all_natural_cross_sections(self):
         if not self.uc.question(
-            "After this action, all current natural cross section profiles will be lost.\n" "Do you want to proceed?"
+                "After this action, all current natural cross section profiles will be lost.\n" "Do you want to proceed?"
         ):
             return
         request = QgsFeatureRequest()
@@ -2142,7 +2246,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
 
     def sample_elevation_current_natural_cross_sections(self):
         if not self.uc.question(
-            "After this action, current natural cross section profile will be lost.\n" "Do you want to proceed?"
+                "After this action, current natural cross section profile will be lost.\n" "Do you want to proceed?"
         ):
             return
         fid = int(self.xs_cbo.currentData())

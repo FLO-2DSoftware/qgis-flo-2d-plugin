@@ -782,30 +782,27 @@ class StructEditorWidget(qtBaseClass, uiDialog):
         self.plot.plot.setLabel("left", text="")
         self.plot.add_item(f"Discharge ({self.system_units[units][2]})", [time_list, discharge_list], col=QColor(Qt.darkYellow), sty=Qt.SolidLine)
 
-        # try:  # Build table.
-        discharge_data_model = StandardItemModel()
-        self.tview.undoStack.clear()
-        self.tview.setModel(discharge_data_model)
-        discharge_data_model.clear()
+        try:  # Build table.
+            discharge_data_model = StandardItemModel()
+            self.tview.undoStack.clear()
+            self.tview.setModel(discharge_data_model)
+            discharge_data_model.clear()
+            discharge_data_model.setHorizontalHeaderLabels(["Time (hours)",
+                                                            f"Discharge ({self.system_units[units][2]})"])
 
-        # AQUI
+            data = zip(time_list, discharge_list)
+            for time, discharge in data:
+                time_item = StandardItem("{:.2f}".format(time)) if time is not None else StandardItem("")
+                discharge_item = StandardItem("{:.2f}".format(discharge)) if discharge is not None else StandardItem("")
+                discharge_data_model.appendRow([time_item, discharge_item])
 
-        discharge_data_model.setHorizontalHeaderLabels(["Time (hours)",
-                                                        f"Discharge ({self.system_units[units][2]})"])
-
-        data = zip(time_list, discharge_list)
-        for time, discharge in data:
-            time_item = StandardItem("{:.2f}".format(time)) if time is not None else StandardItem("")
-            discharge_item = StandardItem("{:.2f}".format(discharge)) if discharge is not None else StandardItem("")
-            discharge_data_model.appendRow([time_item, discharge_item])
-
-        self.tview.horizontalHeader().setStretchLastSection(True)
-        for col in range(3):
-            self.tview.setColumnWidth(col, 100)
-        for i in range(discharge_data_model.rowCount()):
-            self.tview.setRowHeight(i, 20)
-        return
-        # except:
-        #     QApplication.restoreOverrideCursor()
-        #     self.uc.bar_warn("Error while building table for hydraulic structure discharge!")
-        #     return
+            self.tview.horizontalHeader().setStretchLastSection(True)
+            for col in range(3):
+                self.tview.setColumnWidth(col, 100)
+            for i in range(discharge_data_model.rowCount()):
+                self.tview.setRowHeight(i, 20)
+            return
+        except:
+            QApplication.restoreOverrideCursor()
+            self.uc.bar_warn("Error while building table for hydraulic structure discharge!")
+            return
