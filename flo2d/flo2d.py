@@ -2836,7 +2836,7 @@ class Flo2D(object):
                         info = "WARNINGS:\n\n" + self.f2g.export_messages
                         self.uc.show_info(info)
 
-        QApplication.restoreOverrideCursor()
+        QApplication.setOverrideCursor(QtGui.QCursor(QtCore.Qt.ArrowCursor))
 
     @connection_required
     def export_hdf5(self):
