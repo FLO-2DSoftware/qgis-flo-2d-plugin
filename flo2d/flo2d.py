@@ -1045,7 +1045,7 @@ class Flo2D(object):
                 else:
                     not_added.append(layer.name())
 
-        QApplication.restoreOverrideCursor()
+        QApplication.setOverrideCursor(QtGui.QCursor(QtCore.Qt.ArrowCursor))
 
         if len(not_added) > 0:
             layers_not_added = ', '.join(map(str, not_added))
