@@ -1073,10 +1073,11 @@ class Flo2D(object):
         if not ok:
             return
         else:
-            flo2d_dir, project_dir = dlg.get_parameters()
+            flo2d_dir, project_dir, advanced_layers = dlg.get_parameters()
             s = QSettings()
             s.setValue("FLO-2D/lastGdsDir", project_dir)
             s.setValue("FLO-2D/last_flopro", flo2d_dir)
+            s.setValue("FLO-2D/advanced_layers", advanced_layers)
 
             if project_dir != "" and flo2d_dir != "":
                 s.setValue("FLO-2D/run_settings", True)
