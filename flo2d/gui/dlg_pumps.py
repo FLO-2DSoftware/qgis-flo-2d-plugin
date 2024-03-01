@@ -9,7 +9,7 @@
 
 from math import isnan
 
-from qgis.core import QgsFeatureRequest
+from qgis.core import QgsFeatureRequest, QgsRectangle
 from qgis.PyQt.QtCore import Qt
 from qgis.PyQt.QtGui import QColor
 from qgis.PyQt.QtWidgets import (
@@ -23,7 +23,7 @@ from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
 from ..utils import is_number, is_true, m_fdata, float_or_zero
 from .table_editor_widget import StandardItem, StandardItemModel
-from .ui_utils import center_canvas, load_ui, set_icon, try_disconnect, zoom
+from .ui_utils import center_canvas, load_ui, set_icon, try_disconnect, zoom, center_feature
 
 uiDialog, qtBaseClass = load_ui("pumps")
 
@@ -350,10 +350,7 @@ class PumpsDialog(qtBaseClass, uiDialog):
                     ).fetchone()
                     self.lyrs.show_feat_rubber(self.pumps_lyr.id(), fid[0], QColor(Qt.yellow))
                     feat = next(self.pumps_lyr.getFeatures(QgsFeatureRequest(fid[0])))
-                    x, y = feat.geometry().centroid().asPoint()
-                    # self.lyrs.zoom_to_all()
-                    center_canvas(self.iface, x, y)
-                    zoom(self.iface, 0.45)
+                    center_feature(self.iface, feat)            
                 else:
                     self.uc.bar_warn("WARNING 251121.1139: pump '" + str(pump) + "' not found.")
                     self.lyrs.clear_rubber()

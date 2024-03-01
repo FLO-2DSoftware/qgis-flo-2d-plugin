@@ -15,7 +15,7 @@ from qgis.PyQt.QtWidgets import QApplication, QDialogButtonBox, QTableWidgetItem
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
 from ..utils import is_true
-from .ui_utils import center_canvas, load_ui, set_icon, zoom
+from .ui_utils import center_canvas, load_ui, set_icon, zoom, center_feature
 
 uiDialog, qtBaseClass = load_ui("conduits")
 
@@ -512,10 +512,7 @@ class ConduitsDialog(qtBaseClass, uiDialog):
                     ).fetchone()
                     self.lyrs.show_feat_rubber(self.conduits_lyr.id(), fid[0], QColor(Qt.yellow))
                     feat = next(self.conduits_lyr.getFeatures(QgsFeatureRequest(fid[0])))
-                    x, y = feat.geometry().centroid().asPoint()
-                    self.lyrs.zoom_to_all()
-                    center_canvas(self.iface, x, y)
-                    zoom(self.iface, 0.45)
+                    center_feature(self.iface, feat) 
                 else:
                     self.uc.bar_warn("WARNING 091121.1139: conduit " + str(conduit) + " not found.")
                     self.lyrs.clear_rubber()
