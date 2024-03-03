@@ -136,6 +136,7 @@ class OutfallNodesDialog(qtBaseClass, uiDialog):
     #     self.box_valueChanged(self.grid_element, 1)
 
     def populate_outfalls(self):
+        QApplication.setOverrideCursor(Qt.WaitCursor)
         try:
             qry = """SELECT fid,
                             name, 
@@ -151,8 +152,9 @@ class OutfallNodesDialog(qtBaseClass, uiDialog):
 
             rows = self.gutils.execute(qry).fetchall()  # rows is a list of tuples.
             if not rows:
-                QApplication.restoreOverrideCursor()
+                QApplication.setOverrideCursor(Qt.ArrowCursor)
                 self.uc.show_info("WARNING 121121.0421: No outfalls in 'Storm Drain Nodes' User Layer!")
+                QApplication.restoreOverrideCursor()
                 return
 
             self.block = True
@@ -238,7 +240,7 @@ class OutfallNodesDialog(qtBaseClass, uiDialog):
                         if col_number in (1, 2, 4, 5, 6, 8, 9):
                             item.setFlags(Qt.ItemIsSelectable | Qt.ItemIsEnabled)
                         self.outfalls_tblw.setItem(row_number, col_number - 1, item)
-
+                        
             self.outfall_cbo.model().sort(0)
 
             self.outfalls_tblw.sortItems(0, Qt.AscendingOrder)
@@ -250,9 +252,12 @@ class OutfallNodesDialog(qtBaseClass, uiDialog):
             self.highlight_outfall_cell(self.grid_element_txt.text())
 
         except Exception as e:
-            QApplication.restoreOverrideCursor()
+            QApplication.setOverrideCursor(Qt.ArrowCursor)
             self.uc.show_error("ERROR 100618.0846: error while loading outfalls components!", e)
-
+            QApplication.restoreOverrideCursor()
+        finally:
+            QApplication.restoreOverrideCursor()            
+            
     def onVerticalSectionClicked(self, logicalIndex):
         self.outfalls_tblw_cell_clicked(logicalIndex, 0)
 
@@ -319,9 +324,10 @@ class OutfallNodesDialog(qtBaseClass, uiDialog):
                     pass
                     # self.uc.bar_warn("WARNING 221222.0625: time series " + time_series + " not found.")
         except:
-            QApplication.restoreOverrideCursor()
+            QApplication.setOverrideCursor(Qt.ArrowCursor)
             self.uc.bar_warn("WARNING 241222.0840: outfall type not found!")
-
+            QApplication.restoreOverrideCursor()
+            
     def disableTypes(self):
         self.water_depth_dbox.setEnabled(False)
         self.label_5.setEnabled(False)
@@ -596,8 +602,9 @@ class OutfallNodesDialog(qtBaseClass, uiDialog):
             QApplication.restoreOverrideCursor()
 
         except ValueError:
-            QApplication.restoreOverrideCursor()
+            QApplication.setOverrideCursor(Qt.ArrowCursor)
             self.uc.bar_warn("WARNING 121121.1134: Cell " + str(cell) + "is not valid.")
+            QApplication.restoreOverrideCursor()
             self.lyrs.clear_rubber()
             pass
 
@@ -744,6 +751,7 @@ class OutfallTimeSeriesDialog(qtBaseClass, uiDialog):
             self.gutils = GeoPackageUtils(self.con, self.iface)
 
     def populate_time_series_dialog(self):
+        QApplication.setOverrideCursor(Qt.WaitCursor)
         self.loading = True
         if self.time_series_name == "":
             self.use_table_radio.setChecked(True)
@@ -830,8 +838,9 @@ class OutfallTimeSeriesDialog(qtBaseClass, uiDialog):
         try:
             pass
         except Exception as e:
-            QApplication.restoreOverrideCursor()
+            QApplication.setOverrideCursor(Qt.WaitCursor)
             self.uc.show_error("ERROR 140220.0807: reading time series data file failed!", e)
+            QApplication.restoreOverrideCursor()
             return
 
     def is_ok_to_save(self):
@@ -1086,9 +1095,10 @@ class CurveEditorDialog(qtBaseClass, uiDialog):
             return
         s.setValue("FLO-2D/lastSWMMDir", os.path.dirname(curve_file))
 
-        QApplication.setOverrideCursor(Qt.WaitCursor)
+        
         # Load file into table:
         try:
+            QApplication.setOverrideCursor(Qt.WaitCursor)
             with open(curve_file, "r") as f1:
                 lines = f1.readlines()
             if len(lines) > 0:
@@ -1111,11 +1121,13 @@ class CurveEditorDialog(qtBaseClass, uiDialog):
                         else:
                             self.uc.bar_warn("Wrong data in line " + str(j + 4) + " of curve file!")
                 self.description_le.setText(desc)
-        except Exception as e:
+                
             QApplication.restoreOverrideCursor()
+                    
+        except Exception as e:
+            QApplication.setOverrideCursor(Qt.ArrowCursor)
             self.uc.show_error("ERROR 090422.0435: importing curve file failed!.\n", e)
-
-        QApplication.restoreOverrideCursor()
+            QApplication.restoreOverrideCursor()
 
     def save_curve_file(self):
         self.uc.clear_bar_messages()
@@ -1161,7 +1173,7 @@ class CurveEditorDialog(qtBaseClass, uiDialog):
                 tfile.write("\n" + hour + "    " + stage)
 
         QApplication.restoreOverrideCursor()
-        self.uc.bar_info("Curve data saved as " + tidal_file, 4)
+        self.uc.bar_info("Curve data saved as " + curve_file, 4)
 
     def copy_to_clipboard(self):
         copy_tablewidget_selection(self.curve_tblw)

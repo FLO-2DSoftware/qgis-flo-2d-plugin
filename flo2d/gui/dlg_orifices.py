@@ -79,21 +79,23 @@ class OrificesDialog(qtBaseClass, uiDialog):
             self.gutils = GeoPackageUtils(self.con, self.iface)
 
     def populate_orifices(self):
-        qry = """SELECT fid,
-                        orifice_name,
-                        orifice_inlet, 
-                        orifice_outlet,
-                        orifice_type,
-                        orifice_crest_height,
-                        orifice_disch_coeff,
-                        orifice_flap_gate,
-                        orifice_open_close_time,
-                        orifice_shape,
-                        orifice_height,
-                        orifice_width
-                FROM user_swmm_orifices;"""
-        wrong_status = 0
+        QApplication.setOverrideCursor(Qt.WaitCursor)
         try:
+            qry = """SELECT fid,
+                            orifice_name,
+                            orifice_inlet, 
+                            orifice_outlet,
+                            orifice_type,
+                            orifice_crest_height,
+                            orifice_disch_coeff,
+                            orifice_flap_gate,
+                            orifice_open_close_time,
+                            orifice_shape,
+                            orifice_height,
+                            orifice_width
+                    FROM user_swmm_orifices;"""
+            wrong_status = 0           
+            
             rows = self.gutils.execute(qry).fetchall()
             self.orifices_tblw.setRowCount(0)
             for row_number, row_data in enumerate(rows):
@@ -164,20 +166,26 @@ class OrificesDialog(qtBaseClass, uiDialog):
                         self.orifices_tblw.setItem(row_number, column - 1, item)
 
             self.highlight_orifice(self.orifice_name_cbo.currentText())
-            QApplication.restoreOverrideCursor()
+
             if wrong_status > 0:
+                QApplication.setOverrideCursor(Qt.ArrowCursor)
                 self.uc.show_info(
                     "WARNING 070422.0530: there are some orifices with wrong type, shape, or flap gate!\n\n"
                     + "All wrong values were changed to their defaults.\n\n"
                     + "Edit them as wished and then 'Save' to replace the values in the 'Storm Drain Orifices' User layers."
                 )
+                QApplication.restoreOverrideCursor()                
         except Exception as e:
-            QApplication.restoreOverrideCursor()
+            QApplication.setOverrideCursor(Qt.ArrowCursor)
             self.uc.show_error(
                 "ERROR 070422.0730: assignment of value from orifices users layer failed!.\n",
                 e,
             )
-
+            QApplication.restoreOverrideCursor()
+        finally:
+            QApplication.restoreOverrideCursor()              
+            
+            
     def orifice_crest_height_dbox_valueChanged(self):
         self.box_valueChanged(self.orifice_crest_height_dbox, 4)
 

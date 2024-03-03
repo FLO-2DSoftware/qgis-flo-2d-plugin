@@ -82,23 +82,24 @@ class WeirsDialog(qtBaseClass, uiDialog):
             self.gutils = GeoPackageUtils(self.con, self.iface)
 
     def populate_weirs(self):
-        qry = """SELECT fid,
-                        weir_name,
-                        weir_inlet, 
-                        weir_outlet,
-                        weir_type,
-                        weir_crest_height,
-                        weir_disch_coeff,
-                        weir_flap_gate,
-                        weir_end_contrac,
-                        weir_end_coeff,
-                        weir_side_slope,
-                        weir_shape,
-                        weir_height,
-                        weir_length
-                FROM user_swmm_weirs;"""
-        wrong_status = 0
+        QApplication.setOverrideCursor(Qt.WaitCursor)
         try:
+            qry = """SELECT fid,
+                            weir_name,
+                            weir_inlet, 
+                            weir_outlet,
+                            weir_type,
+                            weir_crest_height,
+                            weir_disch_coeff,
+                            weir_flap_gate,
+                            weir_end_contrac,
+                            weir_end_coeff,
+                            weir_side_slope,
+                            weir_shape,
+                            weir_height,
+                            weir_length
+                    FROM user_swmm_weirs;"""
+            wrong_status = 0            
             rows = self.gutils.execute(qry).fetchall()
             self.weirs_tblw.setRowCount(0)
             for row_number, row_data in enumerate(rows):
@@ -186,19 +187,23 @@ class WeirsDialog(qtBaseClass, uiDialog):
                     #     wrong_status += 1
 
             self.highlight_weir(self.weir_name_cbo.currentText())
-            QApplication.restoreOverrideCursor()
             if wrong_status > 0:
+                QApplication.setOverrideCursor(Qt.ArrowCursor)
                 self.uc.show_info(
                     "WARNING 070422.0531: there are some weirs with wrong type, shape, or flap gate!\n\n"
                     + "All wrong values were changed to their defaults.\n\n"
                     + "Edit them as wished and then 'Save' to replace the values in the 'Storm Drain weirs' User layers."
                 )
+                QApplication.restoreOverrideCursor()
         except Exception as e:
-            QApplication.restoreOverrideCursor()
+            QApplication.setOverrideCursor(Qt.ArrowCursor)
             self.uc.show_error(
                 "ERROR 070422.0730: assignment of value from weirs users layer failed!.\n",
                 e,
             )
+            QApplication.restoreOverrideCursor()
+        finally:
+            QApplication.restoreOverrideCursor()
 
     def weir_type_cbo_currentIndexChanged(self):
         self.combo_valueChanged(self.weir_type_cbo, 3)

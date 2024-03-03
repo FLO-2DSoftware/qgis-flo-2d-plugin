@@ -3507,11 +3507,9 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             self.uc.bar_warn("No outfalls defined in 'Storm Drain Nodes' User Layer!")
             return
 
-        QApplication.setOverrideCursor(Qt.WaitCursor)
         dlg_outfalls = OutfallNodesDialog(self.iface, self.lyrs)
         dlg_outfalls.setWindowFlag(Qt.WindowMinimizeButtonHint, True)
         dlg_outfalls.setWindowFlag(Qt.WindowMaximizeButtonHint, True)
-        QApplication.restoreOverrideCursor()
         save = dlg_outfalls.exec_()
         if save:
             try:
@@ -3548,11 +3546,9 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             )
             return
 
-        QApplication.setOverrideCursor(Qt.WaitCursor)
         dlg_inlets = InletNodesDialog(self.iface, self.plot, self.SD_table, self.lyrs)
         dlg_inlets.setWindowFlag(Qt.WindowMinimizeButtonHint, True)
         dlg_inlets.setWindowFlag(Qt.WindowMaximizeButtonHint, True)
-        QApplication.restoreOverrideCursor()
 
         save = dlg_inlets.exec_()
         if save:
@@ -3582,12 +3578,10 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             )
             return
 
-        QApplication.setOverrideCursor(Qt.WaitCursor)
         dlg_storage = StorageUnitsDialog(self.iface, self.plot, self.SD_table, self.lyrs)
         dlg_storage.setWindowFlag(Qt.WindowMinimizeButtonHint, True)
         dlg_storage.setWindowFlag(Qt.WindowMaximizeButtonHint, True)
         dlg_storage.select_curve_type()
-        QApplication.restoreOverrideCursor()
         
         save = dlg_storage.exec_()
         if save:
@@ -3612,11 +3606,9 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             )
             return
 
-        QApplication.setOverrideCursor(Qt.WaitCursor)
         dlg_conduits = ConduitsDialog(self.iface, self.lyrs)
         dlg_conduits.setWindowFlag(Qt.WindowMinimizeButtonHint, True)
         dlg_conduits.setWindowFlag(Qt.WindowMaximizeButtonHint, True)
-        QApplication.restoreOverrideCursor()
         save = dlg_conduits.exec_()
         if save:
             try:
@@ -3643,11 +3635,10 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 + "Please import components from .INP file or shapefile, or convert from schematized Storm Drains."
             )
             return
-        QApplication.setOverrideCursor(Qt.WaitCursor)
+
         dlg_pumps = PumpsDialog(self.iface, self.plot, self.SD_table, self.lyrs)
         dlg_pumps.setWindowFlag(Qt.WindowMinimizeButtonHint, True)
         dlg_pumps.setWindowFlag(Qt.WindowMaximizeButtonHint, True)
-        QApplication.restoreOverrideCursor()
         save = dlg_pumps.exec_()
         if save:
             try:
@@ -3675,11 +3666,9 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             )
             return
 
-        QApplication.setOverrideCursor(Qt.WaitCursor)
         dlg_orifices = OrificesDialog(self.iface, self.lyrs)
         dlg_orifices.setWindowFlag(Qt.WindowMinimizeButtonHint, True)
         dlg_orifices.setWindowFlag(Qt.WindowMaximizeButtonHint, True)
-        QApplication.restoreOverrideCursor()
         save = dlg_orifices.exec_()
         if save:
             try:
@@ -3707,11 +3696,13 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             )
             return
 
-        QApplication.setOverrideCursor(Qt.WaitCursor)
+        ver zoom al cargar weirs, pumps, et
+
+
+
         dlg_weirs = WeirsDialog(self.iface, self.lyrs)
         dlg_weirs.setWindowFlag(Qt.WindowMinimizeButtonHint, True)
         dlg_weirs.setWindowFlag(Qt.WindowMaximizeButtonHint, True)
-        QApplication.restoreOverrideCursor()
         save = dlg_weirs.exec_()
         if save:
             try:

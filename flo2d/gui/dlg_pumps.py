@@ -93,17 +93,19 @@ class PumpsDialog(qtBaseClass, uiDialog):
             self.gutils = GeoPackageUtils(self.con, self.iface)
 
     def populate_pumps(self):
-        qry = """SELECT fid,
-                        pump_name,
-                        pump_inlet, 
-                        pump_outlet,
-                        pump_curve,
-                        pump_init_status,
-                        pump_startup_depth,
-                        pump_shutoff_depth
-                FROM user_swmm_pumps;"""
-        wrong_status = 0
+        QApplication.setOverrideCursor(Qt.WaitCursor)
         try:
+            qry = """SELECT fid,
+                            pump_name,
+                            pump_inlet, 
+                            pump_outlet,
+                            pump_curve,
+                            pump_init_status,
+                            pump_startup_depth,
+                            pump_shutoff_depth
+                    FROM user_swmm_pumps;"""
+            wrong_status = 0            
+            
             self.populate_curves()
             rows = self.gutils.execute(qry).fetchall()
             self.pumps_tblw.setRowCount(0)
@@ -158,8 +160,9 @@ class PumpsDialog(qtBaseClass, uiDialog):
                         self.pumps_tblw.setItem(row_number, column - 1, item)
 
             self.highlight_pump(self.pump_name_cbo.currentText())
-            QApplication.restoreOverrideCursor()
+
             if wrong_status > 0:
+                QApplication.setOverrideCursor(Qt.ArrowCursor)
                 self.uc.show_info(
                     "WARNING 280222.1910: there were "
                     + str(wrong_status)
@@ -167,12 +170,16 @@ class PumpsDialog(qtBaseClass, uiDialog):
                     + "All wrong initial status were changed to 'OFF' in this dialog.\n\n"
                     + "Edit them as wished and then 'Save' to replace the values in the 'Storm Drain Pumps' User layers."
                 )
+                QApplication.restoreOverrideCursor()
         except Exception as e:
-            QApplication.restoreOverrideCursor()
+            QApplication.setOverrideCursor(Qt.ArrowCursor)
             self.uc.show_error(
                 "ERROR 251121.0705: assignment of value from pumps users layer failed!.\n",
                 e,
             )
+            QApplication.restoreOverrideCursor()
+        finally:
+            QApplication.restoreOverrideCursor()               
 
     """
     Events for changes in values of widgets: 

@@ -128,120 +128,126 @@ class StorageUnitsDialog(qtBaseClass, uiDialog):
             # self.populate_rtables()
         
     def populate_storages(self):
-        qry = """SELECT
-                        name, 
-                        grid, 
-                        invert_elev,
-                        max_depth,
-                        init_depth,
-                        external_inflow,
-                        ponded_area,
-                        evap_factor,
-                        treatment,
-                        infiltration,
-                        infil_method,
-                        suction_head,
-                        conductivity,
-                        initial_deficit,
-                        storage_curve,
-                        coefficient,
-                        exponent,
-                        constant,
-                        curve_name           
-                FROM user_swmm_storage_units ORDER BY name ASC;"""
-                
-        rows = self.gutils.execute(qry).fetchall()
-        if not rows:
-            QApplication.restoreOverrideCursor()
-            self.uc.show_info(
-                "WARNING 010224.0546: 'Storm Drain Storage Units' User Layer is empty!"
-            )
-            return
-
-        self.block = True
-        self.populate_tabular_curves()
-        self.storages_tblw.setRowCount(0)
-        for row_number, row_data in enumerate(rows):
-            self.storages_tblw.insertRow(row_number)
-            for cell, data in enumerate(row_data):
-                data = self.validate_user_swmm_storage_units_cell(data,row_number, cell )
-                item = QTableWidgetItem()
-                if cell in [0, 1, 5, 8, 9, 10, 14, 18]:
-                # if cell == 0 or cell == 1 or cell == 5 or cell == 8 or cell == 9  or cell == 10 or cell == 14 or cell == 18:
-                    item.setFlags(item.flags() & ~Qt.ItemIsEditable)
-            
-                # Fill the list of inlet names:
-                if cell == 0:
-                    self.storages_cbo.addItem(data)
-            
-                # Fill all text boxes with data of first feature of query (first cell in table user_swmm_storage_units):
-                if row_number == 0:
-                    if cell == 1:
-                        self.grid_element_le.setText(str(data))
-                    elif cell == 2:
-                        self.invert_elevation_dbox.setValue(data if data is not None else 0)
-                    elif cell == 3:
-                        self.max_depth_dbox.setValue(data if data is not None else 0)
-                    elif cell == 4:
-                        self.initial_depth_dbox.setValue(data if data is not None else 0)
-                    elif cell == 5:
-                        self.external_inflow_chbox.setChecked(True if is_true(data) else False)
-                    elif cell == 6:    
-                        self.ponded_area_dbox.setValue(data if data is not None else 0)
-                    elif cell == 7:
-                        self.evap_factor_dbox.setValue(data if data is not None else 0) 
-                    elif cell == 8:
-                        self.treatment_cbo.setCurrentIndex(0)                                 
-                    elif cell == 9:
-                        self.infiltration_grp.setChecked(True)
-                    elif cell == 10:
-                        self.method_cbo.setCurrentIndex(0)
-                    elif cell == 11:
-                        self.suction_head_dbox.setValue(data if data is not None else 0)
-                    elif cell == 12:
-                        self.conductivity_dbox.setValue(data if data is not None else 0)
-                    elif cell == 13:
-                        self.initial_deficit_dbox.setValue(data if data is not None else 0)
-                    elif cell == 14:
-                        self.functional_radio.setChecked(True if data == "FUNCTIONAL" else False)
-                        self.tabular_radio.setChecked(True if data == "TABULAR" else False)
-                    elif cell == 15:
-                        self.coefficient_dbox.setValue(data if data is not None else 0)
-                    elif cell == 16:
-                        self.exponent_dbox.setValue(data if data is not None else 0)
-                    elif cell == 17:
-                        self.constant_dbox.setValue(data if data is not None else 0)
-                    elif cell == 18:
-                        index = self.tabular_curves_cbo.findText(data)
-                        if index == -1:
-                            index = 0
-                        self.tabular_curves_cbo.setCurrentIndex(index)                      
-                                        
-                item.setData(Qt.EditRole, data)
-                self.storages_tblw.setItem(row_number, cell, item)
-
-        QApplication.restoreOverrideCursor()
-
         QApplication.setOverrideCursor(Qt.WaitCursor)
-        self.storages_cbo.model().sort(Qt.AscendingOrder)
-        self.storages_cbo.setCurrentIndex(0)
-
-        self.storages_tblw.sortItems(0, Qt.AscendingOrder)
-        self.storages_tblw.selectRow(0)
-        self.storages_tblw.setStyleSheet("QTableWidget::item:selected { background-color: lightblue; color: black; }")
+        try:
+            qry = """SELECT
+                            name, 
+                            grid, 
+                            invert_elev,
+                            max_depth,
+                            init_depth,
+                            external_inflow,
+                            ponded_area,
+                            evap_factor,
+                            treatment,
+                            infiltration,
+                            infil_method,
+                            suction_head,
+                            conductivity,
+                            initial_deficit,
+                            storage_curve,
+                            coefficient,
+                            exponent,
+                            constant,
+                            curve_name           
+                    FROM user_swmm_storage_units ORDER BY name ASC;"""
+                    
+            rows = self.gutils.execute(qry).fetchall()
+            if not rows:
+                QApplication.restoreOverrideCursor()
+                self.uc.show_info(
+                    "WARNING 010224.0546: 'Storm Drain Storage Units' User Layer is empty!"
+                )
+                return
     
-        self.enable_external_inflow()
- 
-        self.block = False
+            self.block = True
+            self.populate_tabular_curves()
+            self.storages_tblw.setRowCount(0)
+            for row_number, row_data in enumerate(rows):
+                self.storages_tblw.insertRow(row_number)
+                for cell, data in enumerate(row_data):
+                    data = self.validate_user_swmm_storage_units_cell(data,row_number, cell )
+                    item = QTableWidgetItem()
+                    if cell in [0, 1, 5, 8, 9, 10, 14, 18]:
+                    # if cell == 0 or cell == 1 or cell == 5 or cell == 8 or cell == 9  or cell == 10 or cell == 14 or cell == 18:
+                        item.setFlags(item.flags() & ~Qt.ItemIsEditable)
+                
+                    # Fill the list of inlet names:
+                    if cell == 0:
+                        self.storages_cbo.addItem(data)
+                
+                    # Fill all text boxes with data of first feature of query (first cell in table user_swmm_storage_units):
+                    if row_number == 0:
+                        if cell == 1:
+                            self.grid_element_le.setText(str(data))
+                        elif cell == 2:
+                            self.invert_elevation_dbox.setValue(data if data is not None else 0)
+                        elif cell == 3:
+                            self.max_depth_dbox.setValue(data if data is not None else 0)
+                        elif cell == 4:
+                            self.initial_depth_dbox.setValue(data if data is not None else 0)
+                        elif cell == 5:
+                            self.external_inflow_chbox.setChecked(True if is_true(data) else False)
+                        elif cell == 6:    
+                            self.ponded_area_dbox.setValue(data if data is not None else 0)
+                        elif cell == 7:
+                            self.evap_factor_dbox.setValue(data if data is not None else 0) 
+                        elif cell == 8:
+                            self.treatment_cbo.setCurrentIndex(0)                                 
+                        elif cell == 9:
+                            self.infiltration_grp.setChecked(True)
+                        elif cell == 10:
+                            self.method_cbo.setCurrentIndex(0)
+                        elif cell == 11:
+                            self.suction_head_dbox.setValue(data if data is not None else 0)
+                        elif cell == 12:
+                            self.conductivity_dbox.setValue(data if data is not None else 0)
+                        elif cell == 13:
+                            self.initial_deficit_dbox.setValue(data if data is not None else 0)
+                        elif cell == 14:
+                            self.functional_radio.setChecked(True if data == "FUNCTIONAL" else False)
+                            self.tabular_radio.setChecked(True if data == "TABULAR" else False)
+                        elif cell == 15:
+                            self.coefficient_dbox.setValue(data if data is not None else 0)
+                        elif cell == 16:
+                            self.exponent_dbox.setValue(data if data is not None else 0)
+                        elif cell == 17:
+                            self.constant_dbox.setValue(data if data is not None else 0)
+                        elif cell == 18:
+                            index = self.tabular_curves_cbo.findText(data)
+                            if index == -1:
+                                index = 0
+                            self.tabular_curves_cbo.setCurrentIndex(index)                      
+                                            
+                    item.setData(Qt.EditRole, data)
+                    self.storages_tblw.setItem(row_number, cell, item)
+    
+            self.storages_cbo.model().sort(Qt.AscendingOrder)
+            self.storages_cbo.setCurrentIndex(0)
+    
+            self.storages_tblw.sortItems(0, Qt.AscendingOrder)
+            self.storages_tblw.selectRow(0)
+            self.storages_tblw.setStyleSheet("QTableWidget::item:selected { background-color: lightblue; color: black; }")
         
-        if self.warnings != "":
-            QApplication.restoreOverrideCursor()
-            result = ScrollMessageBox2(QMessageBox.Warning,"Issues found!", "WARNING 070224.1902: wrong values found:\n" + self.warnings)      
-            result.exec_()  
+            self.enable_external_inflow()
+            
+            self.block = False
 
-        # self.select_curve_type()  
-        self.highlight_storage_cell(self.grid_element_le.text())
+            if self.warnings != "":
+                QApplication.restoreOverrideCursor()
+                result = ScrollMessageBox2(QMessageBox.Warning,"Issues found!", "WARNING 070224.1902: wrong values found:\n" + self.warnings)      
+                result.exec_()  
     
+            # self.select_curve_type()  
+            self.highlight_storage_cell(self.grid_element_le.text())
+        
+        except Exception as e:
+            QApplication.setOverrideCursor(Qt.ArrowCursor)
+            self.uc.show_error("ERROR 030324.0622: error while loading storage units components!", e)
+            QApplication.restoreOverrideCursor()
+        finally:
+            QApplication.restoreOverrideCursor()  
+
     def populate_tabular_curves(self):
         self.tabular_curves_cbo.clear()
         self.tabular_curves_cbo.addItem("*")
