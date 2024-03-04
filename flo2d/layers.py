@@ -31,6 +31,7 @@ from qgis.PyQt.QtGui import QColor
 from qgis.PyQt.QtWidgets import QApplication
 
 from .errors import Flo2dError, Flo2dLayerInvalid, Flo2dLayerNotFound, Flo2dNotString
+from .misc.invisible_lyrs_grps import InvisibleLayersAndGroups
 from .user_communication import UserCommunication
 from .utils import get_file_path, is_number
 
@@ -50,224 +51,10 @@ class Layers(object):
         self.rb = None
         self.uc = UserCommunication(iface, "FLO-2D")
         self.gutils = None
+        self.ilg = InvisibleLayersAndGroups(self.iface)
         self.lyrs_to_repaint = []
         self.data = OrderedDict(
             [
-                # User layers:
-                # (
-                #     "user_bc_points",
-                #     {
-                #         "name": "Boundary Condition Points",
-                #         "sgroup": "User Layers. Boundaries",
-                #         "styles": ["user_bc_points.qml"],
-                #         "attrs_edit_widgets": {},
-                #         "module": ["all"],
-                #         "readonly": False,
-                #     },
-                # ),
-                # (
-                #     "user_bc_lines",
-                #     {
-                #         "name": "Boundary Condition Lines",
-                #         "sgroup": "User Layers. Boundaries",
-                #         "styles": ["user_bc_lines.qml"],
-                #         "attrs_edit_widgets": {},
-                #         "module": ["all"],
-                #         "readonly": False,
-                #     },
-                # ),
-                # (
-                #     "user_bc_polygons",
-                #     {
-                #         "name": "Boundary Condition Polygons",
-                #         "sgroup": "User Layers. Boundaries",
-                #         "styles": ["user_bc_polygons.qml"],
-                #         "attrs_edit_widgets": {},
-                #         "module": ["all"],
-                #         "readonly": False,
-                #     },
-                # ),
-                #
-                # (
-                #     "user_left_bank",
-                #     {
-                #         "name": "Left Bank Lines",
-                #         "sgroup": "User Layers. Channels",
-                #         "styles": ["user_lbank.qml"],
-                #         "attrs_edit_widgets": {},
-                #         "module": ["chan"],
-                #         "readonly": False,
-                #     },
-                # ),
-                # (
-                #     "user_right_bank",
-                #     {
-                #         "name": "Right Bank Lines",
-                #         "sgroup": "User Layers. Channels",
-                #         "styles": ["user_rbank.qml"],
-                #         "attrs_edit_widgets": {},
-                #         "module": ["chan"],
-                #         "readonly": False,
-                #     },
-                # ),
-                # (
-                #     "user_xsections",
-                #     {
-                #         "name": "Cross Sections",
-                #         "sgroup": "User Layers. Channels",
-                #         "styles": ["user_xs.qml"],
-                #         "attrs_edit_widgets": {},
-                #         "module": ["chan"],
-                #         "readonly": True,
-                #         "attrs_defaults": {"type": "'R'"},
-                #     },
-                # ),
-                # (
-                #     "user_noexchange_chan_areas",
-                #     {
-                #         "name": "No-Exchange Channel Areas",
-                #         "sgroup": "User Layers. Channels",
-                #         "styles": ["user_noexchange_chan_areas.qml"],
-                #         "attrs_edit_widgets": {},
-                #         "module": ["all"],
-                #         "readonly": False,
-                #     },
-                # ),
-                # (
-                #     "user_swmm_conduits",
-                #     {
-                #         "name": "Storm Drain Conduits",
-                #         "sgroup": "User Layers. Storm Drains",
-                #         "styles": ["user_swmm_conduits.qml"],
-                #         "attrs_edit_widgets": {},
-                #         "module": ["all"],
-                #         "readonly": False,
-                #     },
-                # ),
-                # (
-                #     "user_swmm_pumps",
-                #     {
-                #         "name": "Storm Drain Pumps",
-                #         "sgroup": "User Layers. Storm Drains",
-                #         "styles": ["user_swmm_conduits.qml"],
-                #         "attrs_edit_widgets": {},
-                #         "module": ["all"],
-                #         "readonly": False,
-                #     },
-                # ),
-                # (
-                #     "user_swmm_orifices",
-                #     {
-                #         "name": "Storm Drain Orifices",
-                #         "sgroup": "User Layers. Storm Drains",
-                #         "styles": ["user_swmm_conduits.qml"],
-                #         "attrs_edit_widgets": {},
-                #         "module": ["all"],
-                #         "readonly": False,
-                #     },
-                # ),
-                # (
-                #     "user_swmm_weirs",
-                #     {
-                #         "name": "Storm Drain Weirs",
-                #         "sgroup": "User Layers. Storm Drains",
-                #         "styles": ["user_swmm_conduits.qml"],
-                #         "attrs_edit_widgets": {},
-                #         "module": ["all"],
-                #         "readonly": False,
-                #     },
-                # ),
-                # (
-                #     "user_swmm_nodes",
-                #     {
-                #         "name": "Storm Drain Nodes",
-                #         "sgroup": "User Layers. Storm Drains",
-                #         "styles": ["user_swmm_nodes.qml"],
-                #         "attrs_edit_widgets": {},
-                #         "module": ["all"],
-                #         "readonly": False,
-                #     },
-                # ),
-                #
-                #
-                #
-                # (
-                #     "buildings_areas",
-                #     {
-                #         "name": "Building Areas",
-                #         "sgroup": "User Layers. Grid Attributes",
-                #         "styles": ["user_spatial_gutter.qml"],
-                #         "attrs_edit_widgets": {},
-                #         "readonly": False,
-                #     },
-                # ),
-                # (
-                #     "gutter_areas",
-                #     {
-                #         "name": "Gutter Areas",
-                #         "sgroup": "User Layers. Grid Attributes",
-                #         "styles": ["user_spatial_gutter.qml"],
-                #         "attrs_edit_widgets": {},
-                #         "readonly": False,
-                #     },
-                # ),
-                # (
-                #     "spatialshallow",
-                #     {
-                #         "name": "Shallow-n Areas",
-                #         "sgroup": "User Layers. Grid Attributes",
-                #         "styles": ["user_spatial_shallow_n.qml"],
-                #         "attrs_edit_widgets": {},
-                #         "readonly": False,
-                #     },
-                # ),
-                # (
-                #     "fpfroude",
-                #     {
-                #         "name": "Froude Areas",
-                #         "sgroup": "User Layers. Grid Attributes",
-                #         "styles": ["user_spatial_froude.qml"],
-                #         "attrs_edit_widgets": {},
-                #         "readonly": False,
-                #     },
-                # ),
-                # (
-                #     "tolspatial",
-                #     {
-                #         "name": "Tolerance Areas",
-                #         "sgroup": "User Layers. Grid Attributes",
-                #         "styles": ["tolspatial.qml"],
-                #         "attrs_edit_widgets": {},
-                #         "readonly": False,
-                #     },
-                # ),
-                # (
-                #     "user_blocked_areas",
-                #     {
-                #         "name": "Blocked Areas",
-                #         "sgroup": "User Layers. Grid Attributes",
-                #         "styles": ["blocked_areas.qml"],
-                #         "attrs_edit_widgets": {
-                #             "collapse": {"name": "CheckBox", "config": {u"CheckedState": 1, u"UncheckedState": 0}},
-                #             "calc_arf": {"name": "CheckBox", "config": {u"CheckedState": 1, u"UncheckedState": 0}},
-                #             "calc_wrf": {"name": "CheckBox", "config": {u"CheckedState": 1, u"UncheckedState": 0}},
-                #         },
-                #         "module": ["redfac"],
-                #         "readonly": False,
-                #         "attrs_defaults": {"calc_arf": "1", "calc_wrf": "1"},  #
-                #     },
-                # ),
-                # (
-                #     "user_roughness",
-                #     {
-                #         "name": "Roughness",
-                #         "sgroup": "User Layers. Grid Attributes",
-                #         "styles": ["user_roughness.qml"],
-                #         "attrs_edit_widgets": {},
-                #         "module": ["all"],
-                #         "readonly": False,
-                #     },
-                # ),
                 (
                     "user_bc_points",
                     {
@@ -277,6 +64,7 @@ class Layers(object):
                         "attrs_edit_widgets": {},
                         "module": ["all"],
                         "readonly": False,
+                        "advanced": False
                     },
                 ),
                 (
@@ -288,6 +76,7 @@ class Layers(object):
                         "attrs_edit_widgets": {},
                         "module": ["all"],
                         "readonly": False,
+                        "advanced": False
                     },
                 ),
                 (
@@ -299,6 +88,7 @@ class Layers(object):
                         "attrs_edit_widgets": {},
                         "module": ["all"],
                         "readonly": False,
+                        "advanced": False
                     },
                 ),
                 (
@@ -310,6 +100,7 @@ class Layers(object):
                         "attrs_edit_widgets": {},
                         "module": ["chan"],
                         "readonly": False,
+                        "advanced": False
                     },
                 ),
                 (
@@ -321,6 +112,7 @@ class Layers(object):
                         "attrs_edit_widgets": {},
                         "module": ["chan"],
                         "readonly": False,
+                        "advanced": False
                     },
                 ),
                 (
@@ -333,6 +125,7 @@ class Layers(object):
                         "module": ["chan"],
                         "readonly": True,
                         "attrs_defaults": {"type": "'R'"},
+                        "advanced": False
                     },
                 ),
                 (
@@ -344,6 +137,7 @@ class Layers(object):
                         "attrs_edit_widgets": {},
                         "module": ["all"],
                         "readonly": False,
+                        "advanced": False
                     },
                 ),
                 (
@@ -355,6 +149,7 @@ class Layers(object):
                         "attrs_edit_widgets": {},
                         "module": ["all"],
                         "readonly": False,
+                        "advanced": False
                     },
                 ),
                 (
@@ -366,6 +161,7 @@ class Layers(object):
                         "attrs_edit_widgets": {},
                         "module": ["all"],
                         "readonly": False,
+                        "advanced": False
                     },
                 ),
                 (
@@ -377,6 +173,7 @@ class Layers(object):
                         "attrs_edit_widgets": {},
                         "module": ["all"],
                         "readonly": False,
+                        "advanced": False
                     },
                 ),
                 (
@@ -388,6 +185,7 @@ class Layers(object):
                         "attrs_edit_widgets": {},
                         "module": ["all"],
                         "readonly": False,
+                        "advanced": False
                     },
                 ),
                 (
@@ -399,6 +197,7 @@ class Layers(object):
                         "attrs_edit_widgets": {},
                         "module": ["all"],
                         "readonly": False,
+                        "advanced": False
                     },
                 ),
                 (
@@ -409,6 +208,7 @@ class Layers(object):
                         "styles": ["user_buildings.qml"],
                         "attrs_edit_widgets": {},
                         "readonly": False,
+                        "advanced": False
                     },
                 ),
                 (
@@ -419,6 +219,7 @@ class Layers(object):
                         "styles": ["user_spatial_gutter.qml"],
                         "attrs_edit_widgets": {},
                         "readonly": False,
+                        "advanced": False
                     },
                 ),
                 (
@@ -429,6 +230,7 @@ class Layers(object):
                         "styles": ["user_spatial_shallow_n.qml"],
                         "attrs_edit_widgets": {},
                         "readonly": False,
+                        "advanced": False
                     },
                 ),
                 (
@@ -439,6 +241,7 @@ class Layers(object):
                         "styles": ["user_spatial_froude.qml"],
                         "attrs_edit_widgets": {},
                         "readonly": False,
+                        "advanced": False
                     },
                 ),
                 (
@@ -449,6 +252,7 @@ class Layers(object):
                         "styles": ["tolspatial.qml"],
                         "attrs_edit_widgets": {},
                         "readonly": False,
+                        "advanced": False
                     },
                 ),
                 (
@@ -474,6 +278,7 @@ class Layers(object):
                         "module": ["redfac"],
                         "readonly": False,
                         "attrs_defaults": {"calc_arf": "1", "calc_wrf": "1"},  #
+                        "advanced": False
                     },
                 ),
                 (
@@ -485,6 +290,7 @@ class Layers(object):
                         "attrs_edit_widgets": {},
                         "module": ["all"],
                         "readonly": False,
+                        "advanced": False
                     },
                 ),
                 (
@@ -496,6 +302,7 @@ class Layers(object):
                         "attrs_edit_widgets": {},
                         "visible": True,
                         "readonly": False,
+                        "advanced": False
                     },
                 ),
                 (
@@ -507,6 +314,7 @@ class Layers(object):
                         "attrs_edit_widgets": {},
                         "visible": True,
                         "readonly": False,
+                        "advanced": False
                     },
                 ),
                 (
@@ -518,6 +326,7 @@ class Layers(object):
                         "attrs_edit_widgets": {},
                         "visible": True,
                         "readonly": False,
+                        "advanced": False
                     },
                 ),
                 (
@@ -529,6 +338,7 @@ class Layers(object):
                         "attrs_edit_widgets": {},
                         "module": ["chan"],
                         "readonly": False,
+                        "advanced": False
                     },
                 ),
                 (
@@ -540,6 +350,7 @@ class Layers(object):
                         "attrs_edit_widgets": {},
                         "module": ["structures"],
                         "readonly": False,
+                        "advanced": False
                     },
                 ),
                 (
@@ -551,6 +362,7 @@ class Layers(object):
                         "attrs_edit_widgets": {},
                         "module": ["streets"],
                         "readonly": False,
+                        "advanced": False
                     },
                 ),
                 (
@@ -562,6 +374,7 @@ class Layers(object):
                         "attrs_edit_widgets": {},
                         "module": ["levees"],
                         "readonly": False,
+                        "advanced": False
                     },
                 ),
                 (
@@ -573,6 +386,7 @@ class Layers(object):
                         "attrs_edit_widgets": {},
                         "module": ["all"],
                         "readonly": False,
+                        "advanced": False
                     },
                 ),
                 (
@@ -584,6 +398,7 @@ class Layers(object):
                         "attrs_edit_widgets": {},
                         "module": ["all"],
                         "readonly": False,
+                        "advanced": False
                     },
                 ),
                 (
@@ -595,6 +410,7 @@ class Layers(object):
                         "attrs_edit_widgets": {},
                         "module": ["all"],
                         "readonly": False,
+                        "advanced": False
                     },
                 ),
                 (
@@ -611,6 +427,7 @@ class Layers(object):
                         },
                         "module": ["all"],
                         "readonly": False,
+                        "advanced": False
                     },
                 ),
                 (
@@ -622,6 +439,7 @@ class Layers(object):
                         "attrs_edit_widgets": {},
                         "module": ["all"],
                         "readonly": False,
+                        "advanced": False
                     },
                 ),
                 (
@@ -633,6 +451,7 @@ class Layers(object):
                         "attrs_edit_widgets": {},
                         "module": ["all"],
                         "readonly": False,
+                        "advanced": False
                     },
                 ),
                 (
@@ -643,6 +462,7 @@ class Layers(object):
                         "styles": ["gutter_lines4.qml"],
                         "attrs_edit_widgets": {},
                         "readonly": False,
+                        "advanced": False
                     },
                 ),
                 # Schematic layers:
@@ -655,6 +475,7 @@ class Layers(object):
                         "attrs_edit_widgets": {},
                         "module": ["chan"],
                         "readonly": False,
+                        "advanced": False
                     },
                 ),
                 (
@@ -667,6 +488,7 @@ class Layers(object):
                         "visible": True,
                         "module": ["chan"],
                         "readonly": True,
+                        "advanced": False
                     },
                 ),
                 (
@@ -679,6 +501,7 @@ class Layers(object):
                         "visible": True,
                         "module": ["chan"],
                         "readonly": True,
+                        "advanced": False
                     },
                 ),
                 (
@@ -689,6 +512,7 @@ class Layers(object):
                         "styles": ["chan_confluences.qml"],
                         "attrs_edit_widgets": {},
                         "readonly": True,
+                        "advanced": False
                     },
                 ),
                 (
@@ -699,6 +523,7 @@ class Layers(object):
                         "styles": ["fpxsec.qml"],
                         "attrs_edit_widgets": {},
                         "readonly": True,
+                        "advanced": False
                     },
                 ),
                 (
@@ -709,6 +534,7 @@ class Layers(object):
                         "styles": ["fpxsec_cells.qml"],
                         "attrs_edit_widgets": {},
                         "readonly": True,
+                        "advanced": False
                     },
                 ),
                 (
@@ -720,6 +546,7 @@ class Layers(object):
                         "attrs_edit_widgets": {},
                         "module": ["breach"],
                         "readonly": False,
+                        "advanced": False
                     },
                 ),
                 (
@@ -731,6 +558,7 @@ class Layers(object):
                         "attrs_edit_widgets": {},
                         "module": ["levees"],
                         "readonly": True,
+                        "advanced": False
                     },
                 ),
                 (
@@ -742,6 +570,7 @@ class Layers(object):
                         "attrs_edit_widgets": {},
                         "module": ["struct"],
                         "readonly": True,
+                        "advanced": False
                     },
                 ),
                 (
@@ -753,6 +582,7 @@ class Layers(object):
                         "attrs_edit_widgets": {},
                         "module": ["struct"],
                         "readonly": True,
+                        "advanced": False
                     },
                 ),
                 (
@@ -763,6 +593,7 @@ class Layers(object):
                         "styles": ["all_schem_bc.qml"],
                         "attrs_edit_widgets": {},
                         "readonly": True,
+                        "advanced": False
                     },
                 ),
                 (
@@ -773,6 +604,7 @@ class Layers(object):
                         "styles": ["grid.qml", "grid_nodata.qml"],
                         "attrs_edit_widgets": {},
                         "readonly": True,
+                        "advanced": False
                     },
                 ),
                 (
@@ -783,6 +615,7 @@ class Layers(object):
                         "styles": ["arfwrf.qml"],
                         "attrs_edit_widgets": {},
                         "readonly": True,
+                        "advanced": False
                     },
                 ),
                 (
@@ -793,6 +626,7 @@ class Layers(object):
                         "styles": ["reservoirs.qml"],
                         "attrs_edit_widgets": {},
                         "readonly": False,
+                        "advanced": False
                     },
                 ),
                 (
@@ -803,6 +637,7 @@ class Layers(object):
                         "styles": ["gutter_cells.qml"],
                         "attrs_edit_widgets": {},
                         "readonly": True,
+                        "advanced": False
                     },
                 ),
                 # Storm Drain layers:
@@ -810,22 +645,24 @@ class Layers(object):
                     "swmmflo",
                     {
                         "name": "SD Inlets",
-                        "sgroup": "Storm Drain",
+                        "sgroup": "Schematic Layers",
                         "styles": ["swmmflo.qml"],
                         "attrs_edit_widgets": {},
                         "visible": True,
                         "readonly": False,
+                        "advanced": False
                     },
                 ),
                 (
                     "swmmoutf",
                     {
                         "name": "SD Outfalls",
-                        "sgroup": "Storm Drain",
+                        "sgroup": "Schematic Layers",
                         "styles": ["swmmoutf.qml"],
                         "attrs_edit_widgets": {},
                         "visible": True,
                         "readonly": False,
+                        "advanced": False
                     },
                 ),
                 (
@@ -836,6 +673,7 @@ class Layers(object):
                         "styles": None,
                         "attrs_edit_widgets": {},
                         "readonly": False,
+                        "advanced": True
                     },
                 ),
                 (
@@ -846,6 +684,7 @@ class Layers(object):
                         "styles": None,
                         "attrs_edit_widgets": {},
                         "readonly": False,
+                        "advanced": True
                     },
                 ),
                 (
@@ -856,6 +695,7 @@ class Layers(object):
                         "styles": None,
                         "attrs_edit_widgets": {},
                         "readonly": False,
+                        "advanced": True
                     },
                 ),
                 (
@@ -866,6 +706,7 @@ class Layers(object):
                         "styles": None,
                         "attrs_edit_widgets": {},
                         "readonly": False,
+                        "advanced": True
                     },
                 ),
                 (
@@ -876,6 +717,7 @@ class Layers(object):
                         "styles": None,
                         "attrs_edit_widgets": {},
                         "readonly": False,
+                        "advanced": True
                     },
                 ),
                 (
@@ -886,6 +728,7 @@ class Layers(object):
                         "styles": None,
                         "attrs_edit_widgets": {},
                         "readonly": False,
+                        "advanced": True
                     },
                 ),
                 (
@@ -896,6 +739,7 @@ class Layers(object):
                         "styles": None,
                         "attrs_edit_widgets": {},
                         "readonly": False,
+                        "advanced": True
                     },
                 ),
                 (
@@ -906,6 +750,7 @@ class Layers(object):
                         "styles": None,
                         "attrs_edit_widgets": {},
                         "readonly": False,
+                        "advanced": True
                     },
                 ),
                 (
@@ -916,6 +761,7 @@ class Layers(object):
                         "styles": None,
                         "attrs_edit_widgets": {},
                         "readonly": False,
+                        "advanced": True
                     },
                 ),
                 (
@@ -926,6 +772,7 @@ class Layers(object):
                         "styles": None,
                         "attrs_edit_widgets": {},
                         "readonly": False,
+                        "advanced": True
                     },
                 ),
                 (
@@ -936,6 +783,7 @@ class Layers(object):
                         "styles": None,
                         "attrs_edit_widgets": {},
                         "readonly": False,
+                        "advanced": True
                     },
                 ),                
                 # Infiltration Layers
@@ -947,6 +795,7 @@ class Layers(object):
                         "styles": None,
                         "attrs_edit_widgets": {},
                         "readonly": True,
+                        "advanced": True
                     },
                 ),
                 (
@@ -957,6 +806,7 @@ class Layers(object):
                         "styles": None,
                         "attrs_edit_widgets": {},
                         "readonly": True,
+                        "advanced": True
                     },
                 ),
                 (
@@ -967,6 +817,7 @@ class Layers(object):
                         "styles": None,
                         "attrs_edit_widgets": {},
                         "readonly": True,
+                        "advanced": True
                     },
                 ),
                 (
@@ -977,6 +828,7 @@ class Layers(object):
                         "styles": None,
                         "attrs_edit_widgets": {},
                         "readonly": True,
+                        "advanced": True
                     },
                 ),
                 (
@@ -987,6 +839,7 @@ class Layers(object):
                         "styles": None,
                         "attrs_edit_widgets": {},
                         "readonly": True,
+                        "advanced": True
                     },
                 ),
                 # Tables:
@@ -998,6 +851,7 @@ class Layers(object):
                         "styles": None,
                         "attrs_edit_widgets": {},
                         "readonly": False,
+                        "advanced": True
                     },
                 ),
                 (
@@ -1008,6 +862,7 @@ class Layers(object):
                         "styles": None,
                         "attrs_edit_widgets": {},
                         "readonly": True,
+                        "advanced": True
                     },
                 ),
                 (
@@ -1018,6 +873,7 @@ class Layers(object):
                         "styles": None,
                         "attrs_edit_widgets": {},
                         "readonly": True,
+                        "advanced": True
                     },
                 ),
                 (
@@ -1028,6 +884,7 @@ class Layers(object):
                         "styles": None,
                         "attrs_edit_widgets": {},
                         "readonly": True,
+                        "advanced": True
                     },
                 ),
                 (
@@ -1043,6 +900,7 @@ class Layers(object):
                             "width": "0.99",
                             "n_value": "0.77",
                         },
+                        "advanced": True
                     },
                 ),
                 (
@@ -1053,6 +911,7 @@ class Layers(object):
                         "styles": None,
                         "attrs_edit_widgets": {},
                         "readonly": True,
+                        "advanced": True
                     },
                 ),
                 (
@@ -1063,6 +922,7 @@ class Layers(object):
                         "styles": ["inflow.qml"],
                         "attrs_edit_widgets": {},
                         "readonly": False,
+                        "advanced": True
                     },
                 ),
                 (
@@ -1073,6 +933,7 @@ class Layers(object):
                         "styles": None,
                         "attrs_edit_widgets": {},
                         "readonly": False,
+                        "advanced": True
                     },
                 ),
                 (
@@ -1083,6 +944,7 @@ class Layers(object):
                         "styles": None,
                         "attrs_edit_widgets": {},
                         "readonly": True,
+                        "advanced": True
                     },
                 ),
                 (
@@ -1093,6 +955,7 @@ class Layers(object):
                         "styles": None,
                         "attrs_edit_widgets": {},
                         "readonly": True,
+                        "advanced": True
                     },
                 ),
                 (
@@ -1103,6 +966,7 @@ class Layers(object):
                         "styles": None,
                         "attrs_edit_widgets": {},
                         "readonly": False,
+                        "advanced": True
                     },
                 ),
                 (
@@ -1113,6 +977,7 @@ class Layers(object):
                         "styles": None,
                         "attrs_edit_widgets": {},
                         "readonly": False,
+                        "advanced": True
                     },
                 ),
                 (
@@ -1123,6 +988,7 @@ class Layers(object):
                         "styles": None,
                         "attrs_edit_widgets": {},
                         "readonly": False,
+                        "advanced": True
                     },
                 ),
                 (
@@ -1133,6 +999,7 @@ class Layers(object):
                         "styles": None,
                         "attrs_edit_widgets": {},
                         "readonly": False,
+                        "advanced": True
                     },
                 ),
                 (
@@ -1143,6 +1010,7 @@ class Layers(object):
                         "styles": None,
                         "attrs_edit_widgets": {},
                         "readonly": False,
+                        "advanced": True
                     },
                 ),
                 (
@@ -1153,6 +1021,7 @@ class Layers(object):
                         "styles": None,
                         "attrs_edit_widgets": {},
                         "readonly": False,
+                        "advanced": True
                     },
                 ),
                 (
@@ -1163,6 +1032,7 @@ class Layers(object):
                         "styles": None,
                         "attrs_edit_widgets": {},
                         "readonly": False,
+                        "advanced": True
                     },
                 ),
                 (
@@ -1173,6 +1043,7 @@ class Layers(object):
                         "styles": None,
                         "attrs_edit_widgets": {},
                         "readonly": False,
+                        "advanced": True
                     },
                 ),
                 (
@@ -1183,6 +1054,7 @@ class Layers(object):
                         "styles": None,
                         "attrs_edit_widgets": {},
                         "readonly": False,
+                        "advanced": True
                     },
                 ),
                 # Rain Tables:
@@ -1194,6 +1066,7 @@ class Layers(object):
                         "styles": None,
                         "attrs_edit_widgets": {},
                         "readonly": False,
+                        "advanced": True
                     },
                 ),
                 (
@@ -1204,6 +1077,7 @@ class Layers(object):
                         "styles": None,
                         "attrs_edit_widgets": {},
                         "readonly": False,
+                        "advanced": True
                     },
                 ),
                 (
@@ -1214,6 +1088,7 @@ class Layers(object):
                         "styles": None,
                         "attrs_edit_widgets": {},
                         "readonly": False,
+                        "advanced": True
                     },
                 ),
                 (
@@ -1224,6 +1099,7 @@ class Layers(object):
                         "styles": None,
                         "attrs_edit_widgets": {},
                         "readonly": True,
+                        "advanced": True
                     },
                 ),
                 (
@@ -1234,6 +1110,7 @@ class Layers(object):
                         "styles": None,
                         "attrs_edit_widgets": {},
                         "readonly": True,
+                        "advanced": True
                     },
                 ),
                 (
@@ -1244,6 +1121,7 @@ class Layers(object):
                         "styles": None,
                         "attrs_edit_widgets": {},
                         "readonly": True,
+                        "advanced": True
                     },
                 ),
                 # Calibration Data:
@@ -1256,6 +1134,7 @@ class Layers(object):
                         "attrs_edit_widgets": {},
                         "visible": False,
                         "readonly": False,
+                        "advanced": True
                     },
                 ),
                 (
@@ -1267,6 +1146,7 @@ class Layers(object):
                         "attrs_edit_widgets": {},
                         "visible": False,
                         "readonly": False,
+                        "advanced": True
                     },
                 ),
                 # Evaporation Tables:
@@ -1279,6 +1159,7 @@ class Layers(object):
                         "attrs_edit_widgets": {},
                         "visible": False,
                         "readonly": False,
+                        "advanced": True
                     },
                 ),
                 (
@@ -1290,6 +1171,7 @@ class Layers(object):
                         "attrs_edit_widgets": {},
                         "visible": False,
                         "readonly": False,
+                        "advanced": True
                     },
                 ),
                 (
@@ -1301,6 +1183,7 @@ class Layers(object):
                         "attrs_edit_widgets": {},
                         "visible": False,
                         "readonly": False,
+                        "advanced": True
                     },
                 ),
                 # Levee and Breach Tables:
@@ -1313,6 +1196,7 @@ class Layers(object):
                         "attrs_edit_widgets": {},
                         "visible": False,
                         "readonly": False,
+                        "advanced": True
                     },
                 ),
                 (
@@ -1324,6 +1208,7 @@ class Layers(object):
                         "attrs_edit_widgets": {},
                         "visible": False,
                         "readonly": False,
+                        "advanced": True
                     },
                 ),
                 (
@@ -1334,6 +1219,7 @@ class Layers(object):
                         "styles": None,
                         "attrs_edit_widgets": {},
                         "readonly": False,
+                        "advanced": True
                     },
                 ),
                 (
@@ -1344,6 +1230,7 @@ class Layers(object):
                         "styles": None,
                         "attrs_edit_widgets": {},
                         "readonly": False,
+                        "advanced": True
                     },
                 ),
                 (
@@ -1355,6 +1242,7 @@ class Layers(object):
                         "attrs_edit_widgets": {},
                         "visible": False,
                         "readonly": False,
+                        "advanced": True
                     },
                 ),
                 (
@@ -1366,6 +1254,7 @@ class Layers(object):
                         "attrs_edit_widgets": {},
                         "visible": False,
                         "readonly": False,
+                        "advanced": True
                     },
                 ),
                 # Sediment Transport areas (with polygon geometry (square)):
@@ -1378,6 +1267,7 @@ class Layers(object):
                         "attrs_edit_widgets": {},
                         "visible": False,
                         "readonly": False,
+                        "advanced": True
                     },
                 ),
                 (
@@ -1389,6 +1279,7 @@ class Layers(object):
                         "attrs_edit_widgets": {},
                         "visible": False,
                         "readonly": False,
+                        "advanced": True
                     },
                 ),
                 (
@@ -1400,6 +1291,7 @@ class Layers(object):
                         "attrs_edit_widgets": {},
                         "visible": False,
                         "readonly": False,
+                        "advanced": True
                     },
                 ),
                 # (
@@ -1423,6 +1315,7 @@ class Layers(object):
                         "attrs_edit_widgets": {},
                         "visible": False,
                         "readonly": False,
+                        "advanced": True
                     },
                 ),
                 (
@@ -1434,6 +1327,7 @@ class Layers(object):
                         "attrs_edit_widgets": {},
                         "visible": False,
                         "readonly": False,
+                        "advanced": True
                     },
                 ),
                 (
@@ -1445,6 +1339,7 @@ class Layers(object):
                         "attrs_edit_widgets": {},
                         "visible": False,
                         "readonly": False,
+                        "advanced": True
                     },
                 ),
                 (
@@ -1456,6 +1351,7 @@ class Layers(object):
                         "attrs_edit_widgets": {},
                         "visible": False,
                         "readonly": True,
+                        "advanced": True
                     },
                 ),
                 (
@@ -1467,6 +1363,7 @@ class Layers(object):
                         "attrs_edit_widgets": {},
                         "visible": False,
                         "readonly": True,
+                        "advanced": True
                     },
                 ),
                 (
@@ -1478,6 +1375,7 @@ class Layers(object):
                         "attrs_edit_widgets": {},
                         "visible": False,
                         "readonly": True,
+                        "advanced": True
                     },
                 ),
                 (
@@ -1489,6 +1387,7 @@ class Layers(object):
                         "attrs_edit_widgets": {},
                         "visible": False,
                         "readonly": True,
+                        "advanced": True
                     },
                 ),
                 (
@@ -1500,6 +1399,7 @@ class Layers(object):
                         "attrs_edit_widgets": {},
                         "visible": False,
                         "readonly": True,
+                        "advanced": True
                     },
                 ),
                 (
@@ -1511,6 +1411,7 @@ class Layers(object):
                         "attrs_edit_widgets": {},
                         "visible": False,
                         "readonly": True,
+                        "advanced": True
                     },
                 ),
                 # Channel  Tables:
@@ -1523,6 +1424,7 @@ class Layers(object):
                         "attrs_edit_widgets": {},
                         "visible": False,
                         "readonly": False,
+                        "advanced": True
                     },
                 ),
                 (
@@ -1534,6 +1436,7 @@ class Layers(object):
                         "attrs_edit_widgets": {},
                         "visible": False,
                         "readonly": False,
+                        "advanced": True
                     },
                 ),
                 (
@@ -1545,6 +1448,7 @@ class Layers(object):
                         "attrs_edit_widgets": {},
                         "visible": False,
                         "readonly": False,
+                        "advanced": True
                     },
                 ),
                 (
@@ -1556,6 +1460,7 @@ class Layers(object):
                         "attrs_edit_widgets": {},
                         "visible": False,
                         "readonly": False,
+                        "advanced": True
                     },
                 ),
                 (
@@ -1567,6 +1472,7 @@ class Layers(object):
                         "attrs_edit_widgets": {},
                         "visible": False,
                         "readonly": False,
+                        "advanced": True
                     },
                 ),
                 (
@@ -1578,6 +1484,7 @@ class Layers(object):
                         "attrs_edit_widgets": {},
                         "visible": False,
                         "readonly": False,
+                        "advanced": True
                     },
                 ),
                 (
@@ -1589,6 +1496,7 @@ class Layers(object):
                         "attrs_edit_widgets": {},
                         "visible": False,
                         "readonly": False,
+                        "advanced": True
                     },
                 ),
                 (
@@ -1600,6 +1508,7 @@ class Layers(object):
                         "attrs_edit_widgets": {},
                         "visible": False,
                         "readonly": False,
+                        "advanced": True
                     },
                 ),
                 (
@@ -1611,6 +1520,7 @@ class Layers(object):
                         "attrs_edit_widgets": {},
                         "visible": False,
                         "readonly": False,
+                        "advanced": True
                     },
                 ),
                 (
@@ -1622,6 +1532,7 @@ class Layers(object):
                         "attrs_edit_widgets": {},
                         "visible": False,
                         "readonly": False,
+                        "advanced": True
                     },
                 ),
                 (
@@ -1632,6 +1543,7 @@ class Layers(object):
                         "styles": None,
                         "attrs_edit_widgets": {},
                         "readonly": True,
+                        "advanced": True
                     },
                 ),
                 (
@@ -1642,6 +1554,7 @@ class Layers(object):
                         "styles": None,
                         "attrs_edit_widgets": {},
                         "readonly": True,
+                        "advanced": True
                     },
                 ),
                 (
@@ -1652,6 +1565,7 @@ class Layers(object):
                         "styles": None,
                         "attrs_edit_widgets": {},
                         "readonly": True,
+                        "advanced": True
                     },
                 ),
                 # Multiple Channel  Tables:
@@ -1664,6 +1578,7 @@ class Layers(object):
                         "attrs_edit_widgets": {},
                         "visible": False,
                         "readonly": False,
+                        "advanced": True
                     },
                 ),
                 (
@@ -1675,6 +1590,7 @@ class Layers(object):
                         "attrs_edit_widgets": {},
                         "visible": False,
                         "readonly": False,
+                        "advanced": True
                     },
                 ),
                 (
@@ -1686,6 +1602,7 @@ class Layers(object):
                         "attrs_edit_widgets": {},
                         "visible": False,
                         "readonly": False,
+                        "advanced": True
                     },
                 ),
                 # Hydraulic Structures Tables:
@@ -1697,6 +1614,7 @@ class Layers(object):
                         "styles": ["struc.qml"],
                         "attrs_edit_widgets": {},
                         "readonly": False,
+                        "advanced": True
                     },
                 ),
                 (
@@ -1707,6 +1625,7 @@ class Layers(object):
                         "styles": None,
                         "attrs_edit_widgets": {},
                         "readonly": False,
+                        "advanced": True
                     },
                 ),
                 (
@@ -1717,6 +1636,7 @@ class Layers(object):
                         "styles": None,
                         "attrs_edit_widgets": {},
                         "readonly": False,
+                        "advanced": True
                     },
                 ),
                 (
@@ -1727,6 +1647,7 @@ class Layers(object):
                         "styles": None,
                         "attrs_edit_widgets": {},
                         "readonly": False,
+                        "advanced": True
                     },
                 ),
                 (
@@ -1737,6 +1658,7 @@ class Layers(object):
                         "styles": None,
                         "attrs_edit_widgets": {},
                         "readonly": False,
+                        "advanced": True
                     },
                 ),
                 (
@@ -1747,6 +1669,7 @@ class Layers(object):
                         "styles": None,
                         "attrs_edit_widgets": {},
                         "readonly": False,
+                        "advanced": True
                     },
                 ),
                 (
@@ -1757,6 +1680,7 @@ class Layers(object):
                         "styles": None,
                         "attrs_edit_widgets": {},
                         "readonly": False,
+                        "advanced": True
                     },
                 ),
                 (
@@ -1767,6 +1691,7 @@ class Layers(object):
                         "styles": None,
                         "attrs_edit_widgets": {},
                         "readonly": False,
+                        "advanced": True
                     },
                 ),
             ]
@@ -1785,6 +1710,7 @@ class Layers(object):
         style=None,
         visible=True,
         readonly=False,
+        advanced=False,
         provider="ogr",
     ):
         try:
@@ -1815,6 +1741,7 @@ class Layers(object):
                     grp = self.get_subgroup(group, subgroup)
                     if not subgroup == "User Layers" and not subgroup == "Schematic Layers":
                         grp.setExpanded(False)
+                        self.ilg.hideGroup(subgroup)
                     else:
                         pass
                 else:
@@ -1826,6 +1753,13 @@ class Layers(object):
                 )
             else:
                 start_time = time.time()
+                if subgroup:
+                    grp = self.get_subgroup(group, subgroup)
+                    if not subgroup == "User Layers" and not subgroup == "Schematic Layers":
+                        grp.setExpanded(False)
+                        self.ilg.hideGroup(subgroup)
+                    else:
+                        pass
                 tree_lyr = self.get_layer_tree_item(lyr_exists)
                 self.update_layer_extents(tree_lyr.layer())
                 self.uc.log_info(
@@ -1873,6 +1807,10 @@ class Layers(object):
                 )
             else:
                 pass
+
+            # Check if it is an advanced layer
+            if advanced:
+                self.ilg.hideLayer(self.data[table]["qlyr"])
 
             return self.data[table]["qlyr"].id()
 
@@ -2221,6 +2159,7 @@ class Layers(object):
                     subgroup=data["sgroup"],
                     visible=lyr_is_on,
                     readonly=data["readonly"],
+                    advanced=data["advanced"]
                 )
                 l = self.get_layer_tree_item(lyr_id).layer()
                 if lyr == "blocked_cells":

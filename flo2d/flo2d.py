@@ -112,6 +112,7 @@ from .gui.grid_info_widget import GridInfoWidget
 from .gui.plot_widget import PlotWidget
 from .gui.table_editor_widget import TableEditorWidget
 from .layers import Layers
+from .misc.invisible_lyrs_grps import InvisibleLayersAndGroups
 from .user_communication import UserCommunication
 from .utils import get_flo2dpro_version
 
@@ -167,6 +168,7 @@ class Flo2D(object):
         self.con = None
         self.iface.f2d["con"] = self.con
         self.lyrs = Layers(iface)
+        self.ilg = InvisibleLayersAndGroups(self.iface)
         self.lyrs.group = None
         self.gutils = None
         self.f2g = None
@@ -1077,7 +1079,23 @@ class Flo2D(object):
             s = QSettings()
             s.setValue("FLO-2D/lastGdsDir", project_dir)
             s.setValue("FLO-2D/last_flopro", flo2d_dir)
-            s.setValue("FLO-2D/advanced_layers", advanced_layers)
+            if advanced_layers != s.value("FLO-2D/advanced_layers", ""):
+                # show advanced layers
+                if advanced_layers:
+                    lyrs = self.lyrs.data
+                    for key, value in lyrs.items():
+                        group = value.get("sgroup")
+                        self.ilg.unhideLayer(self.lyrs.data[key]["qlyr"])
+                        self.ilg.unhideGroup(group)
+                # hide advanced layers
+                else:
+                    lyrs = self.lyrs.data
+                    for key, value in lyrs.items():
+                        advanced = value.get("advanced")
+                        if advanced:
+                            self.ilg.hideLayer(self.lyrs.data[key]["qlyr"])
+                            self.ilg.hideGroup(value.get("sgroup"))
+                s.setValue("FLO-2D/advanced_layers", advanced_layers)
 
             if project_dir != "" and flo2d_dir != "":
                 s.setValue("FLO-2D/run_settings", True)
