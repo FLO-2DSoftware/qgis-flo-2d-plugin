@@ -83,6 +83,7 @@ from .flo2d_tools.grid_tools import (
     number_of_elements,
 )
 from .flo2d_tools.info_tool import InfoTool
+from .flo2d_tools.results_tool import ResultsTool
 from .flo2d_tools.schematic_tools import (
     delete_redundant_levee_directions_np,
     generate_schematic_levees,
@@ -208,7 +209,7 @@ class Flo2D(object):
             self.info_tool.feature_picked.connect(self.get_feature_info)
             self.infoToolCalled = True
 
-        self.channel_profile_tool.feature_picked.connect(self.get_feature_profile)
+        self.results_tool.feature_picked.connect(self.get_feature_profile)
         self.grid_info_tool.grid_elem_picked.connect(self.f2d_grid_info.update_fields)
 
         self.f2d_widget.grid_tools.setup_connection()
@@ -277,7 +278,7 @@ class Flo2D(object):
                 popup.addAction(act)
             action.setMenu(popup)
 
-        if text in ["FLO-2D Grid Info Tool", "FLO-2D Info Tool"]:
+        if text in ["FLO-2D Grid Info Tool", "FLO-2D Info Tool", "FLO-2D Results"]:
             action.setCheckable(True)
             action.setChecked(False)
 
@@ -293,7 +294,6 @@ class Flo2D(object):
                 "FLO-2D Project": ("/img/mGeoPackage.svg", "<b>FLO-2D Project</b>"),
                 "Run FLO-2D Pro": ("/img/flo2d.svg", "<b>Run FLO-2D Pro</b>"),
                 "FLO-2D Import/Export": ("/img/ie.svg", "<b>FLO-2D Import/Export</b>"),
-                "FLO-2D Info Tool": ("/img/info_tool.svg", "<b>FLO-2D Info Tool</b>", True),
                 "FLO-2D Project Review": ("/img/editmetadata.svg", "<b>FLO-2D Project Review</b>", True),
                 "FLO-2D Parameters": ("/img/show_cont_table.svg", "<b>FLO-2D Parameters</b>")
             }
@@ -487,34 +487,48 @@ class Flo2D(object):
             )
         )
 
-        self.add_action(
-            os.path.join(self.plugin_dir, "img/info_tool.svg"),
-            text=self.tr("FLO-2D Info Tool"),
-            callback=None,
-            parent=self.iface.mainWindow(),
-            menu=(
-                (
-                    os.path.join(self.plugin_dir, "img/info_tool.svg"),
-                    "Info Tool",
-                    lambda: self.activate_general_info_tool(),
-                ),
-                (
-                    os.path.join(self.plugin_dir, "img/import_swmm.svg"),
-                    "Select .RPT file",
-                    lambda: self.select_RPT_File(),
-                ),
-                # (
-                #     os.path.join(self.plugin_dir, "img/grid_info_tool.svg"),
-                #     "Grid Info Tool",
-                #     lambda: self.activate_grid_info_tool(),
-                # ),
-            )
-        )
+        # self.add_action(
+        #     os.path.join(self.plugin_dir, "img/info_tool.svg"),
+        #     text=self.tr("FLO-2D Info Tool"),
+        #     callback=None,
+        #     parent=self.iface.mainWindow(),
+        #     menu=(
+        #         (
+        #             os.path.join(self.plugin_dir, "img/info_tool.svg"),
+        #             "Info Tool",
+        #             lambda: self.activate_general_info_tool(),
+        #         ),
+        #         (
+        #             os.path.join(self.plugin_dir, "img/import_swmm.svg"),
+        #             "Select .RPT file",
+        #             lambda: self.select_RPT_File(),
+        #         ),
+        #         # (
+        #         #     os.path.join(self.plugin_dir, "img/grid_info_tool.svg"),
+        #         #     "Grid Info Tool",
+        #         #     lambda: self.activate_grid_info_tool(),
+        #         # ),
+        #     )
+        # )
 
         self.add_action(
             os.path.join(self.plugin_dir, "img/grid_info_tool.svg"),
             text=self.tr("FLO-2D Grid Info Tool"),
             callback=lambda: self.activate_grid_info_tool(),
+            parent=self.iface.mainWindow(),
+        )
+
+        self.add_action(
+            os.path.join(self.plugin_dir, "img/info_tool.svg"),
+            text=self.tr("FLO-2D Info Tool"),
+            callback=lambda: self.activate_general_info_tool(),
+            parent=self.iface.mainWindow(),
+        )
+
+        self.add_action(
+            os.path.join(self.plugin_dir, "img/results.svg"),
+            text=self.tr("FLO-2D Results"),
+            callback=lambda: self.activate_results_info_tool(),
             parent=self.iface.mainWindow(),
         )
 
@@ -529,11 +543,11 @@ class Flo2D(object):
                     "HAZUS",
                     lambda: self.show_hazus_dialog(),
                 ),
-                (
-                    os.path.join(self.plugin_dir, "img/profile_tool.svg"),
-                    "Channel Profile",
-                    lambda: self.channel_profile(),
-                ),
+                # (
+                #     os.path.join(self.plugin_dir, "img/profile_tool.svg"),
+                #     "Channel Profile",
+                #     lambda: self.channel_profile(),
+                # ),
                 (
                     os.path.join(self.plugin_dir, "img/issue.svg"),
                     "Warnings and Errors",
@@ -661,7 +675,7 @@ class Flo2D(object):
 
         self.lyrs.clear_rubber()
         # remove maptools
-        del self.info_tool, self.grid_info_tool, self.channel_profile_tool
+        del self.info_tool, self.grid_info_tool, self.results_tool
         # others
         del self.uc
         database_disconnect(self.con)
@@ -1083,6 +1097,7 @@ class Flo2D(object):
                 flo2d_v = get_flo2dpro_version(s.value("FLO-2D/last_flopro") + "/FLOPRO.exe")
                 self.gutils.set_metadata_par("FLO-2D_V", flo2d_v)
 
+            self.f2d_plot.clear()
             self.uc.bar_info("Run Settings saved!")
             self.uc.log_info(f"Run Settings saved!\nProject Folder: {project_dir}\nFLO-2D Folder: {flo2d_dir}")
 
@@ -2952,22 +2967,22 @@ class Flo2D(object):
         """
         Function to activate the Info Tool
         """
-        for tb in self.toolButtons:
-            if tb.toolTip() == "<b>FLO-2D Info Tool</b>":
-                info_tb = tb
+        for ac in self.toolActions:
+            if ac.toolTip() == "<b>FLO-2D Info Tool</b>":
+                info_ac = ac
 
         grid = self.lyrs.data["grid"]["qlyr"]
         if grid is not None:
             tool = self.canvas.mapTool()
             if tool == self.info_tool:
-                info_tb.setChecked(False)
+                info_ac.setChecked(False)
                 self.uncheck_all_info_tools()
             else:
                 if tool is not None:
                     self.uncheck_all_info_tools()
-                    info_tb.setChecked(False)
+                    info_ac.setChecked(False)
                 self.canvas.setMapTool(self.info_tool)
-                info_tb.setChecked(True)
+                info_ac.setChecked(True)
 
     @connection_required
     def activate_grid_info_tool(self):
@@ -3000,6 +3015,32 @@ class Flo2D(object):
             self.uc.bar_warn("There is no grid layer to identify.")
 
     @connection_required
+    def activate_results_info_tool(self):
+        """
+        Function to activate the Results Tool
+        """
+        for ac in self.toolActions:
+            if ac.toolTip() == "<b>FLO-2D Results</b>":
+                info_ac = ac
+
+        tool = self.canvas.mapTool()
+        if tool == self.results_tool:
+            info_ac.setChecked(False)
+            self.uncheck_all_info_tools()
+        else:
+            if tool is not None:
+                self.uncheck_all_info_tools()
+                info_ac.setChecked(False)
+            self.canvas.setMapTool(self.results_tool)
+            # 'channel_profile_tool' is an instance of ChannelProfile class,
+            # created on loading the plugin, and to be used to plot channel
+            # profiles using a subtool in the FLO-2D tool bar.
+            # The plots will be based on data from the 'chan', 'cham_elems'
+            # schematic layers.
+            self.results_tool.update_lyrs_list()
+            info_ac.setChecked(True)
+
+    @connection_required
     def show_user_profile(self, fid=None):
         self.f2d_dock.setUserVisible(True)
         self.f2d_widget.profile_tool_grp.setCollapsed(False)
@@ -3008,7 +3049,31 @@ class Flo2D(object):
 
     @connection_required
     def show_profile(self, fid=None):
-        self.f2d_widget.profile_tool.show_channel(self.cur_profile_table, fid)
+        self.f2d_widget.xs_editor.show_channel_peaks(self.cur_profile_table, fid)
+        self.cur_profile_table = None
+
+    @connection_required
+    def show_xsec_hydrograph(self, fid=None):
+        """
+        Show the cross-section hydrograph from HYCHAN.OUT
+        """
+        self.f2d_widget.xs_editor.show_hydrograph(self.cur_profile_table, fid)
+        self.cur_profile_table = None
+
+    @connection_required
+    def show_fpxsec_hydrograph(self, fid=None):
+        """
+        Show the floodplain cross-section hydrograph from HYCROSS.OUT
+        """
+        self.f2d_widget.fpxsec_editor.show_hydrograph(self.cur_profile_table, fid)
+        self.cur_profile_table = None
+
+    @connection_required
+    def show_fpxsec_cells_hydrograph(self, fid=None):
+        """
+        Show the floodplain cross-section hydrograph from HYCROSS.OUT
+        """
+        self.f2d_widget.fpxsec_editor.show_cells_hydrograph(self.cur_profile_table, fid)
         self.cur_profile_table = None
 
     @connection_required
@@ -3030,6 +3095,14 @@ class Flo2D(object):
         self.f2d_widget.struct_editor.populate_structs(struct_fid=fid)
 
     @connection_required
+    def show_struct_hydrograph(self, fid=None):
+        """
+        Show the Hydraulic Structure Hydrograph from HYDROSTRUCT.OUT
+        """
+        self.f2d_widget.struct_editor.show_hydrograph(self.cur_profile_table, fid)
+        self.cur_profile_table = None
+
+    @connection_required
     def show_sd_discharge(self, fid=None):
         """
         Show storm drain discharge for a given inlet node.
@@ -3040,8 +3113,60 @@ class Flo2D(object):
 
         name, grid = self.gutils.execute("SELECT name, grid FROM user_swmm_nodes WHERE fid = ?", (fid,)).fetchone()
         self.f2d_dock.setUserVisible(True)
-        self.f2d_widget.storm_drain_editor_grp.setCollapsed(False)
+        # self.f2d_widget.storm_drain_editor_grp.setCollapsed(False)
         self.f2d_widget.storm_drain_editor.create_SD_discharge_table_and_plots(name)
+
+    @connection_required
+    def show_conduit_discharge(self, fid=None):
+        """
+        Show storm drain discharge for a given conduit link.
+        """
+        if self.gutils.is_table_empty("grid"):
+            self.uc.bar_warn("There is no grid! Please create it before running tool.")
+            return
+
+        name = self.gutils.execute(f"SELECT conduit_name FROM user_swmm_conduits WHERE fid = '{fid}'").fetchone()[0]
+        self.f2d_dock.setUserVisible(True)
+        self.f2d_widget.storm_drain_editor.create_conduit_discharge_table_and_plots(name)
+
+    @connection_required
+    def show_pump_discharge(self, fid=None):
+        """
+        Show storm drain discharge for a given pump link.
+        """
+        if self.gutils.is_table_empty("grid"):
+            self.uc.bar_warn("There is no grid! Please create it before running tool.")
+            return
+
+        name = self.gutils.execute(f"SELECT pump_name FROM user_swmm_pumps WHERE fid = '{fid}'").fetchone()[0]
+        self.f2d_dock.setUserVisible(True)
+        self.f2d_widget.storm_drain_editor.create_conduit_discharge_table_and_plots(name)
+
+    @connection_required
+    def show_orifice_discharge(self, fid=None):
+        """
+        Show storm drain discharge for a given orifice link.
+        """
+        if self.gutils.is_table_empty("grid"):
+            self.uc.bar_warn("There is no grid! Please create it before running tool.")
+            return
+
+        name = self.gutils.execute(f"SELECT orifice_name FROM user_swmm_orifices WHERE fid = '{fid}'").fetchone()[0]
+        self.f2d_dock.setUserVisible(True)
+        self.f2d_widget.storm_drain_editor.create_conduit_discharge_table_and_plots(name)
+
+    @connection_required
+    def show_weir_discharge(self, fid=None):
+        """
+        Show storm drain discharge for a given weir link.
+        """
+        if self.gutils.is_table_empty("grid"):
+            self.uc.bar_warn("There is no grid! Please create it before running tool.")
+            return
+
+        name = self.gutils.execute(f"SELECT weir_name FROM user_swmm_weirs WHERE fid = '{fid}'").fetchone()[0]
+        self.f2d_dock.setUserVisible(True)
+        self.f2d_widget.storm_drain_editor.create_conduit_discharge_table_and_plots(name)
 
     @connection_required
     def show_schem_xsec_info(self, fid=None):
@@ -3536,7 +3661,7 @@ class Flo2D(object):
         self.canvas = self.iface.mapCanvas()
         self.info_tool = InfoTool(self.canvas, self.lyrs)
         self.grid_info_tool = GridInfoTool(self.uc, self.canvas, self.lyrs)
-        self.channel_profile_tool = ChannelProfile(self.canvas, self.lyrs)
+        self.results_tool = ResultsTool(self.canvas, self.lyrs)
 
     def get_feature_info(self, table, fid):
         try:
@@ -3547,37 +3672,73 @@ class Flo2D(object):
             return
         show_editor(fid)
 
-    def channel_profile(self):
-        for tb in self.toolButtons:
-            if tb.toolTip() == "<b>FLO-2D Project Review</b>":
-                review_tb = tb
-
-        tool = self.canvas.mapTool()
-        if tool == self.channel_profile_tool:
-            review_tb.setIcon(QIcon(os.path.join(self.plugin_dir, "img/editmetadata.svg")))
-            review_tb.setChecked(False)
-            self.uncheck_all_info_tools()
-        else:
-            if tool is not None:
-                self.uncheck_all_info_tools()
-                review_tb.setChecked(False)
-            review_tb.setIcon(QIcon(os.path.join(self.plugin_dir, "img/profile.svg")))
-            self.canvas.setMapTool(self.channel_profile_tool)
-            # 'channel_profile_tool' is an instance of ChannelProfile class,
-            # created on loading the plugin, and to be used to plot channel
-            # profiles using a subtool in the FLO-2D tool bar.
-            # The plots will be based on data from the 'chan', 'cham_elems'
-            # schematic layers.
-            self.channel_profile_tool.update_lyrs_list()
-            review_tb.setChecked(True)
+    # def channel_profile(self):
+    #
+    #     for tb in self.toolButtons:
+    #         if tb.toolTip() == "<b>FLO-2D Project Review</b>":
+    #             review_tb = tb
+    #
+    #     tool = self.canvas.mapTool()
+    #     if tool == self.channel_profile_tool:
+    #         review_tb.setIcon(QIcon(os.path.join(self.plugin_dir, "img/editmetadata.svg")))
+    #         review_tb.setChecked(False)
+    #         self.uncheck_all_info_tools()
+    #     else:
+    #         if tool is not None:
+    #             self.uncheck_all_info_tools()
+    #             review_tb.setChecked(False)
+    #         review_tb.setIcon(QIcon(os.path.join(self.plugin_dir, "img/profile.svg")))
+    #         self.canvas.setMapTool(self.channel_profile_tool)
+    #         # 'channel_profile_tool' is an instance of ChannelProfile class,
+    #         # created on loading the plugin, and to be used to plot channel
+    #         # profiles using a subtool in the FLO-2D tool bar.
+    #         # The plots will be based on data from the 'chan', 'cham_elems'
+    #         # schematic layers.
+    #         self.channel_profile_tool.update_lyrs_list()
+    #         review_tb.setChecked(True)
 
     def get_feature_profile(self, table, fid):
-        try:
-            self.cur_profile_table = table  # Currently 'table' only gets 'chan' table name
-        except KeyError:
-            self.uc.bar_info("Channel Profile tool not implemented for selected features.")
-            return
-        self.show_profile(fid)
+        # try:
+        if table == 'chan':
+            self.cur_profile_table = table
+            self.show_profile(fid)
+        if table == 'chan_elems':
+            self.cur_profile_table = table
+            self.show_xsec_hydrograph(fid)
+        if table == 'fpxsec':
+            self.cur_profile_table = table
+            self.show_fpxsec_hydrograph(fid)
+        if table == 'fpxsec_cells':
+            self.cur_profile_table = table
+            self.show_fpxsec_cells_hydrograph(fid)
+        if table == 'struct':
+            self.cur_profile_table = table
+            self.show_struct_hydrograph(fid)
+        if table == 'user_swmm_nodes':
+            show_editor = self.editors_map[table]
+            self.cur_info_table = table
+            show_editor(fid)
+        if table == 'user_swmm_conduits':
+            show_editor = self.editors_map[table]
+            self.cur_info_table = table
+            show_editor(fid)
+        if table == 'user_swmm_weirs':
+            show_editor = self.editors_map[table]
+            self.cur_info_table = table
+            show_editor(fid)
+        if table == 'user_swmm_orifices':
+            show_editor = self.editors_map[table]
+            self.cur_info_table = table
+            show_editor(fid)
+        if table == 'user_swmm_pumps':
+            show_editor = self.editors_map[table]
+            self.cur_info_table = table
+            show_editor(fid)
+
+        # except KeyError:
+        #     self.uc.bar_info("Channel Profile tool not implemented for selected features.")
+        #     return
+
 
     def set_editors_map(self):
         self.editors_map = {
@@ -3593,6 +3754,10 @@ class Flo2D(object):
             "user_struct": self.show_struct_editor,
             "struct": self.show_struct_editor,
             "user_swmm_nodes": self.show_sd_discharge,
+            "user_swmm_conduits": self.show_conduit_discharge,
+            "user_swmm_weirs": self.show_weir_discharge,
+            "user_swmm_orifices": self.show_orifice_discharge,
+            "user_swmm_pumps": self.show_pump_discharge,
         }
 
     def restore_settings(self):
@@ -3615,7 +3780,15 @@ class Flo2D(object):
         """
         self.canvas.unsetMapTool(self.grid_info_tool)
         self.canvas.unsetMapTool(self.info_tool)
-        self.canvas.unsetMapTool(self.channel_profile_tool)
+        self.canvas.unsetMapTool(self.results_tool)
+
+        for tb in self.toolButtons:
+            tb.setChecked(False)
+            if tb.toolTip() == "<b>FLO-2D Project Review</b>":
+                tb.setIcon(QIcon(os.path.join(self.plugin_dir, "img/editmetadata.svg")))
+
+        for ac in self.toolActions:
+            ac.setChecked(False)
 
         for tb in self.toolButtons:
             tb.setChecked(False)

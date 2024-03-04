@@ -15,6 +15,7 @@ import os
 # pylint: disable=no-self-use
 from collections import OrderedDict
 
+from qgis._core import QgsMessageLog
 from qgis.core import QgsFeatureRequest, QgsWkbTypes
 from qgis.gui import QgsMapToolIdentify, QgsRubberBand
 from qgis.PyQt.QtCore import QPoint, Qt, pyqtSignal
@@ -132,6 +133,23 @@ class InfoTool(QgsMapToolIdentify):
 
     ## EVEN NEWER CODE WITH NODE NAME (doesn't repeat dialog after not finding node but not always!!!):
     def canvasReleaseEvent(self, e):
+        """
+
+        """
+        # These are the tables that are currently implemented.
+        implemented = [
+            "user_levee_lines",
+            "user_xsections",
+            "user_streets",
+            "user_centerline",
+            "chan_elems",
+            "user_left_bank",
+            "user_bc_points",
+            "user_bc_lines",
+            "user_bc_polygons",
+            "user_struct",
+            "struct",
+        ]
         try:
             res = self.identify(e.x(), e.y(), self.lyrs_list, QgsMapToolIdentify.TopDownAll)
             lyrs_found = OrderedDict()
@@ -139,12 +157,13 @@ class InfoTool(QgsMapToolIdentify):
                 lyr_name = item.mLayer.name()
                 lyr_id = item.mLayer.id()
                 table = item.mLayer.dataProvider().dataSourceUri().split("=")[-1]
-                fid = item.mFeature.id()
-                if lyr_name not in list(lyrs_found.keys()):
-                    lyrs_found[lyr_name] = {"lid": lyr_id, "table": table, "fids": []}
-                else:
-                    pass
-                lyrs_found[lyr_name]["fids"].append(fid)
+                if table in implemented:
+                    fid = item.mFeature.id()
+                    if lyr_name not in list(lyrs_found.keys()):
+                        lyrs_found[lyr_name] = {"lid": lyr_id, "table": table, "fids": []}
+                    else:
+                        pass
+                    lyrs_found[lyr_name]["fids"].append(fid)
             popup = QMenu()
             sm = {}
             actions = {}

@@ -543,8 +543,7 @@ class ChannelSegment(GeoPackageUtils):
             except Flo2dError:
                 return False
             self.profiles[lbank_grid]["station"] = sta
-            self.profiles[lbank_grid]["water"] = row[11]
-            self.profiles[lbank_grid]["peak"] = row[12]
+
             sta += xs.xlen
             del xs
         return True

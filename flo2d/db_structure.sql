@@ -487,9 +487,8 @@ CREATE TABLE "chan_elems" (
     "type" TEXT, -- SHAPE, type of cross-section shape definition
     "notes" TEXT,
     "user_xs_fid" INTEGER,
-    "interpolated" INTEGER,
-    "max_water_elev" REAL DEFAULT 0, -- output from HYCHAN.OUT
-    "peak_discharge" REAL DEFAULT 0 -- output from HYCHAN.OUT
+    "interpolated" INTEGER
+
 );
 INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('chan_elems', 'features', 4326);
 SELECT gpkgAddGeometryColumn('chan_elems', 'geom', 'LINESTRING', 0, 0, 0);
