@@ -3130,6 +3130,45 @@ class Flo2D(object):
         self.f2d_widget.storm_drain_editor.create_conduit_discharge_table_and_plots(name)
 
     @connection_required
+    def show_pump_discharge(self, fid=None):
+        """
+        Show storm drain discharge for a given pump link.
+        """
+        if self.gutils.is_table_empty("grid"):
+            self.uc.bar_warn("There is no grid! Please create it before running tool.")
+            return
+
+        name = self.gutils.execute(f"SELECT pump_name FROM user_swmm_pumps WHERE fid = '{fid}'").fetchone()[0]
+        self.f2d_dock.setUserVisible(True)
+        self.f2d_widget.storm_drain_editor.create_conduit_discharge_table_and_plots(name)
+
+    @connection_required
+    def show_orifice_discharge(self, fid=None):
+        """
+        Show storm drain discharge for a given orifice link.
+        """
+        if self.gutils.is_table_empty("grid"):
+            self.uc.bar_warn("There is no grid! Please create it before running tool.")
+            return
+
+        name = self.gutils.execute(f"SELECT orifice_name FROM user_swmm_orifices WHERE fid = '{fid}'").fetchone()[0]
+        self.f2d_dock.setUserVisible(True)
+        self.f2d_widget.storm_drain_editor.create_conduit_discharge_table_and_plots(name)
+
+    @connection_required
+    def show_weir_discharge(self, fid=None):
+        """
+        Show storm drain discharge for a given weir link.
+        """
+        if self.gutils.is_table_empty("grid"):
+            self.uc.bar_warn("There is no grid! Please create it before running tool.")
+            return
+
+        name = self.gutils.execute(f"SELECT weir_name FROM user_swmm_weirs WHERE fid = '{fid}'").fetchone()[0]
+        self.f2d_dock.setUserVisible(True)
+        self.f2d_widget.storm_drain_editor.create_conduit_discharge_table_and_plots(name)
+
+    @connection_required
     def show_schem_xsec_info(self, fid=None):
         """
         Show schematic cross-section info.
@@ -3683,6 +3722,18 @@ class Flo2D(object):
             show_editor = self.editors_map[table]
             self.cur_info_table = table
             show_editor(fid)
+        if table == 'user_swmm_weirs':
+            show_editor = self.editors_map[table]
+            self.cur_info_table = table
+            show_editor(fid)
+        if table == 'user_swmm_orifices':
+            show_editor = self.editors_map[table]
+            self.cur_info_table = table
+            show_editor(fid)
+        if table == 'user_swmm_pumps':
+            show_editor = self.editors_map[table]
+            self.cur_info_table = table
+            show_editor(fid)
 
         # except KeyError:
         #     self.uc.bar_info("Channel Profile tool not implemented for selected features.")
@@ -3704,6 +3755,9 @@ class Flo2D(object):
             "struct": self.show_struct_editor,
             "user_swmm_nodes": self.show_sd_discharge,
             "user_swmm_conduits": self.show_conduit_discharge,
+            "user_swmm_weirs": self.show_weir_discharge,
+            "user_swmm_orifices": self.show_orifice_discharge,
+            "user_swmm_pumps": self.show_pump_discharge,
         }
 
     def restore_settings(self):

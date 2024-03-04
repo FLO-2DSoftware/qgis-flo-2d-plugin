@@ -45,7 +45,10 @@ class ResultsTool(QgsMapToolIdentify):
             self.lyrs.data["fpxsec_cells"]["qlyr"],
             self.lyrs.data["struct"]["qlyr"],
             self.lyrs.data["user_swmm_nodes"]["qlyr"],
-            self.lyrs.data["user_swmm_conduits"]["qlyr"]
+            self.lyrs.data["user_swmm_conduits"]["qlyr"],
+            self.lyrs.data["user_swmm_weirs"]["qlyr"],
+            self.lyrs.data["user_swmm_orifices"]["qlyr"],
+            self.lyrs.data["user_swmm_pumps"]["qlyr"]
         ]
 
     def canvasPressEvent(self, dummy):
@@ -62,6 +65,9 @@ class ResultsTool(QgsMapToolIdentify):
             "fpxsec_cells",
             "user_swmm_nodes",
             "user_swmm_conduits",
+            "user_swmm_weirs",
+            "user_swmm_orifices",
+            "user_swmm_pumps",
             "struct"
         ]
         # Overrides inherited method from QgsMapToolIdentify.
@@ -99,6 +105,21 @@ class ResultsTool(QgsMapToolIdentify):
                     sd_layer = self.lyrs.get_layer_by_name("Storm Drain Conduits", group=self.lyrs.group).layer()
                     feat = next(sd_layer.getFeatures(QgsFeatureRequest(fid)))
                     name = feat["conduit_name"]
+                    actions[i][j] = QAction(name, None)
+                elif ln == "Storm Drain Weirs":
+                    sd_layer = self.lyrs.get_layer_by_name("Storm Drain Weirs", group=self.lyrs.group).layer()
+                    feat = next(sd_layer.getFeatures(QgsFeatureRequest(fid)))
+                    name = feat["weir_name"]
+                    actions[i][j] = QAction(name, None)
+                elif ln == "Storm Drain Orifices":
+                    sd_layer = self.lyrs.get_layer_by_name("Storm Drain Orifices", group=self.lyrs.group).layer()
+                    feat = next(sd_layer.getFeatures(QgsFeatureRequest(fid)))
+                    name = feat["orifice_name"]
+                    actions[i][j] = QAction(name, None)
+                elif ln == "Storm Drain Pumps":
+                    sd_layer = self.lyrs.get_layer_by_name("Storm Drain Pumps", group=self.lyrs.group).layer()
+                    feat = next(sd_layer.getFeatures(QgsFeatureRequest(fid)))
+                    name = feat["pump_name"]
                     actions[i][j] = QAction(name, None)
                 elif ln == "Floodplain Cross Sections Cells":
                     fp_cells_layer = self.lyrs.get_layer_by_name("Floodplain Cross Sections Cells", group=self.lyrs.group).layer()
