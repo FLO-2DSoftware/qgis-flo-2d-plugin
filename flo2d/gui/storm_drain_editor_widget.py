@@ -2189,9 +2189,9 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         Writes <name>.INP file
         (<name> exists or is given by user in initial file dialog).
 
-        The following groups are are always written with the data of the current project:
+        The following groups are always written with the data of the current project:
             [JUNCTIONS] [OUTFALLS] [CONDUITS] [XSECTIONS] [LOSSES] [COORDINATES]
-        All other groups are written from data of .INP file if they exists.
+        All other groups are written from data of .INP file if they exist.
         """
 
         try:
@@ -2207,7 +2207,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             INP_groups = OrderedDict()
 
             s = QSettings()
-            last_dir = s.value("FLO-2D/lastSWMMDir", "")
+            last_dir = s.value("FLO-2D/lastGdsDir", "")
             swmm_dir = QFileDialog.getExistingDirectory(
                 None,
                 "Select directory where SWMM.INP file will be exported",
@@ -2225,8 +2225,9 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 else:
                     pass
 
+            s.setValue("FLO-2D/lastGdsDir", os.path.dirname(swmm_file))
             s.setValue("FLO-2D/lastSWMMDir", os.path.dirname(swmm_file))
-            last_dir = s.value("FLO-2D/lastSWMMDir", "")
+            last_dir = s.value("FLO-2D/lastGdsDir", "")
 
             if os.path.isfile(swmm_file):
                 # File exist, therefore import groups:
@@ -3504,6 +3505,8 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         if not rating_files:
             return
         s.setValue("FLO-2D/lastSWMMDir", os.path.dirname(rating_files[0]))
+        # update lastSWMMDir
+        last_dir = s.value("FLO-2D/lastSWMMDir", "")
         QApplication.setOverrideCursor(Qt.WaitCursor)
         try:
             errors0 = []
@@ -3518,13 +3521,13 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             badCulverts = 0
             already_a_rt = 0
             already_a_culvert = 0
-            no_culvert_grids = []            
+            no_culvert_grids = []
             assignments = {}
 
             for file in rating_files:
                 file_name, file_ext = os.path.splitext(os.path.basename(file))
-                file_name = file_name.strip()                
-                
+                file_name = file_name.strip()
+
                 if file_name.upper() == "TYPE4CULVERT":
 
                     with open(file, "r") as f1:
@@ -3549,37 +3552,37 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                                             self.gutils.execute(
                                                 qry, (grid[0], name, cdiameter, typec, typeen, cubase, multbarrels)
                                             )
-                                            
+
                                             assignments[name] = "C"
-                                                
+
                                             # Include Culvert eq. in dropdown list of type 4s:
                                             self.add_type4("CulvertEquation", file_name)
                                             # Assign Culvert name to user_swmm_nodes:
                                             assign_rt_name_sql = (
                                                 "UPDATE user_swmm_nodes SET rt_name = ? WHERE name =?;"
                                             )
-                                            self.gutils.execute(assign_rt_name_sql, (name, name))                                            
-                            
+                                            self.gutils.execute(assign_rt_name_sql, (name, name))
+
                                             # See if there is a rating table with the same name:
                                             in_rt = self.gutils.execute(
                                                 "SELECT * FROM swmmflort WHERE name = ?;", (name,)
                                             ).fetchone()
                                             if in_rt:
                                                 # Remove existing rating table:
-                            
+
                                                 swmm_fid = self.gutils.execute(
                                                     "SELECT fid FROM swmmflort WHERE name = ?", (name,)
-                                                ).fetchone()                                                                                             
-                                                self.gutils.execute("DELETE FROM swmmflort WHERE name = ?;", (name,)) 
+                                                ).fetchone()
+                                                self.gutils.execute("DELETE FROM swmmflort WHERE name = ?;", (name,))
                                                 # Data in 'swmmflort_data' is deleted with already defined trigger.
-                                                # self.gutils.execute("DELETE FROM swmmflort_data WHERE swmm_rt_fid = ?;", (swmm_fid[0],))                                                 
+                                                # self.gutils.execute("DELETE FROM swmmflort_data WHERE swmm_rt_fid = ?;", (swmm_fid[0],))
                                                 # already_a_rt += 1
                                         else:
                                             no_culvert_grids.append((name, name))
                                 else:
-                                    # badCulverts += 1 
+                                    # badCulverts += 1
                                     pass
- 
+
                 else:
                     err0, err1, err2, t4 = self.check_type4_file(file)
                     if err0 == "" and err1 == "" and err2 == "":
@@ -3598,8 +3601,8 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                         ).fetchone()
                         if swmm_fid:
                             swmm_fid = swmm_fid[0]
-                            self.gutils.execute("DELETE FROM swmmflort WHERE name = ?;", (file_name,))   
-                            
+                            self.gutils.execute("DELETE FROM swmmflort WHERE name = ?;", (file_name,))
+
                         data_sql = "INSERT INTO swmmflort_data (swmm_rt_fid, depth, q) VALUES (?, ?, ?)"
                         with open(file, "r") as f1:
                             for line in f1:
@@ -3615,14 +3618,14 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                             self.gutils.execute(set_grid_sql, (grid, file_name))
 
                         assignments[file_name] = "R"
-                        
+
                         # Assign rating table name to user_swmm_nodes:
                         assign_rt_name_sql = "UPDATE user_swmm_nodes SET rt_name = ? WHERE name =?;"
                         self.gutils.execute(assign_rt_name_sql, (file_name, file_name))
 
                         in_culvert = self.gutils.execute(
                             "SELECT * FROM swmmflo_culvert WHERE name = ?;", (file_name,)
-                        ).fetchone()                        
+                        ).fetchone()
                         if in_culvert:
                             # Remove culvert from swmmflo_culvert:
                             self.gutils.execute("DELETE FROM swmmflo_culvert WHERE name = ?;", (file_name,))
@@ -3633,14 +3636,14 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                             errors1.append(err1)
                         if err2:
                             noInlets.append(err2)
-    
+
                     if t4:
                         lst_no_type4.append(t4)
                         str_no_type4 += "\n" + t4
-            
+
             self.SD_type4_cbo.setCurrentIndex(0)
             self.SD_show_type4_table_and_plot()
-        
+
             txt2 = ""
             answer = True
             if lst_no_type4:
@@ -3707,25 +3710,26 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                         culverts += 1
                     elif val == "R":
                         ratings += 1
-                imported = "* "  + str(culverts) + " Culvert Equations imported.\n\n" 
+                imported = "* "  + str(culverts) + " Culvert Equations imported.\n\n"
                 imported += "* " + str(ratings) + " Rating Tables imported.\n\n"
-                    
-             
-            # Write warnings file Rating Tables Warnings.CHK:   
+
+
+            # Write warnings file Rating Tables Warnings.CHK:
             CHK_file_length = len(assignments) + len(warnings) + len(str_no_type4) + len(noInlets)
-            if  CHK_file_length > 0: 
+            self.uc.log_info(str(last_dir + r"\Rating Tables Warnings.CHK"))
+            if CHK_file_length > 0:
                 with open(last_dir + r"\Rating Tables Warnings.CHK", "w") as report_file:
                     for key, value in assignments.items():
                         if value == "R":
                             report_file.write("Rating Table in file " + key + ".* assigned to inlet " + key + ".\n")
                         elif value == "C":
-                            report_file.write("Culvert Equation from file TYPE4CULVERT.* assigned to inlet " + key + ".\n")    
-                    
-                    if warnings:   
-                        report_file.write("\n") 
+                            report_file.write("Culvert Equation from file TYPE4CULVERT.* assigned to inlet " + key + ".\n")
+
+                    if warnings:
+                        report_file.write("\n")
                         for w in warnings:
                             report_file.write(w + "\n")
-    
+
                     if str_no_type4 != "":
                         if answer:
                             report_file.write(
@@ -3739,7 +3743,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                                 + str_no_type4
                                 + "\n"
                             )
-    
+
                     if noInlets:
                         # report_file.write("\n")
                         for no in noInlets:
@@ -3748,11 +3752,11 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 # Delete previous "Rating Tables Warnings.CHK" file if it exists:
                 try:
                     if os.path.exists(last_dir + r"\Rating Tables Warnings.CHK"):
-                        os.remove(last_dir + r"\Rating Tables Warnings.CHK") 
+                        os.remove(last_dir + r"\Rating Tables Warnings.CHK")
                 except OSError:
                     msg = "Couldn't remove existing outdated 'Rating Tables Warnings.CHK file'"
                     self.uc.bar_warn(msg)
-                    
+
             QApplication.restoreOverrideCursor()
 
             txt1 = " could not be read (maybe wrong format).\n\n"
@@ -3786,7 +3790,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                     + os.path.dirname(rating_files[0])
                     + "/Rating Tables Warnings.CHK"
             )
-            
+
             self.uc.show_info(
                 "INFO 100823.0517:    (" + str(len(rating_files)) + " files selected)\n\n"
                 + imported
@@ -3806,8 +3810,6 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 + txt4
                 + txt5
                 + txt6
-
-
             )
 
         except Exception as e:
