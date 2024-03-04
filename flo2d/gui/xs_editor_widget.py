@@ -45,6 +45,7 @@ from qgis.PyQt.QtWidgets import (
 
 from .dlg_channel_check_report import ChannelCheckReportDialog
 from ..flo2d_ie.flo2d_parser import ParseDAT
+from ..flo2d_ie.flo2dgeopackage import Flo2dGeoPackage
 from ..flo2d_tools.flopro_tools import (
     ChannelNInterpolatorExecutor,
     ChanRightBankExecutor,
@@ -143,6 +144,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
     def __init__(self, iface, plot, table, lyrs):
         qtBaseClass.__init__(self)
         uiDialog.__init__(self)
+        self.f2g = None
         self.chan_seg = None
         self.iface = iface
         self.plot = plot
@@ -2233,21 +2235,57 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
             self.uc.bar_warn("There is no grid! Please create it before running tool.")
             return
 
-        dlg = ExternalProgramFLO2D(self.iface, "Run interpolation of channel n-values")
+        # dlg = ExternalProgramFLO2D(self.iface, "Run interpolation of channel n-values")
         # dlg.debug_run_btn.setVisible(False)
-        dlg.exec_folder_lbl.setText("FLO-2D Folder (of interpolation executable)")
-        ok = dlg.exec_()
-        if not ok:
-            return
-        flo2d_dir, project_dir = dlg.get_parameters()
+        # dlg.exec_folder_lbl.setText("FLO-2D Folder (of interpolation executable)")
+        # ok = dlg.exec_()
+        # if not ok:
+        #     return
+        s = QSettings()
+        flo2d_dir = s.value("FLO-2D/last_flopro", "")
+        project_dir = s.value("FLO-2D/lastGdsDir", "")
+        outdir = project_dir + "/temp/"
+        self.f2g = Flo2dGeoPackage(self.con, self.iface)
+        if not os.path.exists(outdir):
+            os.mkdir(outdir)
         try:
-            channelNInterpolator = ChannelNInterpolatorExecutor(flo2d_dir, project_dir)
+            QApplication.setOverrideCursor(Qt.WaitCursor)
+            # Export CONT, TOPO, CHAN and XSEC to temp folder
+            self.f2g.export_cont_toler_dat(outdir)
+            self.f2g.export_mannings_n_topo_dat(outdir)
+            self.f2g.export_chan(outdir)
+            self.f2g.export_xsec(outdir)
+
+            # Run the interpolator
+            channelNInterpolator = ChannelNInterpolatorExecutor(flo2d_dir, outdir)
             return_code = channelNInterpolator.run()
+
             if return_code == 0:
                 QApplication.restoreOverrideCursor()
-                self.uc.show_warn("WARNING 060319.1757: Channel n-values interpolated into CHAN.DAT file!\n\n")
+
+                # Import back
+                for root, dirs, files in os.walk(outdir):
+                    if "fort.4" in files:
+                        fort_path = os.path.join(root, "fort.4")
+                        chanfile = os.path.join(outdir, "CHAN.DAT")
+
+                        # If CHAN.DAT already exists, remove it
+                        if os.path.exists(chanfile):
+                            os.remove(chanfile)
+
+                        # Rename fort.4 to CHAN.DAT
+                        os.rename(fort_path, chanfile)
+                        break  # Found "fort.4" and renamed it, no need to continue searching
+
+                self.import_chan(temp=outdir)
+
+                # Delete the temp folder
+                shutil.rmtree(outdir)
+
+                self.uc.bar_info("Channel n-values interpolated into CHAN.DAT file!\n\n")
 
             elif return_code == -999:
+                QApplication.restoreOverrideCursor()
                 self.uc.show_warn(
                     "WARNING 060319.1758: Interpolation of channel n-values could not be performed!\n\n"
                     + "File\n\n"
@@ -2266,6 +2304,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
                 )
 
         except Exception as e:
+            QApplication.restoreOverrideCursor()
             self.uc.log_info(repr(e))
             self.uc.show_error(
                 "ERROR 060319.1631: Interpolation of channel n-values failed!\n"
