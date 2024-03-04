@@ -154,7 +154,7 @@ class StructEditorWidget(qtBaseClass, uiDialog):
         self.struct = Structure(fid, self.iface.f2d["con"], self.iface)
         self.struct.get_row()
         self.show_struct_rb()
-        if self.center_chbox.isChecked():
+        if self.center_btn.isChecked():
             try:
                 feat = next(self.user_struct_lyr.getFeatures(QgsFeatureRequest(self.struct.fid)))
                 x, y = feat.geometry().centroid().asPoint()
@@ -411,6 +411,7 @@ class StructEditorWidget(qtBaseClass, uiDialog):
                 if tables_out != "":
                     txt += "The following files were not loaded:\n" + tables_out
                 if txt != "":
+                    self.struct_changed()
                     self.uc.show_info(txt)
 
             except Exception as e:
