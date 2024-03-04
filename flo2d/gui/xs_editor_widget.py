@@ -18,7 +18,7 @@ from collections import OrderedDict
 from math import isnan
 
 from PyQt5.QtWidgets import QProgressDialog
-from qgis._core import QgsMessageLog, QgsProcessingFeatureSourceDefinition
+from qgis._core import QgsMessageLog, QgsProcessingFeatureSourceDefinition, QgsUnitTypes
 from qgis.core import (
     NULL,
     QgsCoordinateTransform,
@@ -999,9 +999,12 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
                 upstream_xc_min_elev = self.gutils.execute(
                     f"SELECT MIN(yi) FROM xsec_n_data WHERE chan_n_nxsecnum = '{upstream_xc}'").fetchone()[0]
 
-                # TODO: Check the units
+                if self.gutils.get_cont_par("METRIC") == "1":
+                    outflow_elev_threshold = 0.03
+                elif self.gutils.get_cont_par("METRIC") == "0":
+                    outflow_elev_threshold = 0.1
 
-                if upstream_xc_min_elev - xc_min_elev < 0.1:
+                if float(upstream_xc_min_elev) - float(xc_min_elev) < outflow_elev_threshold:
                     error_outflow_bc_grid.append(bc_grid)
 
             i += 1
