@@ -40,7 +40,7 @@ from ..utils import (
     m_fdata,
 )
 from .table_editor_widget import CommandItemEdit, StandardItem, StandardItemModel
-from .ui_utils import center_canvas, load_ui, set_icon, zoom
+from .ui_utils import center_canvas, load_ui, set_icon, zoom, center_feature
 # from Cython.Includes.libcpp import functional
 from fontTools.cu2qu.cu2qu import curve_to_quadratic
 
@@ -607,10 +607,11 @@ class StorageUnitsDialog(qtBaseClass, uiDialog):
                     if self.grid_count >= cell and cell > 0:
                         self.lyrs.show_feat_rubber(self.grid_lyr.id(), cell, QColor(Qt.yellow))
                         feat = next(self.grid_lyr.getFeatures(QgsFeatureRequest(cell)))
-                        x, y = feat.geometry().centroid().asPoint()
-                        self.lyrs.zoom_to_all()
-                        center_canvas(self.iface, x, y)
-                        zoom(self.iface, 0.45)
+                        center_feature(self.iface, feat, 15) 
+                        # x, y = feat.geometry().centroid().asPoint()
+                        # self.lyrs.zoom_to_all()
+                        # center_canvas(self.iface, x, y)
+                        # zoom(self.iface, 0.45)
 
                     else:
                         self.uc.bar_warn("WARNING 221219.1140: Cell " + str(cell) + " not found.")

@@ -49,7 +49,7 @@ from ..utils import (
     is_number,
     is_true,
 )
-from .ui_utils import center_canvas, load_ui, set_icon, zoom
+from .ui_utils import center_canvas, load_ui, set_icon, zoom, center_feature
 
 uiDialog, qtBaseClass = load_ui("outfalls")
 
@@ -587,10 +587,11 @@ class OutfallNodesDialog(qtBaseClass, uiDialog):
                     if self.grid_count >= cell and cell > 0:
                         self.lyrs.show_feat_rubber(self.grid_lyr.id(), cell, QColor(Qt.yellow))
                         feat = next(self.grid_lyr.getFeatures(QgsFeatureRequest(cell)))
-                        x, y = feat.geometry().centroid().asPoint()
-                        self.lyrs.zoom_to_all()
-                        center_canvas(self.iface, x, y)
-                        zoom(self.iface, 0.45)
+                        # x, y = feat.geometry().centroid().asPoint()
+                        center_feature(self.iface, feat, 15) 
+                        # self.lyrs.zoom_to_all()
+                        # center_canvas(self.iface, x, y)
+                        # zoom(self.iface, 0.45)
 
                     else:
                         self.uc.bar_warn("WARNING 121121.1140: Cell " + str(cell) + " not found.")

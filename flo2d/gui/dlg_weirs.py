@@ -187,6 +187,7 @@ class WeirsDialog(qtBaseClass, uiDialog):
                     #     wrong_status += 1
 
             self.highlight_weir(self.weir_name_cbo.currentText())
+
             if wrong_status > 0:
                 QApplication.setOverrideCursor(Qt.ArrowCursor)
                 self.uc.show_info(

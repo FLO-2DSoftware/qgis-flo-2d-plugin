@@ -638,7 +638,7 @@ class InletNodesDialog(qtBaseClass, uiDialog):
                     if self.grid_count >= cell and cell > 0:
                         self.lyrs.show_feat_rubber(self.grid_lyr.id(), cell, QColor(Qt.yellow))
                         feat = next(self.grid_lyr.getFeatures(QgsFeatureRequest(cell)))
-                        center_feature(self.iface, feat) 
+                        center_feature(self.iface, feat, 15) 
                         # x, y = feat.geometry().centroid().asPoint()
                         # self.lyrs.zoom_to_all()
                         # center_canvas(self.iface, x, y)

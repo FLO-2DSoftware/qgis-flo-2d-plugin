@@ -58,17 +58,10 @@ def zoom(iface, porcentage):
     canvas.setExtent(rect)
     canvas.refresh()
 
-def center_feature(iface, feat):
+def center_feature(iface, feat, factor=4):
     iface.mapCanvas().setExtent(feat.geometry().boundingBox())
-    iface.mapCanvas().zoomScale(1000)
-    # line = feat.geometry().asPolyline()
-    # start = line[0]
-    # end = line[-1]
-    # rect = QgsRectangle(start, end)
-    # rect.scale(2)
-    # canvas = iface.mapCanvas()
-    # canvas.setExtent(rect)
-    # canvas.refresh()    
+    iface.mapCanvas().zoomByFactor(factor)
+    # iface.mapCanvas().zoomScale(1000)  
     
     
 def zoom_show_n_cells(iface, cell_size, nCells):

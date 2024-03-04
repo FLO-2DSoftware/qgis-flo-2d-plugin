@@ -3696,10 +3696,6 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             )
             return
 
-        ver zoom al cargar weirs, pumps, et
-
-
-
         dlg_weirs = WeirsDialog(self.iface, self.lyrs)
         dlg_weirs.setWindowFlag(Qt.WindowMinimizeButtonHint, True)
         dlg_weirs.setWindowFlag(Qt.WindowMaximizeButtonHint, True)

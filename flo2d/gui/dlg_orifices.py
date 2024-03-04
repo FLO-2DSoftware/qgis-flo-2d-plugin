@@ -381,7 +381,7 @@ class OrificesDialog(qtBaseClass, uiDialog):
                     ).fetchone()
                     self.lyrs.show_feat_rubber(self.orifices_lyr.id(), fid[0], QColor(Qt.yellow))
                     feat = next(self.orifices_lyr.getFeatures(QgsFeatureRequest(fid[0])))
-                    center_feature(self.iface, feat) 
+                    center_feature(self.iface, feat, 15) 
                 else:
                     self.uc.bar_warn("WARNING 070422.0758: orifice '" + str(orifice) + "' not found.")
                     self.lyrs.clear_rubber()
