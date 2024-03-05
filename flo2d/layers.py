@@ -45,13 +45,13 @@ class Layers(object):
         self.iface = iface
         if iface is not None:
             self.canvas = iface.mapCanvas()
+            self.ilg = InvisibleLayersAndGroups(self.iface)
         else:
             self.canvas = None
         self.root = QgsProject.instance().layerTreeRoot()
         self.rb = None
         self.uc = UserCommunication(iface, "FLO-2D")
         self.gutils = None
-        self.ilg = InvisibleLayersAndGroups(self.iface)
         self.lyrs_to_repaint = []
         self.data = OrderedDict(
             [
@@ -1791,7 +1791,8 @@ class Layers(object):
                 grp = self.get_subgroup(group, subgroup)
                 if not subgroup == "User Layers" and not subgroup == "Schematic Layers":
                     grp.setExpanded(False)
-                    self.ilg.hideGroup(subgroup)
+                    if self.ilg is not None:
+                        self.ilg.hideGroup(subgroup)
                 else:
                     pass
                 if subsubgroup:
@@ -1812,7 +1813,8 @@ class Layers(object):
                 grp = self.get_subgroup(group, subgroup)
                 if not subgroup == "User Layers" and not subgroup == "Schematic Layers":
                     grp.setExpanded(False)
-                    self.ilg.hideGroup(subgroup)
+                    if self.ilg is not None:
+                        self.ilg.hideGroup(subgroup)
                 else:
                     pass
             tree_lyr = self.get_layer_tree_item(lyr_exists)
@@ -1865,7 +1867,8 @@ class Layers(object):
 
         # Check if it is an advanced layer
         if advanced:
-            self.ilg.hideLayer(self.data[table]["qlyr"])
+            if self.ilg is not None:
+                self.ilg.hideGroup(subgroup)
 
         return self.data[table]["qlyr"].id()
 
