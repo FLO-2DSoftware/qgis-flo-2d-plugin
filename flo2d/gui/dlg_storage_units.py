@@ -223,8 +223,6 @@ class StorageUnitsDialog(qtBaseClass, uiDialog):
                     self.storages_tblw.setItem(row_number, cell, item)
     
             self.storages_cbo.model().sort(Qt.AscendingOrder)
-            self.storages_cbo.setCurrentIndex(0)
-    
             self.storages_tblw.sortItems(0, Qt.AscendingOrder)
             self.storages_tblw.selectRow(0)
             self.storages_tblw.setStyleSheet("QTableWidget::item:selected { background-color: lightblue; color: black; }")
@@ -237,8 +235,8 @@ class StorageUnitsDialog(qtBaseClass, uiDialog):
                 QApplication.restoreOverrideCursor()
                 result = ScrollMessageBox2(QMessageBox.Warning,"Issues found!", "WARNING 070224.1902: wrong values found:\n" + self.warnings)      
                 result.exec_()  
-    
-            # self.select_curve_type()  
+            
+            self.storages_cbo.setCurrentIndex(0)
             self.highlight_storage_cell(self.grid_element_le.text())
         
         except Exception as e:

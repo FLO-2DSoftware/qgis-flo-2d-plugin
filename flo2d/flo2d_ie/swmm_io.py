@@ -393,7 +393,7 @@ class StormDrainProject(object):
 
     def create_INP_storage_dictionary_with_storage(self):
         try:
-            funct_storage_cols = [
+            funct_and_infil_cols = [
                 "name",
                 "invert_elev",
                 "max_depth" ,
@@ -408,8 +408,22 @@ class StormDrainProject(object):
                 "conductivity",
                 "initial_deficit"                              
             ]
-            
-            tab_storage_cols = [
+
+
+            funct_no_infil_cols = [
+                "name",
+                "invert_elev",
+                "max_depth" ,
+                "init_depth" ,
+                "storage_curve",
+                "coefficient",
+                "exponent",
+                "constant",  
+                "ponded_area",
+                "evap_factor"                            
+            ]
+                        
+            tab_and_infil_cols = [
                 "name",
                 "invert_elev",
                 "max_depth" ,
@@ -421,20 +435,37 @@ class StormDrainProject(object):
                 "suction_head",
                 "conductivity",
                 "initial_deficit"                              
-            ]            
+            ] 
+            
+            tab_no_infil_cols = [
+                "name",
+                "invert_elev",
+                "max_depth" ,
+                "init_depth" ,
+                "storage_curve",
+                "curve_name", 
+                "ponded_area",
+                "evap_factor"                            
+            ]  
+                                   
+                                   
             storage = self.select_this_INP_group("stora")
             if storage:
                 for strg in storage:
                     if not strg or strg[0] in self.ignore:
                         continue
                     split = strg.split()
-                    if split[4] == "FUNCTIONAL":
-                        storage_dict = dict(zip_longest(funct_storage_cols, split ))
-                    elif split[4] == "TABULAR":
-                        storage_dict = dict(zip_longest(tab_storage_cols, split))
+                    if len(split) == 13:  # functional with infiltration
+                        storage_dict = dict(zip_longest(funct_and_infil_cols, split ))
+                    elif len(split) == 11: # tabular with infiltration
+                        storage_dict = dict(zip_longest(tab_and_infil_cols, split))
+                    elif len(split) == 10: # functional no infiltration
+                        storage_dict = dict(zip_longest(tab_no_infil_cols, split))
+                    elif len(split) == 8: # tabular no infiltration
+                        storage_dict = dict(zip_longest(tab_no_infil_cols, split))
                     else:
-                       self.status_report += "\u25E6 Wrong Storage unit '" + split[0] + "' in [STORAGE] group.\n\n"   
-                       continue          
+                        self.status_report += "\u25E6 Wrong Storage unit '" + split[0] + "' in [STORAGE] group.\n\n"   
+                        continue          
                     storage = storage_dict.pop("name")
                     self.INP_storages[storage] = storage_dict
 
