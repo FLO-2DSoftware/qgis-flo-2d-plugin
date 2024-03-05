@@ -53,7 +53,7 @@ class WeirsDialog(qtBaseClass, uiDialog):
         self.weirs_buttonBox.accepted.connect(self.save_weirs)
 
         self.weir_type_cbo.currentIndexChanged.connect(self.weir_type_cbo_currentIndexChanged)
-        self.weir_crest_height_dbox.valueChanged.connect(self.weir_crest_height_dbox_valueChanged)
+        self.weir_inlet_offset_dbox.valueChanged.connect(self.weir_inlet_offset_dbox_valueChanged)
         self.weir_discharge_coeff_dbox.valueChanged.connect(self.weir_discharge_coeff_dbox_valueChanged)
         self.weir_flap_gate_cbo.currentIndexChanged.connect(self.weir_flap_gate_cbo_currentIndexChanged)
         self.weir_end_contrac_cbo.currentIndexChanged.connect(self.weir_end_contrac_cbo_currentIndexChanged)
@@ -130,7 +130,7 @@ class WeirsDialog(qtBaseClass, uiDialog):
                                 self.weir_type_cbo.setCurrentIndex(index)
 
                             elif column == 5:
-                                self.weir_crest_height_dbox.setValue(float_or_zero(data))
+                                self.weir_inlet_offset_dbox.setValue(float_or_zero(data))
 
                             elif column == 6:
                                 self.weir_discharge_coeff_dbox.setValue(float_or_zero(data))
@@ -209,8 +209,8 @@ class WeirsDialog(qtBaseClass, uiDialog):
     def weir_type_cbo_currentIndexChanged(self):
         self.combo_valueChanged(self.weir_type_cbo, 3)
 
-    def weir_crest_height_dbox_valueChanged(self):
-        self.box_valueChanged(self.weir_crest_height_dbox, 4)
+    def weir_inlet_offset_dbox_valueChanged(self):
+        self.box_valueChanged(self.weir_inlet_offset_dbox, 4)
 
     def weir_discharge_coeff_dbox_valueChanged(self):
         self.box_valueChanged(self.weir_discharge_coeff_dbox, 5)
@@ -273,7 +273,7 @@ class WeirsDialog(qtBaseClass, uiDialog):
                 self.uc.bar_warn("WARNING 261123.0425: weir '" + name  + "' has wrong weir type '" + typ + "'. Changed to default 'TRANSVERSE'")
             self.weir_type_cbo.setCurrentIndex(index)
             
-            self.weir_crest_height_dbox.setValue(float_or_zero(self.weirs_tblw.item(row, 4).text()))
+            self.weir_inlet_offset_dbox.setValue(float_or_zero(self.weirs_tblw.item(row, 4).text()))
             self.weir_discharge_coeff_dbox.setValue(float_or_zero(self.weirs_tblw.item(row, 5).text()))
 
             flap = self.weirs_tblw.item(row, 6).text()
@@ -344,7 +344,7 @@ class WeirsDialog(qtBaseClass, uiDialog):
 
             item = self.weirs_tblw.item(row, 4)
             if item is not None:
-                self.weir_crest_height_dbox.setValue(float_or_zero(str(item.text())))
+                self.weir_inlet_offset_dbox.setValue(float_or_zero(str(item.text())))
 
             item = self.weirs_tblw.item(row, 5)
             if item is not None:
@@ -357,21 +357,20 @@ class WeirsDialog(qtBaseClass, uiDialog):
                     self.weir_flap_gate_cbo.setCurrentIndex(indx)
                 else:
                     self.uc.bar_warn("WARNING 261123.0547: weir flap gate not found.")
-            
-            
-            
-            
-            # if item is not None:
-            #     if item.text() in ("YES", "yes", "Yes", "0"):
-            #         self.weir_flap_gate_cbo.setCurrentIndex(0)
-            #     else:
-            #         self.weir_flap_gate_cbo.setCurrentIndex(1)
 
             item = self.weirs_tblw.item(row, 7)
             if item is not None:
-                self.weir_open_close_time_dbox.setValue(float_or_zero(str(item.text())))
+                self.weir_end_contrac_cbo.setCurrentIndex(float_or_zero(str(item.text())))
 
             item = self.weirs_tblw.item(row, 8)
+            if item is not None:
+                self.weir_end_coeff_dbox.setValue(float_or_zero(str(item.text())))
+
+            item = self.weirs_tblw.item(row, 9)
+            if item is not None:
+                self.weir_side_slope_dbox.setValue(float_or_zero(str(item.text())))
+
+            item = self.weirs_tblw.item(row, 10)
             if item is not None:
                 indx = self.weir_shape_cbo.findText(item.text())
                 if indx != -1:
@@ -379,22 +378,13 @@ class WeirsDialog(qtBaseClass, uiDialog):
                 else:
                     self.uc.bar_warn("WARNING 261123.0552: weir shape not found.")
             
-            
-            
-            
-            # if item is not None:
-            #     if item.text() in ("CIRCULAR", "circular", "Circular", "0"):
-            #         self.weir_shape_cbo.setCurrentIndex(0)
-            #     else:
-            #         self.weir_shape_cbo.setCurrentIndex(1)
-
-            item = self.weirs_tblw.item(row, 9)
+            item = self.weirs_tblw.item(row, 11)
             if item is not None:
                 self.weir_height_dbox.setValue(float_or_zero(str(item.text())))
 
-            item = self.weirs_tblw.item(row, 10)
+            item = self.weirs_tblw.item(row, 12)
             if item is not None:
-                self.weir_width_dbox.setValue(float_or_zero(str(item.text())))
+                self.weir_length_dbox.setValue(float_or_zero(str(item.text())))
 
             self.highlight_weir(self.weir_name_cbo.currentText())
 
