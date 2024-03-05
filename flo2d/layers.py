@@ -60,6 +60,7 @@ class Layers(object):
                     {
                         "name": "Boundary Condition Points",
                         "sgroup": "User Layers",
+                        "ssgroup": "Boundary Conditions",
                         "styles": ["user_bc_points.qml"],
                         "attrs_edit_widgets": {},
                         "module": ["all"],
@@ -72,6 +73,7 @@ class Layers(object):
                     {
                         "name": "Boundary Condition Lines",
                         "sgroup": "User Layers",
+                        "ssgroup": "Boundary Conditions",
                         "styles": ["user_bc_lines.qml"],
                         "attrs_edit_widgets": {},
                         "module": ["all"],
@@ -84,6 +86,7 @@ class Layers(object):
                     {
                         "name": "Boundary Condition Polygons",
                         "sgroup": "User Layers",
+                        "ssgroup": "Boundary Conditions",
                         "styles": ["user_bc_polygons.qml"],
                         "attrs_edit_widgets": {},
                         "module": ["all"],
@@ -96,6 +99,7 @@ class Layers(object):
                     {
                         "name": "Left Bank Lines",
                         "sgroup": "User Layers",
+                        "ssgroup": "Channels",
                         "styles": ["user_lbank.qml"],
                         "attrs_edit_widgets": {},
                         "module": ["chan"],
@@ -108,6 +112,7 @@ class Layers(object):
                     {
                         "name": "Right Bank Lines",
                         "sgroup": "User Layers",
+                        "ssgroup": "Channels",
                         "styles": ["user_rbank.qml"],
                         "attrs_edit_widgets": {},
                         "module": ["chan"],
@@ -120,6 +125,7 @@ class Layers(object):
                     {
                         "name": "Cross Sections",
                         "sgroup": "User Layers",
+                        "ssgroup": "Channels",
                         "styles": ["user_xs.qml"],
                         "attrs_edit_widgets": {},
                         "module": ["chan"],
@@ -133,6 +139,7 @@ class Layers(object):
                     {
                         "name": "No-Exchange Channel Areas",
                         "sgroup": "User Layers",
+                        "ssgroup": "Areas",
                         "styles": ["user_noexchange_chan_areas.qml"],
                         "attrs_edit_widgets": {},
                         "module": ["all"],
@@ -145,6 +152,7 @@ class Layers(object):
                     {
                         "name": "Storm Drain Conduits",
                         "sgroup": "User Layers",
+                        "ssgroup": "Storm Drain",
                         "styles": ["user_swmm_conduits.qml"],
                         "attrs_edit_widgets": {},
                         "module": ["all"],
@@ -157,6 +165,7 @@ class Layers(object):
                     {
                         "name": "Storm Drain Pumps",
                         "sgroup": "User Layers",
+                        "ssgroup": "Storm Drain",
                         "styles": ["user_swmm_conduits.qml"],
                         "attrs_edit_widgets": {},
                         "module": ["all"],
@@ -169,6 +178,7 @@ class Layers(object):
                     {
                         "name": "Storm Drain Orifices",
                         "sgroup": "User Layers",
+                        "ssgroup": "Storm Drain",
                         "styles": ["user_swmm_conduits.qml"],
                         "attrs_edit_widgets": {},
                         "module": ["all"],
@@ -181,6 +191,7 @@ class Layers(object):
                     {
                         "name": "Storm Drain Weirs",
                         "sgroup": "User Layers",
+                        "ssgroup": "Storm Drain",
                         "styles": ["user_swmm_conduits.qml"],
                         "attrs_edit_widgets": {},
                         "module": ["all"],
@@ -193,6 +204,7 @@ class Layers(object):
                     {
                         "name": "Storm Drain Nodes",
                         "sgroup": "User Layers",
+                        "ssgroup": "Storm Drain",
                         "styles": ["user_swmm_nodes.qml"],
                         "attrs_edit_widgets": {},
                         "module": ["all"],
@@ -205,6 +217,7 @@ class Layers(object):
                     {
                         "name": "Building Areas",
                         "sgroup": "User Layers",
+                        "ssgroup": "Areas",
                         "styles": ["user_buildings.qml"],
                         "attrs_edit_widgets": {},
                         "readonly": False,
@@ -216,6 +229,7 @@ class Layers(object):
                     {
                         "name": "Gutter Areas",
                         "sgroup": "User Layers",
+                        "ssgroup": "Gutters",
                         "styles": ["user_spatial_gutter.qml"],
                         "attrs_edit_widgets": {},
                         "readonly": False,
@@ -227,6 +241,7 @@ class Layers(object):
                     {
                         "name": "Shallow-n Areas",
                         "sgroup": "User Layers",
+                        "ssgroup": "Areas",
                         "styles": ["user_spatial_shallow_n.qml"],
                         "attrs_edit_widgets": {},
                         "readonly": False,
@@ -238,6 +253,7 @@ class Layers(object):
                     {
                         "name": "Froude Areas",
                         "sgroup": "User Layers",
+                        "ssgroup": "Areas",
                         "styles": ["user_spatial_froude.qml"],
                         "attrs_edit_widgets": {},
                         "readonly": False,
@@ -249,6 +265,7 @@ class Layers(object):
                     {
                         "name": "Tolerance Areas",
                         "sgroup": "User Layers",
+                        "ssgroup": "Areas",
                         "styles": ["tolspatial.qml"],
                         "attrs_edit_widgets": {},
                         "readonly": False,
@@ -260,6 +277,7 @@ class Layers(object):
                     {
                         "name": "Blocked Areas",
                         "sgroup": "User Layers",
+                        "ssgroup": "Areas",
                         "styles": ["blocked_areas.qml"],
                         "attrs_edit_widgets": {
                             "collapse": {
@@ -286,6 +304,7 @@ class Layers(object):
                     {
                         "name": "Roughness",
                         "sgroup": "User Layers",
+                        "ssgroup": "Areas",
                         "styles": ["user_roughness.qml"],
                         "attrs_edit_widgets": {},
                         "module": ["all"],
@@ -298,6 +317,7 @@ class Layers(object):
                     {
                         "name": "Multiple Channel Areas",
                         "sgroup": "User Layers",
+                        "ssgroup": "Multiple Channels",
                         "styles": ["mult_areas.qml"],
                         "attrs_edit_widgets": {},
                         "visible": True,
@@ -310,6 +330,7 @@ class Layers(object):
                     {
                         "name": "Multiple Channel Lines",
                         "sgroup": "User Layers",
+                        "ssgroup": "Multiple Channels",
                         "styles": ["mult_lines.qml"],
                         "attrs_edit_widgets": {},
                         "visible": True,
@@ -322,6 +343,7 @@ class Layers(object):
                     {
                         "name": "Simple Mult. Channel Lines",
                         "sgroup": "User Layers",
+                        "ssgroup": "Multiple Channels",
                         "styles": ["mult_lines.qml"],
                         "attrs_edit_widgets": {},
                         "visible": True,
@@ -334,6 +356,7 @@ class Layers(object):
                     {
                         "name": "Floodplain Cross Sections",
                         "sgroup": "User Layers",
+                        "ssgroup": "Floodplain",
                         "styles": ["user_fpxsec.qml"],
                         "attrs_edit_widgets": {},
                         "module": ["chan"],
@@ -346,6 +369,7 @@ class Layers(object):
                     {
                         "name": "Structure Lines",
                         "sgroup": "User Layers",
+                        "ssgroup": "Hydraulic Structures",
                         "styles": ["user_struct.qml"],
                         "attrs_edit_widgets": {},
                         "module": ["structures"],
@@ -358,6 +382,7 @@ class Layers(object):
                     {
                         "name": "Street Lines",
                         "sgroup": "User Layers",
+                        "ssgroup": "Streets",
                         "styles": ["user_line.qml"],
                         "attrs_edit_widgets": {},
                         "module": ["streets"],
@@ -370,21 +395,10 @@ class Layers(object):
                     {
                         "name": "Levee Lines",
                         "sgroup": "User Layers",
+                        "ssgroup": "Levees",
                         "styles": ["user_levee_lines.qml"],
                         "attrs_edit_widgets": {},
                         "module": ["levees"],
-                        "readonly": False,
-                        "advanced": False
-                    },
-                ),
-                (
-                    "user_model_boundary",
-                    {
-                        "name": "Computational Domain",
-                        "sgroup": "User Layers",
-                        "styles": ["model_boundary.qml"],
-                        "attrs_edit_widgets": {},
-                        "module": ["all"],
                         "readonly": False,
                         "advanced": False
                     },
@@ -394,6 +408,7 @@ class Layers(object):
                     {
                         "name": "Elevation Points",
                         "sgroup": "User Layers",
+                        "ssgroup": "Elevations",
                         "styles": ["user_elevation_points.qml"],
                         "attrs_edit_widgets": {},
                         "module": ["all"],
@@ -406,6 +421,7 @@ class Layers(object):
                     {
                         "name": "Elevation Polygons",
                         "sgroup": "User Layers",
+                        "ssgroup": "Elevations",
                         "styles": ["user_elevation_polygons.qml"],
                         "attrs_edit_widgets": {},
                         "module": ["all"],
@@ -418,6 +434,7 @@ class Layers(object):
                     {
                         "name": "Reservoirs",
                         "sgroup": "User Layers",
+                        "ssgroup": "Boundary Conditions",
                         "styles": ["user_reservoirs.qml"],
                         "attrs_edit_widgets": {
                             "use_n_value": {
@@ -435,6 +452,7 @@ class Layers(object):
                     {
                         "name": "Infiltration Areas",
                         "sgroup": "User Layers",
+                        "ssgroup": "Infiltration",
                         "styles": ["user_infiltration.qml"],
                         "attrs_edit_widgets": {},
                         "module": ["all"],
@@ -447,6 +465,7 @@ class Layers(object):
                     {
                         "name": "Effective Impervious Areas",
                         "sgroup": "User Layers",
+                        "ssgroup": "Areas",
                         "styles": ["user_effective_impervious_area.qml"],
                         "attrs_edit_widgets": {},
                         "module": ["all"],
@@ -459,8 +478,21 @@ class Layers(object):
                     {
                         "name": "Gutter Lines",
                         "sgroup": "User Layers",
+                        "ssgroup": "Gutters",
                         "styles": ["gutter_lines4.qml"],
                         "attrs_edit_widgets": {},
+                        "readonly": False,
+                        "advanced": False
+                    },
+                ),
+                (
+                    "user_model_boundary",
+                    {
+                        "name": "Computational Domain",
+                        "sgroup": "User Layers",
+                        "styles": ["model_boundary.qml"],
+                        "attrs_edit_widgets": {},
+                        "module": ["all"],
                         "readonly": False,
                         "advanced": False
                     },
@@ -471,6 +503,7 @@ class Layers(object):
                     {
                         "name": "Channel Segments (Left Banks)",
                         "sgroup": "Schematic Layers",
+                        "ssgroup": "Channels",
                         "styles": ["chan.qml"],
                         "attrs_edit_widgets": {},
                         "module": ["chan"],
@@ -483,6 +516,7 @@ class Layers(object):
                     {
                         "name": "Channel Cross Sections",
                         "sgroup": "Schematic Layers",
+                        "ssgroup": "Channels",
                         "styles": ["chan_elems.qml"],
                         "attrs_edit_widgets": {},
                         "visible": True,
@@ -496,6 +530,7 @@ class Layers(object):
                     {
                         "name": "Right Banks",
                         "sgroup": "Schematic Layers",
+                        "ssgroup": "Channels",
                         "styles": ["rbank.qml"],
                         "attrs_edit_widgets": {},
                         "visible": True,
@@ -509,6 +544,7 @@ class Layers(object):
                     {
                         "name": "Channel Confluences",
                         "sgroup": "Schematic Layers",
+                        "ssgroup": "Channels",
                         "styles": ["chan_confluences.qml"],
                         "attrs_edit_widgets": {},
                         "readonly": True,
@@ -520,6 +556,7 @@ class Layers(object):
                     {
                         "name": "Floodplain Cross Sections",
                         "sgroup": "Schematic Layers",
+                        "ssgroup": "Floodplain",
                         "styles": ["fpxsec.qml"],
                         "attrs_edit_widgets": {},
                         "readonly": True,
@@ -531,6 +568,7 @@ class Layers(object):
                     {
                         "name": "Floodplain Cross Sections Cells",
                         "sgroup": "Schematic Layers",
+                        "ssgroup": "Floodplain",
                         "styles": ["fpxsec_cells.qml"],
                         "attrs_edit_widgets": {},
                         "readonly": True,
@@ -542,6 +580,7 @@ class Layers(object):
                     {
                         "name": "Breach Locations",
                         "sgroup": "Schematic Layers",
+                        "ssgroup": "Levees",
                         "styles": ["breach.qml"],
                         "attrs_edit_widgets": {},
                         "module": ["breach"],
@@ -554,6 +593,7 @@ class Layers(object):
                     {
                         "name": "Levees",
                         "sgroup": "Schematic Layers",
+                        "ssgroup": "Levees",
                         "styles": ["levee.qml"],
                         "attrs_edit_widgets": {},
                         "module": ["levees"],
@@ -566,6 +606,7 @@ class Layers(object):
                     {
                         "name": "Structures",
                         "sgroup": "Schematic Layers",
+                        "ssgroup": "Hydraulic Structures",
                         "styles": ["struc.qml"],
                         "attrs_edit_widgets": {},
                         "module": ["struct"],
@@ -578,6 +619,7 @@ class Layers(object):
                     {
                         "name": "Streets",
                         "sgroup": "Schematic Layers",
+                        "ssgroup": "Streets",
                         "styles": ["street.qml"],
                         "attrs_edit_widgets": {},
                         "module": ["struct"],
@@ -590,9 +632,73 @@ class Layers(object):
                     {
                         "name": "BC Cells",
                         "sgroup": "Schematic Layers",
+                        "ssgroup": "Boundary Conditions",
                         "styles": ["all_schem_bc.qml"],
                         "attrs_edit_widgets": {},
                         "readonly": True,
+                        "advanced": False
+                    },
+                ),
+                (
+                    "blocked_cells",
+                    {
+                        "name": "ARF_WRF",
+                        "sgroup": "Schematic Layers",
+                        "ssgroup": "Areas",
+                        "styles": ["arfwrf.qml"],
+                        "attrs_edit_widgets": {},
+                        "readonly": True,
+                        "advanced": False
+                    },
+                ),
+                (
+                    "reservoirs",
+                    {
+                        "name": "Reservoirs",
+                        "sgroup": "Schematic Layers",
+                        "ssgroup": "Boundary Conditions",
+                        "styles": ["reservoirs.qml"],
+                        "attrs_edit_widgets": {},
+                        "readonly": False,
+                        "advanced": False
+                    },
+                ),
+                (
+                    "gutter_cells",
+                    {
+                        "name": "Gutter Cells",
+                        "sgroup": "Schematic Layers",
+                        "ssgroup": "Gutters",
+                        "styles": ["gutter_cells.qml"],
+                        "attrs_edit_widgets": {},
+                        "readonly": True,
+                        "advanced": False
+                    },
+                ),
+                # Storm Drain layers:
+                (
+                    "swmmflo",
+                    {
+                        "name": "SD Inlets",
+                        "sgroup": "Schematic Layers",
+                        "ssgroup": "Storm Drain",
+                        "styles": ["swmmflo.qml"],
+                        "attrs_edit_widgets": {},
+                        "visible": True,
+                        "readonly": False,
+                        "advanced": False
+                    },
+                ),
+                (
+                    "swmmoutf",
+                    {
+                        "name": "SD Outfalls",
+                        "sgroup": "Schematic Layers",
+                        "ssgroup": "Storm Drain",
+                        "styles": ["swmmoutf.qml"],
+                        "attrs_edit_widgets": {},
+                        "visible": True,
+                        "readonly": False,
                         "advanced": False
                     },
                 ),
@@ -608,68 +714,10 @@ class Layers(object):
                     },
                 ),
                 (
-                    "blocked_cells",
-                    {
-                        "name": "ARF_WRF",
-                        "sgroup": "Schematic Layers",
-                        "styles": ["arfwrf.qml"],
-                        "attrs_edit_widgets": {},
-                        "readonly": True,
-                        "advanced": False
-                    },
-                ),
-                (
-                    "reservoirs",
-                    {
-                        "name": "Reservoirs",
-                        "sgroup": "Schematic Layers",
-                        "styles": ["reservoirs.qml"],
-                        "attrs_edit_widgets": {},
-                        "readonly": False,
-                        "advanced": False
-                    },
-                ),
-                (
-                    "gutter_cells",
-                    {
-                        "name": "Gutter Cells",
-                        "sgroup": "Schematic Layers",
-                        "styles": ["gutter_cells.qml"],
-                        "attrs_edit_widgets": {},
-                        "readonly": True,
-                        "advanced": False
-                    },
-                ),
-                # Storm Drain layers:
-                (
-                    "swmmflo",
-                    {
-                        "name": "SD Inlets",
-                        "sgroup": "Schematic Layers",
-                        "styles": ["swmmflo.qml"],
-                        "attrs_edit_widgets": {},
-                        "visible": True,
-                        "readonly": False,
-                        "advanced": False
-                    },
-                ),
-                (
-                    "swmmoutf",
-                    {
-                        "name": "SD Outfalls",
-                        "sgroup": "Schematic Layers",
-                        "styles": ["swmmoutf.qml"],
-                        "attrs_edit_widgets": {},
-                        "visible": True,
-                        "readonly": False,
-                        "advanced": False
-                    },
-                ),
-                (
                     "swmmflort",
                     {
                         "name": "Rating Tables",
-                        "sgroup": "Storm Drain",
+                        "sgroup": "Storm Drain Tables",
                         "styles": None,
                         "attrs_edit_widgets": {},
                         "readonly": False,
@@ -680,7 +728,7 @@ class Layers(object):
                     "swmmflort_data",
                     {
                         "name": "Rating Tables Data",
-                        "sgroup": "Storm Drain",
+                        "sgroup": "Storm Drain Tables",
                         "styles": None,
                         "attrs_edit_widgets": {},
                         "readonly": False,
@@ -691,7 +739,7 @@ class Layers(object):
                     "swmmflo_culvert",
                     {
                         "name": "Culvert Equations",
-                        "sgroup": "Storm Drain",
+                        "sgroup": "Storm Drain Tables",
                         "styles": None,
                         "attrs_edit_widgets": {},
                         "readonly": False,
@@ -702,7 +750,7 @@ class Layers(object):
                     "swmm_inflows",
                     {
                         "name": "Storm Drain Inflows",
-                        "sgroup": "Storm Drain",
+                        "sgroup": "Storm Drain Tables",
                         "styles": None,
                         "attrs_edit_widgets": {},
                         "readonly": False,
@@ -713,7 +761,7 @@ class Layers(object):
                     "swmm_inflow_patterns",
                     {
                         "name": "Storm Drain Inflow Patterns",
-                        "sgroup": "Storm Drain",
+                        "sgroup": "Storm Drain Tables",
                         "styles": None,
                         "attrs_edit_widgets": {},
                         "readonly": False,
@@ -724,7 +772,7 @@ class Layers(object):
                     "swmm_time_series",
                     {
                         "name": "Storm Drain Time Series",
-                        "sgroup": "Storm Drain",
+                        "sgroup": "Storm Drain Tables",
                         "styles": None,
                         "attrs_edit_widgets": {},
                         "readonly": False,
@@ -735,7 +783,7 @@ class Layers(object):
                     "swmm_time_series_data",
                     {
                         "name": "Storm Drain Time Series Data",
-                        "sgroup": "Storm Drain",
+                        "sgroup": "Storm Drain Tables",
                         "styles": None,
                         "attrs_edit_widgets": {},
                         "readonly": False,
@@ -746,7 +794,7 @@ class Layers(object):
                     "swmm_tidal_curve",
                     {
                         "name": "Storm Drain Tidal Curve",
-                        "sgroup": "Storm Drain",
+                        "sgroup": "Storm Drain Tables",
                         "styles": None,
                         "attrs_edit_widgets": {},
                         "readonly": False,
@@ -757,7 +805,7 @@ class Layers(object):
                     "swmm_tidal_curve_data",
                     {
                         "name": "Storm Drain Tidal Curve Data",
-                        "sgroup": "Storm Drain",
+                        "sgroup": "Storm Drain Tables",
                         "styles": None,
                         "attrs_edit_widgets": {},
                         "readonly": False,
@@ -768,7 +816,7 @@ class Layers(object):
                     "swmm_pumps_curve_data",
                     {
                         "name": "Storm Drain Pumps Curve Data",
-                        "sgroup": "Storm Drain",
+                        "sgroup": "Storm Drain Tables",
                         "styles": None,
                         "attrs_edit_widgets": {},
                         "readonly": False,
@@ -779,7 +827,7 @@ class Layers(object):
                     "swmm_other_curves",
                     {
                         "name": "Storm Drain Other Curves",
-                        "sgroup": "Storm Drain",
+                        "sgroup": "Storm Drain Tables",
                         "styles": None,
                         "attrs_edit_widgets": {},
                         "readonly": False,
@@ -1610,18 +1658,19 @@ class Layers(object):
                     "struct",
                     {
                         "name": "Hydraulic Structures",
-                        "sgroup": "Hydraulic Structures",
+                        "sgroup": "Schematic Layers",
+                        "ssgroup": "Hydraulic Structures",
                         "styles": ["struc.qml"],
                         "attrs_edit_widgets": {},
                         "readonly": False,
-                        "advanced": True
+                        "advanced": False
                     },
                 ),
                 (
                     "rat_curves",
                     {
                         "name": "Rating Curves",
-                        "sgroup": "Hydraulic Structures",
+                        "sgroup": "Hydraulic Structures Tables",
                         "styles": None,
                         "attrs_edit_widgets": {},
                         "readonly": False,
@@ -1632,7 +1681,7 @@ class Layers(object):
                     "repl_rat_curves",
                     {
                         "name": "Replacement Rating Curves",
-                        "sgroup": "Hydraulic Structures",
+                        "sgroup": "Hydraulic Structures Tables",
                         "styles": None,
                         "attrs_edit_widgets": {},
                         "readonly": False,
@@ -1643,7 +1692,7 @@ class Layers(object):
                     "rat_table",
                     {
                         "name": "Rating Tables",
-                        "sgroup": "Hydraulic Structures",
+                        "sgroup": "Hydraulic Structures Tables",
                         "styles": None,
                         "attrs_edit_widgets": {},
                         "readonly": False,
@@ -1654,7 +1703,7 @@ class Layers(object):
                     "culvert_equations",
                     {
                         "name": "Culvert Equations",
-                        "sgroup": "Hydraulic Structures",
+                        "sgroup": "Hydraulic Structures Tables",
                         "styles": None,
                         "attrs_edit_widgets": {},
                         "readonly": False,
@@ -1665,7 +1714,7 @@ class Layers(object):
                     "storm_drains",
                     {
                         "name": "Hystruc Storm Drains",
-                        "sgroup": "Hydraulic Structures",
+                        "sgroup": "Hydraulic Structures Tables",
                         "styles": None,
                         "attrs_edit_widgets": {},
                         "readonly": False,
@@ -1676,7 +1725,7 @@ class Layers(object):
                     "bridge_variables",
                     {
                         "name": "Bridge Data",
-                        "sgroup": "Hydraulic Structures",
+                        "sgroup": "Hydraulic Structures Tables",
                         "styles": None,
                         "attrs_edit_widgets": {},
                         "readonly": False,
@@ -1687,7 +1736,7 @@ class Layers(object):
                     "bridge_xs",
                     {
                         "name": "Bridge Cross Sections",
-                        "sgroup": "Hydraulic Structures",
+                        "sgroup": "Hydraulic Structures Tables",
                         "styles": None,
                         "attrs_edit_widgets": {},
                         "readonly": False,
@@ -1707,117 +1756,123 @@ class Layers(object):
         group,
         name,
         subgroup=None,
+        subsubgroup=None,
         style=None,
         visible=True,
         readonly=False,
         advanced=False,
         provider="ogr",
     ):
-        try:
-            # check if the layer is already loaded
-            lyr_exists = self.layer_exists_in_group(uri, group)
-            if not lyr_exists:
-                start_time = time.time()
-                vlayer = QgsVectorLayer(uri, name, provider)
-                self.uc.log_info(
-                    "\t{0:.3f} seconds => loading {1} - create QgsVectorLayer".format(time.time() - start_time, name)
+        # try:
+        # check if the layer is already loaded
+        lyr_exists = self.layer_exists_in_group(uri, group)
+        if not lyr_exists:
+            start_time = time.time()
+            vlayer = QgsVectorLayer(uri, name, provider)
+            self.uc.log_info(
+                "\t{0:.3f} seconds => loading {1} - create QgsVectorLayer".format(time.time() - start_time, name)
+            )
+            if not vlayer.isValid():
+                QApplication.restoreOverrideCursor()
+                msg = "WARNING 060319.1821: Unable to load layer {}".format(name)
+                self.uc.show_warn(
+                    msg + "\n\nAre you loading an old project?\nTry using the 'Import from GeoPackage' tool."
                 )
-                if not vlayer.isValid():
-                    QApplication.restoreOverrideCursor()
-                    msg = "WARNING 060319.1821: Unable to load layer {}".format(name)
-                    self.uc.show_warn(
-                        msg + "\n\nAre you loading an old project?\nTry using the 'Import from GeoPackage' tool."
-                    )
-                    raise Flo2dLayerInvalid(msg)
+                raise Flo2dLayerInvalid(msg)
 
-                start_time = time.time()
-                QgsProject.instance().addMapLayer(vlayer, False)
-                self.uc.log_info(
-                    "\t{0:.3f} seconds => loading {1} - add to registry".format(time.time() - start_time, name)
-                )
-                # get target tree group
-                start_time = time.time()
-                if subgroup:
-                    grp = self.get_subgroup(group, subgroup)
-                    if not subgroup == "User Layers" and not subgroup == "Schematic Layers":
-                        grp.setExpanded(False)
-                        self.ilg.hideGroup(subgroup)
-                    else:
-                        pass
+            start_time = time.time()
+            QgsProject.instance().addMapLayer(vlayer, False)
+            self.uc.log_info(
+                "\t{0:.3f} seconds => loading {1} - add to registry".format(time.time() - start_time, name)
+            )
+            # get target tree group
+            start_time = time.time()
+            if subgroup:
+                grp = self.get_subgroup(group, subgroup)
+                if not subgroup == "User Layers" and not subgroup == "Schematic Layers":
+                    grp.setExpanded(False)
+                    self.ilg.hideGroup(subgroup)
                 else:
-                    grp = self.get_group(group)
-                # add layer to the tree group
-                tree_lyr = grp.addLayer(vlayer)
-                self.uc.log_info(
-                    "\t{0:.3f} seconds => loading {1} - add to layer group".format(time.time() - start_time, name)
-                )
-            else:
-                start_time = time.time()
-                if subgroup:
-                    grp = self.get_subgroup(group, subgroup)
-                    if not subgroup == "User Layers" and not subgroup == "Schematic Layers":
-                        grp.setExpanded(False)
-                        self.ilg.hideGroup(subgroup)
-                    else:
-                        pass
-                tree_lyr = self.get_layer_tree_item(lyr_exists)
-                self.update_layer_extents(tree_lyr.layer())
-                self.uc.log_info(
-                    "\t{0:.3f} seconds => loading {1} - only update extents".format(time.time() - start_time, name)
-                )
-            self.data[table]["qlyr"] = tree_lyr.layer()
-
-            # set visibility
-            if not lyr_exists:
-                if visible:
-                    vis = Qt.Checked
-                else:
-                    vis = Qt.Unchecked
-                tree_lyr.setItemVisibilityChecked(vis)
-                tree_lyr.setExpanded(False)
-            # preserve layer visibility for existing layers
-
-            # set style
-            if style:
-                start_time = time.time()
-                style_path = get_file_path("styles", style)
-                if os.path.isfile(style_path):
-                    err_msg, res = self.data[table]["qlyr"].loadNamedStyle(style_path)
-                    if not res:
-                        QApplication.restoreOverrideCursor()
-                        msg = "Unable to load style for layer {}.\n{}".format(name, err_msg)
-                        raise Flo2dError(msg)
-                else:
-                    QApplication.restoreOverrideCursor()
-                    raise Flo2dError("Unable to load style file {}".format(style_path))
-                self.uc.log_info("\t{0:.3f} seconds => loading {1} - set style".format(time.time() - start_time, name))
-
-            # check if the layer should be 'readonly'
-
-            if readonly:
-                start_time = time.time()
-                try:
-                    # check if the signal is already connected
-                    self.data[table]["qlyr"].beforeEditingStarted.disconnect(self.warn_readonly)
-                except TypeError:
                     pass
-                self.data[table]["qlyr"].beforeEditingStarted.connect(self.warn_readonly)
-                self.uc.log_info(
-                    "\t{0:.3f} seconds => loading {1} - set readonly".format(time.time() - start_time, name)
-                )
+                if subsubgroup:
+                    grp = self.get_subgroup(subgroup, subsubgroup)
+                    grp.setExpanded(False)
+                else:
+                    pass
             else:
+                grp = self.get_group(group)
+            # add layer to the tree group
+            tree_lyr = grp.addLayer(vlayer)
+            self.uc.log_info(
+                "\t{0:.3f} seconds => loading {1} - add to layer group".format(time.time() - start_time, name)
+            )
+        else:
+            start_time = time.time()
+            if subgroup:
+                grp = self.get_subgroup(group, subgroup)
+                if not subgroup == "User Layers" and not subgroup == "Schematic Layers":
+                    grp.setExpanded(False)
+                    self.ilg.hideGroup(subgroup)
+                else:
+                    pass
+            tree_lyr = self.get_layer_tree_item(lyr_exists)
+            self.update_layer_extents(tree_lyr.layer())
+            self.uc.log_info(
+                "\t{0:.3f} seconds => loading {1} - only update extents".format(time.time() - start_time, name)
+            )
+        self.data[table]["qlyr"] = tree_lyr.layer()
+
+        # set visibility
+        if not lyr_exists:
+            if visible:
+                vis = Qt.Checked
+            else:
+                vis = Qt.Unchecked
+            tree_lyr.setItemVisibilityChecked(vis)
+            tree_lyr.setExpanded(False)
+        # preserve layer visibility for existing layers
+
+        # set style
+        if style:
+            start_time = time.time()
+            style_path = get_file_path("styles", style)
+            if os.path.isfile(style_path):
+                err_msg, res = self.data[table]["qlyr"].loadNamedStyle(style_path)
+                if not res:
+                    QApplication.restoreOverrideCursor()
+                    msg = "Unable to load style for layer {}.\n{}".format(name, err_msg)
+                    raise Flo2dError(msg)
+            else:
+                QApplication.restoreOverrideCursor()
+                raise Flo2dError("Unable to load style file {}".format(style_path))
+            self.uc.log_info("\t{0:.3f} seconds => loading {1} - set style".format(time.time() - start_time, name))
+
+        # check if the layer should be 'readonly'
+
+        if readonly:
+            start_time = time.time()
+            try:
+                # check if the signal is already connected
+                self.data[table]["qlyr"].beforeEditingStarted.disconnect(self.warn_readonly)
+            except TypeError:
                 pass
+            self.data[table]["qlyr"].beforeEditingStarted.connect(self.warn_readonly)
+            self.uc.log_info(
+                "\t{0:.3f} seconds => loading {1} - set readonly".format(time.time() - start_time, name)
+            )
+        else:
+            pass
 
-            # Check if it is an advanced layer
-            if advanced:
-                self.ilg.hideLayer(self.data[table]["qlyr"])
+        # Check if it is an advanced layer
+        if advanced:
+            self.ilg.hideLayer(self.data[table]["qlyr"])
 
-            return self.data[table]["qlyr"].id()
+        return self.data[table]["qlyr"].id()
 
-        except Exception as e:
-            QApplication.restoreOverrideCursor()
-            msg = "ERROR 270123.1142 Unable to load  layer {}.".format(table)
-            self.uc.bar_error(msg)
+        # except Exception as e:
+        #     QApplication.restoreOverrideCursor()
+        #     msg = "ERROR 270123.1142 Unable to load  layer {}.".format(table)
+        #     self.uc.bar_error(msg)
 
     def warn_readonly(self):
         self.uc.bar_warn("All changes to this layer can be overwritten by changes in the User Layer.")
@@ -2138,58 +2193,63 @@ class Layers(object):
 
         for lyr in self.data:
             pd.setLabelText(f"Loading {lyr}...")
+        # try:
+            start_time = time.time()
+            data = self.data[lyr]
+            if data["styles"]:
+                lstyle = data["styles"][0]
+            else:
+                lstyle = None
+            uri = self.gutils.path + "|layername={}".format(lyr)
             try:
-                start_time = time.time()
-                data = self.data[lyr]
-                if data["styles"]:
-                    lstyle = data["styles"][0]
-                else:
-                    lstyle = None
-                uri = self.gutils.path + "|layername={}".format(lyr)
-                try:
-                    lyr_is_on = data["visible"]
-                except Exception as e:
-                    lyr_is_on = True
-                lyr_id = self.load_layer(
-                    lyr,
-                    uri,
-                    group,
-                    data["name"],
-                    style=lstyle,
-                    subgroup=data["sgroup"],
-                    visible=lyr_is_on,
-                    readonly=data["readonly"],
-                    advanced=data["advanced"]
-                )
-                l = self.get_layer_tree_item(lyr_id).layer()
-                if lyr == "blocked_cells":
-                    self.update_style_blocked(lyr_id)
-                if data["attrs_edit_widgets"]:
-                    for attr, widget_data in data["attrs_edit_widgets"].items():
-                        attr_idx = l.fields().lookupField(attr)
-                        l.setEditorWidgetSetup(
-                            attr_idx,
-                            QgsEditorWidgetSetup(widget_data["name"], widget_data["config"]),
-                        )
-                else:
-                    pass  # no attributes edit widgets config
-                # set attributes default value, if any
-                try:
-                    dvs = data["attrs_defaults"]
-                except Exception as e:
-                    dvs = None
-                if dvs:
-                    for attr, val in dvs.items():
-                        field = l.fields().field(attr)
-                        field.setDefaultValueDefinition(QgsDefaultValue(val))
-                else:
-                    pass
-                self.uc.log_info("{0:.3f} seconds => total loading {1} ".format(time.time() - start_time, data["name"]))
-
+                lyr_is_on = data["visible"]
             except Exception as e:
-                QApplication.restoreOverrideCursor()
-                msg = "ERROR 270123.1137: Unable to load  layer {}.".format(lyr)
-                self.uc.bar_error(msg)
+                lyr_is_on = True
+            try:
+                subsubgroup = data["ssgroup"]
+            except Exception as e:
+                subsubgroup = None
+            lyr_id = self.load_layer(
+                lyr,
+                uri,
+                group,
+                data["name"],
+                style=lstyle,
+                subgroup=data["sgroup"],
+                subsubgroup=subsubgroup,
+                visible=lyr_is_on,
+                readonly=data["readonly"],
+                advanced=data["advanced"]
+            )
+            l = self.get_layer_tree_item(lyr_id).layer()
+            if lyr == "blocked_cells":
+                self.update_style_blocked(lyr_id)
+            if data["attrs_edit_widgets"]:
+                for attr, widget_data in data["attrs_edit_widgets"].items():
+                    attr_idx = l.fields().lookupField(attr)
+                    l.setEditorWidgetSetup(
+                        attr_idx,
+                        QgsEditorWidgetSetup(widget_data["name"], widget_data["config"]),
+                    )
+            else:
+                pass  # no attributes edit widgets config
+            # set attributes default value, if any
+            try:
+                dvs = data["attrs_defaults"]
+            except Exception as e:
+                dvs = None
+            if dvs:
+                for attr, val in dvs.items():
+                    field = l.fields().field(attr)
+                    field.setDefaultValueDefinition(QgsDefaultValue(val))
+            else:
+                pass
+            self.uc.log_info("{0:.3f} seconds => total loading {1} ".format(time.time() - start_time, data["name"]))
+
+            # except Exception as e:
+            #     QApplication.restoreOverrideCursor()
+            #     msg = "ERROR 270123.1137: Unable to load  layer {}.".format(lyr)
+            #     self.uc.bar_error(msg)
 
             i += 1
             QApplication.processEvents()
@@ -2283,9 +2343,9 @@ class Layers(object):
         # grp.insertChildNode(0, QgsLayerTreeLayer(myClone))
         # root.removeLayer(lyr)
 
-        self.expand_flo2d_group(group)
-        self.collapse_all_flo2d_subgroups(group)
-        self.expand_flo2d_subgroup(group, "User Layers")
+        # self.expand_flo2d_group(group)
+        # self.collapse_all_flo2d_subgroups(group)
+        # self.expand_flo2d_subgroup(group, "User Layers")
 
         # root = QgsProject.instance().layerTreeRoot()
         # grp = root.findGroup("User Layers")

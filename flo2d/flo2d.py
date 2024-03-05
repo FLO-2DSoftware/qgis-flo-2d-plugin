@@ -792,6 +792,7 @@ class Flo2D(object):
             s = QSettings()
             s.setValue("FLO-2D/last_flopro_project", os.path.dirname(gpkg_path_adj))
             s.setValue("FLO-2D/lastGdsDir", os.path.dirname(gpkg_path_adj))
+            s.setValue("FLO-2D/advanced_layers", False)
 
             contact = dlg_settings.lineEdit_au.text()
             email = dlg_settings.lineEdit_co.text()
@@ -1062,7 +1063,6 @@ class Flo2D(object):
         self.uncheck_all_info_tools()
         self.dlg_gpkg_management = GpkgManagementDialog(self.iface, self.lyrs, self.gutils)
         self.dlg_gpkg_management.show()
-
 
     def run_settings(self):
         """
