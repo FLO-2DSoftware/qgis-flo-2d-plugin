@@ -236,7 +236,7 @@ class OrificesDialog(qtBaseClass, uiDialog):
 
             self.orifice_from_node_txt.setText(self.orifices_tblw.item(row, 1).text())
             self.orifice_to_node_txt.setText(self.orifices_tblw.item(row, 2).text())
-
+            
             name = self.orifices_tblw.item(row, 0).text()
             
             typ = self.orifices_tblw.item(row, 3).text()
@@ -246,10 +246,10 @@ class OrificesDialog(qtBaseClass, uiDialog):
                 self.orifices_tblw.item(row, 3).setText("SIDE")
                 self.uc.bar_warn("WARNING 111203.1058: orifice '" + name  + "' has wrong orifice type '" + typ + "'. Changed to default 'SIDE'")
             self.orifice_type_cbo.setCurrentIndex(index)            
-
+            
             self.orifice_crest_height_dbox.setValue(float_or_zero(self.orifices_tblw.item(row, 4).text()))
             self.orifice_discharge_coeff_dbox.setValue(float_or_zero(self.orifices_tblw.item(row, 5).text()))
-
+            
             flap = self.orifices_tblw.item(row, 6).text()
             index = self.orifice_flap_gate_cbo.findText(flap)
             if index == -1:
@@ -259,7 +259,7 @@ class OrificesDialog(qtBaseClass, uiDialog):
             self.orifice_flap_gate_cbo.setCurrentIndex(index)             
             
             self.orifice_open_close_time_dbox.setValue(float_or_zero(self.orifices_tblw.item(row, 7).text()))
-
+            
             shape = self.orifices_tblw.item(row, 8).text()
             index = self.orifice_shape_cbo.findText(shape)
             if index == -1:
@@ -267,7 +267,7 @@ class OrificesDialog(qtBaseClass, uiDialog):
                 self.orifices_tblw.item(row, 8).setText("CIRCULAR")
                 self.uc.bar_warn("WARNING 111203.1100: orifice '" + name  + "' has wrong shape '" + shape + "'. Changed to default 'CIRCULAR'")       
             self.orifice_shape_cbo.setCurrentIndex(index) 
-
+            
             self.orifice_height_dbox.setValue(float_or_zero(self.orifices_tblw.item(row, 9).text()))
             self.orifice_width_dbox.setValue(float_or_zero(self.orifices_tblw.item(row, 10).text()))
 
@@ -381,7 +381,7 @@ class OrificesDialog(qtBaseClass, uiDialog):
                     ).fetchone()
                     self.lyrs.show_feat_rubber(self.orifices_lyr.id(), fid[0], QColor(Qt.yellow))
                     feat = next(self.orifices_lyr.getFeatures(QgsFeatureRequest(fid[0])))
-                    center_feature(self.iface, feat, 15) 
+                    center_feature(self.iface, feat) 
                 else:
                     self.uc.bar_warn("WARNING 070422.0758: orifice '" + str(orifice) + "' not found.")
                     self.lyrs.clear_rubber()

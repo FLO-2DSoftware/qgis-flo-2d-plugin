@@ -930,9 +930,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 # External inflows into table swmm_inflows:
                 storm_drain.create_INP_inflows_dictionary_with_inflows()
 
-                if complete_or_create == "Create New":
-                    remove_features(self.swmm_inflows_lyr)
-
+                remove_features(self.swmm_inflows_lyr)
                 try:
                     insert_inflows_sql = """INSERT INTO swmm_inflows 
                                             (   node_name, 
@@ -967,9 +965,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 # Inflows patterns into table swmm_inflow_patterns:
                 storm_drain.create_INP_patterns_list_with_patterns()
 
-                if complete_or_create == "Create New":
-                    remove_features(self.swmm_inflow_patterns_lyr)
-
+                remove_features(self.swmm_inflow_patterns_lyr)
                 try:
                     description = ""
                     insert_patterns_sql = """INSERT INTO swmm_inflow_patterns
@@ -1006,10 +1002,6 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 remove_features(self.swmm_time_series_lyr)
                 remove_features(self.swmm_time_series_data_lyr)
                 
-                # if complete_or_create == "Create New":
-                #     remove_features(self.swmm_time_series_lyr)
-                #     remove_features(self.swmm_time_series_data_lyr)
-
                 try:
                     insert_times_from_file_sql = """INSERT INTO swmm_time_series 
                                             (   time_series_name, 
@@ -1464,9 +1456,14 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 conductivity = float_or_zero(values["conductivity"]) if "conductivity" in values else 0
                 initial_deficit = float_or_zero(values["initial_deficit"]) if "initial_deficit" in values else 0
                 storage_curve = values["storage_curve"].upper() if "storage_curve" in values else "FUNCTIONAL"
-                coefficient = float_or_zero(values["coefficient"]) if "coefficient" in values else 0
-                exponent = float_or_zero(values["exponent"]) if "exponent" in values else 0
-                constant = float_or_zero(values["constant"]) if "constant" in values else 0
+                if (storage_curve == "FUNCTIONAL"):
+                    coefficient = float_or_zero(values["coefficient"]) if "coefficient" in values else 1000
+                    exponent = float_or_zero(values["exponent"]) if "exponent" in values else 0
+                    constant = float_or_zero(values["constant"]) if "constant" in values else 0
+                else:
+                    coefficient = 1000
+                    exponent = 0
+                    constant = 0    
                 curve_name = values["curve_name"] if "curve_name" in values else "*"
     
     
@@ -2268,7 +2265,6 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 self.uc.show_error("ERROR 080422.1115: creation of Storm Drain Weirs layer failed!", e)
                 QApplication.restoreOverrideCursor()
                 
-        QApplication.setOverrideCursor(QtGui.QCursor(QtCore.Qt.ArrowCursor))
         if (
             complete_or_create == "Create New"
             and len(new_nodes) == 0
@@ -2310,6 +2306,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         if error_msg != "ERROR 050322.9423: error(s) importing file\n\n" + swmm_file:
             self.uc.show_critical(error_msg)
 
+        QApplication.setOverrideCursor(QtGui.QCursor(QtCore.Qt.ArrowCursor))
         if complete_or_create == "Create New":
             self.uc.show_info(
                 "Importing Storm Drain data finished!\n\n"

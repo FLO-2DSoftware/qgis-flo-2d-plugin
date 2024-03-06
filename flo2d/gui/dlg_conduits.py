@@ -201,7 +201,6 @@ class ConduitsDialog(qtBaseClass, uiDialog):
     def conduits_tblw_cell_clicked(self, row, column):
         QApplication.setOverrideCursor(Qt.WaitCursor)
         try:
-            # self.blockSignals(True)
             self.conduit_name_cbo.blockSignals(True)
             self.conduit_name_cbo.setCurrentIndex(row)
             self.conduit_name_cbo.blockSignals(False)

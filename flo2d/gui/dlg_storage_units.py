@@ -195,7 +195,7 @@ class StorageUnitsDialog(qtBaseClass, uiDialog):
                         elif cell == 8:
                             self.treatment_cbo.setCurrentIndex(0)                                 
                         elif cell == 9:
-                            self.infiltration_grp.setChecked(True)
+                            self.infiltration_grp.setChecked(True if data == "True" else False)
                         elif cell == 10:
                             self.method_cbo.setCurrentIndex(0)
                         elif cell == 11:
@@ -227,8 +227,6 @@ class StorageUnitsDialog(qtBaseClass, uiDialog):
             self.storages_tblw.selectRow(0)
             self.storages_tblw.setStyleSheet("QTableWidget::item:selected { background-color: lightblue; color: black; }")
         
-            self.enable_external_inflow()
-            
             self.block = False
 
             if self.warnings != "":
@@ -237,6 +235,8 @@ class StorageUnitsDialog(qtBaseClass, uiDialog):
                 result.exec_()  
             
             self.storages_cbo.setCurrentIndex(0)
+            self.enable_external_inflow()
+            
             self.highlight_storage_cell(self.grid_element_le.text())
         
         except Exception as e:

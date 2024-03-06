@@ -460,7 +460,7 @@ class StormDrainProject(object):
                     elif len(split) == 11: # tabular with infiltration
                         storage_dict = dict(zip_longest(tab_and_infil_cols, split))
                     elif len(split) == 10: # functional no infiltration
-                        storage_dict = dict(zip_longest(tab_no_infil_cols, split))
+                        storage_dict = dict(zip_longest(funct_no_infil_cols, split))
                     elif len(split) == 8: # tabular no infiltration
                         storage_dict = dict(zip_longest(tab_no_infil_cols, split))
                     else:
@@ -898,8 +898,8 @@ class StormDrainProject(object):
             if inflows:
                 for infl in inflows:
                     if not infl or infl[0] in self.ignore:
-                       continue                   
-                    elif infl.split()[0] not in self.INP_nodes:
+                        continue                   
+                    elif not (infl.split()[0] in self.INP_nodes or infl.split()[0] in self.INP_storages):
                         self.status_report += "\u25E6 Undefined Node reference (" + infl.split()[0] + ") at \n   [INFLOW]\n   " + infl + "\n\n"      
                     else:
                         inflow_dict = dict(zip_longest(inflows_cols, infl.split()))
