@@ -846,30 +846,44 @@
      <layout class="QGridLayout" name="gridLayout_8">
       <item row="0" column="0">
        <layout class="QGridLayout" name="gridLayout_7">
-        <item row="0" column="0">
-         <widget class="QLabel" name="label_4">
-          <property name="text">
-           <string>Start Node</string>
-          </property>
-         </widget>
-        </item>
         <item row="0" column="3">
-         <widget class="QComboBox" name="end_node_cbo"/>
-        </item>
-        <item row="0" column="2">
          <widget class="QLabel" name="label_5">
           <property name="text">
            <string>End Node</string>
           </property>
          </widget>
         </item>
-        <item row="0" column="1">
-         <widget class="QComboBox" name="start_node_cbo"/>
-        </item>
-        <item row="0" column="4">
+        <item row="0" column="5">
          <widget class="QPushButton" name="find_profile_btn">
           <property name="text">
            <string>Find Profile</string>
+          </property>
+         </widget>
+        </item>
+        <item row="0" column="2">
+         <widget class="QComboBox" name="start_node_cbo"/>
+        </item>
+        <item row="0" column="4">
+         <widget class="QComboBox" name="end_node_cbo"/>
+        </item>
+        <item row="0" column="1">
+         <widget class="QLabel" name="label_4">
+          <property name="text">
+           <string>Start Node</string>
+          </property>
+         </widget>
+        </item>
+        <item row="0" column="0">
+         <widget class="QToolButton" name="center_chbox">
+          <property name="text">
+           <string>...</string>
+          </property>
+          <property name="icon">
+           <iconset>
+            <normaloff>../img/eye-svgrepo-com.svg</normaloff>../img/eye-svgrepo-com.svg</iconset>
+          </property>
+          <property name="checkable">
+           <bool>true</bool>
           </property>
          </widget>
         </item>

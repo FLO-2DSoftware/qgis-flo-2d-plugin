@@ -16,6 +16,7 @@ from collections import OrderedDict
 from datetime import date, datetime, time, timedelta
 from math import floor, isnan, modf
 
+from qgis._core import QgsFeatureRequest
 from qgis.core import (
     NULL,
     QgsArrowSymbolLayer,
@@ -78,7 +79,7 @@ from ..gui.dlg_weirs import WeirsDialog
 from ..user_communication import ScrollMessageBox, ScrollMessageBox2, UserCommunication
 from ..utils import float_or_zero, int_or_zero, is_number, is_true, m_fdata
 from .table_editor_widget import CommandItemEdit, StandardItem, StandardItemModel
-from .ui_utils import load_ui, set_icon, try_disconnect
+from .ui_utils import load_ui, set_icon, try_disconnect, center_canvas
 from ..flo2d_ie.flo2d_parser import ParseDAT
 
 uiDialog, qtBaseClass = load_ui("inp_groups")
@@ -323,6 +324,9 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
 
         self.populate_profile_plot()
         self.find_profile_btn.clicked.connect(self.show_profile)
+        self.start_node_cbo.currentIndexChanged.connect(lambda: self.center_node("Start"))
+        self.end_node_cbo.currentIndexChanged.connect(lambda: self.center_node("End"))
+        self.center_chbox.clicked.connect(self.clear_sd_rubber)
 
     def setup_connection(self):
         con = self.iface.f2d["con"]
@@ -4306,17 +4310,56 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         """
         Function to show the profile
         """
-        inp_file = r"D:/FLO-2D/FLO-2D Plugin/_STORMDRAIN/PYSWMM/FLO2D Run/SWMM.inp"
-        # SWMMIO only read small cap .inp
-        if inp_file.endswith('.INP'):
-            os.rename(inp_file, inp_file[:-4] + '.inp')
+        self.uc.clear_bar_messages()
+        if self.gutils.is_table_empty("grid"):
+            self.uc.bar_warn("There is no grid! Please create it before running tool.")
+            return False
+
+        s = QSettings()
+        GDS_dir = s.value("FLO-2D/lastGdsDir", "")
+        RPT_file = GDS_dir + r"\swmm.RPT"
+        rpt_file = GDS_dir + r"\swmm.rpt"
+        INP_file = GDS_dir + r"\SWMM.INP"
+        inp_file = GDS_dir + r"\SWMM.inp"
+        # Check if there is an RPT and an INP file on the export folder
+        if not os.path.isfile(INP_file) or not os.path.isfile(inp_file):
+            self.uc.bar_warn(
+                "No SWMM.INP file found. Please ensure the simulation has completed and verify the project export "
+                "folder.")
+            return
+        if not os.path.isfile(RPT_file) or not os.path.isfile(rpt_file):
+            self.uc.bar_warn(
+                "No swmm.RPT file found. Please ensure the simulation has completed and verify the project export "
+                "folder.")
+            return
+
+        # SWMMIO only read small cap extensions
+        if not os.path.isfile(inp_file):
+            os.rename(INP_file, INP_file[:-4] + '.inp')
+
+        if not os.path.isfile(rpt_file):
+            os.rename(RPT_file, RPT_file[:-4] + '.rpt')
 
         mymodel = Model(inp_file)
-        # path_selection = find_network_trace(mymodel, "I2-36-30-40", "O-36-30-1")
 
+        start_node = self.start_node_cbo.currentText()
+        end_node = self.end_node_cbo.currentText()
+
+        self.uc.log_info(str(start_node))
+        self.uc.log_info(str(end_node))
+        self.uc.log_info(str(INP_file))
+
+        try:
+            path_selection = find_network_trace(mymodel, start_node, end_node)
+        except:
+            self.uc.bar_warn("No path found!")
+            return
+        QApplication.setOverrideCursor(Qt.WaitCursor)
         dlg_sd_profile_view = SDProfileView()
-        dlg_sd_profile_view.plot_data(mymodel, "I3-38-32-2", "O-36-31-13")
+        dlg_sd_profile_view.plot_profile(mymodel, path_selection)
+        QApplication.restoreOverrideCursor()
         dlg_sd_profile_view.exec_()
+
 
     def SD_show_type4_table_and_plot(self):
         self.SD_table.after_delete.disconnect()
@@ -5210,3 +5253,26 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             QApplication.restoreOverrideCursor()
             self.uc.show_error("ERROR 180322.0925: reading pump curve files failed!", e)
             return
+
+    def center_node(self, node_type):
+        """
+        Function to center the node
+        """
+        if self.center_chbox.isChecked():
+            if node_type == "Start":
+                node_name = self.start_node_cbo.currentText()
+            if node_type == "End":
+                node_name = self.end_node_cbo.currentText()
+            request = QgsFeatureRequest().setFilterExpression(f'"name" = \'{node_name}\'')
+            feats = list(self.user_swmm_nodes_lyr.getFeatures(request))
+            if feats:
+                feat = feats[0]
+                self.lyrs.show_feat_rubber(self.user_swmm_nodes_lyr.id(), request)
+                x, y = feat.geometry().centroid().asPoint()
+                center_canvas(self.iface, x, y)
+
+    def clear_sd_rubber(self):
+        """
+        Function to clear the stormm drain rubber
+        """
+        self.lyrs.clear_rubber()
