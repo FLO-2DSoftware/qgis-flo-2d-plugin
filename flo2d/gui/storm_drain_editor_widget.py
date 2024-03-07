@@ -1219,6 +1219,11 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
 
                 intype = int(values["intype"]) if "intype" in values else 1
 
+
+                if not values["x"] or not values["y"]:
+                    outside_nodes += name + " has no coordinates.\n"
+                    continue
+                
                 x = float(values["x"])
                 y = float(values["y"])
                 grid = self.gutils.grid_on_point(x, y)
@@ -1230,6 +1235,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                     elev = self.gutils.grid_value(grid, "elevation")
                 else:
                     elev = 0
+                elev = elev if elev else 0
                 difference = elev - rim_elev if elev and rim_elev else 0
 
                 if complete_or_create == "Create New":
@@ -1718,11 +1724,14 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                         conduit_outlets_not_found += name + "\n"
                         # continue # Force execution of next iteration, skip rest of code. 
                     else:
-                        x2 = float(all_nodes[conduit_outlet]["x"])
-                        y2 = float(all_nodes[conduit_outlet]["y"])
-                        grid = self.gutils.grid_on_point(x2, y2)
-                        if grid is None:
-                            outside_conduits += name + "\n"
+                        if not all_nodes[conduit_outlet]["x"] or not all_nodes[conduit_outlet]["y"]:
+                            conduit_outlets_not_found += name + "\n" 
+                        else:
+                            x2 = float(all_nodes[conduit_outlet]["x"])
+                            y2 = float(all_nodes[conduit_outlet]["y"])
+                            grid = self.gutils.grid_on_point(x2, y2)
+                            if grid is None:
+                                outside_conduits += name + "\n"
         
                     if conduit_inlet in all_nodes and conduit_outlet in all_nodes:
                         geom = QgsGeometry.fromPolylineXY([QgsPointXY(x1, y1), QgsPointXY(x2, y2)])
@@ -2280,7 +2289,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             error_msg += "\n\nThe following conduits have no inlet defined!\n" + conduit_inlets_not_found
 
         if conduit_outlets_not_found != "":
-            error_msg += "\n\nThe following conduits have no outlet defined!\n" + conduit_outlets_not_found
+            error_msg += "\n\nThe following conduits have no outlet defined!\n\n" + conduit_outlets_not_found
 
         if pump_data_missing != "":
             error_msg += "\n" + pump_data_missing
