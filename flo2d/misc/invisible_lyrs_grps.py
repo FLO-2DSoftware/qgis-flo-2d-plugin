@@ -87,16 +87,26 @@ class InvisibleLayersAndGroups:
         if isinstance(mapLayer, QgsMapLayer):
             self.hideNode(self.root.findLayer(mapLayer.id()), bHide=False)
 
-    def hideGroup(self, group):
+    def hideGroup(self, group, parent_group=None):
         if isinstance(group, QgsLayerTreeGroup):
             self.hideNode(group)
         elif isinstance(group, (str, str)):
-            self.hideGroup(self.root.findGroup(group))
+            if parent_group:
+                parent_group = self.root.findGroup(parent_group)
+                subgroup = parent_group.findGroup(group)
+                if subgroup:
+                    self.hideGroup(subgroup)
+            else:
+                self.hideGroup(self.root.findGroup(group))
 
-    def unhideGroup(self, group):
+    def unhideGroup(self, group, parent_group=None):
         if isinstance(group, QgsLayerTreeGroup):
             self.hideNode(group, bHide=False)
         elif isinstance(group, (str, str)):
-            group_node = self.root.findGroup(group)
-            if group_node:
-                self.hideNode(group_node, bHide=False)
+            if parent_group:
+                parent_group = self.root.findGroup(parent_group)
+                subgroup = parent_group.findGroup(group)
+                if subgroup:
+                    self.hideNode(subgroup, bHide=False)
+            else:
+                self.hideNode(self.root.findGroup(group), bHide=False)

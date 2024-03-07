@@ -12,6 +12,7 @@ import time
 from collections import OrderedDict
 from os.path import normpath
 
+from PyQt5.QtCore import QSettings
 from PyQt5.QtWidgets import QProgressDialog
 from qgis._core import QgsMessageLog
 from qgis.core import (
@@ -233,7 +234,7 @@ class Layers(object):
                         "styles": ["user_spatial_gutter.qml"],
                         "attrs_edit_widgets": {},
                         "readonly": False,
-                        "advanced": False
+                        "advanced": True
                     },
                 ),
                 (
@@ -322,7 +323,7 @@ class Layers(object):
                         "attrs_edit_widgets": {},
                         "visible": True,
                         "readonly": False,
-                        "advanced": False
+                        "advanced": True
                     },
                 ),
                 (
@@ -335,7 +336,7 @@ class Layers(object):
                         "attrs_edit_widgets": {},
                         "visible": True,
                         "readonly": False,
-                        "advanced": False
+                        "advanced": True
                     },
                 ),
                 (
@@ -348,7 +349,7 @@ class Layers(object):
                         "attrs_edit_widgets": {},
                         "visible": True,
                         "readonly": False,
-                        "advanced": False
+                        "advanced": True
                     },
                 ),
                 (
@@ -387,7 +388,7 @@ class Layers(object):
                         "attrs_edit_widgets": {},
                         "module": ["streets"],
                         "readonly": False,
-                        "advanced": False
+                        "advanced": True
                     },
                 ),
                 (
@@ -465,7 +466,7 @@ class Layers(object):
                     {
                         "name": "Effective Impervious Areas",
                         "sgroup": "User Layers",
-                        "ssgroup": "Areas",
+                        "ssgroup": "Infiltration",
                         "styles": ["user_effective_impervious_area.qml"],
                         "attrs_edit_widgets": {},
                         "module": ["all"],
@@ -482,7 +483,7 @@ class Layers(object):
                         "styles": ["gutter_lines4.qml"],
                         "attrs_edit_widgets": {},
                         "readonly": False,
-                        "advanced": False
+                        "advanced": True
                     },
                 ),
                 (
@@ -624,7 +625,7 @@ class Layers(object):
                         "attrs_edit_widgets": {},
                         "module": ["struct"],
                         "readonly": True,
-                        "advanced": False
+                        "advanced": True
                     },
                 ),
                 (
@@ -672,7 +673,7 @@ class Layers(object):
                         "styles": ["gutter_cells.qml"],
                         "attrs_edit_widgets": {},
                         "readonly": True,
-                        "advanced": False
+                        "advanced": True
                     },
                 ),
                 # Storm Drain layers:
@@ -1868,7 +1869,8 @@ class Layers(object):
         # Check if it is an advanced layer
         if advanced:
             if self.ilg is not None:
-                self.ilg.hideGroup(subgroup)
+                if subsubgroup == "Gutters" or subsubgroup == "Multiple Channels" or subsubgroup == "Streets":
+                    self.ilg.hideGroup(subsubgroup, subgroup)
 
         return self.data[table]["qlyr"].id()
 
@@ -2257,6 +2259,10 @@ class Layers(object):
             i += 1
             QApplication.processEvents()
             pd.setValue(i)
+
+        s = QSettings()
+        s.setValue("FLO-2D/advanced_layers", False)
+
 
         # >>>>>>>>>>>>>>>>>111111111
 

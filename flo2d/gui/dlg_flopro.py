@@ -40,7 +40,7 @@ class ExternalProgramFLO2D(qtBaseClass, uiDialog):
         advanced_layers = s.value("FLO-2D/advanced_layers", "")
         self.flo2d_le.setText(flo2d_dir)
         self.project_le.setText(project_dir)
-        if advanced_layers == "false":
+        if advanced_layers == "false" or not advanced_layers:
             self.advanced_lyrs_chbox.setChecked(False)
         else:
             self.advanced_lyrs_chbox.setChecked(True)

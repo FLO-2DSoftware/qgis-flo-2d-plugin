@@ -1085,17 +1085,24 @@ class Flo2D(object):
                     lyrs = self.lyrs.data
                     for key, value in lyrs.items():
                         group = value.get("sgroup")
+                        subsubgroup = value.get("ssgroup")
                         self.ilg.unhideLayer(self.lyrs.data[key]["qlyr"])
                         self.ilg.unhideGroup(group)
+                        self.ilg.unhideGroup(subsubgroup, group)
                 # hide advanced layers
                 else:
                     lyrs = self.lyrs.data
                     for key, value in lyrs.items():
                         advanced = value.get("advanced")
                         if advanced:
+                            subgroup = value.get("sgroup")
+                            subsubgroup = value.get("ssgroup")
                             self.ilg.hideLayer(self.lyrs.data[key]["qlyr"])
-                            self.ilg.hideGroup(value.get("sgroup"))
-                s.setValue("FLO-2D/advanced_layers", advanced_layers)
+                            if subsubgroup == "Gutters" or subsubgroup == "Multiple Channels" or subsubgroup == "Streets":
+                                self.ilg.hideGroup(subsubgroup, subgroup)
+                            else:
+                                self.ilg.hideGroup(subgroup)
+            s.setValue("FLO-2D/advanced_layers", advanced_layers)
 
             if project_dir != "" and flo2d_dir != "":
                 s.setValue("FLO-2D/run_settings", True)
