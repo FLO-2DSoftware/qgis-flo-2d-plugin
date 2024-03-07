@@ -1718,7 +1718,8 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                         y1 = float(all_nodes[conduit_inlet]["y"])                        
                         grid = self.gutils.grid_on_point(x1, y1)
                         if grid is None:
-                            outside_conduits += name + "\n"
+                            if not name in outside_conduits:
+                                outside_conduits += name + "\n"
                                     
                     if not conduit_outlet in all_nodes:
                         conduit_outlets_not_found += name + "\n"
@@ -1731,7 +1732,8 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                             y2 = float(all_nodes[conduit_outlet]["y"])
                             grid = self.gutils.grid_on_point(x2, y2)
                             if grid is None:
-                                outside_conduits += name + "\n"
+                                if not name in outside_conduits:
+                                    outside_conduits += name + "\n"
         
                     if conduit_inlet in all_nodes and conduit_outlet in all_nodes:
                         geom = QgsGeometry.fromPolylineXY([QgsPointXY(x1, y1), QgsPointXY(x2, y2)])
@@ -2399,7 +2401,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             msgBox.setIcon(QMessageBox.Warning)
             msgBox.setWindowTitle("Storm Drain conduits outside domain")
             msgBox.setText("WARNING 221220.0337:")
-            msgBox.setInformativeText("The following Conduits are outside the domain:")
+            msgBox.setInformativeText("The following Conduits extend outside the domain:")
             msgBox.setDetailedText(outside_conduits)
             msgBox.setStandardButtons(QMessageBox.Ok)
             msgBox.exec_()
@@ -2409,7 +2411,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             msgBox.setIcon(QMessageBox.Warning)
             msgBox.setWindowTitle("Storm Drain pumps outside domain")
             msgBox.setText("WARNING 050322.0522:")
-            msgBox.setInformativeText("The following Pumps are outside the domain:")
+            msgBox.setInformativeText("The following Pumps extend outside the domain:")
             msgBox.setDetailedText(outside_pumps)
             msgBox.setStandardButtons(QMessageBox.Ok)
             msgBox.exec_()
@@ -2419,7 +2421,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             msgBox.setIcon(QMessageBox.Warning)
             msgBox.setWindowTitle("Storm Drain orifices outside domain")
             msgBox.setText("WARNING 080422.0522:")
-            msgBox.setInformativeText("The following Orifices are outside the domain:")
+            msgBox.setInformativeText("The following Orifices extend outside the domain:")
             msgBox.setDetailedText(outside_orifices)
             msgBox.setStandardButtons(QMessageBox.Ok)
             msgBox.exec_()
@@ -2430,7 +2432,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             msgBox.setIcon(QMessageBox.Warning)
             msgBox.setWindowTitle("Storm Drain weirs outside domain")
             msgBox.setText("WARNING 211123.0639:")
-            msgBox.setInformativeText("The following Weirs are outside the domain:")
+            msgBox.setInformativeText("The following Weirs extend outside the domain:")
             msgBox.setDetailedText(outside_weirs)
             msgBox.setStandardButtons(QMessageBox.Ok)
             msgBox.exec_()
