@@ -9,6 +9,7 @@
 # of the License, or (at your option) any later version
 
 import os
+import shutil
 import traceback
 from _ast import Pass
 from collections import OrderedDict
@@ -59,7 +60,9 @@ from qgis.PyQt.QtWidgets import (
 )
 
 import pyqtgraph as pg
+from swmmio import Model, find_network_trace
 
+from .dlg_sd_profile_view import SDProfileView
 from ..flo2d_ie.swmm_io import StormDrainProject
 from ..flo2d_tools.grid_tools import spatial_index
 from ..flo2d_tools.schema2user_tools import remove_features
@@ -317,6 +320,9 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         self.populate_type4_combo()
         self.populate_pump_curves_and_data()
         self.show_pump_curve_type_and_description()
+
+        self.populate_profile_plot()
+        self.find_profile_btn.clicked.connect(self.show_profile)
 
     def setup_connection(self):
         con = self.iface.f2d["con"]
@@ -4280,6 +4286,37 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                         self.SD_type4_cbo.addItem(name, 9999 + fid)
                     else:
                         duplicates += name + "\n"
+
+    def populate_profile_plot(self):
+        """
+        Function to populate the nodes on the comboboxes and check for a .RPT file
+        """
+        self.start_node_cbo.clear()
+        self.end_node_cbo.clear()
+
+        nodes_names = self.gutils.execute("SELECT name FROM user_swmm_nodes").fetchall()
+        if not nodes_names:
+            return
+
+        for name in nodes_names:
+            self.start_node_cbo.addItem(name[0])
+            self.end_node_cbo.addItem(name[0])
+
+    def show_profile(self):
+        """
+        Function to show the profile
+        """
+        inp_file = r"D:/FLO-2D/FLO-2D Plugin/_STORMDRAIN/PYSWMM/FLO2D Run/SWMM.inp"
+        # SWMMIO only read small cap .inp
+        if inp_file.endswith('.INP'):
+            os.rename(inp_file, inp_file[:-4] + '.inp')
+
+        mymodel = Model(inp_file)
+        # path_selection = find_network_trace(mymodel, "I2-36-30-40", "O-36-30-1")
+
+        dlg_sd_profile_view = SDProfileView()
+        dlg_sd_profile_view.plot_data(mymodel, "I3-38-32-2", "O-36-31-13")
+        dlg_sd_profile_view.exec_()
 
     def SD_show_type4_table_and_plot(self):
         self.SD_table.after_delete.disconnect()

@@ -14,6 +14,7 @@ import io
 # Lambda may not be necessary
 # pylint: disable=W0108
 import os
+import pathlib
 import pstats
 import sys
 import threading
@@ -34,6 +35,7 @@ from subprocess import (
     run,
 )
 
+import pip
 from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QApplication, QToolButton
 from osgeo import gdal
@@ -135,6 +137,8 @@ class Flo2D(object):
     def __init__(self, iface):
         # self.pr = cProfile.Profile()
         # self.pr.enable()
+
+        self.install_swmmio()
 
         self.iface = iface
         self.iface.f2d = {}
@@ -3847,4 +3851,23 @@ class Flo2D(object):
 
         # Save the result
         picture.save(thumbnail)
+
+    def install_swmmio(self):
+        """
+        Function to install swmmio
+        """
+        try:
+            import swmmio
+        except ImportError:
+            import pathlib as pl
+            import subprocess
+            import sys
+
+            qgis_Path = pl.Path(sys.executable)
+            qgis_python_path = (qgis_Path.parent / "python3.exe").as_posix()
+
+            subprocess.check_call(
+                [qgis_python_path, "-m", "pip", "install", "--user", "swmmio"]
+            )
+            import swmmio
 
