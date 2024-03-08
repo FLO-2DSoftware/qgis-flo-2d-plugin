@@ -113,6 +113,7 @@ from .gui.grid_info_widget import GridInfoWidget
 from .gui.plot_widget import PlotWidget
 from .gui.table_editor_widget import TableEditorWidget
 from .layers import Layers
+from .misc.invisible_lyrs_grps import InvisibleLayersAndGroups
 from .user_communication import UserCommunication
 from .utils import get_flo2dpro_version
 
@@ -168,6 +169,7 @@ class Flo2D(object):
         self.con = None
         self.iface.f2d["con"] = self.con
         self.lyrs = Layers(iface)
+        self.ilg = InvisibleLayersAndGroups(self.iface)
         self.lyrs.group = None
         self.gutils = None
         self.f2g = None
@@ -791,6 +793,7 @@ class Flo2D(object):
             s = QSettings()
             s.setValue("FLO-2D/last_flopro_project", os.path.dirname(gpkg_path_adj))
             s.setValue("FLO-2D/lastGdsDir", os.path.dirname(gpkg_path_adj))
+            s.setValue("FLO-2D/advanced_layers", False)
 
             contact = dlg_settings.lineEdit_au.text()
             email = dlg_settings.lineEdit_co.text()
@@ -1062,7 +1065,6 @@ class Flo2D(object):
         self.dlg_gpkg_management = GpkgManagementDialog(self.iface, self.lyrs, self.gutils)
         self.dlg_gpkg_management.show()
 
-
     def run_settings(self):
         """
         Function to set the run settings: FLO-2D and Project folders
@@ -1074,10 +1076,34 @@ class Flo2D(object):
         if not ok:
             return
         else:
-            flo2d_dir, project_dir = dlg.get_parameters()
+            flo2d_dir, project_dir, advanced_layers = dlg.get_parameters()
             s = QSettings()
             s.setValue("FLO-2D/lastGdsDir", project_dir)
             s.setValue("FLO-2D/last_flopro", flo2d_dir)
+            if advanced_layers != s.value("FLO-2D/advanced_layers", ""):
+                # show advanced layers
+                if advanced_layers:
+                    lyrs = self.lyrs.data
+                    for key, value in lyrs.items():
+                        group = value.get("sgroup")
+                        subsubgroup = value.get("ssgroup")
+                        self.ilg.unhideLayer(self.lyrs.data[key]["qlyr"])
+                        self.ilg.unhideGroup(group)
+                        self.ilg.unhideGroup(subsubgroup, group)
+                # hide advanced layers
+                else:
+                    lyrs = self.lyrs.data
+                    for key, value in lyrs.items():
+                        advanced = value.get("advanced")
+                        if advanced:
+                            subgroup = value.get("sgroup")
+                            subsubgroup = value.get("ssgroup")
+                            self.ilg.hideLayer(self.lyrs.data[key]["qlyr"])
+                            if subsubgroup == "Gutters" or subsubgroup == "Multiple Channels" or subsubgroup == "Streets":
+                                self.ilg.hideGroup(subsubgroup, subgroup)
+                            else:
+                                self.ilg.hideGroup(subgroup)
+            s.setValue("FLO-2D/advanced_layers", advanced_layers)
 
             if project_dir != "" and flo2d_dir != "":
                 s.setValue("FLO-2D/run_settings", True)
