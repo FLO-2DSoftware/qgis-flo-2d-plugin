@@ -23,7 +23,7 @@ from qgis.PyQt.QtGui import QColor, QCursor, QPixmap
 from qgis.PyQt.QtWidgets import QAction, QMenu
 
 class InfoTool(QgsMapToolIdentify):
-    feature_picked = pyqtSignal(str, int)
+    feature_picked = pyqtSignal(str, int, object)
 
     def __init__(self, canvas, lyrs, uc):
         self.canvas = canvas
@@ -94,13 +94,13 @@ class InfoTool(QgsMapToolIdentify):
                     # Add "Start Node" action
                     start_action = QAction("Start Node", None)
                     start_action.hovered.connect(functools.partial(self.show_rubber, lid, fid))
-                    start_action.triggered.connect(functools.partial(self.pass_res_node, tab, fid))
+                    start_action.triggered.connect(functools.partial(self.pass_res, tab, fid, "Start"))
                     ssm.addAction(start_action)
 
                     # Add "End Node" action
                     end_action = QAction("End Node", None)
                     end_action.hovered.connect(functools.partial(self.show_rubber, lid, fid))
-                    end_action.triggered.connect(functools.partial(self.pass_res_node, tab, fid))
+                    end_action.triggered.connect(functools.partial(self.pass_res, tab, fid, "End"))
                     ssm.addAction(end_action)
 
             else:
@@ -115,8 +115,8 @@ class InfoTool(QgsMapToolIdentify):
         # except:
         #     pass
 
-    def pass_res(self, table, fid):
-        self.feature_picked.emit(table, fid)
+    def pass_res(self, table, fid, extra=None):
+        self.feature_picked.emit(table, fid, extra)
         self.clear_rubber()
 
     def show_rubber(self, lyr_id, fid):

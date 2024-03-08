@@ -113,6 +113,7 @@ from .gui.dlg_user2schema import User2SchemaDialog
 from .gui.f2d_main_widget import FLO2DWidget
 from .gui.grid_info_widget import GridInfoWidget
 from .gui.plot_widget import PlotWidget
+from .gui.storm_drain_editor_widget import StormDrainEditorWidget
 from .gui.table_editor_widget import TableEditorWidget
 from .layers import Layers
 from .user_communication import UserCommunication
@@ -3099,12 +3100,14 @@ class Flo2D(object):
         self.f2d_widget.struct_editor.populate_structs(struct_fid=fid)
 
     @connection_required
-    def show_sd_node_info(self, fid=None):
+    def show_sd_node_info(self, fid=None, extra=""):
         """
         Show the selected sd node info
         """
         name = self.gutils.execute("SELECT name FROM user_swmm_nodes WHERE fid = ?", (fid,)).fetchone()
         self.uc.bar_info("Selected Storm Drain Node: " + str(name[0]))
+        self.f2d_widget.storm_drain_editor.center_chbox.setChecked(True)
+        self.f2d_widget.storm_drain_editor.update_profile_cbos(extra, name[0])
 
     @connection_required
     def show_struct_hydrograph(self, fid=None):
@@ -3675,7 +3678,7 @@ class Flo2D(object):
         self.grid_info_tool = GridInfoTool(self.uc, self.canvas, self.lyrs)
         self.results_tool = ResultsTool(self.canvas, self.lyrs)
 
-    def get_feature_info(self, table, fid):
+    def get_feature_info(self, table, fid, extra):
         try:
             show_editor = self.editors_map[table]
             self.cur_info_table = table
@@ -3683,7 +3686,10 @@ class Flo2D(object):
             self.uc.bar_info("Not implemented...")
             return
         if show_editor:
-            show_editor(fid)
+            if extra:
+                show_editor(fid, extra)
+            else:
+                show_editor(fid)
 
     def get_feature_profile(self, table, fid):
         # try:

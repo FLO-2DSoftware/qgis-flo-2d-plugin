@@ -16,6 +16,7 @@ from collections import OrderedDict
 from datetime import date, datetime, time, timedelta
 from math import floor, isnan, modf
 
+import swmmio
 from qgis._core import QgsFeatureRequest
 from qgis.core import (
     NULL,
@@ -4341,22 +4342,20 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             os.rename(RPT_file, RPT_file[:-4] + '.rpt')
 
         mymodel = Model(inp_file)
+        rpt = swmmio.rpt(rpt_file)
 
         start_node = self.start_node_cbo.currentText()
         end_node = self.end_node_cbo.currentText()
 
-        self.uc.log_info(str(start_node))
-        self.uc.log_info(str(end_node))
-        self.uc.log_info(str(INP_file))
-
         try:
             path_selection = find_network_trace(mymodel, start_node, end_node)
+            depths = rpt.node_depth_summary.MaxNodeDepth
         except:
             self.uc.bar_warn("No path found!")
             return
         QApplication.setOverrideCursor(Qt.WaitCursor)
         dlg_sd_profile_view = SDProfileView()
-        dlg_sd_profile_view.plot_profile(mymodel, path_selection)
+        dlg_sd_profile_view.plot_profile(mymodel, path_selection, depths)
         QApplication.restoreOverrideCursor()
         dlg_sd_profile_view.exec_()
 
@@ -5276,3 +5275,18 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         Function to clear the stormm drain rubber
         """
         self.lyrs.clear_rubber()
+
+    def update_profile_cbos(self, node_type, name):
+        """
+        Function to update the start and end node for the profile plot
+        """
+        if node_type == "Start":
+            index = self.start_node_cbo.findText(name)
+            if index != -1:
+                self.uc.log_info(str(index))
+                self.start_node_cbo.setCurrentIndex(index)
+        if node_type == "End":
+            index = self.end_node_cbo.findText(name)
+            if index != -1:
+                self.end_node_cbo.setCurrentIndex(index)
+

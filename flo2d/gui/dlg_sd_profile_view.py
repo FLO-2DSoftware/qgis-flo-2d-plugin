@@ -22,15 +22,15 @@ class SDProfileView(qtBaseClass, uiDialog):
         self.ax = self.canvas.figure.add_subplot(1, 1, 1)
         self.ax.spines[['right', 'top']].set_visible(False)
 
-    def plot_profile(self, model, path_selection):
+    def plot_profile(self, model, path_selection, depths):
         """
         Function to plot the profile plot
         """
         # Clear canvas
         self.ax.clear()
         profile_config = build_profile_plot(self.ax, model, path_selection)
-        # add_hgl_plot(self.ax, profile_config, depth=None, label="No Control")
-        # add_hgl_plot(self.ax, profile_config, depth=None, color='green', label="With Control")
+        # if depths:
+        add_hgl_plot(self.ax, profile_config, depth=depths)
         add_node_labels_plot(self.ax, model, profile_config)
         add_link_labels_plot(self.ax, model, profile_config)
         self.ax.legend()
