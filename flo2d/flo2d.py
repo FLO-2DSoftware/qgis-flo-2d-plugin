@@ -3858,7 +3858,7 @@ class Flo2D(object):
             qgis_python_path = (qgis_Path.parent / "python3.exe").as_posix()
 
             subprocess.check_call(
-                [qgis_python_path, "-m", "pip", "install", "--user", "swmmio"]
+                [qgis_python_path, "-m", "pip", "install", "--user", "swmmio==0.6.11"]
             )
             import swmmio
 

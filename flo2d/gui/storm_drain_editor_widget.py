@@ -16,7 +16,7 @@ from collections import OrderedDict
 from datetime import date, datetime, time, timedelta
 from math import floor, isnan, modf
 
-import swmmio
+# import swmmio
 from qgis._core import QgsFeatureRequest
 from qgis.core import (
     NULL,
@@ -62,7 +62,6 @@ from qgis.PyQt.QtWidgets import (
 )
 
 import pyqtgraph as pg
-from swmmio import Model, find_network_trace
 
 from .dlg_sd_profile_view import SDProfileView
 from ..flo2d_ie.swmm_io import StormDrainProject
@@ -82,6 +81,23 @@ from ..utils import float_or_zero, int_or_zero, is_number, is_true, m_fdata
 from .table_editor_widget import CommandItemEdit, StandardItem, StandardItemModel
 from .ui_utils import load_ui, set_icon, try_disconnect, center_canvas
 from ..flo2d_ie.flo2d_parser import ParseDAT
+
+try:
+    import swmmio
+    from swmmio import Model, find_network_trace
+except ImportError:
+    import pathlib as pl
+    import subprocess
+    import sys
+
+    qgis_Path = pl.Path(sys.executable)
+    qgis_python_path = (qgis_Path.parent / "python3.exe").as_posix()
+
+    subprocess.check_call(
+        [qgis_python_path, "-m", "pip", "install", "--user", "swmmio==0.6.11"]
+    )
+    import swmmio
+    from swmmio import Model, find_network_trace
 
 uiDialog, qtBaseClass = load_ui("inp_groups")
 
@@ -4349,16 +4365,22 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
 
         try:
             path_selection = find_network_trace(mymodel, start_node, end_node)
-            depths = rpt.node_depth_summary.MaxNodeDepth
+            max_depth = rpt.node_depth_summary.MaxNodeDepth
+            ave_depth = rpt.node_depth_summary.AvgDepth
         except:
             self.uc.bar_warn("No path found!")
             return
         QApplication.setOverrideCursor(Qt.WaitCursor)
-        dlg_sd_profile_view = SDProfileView()
-        dlg_sd_profile_view.plot_profile(mymodel, path_selection, depths)
+        dlg_sd_profile_view = SDProfileView(self.gutils)
+        dlg_sd_profile_view.plot_profile(mymodel, path_selection, max_depth, ave_depth)
         QApplication.restoreOverrideCursor()
-        dlg_sd_profile_view.exec_()
-
+        dlg_sd_profile_view.show()
+        while True:
+            ok = dlg_sd_profile_view.exec_()
+            if ok:
+                break
+            else:
+                return
 
     def SD_show_type4_table_and_plot(self):
         self.SD_table.after_delete.disconnect()
