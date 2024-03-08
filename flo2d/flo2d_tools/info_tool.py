@@ -25,10 +25,11 @@ from qgis.PyQt.QtWidgets import QAction, QMenu
 class InfoTool(QgsMapToolIdentify):
     feature_picked = pyqtSignal(str, int)
 
-    def __init__(self, canvas, lyrs):
+    def __init__(self, canvas, lyrs, uc):
         self.canvas = canvas
         self.canvas.setCursor(Qt.CrossCursor)
         self.lyrs = lyrs
+        self.uc = uc
         self.rb = None
         QgsMapToolIdentify.__init__(self, self.canvas)
 
@@ -38,100 +39,6 @@ class InfoTool(QgsMapToolIdentify):
     def canvasPressEvent(self, dummy):
         self.clear_rubber()
 
-    ## OLD CODE WITHOUT NODE NAMES (doesn't repeat dialog after not finding node):
-    # def canvasReleaseEvent(self, e):
-    #     res = self.identify(e.x(), e.y(), self.lyrs_list, QgsMapToolIdentify.TopDownAll)
-    #     lyrs_found = OrderedDict()
-    #     for i, item in enumerate(res):
-    #         lyr_name = item.mLayer.name()
-    #         lyr_id = item.mLayer.id()
-    #         table = item.mLayer.dataProvider().dataSourceUri().split('=')[-1]
-    #         fid = item.mFeature.id()
-    #         if lyr_name not in list(lyrs_found.keys()):
-    #             lyrs_found[lyr_name] = {'lid': lyr_id, 'table': table, 'fids': []}
-    #         else:
-    #             pass
-    #         lyrs_found[lyr_name]['fids'].append(fid)
-    #     popup = QMenu()
-    #     sm = {}
-    #     actions = {}
-    #     for i, ln in enumerate(lyrs_found.keys()):
-    #         lid = lyrs_found[ln]['lid']
-    #         tab = lyrs_found[ln]['table']
-    #         sm[i] = QMenu(ln)
-    #         actions[i] = {}
-    #         if len(lyrs_found[ln]['fids']) == 1:
-    #             fid = lyrs_found[ln]['fids'][0]
-    #             a_text = "{} ({})".format(ln, fid)
-    #             actions[i][0] = QAction(a_text, None)
-    #             actions[i][0].hovered.connect(functools.partial(self.show_rubber, lid, fid))
-    #             actions[i][0].triggered.connect(functools.partial(self.pass_res, tab, fid))
-    #             popup.addAction(actions[i][0])
-    #         else:
-    #             for j, fid in enumerate(lyrs_found[ln]['fids']):
-    #                 actions[i][j] = QAction(str(fid), None)
-    #                 actions[i][j].hovered.connect(functools.partial(self.show_rubber, lid, fid))
-    #                 actions[i][j].triggered.connect(functools.partial(self.pass_res, tab, fid))
-    #                 sm[i].addAction(actions[i][j])
-    #             popup.addMenu(sm[i])
-    #     popup.exec_(self.canvas.mapToGlobal(QPoint(e.pos().x()+30, e.pos().y()+30)))
-
-
-    ## NEW CODE WITH NODE NAMES (repeats dialog after not finding node):
-    # def canvasReleaseEvent(self, e):
-    #     res = self.identify(e.x(), e.y(), self.lyrs_list, QgsMapToolIdentify.TopDownAll)
-    #     lyrs_found = OrderedDict()
-    #     for i, item in enumerate(res):
-    #         lyr_name = item.mLayer.name()
-    #         lyr_id = item.mLayer.id()
-    #         table = item.mLayer.dataProvider().dataSourceUri().split("=")[-1]
-    #         fid = item.mFeature.id()
-    #         if lyr_name not in list(lyrs_found.keys()):
-    #             lyrs_found[lyr_name] = {"lid": lyr_id, "table": table, "fids": []}
-    #         else:
-    #             pass
-    #         lyrs_found[lyr_name]["fids"].append(fid)
-    #     popup = QMenu()
-    #     sm = {}
-    #     actions = {}
-    #     for i, ln in enumerate(lyrs_found.keys()):
-    #         lid = lyrs_found[ln]["lid"]
-    #         tab = lyrs_found[ln]["table"]
-    #         sm[i] = QMenu(ln)
-    #         actions[i] = {}
-    #         if len(lyrs_found[ln]["fids"]) == 1:
-    #             fid = lyrs_found[ln]["fids"][0]
-    #             if ln == "Storm Drain Nodes":
-    #                 sd_layer = self.lyrs.get_layer_by_name("Storm Drain Nodes", group=self.lyrs.group).layer()
-    #                 feat = next(sd_layer.getFeatures(QgsFeatureRequest(fid)))
-    #                 name = feat["name"]
-    #                 grid = feat["grid"]
-    #                 a_text = "{} {}".format(ln, name + " (" + str(grid) + ")")
-    #                 actions[i][0] = QAction(a_text, None)
-    #             else:
-    #                 a_text = "{} ({})".format(ln, fid)
-    #                 actions[i][0] = QAction(a_text, None)                
-    #             actions[i][0].hovered.connect(functools.partial(self.show_rubber, lid, fid))
-    #             actions[i][0].triggered.connect(functools.partial(self.pass_res, tab, fid))
-    #             popup.addAction(actions[i][0])
-    #         else:
-    #             for j, fid in enumerate(lyrs_found[ln]["fids"]):
-    #                 if ln == "Storm Drain Nodes":
-    #                     sd_layer = self.lyrs.get_layer_by_name("Storm Drain Nodes", group=self.lyrs.group).layer()
-    #                     feat = next(sd_layer.getFeatures(QgsFeatureRequest(fid)))
-    #                     name = feat["name"]
-    #                     grid = feat["grid"]
-    #                     actions[i][j] = QAction(name + " (" + str(grid) + ")", None)
-    #                 else:
-    #                     actions[i][j] = QAction(str(fid), None)
-    #                 actions[i][j].hovered.connect(functools.partial(self.show_rubber, lid, fid))
-    #                 actions[i][j].triggered.connect(functools.partial(self.pass_res, tab, fid))
-    #                 sm[i].addAction(actions[i][j])
-    #             popup.addMenu(sm[i])
-    #     popup.exec_(self.canvas.mapToGlobal(QPoint(e.pos().x() + 30, e.pos().y() + 30)))
-
-
-    ## EVEN NEWER CODE WITH NODE NAME (doesn't repeat dialog after not finding node but not always!!!):
     def canvasReleaseEvent(self, e):
         """
 
@@ -149,60 +56,64 @@ class InfoTool(QgsMapToolIdentify):
             "user_bc_polygons",
             "user_struct",
             "struct",
+            "user_swmm_nodes"
         ]
-        try:
-            res = self.identify(e.x(), e.y(), self.lyrs_list, QgsMapToolIdentify.TopDownAll)
-            lyrs_found = OrderedDict()
-            for i, item in enumerate(res):
-                lyr_name = item.mLayer.name()
-                lyr_id = item.mLayer.id()
-                table = item.mLayer.dataProvider().dataSourceUri().split("=")[-1]
-                if table in implemented:
-                    fid = item.mFeature.id()
-                    if lyr_name not in list(lyrs_found.keys()):
-                        lyrs_found[lyr_name] = {"lid": lyr_id, "table": table, "fids": []}
-                    else:
-                        pass
-                    lyrs_found[lyr_name]["fids"].append(fid)
-            popup = QMenu()
-            sm = {}
-            actions = {}
-            for i, ln in enumerate(lyrs_found.keys()):
-                lid = lyrs_found[ln]["lid"]
-                tab = lyrs_found[ln]["table"]
-                sm[i] = QMenu(ln)
-                actions[i] = {}
-                
-                # if len(lyrs_found[ln]["fids"]) == 1:
-                #     fid = lyrs_found[ln]['fids'][0]
-                #     if ln == "Storm Drain Nodes":
-                #         sd_layer = self.lyrs.get_layer_by_name("Storm Drain Nodes", group=self.lyrs.group).layer()
-                #         feat = next(sd_layer.getFeatures(QgsFeatureRequest(fid)))
-                #         name = feat["name"]
-                #         grid = feat["grid"]
-                #     a_text = "{} {}".format(ln, name + " (" + str(grid) + ")")                
-                #     actions[i][0] = QAction(a_text, None)
-                #     actions[i][0].hovered.connect(functools.partial(self.show_rubber, lid, fid))
-                #     actions[i][0].triggered.connect(functools.partial(self.pass_res, tab, fid))
-                #     popup.addAction(actions[i][0])                
-                # else:
-                
+        # try:
+        res = self.identify(e.x(), e.y(), self.lyrs_list, QgsMapToolIdentify.TopDownAll)
+        lyrs_found = OrderedDict()
+        for i, item in enumerate(res):
+            lyr_name = item.mLayer.name()
+            lyr_id = item.mLayer.id()
+            table = item.mLayer.dataProvider().dataSourceUri().split("=")[-1]
+            if table in implemented:
+                fid = item.mFeature.id()
+                if lyr_name not in list(lyrs_found.keys()):
+                    lyrs_found[lyr_name] = {"lid": lyr_id, "table": table, "fids": []}
+                else:
+                    pass
+                lyrs_found[lyr_name]["fids"].append(fid)
+        popup = QMenu()
+        sm = {}
+        ssm = {}
+        actions = {}
+        for i, ln in enumerate(lyrs_found.keys()):
+            lid = lyrs_found[ln]["lid"]
+            tab = lyrs_found[ln]["table"]
+            sm[i] = QMenu(ln)
+            actions[i] = {}
+
+            if ln == "Storm Drain Nodes":
+                sd_layer = self.lyrs.get_layer_by_name("Storm Drain Nodes", group=self.lyrs.group).layer()
                 for j, fid in enumerate(lyrs_found[ln]["fids"]):
-                    if ln == "Storm Drain Nodes":
-                        sd_layer = self.lyrs.get_layer_by_name("Storm Drain Nodes", group=self.lyrs.group).layer()
-                        feat = next(sd_layer.getFeatures(QgsFeatureRequest(fid)))
-                        name = feat["name"]
-                        grid = feat["grid"]
-                        actions[i][j] = QAction(name + " (" + str(grid) + ")", None)
-                    else:
-                        actions[i][j] = QAction(str(fid), None)
+                    feat = next(sd_layer.getFeatures(QgsFeatureRequest(fid)))
+                    name = feat["name"]
+                    grid = feat["grid"]
+                    ssm = QMenu(name + " (" + str(grid) + ")")
+                    sm[i].addMenu(ssm)
+
+                    # Add "Start Node" action
+                    start_action = QAction("Start Node", None)
+                    start_action.hovered.connect(functools.partial(self.show_rubber, lid, fid))
+                    start_action.triggered.connect(functools.partial(self.pass_res_node, tab, fid))
+                    ssm.addAction(start_action)
+
+                    # Add "End Node" action
+                    end_action = QAction("End Node", None)
+                    end_action.hovered.connect(functools.partial(self.show_rubber, lid, fid))
+                    end_action.triggered.connect(functools.partial(self.pass_res_node, tab, fid))
+                    ssm.addAction(end_action)
+
+            else:
+                for j, fid in enumerate(lyrs_found[ln]["fids"]):
+                    actions[i][j] = QAction(str(fid), None)
                     actions[i][j].hovered.connect(functools.partial(self.show_rubber, lid, fid))
                     actions[i][j].triggered.connect(functools.partial(self.pass_res, tab, fid))
                     sm[i].addAction(actions[i][j])
-                popup.addMenu(sm[i])
-            popup.exec_(self.canvas.mapToGlobal(QPoint(e.pos().x() + 30, e.pos().y() + 30)))
-        except:
-            pass
+
+            popup.addMenu(sm[i])
+        popup.exec_(self.canvas.mapToGlobal(QPoint(e.pos().x() + 30, e.pos().y() + 30)))
+        # except:
+        #     pass
 
     def pass_res(self, table, fid):
         self.feature_picked.emit(table, fid)
