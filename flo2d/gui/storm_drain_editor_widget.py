@@ -1711,7 +1711,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                     all_nodes = {**storm_drain.INP_nodes, **storm_drain.INP_storages} 
                     
                     if not conduit_inlet in all_nodes:
-                        conduit_inlets_not_found += name + "\n"
+                        conduit_inlets_not_found += "      " +  name + "\n"
                         # continue # Force execution of next iteration, skip rest of code.
                     else:
                         x1 = float(all_nodes[conduit_inlet]["x"])
@@ -1722,11 +1722,11 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                                 outside_conduits += name + "\n"
                                     
                     if not conduit_outlet in all_nodes:
-                        conduit_outlets_not_found += name + "\n"
+                        conduit_outlets_not_found += "      " +  name + "\n"
                         # continue # Force execution of next iteration, skip rest of code. 
                     else:
                         if not all_nodes[conduit_outlet]["x"] or not all_nodes[conduit_outlet]["y"]:
-                            conduit_outlets_not_found += name + "\n" 
+                            conduit_outlets_not_found += "      " +  name + "\n" 
                         else:
                             x2 = float(all_nodes[conduit_outlet]["x"])
                             y2 = float(all_nodes[conduit_outlet]["y"])
@@ -1889,10 +1889,10 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                     feat.setFields(fields)
 
                     if not pump_inlet in storm_drain.INP_nodes:
-                        pump_inlets_not_found += name + "\n"
+                        pump_inlets_not_found += "      " + name + "\n"
                         go_go = False
                     if not pump_outlet in storm_drain.INP_nodes:
-                        pump_outlets_not_found += name + "\n"
+                        pump_outlets_not_found += "      " +  name + "\n"
                         go_go = False
 
                     if not go_go:
@@ -2026,10 +2026,10 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                     feat.setFields(fields)
                     
                     if not orifice_inlet in storm_drain.INP_nodes:
-                        orifice_inlets_not_found += name + "\n"
+                        orifice_inlets_not_found += "      " +  name + "\n"
                         go_go = False
                     if not orifice_outlet in storm_drain.INP_nodes:
-                        orifice_outlets_not_found += name + "\n"
+                        orifice_outlets_not_found += "      " +  name + "\n"
                         go_go = False
 
                     if not go_go:
@@ -2176,10 +2176,10 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                     feat.setFields(fields)
 
                     if not weir_inlet in storm_drain.INP_nodes:
-                        weir_inlets_not_found += name + "\n"
+                        weir_inlets_not_found += "      " +  name + "\n"
                         go_go = False
                     if not weir_outlet in storm_drain.INP_nodes:
-                        weir_outlets_not_found += name + "\n"
+                        weir_outlets_not_found += "      " +  name + "\n"
                         go_go = False
 
                     if not go_go:
@@ -2291,7 +2291,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             error_msg += "\n\nThe following conduits have no inlet defined!\n" + conduit_inlets_not_found
 
         if conduit_outlets_not_found != "":
-            error_msg += "\n\nThe following conduits have no outlet defined!\n\n" + conduit_outlets_not_found
+            error_msg += "\n\nThe following conduits have no outlet defined!\n" + conduit_outlets_not_found
 
         if pump_data_missing != "":
             error_msg += "\n" + pump_data_missing
