@@ -297,25 +297,145 @@
      </layout>
     </widget>
    </item>
+   <item row="2" column="0">
+    <widget class="QTableWidget" name="weirs_tblw">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <property name="minimumSize">
+      <size>
+       <width>960</width>
+       <height>0</height>
+      </size>
+     </property>
+     <property name="maximumSize">
+      <size>
+       <width>16777215</width>
+       <height>16777215</height>
+      </size>
+     </property>
+     <property name="selectionMode">
+      <enum>QAbstractItemView::SingleSelection</enum>
+     </property>
+     <property name="selectionBehavior">
+      <enum>QAbstractItemView::SelectRows</enum>
+     </property>
+     <property name="rowCount">
+      <number>5</number>
+     </property>
+     <property name="columnCount">
+      <number>13</number>
+     </property>
+     <row/>
+     <row/>
+     <row/>
+     <row/>
+     <row/>
+     <column>
+      <property name="text">
+       <string>Name</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>From Inlet</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>To Outlet</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>Type</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>Inlet Offset</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>Discharge Coeff.</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>Flap Gate</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>End Contrac.</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>End Coeff.</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>Side Slope</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>Shape</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>Height (Geom1)</string>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>Length (Geom2)</string>
+      </property>
+     </column>
+     <item row="0" column="4">
+      <property name="text">
+       <string/>
+      </property>
+     </item>
+     <item row="0" column="7">
+      <property name="text">
+       <string/>
+      </property>
+      <property name="flags">
+       <set>ItemIsSelectable|ItemIsDragEnabled|ItemIsUserCheckable</set>
+      </property>
+     </item>
+    </widget>
+   </item>
+   <item row="3" column="0">
+    <widget class="QDialogButtonBox" name="weirs_buttonBox">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+     <property name="standardButtons">
+      <set>QDialogButtonBox::Close|QDialogButtonBox::Save</set>
+     </property>
+    </widget>
+   </item>
    <item row="1" column="0">
     <layout class="QHBoxLayout" name="horizontalLayout_17">
      <item>
-      <spacer name="horizontalSpacer_3">
-       <property name="orientation">
-        <enum>Qt::Horizontal</enum>
-       </property>
-       <property name="sizeHint" stdset="0">
-        <size>
-         <width>58</width>
-         <height>138</height>
-        </size>
-       </property>
-      </spacer>
-     </item>
-     <item>
       <widget class="QGroupBox" name="pumps_grp">
        <property name="sizePolicy">
-        <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+        <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
          <horstretch>0</horstretch>
          <verstretch>0</verstretch>
         </sizepolicy>
@@ -361,8 +481,14 @@
                 </property>
                 <property name="minimumSize">
                  <size>
-                  <width>56</width>
+                  <width>74</width>
                   <height>25</height>
+                 </size>
+                </property>
+                <property name="maximumSize">
+                 <size>
+                  <width>74</width>
+                  <height>16777215</height>
                  </size>
                 </property>
                 <property name="toolTip">
@@ -412,8 +538,14 @@
                 </property>
                 <property name="minimumSize">
                  <size>
-                  <width>56</width>
+                  <width>74</width>
                   <height>25</height>
+                 </size>
+                </property>
+                <property name="maximumSize">
+                 <size>
+                  <width>74</width>
+                  <height>16777215</height>
                  </size>
                 </property>
                 <property name="toolTip">
@@ -483,13 +615,13 @@
                 </property>
                 <property name="minimumSize">
                  <size>
-                  <width>120</width>
+                  <width>140</width>
                   <height>25</height>
                  </size>
                 </property>
                 <property name="maximumSize">
                  <size>
-                  <width>120</width>
+                  <width>140</width>
                   <height>25</height>
                  </size>
                 </property>
@@ -533,7 +665,7 @@
                </widget>
               </item>
               <item>
-               <widget class="QDoubleSpinBox" name="weir_crest_height_dbox">
+               <widget class="QDoubleSpinBox" name="weir_inlet_offset_dbox">
                 <property name="sizePolicy">
                  <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
                   <horstretch>0</horstretch>
@@ -620,13 +752,13 @@
                 </property>
                 <property name="minimumSize">
                  <size>
-                  <width>60</width>
+                  <width>65</width>
                   <height>25</height>
                  </size>
                 </property>
                 <property name="maximumSize">
                  <size>
-                  <width>60</width>
+                  <width>65</width>
                   <height>25</height>
                  </size>
                 </property>
@@ -809,13 +941,13 @@
                 </property>
                 <property name="minimumSize">
                  <size>
-                  <width>140</width>
+                  <width>143</width>
                   <height>25</height>
                  </size>
                 </property>
                 <property name="maximumSize">
                  <size>
-                  <width>140</width>
+                  <width>143</width>
                   <height>25</height>
                  </size>
                 </property>
@@ -926,153 +1058,7 @@
        </layout>
       </widget>
      </item>
-     <item>
-      <spacer name="horizontalSpacer_5">
-       <property name="orientation">
-        <enum>Qt::Horizontal</enum>
-       </property>
-       <property name="sizeHint" stdset="0">
-        <size>
-         <width>68</width>
-         <height>128</height>
-        </size>
-       </property>
-      </spacer>
-     </item>
     </layout>
-   </item>
-   <item row="2" column="0">
-    <widget class="QTableWidget" name="weirs_tblw">
-     <property name="sizePolicy">
-      <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-       <horstretch>0</horstretch>
-       <verstretch>0</verstretch>
-      </sizepolicy>
-     </property>
-     <property name="minimumSize">
-      <size>
-       <width>960</width>
-       <height>0</height>
-      </size>
-     </property>
-     <property name="maximumSize">
-      <size>
-       <width>16777215</width>
-       <height>16777215</height>
-      </size>
-     </property>
-     <property name="selectionMode">
-      <enum>QAbstractItemView::SingleSelection</enum>
-     </property>
-     <property name="selectionBehavior">
-      <enum>QAbstractItemView::SelectRows</enum>
-     </property>
-     <property name="rowCount">
-      <number>5</number>
-     </property>
-     <property name="columnCount">
-      <number>13</number>
-     </property>
-     <row/>
-     <row/>
-     <row/>
-     <row/>
-     <row/>
-     <column>
-      <property name="text">
-       <string>Name</string>
-      </property>
-     </column>
-     <column>
-      <property name="text">
-       <string>From Inlet</string>
-      </property>
-     </column>
-     <column>
-      <property name="text">
-       <string>To Outlet</string>
-      </property>
-     </column>
-     <column>
-      <property name="text">
-       <string>Type</string>
-      </property>
-     </column>
-     <column>
-      <property name="text">
-       <string>Inlet Offset</string>
-      </property>
-     </column>
-     <column>
-      <property name="text">
-       <string>Discharge Coeff.</string>
-      </property>
-     </column>
-     <column>
-      <property name="text">
-       <string>Flap Gate</string>
-      </property>
-     </column>
-     <column>
-      <property name="text">
-       <string>End Contrac.</string>
-      </property>
-     </column>
-     <column>
-      <property name="text">
-       <string>End Coeff.</string>
-      </property>
-     </column>
-     <column>
-      <property name="text">
-       <string>Side Slope</string>
-      </property>
-     </column>
-     <column>
-      <property name="text">
-       <string>Shape</string>
-      </property>
-     </column>
-     <column>
-      <property name="text">
-       <string>Height (Geom1)</string>
-      </property>
-     </column>
-     <column>
-      <property name="text">
-       <string>Length (Geom2)</string>
-      </property>
-     </column>
-     <item row="0" column="4">
-      <property name="text">
-       <string/>
-      </property>
-     </item>
-     <item row="0" column="7">
-      <property name="text">
-       <string/>
-      </property>
-      <property name="flags">
-       <set>ItemIsSelectable|ItemIsDragEnabled|ItemIsUserCheckable</set>
-      </property>
-     </item>
-    </widget>
-   </item>
-   <item row="3" column="0">
-    <widget class="QDialogButtonBox" name="weirs_buttonBox">
-     <property name="sizePolicy">
-      <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-       <horstretch>0</horstretch>
-       <verstretch>0</verstretch>
-      </sizepolicy>
-     </property>
-     <property name="orientation">
-      <enum>Qt::Horizontal</enum>
-     </property>
-     <property name="standardButtons">
-      <set>QDialogButtonBox::Close|QDialogButtonBox::Save</set>
-     </property>
-    </widget>
    </item>
   </layout>
  </widget>

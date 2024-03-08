@@ -167,7 +167,7 @@ class Layers(object):
                         "name": "Storm Drain Pumps",
                         "sgroup": "User Layers",
                         "ssgroup": "Storm Drain",
-                        "styles": ["user_swmm_conduits.qml"],
+                        "styles": ["user_swmm_pumps.qml"],
                         "attrs_edit_widgets": {},
                         "module": ["all"],
                         "readonly": False,
@@ -180,7 +180,7 @@ class Layers(object):
                         "name": "Storm Drain Orifices",
                         "sgroup": "User Layers",
                         "ssgroup": "Storm Drain",
-                        "styles": ["user_swmm_conduits.qml"],
+                        "styles": ["user_swmm_orifices.qml"],
                         "attrs_edit_widgets": {},
                         "module": ["all"],
                         "readonly": False,
@@ -193,7 +193,7 @@ class Layers(object):
                         "name": "Storm Drain Weirs",
                         "sgroup": "User Layers",
                         "ssgroup": "Storm Drain",
-                        "styles": ["user_swmm_conduits.qml"],
+                        "styles": ["user_swmm_weirs.qml"],
                         "attrs_edit_widgets": {},
                         "module": ["all"],
                         "readonly": False,
@@ -213,6 +213,17 @@ class Layers(object):
                         "advanced": False
                     },
                 ),
+                (
+                    "user_swmm_storage_units",
+                    {
+                        "name": "Storm Drain Storage Units",
+                        "sgroup": "User Layers",
+                        "styles": ["user_swmm_storage_units.qml"],
+                        "attrs_edit_widgets": {},
+                        "module": ["all"],
+                        "readonly": False,
+                    },
+                ),                
                 (
                     "buildings_areas",
                     {

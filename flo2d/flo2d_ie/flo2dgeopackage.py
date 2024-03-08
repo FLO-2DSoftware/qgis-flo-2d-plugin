@@ -15,6 +15,7 @@ from math import isclose
 from operator import itemgetter
 
 import numpy as np
+from qgis.PyQt import QtCore, QtGui
 from qgis.core import NULL, QgsApplication
 from qgis.PyQt.QtCore import Qt
 from qgis.PyQt.QtWidgets import QApplication, QProgressDialog
@@ -763,10 +764,12 @@ class Flo2dGeoPackage(GeoPackageUtils):
             self.execute(qry)
 
         except Exception:
+            QApplication.setOverrideCursor(QtGui.QCursor(QtCore.Qt.ArrowCursor))
             self.uc.log_info(traceback.format_exc())
             self.uc.show_warn(
                 "WARNING 010219.0742: Import channels failed!. Check CHAN.DAT and CHANBANK.DAT files."
             )  # self.uc.show_warn('Import channels failed!.\nMaybe the number of left bank and right bank cells are different.')
+            QApplication.setOverrideCursor(Qt.WaitCursor)
 
     def import_xsec(self):
         xsec_sql = ["""INSERT INTO xsec_n_data (chan_n_nxsecnum, xi, yi) VALUES""", 3]
@@ -3399,7 +3402,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                             else:
                                 inlet_type_qry = "SELECT intype FROM swmmflo WHERE swmm_jt = ?;"
                                 inlet_type = self.execute(inlet_type_qry, (gid,)).fetchall()
-                                if inlet_type is not None:
+                                if inlet_type is not None and len(inlet_type) != 0:
                                     # TODO: there may be more than one record. Why? Some may have intype = 4.
                                     if len(inlet_type) > 1:
                                         errors += "* Grid element " + str(gid) + " has has more than one inlet.\n"
@@ -3457,10 +3460,14 @@ class Flo2dGeoPackage(GeoPackageUtils):
                                                             )
                                             else:
                                                 if not error_mentioned:
-                                                    errors += "Storm Drain Nodes layer in User Layers is empty.\nSWMMFLORT.DAT may be incomplete!"
+                                                    errors += "Storm Drain Nodes layer in User Layers is empty.\nSWMMFLORT.DAT may be incomplete!\n"
                                                     error_mentioned = True
+                                else:
+                                    errors += (
+                                        "* Rating table " + rtname + " doesn't have an inlet associated with node " + str(gid)+ ".\n"
+                                    )                                                        
                     else:
-                        errors += "* Unknown grid element in Rating Table.\n"                                   
+                        errors += "* Unknown grid element for Rating Table " + rtname + ".\n"                                   
                 culverts = self.gutils.execute(
                     "SELECT grid_fid, name, cdiameter, typec, typeen, cubase, multbarrels FROM swmmflo_culvert ORDER BY fid;"
                 ).fetchall()
