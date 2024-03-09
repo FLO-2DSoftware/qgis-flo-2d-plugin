@@ -15,7 +15,7 @@ from qgis.PyQt.QtWidgets import QApplication, QDialogButtonBox, QTableWidgetItem
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
 from ..utils import is_true
-from .ui_utils import center_canvas, load_ui, set_icon, zoom
+from .ui_utils import center_canvas, load_ui, set_icon, zoom, center_feature
 
 uiDialog, qtBaseClass = load_ui("conduits")
 
@@ -201,7 +201,6 @@ class ConduitsDialog(qtBaseClass, uiDialog):
     def conduits_tblw_cell_clicked(self, row, column):
         QApplication.setOverrideCursor(Qt.WaitCursor)
         try:
-            # self.blockSignals(True)
             self.conduit_name_cbo.blockSignals(True)
             self.conduit_name_cbo.setCurrentIndex(row)
             self.conduit_name_cbo.blockSignals(False)
@@ -256,30 +255,31 @@ class ConduitsDialog(qtBaseClass, uiDialog):
             self.uc.show_error("ERROR 200618.0707: assignment of value failed!.\n", e)
 
     def populate_conduits(self):
-        qry = """SELECT fid,
-                        conduit_name,
-                        conduit_inlet, 
-                        conduit_outlet,
-                        conduit_inlet_offset,
-                        conduit_outlet_offset,
-                        xsections_shape,
-                        xsections_barrels,
-                        xsections_max_depth,
-                        xsections_geom2,  
-                        xsections_geom3,  
-                        xsections_geom4,                                                  
-                        conduit_length,
-                        conduit_manning,
-                        conduit_init_flow,
-                        conduit_max_flow,
-                        losses_inlet,
-                        losses_outlet,
-                        losses_average,
-                        losses_flapgate
-                FROM user_swmm_conduits;"""
-                
-        wrong_status = 0
+        QApplication.setOverrideCursor(Qt.WaitCursor)
         try:
+            qry = """SELECT fid,
+                            conduit_name,
+                            conduit_inlet, 
+                            conduit_outlet,
+                            conduit_inlet_offset,
+                            conduit_outlet_offset,
+                            xsections_shape,
+                            xsections_barrels,
+                            xsections_max_depth,
+                            xsections_geom2,  
+                            xsections_geom3,  
+                            xsections_geom4,                                                  
+                            conduit_length,
+                            conduit_manning,
+                            conduit_init_flow,
+                            conduit_max_flow,
+                            losses_inlet,
+                            losses_outlet,
+                            losses_average,
+                            losses_flapgate
+                    FROM user_swmm_conduits;"""
+                    
+            wrong_status = 0
             rows = self.gutils.execute(qry).fetchall()
             self.conduits_tblw.setRowCount(0)
             for row_number, row_data in enumerate(rows):  # In each iteration gets, for example:
@@ -364,20 +364,25 @@ class ConduitsDialog(qtBaseClass, uiDialog):
                         self.conduits_tblw.setItem(row_number, element - 1, item)
 
             self.highlight_conduit(self.conduit_name_cbo.currentText())
-            QApplication.restoreOverrideCursor()
+            
             if wrong_status > 0:
+                QApplication.setOverrideCursor(Qt.ArrowCursor)
                 self.uc.show_info(
                     "WARNING 121203.0547: there are some conduits with wrong shape, or flap gate!\n\n"
                     + "All wrong values were changed to their defaults.\n\n"
                     + "Edit them as wished and then 'Save' to replace the values in the 'Storm Drain Conduits' User layers."
                 )            
-
+                QApplication.restoreOverrideCursor()
         except Exception as e:
-            QApplication.restoreOverrideCursor()
+            QApplication.setOverrideCursor(Qt.ArrowCursor)
             self.uc.show_error(
                 "ERROR 200618.0705: assignment of value from conduits users layer failed!.\n",
                 e,
             )
+            QApplication.restoreOverrideCursor()
+        finally:
+            QApplication.restoreOverrideCursor()              
+            
 
     def onVerticalSectionClicked(self, logicalIndex):
         self.conduits_tblw_cell_clicked(logicalIndex, 0)
@@ -512,10 +517,7 @@ class ConduitsDialog(qtBaseClass, uiDialog):
                     ).fetchone()
                     self.lyrs.show_feat_rubber(self.conduits_lyr.id(), fid[0], QColor(Qt.yellow))
                     feat = next(self.conduits_lyr.getFeatures(QgsFeatureRequest(fid[0])))
-                    x, y = feat.geometry().centroid().asPoint()
-                    self.lyrs.zoom_to_all()
-                    center_canvas(self.iface, x, y)
-                    zoom(self.iface, 0.45)
+                    center_feature(self.iface, feat) 
                 else:
                     self.uc.bar_warn("WARNING 091121.1139: conduit " + str(conduit) + " not found.")
                     self.lyrs.clear_rubber()

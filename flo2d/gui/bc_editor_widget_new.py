@@ -41,7 +41,6 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
         self.iface = iface
         self.canvas = iface.mapCanvas()
         self.uc = UserCommunication(iface, "FLO-2D")
-        self.ilg = InvisibleLayersAndGroups(self.iface)
         self.setupUi(self)
 
         self.lyrs = lyrs
@@ -221,26 +220,6 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
         if self.inflow_grpbox.isChecked() or self.outflow_grpbox.isChecked():
             self.populate_inflows()
             self.populate_outflows()
-
-            self.ilg.unhideLayer(self.bc_points_lyr)
-            self.ilg.unhideLayer(self.bc_lines_lyr)
-            self.ilg.unhideLayer(self.bc_polygons_lyr)
-
-            self.ilg.unhideGroup('Boundary Conditions Tables')
-
-            # self.bc_points_lyr.setFlags(self.bc_points_lyr.flags() & ~QgsMapLayer.LayerFlag(QgsMapLayer.Private))
-            # self.bc_lines_lyr.setFlags(self.bc_lines_lyr.flags() & ~QgsMapLayer.LayerFlag(QgsMapLayer.Private))
-            # self.bc_polygons_lyr.setFlags(self.bc_polygons_lyr.flags() & ~QgsMapLayer.LayerFlag(QgsMapLayer.Private))
-        else:
-            self.ilg.hideLayer(self.bc_points_lyr)
-            self.ilg.hideLayer(self.bc_lines_lyr)
-            self.ilg.hideLayer(self.bc_polygons_lyr)
-
-            self.ilg.hideGroup('Boundary Conditions Tables')
-
-            # self.bc_points_lyr.setFlags(QgsMapLayer.Private)
-            # self.bc_lines_lyr.setFlags(QgsMapLayer.Private)
-            # self.bc_polygons_lyr.setFlags(QgsMapLayer.Private)
 
     def save_changes(self):
         """

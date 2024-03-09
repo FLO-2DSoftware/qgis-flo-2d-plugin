@@ -12,6 +12,7 @@ import os
 import time
 import traceback
 
+from qgis.PyQt import QtCore, QtGui
 from qgis.core import NULL, Qgis, QgsFeature, QgsGeometry, QgsMessageLog, QgsWkbTypes
 from qgis.PyQt import QtWidgets
 from qgis.PyQt.QtCore import QSettings, Qt, QThread
@@ -444,7 +445,7 @@ class GridToolsWidget(qtBaseClass, uiDialog):
                         if cell[0] != NULL:
                             dlg.interpolate_from_lidar()
                         else:
-                            QApplication.restoreOverrideCursor()
+                            QApplication.setOverrideCursor(QtGui.QCursor(QtCore.Qt.ArrowCursor))
                             proceed = self.uc.question(
                                 "Grid layer's fields 'col' and 'row' have NULL values!\n\nWould you like to assign them?"
                             )
