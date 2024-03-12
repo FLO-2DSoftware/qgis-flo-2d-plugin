@@ -218,10 +218,12 @@ class Layers(object):
                     {
                         "name": "Storm Drain Storage Units",
                         "sgroup": "User Layers",
+                        "ssgroup": "Storm Drain",
                         "styles": ["user_swmm_storage_units.qml"],
                         "attrs_edit_widgets": {},
                         "module": ["all"],
                         "readonly": False,
+                        "advanced": False
                     },
                 ),                
                 (
