@@ -16,6 +16,7 @@ from qgis._core import QgsMessageLog
 
 from ..deps import safe_pyqtgraph as pg
 from ..utils import Msge
+import numpy as np
 
 pg.setConfigOption("background", "w")
 pg.setConfigOption("foreground", "k")
@@ -43,7 +44,11 @@ class PlotWidget(QWidget):
         Function to update the axis when changing the plots
         """
         any_checked = any(self.plot.legend.items[i][1].isVisible() for i in range(0, len(self.plot.legend.items)))
-        if any_checked:
+        for i in range(len(self.plot.legend.items)):
+            data_tuple = self.items[self.plot.legend.items[i][1].text].getData()
+            any_nan = any(np.isnan(data) for data in data_tuple[0])
+
+        if any_checked and not any_nan:
             self.plot.autoRange()
 
     def setSizeHint(self, width, height):
@@ -119,7 +124,8 @@ class PlotWidget(QWidget):
 
     def update_item(self, name, data):
         x, y = data
-        self.items[name].setData(x, y)
+        if name in self.items:
+            self.items[name].setData(x, y)
 
     def remove_item(self, name):
         if self.plot.legend:

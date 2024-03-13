@@ -34,6 +34,7 @@ from subprocess import (
     run,
 )
 
+from qgis.PyQt import QtCore, QtGui
 from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QApplication, QToolButton
 from osgeo import gdal
@@ -113,6 +114,7 @@ from .gui.grid_info_widget import GridInfoWidget
 from .gui.plot_widget import PlotWidget
 from .gui.table_editor_widget import TableEditorWidget
 from .layers import Layers
+from .misc.invisible_lyrs_grps import InvisibleLayersAndGroups
 from .user_communication import UserCommunication
 from .utils import get_flo2dpro_version
 
@@ -168,6 +170,7 @@ class Flo2D(object):
         self.con = None
         self.iface.f2d["con"] = self.con
         self.lyrs = Layers(iface)
+        self.ilg = InvisibleLayersAndGroups(self.iface)
         self.lyrs.group = None
         self.gutils = None
         self.f2g = None
@@ -218,8 +221,8 @@ class Flo2D(object):
         self.f2d_widget.rain_editor.setup_connection()
         self.f2d_widget.rain_editor.rain_properties()
 
-        self.f2d_widget.bc_editor.setup_connection()
-        self.f2d_widget.bc_editor.populate_bcs(widget_setup=True)
+        self.f2d_widget.bc_editor_new.setup_connection()
+        self.f2d_widget.bc_editor_new.populate_bcs(widget_setup=True)
 
         self.f2d_widget.ic_editor.populate_cbos()
 
@@ -696,9 +699,9 @@ class Flo2D(object):
             self.iface.removeDockWidget(self.f2d_grid_info_dock)
             del self.f2d_grid_info_dock
         if self.f2d_widget is not None:
-            if self.f2d_widget.bc_editor is not None:
-                self.f2d_widget.bc_editor.close()
-                del self.f2d_widget.bc_editor
+            # if self.f2d_widget.bc_editor is not None:
+            #     self.f2d_widget.bc_editor.close()
+            #     del self.f2d_widget.bc_editor
 
             if self.f2d_widget.profile_tool is not None:
                 self.f2d_widget.profile_tool.close()
@@ -804,6 +807,7 @@ class Flo2D(object):
             s = QSettings()
             s.setValue("FLO-2D/last_flopro_project", os.path.dirname(gpkg_path_adj))
             s.setValue("FLO-2D/lastGdsDir", os.path.dirname(gpkg_path_adj))
+            s.setValue("FLO-2D/advanced_layers", False)
 
             contact = dlg_settings.lineEdit_au.text()
             email = dlg_settings.lineEdit_co.text()
@@ -1058,7 +1062,7 @@ class Flo2D(object):
                 else:
                     not_added.append(layer.name())
 
-        QApplication.restoreOverrideCursor()
+        QApplication.setOverrideCursor(QtGui.QCursor(QtCore.Qt.ArrowCursor))
 
         if len(not_added) > 0:
             layers_not_added = ', '.join(map(str, not_added))
@@ -1075,7 +1079,6 @@ class Flo2D(object):
         self.dlg_gpkg_management = GpkgManagementDialog(self.iface, self.lyrs, self.gutils)
         self.dlg_gpkg_management.show()
 
-
     def run_settings(self):
         """
         Function to set the run settings: FLO-2D and Project folders
@@ -1087,16 +1090,41 @@ class Flo2D(object):
         if not ok:
             return
         else:
-            flo2d_dir, project_dir = dlg.get_parameters()
+            flo2d_dir, project_dir, advanced_layers = dlg.get_parameters()
             s = QSettings()
             s.setValue("FLO-2D/lastGdsDir", project_dir)
             s.setValue("FLO-2D/last_flopro", flo2d_dir)
+            if advanced_layers != s.value("FLO-2D/advanced_layers", ""):
+                # show advanced layers
+                if advanced_layers:
+                    lyrs = self.lyrs.data
+                    for key, value in lyrs.items():
+                        group = value.get("sgroup")
+                        subsubgroup = value.get("ssgroup")
+                        self.ilg.unhideLayer(self.lyrs.data[key]["qlyr"])
+                        self.ilg.unhideGroup(group)
+                        self.ilg.unhideGroup(subsubgroup, group)
+                # hide advanced layers
+                else:
+                    lyrs = self.lyrs.data
+                    for key, value in lyrs.items():
+                        advanced = value.get("advanced")
+                        if advanced:
+                            subgroup = value.get("sgroup")
+                            subsubgroup = value.get("ssgroup")
+                            self.ilg.hideLayer(self.lyrs.data[key]["qlyr"])
+                            if subsubgroup == "Gutters" or subsubgroup == "Multiple Channels" or subsubgroup == "Streets":
+                                self.ilg.hideGroup(subsubgroup, subgroup)
+                            else:
+                                self.ilg.hideGroup(subgroup)
+            s.setValue("FLO-2D/advanced_layers", advanced_layers)
 
             if project_dir != "" and flo2d_dir != "":
                 s.setValue("FLO-2D/run_settings", True)
                 flo2d_v = get_flo2dpro_version(s.value("FLO-2D/last_flopro") + "/FLOPRO.exe")
                 self.gutils.set_metadata_par("FLO-2D_V", flo2d_v)
 
+            self.f2d_plot.clear()
             self.uc.bar_info("Run Settings saved!")
             self.uc.log_info(f"Run Settings saved!\nProject Folder: {project_dir}\nFLO-2D Folder: {flo2d_dir}")
 
@@ -1558,6 +1586,7 @@ class Flo2D(object):
         if calls[0] == "export_cont_toler":
             self.files_used = "CONT.DAT\n"
 
+        QApplication.setOverrideCursor(Qt.WaitCursor)
         for call in calls:
             if call == "export_bridge_xsec":
                 dat = "BRIDGE_XSEC.DAT"
@@ -1855,6 +1884,15 @@ class Flo2D(object):
                         "swmmflort",
                         "swmmflort_data",
                         "swmmoutf",
+                        "swmmflo_culvert",
+                        "swmm_inflows",
+                        "swmm_inflow_patterns",
+                        "swmm_time_series",
+                        "swmm_time_series_data",
+                        "swmm_tidal_curve",
+                        "swmm_tidal_curve_data",
+                        "swmm_pumps_curve_data",
+                        "swmm_other_curves",
                         "tolspatial",
                         "tolspatial_cells",
                         "user_bc_lines",
@@ -1883,6 +1921,7 @@ class Flo2D(object):
                         "user_swmm_orifices",
                         "user_swmm_weirs",
                         "user_swmm_nodes",
+                        "user_swmm_storage_units",
                         "user_xsec_n_data",
                         "user_xsections",
                         "wstime",
@@ -1959,7 +1998,7 @@ class Flo2D(object):
                     else:
                         cell = self.gutils.execute("SELECT col FROM grid WHERE fid = 1").fetchone()
                         if cell[0] == NULL:
-                            QApplication.restoreOverrideCursor()
+                            QApplication.setOverrideCursor(QtGui.QCursor(QtCore.Qt.ArrowCursor))
                             proceed = self.uc.question(
                                 "Grid layer's fields 'col' and 'row' have NULL values!\n\nWould you like to assign them?"
                             )
@@ -1970,13 +2009,13 @@ class Flo2D(object):
                             else:
                                 return
 
-                    QApplication.restoreOverrideCursor()
+                    QApplication.setOverrideCursor(QtGui.QCursor(QtCore.Qt.ArrowCursor))
 
                 except Exception as e:
-                    QApplication.restoreOverrideCursor()
+                    QApplication.setOverrideCursor(QtGui.QCursor(QtCore.Qt.ArrowCursor))
                     self.uc.show_error("ERROR 050521.0349: importing .DAT files!.\n", e)
                 finally:
-                    QApplication.restoreOverrideCursor()
+                    QApplication.setOverrideCursor(QtGui.QCursor(QtCore.Qt.ArrowCursor))
                     if self.files_used != "" or self.files_not_used != "":
                         self.uc.show_info(
                             "Files read by this project:\n\n"
@@ -2225,7 +2264,7 @@ class Flo2D(object):
                 else:
                     cell = self.gutils.execute("SELECT col FROM grid WHERE fid = 1").fetchone()
                     if cell is None:
-                        QApplication.restoreOverrideCursor()
+                        QApplication.setOverrideCursor(QtGui.QCursor(QtCore.Qt.ArrowCursor))
                         proceed = self.uc.question(
                             "Grid layer's fields 'col' and 'row' have NULL values!\n\nWould you like to assign them?"
                         )
@@ -2462,7 +2501,7 @@ class Flo2D(object):
                         self.uc.show_info("No component was selected!")
 
                 finally:
-                    QApplication.restoreOverrideCursor()
+                    QApplication.setOverrideCursor(QtGui.QCursor(QtCore.Qt.ArrowCursor))
                     if self.files_used != "" or self.files_not_used != "":
                         self.uc.show_info(
                             "Files read by this project:\n\n"
@@ -2797,10 +2836,8 @@ class Flo2D(object):
                     # FLO-2D .DAT files
 
                     self.uc.bar_info("Flo2D model exported to " + outdir, dur=3)
-                    QApplication.restoreOverrideCursor()
 
                 finally:
-                    QApplication.restoreOverrideCursor()
 
                     if "export_swmmflo" in export_calls:
                         self.f2d_widget.storm_drain_editor.export_storm_drain_INP_file()
@@ -2811,6 +2848,7 @@ class Flo2D(object):
                             new_files_used = self.files_used.replace("SIMPLE_MULT.DAT\n", "")
                             self.files_used = new_files_used
                             if os.path.isfile(outdir + r"\SIMPLE_MULT.DAT"):
+                                QApplication.restoreOverrideCursor()
                                 if self.uc.question(
                                         "There are no simple multiple channel cells in the project but\n"
                                         + "there is a SIMPLE_MULT.DAT file in the directory.\n"
@@ -2818,11 +2856,12 @@ class Flo2D(object):
                                         + "Delete SIMPLE_MULT.DAT?"
                                 ):
                                     os.remove(outdir + r"\SIMPLE_MULT.DAT")
-
+                                QApplication.setOverrideCursor(Qt.WaitCursor)
                         if self.gutils.is_table_empty("mult_cells"):
                             new_files_used = self.files_used.replace("\nMULT.DAT\n", "\n")
                             self.files_used = new_files_used
                             if os.path.isfile(outdir + r"\MULT.DAT"):
+                                QApplication.restoreOverrideCursor()
                                 if self.uc.question(
                                         "There are no multiple channel cells in the project but\n"
                                         + "there is a MULT.DAT file in the directory.\n"
@@ -2830,7 +2869,7 @@ class Flo2D(object):
                                         + "Delete MULT.DAT?"
                                 ):
                                     os.remove(outdir + r"\MULT.DAT")
-
+                                QApplication.setOverrideCursor(Qt.WaitCursor)
                     if self.files_used != "":
                         self.uc.show_info("Files exported to\n" + outdir + "\n\n" + self.files_used)
 
@@ -2838,7 +2877,7 @@ class Flo2D(object):
                         info = "WARNINGS:\n\n" + self.f2g.export_messages
                         self.uc.show_info(info)
 
-        QApplication.restoreOverrideCursor()
+        QApplication.setOverrideCursor(QtGui.QCursor(QtCore.Qt.ArrowCursor))
 
     @connection_required
     def export_hdf5(self):
@@ -3052,16 +3091,27 @@ class Flo2D(object):
         self.cur_profile_table = None
 
     @connection_required
-    def show_channel_profile(self, fid=None):
-        self.f2d_widget.xs_editor.show_channel(fid)
-        self.cur_profile_table = None
-
-    @connection_required
     def show_xsec_hydrograph(self, fid=None):
         """
         Show the cross-section hydrograph from HYCHAN.OUT
         """
         self.f2d_widget.xs_editor.show_hydrograph(self.cur_profile_table, fid)
+        self.cur_profile_table = None
+
+    @connection_required
+    def show_fpxsec_hydrograph(self, fid=None):
+        """
+        Show the floodplain cross-section hydrograph from HYCROSS.OUT
+        """
+        self.f2d_widget.fpxsec_editor.show_hydrograph(self.cur_profile_table, fid)
+        self.cur_profile_table = None
+
+    @connection_required
+    def show_fpxsec_cells_hydrograph(self, fid=None):
+        """
+        Show the floodplain cross-section hydrograph from HYCROSS.OUT
+        """
+        self.f2d_widget.fpxsec_editor.show_cells_hydrograph(self.cur_profile_table, fid)
         self.cur_profile_table = None
 
     @connection_required
@@ -3105,6 +3155,58 @@ class Flo2D(object):
         self.f2d_widget.storm_drain_editor.create_SD_discharge_table_and_plots(name)
 
     @connection_required
+    def show_conduit_discharge(self, fid=None):
+        """
+        Show storm drain discharge for a given conduit link.
+        """
+        if self.gutils.is_table_empty("grid"):
+            self.uc.bar_warn("There is no grid! Please create it before running tool.")
+            return
+
+        name = self.gutils.execute(f"SELECT conduit_name FROM user_swmm_conduits WHERE fid = '{fid}'").fetchone()[0]
+        self.f2d_dock.setUserVisible(True)
+        self.f2d_widget.storm_drain_editor.create_conduit_discharge_table_and_plots(name)
+
+    @connection_required
+    def show_pump_discharge(self, fid=None):
+        """
+        Show storm drain discharge for a given pump link.
+        """
+        if self.gutils.is_table_empty("grid"):
+            self.uc.bar_warn("There is no grid! Please create it before running tool.")
+            return
+
+        name = self.gutils.execute(f"SELECT pump_name FROM user_swmm_pumps WHERE fid = '{fid}'").fetchone()[0]
+        self.f2d_dock.setUserVisible(True)
+        self.f2d_widget.storm_drain_editor.create_conduit_discharge_table_and_plots(name)
+
+    @connection_required
+    def show_orifice_discharge(self, fid=None):
+        """
+        Show storm drain discharge for a given orifice link.
+        """
+        if self.gutils.is_table_empty("grid"):
+            self.uc.bar_warn("There is no grid! Please create it before running tool.")
+            return
+
+        name = self.gutils.execute(f"SELECT orifice_name FROM user_swmm_orifices WHERE fid = '{fid}'").fetchone()[0]
+        self.f2d_dock.setUserVisible(True)
+        self.f2d_widget.storm_drain_editor.create_conduit_discharge_table_and_plots(name)
+
+    @connection_required
+    def show_weir_discharge(self, fid=None):
+        """
+        Show storm drain discharge for a given weir link.
+        """
+        if self.gutils.is_table_empty("grid"):
+            self.uc.bar_warn("There is no grid! Please create it before running tool.")
+            return
+
+        name = self.gutils.execute(f"SELECT weir_name FROM user_swmm_weirs WHERE fid = '{fid}'").fetchone()[0]
+        self.f2d_dock.setUserVisible(True)
+        self.f2d_widget.storm_drain_editor.create_conduit_discharge_table_and_plots(name)
+
+    @connection_required
     def show_schem_xsec_info(self, fid=None):
         """
         Show schematic cross-section info.
@@ -3121,8 +3223,8 @@ class Flo2D(object):
         Show boundary editor.
         """
         self.f2d_dock.setUserVisible(True)
-        self.f2d_widget.bc_editor_grp.setCollapsed(False)
-        self.f2d_widget.bc_editor.show_editor(self.cur_info_table, fid)
+        self.f2d_widget.bc_editor_new_grp.setCollapsed(False)
+        self.f2d_widget.bc_editor_new.show_editor(self.cur_info_table, fid)
         self.cur_info_table = None
 
     @connection_required
@@ -3641,10 +3743,32 @@ class Flo2D(object):
         if table == 'chan_elems':
             self.cur_profile_table = table
             self.show_xsec_hydrograph(fid)
+        if table == 'fpxsec':
+            self.cur_profile_table = table
+            self.show_fpxsec_hydrograph(fid)
+        if table == 'fpxsec_cells':
+            self.cur_profile_table = table
+            self.show_fpxsec_cells_hydrograph(fid)
         if table == 'struct':
             self.cur_profile_table = table
             self.show_struct_hydrograph(fid)
         if table == 'user_swmm_nodes':
+            show_editor = self.editors_map[table]
+            self.cur_info_table = table
+            show_editor(fid)
+        if table == 'user_swmm_conduits':
+            show_editor = self.editors_map[table]
+            self.cur_info_table = table
+            show_editor(fid)
+        if table == 'user_swmm_weirs':
+            show_editor = self.editors_map[table]
+            self.cur_info_table = table
+            show_editor(fid)
+        if table == 'user_swmm_orifices':
+            show_editor = self.editors_map[table]
+            self.cur_info_table = table
+            show_editor(fid)
+        if table == 'user_swmm_pumps':
             show_editor = self.editors_map[table]
             self.cur_info_table = table
             show_editor(fid)
@@ -3656,20 +3780,22 @@ class Flo2D(object):
 
     def set_editors_map(self):
         self.editors_map = {
-            "chan": self.show_channel_profile,
             "user_levee_lines": self.show_user_profile,
             "user_xsections": self.show_xsec_editor,
             "user_streets": self.show_user_profile,
             "user_centerline": self.show_user_profile,
             "chan_elems": self.show_schem_xsec_info,
             "user_left_bank": self.show_user_profile,
-            "user_right_bank": self.show_user_profile,
             "user_bc_points": self.show_bc_editor,
             "user_bc_lines": self.show_bc_editor,
             "user_bc_polygons": self.show_bc_editor,
             "user_struct": self.show_struct_editor,
             "struct": self.show_struct_editor,
             "user_swmm_nodes": self.show_sd_discharge,
+            "user_swmm_conduits": self.show_conduit_discharge,
+            "user_swmm_weirs": self.show_weir_discharge,
+            "user_swmm_orifices": self.show_orifice_discharge,
+            "user_swmm_pumps": self.show_pump_discharge,
         }
 
     def restore_settings(self):

@@ -1379,7 +1379,6 @@ CREATE TRIGGER "default_swmm_name"
         WHERE "fid" = NEW."fid" AND NEW."name" IS NULL;
     END;
 
-
 CREATE TABLE "swmm_inflows" (
     "fid" INTEGER NOT NULL PRIMARY KEY,
     "node_name" TEXT, -- name of inlet in table swmm_user_nodes
@@ -1433,6 +1432,32 @@ CREATE TABLE "swmm_tidal_curve_data" (
     "stage" REAL DEFAULT 0
 );
 INSERT INTO gpkg_contents (table_name, data_type) VALUES ('swmm_tidal_curve_data', 'aspatial');  
+
+CREATE TABLE "user_swmm_storage_units" (
+    "fid" INTEGER PRIMARY KEY NOT NULL,
+    "grid" INTEGER DEFAULT 0,
+    "name" TEXT,
+	"invert_elev" REAL DEFAULT 0,
+	"max_depth" REAL DEFAULT 0,
+	"init_depth" REAL DEFAULT 0,
+    "external_inflow" TEXT DEFAULT 'False',
+    "treatment" TEXT DEFAULT "NO",
+	"ponded_area" REAL DEFAULT 0,
+	"evap_factor" REAL DEFAULT 0,
+	"infiltration" TEXT DEFAULT 'False',
+	"infil_method" TEXT DEFAULT "GREEN_AMPT",
+	"suction_head" REAL DEFAULT 0,
+	"conductivity" REAL DEFAULT 0,
+	"initial_deficit" REAL DEFAULT 0,
+	"storage_curve" TEXT DEFAULT 'FUNCTIONAL',
+	"coefficient" REAL DEFAULT 0,
+	"exponent" REAL DEFAULT 0,
+	"constant" REAL DEFAULT 0,
+	"curve_name" TEXT DEFAULT "*"
+);
+INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('user_swmm_storage_units', 'features', 4326);
+SELECT gpkgAddGeometryColumn('user_swmm_storage_units', 'geom', 'POINT', 0, 0, 0);
+SELECT gpkgAddGeometryTriggers('user_swmm_storage_units', 'geom');
 
 CREATE TABLE "user_swmm_conduits" (
     "fid" INTEGER PRIMARY KEY NOT NULL,
@@ -2687,14 +2712,18 @@ CREATE TRIGGER "update_all_schem_bc_on_inflow_cell_insert"
     AFTER INSERT ON "inflow_cells"
     BEGIN
         INSERT INTO "all_schem_bc" (type, tab_bc_fid, grid_fid, geom)
-        SELECT 'inflow', NEW."fid", NEW."grid_fid", (SELECT geom from grid WHERE fid = NEW.grid_fid);
+        SELECT 'inflow', inflow.bc_fid, NEW."grid_fid", (SELECT geom from grid WHERE fid = NEW.grid_fid)
+        FROM inflow
+        WHERE inflow.fid = NEW.inflow_fid;
     END;
 
 CREATE TRIGGER "update_all_schem_bc_on_outflow_cell_insert"
     AFTER INSERT ON "outflow_cells"
     BEGIN
         INSERT INTO "all_schem_bc" (type, tab_bc_fid, grid_fid, geom)
-        SELECT 'outflow', NEW."fid", NEW."grid_fid", (SELECT geom from grid WHERE fid = NEW.grid_fid);
+        SELECT 'outflow', outflow.bc_fid, NEW."grid_fid", (SELECT geom from grid WHERE fid = NEW.grid_fid)
+        FROM outflow
+        WHERE outflow.fid = NEW.outflow_fid;
     END;
 
 CREATE TRIGGER "update_all_schem_bc_on_inflow_cell_delete"

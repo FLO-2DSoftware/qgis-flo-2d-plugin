@@ -37,11 +37,13 @@ class ExternalProgramFLO2D(qtBaseClass, uiDialog):
         s = QSettings()
         flo2d_dir = s.value("FLO-2D/last_flopro", "")
         project_dir = last_dir = s.value("FLO-2D/lastGdsDir", "")
+        advanced_layers = s.value("FLO-2D/advanced_layers", "")
         self.flo2d_le.setText(flo2d_dir)
         self.project_le.setText(project_dir)
-
-    #         s.setValue('FLO-2D/last_flopro', flo2d_dir)
-    #         s.setValue('FLO-2D/last_flopro_project', project_dir)
+        if advanced_layers == "false" or not advanced_layers:
+            self.advanced_lyrs_chbox.setChecked(False)
+        else:
+            self.advanced_lyrs_chbox.setChecked(True)
 
     def get_flo2d_dir(self):
         s = QSettings()
@@ -64,7 +66,7 @@ class ExternalProgramFLO2D(qtBaseClass, uiDialog):
         s.setValue("FLO-2D/lastGdsDir", project_dir)
 
     def get_parameters(self):
-        return self.flo2d_le.text(), self.project_le.text()
+        return self.flo2d_le.text(), self.project_le.text(), self.advanced_lyrs_chbox.isChecked()
 
     def debug_run(self):
         try:

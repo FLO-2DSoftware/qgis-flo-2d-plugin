@@ -151,6 +151,7 @@ class InfoTool(QgsMapToolIdentify):
             "user_bc_polygons",
             "user_struct",
             "struct",
+            "user_swmm_nodes"
         ]
         try:
             res = self.identify(e.x(), e.y(), self.lyrs_list, QgsMapToolIdentify.TopDownAll)

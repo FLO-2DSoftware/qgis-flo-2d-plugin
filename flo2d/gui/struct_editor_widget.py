@@ -60,6 +60,11 @@ class StructEditorWidget(qtBaseClass, uiDialog):
         self.gutils = None
         self.define_data_table_head()
 
+        self.system_units = {
+            "CMS": ["m", "mps", "cms"],
+            "CFS": ["ft", "fps", "cfs"]
+             }
+
         self.inletRT = None
         self.plot = plot
         self.plot_item_name = None
@@ -155,7 +160,7 @@ class StructEditorWidget(qtBaseClass, uiDialog):
         self.struct = Structure(fid, self.iface.f2d["con"], self.iface)
         self.struct.get_row()
         self.show_struct_rb()
-        if self.center_chbox.isChecked():
+        if self.center_btn.isChecked():
             try:
                 feat = next(self.user_struct_lyr.getFeatures(QgsFeatureRequest(self.struct.fid)))
                 x, y = feat.geometry().centroid().asPoint()
@@ -412,6 +417,7 @@ class StructEditorWidget(qtBaseClass, uiDialog):
                 if tables_out != "":
                     txt += "The following files were not loaded:\n" + tables_out
                 if txt != "":
+                    self.struct_changed()
                     self.uc.show_info(txt)
 
             except Exception as e:
@@ -722,6 +728,8 @@ class StructEditorWidget(qtBaseClass, uiDialog):
             self.uc.bar_warn("There is no grid! Please create it before running tool.")
             return False
 
+        units = "CMS" if self.gutils.get_cont_par("METRIC") == "1" else "CFS"
+
         s = QSettings()
         HYDROSTRUCT_file = s.value("FLO-2D/lastHYDROSTRUCTFile", "")
         GDS_dir = s.value("FLO-2D/lastGdsDir", "")
@@ -773,4 +781,29 @@ class StructEditorWidget(qtBaseClass, uiDialog):
         self.plot.plot.setTitle(title=f"Hydraulic Structure - {fid}")
         self.plot.plot.setLabel("bottom", text="Time (hrs)")
         self.plot.plot.setLabel("left", text="")
-        self.plot.add_item("Discharge (cfs)", [time_list, discharge_list], col=QColor(Qt.darkYellow), sty=Qt.SolidLine)
+        self.plot.add_item(f"Discharge ({self.system_units[units][2]})", [time_list, discharge_list], col=QColor(Qt.darkYellow), sty=Qt.SolidLine)
+
+        try:  # Build table.
+            discharge_data_model = StandardItemModel()
+            self.tview.undoStack.clear()
+            self.tview.setModel(discharge_data_model)
+            discharge_data_model.clear()
+            discharge_data_model.setHorizontalHeaderLabels(["Time (hours)",
+                                                            f"Discharge ({self.system_units[units][2]})"])
+
+            data = zip(time_list, discharge_list)
+            for time, discharge in data:
+                time_item = StandardItem("{:.2f}".format(time)) if time is not None else StandardItem("")
+                discharge_item = StandardItem("{:.2f}".format(discharge)) if discharge is not None else StandardItem("")
+                discharge_data_model.appendRow([time_item, discharge_item])
+
+            self.tview.horizontalHeader().setStretchLastSection(True)
+            for col in range(3):
+                self.tview.setColumnWidth(col, 100)
+            for i in range(discharge_data_model.rowCount()):
+                self.tview.setRowHeight(i, 20)
+            return
+        except:
+            QApplication.restoreOverrideCursor()
+            self.uc.bar_warn("Error while building table for hydraulic structure discharge!")
+            return

@@ -23,7 +23,7 @@ from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
 from ..utils import is_number, is_true, m_fdata, float_or_zero
 from .table_editor_widget import StandardItem, StandardItemModel
-from .ui_utils import center_canvas, load_ui, set_icon, try_disconnect, zoom
+from .ui_utils import center_canvas, load_ui, set_icon, try_disconnect, zoom, center_feature
 
 uiDialog, qtBaseClass = load_ui("orifices")
 
@@ -79,21 +79,23 @@ class OrificesDialog(qtBaseClass, uiDialog):
             self.gutils = GeoPackageUtils(self.con, self.iface)
 
     def populate_orifices(self):
-        qry = """SELECT fid,
-                        orifice_name,
-                        orifice_inlet, 
-                        orifice_outlet,
-                        orifice_type,
-                        orifice_crest_height,
-                        orifice_disch_coeff,
-                        orifice_flap_gate,
-                        orifice_open_close_time,
-                        orifice_shape,
-                        orifice_height,
-                        orifice_width
-                FROM user_swmm_orifices;"""
-        wrong_status = 0
+        QApplication.setOverrideCursor(Qt.WaitCursor)
         try:
+            qry = """SELECT fid,
+                            orifice_name,
+                            orifice_inlet, 
+                            orifice_outlet,
+                            orifice_type,
+                            orifice_crest_height,
+                            orifice_disch_coeff,
+                            orifice_flap_gate,
+                            orifice_open_close_time,
+                            orifice_shape,
+                            orifice_height,
+                            orifice_width
+                    FROM user_swmm_orifices;"""
+            wrong_status = 0           
+            
             rows = self.gutils.execute(qry).fetchall()
             self.orifices_tblw.setRowCount(0)
             for row_number, row_data in enumerate(rows):
@@ -164,20 +166,26 @@ class OrificesDialog(qtBaseClass, uiDialog):
                         self.orifices_tblw.setItem(row_number, column - 1, item)
 
             self.highlight_orifice(self.orifice_name_cbo.currentText())
-            QApplication.restoreOverrideCursor()
+
             if wrong_status > 0:
+                QApplication.setOverrideCursor(Qt.ArrowCursor)
                 self.uc.show_info(
                     "WARNING 070422.0530: there are some orifices with wrong type, shape, or flap gate!\n\n"
                     + "All wrong values were changed to their defaults.\n\n"
                     + "Edit them as wished and then 'Save' to replace the values in the 'Storm Drain Orifices' User layers."
                 )
+                QApplication.restoreOverrideCursor()                
         except Exception as e:
-            QApplication.restoreOverrideCursor()
+            QApplication.setOverrideCursor(Qt.ArrowCursor)
             self.uc.show_error(
                 "ERROR 070422.0730: assignment of value from orifices users layer failed!.\n",
                 e,
             )
-
+            QApplication.restoreOverrideCursor()
+        finally:
+            QApplication.restoreOverrideCursor()              
+            
+            
     def orifice_crest_height_dbox_valueChanged(self):
         self.box_valueChanged(self.orifice_crest_height_dbox, 4)
 
@@ -228,7 +236,7 @@ class OrificesDialog(qtBaseClass, uiDialog):
 
             self.orifice_from_node_txt.setText(self.orifices_tblw.item(row, 1).text())
             self.orifice_to_node_txt.setText(self.orifices_tblw.item(row, 2).text())
-
+            
             name = self.orifices_tblw.item(row, 0).text()
             
             typ = self.orifices_tblw.item(row, 3).text()
@@ -238,10 +246,10 @@ class OrificesDialog(qtBaseClass, uiDialog):
                 self.orifices_tblw.item(row, 3).setText("SIDE")
                 self.uc.bar_warn("WARNING 111203.1058: orifice '" + name  + "' has wrong orifice type '" + typ + "'. Changed to default 'SIDE'")
             self.orifice_type_cbo.setCurrentIndex(index)            
-
+            
             self.orifice_crest_height_dbox.setValue(float_or_zero(self.orifices_tblw.item(row, 4).text()))
             self.orifice_discharge_coeff_dbox.setValue(float_or_zero(self.orifices_tblw.item(row, 5).text()))
-
+            
             flap = self.orifices_tblw.item(row, 6).text()
             index = self.orifice_flap_gate_cbo.findText(flap)
             if index == -1:
@@ -251,7 +259,7 @@ class OrificesDialog(qtBaseClass, uiDialog):
             self.orifice_flap_gate_cbo.setCurrentIndex(index)             
             
             self.orifice_open_close_time_dbox.setValue(float_or_zero(self.orifices_tblw.item(row, 7).text()))
-
+            
             shape = self.orifices_tblw.item(row, 8).text()
             index = self.orifice_shape_cbo.findText(shape)
             if index == -1:
@@ -259,7 +267,7 @@ class OrificesDialog(qtBaseClass, uiDialog):
                 self.orifices_tblw.item(row, 8).setText("CIRCULAR")
                 self.uc.bar_warn("WARNING 111203.1100: orifice '" + name  + "' has wrong shape '" + shape + "'. Changed to default 'CIRCULAR'")       
             self.orifice_shape_cbo.setCurrentIndex(index) 
-
+            
             self.orifice_height_dbox.setValue(float_or_zero(self.orifices_tblw.item(row, 9).text()))
             self.orifice_width_dbox.setValue(float_or_zero(self.orifices_tblw.item(row, 10).text()))
 
@@ -373,10 +381,7 @@ class OrificesDialog(qtBaseClass, uiDialog):
                     ).fetchone()
                     self.lyrs.show_feat_rubber(self.orifices_lyr.id(), fid[0], QColor(Qt.yellow))
                     feat = next(self.orifices_lyr.getFeatures(QgsFeatureRequest(fid[0])))
-                    x, y = feat.geometry().centroid().asPoint()
-                    self.lyrs.zoom_to_all()
-                    center_canvas(self.iface, x, y)
-                    zoom(self.iface, 0.45)
+                    center_feature(self.iface, feat) 
                 else:
                     self.uc.bar_warn("WARNING 070422.0758: orifice '" + str(orifice) + "' not found.")
                     self.lyrs.clear_rubber()
