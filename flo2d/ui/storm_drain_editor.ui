@@ -484,6 +484,13 @@
          </spacer>
         </item>
         <item>
+         <widget class="QPushButton" name="auto_assign_link_nodes_btn">
+          <property name="text">
+           <string>Auto-assing link nodes</string>
+          </property>
+         </widget>
+        </item>
+        <item>
          <widget class="QComboBox" name="SD_auto_assign_link_nodes_cbo">
           <property name="sizePolicy">
            <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
