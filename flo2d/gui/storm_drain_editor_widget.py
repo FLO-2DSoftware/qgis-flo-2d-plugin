@@ -216,6 +216,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         self.PumpCurv = None
         self.curve_data = None
         self.d1, self.d2, self.d3 = [[], [], []]
+        self.messages = ""
 
         set_icon(self.create_point_btn, "mActionCapturePoint.svg")
         set_icon(self.save_changes_btn, "mActionSaveAllEdits.svg")
@@ -228,7 +229,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         set_icon(self.SD_add_predefined_type4_btn, "mActionOpenFile.svg")
         set_icon(self.SD_remove_type4_btn, "mActionDeleteSelected.svg")
         set_icon(self.SD_rename_type4_btn, "change_name.svg")
-
+        
         set_icon(self.show_pump_table_btn, "show_cont_table.svg")
         set_icon(self.add_pump_curve_btn, "add_table_data.svg")
         set_icon(self.add_predefined_pump_curve_btn, "mActionOpenFile.svg")
@@ -319,8 +320,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
 
         self.SD_nodes_components_cbo.currentIndexChanged.connect(self.nodes_component_changed)
         self.SD_links_components_cbo.currentIndexChanged.connect(self.links_component_changed)
-        self.SD_auto_assign_link_nodes_cbo.currentIndexChanged.connect(self.auto_assign_changed)
-        self.auto_assign_link_nodes_btn.clicked.connect(self.auto_assign_changed)
+        self.auto_assign_link_nodes_btn.clicked.connect(self.auto_assign)
 
         self.populate_type4_combo()
         self.populate_pump_curves_and_data()
@@ -3862,10 +3862,11 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             layer.commitChanges()
             layer.triggerRepaint()
             QApplication.restoreOverrideCursor()
-            QgsMessageLog.logMessage("Inlet and Outlet node names successfully assigned to " + str(len(link_nodes)) + " " + link_name + "!",level=Qgis.Info, )
-            # self.uc.show_info(
-            #     "Inlet and Outlet node names successfully assigned to " + str(len(link_nodes)) + " " + link_name + "!"
-            # )
+            
+            msg ="Inlet and Outlet node names successfully assigned to " + str(len(link_nodes)) + " " + link_name + "!"
+            self.messages += str(len(link_nodes)) + " " + link_name + "." + "\n"
+            QgsMessageLog.logMessage(msg,level=Qgis.Info, )
+            
         except Exception as e:
             QApplication.restoreOverrideCursor()
             self.uc.show_error("ERROR 210322.0429: Couldn't assign " + link_name + " nodes!", e)
@@ -4977,33 +4978,18 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
 
         self.SD_links_components_cbo.setCurrentIndex(0)
 
-    def auto_assign_changed(self):
-        # idx = self.SD_auto_assign_link_nodes_cbo.currentIndex()
-        # if idx == 1:
-        #     self.auto_assign_link_nodes("Conduits", "conduit_inlet", "conduit_outlet")
-        # elif idx == 2:
-        #     self.auto_assign_link_nodes("Pumps", "pump_inlet", "pump_outlet")
-        # elif idx == 3:
-        #     self.auto_assign_link_nodes("Orifices", "orifice_inlet", "orifice_outlet")
-        # elif idx == 4:
-        #     self.auto_assign_link_nodes("Weirs", "weir_inlet", "weir_outlet")
-        # elif idx == 5:
-        #     pass
-        #
-        # self.SD_auto_assign_link_nodes_cbo.setCurrentIndex(0)
-        
-        proceed = self.uc.question("Do you want to overwrite Inlet and Outlet nodes names\n" + 
-                                   "for all conduits, pumps, orifices, and weirs?")
-        if not proceed:
+    def auto_assign(self):
+        if not self.uc.question("Do you want to overwrite Inlet and Outlet node names\n" + 
+                                   "for all conduits, pumps, orifices, and weirs?"):
             return
         
+        self.messages = ""
         self.auto_assign_link_nodes("Conduits", "conduit_inlet", "conduit_outlet")
         self.auto_assign_link_nodes("Pumps", "pump_inlet", "pump_outlet")
         self.auto_assign_link_nodes("Orifices", "orifice_inlet", "orifice_outlet")
         self.auto_assign_link_nodes("Weirs", "weir_inlet", "weir_outlet")
+        self.uc.show_info("Inlet and Outlet node names successfully assigned to \n\n" + self.messages)
         
-        self.SD_auto_assign_link_nodes_cbo.setCurrentIndex(0)
-
     def SD_add_one_type4(self):
         self.add_single_rtable()
 
