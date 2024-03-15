@@ -3772,18 +3772,33 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
 
     def auto_assign_link_nodes(self, link_name, link_inlet, link_outlet):
         """Auto assign Conduits, Pumps, orifices, or Weirs  (user layer) Inlet and Outlet names based on closest (5ft) nodes to their endpoints."""
+        
+        # layer_name = (
+        #     "user_swmm_conduits"
+        #     if link_name == "Conduits"
+        #     else "user_swmm_pumps"
+        #     if link_name == "Pumps"
+        #     else "user_swmm_orifices"
+        #     if link_name == "Orifices"
+        #     else "user_swmm_weirs"
+        #     if link_name == "Weirs"
+        #     else ""
+        # )       
+       
+        no_nodes = ""
+        layer = (
+            self.user_swmm_conduits_lyr
+            if link_name == "Conduits"
+            else self.user_swmm_pumps_lyr
+            if link_name == "Pumps"
+            else self.user_swmm_orifices_lyr
+            if link_name == "Orifices"
+            else self.user_swmm_weirs_lyr
+            if link_name == "Weirs"
+            else self.user_swmm_conduits_lyr
+        )        
+        
         try:
-            layer_name = (
-                "user_swmm_conduits"
-                if link_name == "Conduits"
-                else "user_swmm_pumps"
-                if link_name == "Pumps"
-                else "user_swmm_orifices"
-                if link_name == "Orifices"
-                else "user_swmm_weirs"
-                if link_name == "Weirs"
-                else ""
-            )
 
             # if self.gutils.is_table_empty(layer_name):
             #     self.uc.show_warn(
@@ -3799,20 +3814,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             #     return
 
             QApplication.setOverrideCursor(Qt.WaitCursor)
-            layer = (
-                self.user_swmm_conduits_lyr
-                if link_name == "Conduits"
-                else self.user_swmm_pumps_lyr
-                if link_name == "Pumps"
-                else self.user_swmm_orifices_lyr
-                if link_name == "Orifices"
-                else self.user_swmm_weirs_lyr
-                if link_name == "Weirs"
-                else self.user_swmm_conduits_lyr
-            )
-
             link_fields = layer.fields()
-
             link_inlet_fld_idx = link_fields.lookupField(link_inlet)
             link_outlet_fld_idx = link_fields.lookupField(link_outlet)
             nodes_features, nodes_index = spatial_index(self.user_swmm_nodes_lyr)
@@ -3854,7 +3856,12 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 else:
                     outlet_name = None
                 link_nodes[fid] = inlet_name, outlet_name
-
+                
+                # if not inlet_name:
+                #     no_nodes += "\n" + inlet_name
+                # if not inlet_name:
+                #     no_nodes += "\n" + outlet_name                   
+                
             layer.startEditing()
             for fid, (inlet_name, outlet_name) in link_nodes.items():
                 layer.changeAttributeValue(fid, link_inlet_fld_idx, inlet_name)
@@ -3866,6 +3873,9 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             msg ="Inlet and Outlet node names successfully assigned to " + str(len(link_nodes)) + " " + link_name + "!"
             self.messages += str(len(link_nodes)) + " " + link_name + "." + "\n"
             QgsMessageLog.logMessage(msg,level=Qgis.Info, )
+            
+            # if no_nodes != "":
+            #     self.uc.show_info("The following nodes could not be found:\n\n" + no_nodes) 
             
         except Exception as e:
             QApplication.restoreOverrideCursor()
