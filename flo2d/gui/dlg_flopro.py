@@ -72,33 +72,26 @@ class ExternalProgramFLO2D(qtBaseClass, uiDialog):
         try:
             flo2d_dir = self.flo2d_le.text()
             if os.path.isfile(flo2d_dir + r"\FLOPRO.exe"):
-                # self.uc.show_info("Run FLO-2D PRO Debug")
-                project_dir = self.project_le.text()
-                contDAT = os.path.join(project_dir, "CONT.DAT")
-                if not os.path.exists(contDAT):
-                    self.uc.show_warn("CONT.DAT is not in project directory.\n\n" + project_dir)
-                    return
-                debugDAT = os.path.join(project_dir, "QGISDEBUG.DAT")
-                with open(debugDAT, "w") as f:
-                    f.write("")
-                debug_simulation = FLOPROExecutor(self.iface, flo2d_dir, project_dir)
-                return_code = debug_simulation.perform()
-                self.uc.show_info(
-                    "FLO-2D PRO DEBUG simulation completed."
-                )
-                # if return_code != 0:
-                #     self.uc.show_warn(
-                #        "FLOPRO.EXE debug executed.\n\n"
-                #         + "Program finished with return code " + str(return_code)
-                #     )
-                #     # self.uc.show_warn(
-                #     #     "ERROR 200821.0447: FLO2D.EXE Model simulation run failed!\n\n"
-                #     #     + "Program finished with return code " + str(return_code)
-                #     # )
-                # else:
-                #     self.uc.show_info( "Model debug simulation finished with return code "  + str(return_code))
+                self.uc.show_info("Running FLOPRO.exe")
+                program = "FLOPRO.exe"
+            elif os.path.isfile(flo2d_dir + r"\FLOPRO_Demo.exe"):
+                self.uc.show_info("Running FLOPRO_Demo.exe")
+                program = "FLOPRO_Demo.exe"
             else:
-                self.uc.show_warn("WARNING 221022.0911: Program FLOPRO.exe is not in directory\n\n" + flo2d_dir)
+                self.uc.show_warn("WARNING 221022.0911: Program FLOPRO.exe or FLOPRO_Demo.exe is not in directory\n\n" + flo2d_dir)
+            project_dir = self.project_le.text()
+            contDAT = os.path.join(project_dir, "CONT.DAT")
+            if not os.path.exists(contDAT):
+                self.uc.show_warn("CONT.DAT is not in project directory.\n\n" + project_dir)
+                return
+            debugDAT = os.path.join(project_dir, "QGISDEBUG.DAT")
+            with open(debugDAT, "w") as f:
+                f.write("")
+            debug_simulation = FLOPROExecutor(self.iface, flo2d_dir, project_dir, program)
+            return_code = debug_simulation.perform()
+            self.uc.show_info(
+                "FLO-2D PRO DEBUG simulation completed."
+            )
 
         except Exception as e:
             QApplication.restoreOverrideCursor()

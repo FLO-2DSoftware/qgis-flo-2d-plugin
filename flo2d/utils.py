@@ -373,7 +373,7 @@ def get_plugin_version():
 def get_flo2dpro_version(file_path):
 
     if not os.path.exists(file_path):
-        return "No FLO2D.exe in the folder"
+        return "No FLOPRO or FLOPRO_Demo in the folder"
 
     try:
         # Load the file version DLL
