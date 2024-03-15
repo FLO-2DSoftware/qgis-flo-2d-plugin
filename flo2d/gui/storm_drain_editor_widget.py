@@ -33,6 +33,8 @@ from qgis.core import (
     QgsVectorFileWriter,
     QgsVectorLayer,
     QgsWkbTypes,
+    QgsMessageLog,
+    Qgis
 )
 from qgis.PyQt import QtCore, QtGui
 from qgis.PyQt.QtCore import QSettings, Qt, QTime, QVariant, pyqtSignal
@@ -318,6 +320,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         self.SD_nodes_components_cbo.currentIndexChanged.connect(self.nodes_component_changed)
         self.SD_links_components_cbo.currentIndexChanged.connect(self.links_component_changed)
         self.SD_auto_assign_link_nodes_cbo.currentIndexChanged.connect(self.auto_assign_changed)
+        self.auto_assign_link_nodes_btn.clicked.connect(self.auto_assign_changed)
 
         self.populate_type4_combo()
         self.populate_pump_curves_and_data()
@@ -3761,11 +3764,11 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
 
         self.lyrs.clear_rubber()
 
-    def auto_assign_conduit_nodes(self):
-        self.auto_assign_link_nodes("Conduits", "conduit_inlet", "conduit_outlet")
-
-    def auto_assign_pump_nodes(self):
-        self.auto_assign_link_nodes("Pumps", "pump_inlet", "pump_outlet")
+    # def auto_assign_conduit_nodes(self):
+    #     self.auto_assign_link_nodes("Conduits", "conduit_inlet", "conduit_outlet")
+    #
+    # def auto_assign_pump_nodes(self):
+    #     self.auto_assign_link_nodes("Pumps", "pump_inlet", "pump_outlet")
 
     def auto_assign_link_nodes(self, link_name, link_inlet, link_outlet):
         """Auto assign Conduits, Pumps, orifices, or Weirs  (user layer) Inlet and Outlet names based on closest (5ft) nodes to their endpoints."""
@@ -3782,18 +3785,18 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 else ""
             )
 
-            if self.gutils.is_table_empty(layer_name):
-                self.uc.show_warn(
-                    "User Layer "
-                    + link_name
-                    + " is empty!\n\n"
-                    + "Please import components from .INP file or shapefile, or convert from schematized Storm Drains."
-                )
-                return
+            # if self.gutils.is_table_empty(layer_name):
+            #     self.uc.show_warn(
+            #         "User Layer "
+            #         + link_name
+            #         + " is empty!\n\n"
+            #         + "Please import components from .INP file or shapefile, or convert from schematized Storm Drains."
+            #     )
+            #     return
 
-            proceed = self.uc.question("Do you want to overwrite " + link_name + " Inlet and Outlet nodes names?")
-            if not proceed:
-                return
+            # proceed = self.uc.question("Do you want to overwrite " + link_name + " Inlet and Outlet nodes names?")
+            # if not proceed:
+            #     return
 
             QApplication.setOverrideCursor(Qt.WaitCursor)
             layer = (
@@ -3859,9 +3862,10 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             layer.commitChanges()
             layer.triggerRepaint()
             QApplication.restoreOverrideCursor()
-            self.uc.show_info(
-                "Inlet and Outlet node names successfully assigned to " + str(len(link_nodes)) + " " + link_name + "!"
-            )
+            QgsMessageLog.logMessage("Inlet and Outlet node names successfully assigned to " + str(len(link_nodes)) + " " + link_name + "!",level=Qgis.Info, )
+            # self.uc.show_info(
+            #     "Inlet and Outlet node names successfully assigned to " + str(len(link_nodes)) + " " + link_name + "!"
+            # )
         except Exception as e:
             QApplication.restoreOverrideCursor()
             self.uc.show_error("ERROR 210322.0429: Couldn't assign " + link_name + " nodes!", e)
@@ -4974,18 +4978,30 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         self.SD_links_components_cbo.setCurrentIndex(0)
 
     def auto_assign_changed(self):
-        idx = self.SD_auto_assign_link_nodes_cbo.currentIndex()
-        if idx == 1:
-            self.auto_assign_link_nodes("Conduits", "conduit_inlet", "conduit_outlet")
-        elif idx == 2:
-            self.auto_assign_link_nodes("Pumps", "pump_inlet", "pump_outlet")
-        elif idx == 3:
-            self.auto_assign_link_nodes("Orifices", "orifice_inlet", "orifice_outlet")
-        elif idx == 4:
-            self.auto_assign_link_nodes("Weirs", "weir_inlet", "weir_outlet")
-        elif idx == 5:
-            pass
-
+        # idx = self.SD_auto_assign_link_nodes_cbo.currentIndex()
+        # if idx == 1:
+        #     self.auto_assign_link_nodes("Conduits", "conduit_inlet", "conduit_outlet")
+        # elif idx == 2:
+        #     self.auto_assign_link_nodes("Pumps", "pump_inlet", "pump_outlet")
+        # elif idx == 3:
+        #     self.auto_assign_link_nodes("Orifices", "orifice_inlet", "orifice_outlet")
+        # elif idx == 4:
+        #     self.auto_assign_link_nodes("Weirs", "weir_inlet", "weir_outlet")
+        # elif idx == 5:
+        #     pass
+        #
+        # self.SD_auto_assign_link_nodes_cbo.setCurrentIndex(0)
+        
+        proceed = self.uc.question("Do you want to overwrite Inlet and Outlet nodes names\n" + 
+                                   "for all conduits, pumps, orifices, and weirs?")
+        if not proceed:
+            return
+        
+        self.auto_assign_link_nodes("Conduits", "conduit_inlet", "conduit_outlet")
+        self.auto_assign_link_nodes("Pumps", "pump_inlet", "pump_outlet")
+        self.auto_assign_link_nodes("Orifices", "orifice_inlet", "orifice_outlet")
+        self.auto_assign_link_nodes("Weirs", "weir_inlet", "weir_outlet")
+        
         self.SD_auto_assign_link_nodes_cbo.setCurrentIndex(0)
 
     def SD_add_one_type4(self):
