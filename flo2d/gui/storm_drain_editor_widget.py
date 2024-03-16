@@ -216,7 +216,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         self.PumpCurv = None
         self.curve_data = None
         self.d1, self.d2, self.d3 = [[], [], []]
-        self.messages = ""
+        self.auto_assign_msg = ""
 
         set_icon(self.create_point_btn, "mActionCapturePoint.svg")
         set_icon(self.save_changes_btn, "mActionSaveAllEdits.svg")
@@ -2183,20 +2183,23 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                     feat = QgsFeature()
                     feat.setFields(fields)
 
-                    if not weir_inlet in storm_drain.INP_nodes:
+                    # Unpack and merge storm_drain.INP_nodes and storm_drain.INP_storages:
+                    all_nodes = {**storm_drain.INP_nodes, **storm_drain.INP_storages} 
+
+                    if not weir_inlet in all_nodes:
                         weir_inlets_not_found += "      " +  name + "\n"
                         go_go = False
-                    if not weir_outlet in storm_drain.INP_nodes:
+                    if not weir_outlet in all_nodes:
                         weir_outlets_not_found += "      " +  name + "\n"
                         go_go = False
 
                     if not go_go:
                         continue  # Force execution of next iteration, skip rest of code. No inlet or outlet nodes in INP file.
 
-                    x1 = float(storm_drain.INP_nodes[weir_inlet]["x"])
-                    y1 = float(storm_drain.INP_nodes[weir_inlet]["y"])
-                    x2 = float(storm_drain.INP_nodes[weir_outlet]["x"])
-                    y2 = float(storm_drain.INP_nodes[weir_outlet]["y"])
+                    x1 = float(all_nodes[weir_inlet]["x"])
+                    y1 = float(all_nodes[weir_inlet]["y"])
+                    x2 = float(all_nodes[weir_outlet]["x"])
+                    y2 = float(all_nodes[weir_outlet]["y"])
 
                     grid = self.gutils.grid_on_point(x1, y1)
                     if grid is None:
@@ -3785,6 +3788,8 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         #     else ""
         # )       
        
+        no_inlet = ""
+        no_outlet = ""
         no_nodes = ""
         layer = (
             self.user_swmm_conduits_lyr
@@ -3847,20 +3852,22 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 end_nodes.sort(key=lambda f: f.geometry().distance(end_geom))
                 closest_inlet_feat = start_nodes[0] if start_nodes else None
                 closest_outlet_feat = end_nodes[0] if end_nodes else None
+                
                 if closest_inlet_feat is not None:
                     inlet_name = closest_inlet_feat["name"]
                 else:
-                    inlet_name = None
+                    no_inlet += "* " + feat[2] + "\t" + feat[1] + "\t" + link_name + "\n" 
+                    continue
+                    # inlet_name = feat[2] # Assign current inlet. 
+                    
                 if closest_outlet_feat is not None:
                     outlet_name = closest_outlet_feat["name"]
                 else:
-                    outlet_name = None
-                link_nodes[fid] = inlet_name, outlet_name
-                
-                # if not inlet_name:
-                #     no_nodes += "\n" + inlet_name
-                # if not inlet_name:
-                #     no_nodes += "\n" + outlet_name                   
+                    no_outlet += "* " + feat[3] + "\t" + feat[1] + "\t" + link_name + "\n" 
+                    continue
+                    # outlet_name = feat[3] # Assign current outlet.
+    
+                link_nodes[fid] = inlet_name, outlet_name                  
                 
             layer.startEditing()
             for fid, (inlet_name, outlet_name) in link_nodes.items():
@@ -3870,12 +3877,20 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             layer.triggerRepaint()
             QApplication.restoreOverrideCursor()
             
-            msg ="Inlet and Outlet node names successfully assigned to " + str(len(link_nodes)) + " " + link_name + "!"
-            self.messages += str(len(link_nodes)) + " " + link_name + "." + "\n"
+            msg ="Inlet and Outlet nodes assigned to " + str(len(link_nodes)) + " " + link_name + "!"
+            self.auto_assign_msg +="* " + str(len(link_nodes)) + " " + link_name + "" + "\n"
             QgsMessageLog.logMessage(msg,level=Qgis.Info, )
             
-            # if no_nodes != "":
-            #     self.uc.show_info("The following nodes could not be found:\n\n" + no_nodes) 
+            if no_inlet:
+                no_nodes = "Inlets (Inlet name, Link Name, Link Type):\n\n"  + no_inlet                
+                # no_nodes = "No inlet found for\n"  + no_inlet
+            if no_outlet:
+                if no_nodes:
+                    no_nodes += "\nOutlets (Outlet name, Link Name, Link Type):\n\n" + no_outlet  
+                else:    
+                    no_nodes += "Outlets (Outlet name, Link Name, Link Type):\n\n" + no_outlet    
+            if no_nodes != "":
+                self.uc.show_info("The following nodes (inlets or outlets) could not be found:\n\n" + no_nodes) 
             
         except Exception as e:
             QApplication.restoreOverrideCursor()
@@ -4993,12 +5008,12 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                                    "for all conduits, pumps, orifices, and weirs?"):
             return
         
-        self.messages = ""
+        self.auto_assign_msg = ""
         self.auto_assign_link_nodes("Conduits", "conduit_inlet", "conduit_outlet")
         self.auto_assign_link_nodes("Pumps", "pump_inlet", "pump_outlet")
         self.auto_assign_link_nodes("Orifices", "orifice_inlet", "orifice_outlet")
         self.auto_assign_link_nodes("Weirs", "weir_inlet", "weir_outlet")
-        self.uc.show_info("Inlet and Outlet node names successfully assigned to \n\n" + self.messages)
+        self.uc.show_info("Inlet and Outlet nodes assigned to:\n\n" + self.auto_assign_msg)
         
     def SD_add_one_type4(self):
         self.add_single_rtable()
