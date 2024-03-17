@@ -695,7 +695,6 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
                     "user_chan_t",
                     "user_chan_n",
                     "chan_confluences",
-                    "user_xsec_n_data",
                     "xsec_n_data",
                     "user_noexchange_chan_areas",
                     "noexchange_chan_cells",
