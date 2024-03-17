@@ -188,10 +188,6 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         self.schematize_xs_btn.clicked.connect(self.schematize_channels)
         self.check_schematized_channel_btn.clicked.connect(self.check_schematized_channel)
         self.interpolate_channel_elevation_btn.clicked.connect(self.interpolate_channel_elevation)
-        # self.schematize_right_bank_btn.clicked.connect(self.schematize_right_banks)
-        # self.save_channel_DAT_files_btn.clicked.connect(self.save_channel_DAT_and_XSEC_files)
-        # self.interpolate_xs_btn.clicked.connect(self.interpolate_xs_values)
-        # self.reassign_rightbanks_btn.clicked.connect(self.reassign_rightbanks_from_CHANBANK_file)
         self.confluences_btn.clicked.connect(self.create_confluences)
         self.delete_confluences_btn.clicked.connect(self.delete_confluences)
         self.interpolate_channel_n_btn.clicked.connect(self.interpolate_channel_n)
@@ -1156,11 +1152,11 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         """
         Function to interpolate channel elevation
         """
+        QApplication.setOverrideCursor(Qt.WaitCursor)
         xs_survey = self.save_chan_dot_dat_with_zero_natural_cross_sections()
         if xs_survey:
             if self.save_xsec_dot_dat_with_only_user_cross_sections():
                 if self.save_CHANBANK():
-                    QApplication.restoreOverrideCursor()
                     rtrn = -2
                     while rtrn == -2:
                         rtrn = self.run_INTERPOLATE()
@@ -1653,6 +1649,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
                     with open(chanbank, "w") as cb:
                         for rb in rbanks:
                             cb.write(line.format(rb[0], rb[1]))
+                    QApplication.restoreOverrideCursor()
                     return True
         except Exception as e:
             self.uc.log_info(repr(e))
