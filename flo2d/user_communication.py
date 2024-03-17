@@ -26,7 +26,9 @@ from qgis.PyQt.QtWidgets import (
     QSizePolicy,
     QVBoxLayout,
     QWidget,
+    QSpacerItem,
 )
+from PyQt5.QtGui import QFont
 
 
 class UserCommunication(object):
@@ -43,6 +45,27 @@ class UserCommunication(object):
             QMessageBox.information(self.iface.mainWindow(), self.context, msg)
         else:
             print(msg)
+            
+    def show_msg(self, msg, hSize, type="info"):
+        if self.iface is not None:
+            msgBox = QMessageBox()
+            msgBox.setText(msg)
+            msgBox.setWindowTitle("FLO-2D")
+            icon = QMessageBox.Information if type=="info" else + \
+                    QMessageBox.Warning if type=="warning" else + \
+                    QMessageBox.Critical if type=="error" else QMessageBox.Information
+            msgBox.setIcon(icon)
+
+            horizontalSpacer = QSpacerItem(hSize, 0, QSizePolicy.Minimum, QSizePolicy.Expanding)
+            # Get the layout of the message box
+            layout = msgBox.layout()
+            layout.addItem(horizontalSpacer, layout.rowCount(), 0, 1, layout.columnCount())
+        
+            msgBox.setFont(QFont("Courier", 8))
+            msgBox.exec_()            
+        else:
+            print(msg)
+            
 
     def show_warn(self, msg):
         if self.iface is not None:

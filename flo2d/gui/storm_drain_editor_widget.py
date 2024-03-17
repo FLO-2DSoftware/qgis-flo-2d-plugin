@@ -3791,6 +3791,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         no_inlet = ""
         no_outlet = ""
         no_nodes = ""
+        tab = 20
         layer = (
             self.user_swmm_conduits_lyr
             if link_name == "Conduits"
@@ -3856,14 +3857,14 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 if closest_inlet_feat is not None:
                     inlet_name = closest_inlet_feat["name"]
                 else:
-                    no_inlet += "* " + feat[2] + "\t" + feat[1] + "\t" + link_name + "\n" 
+                    no_inlet += f"{feat[2].ljust(tab, ' ')}{feat[1].ljust(tab, ' ')}{link_name.ljust(tab, ' ')}" + "\n"
                     continue
                     # inlet_name = feat[2] # Assign current inlet. 
                     
                 if closest_outlet_feat is not None:
                     outlet_name = closest_outlet_feat["name"]
                 else:
-                    no_outlet += "* " + feat[3] + "\t" + feat[1] + "\t" + link_name + "\n" 
+                    no_outlet += f"{feat[3].ljust(tab, ' ')}{feat[1].ljust(tab, ' ')}{link_name.ljust(tab, ' ')}" + "\n"
                     continue
                     # outlet_name = feat[3] # Assign current outlet.
     
@@ -3881,16 +3882,18 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             self.auto_assign_msg +="* " + str(len(link_nodes)) + " " + link_name + "" + "\n"
             QgsMessageLog.logMessage(msg,level=Qgis.Info, )
             
+            hyphens = '-' * 50
             if no_inlet:
-                no_nodes = "Inlets (Inlet name, Link Name, Link Type):\n\n"  + no_inlet                
-                # no_nodes = "No inlet found for\n"  + no_inlet
+                no_nodes = f"{'Inlet Name '.ljust(tab, ' ')}{'Link Name  '.ljust(tab, ' ')}{'Link Type  '.ljust(tab, ' ')}" + "\n" + \
+                           f"{hyphens.ljust(tab, ' ')}" + "\n" + no_inlet
             if no_outlet:
-                if no_nodes:
-                    no_nodes += "\nOutlets (Outlet name, Link Name, Link Type):\n\n" + no_outlet  
-                else:    
-                    no_nodes += "Outlets (Outlet name, Link Name, Link Type):\n\n" + no_outlet    
+                header = f"{'Outlet Name'.ljust(tab, ' ')}{'Link Name  '.ljust(tab, ' ')}{'Link Type  '.ljust(tab, ' ')}" + "\n" 
+                if no_nodes == "":
+                    no_nodes = header + f"{hyphens.ljust(tab, ' ')}" + no_outlet
+                else: 
+                    no_nodes += "\n" + header + f"{hyphens.ljust(tab, ' ')}" + no_outlet      
             if no_nodes != "":
-                self.uc.show_info("The following nodes (inlets or outlets) could not be found:\n\n" + no_nodes) 
+                self.uc.show_msg("The following nodes (inlets or outlets) could not be found:\n\n" + no_nodes, 600) 
             
         except Exception as e:
             QApplication.restoreOverrideCursor()
