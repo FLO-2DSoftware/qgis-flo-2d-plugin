@@ -210,6 +210,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         self.outlet_columns = ["swmm_allow_discharge"]
 
         self.other_curve_types = ["Control", "Diversion", "Rating", "Shape", "Storage"]
+        self.all_nodes = None
         self.inletRT = None
         self.plot_item_name = None
         self.inlet_series_data = None
@@ -846,9 +847,6 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         new_weirs = []
         outside_weirs = ""
         updated_weirs = 0
-
-        conduit_inlets_not_found = ""
-        conduit_outlets_not_found = ""
 
         error_msg = "ERROR 050322.9423: error(s) importing file\n\n" + swmm_file
         try:
@@ -1629,7 +1627,14 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         finally:
             QApplication.restoreOverrideCursor()
             
+                    
+        # Unpack and merge storm_drain.INP_nodes and storm_drain.INP_storages:
+        self.all_nodes = {**storm_drain.INP_nodes, **storm_drain.INP_storages} 
+                                
         # CONDUITS: Create User Conduits layer:
+        conduit_inlets_not_found = ""
+        conduit_outlets_not_found = ""
+                
         if complete_or_create == "Create New":
             remove_features(self.user_swmm_conduits_lyr)
         
@@ -1665,10 +1670,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                                        xsections_geom4  = ?
                                  WHERE conduit_name = ?;"""
         
-                fields = self.user_swmm_conduits_lyr.fields()
-                conduit_inlets_not_found = ""
-                conduit_outlets_not_found = ""
-        
+                fields = self.user_swmm_conduits_lyr.fields()       
                 for name, values in list(storm_drain.INP_conduits.items()):
         
                     conduit_inlet = values["conduit_inlet"] if "conduit_inlet" in values else None
@@ -1714,36 +1716,32 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         
                     feat = QgsFeature()
                     feat.setFields(fields)
-                    
-                    # Unpack and merge storm_drain.INP_nodes and storm_drain.INP_storages:
-                    all_nodes = {**storm_drain.INP_nodes, **storm_drain.INP_storages} 
-                    
-                    if not conduit_inlet in all_nodes:
+
+                    if not conduit_inlet in self.all_nodes:
                         conduit_inlets_not_found += "      " +  name + "\n"
-                        # continue # Force execution of next iteration, skip rest of code.
+                        # do not continue to next conduit yet. See outlet first. 
                     else:
-                        x1 = float(all_nodes[conduit_inlet]["x"])
-                        y1 = float(all_nodes[conduit_inlet]["y"])                        
+                        x1 = float(self.all_nodes[conduit_inlet]["x"])
+                        y1 = float(self.all_nodes[conduit_inlet]["y"])                        
                         grid = self.gutils.grid_on_point(x1, y1)
                         if grid is None:
                             if not name in outside_conduits:
                                 outside_conduits += name + "\n"
                                     
-                    if not conduit_outlet in all_nodes:
+                    if not conduit_outlet in self.all_nodes:
                         conduit_outlets_not_found += "      " +  name + "\n"
-                        # continue # Force execution of next iteration, skip rest of code. 
                     else:
-                        if not all_nodes[conduit_outlet]["x"] or not all_nodes[conduit_outlet]["y"]:
+                        if not self.all_nodes[conduit_outlet]["x"] or not self.all_nodes[conduit_outlet]["y"]:
                             conduit_outlets_not_found += "      " +  name + "\n" 
                         else:
-                            x2 = float(all_nodes[conduit_outlet]["x"])
-                            y2 = float(all_nodes[conduit_outlet]["y"])
+                            x2 = float(self.all_nodes[conduit_outlet]["x"])
+                            y2 = float(self.all_nodes[conduit_outlet]["y"])
                             grid = self.gutils.grid_on_point(x2, y2)
                             if grid is None:
                                 if not name in outside_conduits:
                                     outside_conduits += name + "\n"
         
-                    if conduit_inlet in all_nodes and conduit_outlet in all_nodes:
+                    if conduit_inlet in self.all_nodes and conduit_outlet in self.all_nodes:
                         geom = QgsGeometry.fromPolylineXY([QgsPointXY(x1, y1), QgsPointXY(x2, y2)])
                     else:
                         continue
@@ -1874,14 +1872,12 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                                  WHERE pump_name = ?;"""
 
                 fields = self.user_swmm_pumps_lyr.fields()
-
                 for name, values in list(storm_drain.INP_pumps.items()):
                     
                     if values["pump_shutoff_depth"] == None:
                         pump_data_missing = "\nError(s) in [PUMP] group. Are values missing?"
                         continue
                     
-                    go_go = True
                     pump_inlet = values["pump_inlet"] if "pump_inlet" in values else None
                     pump_outlet = values["pump_outlet"] if "pump_outlet" in values else None
                     pump_curve = values["pump_curve"] if "pump_curve" in values else None
@@ -1896,32 +1892,33 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                     feat = QgsFeature()
                     feat.setFields(fields)
 
-                    if not pump_inlet in storm_drain.INP_nodes:
+                    if not pump_inlet in self.all_nodes:
                         pump_inlets_not_found += "      " + name + "\n"
-                        go_go = False
-                    if not pump_outlet in storm_drain.INP_nodes:
+                    else:
+                        x1 = float(self.all_nodes[pump_inlet]["x"])
+                        y1 = float(self.all_nodes[pump_inlet]["y"])                        
+                        grid = self.gutils.grid_on_point(x1, y1)
+                        if grid is None:
+                            if not name in outside_pumps:
+                                outside_pumps += name + "\n"
+
+                    if not pump_outlet in self.all_nodes:
                         pump_outlets_not_found += "      " +  name + "\n"
-                        go_go = False
+                    else:
+                        if not self.all_nodes[pump_outlet]["x"] or not self.all_nodes[pump_outlet]["y"]:
+                            pump_outlets_not_found += "      " +  name + "\n" 
+                        else:
+                            x2 = float(self.all_nodes[pump_outlet]["x"])
+                            y2 = float(self.all_nodes[pump_outlet]["y"])
+                            grid = self.gutils.grid_on_point(x2, y2)
+                            if grid is None:
+                                if not name in outside_pumps:
+                                    outside_pumps += name + "\n"  
 
-                    if not go_go:
-                        continue  # Force execution of next iteration, skip rest of code. No inlet or outlet nodes in INP file.
-        
-                    x1 = float(storm_drain.INP_nodes[pump_inlet]["x"])
-                    y1 = float(storm_drain.INP_nodes[pump_inlet]["y"])
-                    x2 = float(storm_drain.INP_nodes[pump_outlet]["x"])
-                    y2 = float(storm_drain.INP_nodes[pump_outlet]["y"])
-
-                    grid = self.gutils.grid_on_point(x1, y1)
-                    if grid is None:
-                        outside_pumps += name + "\n"
+                    if pump_inlet in self.all_nodes and pump_outlet in self.all_nodes:
+                        geom = QgsGeometry.fromPolylineXY([QgsPointXY(x1, y1), QgsPointXY(x2, y2)])
+                    else:
                         continue
-
-                    grid = self.gutils.grid_on_point(x2, y2)
-                    if grid is None:
-                        outside_pumps += name + "\n"
-                        continue
-
-                    geom = QgsGeometry.fromPolylineXY([QgsPointXY(x1, y1), QgsPointXY(x2, y2)])
 
                     if complete_or_create == "Create New":
                         feat.setGeometry(geom)
@@ -2183,23 +2180,20 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                     feat = QgsFeature()
                     feat.setFields(fields)
 
-                    # Unpack and merge storm_drain.INP_nodes and storm_drain.INP_storages:
-                    all_nodes = {**storm_drain.INP_nodes, **storm_drain.INP_storages} 
-
-                    if not weir_inlet in all_nodes:
+                    if not weir_inlet in self.all_nodes:
                         weir_inlets_not_found += "      " +  name + "\n"
                         go_go = False
-                    if not weir_outlet in all_nodes:
+                    if not weir_outlet in self.all_nodes:
                         weir_outlets_not_found += "      " +  name + "\n"
                         go_go = False
 
                     if not go_go:
                         continue  # Force execution of next iteration, skip rest of code. No inlet or outlet nodes in INP file.
 
-                    x1 = float(all_nodes[weir_inlet]["x"])
-                    y1 = float(all_nodes[weir_inlet]["y"])
-                    x2 = float(all_nodes[weir_outlet]["x"])
-                    y2 = float(all_nodes[weir_outlet]["y"])
+                    x1 = float(self.all_nodes[weir_inlet]["x"])
+                    y1 = float(self.all_nodes[weir_inlet]["y"])
+                    x2 = float(self.all_nodes[weir_outlet]["x"])
+                    y2 = float(self.all_nodes[weir_outlet]["y"])
 
                     grid = self.gutils.grid_on_point(x1, y1)
                     if grid is None:
