@@ -131,3 +131,9 @@ class PlotWidget(QWidget):
         if self.plot.legend:
             if name in self.items:
                 self.plot.removeItem(self.items[name])
+
+    def auto_range(self):
+        """
+        Function to auto range the plot
+        """
+        self.plot.autoRange()

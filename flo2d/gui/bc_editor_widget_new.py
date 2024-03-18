@@ -655,6 +655,7 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
             self.plot.update_item("Current Mud", [self.t, self.m])
         except:
             pass
+        self.plot.auto_range()
 
     def change_bc_name(self, cb, type):
         """
@@ -2124,6 +2125,7 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
             self.d1.append(m_fdata(self.bc_data_model, i, 0))
             self.d2.append(m_fdata(self.bc_data_model, i, 1))
         self.plot.update_item(self.plot_item_name, [self.d1, self.d2])
+        self.plot.auto_range()
 
     def populate_outflow_type_cbo(self):
         """
