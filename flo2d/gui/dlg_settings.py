@@ -346,8 +346,15 @@ class SettingsDialog(qtBaseClass, uiDialog):
         contact = QgsProject.instance().metadata().author()
         plugin_v = get_plugin_version()
         qgis_v = qgis.core.Qgis.QGIS_VERSION
-        if s.value("FLO-2D/last_flopro") is not None:
-            flo2d_v = get_flo2dpro_version(s.value("FLO-2D/last_flopro") + "/FLOPRO.exe")
+
+        flopro_dir = s.value("FLO-2D/last_flopro")
+        if flopro_dir is not None:
+            # Check for FLOPRO.exe
+            if os.path.isfile(flopro_dir + "/FLOPRO.exe"):
+                flo2d_v = get_flo2dpro_version(flopro_dir + "/FLOPRO.exe")
+            # Check for FLOPRO_Demo.exe
+            elif os.path.isfile(flopro_dir + "/FLOPRO_Demo.exe"):
+                flo2d_v = get_flo2dpro_version(flopro_dir + "/FLOPRO_Demo.exe")
         else:
             dlg = ExternalProgramFLO2D(self.iface, "Run Settings")
             # dlg.debug_run_btn.setVisible(False)
@@ -361,7 +368,11 @@ class SettingsDialog(qtBaseClass, uiDialog):
 
             if project_dir != "" and flo2d_dir != "":
                 s.setValue("FLO-2D/run_settings", True)
-                flo2d_v = get_flo2dpro_version(s.value("FLO-2D/last_flopro") + "/FLOPRO.exe")
+                if os.path.isfile(flo2d_dir + "/FLOPRO.exe"):
+                    flo2d_v = get_flo2dpro_version(flo2d_dir + "/FLOPRO.exe")
+                # Check for FLOPRO_Demo.exe
+                elif os.path.isfile(flo2d_dir + "/FLOPRO_Demo.exe"):
+                    flo2d_v = get_flo2dpro_version(flo2d_dir + "/FLOPRO_Demo.exe")
 
         self.lineEdit_au.setText(contact)
         self.lineEdit_co.setText("")

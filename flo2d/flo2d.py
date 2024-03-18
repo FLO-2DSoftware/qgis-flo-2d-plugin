@@ -1121,7 +1121,15 @@ class Flo2D(object):
 
             if project_dir != "" and flo2d_dir != "":
                 s.setValue("FLO-2D/run_settings", True)
-                flo2d_v = get_flo2dpro_version(s.value("FLO-2D/last_flopro") + "/FLOPRO.exe")
+
+                flopro_dir = s.value("FLO-2D/last_flopro")
+                # Check for FLOPRO.exe
+                if os.path.isfile(flopro_dir + "/FLOPRO.exe"):
+                    flo2d_v = get_flo2dpro_version(flopro_dir + "/FLOPRO.exe")
+                # Check for FLOPRO_Demo.exe
+                elif os.path.isfile(flopro_dir + "/FLOPRO_Demo.exe"):
+                    flo2d_v = get_flo2dpro_version(flopro_dir + "/FLOPRO_Demo.exe")
+
                 self.gutils.set_metadata_par("FLO-2D_V", flo2d_v)
 
             self.f2d_plot.clear()
@@ -1315,22 +1323,42 @@ class Flo2D(object):
                         self.uc.show_info(info)
 
             QApplication.restoreOverrideCursor()
-            if s.value("FLO-2D/last_flopro") is not None:
-                flo2d_v = get_flo2dpro_version(s.value("FLO-2D/last_flopro") + "/FLOPRO.exe")
-                self.gutils.set_metadata_par("FLO-2D_V", flo2d_v)
+            flopro_dir = s.value("FLO-2D/last_flopro")
+            if flopro_dir is not None:
+                # Check for FLOPRO.exe
+                if os.path.isfile(flopro_dir + "/FLOPRO.exe"):
+                    flo2d_v = get_flo2dpro_version(flopro_dir + "/FLOPRO.exe")
+                    self.gutils.set_metadata_par("FLO-2D_V", flo2d_v)
+                    program = "FLOPRO.exe"
+                # Check for FLOPRO_Demo.exe
+                elif os.path.isfile(flopro_dir + "/FLOPRO_Demo.exe"):
+                    flo2d_v = get_flo2dpro_version(flopro_dir + "/FLOPRO_Demo.exe")
+                    self.gutils.set_metadata_par("FLO-2D_V", flo2d_v)
+                    program = "FLOPRO_Demo.exe"
             else:
                 self.run_settings()
-            self.run_program("FLOPRO.exe")
+            self.uc.bar_info(f"Running {program}")
+            self.run_program(program)
 
     def run_flopro(self):
         self.uncheck_all_info_tools()
         s = QSettings()
-        if s.value("FLO-2D/last_flopro") is not None:
-            flo2d_v = get_flo2dpro_version(s.value("FLO-2D/last_flopro") + "/FLOPRO.exe")
-            self.gutils.set_metadata_par("FLO-2D_V", flo2d_v)
+        flopro_dir = s.value("FLO-2D/last_flopro")
+        # Check if the FLOPRO directory is in the FLO-2D Settings
+        if flopro_dir is not None:
+            # Check if the user has the FLOPRO version
+            if os.path.isfile(flopro_dir + "/FLOPRO.exe"):
+                flo2d_v = get_flo2dpro_version(flopro_dir + "/FLOPRO.exe")
+                self.gutils.set_metadata_par("FLO-2D_V", flo2d_v)
+                user_program = "FLOPRO.exe"
+            # Check for the FLOPRO_Demo
+            elif os.path.isfile(flopro_dir + "/FLOPRO_Demo.exe"):
+                flo2d_v = get_flo2dpro_version(flopro_dir + "/FLOPRO_Demo.exe")
+                self.gutils.set_metadata_par("FLO-2D_V", flo2d_v)
+                user_program = "FLOPRO_Demo.exe"
         else:
             self.run_settings()
-        self.run_program("FLOPRO.exe")
+        self.run_program(user_program)
 
     def run_tailingsdambreach(self):
         self.uncheck_all_info_tools()
