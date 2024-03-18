@@ -55,11 +55,13 @@ from qgis.PyQt.QtWidgets import (
     QSizePolicy,
     QSpacerItem,
     QVBoxLayout,
+    QHBoxLayout,
     QWidget,
     QAction,
     QMenu,
     QToolButton,
     qApp,
+    QDialogButtonBox,
 )
 
 import pyqtgraph as pg
@@ -824,6 +826,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         s.setValue("FLO-2D/lastSWMMDir", os.path.dirname(swmm_file))
 
         QApplication.setOverrideCursor(Qt.WaitCursor)
+        n_spaces = "\t\t"
         new_nodes = []
         outside_nodes = ""
         updated_nodes = 0
@@ -1226,7 +1229,8 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 intype = int(values["intype"]) if "intype" in values else 1
 
 
-                if not values["x"] or not values["y"]:
+                if not "x" in values or not "y" in values:
+                # if not values["x"] or not values["y"]:
                     outside_nodes += name + " has no coordinates.\n"
                     continue
                 
@@ -1721,25 +1725,30 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                         conduit_inlets_not_found += "      " +  name + "\n"
                         # do not continue to next conduit yet. See outlet first. 
                     else:
-                        x1 = float(self.all_nodes[conduit_inlet]["x"])
-                        y1 = float(self.all_nodes[conduit_inlet]["y"])                        
-                        grid = self.gutils.grid_on_point(x1, y1)
-                        if grid is None:
+                        if "x" in self.all_nodes[conduit_inlet] and "x" in self.all_nodes[conduit_inlet]:
+                            x1 = float(self.all_nodes[conduit_inlet]["x"])
+                            y1 = float(self.all_nodes[conduit_inlet]["y"])                        
+                            grid = self.gutils.grid_on_point(x1, y1)
+                            if grid is None:
+                                if not name in outside_conduits:
+                                    outside_conduits += n_spaces + name + "\n"
+                        else:
                             if not name in outside_conduits:
-                                outside_conduits += name + "\n"
+                                outside_conduits += n_spaces + name + "\n"                                       
                                     
                     if not conduit_outlet in self.all_nodes:
                         conduit_outlets_not_found += "      " +  name + "\n"
                     else:
-                        if not self.all_nodes[conduit_outlet]["x"] or not self.all_nodes[conduit_outlet]["y"]:
-                            conduit_outlets_not_found += "      " +  name + "\n" 
-                        else:
+                        if "x" in self.all_nodes[conduit_outlet] and "y" in self.all_nodes[conduit_outlet]:
                             x2 = float(self.all_nodes[conduit_outlet]["x"])
                             y2 = float(self.all_nodes[conduit_outlet]["y"])
                             grid = self.gutils.grid_on_point(x2, y2)
                             if grid is None:
                                 if not name in outside_conduits:
-                                    outside_conduits += name + "\n"
+                                    outside_conduits += n_spaces + name + "\n"
+                        else:
+                            conduit_outlets_not_found += "      " +  name + "\n" 
+                                        
         
                     if conduit_inlet in self.all_nodes and conduit_outlet in self.all_nodes:
                         geom = QgsGeometry.fromPolylineXY([QgsPointXY(x1, y1), QgsPointXY(x2, y2)])
@@ -1895,12 +1904,16 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                     if not pump_inlet in self.all_nodes:
                         pump_inlets_not_found += "      " + name + "\n"
                     else:
-                        x1 = float(self.all_nodes[pump_inlet]["x"])
-                        y1 = float(self.all_nodes[pump_inlet]["y"])                        
-                        grid = self.gutils.grid_on_point(x1, y1)
-                        if grid is None:
+                        if "x" in self.all_nodes[pump_inlet] and "y" in self.all_nodes[pump_inlet]["y"]:
+                            x1 = float(self.all_nodes[pump_inlet]["x"])
+                            y1 = float(self.all_nodes[pump_inlet]["y"])                        
+                            grid = self.gutils.grid_on_point(x1, y1)
+                            if grid is None:
+                                if not name in outside_pumps:
+                                    outside_pumps += n_spaces + name + "\n"
+                        else:
                             if not name in outside_pumps:
-                                outside_pumps += name + "\n"
+                                outside_pumps += n_spaces + name + "\n"                                        
 
                     if not pump_outlet in self.all_nodes:
                         pump_outlets_not_found += "      " +  name + "\n"
@@ -1913,7 +1926,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                             grid = self.gutils.grid_on_point(x2, y2)
                             if grid is None:
                                 if not name in outside_pumps:
-                                    outside_pumps += name + "\n"  
+                                    outside_pumps += n_spaces + name + "\n"  
 
                     if pump_inlet in self.all_nodes and pump_outlet in self.all_nodes:
                         geom = QgsGeometry.fromPolylineXY([QgsPointXY(x1, y1), QgsPointXY(x2, y2)])
@@ -2007,9 +2020,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                                  WHERE orifice_name = ?;"""
                                  
                 fields = self.user_swmm_orifices_lyr.fields()
-
                 for name, values in list(storm_drain.INP_orifices.items()):
-                    go_go = True
                     orifice_inlet = values["ori_inlet"] if "ori_inlet" in values else None
                     orifice_outlet = values["ori_outlet"] if "ori_outlet" in values else None
                     orifice_type = values["ori_type"] if "ori_type" in values else "SIDE"
@@ -2030,32 +2041,37 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                     feat = QgsFeature()
                     feat.setFields(fields)
                     
-                    if not orifice_inlet in storm_drain.INP_nodes:
+                    if not orifice_inlet in self.all_nodes:
                         orifice_inlets_not_found += "      " +  name + "\n"
-                        go_go = False
-                    if not orifice_outlet in storm_drain.INP_nodes:
+                    else:
+                        if "x" in self.all_nodes[orifice_inlet] and "y" in self.all_nodes[orifice_inlet]["y"]:
+                            x1 = float(self.all_nodes[orifice_inlet]["x"])
+                            y1 = float(self.all_nodes[orifice_inlet]["y"])                        
+                            grid = self.gutils.grid_on_point(x1, y1)
+                            if grid is None:
+                                if not name in outside_orifices:
+                                    outside_orifices += n_spaces + name + "\n"
+                        else:
+                            if not name in outside_orifices:
+                                outside_orifices += n_spaces + name + "\n"                                        
+
+                    if not orifice_outlet in self.all_nodes:
                         orifice_outlets_not_found += "      " +  name + "\n"
-                        go_go = False
+                    else:
+                        if not self.all_nodes[orifice_outlet]["x"] or not self.all_nodes[orifice_outlet]["y"]:
+                            orifice_outlets_not_found += "      " +  name + "\n" 
+                        else:
+                            x2 = float(self.all_nodes[orifice_outlet]["x"])
+                            y2 = float(self.all_nodes[orifice_outlet]["y"])
+                            grid = self.gutils.grid_on_point(x2, y2)
+                            if grid is None:
+                                if not name in outside_orifices:
+                                    outside_orifices += n_spaces +  name + "\n"  
 
-                    if not go_go:
-                        continue  # Force execution of next iteration, skip rest of code. No inlet or outlet nodes in INP file.
-        
-                    x1 = float(storm_drain.INP_nodes[orifice_inlet]["x"])
-                    y1 = float(storm_drain.INP_nodes[orifice_inlet]["y"])
-                    x2 = float(storm_drain.INP_nodes[orifice_outlet]["x"])
-                    y2 = float(storm_drain.INP_nodes[orifice_outlet]["y"])
-
-                    grid = self.gutils.grid_on_point(x1, y1)
-                    if grid is None:
-                        outside_orifices += name + "\n"
+                    if orifice_inlet in self.all_nodes and orifice_outlet in self.all_nodes:
+                        geom = QgsGeometry.fromPolylineXY([QgsPointXY(x1, y1), QgsPointXY(x2, y2)])
+                    else:
                         continue
-
-                    grid = self.gutils.grid_on_point(x2, y2)
-                    if grid is None:
-                        outside_orifices += name + "\n"
-                        continue
-
-                    geom = QgsGeometry.fromPolylineXY([QgsPointXY(x1, y1), QgsPointXY(x2, y2)])
 
                     if complete_or_create == "Create New":
                         feat.setGeometry(geom)
@@ -2157,9 +2173,8 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                                  WHERE weir_name = ?;"""
 
                 fields = self.user_swmm_weirs_lyr.fields()
-
                 for name, values in list(storm_drain.INP_weirs.items()):
-                    go_go = True
+
                     weir_inlet = values["weir_inlet"] if "weir_inlet" in values else None
                     weir_outlet = values["weir_outlet"] if "weir_outlet" in values else None
                     weir_type = values["weir_type"] if "weir_type" in values else "TRANSVERSE"
@@ -2182,30 +2197,35 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
 
                     if not weir_inlet in self.all_nodes:
                         weir_inlets_not_found += "      " +  name + "\n"
-                        go_go = False
+                    else:
+                        if "x" in self.all_nodes[weir_inlet] and "y" in self.all_nodes[weir_inlet]["y"]:
+                            x1 = float(self.all_nodes[weir_inlet]["x"])
+                            y1 = float(self.all_nodes[weir_inlet]["y"])                        
+                            grid = self.gutils.grid_on_point(x1, y1)
+                            if grid is None:
+                                if not name in outside_weirs:
+                                    outside_weirs += n_spaces + name + "\n"
+                        else:
+                            if not name in outside_weirs:
+                                outside_weirs += n_spaces + name + "\n"                                        
+
                     if not weir_outlet in self.all_nodes:
                         weir_outlets_not_found += "      " +  name + "\n"
-                        go_go = False
+                    else:
+                        if not self.all_nodes[weir_outlet]["x"] or not self.all_nodes[weir_outlet]["y"]:
+                            weir_outlets_not_found += "      " +  name + "\n" 
+                        else:
+                            x2 = float(self.all_nodes[weir_outlet]["x"])
+                            y2 = float(self.all_nodes[weir_outlet]["y"])
+                            grid = self.gutils.grid_on_point(x2, y2)
+                            if grid is None:
+                                if not name in outside_weirs:
+                                    outside_weirs += n_spaces + name + "\n"  
 
-                    if not go_go:
-                        continue  # Force execution of next iteration, skip rest of code. No inlet or outlet nodes in INP file.
-
-                    x1 = float(self.all_nodes[weir_inlet]["x"])
-                    y1 = float(self.all_nodes[weir_inlet]["y"])
-                    x2 = float(self.all_nodes[weir_outlet]["x"])
-                    y2 = float(self.all_nodes[weir_outlet]["y"])
-
-                    grid = self.gutils.grid_on_point(x1, y1)
-                    if grid is None:
-                        outside_weirs += name + "\n"
+                    if weir_inlet in self.all_nodes and weir_outlet in self.all_nodes:
+                        geom = QgsGeometry.fromPolylineXY([QgsPointXY(x1, y1), QgsPointXY(x2, y2)])
+                    else:
                         continue
-
-                    grid = self.gutils.grid_on_point(x2, y2)
-                    if grid is None:
-                        outside_weirs += name + "\n"
-                        continue
-
-                    geom = QgsGeometry.fromPolylineXY([QgsPointXY(x1, y1), QgsPointXY(x2, y2)])
 
                     if complete_or_create == "Create New":
                         feat.setGeometry(geom)
@@ -2381,65 +2401,37 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 "later export the .DAT files used by the FLO-2D model."
             )
 
-        if outside_nodes != "":
+        if len(outside_nodes + outside_storages) > 0:
             msgBox = QMessageBox()
             msgBox.setIcon(QMessageBox.Warning)
             msgBox.setWindowTitle("Storm Drain points outside domain")
             msgBox.setText("WARNING 221220.0336:")
-            msgBox.setInformativeText("The following Storm Drain points are outside the domain:")
-            msgBox.setDetailedText(outside_nodes)
+            msgBox.setInformativeText("The following points are outside the domain:")
+            msgBox.setDetailedText(outside_nodes + outside_storages)
             msgBox.setStandardButtons(QMessageBox.Ok)
-            msgBox.exec_()
+            horizontalSpacer = QSpacerItem(700, 0, QSizePolicy.Preferred, QSizePolicy.Preferred)
+            layout = msgBox.layout()
+            layout.addItem(horizontalSpacer, layout.rowCount(), 0, 1, layout.columnCount())
+            msgBox.exec_()       
 
-        if outside_storages != "":
+        items = outside_conduits + outside_pumps + outside_orifices +  outside_weirs 
+
+        if len(items) > 0:
+            items = ("Conduits:\n"  + outside_conduits if len(outside_conduits) > 0 else  "") + \
+                    ("Pumps:\n" + outside_pumps if len(outside_pumps) > 0 else "") + \
+                    ("Orifices:\n" + outside_orifices if len(outside_orifices) > 0 else "") + \
+                    ("Weirs:\n" + outside_weirs  if len(outside_weirs) > 0 else "")  
+
+            items = "WARNING 221220.0337:\nThe following links extend outside the domain:\n\n" + items  
+                                                            
             msgBox = QMessageBox()
             msgBox.setIcon(QMessageBox.Warning)
-            msgBox.setWindowTitle("Storm Drain Storages outside domain")
-            msgBox.setText("WARNING 300124.1129:")
-            msgBox.setInformativeText("The following Storm Drain storages are outside the domain:")
-            msgBox.setDetailedText(outside_storages)
-            msgBox.setStandardButtons(QMessageBox.Ok)
-            msgBox.exec_()
-
-        if outside_conduits != "":
-            msgBox = QMessageBox()
-            msgBox.setIcon(QMessageBox.Warning)
-            msgBox.setWindowTitle("Storm Drain conduits outside domain")
-            msgBox.setText("WARNING 221220.0337:")
-            msgBox.setInformativeText("The following Conduits extend outside the domain:")
-            msgBox.setDetailedText(outside_conduits)
-            msgBox.setStandardButtons(QMessageBox.Ok)
-            msgBox.exec_()
-
-        if outside_pumps != "":
-            msgBox = QMessageBox()
-            msgBox.setIcon(QMessageBox.Warning)
-            msgBox.setWindowTitle("Storm Drain pumps outside domain")
-            msgBox.setText("WARNING 050322.0522:")
-            msgBox.setInformativeText("The following Pumps extend outside the domain:")
-            msgBox.setDetailedText(outside_pumps)
-            msgBox.setStandardButtons(QMessageBox.Ok)
-            msgBox.exec_()
-
-        if outside_orifices != "":
-            msgBox = QMessageBox()
-            msgBox.setIcon(QMessageBox.Warning)
-            msgBox.setWindowTitle("Storm Drain orifices outside domain")
-            msgBox.setText("WARNING 080422.0522:")
-            msgBox.setInformativeText("The following Orifices extend outside the domain:")
-            msgBox.setDetailedText(outside_orifices)
-            msgBox.setStandardButtons(QMessageBox.Ok)
-            msgBox.exec_()
-
-
-        if outside_weirs != "":
-            msgBox = QMessageBox()
-            msgBox.setIcon(QMessageBox.Warning)
-            msgBox.setWindowTitle("Storm Drain weirs outside domain")
-            msgBox.setText("WARNING 211123.0639:")
-            msgBox.setInformativeText("The following Weirs extend outside the domain:")
-            msgBox.setDetailedText(outside_weirs)
-            msgBox.setStandardButtons(QMessageBox.Ok)
+            msgBox.setWindowTitle("Storm Drain links outside domain")
+            msgBox.setStandardButtons(QMessageBox.Close)  # Close button instead of OK
+            layout = QHBoxLayout()
+            label = QLabel(items)
+            layout.addWidget(label)
+            msgBox.layout().addWidget(label)           
             msgBox.exec_()
 
         if storm_drain.status_report:

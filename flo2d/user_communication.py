@@ -55,12 +55,9 @@ class UserCommunication(object):
                     QMessageBox.Warning if type=="warning" else + \
                     QMessageBox.Critical if type=="error" else QMessageBox.Information
             msgBox.setIcon(icon)
-
             horizontalSpacer = QSpacerItem(hSize, 0, QSizePolicy.Minimum, QSizePolicy.Expanding)
-            # Get the layout of the message box
             layout = msgBox.layout()
             layout.addItem(horizontalSpacer, layout.rowCount(), 0, 1, layout.columnCount())
-        
             msgBox.setFont(QFont("Courier", 8))
             msgBox.exec_()            
         else:
