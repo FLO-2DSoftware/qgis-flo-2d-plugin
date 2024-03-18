@@ -2828,7 +2828,7 @@ class Flo2D(object):
                     s = QSettings()
                     s.setValue("FLO-2D/lastGdsDir", outdir)
 
-                    QApplication.setOverrideCursor(Qt.WaitCursor)
+                    # QApplication.setOverrideCursor(Qt.WaitCursor)
                     self.call_IO_methods(export_calls, True, outdir)
 
                     # The strings list 'export_calls', contains the names of
@@ -2871,13 +2871,15 @@ class Flo2D(object):
                                     os.remove(outdir + r"\MULT.DAT")
                                 QApplication.setOverrideCursor(Qt.WaitCursor)
                     if self.files_used != "":
+                        QApplication.restoreOverrideCursor()
                         self.uc.show_info("Files exported to\n" + outdir + "\n\n" + self.files_used)
 
                     if self.f2g.export_messages != "":
                         info = "WARNINGS:\n\n" + self.f2g.export_messages
                         self.uc.show_info(info)
 
-        QApplication.setOverrideCursor(QtGui.QCursor(QtCore.Qt.ArrowCursor))
+        QApplication.restoreOverrideCursor()
+        # QApplication.setOverrideCursor(QtGui.QCursor(QtCore.Qt.ArrowCursor))
 
     @connection_required
     def export_hdf5(self):
