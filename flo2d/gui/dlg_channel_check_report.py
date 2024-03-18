@@ -24,7 +24,6 @@ class ChannelCheckReportDialog(qtBaseClass, uiDialog):
         self.iface = iface
         self.lyrs = lyrs
         self.setupUi(self)
-        self.close_btn.clicked.connect(self.close_dialog)
         self.grid = self.lyrs.data["grid"]["qlyr"]
         self.cell_size = self.gutils.get_cont_par("CELLSIZE")
 

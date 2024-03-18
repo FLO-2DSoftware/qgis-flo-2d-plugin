@@ -16,13 +16,6 @@
   <layout class="QGridLayout" name="gridLayout_2">
    <item row="0" column="0">
     <layout class="QGridLayout" name="gridLayout">
-     <item row="1" column="4">
-      <widget class="QPushButton" name="close_btn">
-       <property name="text">
-        <string>Close</string>
-       </property>
-      </widget>
-     </item>
      <item row="1" column="0">
       <widget class="QComboBox" name="error_grids_cbo"/>
      </item>

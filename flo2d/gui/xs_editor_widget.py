@@ -19,6 +19,7 @@ from math import isnan
 
 from PyQt5.QtWidgets import QProgressDialog
 from qgis._core import QgsMessageLog, QgsProcessingFeatureSourceDefinition, QgsUnitTypes
+from qgis._gui import QgsDockWidget
 from qgis.core import (
     NULL,
     QgsCoordinateTransform,
@@ -1061,8 +1062,17 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         pd.close()
         QApplication.restoreOverrideCursor()
 
+        for widget in QApplication.instance().allWidgets():
+            if isinstance(widget, QgsDockWidget):
+                if widget.windowTitle() == "FLO-2D Channel Check Report":
+                    widget.close()
+
         if msg != "":
             dlg_channel_report = ChannelCheckReportDialog(self.iface, self.lyrs, self.gutils)
+            plot_dock = QgsDockWidget()
+            plot_dock.setWindowTitle("FLO-2D Channel Check Report")
+            plot_dock.setWidget(dlg_channel_report)
+            self.iface.addDockWidget(Qt.BottomDockWidgetArea, plot_dock)
             dlg_channel_report.report_te.insertPlainText(msg)
 
             grid_errors = list(set(
