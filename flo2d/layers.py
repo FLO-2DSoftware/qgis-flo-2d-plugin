@@ -1893,7 +1893,8 @@ class Layers(object):
         #     self.uc.bar_error(msg)
 
     def warn_readonly(self):
-        self.uc.bar_warn("All changes to this layer can be overwritten by changes in the User Layer.")
+        # self.uc.bar_warn("All changes to this layer can be overwritten by changes in the User Layer.")
+        pass
 
     def enter_edit_mode(self, table_name, default_attr_exp=None):
         if not self.group:
