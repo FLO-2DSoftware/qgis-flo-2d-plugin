@@ -176,7 +176,6 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         #         self.create_plot()
         self.xs_data_model = StandardItemModel()
         self.tview.setModel(self.xs_data_model)
-        self.uc = UserCommunication(iface, "FLO-2D")
         # Connections:
 
         # Buttons connections:
@@ -1181,7 +1180,10 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
                                 m += "\n\nIncrement the number of stations in the problematic cross sections."
 
                             shutil.rmtree(last_dir)
-                            self.uc.bar_info(m)
+                            if m != "Elevation Cross Section Interpolated!":
+                                self.uc.bar_warn(m)
+                            else:
+                                self.uc.bar_info(m)
                             self.uc.log_info(m)
 
         QApplication.restoreOverrideCursor()
@@ -1256,7 +1258,10 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
                                     )
                                 if zero > 0 or few > 0:
                                     m += "\n\nIncrement the number of stations in the problematic cross sections."
-                                self.uc.show_info(m)
+                                if m != "Interpolation completed! Check log for more information.":
+                                    self.uc.bar_warn(m)
+                                else:
+                                    self.uc.bar_info(m)
                             if ret == 1:
                                 self.uc.show_warn("WARNING 060319.1747: CHANRIGHTBANK.EXE execution is disabled!")
                             #                         self.run_CHANRIGHTBANK()
