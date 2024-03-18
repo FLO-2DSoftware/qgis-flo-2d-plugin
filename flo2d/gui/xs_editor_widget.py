@@ -1831,6 +1831,8 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
             self.uc.bar_warn("There is no grid! Please create it before running tool.")
             return
 
+        units = "CMS" if self.gutils.get_cont_par("METRIC") == "1" else "CFS"
+
         if self.plot.plot.legend is not None:
             plot_scene = self.plot.plot.legend.scene()
             if plot_scene is not None:
@@ -1863,6 +1865,40 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         self.plot.add_item("Bed elevation", [sta, bed], col=QColor(Qt.black), sty=Qt.SolidLine)
         self.plot.add_item("Left bank", [sta, lb], col=QColor(Qt.darkGreen), sty=Qt.SolidLine)
         self.plot.add_item("Right bank", [sta, rb], col=QColor(Qt.darkYellow), sty=Qt.SolidLine)
+
+        try:  # Build table.
+            data_model = StandardItemModel()
+            self.tview.undoStack.clear()
+            self.tview.setModel(data_model)
+            data_model.clear()
+            data_model.setHorizontalHeaderLabels([f"Station ({self.system_units[units][0]})",
+                                                  f"Bed elevation ({self.system_units[units][0]})",
+                                                  f"Left bank ({self.system_units[units][0]})",
+                                                  f"Right bank ({self.system_units[units][0]})",
+                                                 ])
+
+            data = zip(sta, bed, lb, rb)
+            for station, bed_elev, left_bank, right_bank in data:
+                station_item = StandardItem("{:.2f}".format(station)) if station is not None else StandardItem("")
+                bed_item = StandardItem("{:.2f}".format(bed_elev)) if bed_elev is not None else StandardItem("")
+                left_bank_item = StandardItem("{:.2f}".format(left_bank)) if left_bank is not None else StandardItem("")
+                right_bank_item = StandardItem("{:.2f}".format(right_bank)) if right_bank is not None else StandardItem(
+                    "")
+                data_model.appendRow([station_item,
+                                      bed_item,
+                                      left_bank_item,
+                                      right_bank_item,
+                                      ])
+
+            self.tview.horizontalHeader().setStretchLastSection(True)
+            for col in range(3):
+                self.tview.setColumnWidth(col, 100)
+            for i in range(data_model.rowCount()):
+                self.tview.setRowHeight(i, 20)
+            return
+        except:
+            self.uc.bar_warn("Error while building table for channel!")
+            return
 
     def show_channel_peaks(self, table, fid):
         """
@@ -1912,7 +1948,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
                         grid = line.split()[-1]
                         line = next(myfile)
                         line = next(myfile)
-                        peak_discharge = line.split("MAXIMUM DISCHARGE (CFS) =")[1].split()[0]
+                        peak_discharge = line.split(f"MAXIMUM DISCHARGE ({units}) =")[1].split()[0]
                         line = next(myfile)
                         max_water_elev = line.split("MAXIMUM STAGE = ")[1].split()[0]
                         for _ in range(4):

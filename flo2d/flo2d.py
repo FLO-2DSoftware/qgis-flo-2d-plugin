@@ -3086,6 +3086,11 @@ class Flo2D(object):
         self.cur_info_table = None
 
     @connection_required
+    def show_channel_profile(self, fid=None):
+        self.f2d_widget.xs_editor.show_channel(fid)
+        self.cur_info_table = None
+
+    @connection_required
     def show_profile(self, fid=None):
         self.f2d_widget.xs_editor.show_channel_peaks(self.cur_profile_table, fid)
         self.cur_profile_table = None
@@ -3780,6 +3785,7 @@ class Flo2D(object):
 
     def set_editors_map(self):
         self.editors_map = {
+            "chan": self.show_channel_profile,
             "user_levee_lines": self.show_user_profile,
             "user_xsections": self.show_xsec_editor,
             "user_streets": self.show_user_profile,
