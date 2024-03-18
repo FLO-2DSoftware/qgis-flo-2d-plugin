@@ -279,14 +279,11 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
 
         self.bc_type = type
         if self.lyrs.any_lyr_in_edit(*self.user_bc_tables):
-            if self.uc.question("Would you like to save the Boundary Condition?"):
-                self.save_changes()
-                self.uncheck_btns()
-                return
-            else:
-                self.discard_changes()
-                self.uncheck_btns()
-                return
+            self.uc.bar_info(f"{type.capitalize()} Boundary Condition(s) saved!")
+            self.uc.log_info(f"{type.capitalize()} Boundary Condition(s) saved!")
+            self.save_changes()
+            self.uncheck_btns()
+            return
 
         btn.setCheckable(True)
         btn.setChecked(True)
