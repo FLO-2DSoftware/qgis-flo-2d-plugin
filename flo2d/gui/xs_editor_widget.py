@@ -442,7 +442,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         channel_names = self.gutils.execute("SELECT name FROM user_left_bank").fetchall()
         channel_names_list = [item[0] for item in channel_names]
 
-        if self.xs_cbo.currentText() in channel_names_list:
+        if self.xs_cbo.currentText() in channel_names_list or self.xs_cbo.currentText() == "Non Schematized":
             return
 
         self.xs = UserCrossSection(fid, self.con, self.iface)
