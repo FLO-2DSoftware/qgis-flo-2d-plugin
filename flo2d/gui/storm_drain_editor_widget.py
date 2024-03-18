@@ -220,6 +220,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         self.curve_data = None
         self.d1, self.d2, self.d3 = [[], [], []]
         self.auto_assign_msg = ""
+        self.no_nodes = ""
 
         set_icon(self.create_point_btn, "mActionCapturePoint.svg")
         set_icon(self.save_changes_btn, "mActionSaveAllEdits.svg")
@@ -1229,15 +1230,14 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 intype = int(values["intype"]) if "intype" in values else 1
 
                 if not "x" in values or not "y" in values:
-                    outside_nodes += n_spaces + name + "\thas no coordinates.\n"
+                    outside_nodes += n_spaces + name + "\tno coordinates.\n"
                     continue
                 
                 x = float(values["x"])
                 y = float(values["y"])
                 grid = self.gutils.grid_on_point(x, y)
                 if grid is None:
-                    outside_nodes += n_spaces + name + "\n"
-                    continue
+                    outside_nodes += n_spaces + name + "\toutside domain.\n"
 
                 if grid:
                     elev = self.gutils.grid_value(grid, "elevation")
@@ -1480,17 +1480,15 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                     constant = 0    
                 curve_name = values["curve_name"] if "curve_name" in values else "*"
     
-    
                 if not "x" in values or not "y" in values:
-                    outside_nodes += n_spaces + name + "    has no coordinates.\n"
+                    outside_nodes += n_spaces + name + "\tno coordinates.\n"
                     continue
-    
+                
                 x = float(values["x"])
                 y = float(values["y"])
                 grid = self.gutils.grid_on_point(x, y)
                 if grid is None:
-                    outside_storages += n_spaces + name + "\n"
-                    continue
+                    outside_storages += n_spaces + name + "\toutside domain.\n"
     
                 if complete_or_create == "Create New":
                     geom = QgsGeometry.fromPointXY(QgsPointXY(x, y))
@@ -1905,7 +1903,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                     if not pump_inlet in self.all_nodes:
                         pump_inlets_not_found += "      " + name + "\n"
                     else:
-                        if "x" in self.all_nodes[pump_inlet] and "y" in self.all_nodes[pump_inlet]["y"]:
+                        if "x" in self.all_nodes[pump_inlet] and "y" in self.all_nodes[pump_inlet]:
                             x1 = float(self.all_nodes[pump_inlet]["x"])
                             y1 = float(self.all_nodes[pump_inlet]["y"])                        
                             grid = self.gutils.grid_on_point(x1, y1)
@@ -2045,7 +2043,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                     if not orifice_inlet in self.all_nodes:
                         orifice_inlets_not_found += "      " +  name + "\n"
                     else:
-                        if "x" in self.all_nodes[orifice_inlet] and "y" in self.all_nodes[orifice_inlet]["y"]:
+                        if "x" in self.all_nodes[orifice_inlet] and "y" in self.all_nodes[orifice_inlet]:
                             x1 = float(self.all_nodes[orifice_inlet]["x"])
                             y1 = float(self.all_nodes[orifice_inlet]["y"])                        
                             grid = self.gutils.grid_on_point(x1, y1)
@@ -2199,7 +2197,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                     if not weir_inlet in self.all_nodes:
                         weir_inlets_not_found += "      " +  name + "\n"
                     else:
-                        if "x" in self.all_nodes[weir_inlet] and "y" in self.all_nodes[weir_inlet]["y"]:
+                        if "x" in self.all_nodes[weir_inlet] and "y" in self.all_nodes[weir_inlet]:
                             x1 = float(self.all_nodes[weir_inlet]["x"])
                             y1 = float(self.all_nodes[weir_inlet]["y"])                        
                             grid = self.gutils.grid_on_point(x1, y1)
@@ -3779,7 +3777,6 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
        
         no_inlet = ""
         no_outlet = ""
-        no_nodes = ""
         tab = 20
         layer = (
             self.user_swmm_conduits_lyr
@@ -3873,16 +3870,14 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             
             hyphens = '-' * 50
             if no_inlet:
-                no_nodes = f"{'Inlet Name '.ljust(tab, ' ')}{'Link Name  '.ljust(tab, ' ')}{'Link Type  '.ljust(tab, ' ')}" + "\n" + \
+                self.no_nodes = f"{'Inlet Name '.ljust(tab, ' ')}{'Link Name  '.ljust(tab, ' ')}{'Link Type  '.ljust(tab, ' ')}" + "\n" + \
                            f"{hyphens.ljust(tab, ' ')}" + "\n" + no_inlet
             if no_outlet:
                 header = f"{'Outlet Name'.ljust(tab, ' ')}{'Link Name  '.ljust(tab, ' ')}{'Link Type  '.ljust(tab, ' ')}" + "\n" 
-                if no_nodes == "":
-                    no_nodes = header + f"{hyphens.ljust(tab, ' ')}" + no_outlet
+                if self.no_nodes == "":
+                    self.no_nodes = header + f"{hyphens.ljust(tab, ' ')}" + no_outlet
                 else: 
-                    no_nodes += "\n" + header + f"{hyphens.ljust(tab, ' ')}" + no_outlet      
-            if no_nodes != "":
-                self.uc.show_msg("The following nodes (inlets or outlets) could not be found:\n\n" + no_nodes, 600) 
+                    self.no_nodes += "\n" + header + f"{hyphens.ljust(tab, ' ')}" + no_outlet      
             
         except Exception as e:
             QApplication.restoreOverrideCursor()
@@ -5001,10 +4996,13 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             return
         
         self.auto_assign_msg = ""
+        self.no_nodes = ""
         self.auto_assign_link_nodes("Conduits", "conduit_inlet", "conduit_outlet")
         self.auto_assign_link_nodes("Pumps", "pump_inlet", "pump_outlet")
         self.auto_assign_link_nodes("Orifices", "orifice_inlet", "orifice_outlet")
         self.auto_assign_link_nodes("Weirs", "weir_inlet", "weir_outlet")
+        if self.no_nodes != "":
+                self.uc.show_msg("The following nodes (inlets or outlets) could not be found for the indicated links:\n\n" + self.no_nodes, 600, "error") 
         self.uc.show_info("Inlet and Outlet nodes assigned to:\n\n" + self.auto_assign_msg)
         
     def SD_add_one_type4(self):
