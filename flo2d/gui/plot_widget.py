@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-import numpy as np
+
 # FLO-2D Preprocessor tools for QGIS
 # Copyright © 2021 Lutra Consulting for FLO-2D
 
@@ -16,6 +16,7 @@ from qgis._core import QgsMessageLog
 
 from ..deps import safe_pyqtgraph as pg
 from ..utils import Msge
+import numpy as np
 
 pg.setConfigOption("background", "w")
 pg.setConfigOption("foreground", "k")
@@ -130,3 +131,9 @@ class PlotWidget(QWidget):
         if self.plot.legend:
             if name in self.items:
                 self.plot.removeItem(self.items[name])
+
+    def auto_range(self):
+        """
+        Function to auto range the plot
+        """
+        self.plot.autoRange()

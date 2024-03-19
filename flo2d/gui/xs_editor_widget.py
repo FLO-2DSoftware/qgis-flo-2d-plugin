@@ -9,13 +9,17 @@
 # of the License, or (at your option) any later version
 
 import os
+import shutil
 import subprocess
+import processing
 import sys
 import traceback
 from collections import OrderedDict
 from math import isnan
 
-from qgis._core import QgsMessageLog
+from PyQt5.QtWidgets import QProgressDialog
+from qgis._core import QgsMessageLog, QgsProcessingFeatureSourceDefinition, QgsUnitTypes
+from qgis._gui import QgsDockWidget
 from qgis.core import (
     NULL,
     QgsCoordinateTransform,
@@ -40,7 +44,9 @@ from qgis.PyQt.QtWidgets import (
     QTableWidgetItem,
 )
 
+from .dlg_channel_check_report import ChannelCheckReportDialog
 from ..flo2d_ie.flo2d_parser import ParseDAT
+from ..flo2d_ie.flo2dgeopackage import Flo2dGeoPackage
 from ..flo2d_tools.flopro_tools import (
     ChannelNInterpolatorExecutor,
     ChanRightBankExecutor,
@@ -65,60 +71,60 @@ from .ui_utils import (
     try_disconnect,
 )
 
-uiDialog, qtBaseClass = load_ui("schematized_channels_info")
-
-
-class ShematizedChannelsInfo(qtBaseClass, uiDialog):
-    def __init__(self, iface):
-        qtBaseClass.__init__(self)
-        uiDialog.__init__(self)
-        self.iface = iface
-        self.uc = UserCommunication(iface, "FLO-2D")
-        self.setupUi(self)
-        self.con = self.iface.f2d["con"]
-        self.gutils = GeoPackageUtils(self.con, self.iface)
-        self.schematized_summary_tblw.horizontalHeader().setStretchLastSection(True)
-        self.populate_schematized_dialog()
-
-    def populate_schematized_dialog(self):
-        try:
-            qry_chan_names = """SELECT name FROM user_left_bank"""
-            chan_names = self.gutils.execute(qry_chan_names).fetchall()
-
-            qry_count_xs = """SELECT COUNT(seg_fid) FROM chan_elems GROUP BY seg_fid;"""
-            total_xs = self.gutils.execute(qry_count_xs).fetchall()
-
-            qry_interpolated = """SELECT COUNT(interpolated) FROM chan_elems WHERE interpolated = 1 GROUP BY seg_fid;"""
-            interpolated_xs = self.gutils.execute(qry_interpolated).fetchall()
-
-            self.schematized_summary_tblw.setRowCount(0)
-            for row_number, name in enumerate(chan_names):
-                self.schematized_summary_tblw.insertRow(row_number)
-                item = QTableWidgetItem()
-                if interpolated_xs:
-                    if row_number <= len(interpolated_xs) - 1:
-                        n_interpolated_xs = interpolated_xs[row_number][0]
-                    else:
-                        n_interpolated_xs = 0
-                else:
-                    n_interpolated_xs = 0
-                #                 n_interpolated_xs = interpolated_xs[row_number][0] if interpolated_xs else 0
-                original_xs = total_xs[row_number][0] - n_interpolated_xs
-                item.setData(Qt.DisplayRole, name[0] + " (" + str(original_xs) + " xsecs)")
-                self.schematized_summary_tblw.setItem(row_number, 0, item)
-                item = QTableWidgetItem()
-                item.setData(Qt.DisplayRole, total_xs[row_number][0])
-                self.schematized_summary_tblw.setItem(row_number, 1, item)
-                item = QTableWidgetItem()
-                item.setData(
-                    Qt.DisplayRole,
-                    str(total_xs[row_number][0]) + " (" + str(n_interpolated_xs) + " interpolated)",
-                )
-                self.schematized_summary_tblw.setItem(row_number, 2, item)
-        except Exception as e:
-            QApplication.restoreOverrideCursor()
-            self.uc.show_error("ERROR 130718.0831: schematized dialog failed to show!", e)
-            return
+# uiDialog, qtBaseClass = load_ui("schematized_channels_info")
+#
+#
+# class ShematizedChannelsInfo(qtBaseClass, uiDialog):
+#     def __init__(self, iface):
+#         qtBaseClass.__init__(self)
+#         uiDialog.__init__(self)
+#         self.iface = iface
+#         self.uc = UserCommunication(iface, "FLO-2D")
+#         self.setupUi(self)
+#         self.con = self.iface.f2d["con"]
+#         self.gutils = GeoPackageUtils(self.con, self.iface)
+#         self.schematized_summary_tblw.horizontalHeader().setStretchLastSection(True)
+#         self.populate_schematized_dialog()
+#
+#     def populate_schematized_dialog(self):
+#         try:
+#             qry_chan_names = """SELECT name FROM user_left_bank"""
+#             chan_names = self.gutils.execute(qry_chan_names).fetchall()
+#
+#             qry_count_xs = """SELECT COUNT(seg_fid) FROM chan_elems GROUP BY seg_fid;"""
+#             total_xs = self.gutils.execute(qry_count_xs).fetchall()
+#
+#             qry_interpolated = """SELECT COUNT(interpolated) FROM chan_elems WHERE interpolated = 1 GROUP BY seg_fid;"""
+#             interpolated_xs = self.gutils.execute(qry_interpolated).fetchall()
+#
+#             self.schematized_summary_tblw.setRowCount(0)
+#             for row_number, name in enumerate(chan_names):
+#                 self.schematized_summary_tblw.insertRow(row_number)
+#                 item = QTableWidgetItem()
+#                 if interpolated_xs:
+#                     if row_number <= len(interpolated_xs) - 1:
+#                         n_interpolated_xs = interpolated_xs[row_number][0]
+#                     else:
+#                         n_interpolated_xs = 0
+#                 else:
+#                     n_interpolated_xs = 0
+#                 #                 n_interpolated_xs = interpolated_xs[row_number][0] if interpolated_xs else 0
+#                 original_xs = total_xs[row_number][0] - n_interpolated_xs
+#                 item.setData(Qt.DisplayRole, name[0] + " (" + str(original_xs) + " xsecs)")
+#                 self.schematized_summary_tblw.setItem(row_number, 0, item)
+#                 item = QTableWidgetItem()
+#                 item.setData(Qt.DisplayRole, total_xs[row_number][0])
+#                 self.schematized_summary_tblw.setItem(row_number, 1, item)
+#                 item = QTableWidgetItem()
+#                 item.setData(
+#                     Qt.DisplayRole,
+#                     str(total_xs[row_number][0]) + " (" + str(n_interpolated_xs) + " interpolated)",
+#                 )
+#                 self.schematized_summary_tblw.setItem(row_number, 2, item)
+#         except Exception as e:
+#             QApplication.restoreOverrideCursor()
+#             self.uc.show_error("ERROR 130718.0831: schematized dialog failed to show!", e)
+#             return
 
 
 uiDialog, qtBaseClass = load_ui("xs_editor")
@@ -139,6 +145,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
     def __init__(self, iface, plot, table, lyrs):
         qtBaseClass.__init__(self)
         uiDialog.__init__(self)
+        self.f2g = None
         self.chan_seg = None
         self.iface = iface
         self.plot = plot
@@ -170,26 +177,6 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         #         self.create_plot()
         self.xs_data_model = StandardItemModel()
         self.tview.setModel(self.xs_data_model)
-        self.uc = UserCommunication(iface, "FLO-2D")
-        set_icon(self.digitize_btn, "mActionCaptureLine.svg")
-        set_icon(self.save_xs_changes_btn, "mActionSaveAllEdits.svg")
-        set_icon(self.delete_btn, "mActionDeleteSelected.svg")
-        set_icon(self.revert_changes_btn, "mActionUndo.svg")
-        set_icon(self.schematize_xs_btn, "schematize_xsec.svg")
-        set_icon(self.schematize_right_bank_btn, "schematize_right_bank.svg")
-        set_icon(self.save_channel_DAT_files_btn, "export_channels.svg")
-        set_icon(self.reassign_rightbanks_btn, "import_right_banks.svg")
-        set_icon(self.interpolate_xs_btn, "interpolate_xsec.svg")
-        set_icon(self.confluences_btn, "schematize_confluence.svg")
-        set_icon(self.interpolate_channel_n_btn, "interpolate_channel_n.svg")
-        set_icon(self.rename_xs_btn, "change_name.svg")
-        set_icon(self.sample_elevation_current_R_T_V_btn, "sample_channel_current_RTV.svg")
-        set_icon(self.sample_elevation_all_R_T_V_btn, "sample_channel_all_RTV.svg")
-        set_icon(
-            self.sample_elevation_current_natural_btn,
-            "sample_channel_current_natural.svg",
-        )
-        set_icon(self.sample_elevation_all_natural_btn, "sample_channel_all_natural.svg")
         # Connections:
 
         # Buttons connections:
@@ -197,12 +184,12 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         self.save_xs_changes_btn.clicked.connect(self.save_user_xsections_lyr_edits)
         self.revert_changes_btn.clicked.connect(self.cancel_user_lyr_edits)
         self.delete_btn.clicked.connect(self.delete_xs)
+        self.delete_schema_btn.clicked.connect(self.delete_schematize_data)
         self.schematize_xs_btn.clicked.connect(self.schematize_channels)
-        self.schematize_right_bank_btn.clicked.connect(self.schematize_right_banks)
-        self.save_channel_DAT_files_btn.clicked.connect(self.save_channel_DAT_and_XSEC_files)
-        self.interpolate_xs_btn.clicked.connect(self.interpolate_xs_values)
-        self.reassign_rightbanks_btn.clicked.connect(self.reassign_rightbanks_from_CHANBANK_file)
+        self.check_schematized_channel_btn.clicked.connect(self.check_schematized_channel)
+        self.interpolate_channel_elevation_btn.clicked.connect(self.interpolate_channel_elevation)
         self.confluences_btn.clicked.connect(self.create_confluences)
+        self.delete_confluences_btn.clicked.connect(self.delete_confluences)
         self.interpolate_channel_n_btn.clicked.connect(self.interpolate_channel_n)
         self.rename_xs_btn.clicked.connect(self.change_xs_name)
         self.sample_elevation_current_natural_btn.clicked.connect(self.sample_elevation_current_natural_cross_sections)
@@ -401,7 +388,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         self.xs_cbo.setEnabled(enable)
         self.rename_xs_btn.setEnabled(enable)
         self.xs_type_cbo.setEnabled(enable)
-        self.xs_center_chbox.setEnabled(enable)
+        self.xs_center_btn.setEnabled(enable)
         self.n_sbox.setEnabled(enable)
 
     def cancel_user_lyr_edits(self, i):
@@ -449,16 +436,19 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         if not self.xs_cbo.count():
             return
 
-        #         self.setup_plot()
-        #         self.plot = PlotWidget()
-        #         create_f2d_plot_dock()
-
         if fid is None or fid == -1:
             fid = self.xs_cbo.itemData(0)
+
+        channel_names = self.gutils.execute("SELECT name FROM user_left_bank").fetchall()
+        channel_names_list = [item[0] for item in channel_names]
+
+        if self.xs_cbo.currentText() in channel_names_list or self.xs_cbo.currentText() == "Non Schematized":
+            return
+
         self.xs = UserCrossSection(fid, self.con, self.iface)
         row = self.xs.get_row()
         self.lyrs.clear_rubber()
-        if self.xs_center_chbox.isChecked():
+        if self.xs_center_btn.isChecked():
             self.lyrs.show_feat_rubber(self.user_xs_lyr.id(), int(fid))
             feat = next(self.user_xs_lyr.getFeatures(QgsFeatureRequest(int(self.xs.fid))))
             x, y = feat.geometry().centroid().asPoint()
@@ -680,6 +670,49 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
             self.populate_xsec_cbo()
         self.repaint_xs()
 
+    def delete_schematize_data(self):
+        """
+        Function to delete the schematized channel data
+        """
+        if self.gutils.is_table_empty("grid"):
+            self.uc.bar_warn("There is no grid! Please create it before running tool.")
+            return
+        if self.gutils.is_table_empty("chan"):
+            self.uc.bar_info("There are no schematized channel data. ")
+            return
+        else:
+            if self.uc.question("Are you sure you want to delete all schematized channel data?"):
+                self.gutils.clear_tables(
+                    "chan",
+                    "rbank",
+                    "chan_elems",
+                    "chan_r",
+                    "chan_v",
+                    "chan_t",
+                    "chan_n",
+                    "user_chan_r",
+                    "user_chan_v",
+                    "user_chan_t",
+                    "user_chan_n",
+                    "chan_confluences",
+                    "xsec_n_data",
+                    "user_noexchange_chan_areas",
+                    "noexchange_chan_cells",
+                    "chan_wsel",
+                    "chan_elems_interp"
+                )
+                self.uc.bar_info("Schematized Cross Sections deleted!")
+                chan_schem = self.lyrs.data["chan"]["qlyr"]
+                chan_elems = self.lyrs.data["chan_elems"]["qlyr"]
+                rbank = self.lyrs.data["rbank"]["qlyr"]
+                confluences = self.lyrs.data["chan_confluences"]["qlyr"]
+                self.lyrs.lyrs_to_repaint = [chan_schem, chan_elems, rbank, confluences]
+                self.lyrs.repaint_layers()
+                current_fid = self.xs_cbo.currentData()
+                self.current_xsec_changed(current_fid)
+                self.populate_xsec_cbo()
+            return
+
     def schematize_channels(self):
         if self.gutils.is_table_empty("grid"):
             self.uc.bar_warn("There is no grid! Please create it before running tool.")
@@ -695,9 +728,6 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
                 else:
                     if self.uc.question("Are you sure you want to delete all channel data?"):
                         self.gutils.clear_tables(
-                            "user_left_bank",
-                            "user_right_bank",
-                            "user_xsections",
                             "chan",
                             "rbank",
                             "chan_elems",
@@ -705,10 +735,17 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
                             "chan_v",
                             "chan_t",
                             "chan_n",
+                            "user_chan_r",
+                            "user_chan_v",
+                            "user_chan_t",
+                            "user_chan_n",
                             "chan_confluences",
+                            "user_xsec_n_data",
+                            "xsec_n_data",
                             "user_noexchange_chan_areas",
                             "noexchange_chan_cells",
                             "chan_wsel",
+                            "chan_elems_interp"
                         )
                     return
             else:
@@ -790,12 +827,295 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         current_fid = self.xs_cbo.currentData()
         self.current_xsec_changed(current_fid)
 
-        # self.uc.show_info('Left Banks, Right Banks, and Cross Sections schematized!')
-        #
-        info = ShematizedChannelsInfo(self.iface)
-        close = info.exec_()
+        self.log_schematized_info()
 
         self.populate_xsec_cbo()
+
+    def check_schematized_channel(self):
+        """
+        Function to check the schematized channel. FLO-2D Engine does that, but this tries to remove the necessity
+        of a FLO-2D Engine run to check the schematized channel data.
+        """
+        if self.gutils.is_table_empty("grid"):
+            self.uc.bar_warn("There is no grid! Please create it before running tool.")
+            return
+        if self.gutils.is_table_empty("chan"):
+            self.uc.bar_warn("There is no schematized data! Please schematize the channel data before running tool.")
+            return
+
+        QApplication.setOverrideCursor(Qt.WaitCursor)
+
+        msg = ""
+
+        # Add relevant data to the channel dict
+        # Channel dict: {'left_grid': ['right_grid', topw, distt, xdistshort, xdistlong, xlen, arf_left, arf_right}
+        channel_dict = {}
+
+        # Calculate the Channel Top Width
+        left_bank_grids_r = self.gutils.execute("SELECT elem_fid, fcw FROM chan_r").fetchall()
+        # left_bank_grids_v = self.gutils.execute("SELECT elem_fid, nxsecnum FROM chan_n").fetchall() # TODO variable area
+        left_bank_grids_t = self.gutils.execute("SELECT elem_fid, fcw FROM chan_t").fetchall()
+        left_bank_grids_n = self.gutils.execute("SELECT elem_fid, nxsecnum FROM chan_n").fetchall()
+        cell_size = int(float(self.gutils.get_cont_par("CELLSIZE")))  # Assuming that it is the SIDE on JIM's code
+
+        for data in left_bank_grids_n + left_bank_grids_r + left_bank_grids_t:
+            left_bank_grid = data[0]
+            arf_left = self.gutils.execute(f"SELECT arf FROM blocked_cells WHERE grid_fid = '{left_bank_grid}'").fetchone()
+            if not arf_left:
+                arf_left = 0
+            else:
+                arf_left = arf_left[0]
+            chan_elems = self.gutils.execute(f"SELECT rbankgrid, xlen FROM chan_elems WHERE fid = '{left_bank_grid}'").fetchone()
+            right_bank_grid = chan_elems[0]
+            arf_right = self.gutils.execute(f"SELECT arf FROM blocked_cells WHERE grid_fid = '{right_bank_grid}'").fetchone()
+            if not arf_right:
+                arf_right = 0
+            else:
+                arf_right = arf_right[0]
+            xlen = chan_elems[1]
+
+            lb_centroid = self.gutils.single_centroid(left_bank_grid)
+            rb_centroid = self.gutils.single_centroid(right_bank_grid)
+            lb_x = QgsGeometry().fromWkt(lb_centroid).asPoint().x()
+            lb_y = QgsGeometry().fromWkt(lb_centroid).asPoint().y()
+            rb_x = QgsGeometry().fromWkt(rb_centroid).asPoint().x()
+            rb_y = QgsGeometry().fromWkt(rb_centroid).asPoint().y()
+
+            xcaddist = lb_x - rb_x
+            ycaddist = lb_y - rb_y
+
+            xdistt = (xcaddist ** 2 + ycaddist ** 2) ** 0.5
+
+            if data in left_bank_grids_n:
+                nxsecnum = data[1]
+                topw = self.gutils.execute(
+                    f"SELECT (MAX(xi) - MIN(xi)) FROM xsec_n_data WHERE chan_n_nxsecnum = '{nxsecnum}'").fetchone()[0]
+            else:
+                topw = data[1]
+
+            if xcaddist < 1 or ycaddist < 1:
+                xdistshort = xdistt + cell_size
+                xdistlong = xdistt - cell_size * 1.10
+            else:
+                xdistshort = xdistt + cell_size * 1.41412
+                xdistlong = xdistt - cell_size * 1.41412 * 1.10
+            channel_dict[left_bank_grid] = [right_bank_grid, topw, xdistt, xdistshort, xdistlong, xlen, arf_left, arf_right]
+
+        pd = QProgressDialog("Checking potential width errors", None, 0, len(channel_dict))
+        pd.setWindowTitle("Checking Channel Data...")
+        pd.setModal(True)
+        pd.forceShow()
+        pd.setValue(0)
+        i = 0
+
+        # 1 CHANNEL WIDTH ERROR
+        close_elements = []
+        area_elements = []
+        for left_grid, data in channel_dict.items():
+
+            topw = data[1]
+            xdistt = data[2]
+            xdistshort = data[3]
+            xdistlong = data[4]
+            xlen = data[5]
+            arf_left = data[6]
+            arf_right = data[7]
+
+            acf = topw * xlen
+
+            # 1.1 Cross-section is wider than the distance between two left and right bank elements
+
+            # Distance is shorter than the top width
+            if xdistshort < topw:
+                close_elements.append(left_grid)
+
+            # Distance is longer than the top width
+            if (topw > 2 * xdistt) and (xdistlong > topw):
+                close_elements.append(left_grid)
+
+            # 1.2 Area on the bank elements is less than 5% - JIM's code translated to python
+
+            # Floodplain surface area needs to be larger for the left bank element
+            arealft = xdistshort * xlen - acf
+            if arealft < 0:
+                area_elements.append(left_grid)
+
+            # Available area is less than 5% of the floodplain surface
+            apf_left = arealft * 0.5 * arf_left
+
+            areapercent = apf_left / (cell_size * cell_size)
+            if (areapercent < 0.05) and (arf_left > 0.999):
+                if left_grid not in area_elements: area_elements.append(left_grid)
+
+            # Check storage on the left bank floodplain area
+            if (areapercent < 0.05) and (arf_left < 0.999):
+                apf_left = arealft * 0.5
+                areapercent = apf_left / (cell_size * cell_size)
+                if areapercent < 0.05:
+                    if left_grid not in area_elements: area_elements.append(left_grid)
+
+            # Check storage on the right bank floodplain area
+            if (areapercent < 0.05) and (arf_right > 0.999):
+                if left_grid not in area_elements: area_elements.append(left_grid)
+
+            # Check storage on the right bank floodplain area
+            if (areapercent < 0.05) and (arf_right < 0.999):
+                apf_right = arealft * 0.5
+                areapercent = apf_right / (cell_size * cell_size)
+                if areapercent < 0.05:
+                    if left_grid not in area_elements: area_elements.append(left_grid)
+
+            i += 1
+            pd.setValue(i)
+
+        # 2 RIGHT BANK ERROR
+
+        # 2.1 Right bank is inside the two bank lines
+
+        # 3 BOUNDARY CONDITION ERRORS
+
+        # 3.1 Outflow last cross-section must be lower than adjacent upstream neighbor by 0.1 ft
+        # Verify if there is Channel Outflow BC (outflow table)
+        pd = QProgressDialog("Checking potential outflow boundary conditions errors", None, 0, len(channel_dict))
+        pd.setValue(0)
+        i = 0
+        error_outflow_bc_grid = []
+        outflow_bc_channel_grid_elements = self.gutils.execute(r"SELECT grid_fid FROM outflow_cells JOIN outflow ON "
+                                                               r"outflow_cells.outflow_fid = outflow.fid WHERE "
+                                                               r"outflow.chan_out = '1'").fetchall()
+
+        for bc in outflow_bc_channel_grid_elements:
+            bc_grid = bc[0]
+            # Get the Channel Outflow Grid Element (chan_* table) TODO: Do this for all types of cross sections
+            nxsecnum = self.gutils.execute(f"SELECT nxsecnum FROM chan_n WHERE elem_fid = '{bc_grid}'").fetchone()
+            if nxsecnum:
+                # Get the xc number
+                xc = nxsecnum[0]
+                # Get the downstream xc number
+                upstream_xc = xc - 1
+                # Compare the minimum elevations (xsec_n_data table)
+                xc_min_elev = \
+                    self.gutils.execute(f"SELECT MIN(yi) FROM xsec_n_data WHERE chan_n_nxsecnum = '{xc}'").fetchone()[0]
+                upstream_xc_min_elev = self.gutils.execute(
+                    f"SELECT MIN(yi) FROM xsec_n_data WHERE chan_n_nxsecnum = '{upstream_xc}'").fetchone()[0]
+
+                if self.gutils.get_cont_par("METRIC") == "1":
+                    outflow_elev_threshold = 0.03
+                elif self.gutils.get_cont_par("METRIC") == "0":
+                    outflow_elev_threshold = 0.1
+
+                if float(upstream_xc_min_elev) - float(xc_min_elev) < outflow_elev_threshold:
+                    error_outflow_bc_grid.append(bc_grid)
+
+            i += 1
+            pd.setValue(i)
+
+        # 3.2 Upstream inflow boundary must be positive slope in the downstream direction
+        # Verify if there is Channel Inflow BC (inflow table)
+        pd = QProgressDialog("Checking potential outflow boundary conditions errors", None, 0, len(channel_dict))
+        pd.setValue(0)
+        i = 0
+
+        error_inflow_bc_grid = []
+        inflow_bc_channel_grid_elements = self.gutils.execute(
+            r"SELECT grid_fid FROM inflow_cells JOIN inflow ON inflow_cells.inflow_fid = "
+            r"inflow.fid WHERE inflow.ident = 'C'").fetchall()
+        for bc in inflow_bc_channel_grid_elements:
+            bc_grid = bc[0]
+            # Get the Channel Inflow Grid Element (chan_* table) TODO: Do this for all types of cross sections
+            nxsecnum = self.gutils.execute(f"SELECT nxsecnum FROM chan_n WHERE elem_fid = '{bc_grid}'").fetchone()
+            if nxsecnum:
+                # Get the xc number
+                xc = nxsecnum[0]
+                # Get the downstream xc number
+                downstream_xc = xc + 1
+                # Compare the minimum elevations (xsec_n_data table)
+                xc_min_elev = \
+                    self.gutils.execute(f"SELECT MIN(yi) FROM xsec_n_data WHERE chan_n_nxsecnum = '{xc}'").fetchone()[0]
+                downstream_xc_min_elev = self.gutils.execute(
+                    f"SELECT MIN(yi) FROM xsec_n_data WHERE chan_n_nxsecnum = '{downstream_xc}'").fetchone()[0]
+                if downstream_xc_min_elev >= xc_min_elev:
+                    error_inflow_bc_grid.append(bc_grid)
+
+            i += 1
+            pd.setValue(i)
+
+        if len(close_elements) > 0:
+            msg += "CHANNEL RIGHT BANK ELEMENTS NEED SOME ADJUSTMENT DUE TO THE CHANNEL WIDTH.  " \
+                   "SET THE RIGHT BANK EITHER CLOSER OR FARTHER AWAY FROM THE LEFT BANK ELEMENT. " \
+                   f"GRID ELEMENTS(S): \n{'-'.join(map(str, close_elements))}\n\n"
+
+        if len(area_elements) > 0:
+            msg += "THE REMAINING FLOODPLAIN SURFACE AREA ON THE CHANNEL BANK ELEMENTS NEEDS TO BE LARGER FOR LEFT BANK ELEMENT. " \
+                   f"GRID ELEMENTS(S): \n{'-'.join(map(str, area_elements))}\n\n"
+
+        if len(error_outflow_bc_grid) > 0:
+            msg += "ERROR: CHANNEL OUTFLOW CROSS SECTION MUST BE LOWER THAN ADJACENT UPSTREAM NEIGHBOR BY 0.1. " \
+                   f"GRID ELEMENTS(S): \n{'-'.join(map(str, error_outflow_bc_grid))}\n\n"
+
+        if len(error_inflow_bc_grid) > 0:
+            msg += "ERROR: THE FOLLOWING CHANNEL INFLOW NODES HAVE AN ADVERSE (NEGATIVE BED SLOPE) OR ABSOLUTELY FLAT BED " \
+                   "SLOPE (ZERO SLOPE) TO THE NEXT DOWNSTREAM CHANNEL ELEMENT: \n(EITHER RAISE THE INFLOW NODE BED " \
+                   "ELEVATION OR LOWER THE DOWNSTREAM CHANNEL ELEMENT BED ELEVATION). " \
+                   f"GRID ELEMENTS(S): \n{'-'.join(map(str, error_inflow_bc_grid))}\n\n"
+
+        pd.close()
+        QApplication.restoreOverrideCursor()
+
+        for widget in QApplication.instance().allWidgets():
+            if isinstance(widget, QgsDockWidget):
+                if widget.windowTitle() == "FLO-2D Channel Check Report":
+                    widget.close()
+
+        if msg != "":
+            dlg_channel_report = ChannelCheckReportDialog(self.iface, self.lyrs, self.gutils)
+            plot_dock = QgsDockWidget()
+            plot_dock.setWindowTitle("FLO-2D Channel Check Report")
+            plot_dock.setWidget(dlg_channel_report)
+            self.iface.addDockWidget(Qt.BottomDockWidgetArea, plot_dock)
+            dlg_channel_report.report_te.insertPlainText(msg)
+
+            grid_errors = list(set(
+                str(item) for sublist in [close_elements, area_elements, error_outflow_bc_grid, error_inflow_bc_grid]
+                for item in sublist))
+            dlg_channel_report.error_grids_cbo.addItems(grid_errors)
+            dlg_channel_report.show()
+            while True:
+                ok = dlg_channel_report.exec_()
+                if ok:
+                    break
+                else:
+                    return
+
+            self.uc.log_info(msg)
+        else:
+            self.uc.show_info("The schematized channel has passed all required checks!")
+
+    def log_schematized_info(self):
+        """
+        Function to log the schematized info
+        """
+        qry_chan_names = """SELECT name FROM user_left_bank"""
+
+        chan_names = self.gutils.execute(qry_chan_names).fetchall()
+
+        qry_count_xs = """SELECT COUNT(seg_fid) FROM chan_elems GROUP BY seg_fid;"""
+        total_xs = self.gutils.execute(qry_count_xs).fetchall()
+
+        qry_interpolated = """SELECT COUNT(interpolated) FROM chan_elems WHERE interpolated = 1 GROUP BY seg_fid;"""
+        interpolated_xs = self.gutils.execute(qry_interpolated).fetchall()
+
+        for row_number, name in enumerate(chan_names):
+            if interpolated_xs:
+                if row_number <= len(interpolated_xs) - 1:
+                    n_interpolated_xs = interpolated_xs[row_number][0]
+                else:
+                    n_interpolated_xs = 0
+            else:
+                n_interpolated_xs = 0
+            original_xs = total_xs[row_number][0] - n_interpolated_xs
+            log_msg = f"Interpolation of {name[0]}: {total_xs[row_number][0]} ({original_xs} xsecs & {n_interpolated_xs} interpolated)"
+            self.uc.log_info(log_msg)
 
     def schematize_right_banks(self):
         if self.gutils.is_table_empty("grid"):
@@ -835,6 +1155,48 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         rbank = self.lyrs.data["rbank"]["qlyr"]
         self.lyrs.lyrs_to_repaint = [rbank]
         self.lyrs.repaint_layers()
+
+    def interpolate_channel_elevation(self):
+        """
+        Function to interpolate channel elevation
+        """
+        QApplication.setOverrideCursor(Qt.WaitCursor)
+        xs_survey = self.save_chan_dot_dat_with_zero_natural_cross_sections()
+        if xs_survey:
+            if self.save_xsec_dot_dat_with_only_user_cross_sections():
+                if self.save_CHANBANK():
+                    rtrn = -2
+                    while rtrn == -2:
+                        rtrn = self.run_INTERPOLATE()
+                        if rtrn == 0:
+                            s = QSettings()
+                            last_dir = s.value("FLO-2D/lastGdsDir", "") + "/temp/"
+                            fname = last_dir + "\\CONT.DAT"
+                            if not fname:
+                                return
+                            self.parser.scan_project_dir(fname)
+                            self.import_chan(temp=last_dir)
+                            zero, few = self.import_xsec()
+                            m = "Elevation Cross Section Interpolated!"
+                            if zero > 0:
+                                m += "\n\nWARNING: There are " + str(zero) + " cross sections with no stations."
+                            if few > 0:
+                                m += (
+                                        "\n\nWARNING: There are "
+                                        + str(few)
+                                        + " cross sections with less than 6 stations."
+                                )
+                            if zero > 0 or few > 0:
+                                m += "\n\nIncrement the number of stations in the problematic cross sections."
+
+                            shutil.rmtree(last_dir)
+                            if m != "Elevation Cross Section Interpolated!":
+                                self.uc.bar_warn(m)
+                            else:
+                                self.uc.bar_info(m)
+                            self.uc.log_info(m)
+
+        QApplication.restoreOverrideCursor()
 
     def save_channel_DAT_and_XSEC_files(self):
         if self.gutils.is_table_empty("grid"):
@@ -895,7 +1257,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
                                 self.parser.scan_project_dir(fname)
                                 self.import_chan()
                                 zero, few = self.import_xsec()
-                                m = "Files CHAN.DAT, CHANBANK.DAT, and XSEC.DAT imported."
+                                m = "Interpolation completed! Check log for more information."
                                 if zero > 0:
                                     m += "\n\nWARNING: There are " + str(zero) + " cross sections with no stations."
                                 if few > 0:
@@ -906,7 +1268,10 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
                                     )
                                 if zero > 0 or few > 0:
                                     m += "\n\nIncrement the number of stations in the problematic cross sections."
-                                self.uc.show_info(m)
+                                if m != "Interpolation completed! Check log for more information.":
+                                    self.uc.bar_warn(m)
+                                else:
+                                    self.uc.bar_info(m)
                             if ret == 1:
                                 self.uc.show_warn("WARNING 060319.1747: CHANRIGHTBANK.EXE execution is disabled!")
                             #                         self.run_CHANRIGHTBANK()
@@ -915,12 +1280,18 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
 
         QApplication.restoreOverrideCursor()
 
-    def import_chan(self):
+    def import_chan(self, temp=False):
         s = QSettings()
-        last_dir = s.value("FLO-2D/lastGdsDir", "")
-        if not os.path.isfile(last_dir + "\\CHAN.DAT"):
-            self.uc.show_warn("WARNING 060319.1748: Can't import channels!.\nCHAN.DAT doesn't exist.")
-            return
+        if temp:
+            last_dir = s.value("FLO-2D/lastGdsDir", "") + "/temp/"
+            if not os.path.isfile(last_dir + "\\CHAN.DAT"):
+                self.uc.show_warn("WARNING 060319.1748: Can't import channels!.\nCHAN.DAT doesn't exist.")
+                return
+        else:
+            last_dir = s.value("FLO-2D/lastGdsDir", "")
+            if not os.path.isfile(last_dir + "\\CHAN.DAT"):
+                self.uc.show_warn("WARNING 060319.1748: Can't import channels!.\nCHAN.DAT doesn't exist.")
+                return
 
         cont_file = last_dir + "\\CHAN.DAT"
 
@@ -1113,112 +1484,111 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
 
         s = QSettings()
         last_dir = s.value("FLO-2D/lastGdsDir", "")
-        outdir = QFileDialog.getExistingDirectory(
-            None,
-            "Select directory where CHAN.DAT, CHANBANK.DAT, and XSEC.DAT files will be exported",
-            directory=last_dir,
-        )
+        # Create a temporary directory on the export folder
+        outdir = last_dir + "/temp/"
+        if not os.path.exists(outdir):
+            os.mkdir(outdir)
+
         if outdir:
             QApplication.setOverrideCursor(Qt.WaitCursor)
-            s.setValue("FLO-2D/lastGdsDir", outdir)
             chan = os.path.join(outdir, "CHAN.DAT")
+            if os.path.isfile(chan):
+                os.remove(chan)
+            # try:
+            with open(chan, "w") as c:
+                surveyed = 0
+                non_surveyed = 0
 
-            try:
-                with open(chan, "w") as c:
-                    surveyed = 0
-                    non_surveyed = 0
+                ISED = self.gutils.get_cont_par("ISED")
 
-                    ISED = self.gutils.get_cont_par("ISED")
+                for row in chan_rows:
+                    row = [x if x is not None else "0" for x in row]
+                    fid = row[0]
+                    if ISED == "0":
+                        row[4] = ""
+                    c.write(
+                        segment.format(*row[1:5])
+                    )  # Writes depinitial, froudc, roughadj, isedn from 'chan' table (schematic layer).
+                    # A single line for each channel segment. The next lines will be the grid elements of
+                    # this channel segment.
+                    previous_xs = -999
 
-                    for row in chan_rows:
-                        row = [x if x is not None else "0" for x in row]
-                        fid = row[0]
-                        if ISED == "0":
-                            row[4] = ""
-                        c.write(
-                            segment.format(*row[1:5])
-                        )  # Writes depinitial, froudc, roughadj, isedn from 'chan' table (schematic layer).
-                        # A single line for each channel segment. The next lines will be the grid elements of
-                        # this channel segment.
-                        previous_xs = -999
+                    for elems in self.gutils.execute(
+                            chan_elems_sql, (fid,)
+                    ):  # each 'elems' is a list [(fid, rbankgrid, fcn, xlen, type)] from
+                        # 'chan_elems' table (the cross sections in the schematic layer),
+                        #  that has the 'fid' value indicated (the channel segment id).
 
-                        for elems in self.gutils.execute(
-                                chan_elems_sql, (fid,)
-                        ):  # each 'elems' is a list [(fid, rbankgrid, fcn, xlen, type)] from
-                            # 'chan_elems' table (the cross sections in the schematic layer),
-                            #  that has the 'fid' value indicated (the channel segment id).
+                        elems = [
+                            x if x is not None else "" for x in elems
+                        ]  # If 'elems' has a None in any of above values of list, replace it by ''
+                        (
+                            eid,
+                            rbank,
+                            fcn,
+                            xlen,
+                            typ,
+                            usr_xs_fid,
+                        ) = elems  # Separates values of list into individual variables.
+                        sql, line, fcn_idx, xlen_idx = sqls[
+                            typ
+                        ]  # depending on 'typ' (R,V,T, or N) select sql (the SQLite SELECT statement to execute),
+                        # line (format to write), fcn_idx (?), and xlen_idx (?)
+                        res = [
+                            x if x is not None else "" for x in self.gutils.execute(sql, (eid,)).fetchone()
+                        ]  # 'res' is a list of values depending on 'typ' (R,V,T, or N).
 
-                            elems = [
-                                x if x is not None else "" for x in elems
-                            ]  # If 'elems' has a None in any of above values of list, replace it by ''
-                            (
-                                eid,
-                                rbank,
-                                fcn,
-                                xlen,
-                                typ,
-                                usr_xs_fid,
-                            ) = elems  # Separates values of list into individual variables.
-                            sql, line, fcn_idx, xlen_idx = sqls[
-                                typ
-                            ]  # depending on 'typ' (R,V,T, or N) select sql (the SQLite SELECT statement to execute),
-                            # line (format to write), fcn_idx (?), and xlen_idx (?)
-                            res = [
-                                x if x is not None else "" for x in self.gutils.execute(sql, (eid,)).fetchone()
-                            ]  # 'res' is a list of values depending on 'typ' (R,V,T, or N).
-
-                            if typ == "N":
-                                res.insert(
-                                    1, fcn
-                                )  # Add 'fcn' (coming from table Â´chan_elems' (cross sections) to 'res' list) in position 'fcn_idx'.
-                                res.insert(
-                                    2, xlen
-                                )  # Add Â´xlen' (coming from table Â´chan_elems' (cross sections) to 'res' list in position 'xlen_idx'.
-                                if usr_xs_fid == previous_xs:
-                                    res.insert(3, 0)
-                                    non_surveyed += 1
-                                else:
-                                    res.insert(
-                                        3,
-                                        natural_channel_section_number_dict[usr_xs_fid],
-                                    )
-                                    surveyed += 1
-                                    previous_xs = usr_xs_fid
+                        if typ == "N":
+                            res.insert(
+                                1, fcn
+                            )  # Add 'fcn' (coming from table Â´chan_elems' (cross sections) to 'res' list) in position 'fcn_idx'.
+                            res.insert(
+                                2, xlen
+                            )  # Add Â´xlen' (coming from table Â´chan_elems' (cross sections) to 'res' list in position 'xlen_idx'.
+                            if usr_xs_fid == previous_xs:
+                                res.insert(3, 0)
+                                non_surveyed += 1
                             else:
                                 res.insert(
-                                    fcn_idx, fcn
-                                )  # Add 'fcn' (coming from table Â´chan_elems' (cross sections) to 'res' list) in position 'fcn_idx'.
-                                res.insert(
-                                    xlen_idx, xlen
-                                )  # Add Â´xlen' (coming from table Â´chan_elems' (cross sections) to 'res' list in position 'xlen_idx'.
-
-                            c.write(line.format(*res))
-
-                    for row in self.gutils.execute(chan_wsel_sql):
-                        c.write(wsel.format(*row[:2]))
-                        c.write(wsel.format(*row[2:]))
-
-                    pairs = []
-                    for row in self.gutils.execute(chan_conf_sql):
-                        chan_elem = row[0]
-                        if not pairs:
-                            pairs.append(chan_elem)
+                                    3,
+                                    natural_channel_section_number_dict[usr_xs_fid],
+                                )
+                                surveyed += 1
+                                previous_xs = usr_xs_fid
                         else:
-                            pairs.append(chan_elem)
-                            c.write(conf.format(*pairs))
-                            del pairs[:]
+                            res.insert(
+                                fcn_idx, fcn
+                            )  # Add 'fcn' (coming from table Â´chan_elems' (cross sections) to 'res' list) in position 'fcn_idx'.
+                            res.insert(
+                                xlen_idx, xlen
+                            )  # Add Â´xlen' (coming from table Â´chan_elems' (cross sections) to 'res' list in position 'xlen_idx'.
 
-                    for row in self.gutils.execute(chan_e_sql):
-                        c.write(chan_e.format(row[0]))
+                        c.write(line.format(*res))
 
-                self.uc.bar_info("CHAN.DAT file exported to " + outdir, dur=5)
-                QApplication.restoreOverrideCursor()
-                return [surveyed, non_surveyed]
+                for row in self.gutils.execute(chan_wsel_sql):
+                    c.write(wsel.format(*row[:2]))
+                    c.write(wsel.format(*row[2:]))
 
-            except Exception as e:
-                QApplication.restoreOverrideCursor()
-                self.uc.show_error("ERROR 190521.1733: couln't export CHAN.DAT and/or XSEC.DAT !", e)
-                return []
+                pairs = []
+                for row in self.gutils.execute(chan_conf_sql):
+                    chan_elem = row[0]
+                    if not pairs:
+                        pairs.append(chan_elem)
+                    else:
+                        pairs.append(chan_elem)
+                        c.write(conf.format(*pairs))
+                        del pairs[:]
+
+                for row in self.gutils.execute(chan_e_sql):
+                    c.write(chan_e.format(row[0]))
+
+            QApplication.restoreOverrideCursor()
+            return [surveyed, non_surveyed]
+
+            # except Exception as e:
+            #     QApplication.restoreOverrideCursor()
+            #     self.uc.show_error("ERROR 190521.1733: couln't export CHAN.DAT and/or XSEC.DAT !", e)
+            #     return []
 
         else:
             return []
@@ -1253,11 +1623,15 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
             pass
 
         s = QSettings()
-        outdir = s.value("FLO-2D/lastGdsDir", "")
+        last_dir = s.value("FLO-2D/lastGdsDir", "")
+        # Create a temporary directory on the export folder
+        outdir = last_dir + "/temp/"
+        if not os.path.exists(outdir):
+            os.mkdir(outdir)
+
         if outdir:
             try:
                 QApplication.setOverrideCursor(Qt.WaitCursor)
-                s.setValue("FLO-2D/lastGdsDir", outdir)
                 xsec = os.path.join(outdir, "XSEC.DAT")
                 with open(xsec, "w") as x:
                     for fid, nxsecnum, name in chan_n:
@@ -1265,7 +1639,6 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
                         for xi, yi in self.gutils.execute(xsec_sql, (fid,)):
                             x.write(pkt_line.format(nr.format(xi), nr.format(yi)))
                 QApplication.restoreOverrideCursor()
-                self.uc.bar_info("XSEC.DAT model exported to " + outdir, dur=5)
                 return True
             except Exception as e:
                 QApplication.restoreOverrideCursor()
@@ -1279,38 +1652,34 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
             rbanks = self.gutils.execute("SELECT fid, rbankgrid FROM chan_elems;").fetchall()
             if rbanks:
                 s = QSettings()
-                outdir = s.value("FLO-2D/lastGdsDir", "")
+                last_dir = s.value("FLO-2D/lastGdsDir", "")
+                # Create a temporary directory on the export folder
+                outdir = last_dir + "/temp/"
+                if not os.path.exists(outdir):
+                    os.mkdir(outdir)
                 if outdir:
                     QApplication.setOverrideCursor(Qt.WaitCursor)
-                    s.setValue("FLO-2D/lastGdsDir", outdir)
                     chanbank = os.path.join(outdir, "CHANBANK.DAT")
                     with open(chanbank, "w") as cb:
                         for rb in rbanks:
                             cb.write(line.format(rb[0], rb[1]))
+                    QApplication.restoreOverrideCursor()
                     return True
         except Exception as e:
             self.uc.log_info(repr(e))
             self.uc.show_error("ERROR 260521.1207: Couldn't export CHANBANK.DAT!", e)
             return False
 
-    def run_INTERPOLATE(self, xs_survey):
+    def run_INTERPOLATE(self):
         if sys.platform != "win32":
             self.uc.bar_warn("Could not run interpolation under current operation system!")
             return -1
-
-        try:  # Show dialog to interpolate
-            dlg = XSecInterpolationDialog(self.iface, xs_survey)
-            ok = dlg.exec_()
-            if not ok:
-                return -1
-        except Exception as e:
-            self.uc.log_info(repr(e))
-            self.uc.bar_error("ERROR 280318.0530: Cross sections interpolation dialog could not be loaded!")
-            return -1
-
         try:
             QApplication.setOverrideCursor(Qt.WaitCursor)
-            self.exe_dir, self.project_dir = dlg.get_parameters()
+            s = QSettings()
+            self.project_dir = s.value("FLO-2D/lastGdsDir", "") + "/temp/"
+            self.exe_dir = s.value("FLO-2D/last_flopro", "")
+
             if os.path.isfile(self.exe_dir + "\\INTERPOLATE.EXE"):
                 interpolate = XSECInterpolatorExecutor(self.exe_dir, self.project_dir)
                 return_code = interpolate.run()
@@ -1376,14 +1745,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
             self.uc.bar_warn("CHANRIGHTBANK.EXE failed!")
 
     def interpolate_xs_values(self):
-        if self.gutils.is_table_empty("grid"):
-            self.uc.bar_warn("WARNING 060319.1754: There is no grid! Please create it before running tool.")
-            return
-        if self.gutils.is_table_empty("chan"):
-            self.uc.bar_warn(
-                "WARNING 060319.1755: There are no cross-sections! Please create them before running tool."
-            )
-            return
+        QApplication.setOverrideCursor(Qt.WaitCursor)
         if not self.interp_bed_and_banks():
             QApplication.restoreOverrideCursor()
             self.uc.show_warn(
@@ -1394,7 +1756,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
             current_fid = self.xs_cbo.currentData()
             self.current_xsec_changed(current_fid)
             QApplication.restoreOverrideCursor()
-            self.uc.show_info("Interpolation of cross-sections values finished!")
+            self.uc.bar_info("Interpolation of cross-sections values finished!")
 
     def interpolate_xs_values_externally(self):
         os.chdir("C:/Users/Juan Jose Rodriguez/Desktop/XSEC Interpolated")
@@ -1471,6 +1833,83 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
                 e,
             )
 
+    def show_channel(self, fid):
+        """
+        Function to show the channel schematized data
+        """
+        if self.gutils.is_table_empty("grid"):
+            self.uc.bar_warn("There is no grid! Please create it before running tool.")
+            return
+
+        units = "CMS" if self.gutils.get_cont_par("METRIC") == "1" else "CFS"
+
+        if self.plot.plot.legend is not None:
+            plot_scene = self.plot.plot.legend.scene()
+            if plot_scene is not None:
+                plot_scene.removeItem(self.plot.plot.legend)
+
+        self.chan_seg = ChannelSegment(fid, self.iface.f2d["con"], self.iface)
+        self.chan_seg.get_row()  # Assigns to self.chan_seg all field values of the selected schematized channel:
+        # 'name', 'depinitial',  'froudc',  'roughadj', 'isedn', 'notes', 'user_lbank_fid', 'rank'
+        if not self.chan_seg.get_profiles():
+            return
+        self.plot.clear()
+        sta, lb, rb, bed = [], [], [], []
+
+        ordered_dict = self.chan_seg.profiles.items()
+
+        for item in ordered_dict:
+            key = str(item[0])
+
+        for st, data in ordered_dict:
+            sta.append(data["station"])
+            lb.append(data["lbank_elev"])
+            rb.append(data["rbank_elev"])
+            bed.append(data["bed_elev"])
+
+        self.plot.plot.legend = None
+        self.plot.plot.addLegend(offset=(0, 30))
+        self.plot.plot.setTitle(title=f"Channel Profile - {fid}")
+        self.plot.plot.setLabel("bottom", text="Channel length")
+        self.plot.plot.setLabel("left", text="")
+        self.plot.add_item("Bed elevation", [sta, bed], col=QColor(Qt.black), sty=Qt.SolidLine)
+        self.plot.add_item("Left bank", [sta, lb], col=QColor(Qt.darkGreen), sty=Qt.SolidLine)
+        self.plot.add_item("Right bank", [sta, rb], col=QColor(Qt.darkYellow), sty=Qt.SolidLine)
+
+        try:  # Build table.
+            data_model = StandardItemModel()
+            self.tview.undoStack.clear()
+            self.tview.setModel(data_model)
+            data_model.clear()
+            data_model.setHorizontalHeaderLabels([f"Station ({self.system_units[units][0]})",
+                                                  f"Bed elevation ({self.system_units[units][0]})",
+                                                  f"Left bank ({self.system_units[units][0]})",
+                                                  f"Right bank ({self.system_units[units][0]})",
+                                                 ])
+
+            data = zip(sta, bed, lb, rb)
+            for station, bed_elev, left_bank, right_bank in data:
+                station_item = StandardItem("{:.2f}".format(station)) if station is not None else StandardItem("")
+                bed_item = StandardItem("{:.2f}".format(bed_elev)) if bed_elev is not None else StandardItem("")
+                left_bank_item = StandardItem("{:.2f}".format(left_bank)) if left_bank is not None else StandardItem("")
+                right_bank_item = StandardItem("{:.2f}".format(right_bank)) if right_bank is not None else StandardItem(
+                    "")
+                data_model.appendRow([station_item,
+                                      bed_item,
+                                      left_bank_item,
+                                      right_bank_item,
+                                      ])
+
+            self.tview.horizontalHeader().setStretchLastSection(True)
+            for col in range(3):
+                self.tview.setColumnWidth(col, 100)
+            for i in range(data_model.rowCount()):
+                self.tview.setRowHeight(i, 20)
+            return
+        except:
+            self.uc.bar_warn("Error while building table for channel!")
+            return
+
     def show_channel_peaks(self, table, fid):
         """
         Function to show the channel peaks
@@ -1519,7 +1958,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
                         grid = line.split()[-1]
                         line = next(myfile)
                         line = next(myfile)
-                        peak_discharge = line.split("MAXIMUM DISCHARGE (CFS) =")[1].split()[0]
+                        peak_discharge = line.split(f"MAXIMUM DISCHARGE ({units}) =")[1].split()[0]
                         line = next(myfile)
                         max_water_elev = line.split("MAXIMUM STAGE = ")[1].split()[0]
                         for _ in range(4):
@@ -2002,21 +2441,57 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
             self.uc.bar_warn("There is no grid! Please create it before running tool.")
             return
 
-        dlg = ExternalProgramFLO2D(self.iface, "Run interpolation of channel n-values")
+        # dlg = ExternalProgramFLO2D(self.iface, "Run interpolation of channel n-values")
         # dlg.debug_run_btn.setVisible(False)
-        dlg.exec_folder_lbl.setText("FLO-2D Folder (of interpolation executable)")
-        ok = dlg.exec_()
-        if not ok:
-            return
-        flo2d_dir, project_dir = dlg.get_parameters()
+        # dlg.exec_folder_lbl.setText("FLO-2D Folder (of interpolation executable)")
+        # ok = dlg.exec_()
+        # if not ok:
+        #     return
+        s = QSettings()
+        flo2d_dir = s.value("FLO-2D/last_flopro", "")
+        project_dir = s.value("FLO-2D/lastGdsDir", "")
+        outdir = project_dir + "/temp/"
+        self.f2g = Flo2dGeoPackage(self.con, self.iface)
+        if not os.path.exists(outdir):
+            os.mkdir(outdir)
         try:
-            channelNInterpolator = ChannelNInterpolatorExecutor(flo2d_dir, project_dir)
+            QApplication.setOverrideCursor(Qt.WaitCursor)
+            # Export CONT, TOPO, CHAN and XSEC to temp folder
+            self.f2g.export_cont_toler_dat(outdir)
+            self.f2g.export_mannings_n_topo_dat(outdir)
+            self.f2g.export_chan(outdir)
+            self.f2g.export_xsec(outdir)
+
+            # Run the interpolator
+            channelNInterpolator = ChannelNInterpolatorExecutor(flo2d_dir, outdir)
             return_code = channelNInterpolator.run()
+
             if return_code == 0:
                 QApplication.restoreOverrideCursor()
-                self.uc.show_warn("WARNING 060319.1757: Channel n-values interpolated into CHAN.DAT file!\n\n")
+
+                # Import back
+                for root, dirs, files in os.walk(outdir):
+                    if "fort.4" in files:
+                        fort_path = os.path.join(root, "fort.4")
+                        chanfile = os.path.join(outdir, "CHAN.DAT")
+
+                        # If CHAN.DAT already exists, remove it
+                        if os.path.exists(chanfile):
+                            os.remove(chanfile)
+
+                        # Rename fort.4 to CHAN.DAT
+                        os.rename(fort_path, chanfile)
+                        break  # Found "fort.4" and renamed it, no need to continue searching
+
+                self.import_chan(temp=outdir)
+
+                # Delete the temp folder
+                shutil.rmtree(outdir)
+
+                self.uc.bar_info("Channel n-values interpolated into CHAN.DAT file!\n\n")
 
             elif return_code == -999:
+                QApplication.restoreOverrideCursor()
                 self.uc.show_warn(
                     "WARNING 060319.1758: Interpolation of channel n-values could not be performed!\n\n"
                     + "File\n\n"
@@ -2035,6 +2510,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
                 )
 
         except Exception as e:
+            QApplication.restoreOverrideCursor()
             self.uc.log_info(repr(e))
             self.uc.show_error(
                 "ERROR 060319.1631: Interpolation of channel n-values failed!\n"
@@ -2171,6 +2647,21 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
             QApplication.restoreOverrideCursor()
             self.uc.log_info(traceback.format_exc())
             self.uc.show_error("ERROR 160921.0937: Creation of confluences aborted!\n,", e)
+
+    def delete_confluences(self):
+        """
+        Function to delete confluences
+        """
+        if self.gutils.is_table_empty("grid"):
+            self.uc.bar_warn("WARNING 160821.0930: There is no grid! Please create it before running tool.")
+            return
+        if self.gutils.is_table_empty("chan_elems"):
+            self.uc.bar_warn("WARNING 160821.0931: There are no schematized channel cross sections.")
+            return
+
+        self.gutils.clear_tables("chan_confluences")
+        self.lyrs.data["chan_confluences"]["qlyr"].triggerRepaint()
+        self.uc.bar_info("Confluences deleted!")
 
     def effective_user_cross_section(self, fid, name):
         """Return the cross section split between banks"""

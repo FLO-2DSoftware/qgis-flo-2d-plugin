@@ -29,34 +29,29 @@ class XSecInterpolationDialog(qtBaseClass, uiDialog):
         self.setupUi(self)
         self.iface = iface
         self.uc = UserCommunication(iface, "FLO-2D")
-        self.interpolation_browse.clicked.connect(self.get_interpolation_dir)
-        self.project_browse.clicked.connect(self.get_project_dir)
-        self.set_previous_paths()
+        # self.interpolation_browse.clicked.connect(self.get_interpolation_dir)
+        # self.project_browse.clicked.connect(self.get_project_dir)
+        # self.set_previous_paths()
         self.surveyed_lbl.setText(str(xs_survey[0]))
         self.non_surveyed_lbl.setText(str(xs_survey[1]))
         self.buttonBox.button(QDialogButtonBox.Ok).setText("Interpolate")
-        s = QSettings()
-        outdir = s.value("FLO-2D/lastGdsDir", "")
-        self.directory_lbl.setText("directory: " + outdir)
+        # s = QSettings()
+        # last_dir = s.value("FLO-2D/lastGdsDir", "")
+        # outdir = last_dir + "/temp/"
+        # self.directory_lbl.setText("directory: " + outdir)
 
-    def set_previous_paths(self):
-        s = QSettings()
-        interpolation_dir = s.value("FLO-2D/last_flopro", "")
-        project_dir = s.value("FLO-2D/lastGdsDir", "")
-        self.interpolation_le.setText(interpolation_dir)
-        self.project_le.setText(project_dir)
+    # def set_previous_paths(self):
+    #     s = QSettings()
+    #     interpolation_dir = s.value("FLO-2D/last_flopro", "")
+    #     project_dir = s.value("FLO-2D/lastGdsDir", "")
+        # self.interpolation_le.setText(interpolation_dir)
+        # self.project_le.setText(project_dir)
 
     def get_interpolation_dir(self):
         s = QSettings()
-        interpolation_dir = QFileDialog.getExistingDirectory(
-            None,
-            "Select Cross Sections Interpolation program folder",
-            directory=self.interpolation_le.text(),
-        )
-        if not interpolation_dir:
-            return
-        self.interpolation_le.setText(interpolation_dir)
-        s.setValue("FLO-2D/last_flopro", interpolation_dir)
+        last_dir = s.value("FLO-2D/lastGdsDir", "")
+        interpolation_dir = last_dir + "/temp/"
+        return interpolation_dir
 
     def get_project_dir(self):
         s = QSettings()

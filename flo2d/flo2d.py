@@ -1613,7 +1613,7 @@ class Flo2D(object):
         self.files_not_used = ""
         if calls[0] == "export_cont_toler":
             self.files_used = "CONT.DAT\n"
-            
+
         QApplication.setOverrideCursor(Qt.WaitCursor)
         for call in calls:
             if call == "export_bridge_xsec":
@@ -2856,7 +2856,7 @@ class Flo2D(object):
                     s = QSettings()
                     s.setValue("FLO-2D/lastGdsDir", outdir)
 
-                    QApplication.setOverrideCursor(Qt.WaitCursor)
+                    # QApplication.setOverrideCursor(Qt.WaitCursor)
                     self.call_IO_methods(export_calls, True, outdir)
 
                     # The strings list 'export_calls', contains the names of
@@ -2899,13 +2899,15 @@ class Flo2D(object):
                                     os.remove(outdir + r"\MULT.DAT")
                                 QApplication.setOverrideCursor(Qt.WaitCursor)
                     if self.files_used != "":
+                        QApplication.restoreOverrideCursor()
                         self.uc.show_info("Files exported to\n" + outdir + "\n\n" + self.files_used)
 
                     if self.f2g.export_messages != "":
                         info = "WARNINGS:\n\n" + self.f2g.export_messages
                         self.uc.show_info(info)
 
-        QApplication.setOverrideCursor(QtGui.QCursor(QtCore.Qt.ArrowCursor))
+        QApplication.restoreOverrideCursor()
+        # QApplication.setOverrideCursor(QtGui.QCursor(QtCore.Qt.ArrowCursor))
 
     @connection_required
     def export_hdf5(self):
@@ -3111,6 +3113,11 @@ class Flo2D(object):
         self.f2d_dock.setUserVisible(True)
         self.f2d_widget.profile_tool_grp.setCollapsed(False)
         self.f2d_widget.profile_tool.identify_feature(self.cur_info_table, fid)
+        self.cur_info_table = None
+
+    @connection_required
+    def show_channel_profile(self, fid=None):
+        self.f2d_widget.xs_editor.show_channel(fid)
         self.cur_info_table = None
 
     @connection_required
@@ -3808,6 +3815,7 @@ class Flo2D(object):
 
     def set_editors_map(self):
         self.editors_map = {
+            "chan": self.show_channel_profile,
             "user_levee_lines": self.show_user_profile,
             "user_xsections": self.show_xsec_editor,
             "user_streets": self.show_user_profile,

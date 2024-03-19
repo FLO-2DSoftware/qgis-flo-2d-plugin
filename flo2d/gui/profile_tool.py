@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-import os
+
 # FLO-2D Preprocessor tools for QGIS
 # Copyright © 2021 Lutra Consulting for FLO-2D
 
@@ -44,6 +44,11 @@ class ProfileTool(qtBaseClass, uiDialog):
         },
         "user_left_bank": {
             "user_name": "Left Bank Line",
+            "schema_tab": "chan_elems",
+            "schema_fid": "seg_fid",
+        },
+        "user_right_bank": {
+            "user_name": "Right Bank Line",
             "schema_tab": "chan_elems",
             "schema_fid": "seg_fid",
         },
