@@ -327,7 +327,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         self.SD_nodes_components_cbo.currentIndexChanged.connect(self.nodes_component_changed)
         self.SD_links_components_cbo.currentIndexChanged.connect(self.links_component_changed)
         self.auto_assign_link_nodes_btn.clicked.connect(self.auto_assign)
-
+        
         self.populate_type4_combo()
         self.populate_pump_curves_and_data()
         self.show_pump_curve_type_and_description()
@@ -3857,7 +3857,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                     self.no_nodes = header + f"{hyphens.ljust(tab, ' ')}" + no_outlet
                 else: 
                     self.no_nodes += "\n" + header + f"{hyphens.ljust(tab, ' ')}" + no_outlet      
-            
+           
         except Exception as e:
             QApplication.restoreOverrideCursor()
             self.uc.show_error("ERROR 210322.0429: Couldn't assign " + link_name + " nodes!", e)
