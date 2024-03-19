@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 import ctypes
 
-import win32api
 from qgis._core import QgsMessageLog
 
 from flo2d.flo2d_versions.flo2d_versions import FLO2D_VERSIONS
@@ -40,8 +39,6 @@ from qgis.PyQt.QtWidgets import (
     QMessageBox,
     QStyledItemDelegate,
 )
-
-from win32api import *
 
 class NumericDelegate(QStyledItemDelegate):
     def createEditor(self, parent, option, index):
@@ -389,6 +386,7 @@ def get_flo2dpro_version(file_path):
 
     # Try to use the win32api
     try:
+        import win32api
         info = win32api.GetFileVersionInfo(file_path, '\\')
         ms = info['FileVersionMS']
         ls = info['FileVersionLS']
