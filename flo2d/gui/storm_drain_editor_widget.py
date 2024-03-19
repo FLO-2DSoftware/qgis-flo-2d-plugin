@@ -221,6 +221,8 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         self.d1, self.d2, self.d3 = [[], [], []]
         self.auto_assign_msg = ""
         self.no_nodes = ""
+        self.inlet_not_found = []
+        self.outlet_not_found = []
 
         set_icon(self.create_point_btn, "mActionCapturePoint.svg")
         set_icon(self.save_changes_btn, "mActionSaveAllEdits.svg")
@@ -3760,20 +3762,9 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
     # def auto_assign_pump_nodes(self):
     #     self.auto_assign_link_nodes("Pumps", "pump_inlet", "pump_outlet")
 
-    def auto_assign_link_nodes(self, link_name, link_inlet, link_outlet):
-        """Auto assign Conduits, Pumps, orifices, or Weirs  (user layer) Inlet and Outlet names based on closest (5ft) nodes to their endpoints."""
-        
-        # layer_name = (
-        #     "user_swmm_conduits"
-        #     if link_name == "Conduits"
-        #     else "user_swmm_pumps"
-        #     if link_name == "Pumps"
-        #     else "user_swmm_orifices"
-        #     if link_name == "Orifices"
-        #     else "user_swmm_weirs"
-        #     if link_name == "Weirs"
-        #     else ""
-        # )       
+    def auto_assign_link_nodes(self, link_name, link_inlet, link_outlet, SD_all_nodes_layer):
+        """Auto assign Conduits, Pumps, orifices, or Weirs  (user layer) Inlet and Outlet names 
+           based on closest (5ft) nodes to their endpoints."""    
        
         no_inlet = ""
         no_outlet = ""
@@ -3791,25 +3782,12 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         )        
         
         try:
-
-            # if self.gutils.is_table_empty(layer_name):
-            #     self.uc.show_warn(
-            #         "User Layer "
-            #         + link_name
-            #         + " is empty!\n\n"
-            #         + "Please import components from .INP file or shapefile, or convert from schematized Storm Drains."
-            #     )
-            #     return
-
-            # proceed = self.uc.question("Do you want to overwrite " + link_name + " Inlet and Outlet nodes names?")
-            # if not proceed:
-            #     return
-
             QApplication.setOverrideCursor(Qt.WaitCursor)
             link_fields = layer.fields()
             link_inlet_fld_idx = link_fields.lookupField(link_inlet)
             link_outlet_fld_idx = link_fields.lookupField(link_outlet)
-            nodes_features, nodes_index = spatial_index(self.user_swmm_nodes_lyr)
+
+            nodes_features, nodes_index = spatial_index(SD_all_nodes_layer)
             buffer_distance, segments = 5.0, 5
             link_nodes = {}
             for feat in layer.getFeatures():
@@ -3862,6 +3840,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 layer.changeAttributeValue(fid, link_outlet_fld_idx, outlet_name)
             layer.commitChanges()
             layer.triggerRepaint()
+            
             QApplication.restoreOverrideCursor()
             
             msg ="Inlet and Outlet nodes assigned to " + str(len(link_nodes)) + " " + link_name + "!"
@@ -4438,7 +4417,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
 
         except Exception as e:
             QApplication.restoreOverrideCursor()
-            self.uc.bar_error("Reading .RPT file failed!", e)
+            self.uc.bar_error("Reading .RPT file failed!")
             return False
 
     def create_SD_discharge_table_and_plots(self, intersection=None):
@@ -4608,7 +4587,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
 
         except Exception as e:
             QApplication.restoreOverrideCursor()
-            self.uc.bar_error("Reading .RPT file failed!", e)
+            self.uc.bar_error("Reading .RPT file failed!")
             return False
 
     def block_saving(self):
@@ -4991,19 +4970,66 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         self.SD_links_components_cbo.setCurrentIndex(0)
 
     def auto_assign(self):
+              
+        if self.gutils.is_table_empty("user_swmm_conduits") and self.gutils.is_table_empty("user_swmm_pumps") and \
+            self.gutils.is_table_empty("user_swmm_orifices") and self.gutils.is_table_empty("user_swmm_weirs"):
+            
+            self.uc.show_info("There are no links defined!")
+            return
+        
         if not self.uc.question("Do you want to overwrite Inlet and Outlet node names\n" + 
                                    "for all conduits, pumps, orifices, and weirs?"):
             return
         
-        self.auto_assign_msg = ""
-        self.no_nodes = ""
-        self.auto_assign_link_nodes("Conduits", "conduit_inlet", "conduit_outlet")
-        self.auto_assign_link_nodes("Pumps", "pump_inlet", "pump_outlet")
-        self.auto_assign_link_nodes("Orifices", "orifice_inlet", "orifice_outlet")
-        self.auto_assign_link_nodes("Weirs", "weir_inlet", "weir_outlet")
-        if self.no_nodes != "":
-                self.uc.show_msg("The following nodes (inlets or outlets) could not be found for the indicated links:\n\n" + self.no_nodes, 600, "error") 
-        self.uc.show_info("Inlet and Outlet nodes assigned to:\n\n" + self.auto_assign_msg)
+        try:
+            layer1 = QgsProject.instance().mapLayersByName('Storm Drain Nodes')[0]
+            layer2 = QgsProject.instance().mapLayersByName('Storm Drain Storage Units')[0]
+            
+            # Create a new memory layer for point geometries
+            SD_all_nodes_layer = QgsVectorLayer("Point", 'SD All Points', 'memory')
+            
+            
+            fields = QgsFields()
+            fields.append(QgsField('name', QVariant.String))
+            
+            pr = SD_all_nodes_layer.dataProvider()
+            
+            pr.addAttributes(fields)
+            SD_all_nodes_layer.updateFields()
+    
+            # Iterate through features and add point geometries
+            for layer in [layer1, layer2]:
+                for feature in layer.getFeatures():
+                    point_geometry = feature.geometry()
+                    new_feature = QgsFeature(fields)
+                    new_feature.setGeometry(point_geometry)
+                    new_feature['name'] = feature['name']
+                    pr.addFeatures([new_feature])      
+            
+            # Add the new layer to the map
+            QgsProject.instance().addMapLayer(SD_all_nodes_layer)
+            
+            self.auto_assign_msg = ""
+            self.no_nodes = ""
+            self.inlet_not_found = []
+            self.outlet_not_found = []        
+            self.auto_assign_link_nodes("Conduits", "conduit_inlet", "conduit_outlet", SD_all_nodes_layer)
+            self.auto_assign_link_nodes("Pumps", "pump_inlet", "pump_outlet", SD_all_nodes_layer)
+            self.auto_assign_link_nodes("Orifices", "orifice_inlet", "orifice_outlet", SD_all_nodes_layer)
+            self.auto_assign_link_nodes("Weirs", "weir_inlet", "weir_outlet", SD_all_nodes_layer)
+            if self.no_nodes != "":
+                    self.uc.show_msg("The following nodes (inlets or outlets) could not be found for the indicated links:\n\n" + self.no_nodes, 600, "error") 
+            
+            self.uc.show_info("Inlet and Outlet nodes successfully assigned to:\n\n" + self.auto_assign_msg)
+
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.uc.bar_error("Auto-assign link nodes failed!")
+            return False    
+        finally:    
+            # Remove temporary layer:
+            QgsProject.instance().removeMapLayer(SD_all_nodes_layer)
+            del SD_all_nodes_layer
         
     def SD_add_one_type4(self):
         self.add_single_rtable()
