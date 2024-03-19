@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import ctypes
 
+import win32api
 from qgis._core import QgsMessageLog
 
 from flo2d.flo2d_versions.flo2d_versions import FLO2D_VERSIONS
@@ -40,6 +41,7 @@ from qgis.PyQt.QtWidgets import (
     QStyledItemDelegate,
 )
 
+from win32api import *
 
 class NumericDelegate(QStyledItemDelegate):
     def createEditor(self, parent, option, index):
@@ -371,36 +373,35 @@ def get_plugin_version():
 
 
 def get_flo2dpro_version(file_path):
-
+    """
+    Function to get the FLOPRO version
+    """
     if not os.path.exists(file_path):
-        return "No FLOPRO or FLOPRO_Demo in the folder"
+        return "No FLOPRO or FLOPRO_Demo in the folder!"
 
+    # Check for the license
+    system32_path = os.path.join(os.environ['SystemRoot'], 'System32')
+    license_path = os.path.join(system32_path, "systemflP.dll")
+
+    is_demo = True
+    if os.path.exists(license_path) and os.path.basename(file_path) != "FLOPRO_Demo.exe":
+        is_demo = False
+
+    # Try to use the win32api
     try:
-        # Load the file version DLL
-        version_dll = ctypes.windll.version
+        info = win32api.GetFileVersionInfo(file_path, '\\')
+        ms = info['FileVersionMS']
+        ls = info['FileVersionLS']
+        version = ".".join((str(win32api.HIWORD(ms)), str(win32api.LOWORD(ms)),
+                str(win32api.HIWORD(ls))))
 
-        # Get the file version info size
-        file_version_info_size = version_dll.GetFileVersionInfoSizeW(file_path, None)
+        if is_demo:
+            version += " DEMO"
 
-        # Allocate buffer for file version info
-        file_version_info = ctypes.create_string_buffer(file_version_info_size)
+        return version
 
-        # Retrieve file version info
-        version_dll.GetFileVersionInfoW(file_path, None, file_version_info_size, file_version_info)
-
-        # Query the product version
-        info = ctypes.c_void_p()
-        length = ctypes.c_uint()
-
-        version_dll.VerQueryValueW(file_version_info, '\\', ctypes.byref(info), ctypes.byref(length))
-        version_data = ctypes.cast(info, ctypes.POINTER(ctypes.c_uint))
-        version_str = f"{version_data.contents >> 16}.{version_data.contents & 0xFFFF}"
-
-        return version_str
-
-    # Get the file's creation date and time
+    # Use the date creation dictionary
     except:
-
         creation_time = os.path.getmtime(file_path)
 
         # Convert the timestamp to a datetime object
@@ -419,6 +420,9 @@ def get_flo2dpro_version(file_path):
 
         if found_version is None:
             found_version = "Version not found"
+
+        if is_demo:
+            found_version += " DEMO"
 
         return found_version
 
