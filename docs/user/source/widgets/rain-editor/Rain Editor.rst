@@ -1,11 +1,10 @@
 Rain Editor
 ===========
 
-Rainfall
---------
-
 The rainfall editor is used to set up the RAINFALL.DAT file and the RAINCELL.DAT file.
 This section will describe how to set up uniform rainfall, spatially variable depth area reduction factors, and spatially and time variable rainfall.
+
+.. image:: ../../img/Widgets/rain.png
 
 Uniform Rainfall
 ----------------
@@ -25,10 +24,10 @@ The rainfall distribution is imported from a data file.
 
 .. image:: ../../img/Rain-Editor/rained019.png
 
-2. Import the rainfall distribution file from a set of predefined files. The files
-   are installed in the FLO-2D Documentation folder.
+2. Import the rainfall distribution file from a set of predefined files.
 
-C:\\Users\\Public\\Documents\\FLO-2D PRO Documentation\\Rainfall Distributions
+.. note:: The files are installed in the FLO-2D Documentation folder:
+          C:\\Users\\Public\\Documents\\FLO-2D PRO Documentation\\Rainfall Distributions
 
 .. image:: ../../img/Rain-Editor/rained003.png
 
@@ -105,7 +104,7 @@ NEXRAD rainfall data and rainfall gage data are available from NOAA.
 The realtime rainfall calculator imports the \*.ASC files, interpolates them to the grid and creates the rainfall data in two formats.
 The formats are RAINCELL.DAT and RAINCELL.HD5.
 
-.. important:: The RAINCELL.DAT file is a mega data file. It is not recommended to import this file into a QGIS – FLO-2D
+.. tip:: The RAINCELL.DAT file is a mega data file. It is not recommended to import this file into a QGIS – FLO-2D
                project when importing FLO-2D Data files. It is recommended to use a Skeleton Project with only grid data
                and no other components loaded to perform the RAINCELL.DAT or RAINCELL.HDF5 data files.
 

@@ -4,11 +4,13 @@ Storm Drain Editor
 The Storm Drain Editor tool has several functions to prepare the data that integrates the FLO-2D surface water model
 with the storm drain model.  This document will explain the functionality of each button.
 
-For a step-by-step tutorial, use the QGIS Workshop Lessons or the Self-Help training package.
-
-`Storm Drain Tutorial <https://documentation.flo-2d.com/Workshops/Lesson%203.html>`_
-
 .. image:: ../../img/Storm-Drain/Storm002.png
+
+.. note:: For a step-by-step tutorial, use the QGIS Workshop Lessons or the Self-Help training package.
+          `Storm Drain Tutorial <https://documentation.flo-2d.com/Workshops/Lesson%203.html>`_
+
+Storm Drain Editor
+-------------------
 
 1. The digitize storm drain buttons are inactive.
    It is recommended to create a storm drain network in separate storm drain shapefiles as discussed below.
@@ -179,7 +181,7 @@ Data save in the Components tables is written to the .INP file using this functi
 Components: Inlets/Junctions
 ----------------------------
 
-.. note:: Important!!!  While it is possible to edit and correct attributes in the following dialog boxes, it is
+.. important:: While it is possible to edit and correct attributes in the following dialog boxes, it is
           recommended to make editorial changes in the original shapefiles so that those files carry forward as the
           project evolves.  The process to recalculate the storm drain from the shapefiles is very fast and effective.
 

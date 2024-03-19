@@ -7,6 +7,8 @@ at the grid element resolution.  Global data is applied uniformly to all grid el
 different parameters to be applied to individual cells or groups of cells.  The different methods for setting up the data
 are defined below.
 
+.. image:: ../../img/Widgets/infiltration.png
+
 Green-Ampt
 ----------
 
@@ -108,58 +110,55 @@ In the following image, the infiltration areas are different for urban, desert a
 Channel Infiltration
 ---------------------
 
-1. To assign channel  
-   infiltration, use the channel infiltration editor.
+To assign channel infiltration, use the channel infiltration editor.
 
-2. Set a global  
+1. Check the Channel
+   Element group.
+
+2. Set a global
    hydraulic conductivity for all channel elements.
-
-3. Click the Channel  
-   Infiltration button.
 
 .. image:: ../../img/Infiltration-Editor/Infilt010.png
 
-4. Local channel  
-   infiltration is set by segment in the dialog box.
-
-.. image:: ../../img/Infiltration-Editor/Infilt011.png
 
 Green-Ampt Infiltration Calculator FCDMC Method 2023
 ------------------------------------------------------
 
 To use the Flood Control District of Maricopa County (FCDMC) Green-Ampt calculator, the user must prepare or download soil,
-landuse, and eff shapefiles.  The data maybe provided by the District.  See the FCDMC hydrology manual for a more detailed
-discussion on modeling with the Green-Ampt method.  Review the FLO-2D Plugin Technical Reference Manual for information
-pertaining to the Green-Ampt calculators.  Review the FLO-2D Pro Reference Manual for information pertaining to the use
-of the Green-Ampt method by the FLO-2D engine.
+landuse, and eff shapefiles.  The data maybe provided by the District.
+
+.. note:: See the FCDMC hydrology manual for a more detailed
+          discussion on modeling with the Green-Ampt method.  Review the FLO-2D Plugin Technical Reference Manual for information
+          pertaining to the Green-Ampt calculators.  Review the FLO-2D Pro Reference Manual for information pertaining to the use
+          of the Green-Ampt method by the FLO-2D engine.
 
 1. Prepare the soil data shapefile as seen in the following figure.
 
-- ROCKOUT is the percentage of rock outcrop coverage.  0 to 100
-- XKSAT is the hydraulic conductivity for the soil group. in/hr or mm/hr
-- Soil Depth is the limiting infiltration depth. Once the infiltration reaches this depth, it will turn off.  ft or m
-- DTHETAdry is the soil moisture deficit for dry soil condition.  It ranges in value from zero to the effective porosity.
-- DTHETAnormal is the soil moisture deficit for normal soil condition.
-- PSIF is the wetting front capillary suction. in or mm
+    - ROCKOUT is the percentage of rock outcrop coverage.  0 to 100
+    - XKSAT is the hydraulic conductivity for the soil group. in/hr or mm/hr
+    - Soil Depth is the limiting infiltration depth. Once the infiltration reaches this depth, it will turn off.  ft or m
+    - DTHETAdry is the soil moisture deficit for dry soil condition.  It ranges in value from zero to the effective porosity.
+    - DTHETAnormal is the soil moisture deficit for normal soil condition.
+    - PSIF is the wetting front capillary suction. in or mm
 
 .. image:: ../../img/Infiltration-Editor/infil001.png
 
 
 2. Prepare the Landuse data shapefile as seen in the following figure.
 
- - Saturation is the initial saturation condition.  wet or saturated, dry, or normal
- - Initial Abstraction storage depth that must be reached before infiltration begins.  in or mm
- - Impervious area is the percentage of impermeability for a given polygon.  0 to 100
- - Vegetative cover is not used by FCDMC. Leave it unchecked.
+    - Saturation is the initial saturation condition.  wet or saturated, dry, or normal
+    - Initial Abstraction storage depth that must be reached before infiltration begins.  in or mm
+    - Impervious area is the percentage of impermeability for a given polygon.  0 to 100
+    - Vegetative cover is not used by FCDMC. Leave it unchecked.
 
 .. image:: ../../img/Infiltration-Editor/infil002.png
 
 
 3. Prepare the EFF data shapefile as seen in the following figure.
 
-- Eff is the percent effectiveness of the impervious space.  It pertains more to HEC-1 calculations but can also be
-  applied as an additional control or adjustment for a 2D grid.  If an EFF polygon is present, the calculator will
-  multiply the RTIMPgrid * the EFF to determine a final RTIMP.  0 to 100
+    - Eff is the percent effectiveness of the impervious space.  It pertains more to HEC-1 calculations but can also be
+      applied as an additional control or adjustment for a 2D grid.  If an EFF polygon is present, the calculator will
+      multiply the RTIMPgrid * the EFF to determine a final RTIMP.  0 to 100
 
 .. image:: ../../img/Infiltration-Editor/infil003.png
 
@@ -425,14 +424,14 @@ SCS Calculator From Raster Layer
 This option will add spatially variable infiltration data to the grid from a raster with cells containing CN
 values. Important properties:
 
--  The raster must have the same coordinate reference system (CRS) as the project.
-   If the CRS is missing or is set by the user, save the raster with the correct CRS.
+.. important::  -  The raster must have the same coordinate reference system (CRS) as the project.
+                   If the CRS is missing or is set by the user, save the raster with the correct CRS.
 
--  The best resolution of the grid element CN is achieved when the CN
-   raster pixel size is smaller than the grid element size.
+                -  The best resolution of the grid element CN is achieved when the CN
+                   raster pixel size is smaller than the grid element size.
 
--  The raster warp method uses a weighted average to warp the original
-   raster pixels to the cell size pixels.
+                -  The raster warp method uses a weighted average to warp the original
+                   raster pixels to the cell size pixels.
 
 
 1. Click the Calculate

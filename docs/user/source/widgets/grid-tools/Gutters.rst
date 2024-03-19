@@ -1,8 +1,5 @@
-Gutters
-=======
-
-Overview
---------
+Sampling Gutters
+=================
 
 In the FLO-2D model, street gutters convey shallow flow using a typical
 curb and gutter cross section that has a triangular shape created by the
@@ -12,8 +9,11 @@ the middle of the street to the trough of the gutter. The gutter flow is
 exchanged with other upstream and downstream gutter elements, the
 sidewalk, and other street elements (not having a gutter). Floodplain
 flow is exchanged with the gutter elements through the sidewalk
-interface. See the FLO-2D Reference Manual for more information on using
-the Gutter component with FLO-2D.
+interface.
+
+
+.. note:: See the FLO-2D Reference Manual for more information on using
+          the Gutter component with FLO-2D.
 
 Digitize or Copy Data
 ---------------------

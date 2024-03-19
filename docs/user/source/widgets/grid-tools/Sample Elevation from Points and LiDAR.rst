@@ -1,6 +1,7 @@
-Sample Elevation from Points and LiDAR
+Sample Elevation from Points or LiDAR
 =======================================
 
+This tool is used to sample elevation from points or LiDAR.
 
 Load Elevation Points
 ----------------------
@@ -91,9 +92,9 @@ category.
 
 .. image:: ../../img/Sample-Elevation-From-Points/Sample014.png
 
-3. These files are created from LasTools using the LiDAR *.LAS
+3. These files are created from LasTools using the LiDAR \*.LAS
    files and the position is identified by a tiles shapefile.  Each filename has a
-   distinct tile associated with it.  The LiDAR xyz file must have a *.txt extension.
+   distinct tile associated with it.  The LiDAR xyz file must have a \*.txt extension.
 
 4. Select the files and click Open.
 

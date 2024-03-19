@@ -4,9 +4,12 @@ Floodplain Cross Section Editor
 The floodplain cross section editor is used to set up the FPXSEC.DAT file.
 This section will describe how to digitize and schematize the data.
 
-Use the editor widget to create the cross section.
+.. image:: ../../img/Widgets/floodplain.png
 
-.. image:: ../../img/Floodplain-Cross-Section-Editor/floodp005.png
+Create Cross Section
+---------------------
+
+Use the editor widget to create the cross section.
 
 1. Click the
    floodplain cross section button.

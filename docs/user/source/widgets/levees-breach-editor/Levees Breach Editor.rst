@@ -1,16 +1,21 @@
 Levees Breach Editor
 ====================
 
+The Levee Breach Editor is used to set up the Levee Breach.
+
+.. image:: ../../img/Widgets/leveeandbreach.png
+
 Breach Prescribed
 -----------------
 
 This tool will define a single breach location.
-If walls are being designed, use the Levee and Wall method not this method.
+
+.. important:: If walls are being designed, use the Levee and Wall method not this method.
 
 1. Use the
    Grid ID tool to pick the levee element to assign a prescribed breach to.
 
-.. image:: ../../img/Levee-Breach/Levees002.png
+.. image:: ../../img/Buttons/gridinfo.png
 
 .. image:: ../../img/Levee-Breach/Levees003.png
 
@@ -32,8 +37,9 @@ The process to apply levee prescribed breach:
    (Purple)
 
 6. Fill the failure criteria.
-   See Data Input Manual for variables use.
    (Blue)
+
+.. note:: See Data Input Manual for variables use.
 
 7. Click Apply Change.
    (Red)
@@ -67,9 +73,9 @@ BREACH: An erosion model for earthen dam failures.
 
 .. image:: ../../img/Levee-Breach/Levees008.png
 
-It is important to apply the breach to the reservoir side of the levee.
-Do not apply a breach point on the downstream side of the levee.
-In this case, the breach starts in the North direction because the Point is closest to that levee.
+.. important:: Apply the breach to the reservoir side of the levee.
+               Do not apply a breach point on the downstream side of the levee.
+               In this case, the breach starts in the North direction because the Point is closest to that levee.
 
 4. Click
    this location.
@@ -88,14 +94,15 @@ In this case, the breach starts in the North direction because the Point is clos
 
 .. image:: ../../img/Levee-Breach/Levees012.png
 
-This dialog box is used to define the followoing data.
-For more information see the Data Input Manual and the Erosion Breach Tutorial.
+This dialog box is used to define the following data.
 
 -  Dam geometry
 
 -  Geotechnical soil data
 
 -  Breach methodology data
+
+.. note:: For more information see the Data Input Manual and the Erosion Breach Tutorial.
 
 7. Fill the
    box and click Save.
@@ -105,7 +112,7 @@ For more information see the Data Input Manual and the Erosion Breach Tutorial.
 8. Export the
    data and check the BREACH.DAT and LEVEE.DAT data files.
 
-.. image:: ../../img/Levee-Breach/Levees014.png
+.. image:: ../../img/Buttons/exportproject.png
 
 LEVEE.DAT should include the Breach Erosion Switch.
 
@@ -115,16 +122,16 @@ BREACH.DAT should have only the B lines and D lines for general and individual b
 
 .. image:: ../../img/Levee-Breach/Levees016.png
 
-Important notes for Dam Breach Modeling.
+.. important::
 
-1. The cell elevation should be reset to the base floodplain elevation for any cell that represents the breach flow path.
-   See the Elevation Correction section for more details.
+            1. The cell elevation should be reset to the base floodplain elevation for any cell that represents the breach flow path.
+               See the Elevation Correction section for more details.
 
-2. The breach node should be assigned to a node with a levee and the breach direction should be set so that the breach occurs in the downstream
-   direction.
+            2. The breach node should be assigned to a node with a levee and the breach direction should be set so that the breach occurs in the downstream
+               direction.
 
-3. It is also
-   important to choose a flow direction that contains a levee cutoff.
+            3. It is also
+               important to choose a flow direction that contains a levee cutoff.
 
-4. The levee crest elevation is used as the dam crest elevation.
-   The base elevation is set by the levee cells where the breach occurs.
+            4. The levee crest elevation is used as the dam crest elevation.
+               The base elevation is set by the levee cells where the breach occurs.

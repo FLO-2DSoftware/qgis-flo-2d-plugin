@@ -1,14 +1,12 @@
-Spatial Limiting Froude
-=======================
-
-Overview
---------
+Sampling Limiting Froude Numbers
+=================================
 
 The Spatial Limiting Froude layer is used to set a limiting Froude number for individual FLO-2D grid elements.
 For example, overland flow on a gentle slope will become subcritical so a limiting Froude value of 0.9 can be assigned.
-If the limiting Froude is exceeded, the cell roughness n-value is incrementally increased and maintains numerical stability that might occur for
-severe supercritical flow.
-For further discussion on the limiting Froude numbers refer to the FLO-2D Data Input Manual.
+If the limiting Froude is exceeded, the cell roughness n-value is incrementally increased and maintains
+numerical stability that might occur for severe supercritical flow.
+
+.. note:: For further discussion on the limiting Froude numbers refer to the FLO-2D Data Input Manual.
 
 Digitize or Copy Data
 ---------------------
@@ -27,8 +25,7 @@ Digitize or Copy Data
 Sample Data
 -----------
 
-1. Click the Sampling
-   Froude Numbers button.
+1. Click the Sampling Limiting Froude Numbers.
 
 .. image:: ../../img/Spatial-Limiting-Froude/spatia003.png
 

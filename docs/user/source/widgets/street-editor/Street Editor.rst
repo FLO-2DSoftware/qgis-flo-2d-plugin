@@ -7,9 +7,7 @@ It is used when the grid element size is larger than the width of curb and gutte
 This tool works best for streets that collect and distribute water over the grid system.
 The street should be able to convey water like a small channel.
 
-.. image:: ../../img/Street-Editor/street002.jpeg
-
-1Source: iStock
+.. image:: ../../img/Widgets/street.png
 
 Build a street
 --------------

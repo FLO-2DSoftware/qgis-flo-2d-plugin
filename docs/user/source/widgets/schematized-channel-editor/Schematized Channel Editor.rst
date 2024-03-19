@@ -5,15 +5,20 @@ This editor widget is used to edit the control data and tabular data of the sche
 It works on any schematized channel data including, imported data, imported RAS data and digitized data.
 This data is written to the CHAN.DAT and CHANBANK.DAT files.
 
+.. image:: ../../img/Widgets/schematizedchannel.png
+
 Segment Control
 ---------------
 
 Select a channel segment to load the control data.
 The data is different for each channel segment.
-Review the Channel Modeling Guidelines (FLO-2D 2018) to assign the parameters.
-The sediment transport data will not be used unless the channel option is used in the SED.DAT file.
+
+.. important:: The sediment transport data will not be used unless the channel option is used in the SED.DAT file.
 
 .. image:: ../../img/Schemetized-Channel-Editor/Scheme002.png
+
+.. note:: See the Channel Modeling Guidelines (FLO-2D 2023).
+          C:\\Users\\Public\\Documents\\FLO-2D PRO Documentation\\flo_help\\Manuals\\Channel Guidelines 2023
 
 Initial Conditions
 ------------------
