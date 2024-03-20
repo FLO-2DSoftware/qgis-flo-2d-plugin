@@ -203,6 +203,7 @@ class LeveesElevation(ElevationCorrector):
         self.gutils.con.commit()
 
         grid = self.lyrs.data["grid"]["qlyr"]
+        levee_data = self.lyrs.data["levee_data"]["qlyr"]
         qry = "UPDATE levee_data SET levcrest = ? WHERE user_line_fid = ?;"
         qryElevNullPlusCorrect = "UPDATE levee_data SET levcrest = levcrest + ? WHERE user_line_fid = ?;"
 
@@ -211,34 +212,28 @@ class LeveesElevation(ElevationCorrector):
             if regionReq is None
             else [regionReq]
         ):
-            feats = []
-            featsElevNullPlusCorrect = []
-            for feat in self.user_levees.getFeatures(regionReqSwatch):
-                fid = feat["fid"]
-                elev = feat[self.ELEVATION_FIELD]
-                cor = feat[self.CORRECTION_FIELD]
+
+            for feat in levee_data.getFeatures(regionReqSwatch):
+                levee_data_fid = feat["fid"]
+                user_levee_lines_fid = feat["user_line_fid"]
+                user_levee_lines_data = self.gutils.execute(f"SELECT elev, correction FROM user_levee_lines WHERE fid "
+                                                            f"= '{user_levee_lines_fid}'").fetchall()[0]
+                elev = user_levee_lines_data[0]
+                cor = user_levee_lines_data[1]
 
                 if elev == NULL and cor == NULL:
                     continue
                 elif elev != NULL and cor != NULL:
                     val = elev + cor
-                    feats.append((round(val, 4), fid))
+                    self.gutils.execute(f"UPDATE levee_data SET levcrest = {val} WHERE fid = {levee_data_fid};")
                 elif elev != NULL and cor == NULL:
                     val = elev
-                    feats.append((round(val, 4), fid))
+                    self.gutils.execute(f"UPDATE levee_data SET levcrest = {val} WHERE fid = {levee_data_fid};")
                 elif elev == NULL and cor != NULL:
                     val = cor
-                    featsElevNullPlusCorrect.append((round(val, 4), fid))
+                    self.gutils.execute(f"UPDATE levee_data SET levcrest = levcrest + {val} WHERE fid = {levee_data_fid};")
                 else:
                     continue
-            if len(feats) > 0:
-                print("Writing %i levee features with elevations to db" % len(feats))
-                cur.executemany(qry, feats)
-            if len(featsElevNullPlusCorrect) > 0:
-                print("Writing %i levee features without an assigned elevation to db" % len(featsElevNullPlusCorrect))
-                cur.executemany(qryElevNullPlusCorrect, featsElevNullPlusCorrect)
-            if len(feats) > 0 or len(featsElevNullPlusCorrect) > 0:
-                self.gutils.con.commit()
 
     @timer
     def elevation_from_polygons(self):
