@@ -3358,7 +3358,9 @@ class Flo2D(object):
             self.gutils.con.execute(qryIndex)
             self.gutils.con.commit()
 
-            levees_dup_qry = "SELECT min(fid), grid_fid, ldir, levcrest FROM levee_data GROUP BY grid_fid, ldir, levcrest HAVING COUNT(ldir) > 1 and count(levcrest) > 1 ORDER BY grid_fid"
+            # levees_dup_qry = "SELECT min(fid), grid_fid, ldir, levcrest FROM levee_data GROUP BY grid_fid, ldir, levcrest HAVING COUNT(ldir) > 1 and count(levcrest) > 1 ORDER BY grid_fid"
+            levees_dup_qry = "SELECT fid, grid_fid, ldir, max(levcrest) FROM levee_data GROUP BY grid_fid, ldir HAVING COUNT(grid_fid) = 2"
+
             leveeDups = self.gutils.execute(levees_dup_qry).fetchall()  # min FID, grid fid, ldir, min levcrest
             # grab the values
             print(
@@ -3366,16 +3368,20 @@ class Flo2D(object):
                     valer=len(leveeDups)
                 )
             )
-            del_dup_data = (
-                (item[1], item[2], item[3], item[0]) for item in leveeDups
-            )  # grid fid, ldir, crest elev, fid
+
+            delete_fids = []
+
+            for item in leveeDups:
+                delete_fids.append(item[0])
 
             # delete any duplicates in directions that aren't the min elevation
-            levees_dup_delete_qry = (
-                "DELETE FROM levee_data WHERE grid_fid = ? and ldir = ? and levcrest = ? and fid <> ?;"
-            )
-            self.gutils.con.executemany(levees_dup_delete_qry, (del_dup_data))
-            self.gutils.con.commit()
+            for fid in delete_fids:
+                self.gutils.execute(f"DELETE FROM levee_data WHERE fid = {fid};")
+            # levees_dup_delete_qry =
+            #     "DELETE FROM levee_data WHERE fid = ?;"
+            # )
+            # self.gutils.con.executemany(levees_dup_delete_qry, del_dup_data)
+            # self.gutils.con.commit()
 
             qryIndexDrop = "DROP INDEX if exists levee_dataFIDGRIDFIDLDIRLEVCEST;"
             self.gutils.con.execute(qryIndexDrop)
@@ -3473,10 +3479,10 @@ class Flo2D(object):
                 m.setDefaultButton(QMessageBox.Yes)
 
                 # Spacer                        width, height, h policy, v policy
-                horizontalSpacer = QSpacerItem(0, 300, QSizePolicy.Preferred, QSizePolicy.Preferred)
+                # horizontalSpacer = QSpacerItem(0, 300, QSizePolicy.Preferred, QSizePolicy.Preferred)
                 #                     verticalSpacer = QSpacerItem(10, 10, QSizePolicy.Expanding, QSizePolicy.Expanding)
                 layout = m.layout()
-                layout.addItem(horizontalSpacer)
+                # layout.addItem(horizontalSpacer)
                 #                     layout.addItem(verticalSpacer)
 
                 #                     m.setSizePolicy(QSizePolicy.Expanding,QSizePolicy.Expanding);
