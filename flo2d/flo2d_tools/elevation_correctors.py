@@ -207,6 +207,8 @@ class LeveesElevation(ElevationCorrector):
         qry = "UPDATE levee_data SET levcrest = ? WHERE user_line_fid = ?;"
         qryElevNullPlusCorrect = "UPDATE levee_data SET levcrest = levcrest + ? WHERE user_line_fid = ?;"
 
+        levee_data.startEditing()
+
         for regionReqSwatch in (
             gridRegionGenerator(self.gutils, grid, regionPadding=0, showProgress=True)
             if regionReq is None
@@ -214,26 +216,31 @@ class LeveesElevation(ElevationCorrector):
         ):
 
             for feat in levee_data.getFeatures(regionReqSwatch):
-                levee_data_fid = feat["fid"]
-                user_levee_lines_fid = feat["user_line_fid"]
-                user_levee_lines_data = self.gutils.execute(f"SELECT elev, correction FROM user_levee_lines WHERE fid "
-                                                            f"= '{user_levee_lines_fid}'").fetchall()[0]
-                elev = user_levee_lines_data[0]
-                cor = user_levee_lines_data[1]
 
-                if elev == NULL and cor == NULL:
-                    continue
-                elif elev != NULL and cor != NULL:
-                    val = elev + cor
-                    self.gutils.execute(f"UPDATE levee_data SET levcrest = {val} WHERE fid = {levee_data_fid};")
-                elif elev != NULL and cor == NULL:
-                    val = elev
-                    self.gutils.execute(f"UPDATE levee_data SET levcrest = {val} WHERE fid = {levee_data_fid};")
-                elif elev == NULL and cor != NULL:
-                    val = cor
-                    self.gutils.execute(f"UPDATE levee_data SET levcrest = levcrest + {val} WHERE fid = {levee_data_fid};")
-                else:
-                    continue
+                if not feat["processed_data"]:
+
+                    levee_data.updateFeature(feat)
+
+                    levee_data_fid = feat["fid"]
+                    user_levee_lines_fid = feat["user_line_fid"]
+                    user_levee_lines_data = self.gutils.execute(f"SELECT elev, correction FROM user_levee_lines WHERE fid "
+                                                                f"= '{user_levee_lines_fid}'").fetchall()[0]
+                    elev = user_levee_lines_data[0]
+                    cor = user_levee_lines_data[1]
+
+                    if elev == NULL and cor == NULL:
+                        continue
+                    elif elev != NULL and cor != NULL:
+                        val = elev + cor
+                        self.gutils.execute(f"UPDATE levee_data SET levcrest = {val} WHERE fid = {levee_data_fid};")
+                    elif elev != NULL and cor == NULL:
+                        val = elev
+                        self.gutils.execute(f"UPDATE levee_data SET levcrest = {val} WHERE fid = {levee_data_fid};")
+                    elif elev == NULL and cor != NULL:
+                        val = cor
+                        self.gutils.execute(f"UPDATE levee_data SET levcrest = levcrest + {val} WHERE fid = {levee_data_fid};")
+                    else:
+                        continue
 
     @timer
     def elevation_from_polygons(self):
