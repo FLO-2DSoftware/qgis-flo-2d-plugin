@@ -3323,23 +3323,6 @@ class Flo2D(object):
         n_fail_features_total = 0
 
         starttime = time.time()
-
-        # Create a virtual field to add the process data
-        # This is used to avoid duplicate of processed data when running the moving window
-        levee_data_lyr = self.lyrs.data["levee_data"]["qlyr"]
-        field_name = 'processed_data'
-
-        # Check if the virtual field was already created, if so, delete it
-        existing_field_index = levee_data_lyr.fields().indexFromName(field_name)
-
-        if existing_field_index != -1:  # Field exists, delete it
-            levee_data_lyr.dataProvider().deleteAttributes([existing_field_index])
-            levee_data_lyr.updateFields()
-
-        # Add a virtual field
-        levee_data_lyr.dataProvider().addAttributes([QgsField(field_name, QVariant.String)])
-        levee_data_lyr.updateFields()
-
         # This for loop creates the attributes in the levee_dat
         for (
                 n_elements,
@@ -3361,12 +3344,6 @@ class Flo2D(object):
 
         inctime = time.time()
         print("%s seconds to process levee features" % round(inctime - starttime, 2))
-
-        # Delete the processed field on the user_levee_lines
-        # existing_field_index = user_levees_lines.fields().indexFromName(field_name)
-        # if existing_field_index != -1:  # Field exists, delete it
-        #     user_levees_lines.dataProvider().deleteAttributes([existing_field_index])
-        #     user_levees_lines.updateFields()
 
         # Delete duplicates:
         grid_lyr = self.lyrs.get_layer_by_name("Grid", group=self.lyrs.group).layer()
