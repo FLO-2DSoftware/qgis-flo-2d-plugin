@@ -3024,7 +3024,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                                     0.0 if lrow[3] == "?" else 0.0 if lrow[1] == "CIRCULAR" else lrow[3],
                                     0.0,
                                     0.0,
-                                    0,
+                                    " ",
                                 )
                                 row = tuple(lrow)
                                 swmm_inp_file.write(line.format(*row))
@@ -3060,7 +3060,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                                     0.0 if lrow[3] == "?" else 0.0 if lrow[1] == "CIRCULAR" else lrow[3],
                                     0.0 if lrow[4] == "?" else lrow[4],
                                     0.0 if lrow[5] == "?" else lrow[5],
-                                    0,
+                                    " ",
                                 )
                                 row = tuple(lrow)
                                 swmm_inp_file.write(line.format(*row))
