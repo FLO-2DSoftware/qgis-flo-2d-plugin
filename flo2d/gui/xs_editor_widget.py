@@ -714,6 +714,9 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
             return
 
     def schematize_channels(self):
+        """
+        Function to schematize the channels
+        """
         if self.gutils.is_table_empty("grid"):
             self.uc.bar_warn("There is no grid! Please create it before running tool.")
             return
@@ -766,8 +769,10 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         # Create the Schematized Left Bank (Channel Segments), joining cells intersecting
         # the User Left Bank Line, with arrows from one cell centroid to the next:
         try:
+            QApplication.setOverrideCursor(Qt.WaitCursor)
             cs.create_schematized_channels()
         except Exception as e:
+            QApplication.restoreOverrideCursor()
             self.uc.log_info(traceback.format_exc())
             self.uc.show_error(
                 "ERROR 060319.1611: Schematizing left bank lines failed !\n"
@@ -783,8 +788,10 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
                 e,
             )
             return
+        QApplication.restoreOverrideCursor()
 
         try:
+            QApplication.setOverrideCursor(Qt.WaitCursor)
             cs.copy_features_from_user_channel_layer_to_schematized_channel_layer()
             cs.copy_features_from_user_xsections_layer_to_schematized_xsections_layer()
 
@@ -793,23 +800,28 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
             cs.copy_user_xs_data_to_schem()
 
         except Exception as e:
+            QApplication.restoreOverrideCursor()
             self.uc.log_info(traceback.format_exc())
             self.uc.show_warn(
                 "WARNING 060319.1743: Schematizing failed while processing attributes! "
                 "Please check your User Layers."
             )
             return
+        QApplication.restoreOverrideCursor()
 
         if not self.gutils.is_table_empty("chan_elems"):
             try:
+                QApplication.setOverrideCursor(Qt.WaitCursor)
                 cs.make_distance_table()
             except Exception as e:
+                QApplication.restoreOverrideCursor()
                 self.uc.log_info(traceback.format_exc())
                 self.uc.show_warn(
                     "WARNING 060319.1744: Schematizing failed while preparing interpolation table!\n\n"
                     "Please check your User Layers."
                 )
                 return
+            QApplication.restoreOverrideCursor()
         else:
             self.uc.log_info(traceback.format_exc())
             self.uc.show_warn(
@@ -843,253 +855,259 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
             self.uc.bar_warn("There is no schematized data! Please schematize the channel data before running tool.")
             return
 
-        QApplication.setOverrideCursor(Qt.WaitCursor)
+        try:
+            QApplication.setOverrideCursor(Qt.WaitCursor)
 
-        msg = ""
+            msg = ""
 
-        # Add relevant data to the channel dict
-        # Channel dict: {'left_grid': ['right_grid', topw, distt, xdistshort, xdistlong, xlen, arf_left, arf_right}
-        channel_dict = {}
+            # Add relevant data to the channel dict
+            # Channel dict: {'left_grid': ['right_grid', topw, distt, xdistshort, xdistlong, xlen, arf_left, arf_right}
+            channel_dict = {}
 
-        # Calculate the Channel Top Width
-        left_bank_grids_r = self.gutils.execute("SELECT elem_fid, fcw FROM chan_r").fetchall()
-        # left_bank_grids_v = self.gutils.execute("SELECT elem_fid, nxsecnum FROM chan_n").fetchall() # TODO variable area
-        left_bank_grids_t = self.gutils.execute("SELECT elem_fid, fcw FROM chan_t").fetchall()
-        left_bank_grids_n = self.gutils.execute("SELECT elem_fid, nxsecnum FROM chan_n").fetchall()
-        cell_size = int(float(self.gutils.get_cont_par("CELLSIZE")))  # Assuming that it is the SIDE on JIM's code
+            # Calculate the Channel Top Width
+            left_bank_grids_r = self.gutils.execute("SELECT elem_fid, fcw FROM chan_r").fetchall()
+            # left_bank_grids_v = self.gutils.execute("SELECT elem_fid, nxsecnum FROM chan_n").fetchall() # TODO variable area
+            left_bank_grids_t = self.gutils.execute("SELECT elem_fid, fcw FROM chan_t").fetchall()
+            left_bank_grids_n = self.gutils.execute("SELECT elem_fid, nxsecnum FROM chan_n").fetchall()
+            cell_size = int(float(self.gutils.get_cont_par("CELLSIZE")))  # Assuming that it is the SIDE on JIM's code
 
-        for data in left_bank_grids_n + left_bank_grids_r + left_bank_grids_t:
-            left_bank_grid = data[0]
-            arf_left = self.gutils.execute(f"SELECT arf FROM blocked_cells WHERE grid_fid = '{left_bank_grid}'").fetchone()
-            if not arf_left:
-                arf_left = 0
-            else:
-                arf_left = arf_left[0]
-            chan_elems = self.gutils.execute(f"SELECT rbankgrid, xlen FROM chan_elems WHERE fid = '{left_bank_grid}'").fetchone()
-            right_bank_grid = chan_elems[0]
-            arf_right = self.gutils.execute(f"SELECT arf FROM blocked_cells WHERE grid_fid = '{right_bank_grid}'").fetchone()
-            if not arf_right:
-                arf_right = 0
-            else:
-                arf_right = arf_right[0]
-            xlen = chan_elems[1]
-
-            lb_centroid = self.gutils.single_centroid(left_bank_grid)
-            rb_centroid = self.gutils.single_centroid(right_bank_grid)
-            lb_x = QgsGeometry().fromWkt(lb_centroid).asPoint().x()
-            lb_y = QgsGeometry().fromWkt(lb_centroid).asPoint().y()
-            rb_x = QgsGeometry().fromWkt(rb_centroid).asPoint().x()
-            rb_y = QgsGeometry().fromWkt(rb_centroid).asPoint().y()
-
-            xcaddist = lb_x - rb_x
-            ycaddist = lb_y - rb_y
-
-            xdistt = (xcaddist ** 2 + ycaddist ** 2) ** 0.5
-
-            if data in left_bank_grids_n:
-                nxsecnum = data[1]
-                topw = self.gutils.execute(
-                    f"SELECT (MAX(xi) - MIN(xi)) FROM xsec_n_data WHERE chan_n_nxsecnum = '{nxsecnum}'").fetchone()[0]
-            else:
-                topw = data[1]
-
-            if xcaddist < 1 or ycaddist < 1:
-                xdistshort = xdistt + cell_size
-                xdistlong = xdistt - cell_size * 1.10
-            else:
-                xdistshort = xdistt + cell_size * 1.41412
-                xdistlong = xdistt - cell_size * 1.41412 * 1.10
-            channel_dict[left_bank_grid] = [right_bank_grid, topw, xdistt, xdistshort, xdistlong, xlen, arf_left, arf_right]
-
-        pd = QProgressDialog("Checking potential width errors", None, 0, len(channel_dict))
-        pd.setWindowTitle("Checking Channel Data...")
-        pd.setModal(True)
-        pd.forceShow()
-        pd.setValue(0)
-        i = 0
-
-        # 1 CHANNEL WIDTH ERROR
-        close_elements = []
-        area_elements = []
-        for left_grid, data in channel_dict.items():
-
-            topw = data[1]
-            xdistt = data[2]
-            xdistshort = data[3]
-            xdistlong = data[4]
-            xlen = data[5]
-            arf_left = data[6]
-            arf_right = data[7]
-
-            acf = topw * xlen
-
-            # 1.1 Cross-section is wider than the distance between two left and right bank elements
-
-            # Distance is shorter than the top width
-            if xdistshort < topw:
-                close_elements.append(left_grid)
-
-            # Distance is longer than the top width
-            if (topw > 2 * xdistt) and (xdistlong > topw):
-                close_elements.append(left_grid)
-
-            # 1.2 Area on the bank elements is less than 5% - JIM's code translated to python
-
-            # Floodplain surface area needs to be larger for the left bank element
-            arealft = xdistshort * xlen - acf
-            if arealft < 0:
-                area_elements.append(left_grid)
-
-            # Available area is less than 5% of the floodplain surface
-            apf_left = arealft * 0.5 * arf_left
-
-            areapercent = apf_left / (cell_size * cell_size)
-            if (areapercent < 0.05) and (arf_left > 0.999):
-                if left_grid not in area_elements: area_elements.append(left_grid)
-
-            # Check storage on the left bank floodplain area
-            if (areapercent < 0.05) and (arf_left < 0.999):
-                apf_left = arealft * 0.5
-                areapercent = apf_left / (cell_size * cell_size)
-                if areapercent < 0.05:
-                    if left_grid not in area_elements: area_elements.append(left_grid)
-
-            # Check storage on the right bank floodplain area
-            if (areapercent < 0.05) and (arf_right > 0.999):
-                if left_grid not in area_elements: area_elements.append(left_grid)
-
-            # Check storage on the right bank floodplain area
-            if (areapercent < 0.05) and (arf_right < 0.999):
-                apf_right = arealft * 0.5
-                areapercent = apf_right / (cell_size * cell_size)
-                if areapercent < 0.05:
-                    if left_grid not in area_elements: area_elements.append(left_grid)
-
-            i += 1
-            pd.setValue(i)
-
-        # 2 RIGHT BANK ERROR
-
-        # 2.1 Right bank is inside the two bank lines
-
-        # 3 BOUNDARY CONDITION ERRORS
-
-        # 3.1 Outflow last cross-section must be lower than adjacent upstream neighbor by 0.1 ft
-        # Verify if there is Channel Outflow BC (outflow table)
-        pd = QProgressDialog("Checking potential outflow boundary conditions errors", None, 0, len(channel_dict))
-        pd.setValue(0)
-        i = 0
-        error_outflow_bc_grid = []
-        outflow_bc_channel_grid_elements = self.gutils.execute(r"SELECT grid_fid FROM outflow_cells JOIN outflow ON "
-                                                               r"outflow_cells.outflow_fid = outflow.fid WHERE "
-                                                               r"outflow.chan_out = '1'").fetchall()
-
-        for bc in outflow_bc_channel_grid_elements:
-            bc_grid = bc[0]
-            # Get the Channel Outflow Grid Element (chan_* table) TODO: Do this for all types of cross sections
-            nxsecnum = self.gutils.execute(f"SELECT nxsecnum FROM chan_n WHERE elem_fid = '{bc_grid}'").fetchone()
-            if nxsecnum:
-                # Get the xc number
-                xc = nxsecnum[0]
-                # Get the downstream xc number
-                upstream_xc = xc - 1
-                # Compare the minimum elevations (xsec_n_data table)
-                xc_min_elev = \
-                    self.gutils.execute(f"SELECT MIN(yi) FROM xsec_n_data WHERE chan_n_nxsecnum = '{xc}'").fetchone()[0]
-                upstream_xc_min_elev = self.gutils.execute(
-                    f"SELECT MIN(yi) FROM xsec_n_data WHERE chan_n_nxsecnum = '{upstream_xc}'").fetchone()[0]
-
-                if self.gutils.get_cont_par("METRIC") == "1":
-                    outflow_elev_threshold = 0.03
-                elif self.gutils.get_cont_par("METRIC") == "0":
-                    outflow_elev_threshold = 0.1
-
-                if float(upstream_xc_min_elev) - float(xc_min_elev) < outflow_elev_threshold:
-                    error_outflow_bc_grid.append(bc_grid)
-
-            i += 1
-            pd.setValue(i)
-
-        # 3.2 Upstream inflow boundary must be positive slope in the downstream direction
-        # Verify if there is Channel Inflow BC (inflow table)
-        pd = QProgressDialog("Checking potential outflow boundary conditions errors", None, 0, len(channel_dict))
-        pd.setValue(0)
-        i = 0
-
-        error_inflow_bc_grid = []
-        inflow_bc_channel_grid_elements = self.gutils.execute(
-            r"SELECT grid_fid FROM inflow_cells JOIN inflow ON inflow_cells.inflow_fid = "
-            r"inflow.fid WHERE inflow.ident = 'C'").fetchall()
-        for bc in inflow_bc_channel_grid_elements:
-            bc_grid = bc[0]
-            # Get the Channel Inflow Grid Element (chan_* table) TODO: Do this for all types of cross sections
-            nxsecnum = self.gutils.execute(f"SELECT nxsecnum FROM chan_n WHERE elem_fid = '{bc_grid}'").fetchone()
-            if nxsecnum:
-                # Get the xc number
-                xc = nxsecnum[0]
-                # Get the downstream xc number
-                downstream_xc = xc + 1
-                # Compare the minimum elevations (xsec_n_data table)
-                xc_min_elev = \
-                    self.gutils.execute(f"SELECT MIN(yi) FROM xsec_n_data WHERE chan_n_nxsecnum = '{xc}'").fetchone()[0]
-                downstream_xc_min_elev = self.gutils.execute(
-                    f"SELECT MIN(yi) FROM xsec_n_data WHERE chan_n_nxsecnum = '{downstream_xc}'").fetchone()[0]
-                if downstream_xc_min_elev >= xc_min_elev:
-                    error_inflow_bc_grid.append(bc_grid)
-
-            i += 1
-            pd.setValue(i)
-
-        if len(close_elements) > 0:
-            msg += "CHANNEL RIGHT BANK ELEMENTS NEED SOME ADJUSTMENT DUE TO THE CHANNEL WIDTH.  " \
-                   "SET THE RIGHT BANK EITHER CLOSER OR FARTHER AWAY FROM THE LEFT BANK ELEMENT. " \
-                   f"GRID ELEMENTS(S): \n{'-'.join(map(str, close_elements))}\n\n"
-
-        if len(area_elements) > 0:
-            msg += "THE REMAINING FLOODPLAIN SURFACE AREA ON THE CHANNEL BANK ELEMENTS NEEDS TO BE LARGER FOR LEFT BANK ELEMENT. " \
-                   f"GRID ELEMENTS(S): \n{'-'.join(map(str, area_elements))}\n\n"
-
-        if len(error_outflow_bc_grid) > 0:
-            msg += "ERROR: CHANNEL OUTFLOW CROSS SECTION MUST BE LOWER THAN ADJACENT UPSTREAM NEIGHBOR BY 0.1. " \
-                   f"GRID ELEMENTS(S): \n{'-'.join(map(str, error_outflow_bc_grid))}\n\n"
-
-        if len(error_inflow_bc_grid) > 0:
-            msg += "ERROR: THE FOLLOWING CHANNEL INFLOW NODES HAVE AN ADVERSE (NEGATIVE BED SLOPE) OR ABSOLUTELY FLAT BED " \
-                   "SLOPE (ZERO SLOPE) TO THE NEXT DOWNSTREAM CHANNEL ELEMENT: \n(EITHER RAISE THE INFLOW NODE BED " \
-                   "ELEVATION OR LOWER THE DOWNSTREAM CHANNEL ELEMENT BED ELEVATION). " \
-                   f"GRID ELEMENTS(S): \n{'-'.join(map(str, error_inflow_bc_grid))}\n\n"
-
-        pd.close()
-        QApplication.restoreOverrideCursor()
-
-        for widget in QApplication.instance().allWidgets():
-            if isinstance(widget, QgsDockWidget):
-                if widget.windowTitle() == "FLO-2D Channel Check Report":
-                    widget.close()
-
-        if msg != "":
-            dlg_channel_report = ChannelCheckReportDialog(self.iface, self.lyrs, self.gutils)
-            plot_dock = QgsDockWidget()
-            plot_dock.setWindowTitle("FLO-2D Channel Check Report")
-            plot_dock.setWidget(dlg_channel_report)
-            self.iface.addDockWidget(Qt.BottomDockWidgetArea, plot_dock)
-            dlg_channel_report.report_te.insertPlainText(msg)
-
-            grid_errors = list(set(
-                str(item) for sublist in [close_elements, area_elements, error_outflow_bc_grid, error_inflow_bc_grid]
-                for item in sublist))
-            dlg_channel_report.error_grids_cbo.addItems(grid_errors)
-            dlg_channel_report.show()
-            while True:
-                ok = dlg_channel_report.exec_()
-                if ok:
-                    break
+            for data in left_bank_grids_n + left_bank_grids_r + left_bank_grids_t:
+                left_bank_grid = data[0]
+                arf_left = self.gutils.execute(f"SELECT arf FROM blocked_cells WHERE grid_fid = '{left_bank_grid}'").fetchone()
+                if not arf_left:
+                    arf_left = 0
                 else:
-                    return
+                    arf_left = arf_left[0]
+                chan_elems = self.gutils.execute(f"SELECT rbankgrid, xlen FROM chan_elems WHERE fid = '{left_bank_grid}'").fetchone()
+                right_bank_grid = chan_elems[0]
+                arf_right = self.gutils.execute(f"SELECT arf FROM blocked_cells WHERE grid_fid = '{right_bank_grid}'").fetchone()
+                if not arf_right:
+                    arf_right = 0
+                else:
+                    arf_right = arf_right[0]
+                xlen = chan_elems[1]
 
-            self.uc.log_info(msg)
-        else:
-            self.uc.show_info("The schematized channel has passed all required checks!")
+                lb_centroid = self.gutils.single_centroid(left_bank_grid)
+                rb_centroid = self.gutils.single_centroid(right_bank_grid)
+                lb_x = QgsGeometry().fromWkt(lb_centroid).asPoint().x()
+                lb_y = QgsGeometry().fromWkt(lb_centroid).asPoint().y()
+                rb_x = QgsGeometry().fromWkt(rb_centroid).asPoint().x()
+                rb_y = QgsGeometry().fromWkt(rb_centroid).asPoint().y()
+
+                xcaddist = lb_x - rb_x
+                ycaddist = lb_y - rb_y
+
+                xdistt = (xcaddist ** 2 + ycaddist ** 2) ** 0.5
+
+                if data in left_bank_grids_n:
+                    nxsecnum = data[1]
+                    topw = self.gutils.execute(
+                        f"SELECT (MAX(xi) - MIN(xi)) FROM xsec_n_data WHERE chan_n_nxsecnum = '{nxsecnum}'").fetchone()[0]
+                else:
+                    topw = data[1]
+
+                if xcaddist < 1 or ycaddist < 1:
+                    xdistshort = xdistt + cell_size
+                    xdistlong = xdistt - cell_size * 1.10
+                else:
+                    xdistshort = xdistt + cell_size * 1.41412
+                    xdistlong = xdistt - cell_size * 1.41412 * 1.10
+                channel_dict[left_bank_grid] = [right_bank_grid, topw, xdistt, xdistshort, xdistlong, xlen, arf_left, arf_right]
+
+            pd = QProgressDialog("Checking potential width errors", None, 0, len(channel_dict))
+            pd.setWindowTitle("Checking Channel Data...")
+            pd.setModal(True)
+            pd.forceShow()
+            pd.setValue(0)
+            i = 0
+
+            # 1 CHANNEL WIDTH ERROR
+            close_elements = []
+            area_elements = []
+            for left_grid, data in channel_dict.items():
+
+                topw = data[1]
+                xdistt = data[2]
+                xdistshort = data[3]
+                xdistlong = data[4]
+                xlen = data[5]
+                arf_left = data[6]
+                arf_right = data[7]
+
+                acf = topw * xlen
+
+                # 1.1 Cross-section is wider than the distance between two left and right bank elements
+
+                # Distance is shorter than the top width
+                if xdistshort < topw:
+                    close_elements.append(left_grid)
+
+                # Distance is longer than the top width
+                if (topw > 2 * xdistt) and (xdistlong > topw):
+                    close_elements.append(left_grid)
+
+                # 1.2 Area on the bank elements is less than 5% - JIM's code translated to python
+
+                # Floodplain surface area needs to be larger for the left bank element
+                arealft = xdistshort * xlen - acf
+                if arealft < 0:
+                    area_elements.append(left_grid)
+
+                # Available area is less than 5% of the floodplain surface
+                apf_left = arealft * 0.5 * arf_left
+
+                areapercent = apf_left / (cell_size * cell_size)
+                if (areapercent < 0.05) and (arf_left > 0.999):
+                    if left_grid not in area_elements: area_elements.append(left_grid)
+
+                # Check storage on the left bank floodplain area
+                if (areapercent < 0.05) and (arf_left < 0.999):
+                    apf_left = arealft * 0.5
+                    areapercent = apf_left / (cell_size * cell_size)
+                    if areapercent < 0.05:
+                        if left_grid not in area_elements: area_elements.append(left_grid)
+
+                # Check storage on the right bank floodplain area
+                if (areapercent < 0.05) and (arf_right > 0.999):
+                    if left_grid not in area_elements: area_elements.append(left_grid)
+
+                # Check storage on the right bank floodplain area
+                if (areapercent < 0.05) and (arf_right < 0.999):
+                    apf_right = arealft * 0.5
+                    areapercent = apf_right / (cell_size * cell_size)
+                    if areapercent < 0.05:
+                        if left_grid not in area_elements: area_elements.append(left_grid)
+
+                i += 1
+                pd.setValue(i)
+
+            # 2 RIGHT BANK ERROR
+
+            # 2.1 Right bank is inside the two bank lines
+
+            # 3 BOUNDARY CONDITION ERRORS
+
+            # 3.1 Outflow last cross-section must be lower than adjacent upstream neighbor by 0.1 ft
+            # Verify if there is Channel Outflow BC (outflow table)
+            pd = QProgressDialog("Checking potential outflow boundary conditions errors", None, 0, len(channel_dict))
+            pd.setValue(0)
+            i = 0
+            error_outflow_bc_grid = []
+            outflow_bc_channel_grid_elements = self.gutils.execute(r"SELECT grid_fid FROM outflow_cells JOIN outflow ON "
+                                                                   r"outflow_cells.outflow_fid = outflow.fid WHERE "
+                                                                   r"outflow.chan_out = '1'").fetchall()
+
+            for bc in outflow_bc_channel_grid_elements:
+                bc_grid = bc[0]
+                # Get the Channel Outflow Grid Element (chan_* table) TODO: Do this for all types of cross sections
+                nxsecnum = self.gutils.execute(f"SELECT nxsecnum FROM chan_n WHERE elem_fid = '{bc_grid}'").fetchone()
+                if nxsecnum:
+                    # Get the xc number
+                    xc = nxsecnum[0]
+                    # Get the downstream xc number
+                    upstream_xc = xc - 1
+                    # Compare the minimum elevations (xsec_n_data table)
+                    xc_min_elev = \
+                        self.gutils.execute(f"SELECT MIN(yi) FROM xsec_n_data WHERE chan_n_nxsecnum = '{xc}'").fetchone()[0]
+                    upstream_xc_min_elev = self.gutils.execute(
+                        f"SELECT MIN(yi) FROM xsec_n_data WHERE chan_n_nxsecnum = '{upstream_xc}'").fetchone()[0]
+
+                    if self.gutils.get_cont_par("METRIC") == "1":
+                        outflow_elev_threshold = 0.03
+                    elif self.gutils.get_cont_par("METRIC") == "0":
+                        outflow_elev_threshold = 0.1
+
+                    if float(upstream_xc_min_elev) - float(xc_min_elev) < outflow_elev_threshold:
+                        error_outflow_bc_grid.append(bc_grid)
+
+                i += 1
+                pd.setValue(i)
+
+            # 3.2 Upstream inflow boundary must be positive slope in the downstream direction
+            # Verify if there is Channel Inflow BC (inflow table)
+            pd = QProgressDialog("Checking potential outflow boundary conditions errors", None, 0, len(channel_dict))
+            pd.setValue(0)
+            i = 0
+
+            error_inflow_bc_grid = []
+            inflow_bc_channel_grid_elements = self.gutils.execute(
+                r"SELECT grid_fid FROM inflow_cells JOIN inflow ON inflow_cells.inflow_fid = "
+                r"inflow.fid WHERE inflow.ident = 'C'").fetchall()
+            for bc in inflow_bc_channel_grid_elements:
+                bc_grid = bc[0]
+                # Get the Channel Inflow Grid Element (chan_* table) TODO: Do this for all types of cross sections
+                nxsecnum = self.gutils.execute(f"SELECT nxsecnum FROM chan_n WHERE elem_fid = '{bc_grid}'").fetchone()
+                if nxsecnum:
+                    # Get the xc number
+                    xc = nxsecnum[0]
+                    # Get the downstream xc number
+                    downstream_xc = xc + 1
+                    # Compare the minimum elevations (xsec_n_data table)
+                    xc_min_elev = \
+                        self.gutils.execute(f"SELECT MIN(yi) FROM xsec_n_data WHERE chan_n_nxsecnum = '{xc}'").fetchone()[0]
+                    downstream_xc_min_elev = self.gutils.execute(
+                        f"SELECT MIN(yi) FROM xsec_n_data WHERE chan_n_nxsecnum = '{downstream_xc}'").fetchone()[0]
+                    if downstream_xc_min_elev >= xc_min_elev:
+                        error_inflow_bc_grid.append(bc_grid)
+
+                i += 1
+                pd.setValue(i)
+
+            if len(close_elements) > 0:
+                msg += "CHANNEL RIGHT BANK ELEMENTS NEED SOME ADJUSTMENT DUE TO THE CHANNEL WIDTH.  " \
+                       "SET THE RIGHT BANK EITHER CLOSER OR FARTHER AWAY FROM THE LEFT BANK ELEMENT. " \
+                       f"GRID ELEMENTS(S): \n{'-'.join(map(str, close_elements))}\n\n"
+
+            if len(area_elements) > 0:
+                msg += "THE REMAINING FLOODPLAIN SURFACE AREA ON THE CHANNEL BANK ELEMENTS NEEDS TO BE LARGER FOR LEFT BANK ELEMENT. " \
+                       f"GRID ELEMENTS(S): \n{'-'.join(map(str, area_elements))}\n\n"
+
+            if len(error_outflow_bc_grid) > 0:
+                msg += "ERROR: CHANNEL OUTFLOW CROSS SECTION MUST BE LOWER THAN ADJACENT UPSTREAM NEIGHBOR BY 0.1. " \
+                       f"GRID ELEMENTS(S): \n{'-'.join(map(str, error_outflow_bc_grid))}\n\n"
+
+            if len(error_inflow_bc_grid) > 0:
+                msg += "ERROR: THE FOLLOWING CHANNEL INFLOW NODES HAVE AN ADVERSE (NEGATIVE BED SLOPE) OR ABSOLUTELY FLAT BED " \
+                       "SLOPE (ZERO SLOPE) TO THE NEXT DOWNSTREAM CHANNEL ELEMENT: \n(EITHER RAISE THE INFLOW NODE BED " \
+                       "ELEVATION OR LOWER THE DOWNSTREAM CHANNEL ELEMENT BED ELEVATION). " \
+                       f"GRID ELEMENTS(S): \n{'-'.join(map(str, error_inflow_bc_grid))}\n\n"
+
+            pd.close()
+            QApplication.restoreOverrideCursor()
+
+            for widget in QApplication.instance().allWidgets():
+                if isinstance(widget, QgsDockWidget):
+                    if widget.windowTitle() == "FLO-2D Channel Check Report":
+                        widget.close()
+
+            if msg != "":
+                dlg_channel_report = ChannelCheckReportDialog(self.iface, self.lyrs, self.gutils)
+                plot_dock = QgsDockWidget()
+                plot_dock.setWindowTitle("FLO-2D Channel Check Report")
+                plot_dock.setWidget(dlg_channel_report)
+                self.iface.addDockWidget(Qt.BottomDockWidgetArea, plot_dock)
+                dlg_channel_report.report_te.insertPlainText(msg)
+
+                grid_errors = list(set(
+                    str(item) for sublist in [close_elements, area_elements, error_outflow_bc_grid, error_inflow_bc_grid]
+                    for item in sublist))
+                dlg_channel_report.error_grids_cbo.addItems(grid_errors)
+                dlg_channel_report.show()
+                while True:
+                    ok = dlg_channel_report.exec_()
+                    if ok:
+                        break
+                    else:
+                        return
+
+                self.uc.log_info(msg)
+            else:
+                self.uc.show_info("The schematized channel has passed all required checks!")
+
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.uc.log_info(repr(e))
+            self.uc.show_error("Channel Check Error!", e)
 
     def log_schematized_info(self):
         """
@@ -1160,43 +1178,47 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         """
         Function to interpolate channel elevation
         """
-        QApplication.setOverrideCursor(Qt.WaitCursor)
-        xs_survey = self.save_chan_dot_dat_with_zero_natural_cross_sections()
-        if xs_survey:
-            if self.save_xsec_dot_dat_with_only_user_cross_sections():
-                if self.save_CHANBANK():
-                    rtrn = -2
-                    while rtrn == -2:
-                        rtrn = self.run_INTERPOLATE()
-                        if rtrn == 0:
-                            s = QSettings()
-                            last_dir = s.value("FLO-2D/lastGdsDir", "") + "/temp/"
-                            fname = last_dir + "\\CONT.DAT"
-                            if not fname:
-                                return
-                            self.parser.scan_project_dir(fname)
-                            self.import_chan(temp=last_dir)
-                            zero, few = self.import_xsec()
-                            m = "Elevation Cross Section Interpolated!"
-                            if zero > 0:
-                                m += "\n\nWARNING: There are " + str(zero) + " cross sections with no stations."
-                            if few > 0:
-                                m += (
-                                        "\n\nWARNING: There are "
-                                        + str(few)
-                                        + " cross sections with less than 6 stations."
-                                )
-                            if zero > 0 or few > 0:
-                                m += "\n\nIncrement the number of stations in the problematic cross sections."
+        try:
+            QApplication.setOverrideCursor(Qt.WaitCursor)
+            xs_survey = self.save_chan_dot_dat_with_zero_natural_cross_sections()
+            if xs_survey:
+                if self.save_xsec_dot_dat_with_only_user_cross_sections():
+                    if self.save_CHANBANK():
+                        rtrn = -2
+                        while rtrn == -2:
+                            rtrn = self.run_INTERPOLATE()
+                            if rtrn == 0:
+                                s = QSettings()
+                                last_dir = s.value("FLO-2D/lastGdsDir", "") + "/temp/"
+                                fname = last_dir + "\\CONT.DAT"
+                                if not fname:
+                                    return
+                                self.parser.scan_project_dir(fname)
+                                self.import_chan(temp=last_dir)
+                                zero, few = self.import_xsec()
+                                m = "Elevation Cross Section Interpolated!"
+                                if zero > 0:
+                                    m += "\n\nWARNING: There are " + str(zero) + " cross sections with no stations."
+                                if few > 0:
+                                    m += (
+                                            "\n\nWARNING: There are "
+                                            + str(few)
+                                            + " cross sections with less than 6 stations."
+                                    )
+                                if zero > 0 or few > 0:
+                                    m += "\n\nIncrement the number of stations in the problematic cross sections."
 
-                            shutil.rmtree(last_dir)
-                            if m != "Elevation Cross Section Interpolated!":
-                                self.uc.bar_warn(m)
-                            else:
-                                self.uc.bar_info(m)
-                            self.uc.log_info(m)
-
-        QApplication.restoreOverrideCursor()
+                                shutil.rmtree(last_dir)
+                                if m != "Elevation Cross Section Interpolated!":
+                                    self.uc.bar_warn(m)
+                                else:
+                                    self.uc.bar_info(m)
+                                self.uc.log_info(m)
+            QApplication.restoreOverrideCursor()
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.uc.log_info(repr(e))
+            self.uc.show_error("Interpolate Channel Elevation Error!", e)
 
     def save_channel_DAT_and_XSEC_files(self):
         if self.gutils.is_table_empty("grid"):
@@ -1436,161 +1458,172 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
 
     def save_chan_dot_dat_with_zero_natural_cross_sections(self):
         # check if there are any channels defined
-        if self.gutils.is_table_empty("chan"):
-            return []
-        chan_sql = """SELECT fid, depinitial, froudc, roughadj, isedn FROM chan ORDER BY fid;"""
-        chan_elems_sql = """SELECT fid, rbankgrid, fcn, xlen, type, user_xs_fid FROM chan_elems WHERE seg_fid = ? ORDER BY nr_in_seg;"""
-
-        chan_r_sql = """SELECT elem_fid, bankell, bankelr, fcw, fcd FROM chan_r WHERE elem_fid = ?;"""
-        chan_v_sql = """SELECT elem_fid, bankell, bankelr, fcd, a1, a2, b1, b2, c1, c2,
-                               excdep, a11, a22, b11, b22, c11, c22 FROM chan_v WHERE elem_fid = ?;"""
-        chan_t_sql = """SELECT elem_fid, bankell, bankelr, fcw, fcd, zl, zr FROM chan_t WHERE elem_fid = ?;"""
-        chan_n_sql = """SELECT elem_fid, nxsecnum FROM chan_n WHERE elem_fid = ?;"""
-
-        chan_wsel_sql = """SELECT istart, wselstart, iend, wselend FROM chan_wsel ORDER BY fid;"""
-        chan_conf_sql = """SELECT chan_elem_fid FROM chan_confluences ORDER BY fid;"""
-        chan_e_sql = """SELECT grid_fid FROM noexchange_chan_cells ORDER BY fid;"""
-
-        segment = "   {0:.2f}   {1:.2f}   {2:.2f}   {3}\n"
-        chan_r = "R" + "  {}" * 7 + "\n"
-        chan_v = "V" + "  {}" * 19 + "\n"
-        chan_t = "T" + "  {}" * 9 + "\n"
-        chan_n = "N" + "  {}" * 4 + "\n"
-        chanbank = " {0: <10} {1}\n"
-        wsel = "{0} {1:.2f}\n"
-        conf = " C {0}  {1}\n"
-        chan_e = " E {0}\n"
-
-        sqls = {
-            "R": [chan_r_sql, chan_r, 3, 6],
-            "V": [chan_v_sql, chan_v, 3, 5],
-            "T": [chan_t_sql, chan_t, 3, 6],
-            "N": [chan_n_sql, chan_n, 1, 2],
-        }
-
-        chan_rows = self.gutils.execute(chan_sql).fetchall()
-        if not chan_rows:
-            return []
-        else:
-            pass
-
-        qry = "SELECT user_xs_fid, nxsecnum FROM user_chan_n;"
-        natural_channel_section_number = self.gutils.execute(qry).fetchall()
-        natural_channel_section_number_dict = dict()
-        for i, row in enumerate(natural_channel_section_number):
-            row = [x if x is not None else "" for x in row]
-            user_xs_fid, nxsecum = row
-            natural_channel_section_number_dict[user_xs_fid] = nxsecum
-
-        s = QSettings()
-        last_dir = s.value("FLO-2D/lastGdsDir", "")
-        # Create a temporary directory on the export folder
-        outdir = last_dir + "/temp/"
-        if not os.path.exists(outdir):
-            os.mkdir(outdir)
-
-        if outdir:
+        try:
             QApplication.setOverrideCursor(Qt.WaitCursor)
-            chan = os.path.join(outdir, "CHAN.DAT")
-            if os.path.isfile(chan):
-                os.remove(chan)
-            # try:
-            with open(chan, "w") as c:
-                surveyed = 0
-                non_surveyed = 0
+            if self.gutils.is_table_empty("chan"):
+                QApplication.restoreOverrideCursor()
+                return []
+            chan_sql = """SELECT fid, depinitial, froudc, roughadj, isedn FROM chan ORDER BY fid;"""
+            chan_elems_sql = """SELECT fid, rbankgrid, fcn, xlen, type, user_xs_fid FROM chan_elems WHERE seg_fid = ? ORDER BY nr_in_seg;"""
 
-                ISED = self.gutils.get_cont_par("ISED")
+            chan_r_sql = """SELECT elem_fid, bankell, bankelr, fcw, fcd FROM chan_r WHERE elem_fid = ?;"""
+            chan_v_sql = """SELECT elem_fid, bankell, bankelr, fcd, a1, a2, b1, b2, c1, c2,
+                                   excdep, a11, a22, b11, b22, c11, c22 FROM chan_v WHERE elem_fid = ?;"""
+            chan_t_sql = """SELECT elem_fid, bankell, bankelr, fcw, fcd, zl, zr FROM chan_t WHERE elem_fid = ?;"""
+            chan_n_sql = """SELECT elem_fid, nxsecnum FROM chan_n WHERE elem_fid = ?;"""
 
-                for row in chan_rows:
-                    row = [x if x is not None else "0" for x in row]
-                    fid = row[0]
-                    if ISED == "0":
-                        row[4] = ""
-                    c.write(
-                        segment.format(*row[1:5])
-                    )  # Writes depinitial, froudc, roughadj, isedn from 'chan' table (schematic layer).
-                    # A single line for each channel segment. The next lines will be the grid elements of
-                    # this channel segment.
-                    previous_xs = -999
+            chan_wsel_sql = """SELECT istart, wselstart, iend, wselend FROM chan_wsel ORDER BY fid;"""
+            chan_conf_sql = """SELECT chan_elem_fid FROM chan_confluences ORDER BY fid;"""
+            chan_e_sql = """SELECT grid_fid FROM noexchange_chan_cells ORDER BY fid;"""
 
-                    for elems in self.gutils.execute(
-                            chan_elems_sql, (fid,)
-                    ):  # each 'elems' is a list [(fid, rbankgrid, fcn, xlen, type)] from
-                        # 'chan_elems' table (the cross sections in the schematic layer),
-                        #  that has the 'fid' value indicated (the channel segment id).
+            segment = "   {0:.2f}   {1:.2f}   {2:.2f}   {3}\n"
+            chan_r = "R" + "  {}" * 7 + "\n"
+            chan_v = "V" + "  {}" * 19 + "\n"
+            chan_t = "T" + "  {}" * 9 + "\n"
+            chan_n = "N" + "  {}" * 4 + "\n"
+            chanbank = " {0: <10} {1}\n"
+            wsel = "{0} {1:.2f}\n"
+            conf = " C {0}  {1}\n"
+            chan_e = " E {0}\n"
 
-                        elems = [
-                            x if x is not None else "" for x in elems
-                        ]  # If 'elems' has a None in any of above values of list, replace it by ''
-                        (
-                            eid,
-                            rbank,
-                            fcn,
-                            xlen,
-                            typ,
-                            usr_xs_fid,
-                        ) = elems  # Separates values of list into individual variables.
-                        sql, line, fcn_idx, xlen_idx = sqls[
-                            typ
-                        ]  # depending on 'typ' (R,V,T, or N) select sql (the SQLite SELECT statement to execute),
-                        # line (format to write), fcn_idx (?), and xlen_idx (?)
-                        res = [
-                            x if x is not None else "" for x in self.gutils.execute(sql, (eid,)).fetchone()
-                        ]  # 'res' is a list of values depending on 'typ' (R,V,T, or N).
+            sqls = {
+                "R": [chan_r_sql, chan_r, 3, 6],
+                "V": [chan_v_sql, chan_v, 3, 5],
+                "T": [chan_t_sql, chan_t, 3, 6],
+                "N": [chan_n_sql, chan_n, 1, 2],
+            }
 
-                        if typ == "N":
-                            res.insert(
-                                1, fcn
-                            )  # Add 'fcn' (coming from table Â´chan_elems' (cross sections) to 'res' list) in position 'fcn_idx'.
-                            res.insert(
-                                2, xlen
-                            )  # Add Â´xlen' (coming from table Â´chan_elems' (cross sections) to 'res' list in position 'xlen_idx'.
-                            if usr_xs_fid == previous_xs:
-                                res.insert(3, 0)
-                                non_surveyed += 1
-                            else:
-                                res.insert(
-                                    3,
-                                    natural_channel_section_number_dict[usr_xs_fid],
-                                )
-                                surveyed += 1
-                                previous_xs = usr_xs_fid
-                        else:
-                            res.insert(
-                                fcn_idx, fcn
-                            )  # Add 'fcn' (coming from table Â´chan_elems' (cross sections) to 'res' list) in position 'fcn_idx'.
-                            res.insert(
-                                xlen_idx, xlen
-                            )  # Add Â´xlen' (coming from table Â´chan_elems' (cross sections) to 'res' list in position 'xlen_idx'.
+            chan_rows = self.gutils.execute(chan_sql).fetchall()
+            if not chan_rows:
+                QApplication.restoreOverrideCursor()
+                return []
+            else:
+                pass
 
-                        c.write(line.format(*res))
+            qry = "SELECT user_xs_fid, nxsecnum FROM user_chan_n;"
+            natural_channel_section_number = self.gutils.execute(qry).fetchall()
+            natural_channel_section_number_dict = dict()
+            for i, row in enumerate(natural_channel_section_number):
+                row = [x if x is not None else "" for x in row]
+                user_xs_fid, nxsecum = row
+                natural_channel_section_number_dict[user_xs_fid] = nxsecum
 
-                for row in self.gutils.execute(chan_wsel_sql):
-                    c.write(wsel.format(*row[:2]))
-                    c.write(wsel.format(*row[2:]))
-
-                pairs = []
-                for row in self.gutils.execute(chan_conf_sql):
-                    chan_elem = row[0]
-                    if not pairs:
-                        pairs.append(chan_elem)
-                    else:
-                        pairs.append(chan_elem)
-                        c.write(conf.format(*pairs))
-                        del pairs[:]
-
-                for row in self.gutils.execute(chan_e_sql):
-                    c.write(chan_e.format(row[0]))
+            s = QSettings()
+            last_dir = s.value("FLO-2D/lastGdsDir", "")
+            # Create a temporary directory on the export folder
+            outdir = last_dir + "/temp/"
+            if not os.path.exists(outdir):
+                os.mkdir(outdir)
 
             QApplication.restoreOverrideCursor()
-            return [surveyed, non_surveyed]
+            if outdir:
+                QApplication.setOverrideCursor(Qt.WaitCursor)
+                chan = os.path.join(outdir, "CHAN.DAT")
+                if os.path.isfile(chan):
+                    os.remove(chan)
+                try:
+                    with open(chan, "w") as c:
+                        surveyed = 0
+                        non_surveyed = 0
 
-            # except Exception as e:
-            #     QApplication.restoreOverrideCursor()
-            #     self.uc.show_error("ERROR 190521.1733: couln't export CHAN.DAT and/or XSEC.DAT !", e)
-            #     return []
+                        ISED = self.gutils.get_cont_par("ISED")
 
-        else:
+                        for row in chan_rows:
+                            row = [x if x is not None else "0" for x in row]
+                            fid = row[0]
+                            if ISED == "0":
+                                row[4] = ""
+                            c.write(
+                                segment.format(*row[1:5])
+                            )  # Writes depinitial, froudc, roughadj, isedn from 'chan' table (schematic layer).
+                            # A single line for each channel segment. The next lines will be the grid elements of
+                            # this channel segment.
+                            previous_xs = -999
+
+                            for elems in self.gutils.execute(
+                                    chan_elems_sql, (fid,)
+                            ):  # each 'elems' is a list [(fid, rbankgrid, fcn, xlen, type)] from
+                                # 'chan_elems' table (the cross sections in the schematic layer),
+                                #  that has the 'fid' value indicated (the channel segment id).
+
+                                elems = [
+                                    x if x is not None else "" for x in elems
+                                ]  # If 'elems' has a None in any of above values of list, replace it by ''
+                                (
+                                    eid,
+                                    rbank,
+                                    fcn,
+                                    xlen,
+                                    typ,
+                                    usr_xs_fid,
+                                ) = elems  # Separates values of list into individual variables.
+                                sql, line, fcn_idx, xlen_idx = sqls[
+                                    typ
+                                ]  # depending on 'typ' (R,V,T, or N) select sql (the SQLite SELECT statement to execute),
+                                # line (format to write), fcn_idx (?), and xlen_idx (?)
+                                res = [
+                                    x if x is not None else "" for x in self.gutils.execute(sql, (eid,)).fetchone()
+                                ]  # 'res' is a list of values depending on 'typ' (R,V,T, or N).
+
+                                if typ == "N":
+                                    res.insert(
+                                        1, fcn
+                                    )  # Add 'fcn' (coming from table Â´chan_elems' (cross sections) to 'res' list) in position 'fcn_idx'.
+                                    res.insert(
+                                        2, xlen
+                                    )  # Add Â´xlen' (coming from table Â´chan_elems' (cross sections) to 'res' list in position 'xlen_idx'.
+                                    if usr_xs_fid == previous_xs:
+                                        res.insert(3, 0)
+                                        non_surveyed += 1
+                                    else:
+                                        res.insert(
+                                            3,
+                                            natural_channel_section_number_dict[usr_xs_fid],
+                                        )
+                                        surveyed += 1
+                                        previous_xs = usr_xs_fid
+                                else:
+                                    res.insert(
+                                        fcn_idx, fcn
+                                    )  # Add 'fcn' (coming from table Â´chan_elems' (cross sections) to 'res' list) in position 'fcn_idx'.
+                                    res.insert(
+                                        xlen_idx, xlen
+                                    )  # Add Â´xlen' (coming from table Â´chan_elems' (cross sections) to 'res' list in position 'xlen_idx'.
+
+                                c.write(line.format(*res))
+
+                        for row in self.gutils.execute(chan_wsel_sql):
+                            c.write(wsel.format(*row[:2]))
+                            c.write(wsel.format(*row[2:]))
+
+                        pairs = []
+                        for row in self.gutils.execute(chan_conf_sql):
+                            chan_elem = row[0]
+                            if not pairs:
+                                pairs.append(chan_elem)
+                            else:
+                                pairs.append(chan_elem)
+                                c.write(conf.format(*pairs))
+                                del pairs[:]
+
+                        for row in self.gutils.execute(chan_e_sql):
+                            c.write(chan_e.format(row[0]))
+
+                    QApplication.restoreOverrideCursor()
+                    return [surveyed, non_surveyed]
+
+                except Exception as e:
+                    QApplication.restoreOverrideCursor()
+                    self.uc.show_error("ERROR 190521.1733: couln't export CHAN.DAT and/or XSEC.DAT !", e)
+                    return []
+
+            else:
+                QApplication.restoreOverrideCursor()
+                return []
+
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.uc.log_info(repr(e))
             return []
 
     def save_xsec_dot_dat_with_only_user_cross_sections(self):
@@ -2659,9 +2692,15 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
             self.uc.bar_warn("WARNING 160821.0931: There are no schematized channel cross sections.")
             return
 
-        self.gutils.clear_tables("chan_confluences")
-        self.lyrs.data["chan_confluences"]["qlyr"].triggerRepaint()
-        self.uc.bar_info("Confluences deleted!")
+        try:
+            QApplication.setOverrideCursor(Qt.WaitCursor)
+            self.gutils.clear_tables("chan_confluences")
+            self.lyrs.data["chan_confluences"]["qlyr"].triggerRepaint()
+            self.uc.bar_info("Confluences deleted!")
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.uc.log_info(repr(e))
+            self.uc.show_error("Delete Confluences Error!", e)
 
     def effective_user_cross_section(self, fid, name):
         """Return the cross section split between banks"""
