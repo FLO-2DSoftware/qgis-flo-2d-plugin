@@ -72,6 +72,7 @@ class UpdateGpkg(qtBaseClass, uiDialog):
         self.label_qv.setText(qgis_v)
 
         flopro_dir = s.value("FLO-2D/last_flopro")
+        flo2d_v = "FLOPRO not found"
         if os.path.isfile(flopro_dir + "/FLOPRO.exe"):
             flo2d_v = get_flo2dpro_version(flopro_dir + "/FLOPRO.exe")
         # Check for the FLOPRO_Demo

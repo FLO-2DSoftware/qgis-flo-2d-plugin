@@ -1123,6 +1123,7 @@ class Flo2D(object):
                 s.setValue("FLO-2D/run_settings", True)
 
                 flopro_dir = s.value("FLO-2D/last_flopro")
+                flo2d_v = "FLOPRO not found"
                 # Check for FLOPRO.exe
                 if os.path.isfile(flopro_dir + "/FLOPRO.exe"):
                     flo2d_v = get_flo2dpro_version(flopro_dir + "/FLOPRO.exe")
@@ -1324,6 +1325,7 @@ class Flo2D(object):
 
             QApplication.restoreOverrideCursor()
             flopro_dir = s.value("FLO-2D/last_flopro")
+            flo2d_v = "FLOPRO not found"
             if flopro_dir is not None:
                 # Check for FLOPRO.exe
                 if os.path.isfile(flopro_dir + "/FLOPRO.exe"):
@@ -1344,6 +1346,7 @@ class Flo2D(object):
         self.uncheck_all_info_tools()
         s = QSettings()
         flopro_dir = s.value("FLO-2D/last_flopro")
+        flo2d_v = "FLOPRO not found"
         # Check if the FLOPRO directory is in the FLO-2D Settings
         if flopro_dir is not None:
             # Check if the user has the FLOPRO version
