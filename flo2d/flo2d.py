@@ -3064,6 +3064,9 @@ class Flo2D(object):
             if ac.toolTip() == "<b>FLO-2D Grid Info Tool</b>":
                 info_ac = ac
 
+        if self.f2d_grid_info_dock is not None:
+            self.iface.addDockWidget(Qt.TopDockWidgetArea, self.f2d_grid_info_dock)
+
         grid = self.lyrs.data["grid"]["qlyr"]
         if grid is not None:
             tool = self.canvas.mapTool()
