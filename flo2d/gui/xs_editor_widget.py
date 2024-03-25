@@ -1476,6 +1476,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
             if self.gutils.is_table_empty("chan"):
                 QApplication.restoreOverrideCursor()
                 return []
+
             chan_sql = """SELECT fid, depinitial, froudc, roughadj, isedn FROM chan ORDER BY fid;"""
             chan_elems_sql = """SELECT fid, rbankgrid, fcn, xlen, type, user_xs_fid FROM chan_elems WHERE seg_fid = ? ORDER BY nr_in_seg;"""
 
@@ -1515,6 +1516,12 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
 
             qry = "SELECT user_xs_fid, nxsecnum FROM user_chan_n;"
             natural_channel_section_number = self.gutils.execute(qry).fetchall()
+            if len(natural_channel_section_number) <= 1:
+                QApplication.restoreOverrideCursor()
+                self.uc.bar_warn("ERROR: There is insufficient user cross-sections to interpolate. Check User Cross "
+                                 "Sections table.")
+                return []
+
             natural_channel_section_number_dict = dict()
             for i, row in enumerate(natural_channel_section_number):
                 row = [x if x is not None else "" for x in row]
