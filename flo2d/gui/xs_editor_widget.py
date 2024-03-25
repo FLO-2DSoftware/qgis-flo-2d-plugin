@@ -878,9 +878,9 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
             channel_dict = {}
 
             # Calculate the Channel Top Width
-            left_bank_grids_r = self.gutils.execute("SELECT elem_fid, fcw FROM chan_r").fetchall()
+            left_bank_grids_r = self.gutils.execute("SELECT elem_fid, fcw, fcd FROM chan_r").fetchall()
             # left_bank_grids_v = self.gutils.execute("SELECT elem_fid, nxsecnum FROM chan_n").fetchall() # TODO variable area
-            left_bank_grids_t = self.gutils.execute("SELECT elem_fid, fcw FROM chan_t").fetchall()
+            left_bank_grids_t = self.gutils.execute("SELECT elem_fid, fcw, fcd FROM chan_t").fetchall()
             left_bank_grids_n = self.gutils.execute("SELECT elem_fid, nxsecnum FROM chan_n").fetchall()
             cell_size = int(float(self.gutils.get_cont_par("CELLSIZE")))  # Assuming that it is the SIDE on JIM's code
 
@@ -918,9 +918,10 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
                     topw = self.gutils.execute(
                         f"SELECT (MAX(xi) - MIN(xi)) FROM xsec_n_data WHERE chan_n_nxsecnum = '{nxsecnum}'").fetchone()[0]
                     depth = self.gutils.execute(
-                        f"SELECT (MAX(yi) - MIN(yi)) FROM xsec_n_data WHERE chan_n_nxsecnum = '{nxsecnum}'").fetchone()[0] # TODO need to add to the other geometries
+                        f"SELECT (MAX(yi) - MIN(yi)) FROM xsec_n_data WHERE chan_n_nxsecnum = '{nxsecnum}'").fetchone()[0]
                 else:
                     topw = data[1]
+                    depth = data[2]
 
                 if xcaddist < 1 or ycaddist < 1:
                     xdistshort = xdistt + cell_size
