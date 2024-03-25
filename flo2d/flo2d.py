@@ -3042,6 +3042,12 @@ class Flo2D(object):
             if ac.toolTip() == "<b>FLO-2D Info Tool</b>":
                 info_ac = ac
 
+        if self.f2d_table_dock is not None:
+            self.iface.addDockWidget(Qt.BottomDockWidgetArea, self.f2d_table_dock)
+
+        if self.f2d_plot_dock is not None:
+            self.iface.addDockWidget(Qt.BottomDockWidgetArea, self.f2d_plot_dock)
+
         grid = self.lyrs.data["grid"]["qlyr"]
         if grid is not None:
             tool = self.canvas.mapTool()
@@ -3096,6 +3102,12 @@ class Flo2D(object):
         for ac in self.toolActions:
             if ac.toolTip() == "<b>FLO-2D Results</b>":
                 info_ac = ac
+
+        if self.f2d_table_dock is not None:
+            self.iface.addDockWidget(Qt.BottomDockWidgetArea, self.f2d_table_dock)
+
+        if self.f2d_plot_dock is not None:
+            self.iface.addDockWidget(Qt.BottomDockWidgetArea, self.f2d_plot_dock)
 
         tool = self.canvas.mapTool()
         if tool == self.results_tool:
