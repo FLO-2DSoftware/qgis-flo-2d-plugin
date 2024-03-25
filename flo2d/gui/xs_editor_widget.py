@@ -874,7 +874,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
             msg = ""
 
             # Add relevant data to the channel dict
-            # Channel dict: {'left_grid': ['right_grid', topw, distt, xdistshort, xdistlong, xlen, arf_left, arf_right}
+            # Channel dict: {'left_grid': ['right_grid', topw, distt, xdistshort, xdistlong, xlen, arf_left, arf_right, depth}
             channel_dict = {}
 
             # Calculate the Channel Top Width
@@ -912,10 +912,13 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
 
                 xdistt = (xcaddist ** 2 + ycaddist ** 2) ** 0.5
 
+                depth = None
                 if data in left_bank_grids_n:
                     nxsecnum = data[1]
                     topw = self.gutils.execute(
                         f"SELECT (MAX(xi) - MIN(xi)) FROM xsec_n_data WHERE chan_n_nxsecnum = '{nxsecnum}'").fetchone()[0]
+                    depth = self.gutils.execute(
+                        f"SELECT (MAX(yi) - MIN(yi)) FROM xsec_n_data WHERE chan_n_nxsecnum = '{nxsecnum}'").fetchone()[0] # TODO need to add to the other geometries
                 else:
                     topw = data[1]
 
@@ -925,9 +928,9 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
                 else:
                     xdistshort = xdistt + cell_size * 1.41412
                     xdistlong = xdistt - cell_size * 1.41412 * 1.10
-                channel_dict[left_bank_grid] = [right_bank_grid, topw, xdistt, xdistshort, xdistlong, xlen, arf_left, arf_right]
+                channel_dict[left_bank_grid] = [right_bank_grid, topw, xdistt, xdistshort, xdistlong, xlen, arf_left, arf_right, depth]
 
-            pd = QProgressDialog("Checking potential width errors", None, 0, len(channel_dict))
+            pd = QProgressDialog("Checking potential width and depth errors", None, 0, len(channel_dict))
             pd.setWindowTitle("Checking Channel Data...")
             pd.setModal(True)
             pd.forceShow()
@@ -937,6 +940,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
             # 1 CHANNEL WIDTH ERROR
             close_elements = []
             area_elements = []
+            depth_elements = []
             for left_grid, data in channel_dict.items():
 
                 topw = data[1]
@@ -946,6 +950,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
                 xlen = data[5]
                 arf_left = data[6]
                 arf_right = data[7]
+                depth = data[8]
 
                 acf = topw * xlen
 
@@ -990,6 +995,15 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
                     areapercent = apf_right / (cell_size * cell_size)
                     if areapercent < 0.05:
                         if left_grid not in area_elements: area_elements.append(left_grid)
+
+                # Check small depths
+                if depth:
+                    if self.gutils.get_cont_par("METRIC") == "1":
+                        if depth < 0.3:
+                            depth_elements.append(left_grid)
+                    else:
+                        if depth < 1:
+                            depth_elements.append(left_grid)
 
                 i += 1
                 pd.setValue(i)
@@ -1067,13 +1081,17 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
                 pd.setValue(i)
 
             if len(close_elements) > 0:
-                msg += "CHANNEL RIGHT BANK ELEMENTS NEED SOME ADJUSTMENT DUE TO THE CHANNEL WIDTH.  " \
+                msg += "ERROR: CHANNEL RIGHT BANK ELEMENTS NEED SOME ADJUSTMENT DUE TO THE CHANNEL WIDTH.  " \
                        "SET THE RIGHT BANK EITHER CLOSER OR FARTHER AWAY FROM THE LEFT BANK ELEMENT. " \
                        f"GRID ELEMENTS(S): \n{'-'.join(map(str, close_elements))}\n\n"
 
             if len(area_elements) > 0:
-                msg += "THE REMAINING FLOODPLAIN SURFACE AREA ON THE CHANNEL BANK ELEMENTS NEEDS TO BE LARGER FOR LEFT BANK ELEMENT. " \
+                msg += "ERROR: THE REMAINING FLOODPLAIN SURFACE AREA ON THE CHANNEL BANK ELEMENTS NEEDS TO BE LARGER FOR LEFT BANK ELEMENT. " \
                        f"GRID ELEMENTS(S): \n{'-'.join(map(str, area_elements))}\n\n"
+
+            if len(depth_elements) > 0:
+                msg += "ERROR: CROSS SECTION DEPTH NEEDS TO BE INCREASED. " \
+                       f"GRID ELEMENTS(S): \n{'-'.join(map(str, depth_elements))}\n\n"
 
             if len(error_outflow_bc_grid) > 0:
                 msg += "ERROR: CHANNEL OUTFLOW CROSS SECTION MUST BE LOWER THAN ADJACENT UPSTREAM NEIGHBOR BY 0.1. " \
@@ -1102,7 +1120,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
                 dlg_channel_report.report_te.insertPlainText(msg)
 
                 grid_errors = list(set(
-                    str(item) for sublist in [close_elements, area_elements, error_outflow_bc_grid, error_inflow_bc_grid]
+                    str(item) for sublist in [close_elements, area_elements, depth_elements, error_outflow_bc_grid, error_inflow_bc_grid]
                     for item in sublist))
                 dlg_channel_report.error_grids_cbo.addItems(grid_errors)
                 dlg_channel_report.show()
