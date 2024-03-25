@@ -119,6 +119,9 @@ class SettingsDialog(qtBaseClass, uiDialog):
             "SHALLOWN": 0.2,
             "TOLGLOBAL": 0.004,
             "NOPRTFP": 2,
+            "TOUT": 0.1,
+            "SIMUL": 0.1,
+            "GRAPTIM": 0.1
         }
         qry = """INSERT INTO cont (name, value, note) VALUES (?,?,?);"""
         cont_rows = self.parser.cont_rows
