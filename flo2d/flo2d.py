@@ -1374,13 +1374,15 @@ class Flo2D(object):
             # Check if the user has the FLOPRO version
             if os.path.isfile(flopro_dir + "/FLOPRO.exe"):
                 flo2d_v = get_flo2dpro_version(flopro_dir + "/FLOPRO.exe")
-                self.gutils.set_metadata_par("FLO-2D_V", flo2d_v)
                 user_program = "FLOPRO.exe"
             # Check for the FLOPRO_Demo
             elif os.path.isfile(flopro_dir + "/FLOPRO_Demo.exe"):
                 flo2d_v = get_flo2dpro_version(flopro_dir + "/FLOPRO_Demo.exe")
-                self.gutils.set_metadata_par("FLO-2D_V", flo2d_v)
                 user_program = "FLOPRO_Demo.exe"
+
+            # Only add to metadata if there is a project loaded, otherwise just run FLOPRO
+            if self.gutils:
+                self.gutils.set_metadata_par("FLO-2D_V", flo2d_v)
         else:
             self.run_settings()
         self.run_program(user_program)
