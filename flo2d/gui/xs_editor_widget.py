@@ -184,6 +184,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         self.save_xs_changes_btn.clicked.connect(self.save_user_xsections_lyr_edits)
         self.revert_changes_btn.clicked.connect(self.cancel_user_lyr_edits)
         self.delete_btn.clicked.connect(self.delete_xs)
+        self.delete_user_btn.clicked.connect(self.delete_user_data)
         self.delete_schema_btn.clicked.connect(self.delete_schematize_data)
         self.schematize_xs_btn.clicked.connect(self.schematize_channels)
         self.check_schematized_channel_btn.clicked.connect(self.check_schematized_channel)
@@ -669,6 +670,29 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         except Exception as e:
             self.populate_xsec_cbo()
         self.repaint_xs()
+
+    def delete_user_data(self):
+        """
+        Function to delete the user channel data
+        """
+        if self.gutils.is_table_empty("grid"):
+            self.uc.bar_warn("There is no grid! Please create it before running tool.")
+            return
+        else:
+            if self.uc.question("Are you sure you want to delete all user channel data?"):
+                self.gutils.clear_tables(
+                    "user_chan_r",
+                    "user_chan_v",
+                    "user_chan_t",
+                    "user_chan_n",
+                    "user_xsec_n_data",
+                    "user_noexchange_chan_areas",
+                )
+                self.uc.bar_info("User Channel Data deleted!")
+                current_fid = self.xs_cbo.currentData()
+                self.current_xsec_changed(current_fid)
+                self.populate_xsec_cbo()
+            return
 
     def delete_schematize_data(self):
         """
