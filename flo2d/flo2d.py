@@ -1062,7 +1062,7 @@ class Flo2D(object):
                 else:
                     not_added.append(layer.name())
 
-        QApplication.setOverrideCursor(QtGui.QCursor(QtCore.Qt.ArrowCursor))
+        QApplication.restoreOverrideCursor()
 
         if len(not_added) > 0:
             layers_not_added = ', '.join(map(str, not_added))
@@ -2007,8 +2007,8 @@ class Flo2D(object):
                             swmm_converter = SchemaSWMMConverter(self.con, self.iface, self.lyrs)
                             swmm_converter.create_user_swmm_nodes()
                         except Exception as e:
-                            self.uc.log_info(traceback.format_exc())
                             QApplication.restoreOverrideCursor()
+                            self.uc.log_info(traceback.format_exc())
                             self.uc.show_error(
                                 "ERROR 040723.1749:\n\nConverting Schematic SD Inlets to User Storm Drain Nodes failed!"
                                 + "\n_______________________________________________________________",
@@ -2053,7 +2053,7 @@ class Flo2D(object):
                     else:
                         cell = self.gutils.execute("SELECT col FROM grid WHERE fid = 1").fetchone()
                         if cell[0] == NULL:
-                            QApplication.setOverrideCursor(QtGui.QCursor(QtCore.Qt.ArrowCursor))
+                            QApplication.restoreOverrideCursor()
                             proceed = self.uc.question(
                                 "Grid layer's fields 'col' and 'row' have NULL values!\n\nWould you like to assign them?"
                             )
@@ -2064,13 +2064,13 @@ class Flo2D(object):
                             else:
                                 return
 
-                    QApplication.setOverrideCursor(QtGui.QCursor(QtCore.Qt.ArrowCursor))
+                    QApplication.restoreOverrideCursor()
 
                 except Exception as e:
-                    QApplication.setOverrideCursor(QtGui.QCursor(QtCore.Qt.ArrowCursor))
+                    QApplication.restoreOverrideCursor()
                     self.uc.show_error("ERROR 050521.0349: importing .DAT files!.\n", e)
                 finally:
-                    QApplication.setOverrideCursor(QtGui.QCursor(QtCore.Qt.ArrowCursor))
+                    QApplication.restoreOverrideCursor()
                     if self.files_used != "" or self.files_not_used != "":
                         self.uc.show_info(
                             "Files read by this project:\n\n"

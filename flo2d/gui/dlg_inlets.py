@@ -149,11 +149,10 @@ class InletNodesDialog(qtBaseClass, uiDialog):
                     FROM user_swmm_nodes WHERE sd_type= 'I' or sd_type= 'J';"""
             rows = self.gutils.execute(qry).fetchall()
             if not rows:
-                QApplication.setOverrideCursor(Qt.ArrowCursor)
+                QApplication.restoreOverrideCursor()
                 self.uc.show_info(
                     "WARNING 280920.0421: No inlets/junctions defined (of type 'I' or 'J') in 'Storm Drain Nodes' User Layer!"
                 )
-                QApplication.restoreOverrideCursor()
                 return
     
             self.block = True
@@ -260,11 +259,10 @@ class InletNodesDialog(qtBaseClass, uiDialog):
                     self.inlets_tblw.setItem(row_number, cell, item)
     
             if no_rt != "":
-                QApplication.setOverrideCursor(Qt.ArrowCursor)
+                QApplication.restoreOverrideCursor()
                 self.uc.show_info(
                     "WARNING 070120.1048:\nThe following rating tables/Culvert eq. were not found!:\n\n" + no_rt
                 )
-                QApplication.restoreOverrideCursor()
     
             if duplicates:
                 txt = ""
@@ -294,9 +292,8 @@ class InletNodesDialog(qtBaseClass, uiDialog):
             self.highlight_inlet_cell(self.grid_element_le.text())
     
         except Exception as e:
-            QApplication.setOverrideCursor(Qt.ArrowCursor)
-            self.uc.show_error("ERROR 030324.0633: error while loading inlets/junctions components!", e)
             QApplication.restoreOverrideCursor()
+            self.uc.show_error("ERROR 030324.0633: error while loading inlets/junctions components!", e)
         finally:
             QApplication.restoreOverrideCursor()              
 

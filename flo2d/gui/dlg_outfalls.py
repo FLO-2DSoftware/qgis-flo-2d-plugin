@@ -152,9 +152,8 @@ class OutfallNodesDialog(qtBaseClass, uiDialog):
 
             rows = self.gutils.execute(qry).fetchall()  # rows is a list of tuples.
             if not rows:
-                QApplication.setOverrideCursor(Qt.ArrowCursor)
-                self.uc.show_info("WARNING 121121.0421: No outfalls in 'Storm Drain Nodes' User Layer!")
                 QApplication.restoreOverrideCursor()
+                self.uc.show_info("WARNING 121121.0421: No outfalls in 'Storm Drain Nodes' User Layer!")
                 return
 
             self.block = True
@@ -252,9 +251,8 @@ class OutfallNodesDialog(qtBaseClass, uiDialog):
             self.highlight_outfall_cell(self.grid_element_txt.text())
 
         except Exception as e:
-            QApplication.setOverrideCursor(Qt.ArrowCursor)
-            self.uc.show_error("ERROR 100618.0846: error while loading outfalls components!", e)
             QApplication.restoreOverrideCursor()
+            self.uc.show_error("ERROR 100618.0846: error while loading outfalls components!", e)
         finally:
             QApplication.restoreOverrideCursor()            
             
@@ -324,9 +322,8 @@ class OutfallNodesDialog(qtBaseClass, uiDialog):
                     pass
                     # self.uc.bar_warn("WARNING 221222.0625: time series " + time_series + " not found.")
         except:
-            QApplication.setOverrideCursor(Qt.ArrowCursor)
-            self.uc.bar_warn("WARNING 241222.0840: outfall type not found!")
             QApplication.restoreOverrideCursor()
+            self.uc.bar_warn("WARNING 241222.0840: outfall type not found!")
             
     def disableTypes(self):
         self.water_depth_dbox.setEnabled(False)
@@ -603,9 +600,8 @@ class OutfallNodesDialog(qtBaseClass, uiDialog):
             QApplication.restoreOverrideCursor()
 
         except ValueError:
-            QApplication.setOverrideCursor(Qt.ArrowCursor)
-            self.uc.bar_warn("WARNING 121121.1134: Cell " + str(cell) + "is not valid.")
             QApplication.restoreOverrideCursor()
+            self.uc.bar_warn("WARNING 121121.1134: Cell " + str(cell) + "is not valid.")
             self.lyrs.clear_rubber()
             pass
 

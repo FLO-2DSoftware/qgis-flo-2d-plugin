@@ -168,24 +168,21 @@ class OrificesDialog(qtBaseClass, uiDialog):
             self.highlight_orifice(self.orifice_name_cbo.currentText())
 
             if wrong_status > 0:
-                QApplication.setOverrideCursor(Qt.ArrowCursor)
+                QApplication.restoreOverrideCursor()
                 self.uc.show_info(
                     "WARNING 070422.0530: there are some orifices with wrong type, shape, or flap gate!\n\n"
                     + "All wrong values were changed to their defaults.\n\n"
                     + "Edit them as wished and then 'Save' to replace the values in the 'Storm Drain Orifices' User layers."
                 )
-                QApplication.restoreOverrideCursor()                
         except Exception as e:
-            QApplication.setOverrideCursor(Qt.ArrowCursor)
+            QApplication.restoreOverrideCursor()
             self.uc.show_error(
                 "ERROR 070422.0730: assignment of value from orifices users layer failed!.\n",
                 e,
             )
-            QApplication.restoreOverrideCursor()
         finally:
             QApplication.restoreOverrideCursor()              
-            
-            
+
     def orifice_crest_height_dbox_valueChanged(self):
         self.box_valueChanged(self.orifice_crest_height_dbox, 4)
 

@@ -646,14 +646,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
         self.batch_execute(evapor_sql, evapor_month_sql, evapor_hour_sql)
 
     def import_chan(self):
-        # s = QSettings()
-        # last_dir = s.value("FLO-2D/lastGdsDir", "")
-        # if not os.path.isfile(last_dir + r"\CHAN.DAT"):
-        #     self.uc.show_warn("WARNING 060319.1612: Can't import channels!.\n\nCHAN.DAT doesn't exist.")
-        #     return
-        # if not os.path.isfile(last_dir + r"\CHANBANK.DAT"):
-        #     self.uc.show_warn("WARNING 060319.1632: Can't import channels!.\n\nCHANBANK.DAT doesn't exist.")
-        #     return
+
+        QApplication.setOverrideCursor(Qt.WaitCursor)
 
         chan_sql = [
             """INSERT INTO chan (geom, depinitial, froudc, roughadj, isedn) VALUES""",
@@ -764,12 +758,11 @@ class Flo2dGeoPackage(GeoPackageUtils):
             self.execute(qry)
 
         except Exception:
-            QApplication.setOverrideCursor(QtGui.QCursor(QtCore.Qt.ArrowCursor))
+            QApplication.restoreOverrideCursor()
             self.uc.log_info(traceback.format_exc())
             self.uc.show_warn(
                 "WARNING 010219.0742: Import channels failed!. Check CHAN.DAT and CHANBANK.DAT files."
             )  # self.uc.show_warn('Import channels failed!.\nMaybe the number of left bank and right bank cells are different.')
-            QApplication.setOverrideCursor(Qt.WaitCursor)
 
     def import_xsec(self):
         xsec_sql = ["""INSERT INTO xsec_n_data (chan_n_nxsecnum, xi, yi) VALUES""", 3]

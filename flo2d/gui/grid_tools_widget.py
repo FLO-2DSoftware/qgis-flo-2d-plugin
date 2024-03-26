@@ -445,7 +445,7 @@ class GridToolsWidget(qtBaseClass, uiDialog):
                         if cell[0] != NULL:
                             dlg.interpolate_from_lidar()
                         else:
-                            QApplication.setOverrideCursor(QtGui.QCursor(QtCore.Qt.ArrowCursor))
+                            QApplication.restoreOverrideCursor()
                             proceed = self.uc.question(
                                 "Grid layer's fields 'col' and 'row' have NULL values!\n\nWould you like to assign them?"
                             )

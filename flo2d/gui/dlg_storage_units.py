@@ -240,9 +240,8 @@ class StorageUnitsDialog(qtBaseClass, uiDialog):
             self.highlight_storage_cell(self.grid_element_le.text())
         
         except Exception as e:
-            QApplication.setOverrideCursor(Qt.ArrowCursor)
-            self.uc.show_error("ERROR 030324.0622: error while loading storage units components!", e)
             QApplication.restoreOverrideCursor()
+            self.uc.show_error("ERROR 030324.0622: error while loading storage units components!", e)
         finally:
             QApplication.restoreOverrideCursor()  
 
