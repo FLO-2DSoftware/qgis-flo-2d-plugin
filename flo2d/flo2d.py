@@ -2362,7 +2362,7 @@ class Flo2D(object):
         """
         self.uncheck_all_info_tools()
         imprt = self.uc.dialog_with_2_customized_buttons(
-            "Select import method", "", " Several Components", " One Single Component "
+            "Select import method", "", " Several Components", " One Single Component"
         )
 
         if imprt == QMessageBox.Yes:
@@ -2636,6 +2636,8 @@ class Flo2D(object):
             "SWMMOUTETF.DAT": "import_swmmoutf",
             "WSURF.DAT": "import_wsurf",
             "WSTIME.DAT": "import_wstime",
+            "MANNINGS_N.DAT": "import_mannings_n",
+            "TOPO.DAT": "import_topo"
         }
         s = QSettings()
         last_dir = s.value("FLO-2D/lastGdsDir", "")

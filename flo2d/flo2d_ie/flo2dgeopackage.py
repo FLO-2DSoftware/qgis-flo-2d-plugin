@@ -120,6 +120,39 @@ class Flo2dGeoPackage(GeoPackageUtils):
         elif self.parsed_format == self.FORMAT_HDF5:
             return self.import_mannings_n_topo_hdf5()
 
+    def import_topo(self):
+        if self.parsed_format == self.FORMAT_DAT:
+            return self.import_topo_dat()
+        elif self.parsed_format == self.FORMAT_HDF5:
+            pass # TODO implement this on the hdf5 project
+            # return self.import_topo_dat_hdf5()
+
+    def import_topo_dat(self):
+        """
+        Function to import only the TOPO.DAT file (single component)
+        """
+        QApplication.setOverrideCursor(Qt.WaitCursor)
+        try:
+
+            qry = "UPDATE grid SET elevation = ? WHERE fid = ?;"
+
+            # Clear the elevation
+            self.execute("UPDATE grid SET elevation = '-9999';")
+
+            data = self.parser.parse_topo()
+            fid = 1
+            cell_elev = []
+            for row in data:
+                cell_elev.append((row[2], fid))
+                fid += 1
+            self.gutils.execute_many(qry, cell_elev)
+
+            QApplication.restoreOverrideCursor()
+
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.uc.show_error("ERROR 040521.1154: importing TOPO.DAT!.\n", e)
+
     def import_mannings_n_topo_dat(self):
         try:
             sql = ["""INSERT INTO grid (fid, n_value, elevation, geom) VALUES""", 4]
