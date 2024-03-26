@@ -3557,15 +3557,15 @@ class Flo2dGeoPackage(GeoPackageUtils):
                             else:    
                                 errors += "* Unknown grid element in Culverts eq. table.\n"
             if errors:
-                QApplication.restoreOverrideCursor()
+                QApplication.setOverrideCursor(Qt.ArrowCursor)
                 self.uc.show_info("WARNING 040319.0521:\n\n" + errors)
-                QApplication.setOverrideCursor(Qt.WaitCursor)
-
+                QApplication.restoreOverrideCursor()
             return True
 
         except Exception as e:
-            QApplication.restoreOverrideCursor()
+            QApplication.setOverrideCursor(Qt.ArrowCursor)
             self.uc.show_error("ERROR 101218.1619: exporting SWMMFLORT.DAT failed!.\n", e)
+            QApplication.restoreOverrideCursor()
             return False
 
     def export_swmmoutf(self, outdir):
