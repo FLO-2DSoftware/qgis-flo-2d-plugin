@@ -756,6 +756,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             )
             qry = """UPDATE chan SET name = 'Channel ' ||  cast(fid as text);"""
             self.execute(qry)
+            QApplication.restoreOverrideCursor()
 
         except Exception:
             QApplication.restoreOverrideCursor()
