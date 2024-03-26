@@ -408,6 +408,11 @@ class ParseDAT(object):
         results = self.single_parser(topo)
         return results
 
+    def parse_mannings_n(self):
+        mannings_n = self.dat_files["MANNINGS_N.DAT"]
+        results = self.single_parser(mannings_n)
+        return results
+
     def parse_inflow(self, inflow=None):
         if inflow is None:
             inflow = self.dat_files["INFLOW.DAT"]
