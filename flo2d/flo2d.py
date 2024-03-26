@@ -1090,6 +1090,9 @@ class Flo2D(object):
         if not ok:
             return
         else:
+
+            flopro_found = False
+
             # Project is loaded
             if self.gutils:
                 flo2d_dir, project_dir, advanced_layers = dlg.get_parameters()
@@ -1128,10 +1131,14 @@ class Flo2D(object):
                     flo2d_v = "FLOPRO not found"
                     # Check for FLOPRO.exe
                     if os.path.isfile(flopro_dir + "/FLOPRO.exe"):
+                        flopro_found = True
                         flo2d_v = get_flo2dpro_version(flopro_dir + "/FLOPRO.exe")
                     # Check for FLOPRO_Demo.exe
                     elif os.path.isfile(flopro_dir + "/FLOPRO_Demo.exe"):
+                        flopro_found = True
                         flo2d_v = get_flo2dpro_version(flopro_dir + "/FLOPRO_Demo.exe")
+                    else:
+                        flopro_found = False
 
                     self.gutils.set_metadata_par("FLO-2D_V", flo2d_v)
 
@@ -1148,16 +1155,22 @@ class Flo2D(object):
                     s.setValue("FLO-2D/run_settings", True)
 
                     flopro_dir = s.value("FLO-2D/last_flopro")
-                    flo2d_v = "FLOPRO not found"
                     # Check for FLOPRO.exe
                     if os.path.isfile(flopro_dir + "/FLOPRO.exe"):
-                        flo2d_v = get_flo2dpro_version(flopro_dir + "/FLOPRO.exe")
+                        flopro_found = True
                     # Check for FLOPRO_Demo.exe
                     elif os.path.isfile(flopro_dir + "/FLOPRO_Demo.exe"):
-                        flo2d_v = get_flo2dpro_version(flopro_dir + "/FLOPRO_Demo.exe")
+                        flopro_found = True
+                    else:
+                        flopro_found = False
 
-            self.uc.bar_info("Run Settings saved!")
-            self.uc.log_info(f"Run Settings saved!\nProject Folder: {project_dir}\nFLO-2D Folder: {flo2d_dir}")
+            if flopro_found:
+                self.uc.bar_info("Run Settings saved!")
+                self.uc.log_info(f"Run Settings saved!\nProject Folder: {project_dir}\nFLO-2D Folder: {flo2d_dir}")
+            else:
+                self.uc.bar_warn("Run Settings saved! No FLOPRO.exe found, check your FLO-2D installation folder!")
+                self.uc.log_info(f"Run Settings saved! No FLOPRO.exe found, check your FLO-2D installation "
+                                 f"folder!\nProject Folder: {project_dir}\nFLO-2D Folder: {flo2d_dir}")
 
     @connection_required
     def quick_run_flopro(self):
