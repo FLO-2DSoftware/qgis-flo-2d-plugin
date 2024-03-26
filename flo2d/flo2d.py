@@ -1090,50 +1090,72 @@ class Flo2D(object):
         if not ok:
             return
         else:
-            flo2d_dir, project_dir, advanced_layers = dlg.get_parameters()
-            s = QSettings()
-            s.setValue("FLO-2D/lastGdsDir", project_dir)
-            s.setValue("FLO-2D/last_flopro", flo2d_dir)
-            if advanced_layers != s.value("FLO-2D/advanced_layers", ""):
-                # show advanced layers
-                if advanced_layers:
-                    lyrs = self.lyrs.data
-                    for key, value in lyrs.items():
-                        group = value.get("sgroup")
-                        subsubgroup = value.get("ssgroup")
-                        self.ilg.unhideLayer(self.lyrs.data[key]["qlyr"])
-                        self.ilg.unhideGroup(group)
-                        self.ilg.unhideGroup(subsubgroup, group)
-                # hide advanced layers
-                else:
-                    lyrs = self.lyrs.data
-                    for key, value in lyrs.items():
-                        advanced = value.get("advanced")
-                        if advanced:
-                            subgroup = value.get("sgroup")
+            # Project is loaded
+            if self.gutils:
+                flo2d_dir, project_dir, advanced_layers = dlg.get_parameters()
+                s = QSettings()
+                s.setValue("FLO-2D/lastGdsDir", project_dir)
+                s.setValue("FLO-2D/last_flopro", flo2d_dir)
+                if advanced_layers != s.value("FLO-2D/advanced_layers", ""):
+                    # show advanced layers
+                    if advanced_layers:
+                        lyrs = self.lyrs.data
+                        for key, value in lyrs.items():
+                            group = value.get("sgroup")
                             subsubgroup = value.get("ssgroup")
-                            self.ilg.hideLayer(self.lyrs.data[key]["qlyr"])
-                            if subsubgroup == "Gutters" or subsubgroup == "Multiple Channels" or subsubgroup == "Streets":
-                                self.ilg.hideGroup(subsubgroup, subgroup)
-                            else:
-                                self.ilg.hideGroup(subgroup)
-            s.setValue("FLO-2D/advanced_layers", advanced_layers)
+                            self.ilg.unhideLayer(self.lyrs.data[key]["qlyr"])
+                            self.ilg.unhideGroup(group)
+                            self.ilg.unhideGroup(subsubgroup, group)
+                    # hide advanced layers
+                    else:
+                        lyrs = self.lyrs.data
+                        for key, value in lyrs.items():
+                            advanced = value.get("advanced")
+                            if advanced:
+                                subgroup = value.get("sgroup")
+                                subsubgroup = value.get("ssgroup")
+                                self.ilg.hideLayer(self.lyrs.data[key]["qlyr"])
+                                if subsubgroup == "Gutters" or subsubgroup == "Multiple Channels" or subsubgroup == "Streets":
+                                    self.ilg.hideGroup(subsubgroup, subgroup)
+                                else:
+                                    self.ilg.hideGroup(subgroup)
+                s.setValue("FLO-2D/advanced_layers", advanced_layers)
 
-            if project_dir != "" and flo2d_dir != "":
-                s.setValue("FLO-2D/run_settings", True)
+                if project_dir != "" and flo2d_dir != "":
+                    s.setValue("FLO-2D/run_settings", True)
 
-                flopro_dir = s.value("FLO-2D/last_flopro")
-                flo2d_v = "FLOPRO not found"
-                # Check for FLOPRO.exe
-                if os.path.isfile(flopro_dir + "/FLOPRO.exe"):
-                    flo2d_v = get_flo2dpro_version(flopro_dir + "/FLOPRO.exe")
-                # Check for FLOPRO_Demo.exe
-                elif os.path.isfile(flopro_dir + "/FLOPRO_Demo.exe"):
-                    flo2d_v = get_flo2dpro_version(flopro_dir + "/FLOPRO_Demo.exe")
+                    flopro_dir = s.value("FLO-2D/last_flopro")
+                    flo2d_v = "FLOPRO not found"
+                    # Check for FLOPRO.exe
+                    if os.path.isfile(flopro_dir + "/FLOPRO.exe"):
+                        flo2d_v = get_flo2dpro_version(flopro_dir + "/FLOPRO.exe")
+                    # Check for FLOPRO_Demo.exe
+                    elif os.path.isfile(flopro_dir + "/FLOPRO_Demo.exe"):
+                        flo2d_v = get_flo2dpro_version(flopro_dir + "/FLOPRO_Demo.exe")
 
-                self.gutils.set_metadata_par("FLO-2D_V", flo2d_v)
+                    self.gutils.set_metadata_par("FLO-2D_V", flo2d_v)
 
-            self.f2d_plot.clear()
+                self.f2d_plot.clear()
+
+            # Project not loaded
+            else:
+                flo2d_dir, project_dir, _ = dlg.get_parameters()
+                s = QSettings()
+                s.setValue("FLO-2D/lastGdsDir", project_dir)
+                s.setValue("FLO-2D/last_flopro", flo2d_dir)
+
+                if project_dir != "" and flo2d_dir != "":
+                    s.setValue("FLO-2D/run_settings", True)
+
+                    flopro_dir = s.value("FLO-2D/last_flopro")
+                    flo2d_v = "FLOPRO not found"
+                    # Check for FLOPRO.exe
+                    if os.path.isfile(flopro_dir + "/FLOPRO.exe"):
+                        flo2d_v = get_flo2dpro_version(flopro_dir + "/FLOPRO.exe")
+                    # Check for FLOPRO_Demo.exe
+                    elif os.path.isfile(flopro_dir + "/FLOPRO_Demo.exe"):
+                        flo2d_v = get_flo2dpro_version(flopro_dir + "/FLOPRO_Demo.exe")
+
             self.uc.bar_info("Run Settings saved!")
             self.uc.log_info(f"Run Settings saved!\nProject Folder: {project_dir}\nFLO-2D Folder: {flo2d_dir}")
 
@@ -1352,13 +1374,15 @@ class Flo2D(object):
             # Check if the user has the FLOPRO version
             if os.path.isfile(flopro_dir + "/FLOPRO.exe"):
                 flo2d_v = get_flo2dpro_version(flopro_dir + "/FLOPRO.exe")
-                self.gutils.set_metadata_par("FLO-2D_V", flo2d_v)
                 user_program = "FLOPRO.exe"
             # Check for the FLOPRO_Demo
             elif os.path.isfile(flopro_dir + "/FLOPRO_Demo.exe"):
                 flo2d_v = get_flo2dpro_version(flopro_dir + "/FLOPRO_Demo.exe")
-                self.gutils.set_metadata_par("FLO-2D_V", flo2d_v)
                 user_program = "FLOPRO_Demo.exe"
+
+            # Only add to metadata if there is a project loaded, otherwise just run FLOPRO
+            if self.gutils:
+                self.gutils.set_metadata_par("FLO-2D_V", flo2d_v)
         else:
             self.run_settings()
         self.run_program(user_program)
