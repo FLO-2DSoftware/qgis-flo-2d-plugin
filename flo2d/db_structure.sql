@@ -1615,11 +1615,11 @@ CREATE TABLE "swmmflo_culvert" (
     "fid" INTEGER NOT NULL PRIMARY KEY,
     "grid_fid" INTEGER UNIQUE ON CONFLICT REPLACE, 
     "name" TEXT,
-    "cdiameter" REAL,
-    "typec" INTEGER,
-    "typeen" INTEGER,
-    "cubase" REAL,  
-    "multbarrels" INTEGER
+    "cdiameter" REAL DEFAULT 0.0,
+    "typec" INTEGER DEFAULT 0,
+    "typeen" INTEGER DEFAULT 0,
+    "cubase" REAL DEFAULT 0.0,  
+    "multbarrels" INTEGER DEFAULT 1
 );
 INSERT INTO gpkg_contents (table_name, data_type) VALUES ('swmmflo_culvert', 'aspatial');
 

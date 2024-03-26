@@ -2846,14 +2846,16 @@ class Flo2D(object):
                     export_calls.remove("export_mannings_n_topo")
 
                 if "export_swmmflort" in export_calls:
+                    QApplication.setOverrideCursor(Qt.ArrowCursor)
                     if not self.uc.question(
                             "Did you schematize Storm Drains? Do you want to export Storm Drain files?"
                     ):
                         export_calls.remove("export_swmmflo")
                         export_calls.remove("export_swmmflort")
                         export_calls.remove("export_swmmoutf")
+                    QApplication.restoreOverrideCursor()    
 
-                QApplication.setOverrideCursor(Qt.WaitCursor)
+                # QApplication.setOverrideCursor(Qt.WaitCursor)
 
                 try:
                     s = QSettings()
@@ -2879,7 +2881,7 @@ class Flo2D(object):
                             new_files_used = self.files_used.replace("SIMPLE_MULT.DAT\n", "")
                             self.files_used = new_files_used
                             if os.path.isfile(outdir + r"\SIMPLE_MULT.DAT"):
-                                QApplication.restoreOverrideCursor()
+                                QApplication.setOverrideCursor(Qt.ArrowCursor)
                                 if self.uc.question(
                                         "There are no simple multiple channel cells in the project but\n"
                                         + "there is a SIMPLE_MULT.DAT file in the directory.\n"
@@ -2887,12 +2889,12 @@ class Flo2D(object):
                                         + "Delete SIMPLE_MULT.DAT?"
                                 ):
                                     os.remove(outdir + r"\SIMPLE_MULT.DAT")
-                                QApplication.setOverrideCursor(Qt.WaitCursor)
+                                QApplication.restoreOverrideCursor()
                         if self.gutils.is_table_empty("mult_cells"):
                             new_files_used = self.files_used.replace("\nMULT.DAT\n", "\n")
                             self.files_used = new_files_used
                             if os.path.isfile(outdir + r"\MULT.DAT"):
-                                QApplication.restoreOverrideCursor()
+                                QApplication.setOverrideCursor(Qt.ArrowCursor)
                                 if self.uc.question(
                                         "There are no multiple channel cells in the project but\n"
                                         + "there is a MULT.DAT file in the directory.\n"
@@ -2900,17 +2902,18 @@ class Flo2D(object):
                                         + "Delete MULT.DAT?"
                                 ):
                                     os.remove(outdir + r"\MULT.DAT")
-                                QApplication.setOverrideCursor(Qt.WaitCursor)
+                                QApplication.restoreOverrideCursor()
                     if self.files_used != "":
-                        QApplication.restoreOverrideCursor()
+                        
+                        QApplication.setOverrideCursor(Qt.ArrowCursor)
                         self.uc.show_info("Files exported to\n" + outdir + "\n\n" + self.files_used)
+                        QApplication.restoreOverrideCursor()
 
                     if self.f2g.export_messages != "":
                         info = "WARNINGS:\n\n" + self.f2g.export_messages
                         self.uc.show_info(info)
 
         QApplication.restoreOverrideCursor()
-        # QApplication.setOverrideCursor(QtGui.QCursor(QtCore.Qt.ArrowCursor))
 
     @connection_required
     def export_hdf5(self):

@@ -2515,10 +2515,11 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             if os.path.isfile(swmm_file):
                 QApplication.setOverrideCursor(QtGui.QCursor(QtCore.Qt.ArrowCursor))
                 if not self.uc.question("SWMM.INP already exists.\n\n" + "Would you like to replace it?"):
+                    QApplication.restoreOverrideCursor()
                     return
                 else:
                     pass
-
+                QApplication.restoreOverrideCursor()
             s.setValue("FLO-2D/lastGdsDir", os.path.dirname(swmm_file))
             s.setValue("FLO-2D/lastSWMMDir", os.path.dirname(swmm_file))
             last_dir = s.value("FLO-2D/lastGdsDir", "")
@@ -4691,10 +4692,11 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             self.inlet_data_model.setHorizontalHeaderLabels(["CDDIAMETER", "TYPEC", "TYPEEN", "CUBASE", "MULTBARRELS"])
             self.d1, self.d2= [[], []]
     
-            items = [StandardItem("{:.4f}".format(x)) if x is not None else StandardItem("") for x in in_culvert]
+            items = [StandardItem("{:.4f}".format(x)) if type(x) is float else 
+                    StandardItem("{}".format(x)) if type(x) is int else                     
+                     StandardItem("") for x in in_culvert]
+    
             self.inlet_data_model.appendRow(items)
-            # self.d1.append(row[0] if not row[0] is None else float("NaN"))
-            # self.d2.append(row[1] if not row[1] is None else float("NaN"))
     
             rc = self.inlet_data_model.rowCount()
             if rc < 500:
@@ -5071,7 +5073,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             name_qry = "UPDATE swmmflo_culvert SET name =  'CulvertEq' || cast(fid as text) WHERE fid = ?;"
             self.gutils.execute(name_qry, (rowid,))
             qry = "UPDATE swmmflo_culvert SET cdiameter = ?, typec = ?, typeen = ?, cubase = ?, multbarrels = ? WHERE fid = ?;"
-            self.gutils.execute(qry, (0,0,0,0,1,rowid))
+            self.gutils.execute(qry, (0.0,0,0,0.0,1,rowid))
             
             newCulvert= "Culvert Eq. {}".format(rowid)
             self.populate_type4_combo()
@@ -5268,10 +5270,10 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             
             sql = "UPDATE swmmflo_culvert SET cdiameter=?, typec=?, typeen=?, cubase=?, multbarrels=? WHERE name = ?;"
             
-            cdiameter = self.inlet_data_model.data(self.inlet_data_model.index(0, 0), Qt.DisplayRole)
+            cdiameter = self.inlet_data_model.data(self.inlet_data_model.index(0.0, 0), Qt.DisplayRole)
             typec = self.inlet_data_model.data(self.inlet_data_model.index(0, 1), Qt.DisplayRole)
             typeen = self.inlet_data_model.data(self.inlet_data_model.index(0, 2), Qt.DisplayRole)
-            cubase = self.inlet_data_model.data(self.inlet_data_model.index(0, 3), Qt.DisplayRole)
+            cubase = self.inlet_data_model.data(self.inlet_data_model.index(0.0, 3), Qt.DisplayRole)
             multbarrels = self.inlet_data_model.data(self.inlet_data_model.index(0, 4), Qt.DisplayRole)
             
             self.gutils.execute(sql , (cdiameter ,typec ,typeen ,cubase ,multbarrels, name))
