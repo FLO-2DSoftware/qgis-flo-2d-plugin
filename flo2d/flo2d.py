@@ -3038,6 +3038,7 @@ class Flo2D(object):
         """
         Function to activate the Info Tool
         """
+        info_ac = None
         for ac in self.toolActions:
             if ac.toolTip() == "<b>FLO-2D Info Tool</b>":
                 info_ac = ac
@@ -3046,20 +3047,24 @@ class Flo2D(object):
         if grid is not None:
             tool = self.canvas.mapTool()
             if tool == self.info_tool:
-                info_ac.setChecked(False)
+                if info_ac:
+                    info_ac.setChecked(False)
                 self.uncheck_all_info_tools()
             else:
                 if tool is not None:
                     self.uncheck_all_info_tools()
-                    info_ac.setChecked(False)
+                    if info_ac:
+                        info_ac.setChecked(False)
                 self.canvas.setMapTool(self.info_tool)
-                info_ac.setChecked(True)
+                if info_ac:
+                    info_ac.setChecked(True)
 
     @connection_required
     def activate_grid_info_tool(self):
         """
         Function to activate the Grid Info Tool
         """
+        info_ac = None
         for ac in self.toolActions:
             if ac.toolTip() == "<b>FLO-2D Grid Info Tool</b>":
                 info_ac = ac
@@ -3069,11 +3074,13 @@ class Flo2D(object):
             tool = self.canvas.mapTool()
             if tool == self.grid_info_tool:
                 self.uncheck_all_info_tools()
-                info_ac.setChecked(False)
+                if info_ac:
+                    info_ac.setChecked(False)
             else:
                 if tool is not None:
                     self.uncheck_all_info_tools()
-                    info_ac.setChecked(False)
+                    if info_ac:
+                        info_ac.setChecked(False)
                 self.grid_info_tool.grid = grid
                 self.f2d_grid_info.set_info_layer(grid)
                 self.f2d_grid_info.mann_default = self.gutils.get_cont_par("MANNING")
@@ -3081,7 +3088,8 @@ class Flo2D(object):
                 self.f2d_grid_info.n_cells = number_of_elements(self.gutils, grid)
                 self.f2d_grid_info.gutils = self.gutils
                 self.canvas.setMapTool(self.grid_info_tool)
-                info_ac.setChecked(True)
+                if info_ac:
+                    info_ac.setChecked(True)
         else:
             self.uc.bar_warn("There is no grid layer to identify.")
 
@@ -3090,18 +3098,21 @@ class Flo2D(object):
         """
         Function to activate the Results Tool
         """
+        info_ac = None
         for ac in self.toolActions:
             if ac.toolTip() == "<b>FLO-2D Results</b>":
                 info_ac = ac
 
         tool = self.canvas.mapTool()
         if tool == self.results_tool:
-            info_ac.setChecked(False)
+            if info_ac:
+                info_ac.setChecked(False)
             self.uncheck_all_info_tools()
         else:
             if tool is not None:
                 self.uncheck_all_info_tools()
-                info_ac.setChecked(False)
+                if info_ac:
+                    info_ac.setChecked(False)
             self.canvas.setMapTool(self.results_tool)
             # 'channel_profile_tool' is an instance of ChannelProfile class,
             # created on loading the plugin, and to be used to plot channel
@@ -3109,7 +3120,8 @@ class Flo2D(object):
             # The plots will be based on data from the 'chan', 'cham_elems'
             # schematic layers.
             self.results_tool.update_lyrs_list()
-            info_ac.setChecked(True)
+            if info_ac:
+                info_ac.setChecked(True)
 
     @connection_required
     def show_user_profile(self, fid=None):
