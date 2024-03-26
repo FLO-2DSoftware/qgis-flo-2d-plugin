@@ -1361,6 +1361,7 @@ class Flo2D(object):
             QApplication.restoreOverrideCursor()
             flopro_dir = s.value("FLO-2D/last_flopro")
             flo2d_v = "FLOPRO not found"
+            program = None
             if flopro_dir is not None:
                 # Check for FLOPRO.exe
                 if os.path.isfile(flopro_dir + "/FLOPRO.exe"):
@@ -1374,14 +1375,21 @@ class Flo2D(object):
                     program = "FLOPRO_Demo.exe"
             else:
                 self.run_settings()
-            self.uc.bar_info(f"Running {program}")
-            self.run_program(program)
+
+            if program:
+                self.uc.bar_info(f"Running {program}...")
+                self.uc.log_info(f"Running {program}...")
+                self.run_program(program)
+            else:
+                self.uc.bar_warn("No FLOPRO.exe found, check your FLO-2D installation folder!")
+                self.uc.log_info("No FLOPRO.exe found, check your FLO-2D installation folder!")
 
     def run_flopro(self):
         self.uncheck_all_info_tools()
         s = QSettings()
         flopro_dir = s.value("FLO-2D/last_flopro")
         flo2d_v = "FLOPRO not found"
+        user_program = None
         # Check if the FLOPRO directory is in the FLO-2D Settings
         if flopro_dir is not None:
             # Check if the user has the FLOPRO version
@@ -1398,7 +1406,14 @@ class Flo2D(object):
                 self.gutils.set_metadata_par("FLO-2D_V", flo2d_v)
         else:
             self.run_settings()
-        self.run_program(user_program)
+
+        if user_program:
+            self.uc.bar_info(f"Running {user_program}...")
+            self.uc.log_info(f"Running {user_program}...")
+            self.run_program(user_program)
+        else:
+            self.uc.bar_warn("No FLOPRO.exe found, check your FLO-2D installation folder!")
+            self.uc.log_info("No FLOPRO.exe found, check your FLO-2D installation folder!")
 
     def run_tailingsdambreach(self):
         self.uncheck_all_info_tools()
