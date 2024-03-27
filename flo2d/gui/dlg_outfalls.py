@@ -271,6 +271,7 @@ class OutfallNodesDialog(qtBaseClass, uiDialog):
         self.checkbox_valueChanged(self.allow_discharge_chbox, 4)
 
     def out_fall_type_cbo_currentIndexChanged(self):
+        QApplication.setOverrideCursor(Qt.WaitCursor)
         try:
             self.combo_valueChanged(self.outfall_type_cbo, 5)
 
@@ -323,9 +324,10 @@ class OutfallNodesDialog(qtBaseClass, uiDialog):
                     pass
                     # self.uc.bar_warn("WARNING 221222.0625: time series " + time_series + " not found.")
         except:
-            QApplication.setOverrideCursor(Qt.ArrowCursor)
             self.uc.bar_warn("WARNING 241222.0840: outfall type not found!")
-            QApplication.restoreOverrideCursor()
+            
+        finally:
+            QApplication.restoreOverrideCursor()            
             
     def disableTypes(self):
         self.water_depth_dbox.setEnabled(False)
