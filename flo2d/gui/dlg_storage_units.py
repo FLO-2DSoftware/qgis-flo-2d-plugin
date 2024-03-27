@@ -154,10 +154,11 @@ class StorageUnitsDialog(qtBaseClass, uiDialog):
                     
             rows = self.gutils.execute(qry).fetchall()
             if not rows:
-                QApplication.restoreOverrideCursor()
+                QApplication.setOverrideCursor(Qt.ArrowCursor)
                 self.uc.show_info(
                     "WARNING 010224.0546: 'Storm Drain Storage Units' User Layer is empty!"
                 )
+                QApplication.restoreOverrideCursor()
                 return
     
             self.block = True
@@ -230,10 +231,11 @@ class StorageUnitsDialog(qtBaseClass, uiDialog):
             self.block = False
 
             if self.warnings != "":
-                QApplication.restoreOverrideCursor()
+                QApplication.setOverrideCursor(Qt.ArrowCursor)
                 result = ScrollMessageBox2(QMessageBox.Warning,"Issues found!", "WARNING 070224.1902: wrong values found:\n" + self.warnings)      
                 result.exec_()  
-            
+                QApplication.restoreOverrideCursor()
+                
             self.storages_cbo.setCurrentIndex(0)
             self.enable_external_inflow()
             
