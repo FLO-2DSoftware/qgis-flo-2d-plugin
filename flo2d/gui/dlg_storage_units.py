@@ -580,8 +580,8 @@ class StorageUnitsDialog(qtBaseClass, uiDialog):
                 self.uc.bar_warn("Storage Unit not found not found!")
 
     def find_storage(self):
+        QApplication.setOverrideCursor(Qt.WaitCursor)
         try:
-            QApplication.setOverrideCursor(Qt.WaitCursor)
             if self.grid_lyr is not None:
                 if self.grid_lyr:
                     storage = self.storage_to_find_le.text()
@@ -620,38 +620,33 @@ class StorageUnitsDialog(qtBaseClass, uiDialog):
                     self.uc.bar_warn("WARNING 221219.1139: Cell " + str(cell) + " not found.")
                     self.lyrs.clear_rubber()
 
-            QApplication.restoreOverrideCursor()
-
         except ValueError:
-            QApplication.restoreOverrideCursor()
             self.uc.bar_warn("WARNING 221219.1134: Cell " + str(cell) + "is not valid.")
             self.lyrs.clear_rubber()
-            pass
-
+        finally:
+            QApplication.restoreOverrideCursor()
+            
     def zoom_in_storage_cell(self):
         if self.grid_element_le.text() != "":
             currentCell = next(self.grid_lyr.getFeatures(QgsFeatureRequest(int(self.grid_element_le.text()))))
-            QApplication.setOverrideCursor(Qt.WaitCursor)
             x, y = currentCell.geometry().centroid().asPoint()
             center_canvas(self.iface, x, y)
             zoom(self.iface, 0.4)
             # self.update_extent()
-            QApplication.restoreOverrideCursor()
 
     def zoom_out_storage_cell(self):
         if self.grid_element_le.text() != "":        
             currentCell = next(self.grid_lyr.getFeatures(QgsFeatureRequest(int(self.grid_element_le.text()))))
-            QApplication.setOverrideCursor(Qt.WaitCursor)
             x, y = currentCell.geometry().centroid().asPoint()
             center_canvas(self.iface, x, y)
             zoom(self.iface, -0.4)
             # self.update_extent()
-            QApplication.restoreOverrideCursor()
 
     def save_storages(self):
         """
         Save changes of user_swmm_storage_units layer.
         """
+        QApplication.setOverrideCursor(Qt.WaitCursor)
         try:
             storages = []
             for row in range(0, self.storages_tblw.rowCount()):
@@ -734,7 +729,7 @@ class StorageUnitsDialog(qtBaseClass, uiDialog):
                 item = self.storages_tblw.item(row, 18)
                 if item is not None:
                     curve_name = str(item.text()) if str(item.text()) != "" else "*"                    
-
+                    
                 storages.append(
                     (
                         name,
@@ -787,12 +782,17 @@ class StorageUnitsDialog(qtBaseClass, uiDialog):
             self.gutils.execute_many(update_qry, storages)
 
         except Exception as e:
-            QApplication.restoreOverrideCursor()
+            QApplication.setOverrideCursor(Qt.ArrowCursor)
             self.uc.show_error(
                 "ERROR 030224.1736: couldn't save storage units into User Layer 'Storm Drain Storage Units'!"
                 + "\n__________________________________________________",
                 e,
             )
+            QApplication.restoreOverrideCursor()
+        finally:
+            QApplication.restoreOverrideCursor() 
+
+
 
     def show_external_inflow_dlg(self):
         dlg_external_inflow = ExternalInflowsDialog(self.iface, self.storages_cbo.currentText())
