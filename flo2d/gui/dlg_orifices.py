@@ -273,11 +273,13 @@ class OrificesDialog(qtBaseClass, uiDialog):
 
             self.highlight_orifice(self.orifice_name_cbo.currentText())
 
-            QApplication.restoreOverrideCursor()
-
         except Exception as e:
-            QApplication.restoreOverrideCursor()
+            QApplication.setOverrideCursor(Qt.ArrowCursor)
             self.uc.show_error("ERROR 261121.0707: assignment of value failed!.\n", e)
+            QApplication.restoreOverrideCursor()
+            
+        finally:
+            QApplication.restoreOverrideCursor()              
 
     def onVerticalSectionClicked(self, logicalIndex):
         self.orifices_tblw_cell_clicked(logicalIndex, 0)
@@ -344,15 +346,17 @@ class OrificesDialog(qtBaseClass, uiDialog):
 
             self.highlight_orifice(self.orifice_name_cbo.currentText())
 
-            QApplication.restoreOverrideCursor()
-
         except Exception as e:
-            QApplication.restoreOverrideCursor()
+            QApplication.setOverrideCursor(Qt.ArrowCursor)
             self.uc.show_error("ERROR 200618.0632: assignment of value failed!.\n", e)
+            QApplication.restoreOverrideCursor()
+            
+        finally:
+            QApplication.restoreOverrideCursor()  
 
     def find_orifice(self):
+        QApplication.setOverrideCursor(Qt.WaitCursor)
         try:
-            QApplication.setOverrideCursor(Qt.WaitCursor)
             if self.grid_lyr is not None:
                 if self.grid_lyr:
                     orifice = self.orifice_to_find_le.text()
@@ -366,7 +370,7 @@ class OrificesDialog(qtBaseClass, uiDialog):
                         self.uc.bar_warn("WARNING  070422.0734: orifice '" + str(orifice) + "' not found.")
         except ValueError:
             self.uc.bar_warn("WARNING  070422.0735: orifice '" + str(orifice) + "' not found.")
-            pass
+            
         finally:
             QApplication.restoreOverrideCursor()
 
@@ -385,16 +389,15 @@ class OrificesDialog(qtBaseClass, uiDialog):
                 else:
                     self.uc.bar_warn("WARNING 070422.0758: orifice '" + str(orifice) + "' not found.")
                     self.lyrs.clear_rubber()
-            QApplication.restoreOverrideCursor()
 
         except ValueError:
-            QApplication.restoreOverrideCursor()
             self.uc.bar_warn("WARNING 070422.0759: orifice '" + str(orifice) + "' is not valid.")
             self.lyrs.clear_rubber()
-            pass
+
+        finally:
+            QApplication.restoreOverrideCursor() 
 
     def zoom_in_orifice(self):
-        QApplication.setOverrideCursor(Qt.WaitCursor)
         orifice = self.orifice_name_cbo.currentText()
         fid = self.gutils.execute("SELECT fid FROM user_swmm_orifices WHERE orifice_name = ?;", (orifice,)).fetchone()
         self.lyrs.show_feat_rubber(self.orifices_lyr.id(), fid[0], QColor(Qt.yellow))
@@ -402,10 +405,8 @@ class OrificesDialog(qtBaseClass, uiDialog):
         x, y = feat.geometry().centroid().asPoint()
         center_canvas(self.iface, x, y)
         zoom(self.iface, 0.4)
-        QApplication.restoreOverrideCursor()
 
     def zoom_out_orifice(self):
-        QApplication.setOverrideCursor(Qt.WaitCursor)
         orifice = self.orifice_name_cbo.currentText()
         fid = self.gutils.execute("SELECT fid FROM user_swmm_orifices WHERE orifice_name = ?;", (orifice,)).fetchone()
         self.lyrs.show_feat_rubber(self.orifices_lyr.id(), fid[0], QColor(Qt.yellow))
@@ -413,7 +414,6 @@ class OrificesDialog(qtBaseClass, uiDialog):
         x, y = feat.geometry().centroid().asPoint()
         center_canvas(self.iface, x, y)
         zoom(self.iface, -0.4)
-        QApplication.restoreOverrideCursor()
 
     def save_orifices(self):
         """

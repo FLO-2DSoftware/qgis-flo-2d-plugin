@@ -270,15 +270,12 @@ class InletNodesDialog(qtBaseClass, uiDialog):
                 txt = ""
                 for d in duplicates:
                     txt += "\n" + d + ""
+                QApplication.setOverrideCursor(Qt.ArrowCursor)
                 self.uc.show_info(
                     "WARNING 080120.0814:\nThe following rating tables/Culvert eq. are assigned to more than one inlet:\n"
                     + txt
                 )
-    
-            # if wrong_type:
-            #     self.uc.show_info(
-            #         "WARNING 250622.1627:\nThe following inlets have wrong type:\n\n" + wrong_type
-            #     )
+                QApplication.restoreOverrideCursor()
     
             self.inlet_cbo.model().sort(0)
             self.inlet_cbo.setCurrentIndex(0)
@@ -638,11 +635,7 @@ class InletNodesDialog(qtBaseClass, uiDialog):
                     if self.grid_count >= cell and cell > 0:
                         self.lyrs.show_feat_rubber(self.grid_lyr.id(), cell, QColor(Qt.yellow))
                         feat = next(self.grid_lyr.getFeatures(QgsFeatureRequest(cell)))
-                        center_feature(self.iface, feat, 15) 
-                        # x, y = feat.geometry().centroid().asPoint()
-                        # self.lyrs.zoom_to_all()
-                        # center_canvas(self.iface, x, y)
-                        # zoom(self.iface, 0.45)
+                        center_feature(self.iface, feat, 15)
 
                     else:
                         self.uc.bar_warn("WARNING 221219.1140: Cell " + str(cell) + " not found.")
