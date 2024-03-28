@@ -71,62 +71,6 @@ from .ui_utils import (
     try_disconnect,
 )
 
-# uiDialog, qtBaseClass = load_ui("schematized_channels_info")
-#
-#
-# class ShematizedChannelsInfo(qtBaseClass, uiDialog):
-#     def __init__(self, iface):
-#         qtBaseClass.__init__(self)
-#         uiDialog.__init__(self)
-#         self.iface = iface
-#         self.uc = UserCommunication(iface, "FLO-2D")
-#         self.setupUi(self)
-#         self.con = self.iface.f2d["con"]
-#         self.gutils = GeoPackageUtils(self.con, self.iface)
-#         self.schematized_summary_tblw.horizontalHeader().setStretchLastSection(True)
-#         self.populate_schematized_dialog()
-#
-#     def populate_schematized_dialog(self):
-#         try:
-#             qry_chan_names = """SELECT name FROM user_left_bank"""
-#             chan_names = self.gutils.execute(qry_chan_names).fetchall()
-#
-#             qry_count_xs = """SELECT COUNT(seg_fid) FROM chan_elems GROUP BY seg_fid;"""
-#             total_xs = self.gutils.execute(qry_count_xs).fetchall()
-#
-#             qry_interpolated = """SELECT COUNT(interpolated) FROM chan_elems WHERE interpolated = 1 GROUP BY seg_fid;"""
-#             interpolated_xs = self.gutils.execute(qry_interpolated).fetchall()
-#
-#             self.schematized_summary_tblw.setRowCount(0)
-#             for row_number, name in enumerate(chan_names):
-#                 self.schematized_summary_tblw.insertRow(row_number)
-#                 item = QTableWidgetItem()
-#                 if interpolated_xs:
-#                     if row_number <= len(interpolated_xs) - 1:
-#                         n_interpolated_xs = interpolated_xs[row_number][0]
-#                     else:
-#                         n_interpolated_xs = 0
-#                 else:
-#                     n_interpolated_xs = 0
-#                 #                 n_interpolated_xs = interpolated_xs[row_number][0] if interpolated_xs else 0
-#                 original_xs = total_xs[row_number][0] - n_interpolated_xs
-#                 item.setData(Qt.DisplayRole, name[0] + " (" + str(original_xs) + " xsecs)")
-#                 self.schematized_summary_tblw.setItem(row_number, 0, item)
-#                 item = QTableWidgetItem()
-#                 item.setData(Qt.DisplayRole, total_xs[row_number][0])
-#                 self.schematized_summary_tblw.setItem(row_number, 1, item)
-#                 item = QTableWidgetItem()
-#                 item.setData(
-#                     Qt.DisplayRole,
-#                     str(total_xs[row_number][0]) + " (" + str(n_interpolated_xs) + " interpolated)",
-#                 )
-#                 self.schematized_summary_tblw.setItem(row_number, 2, item)
-#         except Exception as e:
-#             QApplication.restoreOverrideCursor()
-#             self.uc.show_error("ERROR 130718.0831: schematized dialog failed to show!", e)
-#             return
-
-
 uiDialog, qtBaseClass = load_ui("xs_editor")
 
 ChannelRole = Qt.UserRole + 1
@@ -223,7 +167,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
             self.con = con
             self.gutils = GeoPackageUtils(self.con, self.iface)
             self.user_xs_lyr = self.lyrs.data["user_xsections"]["qlyr"]
-            self.user_xs_lyr.editingStopped.connect(self.populate_xsec_cbo)
+            self.user_xs_lyr.editingStopped.connect(lambda: self.populate_xsec_cbo(show_last_edited=True))
             self.user_xs_lyr.selectionChanged.connect(self.switch2selected)
 
     def update_sample_elevation_btn(self, is_checked):
@@ -279,6 +223,9 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         """
         Populate xsection combo.
         """
+
+        last_edited = self.xs_cbo.currentIndex()
+
         self.xs_cbo.clear()
         self.xs_type_cbo.setCurrentIndex(1)
         qry = "SELECT fid, name FROM user_xsections ORDER BY fid COLLATE NOCASE;"
@@ -371,7 +318,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
                         cur_idx = row_index
 
         if show_last_edited:
-            cur_idx = i
+            cur_idx = last_edited
 
         self.xs_cbo.setCurrentIndex(cur_idx)
         self.enable_widgets(False)
@@ -401,6 +348,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         if not self.gutils or not self.lyrs.any_lyr_in_edit("user_xsections"):
             return
         # try to save user bc layers (geometry additions/changes)
+
         user_lyr_edited = self.lyrs.save_lyrs_edits(
             "user_xsections"
         )  # Saves all user cross sections created in this opportunity into 'user_xsections'.
