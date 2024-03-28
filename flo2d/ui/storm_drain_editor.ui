@@ -523,7 +523,7 @@
         <item>
          <widget class="QPushButton" name="auto_assign_link_nodes_btn">
           <property name="text">
-           <string>Auto-assing link nodes</string>
+           <string>Auto-assign link nodes</string>
           </property>
          </widget>
         </item>
