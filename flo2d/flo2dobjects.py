@@ -264,10 +264,10 @@ class UserCrossSection(GeoPackageUtils):
         qry = """INSERT INTO {0} ({1}) VALUES ({2}, {3});""".format(table, cols_t, self.fid, vals_t)
         self.execute(qry)
 
-    def clear_unused_user_nxsec_data(self):
-        qry = """DELETE FROM user_xsec_n_data WHERE chan_n_nxsecnum NOT IN
-            (SELECT nxsecnum FROM user_chan_n);"""
-        self.execute(qry)
+    # def clear_unused_user_nxsec_data(self):
+    #     qry = """DELETE FROM user_xsec_n_data WHERE chan_n_nxsecnum NOT IN
+    #         (SELECT user_xs_fid FROM user_chan_n);"""
+    #     self.execute(qry)
 
     def set_chan_natural_data(self, data):
         self.get_chan_x_row()
@@ -276,7 +276,7 @@ class UserCrossSection(GeoPackageUtils):
         qry = """INSERT INTO user_xsec_n_data (chan_n_nxsecnum, xi, yi) VALUES (?, ?, ?);"""
         self.execute_many(qry, data)
         self.set_nxsecnum()
-        self.clear_unused_user_nxsec_data()
+        # self.clear_unused_user_nxsec_data()
 
     def set_type(self, typ):
         qry = """UPDATE user_xsections SET type = ? WHERE fid = ?;"""
