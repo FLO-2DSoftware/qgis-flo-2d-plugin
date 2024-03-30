@@ -2346,7 +2346,6 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
             self.clear_all_pump_attributes()
 
     def restore_SD_shapefile_orifice_field_names(self):
-        pass
         # Orifices:
         s = QSettings()
         layer = "" if s.value("sf_orifices_layer_name") is None else s.value("sf_orifices_layer_name")
