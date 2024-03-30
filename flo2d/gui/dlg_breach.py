@@ -182,6 +182,11 @@ class GlobalBreachDialog(qtBaseClass, uiDialog_global):
         self.setup_connection()
         self.populate_global_breach_dialog()
 
+        self.global_geometry_data_grp.setCollapsed(True)
+        self.global_core_data_grp.setCollapsed(True)
+        self.global_shell_data_grp.setCollapsed(True)
+        self.global_miscellaneous_data_grp.setCollapsed(True)
+
     def setup_connection(self):
         con = self.iface.f2d["con"]
         if con is None:
@@ -384,6 +389,11 @@ class IndividualBreachDialog(qtBaseClass, uiDialog_individual_breach):
         )
 
         self.populate_individual_breach_dialog()
+
+        self.individual_geometry_data_grp.setCollapsed(True)
+        self.individual_core_data_grp.setCollapsed(True)
+        self.individual_shell_data_grp.setCollapsed(True)
+        self.individual_miscellaneous_data_grp.setCollapsed(True)
 
     def setup_connection(self):
         con = self.iface.f2d["con"]

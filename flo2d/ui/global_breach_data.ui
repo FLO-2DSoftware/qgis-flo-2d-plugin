@@ -83,6 +83,9 @@
          <property name="collapsed">
           <bool>true</bool>
          </property>
+         <property name="saveCollapsedState">
+          <bool>false</bool>
+         </property>
          <layout class="QVBoxLayout" name="verticalLayout">
           <item>
            <layout class="QGridLayout" name="gridLayout_3">
@@ -261,6 +264,9 @@
          <property name="collapsed">
           <bool>true</bool>
          </property>
+         <property name="saveCollapsedState">
+          <bool>false</bool>
+         </property>
          <layout class="QGridLayout" name="gridLayout_5">
           <item row="0" column="0">
            <layout class="QGridLayout" name="gridLayout_4">
@@ -376,6 +382,9 @@
          </property>
          <property name="collapsed">
           <bool>true</bool>
+         </property>
+         <property name="saveCollapsedState">
+          <bool>false</bool>
          </property>
          <layout class="QGridLayout" name="gridLayout_28">
           <item row="0" column="0">
@@ -520,6 +529,9 @@
          </property>
          <property name="collapsed">
           <bool>true</bool>
+         </property>
+         <property name="saveCollapsedState">
+          <bool>false</bool>
          </property>
          <layout class="QGridLayout" name="gridLayout_2">
           <item row="0" column="0">
