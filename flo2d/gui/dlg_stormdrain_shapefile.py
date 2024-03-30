@@ -2225,7 +2225,6 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
             self.clear_all_outfall_attributes()
 
     def restore_SD_shapefile_conduit_field_names(self):
-        pass
         # Conduits:
         s = QSettings()
         layer = "" if s.value("sf_conduits_layer_name") is None else s.value("sf_conduits_layer_name")
