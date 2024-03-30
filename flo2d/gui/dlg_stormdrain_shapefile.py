@@ -1994,40 +1994,41 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
     def save_storm_drain_shapefile_field_names(self):
         s = QSettings()
 
+        # Inlets/Junctions
         s.setValue("sf_inlets_layer_name", self.inlets_shapefile_cbo.currentText())
         
         s.setValue("sf_inlets_name", self.inlets_name_FieldCbo.currentText())
         
-        s.setValue("sf_inlets_type", self.inlets_type_FieldCbo.currentIndex())
+        s.setValue("sf_inlets_type", self.inlets_type_FieldCbo.currentText())
         s.setValue(
             "sf_inlets_invert_elevation",
-            self.inlets_invert_elevation_FieldCbo.currentIndex(),
+            self.inlets_invert_elevation_FieldCbo.currentText(),
         )
-        s.setValue("sf_inlets_max_depth", self.inlets_max_depth_FieldCbo.currentIndex())
-        s.setValue("sf_inlets_init_depth", self.inlets_init_depth_FieldCbo.currentIndex())
+        s.setValue("sf_inlets_max_depth", self.inlets_max_depth_FieldCbo.currentText())
+        s.setValue("sf_inlets_init_depth", self.inlets_init_depth_FieldCbo.currentText())
         s.setValue(
             "sf_inlets_surcharge_depth",
-            self.inlets_surcharge_depth_FieldCbo.currentIndex(),
+            self.inlets_surcharge_depth_FieldCbo.currentText(),
         )
         s.setValue(
             "sf_inlets_length_perimeter",
-            self.inlets_length_perimeter_FieldCbo.currentIndex(),
+            self.inlets_length_perimeter_FieldCbo.currentText(),
         )
-        s.setValue("sf_inlets_width_area", self.inlets_width_area_FieldCbo.currentIndex())
+        s.setValue("sf_inlets_width_area", self.inlets_width_area_FieldCbo.currentText())
         s.setValue(
             "sf_inlets_height_sag_surch",
-            self.inlets_height_sag_surch_FieldCbo.currentIndex(),
+            self.inlets_height_sag_surch_FieldCbo.currentText(),
         )
-        s.setValue("sf_inlets_weir_coeff", self.inlets_weir_coeff_FieldCbo.currentIndex())
-        s.setValue("sf_inlets_feature", self.inlets_feature_FieldCbo.currentIndex())
-        s.setValue("sf_inlets_curb_height", self.inlets_curb_height_FieldCbo.currentIndex())
+        s.setValue("sf_inlets_weir_coeff", self.inlets_weir_coeff_FieldCbo.currentText())
+        s.setValue("sf_inlets_feature", self.inlets_feature_FieldCbo.currentText())
+        s.setValue("sf_inlets_curb_height", self.inlets_curb_height_FieldCbo.currentText())
         s.setValue(
             "sf_inlets_clogging_factor",
-            self.inlets_clogging_factor_FieldCbo.currentIndex(),
+            self.inlets_clogging_factor_FieldCbo.currentText(),
         )
         s.setValue(
             "sf_inlets_time_for_clogging",
-            self.inlets_time_for_clogging_FieldCbo.currentIndex(),
+            self.inlets_time_for_clogging_FieldCbo.currentText(),
         )
 
         # Outfalls
@@ -2153,142 +2154,114 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
     def restore_SD_shapefile_inlet_field_names(self):
         # Inlets/Junctions:
         s = QSettings()
-        name = "" if s.value("sf_inlets_layer_name") is None else s.value("sf_inlets_layer_name")
-        if name == self.inlets_shapefile_cbo.currentText():
-            lyr = self.lyrs.get_layer_by_name(name, group=self.lyrs.group).layer()
+        layer = "" if s.value("sf_inlets_layer_name") is None else s.value("sf_inlets_layer_name")
+        if layer == self.inlets_shapefile_cbo.currentText():
+            lyr = self.lyrs.get_layer_by_name(layer, group=self.lyrs.group).layer()
             field_names = [field.name() for field in lyr.fields()]
             
-            self.restore_field("sf_inlets_name", field_names)              
-
-
-            self.restore_field("sf_inlets_type", field_names) 
-            self.restore_field("sf_inlets_invert_elevation", field_names) 
-            self.restore_field("sf_inlets_max_depth", field_names) 
-            self.restore_field("sf_inlets_init_depth", field_names) 
-            self.restore_field("sf_inlets_surcharge_depth", field_names) 
-            self.restore_field("sf_inlets_length_perimeter", field_names) 
-            self.restore_field("sf_inlets_width_area", field_names) 
-            self.restore_field("sf_inlets_height_sag_surch", field_names) 
-            self.restore_field("sf_inlets_weir_coeff", field_names) 
-            self.restore_field("sf_inlets_feature", field_names) 
-            self.restore_field("sf_inlets_curb_height", field_names) 
-            self.restore_field("sf_inlets_clogging_factor", field_names) 
-            
-            # self.restore_field(s.value("sf_inlets_time_for_clogging"), field_names) 
+            self.inlets_name_FieldCbo.setCurrentIndex(self.restore_field("sf_inlets_name", field_names))              
+            self.inlets_type_FieldCbo.setCurrentIndex(self.restore_field("sf_inlets_type", field_names)) 
+            self.inlets_invert_elevation_FieldCbo.setCurrentIndex(self.restore_field("sf_inlets_invert_elevation", field_names))
+            self.inlets_max_depth_FieldCbo.setCurrentIndex(self.restore_field("sf_inlets_max_depth", field_names))
+            self.inlets_init_depth_FieldCbo.setCurrentIndex(self.restore_field("sf_inlets_init_depth", field_names))
+            self.inlets_surcharge_depth_FieldCbo.setCurrentIndex(self.restore_field("sf_inlets_surcharge_depth", field_names)) 
+            self.inlets_length_perimeter_FieldCbo.setCurrentIndex(self.restore_field("sf_inlets_length_perimeter", field_names)) 
+            self.inlets_width_area_FieldCbo.setCurrentIndex(self.restore_field("sf_inlets_width_area", field_names))
+            self.inlets_height_sag_surch_FieldCbo.setCurrentIndex(self.restore_field("sf_inlets_height_sag_surch", field_names)) 
+            self.inlets_weir_coeff_FieldCbo.setCurrentIndex(self.restore_field("sf_inlets_weir_coeff", field_names))
+            self.inlets_feature_FieldCbo.setCurrentIndex(self.restore_field("sf_inlets_feature", field_names))
+            self.inlets_curb_height_FieldCbo.setCurrentIndex(self.restore_field("sf_inlets_curb_height", field_names))
+            self.inlets_clogging_factor_FieldCbo.setCurrentIndex(self.restore_field("sf_inlets_clogging_factor", field_names)) 
+            self.inlets_time_for_clogging_FieldCbo.setCurrentIndex(self.restore_field("sf_inlets_time_for_clogging", field_names)) 
 
 
 
 
+
+                
+            # val = int(-1 if s.value("sf_inlets_type") is None else s.value("sf_inlets_type"))
+            # .setCurrentIndex(val)
             #
-            # val = int(-1 if s.value("") is None else s.value("sf_inlets_type"))
+            # val = int(-1 if s.value("sf_inlets_invert_elevation") is None else s.value("sf_inlets_invert_elevation"))
+            # .setCurrentIndex(val)
+            #
+            # val = int(-1 if s.value("sf_inlets_max_depth") is None else s.value("sf_inlets_max_depth"))
+            # .setCurrentIndex(val)
+            #
+            # val = int(-1 if s.value("sf_inlets_init_depth") is None else s.value("sf_inlets_init_depth"))
+            #.setCurrentIndex(val)
+            #
+            # val = int(-1 if s.value("sf_inlets_surcharge_depth") is None else s.value("sf_inlets_surcharge_depth"))
+            # .setCurrentIndex(val)
+            #
+            # val = int(-1 if s.value("sf_inlets_length_perimeter") is None else s.value("sf_inlets_length_perimeter"))
+            # .setCurrentIndex(val)
+            #
+            # val = int(-1 if s.value("sf_inlets_width_area") is None else s.value("sf_inlets_width_area"))
+            # .setCurrentIndex(val)
+            #
+            # val = int(-1 if s.value("sf_inlets_height_sag_surch") is None else s.value("sf_inlets_height_sag_surch"))
+            # .setCurrentIndex(val)
+            #
+            # val = int(-1 if s.value("sf_inlets_weir_coeff") is None else s.value("sf_inlets_weir_coeff"))
+            # .setCurrentIndex(val)
+            #
+            # val = int(-1 if s.value("sf_inlets_feature") is None else s.value("sf_inlets_feature"))
+            # .setCurrentIndex(val)
+            #
+            # val = int(-1 if s.value("sf_inlets_curb_height") is None else s.value("sf_inlets_curb_height"))
+            # .setCurrentIndex(val)
+            #
+            # val = int(-1 if s.value("sf_inlets_clogging_factor") is None else s.value("sf_inlets_clogging_factor"))
+            # .setCurrentIndex(val)
+            #
+            # val = int(-1 if s.value("sf_inlets_time_for_clogging") is None else s.value("sf_inlets_time_for_clogging"))
+            # .setCurrentIndex(val)                
+                
+                
+                
+                
+                
+                
+                
+             # val = int(-1 if s.value("sf_inlets_type") is None else s.value("sf_inlets_type"))
             # self.inlets_type_FieldCbo.setCurrentIndex(val)
             #
-            # val = int(-1 if s.value("") is None else s.value("sf_inlets_invert_elevation"))
+            # val = int(-1 if s.value("sf_inlets_invert_elevation") is None else s.value("sf_inlets_invert_elevation"))
             # self.inlets_invert_elevation_FieldCbo.setCurrentIndex(val)
             #
-            # val = int(-1 if s.value("") is None else s.value("sf_inlets_max_depth"))
+            # val = int(-1 if s.value("sf_inlets_max_depth") is None else s.value("sf_inlets_max_depth"))
             # self.inlets_max_depth_FieldCbo.setCurrentIndex(val)
             #
-            # val = int(-1 if s.value("") is None else s.value("sf_inlets_init_depth"))
+            # val = int(-1 if s.value("sf_inlets_init_depth") is None else s.value("sf_inlets_init_depth"))
             # self.inlets_init_depth_FieldCbo.setCurrentIndex(val)
             #
-            # val = int(-1 if s.value("") is None else s.value("sf_inlets_surcharge_depth"))
+            # val = int(-1 if s.value("sf_inlets_surcharge_depth") is None else s.value("sf_inlets_surcharge_depth"))
             # self.inlets_surcharge_depth_FieldCbo.setCurrentIndex(val)
             #
-            # val = int(-1 if s.value("") is None else s.value("sf_inlets_length_perimeter"))
+            # val = int(-1 if s.value("sf_inlets_length_perimeter") is None else s.value("sf_inlets_length_perimeter"))
             # self.inlets_length_perimeter_FieldCbo.setCurrentIndex(val)
             #
-            # val = int(-1 if s.value("") is None else s.value("sf_inlets_width_area"))
+            # val = int(-1 if s.value("sf_inlets_width_area") is None else s.value("sf_inlets_width_area"))
             # self.inlets_width_area_FieldCbo.setCurrentIndex(val)
             #
-            # val = int(-1 if s.value("") is None else s.value("sf_inlets_height_sag_surch"))
+            # val = int(-1 if s.value("sf_inlets_height_sag_surch") is None else s.value("sf_inlets_height_sag_surch"))
             # self.inlets_height_sag_surch_FieldCbo.setCurrentIndex(val)
             #
-            # val = int(-1 if s.value("") is None else s.value("sf_inlets_weir_coeff"))
+            # val = int(-1 if s.value("sf_inlets_weir_coeff") is None else s.value("sf_inlets_weir_coeff"))
             # self.inlets_weir_coeff_FieldCbo.setCurrentIndex(val)
             #
-            # val = int(-1 if s.value("") is None else s.value("sf_inlets_feature"))
+            # val = int(-1 if s.value("sf_inlets_feature") is None else s.value("sf_inlets_feature"))
             # self.inlets_feature_FieldCbo.setCurrentIndex(val)
             #
-            # val = int(-1 if s.value("") is None else s.value("sf_inlets_curb_height"))
+            # val = int(-1 if s.value("sf_inlets_curb_height") is None else s.value("sf_inlets_curb_height"))
             # self.inlets_curb_height_FieldCbo.setCurrentIndex(val)
             #
-            # val = int(-1 if s.value("") is None else s.value("sf_inlets_clogging_factor"))
+            # val = int(-1 if s.value("sf_inlets_clogging_factor") is None else s.value("sf_inlets_clogging_factor"))
             # self.inlets_clogging_factor_FieldCbo.setCurrentIndex(val)
-
-
-
-
-
-            val = int(-1 if s.value("") is None else s.value("sf_inlets_time_for_clogging"))
-            self.inlets_time_for_clogging_FieldCbo.setCurrentIndex(val)                
-                
-
-
-
-
-
-
-
-                
-            val = int(-1 if s.value("sf_inlets_type") is None else s.value("sf_inlets_type"))
-            self.inlets_type_FieldCbo.setCurrentIndex(val)
-            
-            val = int(-1 if s.value("sf_inlets_invert_elevation") is None else s.value("sf_inlets_invert_elevation"))
-            self.inlets_invert_elevation_FieldCbo.setCurrentIndex(val)
-            
-            val = int(-1 if s.value("sf_inlets_max_depth") is None else s.value("sf_inlets_max_depth"))
-            self.inlets_max_depth_FieldCbo.setCurrentIndex(val)
-            
-            val = int(-1 if s.value("sf_inlets_init_depth") is None else s.value("sf_inlets_init_depth"))
-            self.inlets_init_depth_FieldCbo.setCurrentIndex(val)
-            
-            val = int(-1 if s.value("sf_inlets_surcharge_depth") is None else s.value("sf_inlets_surcharge_depth"))
-            self.inlets_surcharge_depth_FieldCbo.setCurrentIndex(val)
-            
-            val = int(-1 if s.value("sf_inlets_length_perimeter") is None else s.value("sf_inlets_length_perimeter"))
-            self.inlets_length_perimeter_FieldCbo.setCurrentIndex(val)
-            
-            val = int(-1 if s.value("sf_inlets_width_area") is None else s.value("sf_inlets_width_area"))
-            self.inlets_width_area_FieldCbo.setCurrentIndex(val)
-            
-            val = int(-1 if s.value("sf_inlets_height_sag_surch") is None else s.value("sf_inlets_height_sag_surch"))
-            self.inlets_height_sag_surch_FieldCbo.setCurrentIndex(val)
-            
-            val = int(-1 if s.value("sf_inlets_weir_coeff") is None else s.value("sf_inlets_weir_coeff"))
-            self.inlets_weir_coeff_FieldCbo.setCurrentIndex(val)
-            
-            val = int(-1 if s.value("sf_inlets_feature") is None else s.value("sf_inlets_feature"))
-            self.inlets_feature_FieldCbo.setCurrentIndex(val)
-            
-            val = int(-1 if s.value("sf_inlets_curb_height") is None else s.value("sf_inlets_curb_height"))
-            self.inlets_curb_height_FieldCbo.setCurrentIndex(val)
-            
-            val = int(-1 if s.value("sf_inlets_clogging_factor") is None else s.value("sf_inlets_clogging_factor"))
-            self.inlets_clogging_factor_FieldCbo.setCurrentIndex(val)
-            
+            #
             # val = int(-1 if s.value("sf_inlets_time_for_clogging") is None else s.value("sf_inlets_time_for_clogging"))
-            # self.inlets_time_for_clogging_FieldCbo.setCurrentIndex(val)                
-                
-                
-                
-                
-                
-            
-            
-            
-    
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-
+            # self.inlets_time_for_clogging_FieldCbo.setCurrentIndex(val)               
 
 
         else:
@@ -2469,11 +2442,13 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
     def restore_field(self, field, field_names): 
         s = QSettings()  
         val = "" if s.value(field) is None else s.value(field)
-        if val:
+        if val != "":
             if val in field_names:
                 # Get the index of the desired field name
                 field_index = field_names.index(val)
+                return field_index
                 self.inlets_name_FieldCbo.setCurrentIndex(field_index)
             else:
-                self.uc.bar_warn(field + " not found in fields names\n")                    
-        
+                self.uc.bar_warn("Wrong value of field name '" + field + "' in the plugin settings\n")                    
+                return -1
+        return -1    
