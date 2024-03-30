@@ -2397,7 +2397,6 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
             self.clear_all_orifice_attributes()
 
     def restore_SD_shapefile_weir_field_names(self):
-        pass
         # Weirs:
         s = QSettings()
         layer = "" if s.value("sf_weirs_layer_name") is None else s.value("sf_weirs_layer_name")
