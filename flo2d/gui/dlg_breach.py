@@ -848,6 +848,8 @@ class IndividualLeveesDialog(qtBaseClass, uiDialog_individual_levees):
 
         self.populate_individual_levees_dialog()
 
+        self.levee_failure_grp.setCollapsed(True)
+
         QApplication.restoreOverrideCursor()
 
     #         event = QEvent(QEvent.FocusIn)
