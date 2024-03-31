@@ -2001,33 +2001,33 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
         
         s. setValue("FLO-2D/sf_inlets_type", self.inlets_type_FieldCbo.currentText())
         s.setValue(
-            "sf_inlets_invert_elevation",
+            "FLO-2D/sf_inlets_invert_elevation",
             self.inlets_invert_elevation_FieldCbo.currentText(),
         )
         s. setValue("FLO-2D/sf_inlets_max_depth", self.inlets_max_depth_FieldCbo.currentText())
         s. setValue("FLO-2D/sf_inlets_init_depth", self.inlets_init_depth_FieldCbo.currentText())
         s.setValue(
-            "sf_inlets_surcharge_depth",
+            "FLO-2D/sf_inlets_surcharge_depth",
             self.inlets_surcharge_depth_FieldCbo.currentText(),
         )
         s.setValue(
-            "sf_inlets_length_perimeter",
+            "FLO-2D/sf_inlets_length_perimeter",
             self.inlets_length_perimeter_FieldCbo.currentText(),
         )
         s. setValue("FLO-2D/sf_inlets_width_area", self.inlets_width_area_FieldCbo.currentText())
         s.setValue(
-            "sf_inlets_height_sag_surch",
+            "FLO-2D/sf_inlets_height_sag_surch",
             self.inlets_height_sag_surch_FieldCbo.currentText(),
         )
         s. setValue("FLO-2D/sf_inlets_weir_coeff", self.inlets_weir_coeff_FieldCbo.currentText())
         s. setValue("FLO-2D/sf_inlets_feature", self.inlets_feature_FieldCbo.currentText())
         s. setValue("FLO-2D/sf_inlets_curb_height", self.inlets_curb_height_FieldCbo.currentText())
         s.setValue(
-            "sf_inlets_clogging_factor",
+            "FLO-2D/sf_inlets_clogging_factor",
             self.inlets_clogging_factor_FieldCbo.currentText(),
         )
         s.setValue(
-            "sf_inlets_time_for_clogging",
+            "FLO-2D/sf_inlets_time_for_clogging",
             self.inlets_time_for_clogging_FieldCbo.currentText(),
         )
 
@@ -2035,12 +2035,12 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
         s. setValue("FLO-2D/sf_outfalls_layer_name", self.outfalls_shapefile_cbo.currentText())
         s. setValue("FLO-2D/sf_outfalls_name", self.outfall_name_FieldCbo.currentText())
         s.setValue(
-            "sf_outfalls_invert_elevation",
+            "FLO-2D/sf_outfalls_invert_elevation",
             self.outfall_invert_elevation_FieldCbo.currentText(),
         )
         s. setValue("FLO-2D/sf_outfalls_flap_gate", self.outfall_flap_gate_FieldCbo.currentText())
         s.setValue(
-            "sf_outfalls_allow_discharge",
+            "FLO-2D/sf_outfalls_allow_discharge",
             self.outfall_allow_discharge_FieldCbo.currentText(),
         )
         s. setValue("FLO-2D/sf_outfalls_type", self.outfall_type_FieldCbo.currentText())
@@ -2054,11 +2054,11 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
         s. setValue("FLO-2D/sf_conduits_from_inlet", self.conduit_from_inlet_FieldCbo.currentText())
         s. setValue("FLO-2D/sf_conduits_to_outlet", self.conduit_to_outlet_FieldCbo.currentText())
         s.setValue(
-            "sf_conduits_inlet_offset",
+            "FLO-2D/sf_conduits_inlet_offset",
             self.conduit_inlet_offset_FieldCbo.currentText(),
         )
         s.setValue(
-            "sf_conduits_outlet_offset",
+            "FLO-2D/sf_conduits_outlet_offset",
             self.conduit_outlet_offset_FieldCbo.currentText(),
         )
         s. setValue("FLO-2D/sf_conduits_shape", self.conduit_shape_FieldCbo.currentText())
@@ -2070,14 +2070,14 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
         s. setValue("FLO-2D/sf_conduits_length", self.conduit_length_FieldCbo.currentText())
         s. setValue("FLO-2D/sf_conduits_manning", self.conduit_manning_FieldCbo.currentText())
         s.setValue(
-            "sf_conduits_initial_flow",
+            "FLO-2D/sf_conduits_initial_flow",
             self.conduit_initial_flow_FieldCbo.currentText(),
         )
         s. setValue("FLO-2D/sf_conduits_max_flow", self.conduit_max_flow_FieldCbo.currentText())
         s. setValue("FLO-2D/sf_conduits_entry_loss", self.conduit_entry_loss_FieldCbo.currentText())
         s. setValue("FLO-2D/sf_conduits_exit_loss", self.conduit_exit_loss_FieldCbo.currentText())
         s.setValue(
-            "sf_conduits_average_loss",
+            "FLO-2D/sf_conduits_average_loss",
             self.conduit_average_loss_FieldCbo.currentText(),
         )
         s. setValue("FLO-2D/sf_conduits_flap_gate", self.conduit_flap_gate_FieldCbo.currentText())
@@ -2093,7 +2093,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
         s. setValue("FLO-2D/sf_pump_curve_name", self.pump_curve_name_FieldCbo.currentText())
         s. setValue("FLO-2D/sf_pump_curve_type", self.pump_curve_type_FieldCbo.currentText())
         s.setValue(
-            "sf_pump_curve_description",
+            "FLO-2D/sf_pump_curve_description",
             self.pump_curve_description_FieldCbo.currentText(),
         )
 
@@ -2105,12 +2105,12 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
         s. setValue("FLO-2D/sf_orifice_type", self.orifice_type_FieldCbo.currentText())
         s. setValue("FLO-2D/sf_orifice_crest_height", self.orifice_crest_height_FieldCbo.currentText())
         s.setValue(
-            "sf_orifice_disch_coeff",
+            "FLO-2D/sf_orifice_disch_coeff",
             self.orifice_discharge_coeff_FieldCbo.currentText(),
         )
         s. setValue("FLO-2D/sf_orifice_flap_gate", self.orifice_flap_gate_FieldCbo.currentText())
         s.setValue(
-            "sf_orifice_open_close_time",
+            "FLO-2D/sf_orifice_open_close_time",
             self.orifice_time_open_close_FieldCbo.currentText(),
         )
         s. setValue("FLO-2D/sf_orifice_shape", self.orifice_shape_FieldCbo.currentText())
