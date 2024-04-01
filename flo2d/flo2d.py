@@ -3747,6 +3747,15 @@ class Flo2D(object):
 
     @connection_required
     def schematic2user(self):
+        components = {
+            1: "Computational Domain",
+            2: "Boundary Conditions",
+            3: "Channel Banks and Cross-Sections",
+            4: "Levees",
+            5: "Floodplain Cross-Sections",
+            6: "Storm Drains",
+            7: "Hydraulic structures",
+            }
         self.uncheck_all_info_tools()
         converter_dlg = Schema2UserDialog(self.con, self.iface, self.lyrs, self.uc)
         ok = converter_dlg.exec_()
@@ -3760,11 +3769,14 @@ class Flo2D(object):
             return
         QApplication.setOverrideCursor(Qt.WaitCursor)
         methods_numbers = sorted(converter_dlg.methods)
+        msg = ""
         for no in methods_numbers:
             converter_dlg.methods[no]()
+            msg += components[no] + "\n"
         self.setup_dock_widgets()
         QApplication.restoreOverrideCursor()
-        self.uc.show_info("Converting Schematic Layers to User Layers finished!")
+        self.uc.show_info("Converting Schematic Layers to User Layers finished for:\n\n" +  msg)
+                        
         if 6 in methods_numbers:  # Storm Drains:
             self.uc.show_info(
                 "To complete the Storm Drain functionality 'Import SWMM.INP' from the Storm Drain Editor widget."

@@ -46,7 +46,8 @@ class Schema2UserDialog(qtBaseClass, uiDialog):
         self.ckbox_levees.stateChanged.connect(self.convert_levees_checked)
         self.ckbox_fpxsec.stateChanged.connect(self.convert_fpxsec_checked)
         self.ckbox_swmm.stateChanged.connect(self.convert_swmm_checked)
-        self.chbox_hydr_struct.stateChanged.connect(self.convert_hydr_checked)
+        self.ckbox_hydr_struct.stateChanged.connect(self.convert_hydr_checked)
+        self.ckbox_select_all.clicked.connect(self.check_components)
 
         self.populate_components()
 
@@ -90,9 +91,9 @@ class Schema2UserDialog(qtBaseClass, uiDialog):
             self.ckbox_swmm.setEnabled(True)
             
         if any(self.gutils.is_table_empty(t) for t in schema_hydr_tables):
-            self.chbox_hydr_struct.setDisabled(True)
+            self.ckbox_hydr_struct.setDisabled(True)
         else:
-            self.chbox_hydr_struct.setEnabled(True)            
+            self.ckbox_hydr_struct.setEnabled(True)            
 
     def convert_domain_checked(self):
         if self.ckbox_domain.isChecked():
@@ -131,7 +132,7 @@ class Schema2UserDialog(qtBaseClass, uiDialog):
             self.methods.pop(6)
 
     def convert_hydr_checked(self):
-        if self.chbox_hydr_struct.isChecked():
+        if self.ckbox_hydr_struct.isChecked():
             self.methods[7] = self.convert_hydr
         else:
             self.methods.pop(7)
@@ -202,6 +203,20 @@ class Schema2UserDialog(qtBaseClass, uiDialog):
                 + "\n_______________________________________________________________",
                 e,
             )
-        
-
+ 
+    def check_components(self, select=True):
+        if self.ckbox_domain.isEnabled():
+            self.ckbox_domain.setChecked(select)
+        if self.ckbox_bc.isEnabled():
+            self.ckbox_bc.setChecked(select)
+        if self.ckbox_1d.isEnabled():
+            self.ckbox_1d.setChecked(select)
+        if self.ckbox_levees.isEnabled():
+            self.ckbox_levees.setChecked(select)
+        if self.ckbox_fpxsec.isEnabled():
+            self.ckbox_fpxsec.setChecked(select)
+        if self.ckbox_swmm.isEnabled():
+            self.ckbox_swmm.setChecked(select)
+        if self.ckbox_hydr_struct.isEnabled():
+            self.ckbox_hydr_struct.setChecked(select)
 
