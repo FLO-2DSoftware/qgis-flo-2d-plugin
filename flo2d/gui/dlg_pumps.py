@@ -162,7 +162,7 @@ class PumpsDialog(qtBaseClass, uiDialog):
             self.highlight_pump(self.pump_name_cbo.currentText())
 
             if wrong_status > 0:
-                QApplication.restoreOverrideCursor()
+                QApplication.setOverrideCursor(Qt.ArrowCursor)
                 self.uc.show_info(
                     "WARNING 280222.1910: there were "
                     + str(wrong_status)
@@ -170,13 +170,14 @@ class PumpsDialog(qtBaseClass, uiDialog):
                     + "All wrong initial status were changed to 'OFF' in this dialog.\n\n"
                     + "Edit them as wished and then 'Save' to replace the values in the 'Storm Drain Pumps' User layers."
                 )
-
+                QApplication.restoreOverrideCursor()
         except Exception as e:
-            QApplication.restoreOverrideCursor()
+            QApplication.setOverrideCursor(Qt.ArrowCursor)
             self.uc.show_error(
                 "ERROR 251121.0705: assignment of value from pumps users layer failed!.\n",
                 e,
             )
+            QApplication.restoreOverrideCursor()
         finally:
             QApplication.restoreOverrideCursor()               
 

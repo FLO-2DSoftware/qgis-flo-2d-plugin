@@ -366,20 +366,23 @@ class ConduitsDialog(qtBaseClass, uiDialog):
             self.highlight_conduit(self.conduit_name_cbo.currentText())
             
             if wrong_status > 0:
-                QApplication.restoreOverrideCursor()
+                QApplication.setOverrideCursor(Qt.ArrowCursor)
                 self.uc.show_info(
                     "WARNING 121203.0547: there are some conduits with wrong shape, or flap gate!\n\n"
                     + "All wrong values were changed to their defaults.\n\n"
                     + "Edit them as wished and then 'Save' to replace the values in the 'Storm Drain Conduits' User layers."
-                )
+                )            
+                QApplication.restoreOverrideCursor()
         except Exception as e:
-            QApplication.restoreOverrideCursor()
+            QApplication.setOverrideCursor(Qt.ArrowCursor)
             self.uc.show_error(
                 "ERROR 200618.0705: assignment of value from conduits users layer failed!.\n",
                 e,
             )
-        finally:
             QApplication.restoreOverrideCursor()
+        finally:
+            QApplication.restoreOverrideCursor()              
+            
 
     def onVerticalSectionClicked(self, logicalIndex):
         self.conduits_tblw_cell_clicked(logicalIndex, 0)

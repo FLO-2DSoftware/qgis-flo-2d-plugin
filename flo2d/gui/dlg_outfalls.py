@@ -152,8 +152,9 @@ class OutfallNodesDialog(qtBaseClass, uiDialog):
 
             rows = self.gutils.execute(qry).fetchall()  # rows is a list of tuples.
             if not rows:
-                QApplication.restoreOverrideCursor()
+                QApplication.setOverrideCursor(Qt.ArrowCursor)
                 self.uc.show_info("WARNING 121121.0421: No outfalls in 'Storm Drain Nodes' User Layer!")
+                QApplication.restoreOverrideCursor()
                 return
 
             self.block = True
@@ -251,8 +252,9 @@ class OutfallNodesDialog(qtBaseClass, uiDialog):
             self.highlight_outfall_cell(self.grid_element_txt.text())
 
         except Exception as e:
-            QApplication.restoreOverrideCursor()
+            QApplication.setOverrideCursor(Qt.ArrowCursor)
             self.uc.show_error("ERROR 100618.0846: error while loading outfalls components!", e)
+            QApplication.restoreOverrideCursor()
         finally:
             QApplication.restoreOverrideCursor()            
             
@@ -322,8 +324,9 @@ class OutfallNodesDialog(qtBaseClass, uiDialog):
                     pass
                     # self.uc.bar_warn("WARNING 221222.0625: time series " + time_series + " not found.")
         except:
-            QApplication.restoreOverrideCursor()
+            QApplication.setOverrideCursor(Qt.ArrowCursor)
             self.uc.bar_warn("WARNING 241222.0840: outfall type not found!")
+            QApplication.restoreOverrideCursor()
             
     def disableTypes(self):
         self.water_depth_dbox.setEnabled(False)
@@ -600,8 +603,9 @@ class OutfallNodesDialog(qtBaseClass, uiDialog):
             QApplication.restoreOverrideCursor()
 
         except ValueError:
-            QApplication.restoreOverrideCursor()
+            QApplication.setOverrideCursor(Qt.ArrowCursor)
             self.uc.bar_warn("WARNING 121121.1134: Cell " + str(cell) + "is not valid.")
+            QApplication.restoreOverrideCursor()
             self.lyrs.clear_rubber()
             pass
 
