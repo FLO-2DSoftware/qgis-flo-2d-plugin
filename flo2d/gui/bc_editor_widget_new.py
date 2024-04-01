@@ -41,7 +41,6 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
         self.iface = iface
         self.canvas = iface.mapCanvas()
         self.uc = UserCommunication(iface, "FLO-2D")
-        self.ilg = InvisibleLayersAndGroups(self.iface)
         self.setupUi(self)
 
         self.lyrs = lyrs
@@ -222,26 +221,6 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
             self.populate_inflows()
             self.populate_outflows()
 
-            self.ilg.unhideLayer(self.bc_points_lyr)
-            self.ilg.unhideLayer(self.bc_lines_lyr)
-            self.ilg.unhideLayer(self.bc_polygons_lyr)
-
-            self.ilg.unhideGroup('Boundary Conditions Tables')
-
-            # self.bc_points_lyr.setFlags(self.bc_points_lyr.flags() & ~QgsMapLayer.LayerFlag(QgsMapLayer.Private))
-            # self.bc_lines_lyr.setFlags(self.bc_lines_lyr.flags() & ~QgsMapLayer.LayerFlag(QgsMapLayer.Private))
-            # self.bc_polygons_lyr.setFlags(self.bc_polygons_lyr.flags() & ~QgsMapLayer.LayerFlag(QgsMapLayer.Private))
-        else:
-            self.ilg.hideLayer(self.bc_points_lyr)
-            self.ilg.hideLayer(self.bc_lines_lyr)
-            self.ilg.hideLayer(self.bc_polygons_lyr)
-
-            self.ilg.hideGroup('Boundary Conditions Tables')
-
-            # self.bc_points_lyr.setFlags(QgsMapLayer.Private)
-            # self.bc_lines_lyr.setFlags(QgsMapLayer.Private)
-            # self.bc_polygons_lyr.setFlags(QgsMapLayer.Private)
-
     def save_changes(self):
         """
         Function to save inflow changes
@@ -300,14 +279,11 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
 
         self.bc_type = type
         if self.lyrs.any_lyr_in_edit(*self.user_bc_tables):
-            if self.uc.question("Would you like to save the Boundary Condition?"):
-                self.save_changes()
-                self.uncheck_btns()
-                return
-            else:
-                self.discard_changes()
-                self.uncheck_btns()
-                return
+            self.uc.bar_info(f"{type.capitalize()} Boundary Condition(s) saved!")
+            self.uc.log_info(f"{type.capitalize()} Boundary Condition(s) saved!")
+            self.save_changes()
+            self.uncheck_btns()
+            return
 
         btn.setCheckable(True)
         btn.setChecked(True)
@@ -676,6 +652,7 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
             self.plot.update_item("Current Mud", [self.t, self.m])
         except:
             pass
+        self.plot.auto_range()
 
     def change_bc_name(self, cb, type):
         """
@@ -1358,7 +1335,7 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
 
         exist_user_bc = self.gutils.execute("SELECT * FROM all_user_bc WHERE type = 'inflow';").fetchone()
         if not exist_user_bc:
-            self.uc.show_info("There are no inflow User Boundary Conditions (points, lines, or polygons) defined.")
+            self.uc.bar_warn("There are no inflow User Boundary Conditions (points, lines, or polygons) defined.")
         if not self.gutils.is_table_empty("all_schem_bc"):
             if not self.uc.question(
                     "There are some boundary conditions grid cells defined already.\n\n Overwrite them?"
@@ -1374,10 +1351,9 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
         self.lyrs.repaint_layers()
 
         QApplication.restoreOverrideCursor()
-        self.uc.show_info(
-            str(in_inserted)
-            + " inflows boundary conditions schematized!"
-        )
+        m = str(in_inserted) + " inflows boundary conditions schematized!"
+        self.uc.bar_info(m)
+        self.uc.log_info(m)
 
         # QgsMessageLog.logMessage(f"Time taken to schematize: {round(time.time() - start_time, 2)} seconds")
 
@@ -1390,7 +1366,7 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
 
         exist_user_bc = self.gutils.execute("SELECT * FROM all_user_bc WHERE type = 'outflow';").fetchone()
         if not exist_user_bc:
-            self.uc.show_info("There are no outflow User Boundary Conditions (points, lines, or polygons) defined.")
+            self.uc.bar_warn("There are no outflow User Boundary Conditions (points, lines, or polygons) defined.")
         if not self.gutils.is_table_empty("all_schem_bc"):
             if not self.uc.question(
                     "There are some boundary conditions grid cells defined already.\n\n Overwrite them?"
@@ -1417,12 +1393,9 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
         self.lyrs.repaint_layers()
 
         QApplication.restoreOverrideCursor()
-        self.uc.show_info(
-            str(out_inserted - out_deleted)
-            + " outflows boundary conditions schematized!"
-        )
-
-        # QgsMessageLog.logMessage(f"Time taken to schematize: {round(time.time() - start_time, 2)} seconds")
+        m = str(out_inserted - out_deleted)+ " outflows boundary conditions schematized!"
+        self.uc.bar_info(m)
+        self.uc.log_info(m)
 
     def schematize_bc(self):
 
@@ -1430,7 +1403,7 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
         border = []
         exist_user_bc = self.gutils.execute("SELECT * FROM all_user_bc;").fetchone()
         if not exist_user_bc:
-            self.uc.show_info("There are no User Boundary Conditions (points, lines, or polygons) defined.")
+            self.uc.bar_warn("There are no User Boundary Conditions (points, lines, or polygons) defined.")
         if not self.gutils.is_table_empty("all_schem_bc"):
             if not self.uc.question(
                     "There are some boundary conditions grid cells defined already.\n\n Overwrite them?"
@@ -1457,12 +1430,10 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
         self.lyrs.repaint_layers()
 
         QApplication.restoreOverrideCursor()
-        self.uc.show_info(
-            str(in_inserted)
-            + " inflows and "
-            + str(out_inserted - out_deleted)
-            + " outflows boundary conditions schematized!"
-        )
+        m = str(in_inserted) + " inflows and " + str(out_inserted - out_deleted) + "outflows boundary conditions " \
+                                                                                   "schematized!"
+        self.uc.bar_info(m)
+        self.uc.log_info(m)
 
     def schematize_outflows(self):
         QApplication.setOverrideCursor(Qt.WaitCursor)
@@ -1522,7 +1493,6 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
 
             QApplication.restoreOverrideCursor()
             return inserted.rowcount
-            #             self.uc.show_info("Outflows schematized!")
         except Exception as e:
             QApplication.restoreOverrideCursor()
             self.uc.show_error("ERROR 180319.1434: Schematizing of outflows aborted!\n", e)
@@ -2145,6 +2115,7 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
             self.d1.append(m_fdata(self.bc_data_model, i, 0))
             self.d2.append(m_fdata(self.bc_data_model, i, 1))
         self.plot.update_item(self.plot_item_name, [self.d1, self.d2])
+        self.plot.auto_range()
 
     def populate_outflow_type_cbo(self):
         """

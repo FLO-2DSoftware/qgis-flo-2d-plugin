@@ -45,12 +45,14 @@ class InfoTool(QgsMapToolIdentify):
         """
         # These are the tables that are currently implemented.
         implemented = [
+            "chan",
             "user_levee_lines",
             "user_xsections",
             "user_streets",
             "user_centerline",
             "chan_elems",
             "user_left_bank",
+            "user_right_bank",
             "user_bc_points",
             "user_bc_lines",
             "user_bc_polygons",

@@ -15,6 +15,7 @@ from _ast import Pass
 from collections import OrderedDict
 from datetime import date, datetime, time, timedelta
 from math import floor, isnan, modf
+from pathlib import Path
 
 from qgis._core import QgsFeatureRequest
 from qgis.core import (
@@ -34,7 +35,10 @@ from qgis.core import (
     QgsVectorFileWriter,
     QgsVectorLayer,
     QgsWkbTypes,
+    QgsMessageLog,
+    Qgis
 )
+from qgis.PyQt import QtCore, QtGui
 from qgis.PyQt.QtCore import QSettings, Qt, QTime, QVariant, pyqtSignal
 from qgis.PyQt.QtGui import QColor, QIcon
 from qgis.PyQt.QtWidgets import (
@@ -53,11 +57,13 @@ from qgis.PyQt.QtWidgets import (
     QSizePolicy,
     QSpacerItem,
     QVBoxLayout,
+    QHBoxLayout,
     QWidget,
     QAction,
     QMenu,
     QToolButton,
     qApp,
+    QDialogButtonBox,
 )
 
 import pyqtgraph as pg
@@ -70,6 +76,7 @@ from ..flo2dobjects import InletRatingTable, PumpCurves
 from ..geopackage_utils import GeoPackageUtils
 from ..gui.dlg_conduits import ConduitsDialog
 from ..gui.dlg_inlets import InletNodesDialog
+from ..gui.dlg_storage_units import StorageUnitsDialog
 from ..gui.dlg_orifices import OrificesDialog
 from ..gui.dlg_outfalls import OutfallNodesDialog
 from ..gui.dlg_pumps import PumpsDialog
@@ -162,6 +169,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
 
         self.grid_lyr = None
         self.user_swmm_nodes_lyr = None
+        self.user_swmm_storage_units_lyr = None
         self.user_swmm_conduits_lyr = None
         self.user_swmm_pumps_lyr = None
         self.swmm_pumps_curve_data_lyr = None
@@ -207,12 +215,17 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         self.outlet_columns = ["swmm_allow_discharge"]
 
         self.other_curve_types = ["Control", "Diversion", "Rating", "Shape", "Storage"]
+        self.all_nodes = None
         self.inletRT = None
         self.plot_item_name = None
         self.inlet_series_data = None
         self.PumpCurv = None
         self.curve_data = None
         self.d1, self.d2, self.d3 = [[], [], []]
+        self.auto_assign_msg = ""
+        self.no_nodes = ""
+        self.inlet_not_found = []
+        self.outlet_not_found = []
 
         set_icon(self.create_point_btn, "mActionCapturePoint.svg")
         set_icon(self.save_changes_btn, "mActionSaveAllEdits.svg")
@@ -225,7 +238,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         set_icon(self.SD_add_predefined_type4_btn, "mActionOpenFile.svg")
         set_icon(self.SD_remove_type4_btn, "mActionDeleteSelected.svg")
         set_icon(self.SD_rename_type4_btn, "change_name.svg")
-
+        
         set_icon(self.show_pump_table_btn, "show_cont_table.svg")
         set_icon(self.add_pump_curve_btn, "add_table_data.svg")
         set_icon(self.add_predefined_pump_curve_btn, "mActionOpenFile.svg")
@@ -248,6 +261,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
 
         self.grid_lyr = self.lyrs.data["grid"]["qlyr"]
         self.user_swmm_nodes_lyr = self.lyrs.data["user_swmm_nodes"]["qlyr"]
+        self.user_swmm_storage_units_lyr = self.lyrs.data["user_swmm_storage_units"]["qlyr"]
         self.user_swmm_conduits_lyr = self.lyrs.data["user_swmm_conduits"]["qlyr"]
         self.user_swmm_pumps_lyr = self.lyrs.data["user_swmm_pumps"]["qlyr"]
         self.user_swmm_orifices_lyr = self.lyrs.data["user_swmm_orifices"]["qlyr"]
@@ -315,8 +329,8 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
 
         self.SD_nodes_components_cbo.currentIndexChanged.connect(self.nodes_component_changed)
         self.SD_links_components_cbo.currentIndexChanged.connect(self.links_component_changed)
-        self.SD_auto_assign_link_nodes_cbo.currentIndexChanged.connect(self.auto_assign_changed)
-
+        self.auto_assign_link_nodes_btn.clicked.connect(self.auto_assign)
+        
         self.populate_type4_combo()
         self.populate_pump_curves_and_data()
         self.show_pump_curve_type_and_description()
@@ -823,10 +837,14 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
 
         s.setValue("FLO-2D/lastSWMMDir", os.path.dirname(swmm_file))
 
-        QApplication.setOverrideCursor(Qt.WaitCursor)
+        n_spaces = "\t\t"
         new_nodes = []
         outside_nodes = ""
         updated_nodes = 0
+
+        new_storages = []
+        outside_storages = ""
+        updated_storages = 0
 
         new_conduits = []
         outside_conduits = ""
@@ -844,10 +862,8 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         outside_weirs = ""
         updated_weirs = 0
 
-        conduit_inlets_not_found = ""
-        conduit_outlets_not_found = ""
-
         error_msg = "ERROR 050322.9423: error(s) importing file\n\n" + swmm_file
+        QApplication.setOverrideCursor(Qt.WaitCursor)
         try:
             """
             Create an ordered dictionary "storm_drain.INP_groups".
@@ -858,28 +874,41 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
 
             """
             subcatchments = None
+            skipped_inlets = 0
             storm_drain = StormDrainProject(self.iface, swmm_file)
 
             ret = storm_drain.split_INP_groups_dictionary_by_tags()
             if ret == 3:
                 # No coordinates in INP file
-                QApplication.restoreOverrideCursor()
+                QApplication.setOverrideCursor(Qt.ArrowCursor)
                 self.uc.show_warn(
                     "WARNING 060319.1729: SWMM input file\n\n " + swmm_file + "\n\n has no coordinates defined!"
                 )
+                QApplication.restoreOverrideCursor()
                 return False
             elif ret == 0:
                 return False
 
+            # if self.select_this_INP_group(INP_groups, "coor") > 0: 
+            #     QApplication.restoreOverrideCursor()
+            #     self.uc.show_warn(
+            #         "WARNING 060319.1730: SWMM input file\n\n " + swmm_file + "\n\n has no coordinates defined!"
+            #     )
+            #     return False                
+
             # Build Nodes:
-            if storm_drain.create_INP_nodes_dictionary_with_coordinates() == 0:
-                QApplication.restoreOverrideCursor()
+            storm_drain.add_JUNCTIONS_to_INP_nodes_dictionary()
+            subcatchments = storm_drain.add_SUBCATCHMENTS_to_INP_nodes_dictionary()
+            storm_drain.add_OUTFALLS_to_INP_nodes_dictionary() 
+                      
+            if storm_drain.add_coordinates_INP_nodes_dictionary() == 0:
+                QApplication.setOverrideCursor(Qt.ArrowCursor)
                 self.uc.show_warn(
                     "WARNING 060319.1730: SWMM input file\n\n " + swmm_file + "\n\n has no coordinates defined!"
                 )
+                QApplication.restoreOverrideCursor()
                 return False
             else:
-                QApplication.restoreOverrideCursor()
 
                 if mode == "Force import of SWMM.INP":
                     complete_or_create = "Keep and Complete"
@@ -887,15 +916,18 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                     if self.gutils.is_table_empty("user_swmm_nodes"):
                         complete_or_create = "Create New"
                     else:
+                        
+                        QApplication.setOverrideCursor(Qt.ArrowCursor)
                         complete_or_create = self.import_INP_action()
+                        QApplication.restoreOverrideCursor()
+                        
                         if complete_or_create == "Cancel":
                             return False
 
-                QApplication.setOverrideCursor(Qt.WaitCursor)
-                subcatchments = storm_drain.add_SUBCATCHMENTS_to_INP_nodes_dictionary()
-                storm_drain.add_OUTFALLS_to_INP_nodes_dictionary()
-                storm_drain.add_JUNCTIONS_to_INP_nodes_dictionary()
-
+                # Storage units:
+                storm_drain.create_INP_storage_dictionary_with_storage()
+                storm_drain.add_coordinates_to_INP_storages_dictionary()
+                
                 # Conduits:
                 storm_drain.create_INP_conduits_dictionary_with_conduits()
                 storm_drain.add_LOSSES_to_INP_conduits_dictionary()
@@ -916,9 +948,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 # External inflows into table swmm_inflows:
                 storm_drain.create_INP_inflows_dictionary_with_inflows()
 
-                if complete_or_create == "Create New":
-                    remove_features(self.swmm_inflows_lyr)
-
+                remove_features(self.swmm_inflows_lyr)
                 try:
                     insert_inflows_sql = """INSERT INTO swmm_inflows 
                                             (   node_name, 
@@ -942,19 +972,18 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                         )
 
                 except Exception as e:
-                    QApplication.restoreOverrideCursor()
+                    QApplication.setOverrideCursor(Qt.ArrowCursor)
                     self.uc.show_error(
                         "ERROR 020219.0812: Reading storm drain inflows from SWMM input data failed!"
                         + "\n__________________________________________________",
                         e,
                     )
-
+                    QApplication.restoreOverrideCursor()
+                    
                 # Inflows patterns into table swmm_inflow_patterns:
                 storm_drain.create_INP_patterns_list_with_patterns()
 
-                if complete_or_create == "Create New":
-                    remove_features(self.swmm_inflow_patterns_lyr)
-
+                remove_features(self.swmm_inflow_patterns_lyr)
                 try:
                     description = ""
                     insert_patterns_sql = """INSERT INTO swmm_inflow_patterns
@@ -966,32 +995,31 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                                             VALUES (?, ?, ?, ?);"""
                     i = 0
                     for pattern in storm_drain.INP_patterns:
-                        if pattern[2][1] == "HOURLY":
+                        if pattern[2][1] == "HOURLY" :
                             name = pattern[1][1]
                             description = pattern[0][1]
-                            for j in range(1, 7):
+                            for j in range(0, 6):
                                 i += 1
                                 hour = str(i)
-                                multiplier = pattern[j + 2][1]
+                                multiplier = pattern[j + 3][1]
                                 self.gutils.execute(insert_patterns_sql, (name, description, hour, multiplier))
                             if i == 24:
                                 i = 0
 
                 except Exception as e:
-                    QApplication.restoreOverrideCursor()
+                    QApplication.setOverrideCursor(Qt.ArrowCursor)
                     self.uc.show_error(
                         "ERROR 280219.1046: Reading storm drain paterns from SWMM input data failed!"
                         + "\n__________________________________________________",
                         e,
                     )
-
+                    QApplication.restoreOverrideCursor()
                 # Inflow time series into table swmm_time_series:
                 storm_drain.create_INP_time_series_list_with_time_series()
 
-                if complete_or_create == "Create New":
-                    remove_features(self.swmm_time_series_lyr)
-                    remove_features(self.swmm_time_series_data_lyr)
-
+                remove_features(self.swmm_time_series_lyr)
+                remove_features(self.swmm_time_series_data_lyr)
+                
                 try:
                     insert_times_from_file_sql = """INSERT INTO swmm_time_series 
                                             (   time_series_name, 
@@ -1037,12 +1065,13 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                             self.gutils.execute(insert_times_from_data_sql, (name, date, tme, value))
 
                 except Exception as e:
-                    QApplication.restoreOverrideCursor()
+                    QApplication.setOverrideCursor(Qt.ArrowCursor)
                     self.uc.show_error(
                         "ERROR 290220.1727: Reading storm drain time series from SWMM input data failed!"
                         + "\n__________________________________________________",
                         e,
                     )
+                    QApplication.restoreOverrideCursor()
 
                 # Curves into pump, tidal, and other curve tables:
                 storm_drain.create_INP_curves_list_with_curves()
@@ -1093,19 +1122,25 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                             self.gutils.execute(insert_other_curves_sql, (curve[0], curve[1], curve[4], curve[2], curve[3]))     
 
                 except Exception as e:
-                    QApplication.restoreOverrideCursor()
+                    QApplication.setOverrideCursor(Qt.ArrowCursor)
                     self.uc.show_error(
                         "ERROR 241121.0547: Reading storm drain pump curve data from SWMM input data failed!"
                         + "\n__________________________________________________",
                         e,
                     )
+                    QApplication.restoreOverrideCursor()
 
         except Exception as e:
-            QApplication.restoreOverrideCursor()
+            QApplication.setOverrideCursor(Qt.ArrowCursor)
             self.uc.show_error("ERROR 080618.0448: reading SWMM input file failed!", e)
+            QApplication.restoreOverrideCursor()
             return False
-
+        finally:
+            QApplication.restoreOverrideCursor()            
+            
+            
         # JUNCTIONS/OUTFALLS: Create User Junctions and Outfalls layers:
+        QApplication.setOverrideCursor(Qt.WaitCursor)
         try:
             """
             Creates Storm Drain Nodes layer (Users layers).
@@ -1141,7 +1176,8 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
 
             new_nodes = []
             updated_nodes = 0
-            for name, values in list(storm_drain.INP_nodes.items()):
+            list_INP_nodes = list(storm_drain.INP_nodes.items())
+            for name, values in list_INP_nodes:
                 # "INP_nodes dictionary contains attributes names and
                 # values taken from the .INP file.
                 if subcatchments is not None:
@@ -1150,7 +1186,8 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                     elif "out_type" in values:
                         sd_type = "O"
                     elif name[0] in ["I", "i"]:
-                        continue  # Only consider inlets in [SUBCATCHMENTS]
+                        skipped_inlets += 1
+                        continue  # Skip inlets defined by initial "I" or "i". Only consider inlets in [SUBCATCHMENTS]
                     else:
                         sd_type = "J"
 
@@ -1201,14 +1238,21 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
 
                 intype = int(values["intype"]) if "intype" in values else 1
 
+                if not "x" in values or not "y" in values:
+                    outside_nodes += n_spaces + name + "\tno coordinates.\n"
+                    continue
+                
                 x = float(values["x"])
                 y = float(values["y"])
                 grid = self.gutils.grid_on_point(x, y)
                 if grid is None:
-                    outside_nodes += name + "\n"
-                    continue
+                    outside_nodes += n_spaces + name + "\toutside domain.\n"
 
-                elev = self.gutils.grid_value(grid, "elevation")
+                if grid:
+                    elev = self.gutils.grid_value(grid, "elevation")
+                else:
+                    elev = 0
+                elev = elev if elev else 0
                 difference = elev - rim_elev if elev and rim_elev else 0
 
                 if complete_or_create == "Create New":
@@ -1367,19 +1411,249 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                     self.user_swmm_nodes_lyr.removeSelection()
 
         except Exception as e:
-            QApplication.restoreOverrideCursor()
+            QApplication.setOverrideCursor(Qt.ArrowCursor)
             self.uc.show_error(
                 "ERROR 060319.1610: Creating Storm Drain Nodes layer failed!\n\n"
                 + "Please check your SWMM input data.\nAre the nodes coordinates inside the computational domain?",
                 e,
             )
+            QApplication.restoreOverrideCursor()
             return False
+        finally:
+            QApplication.restoreOverrideCursor()        
 
+        # STORAGE: Create User Storage layer:
+        if complete_or_create == "Create New":
+            remove_features(self.user_swmm_storage_units_lyr)
+            
+        QApplication.setOverrideCursor(Qt.WaitCursor)       
+        try:
+            """
+            Creates Storm Drain Storage Units layer (Users layers).
+        
+            Creates "user_swmm_storage_units" layer with attributes taken from
+            the [COORDINATES] and [STORAGE] groups.
+        
+            """
+        
+            # Transfer data from "storm_drain.INP_dict" to "user_swmm_storage_units" layer:
+        
+            replace_user_swmm_storage_sql = """UPDATE user_swmm_storage_units
+                             SET    geom = ?,
+                                    "invert_elev" = ?,
+                                    "max_depth" = ?,
+                                    "init_depth" = ?,
+                                    "external_inflow" = ?,
+                                    "treatment" = ?,
+                                    "ponded_area" = ?,
+                                    "evap_factor" = ?,
+                                    "infiltration" = ?,
+                                    "infil_method" = ?,
+                                    "suction_head" = ?,
+                                    "conductivity" = ?,
+                                    "initial_deficit" = ?,
+                                    "storage_curve" = ?,
+                                    "coefficient" = ?,
+                                    "exponent" = ?,
+                                    "constant" = ?,
+                                    "curve_name" = ?                             
+                             WHERE name = ?;"""
+                             
+            new_storages = []
+            updated_storages = 0
+            list_INP_storages = list(storm_drain.INP_storages.items())
+            # if list_INP_storages:
+            for name, values in list_INP_storages:
+                # "INP_storages dictionary contains attributes names and
+                # values taken from the .INP file.
+                
+                invert_elev = float_or_zero(values["invert_elev"]) if "invert_elev" in values else 0
+                max_depth = float_or_zero(values["max_depth"]) if "max_depth" in values else 0
+                init_depth = float_or_zero(values["init_depth"]) if "init_depth" in values else 0
+                external_inflow = int(values["external_inflow"]) if "external_inflow" in values else "False"
+                treatment = values["treatment"].upper() if "treatment" in values else "NO"       
+                ponded_area = float_or_zero(values["ponded_area"]) if "ponded_area" in values else 0
+                evap_factor = float_or_zero(values["evap_factor"]) if "evap_factor" in values else 0
+                infiltration = "True" if len(values) in [14, 12] else "False"
+                infil_method = values["infil_method"].upper() if "infil_method" in values else "GREEN_AMPT"
+                suction_head = float_or_zero(values["suction_head"]) if "suction_head" in values else 0
+                conductivity = float_or_zero(values["conductivity"]) if "conductivity" in values else 0
+                initial_deficit = float_or_zero(values["initial_deficit"]) if "initial_deficit" in values else 0
+                storage_curve = values["storage_curve"].upper() if "storage_curve" in values else "FUNCTIONAL"
+                if (storage_curve == "FUNCTIONAL"):
+                    coefficient = float_or_zero(values["coefficient"]) if "coefficient" in values else 1000
+                    exponent = float_or_zero(values["exponent"]) if "exponent" in values else 0
+                    constant = float_or_zero(values["constant"]) if "constant" in values else 0
+                else:
+                    coefficient = 1000
+                    exponent = 0
+                    constant = 0    
+                curve_name = values["curve_name"] if "curve_name" in values else "*"
+    
+                if not "x" in values or not "y" in values:
+                    outside_nodes += n_spaces + name + "\tno coordinates.\n"
+                    continue
+                
+                x = float(values["x"])
+                y = float(values["y"])
+                grid = self.gutils.grid_on_point(x, y)
+                if grid is None:
+                    outside_storages += n_spaces + name + "\toutside domain.\n"
+    
+                if complete_or_create == "Create New":
+                    geom = QgsGeometry.fromPointXY(QgsPointXY(x, y))
+                    fields = self.user_swmm_storage_units_lyr.fields()
+                    feat = QgsFeature()
+                    feat.setFields(fields)
+                    feat.setGeometry(geom)
+                    feat.setAttribute("grid", grid)
+                    feat.setAttribute("name", name)
+                    feat.setAttribute("invert_elev", invert_elev)
+                    feat.setAttribute("max_depth", max_depth)
+                    feat.setAttribute("init_depth", init_depth)
+                    feat.setAttribute("external_inflow", external_inflow)
+                    feat.setAttribute("treatment", treatment)
+                    feat.setAttribute("ponded_area", ponded_area)
+                    feat.setAttribute("evap_factor", evap_factor)
+                    feat.setAttribute("infiltration", infiltration)
+                    feat.setAttribute("infil_method", infil_method)
+                    feat.setAttribute("suction_head", suction_head)
+                    feat.setAttribute("conductivity", conductivity)
+                    feat.setAttribute("initial_deficit", initial_deficit)
+                    feat.setAttribute("storage_curve", storage_curve)
+                    feat.setAttribute("coefficient", coefficient)
+                    feat.setAttribute("exponent", exponent)
+                    feat.setAttribute("constant", constant)
+                    feat.setAttribute("curve_name", curve_name)
+    
+                    # The following attributes are not defined in .INP files,
+                    # assign them zero as default values:
+                    # feat.setAttribute("swmm_length", 0)
+                    # feat.setAttribute("swmm_width", 0)
+                    # feat.setAttribute("swmm_height", 0)
+                    # feat.setAttribute("swmm_coeff", 0)
+                    # feat.setAttribute("swmm_feature", 0)
+                    # feat.setAttribute("curbheight", 0)
+                    # feat.setAttribute("swmm_clogging_factor", 0)
+                    # feat.setAttribute("swmm_time_for_clogging", 0)
+                    # feat.setAttribute("rt_fid", 0)
+                    # feat.setAttribute("outf_flo", 0)
+    
+                    new_storages.append(feat)
+    
+                else:  # Keep some existing data in user_swmm_storage_unit.
+                    fid = self.gutils.execute("SELECT fid FROM user_swmm_storage_units WHERE name = ?;", (name,)).fetchone()
+                    if fid:  # name already in user_swmm_storage_units
+                        try:
+                            fid, wkt_geom = self.gutils.execute(
+                                "SELECT fid, ST_AsText(ST_Centroid(GeomFromGPB(geom))) FROM user_swmm_storage_units WHERE name = ?;",
+                                (name,),
+                            ).fetchone()
+                        except Exception:
+                            continue
+                        if fid:
+                            geom = "POINT({0} {1})".format(x, y)
+                            geom = self.gutils.wkt_to_gpb(geom)
+    
+                            self.gutils.execute(
+                                replace_user_swmm_storage_sql,
+                                (
+                                    geom,
+                                    invert_elev,
+                                    max_depth,
+                                    init_depth,
+                                    external_inflow,
+                                    treatment,                
+                                    ponded_area,
+                                    evap_factor,
+                                    infiltration,
+                                    infil_method,
+                                    suction_head,
+                                    conductivity,
+                                    initial_deficit,
+                                    storage_curve,
+                                    coefficient,
+                                    exponent,
+                                    constant,
+                                    curve_name,
+                                    name,
+                                ),
+                            )
+                            updated_storages += 1
+    
+                    else:  # this name is not in user_swmm_storages, include it:
+                        geom = QgsGeometry.fromPointXY(QgsPointXY(x, y))
+                        fields = self.user_swmm_storage_units_lyr.fields()
+                        feat = QgsFeature()
+                        feat.setFields(fields)
+                        feat.setGeometry(geom)
+                        feat.setAttribute("grid", grid)
+                        feat.setAttribute("name", name)
+                        feat.setAttribute("invert_elev", invert_elev)
+                        feat.setAttribute("max_depth", max_depth)
+                        feat.setAttribute("init_depth", init_depth)
+                        feat.setAttribute("external_inflow", external_inflow)
+                        feat.setAttribute("treatment", treatment)
+                        feat.setAttribute("ponded_area", ponded_area)
+                        feat.setAttribute("evap_factor", evap_factor)
+                        feat.setAttribute("infiltration", infiltration)
+                        feat.setAttribute("infil_method", infil_method)
+                        feat.setAttribute("suction_head", suction_head)
+                        feat.setAttribute("conductivity", conductivity)
+                        feat.setAttribute("initial_deficit", initial_deficit)
+                        feat.setAttribute("storage_curve", storage_curve)
+                        feat.setAttribute("coefficient", coefficient)
+                        feat.setAttribute("exponent", exponent)
+                        feat.setAttribute("constant", constant)
+                        feat.setAttribute("curve_name", curve_name)                        
+    
+                        new_storages.append(feat)
+                        updated_storages += 1
+    
+            if complete_or_create == "Create New" and len(new_storages) != 0:
+                remove_features(self.user_swmm_storage_units_lyr)
+                self.user_swmm_storage_units_lyr.startEditing()
+                self.user_swmm_storage_units_lyr.addFeatures(new_storages)
+                self.user_swmm_storage_units_lyr.commitChanges()
+                self.user_swmm_storage_units_lyr.updateExtents()
+                self.user_swmm_storage_units_lyr.triggerRepaint()
+                self.user_swmm_storage_units_lyr.removeSelection()
+            else:
+                # The option 'Keep existing and complete' already updated values taken from the .INP file.
+                # but include new ones:
+                if len(new_storages) != 0:
+                    self.user_swmm_storage_units_lyr.startEditing()
+                    self.user_swmm_storage_units_lyr.addFeatures(new_storages)
+                    self.user_swmm_storage_units_lyr.commitChanges()
+                    self.user_swmm_storage_units_lyr.updateExtents()
+                    self.user_swmm_storage_units_lyr.triggerRepaint()
+                    self.user_swmm_storage_units_lyr.removeSelection()
+        
+        except Exception as e:
+            QApplication.setOverrideCursor(Qt.ArrowCursor)
+            self.uc.show_error(
+                "ERROR 300124.1109: Creating Storm Drain Storage Units layer failed!\n\n"
+                + "Please check your SWMM input data.\nAre the nodes coordinates inside the computational domain?",
+                e,
+            )
+            QApplication.restoreOverrideCursor()
+            return False
+        finally:
+            QApplication.restoreOverrideCursor()
+            
+                    
+        # Unpack and merge storm_drain.INP_nodes and storm_drain.INP_storages:
+        self.all_nodes = {**storm_drain.INP_nodes, **storm_drain.INP_storages} 
+                                
         # CONDUITS: Create User Conduits layer:
+        conduit_inlets_not_found = ""
+        conduit_outlets_not_found = ""
+                
         if complete_or_create == "Create New":
             remove_features(self.user_swmm_conduits_lyr)
         
         if storm_drain.INP_conduits:
+            QApplication.setOverrideCursor(Qt.WaitCursor)
             try:
                 """
                 Creates Storm Drain Conduits layer (Users layers)
@@ -1411,12 +1685,8 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                                        xsections_geom4  = ?
                                  WHERE conduit_name = ?;"""
         
-                fields = self.user_swmm_conduits_lyr.fields()
-                conduit_inlets_not_found = ""
-                conduit_outlets_not_found = ""
-        
+                fields = self.user_swmm_conduits_lyr.fields()       
                 for name, values in list(storm_drain.INP_conduits.items()):
-                    go_go = True
         
                     conduit_inlet = values["conduit_inlet"] if "conduit_inlet" in values else None
                     conduit_outlet = values["conduit_outlet"] if "conduit_outlet" in values else None
@@ -1461,33 +1731,39 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         
                     feat = QgsFeature()
                     feat.setFields(fields)
+
+                    if not conduit_inlet in self.all_nodes:
+                        conduit_inlets_not_found += "      " +  name + "\n"
+                    else:
+                        if "x" in self.all_nodes[conduit_inlet] and "x" in self.all_nodes[conduit_inlet]:
+                            x1 = float(self.all_nodes[conduit_inlet]["x"])
+                            y1 = float(self.all_nodes[conduit_inlet]["y"])                        
+                            grid = self.gutils.grid_on_point(x1, y1)
+                            if grid is None:
+                                if not name in outside_conduits:
+                                    outside_conduits += n_spaces + name + "\n"
+                        else:
+                            if not name in outside_conduits:
+                                outside_conduits += n_spaces + name + "\n"                                       
+                                    
+                    if not conduit_outlet in self.all_nodes:
+                        conduit_outlets_not_found += "      " +  name + "\n"
+                    else:
+                        if "x" in self.all_nodes[conduit_outlet] and "y" in self.all_nodes[conduit_outlet]:
+                            x2 = float(self.all_nodes[conduit_outlet]["x"])
+                            y2 = float(self.all_nodes[conduit_outlet]["y"])
+                            grid = self.gutils.grid_on_point(x2, y2)
+                            if grid is None:
+                                if not name in outside_conduits:
+                                    outside_conduits += n_spaces + name + "\n"
+                        else:
+                            conduit_outlets_not_found += "      " +  name + "\n" 
+                                        
         
-                    if not conduit_inlet in storm_drain.INP_nodes:
-                        conduit_inlets_not_found += name + "\n"
-                        go_go = False
-                    if not conduit_outlet in storm_drain.INP_nodes:
-                        conduit_outlets_not_found += name + "\n"
-                        go_go = False
-        
-                    if not go_go:
+                    if conduit_inlet in self.all_nodes and conduit_outlet in self.all_nodes:
+                        geom = QgsGeometry.fromPolylineXY([QgsPointXY(x1, y1), QgsPointXY(x2, y2)])
+                    else:
                         continue
-        
-                    x1 = float(storm_drain.INP_nodes[conduit_inlet]["x"])
-                    y1 = float(storm_drain.INP_nodes[conduit_inlet]["y"])
-                    x2 = float(storm_drain.INP_nodes[conduit_outlet]["x"])
-                    y2 = float(storm_drain.INP_nodes[conduit_outlet]["y"])
-        
-                    grid = self.gutils.grid_on_point(x1, y1)
-                    if grid is None:
-                        outside_conduits += name + "\n"
-                        continue
-        
-                    grid = self.gutils.grid_on_point(x2, y2)
-                    if grid is None:
-                        outside_conduits += name + "\n"
-                        continue
-        
-                    geom = QgsGeometry.fromPolylineXY([QgsPointXY(x1, y1), QgsPointXY(x2, y2)])
                     
                     if complete_or_create == "Create New":
                         feat.setGeometry(geom)
@@ -1582,8 +1858,11 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                     self.user_swmm_conduits_lyr.removeSelection()
         
             except Exception as e:
-                QApplication.restoreOverrideCursor()
+                QApplication.setOverrideCursor(Qt.ArrowCursor)
                 self.uc.show_error("ERROR 050618.1804: creation of Storm Drain Conduits layer failed!", e)
+                QApplication.restoreOverrideCursor()
+            finally:
+                QApplication.restoreOverrideCursor() 
 
         # PUMPS: Create User Pumps layer:
         pump_inlets_not_found = ""
@@ -1594,6 +1873,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             remove_features(self.user_swmm_pumps_lyr)
 
         if storm_drain.INP_pumps:
+            QApplication.setOverrideCursor(Qt.WaitCursor)
             try:
                 """
                 Creates Storm Drain Pumps layer (Users layers)
@@ -1613,14 +1893,12 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                                  WHERE pump_name = ?;"""
 
                 fields = self.user_swmm_pumps_lyr.fields()
-
                 for name, values in list(storm_drain.INP_pumps.items()):
                     
                     if values["pump_shutoff_depth"] == None:
                         pump_data_missing = "\nError(s) in [PUMP] group. Are values missing?"
                         continue
                     
-                    go_go = True
                     pump_inlet = values["pump_inlet"] if "pump_inlet" in values else None
                     pump_outlet = values["pump_outlet"] if "pump_outlet" in values else None
                     pump_curve = values["pump_curve"] if "pump_curve" in values else None
@@ -1635,32 +1913,37 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                     feat = QgsFeature()
                     feat.setFields(fields)
 
-                    if not pump_inlet in storm_drain.INP_nodes:
-                        pump_inlets_not_found += name + "\n"
-                        go_go = False
-                    if not pump_outlet in storm_drain.INP_nodes:
-                        pump_outlets_not_found += name + "\n"
-                        go_go = False
+                    if not pump_inlet in self.all_nodes:
+                        pump_inlets_not_found += "      " + name + "\n"
+                    else:
+                        if "x" in self.all_nodes[pump_inlet] and "y" in self.all_nodes[pump_inlet]:
+                            x1 = float(self.all_nodes[pump_inlet]["x"])
+                            y1 = float(self.all_nodes[pump_inlet]["y"])                        
+                            grid = self.gutils.grid_on_point(x1, y1)
+                            if grid is None:
+                                if not name in outside_pumps:
+                                    outside_pumps += n_spaces + name + "\n"
+                        else:
+                            if not name in outside_pumps:
+                                outside_pumps += n_spaces + name + "\n"                                        
 
-                    if not go_go:
-                        continue  # Force execution of next iteration, skip rest of code. No inlet or outlet nodes in INP file.
-        
-                    x1 = float(storm_drain.INP_nodes[pump_inlet]["x"])
-                    y1 = float(storm_drain.INP_nodes[pump_inlet]["y"])
-                    x2 = float(storm_drain.INP_nodes[pump_outlet]["x"])
-                    y2 = float(storm_drain.INP_nodes[pump_outlet]["y"])
+                    if not pump_outlet in self.all_nodes:
+                        pump_outlets_not_found += "      " +  name + "\n"
+                    else:
+                        if "x" in self.all_nodes[pump_outlet] and "y" in self.all_nodes[pump_outlet]:
+                            x2 = float(self.all_nodes[pump_outlet]["x"])
+                            y2 = float(self.all_nodes[pump_outlet]["y"])
+                            grid = self.gutils.grid_on_point(x2, y2)
+                            if grid is None:
+                                if not name in outside_pumps:
+                                    outside_pumps += n_spaces + name + "\n"
+                        else:
+                            pump_outlets_not_found += "      " +  name + "\n" 
 
-                    grid = self.gutils.grid_on_point(x1, y1)
-                    if grid is None:
-                        outside_pumps += name + "\n"
+                    if pump_inlet in self.all_nodes and pump_outlet in self.all_nodes:
+                        geom = QgsGeometry.fromPolylineXY([QgsPointXY(x1, y1), QgsPointXY(x2, y2)])
+                    else:
                         continue
-
-                    grid = self.gutils.grid_on_point(x2, y2)
-                    if grid is None:
-                        outside_pumps += name + "\n"
-                        continue
-
-                    geom = QgsGeometry.fromPolylineXY([QgsPointXY(x1, y1), QgsPointXY(x2, y2)])
 
                     if complete_or_create == "Create New":
                         feat.setGeometry(geom)
@@ -1714,8 +1997,11 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                     self.user_swmm_pumps_lyr.removeSelection()
 
             except Exception as e:
-                QApplication.restoreOverrideCursor()
+                QApplication.setOverrideCursor(Qt.ArrowCursor)
                 self.uc.show_error("ERROR 050618.1805: creation of Storm Drain Pumps layer failed!", e)
+                QApplication.restoreOverrideCursor()
+            finally:
+                QApplication.restoreOverrideCursor()
 
         # ORIFICES: Create User Orifices layer:
         orifice_inlets_not_found = ""
@@ -1725,6 +2011,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             remove_features(self.user_swmm_orifices_lyr)
 
         if storm_drain.INP_orifices:
+            QApplication.setOverrideCursor(Qt.WaitCursor)
             try:
                 """
                 Creates Storm Drain Orifices layer (Users layers)
@@ -1748,9 +2035,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                                  WHERE orifice_name = ?;"""
                                  
                 fields = self.user_swmm_orifices_lyr.fields()
-
                 for name, values in list(storm_drain.INP_orifices.items()):
-                    go_go = True
                     orifice_inlet = values["ori_inlet"] if "ori_inlet" in values else None
                     orifice_outlet = values["ori_outlet"] if "ori_outlet" in values else None
                     orifice_type = values["ori_type"] if "ori_type" in values else "SIDE"
@@ -1771,32 +2056,37 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                     feat = QgsFeature()
                     feat.setFields(fields)
                     
-                    if not orifice_inlet in storm_drain.INP_nodes:
-                        orifice_inlets_not_found += name + "\n"
-                        go_go = False
-                    if not orifice_outlet in storm_drain.INP_nodes:
-                        orifice_outlets_not_found += name + "\n"
-                        go_go = False
+                    if not orifice_inlet in self.all_nodes:
+                        orifice_inlets_not_found += "      " +  name + "\n"
+                    else:
+                        if "x" in self.all_nodes[orifice_inlet] and "y" in self.all_nodes[orifice_inlet]:
+                            x1 = float(self.all_nodes[orifice_inlet]["x"])
+                            y1 = float(self.all_nodes[orifice_inlet]["y"])                        
+                            grid = self.gutils.grid_on_point(x1, y1)
+                            if grid is None:
+                                if not name in outside_orifices:
+                                    outside_orifices += n_spaces + name + "\n"
+                        else:
+                            if not name in outside_orifices:
+                                outside_orifices += n_spaces + name + "\n"                                        
 
-                    if not go_go:
-                        continue  # Force execution of next iteration, skip rest of code. No inlet or outlet nodes in INP file.
-        
-                    x1 = float(storm_drain.INP_nodes[orifice_inlet]["x"])
-                    y1 = float(storm_drain.INP_nodes[orifice_inlet]["y"])
-                    x2 = float(storm_drain.INP_nodes[orifice_outlet]["x"])
-                    y2 = float(storm_drain.INP_nodes[orifice_outlet]["y"])
-
-                    grid = self.gutils.grid_on_point(x1, y1)
-                    if grid is None:
-                        outside_orifices += name + "\n"
+                    if not orifice_outlet in self.all_nodes:
+                        orifice_outlets_not_found += "      " +  name + "\n"
+                    else:
+                        if "x" in self.all_nodes[orifice_outlet] and "y" in self.all_nodes[orifice_outlet]:
+                            x2 = float(self.all_nodes[orifice_outlet]["x"])
+                            y2 = float(self.all_nodes[orifice_outlet]["y"])
+                            grid = self.gutils.grid_on_point(x2, y2)
+                            if grid is None:
+                                if not name in outside_orifices:
+                                    outside_orifices += n_spaces + name + "\n"
+                        else:
+                            orifice_outlets_not_found += "      " +  name + "\n" 
+                                        
+                    if orifice_inlet in self.all_nodes and orifice_outlet in self.all_nodes:
+                        geom = QgsGeometry.fromPolylineXY([QgsPointXY(x1, y1), QgsPointXY(x2, y2)])
+                    else:
                         continue
-
-                    grid = self.gutils.grid_on_point(x2, y2)
-                    if grid is None:
-                        outside_orifices += name + "\n"
-                        continue
-
-                    geom = QgsGeometry.fromPolylineXY([QgsPointXY(x1, y1), QgsPointXY(x2, y2)])
 
                     if complete_or_create == "Create New":
                         feat.setGeometry(geom)
@@ -1862,8 +2152,11 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                     self.user_swmm_orifices_lyr.removeSelection()
 
             except Exception as e:
-                QApplication.restoreOverrideCursor()
+                QApplication.setOverrideCursor(Qt.ArrowCursor)
                 self.uc.show_error("ERROR 310322.0853: creation of Storm Drain Orifices layer failed!", e)
+                QApplication.restoreOverrideCursor()
+            finally:
+                QApplication.restoreOverrideCursor() 
 
         # WEIRS: Create User Weirs layer:
         weir_inlets_not_found = ""
@@ -1873,6 +2166,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             remove_features(self.user_swmm_weirs_lyr)
 
         if storm_drain.INP_weirs:
+            QApplication.setOverrideCursor(Qt.WaitCursor)
             try:
                 """
                 Creates Storm Drain Weirs layer (Users layers)
@@ -1897,9 +2191,8 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                                  WHERE weir_name = ?;"""
 
                 fields = self.user_swmm_weirs_lyr.fields()
-
                 for name, values in list(storm_drain.INP_weirs.items()):
-                    go_go = True
+
                     weir_inlet = values["weir_inlet"] if "weir_inlet" in values else None
                     weir_outlet = values["weir_outlet"] if "weir_outlet" in values else None
                     weir_type = values["weir_type"] if "weir_type" in values else "TRANSVERSE"
@@ -1920,32 +2213,37 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                     feat = QgsFeature()
                     feat.setFields(fields)
 
-                    if not weir_inlet in storm_drain.INP_nodes:
-                        weir_inlets_not_found += name + "\n"
-                        go_go = False
-                    if not weir_outlet in storm_drain.INP_nodes:
-                        weir_outlets_not_found += name + "\n"
-                        go_go = False
+                    if not weir_inlet in self.all_nodes:
+                        weir_inlets_not_found += "      " +  name + "\n"
+                    else:
+                        if "x" in self.all_nodes[weir_inlet] and "y" in self.all_nodes[weir_inlet]:
+                            x1 = float(self.all_nodes[weir_inlet]["x"])
+                            y1 = float(self.all_nodes[weir_inlet]["y"])                        
+                            grid = self.gutils.grid_on_point(x1, y1)
+                            if grid is None:
+                                if not name in outside_weirs:
+                                    outside_weirs += n_spaces + name + "\n"
+                        else:
+                            if not name in outside_weirs:
+                                outside_weirs += n_spaces + name + "\n"                                        
 
-                    if not go_go:
-                        continue  # Force execution of next iteration, skip rest of code. No inlet or outlet nodes in INP file.
-
-                    x1 = float(storm_drain.INP_nodes[weir_inlet]["x"])
-                    y1 = float(storm_drain.INP_nodes[weir_inlet]["y"])
-                    x2 = float(storm_drain.INP_nodes[weir_outlet]["x"])
-                    y2 = float(storm_drain.INP_nodes[weir_outlet]["y"])
-
-                    grid = self.gutils.grid_on_point(x1, y1)
-                    if grid is None:
-                        outside_weirs += name + "\n"
+                    if not weir_outlet in self.all_nodes:
+                        weir_outlets_not_found += "      " +  name + "\n"
+                    else:
+                        if "x" in self.all_nodes[weir_outlet] and "y" in self.all_nodes[weir_outlet]:
+                            x2 = float(self.all_nodes[weir_outlet]["x"])
+                            y2 = float(self.all_nodes[weir_outlet]["y"])
+                            grid = self.gutils.grid_on_point(x2, y2)
+                            if grid is None:
+                                if not name in outside_weirs:
+                                    outside_weirs += n_spaces + name + "\n"
+                        else:
+                            weir_outlets_not_found += "      " +  name + "\n" 
+                                      
+                    if weir_inlet in self.all_nodes and weir_outlet in self.all_nodes:
+                        geom = QgsGeometry.fromPolylineXY([QgsPointXY(x1, y1), QgsPointXY(x2, y2)])
+                    else:
                         continue
-
-                    grid = self.gutils.grid_on_point(x2, y2)
-                    if grid is None:
-                        outside_weirs += name + "\n"
-                        continue
-
-                    geom = QgsGeometry.fromPolylineXY([QgsPointXY(x1, y1), QgsPointXY(x2, y2)])
 
                     if complete_or_create == "Create New":
                         feat.setGeometry(geom)
@@ -2017,14 +2315,16 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                     self.user_swmm_weirs_lyr.removeSelection()
 
             except Exception as e:
-                QApplication.restoreOverrideCursor()
+                QApplication.setOverrideCursor(Qt.ArrowCursor)
                 self.uc.show_error("ERROR 080422.1115: creation of Storm Drain Weirs layer failed!", e)
-
-        QApplication.restoreOverrideCursor()
-
+                QApplication.restoreOverrideCursor()
+            finally:
+                QApplication.restoreOverrideCursor() 
+                
         if (
             complete_or_create == "Create New"
             and len(new_nodes) == 0
+            and len(new_storages) == 0
             and len(new_conduits) == 0
             and len(new_pumps) == 0
             and len(new_orifices) == 0
@@ -2062,6 +2362,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         if error_msg != "ERROR 050322.9423: error(s) importing file\n\n" + swmm_file:
             self.uc.show_critical(error_msg)
 
+        QApplication.setOverrideCursor(Qt.ArrowCursor)
         if complete_or_create == "Create New":
             self.uc.show_info(
                 "Importing Storm Drain data finished!\n\n"
@@ -2069,6 +2370,9 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 + str(len(new_nodes))
                 + " Nodes (inlets, junctions, and outfalls) were created in the 'Storm Drain Nodes' layer ('User Layers' group), and\n\n"
                 + "* "
+                + str(len(new_storages))
+                + " Storage Units in the 'Storm Drain Storage Units' layer ('User Layers' group), and\n\n"
+                + "* "                
                 + str(len(new_conduits))
                 + " Conduits in the 'Storm Drain Conduits' layer ('User Layers' group), and\n\n"
                 + "* "
@@ -2084,9 +2388,8 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 "NOTE: the 'Schematize Storm Drain Components' button  in the Storm Drain Editor widget will update the 'Storm Drain' layer group, required to "
                 "later export the .DAT files used by the FLO-2D model."
             )
-            
+        
         elif show_end_message:
-            QApplication.restoreOverrideCursor()
             self.uc.show_info(
                 "Storm Drain data was updated from file\n"
                 + swmm_file
@@ -2095,6 +2398,9 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 + str(updated_nodes)
                 + " Nodes (inlets, junctions, and outfalls) in the 'Storm Drain Nodes' layer ('User Layers' group) were updated, and\n\n"
                 + "* "
+                + str(updated_storages)
+                + " Storage Units in the 'Storm Drain Storage Units' layer ('User Layers' group) were updated, and\n\n"
+                + "* "                
                 + str(updated_conduits)
                 + " Conduits in the 'Storm Drain Conduits' layer ('User Layers' group) were updated, and\n"
                 + "  " + str(len(new_conduits)) + " new conduits created.\n\n"
@@ -2115,66 +2421,56 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 "later export the .DAT files used by the FLO-2D model."
             )
 
-        if outside_nodes != "":
+
+        node_items = outside_nodes + outside_storages
+        if len(node_items) > 0:
+            node_items = ("Inlets/Junctions/Outflows:\n"  + outside_nodes if len(outside_nodes) > 0 else  "") + \
+                    ("Storage Units:\n" + outside_storages if len(outside_storages) > 0 else "") 
+            
+            node_items = "WARNING 221220.0336:\nPoints with no coordinates or outside the domain:\n\n" + node_items
             msgBox = QMessageBox()
             msgBox.setIcon(QMessageBox.Warning)
-            msgBox.setWindowTitle("Storm Drain points outside domain")
-            msgBox.setText("WARNING 221220.0336:")
-            msgBox.setInformativeText("The following Storm Drain points are outside the domain:")
-            msgBox.setDetailedText(outside_nodes)
-            msgBox.setStandardButtons(QMessageBox.Ok)
-            msgBox.exec_()
+            msgBox.setWindowTitle("Problematic Storm Drain points")
+            msgBox.setStandardButtons(QMessageBox.Close)  # Close button instead of OK
+            layout = QHBoxLayout()
+            label = QLabel(node_items)
+            layout.addWidget(label)
+            msgBox.layout().addWidget(label)           
+            msgBox.exec_()   
 
-        if outside_conduits != "":
+        link_items = outside_conduits + outside_pumps + outside_orifices +  outside_weirs 
+        if len(link_items) > 0:
+            link_items = ("Conduits:\n"  + outside_conduits if len(outside_conduits) > 0 else  "") + \
+                    ("Pumps:\n" + outside_pumps if len(outside_pumps) > 0 else "") + \
+                    ("Orifices:\n" + outside_orifices if len(outside_orifices) > 0 else "") + \
+                    ("Weirs:\n" + outside_weirs  if len(outside_weirs) > 0 else "")  
+
+            link_items = "WARNING 221220.0337:\nThe following links extend outside the domain:\n\n" + link_items                                          
             msgBox = QMessageBox()
             msgBox.setIcon(QMessageBox.Warning)
-            msgBox.setWindowTitle("Storm Drain conduits outside domain")
-            msgBox.setText("WARNING 221220.0337:")
-            msgBox.setInformativeText("The following Conduits are outside the domain:")
-            msgBox.setDetailedText(outside_conduits)
-            msgBox.setStandardButtons(QMessageBox.Ok)
-            msgBox.exec_()
-
-        if outside_pumps != "":
-            msgBox = QMessageBox()
-            msgBox.setIcon(QMessageBox.Warning)
-            msgBox.setWindowTitle("Storm Drain pumps outside domain")
-            msgBox.setText("WARNING 050322.0522:")
-            msgBox.setInformativeText("The following Pumps are outside the domain:")
-            msgBox.setDetailedText(outside_pumps)
-            msgBox.setStandardButtons(QMessageBox.Ok)
-            msgBox.exec_()
-
-        if outside_orifices != "":
-            msgBox = QMessageBox()
-            msgBox.setIcon(QMessageBox.Warning)
-            msgBox.setWindowTitle("Storm Drain orifices outside domain")
-            msgBox.setText("WARNING 080422.0522:")
-            msgBox.setInformativeText("The following Orifices are outside the domain:")
-            msgBox.setDetailedText(outside_orifices)
-            msgBox.setStandardButtons(QMessageBox.Ok)
-            msgBox.exec_()
-
-
-        if outside_weirs != "":
-            msgBox = QMessageBox()
-            msgBox.setIcon(QMessageBox.Warning)
-            msgBox.setWindowTitle("Storm Drain weirs outside domain")
-            msgBox.setText("WARNING 211123.0639:")
-            msgBox.setInformativeText("The following Weirs are outside the domain:")
-            msgBox.setDetailedText(outside_weirs)
-            msgBox.setStandardButtons(QMessageBox.Ok)
+            msgBox.setWindowTitle("Storm Drain links outside domain")
+            msgBox.setStandardButtons(QMessageBox.Close)  # Close button instead of OK
+            layout = QHBoxLayout()
+            label = QLabel(link_items)
+            layout.addWidget(label)
+            msgBox.layout().addWidget(label)           
             msgBox.exec_()
 
         if storm_drain.status_report:
             result2 = ScrollMessageBox2(QMessageBox.Warning, "Storm Drain import status", storm_drain.status_report)
             result2.exec_()
+            
+        if skipped_inlets != 0:
+            self.uc.show_warn("File " + Path(swmm_file).name + " has [SUBCATCHMENTS].\n\n" + 
+                              str(skipped_inlets) + " inlets with 'I' or 'i' name prefix were skipped.\n\n"
+                              "WARNING: there may be conduits that reference those inlets.")                
 
         self.populate_pump_curves_combo(False)
         self.pump_curve_cbo.blockSignals(True)
         self.update_pump_curve_data()
         self.pump_curve_cbo.blockSignals(False)
-
+        
+        QApplication.restoreOverrideCursor()
         return True
 
     def import_INP_action(self):
@@ -2234,11 +2530,13 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
 
             swmm_file = swmm_dir + r"\SWMM.INP"
             if os.path.isfile(swmm_file):
+                QApplication.setOverrideCursor(Qt.ArrowCursor)
                 if not self.uc.question("SWMM.INP already exists.\n\n" + "Would you like to replace it?"):
+                    QApplication.restoreOverrideCursor()
                     return
                 else:
                     pass
-
+                QApplication.restoreOverrideCursor()
             s.setValue("FLO-2D/lastGdsDir", os.path.dirname(swmm_file))
             s.setValue("FLO-2D/lastSWMMDir", os.path.dirname(swmm_file))
             last_dir = s.value("FLO-2D/lastGdsDir", "")
@@ -2417,6 +2715,70 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                     except Exception as e:
                         QApplication.restoreOverrideCursor()
                         self.uc.show_error("ERROR 070618.1619: error while exporting [OUTFALLS] to .INP file!", e)
+                        return
+
+                    # INP STORAGE ###################################################
+                    try:
+                        SD_storages_sql = """SELECT name, invert_elev, max_depth, init_depth, storage_curve,
+                                                    coefficient, exponent, constant, ponded_area, 
+                                                    evap_factor, suction_head, conductivity, initial_deficit, curve_name, infiltration
+                                             FROM user_swmm_storage_units;"""
+
+                        storages_rows = self.gutils.execute(SD_storages_sql).fetchall()
+                        if not storages_rows:
+                            pass
+                        else:
+                            swmm_inp_file.write("\n")
+                            swmm_inp_file.write("\n[STORAGE]")
+                            swmm_inp_file.write("\n;;               Invert   Max.     Init.    Storage    Curve                      Ponded   Evap.")
+                            swmm_inp_file.write("\n;;Name           Elev.    Depth    Depth    Curve      Params                     Area     Frac.    Infiltration Parameters")
+                            swmm_inp_file.write("\n;;-------------- -------- -------- -------- ---------- -------- -------- -------- -------- -------- -----------------------")
+
+                            line_functional_with_infil = "\n{0:16} {1:<8} {2:<8} {3:<8} {4:<10} {5:<8} {6:<8} {7:<8} {8:<8} {9:<8} {10:<8} {11:<8} {12:<8}"
+                            line_tabular_with_infil = "\n{0:16} {1:<8} {2:<8} {3:<8} {4:<10} {5:<26} {6:<8} {7:<8} {8:<8} {9:<8} {10:<8}"
+                            line_functional_no_infil = "\n{0:16} {1:<8} {2:<8} {3:<8} {4:<10} {5:<8} {6:<8} {7:<8} {8:<8} {9:<8}"
+                            line_tabular_no_infil = "\n{0:16} {1:<8} {2:<8} {3:<8} {4:<10} {5:<26} {6:<8} {7:<8}"
+
+                            for row in storages_rows:
+                                lrow = list(row)
+                                lrow = [
+                                    lrow[0],
+                                    0 if lrow[1] is None else '%g'%lrow[1],
+                                    0 if lrow[2] is None else '%g'%lrow[2],
+                                    0 if lrow[3] is None else '%g'%lrow[3],
+                                    "FUNCTIONAL" if lrow[4] is None else lrow[4],
+                                    0 if lrow[5] is None else '%g'%lrow[5],
+                                    0 if lrow[6] is None else '%g'%lrow[6],
+                                    0 if lrow[7] is None else '%g'%lrow[7],
+                                    0 if lrow[8] is None else '%g'%lrow[8],
+                                    0 if lrow[9] is None else '%g'%lrow[9],
+                                    0 if lrow[10] is None else '%g'%lrow[10],
+                                    0 if lrow[11] is None else '%g'%lrow[11],
+                                    0 if lrow[12] is None else '%g'%lrow[12],
+                                    lrow[13],
+                                    lrow[14]
+                                ]
+                                if lrow[4] == "FUNCTIONAL": 
+                                    if lrow[14]== "True":
+                                        swmm_inp_file.write(line_functional_with_infil.format(lrow[0], lrow[1], lrow[2], lrow[3], lrow[4], lrow[5],
+                                                                    lrow[6], lrow[7], lrow[8], lrow[9], 
+                                                                    lrow[10], lrow[11], lrow[12]))
+                                    else:
+                                        swmm_inp_file.write(line_functional_no_infil.format(lrow[0], lrow[1], lrow[2], lrow[3], lrow[4], lrow[5],
+                                                                    lrow[6], lrow[7], lrow[8], lrow[9]))                                         
+                                            
+                                else:
+                                    if lrow[14]=="True":
+                                        swmm_inp_file.write(line_tabular_with_infil.format(lrow[0], lrow[1], lrow[2], lrow[3], lrow[4],
+                                                                lrow[13], lrow[8], lrow[9], 
+                                                                lrow[10], lrow[11], lrow[12]))
+                                    else:    
+                                        swmm_inp_file.write(line_tabular_no_infil.format(lrow[0], lrow[1], lrow[2], lrow[3], lrow[4],
+                                                                lrow[13], lrow[8], lrow[9]))                                        
+
+                    except Exception as e:
+                        QApplication.restoreOverrideCursor()
+                        self.uc.show_error("ERROR 160224.0541: error while exporting [STORAGE] to .INP file!", e)
                         return
 
                     # INP CONDUITS ###################################################
@@ -2680,7 +3042,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                                     0.0 if lrow[3] == "?" else 0.0 if lrow[1] == "CIRCULAR" else lrow[3],
                                     0.0,
                                     0.0,
-                                    0,
+                                    " ",
                                 )
                                 row = tuple(lrow)
                                 swmm_inp_file.write(line.format(*row))
@@ -2716,7 +3078,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                                     0.0 if lrow[3] == "?" else 0.0 if lrow[1] == "CIRCULAR" else lrow[3],
                                     0.0 if lrow[4] == "?" else lrow[4],
                                     0.0 if lrow[5] == "?" else lrow[5],
-                                    0,
+                                    " ",
                                 )
                                 row = tuple(lrow)
                                 swmm_inp_file.write(line.format(*row))
@@ -2890,7 +3252,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                                                             date, 
                                                             time,
                                                             value
-                                          FROM swmm_time_series_data WHERE time_series_name = ? ORDER BY fid;"""
+                                          FROM swmm_time_series_data WHERE time_series_name = ?;"""
 
                         line1 = "\n;{0:16}"
                         line2 = "\n{0:16} {1:<10} {2:<50}"
@@ -2921,7 +3283,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                                         description = [row[1]]
                                         swmm_inp_file.write(line1.format(*description))
                                         for data in time_series_data:
-                                            date = data[0] if data[0] is not None else "00/00/0000"
+                                            date = data[0] if data[0] is not None else "          "
                                             swmm_inp_file.write(
                                                 line3.format(
                                                     name if name is not None else " ",
@@ -3032,11 +3394,11 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                         swmm_inp_file.write("\n;;Node           X-Coord            Y-Coord ")
                         swmm_inp_file.write("\n;;-------------- ------------------ ------------------")
 
-                        SD_coordinates_sql = """SELECT name, ST_AsText(ST_Centroid(GeomFromGPB(geom)))
+                        SD_nodes_coords_sql = """SELECT name, ST_AsText(ST_Centroid(GeomFromGPB(geom)))
                                           FROM user_swmm_nodes ORDER BY fid;"""
 
                         line = "\n{0:16} {1:<18} {2:<18}"
-                        coordinates_rows = self.gutils.execute(SD_coordinates_sql).fetchall()
+                        coordinates_rows = self.gutils.execute(SD_nodes_coords_sql).fetchall()
                         if not coordinates_rows:
                             pass
                         else:
@@ -3044,6 +3406,19 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                                 x = row[:2][1].strip("POINT()").split()[0]
                                 y = row[:2][1].strip("POINT()").split()[1]
                                 swmm_inp_file.write(line.format(row[0], x, y))
+                                
+                        SD_storage_coords_sql = """SELECT name, ST_AsText(ST_Centroid(GeomFromGPB(geom)))
+                                          FROM user_swmm_storage_units ORDER BY fid;"""
+
+                        line = "\n{0:16} {1:<18} {2:<18}"
+                        coordinates_rows = self.gutils.execute(SD_storage_coords_sql).fetchall()
+                        if not coordinates_rows:
+                            pass
+                        else:
+                            for row in coordinates_rows:
+                                x = row[:2][1].strip("POINT()").split()[0]
+                                y = row[:2][1].strip("POINT()").split()[1]
+                                swmm_inp_file.write(line.format(row[0], x, y))                                
                     except Exception as e:
                         QApplication.restoreOverrideCursor()
                         self.uc.show_error("ERROR 070618.1623: error while exporting [COORDINATES] to .INP file!", e)
@@ -3064,7 +3439,6 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                         "GROUNDWATER",
                         "SNOWPACKS",
                         "DIVIDERS",
-                        "STORAGE",
                         "OUTLETS",
                         "TRANSECTS",
                         "POLLUTANTS",
@@ -3103,6 +3477,8 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                     + "\t[JUNCTIONS]\n"
                     + str(len(outfalls_rows))
                     + "\t[OUTFALLS]\n"
+                    + str(len(storages_rows))
+                    + "\t[STORAGE]\n"                    
                     + str(len(conduits_rows))
                     + "\t[CONDUITS]\n"
                     + str(len(pumps_rows))
@@ -3192,11 +3568,9 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             self.uc.bar_warn("No outfalls defined in 'Storm Drain Nodes' User Layer!")
             return
 
-        QApplication.setOverrideCursor(Qt.WaitCursor)
         dlg_outfalls = OutfallNodesDialog(self.iface, self.lyrs)
         dlg_outfalls.setWindowFlag(Qt.WindowMinimizeButtonHint, True)
         dlg_outfalls.setWindowFlag(Qt.WindowMaximizeButtonHint, True)
-        QApplication.restoreOverrideCursor()
         save = dlg_outfalls.exec_()
         if save:
             try:
@@ -3233,11 +3607,9 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             )
             return
 
-        QApplication.setOverrideCursor(Qt.WaitCursor)
         dlg_inlets = InletNodesDialog(self.iface, self.plot, self.SD_table, self.lyrs)
         dlg_inlets.setWindowFlag(Qt.WindowMinimizeButtonHint, True)
         dlg_inlets.setWindowFlag(Qt.WindowMaximizeButtonHint, True)
-        QApplication.restoreOverrideCursor()
 
         save = dlg_inlets.exec_()
         if save:
@@ -3254,6 +3626,34 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
 
         self.lyrs.clear_rubber()
 
+    def show_storage_units(self):
+        """
+        Shows storage_units_dialog dialog.
+
+        """
+        # See if table is empty:
+        if self.gutils.is_table_empty("user_swmm_storage_units"):
+            self.uc.show_warn(
+                'User Layer "Storm Drain Storage Units" is empty!\n\n'
+                + "Please import components from .INP file or shapefile, or convert from schematized Storm Drains."
+            )
+            return
+
+        dlg_storage = StorageUnitsDialog(self.iface, self.plot, self.SD_table, self.lyrs)
+        dlg_storage.setWindowFlag(Qt.WindowMinimizeButtonHint, True)
+        dlg_storage.setWindowFlag(Qt.WindowMaximizeButtonHint, True)
+        dlg_storage.select_curve_type()
+        
+        save = dlg_storage.exec_()
+        if save:
+            self.uc.bar_info("Storage Units saved to 'Storm Drain Storage Units' User Layer.")
+        elif not save:
+            pass
+        else:
+            self.uc.bar_warn("Could not save Inlets! Please check if they are correct.")
+        
+        self.lyrs.clear_rubber()
+
     def show_conduits(self):
         """
         Shows conduits dialog.
@@ -3267,11 +3667,9 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             )
             return
 
-        QApplication.setOverrideCursor(Qt.WaitCursor)
         dlg_conduits = ConduitsDialog(self.iface, self.lyrs)
         dlg_conduits.setWindowFlag(Qt.WindowMinimizeButtonHint, True)
         dlg_conduits.setWindowFlag(Qt.WindowMaximizeButtonHint, True)
-        QApplication.restoreOverrideCursor()
         save = dlg_conduits.exec_()
         if save:
             try:
@@ -3298,11 +3696,10 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 + "Please import components from .INP file or shapefile, or convert from schematized Storm Drains."
             )
             return
-        QApplication.setOverrideCursor(Qt.WaitCursor)
+
         dlg_pumps = PumpsDialog(self.iface, self.plot, self.SD_table, self.lyrs)
         dlg_pumps.setWindowFlag(Qt.WindowMinimizeButtonHint, True)
         dlg_pumps.setWindowFlag(Qt.WindowMaximizeButtonHint, True)
-        QApplication.restoreOverrideCursor()
         save = dlg_pumps.exec_()
         if save:
             try:
@@ -3330,11 +3727,9 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             )
             return
 
-        QApplication.setOverrideCursor(Qt.WaitCursor)
         dlg_orifices = OrificesDialog(self.iface, self.lyrs)
         dlg_orifices.setWindowFlag(Qt.WindowMinimizeButtonHint, True)
         dlg_orifices.setWindowFlag(Qt.WindowMaximizeButtonHint, True)
-        QApplication.restoreOverrideCursor()
         save = dlg_orifices.exec_()
         if save:
             try:
@@ -3362,11 +3757,9 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             )
             return
 
-        QApplication.setOverrideCursor(Qt.WaitCursor)
         dlg_weirs = WeirsDialog(self.iface, self.lyrs)
         dlg_weirs.setWindowFlag(Qt.WindowMinimizeButtonHint, True)
         dlg_weirs.setWindowFlag(Qt.WindowMaximizeButtonHint, True)
-        QApplication.restoreOverrideCursor()
         save = dlg_weirs.exec_()
         if save:
             try:
@@ -3381,58 +3774,38 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
 
         self.lyrs.clear_rubber()
 
-    def auto_assign_conduit_nodes(self):
-        self.auto_assign_link_nodes("Conduits", "conduit_inlet", "conduit_outlet")
+    # def auto_assign_conduit_nodes(self):
+    #     self.auto_assign_link_nodes("Conduits", "conduit_inlet", "conduit_outlet")
+    #
+    # def auto_assign_pump_nodes(self):
+    #     self.auto_assign_link_nodes("Pumps", "pump_inlet", "pump_outlet")
 
-    def auto_assign_pump_nodes(self):
-        self.auto_assign_link_nodes("Pumps", "pump_inlet", "pump_outlet")
-
-    def auto_assign_link_nodes(self, link_name, link_inlet, link_outlet):
-        """Auto assign Conduits, Pumps, orifices, or Weirs  (user layer) Inlet and Outlet names based on closest (5ft) nodes to their endpoints."""
+    def auto_assign_link_nodes(self, link_name, link_inlet, link_outlet, SD_all_nodes_layer):
+        """Auto assign Conduits, Pumps, orifices, or Weirs  (user layer) Inlet and Outlet names 
+           based on closest (5ft) nodes to their endpoints."""    
+       
+        no_inlet = ""
+        no_outlet = ""
+        tab = 20
+        layer = (
+            self.user_swmm_conduits_lyr
+            if link_name == "Conduits"
+            else self.user_swmm_pumps_lyr
+            if link_name == "Pumps"
+            else self.user_swmm_orifices_lyr
+            if link_name == "Orifices"
+            else self.user_swmm_weirs_lyr
+            if link_name == "Weirs"
+            else self.user_swmm_conduits_lyr
+        )        
+        
         try:
-            layer_name = (
-                "user_swmm_conduits"
-                if link_name == "Conduits"
-                else "user_swmm_pumps"
-                if link_name == "Pumps"
-                else "user_swmm_orifices"
-                if link_name == "Orifices"
-                else "user_swmm_weirs"
-                if link_name == "Weirs"
-                else ""
-            )
-
-            if self.gutils.is_table_empty(layer_name):
-                self.uc.show_warn(
-                    "User Layer "
-                    + link_name
-                    + " is empty!\n\n"
-                    + "Please import components from .INP file or shapefile, or convert from schematized Storm Drains."
-                )
-                return
-
-            proceed = self.uc.question("Do you want to overwrite " + link_name + " Inlet and Outlet nodes names?")
-            if not proceed:
-                return
-
             QApplication.setOverrideCursor(Qt.WaitCursor)
-            layer = (
-                self.user_swmm_conduits_lyr
-                if link_name == "Conduits"
-                else self.user_swmm_pumps_lyr
-                if link_name == "Pumps"
-                else self.user_swmm_orifices_lyr
-                if link_name == "Orifices"
-                else self.user_swmm_weirs_lyr
-                if link_name == "Weirs"
-                else self.user_swmm_conduits_lyr
-            )
-
             link_fields = layer.fields()
-
             link_inlet_fld_idx = link_fields.lookupField(link_inlet)
             link_outlet_fld_idx = link_fields.lookupField(link_outlet)
-            nodes_features, nodes_index = spatial_index(self.user_swmm_nodes_lyr)
+
+            nodes_features, nodes_index = spatial_index(SD_all_nodes_layer)
             buffer_distance, segments = 5.0, 5
             link_nodes = {}
             for feat in layer.getFeatures():
@@ -3462,26 +3835,47 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 end_nodes.sort(key=lambda f: f.geometry().distance(end_geom))
                 closest_inlet_feat = start_nodes[0] if start_nodes else None
                 closest_outlet_feat = end_nodes[0] if end_nodes else None
+                
                 if closest_inlet_feat is not None:
                     inlet_name = closest_inlet_feat["name"]
                 else:
-                    inlet_name = None
+                    no_inlet += f"{feat[2].ljust(tab, ' ')}{feat[1].ljust(tab, ' ')}{link_name.ljust(tab, ' ')}" + "\n"
+                    continue
+                    # inlet_name = feat[2] # Assign current inlet. 
+                    
                 if closest_outlet_feat is not None:
                     outlet_name = closest_outlet_feat["name"]
                 else:
-                    outlet_name = None
-                link_nodes[fid] = inlet_name, outlet_name
-
+                    no_outlet += f"{feat[3].ljust(tab, ' ')}{feat[1].ljust(tab, ' ')}{link_name.ljust(tab, ' ')}" + "\n"
+                    continue
+                    # outlet_name = feat[3] # Assign current outlet.
+    
+                link_nodes[fid] = inlet_name, outlet_name                  
+                
             layer.startEditing()
             for fid, (inlet_name, outlet_name) in link_nodes.items():
                 layer.changeAttributeValue(fid, link_inlet_fld_idx, inlet_name)
                 layer.changeAttributeValue(fid, link_outlet_fld_idx, outlet_name)
             layer.commitChanges()
             layer.triggerRepaint()
+            
             QApplication.restoreOverrideCursor()
-            self.uc.show_info(
-                "Inlet and Outlet node names successfully assigned to " + str(len(link_nodes)) + " " + link_name + "!"
-            )
+            
+            msg ="Inlet and Outlet nodes assigned to " + str(len(link_nodes)) + " " + link_name + "!"
+            self.auto_assign_msg +="* " + str(len(link_nodes)) + " " + link_name + "" + "\n"
+            QgsMessageLog.logMessage(msg,level=Qgis.Info, )
+            
+            hyphens = '-' * 50
+            if no_inlet:
+                self.no_nodes = f"{'Inlet Name '.ljust(tab, ' ')}{'Link Name  '.ljust(tab, ' ')}{'Link Type  '.ljust(tab, ' ')}" + "\n" + \
+                           f"{hyphens.ljust(tab, ' ')}" + "\n" + no_inlet
+            if no_outlet:
+                header = f"{'Outlet Name'.ljust(tab, ' ')}{'Link Name  '.ljust(tab, ' ')}{'Link Type  '.ljust(tab, ' ')}" + "\n" 
+                if self.no_nodes == "":
+                    self.no_nodes = header + f"{hyphens.ljust(tab, ' ')}" + no_outlet
+                else: 
+                    self.no_nodes += "\n" + header + f"{hyphens.ljust(tab, ' ')}" + no_outlet      
+           
         except Exception as e:
             QApplication.restoreOverrideCursor()
             self.uc.show_error("ERROR 210322.0429: Couldn't assign " + link_name + " nodes!", e)
@@ -4041,7 +4435,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
 
         except Exception as e:
             QApplication.restoreOverrideCursor()
-            self.uc.bar_error("Reading .RPT file failed!", e)
+            self.uc.bar_error("Reading .RPT file failed!")
             return False
 
     def create_SD_discharge_table_and_plots(self, intersection=None):
@@ -4211,7 +4605,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
 
         except Exception as e:
             QApplication.restoreOverrideCursor()
-            self.uc.bar_error("Reading .RPT file failed!", e)
+            self.uc.bar_error("Reading .RPT file failed!")
             return False
 
     def block_saving(self):
@@ -4439,10 +4833,11 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             self.inlet_data_model.setHorizontalHeaderLabels(["CDDIAMETER", "TYPEC", "TYPEEN", "CUBASE", "MULTBARRELS"])
             self.d1, self.d2= [[], []]
     
-            items = [StandardItem("{:.4f}".format(x)) if x is not None else StandardItem("") for x in in_culvert]
+            items = [StandardItem("{:.4f}".format(x)) if type(x) is float else 
+                    StandardItem("{}".format(x)) if type(x) is int else                     
+                     StandardItem("") for x in in_culvert]
+    
             self.inlet_data_model.appendRow(items)
-            # self.d1.append(row[0] if not row[0] is None else float("NaN"))
-            # self.d2.append(row[1] if not row[1] is None else float("NaN"))
     
             rc = self.inlet_data_model.rowCount()
             if rc < 500:
@@ -4699,6 +5094,8 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             self.show_inlets()
         elif idx == 2:
             self.show_outfalls()
+        elif idx == 3:
+            self.show_storage_units()                
 
         self.SD_nodes_components_cbo.setCurrentIndex(0)
 
@@ -4715,21 +5112,68 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
 
         self.SD_links_components_cbo.setCurrentIndex(0)
 
-    def auto_assign_changed(self):
-        idx = self.SD_auto_assign_link_nodes_cbo.currentIndex()
-        if idx == 1:
-            self.auto_assign_link_nodes("Conduits", "conduit_inlet", "conduit_outlet")
-        elif idx == 2:
-            self.auto_assign_link_nodes("Pumps", "pump_inlet", "pump_outlet")
-        elif idx == 3:
-            self.auto_assign_link_nodes("Orifices", "orifice_inlet", "orifice_outlet")
-        elif idx == 4:
-            self.auto_assign_link_nodes("Weirs", "weir_inlet", "weir_outlet")
-        elif idx == 5:
-            pass
+    def auto_assign(self):
+              
+        if self.gutils.is_table_empty("user_swmm_conduits") and self.gutils.is_table_empty("user_swmm_pumps") and \
+            self.gutils.is_table_empty("user_swmm_orifices") and self.gutils.is_table_empty("user_swmm_weirs"):
+            
+            self.uc.show_info("There are no links defined!")
+            return
+        
+        if not self.uc.question("Do you want to overwrite Inlet and Outlet node names\n" + 
+                                   "for all conduits, pumps, orifices, and weirs?"):
+            return
+        
+        try:
+            layer1 = QgsProject.instance().mapLayersByName('Storm Drain Nodes')[0]
+            layer2 = QgsProject.instance().mapLayersByName('Storm Drain Storage Units')[0]
+            
+            # Create a new memory layer for point geometries
+            SD_all_nodes_layer = QgsVectorLayer("Point", 'SD All Points', 'memory')
+            
+            
+            fields = QgsFields()
+            fields.append(QgsField('name', QVariant.String))
+            
+            pr = SD_all_nodes_layer.dataProvider()
+            
+            pr.addAttributes(fields)
+            SD_all_nodes_layer.updateFields()
+    
+            # Iterate through features and add point geometries
+            for layer in [layer1, layer2]:
+                for feature in layer.getFeatures():
+                    point_geometry = feature.geometry()
+                    new_feature = QgsFeature(fields)
+                    new_feature.setGeometry(point_geometry)
+                    new_feature['name'] = feature['name']
+                    pr.addFeatures([new_feature])      
+            
+            # Add the new layer to the map
+            QgsProject.instance().addMapLayer(SD_all_nodes_layer)
+            
+            self.auto_assign_msg = ""
+            self.no_nodes = ""
+            self.inlet_not_found = []
+            self.outlet_not_found = []        
+            self.auto_assign_link_nodes("Conduits", "conduit_inlet", "conduit_outlet", SD_all_nodes_layer)
+            self.auto_assign_link_nodes("Pumps", "pump_inlet", "pump_outlet", SD_all_nodes_layer)
+            self.auto_assign_link_nodes("Orifices", "orifice_inlet", "orifice_outlet", SD_all_nodes_layer)
+            self.auto_assign_link_nodes("Weirs", "weir_inlet", "weir_outlet", SD_all_nodes_layer)
+            if self.no_nodes != "":
+                    self.uc.show_msg("The following nodes (inlets or outlets) could not be found for the indicated links:\n\n" + self.no_nodes, 600, "error") 
+            
+            self.uc.show_info("Inlet and Outlet nodes successfully assigned to:\n\n" + self.auto_assign_msg)
 
-        self.SD_auto_assign_link_nodes_cbo.setCurrentIndex(0)
-
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.uc.bar_error("Auto-assign link nodes failed!")
+            return False    
+        finally:    
+            # Remove temporary layer:
+            QgsProject.instance().removeMapLayer(SD_all_nodes_layer)
+            del SD_all_nodes_layer
+        
     def SD_add_one_type4(self):
         self.add_single_rtable()
 
@@ -4770,7 +5214,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             name_qry = "UPDATE swmmflo_culvert SET name =  'CulvertEq' || cast(fid as text) WHERE fid = ?;"
             self.gutils.execute(name_qry, (rowid,))
             qry = "UPDATE swmmflo_culvert SET cdiameter = ?, typec = ?, typeen = ?, cubase = ?, multbarrels = ? WHERE fid = ?;"
-            self.gutils.execute(qry, (0,0,0,0,1,rowid))
+            self.gutils.execute(qry, (0.0,0,0,0.0,1,rowid))
             
             newCulvert= "Culvert Eq. {}".format(rowid)
             self.populate_type4_combo()
@@ -4967,10 +5411,10 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             
             sql = "UPDATE swmmflo_culvert SET cdiameter=?, typec=?, typeen=?, cubase=?, multbarrels=? WHERE name = ?;"
             
-            cdiameter = self.inlet_data_model.data(self.inlet_data_model.index(0, 0), Qt.DisplayRole)
+            cdiameter = self.inlet_data_model.data(self.inlet_data_model.index(0.0, 0), Qt.DisplayRole)
             typec = self.inlet_data_model.data(self.inlet_data_model.index(0, 1), Qt.DisplayRole)
             typeen = self.inlet_data_model.data(self.inlet_data_model.index(0, 2), Qt.DisplayRole)
-            cubase = self.inlet_data_model.data(self.inlet_data_model.index(0, 3), Qt.DisplayRole)
+            cubase = self.inlet_data_model.data(self.inlet_data_model.index(0.0, 3), Qt.DisplayRole)
             multbarrels = self.inlet_data_model.data(self.inlet_data_model.index(0, 4), Qt.DisplayRole)
             
             self.gutils.execute(sql , (cdiameter ,typec ,typeen ,cubase ,multbarrels, name))
@@ -5343,4 +5787,3 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             index = self.end_node_cbo.findText(name)
             if index != -1:
                 self.end_node_cbo.setCurrentIndex(index)
-

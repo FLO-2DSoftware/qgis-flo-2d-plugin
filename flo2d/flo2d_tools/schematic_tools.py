@@ -1169,7 +1169,7 @@ class ChannelsSchematizer(GeoPackageUtils):
 
     def create_schematized_channels(self):
         """
-        Schematizing banks and cross section.
+        Schematizing banks and cross-section.
         """
 
         nxsecnum = []
@@ -1228,7 +1228,14 @@ class ChannelsSchematizer(GeoPackageUtils):
                 if self.grid_on_point(line_start.x(), line_start.y()) != self.grid_on_point(xs_end.x(), xs_end.y()):
                     msg = "WARNING 060319.1823: Right bank line ({}) and first cross-section ({}) must start in the same grid cell, and intersect!"
                     msg = msg.format(left_bank_feature.attributes()[1], first_xs.attributes()[3])
+                    expression = "{} = '{}'".format('name', first_xs.attributes()[3])
+                    features = self.user_xsections_lyr.getFeatures(expression)
+                    for feature in features:
+                        self.user_xsections_lyr.selectByIds([feature.id()])
+                        self.iface.mapCanvas().zoomToSelected(self.user_xsections_lyr)
+                        break
                     self.uc.show_warn(msg)
+                    self.uc.log_info(msg)
                     raise Exception
 
             feat_xs.append((left_bank_feature, right_bank_feature, sorted_xs))
@@ -1237,10 +1244,18 @@ class ChannelsSchematizer(GeoPackageUtils):
                     nxsecnum.append(xs.attribute("fid"))
 
         if len(found_right_bank_feature_id) != self.user_rbank_lyr.featureCount():
-            self.uc.show_warn(
-                "WARNING 060319.1633: At least one right bank was not used,\n"
-                " schematize channel will continue but check your user layers."
-            )
+            rb_not_used = []
+            for rb in self.user_rbank_lyr.getFeatures():
+                if rb.id() not in found_right_bank_feature_id:
+                    rb_not_used.append(rb.id())
+            ids_adjusted = ' - '.join([str(id) for id in rb_not_used])
+            message = f"WARNING 060319.1633: The following right bank(s) were not used: \n\n" \
+                      f"FID {ids_adjusted}\n\n" \
+                      f"Schematize channel will continue but check your user layers."
+            self.uc.show_warn(message)
+            self.uc.log_info(message)
+            self.user_rbank_lyr.selectByIds([rb_not_used[0]])
+            self.iface.mapCanvas().zoomToSelected(self.user_rbank_lyr)
 
         # schematized banks (left bank and right bank if exists and is valid)
         self.clear_tables("chan", "chan_elems", "rbank", "chan_confluences")

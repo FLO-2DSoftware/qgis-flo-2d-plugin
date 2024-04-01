@@ -36,8 +36,9 @@ from subprocess import (
 )
 
 import pip
+from qgis.PyQt import QtCore, QtGui
 from PyQt5.QtGui import QFont
-from PyQt5.QtWidgets import QApplication, QToolButton
+from PyQt5.QtWidgets import QApplication, QToolButton, QProgressDialog
 from osgeo import gdal
 from qgis._core import QgsMessageLog, QgsCoordinateReferenceSystem, QgsMapSettings, QgsProjectMetadata, \
     QgsMapRendererParallelJob, QgsLayerTreeLayer, QgsVectorLayerExporter, QgsVectorFileWriter, QgsVectorLayer, \
@@ -116,6 +117,7 @@ from .gui.plot_widget import PlotWidget
 from .gui.storm_drain_editor_widget import StormDrainEditorWidget
 from .gui.table_editor_widget import TableEditorWidget
 from .layers import Layers
+from .misc.invisible_lyrs_grps import InvisibleLayersAndGroups
 from .user_communication import UserCommunication
 from .utils import get_flo2dpro_version
 
@@ -170,6 +172,7 @@ class Flo2D(object):
         self.con = None
         self.iface.f2d["con"] = self.con
         self.lyrs = Layers(iface)
+        self.ilg = InvisibleLayersAndGroups(self.iface)
         self.lyrs.group = None
         self.gutils = None
         self.f2g = None
@@ -806,6 +809,7 @@ class Flo2D(object):
             s = QSettings()
             s.setValue("FLO-2D/last_flopro_project", os.path.dirname(gpkg_path_adj))
             s.setValue("FLO-2D/lastGdsDir", os.path.dirname(gpkg_path_adj))
+            s.setValue("FLO-2D/advanced_layers", False)
 
             contact = dlg_settings.lineEdit_au.text()
             email = dlg_settings.lineEdit_co.text()
@@ -1060,7 +1064,7 @@ class Flo2D(object):
                 else:
                     not_added.append(layer.name())
 
-        QApplication.restoreOverrideCursor()
+        QApplication.setOverrideCursor(QtGui.QCursor(QtCore.Qt.ArrowCursor))
 
         if len(not_added) > 0:
             layers_not_added = ', '.join(map(str, not_added))
@@ -1077,7 +1081,6 @@ class Flo2D(object):
         self.dlg_gpkg_management = GpkgManagementDialog(self.iface, self.lyrs, self.gutils)
         self.dlg_gpkg_management.show()
 
-
     def run_settings(self):
         """
         Function to set the run settings: FLO-2D and Project folders
@@ -1089,19 +1092,87 @@ class Flo2D(object):
         if not ok:
             return
         else:
-            flo2d_dir, project_dir = dlg.get_parameters()
-            s = QSettings()
-            s.setValue("FLO-2D/lastGdsDir", project_dir)
-            s.setValue("FLO-2D/last_flopro", flo2d_dir)
 
-            if project_dir != "" and flo2d_dir != "":
-                s.setValue("FLO-2D/run_settings", True)
-                flo2d_v = get_flo2dpro_version(s.value("FLO-2D/last_flopro") + "/FLOPRO.exe")
-                self.gutils.set_metadata_par("FLO-2D_V", flo2d_v)
+            flopro_found = False
 
-            self.f2d_plot.clear()
-            self.uc.bar_info("Run Settings saved!")
-            self.uc.log_info(f"Run Settings saved!\nProject Folder: {project_dir}\nFLO-2D Folder: {flo2d_dir}")
+            # Project is loaded
+            if self.gutils:
+                flo2d_dir, project_dir, advanced_layers = dlg.get_parameters()
+                s = QSettings()
+                s.setValue("FLO-2D/lastGdsDir", project_dir)
+                s.setValue("FLO-2D/last_flopro", flo2d_dir)
+                if advanced_layers != s.value("FLO-2D/advanced_layers", ""):
+                    # show advanced layers
+                    if advanced_layers:
+                        lyrs = self.lyrs.data
+                        for key, value in lyrs.items():
+                            group = value.get("sgroup")
+                            subsubgroup = value.get("ssgroup")
+                            self.ilg.unhideLayer(self.lyrs.data[key]["qlyr"])
+                            self.ilg.unhideGroup(group)
+                            self.ilg.unhideGroup(subsubgroup, group)
+                    # hide advanced layers
+                    else:
+                        lyrs = self.lyrs.data
+                        for key, value in lyrs.items():
+                            advanced = value.get("advanced")
+                            if advanced:
+                                subgroup = value.get("sgroup")
+                                subsubgroup = value.get("ssgroup")
+                                self.ilg.hideLayer(self.lyrs.data[key]["qlyr"])
+                                if subsubgroup == "Gutters" or subsubgroup == "Multiple Channels" or subsubgroup == "Streets":
+                                    self.ilg.hideGroup(subsubgroup, subgroup)
+                                else:
+                                    self.ilg.hideGroup(subgroup)
+                s.setValue("FLO-2D/advanced_layers", advanced_layers)
+
+                if project_dir != "" and flo2d_dir != "":
+                    s.setValue("FLO-2D/run_settings", True)
+
+                    flopro_dir = s.value("FLO-2D/last_flopro")
+                    flo2d_v = "FLOPRO not found"
+                    # Check for FLOPRO.exe
+                    if os.path.isfile(flopro_dir + "/FLOPRO.exe"):
+                        flopro_found = True
+                        flo2d_v = get_flo2dpro_version(flopro_dir + "/FLOPRO.exe")
+                    # Check for FLOPRO_Demo.exe
+                    elif os.path.isfile(flopro_dir + "/FLOPRO_Demo.exe"):
+                        flopro_found = True
+                        flo2d_v = get_flo2dpro_version(flopro_dir + "/FLOPRO_Demo.exe")
+                    else:
+                        flopro_found = False
+
+                    self.gutils.set_metadata_par("FLO-2D_V", flo2d_v)
+
+                self.f2d_plot.clear()
+
+            # Project not loaded
+            else:
+                flo2d_dir, project_dir, _ = dlg.get_parameters()
+                s = QSettings()
+                s.setValue("FLO-2D/lastGdsDir", project_dir)
+                s.setValue("FLO-2D/last_flopro", flo2d_dir)
+
+                if project_dir != "" and flo2d_dir != "":
+                    s.setValue("FLO-2D/run_settings", True)
+
+                    flopro_dir = s.value("FLO-2D/last_flopro")
+                    # Check for FLOPRO.exe
+                    if os.path.isfile(flopro_dir + "/FLOPRO.exe"):
+                        flopro_found = True
+                    # Check for FLOPRO_Demo.exe
+                    elif os.path.isfile(flopro_dir + "/FLOPRO_Demo.exe"):
+                        flopro_found = True
+                    else:
+                        flopro_found = False
+
+            if flopro_found:
+                self.uc.bar_info("Run Settings saved!")
+                self.uc.log_info(f"Run Settings saved!\nProject Folder: {project_dir}\nFLO-2D Folder: {flo2d_dir}")
+            else:
+                self.uc.bar_warn("Run Settings saved! No FLOPRO.exe found, check your FLO-2D installation folder!")
+                self.uc.log_info(f"Run Settings saved! No FLOPRO.exe found, check your FLO-2D installation "
+                                 f"folder!\nProject Folder: {project_dir}\nFLO-2D Folder: {flo2d_dir}")
 
     @connection_required
     def quick_run_flopro(self):
@@ -1290,22 +1361,61 @@ class Flo2D(object):
                         self.uc.show_info(info)
 
             QApplication.restoreOverrideCursor()
-            if s.value("FLO-2D/last_flopro") is not None:
-                flo2d_v = get_flo2dpro_version(s.value("FLO-2D/last_flopro") + "/FLOPRO.exe")
-                self.gutils.set_metadata_par("FLO-2D_V", flo2d_v)
+            flopro_dir = s.value("FLO-2D/last_flopro")
+            flo2d_v = "FLOPRO not found"
+            program = None
+            if flopro_dir is not None:
+                # Check for FLOPRO.exe
+                if os.path.isfile(flopro_dir + "/FLOPRO.exe"):
+                    flo2d_v = get_flo2dpro_version(flopro_dir + "/FLOPRO.exe")
+                    self.gutils.set_metadata_par("FLO-2D_V", flo2d_v)
+                    program = "FLOPRO.exe"
+                # Check for FLOPRO_Demo.exe
+                elif os.path.isfile(flopro_dir + "/FLOPRO_Demo.exe"):
+                    flo2d_v = get_flo2dpro_version(flopro_dir + "/FLOPRO_Demo.exe")
+                    self.gutils.set_metadata_par("FLO-2D_V", flo2d_v)
+                    program = "FLOPRO_Demo.exe"
             else:
                 self.run_settings()
-            self.run_program("FLOPRO.exe")
+
+            if program:
+                self.uc.bar_info(f"Running {program}...")
+                self.uc.log_info(f"Running {program}...")
+                self.run_program(program)
+            else:
+                self.uc.bar_warn("No FLOPRO.exe found, check your FLO-2D installation folder!")
+                self.uc.log_info("No FLOPRO.exe found, check your FLO-2D installation folder!")
 
     def run_flopro(self):
         self.uncheck_all_info_tools()
         s = QSettings()
-        if s.value("FLO-2D/last_flopro") is not None:
-            flo2d_v = get_flo2dpro_version(s.value("FLO-2D/last_flopro") + "/FLOPRO.exe")
-            self.gutils.set_metadata_par("FLO-2D_V", flo2d_v)
+        flopro_dir = s.value("FLO-2D/last_flopro")
+        flo2d_v = "FLOPRO not found"
+        user_program = None
+        # Check if the FLOPRO directory is in the FLO-2D Settings
+        if flopro_dir is not None:
+            # Check if the user has the FLOPRO version
+            if os.path.isfile(flopro_dir + "/FLOPRO.exe"):
+                flo2d_v = get_flo2dpro_version(flopro_dir + "/FLOPRO.exe")
+                user_program = "FLOPRO.exe"
+            # Check for the FLOPRO_Demo
+            elif os.path.isfile(flopro_dir + "/FLOPRO_Demo.exe"):
+                flo2d_v = get_flo2dpro_version(flopro_dir + "/FLOPRO_Demo.exe")
+                user_program = "FLOPRO_Demo.exe"
+
+            # Only add to metadata if there is a project loaded, otherwise just run FLOPRO
+            if self.gutils:
+                self.gutils.set_metadata_par("FLO-2D_V", flo2d_v)
         else:
             self.run_settings()
-        self.run_program("FLOPRO.exe")
+
+        if user_program:
+            self.uc.bar_info(f"Running {user_program}...")
+            self.uc.log_info(f"Running {user_program}...")
+            self.run_program(user_program)
+        else:
+            self.uc.bar_warn("No FLOPRO.exe found, check your FLO-2D installation folder!")
+            self.uc.log_info("No FLOPRO.exe found, check your FLO-2D installation folder!")
 
     def run_tailingsdambreach(self):
         self.uncheck_all_info_tools()
@@ -1540,7 +1650,18 @@ class Flo2D(object):
 
     def call_IO_methods_hdf5(self, calls, debug, *args):
         self.f2g.parser.write_mode = "w"
+
+        progDialog = QProgressDialog("Exporting to HDF5...", None, 0, len(calls))
+        progDialog.setModal(True)
+        progDialog.setValue(0)
+        progDialog.show()
+        i = 0
+
         for call in calls:
+            i += 1
+            progDialog.setValue(i)
+            progDialog.setLabelText(call)
+            QApplication.processEvents()
             method = getattr(self.f2g, call)
             try:
                 method(*args)
@@ -1550,6 +1671,7 @@ class Flo2D(object):
                     self.uc.log_info(traceback.format_exc())
                 else:
                     raise
+
         self.f2g.parser.write_mode = "w"
 
     def call_IO_methods_dat(self, calls, debug, *args):
@@ -1561,6 +1683,7 @@ class Flo2D(object):
         if calls[0] == "export_cont_toler":
             self.files_used = "CONT.DAT\n"
 
+        QApplication.setOverrideCursor(Qt.WaitCursor)
         for call in calls:
             if call == "export_bridge_xsec":
                 dat = "BRIDGE_XSEC.DAT"
@@ -1858,6 +1981,15 @@ class Flo2D(object):
                         "swmmflort",
                         "swmmflort_data",
                         "swmmoutf",
+                        "swmmflo_culvert",
+                        "swmm_inflows",
+                        "swmm_inflow_patterns",
+                        "swmm_time_series",
+                        "swmm_time_series_data",
+                        "swmm_tidal_curve",
+                        "swmm_tidal_curve_data",
+                        "swmm_pumps_curve_data",
+                        "swmm_other_curves",
                         "tolspatial",
                         "tolspatial_cells",
                         "user_bc_lines",
@@ -1886,6 +2018,7 @@ class Flo2D(object):
                         "user_swmm_orifices",
                         "user_swmm_weirs",
                         "user_swmm_nodes",
+                        "user_swmm_storage_units",
                         "user_xsec_n_data",
                         "user_xsections",
                         "wstime",
@@ -1962,7 +2095,7 @@ class Flo2D(object):
                     else:
                         cell = self.gutils.execute("SELECT col FROM grid WHERE fid = 1").fetchone()
                         if cell[0] == NULL:
-                            QApplication.restoreOverrideCursor()
+                            QApplication.setOverrideCursor(QtGui.QCursor(QtCore.Qt.ArrowCursor))
                             proceed = self.uc.question(
                                 "Grid layer's fields 'col' and 'row' have NULL values!\n\nWould you like to assign them?"
                             )
@@ -1973,13 +2106,13 @@ class Flo2D(object):
                             else:
                                 return
 
-                    QApplication.restoreOverrideCursor()
+                    QApplication.setOverrideCursor(QtGui.QCursor(QtCore.Qt.ArrowCursor))
 
                 except Exception as e:
-                    QApplication.restoreOverrideCursor()
+                    QApplication.setOverrideCursor(QtGui.QCursor(QtCore.Qt.ArrowCursor))
                     self.uc.show_error("ERROR 050521.0349: importing .DAT files!.\n", e)
                 finally:
-                    QApplication.restoreOverrideCursor()
+                    QApplication.setOverrideCursor(QtGui.QCursor(QtCore.Qt.ArrowCursor))
                     if self.files_used != "" or self.files_not_used != "":
                         self.uc.show_info(
                             "Files read by this project:\n\n"
@@ -2228,7 +2361,7 @@ class Flo2D(object):
                 else:
                     cell = self.gutils.execute("SELECT col FROM grid WHERE fid = 1").fetchone()
                     if cell is None:
-                        QApplication.restoreOverrideCursor()
+                        QApplication.setOverrideCursor(QtGui.QCursor(QtCore.Qt.ArrowCursor))
                         proceed = self.uc.question(
                             "Grid layer's fields 'col' and 'row' have NULL values!\n\nWould you like to assign them?"
                         )
@@ -2271,7 +2404,7 @@ class Flo2D(object):
         """
         self.uncheck_all_info_tools()
         imprt = self.uc.dialog_with_2_customized_buttons(
-            "Select import method", "", " Several Components", " One Single Component "
+            "Select import method", "", " Several Components", " One Single Component"
         )
 
         if imprt == QMessageBox.Yes:
@@ -2465,7 +2598,7 @@ class Flo2D(object):
                         self.uc.show_info("No component was selected!")
 
                 finally:
-                    QApplication.restoreOverrideCursor()
+                    QApplication.setOverrideCursor(QtGui.QCursor(QtCore.Qt.ArrowCursor))
                     if self.files_used != "" or self.files_not_used != "":
                         self.uc.show_info(
                             "Files read by this project:\n\n"
@@ -2545,6 +2678,8 @@ class Flo2D(object):
             "SWMMOUTETF.DAT": "import_swmmoutf",
             "WSURF.DAT": "import_wsurf",
             "WSTIME.DAT": "import_wstime",
+            "MANNINGS_N.DAT": "import_mannings_n",
+            "TOPO.DAT": "import_topo"
         }
         s = QSettings()
         last_dir = s.value("FLO-2D/lastGdsDir", "")
@@ -2779,20 +2914,22 @@ class Flo2D(object):
                     export_calls.remove("export_mannings_n_topo")
 
                 if "export_swmmflort" in export_calls:
+                    QApplication.setOverrideCursor(Qt.ArrowCursor)
                     if not self.uc.question(
                             "Did you schematize Storm Drains? Do you want to export Storm Drain files?"
                     ):
                         export_calls.remove("export_swmmflo")
                         export_calls.remove("export_swmmflort")
                         export_calls.remove("export_swmmoutf")
+                    QApplication.restoreOverrideCursor()    
 
-                QApplication.setOverrideCursor(Qt.WaitCursor)
+                # QApplication.setOverrideCursor(Qt.WaitCursor)
 
                 try:
                     s = QSettings()
                     s.setValue("FLO-2D/lastGdsDir", outdir)
 
-                    QApplication.setOverrideCursor(Qt.WaitCursor)
+                    # QApplication.setOverrideCursor(Qt.WaitCursor)
                     self.call_IO_methods(export_calls, True, outdir)
 
                     # The strings list 'export_calls', contains the names of
@@ -2800,10 +2937,8 @@ class Flo2D(object):
                     # FLO-2D .DAT files
 
                     self.uc.bar_info("Flo2D model exported to " + outdir, dur=3)
-                    QApplication.restoreOverrideCursor()
 
                 finally:
-                    QApplication.restoreOverrideCursor()
 
                     if "export_swmmflo" in export_calls:
                         self.f2d_widget.storm_drain_editor.export_storm_drain_INP_file()
@@ -2814,6 +2949,7 @@ class Flo2D(object):
                             new_files_used = self.files_used.replace("SIMPLE_MULT.DAT\n", "")
                             self.files_used = new_files_used
                             if os.path.isfile(outdir + r"\SIMPLE_MULT.DAT"):
+                                QApplication.setOverrideCursor(Qt.ArrowCursor)
                                 if self.uc.question(
                                         "There are no simple multiple channel cells in the project but\n"
                                         + "there is a SIMPLE_MULT.DAT file in the directory.\n"
@@ -2821,11 +2957,12 @@ class Flo2D(object):
                                         + "Delete SIMPLE_MULT.DAT?"
                                 ):
                                     os.remove(outdir + r"\SIMPLE_MULT.DAT")
-
+                                QApplication.restoreOverrideCursor()
                         if self.gutils.is_table_empty("mult_cells"):
                             new_files_used = self.files_used.replace("\nMULT.DAT\n", "\n")
                             self.files_used = new_files_used
                             if os.path.isfile(outdir + r"\MULT.DAT"):
+                                QApplication.setOverrideCursor(Qt.ArrowCursor)
                                 if self.uc.question(
                                         "There are no multiple channel cells in the project but\n"
                                         + "there is a MULT.DAT file in the directory.\n"
@@ -2833,9 +2970,12 @@ class Flo2D(object):
                                         + "Delete MULT.DAT?"
                                 ):
                                     os.remove(outdir + r"\MULT.DAT")
-
+                                QApplication.restoreOverrideCursor()
                     if self.files_used != "":
+                        
+                        QApplication.setOverrideCursor(Qt.ArrowCursor)
                         self.uc.show_info("Files exported to\n" + outdir + "\n\n" + self.files_used)
+                        QApplication.restoreOverrideCursor()
 
                     if self.f2g.export_messages != "":
                         info = "WARNINGS:\n\n" + self.f2g.export_messages
@@ -2869,7 +3009,126 @@ class Flo2D(object):
                 "export_cont_toler",
                 "export_mannings_n_topo",
                 "export_neighbours",
+                "export_inflow",
+                "export_outflow",
+                "export_infil",
+                "export_arf",
+                "export_rain",
+                "export_levee",
+                "export_hystruc",
+                "export_chan",
+                "export_bridge_coeff_data",
+                "export_bridge_xsec",
+                "export_xsec",
+                "export_breach",
+                "export_mult",
+                "export_fpxsec",
+                "export_fpfroude",
+                "export_sed",
+                "export_swmmflo",
+                "export_swmmflort",
+                "export_swmmoutf",
+                "export_evapor",
+                "export_street",
+                "export_shallowNSpatial",
+                "export_gutter",
+                "export_tailings",
+                "export_tolspatial"
             ]
+
+            s.setValue("FLO-2D/lastGdsDir", outdir)
+
+            dlg_components = ComponentsDialog(self.con, self.iface, self.lyrs, "out")
+            ok = dlg_components.exec_()
+            if ok:
+                if "Channels" not in dlg_components.components:
+                    export_calls.remove("export_chan")
+                    export_calls.remove("export_xsec")
+
+                if "Reduction Factors" not in dlg_components.components:
+                    export_calls.remove("export_arf")
+
+                # if "Streets" not in dlg_components.components:
+                #     export_calls.remove("export_street")
+
+                if "Outflow Elements" not in dlg_components.components:
+                    export_calls.remove("export_outflow")
+
+                if "Inflow Elements" not in dlg_components.components:
+                    export_calls.remove("export_inflow")
+                    # export_calls.remove("export_tailings")
+
+                if "Levees" not in dlg_components.components:
+                    export_calls.remove("export_levee")
+
+                if "Multiple Channels" not in dlg_components.components:
+                    export_calls.remove("export_mult")
+
+                if "Breach" not in dlg_components.components:
+                    export_calls.remove("export_breach")
+
+                # if "Gutters" not in dlg_components.components:
+                #     export_calls.remove("export_gutter")
+
+                if "Infiltration" not in dlg_components.components:
+                    export_calls.remove("export_infil")
+
+                if "Floodplain Cross Sections" not in dlg_components.components:
+                    export_calls.remove("export_fpxsec")
+
+                if "Mudflow and Sediment Transport" not in dlg_components.components:
+                    export_calls.remove("export_sed")
+
+                if "Evaporation" not in dlg_components.components:
+                    export_calls.remove("export_evapor")
+
+                if "Hydraulic  Structures" not in dlg_components.components:
+                    export_calls.remove("export_hystruc")
+                    export_calls.remove("export_bridge_xsec")
+                    export_calls.remove("export_bridge_coeff_data")
+                else:
+                    # if not self.uc.question("Did you schematize Hydraulic Structures? Do you want to export Hydraulic Structures files?"):
+                    #     export_calls.remove("export_hystruc")
+                    #     export_calls.remove("export_bridge_xsec")
+                    #     export_calls.remove("export_bridge_coeff_data")
+                    # else:
+                    xsecs = self.gutils.execute("SELECT fid FROM struct WHERE icurvtable = 3").fetchone()
+                    if not xsecs:
+                        if os.path.isfile(outdir + r"\BRIDGE_XSEC.DAT"):
+                            os.remove(outdir + r"\BRIDGE_XSEC.DAT")
+                        export_calls.remove("export_bridge_xsec")
+                        export_calls.remove("export_bridge_coeff_data")
+
+                if "Rain" not in dlg_components.components:
+                    export_calls.remove("export_rain")
+
+                if "Storm Drain" not in dlg_components.components:
+                    export_calls.remove("export_swmmflo")
+                    export_calls.remove("export_swmmflort")
+                    export_calls.remove("export_swmmoutf")
+
+                # if "Spatial Shallow-n" not in dlg_components.components:
+                #     export_calls.remove("export_shallowNSpatial")
+
+                # if "Spatial Tolerance" not in dlg_components.components:
+                #     export_calls.remove("export_tolspatial")
+
+                if "Spatial Froude" not in dlg_components.components:
+                    export_calls.remove("export_fpfroude")
+
+                # if "Manning's n and Topo" not in dlg_components.components:
+                #     export_calls.remove("export_mannings_n_topo")
+
+                if "export_swmmflort" in export_calls:
+                    if not self.uc.question(
+                            "Did you schematize Storm Drains? Do you want to export Storm Drain files?"
+                    ):
+                        export_calls.remove("export_swmmflo")
+                        export_calls.remove("export_swmmflort")
+                        export_calls.remove("export_swmmoutf")
+
+                QApplication.setOverrideCursor(Qt.WaitCursor)
+
             try:
                 s = QSettings()
                 s.setValue("FLO-2D/lastGdsDir", outdir)
@@ -2973,6 +3232,12 @@ class Flo2D(object):
             if ac.toolTip() == "<b>FLO-2D Info Tool</b>":
                 info_ac = ac
 
+        if self.f2d_table_dock is not None:
+            self.iface.addDockWidget(Qt.BottomDockWidgetArea, self.f2d_table_dock)
+
+        if self.f2d_plot_dock is not None:
+            self.iface.addDockWidget(Qt.BottomDockWidgetArea, self.f2d_plot_dock)
+
         grid = self.lyrs.data["grid"]["qlyr"]
         if grid is not None:
             tool = self.canvas.mapTool()
@@ -2994,6 +3259,9 @@ class Flo2D(object):
         for ac in self.toolActions:
             if ac.toolTip() == "<b>FLO-2D Grid Info Tool</b>":
                 info_ac = ac
+
+        if self.f2d_grid_info_dock is not None:
+            self.iface.addDockWidget(Qt.TopDockWidgetArea, self.f2d_grid_info_dock)
 
         grid = self.lyrs.data["grid"]["qlyr"]
         if grid is not None:
@@ -3025,6 +3293,12 @@ class Flo2D(object):
             if ac.toolTip() == "<b>FLO-2D Results</b>":
                 info_ac = ac
 
+        if self.f2d_table_dock is not None:
+            self.iface.addDockWidget(Qt.BottomDockWidgetArea, self.f2d_table_dock)
+
+        if self.f2d_plot_dock is not None:
+            self.iface.addDockWidget(Qt.BottomDockWidgetArea, self.f2d_plot_dock)
+
         tool = self.canvas.mapTool()
         if tool == self.results_tool:
             info_ac.setChecked(False)
@@ -3047,6 +3321,11 @@ class Flo2D(object):
         self.f2d_dock.setUserVisible(True)
         self.f2d_widget.profile_tool_grp.setCollapsed(False)
         self.f2d_widget.profile_tool.identify_feature(self.cur_info_table, fid)
+        self.cur_info_table = None
+
+    @connection_required
+    def show_channel_profile(self, fid=None):
+        self.f2d_widget.xs_editor.show_channel(fid)
         self.cur_info_table = None
 
     @connection_required
@@ -3733,6 +4012,7 @@ class Flo2D(object):
 
     def set_editors_map(self):
         self.editors_map = {
+            "chan": self.show_channel_profile,
             "user_levee_lines": self.show_user_profile,
             "user_xsections": self.show_xsec_editor,
             "user_streets": self.show_user_profile,
