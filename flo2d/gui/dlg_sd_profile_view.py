@@ -4,20 +4,6 @@ from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
 import matplotlib.pyplot as plt
 
-try:
-    from swmmio import find_network_trace, build_profile_plot, add_hgl_plot, add_node_labels_plot, add_link_labels_plot
-except ImportError:
-    import pathlib as pl
-    import subprocess
-    import sys
-
-    qgis_Path = pl.Path(sys.executable)
-    qgis_python_path = (qgis_Path.parent / "python3.exe").as_posix()
-
-    subprocess.check_call(
-        [qgis_python_path, "-m", "pip", "install", "--user", "swmmio==0.6.11"]
-    )
-    from swmmio import find_network_trace, build_profile_plot, add_hgl_plot, add_node_labels_plot, add_link_labels_plot
 
 from flo2d.gui.ui_utils import load_ui
 
@@ -68,17 +54,17 @@ class SDProfileView(qtBaseClass, uiDialog):
                      ydata + cur_yrange * scale_factor])
         plt.draw()
 
-    def plot_profile(self, model, path_selection, max_depth, ave_depth):
+    def plot_profile(self, swmmio, model, path_selection, max_depth, ave_depth):
         """
         Function to plot the profile plot
         """
         # Clear canvas
         self.ax.clear()
-        profile_config = build_profile_plot(self.ax, model, path_selection)
-        add_hgl_plot(self.ax, profile_config, depth=max_depth, color='red', label="Maximum Depth")
-        add_hgl_plot(self.ax, profile_config, depth=ave_depth, label="Average Depth")
-        add_node_labels_plot(self.ax, model, profile_config)
-        add_link_labels_plot(self.ax, model, profile_config)
+        profile_config = swmmio.build_profile_plot(self.ax, model, path_selection)
+        swmmio.add_hgl_plot(self.ax, profile_config, depth=max_depth, color='red', label="Maximum Depth")
+        swmmio.add_hgl_plot(self.ax, profile_config, depth=ave_depth, label="Average Depth")
+        swmmio.add_node_labels_plot(self.ax, model, profile_config)
+        swmmio.add_link_labels_plot(self.ax, model, profile_config)
         self.ax.legend(loc='best')
         self.ax.grid('xy')
         self.ax.grid(False)
@@ -89,5 +75,4 @@ class SDProfileView(qtBaseClass, uiDialog):
         self.ax.set_ylabel(f"Elevation ({units})")
 
         self.canvas.draw()
-
 

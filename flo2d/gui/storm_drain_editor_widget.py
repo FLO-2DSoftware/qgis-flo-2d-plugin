@@ -16,7 +16,6 @@ from collections import OrderedDict
 from datetime import date, datetime, time, timedelta
 from math import floor, isnan, modf
 
-# import swmmio
 from qgis._core import QgsFeatureRequest
 from qgis.core import (
     NULL,
@@ -81,23 +80,6 @@ from ..utils import float_or_zero, int_or_zero, is_number, is_true, m_fdata
 from .table_editor_widget import CommandItemEdit, StandardItem, StandardItemModel
 from .ui_utils import load_ui, set_icon, try_disconnect, center_canvas
 from ..flo2d_ie.flo2d_parser import ParseDAT
-
-try:
-    import swmmio
-    from swmmio import Model, find_network_trace
-except ImportError:
-    import pathlib as pl
-    import subprocess
-    import sys
-
-    qgis_Path = pl.Path(sys.executable)
-    qgis_python_path = (qgis_Path.parent / "python3.exe").as_posix()
-
-    subprocess.check_call(
-        [qgis_python_path, "-m", "pip", "install", "--user", "swmmio==0.6.11"]
-    )
-    import swmmio
-    from swmmio import Model, find_network_trace
 
 uiDialog, qtBaseClass = load_ui("inp_groups")
 
@@ -4327,11 +4309,61 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         """
         Function to show the profile
         """
-        self.uc.clear_bar_messages()
+        QApplication.setOverrideCursor(Qt.WaitCursor)
+        try:
+            import swmmio
+        except ImportError:
+            QApplication.restoreOverrideCursor()
+            message = "The swmmio library is not found in your python environment. This external library is required to " \
+                      "run some processes related to swmm files. More information on: https://swmmio.readthedocs.io/en/v0.6.11/.\n\n" \
+                      "Would you like to install it automatically or " \
+                      "manually?\n\nSelect automatic if you have admin rights. Otherwise, contact your admin and " \
+                      "follow the manual steps."
+            title = "External library not found!"
+            button1 = "Automatic"
+            button2 = "Manual"
+
+            install_options = self.uc.dialog_with_2_customized_buttons(title, message, button1, button2)
+
+            if install_options == QMessageBox.Yes:
+                QApplication.setOverrideCursor(Qt.WaitCursor)
+                try:
+                    import pathlib as pl
+                    import subprocess
+                    import sys
+
+                    qgis_Path = pl.Path(sys.executable)
+                    qgis_python_path = (qgis_Path.parent / "python3.exe").as_posix()
+
+                    subprocess.check_call(
+                        [qgis_python_path, "-m", "pip", "install", "--user", "swmmio==0.6.11"]
+                    )
+                    import swmmio
+                    self.uc.bar_info("swmmio successfully installed!")
+                    self.uc.log_info("swmmio successfully installed!")
+                    QApplication.restoreOverrideCursor()
+
+                except ImportError as e:
+                    QApplication.restoreOverrideCursor()
+                    self.uc.show_critical("Error while installing swmmio. Install it manually.")
+
+            # Manual Installation
+            elif install_options == QMessageBox.No:
+                QApplication.restoreOverrideCursor()
+                message = "1. Run OSGeo4W Shell as admin\n" \
+                          "2. Type this command: pip install swmmio==0.6.11\n\n" \
+                          "Wait the process to finish and rerun this process.\n\n" \
+                          "For more information, access https://flo-2d.com/contact/"
+                self.uc.show_info(message)
+                return
+            else:
+                return
+
         if self.gutils.is_table_empty("grid"):
             self.uc.bar_warn("There is no grid! Please create it before running tool.")
             return False
 
+        QApplication.restoreOverrideCursor()
         s = QSettings()
         GDS_dir = s.value("FLO-2D/lastGdsDir", "")
         RPT_file = GDS_dir + r"\swmm.RPT"
@@ -4357,14 +4389,14 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         if not os.path.isfile(rpt_file):
             os.rename(RPT_file, RPT_file[:-4] + '.rpt')
 
-        mymodel = Model(inp_file)
+        mymodel = swmmio.Model(inp_file)
         rpt = swmmio.rpt(rpt_file)
 
         start_node = self.start_node_cbo.currentText()
         end_node = self.end_node_cbo.currentText()
 
         try:
-            path_selection = find_network_trace(mymodel, start_node, end_node)
+            path_selection = swmmio.find_network_trace(mymodel, start_node, end_node)
             max_depth = rpt.node_depth_summary.MaxNodeDepth
             ave_depth = rpt.node_depth_summary.AvgDepth
         except:
@@ -4372,7 +4404,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             return
         QApplication.setOverrideCursor(Qt.WaitCursor)
         dlg_sd_profile_view = SDProfileView(self.gutils)
-        dlg_sd_profile_view.plot_profile(mymodel, path_selection, max_depth, ave_depth)
+        dlg_sd_profile_view.plot_profile(swmmio, mymodel, path_selection, max_depth, ave_depth)
         QApplication.restoreOverrideCursor()
         dlg_sd_profile_view.show()
         while True:
