@@ -58,7 +58,12 @@ def zoom(iface, porcentage):
     canvas.setExtent(rect)
     canvas.refresh()
 
-
+def center_feature(iface, feat, factor=4):
+    iface.mapCanvas().setExtent(feat.geometry().boundingBox())
+    iface.mapCanvas().zoomByFactor(factor)
+    # iface.mapCanvas().zoomScale(1000)  
+    
+    
 def zoom_show_n_cells(iface, cell_size, nCells):
     canvas = iface.mapCanvas()
     extend = canvas.extent()

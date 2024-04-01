@@ -5,6 +5,7 @@
 
 import os
 import tempfile
+from itertools import chain
 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -721,25 +722,12 @@ class GreenAmpt(object):
         return iabstr
 
     @staticmethod
-    def calculate_rtimp_n(parts, globalRockOutCrop=0.2):
-        # calculated naturall occuring RTIMP without consideration of the effective impervious area
-        # rtimp_gen_n = (area * (float(rtimps) * float(eff)) for rtimps, eff, area in parts)
-        rtimp_gen_n = [area * (float(rtimps)) for rtimps, area in parts]
+    def calculate_rtimp_n(parts):
+        # calculated natural occurring RTIMP without consideration of the effective impervious area
         areaTotal = sum(area for rtimps, area in parts)
-        if areaTotal < 1.0:
-            rtimp_gen_n.append((1.0 - areaTotal) * globalRockOutCrop)
+        rtimp_gen_n = [(area / areaTotal) * (float(rtimps)) for rtimps, area in parts]
         rtimp_n = sum(rtimp_gen_n)
         return rtimp_n
-
-    @staticmethod
-    def calculate_rtimp_l(parts, globalRTIMPL=0.2):
-        rtimp_l = [area * float(rtimpl) for rtimpl, area in parts]
-        areaTotal = sum(area for rtimpl, area in parts)
-        if areaTotal < 1.0:
-            rtimp_l.append((1.0 - areaTotal) * globalRTIMPL)
-        rtimp = sum(rtimp_l)
-        return rtimp
-
 
 class SCPCurveNumber(object):
     def __init__(self):

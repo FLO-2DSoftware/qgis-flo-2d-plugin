@@ -11,7 +11,7 @@ from collections import OrderedDict
 from itertools import chain, zip_longest
 
 from qgis.PyQt.QtWidgets import QApplication
-
+from qgis.PyQt.QtCore import Qt
 from ..user_communication import UserCommunication
 from ..utils import float_or_zero
 
@@ -25,6 +25,7 @@ class StormDrainProject(object):
         self.INP_groups = OrderedDict()  # ".INP_groups" will contain all groups [xxxx] in .INP file,
         # ordered as entered.
         self.INP_nodes = {}
+        self.INP_storages = {}
         self.INP_inflows = {}
         self.INP_patterns = []
         self.INP_timeseries = []
@@ -81,8 +82,9 @@ class StormDrainProject(object):
                 return 3
 
         except Exception as e:
-            QApplication.restoreOverrideCursor()
+            QApplication.setOverrideCursor(Qt.ArrowCursor)
             self.uc.show_error("ERROR 170618.0611: construction of INP dictionary failed!", e)
+            QApplication.restoreOverrideCursor()
             return 0
 
     def select_this_INP_group(self, chars):
@@ -361,7 +363,7 @@ class StormDrainProject(object):
         # Finally update keyed element 'XSECTIONS' of INP_groups dictionary:
         self.update_tag_in_INP_groups("xsec", new_xsections)
 
-    def create_INP_nodes_dictionary_with_coordinates(self):
+    def add_coordinates_INP_nodes_dictionary(self):
         try:
             coord_cols = ["node", "x", "y"]
             coord_list = self.select_this_INP_group(
@@ -375,15 +377,136 @@ class StormDrainProject(object):
                         zip_longest(coord_cols, coord.split())
                     )  # Creates one dictionary element {'node', x, y}
                     node = coord_dict.pop("node")
-                    self.INP_nodes[node] = coord_dict  # Inserts one new element to dictionary with key "node".
-                    # At the end, it will have all elements from the [COORDINATES] group in .INP file.
-                    # E.g:
-                    # "self.INP_nodes":
-                    # {'I1': {'x': '366976.000', 'y': '1185380.000'},
-                    #  'I3': {'x': '366875.000', 'y': '1185664.000'},
-                    #  'I2': {'x': '366969.000', 'y': '1185492.000'}, etc.
+                    if node in self.INP_nodes:
+                        self.INP_nodes[node].update(coord_dict)  # Inserts one new element to dictionary with key "node".
+                        # At the end, it will have all elements from the [COORDINATES] group in .INP file.
+                        # E.g:
+                        # "self.INP_nodes":
+                        # {'I1': {'x': '366976.000', 'y': '1185380.000'},
+                        #  'I3': {'x': '366875.000', 'y': '1185664.000'},
+                        #  'I2': {'x': '366969.000', 'y': '1185492.000'}, etc.
 
             return len(coord_list)
+
+        except Exception as e:
+            self.uc.bar_warn("WARNING 221121.1017: Reading coordinates from SWMM input data failed!")
+            return 0
+
+    def create_INP_storage_dictionary_with_storage(self):
+        try:
+            funct_and_infil_cols = [
+                "name",
+                "invert_elev",
+                "max_depth" ,
+                "init_depth" ,
+                "storage_curve",
+                "coefficient",
+                "exponent",
+                "constant",  
+                "ponded_area",
+                "evap_factor",
+                "suction_head",
+                "conductivity",
+                "initial_deficit"                              
+            ]
+
+
+            funct_no_infil_cols = [
+                "name",
+                "invert_elev",
+                "max_depth" ,
+                "init_depth" ,
+                "storage_curve",
+                "coefficient",
+                "exponent",
+                "constant",  
+                "ponded_area",
+                "evap_factor"                            
+            ]
+                        
+            tab_and_infil_cols = [
+                "name",
+                "invert_elev",
+                "max_depth" ,
+                "init_depth" ,
+                "storage_curve",
+                "curve_name", 
+                "ponded_area",
+                "evap_factor",
+                "suction_head",
+                "conductivity",
+                "initial_deficit"                              
+            ] 
+            
+            tab_no_infil_cols = [
+                "name",
+                "invert_elev",
+                "max_depth" ,
+                "init_depth" ,
+                "storage_curve",
+                "curve_name", 
+                "ponded_area",
+                "evap_factor"                            
+            ]  
+                                   
+                                   
+            storage = self.select_this_INP_group("stora")
+            if storage:
+                for strg in storage:
+                    if not strg or strg[0] in self.ignore:
+                        continue
+                    split = strg.split()
+                    if len(split) == 13:  # functional with infiltration
+                        storage_dict = dict(zip_longest(funct_and_infil_cols, split ))
+                    elif len(split) == 11: # tabular with infiltration
+                        storage_dict = dict(zip_longest(tab_and_infil_cols, split))
+                    elif len(split) == 10: # functional no infiltration
+                        storage_dict = dict(zip_longest(funct_no_infil_cols, split))
+                    elif len(split) == 8: # tabular no infiltration
+                        storage_dict = dict(zip_longest(tab_no_infil_cols, split))
+                    else:
+                        self.status_report += "\u25E6 Wrong Storage unit '" + split[0] + "' in [STORAGE] group.\n\n"   
+                        continue          
+                    storage = storage_dict.pop("name")
+                    self.INP_storages[storage] = storage_dict
+
+        except Exception as e:
+            self.uc.bar_warn("WARNING 290124.1840: Reading storage units from SWMM input data failed!")
+
+    def add_coordinates_to_INP_storages_dictionary(self):
+        try:
+            coord_cols = ["node", "x", "y"]
+            coord_list = self.select_this_INP_group(
+                "coor"
+            )  # coord_list is a copy of the whole [COORDINATES] group of .INP file.
+            if len(coord_list) > 0:
+                for coord in coord_list:
+                    if not coord or coord[0] in self.ignore:
+                        continue
+                    coord_dict = dict(
+                        zip_longest(coord_cols, coord.split())
+                    )  # Creates one dictionary element {'node', x, y}
+                    node = coord_dict.pop("node")
+                    if node in self.INP_storages:
+                        self.INP_storages[node].update(coord_dict)  # Inserts one new element to dictionary with key "node".
+                        # At the end, it will have all elements from the [COORDINATES] group in .INP file.
+                        # E.g:
+                        # "self.INP_storages":
+                        # {'I1': {'x': '366976.000', 'y': '1185380.000'},
+                        #  'I3': {'x': '366875.000', 'y': '1185664.000'},
+                        #  'I2': {'x': '366969.000', 'y': '1185492.000'}, etc.  
+            
+            # Remove storage units without coordinates:
+            new_storages = {}
+            for key, inner_dict in self.INP_storages.items():
+                if "x" in inner_dict:
+                    new_storages[key] = inner_dict
+                else:
+                    self.status_report += "\u25E6 Storage unit '" + key + "' in [STORAGE] group without coordinates in [COORDINATES] group.\n\n"    
+
+
+            self.INP_storages = new_storages
+            return len(self.INP_storages)
 
         except Exception as e:
             self.uc.bar_warn("WARNING 221121.1017: Reading coordinates from SWMM input data failed!")
@@ -412,7 +535,7 @@ class StormDrainProject(object):
                     self.INP_conduits[conduit] = conduit_dict
 
                     if conduit_dict["conduit_inlet"] == "?" or conduit_dict["conduit_outlet"] == "?":
-                        self.status_report += "Undefined Node (?) reference at \n[CONDUITS]\n" + cond + "\n\n"
+                        self.status_report += "\u25E6 Undefined Node (?) reference at \n   [CONDUITS]\n   " + cond + "\n\n"
 
         except Exception as e:
             self.uc.bar_warn("WARNING 221121.1018: Reading conduits from SWMM input data failed!")
@@ -539,7 +662,7 @@ class StormDrainProject(object):
                         )  # Adds new values (from "losses_dict" , that include the "losses_cols") to
                         # an already existing key in dictionary INP_conduits.
                     else:
-                        self.status_report += "Undefined Link (" + loss + ") reference at \n[LOSSES]\n" + lo + "\n\n"
+                        self.status_report += "\u25E6 Undefined Link (" + loss + ") reference at \n   [LOSSES]\n" + lo + "\n\n"
         except Exception as e:
             self.uc.show_error(
                 "ERROR 010422.0513: couldn't create a [LOSSES] group from storm drain .INP file!",
@@ -575,7 +698,7 @@ class StormDrainProject(object):
                     elif xsec in self.INP_weirs:
                         pass
                     else:
-                        self.status_report += "Undefined Link (" + xsec + ") reference at  [XSECTIONS]\n" + xs + "\n\n"
+                        self.status_report += "\u25E6 Undefined Link (" + xsec + ") reference in [XSECTIONS] group\n   " + xs + "\n\n"
 
         except Exception as e:
             self.uc.show_error(
@@ -724,7 +847,7 @@ class StormDrainProject(object):
                     items = [i0, i1, i2, i3, i4]
                     out_dict = dict(zip_longest(out_cols, items))
                     outfall = out_dict.pop("outfall")
-                    self.INP_nodes[outfall].update(out_dict)
+                    self.INP_nodes[outfall] = out_dict
         except Exception as e:
             self.uc.show_error(
                 "ERROR 170618.0700: couldn't create a [OUTFALLS] group from storm drain .INP file!",
@@ -751,9 +874,7 @@ class StormDrainProject(object):
                     jun_dict = dict(zip_longest(jun_cols, jun.split()))
                     junction = jun_dict.pop("junction")
                     if junction is not None:
-                        self.INP_nodes[junction].update(
-                            jun_dict
-                        )  # Adds to the key 'junction' the values in 'jun_dict' in dictionary 'INP_nodes'.
+                        self.INP_nodes[junction]= jun_dict  # Adds to the key 'junction' the values in 'jun_dict' in dictionary 'INP_nodes'.
         except Exception as e:
             self.uc.show_error(
                 "ERROR 170618.0701: couldn't create a [JUNCTIONS] group from storm drain .INP file!\n"
@@ -778,9 +899,9 @@ class StormDrainProject(object):
             if inflows:
                 for infl in inflows:
                     if not infl or infl[0] in self.ignore:
-                       continue                   
-                    elif infl.split()[0] not in self.INP_nodes:
-                        self.status_report += "Undefined Node (?) reference at \n[INFLOW]\n" + infl + "\n\n"      
+                        continue                   
+                    elif not (infl.split()[0] in self.INP_nodes or infl.split()[0] in self.INP_storages):
+                        self.status_report += "\u25E6 Undefined Node reference (" + infl.split()[0] + ") at \n   [INFLOW]\n   " + infl + "\n\n"      
                     else:
                         inflow_dict = dict(zip_longest(inflows_cols, infl.split()))
                         inflow = inflow_dict.pop("node_name")
@@ -813,6 +934,7 @@ class StormDrainProject(object):
                     type = pattSplit[1].upper().strip()
                     if type in ["HOURLY", "MONTHLY", "DAILY", "WEEKEND"]:
                         pattern_list = list(zip_longest(pattern_cols, pattSplit))
+                        name = pattSplit[0].strip()
                     else:
                         pattSplit.insert(1, pattern_list[2][1])
                         pattern_list = list(zip_longest(pattern_cols, pattSplit))
@@ -826,7 +948,7 @@ class StormDrainProject(object):
             time_cols_file = ["time_series_name", "file", "file_name"]
             time_cols_date = ["name", "date", "time", "value"]
             times = self.select_this_INP_group("timeseries")
-            warn = ""
+            warn = "WARNING 310323.0507:"
             descr = ""
             if times:
                 for time in times:
@@ -843,15 +965,26 @@ class StormDrainProject(object):
                         time_list = list(zip_longest(time_cols_file, timeSplit))
                     else:
                         if len(timeSplit) < 4:
-                            if warn == "":
-                                if timeSplit[0] != name:
-                                    warn = "WARNING 310323.0507: Wrong data in [TIMESERIES] group!"
-                                    continue
-                                else:
-                                    time = timeSplit[1]
-                                    value = timeSplit[2]
-                                    timeSplit = [name, date, time, value]
-                                    time_list = list(zip_longest(time_cols_date, timeSplit))
+                            if len(timeSplit)== 3:
+                                # One item missing, assume it's the date:
+                                name = timeSplit[0]
+                                date = "          "
+                                time = timeSplit[1]
+                                value = timeSplit[2]
+                                timeSplit = [name, date, time, value]
+                                time_list = list(zip_longest(time_cols_date, timeSplit))                                
+                            else:
+                                warn += "\nWrong [TIMESERIES] line: " + time
+                                continue
+                                # if warn == "":
+                                #     if timeSplit[0] != name:
+                                #         warn = "WARNING 310323.0507: Wrong data in [TIMESERIES] group!"
+                                #         continue
+                                #     else:
+                                #         time = timeSplit[1]
+                                #         value = timeSplit[2]
+                                #         timeSplit = [name, date, time, value]
+                                #         time_list = list(zip_longest(time_cols_date, timeSplit))
                         else:
                             name = timeSplit[0]
                             date = timeSplit[1]
@@ -861,8 +994,8 @@ class StormDrainProject(object):
                             time_list = list(zip_longest(time_cols_date, timeSplit))
                     time_list.insert(0, ["description", descr if descr is not None else ""])
                     self.INP_timeseries.append(time_list)
-            if warn != "":
-                self.uc.bar_warn(warn)
+            if warn != "WARNING 310323.0507:":
+                self.uc.show_warn(warn)
         except Exception as e:
             self.uc.bar_warn("WARNING 221121.1022: Reading time series from SWMM input data failed!")
 

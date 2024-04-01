@@ -9,7 +9,7 @@
 
 from math import isnan
 
-from qgis.core import QgsFeatureRequest
+from qgis.core import QgsFeatureRequest, QgsRectangle
 from qgis.PyQt.QtCore import Qt
 from qgis.PyQt.QtGui import QColor
 from qgis.PyQt.QtWidgets import (
@@ -23,7 +23,7 @@ from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
 from ..utils import is_number, is_true, m_fdata, float_or_zero
 from .table_editor_widget import StandardItem, StandardItemModel
-from .ui_utils import center_canvas, load_ui, set_icon, try_disconnect, zoom
+from .ui_utils import center_canvas, load_ui, set_icon, try_disconnect, zoom, center_feature
 
 uiDialog, qtBaseClass = load_ui("pumps")
 
@@ -93,17 +93,19 @@ class PumpsDialog(qtBaseClass, uiDialog):
             self.gutils = GeoPackageUtils(self.con, self.iface)
 
     def populate_pumps(self):
-        qry = """SELECT fid,
-                        pump_name,
-                        pump_inlet, 
-                        pump_outlet,
-                        pump_curve,
-                        pump_init_status,
-                        pump_startup_depth,
-                        pump_shutoff_depth
-                FROM user_swmm_pumps;"""
-        wrong_status = 0
+        QApplication.setOverrideCursor(Qt.WaitCursor)
         try:
+            qry = """SELECT fid,
+                            pump_name,
+                            pump_inlet, 
+                            pump_outlet,
+                            pump_curve,
+                            pump_init_status,
+                            pump_startup_depth,
+                            pump_shutoff_depth
+                    FROM user_swmm_pumps;"""
+            wrong_status = 0            
+            
             self.populate_curves()
             rows = self.gutils.execute(qry).fetchall()
             self.pumps_tblw.setRowCount(0)
@@ -158,8 +160,9 @@ class PumpsDialog(qtBaseClass, uiDialog):
                         self.pumps_tblw.setItem(row_number, column - 1, item)
 
             self.highlight_pump(self.pump_name_cbo.currentText())
-            QApplication.restoreOverrideCursor()
+
             if wrong_status > 0:
+                QApplication.setOverrideCursor(Qt.ArrowCursor)
                 self.uc.show_info(
                     "WARNING 280222.1910: there were "
                     + str(wrong_status)
@@ -167,12 +170,16 @@ class PumpsDialog(qtBaseClass, uiDialog):
                     + "All wrong initial status were changed to 'OFF' in this dialog.\n\n"
                     + "Edit them as wished and then 'Save' to replace the values in the 'Storm Drain Pumps' User layers."
                 )
+                QApplication.restoreOverrideCursor()
         except Exception as e:
-            QApplication.restoreOverrideCursor()
+            QApplication.setOverrideCursor(Qt.ArrowCursor)
             self.uc.show_error(
                 "ERROR 251121.0705: assignment of value from pumps users layer failed!.\n",
                 e,
             )
+            QApplication.restoreOverrideCursor()
+        finally:
+            QApplication.restoreOverrideCursor()               
 
     """
     Events for changes in values of widgets: 
@@ -257,34 +264,21 @@ class PumpsDialog(qtBaseClass, uiDialog):
                 self.pumps_tblw.item(row, 4).setText("OFF")
                 self.uc.bar_warn("WARNING 261128.0542: pump '" + name  + "' has wrong status '" + status + "'. Changed to default 'OFF'")                
             self.pump_init_status_cbo.setCurrentIndex(index)
-
-
-
-
-            # status = self.pumps_tblw.item(row, 4).text()
-            # if status.isdigit():
-            #     index = int(status) - 1
-            #     index = 1 if index > 1 else 0 if index < 0 else index
-            # else:
-            #     index = 0 if status == "ON" else 1
-            # self.pump_init_status_cbo.setCurrentIndex(index)
-
-
-
-
-
-
-
             self.startup_depth_dbox.setValue(float_or_zero(self.pumps_tblw.item(row, 5).text()))
             self.shutoff_depth_dbox.setValue(float(self.pumps_tblw.item(row, 6).text()))
 
             self.highlight_pump(self.pump_name_cbo.currentText())
 
-            QApplication.restoreOverrideCursor()
-
         except Exception as e:
-            QApplication.restoreOverrideCursor()
+            QApplication.setOverrideCursor(Qt.ArrowCursor)
             self.uc.show_error("ERROR 261121.0707: assignment of value failed!.\n", e)
+            QApplication.restoreOverrideCursor()
+            
+        finally:
+            QApplication.restoreOverrideCursor()  
+
+
+
 
     def onVerticalSectionClicked(self, logicalIndex):
         self.pumps_tblw_cell_clicked(logicalIndex, 0)
@@ -332,15 +326,21 @@ class PumpsDialog(qtBaseClass, uiDialog):
 
             self.highlight_pump(self.pump_name_cbo.currentText())
 
+        except Exception as e:
+            QApplication.setOverrideCursor(Qt.ArrowCursor)
+            self.uc.show_error("ERROR 200618.0633: assignment of value failed!.\n", e)
             QApplication.restoreOverrideCursor()
 
-        except Exception as e:
-            QApplication.restoreOverrideCursor()
-            self.uc.show_error("ERROR 200618.0633: assignment of value failed!.\n", e)
+        finally:
+            QApplication.restoreOverrideCursor()  
+
+
+
+
 
     def find_pump(self):
+        QApplication.setOverrideCursor(Qt.WaitCursor)
         try:
-            QApplication.setOverrideCursor(Qt.WaitCursor)
             if self.grid_lyr is not None:
                 if self.grid_lyr:
                     pump = self.pump_to_find_le.text()
@@ -354,7 +354,7 @@ class PumpsDialog(qtBaseClass, uiDialog):
                         self.uc.bar_warn("WARNING  091121.0747: pump '" + str(pump) + "' not found.")
         except ValueError:
             self.uc.bar_warn("WARNING  091121.0748: pump '" + str(pump) + "' not forund.")
-            pass
+
         finally:
             QApplication.restoreOverrideCursor()
 
@@ -368,43 +368,35 @@ class PumpsDialog(qtBaseClass, uiDialog):
                     ).fetchone()
                     self.lyrs.show_feat_rubber(self.pumps_lyr.id(), fid[0], QColor(Qt.yellow))
                     feat = next(self.pumps_lyr.getFeatures(QgsFeatureRequest(fid[0])))
-                    x, y = feat.geometry().centroid().asPoint()
-                    self.lyrs.zoom_to_all()
-                    center_canvas(self.iface, x, y)
-                    zoom(self.iface, 0.45)
+                    center_feature(self.iface, feat)            
                 else:
                     self.uc.bar_warn("WARNING 251121.1139: pump '" + str(pump) + "' not found.")
                     self.lyrs.clear_rubber()
 
-            QApplication.restoreOverrideCursor()
-
         except ValueError:
-            QApplication.restoreOverrideCursor()
             self.uc.bar_warn("WARNING 251121.1134: pump '" + str(pump) + "' is not valid.")
             self.lyrs.clear_rubber()
-            pass
+
+        finally:
+            QApplication.restoreOverrideCursor()
 
     def zoom_in_pump(self):
-        QApplication.setOverrideCursor(Qt.WaitCursor)
-        conduit = self.pump_name_cbo.currentText()
-        fid = self.gutils.execute("SELECT fid FROM user_swmm_pumps WHERE pump_name = ?;", (conduit,)).fetchone()
+        pump = self.pump_name_cbo.currentText()
+        fid = self.gutils.execute("SELECT fid FROM user_swmm_pumps WHERE pump_name = ?;", (pump,)).fetchone()
         self.lyrs.show_feat_rubber(self.pumps_lyr.id(), fid[0], QColor(Qt.yellow))
         feat = next(self.pumps_lyr.getFeatures(QgsFeatureRequest(fid[0])))
         x, y = feat.geometry().centroid().asPoint()
         center_canvas(self.iface, x, y)
         zoom(self.iface, 0.4)
-        QApplication.restoreOverrideCursor()
 
     def zoom_out_pump(self):
-        QApplication.setOverrideCursor(Qt.WaitCursor)
-        conduit = self.pump_name_cbo.currentText()
-        fid = self.gutils.execute("SELECT fid FROM user_swmm_pumps WHERE pump_name = ?;", (conduit,)).fetchone()
+        pump = self.pump_name_cbo.currentText()
+        fid = self.gutils.execute("SELECT fid FROM user_swmm_pumps WHERE pump_name = ?;", (pump,)).fetchone()
         self.lyrs.show_feat_rubber(self.pumps_lyr.id(), fid[0], QColor(Qt.yellow))
         feat = next(self.pumps_lyr.getFeatures(QgsFeatureRequest(fid[0])))
         x, y = feat.geometry().centroid().asPoint()
         center_canvas(self.iface, x, y)
         zoom(self.iface, -0.4)
-        QApplication.restoreOverrideCursor()
 
     def show_pump_curve_clicked(self):
         self.uc.show_info("Show curve dialog")
@@ -486,55 +478,6 @@ class PumpsDialog(qtBaseClass, uiDialog):
         curve = self.gutils.execute("SELECT DISTINCT pump_curve_name FROM swmm_pumps_curve_data")
         for c in curve:
             self.pump_curve_cbo.addItem(c[0])
-
-        # self.pump_curve_cbo.clear()
-        # self.pump_curve_cbo.addItem("*")
-        # for row in self.PumpCurv.get_pump_curves():
-        #     pc_fid, name = [x if x is not None else "" for x in row]
-        #     if name != "":
-        #         if self.pump_curve_cbo.findText(name) == -1:
-        #             self.pump_curve_cbo.addItem(name, pc_fid)
-
-    # def show_pump_curve_table_and_plot(self):
-    #     idx = self.pump_curve_cbo.currentIndex()
-    #     curve_fid = self.pump_curve_cbo.itemData(idx)
-    #     curve_name = self.pump_curve_cbo.currentText()
-    #     # if curve_name == "*":
-    #     #     return
-    #     #
-    #
-    #     if curve_fid is None:
-    #         self.plot.clear()
-    #         self.tview.undoStack.clear()
-    #         self.tview.setModel(self.pumps_data_model)
-    #         self.pumps_data_model.clear()
-    #         return
-    #
-    #     self.curve_data = self.PumpCurv.get_pump_curve_data(curve_name)
-    #     if not self.curve_data:
-    #         return
-    #     self.create_plot(curve_name)
-    #     self.tview.undoStack.clear()
-    #     self.tview.setModel(self.pumps_data_model)
-    #     self.pumps_data_model.clear()
-    #     self.pumps_data_model.setHorizontalHeaderLabels(["Depth", "Q"])
-    #     self.d1, self.d2 = [[], []]
-    #     for row in self.curve_data:
-    #         items = [StandardItem("{:.4f}".format(x)) if x is not None else StandardItem("") for x in row]
-    #         self.pumps_data_model.appendRow(items)
-    #         self.d1.append(row[0] if not row[0] is None else float("NaN"))
-    #         self.d2.append(row[1] if not row[1] is None else float("NaN"))
-    #     rc = self.pumps_data_model.rowCount()
-    #     if rc < 500:
-    #         for row in range(rc, 500 + 1):
-    #             items = [StandardItem(x) for x in ("",) * 2]
-    #             self.pumps_data_model.appendRow(items)
-    #     self.tview.horizontalHeader().setStretchLastSection(True)
-    #     for col in range(2):
-    #         self.tview.setColumnWidth(col, 100)
-    #     for i in range(self.pumps_data_model.rowCount()):
-    #         self.tview.setRowHeight(i, 20)
-    #     self.update_plot()
 
     def create_plot(self, name):
         self.plot.clear()

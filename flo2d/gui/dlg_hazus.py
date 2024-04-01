@@ -582,7 +582,7 @@ class HazusDialog(qtBaseClass, uiDialog):
 
         except Exception as e:
             QApplication.restoreOverrideCursor()
-            self.uc.show_error("ERROR 080618.0456: Uniformization of field values failed!\n", e)
+            self.uc.show_error("ERROR 080618.0457: Uniformization of field values failed!\n", e)
             lyr.rollBack()
             return False, ""
 

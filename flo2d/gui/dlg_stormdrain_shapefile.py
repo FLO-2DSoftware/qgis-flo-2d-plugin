@@ -1366,13 +1366,15 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
 
                     cell = self.gutils.grid_on_point(points[0].x(), points[0].y())
                     if cell is None:
-                        outside_conduits += "\n" + conduit_name
-                        continue
+                        if not (conduit_name in outside_conduits):
+                            outside_conduits += "\n" + conduit_name
+                            continue
 
                     cell = self.gutils.grid_on_point(points[1].x(), points[1].y())
                     if cell is None:
-                        outside_conduits += "\n" + conduit_name
-                        continue
+                        if not (conduit_name in outside_conduits):
+                            outside_conduits += "\n" + conduit_name
+                            continue
 
                     new_geom = QgsGeometry.fromPolylineXY(points)
                     feat.setGeometry(new_geom)

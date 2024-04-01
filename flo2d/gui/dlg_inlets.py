@@ -39,7 +39,7 @@ from ..utils import (
     m_fdata,
 )
 from .table_editor_widget import CommandItemEdit, StandardItem, StandardItemModel
-from .ui_utils import center_canvas, load_ui, set_icon, zoom
+from .ui_utils import center_canvas, load_ui, set_icon, zoom, center_feature
 
 uiDialog, qtBaseClass = load_ui("inlets")
 
@@ -59,7 +59,7 @@ class InletNodesDialog(qtBaseClass, uiDialog):
             "Save Inlet/Junctions to 'Storm Drain Nodes-Inlets/Junctions' User Layer"
         )
         set_icon(self.find_inlet_cell_btn, "eye-svgrepo-com.svg")
-        set_icon(self.external_inflow_btn, "external_inflow.svg")
+        set_icon(self.external_inflow_btn, "open_dialog.svg")
         set_icon(self.zoom_in_inlet_btn, "zoom_in.svg")
         set_icon(self.zoom_out_inlet_btn, "zoom_out.svg")
 
@@ -111,7 +111,7 @@ class InletNodesDialog(qtBaseClass, uiDialog):
         self.inlets_tblw.verticalHeader().sectionClicked.connect(self.onVerticalSectionClicked)
 
         self.set_header()
-        self.inlets_note_lbl.setText("Values for files: (1) SWMMFLO.DAT     (2) SWMMFLORT.DAT     (3) SDCLOGGING.DAT")
+        # self.inlets_note_lbl.setText("Values for files: (1) SWMMFLO.DAT     (2) SWMMFLORT.DAT     (3) SDCLOGGING.DAT")
 
         self.populate_inlets()
 
@@ -126,169 +126,176 @@ class InletNodesDialog(qtBaseClass, uiDialog):
             self.populate_rtables()
         
     def populate_inlets(self):
-        qry = """SELECT
-                        name, 
-                        grid, 
-                        junction_invert_elev,
-                        max_depth, 
-                        init_depth, 
-                        surcharge_depth, 
-                        ponded_area, 
-                        intype, 
-                        swmm_length, 
-                        swmm_width, 
-                        swmm_height,
-                        swmm_coeff,
-                        swmm_feature,
-                        curbheight,
-                        swmm_clogging_factor,
-                        swmm_time_for_clogging,
-                        rt_name          
-                FROM user_swmm_nodes WHERE sd_type= 'I' or sd_type= 'J';"""
-        rows = self.gutils.execute(qry).fetchall()
-        if not rows:
-            QApplication.restoreOverrideCursor()
-            self.uc.show_info(
-                "WARNING 280920.0421: No inlets/junctions defined (of type 'I' or 'J') in 'Storm Drain Nodes' User Layer!"
-            )
-            return
-
-        self.block = True
-
-        self.inlets_tblw.setRowCount(0)
-        no_rt = ""
-        existing_rts = []
-        duplicates = []
-        wrong_type = ""
-
-        for row_number, row_data in enumerate(rows):
-            name = row_data[0].strip()
-            typ = str(row_data[7]).strip()
-
-            if name[0:2] in ["I1", "I2", "I3", "I4", "I5"]:
-                if name[1] != typ:
-                    if len(wrong_type) < 1500:
-                        wrong_type += name + "\tWrong type " + typ + ". Should be " + name[1] + ".\n"
-            if name[0:2] == "IM":
-                if name[2] != typ:
-                    if len(wrong_type) < 1500:
-                        wrong_type += name + "\tWrong type " + typ + ". Should be " + name[2] + ".\n"
-
-            #
-            # if not () or
-            #         (name()[1] == "M" and name()[2] == "5"):
-            self.inlets_tblw.insertRow(row_number)
-            for cell, data in enumerate(row_data):
-                item = QTableWidgetItem()
-                if cell == 0 or cell == 1 or cell == 6 or cell == 7 or cell == 16:
-                    # item.setFlags(Qt.ItemIsSelectable | Qt.ItemIsEnabled)
-                    item.setFlags(item.flags() & ~Qt.ItemIsEditable)
-
-                # item.setData(Qt.DisplayRole, data)
-                # Fill the list of inlet names:
-                if cell == 0:
-                    self.inlet_cbo.addItem(data)
-
-                # Fill all text boxes with data of first feature of query (first cell in table user_swmm_nodes):
-                if row_number == 0:
-                    if cell == 1:
-                        self.grid_element_le.setText(str(data))
-                    elif cell == 2:
-                        self.invert_elevation_dbox.setValue(data if data is not None else 0)
-                    elif cell == 3:
-                        self.max_depth_dbox.setValue(data if data is not None else 0)
-                    elif cell == 4:
-                        self.initial_depth_dbox.setValue(data if data is not None else 0)
-                    elif cell == 5:
-                        self.surcharge_depth_dbox.setValue(data if data is not None else 0)
-                    # elif cell == 6:
-                    #     self.ponded_area_dbox.setValue(data if data is not None else 0)
-                    elif cell == 7:
-                        self.inlet_drain_type_cbo.setCurrentIndex(data - 1)
-                    elif cell == 8:
-                        self.length_dbox.setValue(data if data is not None else 0)
-                    elif cell == 9:
-                        self.width_dbox.setValue(data if data is not None else 0)
-                    elif cell == 10:
-                        self.height_dbox.setValue(data if data is not None else 0)
-                    elif cell == 11:
-                        self.weir_coeff_dbox.setValue(data if data is not None else 0)
-                    elif cell == 12:
-                        self.feature_sbox.setValue(data if data is not None else 0)
-                    elif cell == 13:
-                        self.curb_height_dbox.setValue(data if data is not None else 0)
-                    elif cell == 14:
-                        self.clogging_factor_dbox.setValue(data if data is not None else 0)
-                    elif cell == 15:
-                        self.time_for_clogging_dbox.setValue(data if data is not None else 0)
-                    elif cell == 16:  # Rating table name/Culvert Eq.
-                        idx = self.inlet_rating_table_cbo.findText(str(data) if data is not None else "")
-                        self.inlet_rating_table_cbo.setCurrentIndex(idx)
-
-                # See if rating tables or Culvert eq. exist:
-                if cell == 0:
-                    inlet = data
-                if cell == 16:
-                    if data:  # data is the rating table or Culvert eq. name for cell 16.
-                        data = data.strip()
-                        if data != "":
-                            fid_rt = self.gutils.execute("SELECT fid FROM swmmflort WHERE name = ?", (data,)).fetchone()
-                            if not fid_rt:
-                                fid_c = self.gutils.execute(
-                                    "SELECT fid FROM swmmflo_culvert WHERE name = ?",
-                                    (data,),
-                                ).fetchone()
-                                if not fid_c:
-                                    no_rt += data + "\t   for inlet   " + inlet + "\n"
-                                    # data = ""
-                                if data in existing_rts:
-                                    if data not in duplicates:
-                                        duplicates.append(data)
-                                else:
-                                    existing_rts.append(data)
-
-                            # if data in existing_rts:
-                            #     if data not in duplicates:
-                            #         duplicates.append(data)
-                            # else:
-                            #     existing_rts.append(data)
-
-                item.setData(Qt.EditRole, data)
-                self.inlets_tblw.setItem(row_number, cell, item)
-
-        QApplication.restoreOverrideCursor()
-        if no_rt != "":
-            self.uc.show_info(
-                "WARNING 070120.1048:\nThe following rating tables/Culvert eq. were not found!:\n\n" + no_rt
-            )
-
-        if duplicates:
-            txt = ""
-            for d in duplicates:
-                txt += "\n" + d + ""
-            self.uc.show_info(
-                "WARNING 080120.0814:\nThe following rating tables/Culvert eq. are assigned to more than one inlet:\n"
-                + txt
-            )
-
-        # if wrong_type:
-        #     self.uc.show_info(
-        #         "WARNING 250622.1627:\nThe following inlets have wrong type:\n\n" + wrong_type
-        #     )
-
         QApplication.setOverrideCursor(Qt.WaitCursor)
-        self.inlet_cbo.model().sort(0)
-        self.inlet_cbo.setCurrentIndex(0)
-
-        self.inlets_tblw.sortItems(0, Qt.AscendingOrder)
-        self.inlets_tblw.selectRow(0)
-        self.rt_previous_index = self.inlet_rating_table_cbo.currentIndex()
-
-        self.enable_external_inflow()
-
-        self.block = False
-
-        self.highlight_inlet_cell(self.grid_element_le.text())
+        try:
+            qry = """SELECT
+                            name, 
+                            grid, 
+                            junction_invert_elev,
+                            max_depth, 
+                            init_depth, 
+                            surcharge_depth, 
+                            ponded_area, 
+                            intype, 
+                            swmm_length, 
+                            swmm_width, 
+                            swmm_height,
+                            swmm_coeff,
+                            swmm_feature,
+                            curbheight,
+                            swmm_clogging_factor,
+                            swmm_time_for_clogging,
+                            rt_name          
+                    FROM user_swmm_nodes WHERE sd_type= 'I' or sd_type= 'J';"""
+            rows = self.gutils.execute(qry).fetchall()
+            if not rows:
+                QApplication.setOverrideCursor(Qt.ArrowCursor)
+                self.uc.show_info(
+                    "WARNING 280920.0421: No inlets/junctions defined (of type 'I' or 'J') in 'Storm Drain Nodes' User Layer!"
+                )
+                QApplication.restoreOverrideCursor()
+                return
+    
+            self.block = True
+    
+            self.inlets_tblw.setRowCount(0)
+            no_rt = ""
+            existing_rts = []
+            duplicates = []
+            wrong_type = ""
+    
+            for row_number, row_data in enumerate(rows):
+                name = row_data[0].strip()
+                typ = str(row_data[7]).strip()
+    
+                if name[0:2] in ["I1", "I2", "I3", "I4", "I5"]:
+                    if name[1] != typ:
+                        if len(wrong_type) < 1500:
+                            wrong_type += name + "\tWrong type " + typ + ". Should be " + name[1] + ".\n"
+                if name[0:2] == "IM":
+                    if name[2] != typ:
+                        if len(wrong_type) < 1500:
+                            wrong_type += name + "\tWrong type " + typ + ". Should be " + name[2] + ".\n"
+    
+                #
+                # if not () or
+                #         (name()[1] == "M" and name()[2] == "5"):
+                self.inlets_tblw.insertRow(row_number)
+                for cell, data in enumerate(row_data):
+                    item = QTableWidgetItem()
+                    if cell == 0 or cell == 1 or cell == 6 or cell == 7 or cell == 16:
+                        # item.setFlags(Qt.ItemIsSelectable | Qt.ItemIsEnabled)
+                        item.setFlags(item.flags() & ~Qt.ItemIsEditable)
+    
+                    # item.setData(Qt.DisplayRole, data)
+                    # Fill the list of inlet names:
+                    if cell == 0:
+                        self.inlet_cbo.addItem(data)
+    
+                    # Fill all text boxes with data of first feature of query (first cell in table user_swmm_nodes):
+                    if row_number == 0:
+                        if cell == 1:
+                            self.grid_element_le.setText(str(data))
+                        elif cell == 2:
+                            self.invert_elevation_dbox.setValue(data if data is not None else 0)
+                        elif cell == 3:
+                            self.max_depth_dbox.setValue(data if data is not None else 0)
+                        elif cell == 4:
+                            self.initial_depth_dbox.setValue(data if data is not None else 0)
+                        elif cell == 5:
+                            self.surcharge_depth_dbox.setValue(data if data is not None else 0)
+                        # elif cell == 6:
+                        #     self.ponded_area_dbox.setValue(data if data is not None else 0)
+                        elif cell == 7:
+                            self.inlet_drain_type_cbo.setCurrentIndex(data - 1)
+                        elif cell == 8:
+                            self.length_dbox.setValue(data if data is not None else 0)
+                        elif cell == 9:
+                            self.width_dbox.setValue(data if data is not None else 0)
+                        elif cell == 10:
+                            self.height_dbox.setValue(data if data is not None else 0)
+                        elif cell == 11:
+                            self.weir_coeff_dbox.setValue(data if data is not None else 0)
+                        elif cell == 12:
+                            self.feature_sbox.setValue(data if data is not None else 0)
+                        elif cell == 13:
+                            self.curb_height_dbox.setValue(data if data is not None else 0)
+                        elif cell == 14:
+                            self.clogging_factor_dbox.setValue(data if data is not None else 0)
+                        elif cell == 15:
+                            self.time_for_clogging_dbox.setValue(data if data is not None else 0)
+                        elif cell == 16:  # Rating table name/Culvert Eq.
+                            idx = self.inlet_rating_table_cbo.findText(str(data) if data is not None else "")
+                            self.inlet_rating_table_cbo.setCurrentIndex(idx)
+    
+                    # See if rating tables or Culvert eq. exist:
+                    if cell == 0:
+                        inlet = data
+                    if cell == 16:
+                        if data:  # data is the rating table or Culvert eq. name for cell 16.
+                            data = data.strip()
+                            if data != "":
+                                fid_rt = self.gutils.execute("SELECT fid FROM swmmflort WHERE name = ?", (data,)).fetchone()
+                                if not fid_rt:
+                                    fid_c = self.gutils.execute(
+                                        "SELECT fid FROM swmmflo_culvert WHERE name = ?",
+                                        (data,),
+                                    ).fetchone()
+                                    if not fid_c:
+                                        no_rt += data + "\t   for inlet   " + inlet + "\n"
+                                        # data = ""
+                                    if data in existing_rts:
+                                        if data not in duplicates:
+                                            duplicates.append(data)
+                                    else:
+                                        existing_rts.append(data)
+    
+                                # if data in existing_rts:
+                                #     if data not in duplicates:
+                                #         duplicates.append(data)
+                                # else:
+                                #     existing_rts.append(data)
+    
+                    item.setData(Qt.EditRole, data)
+                    self.inlets_tblw.setItem(row_number, cell, item)
+    
+            if no_rt != "":
+                QApplication.setOverrideCursor(Qt.ArrowCursor)
+                self.uc.show_info(
+                    "WARNING 070120.1048:\nThe following rating tables/Culvert eq. were not found!:\n\n" + no_rt
+                )
+                QApplication.restoreOverrideCursor()
+    
+            if duplicates:
+                txt = ""
+                for d in duplicates:
+                    txt += "\n" + d + ""
+                QApplication.setOverrideCursor(Qt.ArrowCursor)
+                self.uc.show_info(
+                    "WARNING 080120.0814:\nThe following rating tables/Culvert eq. are assigned to more than one inlet:\n"
+                    + txt
+                )
+                QApplication.restoreOverrideCursor()
+    
+            self.inlet_cbo.model().sort(0)
+            self.inlet_cbo.setCurrentIndex(0)
+    
+            self.inlets_tblw.sortItems(0, Qt.AscendingOrder)
+            self.inlets_tblw.selectRow(0)
+            self.rt_previous_index = self.inlet_rating_table_cbo.currentIndex()
+    
+            self.enable_external_inflow()
+    
+            self.block = False
+    
+            self.highlight_inlet_cell(self.grid_element_le.text())
+    
+        except Exception as e:
+            QApplication.setOverrideCursor(Qt.ArrowCursor)
+            self.uc.show_error("ERROR 030324.0633: error while loading inlets/junctions components!", e)
+            QApplication.restoreOverrideCursor()
+        finally:
+            QApplication.restoreOverrideCursor()              
 
     def onVerticalSectionClicked(self, logicalIndex):
         self.inlets_tblw_cell_clicked(logicalIndex, 0)
@@ -628,10 +635,7 @@ class InletNodesDialog(qtBaseClass, uiDialog):
                     if self.grid_count >= cell and cell > 0:
                         self.lyrs.show_feat_rubber(self.grid_lyr.id(), cell, QColor(Qt.yellow))
                         feat = next(self.grid_lyr.getFeatures(QgsFeatureRequest(cell)))
-                        x, y = feat.geometry().centroid().asPoint()
-                        self.lyrs.zoom_to_all()
-                        center_canvas(self.iface, x, y)
-                        zoom(self.iface, 0.45)
+                        center_feature(self.iface, feat, 15)
 
                     else:
                         self.uc.bar_warn("WARNING 221219.1140: Cell " + str(cell) + " not found.")
@@ -872,25 +876,28 @@ class InletNodesDialog(qtBaseClass, uiDialog):
             self.gutils.execute_many(update_qry, inlets)
 
             if len(t4_but_rt_name) > 0:
-                QApplication.restoreOverrideCursor()
                 t4_but_rt_name.sort()
                 no_rt_names = ""
                 for inl, gr in t4_but_rt_name:
                     no_rt_names += "\n" + inl + "\t(grid " + gr + ")"
+                QApplication.setOverrideCursor(Qt.WaitCursor)    
                 self.uc.show_info(
                     "WARNING 020219.1836:\n\nThe following "
                     + str(len(t4_but_rt_name))
                     + " inlet(s) are of type 4 (stage discharge with rating table or Culvert equation) but don't have data assigned:\n"
                     + no_rt_names
                 )
+                QApplication.restoreOverrideCursor()
 
         except Exception as e:
-            QApplication.restoreOverrideCursor()
+            QApplication.setOverrideCursor(Qt.WaitCursor)
             self.uc.show_error(
                 "ERROR 020219.0812: couldn't save inlets/junction into User Storm Drain Nodes!"
                 + "\n__________________________________________________",
                 e,
             )
+            QApplication.restoreOverrideCursor()
+            
 
     def populate_rtables(self):
         self.inlet_rating_table_cbo.clear()
@@ -1314,22 +1321,28 @@ class InflowTimeSeriesDialog(qtBaseClass, uiDialog):
                         for col, data in enumerate(row_data):
                             if col == 0:
                                 if data:
-                                    a, b, c = data.split("/")
-                                    if len(a) < 2:
-                                        a = "0" * (2 - len(a)) + a
-                                    if len(b) < 2:
-                                        b = "0" * (2 - len(b)) + b
-                                    if len(c) < 4:
-                                        c = "0" * (4 - len(c)) + c
-                                    data = a + "/" + b + "/" + c
+                                    try:
+                                        a, b, c = data.split("/")
+                                        if len(a) < 2:
+                                            a = "0" * (2 - len(a)) + a
+                                        if len(b) < 2:
+                                            b = "0" * (2 - len(b)) + b
+                                        if len(c) < 4:
+                                            c = "0" * (4 - len(c)) + c
+                                        data = a + "/" + b + "/" + c
+                                    except:
+                                        data = "00/00/0000"
                                 else:
                                     data = "00/00/0000"
                             if col == 1:
                                 if data:
-                                    a, b = data.split(":")
-                                    if len(a) == 1:
-                                        a = "0" + a
-                                    data = a + ":" + b
+                                    try:
+                                        a, b = data.split(":")
+                                        if len(a) == 1:
+                                            a = "0" + a
+                                        data = a + ":" + b
+                                    except:
+                                        data = "00:00"    
                                 else:
                                     data = "00:00"
                             if col == 2:

@@ -11,6 +11,7 @@
 import csv
 import io
 import os
+import re
 import sys
 from _ast import Or
 from collections import OrderedDict
@@ -58,6 +59,11 @@ class StructEditorWidget(qtBaseClass, uiDialog):
         self.struct = None
         self.gutils = None
         self.define_data_table_head()
+
+        self.system_units = {
+            "CMS": ["m", "mps", "cms"],
+            "CFS": ["ft", "fps", "cfs"]
+             }
 
         self.inletRT = None
         self.plot = plot
@@ -154,7 +160,7 @@ class StructEditorWidget(qtBaseClass, uiDialog):
         self.struct = Structure(fid, self.iface.f2d["con"], self.iface)
         self.struct.get_row()
         self.show_struct_rb()
-        if self.center_chbox.isChecked():
+        if self.center_btn.isChecked():
             try:
                 feat = next(self.user_struct_lyr.getFeatures(QgsFeatureRequest(self.struct.fid)))
                 x, y = feat.geometry().centroid().asPoint()
@@ -411,6 +417,7 @@ class StructEditorWidget(qtBaseClass, uiDialog):
                 if tables_out != "":
                     txt += "The following files were not loaded:\n" + tables_out
                 if txt != "":
+                    self.struct_changed()
                     self.uc.show_info(txt)
 
             except Exception as e:
@@ -711,3 +718,92 @@ class StructEditorWidget(qtBaseClass, uiDialog):
                 self.uc.show_info("Bridge variables saved for '" + self.struct_cbo.currentText() + "'")
             else:
                 self.uc.bar_warn("Could not save bridge variables!")
+
+    def show_hydrograph(self, table, fid):
+        """
+        Function to load the structure hydrograph data from HYDROSTRUCT.OUT
+        """
+        self.uc.clear_bar_messages()
+        if self.gutils.is_table_empty("grid"):
+            self.uc.bar_warn("There is no grid! Please create it before running tool.")
+            return False
+
+        units = "CMS" if self.gutils.get_cont_par("METRIC") == "1" else "CFS"
+
+        s = QSettings()
+        HYDROSTRUCT_file = s.value("FLO-2D/lastHYDROSTRUCTFile", "")
+        GDS_dir = s.value("FLO-2D/lastGdsDir", "")
+        # Check if there is an HYDROSTRUCT.OUT file on the FLO-2D QSettings
+        if not os.path.isfile(HYDROSTRUCT_file):
+            HYDROSTRUCT_file = GDS_dir + r"/HYDROSTRUCT.OUT"
+            # Check if there is an HYDROSTRUCT.OUT file on the export folder
+            if not os.path.isfile(HYDROSTRUCT_file):
+                self.uc.bar_warn(
+                    "No HYDROSTRUCT.OUT file found. Please ensure the simulation has completed and verify the project export folder.")
+                return
+        # Check if the HYDROSTRUCT.OUT has data on it
+        if os.path.getsize(HYDROSTRUCT_file) == 0:
+            QApplication.restoreOverrideCursor()
+            self.uc.bar_warn("File  '" + os.path.basename(HYDROSTRUCT_file) + "'  is empty!")
+            return
+
+        with open(HYDROSTRUCT_file, "r") as myfile:
+            time_list = []
+            discharge_list = []
+            pattern = r'STRUCTURE\sNO.\s+(\d+)\s+IS:'
+            while True:
+                try:
+                    line = next(myfile)
+                    match = re.search(pattern, line)
+                    if match:
+                        matched_structure_number = int(match.group(1))
+                        if matched_structure_number == fid:
+                            line = next(myfile)
+                            while True:
+                                line = next(myfile)
+                                if not line.strip():  # If the line is empty, exit the loop
+                                    break
+                                line = line.split()
+                                time_list.append(float(line[0]))
+                                discharge_list.append(float(line[1]))
+                            break
+                except StopIteration:
+                    break
+
+        self.plot.clear()
+        if self.plot.plot.legend is not None:
+            plot_scene = self.plot.plot.legend.scene()
+            if plot_scene is not None:
+                plot_scene.removeItem(self.plot.plot.legend)
+
+        self.plot.plot.legend = None
+        self.plot.plot.addLegend(offset=(0, 30))
+        self.plot.plot.setTitle(title=f"Hydraulic Structure - {fid}")
+        self.plot.plot.setLabel("bottom", text="Time (hrs)")
+        self.plot.plot.setLabel("left", text="")
+        self.plot.add_item(f"Discharge ({self.system_units[units][2]})", [time_list, discharge_list], col=QColor(Qt.darkYellow), sty=Qt.SolidLine)
+
+        try:  # Build table.
+            discharge_data_model = StandardItemModel()
+            self.tview.undoStack.clear()
+            self.tview.setModel(discharge_data_model)
+            discharge_data_model.clear()
+            discharge_data_model.setHorizontalHeaderLabels(["Time (hours)",
+                                                            f"Discharge ({self.system_units[units][2]})"])
+
+            data = zip(time_list, discharge_list)
+            for time, discharge in data:
+                time_item = StandardItem("{:.2f}".format(time)) if time is not None else StandardItem("")
+                discharge_item = StandardItem("{:.2f}".format(discharge)) if discharge is not None else StandardItem("")
+                discharge_data_model.appendRow([time_item, discharge_item])
+
+            self.tview.horizontalHeader().setStretchLastSection(True)
+            for col in range(3):
+                self.tview.setColumnWidth(col, 100)
+            for i in range(discharge_data_model.rowCount()):
+                self.tview.setRowHeight(i, 20)
+            return
+        except:
+            QApplication.restoreOverrideCursor()
+            self.uc.bar_warn("Error while building table for hydraulic structure discharge!")
+            return

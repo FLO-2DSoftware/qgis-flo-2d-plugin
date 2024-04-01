@@ -264,10 +264,10 @@ class UserCrossSection(GeoPackageUtils):
         qry = """INSERT INTO {0} ({1}) VALUES ({2}, {3});""".format(table, cols_t, self.fid, vals_t)
         self.execute(qry)
 
-    def clear_unused_user_nxsec_data(self):
-        qry = """DELETE FROM user_xsec_n_data WHERE chan_n_nxsecnum NOT IN
-            (SELECT nxsecnum FROM user_chan_n);"""
-        self.execute(qry)
+    # def clear_unused_user_nxsec_data(self):
+    #     qry = """DELETE FROM user_xsec_n_data WHERE chan_n_nxsecnum NOT IN
+    #         (SELECT user_xs_fid FROM user_chan_n);"""
+    #     self.execute(qry)
 
     def set_chan_natural_data(self, data):
         self.get_chan_x_row()
@@ -276,7 +276,7 @@ class UserCrossSection(GeoPackageUtils):
         qry = """INSERT INTO user_xsec_n_data (chan_n_nxsecnum, xi, yi) VALUES (?, ?, ?);"""
         self.execute_many(qry, data)
         self.set_nxsecnum()
-        self.clear_unused_user_nxsec_data()
+        # self.clear_unused_user_nxsec_data()
 
     def set_type(self, typ):
         qry = """UPDATE user_xsections SET type = ? WHERE fid = ?;"""
@@ -543,8 +543,7 @@ class ChannelSegment(GeoPackageUtils):
             except Flo2dError:
                 return False
             self.profiles[lbank_grid]["station"] = sta
-            self.profiles[lbank_grid]["water"] = row[11]
-            self.profiles[lbank_grid]["peak"] = row[12]
+
             sta += xs.xlen
             del xs
         return True
@@ -680,6 +679,8 @@ class Inflow(GeoPackageUtils):
             # there is a trigger updating inflow table when the user bc layer is changed
             # this is for inflow rows without geometry
         qry = "DELETE FROM inflow WHERE fid=?"
+        self.execute(qry, (self.fid,))
+        qry = "DELETE FROM inflow_cells WHERE inflow_fid=?"
         self.execute(qry, (self.fid,))
 
     def add_time_series(self, name=None, fetch=False):
@@ -871,6 +872,8 @@ class Outflow(GeoPackageUtils):
         # this is for outflow rows without geometry
         qry = "DELETE FROM outflow WHERE fid=?"
         self.execute(qry, (self.fid,))
+        qry = "DELETE FROM outflow_cells WHERE outflow_fid=?"
+        self.execute(qry, (self.fid,))
 
     def clear_type_data(self):
         self.typ = None
@@ -887,7 +890,7 @@ class Outflow(GeoPackageUtils):
         self.clear_type_data()
         # self.clear_data_fids()
         self.typ = typ
-        if typ in (2, 8, 9, 11):
+        if typ in (2, 8, 9, 10):
             self.chan_out = 1
         elif typ in (1, 7):
             self.fp_out = 1
@@ -984,9 +987,9 @@ class Outflow(GeoPackageUtils):
         """
         if self.typ in [5, 6, 7, 8]:
             return self.get_time_series()
-        elif self.typ in [9, 10]:
+        elif self.typ == 9:
             return self.get_qh_params()
-        elif self.typ == 11:
+        elif self.typ == 10:
             return self.get_qh_tables()
         else:
             pass
@@ -998,9 +1001,9 @@ class Outflow(GeoPackageUtils):
         data = None
         if self.typ in [5, 6, 7, 8]:
             data = self.add_time_series(name)
-        elif self.typ in [9, 10]:
+        elif self.typ in [9]:
             data = self.add_qh_params(name)
-        elif self.typ == 11:
+        elif self.typ == 10:
             data = self.add_qh_table(name)
         else:
             pass
@@ -1013,9 +1016,9 @@ class Outflow(GeoPackageUtils):
         self.data_fid = self.get_cur_data_fid()
         if self.typ in [5, 6, 7, 8]:
             self.set_time_series_data_name(name)
-        elif self.typ in [9, 10]:
+        elif self.typ in [9]:
             self.set_qh_params_data_name(name)
-        elif self.typ == 11:
+        elif self.typ == 10:
             self.set_qh_table_data_name(name)
         else:
             pass
@@ -1027,14 +1030,15 @@ class Outflow(GeoPackageUtils):
         self.data_fid = self.get_cur_data_fid()
         if self.typ in [5, 6, 7, 8]:
             self.set_time_series_data(name, data)
-        elif self.typ in [9, 10]:
+        elif self.typ in [9]:
             self.set_qh_params_data(name, data)
-        elif self.typ == 11:
+        elif self.typ == 10:
             self.set_qh_table_data(name, data)
         else:
             pass
 
     def set_time_series_data_name(self, name):
+        self.data_fid = self.get_cur_data_fid()
         qry = "UPDATE outflow_time_series SET name=? WHERE fid=?;"
         self.execute(
             qry,
@@ -1045,6 +1049,7 @@ class Outflow(GeoPackageUtils):
         )
 
     def set_time_series_data(self, name, data):
+        self.data_fid = self.get_cur_data_fid()
         qry = "UPDATE outflow_time_series SET name=? WHERE fid=?;"
         self.execute(
             qry,
@@ -1059,6 +1064,7 @@ class Outflow(GeoPackageUtils):
         self.execute_many(qry.format(self.data_fid), data)
 
     def set_qh_params_data_name(self, name):
+        self.data_fid = self.get_cur_data_fid()
         qry = "UPDATE qh_params SET name=? WHERE fid=?;"
         self.execute(
             qry,
@@ -1069,6 +1075,7 @@ class Outflow(GeoPackageUtils):
         )
 
     def set_qh_params_data(self, name, data):
+        self.data_fid = self.get_cur_data_fid()
         qry = "UPDATE qh_params SET name=? WHERE fid=?;"
         self.execute(
             qry,
@@ -1083,6 +1090,7 @@ class Outflow(GeoPackageUtils):
         self.execute_many(qry.format(self.data_fid), data)
 
     def set_qh_table_data_name(self, name):
+        self.data_fid = self.get_cur_data_fid()
         qry = "UPDATE qh_table SET name=? WHERE fid=?;"
         self.execute(
             qry,
@@ -1093,6 +1101,7 @@ class Outflow(GeoPackageUtils):
         )
 
     def set_qh_table_data(self, name, data):
+        self.data_fid = self.get_cur_data_fid()
         qry = "UPDATE qh_table SET name=? WHERE fid=?;"
         self.execute(
             qry,
@@ -1133,9 +1142,9 @@ class Outflow(GeoPackageUtils):
             self.fp_tser_fid = fid
         elif self.typ in [6, 8]:
             self.chan_tser_fid = fid
-        elif self.typ in [9, 10]:
+        elif self.typ in [9]:
             self.chan_qhpar_fid = fid
-        elif self.typ == 11:
+        elif self.typ == 10:
             self.chan_qhtab_fid = fid
         else:
             pass
@@ -1204,9 +1213,9 @@ class Outflow(GeoPackageUtils):
         """
         if self.typ in [5, 6, 7, 8]:
             return self.get_time_series_data()
-        elif self.typ in [9, 10]:
+        elif self.typ in [9]:
             return self.get_qh_params_data()
-        elif self.typ == 11:
+        elif self.typ == 10:
             return self.get_qh_table_data()
         else:
             pass
@@ -1214,9 +1223,9 @@ class Outflow(GeoPackageUtils):
     def get_new_data_name(self, fid):
         if self.typ in [5, 6, 7, 8]:
             return "OutTimeSeries {}".format(fid)
-        elif self.typ in [9, 10]:
+        elif self.typ in [9]:
             return "Q(h) parameters {}".format(fid)
-        elif self.typ == 11:
+        elif self.typ == 10:
             return "Q(h) table {}".format(fid)
         else:
             return None

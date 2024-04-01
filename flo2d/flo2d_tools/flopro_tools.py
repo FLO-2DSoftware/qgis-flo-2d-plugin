@@ -37,11 +37,11 @@ def cd(newdir):
 
 
 class FLOPROExecutor(object):
-    FLOPRO_EXE = "FLOPRO.exe"
 
-    def __init__(self, iface, flo2d_dir, project_dir):
+    def __init__(self, iface, flo2d_dir, project_dir, program):
+        self.program = program
         self.flo2d_dir = flo2d_dir
-        self.flo2d_exe = flo2d_dir + "/" + self.FLOPRO_EXE
+        self.flo2d_exe = flo2d_dir + "/" + self.program
         # self.flo2d_exe = os.path.join(flo2d_dir, self.FLOPRO_EXE)
         self.project_dir = project_dir
         self.uc = self.uc = UserCommunication(iface, "FLO-2D")
@@ -122,7 +122,7 @@ class FLOPROExecutor(object):
                 # result = call(self.flo2d_exe)
 
                 self.uc.bar_info(
-                    "Model FLOPRO.exe started " + str(result) if result is not None else "",
+                    f"Model {self.program} started " + str(result) if result is not None else "",
                     10,
                 )
 

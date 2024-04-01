@@ -23,7 +23,7 @@ from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
 from ..utils import is_number, is_true, m_fdata, float_or_zero
 from .table_editor_widget import StandardItem, StandardItemModel
-from .ui_utils import center_canvas, load_ui, set_icon, try_disconnect, zoom
+from .ui_utils import center_canvas, load_ui, set_icon, try_disconnect, zoom, center_feature
 
 uiDialog, qtBaseClass = load_ui("weirs")
 
@@ -53,7 +53,7 @@ class WeirsDialog(qtBaseClass, uiDialog):
         self.weirs_buttonBox.accepted.connect(self.save_weirs)
 
         self.weir_type_cbo.currentIndexChanged.connect(self.weir_type_cbo_currentIndexChanged)
-        self.weir_crest_height_dbox.valueChanged.connect(self.weir_crest_height_dbox_valueChanged)
+        self.weir_inlet_offset_dbox.valueChanged.connect(self.weir_inlet_offset_dbox_valueChanged)
         self.weir_discharge_coeff_dbox.valueChanged.connect(self.weir_discharge_coeff_dbox_valueChanged)
         self.weir_flap_gate_cbo.currentIndexChanged.connect(self.weir_flap_gate_cbo_currentIndexChanged)
         self.weir_end_contrac_cbo.currentIndexChanged.connect(self.weir_end_contrac_cbo_currentIndexChanged)
@@ -82,23 +82,24 @@ class WeirsDialog(qtBaseClass, uiDialog):
             self.gutils = GeoPackageUtils(self.con, self.iface)
 
     def populate_weirs(self):
-        qry = """SELECT fid,
-                        weir_name,
-                        weir_inlet, 
-                        weir_outlet,
-                        weir_type,
-                        weir_crest_height,
-                        weir_disch_coeff,
-                        weir_flap_gate,
-                        weir_end_contrac,
-                        weir_end_coeff,
-                        weir_side_slope,
-                        weir_shape,
-                        weir_height,
-                        weir_length
-                FROM user_swmm_weirs;"""
-        wrong_status = 0
+        QApplication.setOverrideCursor(Qt.WaitCursor)
         try:
+            qry = """SELECT fid,
+                            weir_name,
+                            weir_inlet, 
+                            weir_outlet,
+                            weir_type,
+                            weir_crest_height,
+                            weir_disch_coeff,
+                            weir_flap_gate,
+                            weir_end_contrac,
+                            weir_end_coeff,
+                            weir_side_slope,
+                            weir_shape,
+                            weir_height,
+                            weir_length
+                    FROM user_swmm_weirs;"""
+            wrong_status = 0            
             rows = self.gutils.execute(qry).fetchall()
             self.weirs_tblw.setRowCount(0)
             for row_number, row_data in enumerate(rows):
@@ -129,7 +130,7 @@ class WeirsDialog(qtBaseClass, uiDialog):
                                 self.weir_type_cbo.setCurrentIndex(index)
 
                             elif column == 5:
-                                self.weir_crest_height_dbox.setValue(float_or_zero(data))
+                                self.weir_inlet_offset_dbox.setValue(float_or_zero(data))
 
                             elif column == 6:
                                 self.weir_discharge_coeff_dbox.setValue(float_or_zero(data))
@@ -186,25 +187,32 @@ class WeirsDialog(qtBaseClass, uiDialog):
                     #     wrong_status += 1
 
             self.highlight_weir(self.weir_name_cbo.currentText())
-            QApplication.restoreOverrideCursor()
+
             if wrong_status > 0:
+                QApplication.setOverrideCursor(Qt.ArrowCursor)
                 self.uc.show_info(
                     "WARNING 070422.0531: there are some weirs with wrong type, shape, or flap gate!\n\n"
                     + "All wrong values were changed to their defaults.\n\n"
                     + "Edit them as wished and then 'Save' to replace the values in the 'Storm Drain weirs' User layers."
                 )
+                QApplication.restoreOverrideCursor()
+                
         except Exception as e:
-            QApplication.restoreOverrideCursor()
+            QApplication.setOverrideCursor(Qt.ArrowCursor)
             self.uc.show_error(
                 "ERROR 070422.0730: assignment of value from weirs users layer failed!.\n",
                 e,
             )
+            QApplication.restoreOverrideCursor()
+            
+        finally:
+            QApplication.restoreOverrideCursor()
 
     def weir_type_cbo_currentIndexChanged(self):
         self.combo_valueChanged(self.weir_type_cbo, 3)
 
-    def weir_crest_height_dbox_valueChanged(self):
-        self.box_valueChanged(self.weir_crest_height_dbox, 4)
+    def weir_inlet_offset_dbox_valueChanged(self):
+        self.box_valueChanged(self.weir_inlet_offset_dbox, 4)
 
     def weir_discharge_coeff_dbox_valueChanged(self):
         self.box_valueChanged(self.weir_discharge_coeff_dbox, 5)
@@ -267,7 +275,7 @@ class WeirsDialog(qtBaseClass, uiDialog):
                 self.uc.bar_warn("WARNING 261123.0425: weir '" + name  + "' has wrong weir type '" + typ + "'. Changed to default 'TRANSVERSE'")
             self.weir_type_cbo.setCurrentIndex(index)
             
-            self.weir_crest_height_dbox.setValue(float_or_zero(self.weirs_tblw.item(row, 4).text()))
+            self.weir_inlet_offset_dbox.setValue(float_or_zero(self.weirs_tblw.item(row, 4).text()))
             self.weir_discharge_coeff_dbox.setValue(float_or_zero(self.weirs_tblw.item(row, 5).text()))
 
             flap = self.weirs_tblw.item(row, 6).text()
@@ -301,11 +309,13 @@ class WeirsDialog(qtBaseClass, uiDialog):
 
             self.highlight_weir(self.weir_name_cbo.currentText())
 
-            QApplication.restoreOverrideCursor()
-
         except Exception as e:
-            QApplication.restoreOverrideCursor()
+            QApplication.setOverrideCursor(Qt.ArrowCursor)
             self.uc.show_error("ERROR 090422.1101: assignment of value failed!.\n", e)
+            QApplication.restoreOverrideCursor()
+                
+        finally:
+            QApplication.restoreOverrideCursor()
 
     def onVerticalSectionClicked(self, logicalIndex):
         self.weirs_tblw_cell_clicked(logicalIndex, 0)
@@ -338,7 +348,7 @@ class WeirsDialog(qtBaseClass, uiDialog):
 
             item = self.weirs_tblw.item(row, 4)
             if item is not None:
-                self.weir_crest_height_dbox.setValue(float_or_zero(str(item.text())))
+                self.weir_inlet_offset_dbox.setValue(float_or_zero(str(item.text())))
 
             item = self.weirs_tblw.item(row, 5)
             if item is not None:
@@ -351,21 +361,20 @@ class WeirsDialog(qtBaseClass, uiDialog):
                     self.weir_flap_gate_cbo.setCurrentIndex(indx)
                 else:
                     self.uc.bar_warn("WARNING 261123.0547: weir flap gate not found.")
-            
-            
-            
-            
-            # if item is not None:
-            #     if item.text() in ("YES", "yes", "Yes", "0"):
-            #         self.weir_flap_gate_cbo.setCurrentIndex(0)
-            #     else:
-            #         self.weir_flap_gate_cbo.setCurrentIndex(1)
 
             item = self.weirs_tblw.item(row, 7)
             if item is not None:
-                self.weir_open_close_time_dbox.setValue(float_or_zero(str(item.text())))
+                self.weir_end_contrac_cbo.setCurrentIndex(float_or_zero(str(item.text())))
 
             item = self.weirs_tblw.item(row, 8)
+            if item is not None:
+                self.weir_end_coeff_dbox.setValue(float_or_zero(str(item.text())))
+
+            item = self.weirs_tblw.item(row, 9)
+            if item is not None:
+                self.weir_side_slope_dbox.setValue(float_or_zero(str(item.text())))
+
+            item = self.weirs_tblw.item(row, 10)
             if item is not None:
                 indx = self.weir_shape_cbo.findText(item.text())
                 if indx != -1:
@@ -373,34 +382,30 @@ class WeirsDialog(qtBaseClass, uiDialog):
                 else:
                     self.uc.bar_warn("WARNING 261123.0552: weir shape not found.")
             
-            
-            
-            
-            # if item is not None:
-            #     if item.text() in ("CIRCULAR", "circular", "Circular", "0"):
-            #         self.weir_shape_cbo.setCurrentIndex(0)
-            #     else:
-            #         self.weir_shape_cbo.setCurrentIndex(1)
-
-            item = self.weirs_tblw.item(row, 9)
+            item = self.weirs_tblw.item(row, 11)
             if item is not None:
                 self.weir_height_dbox.setValue(float_or_zero(str(item.text())))
 
-            item = self.weirs_tblw.item(row, 10)
+            item = self.weirs_tblw.item(row, 12)
             if item is not None:
-                self.weir_width_dbox.setValue(float_or_zero(str(item.text())))
+                self.weir_length_dbox.setValue(float_or_zero(str(item.text())))
 
             self.highlight_weir(self.weir_name_cbo.currentText())
 
+        except Exception as e:
+            QApplication.setOverrideCursor(Qt.ArrowCursor)
+            self.uc.show_error("ERROR 200618.0632: assignment of value failed!.\n", e)
             QApplication.restoreOverrideCursor()
 
-        except Exception as e:
+        finally:
             QApplication.restoreOverrideCursor()
-            self.uc.show_error("ERROR 200618.0632: assignment of value failed!.\n", e)
+
+
+
 
     def find_weir(self):
+        QApplication.setOverrideCursor(Qt.WaitCursor)
         try:
-            QApplication.setOverrideCursor(Qt.WaitCursor)
             if self.grid_lyr is not None:
                 if self.grid_lyr:
                     weir = self.weir_to_find_le.text()
@@ -414,7 +419,7 @@ class WeirsDialog(qtBaseClass, uiDialog):
                         self.uc.bar_warn("WARNING  070422.0734: weir '" + str(weir) + "' not found.")
         except ValueError:
             self.uc.bar_warn("WARNING  070422.0735: weir '" + str(weir) + "' not found.")
-            pass
+
         finally:
             QApplication.restoreOverrideCursor()
 
@@ -428,23 +433,18 @@ class WeirsDialog(qtBaseClass, uiDialog):
                     ).fetchone()
                     self.lyrs.show_feat_rubber(self.weirs_lyr.id(), fid[0], QColor(Qt.yellow))
                     feat = next(self.weirs_lyr.getFeatures(QgsFeatureRequest(fid[0])))
-                    x, y = feat.geometry().centroid().asPoint()
-                    self.lyrs.zoom_to_all()
-                    center_canvas(self.iface, x, y)
-                    zoom(self.iface, 0.45)
+                    center_feature(self.iface, feat) 
                 else:
                     self.uc.bar_warn("WARNING 070422.0760: weir '" + str(weir) + "' not found.")
                     self.lyrs.clear_rubber()
-            QApplication.restoreOverrideCursor()
-
         except ValueError:
-            QApplication.restoreOverrideCursor()
             self.uc.bar_warn("WARNING 070422.0761: weir '" + str(weir) + "' is not valid.")
             self.lyrs.clear_rubber()
-            pass
+
+        finally:
+            QApplication.restoreOverrideCursor()
 
     def zoom_in_weir(self):
-        QApplication.setOverrideCursor(Qt.WaitCursor)
         weir = self.weir_name_cbo.currentText()
         fid = self.gutils.execute("SELECT fid FROM user_swmm_weirs WHERE weir_name = ?;", (weir,)).fetchone()
         self.lyrs.show_feat_rubber(self.weirs_lyr.id(), fid[0], QColor(Qt.yellow))
@@ -452,10 +452,8 @@ class WeirsDialog(qtBaseClass, uiDialog):
         x, y = feat.geometry().centroid().asPoint()
         center_canvas(self.iface, x, y)
         zoom(self.iface, 0.4)
-        QApplication.restoreOverrideCursor()
 
     def zoom_out_weir(self):
-        QApplication.setOverrideCursor(Qt.WaitCursor)
         weir = self.weir_name_cbo.currentText()
         fid = self.gutils.execute("SELECT fid FROM user_swmm_weirs WHERE weir_name = ?;", (weir,)).fetchone()
         self.lyrs.show_feat_rubber(self.weirs_lyr.id(), fid[0], QColor(Qt.yellow))
@@ -463,7 +461,6 @@ class WeirsDialog(qtBaseClass, uiDialog):
         x, y = feat.geometry().centroid().asPoint()
         center_canvas(self.iface, x, y)
         zoom(self.iface, -0.4)
-        QApplication.restoreOverrideCursor()
 
     def save_weirs(self):
         """

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>conduits_dlg</class>
- <widget class="QDialog" name="conduits_dlg">
+ <class>pumps_dlg</class>
+ <widget class="QDialog" name="pumps_dlg">
   <property name="windowModality">
    <enum>Qt::NonModal</enum>
   </property>
@@ -866,7 +866,7 @@
   <connection>
    <sender>pumps_buttonBox</sender>
    <signal>accepted()</signal>
-   <receiver>conduits_dlg</receiver>
+   <receiver>pumps_dlg</receiver>
    <slot>accept()</slot>
    <hints>
     <hint type="sourcelabel">
@@ -882,7 +882,7 @@
   <connection>
    <sender>pumps_buttonBox</sender>
    <signal>rejected()</signal>
-   <receiver>conduits_dlg</receiver>
+   <receiver>pumps_dlg</receiver>
    <slot>reject()</slot>
    <hints>
     <hint type="sourcelabel">
