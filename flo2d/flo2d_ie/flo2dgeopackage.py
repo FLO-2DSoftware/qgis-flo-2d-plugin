@@ -16,13 +16,14 @@ from operator import itemgetter
 
 import numpy as np
 from qgis._core import QgsMessageLog
+from qgis.PyQt import QtCore, QtGui
 from qgis.core import NULL, QgsApplication
 from qgis.PyQt.QtCore import Qt
 from qgis.PyQt.QtWidgets import QApplication, QProgressDialog
 
 from ..flo2d_tools.grid_tools import grid_compas_neighbors
 from ..geopackage_utils import GeoPackageUtils
-from ..gui.bc_editor_widget import BCEditorWidget
+# from ..gui.bc_editor_widget import BCEditorWidget
 from ..layers import Layers
 from ..utils import BC_BORDER, float_or_zero, get_BC_Border
 from .flo2d_parser import ParseDAT, ParseHDF5
@@ -128,6 +129,70 @@ class Flo2dGeoPackage(GeoPackageUtils):
             return self.import_mannings_n_topo_dat()
         elif self.parsed_format == self.FORMAT_HDF5:
             return self.import_mannings_n_topo_hdf5()
+
+    def import_topo(self):
+        if self.parsed_format == self.FORMAT_DAT:
+            return self.import_topo_dat()
+        elif self.parsed_format == self.FORMAT_HDF5:
+            pass # TODO implement this on the hdf5 project
+            # return self.import_topo_dat_hdf5()
+
+    def import_topo_dat(self):
+        """
+        Function to import only the TOPO.DAT file (single component)
+        """
+        QApplication.setOverrideCursor(Qt.WaitCursor)
+        try:
+
+            qry = "UPDATE grid SET elevation = ? WHERE fid = ?;"
+
+            # Clear the elevation
+            self.execute("UPDATE grid SET elevation = '-9999';")
+
+            data = self.parser.parse_topo()
+            fid = 1
+            cell_elev = []
+            for row in data:
+                cell_elev.append((row[2], fid))
+                fid += 1
+            self.gutils.execute_many(qry, cell_elev)
+
+            QApplication.restoreOverrideCursor()
+
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.uc.show_error("ERROR 040521.1154: importing TOPO.DAT!.\n", e)
+
+    def import_mannings_n(self):
+        if self.parsed_format == self.FORMAT_DAT:
+            return self.import_manning_n_dat()
+        elif self.parsed_format == self.FORMAT_HDF5:
+            pass # TODO implement this on the hdf5 project
+            # return self.import_topo_dat_hdf5()
+
+    def import_manning_n_dat(self):
+        """
+        Function to import only the MANNINGS_N.DAT file (single component)
+        """
+        QApplication.setOverrideCursor(Qt.WaitCursor)
+        try:
+
+            qry = "UPDATE grid SET n_value = ? WHERE fid = ?;"
+
+            # Clear the elevation
+            self.execute("UPDATE grid SET n_value = '0.04';")
+
+            data = self.parser.parse_mannings_n()
+            cell_mannings_n = []
+            for row in data:
+                cell_mannings_n.append((row[1], row[0]))
+            self.gutils.execute_many(qry, cell_mannings_n)
+
+            QApplication.restoreOverrideCursor()
+
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.uc.show_error("ERROR 040521.1154: importing MANNINGS_N.DAT!.\n", e)
 
     def import_mannings_n_topo_dat(self):
         try:
@@ -773,10 +838,12 @@ class Flo2dGeoPackage(GeoPackageUtils):
             self.execute(qry)
 
         except Exception:
+            QApplication.setOverrideCursor(QtGui.QCursor(QtCore.Qt.ArrowCursor))
             self.uc.log_info(traceback.format_exc())
             self.uc.show_warn(
                 "WARNING 010219.0742: Import channels failed!. Check CHAN.DAT and CHANBANK.DAT files."
             )  # self.uc.show_warn('Import channels failed!.\nMaybe the number of left bank and right bank cells are different.')
+            QApplication.setOverrideCursor(Qt.WaitCursor)
 
     def import_xsec(self):
         xsec_sql = ["""INSERT INTO xsec_n_data (chan_n_nxsecnum, xi, yi) VALUES""", 3]
@@ -2062,7 +2129,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             if self.is_table_empty("inflow") and self.is_table_empty("reservoirs"):
                 return False
             cont_sql = """SELECT value FROM cont WHERE name = ?;"""
-            inflow_sql = """SELECT fid, time_series_fid, ident, inoutfc FROM inflow WHERE bc_fid = ?;"""
+            inflow_sql = """SELECT fid, time_series_fid, ident, inoutfc FROM inflow WHERE fid = ?;"""
             inflow_cells_sql = """SELECT inflow_fid, grid_fid FROM inflow_cells ORDER BY inflow_fid, grid_fid;"""
             ts_data_sql = (
                 """SELECT time, value, value2 FROM inflow_time_series_data WHERE series_fid = ? ORDER BY fid;"""
@@ -5301,7 +5368,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                             else:
                                 inlet_type_qry = "SELECT intype FROM swmmflo WHERE swmm_jt = ?;"
                                 inlet_type = self.execute(inlet_type_qry, (gid,)).fetchall()
-                                if inlet_type is not None:
+                                if inlet_type is not None and len(inlet_type) != 0:
                                     # TODO: there may be more than one record. Why? Some may have intype = 4.
                                     if len(inlet_type) > 1:
                                         errors += "* Grid element " + str(gid) + " has has more than one inlet.\n"
@@ -5359,10 +5426,14 @@ class Flo2dGeoPackage(GeoPackageUtils):
                                                             )
                                             else:
                                                 if not error_mentioned:
-                                                    errors += "Storm Drain Nodes layer in User Layers is empty.\nSWMMFLORT.DAT may be incomplete!"
+                                                    errors += "Storm Drain Nodes layer in User Layers is empty.\nSWMMFLORT.DAT may be incomplete!\n"
                                                     error_mentioned = True
+                                else:
+                                    errors += (
+                                        "* Rating table " + rtname + " doesn't have an inlet associated with node " + str(gid)+ ".\n"
+                                    )                                                        
                     else:
-                        errors += "* Unknown grid element in Rating Table.\n"                                   
+                        errors += "* Unknown grid element for Rating Table " + rtname + ".\n"                                   
                 culverts = self.gutils.execute(
                     "SELECT grid_fid, name, cdiameter, typec, typeen, cubase, multbarrels FROM swmmflo_culvert ORDER BY fid;"
                 ).fetchall()
@@ -5388,15 +5459,15 @@ class Flo2dGeoPackage(GeoPackageUtils):
                             else:    
                                 errors += "* Unknown grid element in Culverts eq. table.\n"
             if errors:
-                QApplication.restoreOverrideCursor()
+                QApplication.setOverrideCursor(Qt.ArrowCursor)
                 self.uc.show_info("WARNING 040319.0521:\n\n" + errors)
-                QApplication.setOverrideCursor(Qt.WaitCursor)
-
+                QApplication.restoreOverrideCursor()
             return True
 
         except Exception as e:
-            QApplication.restoreOverrideCursor()
+            QApplication.setOverrideCursor(Qt.ArrowCursor)
             self.uc.show_error("ERROR 101218.1619: exporting SWMMFLORT.DAT failed!.\n", e)
+            QApplication.restoreOverrideCursor()
             return False
 
     def export_swmmoutf(self, output=None):

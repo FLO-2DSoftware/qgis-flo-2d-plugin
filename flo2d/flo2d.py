@@ -34,6 +34,7 @@ from subprocess import (
     run,
 )
 
+from qgis.PyQt import QtCore, QtGui
 from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QApplication, QToolButton, QProgressDialog
 from osgeo import gdal
@@ -83,6 +84,7 @@ from .flo2d_tools.grid_tools import (
     number_of_elements,
 )
 from .flo2d_tools.info_tool import InfoTool
+from .flo2d_tools.results_tool import ResultsTool
 from .flo2d_tools.schematic_tools import (
     delete_redundant_levee_directions_np,
     generate_schematic_levees,
@@ -112,6 +114,7 @@ from .gui.grid_info_widget import GridInfoWidget
 from .gui.plot_widget import PlotWidget
 from .gui.table_editor_widget import TableEditorWidget
 from .layers import Layers
+from .misc.invisible_lyrs_grps import InvisibleLayersAndGroups
 from .user_communication import UserCommunication
 from .utils import get_flo2dpro_version
 
@@ -156,6 +159,7 @@ class Flo2D(object):
         self.project = QgsProject.instance()
         self.actions = []
         self.toolButtons = []
+        self.toolActions = []
 
         self.files_used = ""
         self.files_not_used = ""
@@ -166,6 +170,7 @@ class Flo2D(object):
         self.con = None
         self.iface.f2d["con"] = self.con
         self.lyrs = Layers(iface)
+        self.ilg = InvisibleLayersAndGroups(self.iface)
         self.lyrs.group = None
         self.gutils = None
         self.f2g = None
@@ -184,7 +189,6 @@ class Flo2D(object):
         # connections
         self.project.readProject.connect(self.load_gpkg_from_proj)
         self.project.writeProject.connect(self.flo_save_project)
-        # self.project.projectSaved.connect(self.add_flo2d_logo)
 
         self.uc.clear_bar_messages()
         QApplication.restoreOverrideCursor()
@@ -204,11 +208,11 @@ class Flo2D(object):
         self.add_docks_to_iface()
         self.set_editors_map()
 
-        if not self.infoToolCalled: 
+        if not self.infoToolCalled:
             self.info_tool.feature_picked.connect(self.get_feature_info)
             self.infoToolCalled = True
-            
-        self.channel_profile_tool.feature_picked.connect(self.get_feature_profile)
+
+        self.results_tool.feature_picked.connect(self.get_feature_profile)
         self.grid_info_tool.grid_elem_picked.connect(self.f2d_grid_info.update_fields)
 
         self.f2d_widget.grid_tools.setup_connection()
@@ -217,8 +221,8 @@ class Flo2D(object):
         self.f2d_widget.rain_editor.setup_connection()
         self.f2d_widget.rain_editor.rain_properties()
 
-        self.f2d_widget.bc_editor.setup_connection()
-        self.f2d_widget.bc_editor.populate_bcs(widget_setup=True)
+        self.f2d_widget.bc_editor_new.setup_connection()
+        self.f2d_widget.bc_editor_new.populate_bcs(widget_setup=True)
 
         self.f2d_widget.ic_editor.populate_cbos()
 
@@ -277,7 +281,7 @@ class Flo2D(object):
                 popup.addAction(act)
             action.setMenu(popup)
 
-        if text in ["FLO-2D Grid Info Tool", "FLO-2D Info Tool"]:
+        if text in ["FLO-2D Grid Info Tool", "FLO-2D Info Tool", "FLO-2D Results"]:
             action.setCheckable(True)
             action.setChecked(False)
 
@@ -293,7 +297,6 @@ class Flo2D(object):
                 "FLO-2D Project": ("/img/mGeoPackage.svg", "<b>FLO-2D Project</b>"),
                 "Run FLO-2D Pro": ("/img/flo2d.svg", "<b>Run FLO-2D Pro</b>"),
                 "FLO-2D Import/Export": ("/img/ie.svg", "<b>FLO-2D Import/Export</b>"),
-                "FLO-2D Info Tool": ("/img/info_tool.svg", "<b>FLO-2D Info Tool</b>", True),
                 "FLO-2D Project Review": ("/img/editmetadata.svg", "<b>FLO-2D Project Review</b>", True),
                 "FLO-2D Parameters": ("/img/show_cont_table.svg", "<b>FLO-2D Parameters</b>")
             }
@@ -312,6 +315,7 @@ class Flo2D(object):
                 self.toolButtons.append(toolButton)
             else:
                 self.toolbar.addAction(action)
+                self.toolActions.append(action)
 
         if add_to_menu:
             self.iface.addPluginToMenu(self.menu, action)
@@ -486,28 +490,49 @@ class Flo2D(object):
             )
         )
 
+        # self.add_action(
+        #     os.path.join(self.plugin_dir, "img/info_tool.svg"),
+        #     text=self.tr("FLO-2D Info Tool"),
+        #     callback=None,
+        #     parent=self.iface.mainWindow(),
+        #     menu=(
+        #         (
+        #             os.path.join(self.plugin_dir, "img/info_tool.svg"),
+        #             "Info Tool",
+        #             lambda: self.activate_general_info_tool(),
+        #         ),
+        #         (
+        #             os.path.join(self.plugin_dir, "img/import_swmm.svg"),
+        #             "Select .RPT file",
+        #             lambda: self.select_RPT_File(),
+        #         ),
+        #         # (
+        #         #     os.path.join(self.plugin_dir, "img/grid_info_tool.svg"),
+        #         #     "Grid Info Tool",
+        #         #     lambda: self.activate_grid_info_tool(),
+        #         # ),
+        #     )
+        # )
+
+        self.add_action(
+            os.path.join(self.plugin_dir, "img/grid_info_tool.svg"),
+            text=self.tr("FLO-2D Grid Info Tool"),
+            callback=lambda: self.activate_grid_info_tool(),
+            parent=self.iface.mainWindow(),
+        )
+
         self.add_action(
             os.path.join(self.plugin_dir, "img/info_tool.svg"),
             text=self.tr("FLO-2D Info Tool"),
-            callback=None,
+            callback=lambda: self.activate_general_info_tool(),
             parent=self.iface.mainWindow(),
-            menu=(
-                (
-                    os.path.join(self.plugin_dir, "img/info_tool.svg"),
-                    "Info Tool",
-                    lambda: self.activate_general_info_tool(),
-                ),
-                (
-                    os.path.join(self.plugin_dir, "img/import_swmm.svg"),
-                    "Select .RPT file",
-                    lambda: self.select_RPT_File(),
-                ),
-                (
-                    os.path.join(self.plugin_dir, "img/grid_info_tool.svg"),
-                    "Grid Info Tool",
-                    lambda: self.activate_grid_info_tool(),
-                ),
-            )
+        )
+
+        self.add_action(
+            os.path.join(self.plugin_dir, "img/results.svg"),
+            text=self.tr("FLO-2D Results"),
+            callback=lambda: self.activate_results_info_tool(),
+            parent=self.iface.mainWindow(),
         )
 
         self.add_action(
@@ -521,11 +546,11 @@ class Flo2D(object):
                     "HAZUS",
                     lambda: self.show_hazus_dialog(),
                 ),
-                (
-                    os.path.join(self.plugin_dir, "img/profile_tool.svg"),
-                    "Channel Profile",
-                    lambda: self.channel_profile(),
-                ),
+                # (
+                #     os.path.join(self.plugin_dir, "img/profile_tool.svg"),
+                #     "Channel Profile",
+                #     lambda: self.channel_profile(),
+                # ),
                 (
                     os.path.join(self.plugin_dir, "img/issue.svg"),
                     "Warnings and Errors",
@@ -653,7 +678,7 @@ class Flo2D(object):
 
         self.lyrs.clear_rubber()
         # remove maptools
-        del self.info_tool, self.grid_info_tool, self.channel_profile_tool
+        del self.info_tool, self.grid_info_tool, self.results_tool
         # others
         del self.uc
         database_disconnect(self.con)
@@ -674,9 +699,9 @@ class Flo2D(object):
             self.iface.removeDockWidget(self.f2d_grid_info_dock)
             del self.f2d_grid_info_dock
         if self.f2d_widget is not None:
-            if self.f2d_widget.bc_editor is not None:
-                self.f2d_widget.bc_editor.close()
-                del self.f2d_widget.bc_editor
+            # if self.f2d_widget.bc_editor is not None:
+            #     self.f2d_widget.bc_editor.close()
+            #     del self.f2d_widget.bc_editor
 
             if self.f2d_widget.profile_tool is not None:
                 self.f2d_widget.profile_tool.close()
@@ -782,6 +807,7 @@ class Flo2D(object):
             s = QSettings()
             s.setValue("FLO-2D/last_flopro_project", os.path.dirname(gpkg_path_adj))
             s.setValue("FLO-2D/lastGdsDir", os.path.dirname(gpkg_path_adj))
+            s.setValue("FLO-2D/advanced_layers", False)
 
             contact = dlg_settings.lineEdit_au.text()
             email = dlg_settings.lineEdit_co.text()
@@ -926,15 +952,17 @@ class Flo2D(object):
         finally:
             QApplication.restoreOverrideCursor()
 
-    # @connection_required
     def flo_save_project(self):
         """
         Function to save a FLO-2D project into a geopackage
         """
 
         # QApplication.setOverrideCursor(Qt.WaitCursor)
+        try:
+            gpkg_path = self.gutils.get_gpkg_path()
+        except AttributeError:
+            return
 
-        gpkg_path = self.gutils.get_gpkg_path()
         proj_name = os.path.splitext(os.path.basename(gpkg_path))[0]
         uri = f'geopackage:{gpkg_path}?projectName={proj_name}'
 
@@ -1034,7 +1062,7 @@ class Flo2D(object):
                 else:
                     not_added.append(layer.name())
 
-        QApplication.restoreOverrideCursor()
+        QApplication.setOverrideCursor(QtGui.QCursor(QtCore.Qt.ArrowCursor))
 
         if len(not_added) > 0:
             layers_not_added = ', '.join(map(str, not_added))
@@ -1051,30 +1079,98 @@ class Flo2D(object):
         self.dlg_gpkg_management = GpkgManagementDialog(self.iface, self.lyrs, self.gutils)
         self.dlg_gpkg_management.show()
 
-
     def run_settings(self):
         """
         Function to set the run settings: FLO-2D and Project folders
         """
         self.uncheck_all_info_tools()
         dlg = ExternalProgramFLO2D(self.iface, "Run Settings")
-        # dlg.debug_run_btn.setVisible(False)
         dlg.exec_folder_lbl.setText("FLO-2D Folder")
         ok = dlg.exec_()
         if not ok:
             return
         else:
-            flo2d_dir, project_dir = dlg.get_parameters()
-            s = QSettings()
-            s.setValue("FLO-2D/lastGdsDir", project_dir)
-            s.setValue("FLO-2D/last_flopro", flo2d_dir)
 
-            if project_dir != "" and flo2d_dir != "":
-                s.setValue("FLO-2D/run_settings", True)
-                flo2d_v = get_flo2dpro_version(s.value("FLO-2D/last_flopro") + "/FLOPRO.exe")
-                self.gutils.set_metadata_par("FLO-2D_V", flo2d_v)
+            flopro_found = False
 
-            self.uc.show_info("Run Settings saved!")
+            # Project is loaded
+            if self.gutils:
+                flo2d_dir, project_dir, advanced_layers = dlg.get_parameters()
+                s = QSettings()
+                s.setValue("FLO-2D/lastGdsDir", project_dir)
+                s.setValue("FLO-2D/last_flopro", flo2d_dir)
+                if advanced_layers != s.value("FLO-2D/advanced_layers", ""):
+                    # show advanced layers
+                    if advanced_layers:
+                        lyrs = self.lyrs.data
+                        for key, value in lyrs.items():
+                            group = value.get("sgroup")
+                            subsubgroup = value.get("ssgroup")
+                            self.ilg.unhideLayer(self.lyrs.data[key]["qlyr"])
+                            self.ilg.unhideGroup(group)
+                            self.ilg.unhideGroup(subsubgroup, group)
+                    # hide advanced layers
+                    else:
+                        lyrs = self.lyrs.data
+                        for key, value in lyrs.items():
+                            advanced = value.get("advanced")
+                            if advanced:
+                                subgroup = value.get("sgroup")
+                                subsubgroup = value.get("ssgroup")
+                                self.ilg.hideLayer(self.lyrs.data[key]["qlyr"])
+                                if subsubgroup == "Gutters" or subsubgroup == "Multiple Channels" or subsubgroup == "Streets":
+                                    self.ilg.hideGroup(subsubgroup, subgroup)
+                                else:
+                                    self.ilg.hideGroup(subgroup)
+                s.setValue("FLO-2D/advanced_layers", advanced_layers)
+
+                if project_dir != "" and flo2d_dir != "":
+                    s.setValue("FLO-2D/run_settings", True)
+
+                    flopro_dir = s.value("FLO-2D/last_flopro")
+                    flo2d_v = "FLOPRO not found"
+                    # Check for FLOPRO.exe
+                    if os.path.isfile(flopro_dir + "/FLOPRO.exe"):
+                        flopro_found = True
+                        flo2d_v = get_flo2dpro_version(flopro_dir + "/FLOPRO.exe")
+                    # Check for FLOPRO_Demo.exe
+                    elif os.path.isfile(flopro_dir + "/FLOPRO_Demo.exe"):
+                        flopro_found = True
+                        flo2d_v = get_flo2dpro_version(flopro_dir + "/FLOPRO_Demo.exe")
+                    else:
+                        flopro_found = False
+
+                    self.gutils.set_metadata_par("FLO-2D_V", flo2d_v)
+
+                self.f2d_plot.clear()
+
+            # Project not loaded
+            else:
+                flo2d_dir, project_dir, _ = dlg.get_parameters()
+                s = QSettings()
+                s.setValue("FLO-2D/lastGdsDir", project_dir)
+                s.setValue("FLO-2D/last_flopro", flo2d_dir)
+
+                if project_dir != "" and flo2d_dir != "":
+                    s.setValue("FLO-2D/run_settings", True)
+
+                    flopro_dir = s.value("FLO-2D/last_flopro")
+                    # Check for FLOPRO.exe
+                    if os.path.isfile(flopro_dir + "/FLOPRO.exe"):
+                        flopro_found = True
+                    # Check for FLOPRO_Demo.exe
+                    elif os.path.isfile(flopro_dir + "/FLOPRO_Demo.exe"):
+                        flopro_found = True
+                    else:
+                        flopro_found = False
+
+            if flopro_found:
+                self.uc.bar_info("Run Settings saved!")
+                self.uc.log_info(f"Run Settings saved!\nProject Folder: {project_dir}\nFLO-2D Folder: {flo2d_dir}")
+            else:
+                self.uc.bar_warn("Run Settings saved! No FLOPRO.exe found, check your FLO-2D installation folder!")
+                self.uc.log_info(f"Run Settings saved! No FLOPRO.exe found, check your FLO-2D installation "
+                                 f"folder!\nProject Folder: {project_dir}\nFLO-2D Folder: {flo2d_dir}")
 
     @connection_required
     def quick_run_flopro(self):
@@ -1263,22 +1359,61 @@ class Flo2D(object):
                         self.uc.show_info(info)
 
             QApplication.restoreOverrideCursor()
-            if s.value("FLO-2D/last_flopro") is not None:
-                flo2d_v = get_flo2dpro_version(s.value("FLO-2D/last_flopro") + "/FLOPRO.exe")
-                self.gutils.set_metadata_par("FLO-2D_V", flo2d_v)
+            flopro_dir = s.value("FLO-2D/last_flopro")
+            flo2d_v = "FLOPRO not found"
+            program = None
+            if flopro_dir is not None:
+                # Check for FLOPRO.exe
+                if os.path.isfile(flopro_dir + "/FLOPRO.exe"):
+                    flo2d_v = get_flo2dpro_version(flopro_dir + "/FLOPRO.exe")
+                    self.gutils.set_metadata_par("FLO-2D_V", flo2d_v)
+                    program = "FLOPRO.exe"
+                # Check for FLOPRO_Demo.exe
+                elif os.path.isfile(flopro_dir + "/FLOPRO_Demo.exe"):
+                    flo2d_v = get_flo2dpro_version(flopro_dir + "/FLOPRO_Demo.exe")
+                    self.gutils.set_metadata_par("FLO-2D_V", flo2d_v)
+                    program = "FLOPRO_Demo.exe"
             else:
                 self.run_settings()
-            self.run_program("FLOPRO.exe")
+
+            if program:
+                self.uc.bar_info(f"Running {program}...")
+                self.uc.log_info(f"Running {program}...")
+                self.run_program(program)
+            else:
+                self.uc.bar_warn("No FLOPRO.exe found, check your FLO-2D installation folder!")
+                self.uc.log_info("No FLOPRO.exe found, check your FLO-2D installation folder!")
 
     def run_flopro(self):
         self.uncheck_all_info_tools()
         s = QSettings()
-        if s.value("FLO-2D/last_flopro") is not None:
-            flo2d_v = get_flo2dpro_version(s.value("FLO-2D/last_flopro") + "/FLOPRO.exe")
-            self.gutils.set_metadata_par("FLO-2D_V", flo2d_v)
+        flopro_dir = s.value("FLO-2D/last_flopro")
+        flo2d_v = "FLOPRO not found"
+        user_program = None
+        # Check if the FLOPRO directory is in the FLO-2D Settings
+        if flopro_dir is not None:
+            # Check if the user has the FLOPRO version
+            if os.path.isfile(flopro_dir + "/FLOPRO.exe"):
+                flo2d_v = get_flo2dpro_version(flopro_dir + "/FLOPRO.exe")
+                user_program = "FLOPRO.exe"
+            # Check for the FLOPRO_Demo
+            elif os.path.isfile(flopro_dir + "/FLOPRO_Demo.exe"):
+                flo2d_v = get_flo2dpro_version(flopro_dir + "/FLOPRO_Demo.exe")
+                user_program = "FLOPRO_Demo.exe"
+
+            # Only add to metadata if there is a project loaded, otherwise just run FLOPRO
+            if self.gutils:
+                self.gutils.set_metadata_par("FLO-2D_V", flo2d_v)
         else:
             self.run_settings()
-        self.run_program("FLOPRO.exe")
+
+        if user_program:
+            self.uc.bar_info(f"Running {user_program}...")
+            self.uc.log_info(f"Running {user_program}...")
+            self.run_program(user_program)
+        else:
+            self.uc.bar_warn("No FLOPRO.exe found, check your FLO-2D installation folder!")
+            self.uc.log_info("No FLOPRO.exe found, check your FLO-2D installation folder!")
 
     def run_tailingsdambreach(self):
         self.uncheck_all_info_tools()
@@ -1546,6 +1681,7 @@ class Flo2D(object):
         if calls[0] == "export_cont_toler":
             self.files_used = "CONT.DAT\n"
 
+        QApplication.setOverrideCursor(Qt.WaitCursor)
         for call in calls:
             if call == "export_bridge_xsec":
                 dat = "BRIDGE_XSEC.DAT"
@@ -1843,6 +1979,15 @@ class Flo2D(object):
                         "swmmflort",
                         "swmmflort_data",
                         "swmmoutf",
+                        "swmmflo_culvert",
+                        "swmm_inflows",
+                        "swmm_inflow_patterns",
+                        "swmm_time_series",
+                        "swmm_time_series_data",
+                        "swmm_tidal_curve",
+                        "swmm_tidal_curve_data",
+                        "swmm_pumps_curve_data",
+                        "swmm_other_curves",
                         "tolspatial",
                         "tolspatial_cells",
                         "user_bc_lines",
@@ -1871,6 +2016,7 @@ class Flo2D(object):
                         "user_swmm_orifices",
                         "user_swmm_weirs",
                         "user_swmm_nodes",
+                        "user_swmm_storage_units",
                         "user_xsec_n_data",
                         "user_xsections",
                         "wstime",
@@ -1947,7 +2093,7 @@ class Flo2D(object):
                     else:
                         cell = self.gutils.execute("SELECT col FROM grid WHERE fid = 1").fetchone()
                         if cell[0] == NULL:
-                            QApplication.restoreOverrideCursor()
+                            QApplication.setOverrideCursor(QtGui.QCursor(QtCore.Qt.ArrowCursor))
                             proceed = self.uc.question(
                                 "Grid layer's fields 'col' and 'row' have NULL values!\n\nWould you like to assign them?"
                             )
@@ -1958,13 +2104,13 @@ class Flo2D(object):
                             else:
                                 return
 
-                    QApplication.restoreOverrideCursor()
+                    QApplication.setOverrideCursor(QtGui.QCursor(QtCore.Qt.ArrowCursor))
 
                 except Exception as e:
-                    QApplication.restoreOverrideCursor()
+                    QApplication.setOverrideCursor(QtGui.QCursor(QtCore.Qt.ArrowCursor))
                     self.uc.show_error("ERROR 050521.0349: importing .DAT files!.\n", e)
                 finally:
-                    QApplication.restoreOverrideCursor()
+                    QApplication.setOverrideCursor(QtGui.QCursor(QtCore.Qt.ArrowCursor))
                     if self.files_used != "" or self.files_not_used != "":
                         self.uc.show_info(
                             "Files read by this project:\n\n"
@@ -2213,7 +2359,7 @@ class Flo2D(object):
                 else:
                     cell = self.gutils.execute("SELECT col FROM grid WHERE fid = 1").fetchone()
                     if cell is None:
-                        QApplication.restoreOverrideCursor()
+                        QApplication.setOverrideCursor(QtGui.QCursor(QtCore.Qt.ArrowCursor))
                         proceed = self.uc.question(
                             "Grid layer's fields 'col' and 'row' have NULL values!\n\nWould you like to assign them?"
                         )
@@ -2256,7 +2402,7 @@ class Flo2D(object):
         """
         self.uncheck_all_info_tools()
         imprt = self.uc.dialog_with_2_customized_buttons(
-            "Select import method", "", " Several Components", " One Single Component "
+            "Select import method", "", " Several Components", " One Single Component"
         )
 
         if imprt == QMessageBox.Yes:
@@ -2450,7 +2596,7 @@ class Flo2D(object):
                         self.uc.show_info("No component was selected!")
 
                 finally:
-                    QApplication.restoreOverrideCursor()
+                    QApplication.setOverrideCursor(QtGui.QCursor(QtCore.Qt.ArrowCursor))
                     if self.files_used != "" or self.files_not_used != "":
                         self.uc.show_info(
                             "Files read by this project:\n\n"
@@ -2530,6 +2676,8 @@ class Flo2D(object):
             "SWMMOUTETF.DAT": "import_swmmoutf",
             "WSURF.DAT": "import_wsurf",
             "WSTIME.DAT": "import_wstime",
+            "MANNINGS_N.DAT": "import_mannings_n",
+            "TOPO.DAT": "import_topo"
         }
         s = QSettings()
         last_dir = s.value("FLO-2D/lastGdsDir", "")
@@ -2764,20 +2912,22 @@ class Flo2D(object):
                     export_calls.remove("export_mannings_n_topo")
 
                 if "export_swmmflort" in export_calls:
+                    QApplication.setOverrideCursor(Qt.ArrowCursor)
                     if not self.uc.question(
                             "Did you schematize Storm Drains? Do you want to export Storm Drain files?"
                     ):
                         export_calls.remove("export_swmmflo")
                         export_calls.remove("export_swmmflort")
                         export_calls.remove("export_swmmoutf")
+                    QApplication.restoreOverrideCursor()    
 
-                QApplication.setOverrideCursor(Qt.WaitCursor)
+                # QApplication.setOverrideCursor(Qt.WaitCursor)
 
                 try:
                     s = QSettings()
                     s.setValue("FLO-2D/lastGdsDir", outdir)
 
-                    QApplication.setOverrideCursor(Qt.WaitCursor)
+                    # QApplication.setOverrideCursor(Qt.WaitCursor)
                     self.call_IO_methods(export_calls, True, outdir)
 
                     # The strings list 'export_calls', contains the names of
@@ -2785,10 +2935,8 @@ class Flo2D(object):
                     # FLO-2D .DAT files
 
                     self.uc.bar_info("Flo2D model exported to " + outdir, dur=3)
-                    QApplication.restoreOverrideCursor()
 
                 finally:
-                    QApplication.restoreOverrideCursor()
 
                     if "export_swmmflo" in export_calls:
                         self.f2d_widget.storm_drain_editor.export_storm_drain_INP_file()
@@ -2799,6 +2947,7 @@ class Flo2D(object):
                             new_files_used = self.files_used.replace("SIMPLE_MULT.DAT\n", "")
                             self.files_used = new_files_used
                             if os.path.isfile(outdir + r"\SIMPLE_MULT.DAT"):
+                                QApplication.setOverrideCursor(Qt.ArrowCursor)
                                 if self.uc.question(
                                         "There are no simple multiple channel cells in the project but\n"
                                         + "there is a SIMPLE_MULT.DAT file in the directory.\n"
@@ -2806,11 +2955,12 @@ class Flo2D(object):
                                         + "Delete SIMPLE_MULT.DAT?"
                                 ):
                                     os.remove(outdir + r"\SIMPLE_MULT.DAT")
-
+                                QApplication.restoreOverrideCursor()
                         if self.gutils.is_table_empty("mult_cells"):
                             new_files_used = self.files_used.replace("\nMULT.DAT\n", "\n")
                             self.files_used = new_files_used
                             if os.path.isfile(outdir + r"\MULT.DAT"):
+                                QApplication.setOverrideCursor(Qt.ArrowCursor)
                                 if self.uc.question(
                                         "There are no multiple channel cells in the project but\n"
                                         + "there is a MULT.DAT file in the directory.\n"
@@ -2818,9 +2968,12 @@ class Flo2D(object):
                                         + "Delete MULT.DAT?"
                                 ):
                                     os.remove(outdir + r"\MULT.DAT")
-
+                                QApplication.restoreOverrideCursor()
                     if self.files_used != "":
+                        
+                        QApplication.setOverrideCursor(Qt.ArrowCursor)
                         self.uc.show_info("Files exported to\n" + outdir + "\n\n" + self.files_used)
+                        QApplication.restoreOverrideCursor()
 
                     if self.f2g.export_messages != "":
                         info = "WARNINGS:\n\n" + self.f2g.export_messages
@@ -3068,66 +3221,98 @@ class Flo2D(object):
             QApplication.restoreOverrideCursor()
             self.uc.show_error("ERROR 110618.1816: Could not save FLO-2D parameters!!", e)
 
+    @connection_required
     def activate_general_info_tool(self):
         """
         Function to activate the Info Tool
         """
+        for ac in self.toolActions:
+            if ac.toolTip() == "<b>FLO-2D Info Tool</b>":
+                info_ac = ac
+
+        if self.f2d_table_dock is not None:
+            self.iface.addDockWidget(Qt.BottomDockWidgetArea, self.f2d_table_dock)
+
+        if self.f2d_plot_dock is not None:
+            self.iface.addDockWidget(Qt.BottomDockWidgetArea, self.f2d_plot_dock)
+
         grid = self.lyrs.data["grid"]["qlyr"]
         if grid is not None:
-            self.uncheck_toolbar_tb("<b>FLO-2D Info Tool</b>")
-            self.uncheck_all_info_tools()
-            for tb in self.toolButtons:
-                if tb.toolTip() == "<b>FLO-2D Info Tool</b>":
-                    tb.setIcon(QIcon(os.path.join(self.plugin_dir, "img/info_tool.svg")))
-                    if tb.isChecked():
-                        tb.setChecked(False)
-                        self.uncheck_all_info_tools()
-                    else:
-                        tb.setChecked(True)
-                        self.f2d_grid_info_dock.setUserVisible(True)
-                        tool = self.canvas.mapTool()
-                        if tool == self.info_tool:
-                            self.uncheck_all_info_tools()
-                        else:
-                            if tool is not None:
-                                self.uncheck_all_info_tools()
-                            self.canvas.setMapTool(self.info_tool)
-                    break
-        else:
-            self.uc.bar_warn("Define a database connection first!")
+            tool = self.canvas.mapTool()
+            if tool == self.info_tool:
+                info_ac.setChecked(False)
+                self.uncheck_all_info_tools()
+            else:
+                if tool is not None:
+                    self.uncheck_all_info_tools()
+                    info_ac.setChecked(False)
+                self.canvas.setMapTool(self.info_tool)
+                info_ac.setChecked(True)
 
     @connection_required
     def activate_grid_info_tool(self):
-        self.f2d_grid_info_dock.setUserVisible(True)
+        """
+        Function to activate the Grid Info Tool
+        """
+        for ac in self.toolActions:
+            if ac.toolTip() == "<b>FLO-2D Grid Info Tool</b>":
+                info_ac = ac
+
+        if self.f2d_grid_info_dock is not None:
+            self.iface.addDockWidget(Qt.TopDockWidgetArea, self.f2d_grid_info_dock)
+
         grid = self.lyrs.data["grid"]["qlyr"]
         if grid is not None:
-            self.uncheck_toolbar_tb("<b>FLO-2D Info Tool</b>")
-            for tb in self.toolButtons:
-                if tb.toolTip() == "<b>FLO-2D Info Tool</b>":
-                    tb.setIcon(QIcon(os.path.join(self.plugin_dir, "img/grid_info_tool.svg")))
-                    if tb.isChecked():
-                        tb.setIcon(QIcon(os.path.join(self.plugin_dir, "img/info_tool.svg")))
-                        tb.setChecked(False)
-                        self.uncheck_all_info_tools()
-                    else:
-                        tb.setChecked(True)
-                        tool = self.canvas.mapTool()
-                        if tool == self.grid_info_tool:
-                            self.uncheck_all_info_tools()
-                        else:
-                            if tool is not None:
-                                self.uncheck_all_info_tools()
-                            self.grid_info_tool.grid = grid
-                            self.f2d_grid_info.set_info_layer(grid)
-                            self.f2d_grid_info.mann_default = self.gutils.get_cont_par("MANNING")
-                            self.f2d_grid_info.cell_Edit = self.gutils.get_cont_par("CELLSIZE")
-                            self.f2d_grid_info.n_cells = number_of_elements(self.gutils, grid)
-                            self.f2d_grid_info.gutils = self.gutils
-                            self.canvas.setMapTool(self.grid_info_tool)
-                    break
-
+            tool = self.canvas.mapTool()
+            if tool == self.grid_info_tool:
+                self.uncheck_all_info_tools()
+                info_ac.setChecked(False)
+            else:
+                if tool is not None:
+                    self.uncheck_all_info_tools()
+                    info_ac.setChecked(False)
+                self.grid_info_tool.grid = grid
+                self.f2d_grid_info.set_info_layer(grid)
+                self.f2d_grid_info.mann_default = self.gutils.get_cont_par("MANNING")
+                self.f2d_grid_info.cell_Edit = self.gutils.get_cont_par("CELLSIZE")
+                self.f2d_grid_info.n_cells = number_of_elements(self.gutils, grid)
+                self.f2d_grid_info.gutils = self.gutils
+                self.canvas.setMapTool(self.grid_info_tool)
+                info_ac.setChecked(True)
         else:
             self.uc.bar_warn("There is no grid layer to identify.")
+
+    @connection_required
+    def activate_results_info_tool(self):
+        """
+        Function to activate the Results Tool
+        """
+        for ac in self.toolActions:
+            if ac.toolTip() == "<b>FLO-2D Results</b>":
+                info_ac = ac
+
+        if self.f2d_table_dock is not None:
+            self.iface.addDockWidget(Qt.BottomDockWidgetArea, self.f2d_table_dock)
+
+        if self.f2d_plot_dock is not None:
+            self.iface.addDockWidget(Qt.BottomDockWidgetArea, self.f2d_plot_dock)
+
+        tool = self.canvas.mapTool()
+        if tool == self.results_tool:
+            info_ac.setChecked(False)
+            self.uncheck_all_info_tools()
+        else:
+            if tool is not None:
+                self.uncheck_all_info_tools()
+                info_ac.setChecked(False)
+            self.canvas.setMapTool(self.results_tool)
+            # 'channel_profile_tool' is an instance of ChannelProfile class,
+            # created on loading the plugin, and to be used to plot channel
+            # profiles using a subtool in the FLO-2D tool bar.
+            # The plots will be based on data from the 'chan', 'cham_elems'
+            # schematic layers.
+            self.results_tool.update_lyrs_list()
+            info_ac.setChecked(True)
 
     @connection_required
     def show_user_profile(self, fid=None):
@@ -3137,8 +3322,37 @@ class Flo2D(object):
         self.cur_info_table = None
 
     @connection_required
+    def show_channel_profile(self, fid=None):
+        self.f2d_widget.xs_editor.show_channel(fid)
+        self.cur_info_table = None
+
+    @connection_required
     def show_profile(self, fid=None):
-        self.f2d_widget.profile_tool.show_channel(self.cur_profile_table, fid)
+        self.f2d_widget.xs_editor.show_channel_peaks(self.cur_profile_table, fid)
+        self.cur_profile_table = None
+
+    @connection_required
+    def show_xsec_hydrograph(self, fid=None):
+        """
+        Show the cross-section hydrograph from HYCHAN.OUT
+        """
+        self.f2d_widget.xs_editor.show_hydrograph(self.cur_profile_table, fid)
+        self.cur_profile_table = None
+
+    @connection_required
+    def show_fpxsec_hydrograph(self, fid=None):
+        """
+        Show the floodplain cross-section hydrograph from HYCROSS.OUT
+        """
+        self.f2d_widget.fpxsec_editor.show_hydrograph(self.cur_profile_table, fid)
+        self.cur_profile_table = None
+
+    @connection_required
+    def show_fpxsec_cells_hydrograph(self, fid=None):
+        """
+        Show the floodplain cross-section hydrograph from HYCROSS.OUT
+        """
+        self.f2d_widget.fpxsec_editor.show_cells_hydrograph(self.cur_profile_table, fid)
         self.cur_profile_table = None
 
     @connection_required
@@ -3160,6 +3374,14 @@ class Flo2D(object):
         self.f2d_widget.struct_editor.populate_structs(struct_fid=fid)
 
     @connection_required
+    def show_struct_hydrograph(self, fid=None):
+        """
+        Show the Hydraulic Structure Hydrograph from HYDROSTRUCT.OUT
+        """
+        self.f2d_widget.struct_editor.show_hydrograph(self.cur_profile_table, fid)
+        self.cur_profile_table = None
+
+    @connection_required
     def show_sd_discharge(self, fid=None):
         """
         Show storm drain discharge for a given inlet node.
@@ -3170,8 +3392,60 @@ class Flo2D(object):
 
         name, grid = self.gutils.execute("SELECT name, grid FROM user_swmm_nodes WHERE fid = ?", (fid,)).fetchone()
         self.f2d_dock.setUserVisible(True)
-        self.f2d_widget.storm_drain_editor_grp.setCollapsed(False)
+        # self.f2d_widget.storm_drain_editor_grp.setCollapsed(False)
         self.f2d_widget.storm_drain_editor.create_SD_discharge_table_and_plots(name)
+
+    @connection_required
+    def show_conduit_discharge(self, fid=None):
+        """
+        Show storm drain discharge for a given conduit link.
+        """
+        if self.gutils.is_table_empty("grid"):
+            self.uc.bar_warn("There is no grid! Please create it before running tool.")
+            return
+
+        name = self.gutils.execute(f"SELECT conduit_name FROM user_swmm_conduits WHERE fid = '{fid}'").fetchone()[0]
+        self.f2d_dock.setUserVisible(True)
+        self.f2d_widget.storm_drain_editor.create_conduit_discharge_table_and_plots(name)
+
+    @connection_required
+    def show_pump_discharge(self, fid=None):
+        """
+        Show storm drain discharge for a given pump link.
+        """
+        if self.gutils.is_table_empty("grid"):
+            self.uc.bar_warn("There is no grid! Please create it before running tool.")
+            return
+
+        name = self.gutils.execute(f"SELECT pump_name FROM user_swmm_pumps WHERE fid = '{fid}'").fetchone()[0]
+        self.f2d_dock.setUserVisible(True)
+        self.f2d_widget.storm_drain_editor.create_conduit_discharge_table_and_plots(name)
+
+    @connection_required
+    def show_orifice_discharge(self, fid=None):
+        """
+        Show storm drain discharge for a given orifice link.
+        """
+        if self.gutils.is_table_empty("grid"):
+            self.uc.bar_warn("There is no grid! Please create it before running tool.")
+            return
+
+        name = self.gutils.execute(f"SELECT orifice_name FROM user_swmm_orifices WHERE fid = '{fid}'").fetchone()[0]
+        self.f2d_dock.setUserVisible(True)
+        self.f2d_widget.storm_drain_editor.create_conduit_discharge_table_and_plots(name)
+
+    @connection_required
+    def show_weir_discharge(self, fid=None):
+        """
+        Show storm drain discharge for a given weir link.
+        """
+        if self.gutils.is_table_empty("grid"):
+            self.uc.bar_warn("There is no grid! Please create it before running tool.")
+            return
+
+        name = self.gutils.execute(f"SELECT weir_name FROM user_swmm_weirs WHERE fid = '{fid}'").fetchone()[0]
+        self.f2d_dock.setUserVisible(True)
+        self.f2d_widget.storm_drain_editor.create_conduit_discharge_table_and_plots(name)
 
     @connection_required
     def show_schem_xsec_info(self, fid=None):
@@ -3190,8 +3464,8 @@ class Flo2D(object):
         Show boundary editor.
         """
         self.f2d_dock.setUserVisible(True)
-        self.f2d_widget.bc_editor_grp.setCollapsed(False)
-        self.f2d_widget.bc_editor.show_editor(self.cur_info_table, fid)
+        self.f2d_widget.bc_editor_new_grp.setCollapsed(False)
+        self.f2d_widget.bc_editor_new.show_editor(self.cur_info_table, fid)
         self.cur_info_table = None
 
     @connection_required
@@ -3666,7 +3940,7 @@ class Flo2D(object):
         self.canvas = self.iface.mapCanvas()
         self.info_tool = InfoTool(self.canvas, self.lyrs)
         self.grid_info_tool = GridInfoTool(self.uc, self.canvas, self.lyrs)
-        self.channel_profile_tool = ChannelProfile(self.canvas, self.lyrs)
+        self.results_tool = ResultsTool(self.canvas, self.lyrs)
 
     def get_feature_info(self, table, fid):
         try:
@@ -3677,37 +3951,77 @@ class Flo2D(object):
             return
         show_editor(fid)
 
-    def channel_profile(self):
-        self.uncheck_all_info_tools()
-        self.uncheck_toolbar_tb("<b>FLO-2D Project Review</b>")
-        for tb in self.toolButtons:
-            if tb.toolTip() == "<b>FLO-2D Project Review</b>":
-                if tb.isChecked():
-                    tb.setIcon(QIcon(os.path.join(self.plugin_dir, "img/editmetadata.svg")))
-                    tb.setChecked(False)
-                    self.canvas.unsetMapTool(self.channel_profile_tool)
-                else:
-                    tb.setIcon(QIcon(os.path.join(self.plugin_dir, "img/profile.svg")))
-                    tb.setChecked(True)
-                    self.canvas.setMapTool(
-                        self.channel_profile_tool
-                    )  # 'channel_profile_tool' is an instance of ChannelProfile class,
-                    # created on loading the plugin, and to be used to plot channel
-                    # profiles using a subtool in the FLO-2D tool bar.
-                    # The plots will be based on data from the 'chan', 'cham_elems'
-                    # schematic layers.
-                    self.channel_profile_tool.update_lyrs_list()
+    # def channel_profile(self):
+    #
+    #     for tb in self.toolButtons:
+    #         if tb.toolTip() == "<b>FLO-2D Project Review</b>":
+    #             review_tb = tb
+    #
+    #     tool = self.canvas.mapTool()
+    #     if tool == self.channel_profile_tool:
+    #         review_tb.setIcon(QIcon(os.path.join(self.plugin_dir, "img/editmetadata.svg")))
+    #         review_tb.setChecked(False)
+    #         self.uncheck_all_info_tools()
+    #     else:
+    #         if tool is not None:
+    #             self.uncheck_all_info_tools()
+    #             review_tb.setChecked(False)
+    #         review_tb.setIcon(QIcon(os.path.join(self.plugin_dir, "img/profile.svg")))
+    #         self.canvas.setMapTool(self.channel_profile_tool)
+    #         # 'channel_profile_tool' is an instance of ChannelProfile class,
+    #         # created on loading the plugin, and to be used to plot channel
+    #         # profiles using a subtool in the FLO-2D tool bar.
+    #         # The plots will be based on data from the 'chan', 'cham_elems'
+    #         # schematic layers.
+    #         self.channel_profile_tool.update_lyrs_list()
+    #         review_tb.setChecked(True)
 
     def get_feature_profile(self, table, fid):
-        try:
-            self.cur_profile_table = table  # Currently 'table' only gets 'chan' table name
-        except KeyError:
-            self.uc.bar_info("Channel Profile tool not implemented for selected features.")
-            return
-        self.show_profile(fid)
+        # try:
+        if table == 'chan':
+            self.cur_profile_table = table
+            self.show_profile(fid)
+        if table == 'chan_elems':
+            self.cur_profile_table = table
+            self.show_xsec_hydrograph(fid)
+        if table == 'fpxsec':
+            self.cur_profile_table = table
+            self.show_fpxsec_hydrograph(fid)
+        if table == 'fpxsec_cells':
+            self.cur_profile_table = table
+            self.show_fpxsec_cells_hydrograph(fid)
+        if table == 'struct':
+            self.cur_profile_table = table
+            self.show_struct_hydrograph(fid)
+        if table == 'user_swmm_nodes':
+            show_editor = self.editors_map[table]
+            self.cur_info_table = table
+            show_editor(fid)
+        if table == 'user_swmm_conduits':
+            show_editor = self.editors_map[table]
+            self.cur_info_table = table
+            show_editor(fid)
+        if table == 'user_swmm_weirs':
+            show_editor = self.editors_map[table]
+            self.cur_info_table = table
+            show_editor(fid)
+        if table == 'user_swmm_orifices':
+            show_editor = self.editors_map[table]
+            self.cur_info_table = table
+            show_editor(fid)
+        if table == 'user_swmm_pumps':
+            show_editor = self.editors_map[table]
+            self.cur_info_table = table
+            show_editor(fid)
+
+        # except KeyError:
+        #     self.uc.bar_info("Channel Profile tool not implemented for selected features.")
+        #     return
+
 
     def set_editors_map(self):
         self.editors_map = {
+            "chan": self.show_channel_profile,
             "user_levee_lines": self.show_user_profile,
             "user_xsections": self.show_xsec_editor,
             "user_streets": self.show_user_profile,
@@ -3720,6 +4034,10 @@ class Flo2D(object):
             "user_struct": self.show_struct_editor,
             "struct": self.show_struct_editor,
             "user_swmm_nodes": self.show_sd_discharge,
+            "user_swmm_conduits": self.show_conduit_discharge,
+            "user_swmm_weirs": self.show_weir_discharge,
+            "user_swmm_orifices": self.show_orifice_discharge,
+            "user_swmm_pumps": self.show_pump_discharge,
         }
 
     def restore_settings(self):
@@ -3742,7 +4060,23 @@ class Flo2D(object):
         """
         self.canvas.unsetMapTool(self.grid_info_tool)
         self.canvas.unsetMapTool(self.info_tool)
-        self.canvas.unsetMapTool(self.channel_profile_tool)
+        self.canvas.unsetMapTool(self.results_tool)
+
+        for tb in self.toolButtons:
+            tb.setChecked(False)
+            if tb.toolTip() == "<b>FLO-2D Project Review</b>":
+                tb.setIcon(QIcon(os.path.join(self.plugin_dir, "img/editmetadata.svg")))
+
+        for ac in self.toolActions:
+            ac.setChecked(False)
+
+        for tb in self.toolButtons:
+            tb.setChecked(False)
+            if tb.toolTip() == "<b>FLO-2D Project Review</b>":
+                tb.setIcon(QIcon(os.path.join(self.plugin_dir, "img/editmetadata.svg")))
+
+        for ac in self.toolActions:
+            ac.setChecked(False)
 
     def check_layer_source(self, layer, gpkg_path):
         """

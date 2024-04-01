@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>440</width>
-    <height>531</height>
+    <height>555</height>
    </rect>
   </property>
   <property name="minimumSize">
@@ -349,117 +349,159 @@
      <property name="title">
       <string>Components</string>
      </property>
-     <layout class="QGridLayout" name="gridLayout_3">
+     <layout class="QGridLayout" name="gridLayout_7">
       <item row="0" column="0">
-       <layout class="QHBoxLayout" name="horizontalLayout_4">
-        <item>
-         <layout class="QVBoxLayout" name="verticalLayout_2">
-          <item>
-           <widget class="QLabel" name="label_2">
-            <property name="text">
-             <string>Nodes</string>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QComboBox" name="SD_nodes_components_cbo">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
-            <property name="minimumSize">
-             <size>
-              <width>0</width>
-              <height>22</height>
-             </size>
-            </property>
-            <property name="maximumSize">
-             <size>
-              <width>16777215</width>
-              <height>22</height>
-             </size>
-            </property>
-            <item>
-             <property name="text">
-              <string>Select Component</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>Inlets/Junctions</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>Outfalls</string>
-             </property>
-            </item>
-           </widget>
-          </item>
-         </layout>
+       <layout class="QGridLayout" name="gridLayout_3">
+        <item row="0" column="0">
+         <widget class="QLabel" name="label_2">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="minimumSize">
+           <size>
+            <width>164</width>
+            <height>22</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>164</width>
+            <height>22</height>
+           </size>
+          </property>
+          <property name="text">
+           <string>Nodes</string>
+          </property>
+         </widget>
         </item>
-        <item>
-         <layout class="QVBoxLayout" name="verticalLayout">
+        <item row="0" column="1">
+         <widget class="QLabel" name="label">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="minimumSize">
+           <size>
+            <width>164</width>
+            <height>22</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>164</width>
+            <height>22</height>
+           </size>
+          </property>
+          <property name="text">
+           <string>Links</string>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="0">
+         <widget class="QComboBox" name="SD_nodes_components_cbo">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="minimumSize">
+           <size>
+            <width>168</width>
+            <height>25</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>168</width>
+            <height>25</height>
+           </size>
+          </property>
+          <property name="sizeIncrement">
+           <size>
+            <width>0</width>
+            <height>0</height>
+           </size>
+          </property>
+          <property name="currentText">
+           <string>Select Nodes Type</string>
+          </property>
           <item>
-           <widget class="QLabel" name="label">
-            <property name="text">
-             <string>Links</string>
-            </property>
-           </widget>
+           <property name="text">
+            <string>Select Nodes Type</string>
+           </property>
           </item>
           <item>
-           <widget class="QComboBox" name="SD_links_components_cbo">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
-            <property name="minimumSize">
-             <size>
-              <width>0</width>
-              <height>22</height>
-             </size>
-            </property>
-            <property name="maximumSize">
-             <size>
-              <width>16777215</width>
-              <height>22</height>
-             </size>
-            </property>
-            <property name="currentText">
-             <string>Select Link</string>
-            </property>
-            <item>
-             <property name="text">
-              <string>Select Link</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>Conduits</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>Pumps</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>Orifices</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>Weirs</string>
-             </property>
-            </item>
-           </widget>
+           <property name="text">
+            <string>Inlets/Junctions</string>
+           </property>
           </item>
-         </layout>
+          <item>
+           <property name="text">
+            <string>Outfalls</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>Storage Units</string>
+           </property>
+          </item>
+         </widget>
+        </item>
+        <item row="1" column="1">
+         <widget class="QComboBox" name="SD_links_components_cbo">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="minimumSize">
+           <size>
+            <width>164</width>
+            <height>25</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>164</width>
+            <height>25</height>
+           </size>
+          </property>
+          <property name="currentText">
+           <string>Select Links Type</string>
+          </property>
+          <item>
+           <property name="text">
+            <string>Select Links Type</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>Conduits</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>Pumps</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>Orifices</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>Weirs</string>
+           </property>
+          </item>
+         </widget>
         </item>
        </layout>
       </item>
@@ -479,53 +521,10 @@
          </spacer>
         </item>
         <item>
-         <widget class="QComboBox" name="SD_auto_assign_link_nodes_cbo">
-          <property name="sizePolicy">
-           <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-            <horstretch>0</horstretch>
-            <verstretch>0</verstretch>
-           </sizepolicy>
-          </property>
-          <property name="minimumSize">
-           <size>
-            <width>165</width>
-            <height>22</height>
-           </size>
-          </property>
-          <property name="maximumSize">
-           <size>
-            <width>165</width>
-            <height>22</height>
-           </size>
-          </property>
-          <property name="currentText">
+         <widget class="QPushButton" name="auto_assign_link_nodes_btn">
+          <property name="text">
            <string>Auto-assign link nodes</string>
           </property>
-          <item>
-           <property name="text">
-            <string>Auto-assign link nodes</string>
-           </property>
-          </item>
-          <item>
-           <property name="text">
-            <string>Conduits</string>
-           </property>
-          </item>
-          <item>
-           <property name="text">
-            <string>Pumps</string>
-           </property>
-          </item>
-          <item>
-           <property name="text">
-            <string>Orificies</string>
-           </property>
-          </item>
-          <item>
-           <property name="text">
-            <string>Weirs</string>
-           </property>
-          </item>
          </widget>
         </item>
         <item>
@@ -577,13 +576,13 @@
           <property name="minimumSize">
            <size>
             <width>0</width>
-            <height>22</height>
+            <height>25</height>
            </size>
           </property>
           <property name="maximumSize">
            <size>
             <width>16777215</width>
-            <height>22</height>
+            <height>25</height>
            </size>
           </property>
           <property name="maxVisibleItems">
@@ -775,13 +774,13 @@
           <property name="minimumSize">
            <size>
             <width>0</width>
-            <height>22</height>
+            <height>25</height>
            </size>
           </property>
           <property name="maximumSize">
            <size>
             <width>16777215</width>
-            <height>22</height>
+            <height>25</height>
            </size>
           </property>
           <property name="insertPolicy">
@@ -1000,13 +999,13 @@
             <property name="minimumSize">
              <size>
               <width>0</width>
-              <height>22</height>
+              <height>25</height>
              </size>
             </property>
             <property name="maximumSize">
              <size>
               <width>16777215</width>
-              <height>22</height>
+              <height>25</height>
              </size>
             </property>
             <property name="currentText">

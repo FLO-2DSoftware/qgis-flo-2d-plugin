@@ -576,19 +576,29 @@
                 <bool>true</bool>
                </property>
                <property name="sizePolicy">
-                <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
                  <horstretch>0</horstretch>
                  <verstretch>0</verstretch>
                 </sizepolicy>
                </property>
+               <property name="minimumSize">
+                <size>
+                 <width>50</width>
+                 <height>0</height>
+                </size>
+               </property>
                <property name="maximumSize">
                 <size>
-                 <width>31</width>
+                 <width>50</width>
                  <height>23</height>
                 </size>
                </property>
                <property name="text">
                 <string>...</string>
+               </property>
+               <property name="icon">
+                <iconset>
+                 <normaloff>../img/open_dialog.svg</normaloff>../img/open_dialog.svg</iconset>
                </property>
               </widget>
              </item>
@@ -643,19 +653,29 @@
                 <bool>true</bool>
                </property>
                <property name="sizePolicy">
-                <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
                  <horstretch>0</horstretch>
                  <verstretch>0</verstretch>
                 </sizepolicy>
                </property>
+               <property name="minimumSize">
+                <size>
+                 <width>50</width>
+                 <height>0</height>
+                </size>
+               </property>
                <property name="maximumSize">
                 <size>
-                 <width>31</width>
+                 <width>50</width>
                  <height>23</height>
                 </size>
                </property>
                <property name="text">
                 <string>...</string>
+               </property>
+               <property name="icon">
+                <iconset>
+                 <normaloff>../img/open_dialog.svg</normaloff>../img/open_dialog.svg</iconset>
                </property>
               </widget>
              </item>
