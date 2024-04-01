@@ -3143,7 +3143,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
     def export_xsec(self, output = None):
         if self.parsed_format == self.FORMAT_DAT:
-            return self.export_xsec_data(output)
+            return self.export_xsec_dat(output)
         elif self.parsed_format == self.FORMAT_HDF5:
             return self.export_xsec_hdf5()
 
