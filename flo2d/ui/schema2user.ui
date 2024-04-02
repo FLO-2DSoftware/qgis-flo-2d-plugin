@@ -9,8 +9,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>521</width>
-    <height>272</height>
+    <width>523</width>
+    <height>307</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -32,55 +32,99 @@
     </widget>
    </item>
    <item row="2" column="0" colspan="2">
-    <layout class="QGridLayout" name="gridLayout">
-     <item row="0" column="0">
-      <widget class="QCheckBox" name="ckbox_domain">
-       <property name="text">
-        <string>Computational Domain</string>
-       </property>
-      </widget>
+    <layout class="QVBoxLayout" name="verticalLayout">
+     <item>
+      <layout class="QGridLayout" name="gridLayout_4">
+       <item row="0" column="0">
+        <spacer name="horizontalSpacer">
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>164</width>
+           <height>20</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+       <item row="0" column="1">
+        <widget class="QCheckBox" name="ckbox_select_all">
+         <property name="text">
+          <string>Select all</string>
+         </property>
+         <property name="checked">
+          <bool>false</bool>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="2">
+        <spacer name="horizontalSpacer_2">
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>185</width>
+           <height>20</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+      </layout>
      </item>
-     <item row="0" column="1">
-      <widget class="QCheckBox" name="ckbox_levees">
-       <property name="text">
-        <string>Levees</string>
-       </property>
-      </widget>
-     </item>
-     <item row="1" column="0">
-      <widget class="QCheckBox" name="ckbox_bc">
-       <property name="text">
-        <string>Boundary conditions</string>
-       </property>
-      </widget>
-     </item>
-     <item row="1" column="1">
-      <widget class="QCheckBox" name="ckbox_fpxsec">
-       <property name="text">
-        <string>Floodplain cross-sections</string>
-       </property>
-      </widget>
-     </item>
-     <item row="2" column="0">
-      <widget class="QCheckBox" name="ckbox_1d">
-       <property name="text">
-        <string>Channel Banks and Cross-Sections</string>
-       </property>
-      </widget>
-     </item>
-     <item row="2" column="1">
-      <widget class="QCheckBox" name="ckbox_swmm">
-       <property name="text">
-        <string>Storm Drains</string>
-       </property>
-      </widget>
-     </item>
-     <item row="3" column="0">
-      <widget class="QCheckBox" name="chbox_hydr_struct">
-       <property name="text">
-        <string>Hydraulic structures</string>
-       </property>
-      </widget>
+     <item>
+      <layout class="QGridLayout" name="gridLayout">
+       <item row="0" column="0">
+        <widget class="QCheckBox" name="ckbox_domain">
+         <property name="text">
+          <string>Computational Domain</string>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="1">
+        <widget class="QCheckBox" name="ckbox_levees">
+         <property name="text">
+          <string>Levees</string>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="0">
+        <widget class="QCheckBox" name="ckbox_bc">
+         <property name="text">
+          <string>Boundary Conditions</string>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="1">
+        <widget class="QCheckBox" name="ckbox_fpxsec">
+         <property name="text">
+          <string>Floodplain Cross-Sections</string>
+         </property>
+        </widget>
+       </item>
+       <item row="2" column="0">
+        <widget class="QCheckBox" name="ckbox_1d">
+         <property name="text">
+          <string>Channel Banks and Cross-Sections</string>
+         </property>
+        </widget>
+       </item>
+       <item row="2" column="1">
+        <widget class="QCheckBox" name="ckbox_swmm">
+         <property name="text">
+          <string>Storm Drains</string>
+         </property>
+        </widget>
+       </item>
+       <item row="3" column="0">
+        <widget class="QCheckBox" name="ckbox_hydr_struct">
+         <property name="text">
+          <string>Hydraulic Structures</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
      </item>
     </layout>
    </item>
