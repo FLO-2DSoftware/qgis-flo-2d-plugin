@@ -162,7 +162,6 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         self.user_xs_lyr = self.lyrs.data["user_xsections"]["qlyr"]
         self.user_xs_lyr.geometryChanged.connect(self.xs_feature_changed)
         self.user_xs_lyr.attributeValueChanged.connect(self.xs_feature_changed)
-        self.user_xs_lyr.committedFeaturesAdded.connect(self.xs_feature_changed)
 
     def setup_connection(self):
         con = self.iface.f2d["con"]
