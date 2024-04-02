@@ -189,7 +189,6 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
             for l in lyrs:
                 if l.geometryType() == QgsWkbTypes.PointGeometry:
                     if l.featureCount() > 0:
-                        # if l.selectedFeatureCount() != 0:
                         self.inlets_shapefile_cbo.addItem(l.name(), l.dataProvider().dataSourceUri())
                         self.outfalls_shapefile_cbo.addItem(l.name(), l.dataProvider().dataSourceUri())
 
@@ -817,7 +816,6 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
         ):
             self.uc.bar_warn("No data was selected!")
             self.save_storm_drain_shapefile_field_names()
-            # self.save_storm_drain_shapefile_fields()
 
         else:
             self.load_inlets_from_shapefile()
@@ -882,7 +880,6 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                 outside_inlets = ""
                 inlets_shapefile = self.inlets_shapefile_cbo.currentText()
                 group = self.lyrs.group
-                #                     lyr = self.lyrs.get_layer_by_name(inlets_shapefile, group).layer()
                 lyr = self.lyrs.get_layer_by_name(inlets_shapefile, group=self.lyrs.group).layer()
 
                 inlets_shapefile_fts = lyr.getFeatures()
@@ -1139,8 +1136,6 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                         if self.outfall_type_FieldCbo.currentText() != ""
                         else ""
                     )
-
-                    # water_depth = f[self.outfall_water_depth_FieldCbo.currentText()] if self.outfall_water_depth_FieldCbo.currentText() != "" else ""
                     water_depth = self.outfall_water_depth_FieldCbo.currentText()
                     water_depth = f[water_depth] if water_depth != "" and water_depth is not None else ""
 
@@ -1354,13 +1349,11 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
 
                     geom = f.geometry()
                     if geom is None or geom.type() != 1:
-                        #                             QApplication.restoreOverrideCursor()
                         self.uc.show_warn("WARNING 060319.1701: Error processing geometry of conduit  " + conduit_name)
                         continue
 
                     points = extractPoints(geom)
                     if points is None:
-                        #                             QApplication.restoreOverrideCursor()
                         self.uc.show_warn("WARNING 060319.1702: Conduit  " + conduit_name + "  is faulty!")
                         continue
 
@@ -1427,7 +1420,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                         "xsections_shape",
                         conduit_shape if conduit_shape in self.shape else "CIRCULAR",
                     )
-                    # feat.setAttribute("xsections_shape", "CIRCULAR")
+
                     feat.setAttribute(
                         "xsections_barrels",
                         conduit_barrels if conduit_barrels != NULL else 0,
@@ -2256,7 +2249,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
         if layer == self.orifices_shapefile_cbo.currentText():
             lyr = self.lyrs.get_layer_by_name(layer, group=self.lyrs.group).layer()
             field_names = [field.name() for field in lyr.fields()]            
- 
+
             self.orifice_name_FieldCbo.setCurrentIndex(self.restore_field("FLO-2D/sf_orifice_name", field_names))
             self.orifice_from_inlet_FieldCbo.setCurrentIndex(self.restore_field("FLO-2D/sf_orifice_from_inlet", field_names))
             self.orifice_to_outlet_FieldCbo.setCurrentIndex(self.restore_field("FLO-2D/sf_orifice_to_outlet", field_names))

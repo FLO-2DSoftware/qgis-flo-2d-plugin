@@ -1062,7 +1062,7 @@ class Flo2D(object):
                 else:
                     not_added.append(layer.name())
 
-        QApplication.setOverrideCursor(QtGui.QCursor(QtCore.Qt.ArrowCursor))
+        QApplication.restoreOverrideCursor()
 
         if len(not_added) > 0:
             layers_not_added = ', '.join(map(str, not_added))
@@ -2047,8 +2047,8 @@ class Flo2D(object):
                             swmm_converter = SchemaSWMMConverter(self.con, self.iface, self.lyrs)
                             swmm_converter.create_user_swmm_nodes()
                         except Exception as e:
-                            self.uc.log_info(traceback.format_exc())
                             QApplication.restoreOverrideCursor()
+                            self.uc.log_info(traceback.format_exc())
                             self.uc.show_error(
                                 "ERROR 040723.1749:\n\nConverting Schematic SD Inlets to User Storm Drain Nodes failed!"
                                 + "\n_______________________________________________________________",
@@ -2093,7 +2093,7 @@ class Flo2D(object):
                     else:
                         cell = self.gutils.execute("SELECT col FROM grid WHERE fid = 1").fetchone()
                         if cell[0] == NULL:
-                            QApplication.setOverrideCursor(QtGui.QCursor(QtCore.Qt.ArrowCursor))
+                            QApplication.restoreOverrideCursor()
                             proceed = self.uc.question(
                                 "Grid layer's fields 'col' and 'row' have NULL values!\n\nWould you like to assign them?"
                             )
@@ -2104,13 +2104,13 @@ class Flo2D(object):
                             else:
                                 return
 
-                    QApplication.setOverrideCursor(QtGui.QCursor(QtCore.Qt.ArrowCursor))
+                    QApplication.restoreOverrideCursor()
 
                 except Exception as e:
-                    QApplication.setOverrideCursor(QtGui.QCursor(QtCore.Qt.ArrowCursor))
+                    QApplication.restoreOverrideCursor()
                     self.uc.show_error("ERROR 050521.0349: importing .DAT files!.\n", e)
                 finally:
-                    QApplication.setOverrideCursor(QtGui.QCursor(QtCore.Qt.ArrowCursor))
+                    QApplication.restoreOverrideCursor()
                     if self.files_used != "" or self.files_not_used != "":
                         self.uc.show_info(
                             "Files read by this project:\n\n"
@@ -3893,6 +3893,15 @@ class Flo2D(object):
 
     @connection_required
     def schematic2user(self):
+        components = {
+            1: "Computational Domain",
+            2: "Boundary Conditions",
+            3: "Channel Banks and Cross-Sections",
+            4: "Levees",
+            5: "Floodplain Cross-Sections",
+            6: "Storm Drains",
+            7: "Hydraulic structures",
+            }
         self.uncheck_all_info_tools()
         converter_dlg = Schema2UserDialog(self.con, self.iface, self.lyrs, self.uc)
         ok = converter_dlg.exec_()
@@ -3906,11 +3915,14 @@ class Flo2D(object):
             return
         QApplication.setOverrideCursor(Qt.WaitCursor)
         methods_numbers = sorted(converter_dlg.methods)
+        msg = ""
         for no in methods_numbers:
             converter_dlg.methods[no]()
+            msg += components[no] + "\n"
         self.setup_dock_widgets()
         QApplication.restoreOverrideCursor()
-        self.uc.show_info("Converting Schematic Layers to User Layers finished!")
+        self.uc.show_info("Converting Schematic Layers to User Layers finished for:\n\n" +  msg)
+                        
         if 6 in methods_numbers:  # Storm Drains:
             self.uc.show_info(
                 "To complete the Storm Drain functionality 'Import SWMM.INP' from the Storm Drain Editor widget."
