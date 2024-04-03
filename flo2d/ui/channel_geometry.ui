@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>968</width>
-    <height>935</height>
+    <width>972</width>
+    <height>944</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -73,8 +73,11 @@
             <height>0</height>
            </size>
           </property>
+          <property name="toolTip">
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;FROUDC&lt;/p&gt;&lt;p&gt;Maximum channel Froude number if the Froude number exceeds FROUDC, the Manning’s n roughness value is increased by 0.001. Set FROUDC = 0 for no adjustments of the n-value in a given channel segment. The increased nvalues are reported in the ROUGH.OUT and CHAN.RGH files.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+          </property>
           <property name="text">
-           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Maximun Froude number&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Maximum Froude number&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
           </property>
           <property name="wordWrap">
            <bool>true</bool>
@@ -124,6 +127,9 @@
             <height>0</height>
            </size>
           </property>
+          <property name="toolTip">
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;ROUGHADJ&lt;/p&gt;&lt;p&gt;A coefficient used in the depth adjustment of the Manning’s n-value and the shallown value for channel segments.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+          </property>
           <property name="text">
            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Roughness adjustment&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
           </property>
@@ -169,6 +175,9 @@
           <width>281</width>
           <height>0</height>
          </size>
+        </property>
+        <property name="toolTip">
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;ISEDN&lt;/p&gt;&lt;p&gt;Sediment transport equation or data group for routing by size fractions for the channel segment. Set ISED = 1 in the CONT.DAT file to use this option. Choose one of the two following options for each channel segment:&lt;/p&gt;&lt;p&gt;For sediment routing without size fractions: Set ISEDN(K) = 1 - 11 (one of eleven sediment transport equations).&lt;/p&gt;&lt;p&gt;or&lt;/p&gt;&lt;p&gt;For sediment routing with size fractions: Set ISEDN(K) = sediment data group (Line 3 in SED.DAT which includes a sediment transport equation).&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
         </property>
         <property name="text">
          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Transport equation (if ISED = 1 in CONT.DAT)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
@@ -299,6 +308,9 @@
          <layout class="QGridLayout" name="gridLayout_24">
           <item row="0" column="0">
            <widget class="QLabel" name="label_23">
+            <property name="toolTip">
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;DEPINITIAL&lt;/p&gt;&lt;p&gt;DEPINITIAL(K) = 0 for no initial channel flow depth in the channel segment (default).&lt;/p&gt;&lt;p&gt;DEPINITIAL(K) = Initial flow depth for the all channel elements in the channel segment (optional).&lt;/p&gt;&lt;p&gt;DEPINITIAL(K) = -1 to assign an initial water surface elevation to a channel reach.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            </property>
             <property name="text">
              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Initial flow depth for all elements of this channel segment&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
             </property>
@@ -378,6 +390,9 @@
                   <height>16777215</height>
                  </size>
                 </property>
+                <property name="toolTip">
+                 <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                </property>
                 <property name="maximum">
                  <number>99999999</number>
                 </property>
@@ -390,6 +405,9 @@
                   <horstretch>0</horstretch>
                   <verstretch>0</verstretch>
                  </sizepolicy>
+                </property>
+                <property name="toolTip">
+                 <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                 </property>
                 <property name="buttonSymbols">
                  <enum>QAbstractSpinBox::UpDownArrows</enum>
@@ -413,6 +431,9 @@
                   <verstretch>0</verstretch>
                  </sizepolicy>
                 </property>
+                <property name="toolTip">
+                 <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;WSELSTART&lt;/p&gt;&lt;p&gt;Starting water surface elevation for the channel element ISTART (ft or m).&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                </property>
                 <property name="text">
                  <string>Starting water elevation</string>
                 </property>
@@ -428,6 +449,9 @@
                   <horstretch>0</horstretch>
                   <verstretch>0</verstretch>
                  </sizepolicy>
+                </property>
+                <property name="toolTip">
+                 <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;ISTART&lt;/p&gt;&lt;p&gt;First channel element for which a starting water surface elevation is specified.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                 </property>
                 <property name="text">
                  <string>First element</string>
@@ -454,6 +478,9 @@
                   <verstretch>0</verstretch>
                  </sizepolicy>
                 </property>
+                <property name="toolTip">
+                 <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;IEND&lt;/p&gt;&lt;p&gt;Last channel element for which a starting water surface elevation is specified.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                </property>
                 <property name="text">
                  <string>Last element</string>
                 </property>
@@ -469,6 +496,9 @@
                   <horstretch>0</horstretch>
                   <verstretch>0</verstretch>
                  </sizepolicy>
+                </property>
+                <property name="toolTip">
+                 <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;WSELEND&lt;/p&gt;&lt;p&gt;Ending water surface elevation for the channel element IEND (ft or m).&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                 </property>
                 <property name="text">
                  <string>Ending water elevation</string>
@@ -498,6 +528,9 @@
                   <height>16777215</height>
                  </size>
                 </property>
+                <property name="toolTip">
+                 <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                </property>
                 <property name="maximum">
                  <number>99999999</number>
                 </property>
@@ -510,6 +543,9 @@
                   <horstretch>0</horstretch>
                   <verstretch>0</verstretch>
                  </sizepolicy>
+                </property>
+                <property name="toolTip">
+                 <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                 </property>
                 <property name="buttonSymbols">
                  <enum>QAbstractSpinBox::UpDownArrows</enum>
@@ -571,6 +607,9 @@
        <layout class="QGridLayout" name="gridLayout_30">
         <item row="0" column="0">
          <widget class="QLabel" name="label_2">
+          <property name="toolTip">
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;ICHANGRID&lt;/p&gt;&lt;p&gt;Channel grid element number.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+          </property>
           <property name="text">
            <string>Grid element number</string>
           </property>
@@ -580,7 +619,11 @@
          </widget>
         </item>
         <item row="0" column="1">
-         <widget class="QComboBox" name="grid_element_cbo"/>
+         <widget class="QComboBox" name="grid_element_cbo">
+          <property name="toolTip">
+           <string/>
+          </property>
+         </widget>
         </item>
        </layout>
       </item>
@@ -593,6 +636,9 @@
             <horstretch>0</horstretch>
             <verstretch>0</verstretch>
            </sizepolicy>
+          </property>
+          <property name="toolTip">
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;SHAPE = ‘R’, rectangular channel geometry (width and depth data).&lt;/p&gt;&lt;p&gt;SHAPE = ‘V’, variable area channel geometry (power relationships).&lt;/p&gt;&lt;p&gt;SHAPE = ‘T’, trapezoidal channel (bottom width, depth and slopes data).&lt;/p&gt;&lt;p&gt;SHAPE = ‘N’, channel cross sections (cross section survey data).&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
           </property>
           <property name="text">
            <string>Shape</string>
@@ -638,6 +684,9 @@
        <layout class="QGridLayout" name="gridLayout_28">
         <item row="0" column="0">
          <widget class="QLabel" name="label_15">
+          <property name="toolTip">
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;FCN&lt;/p&gt;&lt;p&gt;Average Manning’s n roughness coefficient the channel in the grid element ICHANGRID&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+          </property>
           <property name="text">
            <string>Manning's n</string>
           </property>
@@ -656,6 +705,9 @@
        <layout class="QGridLayout" name="gridLayout_29">
         <item row="0" column="0">
          <widget class="QLabel" name="label_16">
+          <property name="toolTip">
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;XLEN&lt;/p&gt;&lt;p&gt;Channel length contained within the grid element ICHANGRID (ft). If more than one channel exists in a given grid element, assign XLEN(I) equal to the average representative flow length in one direction.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+          </property>
           <property name="text">
            <string>Channel  length</string>
           </property>
@@ -682,6 +734,9 @@
          <layout class="QGridLayout" name="gridLayout_19">
           <item row="0" column="0">
            <widget class="QLabel" name="label_3">
+            <property name="toolTip">
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;BANKELL&lt;/p&gt;&lt;p&gt;Left bank elevation looking downstream.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            </property>
             <property name="text">
              <string>Left bank elevation</string>
             </property>
@@ -692,6 +747,9 @@
           </item>
           <item row="1" column="0">
            <widget class="QLabel" name="label_4">
+            <property name="toolTip">
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;BANKELR&lt;/p&gt;&lt;p&gt;Right bank elevation looking downstream&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            </property>
             <property name="text">
              <string>Right bank elevation</string>
             </property>
@@ -737,6 +795,9 @@
          <layout class="QGridLayout" name="gridLayout">
           <item row="0" column="0">
            <widget class="QLabel" name="label_9">
+            <property name="toolTip">
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;ZL&lt;/p&gt;&lt;p&gt;ZL(I) is the left side slope of the trapezoidal channel.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            </property>
             <property name="text">
              <string>Left side slope</string>
             </property>
@@ -747,6 +808,9 @@
           </item>
           <item row="1" column="0">
            <widget class="QLabel" name="label_11">
+            <property name="toolTip">
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;ZR&lt;/p&gt;&lt;p&gt;ZR(I) is the right side slope of the trapezoidal channel.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            </property>
             <property name="text">
              <string>Right side slope</string>
             </property>
@@ -816,6 +880,9 @@
          <layout class="QGridLayout" name="gridLayout_5">
           <item row="0" column="0">
            <widget class="QLabel" name="label_5">
+            <property name="toolTip">
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;FCW&lt;/p&gt;&lt;p&gt;Set FCW(I) = channel width for rectangular channel.&lt;/p&gt;&lt;p&gt;Set FCW(I) = width of channel base for trapezoidal channel.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            </property>
             <property name="text">
              <string>Average width</string>
             </property>
@@ -826,6 +893,9 @@
           </item>
           <item row="1" column="0">
            <widget class="QLabel" name="label_7">
+            <property name="toolTip">
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;FCD&lt;/p&gt;&lt;p&gt;Channel thalweg depth (ft or m). The thalweg depth is the deepest part of the channel measured from the lowest top of bank&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            </property>
             <property name="text">
              <string>Thalweg depth</string>
             </property>
@@ -959,42 +1029,28 @@
            </property>
            <layout class="QGridLayout" name="gridLayout_18">
             <item row="0" column="0">
-             <layout class="QGridLayout" name="gridLayout_12">
-              <item row="0" column="0">
-               <widget class="QLabel" name="label_6">
-                <property name="text">
-                 <string>Area</string>
-                </property>
-                <property name="alignment">
-                 <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-                </property>
-               </widget>
-              </item>
-              <item row="1" column="0">
-               <widget class="QLabel" name="label_17">
-                <property name="text">
-                 <string>Wetted perimeter</string>
-                </property>
-                <property name="alignment">
-                 <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-                </property>
-               </widget>
-              </item>
-              <item row="2" column="0">
-               <widget class="QLabel" name="label_18">
-                <property name="text">
-                 <string>Top width</string>
-                </property>
-                <property name="alignment">
-                 <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-                </property>
-               </widget>
-              </item>
-             </layout>
-            </item>
-            <item row="0" column="1">
              <layout class="QGridLayout" name="gridLayout_15">
-              <item row="0" column="0">
+              <item row="1" column="2">
+               <widget class="QDoubleSpinBox" name="first_area_exp_dbox">
+                <property name="decimals">
+                 <number>4</number>
+                </property>
+                <property name="maximum">
+                 <double>9999999.000000000000000</double>
+                </property>
+               </widget>
+              </item>
+              <item row="2" column="1">
+               <widget class="QDoubleSpinBox" name="first_wetted_coeff_dbox">
+                <property name="decimals">
+                 <number>4</number>
+                </property>
+                <property name="maximum">
+                 <double>9999999.000000000000000</double>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="1">
                <widget class="QLabel" name="label_19">
                 <property name="text">
                  <string>Coefficient</string>
@@ -1004,7 +1060,47 @@
                 </property>
                </widget>
               </item>
-              <item row="0" column="1">
+              <item row="1" column="1">
+               <widget class="QDoubleSpinBox" name="first_area_coeff_dbox">
+                <property name="decimals">
+                 <number>4</number>
+                </property>
+                <property name="maximum">
+                 <double>9999999.000000000000000</double>
+                </property>
+               </widget>
+              </item>
+              <item row="3" column="1">
+               <widget class="QDoubleSpinBox" name="first_top_width_coeff_dbox">
+                <property name="decimals">
+                 <number>4</number>
+                </property>
+                <property name="maximum">
+                 <double>9999999.000000000000000</double>
+                </property>
+               </widget>
+              </item>
+              <item row="3" column="2">
+               <widget class="QDoubleSpinBox" name="first_top_width_exp_dbox">
+                <property name="decimals">
+                 <number>4</number>
+                </property>
+                <property name="maximum">
+                 <double>9999999.000000000000000</double>
+                </property>
+               </widget>
+              </item>
+              <item row="2" column="2">
+               <widget class="QDoubleSpinBox" name="first_wetted_exp_dbox">
+                <property name="decimals">
+                 <number>4</number>
+                </property>
+                <property name="maximum">
+                 <double>9999999.000000000000000</double>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="2">
                <widget class="QLabel" name="label_28">
                 <property name="text">
                  <string>Exponent</string>
@@ -1015,64 +1111,56 @@
                </widget>
               </item>
               <item row="1" column="0">
-               <widget class="QDoubleSpinBox" name="first_area_coeff_dbox">
-                <property name="decimals">
-                 <number>4</number>
+               <widget class="QLabel" name="label_6">
+                <property name="toolTip">
+                 <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;A1&lt;/p&gt;&lt;p&gt;Coefficient for the variable area regression relationships.&lt;/p&gt;&lt;p&gt;A2&lt;/p&gt;&lt;p&gt;Exponent for the variable area regression relationships.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                 </property>
-                <property name="maximum">
-                 <double>9999999.000000000000000</double>
+                <property name="text">
+                 <string>Area</string>
                 </property>
-               </widget>
-              </item>
-              <item row="1" column="1">
-               <widget class="QDoubleSpinBox" name="first_area_exp_dbox">
-                <property name="decimals">
-                 <number>4</number>
-                </property>
-                <property name="maximum">
-                 <double>9999999.000000000000000</double>
+                <property name="alignment">
+                 <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
                 </property>
                </widget>
               </item>
               <item row="2" column="0">
-               <widget class="QDoubleSpinBox" name="first_wetted_coeff_dbox">
-                <property name="decimals">
-                 <number>4</number>
+               <widget class="QLabel" name="label_17">
+                <property name="toolTip">
+                 <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;B1&lt;/p&gt;&lt;p&gt;Coefficient for the variable wetted perimeter relationships.&lt;/p&gt;&lt;p&gt;B2&lt;/p&gt;&lt;p&gt;Exponent for the variable wetted perimeter relationships.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                 </property>
-                <property name="maximum">
-                 <double>9999999.000000000000000</double>
+                <property name="text">
+                 <string>Wetted perimeter</string>
                 </property>
-               </widget>
-              </item>
-              <item row="2" column="1">
-               <widget class="QDoubleSpinBox" name="first_wetted_exp_dbox">
-                <property name="decimals">
-                 <number>4</number>
-                </property>
-                <property name="maximum">
-                 <double>9999999.000000000000000</double>
+                <property name="alignment">
+                 <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
                 </property>
                </widget>
               </item>
               <item row="3" column="0">
-               <widget class="QDoubleSpinBox" name="first_top_width_coeff_dbox">
-                <property name="decimals">
-                 <number>4</number>
+               <widget class="QLabel" name="label_18">
+                <property name="toolTip">
+                 <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;C1&lt;/p&gt;&lt;p&gt;Coefficient for the variable top width relationships.&lt;/p&gt;&lt;p&gt;C2&lt;/p&gt;&lt;p&gt;Exponent for the variable top width relationships.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                 </property>
-                <property name="maximum">
-                 <double>9999999.000000000000000</double>
+                <property name="text">
+                 <string>Top width</string>
+                </property>
+                <property name="alignment">
+                 <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
                 </property>
                </widget>
               </item>
-              <item row="3" column="1">
-               <widget class="QDoubleSpinBox" name="first_top_width_exp_dbox">
-                <property name="decimals">
-                 <number>4</number>
+              <item row="0" column="0">
+               <spacer name="horizontalSpacer_4">
+                <property name="orientation">
+                 <enum>Qt::Horizontal</enum>
                 </property>
-                <property name="maximum">
-                 <double>9999999.000000000000000</double>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>40</width>
+                  <height>20</height>
+                 </size>
                 </property>
-               </widget>
+               </spacer>
               </item>
              </layout>
             </item>
@@ -1091,53 +1179,9 @@
             <string>Second relationship</string>
            </property>
            <layout class="QGridLayout" name="gridLayout_11">
-            <item row="0" column="0">
-             <widget class="QLabel" name="label_12">
-              <property name="text">
-               <string>Depth for second relationship</string>
-              </property>
-              <property name="wordWrap">
-               <bool>true</bool>
-              </property>
-             </widget>
-            </item>
             <item row="0" column="1" rowspan="2">
-             <layout class="QGridLayout" name="gridLayout_17">
-              <item row="0" column="0">
-               <widget class="QLabel" name="label_13">
-                <property name="text">
-                 <string>Area</string>
-                </property>
-                <property name="alignment">
-                 <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-                </property>
-               </widget>
-              </item>
-              <item row="1" column="0">
-               <widget class="QLabel" name="label_31">
-                <property name="text">
-                 <string>Wetted perimeter</string>
-                </property>
-                <property name="alignment">
-                 <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-                </property>
-               </widget>
-              </item>
-              <item row="2" column="0">
-               <widget class="QLabel" name="label_32">
-                <property name="text">
-                 <string>Top width</string>
-                </property>
-                <property name="alignment">
-                 <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-                </property>
-               </widget>
-              </item>
-             </layout>
-            </item>
-            <item row="0" column="2" rowspan="2">
              <layout class="QGridLayout" name="gridLayout_16">
-              <item row="0" column="0">
+              <item row="0" column="1">
                <widget class="QLabel" name="label_29">
                 <property name="text">
                  <string>Coefficient</string>
@@ -1147,38 +1191,8 @@
                 </property>
                </widget>
               </item>
-              <item row="0" column="1">
-               <widget class="QLabel" name="label_30">
-                <property name="text">
-                 <string>Exponent</string>
-                </property>
-                <property name="alignment">
-                 <set>Qt::AlignCenter</set>
-                </property>
-               </widget>
-              </item>
-              <item row="1" column="0">
-               <widget class="QDoubleSpinBox" name="second_area_coeff_dbox">
-                <property name="decimals">
-                 <number>4</number>
-                </property>
-                <property name="maximum">
-                 <double>9999999.000000000000000</double>
-                </property>
-               </widget>
-              </item>
-              <item row="1" column="1">
-               <widget class="QDoubleSpinBox" name="second_area_exp_dbox">
-                <property name="decimals">
-                 <number>4</number>
-                </property>
-                <property name="maximum">
-                 <double>9999999.000000000000000</double>
-                </property>
-               </widget>
-              </item>
-              <item row="2" column="0">
-               <widget class="QDoubleSpinBox" name="second_wetted_coeff_dbox">
+              <item row="3" column="2">
+               <widget class="QDoubleSpinBox" name="second_top_width_exp_dbox">
                 <property name="decimals">
                  <number>4</number>
                 </property>
@@ -1188,7 +1202,7 @@
                </widget>
               </item>
               <item row="2" column="1">
-               <widget class="QDoubleSpinBox" name="second_wetted_exp_dbox">
+               <widget class="QDoubleSpinBox" name="second_wetted_coeff_dbox">
                 <property name="decimals">
                  <number>4</number>
                 </property>
@@ -1197,8 +1211,18 @@
                 </property>
                </widget>
               </item>
-              <item row="3" column="0">
-               <widget class="QDoubleSpinBox" name="second_top_width_coeff_dbox">
+              <item row="0" column="2">
+               <widget class="QLabel" name="label_30">
+                <property name="text">
+                 <string>Exponent</string>
+                </property>
+                <property name="alignment">
+                 <set>Qt::AlignCenter</set>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="1">
+               <widget class="QDoubleSpinBox" name="second_area_coeff_dbox">
                 <property name="decimals">
                  <number>4</number>
                 </property>
@@ -1208,7 +1232,7 @@
                </widget>
               </item>
               <item row="3" column="1">
-               <widget class="QDoubleSpinBox" name="second_top_width_exp_dbox">
+               <widget class="QDoubleSpinBox" name="second_top_width_coeff_dbox">
                 <property name="decimals">
                  <number>4</number>
                 </property>
@@ -1216,6 +1240,78 @@
                  <double>9999999.000000000000000</double>
                 </property>
                </widget>
+              </item>
+              <item row="1" column="2">
+               <widget class="QDoubleSpinBox" name="second_area_exp_dbox">
+                <property name="decimals">
+                 <number>4</number>
+                </property>
+                <property name="maximum">
+                 <double>9999999.000000000000000</double>
+                </property>
+               </widget>
+              </item>
+              <item row="2" column="2">
+               <widget class="QDoubleSpinBox" name="second_wetted_exp_dbox">
+                <property name="decimals">
+                 <number>4</number>
+                </property>
+                <property name="maximum">
+                 <double>9999999.000000000000000</double>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="0">
+               <widget class="QLabel" name="label_13">
+                <property name="toolTip">
+                 <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;A11&lt;/p&gt;&lt;p&gt;Coefficient for the variable area regression relationships for flow depth above EXCDEP.&lt;/p&gt;&lt;p&gt;A22&lt;/p&gt;&lt;p&gt;Exponent for the variable area regression relationships for flow depth above EXCDEP.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                </property>
+                <property name="text">
+                 <string>Area</string>
+                </property>
+                <property name="alignment">
+                 <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                </property>
+               </widget>
+              </item>
+              <item row="2" column="0">
+               <widget class="QLabel" name="label_31">
+                <property name="toolTip">
+                 <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;B11&lt;/p&gt;&lt;p&gt;Coefficient for the variable wetted perimeter relationships for flow above EXCDEP.&lt;/p&gt;&lt;p&gt;B22&lt;/p&gt;&lt;p&gt;Exponent for the variable wetted perimeter relationships for flow above EXCDEP.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                </property>
+                <property name="text">
+                 <string>Wetted perimeter</string>
+                </property>
+                <property name="alignment">
+                 <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                </property>
+               </widget>
+              </item>
+              <item row="3" column="0">
+               <widget class="QLabel" name="label_32">
+                <property name="toolTip">
+                 <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;C11&lt;/p&gt;&lt;p&gt;Coefficient for the variable top width relationships for flow depth above EXCDEP.&lt;/p&gt;&lt;p&gt;C22&lt;/p&gt;&lt;p&gt;Exponent for the variable top width relationships for flow depth above EXCDEP.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                </property>
+                <property name="text">
+                 <string>Top width</string>
+                </property>
+                <property name="alignment">
+                 <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="0">
+               <spacer name="horizontalSpacer_5">
+                <property name="orientation">
+                 <enum>Qt::Horizontal</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>40</width>
+                  <height>20</height>
+                 </size>
+                </property>
+               </spacer>
               </item>
              </layout>
             </item>
@@ -1226,6 +1322,19 @@
               </property>
               <property name="maximum">
                <double>9999999.000000000000000</double>
+              </property>
+             </widget>
+            </item>
+            <item row="0" column="0">
+             <widget class="QLabel" name="label_12">
+              <property name="toolTip">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;EXCDEP&lt;/p&gt;&lt;p&gt;Channel depth above which a second variable area relationship will apply. If only one channel geometry relationship is used, set EXCDEP(I) = 0.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
+              <property name="text">
+               <string>Depth for second relationship</string>
+              </property>
+              <property name="wordWrap">
+               <bool>true</bool>
               </property>
              </widget>
             </item>
