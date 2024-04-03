@@ -9,8 +9,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>463</width>
-    <height>346</height>
+    <width>467</width>
+    <height>355</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -392,6 +392,9 @@
            <height>20</height>
           </size>
          </property>
+         <property name="toolTip">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;CDIAMETER&lt;/p&gt;&lt;p&gt;Circular culvert diameter (ft or m). For the generalized culvert equations&lt;/p&gt;&lt;p&gt;CDIAMETER is the circular culvert diameter or the box culvert height&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
          <property name="text">
           <string>Circular diameter or box culvert height</string>
          </property>
@@ -410,6 +413,9 @@
            <width>169</width>
            <height>20</height>
           </size>
+         </property>
+         <property name="toolTip">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;HEADREFEL&lt;/p&gt;&lt;p&gt;Reference elevation above which the headwater depth is determined for&lt;/p&gt;&lt;p&gt;either the discharge rating curve or rating table. Set HEADREFEL(I) =&lt;/p&gt;&lt;p&gt;0.0 to use the existing channel bed or floodplain elevation for the reference&lt;/p&gt;&lt;p&gt;elevation to compute the headwater depth (ft or m).&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
          </property>
          <property name="text">
           <string>Reference elevation for headwater</string>
@@ -430,6 +436,9 @@
            <height>20</height>
           </size>
          </property>
+         <property name="toolTip">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;CLENGTH&lt;/p&gt;&lt;p&gt;Culvert length (ft or m). When a long culvert is simulated (&amp;gt;500 ft or&lt;/p&gt;&lt;p&gt;152.4 m), CLENGTH must be assigned to that culvert’s length to activate&lt;/p&gt;&lt;p&gt;the long culvert routing routine.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
          <property name="text">
           <string>Culvert or conduit length</string>
          </property>
@@ -448,6 +457,9 @@
            <width>121</width>
            <height>17</height>
           </size>
+         </property>
+         <property name="toolTip">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;STORMDMAXQ&lt;br/&gt;Maximum allowable discharge (conveyance capacity) of the collection&lt;/p&gt;&lt;p&gt;pipe represented by the ISTORMDOUT element. (cfs or cms)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
          </property>
          <property name="text">
           <string>Storm drain capacity</string>
