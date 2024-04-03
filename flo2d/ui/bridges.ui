@@ -179,6 +179,9 @@
                 <verstretch>0</verstretch>
                </sizepolicy>
               </property>
+              <property name="toolTip">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;COEFF*&lt;/p&gt;&lt;p&gt;Overall bridge discharge coefficient – assigned or computed (default = 0.).&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
               <property name="text">
                <string>Overall bridge discharge coefficient</string>
               </property>
@@ -198,6 +201,9 @@
                 <horstretch>0</horstretch>
                 <verstretch>0</verstretch>
                </sizepolicy>
+              </property>
+              <property name="toolTip">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;C_PRIME_USER*&lt;/p&gt;&lt;p&gt;Baseline bridge discharge coefficient to be adjusted with detail coefficients.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
               <property name="text">
                <string>Baseline bridge discharge coefficient</string>
@@ -241,6 +247,9 @@
                 <verstretch>0</verstretch>
                </sizepolicy>
               </property>
+              <property name="toolTip">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;KF_COEF*&lt;/p&gt;&lt;p&gt;Froude number coefficient – assigned or computed (= 0.)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
               <property name="text">
                <string>Froude number coefficient</string>
               </property>
@@ -282,6 +291,9 @@
                 <horstretch>0</horstretch>
                 <verstretch>0</verstretch>
                </sizepolicy>
+              </property>
+              <property name="toolTip">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;KWW_COEF*&lt;br/&gt;Wingwall coefficient – assigned or computed (= 0.)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
               <property name="text">
                <string>Wingwall coefficient</string>
@@ -332,6 +344,9 @@
                 <verstretch>0</verstretch>
                </sizepolicy>
               </property>
+              <property name="toolTip">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;KPHI_COEF*&lt;/p&gt;&lt;p&gt;Flow angle with bridge coefficient – assigned or computed (= 0.)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
               <property name="text">
                <string>Flow angle with bridge coefficient</string>
               </property>
@@ -373,6 +388,9 @@
                 <horstretch>0</horstretch>
                 <verstretch>0</verstretch>
                </sizepolicy>
+              </property>
+              <property name="toolTip">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;KY_COEF*&lt;/p&gt;&lt;p&gt;Coefficient associated with sloping embankments and vertical abutments (= 0.)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
               <property name="text">
                <string>Coefficient associated with sloping embankments and vertical abutments</string>
@@ -419,6 +437,9 @@
                 <verstretch>0</verstretch>
                </sizepolicy>
               </property>
+              <property name="toolTip">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;KX_COEF*&lt;/p&gt;&lt;p&gt;Coefficient associated with sloping abutments – assigned or computed (=0.)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
               <property name="text">
                <string>Coefficient associated with sloping abutments</string>
               </property>
@@ -463,6 +484,9 @@
                 <horstretch>0</horstretch>
                 <verstretch>0</verstretch>
                </sizepolicy>
+              </property>
+              <property name="toolTip">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;KJ_COEF*&lt;/p&gt;&lt;p&gt;Coefficient associated with pier and piles – assigned or computer (= 0.)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
               <property name="text">
                <string>Coefficient associated with pier and piles</string>
@@ -547,6 +571,9 @@
             </property>
             <item row="0" column="0">
              <widget class="QLabel" name="label_23">
+              <property name="toolTip">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;BN_VALUE&lt;/p&gt;&lt;p&gt;Bridge reach n-value&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
               <property name="text">
                <string>Bridge reach n-value</string>
               </property>
@@ -592,6 +619,9 @@
             </property>
             <item row="0" column="0">
              <widget class="QLabel" name="label_22">
+              <property name="toolTip">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;UPLENGTH&lt;/p&gt;&lt;p&gt;Distance to upstream cross section unaffected by bridge backwater (ft or m)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
               <property name="text">
                <string>Distance to upstream cross section unaffected by bridge backwater</string>
               </property>
@@ -637,6 +667,9 @@
             </property>
             <item row="0" column="0">
              <widget class="QLabel" name="label_52">
+              <property name="toolTip">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;BOPENING&lt;/p&gt;&lt;p&gt;Bridge opening width (ft or m).&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
               <property name="text">
                <string>Bridge opening width</string>
               </property>
@@ -682,6 +715,9 @@
             </property>
             <item row="0" column="0">
              <widget class="QLabel" name="label_10">
+              <property name="toolTip">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;BLENGTH&lt;/p&gt;&lt;p&gt;Bridge length from upstream edge to downstream abutment (ft or m).&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
               <property name="text">
                <string>Bridge length from upstream edge to downstream abutment</string>
               </property>
@@ -727,6 +763,9 @@
             </property>
             <item row="0" column="0">
              <widget class="QLabel" name="label_21">
+              <property name="toolTip">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;DECKHT&lt;/p&gt;&lt;p&gt;Average elevation of the top of the deck railing for overtop flow (ft or m)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
               <property name="text">
                <string>Average elevation of the top of the deck railing for overtop flow</string>
               </property>
@@ -772,6 +811,9 @@
             </property>
             <item row="0" column="0">
              <widget class="QLabel" name="label_11">
+              <property name="toolTip">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;LOWCHORD&lt;/p&gt;&lt;p&gt;Average elevation of the low chord (ft or m).&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
               <property name="text">
                <string>Average elevation of the low chord</string>
               </property>
@@ -817,6 +859,9 @@
             </property>
             <item row="0" column="0">
              <widget class="QLabel" name="label_20">
+              <property name="toolTip">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;DECKLENGTH&lt;/p&gt;&lt;p&gt;Deck weir length (ft or m)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
               <property name="text">
                <string>Deck weir length</string>
               </property>
@@ -862,6 +907,9 @@
             </property>
             <item row="0" column="0">
              <widget class="QLabel" name="label_19">
+              <property name="toolTip">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;PIERWIDTH&lt;/p&gt;&lt;p&gt;Combined pier or pile cross section width (flow blockage width in ft or m)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
               <property name="text">
                <string>Combined pier or pile cross section width</string>
               </property>
@@ -914,6 +962,9 @@
             </property>
             <item row="0" column="0">
              <widget class="QLabel" name="label_18">
+              <property name="toolTip">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;SLUICECOEFADJ&lt;/p&gt;&lt;p&gt;Adjustment factor to raise or lower the sluice gate coefficient which is 0.33 for Yu/Z = 1.0.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
               <property name="text">
                <string>Adjustment factor to raise or lower the sluice gate coefficient which is 0.33 for Yu/Z = 1.0</string>
               </property>
@@ -959,6 +1010,9 @@
             </property>
             <item row="0" column="0">
              <widget class="QLabel" name="label_17">
+              <property name="toolTip">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;ORIFICECOEFADJ&lt;/p&gt;&lt;p&gt;Adjustment factor to raise or lower the orifice flow coefficient which is 0.80 for Yu/Z = 1.0&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
               <property name="text">
                <string>Adjustment factor to raise or lower the orifice flow coefficient which is 0.80 for Yu/Z = 1.0</string>
               </property>
@@ -1004,6 +1058,9 @@
             </property>
             <item row="0" column="0">
              <widget class="QLabel" name="label_16">
+              <property name="toolTip">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;COEFFWEIRB&lt;/p&gt;&lt;p&gt;Weir coefficient for flow over the bridge deck. For metric: COEFFWIERB x 0.552.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
               <property name="text">
                <string>Weir coefficient for flow over the bridge deck.</string>
               </property>
@@ -1049,6 +1106,9 @@
             </property>
             <item row="0" column="0">
              <widget class="QLabel" name="label_15">
+              <property name="toolTip">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;WINGWALL_ANGLE&lt;/p&gt;&lt;p&gt;Angle the wingwall makes with the abutment perpendicular to the flow&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
               <property name="text">
                <string>Angle the wingwall makes with the abutment perpendicular to the flow</string>
               </property>
@@ -1091,6 +1151,9 @@
            <layout class="QGridLayout" name="gridLayout_26">
             <item row="0" column="0">
              <widget class="QLabel" name="label_13">
+              <property name="toolTip">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;PHI_ANGLE&lt;/p&gt;&lt;p&gt;Angle the flow makes with the bridge alignment perpendicular to the flow&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
               <property name="text">
                <string>Angle the flow makes with the bridge alignment perpendicular to the flow</string>
               </property>
@@ -1136,6 +1199,9 @@
             </property>
             <item row="0" column="0">
              <widget class="QLabel" name="label_14">
+              <property name="toolTip">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;LBTOEABUT&lt;/p&gt;&lt;p&gt;Toe elevation of the left abutment (ft or m)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
               <property name="text">
                <string>Toe elevation of the left abutment</string>
               </property>
@@ -1181,6 +1247,9 @@
             </property>
             <item row="0" column="0">
              <widget class="QLabel" name="label_12">
+              <property name="toolTip">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;RBTOEABUT&lt;/p&gt;&lt;p&gt;Toe elevation of the right abutment (ft or m)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
               <property name="text">
                <string>Toe elevation of the right abutment</string>
               </property>
