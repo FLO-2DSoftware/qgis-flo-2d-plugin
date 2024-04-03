@@ -2831,8 +2831,27 @@ class Flo2D(object):
             s.setValue("FLO-2D/lastGdsDir", outdir)
 
             dlg_components = ComponentsDialog(self.con, self.iface, self.lyrs, "out")
+
+            # Check the presence of fplain cadpts neighbors dat files
+            files = [
+                    "FPLAIN.DAT",
+                    "CADPTS.DAT",
+                    "NEIGHBORS.DAT"
+            ]
+            for file in files:
+                file_path = os.path.join(outdir, file)
+                if os.path.exists(file_path):
+                    dlg_components.remove_files_chbox.setEnabled(True)
+                    break
+
             ok = dlg_components.exec_()
             if ok:
+                if dlg_components.remove_files_chbox.isChecked():
+                    for file in files:
+                        file_path = os.path.join(outdir, file)
+                        if os.path.exists(file_path):
+                            os.remove(file_path)
+
                 if "Channels" not in dlg_components.components:
                     export_calls.remove("export_chan")
                     export_calls.remove("export_xsec")
@@ -3124,22 +3143,18 @@ class Flo2D(object):
                         export_calls.remove("export_swmmflo")
                         export_calls.remove("export_swmmflort")
                         export_calls.remove("export_swmmoutf")
+                try:
+                    s = QSettings()
+                    s.setValue("FLO-2D/lastGdsDir", outdir)
 
-                QApplication.setOverrideCursor(Qt.WaitCursor)
-
-            try:
-                s = QSettings()
-                s.setValue("FLO-2D/lastGdsDir", outdir)
-
-                QApplication.setOverrideCursor(Qt.WaitCursor)
-                self.call_IO_methods(export_calls, True)
-                self.uc.bar_info("Flo2D model exported to " + output_hdf5, dur=3)
-                QApplication.restoreOverrideCursor()
-            finally:
-                QApplication.restoreOverrideCursor()
-                if self.f2g.export_messages != "":
-                    info = "WARNINGS:\n\n" + self.f2g.export_messages
-                    self.uc.show_info(info)
+                    QApplication.setOverrideCursor(Qt.WaitCursor)
+                    self.call_IO_methods(export_calls, True)
+                    self.uc.bar_info("Flo2D model exported to " + output_hdf5, dur=3)
+                finally:
+                    QApplication.restoreOverrideCursor()
+                    if self.f2g.export_messages != "":
+                        info = "WARNINGS:\n\n" + self.f2g.export_messages
+                        self.uc.show_info(info)
 
     @connection_required
     def import_from_gpkg(self):
