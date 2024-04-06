@@ -105,6 +105,7 @@ class InletNodesDialog(qtBaseClass, uiDialog):
         self.curb_height_dbox.valueChanged.connect(self.curb_height_dbox_valueChanged)
         self.clogging_factor_dbox.valueChanged.connect(self.clogging_factor_dbox_valueChanged)
         self.time_for_clogging_dbox.valueChanged.connect(self.time_for_clogging_dbox_valueChanged)
+        self.dropbox_area_dbox.valueChanged.connect(self.dropbox_area_dbox_valueChanged)
         self.inlets_tblw.cellClicked.connect(self.inlets_tblw_cell_clicked)
         self.inlet_rating_table_cbo.currentIndexChanged.connect(self.inlet_rating_table_cbo_changed)
 
@@ -145,7 +146,8 @@ class InletNodesDialog(qtBaseClass, uiDialog):
                             curbheight,
                             swmm_clogging_factor,
                             swmm_time_for_clogging,
-                            rt_name          
+                            rt_name,
+                            drboxarea         
                     FROM user_swmm_nodes WHERE sd_type= 'I' or sd_type= 'J';"""
             rows = self.gutils.execute(qry).fetchall()
             if not rows:
@@ -176,15 +178,10 @@ class InletNodesDialog(qtBaseClass, uiDialog):
                     if name[2] != typ:
                         if len(wrong_type) < 1500:
                             wrong_type += name + "\tWrong type " + typ + ". Should be " + name[2] + ".\n"
-    
-                #
-                # if not () or
-                #         (name()[1] == "M" and name()[2] == "5"):
                 self.inlets_tblw.insertRow(row_number)
                 for cell, data in enumerate(row_data):
                     item = QTableWidgetItem()
                     if cell == 0 or cell == 1 or cell == 6 or cell == 7 or cell == 16:
-                        # item.setFlags(Qt.ItemIsSelectable | Qt.ItemIsEnabled)
                         item.setFlags(item.flags() & ~Qt.ItemIsEditable)
     
                     # item.setData(Qt.DisplayRole, data)
@@ -227,6 +224,8 @@ class InletNodesDialog(qtBaseClass, uiDialog):
                         elif cell == 16:  # Rating table name/Culvert Eq.
                             idx = self.inlet_rating_table_cbo.findText(str(data) if data is not None else "")
                             self.inlet_rating_table_cbo.setCurrentIndex(idx)
+                        elif cell == 17:
+                            self.dropbox_area_dbox.setValue(data if data is not None else 0)                            
     
                     # See if rating tables or Culvert eq. exist:
                     if cell == 0:
@@ -431,6 +430,9 @@ class InletNodesDialog(qtBaseClass, uiDialog):
 
     def time_for_clogging_dbox_valueChanged(self):
         self.box_valueChanged(self.time_for_clogging_dbox, 15)
+
+    def dropbox_area_dbox_valueChanged(self):
+        self.box_valueChanged(self.dropbox_area_dbox, 17)
 
     def box_valueChanged(self, widget, col):
         if not self.block:
