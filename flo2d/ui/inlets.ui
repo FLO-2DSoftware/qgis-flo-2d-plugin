@@ -1440,6 +1440,9 @@
                    <height>23</height>
                   </size>
                  </property>
+                 <property name="maximum">
+                  <double>999999.000000000000000</double>
+                 </property>
                 </widget>
                </item>
               </layout>
@@ -1542,7 +1545,7 @@
       <number>5</number>
      </property>
      <property name="columnCount">
-      <number>17</number>
+      <number>18</number>
      </property>
      <attribute name="verticalHeaderVisible">
       <bool>true</bool>
@@ -1552,6 +1555,7 @@
      <row/>
      <row/>
      <row/>
+     <column/>
      <column/>
      <column/>
      <column/>

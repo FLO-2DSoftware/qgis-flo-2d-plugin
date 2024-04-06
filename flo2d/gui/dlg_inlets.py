@@ -112,8 +112,7 @@ class InletNodesDialog(qtBaseClass, uiDialog):
         self.inlets_tblw.verticalHeader().sectionClicked.connect(self.onVerticalSectionClicked)
 
         self.set_header()
-        # self.inlets_note_lbl.setText("Values for files: (1) SWMMFLO.DAT     (2) SWMMFLORT.DAT     (3) SDCLOGGING.DAT")
-
+        
         self.populate_inlets()
 
     def setup_connection(self):
@@ -319,6 +318,7 @@ class InletNodesDialog(qtBaseClass, uiDialog):
                 "Clogging Factor",  # FLO-2D. SDCLOGGING.DAT
                 "Time for Clogging",  # FLO-2D. SDCLOGGING.DAT
                 "Rat.Table/Culvert Eq.",
+                "Dropbox Area",  # FLO-2D. SWMMFLODROPBOX.DAT
             ]
         )
 
@@ -533,6 +533,7 @@ class InletNodesDialog(qtBaseClass, uiDialog):
         self.curb_height_dbox.setValue(float_or_zero(self.inlets_tblw.item(row, 13)))
         self.clogging_factor_dbox.setValue(float_or_zero(self.inlets_tblw.item(row, 14)))
         self.time_for_clogging_dbox.setValue(float_or_zero(self.inlets_tblw.item(row, 15)))
+        self.dropbox_area_dbox.setValue(float_or_zero(self.inlets_tblw.item(row, 17)))
 
         rt_name = self.inlets_tblw.item(row, 16).text().strip()
         rt_name = rt_name if rt_name is not None else ""
