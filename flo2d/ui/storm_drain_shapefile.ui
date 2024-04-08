@@ -1232,7 +1232,7 @@
         <item row="1" column="0" colspan="3">
          <widget class="QLabel" name="label_24">
           <property name="text">
-           <string>fields for   * SWMMFLO.DAT     #  SDCLOGGING.DAT    &amp; SWMMFLODROPBOX</string>
+           <string>fields for   * SWMMFLO.DAT     # SDCLOGGING.DAT    &amp; SWMMFLODROPBOX</string>
           </property>
           <property name="wordWrap">
            <bool>false</bool>
