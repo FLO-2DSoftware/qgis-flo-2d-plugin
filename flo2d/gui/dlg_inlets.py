@@ -592,6 +592,7 @@ class InletNodesDialog(qtBaseClass, uiDialog):
             self.curb_height_dbox.setValue(float_or_zero(self.inlets_tblw.item(row, 13)))
             self.clogging_factor_dbox.setValue(float_or_zero(self.inlets_tblw.item(row, 14)))
             self.time_for_clogging_dbox.setValue(float_or_zero(self.inlets_tblw.item(row, 15)))
+            self.dropbox_area_dbox.setValue(float_or_zero(self.inlets_tblw.item(row, 17)))
 
             if inlet_type_index == 3:
                 rt_name = self.inlets_tblw.item(row, 16)
@@ -754,6 +755,10 @@ class InletNodesDialog(qtBaseClass, uiDialog):
                 item = self.inlets_tblw.item(row, 16)
                 if item is not None:
                     rt_name = str(item.text())
+                    
+                item = self.inlets_tblw.item(row, 17)
+                if item is not None:
+                    drboxarea = str(item.text()) if str(item.text()) != "" else "0"                   
 
                 # See if rating table exists in swmmflort:
                 rt_fid = 0
@@ -848,6 +853,7 @@ class InletNodesDialog(qtBaseClass, uiDialog):
                         swmm_time_for_clogging,
                         rt_fid,
                         rt_name,
+                        drboxarea,
                         name,
                     )
                 )
@@ -873,7 +879,8 @@ class InletNodesDialog(qtBaseClass, uiDialog):
                 swmm_clogging_factor = ?,
                 swmm_time_for_clogging = ?,
                 rt_fid = ?,
-                rt_name = ?
+                rt_name = ?,
+                drboxarea = ?
             WHERE name = ?;"""
 
             self.gutils.execute_many(update_qry, inlets)
