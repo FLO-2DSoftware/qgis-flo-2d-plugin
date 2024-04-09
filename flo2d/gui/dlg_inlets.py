@@ -678,6 +678,7 @@ class InletNodesDialog(qtBaseClass, uiDialog):
         """
         Save changes of user_swmm_nodes layer.
         """
+        QApplication.setOverrideCursor(Qt.WaitCursor)
         try:
             inlets = []
             t4_but_rt_name = []
@@ -890,7 +891,7 @@ class InletNodesDialog(qtBaseClass, uiDialog):
                 no_rt_names = ""
                 for inl, gr in t4_but_rt_name:
                     no_rt_names += "\n" + inl + "\t(grid " + gr + ")"
-                QApplication.setOverrideCursor(Qt.WaitCursor)    
+                QApplication.setOverrideCursor(Qt.ArrowCursor)    
                 self.uc.show_info(
                     "WARNING 020219.1836:\n\nThe following "
                     + str(len(t4_but_rt_name))
@@ -900,14 +901,15 @@ class InletNodesDialog(qtBaseClass, uiDialog):
                 QApplication.restoreOverrideCursor()
 
         except Exception as e:
-            QApplication.setOverrideCursor(Qt.WaitCursor)
+            QApplication.setOverrideCursor(Qt.ArrowCursor)
             self.uc.show_error(
                 "ERROR 020219.0812: couldn't save inlets/junction into User Storm Drain Nodes!"
                 + "\n__________________________________________________",
                 e,
             )
             QApplication.restoreOverrideCursor()
-            
+        finally:
+            QApplication.restoreOverrideCursor()           
 
     def populate_rtables(self):
         self.inlet_rating_table_cbo.clear()
