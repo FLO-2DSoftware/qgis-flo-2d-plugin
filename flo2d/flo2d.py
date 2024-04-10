@@ -2101,11 +2101,7 @@ class Flo2D(object):
                             )
                             QApplication.restoreOverrideCursor()
                             if proceed:
-                                QApplication.setOverrideCursor(Qt.WaitCursor)
                                 assign_col_row_indexes_to_grid(self.lyrs.data["grid"]["qlyr"], self.gutils)
-                                QApplication.restoreOverrideCursor()
-                            else:
-                                return
 
                     QApplication.restoreOverrideCursor()
 
