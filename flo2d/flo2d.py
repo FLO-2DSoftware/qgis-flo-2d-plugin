@@ -1219,6 +1219,7 @@ class Flo2D(object):
                 "export_swmmflo",
                 "export_swmmflort",
                 "export_swmmoutf",
+                "export_swmmflodropbox",
                 "export_wsurf",
                 "export_wstime",
                 "export_shallowNSpatial",
@@ -1290,6 +1291,7 @@ class Flo2D(object):
                     export_calls.remove("export_swmmflo")
                     export_calls.remove("export_swmmflort")
                     export_calls.remove("export_swmmoutf")
+                    export_calls.remove("export_swmmflodropbox")
                 else:
                     self.uc.show_info("Storm Drain features not allowed on the Quick Run FLO-2D Pro.")
                     return
@@ -2824,6 +2826,7 @@ class Flo2D(object):
                 "export_swmmflo",
                 "export_swmmflort",
                 "export_swmmoutf",
+                "export_swmmflodropbox",
                 "export_wsurf",
                 "export_wstime",
                 "export_shallowNSpatial",
@@ -2900,6 +2903,7 @@ class Flo2D(object):
                     export_calls.remove("export_swmmflo")
                     export_calls.remove("export_swmmflort")
                     export_calls.remove("export_swmmoutf")
+                    export_calls.remove("export_swmmflodropbox")
 
                 if "Spatial Shallow-n" not in dlg_components.components:
                     export_calls.remove("export_shallowNSpatial")
@@ -2921,6 +2925,7 @@ class Flo2D(object):
                         export_calls.remove("export_swmmflo")
                         export_calls.remove("export_swmmflort")
                         export_calls.remove("export_swmmoutf")
+                        export_calls.remove("export_swmmflodropbox")
                     QApplication.restoreOverrideCursor()    
 
                 # QApplication.setOverrideCursor(Qt.WaitCursor)
@@ -2978,8 +2983,10 @@ class Flo2D(object):
                         QApplication.restoreOverrideCursor()
 
                     if self.f2g.export_messages != "":
-                        info = "WARNINGS:\n\n" + self.f2g.export_messages
+                        QApplication.setOverrideCursor(Qt.ArrowCursor)
+                        info = "WARNINGS 100424.0613:\n\n" + self.f2g.export_messages
                         self.uc.show_info(info)
+                        QApplication.restoreOverrideCursor()
 
         QApplication.restoreOverrideCursor()
 

@@ -5100,6 +5100,13 @@ class Flo2dGeoPackage(GeoPackageUtils):
         elif self.parsed_format == self.FORMAT_HDF5:
             return self.export_swmmflo_hdf5()
 
+    def export_swmmflodropbox(self, output=None):
+        if self.parsed_format == self.FORMAT_DAT:
+            return self.export_swmmflodropbox_dat(output)
+        # elif self.parsed_format == self.FORMAT_HDF5:
+        #     return self.export_swmmflo_hdf5()
+
+
     def export_swmmflo_hdf5(self):
         """
         Function to export the swmm flo to the hdf5 file
@@ -5183,6 +5190,27 @@ class Flo2dGeoPackage(GeoPackageUtils):
         except Exception as e:
             QApplication.restoreOverrideCursor()
             self.uc.show_error("ERROR 101218.1618: exporting SWMMFLO.DAT failed!.\n", e)
+            return False
+
+    def export_swmmflodropbox_dat(self, outdir):
+        try:
+            if self.is_table_empty("user_swmm_nodes"):
+                return False
+            
+            qry = """SELECT name, grid, drboxarea  FROM user_swmm_nodes WHERE (sd_type = 'I' OR sd_type = 'J') AND drboxarea > 0.0;"""
+            rows = self.gutils.execute(qry).fetchall()
+            if rows:
+                line1 = "{0:16} {1:<10} {2:<10.2f}\n"
+
+                swmmflodropbox = os.path.join(outdir, "SWMMFLODROPBOX.DAT")
+                with open(swmmflodropbox, "w") as s:
+                    for row in rows:
+                        s.write(line1.format(*row))
+                return True
+
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.uc.show_error("ERROR 090424.0938.1618: exporting SWMMFLODROPBOX.DAT failed!.\n", e)
             return False
 
     def export_swmmflort(self, output=None):
@@ -5335,7 +5363,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             if self.is_table_empty("swmmflort") and self.is_table_empty("swmmflo_culvert"):
                 if os.path.isfile(outdir + r"\SWMMFLORT.DAT"):
                     m = "* There are no SWMM Rating Tables or Culvert Equations defined in the project, but there is\n"
-                    m += "an old SWMMFLORT.DAT in the project directory\n  " + outdir + "\n\n"
+                    m += "an old SWMMFLORT.DAT in the project directory\n\n  " + outdir + "\n\n"
                     self.export_messages += m
                     return False
 
