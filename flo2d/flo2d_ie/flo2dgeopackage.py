@@ -1599,7 +1599,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
         for row in data:
             name  = row[0]
             area = row[2]
-            self.self.gutils.execute("UPDATE user_swmm_nodes SET drboxarea = ? WHERE name = ?", (name, area))
+            self.gutils.execute("UPDATE user_swmm_nodes SET drboxarea = ? WHERE name = ?", (area, name))
 
     def import_swmmflort(self):
         """

@@ -2055,7 +2055,8 @@ class Flo2D(object):
                             last_dir = s.value("FLO-2D/lastGdsDir", "")
                             if os.path.isfile(last_dir + r"\SWMMFLODROPBOX.DAT"):
                                 if os.path.getsize(last_dir + r"\SWMMFLODROPBOX.DAT") > 0:
-                                    self.uc.show_info("Import SWMMFLODROPBOX.DAT?")                               
+                                    self.uc.show_info("Import SWMMFLODROPBOX.DAT?") 
+                                    self.f2g.import_swmmflodropbox()                       
                             
                         except Exception as e:
                             QApplication.restoreOverrideCursor()
