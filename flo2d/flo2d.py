@@ -1781,7 +1781,6 @@ class Flo2D(object):
             "import_swmmflo",
             "import_swmmflort",
             "import_swmmoutf",
-            "import_swmmflodropbox",
             "import_tolspatial",
             "import_wsurf",
             "import_wstime",
@@ -1885,7 +1884,6 @@ class Flo2D(object):
                         import_calls.remove("import_swmmflo")
                         import_calls.remove("import_swmmflort")
                         import_calls.remove("import_swmmoutf")
-                        import_calls.remove("import_swmmflodropbox")
 
                     if "Spatial Tolerance" not in dlg_components.components:
                         import_calls.remove("import_tolspatial")
@@ -2055,8 +2053,14 @@ class Flo2D(object):
                             last_dir = s.value("FLO-2D/lastGdsDir", "")
                             if os.path.isfile(last_dir + r"\SWMMFLODROPBOX.DAT"):
                                 if os.path.getsize(last_dir + r"\SWMMFLODROPBOX.DAT") > 0:
-                                    self.uc.show_info("Import SWMMFLODROPBOX.DAT?") 
-                                    self.f2g.import_swmmflodropbox()                       
+                                    if self.f2g.import_swmmflodropbox():
+                                        self.files_used += "SWMMFLODROPBOX.DAT\n"
+                                    else:
+                                        self.files_not_used +="SWMMFLODROPBOX.DAT (errors found)\n"  
+                                else:
+                                    self.files_not_used +="SWMMFLODROPBOX.DAT\n" 
+                            else:
+                                self.files_not_used +="SWMMFLODROPBOX.DAT\n"                                   
                             
                         except Exception as e:
                             QApplication.restoreOverrideCursor()
@@ -2135,7 +2139,7 @@ class Flo2D(object):
                     if "import_swmmflo" in import_calls:
                         msg += "* To complete the Storm Drain functionality, the 'Computational Domain' and 'Storm Drains' conversion "
                         msg += "must be done using the "
-                        msg += "<FONT COLOR=green>Conversion from Schematic Layers to User Layers</FONT>"
+                        msg += "<FONT COLOR=green>Convert Schematic Layers to User Layers</FONT>"
                         msg += " tool in the <FONT COLOR=blue>FLO-2D panel</FONT>...<br>"
                         if "SWMM.INP" not in self.files_used:
                             msg += "...and <FONT COLOR=green>Import SWMM.INP</FONT> from the <FONT COLOR=blue>Storm Drain Editor widget</FONT>."
@@ -2390,7 +2394,7 @@ class Flo2D(object):
                 if "import_swmmflo" in import_calls:
                     msg += "* To complete the Storm Drain functionality, the 'Computational Domain' and 'Storm Drains' conversion "
                     msg += "must be done using the "
-                    msg += "<FONT COLOR=green>Conversion from Schematic Layers to User Layers</FONT>"
+                    msg += "<FONT COLOR=green>Convert Schematic Layers to User Layers</FONT>"
                     msg += " tool in the <FONT COLOR=blue>FLO-2D panel</FONT>...<br>"
                     # msg += "...and <FONT COLOR=green>Import SWMM.INP</FONT> from the <FONT COLOR=blue>Storm Drain Editor widget</FONT>."
 
@@ -2625,14 +2629,14 @@ class Flo2D(object):
                         if self.gutils.is_table_empty("user_model_boundary"):
                             msg += "* To complete the Storm Drain functionality, the 'Computational Domain' and 'Storm Drains' conversion "
                             msg += "must be done using the "
-                            msg += "<FONT COLOR=green>Conversion from Schematic Layers to User Layers</FONT>"
+                            msg += "<FONT COLOR=green>Convert Schematic Layers to User Layers</FONT>"
                             msg += " tool in the <FONT COLOR=blue>FLO-2D panel</FONT>...<br>"
                             if "SWMM.INP" not in self.files_used:
                                 msg += "...and <FONT COLOR=green>Import SWMM.INP</FONT> from the <FONT COLOR=blue>Storm Drain Editor widget</FONT>."
                         else:
                             msg += "* To complete the Storm Drain functionality, the 'Storm Drains' conversion "
                             msg += "must be done using the "
-                            msg += "<FONT COLOR=green>Conversion from Schematic Layers to User Layers</FONT>"
+                            msg += "<FONT COLOR=green>Convert Schematic Layers to User Layers</FONT>"
                             msg += " tool in the <FONT COLOR=blue>FLO-2D panel</FONT>...<br>"
                             if "SWMM.INP" not in self.files_used:
                                 msg += "...and <FONT COLOR=green>Import SWMM.INP</FONT> from the <FONT COLOR=blue>Storm Drain Editor widget</FONT>."
@@ -2742,14 +2746,14 @@ class Flo2D(object):
                     if self.gutils.is_table_empty("user_model_boundary"):
                         msg += "* To complete the Storm Drain functionality, the 'Computational Domain' and 'Storm Drains' conversion "
                         msg += "must be done using the "
-                        msg += "<FONT COLOR=green>Conversion from Schematic Layers to User Layers</FONT>"
+                        msg += "<FONT COLOR=green>Convert Schematic Layers to User Layers</FONT>"
                         msg += " tool in the <FONT COLOR=blue>FLO-2D panel</FONT>...<br>"
                         msg += "...and <FONT COLOR=green>Import SWMM.INP</FONT> from the <FONT COLOR=blue>Storm Drain Editor widget</FONT>."
 
                     else:
                         msg += "* To complete the Storm Drain functionality, the 'Storm Drains' conversion "
                         msg += "must be done using the "
-                        msg += "<FONT COLOR=green>Conversion from Schematic Layers to User Layers</FONT>"
+                        msg += "<FONT COLOR=green>Convert Schematic Layers to User Layers</FONT>"
                         msg += " tool in the <FONT COLOR=blue>FLO-2D panel</FONT>...<br>"
                         msg += "...and <FONT COLOR=green>Import SWMM.INP</FONT> from the <FONT COLOR=blue>Storm Drain Editor widget</FONT>."
 

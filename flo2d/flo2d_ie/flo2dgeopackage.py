@@ -1595,12 +1595,16 @@ class Flo2dGeoPackage(GeoPackageUtils):
         self.batch_execute(swmmflo_sql)
 
     def import_swmmflodropbox(self):
-        data = self.parser.parse_swmmflodropbox()
-        for row in data:
-            name  = row[0]
-            area = row[2]
-            self.gutils.execute("UPDATE user_swmm_nodes SET drboxarea = ? WHERE name = ?", (area, name))
-
+        try: 
+            data = self.parser.parse_swmmflodropbox()
+            for row in data:
+                name  = row[0]
+                area = row[2]
+                self.gutils.execute("UPDATE user_swmm_nodes SET drboxarea = ? WHERE name = ?", (area, name))
+            return True
+        except:
+            return False
+        
     def import_swmmflort(self):
         """
         Reads SWMMFLORT.DAT (Rating Tables).
