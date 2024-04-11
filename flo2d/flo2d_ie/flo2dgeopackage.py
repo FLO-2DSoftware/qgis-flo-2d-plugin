@@ -1594,6 +1594,13 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
         self.batch_execute(swmmflo_sql)
 
+    def import_swmmflodropbox(self):
+        data = self.parser.parse_swmmflodropbox()
+        for row in data:
+            name  = row[0]
+            area = row[2]
+            self.self.gutils.execute("UPDATE user_swmm_nodes SET drboxarea = ? WHERE name = ?", (name, area))
+
     def import_swmmflort(self):
         """
         Reads SWMMFLORT.DAT (Rating Tables).
@@ -3819,7 +3826,6 @@ class Flo2dGeoPackage(GeoPackageUtils):
             self.uc.show_error("ERROR 101218.1610: exporting ARF.DAT failed!.", e)
             return False
 
-
     def export_arf_hdf5(self):
         # check if there are any grid cells with ARF defined.
         try:
@@ -5105,7 +5111,6 @@ class Flo2dGeoPackage(GeoPackageUtils):
             return self.export_swmmflodropbox_dat(output)
         # elif self.parsed_format == self.FORMAT_HDF5:
         #     return self.export_swmmflo_hdf5()
-
 
     def export_swmmflo_hdf5(self):
         """

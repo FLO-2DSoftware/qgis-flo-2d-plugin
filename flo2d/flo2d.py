@@ -1781,6 +1781,7 @@ class Flo2D(object):
             "import_swmmflo",
             "import_swmmflort",
             "import_swmmoutf",
+            "import_swmmflodropbox",
             "import_tolspatial",
             "import_wsurf",
             "import_wstime",
@@ -1884,6 +1885,7 @@ class Flo2D(object):
                         import_calls.remove("import_swmmflo")
                         import_calls.remove("import_swmmflort")
                         import_calls.remove("import_swmmoutf")
+                        import_calls.remove("import_swmmflodropbox")
 
                     if "Spatial Tolerance" not in dlg_components.components:
                         import_calls.remove("import_tolspatial")
@@ -2048,6 +2050,13 @@ class Flo2D(object):
                         try:
                             swmm_converter = SchemaSWMMConverter(self.con, self.iface, self.lyrs)
                             swmm_converter.create_user_swmm_nodes()
+                            
+                            s = QSettings()
+                            last_dir = s.value("FLO-2D/lastGdsDir", "")
+                            if os.path.isfile(last_dir + r"\SWMMFLODROPBOX.DAT"):
+                                if os.path.getsize(last_dir + r"\SWMMFLODROPBOX.DAT") > 0:
+                                    self.uc.show_info("Import SWMMFLODROPBOX.DAT?")                               
+                            
                         except Exception as e:
                             QApplication.restoreOverrideCursor()
                             self.uc.log_info(traceback.format_exc())

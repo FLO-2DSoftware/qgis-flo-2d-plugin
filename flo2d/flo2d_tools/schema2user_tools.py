@@ -473,7 +473,7 @@ class SchemaSWMMConverter(SchemaConverter):
             self.user_swmm_nodes_lyr.commitChanges()
             self.user_swmm_nodes_lyr.updateExtents()
             self.user_swmm_nodes_lyr.triggerRepaint()
-            self.user_swmm_nodes_lyr.removeSelection()    
+            self.user_swmm_nodes_lyr.removeSelection()      
             
         except Exception as e:
             QApplication.restoreOverrideCursor()

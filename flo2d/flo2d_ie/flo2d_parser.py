@@ -354,6 +354,7 @@ class ParseDAT(object):
             "SWMMFLO.DAT": None,
             "SWMMFLORT.DAT": None,
             "SWMMOUTF.DAT": None,
+            "SWMMFLODROPBOX.DAT": None,
             "TOLSPATIAL.DAT": None,
             "SHALLOWN_SPATIAL.DAT": None,
             "WSURF.DAT": None,
@@ -980,6 +981,12 @@ class ParseDAT(object):
     def parse_swmmflo(self):
         swmmflo = self.dat_files["SWMMFLO.DAT"]
         par = self.single_parser(swmmflo)
+        data = [row for row in par]
+        return data
+
+    def parse_swmmflodropbox(self):
+        swmmflodropbox = self.dat_files["SWMMFLODROPBOX.DAT"]
+        par = self.single_parser(swmmflodropbox)
         data = [row for row in par]
         return data
 
