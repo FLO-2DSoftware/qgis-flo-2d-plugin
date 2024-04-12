@@ -2688,6 +2688,7 @@ class Flo2D(object):
             "SWMMFLO.DAT": "import_swmmflo",
             "SWMMFLORT.DAT": "import_swmmflort",
             "SWMMOUTETF.DAT": "import_swmmoutf",
+            "SWMMFLODROPBOX.DAT": "import_swmmflodropbox",
             "WSURF.DAT": "import_wsurf",
             "WSTIME.DAT": "import_wstime",
             "MANNINGS_N.DAT": "import_mannings_n",
@@ -2722,7 +2723,7 @@ class Flo2D(object):
                 QMessageBox.information(
                     self.iface.mainWindow(),
                     "Import selected GDS file",
-                    "Import from {0} is successful".format(bname),
+                    "Import from {0} was successful".format(bname),
                 )
                 if call_string == "import_chan":
                     self.gutils.create_schematized_rbank_lines_from_xs_tips()
