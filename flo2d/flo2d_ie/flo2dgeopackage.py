@@ -4630,14 +4630,14 @@ class Flo2dGeoPackage(GeoPackageUtils):
         levee_group = self.parser.levee_group
 
         levee_group.create_dataset('LEVEE_GLOBAL', [])
-        levee_group.datasets["LEVEE_GLOBAL"].data.append(np.array(head, dtype=int))
+        levee_group.datasets["LEVEE_GLOBAL"].data.append(np.array(head, dtype=float))
 
         levee_group.create_dataset('LEVEE_DATA', [])
         levee_data = self.execute(levee_data_sql).fetchall()
         for data in levee_data:
             levee_group.datasets["LEVEE_DATA"].data.append(np.array([data[0], data[1], data[2]], dtype=float))
 
-        levee_group.create_dataset('LEVEE', [])
+        # levee_group.create_dataset('LEVEE', [])
 
         if head[1] == 1:
             levee_group.create_dataset('LEVEE_FAILURE', [])
@@ -4654,12 +4654,12 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     failure[7]],
                     dtype=float))
 
-        if None not in glob_frag:
-            levee_group.datasets["LEVEE"].data.append(create_array(line6, 8, np.string_, glob_frag))
-        else:
-            pass
-        for row in self.execute(levee_frag_sql):
-            levee_group.datasets["LEVEE"].data.append(create_array(line7, 8, np.string_, row))
+        # if None not in glob_frag:
+        #     levee_group.datasets["LEVEE"].data.append(create_array(line6, 8, np.string_, glob_frag))
+        # else:
+        #     pass
+        # for row in self.execute(levee_frag_sql):
+        #     levee_group.datasets["LEVEE"].data.append(create_array(line7, 8, np.string_, row))
 
         self.parser.write_groups(levee_group)
         return True
