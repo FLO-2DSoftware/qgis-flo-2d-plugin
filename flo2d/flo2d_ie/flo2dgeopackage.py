@@ -1747,32 +1747,99 @@ class Flo2dGeoPackage(GeoPackageUtils):
         # try:
         cont_group = self.parser.control_group
 
-        sql = """SELECT name, value FROM cont;"""
-        for option_name, option_value in self.execute(sql).fetchall():
-            dataset_data = np.string_([option_value]) if option_value is not None else np.string_([""])
-            cont_group.create_dataset(option_name, dataset_data)
+        cont_variables = [
+            "SIMUL",
+            "TOUT",
+            "LGPLOT",
+            "METRIC",
+            "IBACKUP",
+            "ICHANNEL",
+            "MSTREET",
+            "LEVEE",
+            "IWRFS",
+            "IMULTC",
+            "IRAIN",
+            "INFIL",
+            "IEVAP",
+            "MUD",
+            "ISED",
+            "IMODFLOW",
+            "SWMM",
+            "IHYDRSTRUCT",
+            "IFLOODWAY",
+            "IDEBRV",
+            "AMANN",
+            "DEPTHDUR",
+            "XCONC",
+            "XARF",
+            "FROUDL",
+            "SHALLOWN",
+            "ENCROACH",
+            "NOPRTFP",
+            "DEPRESSDEPTH",
+            "NOPRTC",
+            "ITIMTEP",
+            "TIMTEP",
+            "STARTIMTEP",
+            "ENDTIMTEP",
+            "GRAPTIM",
+        ]
 
-        tol_group = self.parser.tol_group
-        tol_group.create_dataset('TOLER', [])
-        parser = ParseDAT()
-        options = {o: v if v is not None else "" for o, v in self.execute(sql).fetchall()}
-        rline = " {0}"
-        for row in parser.toler_rows:
-            lst = ""
-            for o in row:
-                if o not in options:
-                    continue
-                val = options[o]
-                lst += rline.format(val)  # Second line 'C' (Courant values) writes 1, 2, or 3 values depending
-                # if channels and/or streets are simulated
-            lst += "\n"
-            if lst.isspace() is False:
-                tol_group.datasets["TOLER"].data.append(create_array(lst, 4, np.string_))
-                # t.write(lst)
+        tol_variables = [
+            "TOLGLOBAL",
+            "DEPTOL",
+            "COURANTFP",
+            "COURANTC",
+            "COURANTST",
+            "TIME_ACCEL"
+        ]
+
+        cont_group.create_dataset('CONT', [])
+        for var in cont_variables:
+            sql = f"""SELECT value FROM cont WHERE name = '{var}';"""
+            value = self.execute(sql).fetchone()[0]
+            self.uc.log_info(str(value))
+            if value is not None:
+                cont_group.datasets["CONT"].data.append(float(value))
             else:
-                pass
+                cont_group.datasets["CONT"].data.append(-9999)
 
-        self.parser.write_groups(cont_group, tol_group)
+        cont_group.create_dataset('TOLER', [])
+        for var in tol_variables:
+            sql = f"""SELECT value FROM cont WHERE name = '{var}';"""
+            value = self.execute(sql).fetchone()[0]
+            self.uc.log_info(str(value))
+            if value is not None:
+                cont_group.datasets["TOLER"].data.append(float(value))
+            else:
+                cont_group.datasets["TOLER"].data.append(-9999)
+
+
+        # for option_name, option_value in self.execute(sql).fetchall():
+        #     dataset_data = np.string_([option_value]) if option_value is not None else np.string_([""])
+        #     cont_group.create_dataset(option_name, dataset_data)
+
+        # tol_group = self.parser.tol_group
+        # tol_group.create_dataset('TOLER', [])
+        # parser = ParseDAT()
+        # options = {o: v if v is not None else "" for o, v in self.execute(sql).fetchall()}
+        # rline = " {0}"
+        # for row in parser.toler_rows:
+        #     lst = ""
+        #     for o in row:
+        #         if o not in options:
+        #             continue
+        #         val = options[o]
+        #         lst += rline.format(val)  # Second line 'C' (Courant values) writes 1, 2, or 3 values depending
+        #         # if channels and/or streets are simulated
+        #     lst += "\n"
+        #     if lst.isspace() is False:
+        #         cont_group.datasets["TOLER"].data.append(create_array(lst, 4, np.string_))
+        #         # t.write(lst)
+        #     else:
+        #         pass
+
+        self.parser.write_groups(cont_group)
         return True
         # except Exception as e:
         #     QApplication.restoreOverrideCursor()
@@ -4089,17 +4156,17 @@ class Flo2dGeoPackage(GeoPackageUtils):
             else:
                 pass
 
-            tol_group = self.parser.tol_group
-            tol_group.create_dataset('TOLSPATIAL', [])
+            cont_group = self.parser.control_group
+            cont_group.create_dataset('TOLSPATIAL', [])
             # tolspatial_dat = os.path.join(outdir, "TOLSPATIAL.DAT")  # path and name of file to write
 
             for fid, tol in tol_poly_rows:
                 for row in self.execute(tol_cells_sql, (fid,)):
                     gid = row[0]
-                    tol_group.datasets["TOLSPATIAL"].data.append(create_array(line1, 2, np.string_, gid, tol))
+                    cont_group.datasets["TOLSPATIAL"].data.append(create_array(line1, 2, np.float_, gid, tol))
                     # t.write(line1.format(gid, tol))
 
-            self.parser.write_groups(tol_group)
+            self.parser.write_groups(cont_group)
             return True
 
         except Exception as e:

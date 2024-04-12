@@ -19,7 +19,7 @@ from qgis.PyQt.QtCore import QSettings
 from qgis.PyQt.QtWidgets import QMessageBox
 
 from ..flo2d_hdf5.hdf5_descriptions import CONTROL, GRID, NEIGHBORS, STORMDRAIN, BC, CHANNEL, HYSTRUCT, INFIL, RAIN, \
-    REDUCTION_FACTORS, TOLER, LEVEE, EVAPOR, FLOODPLAIN, GUTTER, TAILINGS
+    REDUCTION_FACTORS, LEVEE, EVAPOR, FLOODPLAIN, GUTTER, TAILINGS
 from ..utils import Msge
 
 try:
@@ -63,58 +63,8 @@ class ParseHDF5:
 
     @property
     def control_group(self):
-        group_name = "Input/Control"
-        group_datasets = [
-            "SIMUL",
-            "TOUT",
-            "LGPLOT",
-            "METRIC",
-            "IBACKUP",
-            "build",
-            "ICHANNEL",
-            "MSTREET",
-            "LEVEE",
-            "IWRFS",
-            "IMULTC",
-            "IRAIN",
-            "INFIL",
-            "IEVAP",
-            "MUD",
-            "ISED",
-            "IMODFLOW",
-            "SWMM",
-            "IHYDRSTRUCT",
-            "IFLOODWAY",
-            "IDEBRV",
-            "AMANN",
-            "DEPTHDUR",
-            "XCONC",
-            "XARF",
-            "FROUDL",
-            "SHALLOWN",
-            "ENCROACH",
-            "NOPRTFP",
-            "DEPRESSDEPTH",
-            "NOPRTC",
-            "ITIMTEP",
-            "TIMTEP",
-            "STARTIMTEP",
-            "ENDTIMTEP",
-            "GRAPTIM",
-            "TOLGLOBAL",
-            "DEPTOL",
-            "WAVEMAX",
-            "COURCHAR_C",
-            "COURANTFP",
-            "COURANTC",
-            "COURANTST",
-            "COURCHAR_T",
-            "TIME_ACCEL",
-            "TOLGLOBAL",
-        ]
+        group_name = "Input/Control Parameters"
         group = HDF5Group(group_name)
-        for dataset_name in group_datasets:
-            group.create_dataset(dataset_name)
         return group
 
     @property
@@ -241,7 +191,7 @@ class ParseHDF5:
             hdf5_group = hdf5_file[group.name]
             ds = hdf5_group.create_dataset(dataset.name, data=dataset.data, compression="gzip")
             attributes_dicts = [CONTROL, GRID, NEIGHBORS, STORMDRAIN, BC, CHANNEL, HYSTRUCT, INFIL, RAIN,
-                                REDUCTION_FACTORS, TOLER, LEVEE, EVAPOR, FLOODPLAIN, GUTTER, TAILINGS]
+                                REDUCTION_FACTORS, LEVEE, EVAPOR, FLOODPLAIN, GUTTER, TAILINGS]
 
             for attributes_dict in attributes_dicts:
                 if dataset.name in attributes_dict:
