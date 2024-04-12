@@ -103,7 +103,9 @@ INFIL = {
 }
 
 RAIN = {
-    "RAIN": "Rainfall Data"
+    "RAIN_GLOBAL": "Global Rainfall Data",
+    "RAIN_DATA": "Rainfall Data",
+    "RAIN_ARF": "Rainfall ARF"
 }
 
 REDUCTION_FACTORS = {
