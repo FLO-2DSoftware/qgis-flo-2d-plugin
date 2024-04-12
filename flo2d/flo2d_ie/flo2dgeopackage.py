@@ -1937,6 +1937,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             records = self.execute(sql)
             nulls = 0
             grid_group = self.parser.grid_group
+            coordinates_line = "{0} {1}"
             for row in records:
                 fid, man, elev, geom = row
                 if man is None or elev is None:
@@ -1949,8 +1950,9 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 grid_group.datasets["GRIDCODE"].data.append(fid)
                 grid_group.datasets["MANNING"].data.append(man)
                 grid_group.datasets["ELEVATION"].data.append(elev)
-                grid_group.datasets["X"].data.append(x)
-                grid_group.datasets["Y"].data.append(y)
+                grid_group.datasets["COORDINATES"].data.append(create_array(coordinates_line, 2, np.float_, tuple([x,y])))
+                # grid_group.datasets["X"].data.append(x)
+                # grid_group.datasets["Y"].data.append(y)
             neighbors_line = "{0} {1} {2} {3} {4} {5} {6} {7}"
             for row in grid_compas_neighbors(self.gutils):
                 grid_group.datasets["NEIGHBOURS"].data.append(create_array(neighbors_line, 8, np.int_, tuple(row)))

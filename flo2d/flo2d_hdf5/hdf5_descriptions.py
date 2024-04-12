@@ -61,8 +61,7 @@ CONTROL = {
 GRID = {
     "GRIDCODE": "Grid code",
     "MANNING": "Global n Value Adjustment",
-    "X": "Longitude",
-    "Y": "Latitude",
+    "COORDINATES": "Longitude - Latitude",
     "ELEVATION": "Elevation",
     "NEIGHBOURS": "Neighbours"
 }
