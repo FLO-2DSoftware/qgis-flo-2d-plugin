@@ -9,8 +9,10 @@
 # of the License, or (at your option) any later version
 
 import traceback
+import os
 
 from qgis.PyQt.QtWidgets import QApplication
+from qgis.PyQt.QtCore import QSettings
 
 from ..flo2d_tools.schema2user_tools import (
     Schema1DConverter,
@@ -23,6 +25,7 @@ from ..flo2d_tools.schema2user_tools import (
 )
 from ..geopackage_utils import GeoPackageUtils
 from .ui_utils import load_ui
+from ..flo2d_ie.flo2d_parser import ParseDAT
 
 uiDialog, qtBaseClass = load_ui("schema2user")
 
@@ -182,6 +185,22 @@ class Schema2UserDialog(qtBaseClass, uiDialog):
         try:
             swmm_converter = SchemaSWMMConverter(self.con, self.iface, self.lyrs)
             swmm_converter.create_user_swmm_nodes()
+            
+            s = QSettings()
+            last_dir = s.value("FLO-2D/lastGdsDir", "")
+            file = last_dir + r"\SWMMFLODROPBOX.DAT"
+            if os.path.isfile(file):
+                if os.path.getsize(file) > 0:
+                    try: 
+                        pd = ParseDAT()
+                        par = pd.single_parser(file)
+                        for row in par:                    
+                            name  = row[0]
+                            area = row[2]
+                            self.gutils.execute("UPDATE user_swmm_nodes SET drboxarea = ? WHERE name = ?", (area, name))
+                    except:
+                        self.uc.bar_error("Error while reading SWMMFLODROPBOX.DAT !")                  
+
         except Exception as e:
             self.uc.log_info(traceback.format_exc())
             QApplication.restoreOverrideCursor()

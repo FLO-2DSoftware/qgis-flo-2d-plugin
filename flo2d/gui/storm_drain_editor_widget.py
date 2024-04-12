@@ -1391,6 +1391,23 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 self.user_swmm_nodes_lyr.updateExtents()
                 self.user_swmm_nodes_lyr.triggerRepaint()
                 self.user_swmm_nodes_lyr.removeSelection()
+                
+                s = QSettings()
+                last_dir = s.value("FLO-2D/lastGdsDir", "")
+                file = last_dir + r"\SWMMFLODROPBOX.DAT"
+                if os.path.isfile(file):
+                    if os.path.getsize(file) > 0:
+                        try: 
+                            pd = ParseDAT()
+                            par = pd.single_parser(file)
+                            for row in par:                    
+                                name  = row[0]
+                                area = row[2]
+                                self.gutils.execute("UPDATE user_swmm_nodes SET drboxarea = ? WHERE name = ?", (area, name))
+                        except:
+                            self.uc.bar_error("Error while reading SWMMFLODROPBOX.DAT !")                  
+
+                
             else:
                 # The option 'Keep existing and complete' already updated values taken from the .INP file.
                 # but include new ones:
