@@ -5216,10 +5216,15 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     for row in rows:
                         s.write(line1.format(*row))
                 return True
-
+            else:
+                # There are no drop box areas defined, delete SWMMFLODROPBOX.DAT if exists:
+                if os.path.isfile(outdir + r"\SWMMFLODROPBOX.DAT"):
+                    os.remove(outdir + r"\SWMMFLODROPBOX.DAT")
+                return False
+                    
         except Exception as e:
             QApplication.restoreOverrideCursor()
-            self.uc.show_error("ERROR 090424.0938.1618: exporting SWMMFLODROPBOX.DAT failed!.\n", e)
+            self.uc.show_error("ERROR 120424.0449: exporting SWMMFLODROPBOX.DAT failed!.\n", e)
             return False
 
     def export_swmmflort(self, output=None):

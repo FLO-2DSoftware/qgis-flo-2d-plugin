@@ -2989,7 +2989,8 @@ class Flo2D(object):
                     if self.files_used != "":
                         
                         QApplication.setOverrideCursor(Qt.ArrowCursor)
-                        self.uc.show_info("Files exported to\n" + outdir + "\n\n" + self.files_used)
+                        info =  "Files exported to\n" + outdir + "\n\n" + self.files_used
+                        self.uc.show_info(info)
                         QApplication.restoreOverrideCursor()
 
                     if self.f2g.export_messages != "":
