@@ -64,6 +64,7 @@ GRID = {
     "X": "Longitude",
     "Y": "Latitude",
     "ELEVATION": "Elevation",
+    "NEIGHBOURS": "Neighbours"
 }
 
 NEIGHBORS = {

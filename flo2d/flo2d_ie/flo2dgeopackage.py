@@ -1798,7 +1798,6 @@ class Flo2dGeoPackage(GeoPackageUtils):
         for var in cont_variables:
             sql = f"""SELECT value FROM cont WHERE name = '{var}';"""
             value = self.execute(sql).fetchone()[0]
-            self.uc.log_info(str(value))
             if value is not None:
                 cont_group.datasets["CONT"].data.append(float(value))
             else:
@@ -1808,36 +1807,10 @@ class Flo2dGeoPackage(GeoPackageUtils):
         for var in tol_variables:
             sql = f"""SELECT value FROM cont WHERE name = '{var}';"""
             value = self.execute(sql).fetchone()[0]
-            self.uc.log_info(str(value))
             if value is not None:
                 cont_group.datasets["TOLER"].data.append(float(value))
             else:
                 cont_group.datasets["TOLER"].data.append(-9999)
-
-
-        # for option_name, option_value in self.execute(sql).fetchall():
-        #     dataset_data = np.string_([option_value]) if option_value is not None else np.string_([""])
-        #     cont_group.create_dataset(option_name, dataset_data)
-
-        # tol_group = self.parser.tol_group
-        # tol_group.create_dataset('TOLER', [])
-        # parser = ParseDAT()
-        # options = {o: v if v is not None else "" for o, v in self.execute(sql).fetchall()}
-        # rline = " {0}"
-        # for row in parser.toler_rows:
-        #     lst = ""
-        #     for o in row:
-        #         if o not in options:
-        #             continue
-        #         val = options[o]
-        #         lst += rline.format(val)  # Second line 'C' (Courant values) writes 1, 2, or 3 values depending
-        #         # if channels and/or streets are simulated
-        #     lst += "\n"
-        #     if lst.isspace() is False:
-        #         cont_group.datasets["TOLER"].data.append(create_array(lst, 4, np.string_))
-        #         # t.write(lst)
-        #     else:
-        #         pass
 
         self.parser.write_groups(cont_group)
         return True
@@ -1978,6 +1951,9 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 grid_group.datasets["ELEVATION"].data.append(elev)
                 grid_group.datasets["X"].data.append(x)
                 grid_group.datasets["Y"].data.append(y)
+            neighbors_line = "{0} {1} {2} {3} {4} {5} {6} {7}"
+            for row in grid_compas_neighbors(self.gutils):
+                grid_group.datasets["NEIGHBOURS"].data.append(create_array(neighbors_line, 8, np.int_, tuple(row)))
             self.parser.write_groups(grid_group)
             if nulls > 0:
                 QApplication.restoreOverrideCursor()
@@ -2046,26 +2022,29 @@ class Flo2dGeoPackage(GeoPackageUtils):
             QApplication.setOverrideCursor(Qt.WaitCursor)
             return False
 
-    def export_neighbours(self):
-        if self.parsed_format == self.FORMAT_DAT:
-            raise NotImplementedError("Exporting NEIGHBOURS.DAT is not supported!")
-        elif self.parsed_format == self.FORMAT_HDF5:
-            return self.export_neighbours_hdf5()
-
-    def export_neighbours_hdf5(self):
-        try:
-            neighbors_group = self.parser.neighbors_group
-            for row in grid_compas_neighbors(self.gutils):
-                directions = ["N", "E", "S", "W", "NE", "SE", "SW", "NW"]
-                for direction, neighbor_gid in zip(directions, row):
-                    neighbors_group.datasets[direction].data.append(neighbor_gid)
-            self.parser.write_groups(neighbors_group)
-            return True
-        except Exception as e:
-            QApplication.restoreOverrideCursor()
-            self.uc.show_error("ERROR: exporting grid neighbors data failed!.\n", e)
-            QApplication.setOverrideCursor(Qt.WaitCursor)
-            return False
+    # def export_neighbours(self):
+    #     if self.parsed_format == self.FORMAT_DAT:
+    #         raise NotImplementedError("Exporting NEIGHBOURS.DAT is not supported!")
+    #     elif self.parsed_format == self.FORMAT_HDF5:
+    #         return self.export_neighbours_hdf5()
+    #
+    # def export_neighbours_hdf5(self):
+    #     # try:
+    #     grid_group = self.parser.grid_group
+    #     neighbors_line = "{0} {1} {2} {3} {4} {5} {6} {7}"
+    #     for row in grid_compas_neighbors(self.gutils):
+    #         # self.uc.log_info(str(row))
+    #         grid_group.datasets["NEIGHBORS"].data.append(create_array(neighbors_line, 8, np.float_, tuple(row)))
+    #         # directions = ["N", "E", "S", "W", "NE", "SE", "SW", "NW"]
+    #         # for direction, neighbor_gid in zip(directions, row):
+    #         #     grid_group.datasets[direction].data.append(neighbor_gid)
+    #     #self.parser.write_groups(grid_group)
+    #     return True
+    #     # except Exception as e:
+    #     #     QApplication.restoreOverrideCursor()
+    #     #     self.uc.show_error("ERROR: exporting grid neighbors data failed!.\n", e)
+    #     #     QApplication.setOverrideCursor(Qt.WaitCursor)
+    #     #     return False
 
     def export_inflow(self, output=None):
         if self.parsed_format == self.FORMAT_DAT:
