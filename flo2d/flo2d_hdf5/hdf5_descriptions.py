@@ -123,6 +123,9 @@ REDUCTION_FACTORS = {
 
 LEVEE = {
     "LEVEE": "Levee and Failure Data",
+    "LEVEE_GLOBAL": "Levee Global Data",
+    "LEVEE_DATA": "Levee Data",
+    "LEVEE_FAILURE": "Levee Failure Data"
 }
 
 EVAPOR = {
