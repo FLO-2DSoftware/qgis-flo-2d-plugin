@@ -1220,6 +1220,7 @@ class Flo2D(object):
                 "export_swmmflort",
                 "export_swmmoutf",
                 "export_swmmflodropbox",
+                "export_sdclogging",
                 "export_wsurf",
                 "export_wstime",
                 "export_shallowNSpatial",
@@ -1292,6 +1293,8 @@ class Flo2D(object):
                     export_calls.remove("export_swmmflort")
                     export_calls.remove("export_swmmoutf")
                     export_calls.remove("export_swmmflodropbox")
+                    export_calls.remove("export_sdclogging")
+                    
                 else:
                     self.uc.show_info("Storm Drain features not allowed on the Quick Run FLO-2D Pro.")
                     return
@@ -2854,6 +2857,7 @@ class Flo2D(object):
                 "export_swmmflort",
                 "export_swmmoutf",
                 "export_swmmflodropbox",
+                "export_sdclogging",
                 "export_wsurf",
                 "export_wstime",
                 "export_shallowNSpatial",
@@ -2931,7 +2935,8 @@ class Flo2D(object):
                     export_calls.remove("export_swmmflort")
                     export_calls.remove("export_swmmoutf")
                     export_calls.remove("export_swmmflodropbox")
-
+                    export_calls.remove("export_sdclogging")
+                    
                 if "Spatial Shallow-n" not in dlg_components.components:
                     export_calls.remove("export_shallowNSpatial")
 
@@ -2953,6 +2958,8 @@ class Flo2D(object):
                         export_calls.remove("export_swmmflort")
                         export_calls.remove("export_swmmoutf")
                         export_calls.remove("export_swmmflodropbox")
+                        export_calls.remove("export_sdclogging")
+                        
                     QApplication.restoreOverrideCursor()    
 
                 # QApplication.setOverrideCursor(Qt.WaitCursor)
