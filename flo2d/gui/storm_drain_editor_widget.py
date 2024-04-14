@@ -521,7 +521,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 "Schematizing Storm Drains finished!\n\n"
                 + "The storm drain Inlets, outfalls, and/or rating tables were updated.\n\n"
                 + "(Note: The ‘Export data (*.DAT) files’ tool will write the layer attributes into the SWMMFLO.DAT, "
-                + " SWMMFLORT.DAT, SWMMOUTF.DAT, and SWMMFLODROPBOX.DAT files)"
+                + " SWMMFLORT.DAT, SWMMOUTF.DAT, SWMMFLODROPBOX.DAT, and SDCLOGGING.DAT files)"
             )
 
     #             if self.schematize_conduits():
@@ -1394,6 +1394,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 
                 s = QSettings()
                 last_dir = s.value("FLO-2D/lastGdsDir", "")
+                # Update drboxarea field by reading SWMMFLODROPBOX.DAT:
                 file = last_dir + r"\SWMMFLODROPBOX.DAT"
                 if os.path.isfile(file):
                     if os.path.getsize(file) > 0:
@@ -1407,6 +1408,22 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                         except:
                             self.uc.bar_error("Error while reading SWMMFLODROPBOX.DAT !")                  
 
+                # Update swmm_clogging_factor and  swmm_time_for_clogging fields by reading SDCLOGGING.DAT:
+                file = last_dir + r"\SDCLOGGING.DAT"
+                if os.path.isfile(file):
+                    if os.path.getsize(file) > 0:
+                        try: 
+                            pd = ParseDAT()
+                            par = pd.single_parser(file)
+                            for row in par:   
+                                name  = row[2]
+                                clog_fact = row[3]
+                                clog_time = row[4]
+                                self.gutils.execute("""UPDATE user_swmm_nodes
+                                                       SET swmm_clogging_factor = ?, swmm_time_for_clogging = ?
+                                                       WHERE name = ?""", (clog_fact, clog_time, name))                            
+                        except:
+                            self.uc.bar_error("Error while reading SDCLOGGING.DAT !")                  
                 
             else:
                 # The option 'Keep existing and complete' already updated values taken from the .INP file.
