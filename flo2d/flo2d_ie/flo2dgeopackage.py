@@ -1604,6 +1604,21 @@ class Flo2dGeoPackage(GeoPackageUtils):
             return True
         except:
             return False
+
+    def import_sdclogging(self):
+        try: 
+            data = self.parser.parse_sdclogging()
+            for row in data:
+                name  = row[2]
+                clog_fact = row[3]
+                clog_time = row[4]
+                self.gutils.execute("""UPDATE user_swmm_nodes
+                                       SET swmm_clogging_factor = ?, swmm_time_for_clogging = ?
+                                       WHERE name = ?""", (clog_fact, clog_time, name))
+            return True
+        except:
+            return False
+        
         
     def import_swmmflort(self):
         """
