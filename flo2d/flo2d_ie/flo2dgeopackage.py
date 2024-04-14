@@ -5256,12 +5256,12 @@ class Flo2dGeoPackage(GeoPackageUtils):
             if self.is_table_empty("user_swmm_nodes"):
                 return False
             
-            qry = """SELECT name, grid, swmm_clogging_factor, swmm_time_for_clogging
+            qry = """SELECT grid, name, swmm_clogging_factor, swmm_time_for_clogging
                      FROM user_swmm_nodes 
                      WHERE (sd_type = 'I' OR sd_type = 'J') AND swmm_clogging_factor > 0.0 AND swmm_time_for_clogging > 0.0;"""
             rows = self.gutils.execute(qry).fetchall()
             if rows:
-                line1 = "D  {0:16} {1:<10} {2:<10.2f} {3:<10.2f}\n"
+                line1 = "D {0:8}   {1:<16} {2:<10.2f} {3:<10.2f}\n"
 
                 sdclogging = os.path.join(outdir, "SDCLOGGING.DAT")
                 with open(sdclogging, "w") as s:
