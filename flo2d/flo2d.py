@@ -1219,6 +1219,7 @@ class Flo2D(object):
                 "export_swmmflo",
                 "export_swmmflort",
                 "export_swmmoutf",
+                "export_swmmflodropbox",
                 "export_wsurf",
                 "export_wstime",
                 "export_shallowNSpatial",
@@ -1290,6 +1291,7 @@ class Flo2D(object):
                     export_calls.remove("export_swmmflo")
                     export_calls.remove("export_swmmflort")
                     export_calls.remove("export_swmmoutf")
+                    export_calls.remove("export_swmmflodropbox")
                 else:
                     self.uc.show_info("Storm Drain features not allowed on the Quick Run FLO-2D Pro.")
                     return
@@ -2046,6 +2048,20 @@ class Flo2D(object):
                         try:
                             swmm_converter = SchemaSWMMConverter(self.con, self.iface, self.lyrs)
                             swmm_converter.create_user_swmm_nodes()
+                            
+                            s = QSettings()
+                            last_dir = s.value("FLO-2D/lastGdsDir", "")
+                            if os.path.isfile(last_dir + r"\SWMMFLODROPBOX.DAT"):
+                                if os.path.getsize(last_dir + r"\SWMMFLODROPBOX.DAT") > 0:
+                                    if self.f2g.import_swmmflodropbox():
+                                        self.files_used += "SWMMFLODROPBOX.DAT\n"
+                                    else:
+                                        self.files_not_used +="SWMMFLODROPBOX.DAT (errors found)\n"  
+                                else:
+                                    self.files_not_used +="SWMMFLODROPBOX.DAT\n" 
+                            else:
+                                self.files_not_used +="SWMMFLODROPBOX.DAT\n"                                   
+                            
                         except Exception as e:
                             QApplication.restoreOverrideCursor()
                             self.uc.log_info(traceback.format_exc())
@@ -2093,16 +2109,13 @@ class Flo2D(object):
                     else:
                         cell = self.gutils.execute("SELECT col FROM grid WHERE fid = 1").fetchone()
                         if cell[0] == NULL:
-                            QApplication.restoreOverrideCursor()
+                            QApplication.setOverrideCursor(Qt.ArrowCursor)
                             proceed = self.uc.question(
                                 "Grid layer's fields 'col' and 'row' have NULL values!\n\nWould you like to assign them?"
                             )
+                            QApplication.restoreOverrideCursor()
                             if proceed:
-                                QApplication.setOverrideCursor(Qt.WaitCursor)
                                 assign_col_row_indexes_to_grid(self.lyrs.data["grid"]["qlyr"], self.gutils)
-                                QApplication.restoreOverrideCursor()
-                            else:
-                                return
 
                     QApplication.restoreOverrideCursor()
 
@@ -2126,7 +2139,7 @@ class Flo2D(object):
                     if "import_swmmflo" in import_calls:
                         msg += "* To complete the Storm Drain functionality, the 'Computational Domain' and 'Storm Drains' conversion "
                         msg += "must be done using the "
-                        msg += "<FONT COLOR=green>Conversion from Schematic Layers to User Layers</FONT>"
+                        msg += "<FONT COLOR=green>Convert Schematic Layers to User Layers</FONT>"
                         msg += " tool in the <FONT COLOR=blue>FLO-2D panel</FONT>...<br>"
                         if "SWMM.INP" not in self.files_used:
                             msg += "...and <FONT COLOR=green>Import SWMM.INP</FONT> from the <FONT COLOR=blue>Storm Drain Editor widget</FONT>."
@@ -2359,10 +2372,11 @@ class Flo2D(object):
                 else:
                     cell = self.gutils.execute("SELECT col FROM grid WHERE fid = 1").fetchone()
                     if cell is None:
-                        QApplication.setOverrideCursor(QtGui.QCursor(QtCore.Qt.ArrowCursor))
+                        QApplication.setOverrideCursor(Qt.ArrowCursor)
                         proceed = self.uc.question(
                             "Grid layer's fields 'col' and 'row' have NULL values!\n\nWould you like to assign them?"
                         )
+                        QApplication.restoreOverrideCursor()
                         if proceed:
                             QApplication.setOverrideCursor(Qt.WaitCursor)
                             assign_col_row_indexes_to_grid(self.lyrs.data["grid"]["qlyr"], self.gutils)
@@ -2380,7 +2394,7 @@ class Flo2D(object):
                 if "import_swmmflo" in import_calls:
                     msg += "* To complete the Storm Drain functionality, the 'Computational Domain' and 'Storm Drains' conversion "
                     msg += "must be done using the "
-                    msg += "<FONT COLOR=green>Conversion from Schematic Layers to User Layers</FONT>"
+                    msg += "<FONT COLOR=green>Convert Schematic Layers to User Layers</FONT>"
                     msg += " tool in the <FONT COLOR=blue>FLO-2D panel</FONT>...<br>"
                     # msg += "...and <FONT COLOR=green>Import SWMM.INP</FONT> from the <FONT COLOR=blue>Storm Drain Editor widget</FONT>."
 
@@ -2615,14 +2629,14 @@ class Flo2D(object):
                         if self.gutils.is_table_empty("user_model_boundary"):
                             msg += "* To complete the Storm Drain functionality, the 'Computational Domain' and 'Storm Drains' conversion "
                             msg += "must be done using the "
-                            msg += "<FONT COLOR=green>Conversion from Schematic Layers to User Layers</FONT>"
+                            msg += "<FONT COLOR=green>Convert Schematic Layers to User Layers</FONT>"
                             msg += " tool in the <FONT COLOR=blue>FLO-2D panel</FONT>...<br>"
                             if "SWMM.INP" not in self.files_used:
                                 msg += "...and <FONT COLOR=green>Import SWMM.INP</FONT> from the <FONT COLOR=blue>Storm Drain Editor widget</FONT>."
                         else:
                             msg += "* To complete the Storm Drain functionality, the 'Storm Drains' conversion "
                             msg += "must be done using the "
-                            msg += "<FONT COLOR=green>Conversion from Schematic Layers to User Layers</FONT>"
+                            msg += "<FONT COLOR=green>Convert Schematic Layers to User Layers</FONT>"
                             msg += " tool in the <FONT COLOR=blue>FLO-2D panel</FONT>...<br>"
                             if "SWMM.INP" not in self.files_used:
                                 msg += "...and <FONT COLOR=green>Import SWMM.INP</FONT> from the <FONT COLOR=blue>Storm Drain Editor widget</FONT>."
@@ -2674,6 +2688,7 @@ class Flo2D(object):
             "SWMMFLO.DAT": "import_swmmflo",
             "SWMMFLORT.DAT": "import_swmmflort",
             "SWMMOUTETF.DAT": "import_swmmoutf",
+            "SWMMFLODROPBOX.DAT": "import_swmmflodropbox",
             "WSURF.DAT": "import_wsurf",
             "WSTIME.DAT": "import_wstime",
             "MANNINGS_N.DAT": "import_mannings_n",
@@ -2708,7 +2723,7 @@ class Flo2D(object):
                 QMessageBox.information(
                     self.iface.mainWindow(),
                     "Import selected GDS file",
-                    "Import from {0} is successful".format(bname),
+                    "Import from {0} was successful".format(bname),
                 )
                 if call_string == "import_chan":
                     self.gutils.create_schematized_rbank_lines_from_xs_tips()
@@ -2732,14 +2747,14 @@ class Flo2D(object):
                     if self.gutils.is_table_empty("user_model_boundary"):
                         msg += "* To complete the Storm Drain functionality, the 'Computational Domain' and 'Storm Drains' conversion "
                         msg += "must be done using the "
-                        msg += "<FONT COLOR=green>Conversion from Schematic Layers to User Layers</FONT>"
+                        msg += "<FONT COLOR=green>Convert Schematic Layers to User Layers</FONT>"
                         msg += " tool in the <FONT COLOR=blue>FLO-2D panel</FONT>...<br>"
                         msg += "...and <FONT COLOR=green>Import SWMM.INP</FONT> from the <FONT COLOR=blue>Storm Drain Editor widget</FONT>."
 
                     else:
                         msg += "* To complete the Storm Drain functionality, the 'Storm Drains' conversion "
                         msg += "must be done using the "
-                        msg += "<FONT COLOR=green>Conversion from Schematic Layers to User Layers</FONT>"
+                        msg += "<FONT COLOR=green>Convert Schematic Layers to User Layers</FONT>"
                         msg += " tool in the <FONT COLOR=blue>FLO-2D panel</FONT>...<br>"
                         msg += "...and <FONT COLOR=green>Import SWMM.INP</FONT> from the <FONT COLOR=blue>Storm Drain Editor widget</FONT>."
 
@@ -2822,6 +2837,7 @@ class Flo2D(object):
                 "export_swmmflo",
                 "export_swmmflort",
                 "export_swmmoutf",
+                "export_swmmflodropbox",
                 "export_wsurf",
                 "export_wstime",
                 "export_shallowNSpatial",
@@ -2898,6 +2914,7 @@ class Flo2D(object):
                     export_calls.remove("export_swmmflo")
                     export_calls.remove("export_swmmflort")
                     export_calls.remove("export_swmmoutf")
+                    export_calls.remove("export_swmmflodropbox")
 
                 if "Spatial Shallow-n" not in dlg_components.components:
                     export_calls.remove("export_shallowNSpatial")
@@ -2919,6 +2936,7 @@ class Flo2D(object):
                         export_calls.remove("export_swmmflo")
                         export_calls.remove("export_swmmflort")
                         export_calls.remove("export_swmmoutf")
+                        export_calls.remove("export_swmmflodropbox")
                     QApplication.restoreOverrideCursor()    
 
                 # QApplication.setOverrideCursor(Qt.WaitCursor)
@@ -2972,12 +2990,15 @@ class Flo2D(object):
                     if self.files_used != "":
                         
                         QApplication.setOverrideCursor(Qt.ArrowCursor)
-                        self.uc.show_info("Files exported to\n" + outdir + "\n\n" + self.files_used)
+                        info =  "Files exported to\n" + outdir + "\n\n" + self.files_used
+                        self.uc.show_info(info)
                         QApplication.restoreOverrideCursor()
 
                     if self.f2g.export_messages != "":
-                        info = "WARNINGS:\n\n" + self.f2g.export_messages
+                        QApplication.setOverrideCursor(Qt.ArrowCursor)
+                        info = "WARNINGS 100424.0613:\n\n" + self.f2g.export_messages
                         self.uc.show_info(info)
+                        QApplication.restoreOverrideCursor()
 
         QApplication.restoreOverrideCursor()
 

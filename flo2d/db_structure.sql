@@ -1354,6 +1354,9 @@ CREATE TABLE "user_swmm_nodes" (
 	    "swmm_allow_discharge" TEXT DEFAULT 'False',
 	------------------------------------
 
+	--VARIABLE FOR SWMMFLODROPBOX.DAT 
+	"drboxarea" REAL DEFAULT 0.0,
+
 	"water_depth" REAL DEFAULT 0,
     "rt_fid" INTEGER,
     "rt_name" TEXT,

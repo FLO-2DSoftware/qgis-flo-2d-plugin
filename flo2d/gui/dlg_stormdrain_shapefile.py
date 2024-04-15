@@ -89,6 +89,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
         self.clear_inlets_curb_height_btn.clicked.connect(self.clear_inlets_curb_height)
         self.clear_inlets_clogging_factor_btn.clicked.connect(self.clear_inlets_clogging_factor)
         self.clear_inlets_time_for_clogging_btn.clicked.connect(self.clear_inlets_time_for_clogging)
+        self.clear_inlets_dropbox_area_btn.clicked.connect(self.clear_inlets_dropbox_area)
 
         # Connections to clear outfalls fields.
         self.clear_outfall_name_btn.clicked.connect(self.clear_outfall_name)
@@ -454,6 +455,9 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
     def clear_inlets_time_for_clogging(self):
         self.inlets_time_for_clogging_FieldCbo.setCurrentIndex(-1)
 
+    def clear_inlets_dropbox_area(self):
+        self.inlets_dropbox_area_FieldCbo.setCurrentIndex(-1)
+        
     def clear_inlets_length_perimeter(self):
         self.inlets_length_perimeter_FieldCbo.setCurrentIndex(-1)
 
@@ -664,6 +668,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
         self.inlets_curb_height_FieldCbo.setCurrentIndex(-1)
         self.inlets_clogging_factor_FieldCbo.setCurrentIndex(-1)
         self.inlets_time_for_clogging_FieldCbo.setCurrentIndex(-1)
+        self.inlets_dropbox_area_FieldCbo.setCurrentIndex(-1)
         self.inlets_length_perimeter_FieldCbo.setCurrentIndex(-1)
         self.inlets_width_area_FieldCbo.setCurrentIndex(-1)
         self.inlets_height_sag_surch_FieldCbo.setCurrentIndex(-1)
@@ -957,6 +962,11 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                         if self.inlets_time_for_clogging_FieldCbo.currentText() != ""
                         else 0
                     )
+                    drboxarea = (
+                        f[self.inlets_dropbox_area_FieldCbo.currentText()]
+                        if self.inlets_dropbox_area_FieldCbo.currentText() != ""
+                        else 0
+                    )                    
 
                     feat = QgsFeature()
                     feat.setFields(fields)
@@ -1038,6 +1048,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                     feat.setAttribute("curbheight", curbheight)
                     feat.setAttribute("swmm_clogging_factor", swmm_clogging_factor)
                     feat.setAttribute("swmm_time_for_clogging", swmm_time_for_clogging)
+                    feat.setAttribute("drboxarea", drboxarea)
                     feat.setAttribute("swmm_allow_discharge", "True")
                     feat.setAttribute("water_depth", 0)
                     feat.setAttribute("rt_fid", 0)
@@ -2023,6 +2034,10 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
             "FLO-2D/sf_inlets_time_for_clogging",
             self.inlets_time_for_clogging_FieldCbo.currentText(),
         )
+        s.setValue(
+            "FLO-2D/sf_inlets_dropbox_area",
+            self.inlets_dropbox_area_FieldCbo.currentText(),
+        )        
 
         # Outfalls
         s. setValue("FLO-2D/sf_outfalls_layer_name", self.outfalls_shapefile_cbo.currentText())
@@ -2166,6 +2181,8 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
             self.inlets_curb_height_FieldCbo.setCurrentIndex(self.restore_field("FLO-2D/sf_inlets_curb_height", field_names))
             self.inlets_clogging_factor_FieldCbo.setCurrentIndex(self.restore_field("FLO-2D/sf_inlets_clogging_factor", field_names)) 
             self.inlets_time_for_clogging_FieldCbo.setCurrentIndex(self.restore_field("FLO-2D/sf_inlets_time_for_clogging", field_names)) 
+            self.inlets_dropbox_area_FieldCbo.setCurrentIndex(self.restore_field("FLO-2D/sf_inlets_dropbox_area", field_names)) 
+
 
         else:
             self.clear_all_inlet_attributes()
