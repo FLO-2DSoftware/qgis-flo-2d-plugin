@@ -2881,18 +2881,17 @@ class Flo2dGeoPackage(GeoPackageUtils):
         horton_sql = """SELECT grid_fid,fhorti, fhortf, deca FROM infil_cells_horton ORDER BY grid_fid;"""
         chan_sql = """SELECT grid_fid, hydconch FROM infil_chan_elems ORDER by grid_fid;"""
 
-        line1 = "{0}"
-        line2 = "\n" + "  {}" * 6
-        line3 = "\n" + "  {}" * 3
-        line4 = "\n{0}"
-        line4ab = "\nR  {0}  {1}  {2}"
-        line5 = "\n{0}  {1}"
-        line6 = "\nF {0:<8} {1:<7.4f} {2:<7.4f} {3:<7.4f} {4:<7.4f} {5:<7.4f} {6:<7.4f}"
-        #         line6 = '\n' + 'F' + '  {}' * 7
-        line7 = "\nS  {0}  {1}"
-        line8 = "\nC  {0}  {1}"
-        line9 = "\nI {0:<7.4f} {1:<7.4f} {2:<7.4f}"
-        line10 = "\nH  {0:<8} {1:<7.4f} {2:<7.4f} {3:<7.4f}"
+        # line1 = "{0}"
+        # line2 = "\n" + "  {}" * 6
+        # line3 = "\n" + "  {}" * 3
+        # line4 = "\n{0}"
+        line4ab = "\n{0}  {1}  {2}"
+        # line5 = "\n{0}  {1}"
+        line6 = "\n{0:<8} {1:<7.4f} {2:<7.4f} {3:<7.4f} {4:<7.4f} {5:<7.4f} {6:<7.4f}"
+        line7 = "\n{0}  {1}"
+        line8 = "\n{0}  {1}"
+        # line9 = "\nI {0:<7.4f} {1:<7.4f} {2:<7.4f}"
+        line10 = "\n{0:<8} {1:<7.4f} {2:<7.4f} {3:<7.4f}"
 
         infil_row = self.execute(infil_sql).fetchone()
         if infil_row is None:
@@ -2901,7 +2900,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             pass
 
         infil_group = self.parser.infil_group
-        infil_group.create_dataset('INFIL', [])
+        infil_group.create_dataset('INFIL_METHOD', [])
 
         gen = [x if x is not None else "" for x in infil_row[1:]]
         v1, v2, v3, v4, v5, v9 = (
@@ -2913,32 +2912,108 @@ class Flo2dGeoPackage(GeoPackageUtils):
             gen[13:],
         )
 
-        infil_group.datasets["INFIL"].data.append(create_array(line1, 8, np.string_, v1))
-        if v1 == 1 or v1 == 3:
-            infil_group.datasets["INFIL"].data.append(create_array(line2, 8, np.string_, tuple(v2)))
-            infil_group.datasets["INFIL"].data.append(create_array(line3, 8, np.string_, tuple(v3)))
+        infil_group.datasets["INFIL_METHOD"].data.append(v1)
+
+        # GA
+        if v1 == 1:
+            infil_group.create_dataset('INFIL_GA_GLOBAL', [])
+            # v2: ABSTR SATI SATF POROS SOILD INFCHAN
+            for var in v2:
+                infil_group.datasets["INFIL_GA_GLOBAL"].data.append(var)
+            # v3: HYDCALL SOILALL HYDCADJ
+            for var in v3:
+                infil_group.datasets["INFIL_GA_GLOBAL"].data.append(var)
+
+            ga_cells_row = self.execute(green_sql).fetchone()
+            if ga_cells_row is not None:
+                infil_group.create_dataset('INFIL_GA_CELLS', [])
+                for row in self.execute(green_sql):
+                    infil_group.datasets["INFIL_GA_CELLS"].data.append(create_array(line6, 7, np.float_, row))
+
+            # v2[5]: INFCHAN
             if v2[5] == 1:
-                infil_group.datasets["INFIL"].data.append(create_array(line4, 8, np.string_, tuple(v4)))
-            for row in self.execute(infil_r_sql):
-                row = [x if x is not None else "" for x in row]
-                infil_group.datasets["INFIL"].data.append(create_array(line4ab, 8, np.string_, row))
-        if v1 == 2 or v1 == 3:
-            if any(v5) is True:
-                infil_group.datasets["INFIL"].data.append(create_array(line5, 8, np.string_, tuple(v5)))
-            else:
-                pass
-        for row in self.execute(green_sql):
-            infil_group.datasets["INFIL"].data.append(create_array(line6, 8, np.string_, row))
-        for row in self.execute(scs_sql):
-            infil_group.datasets["INFIL"].data.append(create_array(line7, 8, np.string_, row))
-        for row in self.execute(chan_sql):
-            infil_group.datasets["INFIL"].data.append(create_array(line8, 8, np.string_, row))
-        if any(v9) is True:
-            infil_group.datasets["INFIL"].data.append(create_array(line9, 8, np.string_, tuple(v9)))
-        else:
-            pass
-        for row in self.execute(horton_sql):
-            infil_group.datasets["INFIL"].data.append(create_array(line10, 8, np.string_, row))
+                infil_group.create_dataset('INFIL_CHAN_GLOBAL', [])
+                infil_group.datasets["INFIL_CHAN_GLOBAL"].data.append(v4)
+
+                infil_chan_seg = self.execute(infil_r_sql).fetchone()
+                if infil_chan_seg is not None:
+                    infil_group.create_dataset('INFIL_CHAN_SEG', [])
+                    for row in self.execute(infil_r_sql):
+                        row = [x if (x is not None and x != "") else -9999 for x in row]
+                        infil_group.datasets["INFIL_CHAN_SEG"].data.append(create_array(line4ab, 3, np.float_, tuple(row)))
+
+                infil_chan_elems = self.execute(chan_sql).fetchone()
+                if infil_chan_elems is not None:
+                    infil_group.create_dataset('INFIL_CHAN_ELEMS', [])
+                    for row in self.execute(chan_sql):
+                        infil_group.datasets["INFIL_CHAN_ELEMS"].data.append(create_array(line8, 2, np.float_, row))
+
+        if v1 == 2:
+            infil_group.create_dataset('INFIL_SCS_GLOBAL', [])
+            # v5: SCSNALL ABSTR1
+            for var in v5:
+                infil_group.datasets["INFIL_SCS_GLOBAL"].data.append(var
+                                                                     )
+            scs_cells_row = self.execute(scs_sql).fetchone()
+            if scs_cells_row is not None:
+                infil_group.create_dataset('INFIL_SCS_CELLS', [])
+                for row in self.execute(scs_sql):
+                    infil_group.datasets["INFIL_SCS_CELLS"].data.append(create_array(line7, 2, np.float_, row))
+
+        if v1 == 3:
+            infil_group.create_dataset('INFIL_GA_GLOBAL', [])
+            # v2: ABSTR SATI SATF POROS SOILD INFCHAN
+            for var in v2:
+                infil_group.datasets["INFIL_GA_GLOBAL"].data.append(var)
+            # v3: HYDCALL SOILALL HYDCADJ
+            for var in v3:
+                infil_group.datasets["INFIL_GA_GLOBAL"].data.append(var)
+
+            ga_cells_row = self.execute(green_sql).fetchone()
+            if ga_cells_row is not None:
+                infil_group.create_dataset('INFIL_GA_CELLS', [])
+                for row in self.execute(green_sql):
+                    infil_group.datasets["INFIL_GA_CELLS"].data.append(create_array(line6, 7, np.float_, row))
+
+            infil_group.create_dataset('INFIL_SCS_GLOBAL', [])
+            # v5: SCSNALL ABSTR1
+            for var in v5:
+                infil_group.datasets["INFIL_SCS_GLOBAL"].data.append(var
+                                                                     )
+            scs_cells_row = self.execute(scs_sql).fetchone()
+            if scs_cells_row is not None:
+                infil_group.create_dataset('INFIL_SCS_CELLS', [])
+                for row in self.execute(scs_sql):
+                    infil_group.datasets["INFIL_SCS_CELLS"].data.append(create_array(line7, 2, np.float_, row))
+
+            # v2[5]: INFCHAN
+            if v2[5] == 1:
+                infil_group.create_dataset('INFIL_CHAN_GLOBAL', [])
+                infil_group.datasets["INFIL_CHAN_GLOBAL"].data.append(v4)
+
+                infil_chan_seg = self.execute(infil_r_sql).fetchone()
+                if infil_chan_seg is not None:
+                    infil_group.create_dataset('INFIL_CHAN_SEG', [])
+                    for row in self.execute(infil_r_sql):
+                        row = [x if (x is not None and x != "") else -9999 for x in row]
+                        infil_group.datasets["INFIL_CHAN_SEG"].data.append(create_array(line4ab, 3, np.float_, tuple(row)))
+
+                infil_chan_elems = self.execute(chan_sql).fetchone()
+                if infil_chan_elems is not None:
+                    infil_group.create_dataset('INFIL_CHAN_ELEMS', [])
+                    for row in self.execute(chan_sql):
+                        infil_group.datasets["INFIL_CHAN_ELEMS"].data.append(create_array(line8, 2, np.float_, row))
+
+        if v1 == 4:
+            infil_group.create_dataset('INFIL_HORTON_GLOBAL', [])
+            for var in v9:
+                infil_group.datasets["INFIL_HORTON_GLOBAL"].data.append(var)
+            horton_cells_row = self.execute(horton_sql).fetchone()
+            if horton_cells_row is not None:
+                infil_group.create_dataset('INFIL_HORTON_CELLS', [])
+                for row in self.execute(horton_sql):
+                    infil_group.datasets["INFIL_HORTON_CELLS"].data.append(create_array(line10, 4, np.float_, row))
+
         self.parser.write_groups(infil_group)
         return True
 

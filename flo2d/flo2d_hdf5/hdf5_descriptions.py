@@ -102,7 +102,16 @@ HYSTRUCT = {
 }
 
 INFIL = {
-    "INFIL": "Infiltration Data"
+    "INFIL_METHOD": "Infiltration Method: 1 - Green-Ampt, 2 - SCS Curve, 3 - Both Green-Ampt and SCS, and 4 - Horton",
+    "INFIL_GA_GLOBAL": "Green-Ampt Global Infiltration Data",
+    "INFIL_GA_CELLS": "Green-Ampt Infiltration Data",
+    "INFIL_CHAN_GLOBAL": "Channel Global Infiltration Data",
+    "INFIL_CHAN_SEG": "Channel Segment Infiltration Data",
+    "INFIL_CHAN_ELEMS": "Channel Grid Infiltration Data",
+    "INFIL_SCS_GLOBAL": "SCS Global Infiltration Data",
+    "INFIL_SCS_CELLS": "SCS Infiltration Data",
+    "INFIL_HORTON_GLOBAL": "Horton Global Infiltration Data",
+    "INFIL_HORTON_CELLS": "Horton Infiltration Data",
 }
 
 RAIN = {
