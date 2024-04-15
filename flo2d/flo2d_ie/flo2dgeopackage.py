@@ -3968,46 +3968,27 @@ class Flo2dGeoPackage(GeoPackageUtils):
                          FROM blocked_cells WHERE arf < 1 ORDER BY grid_fid;"""
             collapse_sql = """SELECT collapse FROM user_blocked_areas WHERE fid = ?;"""
 
-            line1 = "S  {}\n"
-            line2 = " T   {}\n"
+            # line1 = "{}\n"
+            # line2 = "{}\n"
             line3 = "{0:<8} {1:<5.2f} {2:<5.2f} {3:<5.2f} {4:<5.2f} {5:<5.2f} {6:<5.2f} {7:<5.2f} {8:5.2f} {9:<5.2f}\n"
             option = self.execute(cont_sql).fetchone()
             if option is None:
-                # TODO: We need to implement correct export of 'IARFBLOCKMOD'
                 option = ("IARFBLOCKMOD", 0)
 
-            # arf = os.path.join(outdir, "ARF.DAT")
             arfwrf_group = self.parser.arfwrf_group
-            arfwrf_group.create_dataset('ARF', [])
+            arfwrf_group.create_dataset('ARF_GLOBAL', [])
 
-            # with open(arf, "w") as a:
             head = option[-1]
             if head is not None:
-                arfwrf_group.datasets["ARF"].data.append(create_array(line1, 10, np.string_, head))
-                # a.write(line1.format(head))
+                arfwrf_group.datasets["ARF_GLOBAL"].data.append(float(head))
             else:
                 pass
 
             # Totally blocked grid elements:
-            for row in self.execute(tbc_sql):
-                collapse = self.execute(collapse_sql, (row[1],)).fetchone()
-                if collapse:
-                    cll = collapse[0]
-                else:
-                    cll = 0
-                cll = [cll if cll is not None else 0]
-                cell = row[0]
-                if cll[0] == 1:
-                    cell = -cell
-                arfwrf_group.datasets["ARF"].data.append(create_array(line2, 10, np.string_, cell))
-                # a.write(line2.format(cell))
-
-            # Partially blocked grid elements:
-            for row in self.execute(pbc_sql):
-                row = [x if x is not None else "" for x in row]
-                # Is there any side blocked? If not omit it:
-                any_blocked = sum(row) - row[0] - row[1]
-                if any_blocked > 0:
+            totally_blocked_grid = self.execute(tbc_sql).fetchone()
+            if totally_blocked_grid is not None:
+                arfwrf_group.create_dataset('ARF_TOTALLY_BLOCKED', [])
+                for row in self.execute(tbc_sql):
                     collapse = self.execute(collapse_sql, (row[1],)).fetchone()
                     if collapse:
                         cll = collapse[0]
@@ -4015,12 +3996,32 @@ class Flo2dGeoPackage(GeoPackageUtils):
                         cll = 0
                     cll = [cll if cll is not None else 0]
                     cell = row[0]
-                    arf_value = row[2]
                     if cll[0] == 1:
-                        arf_value = -arf_value
-                    # a.write(line3.format(cell, arf_value, *row[3:]))
-                    arfwrf_group.datasets["ARF"].data.append(
-                        create_array(line3, 10, np.string_, cell, arf_value, *row[3:]))
+                        cell = -cell
+                    arfwrf_group.datasets["ARF_TOTALLY_BLOCKED"].data.append(cell)
+
+            # Partially blocked grid elements:
+            partially_blocked_grid = self.execute(pbc_sql).fetchone()
+            if partially_blocked_grid is not None:
+                arfwrf_group.create_dataset('ARF_PARTIALLY_BLOCKED', [])
+                for row in self.execute(pbc_sql):
+                    row = [x if x is not None else "" for x in row]
+                    # Is there any side blocked? If not omit it:
+                    any_blocked = sum(row) - row[0] - row[1]
+                    if any_blocked > 0:
+                        collapse = self.execute(collapse_sql, (row[1],)).fetchone()
+                        if collapse:
+                            cll = collapse[0]
+                        else:
+                            cll = 0
+                        cll = [cll if cll is not None else 0]
+                        cell = row[0]
+                        arf_value = row[2]
+                        if cll[0] == 1:
+                            arf_value = -arf_value
+                        arfwrf_group.datasets["ARF_PARTIALLY_BLOCKED"].data.append(
+                            create_array(line3, 10, np.float_, cell, arf_value, *row[3:]))
+
             self.parser.write_groups(arfwrf_group)
             return True
 

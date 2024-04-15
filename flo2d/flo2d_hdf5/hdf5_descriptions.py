@@ -121,7 +121,9 @@ RAIN = {
 }
 
 REDUCTION_FACTORS = {
-    "ARF": "Floodplain Area Reduction",
+    "ARF_GLOBAL": "Global revision to the ARF",
+    "ARF_TOTALLY_BLOCKED": "Totally blocked grid elements",
+    "ARF_PARTIALLY_BLOCKED": "Partially blocked gridd elements",
     "WRF": "Floodplain Width Reduction",
 }
 
