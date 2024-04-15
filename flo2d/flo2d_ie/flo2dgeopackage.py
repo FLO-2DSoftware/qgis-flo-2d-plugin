@@ -1604,6 +1604,21 @@ class Flo2dGeoPackage(GeoPackageUtils):
             return True
         except:
             return False
+
+    def import_sdclogging(self):
+        try: 
+            data = self.parser.parse_sdclogging()
+            for row in data:
+                name  = row[2]
+                clog_fact = row[3]
+                clog_time = row[4]
+                self.gutils.execute("""UPDATE user_swmm_nodes
+                                       SET swmm_clogging_factor = ?, swmm_time_for_clogging = ?
+                                       WHERE name = ?""", (clog_fact, clog_time, name))
+            return True
+        except:
+            return False
+        
         
     def import_swmmflort(self):
         """
@@ -5116,6 +5131,14 @@ class Flo2dGeoPackage(GeoPackageUtils):
         # elif self.parsed_format == self.FORMAT_HDF5:
         #     return self.export_swmmflo_hdf5()
 
+
+    def export_sdclogging(self, output=None):
+        if self.parsed_format == self.FORMAT_DAT:
+            return self.export_sdclogging_dat(output)
+        # elif self.parsed_format == self.FORMAT_HDF5:
+        #     return self.export_swmmflo_hdf5()
+
+
     def export_swmmflo_hdf5(self):
         """
         Function to export the swmm flo to the hdf5 file
@@ -5225,6 +5248,35 @@ class Flo2dGeoPackage(GeoPackageUtils):
         except Exception as e:
             QApplication.restoreOverrideCursor()
             self.uc.show_error("ERROR 120424.0449: exporting SWMMFLODROPBOX.DAT failed!.\n", e)
+            return False
+
+
+    def export_sdclogging_dat(self, outdir):
+        try:
+            if self.is_table_empty("user_swmm_nodes"):
+                return False
+            
+            qry = """SELECT grid, name, swmm_clogging_factor, swmm_time_for_clogging
+                     FROM user_swmm_nodes 
+                     WHERE (sd_type = 'I' OR sd_type = 'J') AND swmm_clogging_factor > 0.0 AND swmm_time_for_clogging > 0.0;"""
+            rows = self.gutils.execute(qry).fetchall()
+            if rows:
+                line1 = "D {0:8}   {1:<16} {2:<10.2f} {3:<10.2f}\n"
+
+                sdclogging = os.path.join(outdir, "SDCLOGGING.DAT")
+                with open(sdclogging, "w") as s:
+                    for row in rows:
+                        s.write(line1.format(*row))
+                return True
+            else:
+                # There are no cloggings defined, delete SDCLOGGING.DAT if exists:
+                if os.path.isfile(outdir + r"\SDCLOGGING.DAT"):
+                    os.remove(outdir + r"\SDCLOGGING.DAT")
+                return False
+                    
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.uc.show_error("ERROR 140424.1828: exporting SDCLOGGING.DAT failed!.\n", e)
             return False
 
     def export_swmmflort(self, output=None):

@@ -188,6 +188,7 @@ class Schema2UserDialog(qtBaseClass, uiDialog):
             
             s = QSettings()
             last_dir = s.value("FLO-2D/lastGdsDir", "")
+            # Update drboxarea field by reading SWMMFLODROPBOX.DAT:
             file = last_dir + r"\SWMMFLODROPBOX.DAT"
             if os.path.isfile(file):
                 if os.path.getsize(file) > 0:
@@ -199,7 +200,24 @@ class Schema2UserDialog(qtBaseClass, uiDialog):
                             area = row[2]
                             self.gutils.execute("UPDATE user_swmm_nodes SET drboxarea = ? WHERE name = ?", (area, name))
                     except:
-                        self.uc.bar_error("Error while reading SWMMFLODROPBOX.DAT !")                  
+                        self.uc.bar_error("Error while reading SWMMFLODROPBOX.DAT !")
+
+            # Update swmm_clogging_factor and  swmm_time_for_clogging fields by reading SDCLOGGING.DAT:
+            file = last_dir + r"\SDCLOGGING.DAT"
+            if os.path.isfile(file):
+                if os.path.getsize(file) > 0:
+                    try: 
+                        pd = ParseDAT()
+                        par = pd.single_parser(file)
+                        for row in par:   
+                            name  = row[2]
+                            clog_fact = row[3]
+                            clog_time = row[4]
+                            self.gutils.execute("""UPDATE user_swmm_nodes
+                                                   SET swmm_clogging_factor = ?, swmm_time_for_clogging = ?
+                                                   WHERE name = ?""", (clog_fact, clog_time, name))                            
+                    except:
+                        self.uc.bar_error("Error while reading SDCLOGGING.DAT !")                  
 
         except Exception as e:
             self.uc.log_info(traceback.format_exc())

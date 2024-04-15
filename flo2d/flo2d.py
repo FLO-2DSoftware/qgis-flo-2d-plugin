@@ -1220,6 +1220,7 @@ class Flo2D(object):
                 "export_swmmflort",
                 "export_swmmoutf",
                 "export_swmmflodropbox",
+                "export_sdclogging",
                 "export_wsurf",
                 "export_wstime",
                 "export_shallowNSpatial",
@@ -1292,6 +1293,8 @@ class Flo2D(object):
                     export_calls.remove("export_swmmflort")
                     export_calls.remove("export_swmmoutf")
                     export_calls.remove("export_swmmflodropbox")
+                    export_calls.remove("export_sdclogging")
+                    
                 else:
                     self.uc.show_info("Storm Drain features not allowed on the Quick Run FLO-2D Pro.")
                     return
@@ -2051,8 +2054,10 @@ class Flo2D(object):
                             
                             s = QSettings()
                             last_dir = s.value("FLO-2D/lastGdsDir", "")
-                            if os.path.isfile(last_dir + r"\SWMMFLODROPBOX.DAT"):
-                                if os.path.getsize(last_dir + r"\SWMMFLODROPBOX.DAT") > 0:
+                            # Import SWMMFLODROPBOX.DAT:
+                            file = last_dir + r"\SWMMFLODROPBOX.DAT"
+                            if os.path.isfile(file):
+                                if os.path.getsize(file) > 0:
                                     if self.f2g.import_swmmflodropbox():
                                         self.files_used += "SWMMFLODROPBOX.DAT\n"
                                     else:
@@ -2060,7 +2065,21 @@ class Flo2D(object):
                                 else:
                                     self.files_not_used +="SWMMFLODROPBOX.DAT\n" 
                             else:
-                                self.files_not_used +="SWMMFLODROPBOX.DAT\n"                                   
+                                self.files_not_used +="SWMMFLODROPBOX.DAT\n" 
+                                
+                            # Import SDCLOGGING..DAT:
+                            file = last_dir + r"\SDCLOGGING.DAT"
+                            if os.path.isfile(file):
+                                if os.path.getsize(file) > 0:
+                                    if self.f2g.import_sdclogging():
+                                        self.files_used += "SDCLOGGING.DAT\n"
+                                    else:
+                                        self.files_not_used +="SDCLOGGING.DAT (errors found)\n"  
+                                else:
+                                    self.files_not_used +="SDCLOGGING.DAT\n" 
+                            else:
+                                self.files_not_used +="SDCLOGGING.DAT\n" 
+                                                                                                 
                             
                         except Exception as e:
                             QApplication.restoreOverrideCursor()
@@ -2838,6 +2857,7 @@ class Flo2D(object):
                 "export_swmmflort",
                 "export_swmmoutf",
                 "export_swmmflodropbox",
+                "export_sdclogging",
                 "export_wsurf",
                 "export_wstime",
                 "export_shallowNSpatial",
@@ -2915,7 +2935,8 @@ class Flo2D(object):
                     export_calls.remove("export_swmmflort")
                     export_calls.remove("export_swmmoutf")
                     export_calls.remove("export_swmmflodropbox")
-
+                    export_calls.remove("export_sdclogging")
+                    
                 if "Spatial Shallow-n" not in dlg_components.components:
                     export_calls.remove("export_shallowNSpatial")
 
@@ -2937,6 +2958,8 @@ class Flo2D(object):
                         export_calls.remove("export_swmmflort")
                         export_calls.remove("export_swmmoutf")
                         export_calls.remove("export_swmmflodropbox")
+                        export_calls.remove("export_sdclogging")
+                        
                     QApplication.restoreOverrideCursor()    
 
                 # QApplication.setOverrideCursor(Qt.WaitCursor)
