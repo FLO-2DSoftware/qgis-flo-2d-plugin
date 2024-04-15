@@ -4074,7 +4074,6 @@ class Flo2D(object):
         #     self.uc.bar_info("Channel Profile tool not implemented for selected features.")
         #     return
 
-
     def set_editors_map(self):
         self.editors_map = {
             "chan": self.show_channel_profile,

@@ -1848,27 +1848,21 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
         self.lyrs.show_feat_rubber(self.bc_lyr.id(), self.outflow.bc_fid)
 
     def show_editor(self, user_bc_table=None, bc_fid=None):
-        typ = "inflow"
-        fid = None
-        geom_type_map = {
-            "user_bc_points": "point",
-            "user_bc_lines": "line",
-            "user_bc_polygons": "polygon",
-        }
         if user_bc_table:
-            qry = """SELECT
-                        fid, type
+            qry = f"""SELECT
+                        type
                     FROM
-                        in_and_outflows
+                        {user_bc_table}
                     WHERE
-                        bc_fid = ? and
-                        geom_type = ? and
-                        type = (SELECT type FROM {} WHERE fid = ?);""".format(
-                user_bc_table
-            )
-            data = (bc_fid, geom_type_map[user_bc_table], bc_fid)
-            fid, typ = self.gutils.execute(qry, data).fetchone()
-        self.change_bc_type(typ, fid)
+                        fid = {bc_fid}"""
+
+            typ = self.gutils.execute(qry).fetchone()[0]
+            self.uc.log_info(str(typ))
+            self.populate_bcs(bc_fid)
+            if typ == "inflow":
+                self.populate_inflow_data_cbo()
+            if typ == "outflow":
+                self.populate_outflow_data_cbo()
 
     def outflow_changed(self):
         self.bc_type = "outflow"
