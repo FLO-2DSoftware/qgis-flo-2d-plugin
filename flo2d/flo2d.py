@@ -14,6 +14,7 @@ import io
 # Lambda may not be necessary
 # pylint: disable=W0108
 import os
+import pathlib
 import pstats
 import sys
 import threading
@@ -34,6 +35,7 @@ from subprocess import (
     run,
 )
 
+import pip
 from qgis.PyQt import QtCore, QtGui
 from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QApplication, QToolButton, QProgressDialog
@@ -112,6 +114,7 @@ from .gui.dlg_user2schema import User2SchemaDialog
 from .gui.f2d_main_widget import FLO2DWidget
 from .gui.grid_info_widget import GridInfoWidget
 from .gui.plot_widget import PlotWidget
+from .gui.storm_drain_editor_widget import StormDrainEditorWidget
 from .gui.table_editor_widget import TableEditorWidget
 from .layers import Layers
 from .misc.invisible_lyrs_grps import InvisibleLayersAndGroups
@@ -137,7 +140,6 @@ class Flo2D(object):
     def __init__(self, iface):
         # self.pr = cProfile.Profile()
         # self.pr.enable()
-
         self.iface = iface
         self.iface.f2d = {}
         self.plugin_dir = os.path.dirname(__file__)
@@ -3418,6 +3420,16 @@ class Flo2D(object):
         self.f2d_widget.struct_editor.populate_structs(struct_fid=fid)
 
     @connection_required
+    def show_sd_node_info(self, fid=None, extra=""):
+        """
+        Show the selected sd node info
+        """
+        name = self.gutils.execute("SELECT name FROM user_swmm_nodes WHERE fid = ?", (fid,)).fetchone()
+        self.uc.bar_info("Selected Storm Drain Node: " + str(name[0]))
+        self.f2d_widget.storm_drain_editor.center_chbox.setChecked(True)
+        self.f2d_widget.storm_drain_editor.update_profile_cbos(extra, name[0])
+
+    @connection_required
     def show_struct_hydrograph(self, fid=None):
         """
         Show the Hydraulic Structure Hydrograph from HYDROSTRUCT.OUT
@@ -3994,43 +4006,22 @@ class Flo2D(object):
 
     def create_map_tools(self):
         self.canvas = self.iface.mapCanvas()
-        self.info_tool = InfoTool(self.canvas, self.lyrs)
+        self.info_tool = InfoTool(self.canvas, self.lyrs, self.uc)
         self.grid_info_tool = GridInfoTool(self.uc, self.canvas, self.lyrs)
         self.results_tool = ResultsTool(self.canvas, self.lyrs)
 
-    def get_feature_info(self, table, fid):
+    def get_feature_info(self, table, fid, extra):
         try:
             show_editor = self.editors_map[table]
             self.cur_info_table = table
         except KeyError:
             self.uc.bar_info("Not implemented...")
             return
-        show_editor(fid)
-
-    # def channel_profile(self):
-    #
-    #     for tb in self.toolButtons:
-    #         if tb.toolTip() == "<b>FLO-2D Project Review</b>":
-    #             review_tb = tb
-    #
-    #     tool = self.canvas.mapTool()
-    #     if tool == self.channel_profile_tool:
-    #         review_tb.setIcon(QIcon(os.path.join(self.plugin_dir, "img/editmetadata.svg")))
-    #         review_tb.setChecked(False)
-    #         self.uncheck_all_info_tools()
-    #     else:
-    #         if tool is not None:
-    #             self.uncheck_all_info_tools()
-    #             review_tb.setChecked(False)
-    #         review_tb.setIcon(QIcon(os.path.join(self.plugin_dir, "img/profile.svg")))
-    #         self.canvas.setMapTool(self.channel_profile_tool)
-    #         # 'channel_profile_tool' is an instance of ChannelProfile class,
-    #         # created on loading the plugin, and to be used to plot channel
-    #         # profiles using a subtool in the FLO-2D tool bar.
-    #         # The plots will be based on data from the 'chan', 'cham_elems'
-    #         # schematic layers.
-    #         self.channel_profile_tool.update_lyrs_list()
-    #         review_tb.setChecked(True)
+        if show_editor:
+            if extra:
+                show_editor(fid, extra)
+            else:
+                show_editor(fid)
 
     def get_feature_profile(self, table, fid):
         # try:
@@ -4050,25 +4041,25 @@ class Flo2D(object):
             self.cur_profile_table = table
             self.show_struct_hydrograph(fid)
         if table == 'user_swmm_nodes':
-            show_editor = self.editors_map[table]
-            self.cur_info_table = table
-            show_editor(fid)
+            #show_editor = self.editors_map[table]
+            self.cur_profile_table = table
+            self.show_sd_discharge(fid)
         if table == 'user_swmm_conduits':
-            show_editor = self.editors_map[table]
-            self.cur_info_table = table
-            show_editor(fid)
+            #show_editor = self.editors_map[table]
+            self.cur_profile_table = table
+            self.show_conduit_discharge(fid)
         if table == 'user_swmm_weirs':
-            show_editor = self.editors_map[table]
-            self.cur_info_table = table
-            show_editor(fid)
+            #show_editor = self.editors_map[table]
+            self.cur_profile_table = table
+            self.show_weir_discharge(fid)
         if table == 'user_swmm_orifices':
-            show_editor = self.editors_map[table]
-            self.cur_info_table = table
-            show_editor(fid)
+            #show_editor = self.editors_map[table]
+            self.cur_profile_table = table
+            self.show_orifice_discharge(fid)
         if table == 'user_swmm_pumps':
-            show_editor = self.editors_map[table]
-            self.cur_info_table = table
-            show_editor(fid)
+            #show_editor = self.editors_map[table]
+            self.cur_profile_table = table
+            self.show_pump_discharge(fid)
 
         # except KeyError:
         #     self.uc.bar_info("Channel Profile tool not implemented for selected features.")
@@ -4088,11 +4079,12 @@ class Flo2D(object):
             "user_bc_polygons": self.show_bc_editor,
             "user_struct": self.show_struct_editor,
             "struct": self.show_struct_editor,
-            "user_swmm_nodes": self.show_sd_discharge,
-            "user_swmm_conduits": self.show_conduit_discharge,
-            "user_swmm_weirs": self.show_weir_discharge,
-            "user_swmm_orifices": self.show_orifice_discharge,
-            "user_swmm_pumps": self.show_pump_discharge,
+            "chan": self.show_profile,
+            "user_swmm_nodes": self.show_sd_node_info,
+            "user_swmm_conduits": None,
+            "user_swmm_weirs": None,
+            "user_swmm_orifices": None,
+            "user_swmm_pumps": None,
         }
 
     def restore_settings(self):

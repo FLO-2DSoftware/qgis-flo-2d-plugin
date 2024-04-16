@@ -9,6 +9,7 @@
 # of the License, or (at your option) any later version
 
 import os
+import shutil
 import traceback
 from _ast import Pass
 from collections import OrderedDict
@@ -16,6 +17,7 @@ from datetime import date, datetime, time, timedelta
 from math import floor, isnan, modf
 from pathlib import Path
 
+from qgis._core import QgsFeatureRequest
 from qgis.core import (
     NULL,
     QgsArrowSymbolLayer,
@@ -66,6 +68,7 @@ from qgis.PyQt.QtWidgets import (
 
 import pyqtgraph as pg
 
+from .dlg_sd_profile_view import SDProfileView
 from ..flo2d_ie.swmm_io import StormDrainProject
 from ..flo2d_tools.grid_tools import spatial_index
 from ..flo2d_tools.schema2user_tools import remove_features
@@ -82,7 +85,7 @@ from ..gui.dlg_weirs import WeirsDialog
 from ..user_communication import ScrollMessageBox, ScrollMessageBox2, UserCommunication
 from ..utils import float_or_zero, int_or_zero, is_number, is_true, m_fdata
 from .table_editor_widget import CommandItemEdit, StandardItem, StandardItemModel
-from .ui_utils import load_ui, set_icon, try_disconnect
+from .ui_utils import load_ui, set_icon, try_disconnect, center_canvas
 from ..flo2d_ie.flo2d_parser import ParseDAT
 
 uiDialog, qtBaseClass = load_ui("inp_groups")
@@ -333,6 +336,12 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         self.populate_type4_combo()
         self.populate_pump_curves_and_data()
         self.show_pump_curve_type_and_description()
+
+        self.populate_profile_plot()
+        self.find_profile_btn.clicked.connect(self.show_profile)
+        self.start_node_cbo.currentIndexChanged.connect(lambda: self.center_node("Start"))
+        self.end_node_cbo.currentIndexChanged.connect(lambda: self.center_node("End"))
+        self.center_chbox.clicked.connect(self.clear_sd_rubber)
 
     def setup_connection(self):
         con = self.iface.f2d["con"]
@@ -4722,6 +4731,130 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                     else:
                         duplicates += name + "\n"
 
+    def populate_profile_plot(self):
+        """
+        Function to populate the nodes on the comboboxes and check for a .RPT file
+        """
+        self.start_node_cbo.clear()
+        self.end_node_cbo.clear()
+
+        nodes_names = self.gutils.execute("SELECT name FROM user_swmm_nodes").fetchall()
+        if not nodes_names:
+            return
+
+        for name in nodes_names:
+            self.start_node_cbo.addItem(name[0])
+            self.end_node_cbo.addItem(name[0])
+
+    def show_profile(self):
+        """
+        Function to show the profile
+        """
+        QApplication.setOverrideCursor(Qt.WaitCursor)
+        try:
+            import swmmio
+        except ImportError:
+            QApplication.restoreOverrideCursor()
+            message = "The swmmio library is not found in your python environment. This external library is required to " \
+                      "run some processes related to swmm files. More information on: https://swmmio.readthedocs.io/en/v0.6.11/.\n\n" \
+                      "Would you like to install it automatically or " \
+                      "manually?\n\nSelect automatic if you have admin rights. Otherwise, contact your admin and " \
+                      "follow the manual steps."
+            title = "External library not found!"
+            button1 = "Automatic"
+            button2 = "Manual"
+
+            install_options = self.uc.dialog_with_2_customized_buttons(title, message, button1, button2)
+
+            if install_options == QMessageBox.Yes:
+                QApplication.setOverrideCursor(Qt.WaitCursor)
+                try:
+                    import pathlib as pl
+                    import subprocess
+                    import sys
+
+                    qgis_Path = pl.Path(sys.executable)
+                    qgis_python_path = (qgis_Path.parent / "python3.exe").as_posix()
+
+                    subprocess.check_call(
+                        [qgis_python_path, "-m", "pip", "install", "--user", "swmmio==0.6.11"]
+                    )
+                    import swmmio
+                    self.uc.bar_info("swmmio successfully installed!")
+                    self.uc.log_info("swmmio successfully installed!")
+                    QApplication.restoreOverrideCursor()
+
+                except ImportError as e:
+                    QApplication.restoreOverrideCursor()
+                    self.uc.show_critical("Error while installing swmmio. Install it manually.")
+
+            # Manual Installation
+            elif install_options == QMessageBox.No:
+                QApplication.restoreOverrideCursor()
+                message = "1. Run OSGeo4W Shell as admin\n" \
+                          "2. Type this command: pip install swmmio==0.6.11\n\n" \
+                          "Wait the process to finish and rerun this process.\n\n" \
+                          "For more information, access https://flo-2d.com/contact/"
+                self.uc.show_info(message)
+                return
+            else:
+                return
+
+        if self.gutils.is_table_empty("grid"):
+            self.uc.bar_warn("There is no grid! Please create it before running tool.")
+            return False
+
+        QApplication.restoreOverrideCursor()
+        s = QSettings()
+        GDS_dir = s.value("FLO-2D/lastGdsDir", "")
+        RPT_file = GDS_dir + r"\swmm.RPT"
+        rpt_file = GDS_dir + r"\swmm.rpt"
+        INP_file = GDS_dir + r"\SWMM.INP"
+        inp_file = GDS_dir + r"\SWMM.inp"
+        # Check if there is an RPT and an INP file on the export folder
+        if not os.path.isfile(INP_file) or not os.path.isfile(inp_file):
+            self.uc.bar_warn(
+                "No SWMM.INP file found. Please ensure the simulation has completed and verify the project export "
+                "folder.")
+            return
+        if not os.path.isfile(RPT_file) or not os.path.isfile(rpt_file):
+            self.uc.bar_warn(
+                "No swmm.RPT file found. Please ensure the simulation has completed and verify the project export "
+                "folder.")
+            return
+
+        # SWMMIO only read small cap extensions
+        if not os.path.isfile(inp_file):
+            os.rename(INP_file, INP_file[:-4] + '.inp')
+
+        if not os.path.isfile(rpt_file):
+            os.rename(RPT_file, RPT_file[:-4] + '.rpt')
+
+        mymodel = swmmio.Model(inp_file)
+        rpt = swmmio.rpt(rpt_file)
+
+        start_node = self.start_node_cbo.currentText()
+        end_node = self.end_node_cbo.currentText()
+
+        try:
+            path_selection = swmmio.find_network_trace(mymodel, start_node, end_node)
+            max_depth = rpt.node_depth_summary.MaxNodeDepth
+            ave_depth = rpt.node_depth_summary.AvgDepth
+        except:
+            self.uc.bar_warn("No path found!")
+            return
+        QApplication.setOverrideCursor(Qt.WaitCursor)
+        dlg_sd_profile_view = SDProfileView(self.gutils)
+        dlg_sd_profile_view.plot_profile(swmmio, mymodel, path_selection, max_depth, ave_depth)
+        QApplication.restoreOverrideCursor()
+        dlg_sd_profile_view.show()
+        while True:
+            ok = dlg_sd_profile_view.exec_()
+            if ok:
+                break
+            else:
+                return
+
     def SD_show_type4_table_and_plot(self):
         self.SD_table.after_delete.disconnect()
         self.SD_table.after_delete.connect(self.save_SD_table_data)
@@ -5664,3 +5797,40 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             QApplication.restoreOverrideCursor()
             self.uc.show_error("ERROR 180322.0925: reading pump curve files failed!", e)
             return
+
+    def center_node(self, node_type):
+        """
+        Function to center the node
+        """
+        if self.center_chbox.isChecked():
+            if node_type == "Start":
+                node_name = self.start_node_cbo.currentText()
+            if node_type == "End":
+                node_name = self.end_node_cbo.currentText()
+            request = QgsFeatureRequest().setFilterExpression(f'"name" = \'{node_name}\'')
+            feats = list(self.user_swmm_nodes_lyr.getFeatures(request))
+            if feats:
+                feat = feats[0]
+                self.lyrs.show_feat_rubber(self.user_swmm_nodes_lyr.id(), request)
+                x, y = feat.geometry().centroid().asPoint()
+                center_canvas(self.iface, x, y)
+
+    def clear_sd_rubber(self):
+        """
+        Function to clear the stormm drain rubber
+        """
+        self.lyrs.clear_rubber()
+
+    def update_profile_cbos(self, node_type, name):
+        """
+        Function to update the start and end node for the profile plot
+        """
+        if node_type == "Start":
+            index = self.start_node_cbo.findText(name)
+            if index != -1:
+                self.uc.log_info(str(index))
+                self.start_node_cbo.setCurrentIndex(index)
+        if node_type == "End":
+            index = self.end_node_cbo.findText(name)
+            if index != -1:
+                self.end_node_cbo.setCurrentIndex(index)
