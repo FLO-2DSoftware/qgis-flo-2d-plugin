@@ -85,7 +85,14 @@ STORMDRAIN = {
 
 BC = {
     "INFLOW": "Inflow Hydrograph Data",
-    "OUTFLOW": "Outflow Hydrograph Data"
+    "OUT_GRID_CHAN": "Channel Outflow Elements",
+    "QH_PARAMS": "Channel Depth-Discharge Power Regression",
+    "QH_TABLE": "Channel Depth-Discharge",
+    "OUT_GRID_TS": "Grid Elements with Stage-time Relationships",
+    "OUT_TS_DATA": "Time Intervals (hrs) and Water Surface Elevations (ft or m) for the Grid Element Stage-time "
+                   "relationship",
+    "OUT_GRID_HYD": "Outflow Grid Elements That Will Generate a Hydrograph",
+    "OUT_GRID": "Outflow Grid Elements",
 }
 
 CHANNEL = {
