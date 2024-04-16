@@ -37,8 +37,8 @@ from qgis.core import (
     Qgis
 )
 from qgis.PyQt import QtCore, QtGui
-from qgis.PyQt.QtCore import QSettings, Qt, QTime, QVariant, pyqtSignal
-from qgis.PyQt.QtGui import QColor, QIcon
+from qgis.PyQt.QtCore import QSettings, Qt, QTime, QVariant, pyqtSignal, QUrl
+from qgis.PyQt.QtGui import QColor, QIcon, QDesktopServices
 from qgis.PyQt.QtWidgets import (
     QApplication,
     QCheckBox,
@@ -229,6 +229,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         set_icon(self.revert_changes_btn, "mActionUndo.svg")
         set_icon(self.sd_delete_btn, "mActionDeleteSelected.svg")
         set_icon(self.schema_storm_drain_btn, "schematize_res.svg")
+        set_icon(self.sd_help_btn, "help_contents.svg")
 
         set_icon(self.SD_show_type4_btn, "show_cont_table.svg")
         set_icon(self.SD_add_one_type4_btn, "add_table_data.svg")
@@ -286,6 +287,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         self.revert_changes_btn.clicked.connect(self.revert_swmm_lyr_edits)
         self.sd_delete_btn.clicked.connect(self.delete_cur_swmm)
         self.schema_storm_drain_btn.clicked.connect(self.schematize_swmm)
+        self.sd_help_btn.clicked.connect(self.sd_help)
 
         self.SD_show_type4_btn.clicked.connect(self.SD_show_type4_table_and_plot)
         # self.SD_add_one_type4_btn.clicked.connect(self.SD_add_one_type4)
@@ -459,6 +461,9 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         self.gutils.execute("DELETE FROM user_swmm_nodes WHERE fid = ?;", (swmm_fid,))
         self.swmm_lyr.triggerRepaint()
         # self.populate_swmm()
+    
+    def sd_help(self):
+        QDesktopServices.openUrl(QUrl("https://flo-2dsoftware.github.io/FLO-2D-Documentation/Plugin1000/widgets/storm-drain-editor/Storm%20Drain.html"))        
 
     def save_attrs(self):
         swmm_dict = self.swmm_name_cbo.itemData(self.swmm_idx)
