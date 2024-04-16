@@ -38,6 +38,10 @@ def create_array(line_format, max_columns, array_type, *args):
     return array
 
 
+def check_outflow_condition(variables):
+    return all(val == 0 for val in variables)
+
+
 class Flo2dGeoPackage(GeoPackageUtils):
     """
     Class for proper import and export FLO-2D data.
@@ -2496,7 +2500,6 @@ class Flo2dGeoPackage(GeoPackageUtils):
         else:
             pass
         bc_group = self.parser.bc_group
-        # bc_group.create_dataset('Outflow/OUTFLOW_GLOBAL', [])
 
         floodplains = {}
         previous_oid = -1
@@ -2531,69 +2534,175 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     chan_qhtab_fid,
                     fp_tser_fid,
                 ) = row
-                if gid not in floodplains and (fp_out == 1 or hydro_out > 0):
-                    floodplains[gid] = hydro_out
-                if chan_out == 1:
-                    bc_group.create_dataset('Outflow/OUT_GRID_CHAN', [])
-                    bc_group.datasets["Outflow/OUT_GRID_CHAN"].data.append(create_array(k_line, 1, np.int_, gid))
 
-                    qh_params = self.execute(qh_params_data_sql, (chan_qhpar_fid,)).fetchone()
-                    if qh_params is not None:
-                        bc_group.create_dataset('Outflow/QH_PARAMS', [])
-                        for qh_params_values in self.execute(qh_params_data_sql, (chan_qhpar_fid,)):
-                            bc_group.datasets["Outflow/QH_PARAMS"].data.append(
-                                create_array(qh_params_line, 3, np.float_, qh_params_values))
+                #(fp_out, chan_out, hydro_out, chan_tser_fid, chan_qhpar_fid, chan_qhtab_fid, fp_tser_fid)
 
-                    qh_table = self.execute(qh_table_data_sql, (chan_qhtab_fid,)).fetchone()
-                    if qh_table is not None:
-                        bc_group.create_dataset('Outflow/QH_TABLE', [])
-                        for qh_table_values in self.execute(qh_table_data_sql, (chan_qhtab_fid,)):
-                            bc_group.datasets["Outflow/QH_TABLE"].data.append(
-                                create_array(qh_table_line, 2, np.float_, qh_table_values))
-                else:
-                    pass
+                # 1. Floodplain outflow (no hydrograph)
+                variables = (chan_out, hydro_out, chan_tser_fid, chan_qhpar_fid, chan_qhtab_fid, fp_tser_fid)
+                if fp_out == 1 and check_outflow_condition(variables):
+                    try:
+                        bc_group.datasets["Outflow/FP_OUT_GRID"].data.append(gid)
+                    except:
+                        bc_group.create_dataset('Outflow/FP_OUT_GRID', [])
+                        bc_group.datasets["Outflow/FP_OUT_GRID"].data.append(gid)
+                    continue
 
-                if chan_tser_fid > 0 or fp_tser_fid > 0:
-                    if border is not None:
-                        if gid in border:
-                            continue
-                    if chan_tser_fid == 1:
-                        nostacfp = 1
-                        bc_group.create_dataset('Outflow/OUT_GRID_TS', [])
-                        bc_group.datasets["Outflow/OUT_GRID_TS"].data.append(create_array(n_line, 2, np.int_, gid, nostacfp))
-                    else:
-                        nostacfp = 0
+                # 2. Channel outflow (no hydrograph)
+                variables = (fp_out, hydro_out, chan_tser_fid, chan_qhpar_fid, chan_qhtab_fid, fp_tser_fid)
+                if chan_out == 1 and check_outflow_condition(variables):
+                    try:
+                        bc_group.datasets["Outflow/CH_OUT_GRID"].data.append(gid)
+                    except:
+                        bc_group.create_dataset('Outflow/CH_OUT_GRID', [])
+                        bc_group.datasets["Outflow/CH_OUT_GRID"].data.append(gid)
+                    continue
 
-                    series_fid = chan_tser_fid if chan_tser_fid > 0 else fp_tser_fid
+                # 3. Floodplain and channel outflow (no hydrograph)
+                variables = (hydro_out, chan_tser_fid, chan_qhpar_fid, chan_qhtab_fid, fp_tser_fid)
+                if fp_out == 1 and chan_out == 1 and check_outflow_condition(variables):
+                    try:
+                        bc_group.datasets["Outflow/FP_OUT_GRID"].data.append(gid)
+                    except:
+                        bc_group.create_dataset('Outflow/FP_OUT_GRID', [])
+                        bc_group.datasets["Outflow/FP_OUT_GRID"].data.append(gid)
+                    try:
+                        bc_group.datasets["Outflow/CH_OUT_GRID"].data.append(gid)
+                    except:
+                        bc_group.create_dataset('Outflow/CH_OUT_GRID', [])
+                        bc_group.datasets["Outflow/CH_OUT_GRID"].data.append(gid)
+                    continue
 
-                    ts = self.execute(ts_data_sql, (series_fid,)).fetchone()
-                    if ts is not None:
-                        bc_group.create_dataset('Outflow/OUT_TS_DATA', [])
-                        for ts_line_values in self.execute(ts_data_sql, (series_fid,)):
-                            bc_group.datasets["Outflow/OUT_TS_DATA"].data.append(create_array(ts_line, 2, np.float_, ts_line_values))
-                else:
-                    pass
+                # 4. Outflow with hydrograph
+                variables = (fp_out, chan_out, chan_tser_fid, chan_qhpar_fid, chan_qhtab_fid, fp_tser_fid)
+                if hydro_out != 0 and check_outflow_condition(variables):
+                    try:
+                        bc_group.datasets["Outflow/HYD_OUT_GRID"].data.append(create_array(o_line, 2, np.int_, (hydro_out, gid)))
+                    except:
+                        bc_group.create_dataset('Outflow/HYD_OUT_GRID', [])
+                        bc_group.datasets["Outflow/HYD_OUT_GRID"].data.append(create_array(o_line, 2, np.int_, (hydro_out, gid)))
+                    continue
 
-        if len(floodplains) > 0:
-            bc_group.create_dataset('Outflow/OUT_GRID_HYD', [])
-            bc_group.create_dataset('Outflow/OUT_GRID', [])
-        # Write O1, O2, ... lines:
-        for gid, hydro_out in sorted(iter(floodplains.items()), key=lambda items: (items[1], items[0])):
-            if hydro_out > 0:
-                bc_group.datasets["Outflow/OUT_GRID_HYD"].data.append(create_array(o_line, 2, np.int_, (hydro_out, gid)))
-                if border is not None:
-                    if gid in border:
-                        border.remove(gid)
-            else:
-                # hydro_out = 0
-                bc_group.datasets["Outflow/OUT_GRID"].data.append(gid)
-            # ident = "O{0}".format(hydro_out) if hydro_out > 0 else "O"
+                # 5. Time-stage for floodplain
+                variables = (fp_out, chan_out, hydro_out, chan_tser_fid, chan_qhpar_fid, chan_qhtab_fid)
+                if fp_tser_fid == 1 and check_outflow_condition(variables):
+                    self.uc.log_info("TS FP")
+                    continue
 
-        # Write lines 'O cell_id':
-        # if border is not None:
+                # 6. Time-stage for channel
+                variables = (fp_out, chan_out, hydro_out, chan_qhpar_fid, chan_qhtab_fid, fp_tser_fid)
+                if chan_tser_fid == 1 and check_outflow_condition(variables):
+                    self.uc.log_info("TS CH")
+                    continue
+
+                # 7. Time-stage for floodplain and free floodplain and channel
+                variables = (chan_out, hydro_out, chan_tser_fid, chan_qhpar_fid, chan_qhtab_fid)
+                if fp_out == 1 and fp_tser_fid == 1 and check_outflow_condition(variables):
+                    self.uc.log_info("TS FP FREE FP CH")
+                    continue
+
+                # 8. Time-stage for channel and free floodplain and channel
+                variables = (fp_out, hydro_out, chan_qhpar_fid, chan_qhtab_fid, fp_tser_fid)
+                if chan_out == 1 and chan_tser_fid == 1 and check_outflow_condition(variables):
+                    self.uc.log_info("TS CH FREE FP CH")
+                    continue
+
+                # 9. Channel Depth-Discharge Power Regression (qh-params)
+                variables = (fp_out, hydro_out, chan_tser_fid, chan_qhtab_fid, fp_tser_fid)
+                if chan_out == 1 and chan_qhpar_fid == 1 and check_outflow_condition(variables):
+                    # try:
+                    #     bc_group.datasets["Outflow/QH_PARAMS_GRID"].data.append(gid)
+                    #     for qh_params_values in self.execute(qh_params_data_sql, (chan_qhpar_fid,)):
+                    #         bc_group.datasets["Outflow/QH_PARAMS"].data.append(
+                    #             create_array(qh_params_line, 3, np.float_, qh_params_values))
+                    # except:
+                    #     bc_group.create_dataset('Outflow/QH_PARAMS_GRID', [])
+                    #     bc_group.datasets["Outflow/QH_PARAMS_GRID"].data.append(gid)
+                    #     bc_group.create_dataset('Outflow/QH_PARAMS', [])
+                    #     for qh_params_values in self.execute(qh_params_data_sql, (chan_qhpar_fid,)):
+                    #         bc_group.datasets["Outflow/QH_PARAMS"].data.append(
+                    #             create_array(qh_params_line, 3, np.float_, qh_params_values))
+                    continue
+
+                # 10. Channel Depth-Discharge (qh-table)
+                variables = (fp_out, hydro_out, chan_tser_fid, chan_qhpar_fid, fp_tser_fid)
+                if chan_out == 1 and chan_qhtab_fid == 1 and check_outflow_condition(variables):
+                    # try:
+                    #     bc_group.datasets["Outflow/QH_TABLE_GRID"].data.append(gid)
+                    #     for qh_table_values in self.execute(qh_table_data_sql, (chan_qhtab_fid,)):
+                    #         bc_group.datasets["Outflow/QH_TABLE"].data.append(
+                    #             create_array(qh_table_line, 3, np.float_, qh_table_values))
+                    # except:
+                    #     bc_group.create_dataset('Outflow/QH_TABLE_GRID', [])
+                    #     bc_group.datasets["Outflow/QH_TABLE_GRID"].data.append(gid)
+                    #     bc_group.create_dataset('Outflow/QH_TABLE', [])
+                    #     for qh_table_values in self.execute(qh_table_data_sql, (chan_qhtab_fid,)):
+                    #         bc_group.datasets["Outflow/QH_TABLE"].data.append(
+                    #             create_array(qh_table_line, 3, np.float_, qh_table_values))
+                    continue
+
+        #         if gid not in floodplains and (fp_out == 1 or hydro_out > 0):
+        #             floodplains[gid] = hydro_out
+        #         if chan_out == 1:
+        #             bc_group.create_dataset('Outflow/OUT_GRID_CHAN', [])
+        #             bc_group.datasets["Outflow/OUT_GRID_CHAN"].data.append(create_array(k_line, 1, np.int_, gid))
+        #
+        #             qh_params = self.execute(qh_params_data_sql, (chan_qhpar_fid,)).fetchone()
+        #             if qh_params is not None:
+        #                 bc_group.create_dataset('Outflow/QH_PARAMS', [])
+        #                 for qh_params_values in self.execute(qh_params_data_sql, (chan_qhpar_fid,)):
+        #                     bc_group.datasets["Outflow/QH_PARAMS"].data.append(
+        #                         create_array(qh_params_line, 3, np.float_, qh_params_values))
+        #
+        #             qh_table = self.execute(qh_table_data_sql, (chan_qhtab_fid,)).fetchone()
+        #             if qh_table is not None:
+        #                 bc_group.create_dataset('Outflow/QH_TABLE', [])
+        #                 for qh_table_values in self.execute(qh_table_data_sql, (chan_qhtab_fid,)):
+        #                     bc_group.datasets["Outflow/QH_TABLE"].data.append(
+        #                         create_array(qh_table_line, 2, np.float_, qh_table_values))
+        #         else:
+        #             pass
+        #
+        #         if chan_tser_fid > 0 or fp_tser_fid > 0:
+        #             if border is not None:
+        #                 if gid in border:
+        #                     continue
+        #             if chan_tser_fid == 1:
+        #                 nostacfp = 1
+        #                 bc_group.create_dataset('Outflow/OUT_GRID_TS', [])
+        #                 bc_group.datasets["Outflow/OUT_GRID_TS"].data.append(create_array(n_line, 2, np.int_, gid, nostacfp))
+        #             else:
+        #                 nostacfp = 0
+        #
+        #             series_fid = chan_tser_fid if chan_tser_fid > 0 else fp_tser_fid
+        #
+        #             ts = self.execute(ts_data_sql, (series_fid,)).fetchone()
+        #             if ts is not None:
+        #                 bc_group.create_dataset('Outflow/OUT_TS_DATA', [])
+        #                 for ts_line_values in self.execute(ts_data_sql, (series_fid,)):
+        #                     bc_group.datasets["Outflow/OUT_TS_DATA"].data.append(create_array(ts_line, 2, np.float_, ts_line_values))
+        #         else:
+        #             pass
+        #
+        # if len(floodplains) > 0:
+        #     bc_group.create_dataset('Outflow/OUT_GRID_HYD', [])
         #     bc_group.create_dataset('Outflow/OUT_GRID', [])
-        #     for b in border:
-        #         bc_group.datasets["Outflow/OUT_GRID"].data.append(b)
+        # # Write O1, O2, ... lines:
+        # for gid, hydro_out in sorted(iter(floodplains.items()), key=lambda items: (items[1], items[0])):
+        #     if hydro_out > 0:
+        #         bc_group.datasets["Outflow/OUT_GRID_HYD"].data.append(create_array(o_line, 2, np.int_, (hydro_out, gid)))
+        #         if border is not None:
+        #             if gid in border:
+        #                 border.remove(gid)
+        #     else:
+        #         # hydro_out = 0
+        #         bc_group.datasets["Outflow/OUT_GRID"].data.append(gid)
+        #     # ident = "O{0}".format(hydro_out) if hydro_out > 0 else "O"
+        #
+        # # Write lines 'O cell_id':
+        # # if border is not None:
+        # #     bc_group.create_dataset('Outflow/OUT_GRID', [])
+        # #     for b in border:
+        # #         bc_group.datasets["Outflow/OUT_GRID"].data.append(b)
 
         self.parser.write_groups(bc_group)
         QApplication.restoreOverrideCursor()
@@ -2963,7 +3072,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     infil_group.create_dataset('INFIL_CHAN_SEG', [])
                     for row in self.execute(infil_r_sql):
                         row = [x if (x is not None and x != "") else -9999 for x in row]
-                        infil_group.datasets["INFIL_CHAN_SEG"].data.append(create_array(line4ab, 3, np.float_, tuple(row)))
+                        infil_group.datasets["INFIL_CHAN_SEG"].data.append(
+                            create_array(line4ab, 3, np.float_, tuple(row)))
 
                 infil_chan_elems = self.execute(chan_sql).fetchone()
                 if infil_chan_elems is not None:
@@ -3019,7 +3129,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     infil_group.create_dataset('INFIL_CHAN_SEG', [])
                     for row in self.execute(infil_r_sql):
                         row = [x if (x is not None and x != "") else -9999 for x in row]
-                        infil_group.datasets["INFIL_CHAN_SEG"].data.append(create_array(line4ab, 3, np.float_, tuple(row)))
+                        infil_group.datasets["INFIL_CHAN_SEG"].data.append(
+                            create_array(line4ab, 3, np.float_, tuple(row)))
 
                 infil_chan_elems = self.execute(chan_sql).fetchone()
                 if infil_chan_elems is not None:
