@@ -720,14 +720,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
         self.batch_execute(evapor_sql, evapor_month_sql, evapor_hour_sql)
 
     def import_chan(self):
-        # s = QSettings()
-        # last_dir = s.value("FLO-2D/lastGdsDir", "")
-        # if not os.path.isfile(last_dir + r"\CHAN.DAT"):
-        #     self.uc.show_warn("WARNING 060319.1612: Can't import channels!.\n\nCHAN.DAT doesn't exist.")
-        #     return
-        # if not os.path.isfile(last_dir + r"\CHANBANK.DAT"):
-        #     self.uc.show_warn("WARNING 060319.1632: Can't import channels!.\n\nCHANBANK.DAT doesn't exist.")
-        #     return
+
+        QApplication.setOverrideCursor(Qt.WaitCursor)
 
         chan_sql = [
             """INSERT INTO chan (geom, depinitial, froudc, roughadj, isedn) VALUES""",
@@ -836,14 +830,14 @@ class Flo2dGeoPackage(GeoPackageUtils):
             )
             qry = """UPDATE chan SET name = 'Channel ' ||  cast(fid as text);"""
             self.execute(qry)
+            QApplication.restoreOverrideCursor()
 
         except Exception:
-            QApplication.setOverrideCursor(QtGui.QCursor(QtCore.Qt.ArrowCursor))
+            QApplication.restoreOverrideCursor()
             self.uc.log_info(traceback.format_exc())
             self.uc.show_warn(
                 "WARNING 010219.0742: Import channels failed!. Check CHAN.DAT and CHANBANK.DAT files."
             )  # self.uc.show_warn('Import channels failed!.\nMaybe the number of left bank and right bank cells are different.')
-            QApplication.setOverrideCursor(Qt.WaitCursor)
 
     def import_xsec(self):
         xsec_sql = ["""INSERT INTO xsec_n_data (chan_n_nxsecnum, xi, yi) VALUES""", 3]
@@ -1600,6 +1594,32 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
         self.batch_execute(swmmflo_sql)
 
+    def import_swmmflodropbox(self):
+        try: 
+            data = self.parser.parse_swmmflodropbox()
+            for row in data:
+                name  = row[0]
+                area = row[2]
+                self.gutils.execute("UPDATE user_swmm_nodes SET drboxarea = ? WHERE name = ?", (area, name))
+            return True
+        except:
+            return False
+
+    def import_sdclogging(self):
+        try: 
+            data = self.parser.parse_sdclogging()
+            for row in data:
+                name  = row[2]
+                clog_fact = row[3]
+                clog_time = row[4]
+                self.gutils.execute("""UPDATE user_swmm_nodes
+                                       SET swmm_clogging_factor = ?, swmm_time_for_clogging = ?
+                                       WHERE name = ?""", (clog_fact, clog_time, name))
+            return True
+        except:
+            return False
+        
+        
     def import_swmmflort(self):
         """
         Reads SWMMFLORT.DAT (Rating Tables).
@@ -3825,7 +3845,6 @@ class Flo2dGeoPackage(GeoPackageUtils):
             self.uc.show_error("ERROR 101218.1610: exporting ARF.DAT failed!.", e)
             return False
 
-
     def export_arf_hdf5(self):
         # check if there are any grid cells with ARF defined.
         try:
@@ -5106,6 +5125,20 @@ class Flo2dGeoPackage(GeoPackageUtils):
         elif self.parsed_format == self.FORMAT_HDF5:
             return self.export_swmmflo_hdf5()
 
+    def export_swmmflodropbox(self, output=None):
+        if self.parsed_format == self.FORMAT_DAT:
+            return self.export_swmmflodropbox_dat(output)
+        # elif self.parsed_format == self.FORMAT_HDF5:
+        #     return self.export_swmmflo_hdf5()
+
+
+    def export_sdclogging(self, output=None):
+        if self.parsed_format == self.FORMAT_DAT:
+            return self.export_sdclogging_dat(output)
+        # elif self.parsed_format == self.FORMAT_HDF5:
+        #     return self.export_swmmflo_hdf5()
+
+
     def export_swmmflo_hdf5(self):
         """
         Function to export the swmm flo to the hdf5 file
@@ -5189,6 +5222,61 @@ class Flo2dGeoPackage(GeoPackageUtils):
         except Exception as e:
             QApplication.restoreOverrideCursor()
             self.uc.show_error("ERROR 101218.1618: exporting SWMMFLO.DAT failed!.\n", e)
+            return False
+
+    def export_swmmflodropbox_dat(self, outdir):
+        try:
+            if self.is_table_empty("user_swmm_nodes"):
+                return False
+            
+            qry = """SELECT name, grid, drboxarea  FROM user_swmm_nodes WHERE (sd_type = 'I' OR sd_type = 'J') AND drboxarea > 0.0;"""
+            rows = self.gutils.execute(qry).fetchall()
+            if rows:
+                line1 = "{0:16} {1:<10} {2:<10.2f}\n"
+
+                swmmflodropbox = os.path.join(outdir, "SWMMFLODROPBOX.DAT")
+                with open(swmmflodropbox, "w") as s:
+                    for row in rows:
+                        s.write(line1.format(*row))
+                return True
+            else:
+                # There are no drop box areas defined, delete SWMMFLODROPBOX.DAT if exists:
+                if os.path.isfile(outdir + r"\SWMMFLODROPBOX.DAT"):
+                    os.remove(outdir + r"\SWMMFLODROPBOX.DAT")
+                return False
+                    
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.uc.show_error("ERROR 120424.0449: exporting SWMMFLODROPBOX.DAT failed!.\n", e)
+            return False
+
+
+    def export_sdclogging_dat(self, outdir):
+        try:
+            if self.is_table_empty("user_swmm_nodes"):
+                return False
+            
+            qry = """SELECT grid, name, swmm_clogging_factor, swmm_time_for_clogging
+                     FROM user_swmm_nodes 
+                     WHERE (sd_type = 'I' OR sd_type = 'J') AND swmm_clogging_factor > 0.0 AND swmm_time_for_clogging > 0.0;"""
+            rows = self.gutils.execute(qry).fetchall()
+            if rows:
+                line1 = "D {0:8}   {1:<16} {2:<10.2f} {3:<10.2f}\n"
+
+                sdclogging = os.path.join(outdir, "SDCLOGGING.DAT")
+                with open(sdclogging, "w") as s:
+                    for row in rows:
+                        s.write(line1.format(*row))
+                return True
+            else:
+                # There are no cloggings defined, delete SDCLOGGING.DAT if exists:
+                if os.path.isfile(outdir + r"\SDCLOGGING.DAT"):
+                    os.remove(outdir + r"\SDCLOGGING.DAT")
+                return False
+                    
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.uc.show_error("ERROR 140424.1828: exporting SDCLOGGING.DAT failed!.\n", e)
             return False
 
     def export_swmmflort(self, output=None):
@@ -5341,7 +5429,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             if self.is_table_empty("swmmflort") and self.is_table_empty("swmmflo_culvert"):
                 if os.path.isfile(outdir + r"\SWMMFLORT.DAT"):
                     m = "* There are no SWMM Rating Tables or Culvert Equations defined in the project, but there is\n"
-                    m += "an old SWMMFLORT.DAT in the project directory\n  " + outdir + "\n\n"
+                    m += "an old SWMMFLORT.DAT in the project directory\n\n  " + outdir + "\n\n"
                     self.export_messages += m
                     return False
 

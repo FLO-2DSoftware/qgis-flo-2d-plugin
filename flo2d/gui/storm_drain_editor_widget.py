@@ -39,8 +39,8 @@ from qgis.core import (
     Qgis
 )
 from qgis.PyQt import QtCore, QtGui
-from qgis.PyQt.QtCore import QSettings, Qt, QTime, QVariant, pyqtSignal
-from qgis.PyQt.QtGui import QColor, QIcon
+from qgis.PyQt.QtCore import QSettings, Qt, QTime, QVariant, pyqtSignal, QUrl
+from qgis.PyQt.QtGui import QColor, QIcon, QDesktopServices
 from qgis.PyQt.QtWidgets import (
     QApplication,
     QCheckBox,
@@ -232,6 +232,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         set_icon(self.revert_changes_btn, "mActionUndo.svg")
         set_icon(self.sd_delete_btn, "mActionDeleteSelected.svg")
         set_icon(self.schema_storm_drain_btn, "schematize_res.svg")
+        set_icon(self.sd_help_btn, "help_contents.svg")
 
         set_icon(self.SD_show_type4_btn, "show_cont_table.svg")
         set_icon(self.SD_add_one_type4_btn, "add_table_data.svg")
@@ -289,6 +290,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         self.revert_changes_btn.clicked.connect(self.revert_swmm_lyr_edits)
         self.sd_delete_btn.clicked.connect(self.delete_cur_swmm)
         self.schema_storm_drain_btn.clicked.connect(self.schematize_swmm)
+        self.sd_help_btn.clicked.connect(self.sd_help)
 
         self.SD_show_type4_btn.clicked.connect(self.SD_show_type4_table_and_plot)
         # self.SD_add_one_type4_btn.clicked.connect(self.SD_add_one_type4)
@@ -468,6 +470,9 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         self.gutils.execute("DELETE FROM user_swmm_nodes WHERE fid = ?;", (swmm_fid,))
         self.swmm_lyr.triggerRepaint()
         # self.populate_swmm()
+    
+    def sd_help(self):
+        QDesktopServices.openUrl(QUrl("https://flo-2dsoftware.github.io/FLO-2D-Documentation/Plugin1000/widgets/storm-drain-editor/Storm%20Drain.html"))        
 
     def save_attrs(self):
         swmm_dict = self.swmm_name_cbo.itemData(self.swmm_idx)
@@ -529,7 +534,8 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             self.uc.show_info(
                 "Schematizing Storm Drains finished!\n\n"
                 + "The storm drain Inlets, outfalls, and/or rating tables were updated.\n\n"
-                + "(Note: The ‘Export Data Files’ tool will write the layer attributes into the SWMMFLO.DAT, SWMMFLORT.DAT, and SWMMOUTF.DAT files)"
+                + "(Note: The ‘Export data (*.DAT) files’ tool will write the layer attributes into the SWMMFLO.DAT, "
+                + " SWMMFLORT.DAT, SWMMOUTF.DAT, SWMMFLODROPBOX.DAT, and SDCLOGGING.DAT files)"
             )
 
     #             if self.schematize_conduits():
@@ -1399,6 +1405,40 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 self.user_swmm_nodes_lyr.updateExtents()
                 self.user_swmm_nodes_lyr.triggerRepaint()
                 self.user_swmm_nodes_lyr.removeSelection()
+                
+                s = QSettings()
+                last_dir = s.value("FLO-2D/lastGdsDir", "")
+                # Update drboxarea field by reading SWMMFLODROPBOX.DAT:
+                file = last_dir + r"\SWMMFLODROPBOX.DAT"
+                if os.path.isfile(file):
+                    if os.path.getsize(file) > 0:
+                        try: 
+                            pd = ParseDAT()
+                            par = pd.single_parser(file)
+                            for row in par:                    
+                                name  = row[0]
+                                area = row[2]
+                                self.gutils.execute("UPDATE user_swmm_nodes SET drboxarea = ? WHERE name = ?", (area, name))
+                        except:
+                            self.uc.bar_error("Error while reading SWMMFLODROPBOX.DAT !")                  
+
+                # Update swmm_clogging_factor and  swmm_time_for_clogging fields by reading SDCLOGGING.DAT:
+                file = last_dir + r"\SDCLOGGING.DAT"
+                if os.path.isfile(file):
+                    if os.path.getsize(file) > 0:
+                        try: 
+                            pd = ParseDAT()
+                            par = pd.single_parser(file)
+                            for row in par:   
+                                name  = row[2]
+                                clog_fact = row[3]
+                                clog_time = row[4]
+                                self.gutils.execute("""UPDATE user_swmm_nodes
+                                                       SET swmm_clogging_factor = ?, swmm_time_for_clogging = ?
+                                                       WHERE name = ?""", (clog_fact, clog_time, name))                            
+                        except:
+                            self.uc.bar_error("Error while reading SDCLOGGING.DAT !")                  
+                
             else:
                 # The option 'Keep existing and complete' already updated values taken from the .INP file.
                 # but include new ones:
@@ -2518,25 +2558,25 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
 
             s = QSettings()
             last_dir = s.value("FLO-2D/lastGdsDir", "")
+            QApplication.setOverrideCursor(Qt.ArrowCursor)
             swmm_dir = QFileDialog.getExistingDirectory(
                 None,
                 "Select directory where SWMM.INP file will be exported",
                 directory=last_dir,
                 options=QFileDialog.ShowDirsOnly,
             )
-
+            QApplication.restoreOverrideCursor()
             if not swmm_dir:
                 return
 
             swmm_file = swmm_dir + r"\SWMM.INP"
             if os.path.isfile(swmm_file):
                 QApplication.setOverrideCursor(Qt.ArrowCursor)
-                if not self.uc.question("SWMM.INP already exists.\n\n" + "Would you like to replace it?"):
-                    QApplication.restoreOverrideCursor()
-                    return
-                else:
-                    pass
+                replace = self.uc.question("SWMM.INP already exists.\n\n" + "Would you like to replace it?")
                 QApplication.restoreOverrideCursor()
+                if not replace:
+                    return
+                
             s.setValue("FLO-2D/lastGdsDir", os.path.dirname(swmm_file))
             s.setValue("FLO-2D/lastSWMMDir", os.path.dirname(swmm_file))
             last_dir = s.value("FLO-2D/lastGdsDir", "")
@@ -2550,8 +2590,10 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
 
             # Show dialog with [TITLE], [OPTIONS], and [REPORT], with values taken from existing .INP file (if selected),
             # and project units, start date, report start.
+            QApplication.setOverrideCursor(Qt.ArrowCursor)
             dlg_INP_groups = INP_GroupsDialog(self.con, self.iface)
             ok = dlg_INP_groups.exec_()
+            QApplication.restoreOverrideCursor()
             if ok:
                 start_date = NULL
                 end_date = NULL
@@ -3470,6 +3512,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                         ini_file.write("\nSaved=1")
                         ini_file.write("\nCurrent=1")
 
+                QApplication.setOverrideCursor(Qt.ArrowCursor)
                 self.uc.show_info(
                     swmm_file
                     + "\n\nfile saved with:\n\n"
@@ -3502,6 +3545,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                     + str(int(len(pattern_rows) / 24))
                     + "\t[PATTERNS]"
                 )
+                
                 warn = ""
                 if no_in_out_conduits != 0:
                     warn += (
@@ -3544,7 +3588,10 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                         + warn
                         + "Please review these issues because they will cause errors during their processing."
                     )
-
+                    
+                QApplication.restoreOverrideCursor()
+                    
+                    
         except Exception as e:
             self.uc.show_error("ERROR 160618.0634: couldn't export .INP file!", e)
 
