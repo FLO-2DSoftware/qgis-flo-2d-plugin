@@ -1144,8 +1144,6 @@ class Flo2D(object):
 
                     self.gutils.set_metadata_par("FLO-2D_V", flo2d_v)
 
-                self.f2d_plot.clear()
-
             # Project not loaded
             else:
                 flo2d_dir, project_dir, _ = dlg.get_parameters()

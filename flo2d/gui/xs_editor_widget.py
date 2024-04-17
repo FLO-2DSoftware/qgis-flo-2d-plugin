@@ -159,6 +159,10 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         self.raster_radio_btn.toggled.connect(self.update_sample_elevation_btn)
         self.update_sample_elevation_btn(self.raster_radio_btn.isChecked())
 
+        self.user_xs_lyr = self.lyrs.data["user_xsections"]["qlyr"]
+        self.user_xs_lyr.geometryChanged.connect(self.xs_feature_changed)
+        self.user_xs_lyr.attributeValueChanged.connect(self.xs_feature_changed)
+
     def setup_connection(self):
         con = self.iface.f2d["con"]
         if con is None:
@@ -218,6 +222,16 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
     def setup_plot(self):
         self.plotWidget = PlotWidget()
         self.plotLayout.addWidget(self.plotWidget)
+
+    def xs_feature_changed(self, fid):
+        """
+        Function to set the xs_cbo index equal to the feature edited
+        """
+        try:
+            self.xs_cbo.setCurrentIndex(fid)
+            self.populate_xsec_cbo(show_last_edited=True)
+        except:
+            return
 
     def populate_xsec_cbo(self, fid=None, show_last_edited=False):
         """
@@ -319,6 +333,8 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
 
         if show_last_edited:
             cur_idx = last_edited
+            if cur_idx == -1:
+                cur_idx = 1
 
         self.xs_cbo.setCurrentIndex(cur_idx)
         self.enable_widgets(False)
@@ -387,6 +403,8 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
 
         if fid is None or fid == -1:
             fid = self.xs_cbo.itemData(0)
+            if fid is None:
+                fid = 1
 
         channel_names = self.gutils.execute("SELECT name FROM user_left_bank").fetchall()
         channel_names_list = [item[0] for item in channel_names]
