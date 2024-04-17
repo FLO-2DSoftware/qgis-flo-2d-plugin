@@ -2599,7 +2599,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                             for ts_line_values in self.execute(ts_data_sql, (fp_tser_fid,)):
                                 bc_group.datasets["Outflow/TS_OUT_DATA"].data.append(
                                     create_array(three_values, 3, np.float_, ts_line_values))
-                            ts_series_fid.append(chan_tser_fid)
+                            ts_series_fid.append(fp_tser_fid)
                     # 6. Time-stage for channel
                     if chan_tser_fid != 0:
                         try:
