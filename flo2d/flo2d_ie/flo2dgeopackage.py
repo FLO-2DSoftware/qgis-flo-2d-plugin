@@ -2600,12 +2600,29 @@ class Flo2dGeoPackage(GeoPackageUtils):
                         bc_group.create_dataset('Outflow/TS_OUT_DATA', [])
                         for ts_line_values in self.execute(ts_data_sql, (fp_tser_fid,)):
                              bc_group.datasets["Outflow/TS_OUT_DATA"].data.append(create_array(ts_line, 3, np.float_, ts_line_values))
+                        ts_series_fid.append(chan_tser_fid)
                     continue
 
                 # 6. Time-stage for channel
                 variables = (fp_out, chan_out, hydro_out, chan_qhpar_fid, chan_qhtab_fid, fp_tser_fid)
-                if chan_tser_fid == 1 and check_outflow_condition(variables):
-                    self.uc.log_info("TS CH")
+                if chan_tser_fid != 0 and check_outflow_condition(variables):
+                    try:
+                        bc_group.datasets["Outflow/TS_OUT_GRID"].data.append(
+                            create_array(n_line, 3, np.int_, (gid, 1, chan_tser_fid)))
+                        if chan_tser_fid not in ts_series_fid:
+                            for ts_line_values in self.execute(ts_data_sql, (chan_tser_fid,)):
+                                bc_group.datasets["Outflow/TS_OUT_DATA"].data.append(
+                                    create_array(ts_line, 3, np.float_, ts_line_values))
+                            ts_series_fid.append(chan_tser_fid)
+                    except:
+                        bc_group.create_dataset('Outflow/TS_OUT_GRID', [])
+                        bc_group.datasets["Outflow/TS_OUT_GRID"].data.append(
+                            create_array(n_line, 3, np.int_, (gid, 1, chan_tser_fid)))
+                        bc_group.create_dataset('Outflow/TS_OUT_DATA', [])
+                        for ts_line_values in self.execute(ts_data_sql, (chan_tser_fid,)):
+                            bc_group.datasets["Outflow/TS_OUT_DATA"].data.append(
+                                create_array(ts_line, 3, np.float_, ts_line_values))
+                        ts_series_fid.append(chan_tser_fid)
                     continue
 
                 # 7. Time-stage for floodplain and free floodplain and channel
