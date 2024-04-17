@@ -19,6 +19,7 @@ import warnings
 from subprocess import PIPE, STDOUT, Popen
 
 import numpy as np
+from PyQt5.QtWidgets import QMessageBox
 
 sys.path.append(os.path.dirname(__file__))
 from affine import Affine
@@ -26,10 +27,10 @@ from pip_install import pip_install
 
 with warnings.catch_warnings():
     warnings.filterwarnings("ignore", category=DeprecationWarning)
-    from osgeo import gdal
+from osgeo import gdal
 
-    gdal.UseExceptions()
-    from osgeo import osr
+gdal.UseExceptions()
+from osgeo import osr
 
 gdal_default_cachemax = gdal.GetCacheMax()  # bytes
 
@@ -44,22 +45,22 @@ def print_line(message, *arg, **kwargs):
         GUI_STDIO.logMessage.emit(message, False)
 
 
-def install_dask():
-    available = True
-    try:
-        import dask
-        from dask.distributed import Client
-    except:
-        print_line("Missing dask dependencies.")
-        print_line("Trying to install dask library ...\n")
-        pip_install("dask[complete],dask[distributed],pandas", pipe=print_line)
-        try:
-            import dask
-        except:
-            print_line("Problem with dask library\n")
-            print_line(traceback.format_exc() + "\n")
-            available = False
-    return available
+# def install_dask():
+#     available = True
+#     try:
+#         import dask
+#         from dask.distributed import Client
+#     except:
+#         print_line("Missing dask dependencies.")
+#         print_line("Trying to install dask library ...\n")
+#         pip_install("dask[complete],dask[distributed],pandas", pipe=print_line)
+#         try:
+#             import dask
+#         except:
+#             print_line("Problem with dask library\n")
+#             print_line(traceback.format_exc() + "\n")
+#             available = False
+#     return available
 
 
 def gdal_progress_callback(complete, message, data):
@@ -376,40 +377,40 @@ def raster_to_xyz(raster_inpath, xyz_outpath, set_integer_nodata=False, remove_n
     # Remove nodata from XYZ file and save in another file, whose filename is random
     xyz_temp_outpath = get_temp_filepath(xyz_outpath, os.path.splitext(xyz_outpath)[1])
 
-    @timer
-    def _remove_xyz_nodata():
-        if not install_dask():
-            gdal_callback_data = ["XYZ file--Remove Nodata"]
-            ogr_opt = gdal.VectorTranslateOptions(
-                format="CSV",
-                accessMode="overwrite",
-                SQLStatement="SELECT CAST(X as float),CAST(Y as float),CAST(Z as float) FROM {0:s} WHERE Z > '{1:f}'".format(
-                    os.path.basename(xyz_outpath)[:-4], src_nodata
-                ),
-                options=["SEPARATOR=COMMA"],  # 'STRING_QUOTING=IF_NEEDED'],
-                callback=gdal_progress_callback,
-                callback_data=gdal_callback_data,
-            )
-            gdal.VectorTranslate(xyz_temp_outpath, xyz_outpath, options=ogr_opt)
-        else:
-            print_line(">>> Using dask to remove nodata from XYZ file.\n")
-            import dask.dataframe as dd
-
-            df = dd.read_csv(xyz_outpath)
-            df_revised = df[df.Z > src_nodata]
-            df_revised.to_csv(xyz_temp_outpath, single_file=True, index=False)
-
-    if remove_nodata:
-        _remove_xyz_nodata()
-        if os.path.exists(xyz_temp_outpath):
-            os.replace(xyz_temp_outpath, xyz_outpath)
-
-    # Clean up ........................................
-    ds, band = (None, None)  # this may be not necessary
-    if raster_src != raster_inpath:
-        os.unlink(raster_src)
-
-    return xyz_outpath
+    # @timer
+    # def _remove_xyz_nodata():
+    #     if not install_dask():
+    #         gdal_callback_data = ["XYZ file--Remove Nodata"]
+    #         ogr_opt = gdal.VectorTranslateOptions(
+    #             format="CSV",
+    #             accessMode="overwrite",
+    #             SQLStatement="SELECT CAST(X as float),CAST(Y as float),CAST(Z as float) FROM {0:s} WHERE Z > '{1:f}'".format(
+    #                 os.path.basename(xyz_outpath)[:-4], src_nodata
+    #             ),
+    #             options=["SEPARATOR=COMMA"],  # 'STRING_QUOTING=IF_NEEDED'],
+    #             callback=gdal_progress_callback,
+    #             callback_data=gdal_callback_data,
+    #         )
+    #         gdal.VectorTranslate(xyz_temp_outpath, xyz_outpath, options=ogr_opt)
+    #     else:
+    #         print_line(">>> Using dask to remove nodata from XYZ file.\n")
+    #         import dask.dataframe as dd
+    #
+    #         df = dd.read_csv(xyz_outpath)
+    #         df_revised = df[df.Z > src_nodata]
+    #         df_revised.to_csv(xyz_temp_outpath, single_file=True, index=False)
+    #
+    # if remove_nodata:
+    #     _remove_xyz_nodata()
+    #     if os.path.exists(xyz_temp_outpath):
+    #         os.replace(xyz_temp_outpath, xyz_outpath)
+    #
+    # # Clean up ........................................
+    # ds, band = (None, None)  # this may be not necessary
+    # if raster_src != raster_inpath:
+    #     os.unlink(raster_src)
+    #
+    # return xyz_outpath
 
 
 @timer
@@ -457,45 +458,110 @@ def xyz_to_raster(xyz_inpath, extents, shape, resampling_option, srs, layername=
 @timer
 def xyz_to_raster_gds_average(csv_file, extents, shape, srs, open_dashboard, procs, threads, nodata=None):
     print_line("XYZ-to-Raster-Average\n")
-    if install_dask():
-        base_path, ext = os.path.splitext(csv_file)
-        raster_outpath = "{}_gdsgrid.tif".format(base_path)  # hard-coded path
-        py_script = os.path.join(os.path.dirname(__file__), "calc_average_elev.py")
-        xmin, ymin, xmax, ymax = [str(x) for x in extents]
-        rows, cols = [str(x) for x in shape]
-        try:
-            result = subprocess.run(
-                [
-                    "python3",
-                    py_script,
-                    csv_file,
-                    xmin,
-                    ymin,
-                    xmax,
-                    ymax,
-                    rows,
-                    cols,
-                    srs,
-                    str(open_dashboard),
-                    str(procs),
-                    str(threads),
-                    str(nodata),
-                ],
-                capture_output=True,
-                check=True,
-                # stdout = PIPE,
-                # stderr= STDOUT,
-                text=True,
-                env=os.environ,
-            )
-        except subprocess.CalledProcessError as e:
-            print_line("Subprocess output: %s" % e.output)
-            print_line("Subprocess STDError: %s" % e.stderr)
-            raise Exception("xyz to raster failed. Check the printed error message.")
 
+    try:
+        import dask
+        import subprocess
+    except ImportError:
+        message = "The dask library is not found in your python environment. This external library is required to " \
+                  "run some processes related to sampling elevation. More information on: https://www.dask.org/.\n\n" \
+                  "Would you like to install it automatically or " \
+                  "manually?\n\nSelect automatic if you have admin rights. Otherwise, contact your admin and " \
+                  "follow the manual steps."
+        title = "External library not found!"
+        button1 = "Automatic"
+        button2 = "Manual"
+
+        msgBox = QMessageBox()
+        msgBox.setWindowTitle(title)
+        msgBox.setText(message)
+        msgBox.setStandardButtons(QMessageBox.Yes | QMessageBox.No | QMessageBox.Close)
+        msgBox.setDefaultButton(QMessageBox.Yes)
+        buttonY = msgBox.button(QMessageBox.Yes)
+        buttonY.setText(button1)
+        buttonN = msgBox.button(QMessageBox.No)
+        buttonN.setText(button2)
+
+        install_options = msgBox.exec_()
+
+        if install_options == QMessageBox.Yes:
+            try:
+                import pathlib as pl
+                import subprocess
+                import sys
+
+                qgis_Path = pl.Path(sys.executable)
+                qgis_python_path = (qgis_Path.parent / "python3.exe").as_posix()
+
+                subprocess.check_call(
+                    [qgis_python_path, "-m", "pip", "install", "--user", "dask"]
+                )
+                import dask
+                import subprocess
+
+            except ImportError as e:
+                msgBox = QMessageBox()
+                msgBox.setText("Error while installing dask. Install it manually.")
+                msgBox.setWindowTitle("FLO-2D")
+                icon = QMessageBox.Critical
+                msgBox.setIcon(icon)
+                msgBox.exec_()
+                return
+
+        # Manual Installation
+        elif install_options == QMessageBox.No:
+            message = "1. Run OSGeo4W Shell as admin\n" \
+                      "2. Type this command: pip install dask\n\n" \
+                      "Wait the process to finish and rerun this process.\n\n" \
+                      "For more information, access https://flo-2d.com/contact/"
+            msgBox = QMessageBox()
+            msgBox.setText(message)
+            msgBox.setWindowTitle("FLO-2D")
+            icon = QMessageBox.Critical
+            msgBox.setIcon(icon)
+            msgBox.exec_()
+            return
         else:
-            print_line("Subprocess STDOUT: %s" % result.stdout)
-            return raster_outpath
+            return
+
+    base_path, ext = os.path.splitext(csv_file)
+    raster_outpath = "{}_gdsgrid.tif".format(base_path)  # hard-coded path
+    py_script = os.path.join(os.path.dirname(__file__), "calc_average_elev.py")
+    xmin, ymin, xmax, ymax = [str(x) for x in extents]
+    rows, cols = [str(x) for x in shape]
+    try:
+        result = subprocess.run(
+            [
+                "python3",
+                py_script,
+                csv_file,
+                xmin,
+                ymin,
+                xmax,
+                ymax,
+                rows,
+                cols,
+                srs,
+                str(open_dashboard),
+                str(procs),
+                str(threads),
+                str(nodata),
+            ],
+            capture_output=True,
+            check=True,
+            # stdout = PIPE,
+            # stderr= STDOUT,
+            text=True,
+            env=os.environ,
+        )
+    except subprocess.CalledProcessError as e:
+        print_line("Subprocess output: %s" % e.output)
+        print_line("Subprocess STDError: %s" % e.stderr)
+        raise Exception("xyz to raster failed. Check the printed error message.")
+
+    else:
+        print_line("Subprocess STDOUT: %s" % result.stdout)
+        return raster_outpath
 
 
 if __name__ == "__main__":

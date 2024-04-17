@@ -196,6 +196,7 @@ class WeirsDialog(qtBaseClass, uiDialog):
                     + "Edit them as wished and then 'Save' to replace the values in the 'Storm Drain weirs' User layers."
                 )
                 QApplication.restoreOverrideCursor()
+                
         except Exception as e:
             QApplication.setOverrideCursor(Qt.ArrowCursor)
             self.uc.show_error(
@@ -203,6 +204,7 @@ class WeirsDialog(qtBaseClass, uiDialog):
                 e,
             )
             QApplication.restoreOverrideCursor()
+            
         finally:
             QApplication.restoreOverrideCursor()
 
@@ -307,11 +309,13 @@ class WeirsDialog(qtBaseClass, uiDialog):
 
             self.highlight_weir(self.weir_name_cbo.currentText())
 
-            QApplication.restoreOverrideCursor()
-
         except Exception as e:
-            QApplication.restoreOverrideCursor()
+            QApplication.setOverrideCursor(Qt.ArrowCursor)
             self.uc.show_error("ERROR 090422.1101: assignment of value failed!.\n", e)
+            QApplication.restoreOverrideCursor()
+                
+        finally:
+            QApplication.restoreOverrideCursor()
 
     def onVerticalSectionClicked(self, logicalIndex):
         self.weirs_tblw_cell_clicked(logicalIndex, 0)
@@ -388,15 +392,20 @@ class WeirsDialog(qtBaseClass, uiDialog):
 
             self.highlight_weir(self.weir_name_cbo.currentText())
 
+        except Exception as e:
+            QApplication.setOverrideCursor(Qt.ArrowCursor)
+            self.uc.show_error("ERROR 200618.0632: assignment of value failed!.\n", e)
             QApplication.restoreOverrideCursor()
 
-        except Exception as e:
+        finally:
             QApplication.restoreOverrideCursor()
-            self.uc.show_error("ERROR 200618.0632: assignment of value failed!.\n", e)
+
+
+
 
     def find_weir(self):
+        QApplication.setOverrideCursor(Qt.WaitCursor)
         try:
-            QApplication.setOverrideCursor(Qt.WaitCursor)
             if self.grid_lyr is not None:
                 if self.grid_lyr:
                     weir = self.weir_to_find_le.text()
@@ -410,7 +419,7 @@ class WeirsDialog(qtBaseClass, uiDialog):
                         self.uc.bar_warn("WARNING  070422.0734: weir '" + str(weir) + "' not found.")
         except ValueError:
             self.uc.bar_warn("WARNING  070422.0735: weir '" + str(weir) + "' not found.")
-            pass
+
         finally:
             QApplication.restoreOverrideCursor()
 
@@ -428,16 +437,14 @@ class WeirsDialog(qtBaseClass, uiDialog):
                 else:
                     self.uc.bar_warn("WARNING 070422.0760: weir '" + str(weir) + "' not found.")
                     self.lyrs.clear_rubber()
-            QApplication.restoreOverrideCursor()
-
         except ValueError:
-            QApplication.restoreOverrideCursor()
             self.uc.bar_warn("WARNING 070422.0761: weir '" + str(weir) + "' is not valid.")
             self.lyrs.clear_rubber()
-            pass
+
+        finally:
+            QApplication.restoreOverrideCursor()
 
     def zoom_in_weir(self):
-        QApplication.setOverrideCursor(Qt.WaitCursor)
         weir = self.weir_name_cbo.currentText()
         fid = self.gutils.execute("SELECT fid FROM user_swmm_weirs WHERE weir_name = ?;", (weir,)).fetchone()
         self.lyrs.show_feat_rubber(self.weirs_lyr.id(), fid[0], QColor(Qt.yellow))
@@ -445,10 +452,8 @@ class WeirsDialog(qtBaseClass, uiDialog):
         x, y = feat.geometry().centroid().asPoint()
         center_canvas(self.iface, x, y)
         zoom(self.iface, 0.4)
-        QApplication.restoreOverrideCursor()
 
     def zoom_out_weir(self):
-        QApplication.setOverrideCursor(Qt.WaitCursor)
         weir = self.weir_name_cbo.currentText()
         fid = self.gutils.execute("SELECT fid FROM user_swmm_weirs WHERE weir_name = ?;", (weir,)).fetchone()
         self.lyrs.show_feat_rubber(self.weirs_lyr.id(), fid[0], QColor(Qt.yellow))
@@ -456,7 +461,6 @@ class WeirsDialog(qtBaseClass, uiDialog):
         x, y = feat.geometry().centroid().asPoint()
         center_canvas(self.iface, x, y)
         zoom(self.iface, -0.4)
-        QApplication.restoreOverrideCursor()
 
     def save_weirs(self):
         """

@@ -271,11 +271,11 @@ class OutfallNodesDialog(qtBaseClass, uiDialog):
         self.checkbox_valueChanged(self.allow_discharge_chbox, 4)
 
     def out_fall_type_cbo_currentIndexChanged(self):
+        QApplication.setOverrideCursor(Qt.WaitCursor)
         try:
             self.combo_valueChanged(self.outfall_type_cbo, 5)
 
             self.disableTypes()
-
             idx = self.outfall_type_cbo.currentIndex()
 
             if idx == 0:
@@ -324,9 +324,10 @@ class OutfallNodesDialog(qtBaseClass, uiDialog):
                     pass
                     # self.uc.bar_warn("WARNING 221222.0625: time series " + time_series + " not found.")
         except:
-            QApplication.setOverrideCursor(Qt.ArrowCursor)
             self.uc.bar_warn("WARNING 241222.0840: outfall type not found!")
-            QApplication.restoreOverrideCursor()
+            
+        finally:
+            QApplication.restoreOverrideCursor()            
             
     def disableTypes(self):
         self.water_depth_dbox.setEnabled(False)
@@ -497,11 +498,14 @@ class OutfallNodesDialog(qtBaseClass, uiDialog):
 
             self.highlight_outfall_cell(self.grid_element_txt.text())
 
-            QApplication.restoreOverrideCursor()
-
         except Exception as e:
-            QApplication.restoreOverrideCursor()
+            QApplication.setOverrideCursor(Qt.ArrowCursor)
             self.uc.show_error("ERROR 210618.1702: error assigning outfall values!", e)
+            QApplication.restoreOverrideCursor()
+        finally:
+            QApplication.restoreOverrideCursor()                
+            
+            
 
     def fill_individual_controls_with_current_outfall_in_table(self):
         QApplication.setOverrideCursor(Qt.WaitCursor)
@@ -559,8 +563,8 @@ class OutfallNodesDialog(qtBaseClass, uiDialog):
         QApplication.restoreOverrideCursor()
 
     def find_outfall(self):
+        QApplication.setOverrideCursor(Qt.WaitCursor)
         try:
-            QApplication.setOverrideCursor(Qt.WaitCursor)
             if self.grid_lyr is not None:
                 if self.grid_lyr:
                     outfall = self.outfall_to_find_le.text()
@@ -600,32 +604,25 @@ class OutfallNodesDialog(qtBaseClass, uiDialog):
                     self.uc.bar_warn("WARNING 121121.1139: Cell " + str(cell) + " not found.")
                     self.lyrs.clear_rubber()
 
-            QApplication.restoreOverrideCursor()
-
         except ValueError:
             QApplication.setOverrideCursor(Qt.ArrowCursor)
             self.uc.bar_warn("WARNING 121121.1134: Cell " + str(cell) + "is not valid.")
             QApplication.restoreOverrideCursor()
             self.lyrs.clear_rubber()
-            pass
-
+        finally:
+            QApplication.restoreOverrideCursor()
+            
     def zoom_in_outfall_cell(self):
         self.currentCell = next(self.grid_lyr.getFeatures(QgsFeatureRequest(int(self.grid_element_txt.text()))))
-        QApplication.setOverrideCursor(Qt.WaitCursor)
         x, y = self.currentCell.geometry().centroid().asPoint()
         center_canvas(self.iface, x, y)
         zoom(self.iface, 0.4)
-        # self.update_extent()
-        QApplication.restoreOverrideCursor()
 
     def zoom_out_outfall_cell(self):
         self.currentCell = next(self.grid_lyr.getFeatures(QgsFeatureRequest(int(self.grid_element_txt.text()))))
-        QApplication.setOverrideCursor(Qt.WaitCursor)
         x, y = self.currentCell.geometry().centroid().asPoint()
         center_canvas(self.iface, x, y)
         zoom(self.iface, -0.4)
-        # self.update_extent()
-        QApplication.restoreOverrideCursor()
 
     def save_outfalls(self):
         """

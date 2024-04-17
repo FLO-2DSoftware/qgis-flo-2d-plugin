@@ -12,6 +12,8 @@ import os
 import time
 import traceback
 
+from PyQt5.QtCore import QUrl
+from PyQt5.QtGui import QDesktopServices
 from qgis.PyQt import QtCore, QtGui
 from qgis.core import NULL, Qgis, QgsFeature, QgsGeometry, QgsMessageLog, QgsWkbTypes
 from qgis.PyQt import QtWidgets
@@ -109,6 +111,7 @@ class GridToolsWidget(qtBaseClass, uiDialog):
         self.noexchange_btn.clicked.connect(self.eval_noexchange)
         self.other_variable_btn.clicked.connect(self.other_variable)
         self.tailings_btn.clicked.connect(self.get_tailings)
+        self.help_btn.clicked.connect(self.show_grid_widget_help)
 
     def setup_connection(self):
         con = self.iface.f2d["con"]
@@ -445,10 +448,11 @@ class GridToolsWidget(qtBaseClass, uiDialog):
                         if cell[0] != NULL:
                             dlg.interpolate_from_lidar()
                         else:
-                            QApplication.setOverrideCursor(QtGui.QCursor(QtCore.Qt.ArrowCursor))
+                            QApplication.setOverrideCursor(Qt.ArrowCursor)
                             proceed = self.uc.question(
                                 "Grid layer's fields 'col' and 'row' have NULL values!\n\nWould you like to assign them?"
                             )
+                            QApplication.restoreOverrideCursor()
                             if proceed:
                                 QApplication.setOverrideCursor(Qt.WaitCursor)
                                 assign_col_row_indexes_to_grid(self.lyrs.data["grid"]["qlyr"], self.gutils)
@@ -1320,3 +1324,9 @@ class GridToolsWidget(qtBaseClass, uiDialog):
                 "WARNING 060319.1721: Selection of no-exchange cells failed! Please check your No-xchange Cells (Tables layer)."
             )
             QApplication.restoreOverrideCursor()
+
+    def show_grid_widget_help(self):
+        """
+        Function to show the grid widget help
+        """
+        QDesktopServices.openUrl(QUrl("https://flo-2dsoftware.github.io/FLO-2D-Documentation/Plugin1000/widgets/grid-tools/index.html"))

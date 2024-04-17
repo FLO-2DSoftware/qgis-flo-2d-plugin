@@ -105,14 +105,14 @@ class InletNodesDialog(qtBaseClass, uiDialog):
         self.curb_height_dbox.valueChanged.connect(self.curb_height_dbox_valueChanged)
         self.clogging_factor_dbox.valueChanged.connect(self.clogging_factor_dbox_valueChanged)
         self.time_for_clogging_dbox.valueChanged.connect(self.time_for_clogging_dbox_valueChanged)
+        self.dropbox_area_dbox.valueChanged.connect(self.dropbox_area_dbox_valueChanged)
         self.inlets_tblw.cellClicked.connect(self.inlets_tblw_cell_clicked)
         self.inlet_rating_table_cbo.currentIndexChanged.connect(self.inlet_rating_table_cbo_changed)
 
         self.inlets_tblw.verticalHeader().sectionClicked.connect(self.onVerticalSectionClicked)
 
         self.set_header()
-        # self.inlets_note_lbl.setText("Values for files: (1) SWMMFLO.DAT     (2) SWMMFLORT.DAT     (3) SDCLOGGING.DAT")
-
+        
         self.populate_inlets()
 
     def setup_connection(self):
@@ -145,7 +145,8 @@ class InletNodesDialog(qtBaseClass, uiDialog):
                             curbheight,
                             swmm_clogging_factor,
                             swmm_time_for_clogging,
-                            rt_name          
+                            rt_name,
+                            drboxarea         
                     FROM user_swmm_nodes WHERE sd_type= 'I' or sd_type= 'J';"""
             rows = self.gutils.execute(qry).fetchall()
             if not rows:
@@ -176,15 +177,10 @@ class InletNodesDialog(qtBaseClass, uiDialog):
                     if name[2] != typ:
                         if len(wrong_type) < 1500:
                             wrong_type += name + "\tWrong type " + typ + ". Should be " + name[2] + ".\n"
-    
-                #
-                # if not () or
-                #         (name()[1] == "M" and name()[2] == "5"):
                 self.inlets_tblw.insertRow(row_number)
                 for cell, data in enumerate(row_data):
                     item = QTableWidgetItem()
                     if cell == 0 or cell == 1 or cell == 6 or cell == 7 or cell == 16:
-                        # item.setFlags(Qt.ItemIsSelectable | Qt.ItemIsEnabled)
                         item.setFlags(item.flags() & ~Qt.ItemIsEditable)
     
                     # item.setData(Qt.DisplayRole, data)
@@ -227,6 +223,8 @@ class InletNodesDialog(qtBaseClass, uiDialog):
                         elif cell == 16:  # Rating table name/Culvert Eq.
                             idx = self.inlet_rating_table_cbo.findText(str(data) if data is not None else "")
                             self.inlet_rating_table_cbo.setCurrentIndex(idx)
+                        elif cell == 17:
+                            self.dropbox_area_dbox.setValue(data if data is not None else 0)                            
     
                     # See if rating tables or Culvert eq. exist:
                     if cell == 0:
@@ -270,15 +268,12 @@ class InletNodesDialog(qtBaseClass, uiDialog):
                 txt = ""
                 for d in duplicates:
                     txt += "\n" + d + ""
+                QApplication.setOverrideCursor(Qt.ArrowCursor)
                 self.uc.show_info(
                     "WARNING 080120.0814:\nThe following rating tables/Culvert eq. are assigned to more than one inlet:\n"
                     + txt
                 )
-    
-            # if wrong_type:
-            #     self.uc.show_info(
-            #         "WARNING 250622.1627:\nThe following inlets have wrong type:\n\n" + wrong_type
-            #     )
+                QApplication.restoreOverrideCursor()
     
             self.inlet_cbo.model().sort(0)
             self.inlet_cbo.setCurrentIndex(0)
@@ -323,6 +318,7 @@ class InletNodesDialog(qtBaseClass, uiDialog):
                 "Clogging Factor",  # FLO-2D. SDCLOGGING.DAT
                 "Time for Clogging",  # FLO-2D. SDCLOGGING.DAT
                 "Rat.Table/Culvert Eq.",
+                "Dropbox Area",  # FLO-2D. SWMMFLODROPBOX.DAT
             ]
         )
 
@@ -435,6 +431,9 @@ class InletNodesDialog(qtBaseClass, uiDialog):
     def time_for_clogging_dbox_valueChanged(self):
         self.box_valueChanged(self.time_for_clogging_dbox, 15)
 
+    def dropbox_area_dbox_valueChanged(self):
+        self.box_valueChanged(self.dropbox_area_dbox, 17)
+
     def box_valueChanged(self, widget, col):
         if not self.block:
             inlet = self.inlet_cbo.currentText()
@@ -534,6 +533,7 @@ class InletNodesDialog(qtBaseClass, uiDialog):
         self.curb_height_dbox.setValue(float_or_zero(self.inlets_tblw.item(row, 13)))
         self.clogging_factor_dbox.setValue(float_or_zero(self.inlets_tblw.item(row, 14)))
         self.time_for_clogging_dbox.setValue(float_or_zero(self.inlets_tblw.item(row, 15)))
+        self.dropbox_area_dbox.setValue(float_or_zero(self.inlets_tblw.item(row, 17)))
 
         rt_name = self.inlets_tblw.item(row, 16).text().strip()
         rt_name = rt_name if rt_name is not None else ""
@@ -592,6 +592,7 @@ class InletNodesDialog(qtBaseClass, uiDialog):
             self.curb_height_dbox.setValue(float_or_zero(self.inlets_tblw.item(row, 13)))
             self.clogging_factor_dbox.setValue(float_or_zero(self.inlets_tblw.item(row, 14)))
             self.time_for_clogging_dbox.setValue(float_or_zero(self.inlets_tblw.item(row, 15)))
+            self.dropbox_area_dbox.setValue(float_or_zero(self.inlets_tblw.item(row, 17)))
 
             if inlet_type_index == 3:
                 rt_name = self.inlets_tblw.item(row, 16)
@@ -638,11 +639,7 @@ class InletNodesDialog(qtBaseClass, uiDialog):
                     if self.grid_count >= cell and cell > 0:
                         self.lyrs.show_feat_rubber(self.grid_lyr.id(), cell, QColor(Qt.yellow))
                         feat = next(self.grid_lyr.getFeatures(QgsFeatureRequest(cell)))
-                        center_feature(self.iface, feat, 15) 
-                        # x, y = feat.geometry().centroid().asPoint()
-                        # self.lyrs.zoom_to_all()
-                        # center_canvas(self.iface, x, y)
-                        # zoom(self.iface, 0.45)
+                        center_feature(self.iface, feat, 15)
 
                     else:
                         self.uc.bar_warn("WARNING 221219.1140: Cell " + str(cell) + " not found.")
@@ -681,6 +678,7 @@ class InletNodesDialog(qtBaseClass, uiDialog):
         """
         Save changes of user_swmm_nodes layer.
         """
+        QApplication.setOverrideCursor(Qt.WaitCursor)
         try:
             inlets = []
             t4_but_rt_name = []
@@ -758,6 +756,10 @@ class InletNodesDialog(qtBaseClass, uiDialog):
                 item = self.inlets_tblw.item(row, 16)
                 if item is not None:
                     rt_name = str(item.text())
+                    
+                item = self.inlets_tblw.item(row, 17)
+                if item is not None:
+                    drboxarea = str(item.text()) if str(item.text()) != "" else "0"                   
 
                 # See if rating table exists in swmmflort:
                 rt_fid = 0
@@ -852,6 +854,7 @@ class InletNodesDialog(qtBaseClass, uiDialog):
                         swmm_time_for_clogging,
                         rt_fid,
                         rt_name,
+                        drboxarea,
                         name,
                     )
                 )
@@ -877,7 +880,8 @@ class InletNodesDialog(qtBaseClass, uiDialog):
                 swmm_clogging_factor = ?,
                 swmm_time_for_clogging = ?,
                 rt_fid = ?,
-                rt_name = ?
+                rt_name = ?,
+                drboxarea = ?
             WHERE name = ?;"""
 
             self.gutils.execute_many(update_qry, inlets)
@@ -887,7 +891,7 @@ class InletNodesDialog(qtBaseClass, uiDialog):
                 no_rt_names = ""
                 for inl, gr in t4_but_rt_name:
                     no_rt_names += "\n" + inl + "\t(grid " + gr + ")"
-                QApplication.setOverrideCursor(Qt.WaitCursor)    
+                QApplication.setOverrideCursor(Qt.ArrowCursor)    
                 self.uc.show_info(
                     "WARNING 020219.1836:\n\nThe following "
                     + str(len(t4_but_rt_name))
@@ -897,14 +901,15 @@ class InletNodesDialog(qtBaseClass, uiDialog):
                 QApplication.restoreOverrideCursor()
 
         except Exception as e:
-            QApplication.setOverrideCursor(Qt.WaitCursor)
+            QApplication.setOverrideCursor(Qt.ArrowCursor)
             self.uc.show_error(
                 "ERROR 020219.0812: couldn't save inlets/junction into User Storm Drain Nodes!"
                 + "\n__________________________________________________",
                 e,
             )
             QApplication.restoreOverrideCursor()
-            
+        finally:
+            QApplication.restoreOverrideCursor()           
 
     def populate_rtables(self):
         self.inlet_rating_table_cbo.clear()

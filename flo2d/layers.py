@@ -2277,6 +2277,8 @@ class Layers(object):
         s = QSettings()
         s.setValue("FLO-2D/advanced_layers", False)
 
+        grp = self.get_group(self.group)
+        grp.setExpanded(True)
 
         # >>>>>>>>>>>>>>>>>111111111
 

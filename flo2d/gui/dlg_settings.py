@@ -119,6 +119,9 @@ class SettingsDialog(qtBaseClass, uiDialog):
             "SHALLOWN": 0.2,
             "TOLGLOBAL": 0.004,
             "NOPRTFP": 2,
+            "TOUT": 0.1,
+            "SIMUL": 0.1,
+            "GRAPTIM": 0.1
         }
         qry = """INSERT INTO cont (name, value, note) VALUES (?,?,?);"""
         cont_rows = self.parser.cont_rows
@@ -346,6 +349,9 @@ class SettingsDialog(qtBaseClass, uiDialog):
         contact = QgsProject.instance().metadata().author()
         plugin_v = get_plugin_version()
         qgis_v = qgis.core.Qgis.QGIS_VERSION
+        # Referencing the variable before. It will be updated if there is a FLOPRO.exe or FLOPRO_Demo.exe if FLO-2D is
+        # installed correctly on the user's computer
+        flo2d_v = "FLOPRO not found"
 
         flopro_dir = s.value("FLO-2D/last_flopro")
         if flopro_dir is not None:
