@@ -2485,13 +2485,13 @@ class Flo2dGeoPackage(GeoPackageUtils):
         outflow_cells_sql = """SELECT outflow_fid, grid_fid FROM outflow_cells ORDER BY outflow_fid, grid_fid;"""
         qh_params_data_sql = """SELECT hmax, coef, exponent FROM qh_params_data WHERE params_fid = ?;"""
         qh_table_data_sql = """SELECT depth, q FROM qh_table_data WHERE table_fid = ? ORDER BY fid;"""
-        ts_data_sql = """SELECT time, value FROM outflow_time_series_data WHERE series_fid = ? ORDER BY fid;"""
+        ts_data_sql = """SELECT series_fid, time, value FROM outflow_time_series_data WHERE series_fid = ? ORDER BY fid;"""
 
         k_line = "{0}\n"
         qh_params_line = "{0}  {1}  {2}\n"
         qh_table_line = "{0}  {1}\n"
-        n_line = "{0}  {1}\n"
-        ts_line = "{0}  {1}\n"
+        n_line = "{0}  {1} {2}\n"
+        ts_line = "{0}  {1}  {2}\n"
         o_line = "{0}  {1}\n"
 
         out_cells = self.execute(outflow_cells_sql).fetchall()
@@ -2505,6 +2505,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
         previous_oid = -1
         row = None
         border = get_BC_Border()
+        ts_series_fid = []
 
         warning = ""
 
@@ -2584,8 +2585,21 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
                 # 5. Time-stage for floodplain
                 variables = (fp_out, chan_out, hydro_out, chan_tser_fid, chan_qhpar_fid, chan_qhtab_fid)
-                if fp_tser_fid == 1 and check_outflow_condition(variables):
-                    self.uc.log_info("TS FP")
+                if fp_tser_fid != 0 and check_outflow_condition(variables):
+                    try:
+                        bc_group.datasets["Outflow/TS_OUT_GRID"].data.append(
+                            create_array(n_line, 3, np.int_, (gid, 0, fp_tser_fid)))
+                        if fp_tser_fid not in ts_series_fid:
+                            for ts_line_values in self.execute(ts_data_sql, (fp_tser_fid,)):
+                                 bc_group.datasets["Outflow/TS_OUT_DATA"].data.append(create_array(ts_line, 3, np.float_, ts_line_values))
+                            ts_series_fid.append(fp_tser_fid)
+                    except:
+                        bc_group.create_dataset('Outflow/TS_OUT_GRID', [])
+                        bc_group.datasets["Outflow/TS_OUT_GRID"].data.append(
+                            create_array(n_line, 3, np.int_, (gid, 0, fp_tser_fid)))
+                        bc_group.create_dataset('Outflow/TS_OUT_DATA', [])
+                        for ts_line_values in self.execute(ts_data_sql, (fp_tser_fid,)):
+                             bc_group.datasets["Outflow/TS_OUT_DATA"].data.append(create_array(ts_line, 3, np.float_, ts_line_values))
                     continue
 
                 # 6. Time-stage for channel
