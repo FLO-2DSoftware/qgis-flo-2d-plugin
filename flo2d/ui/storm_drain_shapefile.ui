@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>890</width>
+    <width>920</width>
     <height>570</height>
    </rect>
   </property>
@@ -18,13 +18,13 @@
   </property>
   <property name="minimumSize">
    <size>
-    <width>820</width>
+    <width>920</width>
     <height>570</height>
    </size>
   </property>
   <property name="maximumSize">
    <size>
-    <width>890</width>
+    <width>920</width>
     <height>570</height>
    </size>
   </property>
@@ -66,50 +66,12 @@
       <attribute name="title">
        <string>Inlets/Junctions</string>
       </attribute>
-      <widget class="QLabel" name="label_31">
-       <property name="geometry">
-        <rect>
-         <x>0</x>
-         <y>10</y>
-         <width>161</width>
-         <height>40</height>
-        </rect>
-       </property>
-       <property name="layoutDirection">
-        <enum>Qt::LeftToRight</enum>
-       </property>
-       <property name="text">
-        <string>Select inlets/junctions from points layer</string>
-       </property>
-       <property name="alignment">
-        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-       </property>
-       <property name="wordWrap">
-        <bool>true</bool>
-       </property>
-      </widget>
-      <widget class="QComboBox" name="inlets_shapefile_cbo">
-       <property name="geometry">
-        <rect>
-         <x>173</x>
-         <y>24</y>
-         <width>341</width>
-         <height>22</height>
-        </rect>
-       </property>
-       <property name="sizePolicy">
-        <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-         <horstretch>0</horstretch>
-         <verstretch>0</verstretch>
-        </sizepolicy>
-       </property>
-      </widget>
       <widget class="QGroupBox" name="inlets_fields_groupBox">
        <property name="geometry">
         <rect>
-         <x>10</x>
+         <x>13</x>
          <y>110</y>
-         <width>851</width>
+         <width>880</width>
          <height>330</height>
         </rect>
        </property>
@@ -121,13 +83,13 @@
        </property>
        <property name="minimumSize">
         <size>
-         <width>0</width>
+         <width>880</width>
          <height>330</height>
         </size>
        </property>
        <property name="maximumSize">
         <size>
-         <width>16777215</width>
+         <width>880</width>
          <height>330</height>
         </size>
        </property>
@@ -139,9 +101,21 @@
        </property>
        <layout class="QGridLayout" name="gridLayout_15">
         <item row="0" column="0">
-         <layout class="QGridLayout" name="gridLayout">
+         <layout class="QGridLayout" name="gridLayout" rowstretch="0,0,0,0,0,0,0" rowminimumheight="0,0,0,0,0,0,0">
           <item row="0" column="0">
            <widget class="QLabel" name="label_22">
+            <property name="minimumSize">
+             <size>
+              <width>0</width>
+              <height>22</height>
+             </size>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>16777215</width>
+              <height>22</height>
+             </size>
+            </property>
             <property name="text">
              <string>Inlet Name</string>
             </property>
@@ -152,6 +126,18 @@
           </item>
           <item row="1" column="0">
            <widget class="QLabel" name="label_47">
+            <property name="minimumSize">
+             <size>
+              <width>0</width>
+              <height>22</height>
+             </size>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>16777215</width>
+              <height>22</height>
+             </size>
+            </property>
             <property name="text">
              <string>Inlet Type</string>
             </property>
@@ -162,6 +148,18 @@
           </item>
           <item row="2" column="0">
            <widget class="QLabel" name="label_3">
+            <property name="minimumSize">
+             <size>
+              <width>0</width>
+              <height>22</height>
+             </size>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>16777215</width>
+              <height>22</height>
+             </size>
+            </property>
             <property name="text">
              <string>Invert Elevation</string>
             </property>
@@ -172,6 +170,18 @@
           </item>
           <item row="3" column="0">
            <widget class="QLabel" name="label_4">
+            <property name="minimumSize">
+             <size>
+              <width>0</width>
+              <height>22</height>
+             </size>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>16777215</width>
+              <height>22</height>
+             </size>
+            </property>
             <property name="text">
              <string>Max. Depth</string>
             </property>
@@ -182,6 +192,18 @@
           </item>
           <item row="5" column="0">
            <widget class="QLabel" name="label_8">
+            <property name="minimumSize">
+             <size>
+              <width>0</width>
+              <height>22</height>
+             </size>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>16777215</width>
+              <height>22</height>
+             </size>
+            </property>
             <property name="text">
              <string>Surcharge Depth</string>
             </property>
@@ -192,6 +214,18 @@
           </item>
           <item row="4" column="0">
            <widget class="QLabel" name="label_5">
+            <property name="minimumSize">
+             <size>
+              <width>0</width>
+              <height>22</height>
+             </size>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>16777215</width>
+              <height>22</height>
+             </size>
+            </property>
             <property name="text">
              <string>Init. Depth</string>
             </property>
@@ -202,6 +236,18 @@
           </item>
           <item row="6" column="0">
            <widget class="QLabel" name="label_11">
+            <property name="minimumSize">
+             <size>
+              <width>0</width>
+              <height>22</height>
+             </size>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>16777215</width>
+              <height>22</height>
+             </size>
+            </property>
             <property name="font">
              <font>
               <italic>true</italic>
@@ -597,6 +643,13 @@
           </item>
          </layout>
         </item>
+        <item row="1" column="4">
+         <widget class="QPushButton" name="clear_all_inlets_btn">
+          <property name="text">
+           <string>Unselect all Inlet/Junction Fields</string>
+          </property>
+         </widget>
+        </item>
         <item row="0" column="2">
          <layout class="QGridLayout" name="gridLayout_5">
           <item row="0" column="0">
@@ -817,7 +870,7 @@
           </item>
          </layout>
         </item>
-        <item row="0" column="3">
+        <item row="0" column="3" colspan="2">
          <layout class="QGridLayout" name="gridLayout_14">
           <item row="0" column="0">
            <layout class="QGridLayout" name="gridLayout_12">
@@ -1229,20 +1282,13 @@
           </item>
          </layout>
         </item>
-        <item row="1" column="0" colspan="3">
+        <item row="1" column="0" colspan="4">
          <widget class="QLabel" name="label_24">
           <property name="text">
-           <string>fields for   * SWMMFLO.DAT     # SDCLOGGING.DAT    &amp; SWMMFLODROPBOX</string>
+           <string>fields for   * SWMMFLO.DAT     # SDCLOGGING.DAT    &amp; SWMMFLODROPBOX.DAT</string>
           </property>
           <property name="wordWrap">
            <bool>false</bool>
-          </property>
-         </widget>
-        </item>
-        <item row="1" column="3">
-         <widget class="QPushButton" name="clear_all_inlets_btn">
-          <property name="text">
-           <string>Unselect all Inlet/Junction Fields</string>
           </property>
          </widget>
         </item>
@@ -1251,23 +1297,41 @@
       <widget class="QLabel" name="label_21">
        <property name="geometry">
         <rect>
-         <x>70</x>
-         <y>50</y>
-         <width>441</width>
-         <height>20</height>
+         <x>13</x>
+         <y>53</y>
+         <width>450</width>
+         <height>19</height>
         </rect>
+       </property>
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="minimumSize">
+        <size>
+         <width>450</width>
+         <height>0</height>
+        </size>
+       </property>
+       <property name="maximumSize">
+        <size>
+         <width>450</width>
+         <height>16777215</height>
+        </size>
        </property>
        <property name="text">
         <string>(only visible point layers with at least one feature are shown)</string>
        </property>
       </widget>
-      <widget class="QWidget" name="layoutWidget">
+      <widget class="QWidget" name="">
        <property name="geometry">
         <rect>
-         <x>520</x>
-         <y>20</y>
-         <width>337</width>
-         <height>57</height>
+         <x>620</x>
+         <y>10</y>
+         <width>264</width>
+         <height>76</height>
         </rect>
        </property>
        <layout class="QVBoxLayout" name="verticalLayout_14">
@@ -1276,8 +1340,27 @@
           <property name="enabled">
            <bool>true</bool>
           </property>
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="minimumSize">
+           <size>
+            <width>231</width>
+            <height>0</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>231</width>
+            <height>16777215</height>
+           </size>
+          </property>
           <property name="text">
-           <string>Add to current storm drain inlets/junctions</string>
+           <string>Add to current storm drain 
+inlets/junctions</string>
           </property>
          </widget>
         </item>
@@ -1286,8 +1369,64 @@
           <property name="enabled">
            <bool>false</bool>
           </property>
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
           <property name="text">
            <string>Discard unlinked inlets/junctions</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QWidget" name="">
+       <property name="geometry">
+        <rect>
+         <x>1</x>
+         <y>14</y>
+         <width>609</width>
+         <height>30</height>
+        </rect>
+       </property>
+       <layout class="QHBoxLayout" name="horizontalLayout_15">
+        <item>
+         <widget class="QLabel" name="label_31">
+          <property name="layoutDirection">
+           <enum>Qt::LeftToRight</enum>
+          </property>
+          <property name="text">
+           <string>Select inlets/junctions from points layer</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+          </property>
+          <property name="wordWrap">
+           <bool>true</bool>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QComboBox" name="inlets_shapefile_cbo">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="minimumSize">
+           <size>
+            <width>300</width>
+            <height>0</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>300</width>
+            <height>16777215</height>
+           </size>
           </property>
          </widget>
         </item>
@@ -1298,52 +1437,32 @@
       <attribute name="title">
        <string>Outfalls</string>
       </attribute>
-      <widget class="QComboBox" name="outfalls_shapefile_cbo">
+      <widget class="QGroupBox" name="outfalls_fields_groupBox">
        <property name="geometry">
         <rect>
-         <x>173</x>
-         <y>24</y>
-         <width>341</width>
-         <height>22</height>
+         <x>110</x>
+         <y>107</y>
+         <width>622</width>
+         <height>349</height>
         </rect>
        </property>
        <property name="sizePolicy">
-        <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+        <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
          <horstretch>0</horstretch>
          <verstretch>0</verstretch>
         </sizepolicy>
        </property>
-      </widget>
-      <widget class="QLabel" name="label_99">
-       <property name="geometry">
-        <rect>
-         <x>20</x>
-         <y>10</y>
-         <width>131</width>
-         <height>40</height>
-        </rect>
-       </property>
-       <property name="layoutDirection">
-        <enum>Qt::LeftToRight</enum>
-       </property>
-       <property name="text">
-        <string>Select outfalls from points layer</string>
-       </property>
-       <property name="alignment">
-        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-       </property>
-       <property name="wordWrap">
-        <bool>true</bool>
-       </property>
-      </widget>
-      <widget class="QGroupBox" name="outfalls_fields_groupBox">
-       <property name="geometry">
-        <rect>
-         <x>90</x>
-         <y>100</y>
+       <property name="minimumSize">
+        <size>
          <width>622</width>
-         <height>349</height>
-        </rect>
+         <height>0</height>
+        </size>
+       </property>
+       <property name="maximumSize">
+        <size>
+         <width>622</width>
+         <height>16777215</height>
+        </size>
        </property>
        <property name="title">
         <string>Outfalls Fields Selection</string>
@@ -2013,10 +2132,10 @@
       <widget class="QLabel" name="label_2">
        <property name="geometry">
         <rect>
-         <x>80</x>
-         <y>50</y>
-         <width>441</width>
-         <height>20</height>
+         <x>13</x>
+         <y>53</y>
+         <width>431</width>
+         <height>19</height>
         </rect>
        </property>
        <property name="text">
@@ -2026,8 +2145,8 @@
       <widget class="QWidget" name="layoutWidget">
        <property name="geometry">
         <rect>
-         <x>570</x>
-         <y>20</y>
+         <x>600</x>
+         <y>13</y>
          <width>281</width>
          <height>57</height>
         </rect>
@@ -2055,54 +2174,71 @@
         </item>
        </layout>
       </widget>
+      <widget class="QWidget" name="">
+       <property name="geometry">
+        <rect>
+         <x>0</x>
+         <y>13</y>
+         <width>571</width>
+         <height>40</height>
+        </rect>
+       </property>
+       <layout class="QHBoxLayout" name="horizontalLayout_16">
+        <item>
+         <widget class="QLabel" name="label_99">
+          <property name="layoutDirection">
+           <enum>Qt::LeftToRight</enum>
+          </property>
+          <property name="text">
+           <string>Select outfalls from points layer</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+          </property>
+          <property name="wordWrap">
+           <bool>true</bool>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QComboBox" name="outfalls_shapefile_cbo">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="minimumSize">
+           <size>
+            <width>300</width>
+            <height>0</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>300</width>
+            <height>16777215</height>
+           </size>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+     </widget>
+     <widget class="QWidget" name="storage_units_tab">
+      <attribute name="title">
+       <string>Storage Units</string>
+      </attribute>
      </widget>
      <widget class="QWidget" name="conduits_tab">
       <attribute name="title">
        <string>Conduits</string>
       </attribute>
-      <widget class="QComboBox" name="conduits_shapefile_cbo">
-       <property name="geometry">
-        <rect>
-         <x>173</x>
-         <y>24</y>
-         <width>341</width>
-         <height>22</height>
-        </rect>
-       </property>
-       <property name="sizePolicy">
-        <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-         <horstretch>0</horstretch>
-         <verstretch>0</verstretch>
-        </sizepolicy>
-       </property>
-      </widget>
-      <widget class="QLabel" name="label_100">
-       <property name="geometry">
-        <rect>
-         <x>0</x>
-         <y>10</y>
-         <width>161</width>
-         <height>40</height>
-        </rect>
-       </property>
-       <property name="layoutDirection">
-        <enum>Qt::LeftToRight</enum>
-       </property>
-       <property name="text">
-        <string>Select conduits from lines layer</string>
-       </property>
-       <property name="alignment">
-        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-       </property>
-       <property name="wordWrap">
-        <bool>true</bool>
-       </property>
-      </widget>
       <widget class="QGroupBox" name="conduits_fields_groupBox">
        <property name="geometry">
         <rect>
-         <x>2</x>
-         <y>80</y>
+         <x>20</x>
+         <y>90</y>
          <width>848</width>
          <height>381</height>
         </rect>
@@ -3432,8 +3568,8 @@
       <widget class="QLabel" name="label">
        <property name="geometry">
         <rect>
-         <x>110</x>
-         <y>50</y>
+         <x>13</x>
+         <y>53</y>
          <width>431</width>
          <height>20</height>
         </rect>
@@ -3445,8 +3581,8 @@
       <widget class="QWidget" name="layoutWidget">
        <property name="geometry">
         <rect>
-         <x>560</x>
-         <y>20</y>
+         <x>590</x>
+         <y>10</y>
          <width>289</width>
          <height>57</height>
         </rect>
@@ -3474,6 +3610,56 @@
         </item>
        </layout>
       </widget>
+      <widget class="QWidget" name="">
+       <property name="geometry">
+        <rect>
+         <x>0</x>
+         <y>10</y>
+         <width>561</width>
+         <height>40</height>
+        </rect>
+       </property>
+       <layout class="QHBoxLayout" name="horizontalLayout_18">
+        <item>
+         <widget class="QLabel" name="label_100">
+          <property name="layoutDirection">
+           <enum>Qt::LeftToRight</enum>
+          </property>
+          <property name="text">
+           <string>Select conduits from lines layer</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+          </property>
+          <property name="wordWrap">
+           <bool>true</bool>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QComboBox" name="conduits_shapefile_cbo">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="minimumSize">
+           <size>
+            <width>300</width>
+            <height>0</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>300</width>
+            <height>16777215</height>
+           </size>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </widget>
      </widget>
      <widget class="QWidget" name="pumps_tab">
       <attribute name="title">
@@ -3482,7 +3668,7 @@
       <widget class="QGroupBox" name="pumps_fields_groupBox">
        <property name="geometry">
         <rect>
-         <x>30</x>
+         <x>40</x>
          <y>120</y>
          <width>811</width>
          <height>279</height>
@@ -4173,49 +4359,11 @@
         </item>
        </layout>
       </widget>
-      <widget class="QLabel" name="label_101">
-       <property name="geometry">
-        <rect>
-         <x>30</x>
-         <y>10</y>
-         <width>131</width>
-         <height>40</height>
-        </rect>
-       </property>
-       <property name="layoutDirection">
-        <enum>Qt::LeftToRight</enum>
-       </property>
-       <property name="text">
-        <string>Select pump from lines layer</string>
-       </property>
-       <property name="alignment">
-        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-       </property>
-       <property name="wordWrap">
-        <bool>true</bool>
-       </property>
-      </widget>
-      <widget class="QComboBox" name="pumps_shapefile_cbo">
-       <property name="geometry">
-        <rect>
-         <x>173</x>
-         <y>24</y>
-         <width>341</width>
-         <height>22</height>
-        </rect>
-       </property>
-       <property name="sizePolicy">
-        <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-         <horstretch>0</horstretch>
-         <verstretch>0</verstretch>
-        </sizepolicy>
-       </property>
-      </widget>
       <widget class="QLabel" name="label_67">
        <property name="geometry">
         <rect>
-         <x>100</x>
-         <y>50</y>
+         <x>13</x>
+         <y>53</y>
          <width>431</width>
          <height>20</height>
         </rect>
@@ -4227,8 +4375,8 @@
       <widget class="QWidget" name="layoutWidget">
        <property name="geometry">
         <rect>
-         <x>570</x>
-         <y>20</y>
+         <x>590</x>
+         <y>10</y>
          <width>278</width>
          <height>57</height>
         </rect>
@@ -4256,53 +4404,65 @@
         </item>
        </layout>
       </widget>
+      <widget class="QWidget" name="">
+       <property name="geometry">
+        <rect>
+         <x>0</x>
+         <y>10</y>
+         <width>561</width>
+         <height>40</height>
+        </rect>
+       </property>
+       <layout class="QHBoxLayout" name="horizontalLayout_19">
+        <item>
+         <widget class="QLabel" name="label_101">
+          <property name="layoutDirection">
+           <enum>Qt::LeftToRight</enum>
+          </property>
+          <property name="text">
+           <string>Select pumps from lines layer</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+          </property>
+          <property name="wordWrap">
+           <bool>true</bool>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QComboBox" name="pumps_shapefile_cbo">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="minimumSize">
+           <size>
+            <width>300</width>
+            <height>0</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>300</width>
+            <height>16777215</height>
+           </size>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </widget>
      </widget>
      <widget class="QWidget" name="orifices_tab">
       <attribute name="title">
        <string>Orifices</string>
       </attribute>
-      <widget class="QLabel" name="label_102">
-       <property name="geometry">
-        <rect>
-         <x>30</x>
-         <y>10</y>
-         <width>141</width>
-         <height>40</height>
-        </rect>
-       </property>
-       <property name="layoutDirection">
-        <enum>Qt::LeftToRight</enum>
-       </property>
-       <property name="text">
-        <string>Select orifices from lines layer</string>
-       </property>
-       <property name="alignment">
-        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-       </property>
-       <property name="wordWrap">
-        <bool>true</bool>
-       </property>
-      </widget>
-      <widget class="QComboBox" name="orifices_shapefile_cbo">
-       <property name="geometry">
-        <rect>
-         <x>173</x>
-         <y>24</y>
-         <width>341</width>
-         <height>22</height>
-        </rect>
-       </property>
-       <property name="sizePolicy">
-        <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-         <horstretch>0</horstretch>
-         <verstretch>0</verstretch>
-        </sizepolicy>
-       </property>
-      </widget>
       <widget class="QGroupBox" name="orifices_fields_groupBox">
        <property name="geometry">
         <rect>
-         <x>10</x>
+         <x>30</x>
          <y>120</y>
          <width>838</width>
          <height>271</height>
@@ -5082,8 +5242,8 @@
       <widget class="QLabel" name="label_68">
        <property name="geometry">
         <rect>
-         <x>100</x>
-         <y>50</y>
+         <x>13</x>
+         <y>53</y>
          <width>441</width>
          <height>20</height>
         </rect>
@@ -5095,8 +5255,8 @@
       <widget class="QWidget" name="layoutWidget">
        <property name="geometry">
         <rect>
-         <x>570</x>
-         <y>30</y>
+         <x>600</x>
+         <y>10</y>
          <width>280</width>
          <height>57</height>
         </rect>
@@ -5124,6 +5284,56 @@
         </item>
        </layout>
       </widget>
+      <widget class="QWidget" name="">
+       <property name="geometry">
+        <rect>
+         <x>20</x>
+         <y>10</y>
+         <width>531</width>
+         <height>40</height>
+        </rect>
+       </property>
+       <layout class="QHBoxLayout" name="horizontalLayout_20">
+        <item>
+         <widget class="QLabel" name="label_102">
+          <property name="layoutDirection">
+           <enum>Qt::LeftToRight</enum>
+          </property>
+          <property name="text">
+           <string>Select orifices from lines layer</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+          </property>
+          <property name="wordWrap">
+           <bool>true</bool>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QComboBox" name="orifices_shapefile_cbo">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="minimumSize">
+           <size>
+            <width>300</width>
+            <height>0</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>300</width>
+            <height>16777215</height>
+           </size>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </widget>
      </widget>
      <widget class="QWidget" name="weirs_tab">
       <attribute name="title">
@@ -5132,8 +5342,8 @@
       <widget class="QLabel" name="label_71">
        <property name="geometry">
         <rect>
-         <x>100</x>
-         <y>50</y>
+         <x>13</x>
+         <y>53</y>
          <width>420</width>
          <height>19</height>
         </rect>
@@ -5142,27 +5352,11 @@
         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;(only visible line layers with at least one feature are shown)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
        </property>
       </widget>
-      <widget class="QComboBox" name="weirs_shapefile_cbo">
-       <property name="geometry">
-        <rect>
-         <x>173</x>
-         <y>24</y>
-         <width>341</width>
-         <height>22</height>
-        </rect>
-       </property>
-       <property name="sizePolicy">
-        <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-         <horstretch>0</horstretch>
-         <verstretch>0</verstretch>
-        </sizepolicy>
-       </property>
-      </widget>
       <widget class="QGroupBox" name="weirs_fields_groupBox">
        <property name="geometry">
         <rect>
-         <x>22</x>
-         <y>130</y>
+         <x>40</x>
+         <y>110</y>
          <width>821</width>
          <height>302</height>
         </rect>
@@ -5175,13 +5369,13 @@
        </property>
        <property name="minimumSize">
         <size>
-         <width>0</width>
+         <width>821</width>
          <height>0</height>
         </size>
        </property>
        <property name="maximumSize">
         <size>
-         <width>16777215</width>
+         <width>821</width>
          <height>16777215</height>
         </size>
        </property>
@@ -5191,7 +5385,7 @@
        <property name="alignment">
         <set>Qt::AlignCenter</set>
        </property>
-       <layout class="QGridLayout" name="gridLayout_52">
+       <layout class="QGridLayout" name="gridLayout_28">
         <item row="0" column="0">
          <layout class="QHBoxLayout" name="horizontalLayout_4">
           <item>
@@ -6054,33 +6248,11 @@
         </item>
        </layout>
       </widget>
-      <widget class="QLabel" name="label_103">
-       <property name="geometry">
-        <rect>
-         <x>40</x>
-         <y>10</y>
-         <width>122</width>
-         <height>38</height>
-        </rect>
-       </property>
-       <property name="layoutDirection">
-        <enum>Qt::LeftToRight</enum>
-       </property>
-       <property name="text">
-        <string>Select weirs from lines layer</string>
-       </property>
-       <property name="alignment">
-        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-       </property>
-       <property name="wordWrap">
-        <bool>true</bool>
-       </property>
-      </widget>
       <widget class="QWidget" name="layoutWidget">
        <property name="geometry">
         <rect>
-         <x>580</x>
-         <y>30</y>
+         <x>610</x>
+         <y>10</y>
          <width>267</width>
          <height>57</height>
         </rect>
@@ -6103,6 +6275,56 @@
           </property>
           <property name="text">
            <string>Discard unlinked weirs</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QWidget" name="">
+       <property name="geometry">
+        <rect>
+         <x>0</x>
+         <y>13</y>
+         <width>561</width>
+         <height>40</height>
+        </rect>
+       </property>
+       <layout class="QHBoxLayout" name="horizontalLayout_17">
+        <item>
+         <widget class="QLabel" name="label_103">
+          <property name="layoutDirection">
+           <enum>Qt::LeftToRight</enum>
+          </property>
+          <property name="text">
+           <string>Select weirs from lines layer</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+          </property>
+          <property name="wordWrap">
+           <bool>true</bool>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QComboBox" name="weirs_shapefile_cbo">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="minimumSize">
+           <size>
+            <width>300</width>
+            <height>0</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>300</width>
+            <height>16777215</height>
+           </size>
           </property>
          </widget>
         </item>
