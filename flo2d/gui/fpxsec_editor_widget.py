@@ -11,8 +11,8 @@
 import os
 import traceback
 
-from PyQt5.QtCore import QSettings, Qt
-from PyQt5.QtGui import QColor
+from PyQt5.QtCore import QSettings, Qt, QUrl
+from PyQt5.QtGui import QColor, QDesktopServices
 from PyQt5.QtWidgets import QApplication
 from qgis.core import QgsFeatureRequest
 from qgis.PyQt.QtGui import QIcon
@@ -69,6 +69,7 @@ class FPXsecEditorWidget(qtBaseClass, uiDialog):
         self.rename_fpxs_btn.clicked.connect(self.rename_fpxs)
         self.fpxs_cbo.activated.connect(self.cur_fpxs_changed)
         self.flow_dir_cbo.activated.connect(self.save_fpxs)
+        self.help_btn.clicked.connect(self.show_fp_xs_widget_help)
 
     def setup_connection(self):
         con = self.iface.f2d["con"]
@@ -402,3 +403,10 @@ class FPXsecEditorWidget(qtBaseClass, uiDialog):
             QApplication.restoreOverrideCursor()
             self.uc.bar_warn("Error while building table for floodplain cells!")
             return
+
+    def show_fp_xs_widget_help(self):
+        """
+        Function to show the fp xs widget help
+        """
+        QDesktopServices.openUrl(QUrl("https://flo-2dsoftware.github.io/FLO-2D-Documentation/Plugin1000/widgets"
+                                      "/floodplain-cross-section-editor/Floodplain%20Cross%20Section%20Editor.html"))
