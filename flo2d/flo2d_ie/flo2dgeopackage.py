@@ -2066,31 +2066,37 @@ class Flo2dGeoPackage(GeoPackageUtils):
         if self.is_table_empty("inflow") and self.is_table_empty("reservoirs"):
             return False
         cont_sql = """SELECT value FROM cont WHERE name = ?;"""
-        inflow_sql = """SELECT fid, time_series_fid, ident, inoutfc FROM inflow WHERE bc_fid = ?;"""
+        inflow_sql = """SELECT fid, time_series_fid, ident, inoutfc FROM inflow WHERE fid = ?;"""
         inflow_cells_sql = """SELECT inflow_fid, grid_fid FROM inflow_cells ORDER BY inflow_fid, grid_fid;"""
         ts_data_sql = (
-            """SELECT time, value, value2 FROM inflow_time_series_data WHERE series_fid = ? ORDER BY fid;"""
+            """SELECT series_fid, time, value, value2 FROM inflow_time_series_data WHERE series_fid = ? ORDER BY fid;"""
         )
 
-        head_line = " {0: <15} {1}"
-        inf_line = "{0: <15} {1: <15} {2}"
-        tsd_line = "H   {0: <15} {1: <15} {2}"
+        three_values = "{0}  {1}  {2}"
+        four_values = "{0}  {1}  {2}  {3}"
+        five_values = "{0}  {1}  {2}  {3}  {4}"
 
-        ideplt = self.execute(cont_sql, ("IDEPLT",)).fetchone()
-        ihourdaily = self.execute(cont_sql, ("IHOURDAILY",)).fetchone()
+        ideplt = self.execute(cont_sql, ("IDEPLT",)).fetchone()[0]
+        ihourdaily = self.execute(cont_sql, ("IHOURDAILY",)).fetchone()[0]
 
-        # TODO: Need to implement correct export for ideplt and ihourdaily parameters
         if ihourdaily is None:
-            ihourdaily = (0,)
+            ihourdaily = 0
         if ideplt is None:
-            first_gid = self.execute("""SELECT grid_fid FROM inflow_cells ORDER BY fid LIMIT 1;""").fetchone()
-            ideplt = first_gid if first_gid is not None else (0,)
+            first_gid = self.execute("""SELECT grid_fid FROM inflow_cells ORDER BY fid LIMIT 1;""").fetchone()[0]
+            ideplt = first_gid if first_gid is not None else 0
+
+        inflow_global = [float(ihourdaily), float(ideplt)]
+
+        bc_group = self.parser.bc_group
+        bc_group.create_dataset('Inflow/INF_GLOBAL', [])
+        for data in inflow_global:
+            bc_group.datasets["Inflow/INF_GLOBAL"].data.append(data)
 
         previous_iid = -1
         row = None
 
         warning = ""
-        inflow_lines = []
+        ts_series_fid = []
 
         if not self.is_table_empty("inflow"):
             for iid, gid in self.execute(inflow_cells_sql):
@@ -2098,8 +2104,6 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     row = self.execute(inflow_sql, (iid,)).fetchone()
                     if row:
                         row = [x if x is not None and x != "" else 0 for x in row]
-                        if previous_iid == -1:
-                            inflow_lines.append(head_line.format(ihourdaily[0], ideplt[0]))
                         previous_iid = iid
                     else:
                         warning += (
@@ -2113,61 +2117,61 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 else:
                     pass
 
-                fid, ts_fid, ident, inoutfc = row  # ident is 'F' or 'C'
-                inflow_lines.append(inf_line.format(ident, inoutfc, gid))
-                series = self.execute(ts_data_sql, (ts_fid,))
-                for tsd_row in series:
-                    tsd_row = [x if x is not None else "" for x in tsd_row]
-                    inflow_lines.append(tsd_line.format(*tsd_row).rstrip())
+                fid, ts_fid, ident, inoutfc = row
+                if ident == 'F':
+                    try:
+                        bc_group.datasets["Inflow/INF_GRID"].data.append(
+                            create_array(four_values, 4, np.int_, (0, inoutfc, gid, ts_fid)))
+                        if ts_fid not in ts_series_fid:
+                            for tsd_row in self.execute(ts_data_sql, (ts_fid,)):
+                                tsd_row = [x if (x is not None and x != "") else -9999 for x in tsd_row]
+                                bc_group.datasets["Inflow/TS_INF_DATA"].data.append(
+                                    create_array(four_values, 4, np.float_, tuple(tsd_row)))
+                            ts_series_fid.append(ts_fid)
+                    except:
+                        bc_group.create_dataset('Inflow/INF_GRID', [])
+                        bc_group.datasets["Inflow/INF_GRID"].data.append(
+                            create_array(four_values, 4, np.int_, (0, inoutfc, gid, ts_fid)))
+                        bc_group.create_dataset('Inflow/TS_INF_DATA', [])
+                        for tsd_row in self.execute(ts_data_sql, (ts_fid,)):
+                            tsd_row = [x if (x is not None and x != "") else -9999 for x in tsd_row]
+                            bc_group.datasets["Inflow/TS_INF_DATA"].data.append(
+                                create_array(four_values, 4, np.float_, tuple(tsd_row)))
+                        ts_series_fid.append(ts_fid)
+
+                if ident == 'C':
+                    try:
+                        bc_group.datasets["Inflow/INF_GRID"].data.append(
+                            create_array(four_values, 4, np.int_, (1, inoutfc, gid, ts_fid)))
+                        if ts_fid not in ts_series_fid:
+                            for tsd_row in self.execute(ts_data_sql, (ts_fid,)):
+                                tsd_row = [x if (x is not None and x != "") else -9999 for x in tsd_row]
+                                bc_group.datasets["Inflow/TS_INF_DATA"].data.append(
+                                    create_array(four_values, 4, np.float_, tuple(tsd_row)))
+                            ts_series_fid.append(ts_fid)
+                    except:
+                        bc_group.create_dataset('Inflow/INF_GRID', [])
+                        bc_group.datasets["Inflow/INF_GRID"].data.append(
+                            create_array(four_values, 4, np.int_, (1, inoutfc, gid, ts_fid)))
+                        bc_group.create_dataset('Inflow/TS_INF_DATA', [])
+                        for tsd_row in self.execute(ts_data_sql, (ts_fid,)):
+                            tsd_row = [x if (x is not None and x != "") else -9999 for x in tsd_row]
+                            bc_group.datasets["Inflow/TS_INF_DATA"].data.append(
+                                create_array(four_values, 4, np.float_, tuple(tsd_row)))
+                        ts_series_fid.append(ts_fid)
 
         if not self.is_table_empty("reservoirs"):
+
+            bc_group.create_dataset('Inflow/RESERVOIRS', [])
             schematic_reservoirs_sql = (
                 """SELECT grid_fid, wsel, n_value, use_n_value, tailings FROM reservoirs ORDER BY fid;"""
             )
-
-            res_line1a = "R   {0: <15} {1:<10.2f} {2:<10.2f}"
-            res_line1at = "R   {0: <15} {1:<10.2f} {4:<10.2f} {2:<10.2f}"
-
-            res_line1b = "R   {0: <15} {1:<10.2f}"
-            res_line1bt = "R   {0: <15} {1:<10.2f} {2:<10.2f}"
-
-            res_line2a = "R     {0: <15} {1:<10.2f} {2:<10.2f}"
-            res_line2at = "R     {0: <15} {1:<10.2f} {4:<10.2f} {2:<10.2f}"
-
-            res_line2b = "R     {0: <15} {1:<10.2f}"
-            res_line2bt = "R     {0: <15} {1:<10.2f} {4:<10.2f}"
-
             for res in self.execute(schematic_reservoirs_sql):
-                res = [x if x is not None else "" for x in res]
+                res = [x if (x is not None and x != "") else -9999 for x in res]
+                bc_group.datasets["Inflow/RESERVOIRS"].data.append(
+                    create_array(five_values, 5, np.float_, tuple(res)))
 
-                if res[3] == 1:  # write n value
-                    if res[4] == -1.0:
-                        # Do not write tailings
-                        inflow_lines.append(res_line2a.format(*res))
-                    else:
-                        # Write tailings:
-                        inflow_lines.append(res_line2at.format(*res))
-                else:  # do not write n value
-                    if res[4] == -1.0:
-                        # Do not write tailings:
-                        inflow_lines.append(res_line2b.format(*res))
-                    else:
-                        # Write tailings:
-                        inflow_lines.append(res_line2bt.format(*res))
-
-        if inflow_lines:
-            bc_group = self.parser.bc_group
-            bc_group.create_dataset('INFLOW', [])
-            for line in inflow_lines:
-                if line:
-                    values = line.split()
-                    c1 = values[0]
-                    c2 = values[1]
-                    c3 = values[2] if len(values) == 3 else ""
-                    data_array = np.array([c1, c2, c3], dtype=np.string_)
-                    bc_group.datasets["INFLOW"].data.append(data_array)
-            self.parser.write_groups(bc_group)
-
+        self.parser.write_groups(bc_group)
         return True
 
     def export_inflow_dat(self, outdir):
@@ -2189,7 +2193,6 @@ class Flo2dGeoPackage(GeoPackageUtils):
             ideplt = self.execute(cont_sql, ("IDEPLT",)).fetchone()
             ihourdaily = self.execute(cont_sql, ("IHOURDAILY",)).fetchone()
 
-            # TODO: Need to implement correct export for ideplt and ihourdaily parameters
             if ihourdaily is None:
                 ihourdaily = (0,)
             if ideplt is None:
