@@ -60,7 +60,7 @@ class FPXsecEditorWidget(qtBaseClass, uiDialog):
             icon_file = "arrow_{}.svg".format(i + 1)
             self.flow_dir_cbo.setItemIcon(i, QIcon(os.path.join(idir, icon_file)))
 
-        # connections
+        # Buttons connections
         self.add_user_fpxs_btn.clicked.connect(self.create_user_fpxs)
         self.save_changes_btn.clicked.connect(self.save_fpxs_lyr_edits)
         self.revert_changes_btn.clicked.connect(self.revert_fpxs_lyr_edits)
@@ -71,6 +71,10 @@ class FPXsecEditorWidget(qtBaseClass, uiDialog):
         self.flow_dir_cbo.activated.connect(self.save_fpxs)
         self.help_btn.clicked.connect(self.show_fp_xs_widget_help)
 
+        self.fpxsec_lyr = self.lyrs.data["user_fpxsec"]["qlyr"]
+        self.fpxsec_lyr.geometryChanged.connect(self.fpxs_feature_changed)
+        self.fpxsec_lyr.attributeValueChanged.connect(self.fpxs_feature_changed)
+
     def setup_connection(self):
         con = self.iface.f2d["con"]
         if con is None:
@@ -78,7 +82,7 @@ class FPXsecEditorWidget(qtBaseClass, uiDialog):
         else:
             self.con = con
             self.gutils = GeoPackageUtils(self.con, self.iface)
-            self.fpxsec_lyr = self.lyrs.data["user_fpxsec"]["qlyr"]
+
             self.report_chbox.setEnabled(True)
             nxprt = self.gutils.get_cont_par("NXPRT")
             if nxprt == "0":
@@ -89,8 +93,6 @@ class FPXsecEditorWidget(qtBaseClass, uiDialog):
                 self.report_chbox.setChecked(False)
                 self.set_report()
             self.report_chbox.stateChanged.connect(self.set_report)
-            self.fpxsec_lyr.selectionChanged.connect(self.switch2selected)
-            self.fpxsec_lyr.editingStopped.connect(self.populate_cbos)
 
     def switch2selected(self):
         switch_to_selected(self.fpxsec_lyr, self.fpxs_cbo)
@@ -98,21 +100,18 @@ class FPXsecEditorWidget(qtBaseClass, uiDialog):
 
     def populate_cbos(self, fid=None, show_last_edited=True):
         self.fpxs_cbo.clear()
-        qry = """SELECT fid, name, iflo FROM user_fpxsec ORDER BY name COLLATE NOCASE"""
+        qry = """SELECT fid, name, iflo FROM user_fpxsec ORDER BY fid COLLATE NOCASE"""
         rows = self.gutils.execute(qry).fetchall()
         if rows:
-            max_fid = self.gutils.get_max("user_fpxsec")
             cur_idx = 0
             for i, row in enumerate(rows):
                 self.fpxs_cbo.addItem(row[1], row)
-                if fid and row[0] == fid:
-                    cur_idx = i
-                elif show_last_edited and row[0] == max_fid:
-                    cur_idx = i
+            if fid:
+                cur_idx = fid
             self.fpxs_cbo.setCurrentIndex(cur_idx)
             self.cur_fpxs_changed()
         else:
-          self.lyrs.clear_rubber()      
+          self.lyrs.clear_rubber()
 
     def cur_fpxs_changed(self):
         row = self.fpxs_cbo.itemData(self.fpxs_cbo.currentIndex())
@@ -402,6 +401,17 @@ class FPXsecEditorWidget(qtBaseClass, uiDialog):
         except:
             QApplication.restoreOverrideCursor()
             self.uc.bar_warn("Error while building table for floodplain cells!")
+            return
+
+    def fpxs_feature_changed(self, fid):
+        """
+        Function to set the fpxs_cbo index equal to the feature edited
+        """
+        try:
+            fpxs_name = self.gutils.execute(f"SELECT name FROM user_fpxsec WHERE fid = '{fid}'").fetchone()[0]
+            index = self.fpxs_cbo.findText(fpxs_name)
+            self.populate_cbos(fid=index)
+        except:
             return
 
     def show_fp_xs_widget_help(self):

@@ -261,9 +261,16 @@
       </spacer>
      </item>
      <item>
-      <widget class="QCheckBox" name="center_fpxs_chbox">
+      <widget class="QToolButton" name="center_fpxs_chbox">
        <property name="text">
-        <string>center</string>
+        <string>...</string>
+       </property>
+       <property name="icon">
+        <iconset>
+         <normaloff>../img/eye-svgrepo-com.svg</normaloff>../img/eye-svgrepo-com.svg</iconset>
+       </property>
+       <property name="checkable">
+        <bool>true</bool>
        </property>
       </widget>
      </item>
@@ -335,10 +342,16 @@
         </item>
         <item>
          <widget class="QToolButton" name="rename_fpxs_btn">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
           <property name="minimumSize">
            <size>
-            <width>31</width>
-            <height>30</height>
+            <width>0</width>
+            <height>0</height>
            </size>
           </property>
           <property name="maximumSize">
@@ -348,7 +361,7 @@
            </size>
           </property>
           <property name="toolTip">
-           <string>Change reservoir name</string>
+           <string>Change floodplain XS name</string>
           </property>
           <property name="text">
            <string>...</string>
@@ -364,7 +377,7 @@
           <property name="minimumSize">
            <size>
             <width>0</width>
-            <height>30</height>
+            <height>0</height>
            </size>
           </property>
           <property name="sizeIncrement">
