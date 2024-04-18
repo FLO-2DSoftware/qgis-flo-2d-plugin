@@ -49,7 +49,7 @@ class FPXsecEditorWidget(qtBaseClass, uiDialog):
 
         # set button icons
         set_icon(self.add_user_fpxs_btn, "add_fpxs.svg")
-        set_icon(self.save_changes_btn, "mActionSaveAllEdits.svg")
+        # set_icon(self.save_changes_btn, "mActionSaveAllEdits.svg")
         set_icon(self.revert_changes_btn, "mActionUndo.svg")
         set_icon(self.delete_fpxs_btn, "mActionDeleteSelected.svg")
         set_icon(self.schem_fpxs_btn, "schematize_fpxs.svg")
@@ -62,7 +62,7 @@ class FPXsecEditorWidget(qtBaseClass, uiDialog):
 
         # Buttons connections
         self.add_user_fpxs_btn.clicked.connect(self.create_user_fpxs)
-        self.save_changes_btn.clicked.connect(self.save_fpxs_lyr_edits)
+        # self.save_changes_btn.clicked.connect(self.save_fpxs_lyr_edits)
         self.revert_changes_btn.clicked.connect(self.revert_fpxs_lyr_edits)
         self.delete_fpxs_btn.clicked.connect(self.delete_cur_fpxs)
         self.schem_fpxs_btn.clicked.connect(self.schematize_fpxs)
@@ -73,7 +73,7 @@ class FPXsecEditorWidget(qtBaseClass, uiDialog):
 
         self.fpxsec_lyr = self.lyrs.data["user_fpxsec"]["qlyr"]
         self.fpxsec_lyr.geometryChanged.connect(self.fpxs_feature_changed)
-        self.fpxsec_lyr.attributeValueChanged.connect(self.fpxs_feature_changed)
+        # self.fpxsec_lyr.attributeValueChanged.connect(self.fpxs_feature_changed)
 
     def setup_connection(self):
         con = self.iface.f2d["con"]
@@ -93,6 +93,7 @@ class FPXsecEditorWidget(qtBaseClass, uiDialog):
                 self.report_chbox.setChecked(False)
                 self.set_report()
             self.report_chbox.stateChanged.connect(self.set_report)
+            # self.fpxsec_lyr.editingStopped.connect(self.populate_cbos)
 
     def switch2selected(self):
         switch_to_selected(self.fpxsec_lyr, self.fpxs_cbo)
@@ -100,18 +101,28 @@ class FPXsecEditorWidget(qtBaseClass, uiDialog):
 
     def populate_cbos(self, fid=None, show_last_edited=True):
         self.fpxs_cbo.clear()
-        qry = """SELECT fid, name, iflo FROM user_fpxsec ORDER BY fid COLLATE NOCASE"""
+        qry = """SELECT fid, name, iflo FROM user_fpxsec ORDER BY name COLLATE NOCASE"""
         rows = self.gutils.execute(qry).fetchall()
         if rows:
+            max_fid = self.gutils.get_max("user_fpxsec")
             cur_idx = 0
             for i, row in enumerate(rows):
+                self.uc.log_info(str(i))
+                self.uc.log_info(str(row))
+                self.uc.log_info(str(fid))
                 self.fpxs_cbo.addItem(row[1], row)
-            if fid:
-                cur_idx = fid
+                if fid and row[0] == fid:
+                    cur_idx = i + 1
+                    self.uc.log_info("-> 1")
+                # elif show_last_edited and row[0] == max_fid:
+                #     cur_idx = i
+                #     self.uc.log_info("-> 2")
+            self.uc.log_info(str(cur_idx))
+            self.uc.log_info("-----")
             self.fpxs_cbo.setCurrentIndex(cur_idx)
             self.cur_fpxs_changed()
         else:
-          self.lyrs.clear_rubber()
+            self.lyrs.clear_rubber()
 
     def cur_fpxs_changed(self):
         row = self.fpxs_cbo.itemData(self.fpxs_cbo.currentIndex())
@@ -134,12 +145,23 @@ class FPXsecEditorWidget(qtBaseClass, uiDialog):
         self.lyrs.show_feat_rubber(self.fpxsec_lyr.id(), self.fpxs_fid)
 
     def create_user_fpxs(self):
+
+        if self.lyrs.any_lyr_in_edit("user_fpxsec"):
+            self.save_fpxs_lyr_edits()
+            self.add_user_fpxs_btn.setChecked(False)
+            return
+
+        self.add_user_fpxs_btn.setCheckable(True)
+        self.add_user_fpxs_btn.setChecked(True)
+
         self.lyrs.enter_edit_mode("user_fpxsec")
 
     def save_fpxs_lyr_edits(self):
         if not self.lyrs.any_lyr_in_edit("user_fpxsec"):
             return
         self.lyrs.save_lyrs_edits("user_fpxsec")
+        self.populate_cbos(fid=self.gutils.get_max("user_fpxsec")-1)
+        self.uc.bar_info("Floodplain cross-sections created!")
 
     def rename_fpxs(self):
         if not self.fpxs_cbo.count():
@@ -167,8 +189,8 @@ class FPXsecEditorWidget(qtBaseClass, uiDialog):
         if not self.uc.question(q):
             return
         self.gutils.execute("DELETE FROM user_fpxsec WHERE fid = ?;", (self.fpxs_fid,))
+        self.populate_cbos(fid=0)
         self.fpxsec_lyr.triggerRepaint()
-        self.populate_cbos()
 
     def save_fpxs(self):
         if not self.fpxs_cbo.count():
@@ -420,3 +442,4 @@ class FPXsecEditorWidget(qtBaseClass, uiDialog):
         """
         QDesktopServices.openUrl(QUrl("https://flo-2dsoftware.github.io/FLO-2D-Documentation/Plugin1000/widgets"
                                       "/floodplain-cross-section-editor/Floodplain%20Cross%20Section%20Editor.html"))
+
