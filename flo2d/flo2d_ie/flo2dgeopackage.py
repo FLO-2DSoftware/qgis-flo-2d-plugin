@@ -2489,7 +2489,6 @@ class Flo2dGeoPackage(GeoPackageUtils):
         qh_table_data_sql = """SELECT table_fid, depth, q FROM qh_table_data WHERE table_fid = ? ORDER BY fid;"""
         ts_data_sql = """SELECT series_fid, time, value FROM outflow_time_series_data WHERE series_fid = ? ORDER BY fid;"""
 
-
         two_values = "{0}  {1}\n"
         three_values = "{0}  {1}  {2}\n"
         four_values = "{0}  {1}  {2}  {3}\n"
@@ -2575,10 +2574,12 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 variables = (fp_out, chan_out, chan_tser_fid, chan_qhpar_fid, chan_qhtab_fid, fp_tser_fid)
                 if hydro_out != 0 and check_outflow_condition(variables):
                     try:
-                        bc_group.datasets["Outflow/HYD_OUT_GRID"].data.append(create_array(two_values, 2, np.int_, (hydro_out, gid)))
+                        bc_group.datasets["Outflow/HYD_OUT_GRID"].data.append(
+                            create_array(two_values, 2, np.int_, (hydro_out, gid)))
                     except:
                         bc_group.create_dataset('Outflow/HYD_OUT_GRID', [])
-                        bc_group.datasets["Outflow/HYD_OUT_GRID"].data.append(create_array(two_values, 2, np.int_, (hydro_out, gid)))
+                        bc_group.datasets["Outflow/HYD_OUT_GRID"].data.append(
+                            create_array(two_values, 2, np.int_, (hydro_out, gid)))
                     continue
 
                 # Time-stage BCs
@@ -3514,35 +3515,6 @@ class Flo2dGeoPackage(GeoPackageUtils):
             self.uc.show_error("ERROR 101218.1607:  exporting XSEC.DAT  failed!.\n", e)
             return False
 
-    def export_xsec_dat(self, outdir):
-        try:
-            chan_n_sql = """SELECT nxsecnum, xsecname FROM chan_n ORDER BY nxsecnum;"""
-            xsec_sql = """SELECT xi, yi FROM xsec_n_data WHERE chan_n_nxsecnum = ? ORDER BY fid;"""
-
-            xsec_line = """X     {0}  {1}\n"""
-            pkt_line = """ {0:<10} {1: >10}\n"""
-            nr = "{0:.2f}"
-
-            chan_n = self.execute(chan_n_sql).fetchall()
-            if not chan_n:
-                return False
-            else:
-                pass
-
-            xsec = os.path.join(outdir, "XSEC.DAT")
-            with open(xsec, "w") as x:
-                for nxecnum, xsecname in chan_n:
-                    x.write(xsec_line.format(nxecnum, xsecname))
-                    for xi, yi in self.execute(xsec_sql, (nxecnum,)):
-                        x.write(pkt_line.format(nr.format(xi), nr.format(yi)))
-
-            return True
-
-        except Exception as e:
-            QApplication.restoreOverrideCursor()
-            self.uc.show_error("ERROR 101218.1607:  exporting XSEC.DAT  failed!.\n", e)
-            return False
-
     def export_hystruc(self, output=None):
         if self.parsed_format == self.FORMAT_DAT:
             return self.export_hystruc_dat(output)
@@ -3573,29 +3545,58 @@ class Flo2dGeoPackage(GeoPackageUtils):
         ratt_sql = """SELECT * FROM rat_table WHERE struct_fid = ? ORDER BY fid;"""
         culvert_sql = """SELECT * FROM culvert_equations WHERE struct_fid = ? ORDER BY fid;"""
         storm_sql = """SELECT * FROM storm_drains WHERE struct_fid = ? ORDER BY fid;"""
-        bridge_a_sql = """SELECT fid, struct_fid, IBTYPE, COEFF, C_PRIME_USER, KF_COEF, KWW_COEF,  KPHI_COEF, KY_COEF, KX_COEF, KJ_COEF 
-                            FROM bridge_variables WHERE struct_fid = ? ORDER BY fid;"""
-        bridge_b_sql = """SELECT fid, struct_fid, BOPENING, BLENGTH, BN_VALUE, UPLENGTH12, LOWCHORD,
-                                 DECKHT, DECKLENGTH, PIERWIDTH, SLUICECOEFADJ, ORIFICECOEFADJ, 
-                                COEFFWEIRB, WINGWALL_ANGLE, PHI_ANGLE, LBTOEABUT, RBTOEABUT 
-                              FROM bridge_variables WHERE struct_fid = ? ORDER BY fid;"""
+        bridge_sql = """SELECT fid, 
+                               struct_fid, 
+                               IBTYPE, 
+                               COEFF, 
+                               C_PRIME_USER, 
+                               KF_COEF, 
+                               KWW_COEF,  
+                               KPHI_COEF, 
+                               KY_COEF, 
+                               KX_COEF, 
+                               KJ_COEF,
+                               BOPENING, 
+                               BLENGTH, 
+                               BN_VALUE, 
+                               UPLENGTH12, 
+                               LOWCHORD,
+                               DECKHT, 
+                               DECKLENGTH, 
+                               PIERWIDTH, 
+                               SLUICECOEFADJ, 
+                               ORIFICECOEFADJ, 
+                               COEFFWEIRB, 
+                               WINGWALL_ANGLE, 
+                               PHI_ANGLE, 
+                               LBTOEABUT, 
+                               RBTOEABUT 
+                        FROM bridge_variables WHERE struct_fid = ? ORDER BY fid;"""
 
-        line1 = "S" + "  {}" * 9 + "\n"
+        # line1 = "S" + "  {}" * 9 + "\n"
         line2 = "C" + "  {}" * 5 + "\n"
         line3 = "R" + "  {}" * 5 + "\n"
-        line4 = "T" + "  {}" * 3 + "\n"
+
         line5 = "F" + "  {}" * 6 + "\n"
         line6 = "D" + "  {}" * 2 + "\n"
         line7a = "B" + "  {}" * 9 + "\n"
         line7b = "B" + "  {}" * 15 + "\n"
 
+        two_values = "{}  {}\n"
+        three_values = "{}  {}  {}\n"
+        four_values = "{}  {}  {}  {}\n"
+        five_values = "{}  {}  {}  {}  {}\n"
+        six_values = "{}  {}  {}  {}  {}  {}\n"
+        seven_values = "{}  {}  {}  {}  {}  {}  {}\n"
+        nine_values = "{}  {}  {}  {}  {}  {}  {}  {}  {}\n"
+        eleven_values = "{}  {}  {}  {}  {}  {}  {}  {}  {}  {}  {}\n"
+        tfive_values = "{}" + " {}" * 24 + "\n"
+
         pairs = [
             [ratc_sql, line2],  # rating curve  ('C' lines)
-            [repl_ratc_sql, line3],  # rating curve replacement ('R' lines)
-            [ratt_sql, line4],  # rating table ('T' lines)
+            [ratt_sql, three_values],  # rating table ('T' lines)
             [culvert_sql, line5],  # culvert equation ('F' lines)
-            [bridge_a_sql, line7a],  # bridge ('B' lines a)
-            [bridge_b_sql, line7b],  # bridge ('B' lines b)
+            [bridge_sql, line7a],  # bridge ('B' lines a
             [storm_sql, line6],  # storm drains ('D' lines)
         ]
 
@@ -3605,52 +3606,119 @@ class Flo2dGeoPackage(GeoPackageUtils):
         else:
             pass
 
-        # hystruc = os.path.join(outdir, "HYSTRUC.DAT")
         hystruc_group = self.parser.hystruc_group
-        hystruc_group.create_dataset('HYSTRUC', [])
+        hystruc_group.create_dataset('STR_CONTROL', [])
+        hystruc_group.create_dataset('STR_NAME', [])
 
-        d_lines = []
         for stru in hystruc_rows:
             fid = stru[0]
             vals1 = [x if x is not None and x != "" else 0 for x in stru[2:8]]
             vals2 = [x if x is not None and x != "" else 0.0 for x in stru[8:11]]
             vals = vals1 + vals2
-            hystruc_group.datasets["HYSTRUC"].data.append(create_array(line1, 16, np.string_, tuple(vals)))
-            # h.write(line1.format(*vals))
-            type = stru[4]  # 0: rating curve
+            (
+                struct_name,
+                ifporchan,
+                icurvtable,
+                inflonod,
+                outflonod,
+                inoutcont,
+                headrefel,
+                clength,
+                cdiameter
+            ) = vals
+            hystruc_group.datasets["STR_CONTROL"].data.append(create_array(
+                nine_values,
+                9,
+                np.float_,
+                fid,
+                ifporchan,
+                icurvtable,
+                inflonod,
+                outflonod,
+                inoutcont,
+                headrefel,
+                clength,
+                cdiameter))
+            hystruc_group.datasets["STR_NAME"].data.append(create_array(two_values, 2, np.string_, fid, struct_name))
+
+            #  0: rating curve
             #  1: rating table
             #  2: culvert equation
             #  3: bridge routine
+
+            type = stru[4]
+
             for i, (qry, line) in enumerate(pairs):
                 if (
-                        (type == 0 and i == 0)  # rating curve line 'C'
-                        or (type == 0 and i == 1)  # rating curve line 'R'
-                        or (type == 1 and i == 2)  # rating table
-                        or (type == 2 and i == 3)  # culvert equation
-                        or (type == 3 and i == 4)  # bridge routine lines a
-                        or (type == 3 and i == 5)  # bridge routine lines b
-                        or i == 6  # storm drains
+                        (type == 0 and i == 0)  # rating curve
+                        or (type == 1 and i == 1)  # rating table
+                        or (type == 2 and i == 2)  # culvert equation
+                        or (type == 3 and i == 3)  # bridge routine
+                        or i == 4  # storm drains
                 ):
                     for row in self.execute(qry, (fid,)):
                         if row:
-                            subvals = [x if x is not None else "0.0" for x in row[2:]]
-                            if i == 3:  # Culvert equation.
-                                subvals[-1] = subvals[-1] if subvals[-1] not in [None, "0", "0.0"] else 1
-                            if i == 4:  # bridge routine lines a. Assign correct bridge type configuration.
-                                t = subvals[0]
-                                t = 1 if t == 1 else 2 if (t == 2 or t == 3) else 3 if (t == 4 or t == 5) else 4
-                                subvals[0] = t
-                            if i == 6:
-                                d_lines.append(line.format(*subvals))
-                            else:
-                                hystruc_group.datasets["HYSTRUC"].data.append(
-                                    create_array(line, 16, np.string_, tuple(subvals)))
-                                # h.write(line.format(*subvals))
+                            subvals = [x if x is not None else 0.0 for x in row[1:]]
 
-        # TODO: Fix the D lines for HDF5
-        # if d_lines:
-        #     for dl in d_lines:
-        #         h.write(dl)
+                            if i == 0:  # Rating curve line 'C' and 'R'
+                                # Replacement rating curve
+                                rrc_row = self.execute(repl_ratc_sql, (fid,)).fetchone()
+                                if rrc_row:
+                                    rrc_row = [x if x is not None else 0.0 for x in rrc_row[2:]]
+                                    try:
+                                        hystruc_group.datasets["RATING_CURVE"].data.append(
+                                            create_array(eleven_values, 11, np.float_, tuple(subvals + rrc_row)))
+                                    except:
+                                        hystruc_group.create_dataset('RATING_CURVE', [])
+                                        hystruc_group.datasets["RATING_CURVE"].data.append(
+                                            create_array(eleven_values, 11, np.float_, tuple(subvals + rrc_row)))
+                                else:
+                                    try:
+                                        hystruc_group.datasets["RATING_CURVE"].data.append(
+                                            create_array(eleven_values, 11, np.float_, tuple(subvals + (5 * [0]))))
+                                    except:
+                                        hystruc_group.create_dataset('RATING_CURVE', [])
+                                        hystruc_group.datasets["RATING_CURVE"].data.append(
+                                            create_array(eleven_values, 11, np.float_, tuple(subvals + (5 * [0]))))
+
+                            if i == 1:  # Rating table
+                                try:
+                                    hystruc_group.datasets["RATING_TABLE"].data.append(
+                                    create_array(four_values, 4, np.float_, tuple(subvals)))
+                                except:
+                                    hystruc_group.create_dataset('RATING_TABLE', [])
+                                    hystruc_group.datasets["RATING_TABLE"].data.append(
+                                    create_array(four_values, 4, np.float_, tuple(subvals)))
+
+                            if i == 2:  # Culvert equation.
+                                subvals[-1] = subvals[-1] if subvals[-1] not in [None, "0", "0.0"] else 1
+                                try:
+                                    hystruc_group.datasets["CULVERT_EQUATIONS"].data.append(
+                                        create_array(seven_values, 7, np.float_, tuple(subvals)))
+                                except:
+                                    hystruc_group.create_dataset('CULVERT_EQUATIONS', [])
+                                    hystruc_group.datasets["CULVERT_EQUATIONS"].data.append(
+                                        create_array(seven_values, 7, np.float_, tuple(subvals)))
+
+                            if i == 3:  # Bridge routine line
+                                try:
+                                    hystruc_group.datasets["BRIDGE_VARIABLES"].data.append(
+                                        create_array(tfive_values, 25, np.float_, tuple(subvals)))
+                                except:
+                                    hystruc_group.create_dataset('BRIDGE_VARIABLES', [])
+                                    hystruc_group.datasets["BRIDGE_VARIABLES"].data.append(
+                                        create_array(tfive_values, 25, np.float_, tuple(subvals)))
+
+                            if i == 4:
+                                try:
+                                    hystruc_group.datasets["STORM_DRAIN"].data.append(
+                                        create_array(three_values, 3, np.float_, tuple(subvals)))
+                                except:
+                                    hystruc_group.create_dataset('STORM_DRAIN', [])
+                                    hystruc_group.datasets["STORM_DRAIN"].data.append(
+                                        create_array(three_values, 3, np.float_, tuple(subvals)))
+                            else:
+                                pass
 
         self.parser.write_groups(hystruc_group)
         return True
@@ -3785,7 +3853,6 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
             hystruc_group = self.parser.hystruc_group
             hystruc_group.create_dataset('BRIDGE_XSEC', [])
-            # bridge = os.path.join(outdir, "BRIDGE_XSEC.DAT")
 
             for stru in hystruc_rows:
                 struct_fid = stru[0]
@@ -3794,14 +3861,11 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 if not bridge_rows:
                     continue
                 else:
-                    line1 = "X  " + str(in_node) + "\n"
-                    hystruc_group.datasets["BRIDGE_XSEC"].data.append(create_array(line1, 3, np.string_))
-                    # b.write("X  " + str(in_node) + "\n")
+
                     for row in bridge_rows:
                         row = [x if x not in [NULL, None, "None", "none"] else 0 for x in row]
-                        line2 = str(row[0]) + "  " + str(row[1]) + "  " + str(row[2]) + "\n"
-                        hystruc_group.datasets["BRIDGE_XSEC"].data.append(create_array(line2, 3, np.string_))
-                        # b.write(str(row[0]) + "  " + str(row[1]) + "  " + str(row[2]) + "\n")
+                        line = str(in_node) + "  " + str(row[0]) + "  " + str(row[1]) + "  " + str(row[2]) + "\n"
+                        hystruc_group.datasets["BRIDGE_XSEC"].data.append(create_array(line, 4, np.float_))
 
             self.parser.write_groups(hystruc_group)
             return True

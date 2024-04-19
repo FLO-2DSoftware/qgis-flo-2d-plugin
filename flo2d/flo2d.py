@@ -3006,7 +3006,6 @@ class Flo2D(object):
             export_calls = [
                 "export_cont_toler",
                 "export_mannings_n_topo",
-                # "export_neighbours",
                 "export_inflow",
                 "export_outflow",
                 "export_infil",
@@ -3015,7 +3014,6 @@ class Flo2D(object):
                 "export_levee",
                 "export_hystruc",
                 "export_chan",
-                "export_bridge_coeff_data",
                 "export_bridge_xsec",
                 "export_xsec",
                 "export_breach",
@@ -3083,7 +3081,6 @@ class Flo2D(object):
                 if "Hydraulic  Structures" not in dlg_components.components:
                     export_calls.remove("export_hystruc")
                     export_calls.remove("export_bridge_xsec")
-                    export_calls.remove("export_bridge_coeff_data")
                 else:
                     # if not self.uc.question("Did you schematize Hydraulic Structures? Do you want to export Hydraulic Structures files?"):
                     #     export_calls.remove("export_hystruc")
@@ -3095,7 +3092,6 @@ class Flo2D(object):
                         if os.path.isfile(outdir + r"\BRIDGE_XSEC.DAT"):
                             os.remove(outdir + r"\BRIDGE_XSEC.DAT")
                         export_calls.remove("export_bridge_xsec")
-                        export_calls.remove("export_bridge_coeff_data")
 
                 if "Rain" not in dlg_components.components:
                     export_calls.remove("export_rain")

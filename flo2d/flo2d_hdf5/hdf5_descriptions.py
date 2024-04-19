@@ -84,15 +84,19 @@ STORMDRAIN = {
 }
 
 BC = {
-    "INFLOW": "Inflow Hydrograph Data",
-    "OUT_GRID_CHAN": "Channel Outflow Elements",
-    "QH_PARAMS": "Channel Depth-Discharge Power Regression",
-    "QH_TABLE": "Channel Depth-Discharge",
-    "OUT_GRID_TS": "Grid Elements with Stage-time Relationships",
-    "OUT_TS_DATA": "Time Intervals (hrs) and Water Surface Elevations (ft or m) for the Grid Element Stage-time "
-                   "relationship",
-    "OUT_GRID_HYD": "Outflow Grid Elements That Will Generate a Hydrograph",
-    "OUT_GRID": "Outflow Grid Elements",
+    "Inflow/INF_GLOBAL": "Inflow Global Data",
+    "Inflow/INF_GRID": "Inflow Grid Data",
+    "Inflow/RESERVOIRS": "Reservoirs Data",
+    "Inflow/TS_INF_DATA": "Time Series Inflow Data",
+    "Outflow/CH_OUT_GRID": "Channel Outflow Grids",
+    "Outflow/FP_OUT_GRID": "Floodplain Outflow Grids",
+    "Outflow/HYD_OUT_GRID": "Outflow Hydrograph Grids",
+    "Outflow/QH_PARAMS": "Channel Depth-Discharge Power Regression Parameters",
+    "Outflow/QH_PARAMS_GRID": "Channel Depth-Discharge Power Regression Grids",
+    "Outflow/QH_TABLE": "Channel Depth-Discharge Data",
+    "Outflow/QH_TABLE_GRID": "Channel Depth-Discharge Gris",
+    "Outflow/TS_OUT_DATA": "Time-Stage Data",
+    "Outflow/TS_OUT_GRID": "Time-Stage Grids",
 }
 
 CHANNEL = {
@@ -103,9 +107,14 @@ CHANNEL = {
 }
 
 HYSTRUCT = {
-    "HYSTRUC": "Hydraulic Structure Data",
-    "BRIDGE_COEFF_DATA": "Bridge Coefficient Data",
-    "BRIDGE_XSEC": "Bridge Cross Sections Data"
+    "BRIDGE_VARIABLES": "Bridge Variables",
+    "BRIDGE_XSEC": "Bridge Cross-sections",
+    "CULVERT_EQUATIONS": "Generalized Culvert Equation",
+    "RATING_CURVE": "Rating Curve",
+    "RATING_TABLE": "Rating Table",
+    "STORM_DRAIN": "Storm Drain Capacity",
+    "STR_CONTROL": "Hydraulic Structure Data",
+    "STR_NAME": "Hydraulic Structure Names",
 }
 
 INFIL = {
