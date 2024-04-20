@@ -2309,7 +2309,7 @@ inlets/junctions</string>
            <item>
             <widget class="QLabel" name="label_177">
              <property name="sizePolicy">
-              <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+              <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
                <horstretch>0</horstretch>
                <verstretch>0</verstretch>
               </sizepolicy>
@@ -2317,7 +2317,13 @@ inlets/junctions</string>
              <property name="minimumSize">
               <size>
                <width>100</width>
-               <height>0</height>
+               <height>22</height>
+              </size>
+             </property>
+             <property name="maximumSize">
+              <size>
+               <width>16777215</width>
+               <height>22</height>
               </size>
              </property>
              <property name="text">
@@ -2331,7 +2337,7 @@ inlets/junctions</string>
            <item>
             <widget class="QLabel" name="label_178">
              <property name="sizePolicy">
-              <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+              <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
                <horstretch>0</horstretch>
                <verstretch>0</verstretch>
               </sizepolicy>
@@ -2339,7 +2345,13 @@ inlets/junctions</string>
              <property name="minimumSize">
               <size>
                <width>100</width>
-               <height>0</height>
+               <height>22</height>
+              </size>
+             </property>
+             <property name="maximumSize">
+              <size>
+               <width>16777215</width>
+               <height>22</height>
               </size>
              </property>
              <property name="text">
@@ -2353,7 +2365,7 @@ inlets/junctions</string>
            <item>
             <widget class="QLabel" name="label_179">
              <property name="sizePolicy">
-              <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+              <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
                <horstretch>0</horstretch>
                <verstretch>0</verstretch>
               </sizepolicy>
@@ -2361,7 +2373,13 @@ inlets/junctions</string>
              <property name="minimumSize">
               <size>
                <width>100</width>
-               <height>0</height>
+               <height>22</height>
+              </size>
+             </property>
+             <property name="maximumSize">
+              <size>
+               <width>16777215</width>
+               <height>22</height>
               </size>
              </property>
              <property name="text">
@@ -2375,7 +2393,7 @@ inlets/junctions</string>
            <item>
             <widget class="QLabel" name="label_180">
              <property name="sizePolicy">
-              <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+              <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
                <horstretch>0</horstretch>
                <verstretch>0</verstretch>
               </sizepolicy>
@@ -2383,7 +2401,13 @@ inlets/junctions</string>
              <property name="minimumSize">
               <size>
                <width>100</width>
-               <height>0</height>
+               <height>22</height>
+              </size>
+             </property>
+             <property name="maximumSize">
+              <size>
+               <width>16777215</width>
+               <height>22</height>
               </size>
              </property>
              <property name="font">
@@ -2402,7 +2426,7 @@ inlets/junctions</string>
            <item>
             <widget class="QLabel" name="label_181">
              <property name="sizePolicy">
-              <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+              <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
                <horstretch>0</horstretch>
                <verstretch>0</verstretch>
               </sizepolicy>
@@ -2410,7 +2434,13 @@ inlets/junctions</string>
              <property name="minimumSize">
               <size>
                <width>100</width>
-               <height>0</height>
+               <height>22</height>
+              </size>
+             </property>
+             <property name="maximumSize">
+              <size>
+               <width>16777215</width>
+               <height>22</height>
               </size>
              </property>
              <property name="text">
@@ -2424,7 +2454,7 @@ inlets/junctions</string>
            <item>
             <widget class="QLabel" name="label_182">
              <property name="sizePolicy">
-              <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+              <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
                <horstretch>0</horstretch>
                <verstretch>0</verstretch>
               </sizepolicy>
@@ -2432,7 +2462,13 @@ inlets/junctions</string>
              <property name="minimumSize">
               <size>
                <width>100</width>
-               <height>0</height>
+               <height>22</height>
+              </size>
+             </property>
+             <property name="maximumSize">
+              <size>
+               <width>16777215</width>
+               <height>22</height>
               </size>
              </property>
              <property name="font">
@@ -2451,7 +2487,7 @@ inlets/junctions</string>
            <item>
             <widget class="QLabel" name="label_183">
              <property name="sizePolicy">
-              <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+              <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
                <horstretch>0</horstretch>
                <verstretch>0</verstretch>
               </sizepolicy>
@@ -2459,7 +2495,13 @@ inlets/junctions</string>
              <property name="minimumSize">
               <size>
                <width>100</width>
-               <height>0</height>
+               <height>22</height>
+              </size>
+             </property>
+             <property name="maximumSize">
+              <size>
+               <width>16777215</width>
+               <height>22</height>
               </size>
              </property>
              <property name="font">
@@ -2478,7 +2520,7 @@ inlets/junctions</string>
            <item>
             <widget class="QLabel" name="label_184">
              <property name="sizePolicy">
-              <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+              <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
                <horstretch>0</horstretch>
                <verstretch>0</verstretch>
               </sizepolicy>
@@ -2486,7 +2528,13 @@ inlets/junctions</string>
              <property name="minimumSize">
               <size>
                <width>100</width>
-               <height>0</height>
+               <height>22</height>
+              </size>
+             </property>
+             <property name="maximumSize">
+              <size>
+               <width>16777215</width>
+               <height>22</height>
               </size>
              </property>
              <property name="font">
@@ -2505,7 +2553,7 @@ inlets/junctions</string>
            <item>
             <widget class="QLabel" name="label_195">
              <property name="sizePolicy">
-              <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+              <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
                <horstretch>0</horstretch>
                <verstretch>0</verstretch>
               </sizepolicy>
@@ -2513,7 +2561,13 @@ inlets/junctions</string>
              <property name="minimumSize">
               <size>
                <width>100</width>
-               <height>0</height>
+               <height>22</height>
+              </size>
+             </property>
+             <property name="maximumSize">
+              <size>
+               <width>16777215</width>
+               <height>22</height>
               </size>
              </property>
              <property name="font">
@@ -2522,7 +2576,7 @@ inlets/junctions</string>
               </font>
              </property>
              <property name="text">
-              <string>Evaporation Factor</string>
+              <string>Infiltration</string>
              </property>
              <property name="alignment">
               <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -2584,7 +2638,7 @@ inlets/junctions</string>
             </widget>
            </item>
            <item>
-            <widget class="QgsFieldComboBox" name="strge_unit_flap_gate_FieldCbo">
+            <widget class="QgsFieldComboBox" name="strge_unit_max_depth_FieldCbo">
              <property name="sizePolicy">
               <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
                <horstretch>0</horstretch>
@@ -2609,7 +2663,7 @@ inlets/junctions</string>
             </widget>
            </item>
            <item>
-            <widget class="QgsFieldComboBox" name="strge_unit_allow_discharge_FieldCbo">
+            <widget class="QgsFieldComboBox" name="strge_unit_initial_depth_FieldCbo">
              <property name="sizePolicy">
               <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
                <horstretch>0</horstretch>
@@ -2634,7 +2688,7 @@ inlets/junctions</string>
             </widget>
            </item>
            <item>
-            <widget class="QgsFieldComboBox" name="strge_unit_type_FieldCbo">
+            <widget class="QgsFieldComboBox" name="strge_unit_external_inflow_FieldCbo">
              <property name="sizePolicy">
               <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
                <horstretch>0</horstretch>
@@ -2659,7 +2713,7 @@ inlets/junctions</string>
             </widget>
            </item>
            <item>
-            <widget class="QgsFieldComboBox" name="strge_unit_water_depth_FieldCbo">
+            <widget class="QgsFieldComboBox" name="strge_unit_treatment_FieldCbo">
              <property name="sizePolicy">
               <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
                <horstretch>0</horstretch>
@@ -2684,7 +2738,7 @@ inlets/junctions</string>
             </widget>
            </item>
            <item>
-            <widget class="QgsFieldComboBox" name="strge_unit_tidal_curve_FieldCbo">
+            <widget class="QgsFieldComboBox" name="strge_unit_ponded_area_FieldCbo">
              <property name="sizePolicy">
               <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
                <horstretch>0</horstretch>
@@ -2709,7 +2763,7 @@ inlets/junctions</string>
             </widget>
            </item>
            <item>
-            <widget class="QgsFieldComboBox" name="strge_unit_time_series_FieldCbo">
+            <widget class="QgsFieldComboBox" name="strge_unit_evap_factor_FieldCbo">
              <property name="sizePolicy">
               <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
                <horstretch>0</horstretch>
@@ -2734,7 +2788,7 @@ inlets/junctions</string>
             </widget>
            </item>
            <item>
-            <widget class="QgsFieldComboBox" name="strge_unit_time_series_FieldCbo_3">
+            <widget class="QgsFieldComboBox" name="strge_unit_infiltration_FieldCbo">
              <property name="sizePolicy">
               <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
                <horstretch>0</horstretch>
@@ -2823,7 +2877,7 @@ inlets/junctions</string>
           </widget>
          </item>
          <item>
-          <widget class="QPushButton" name="clear_strge_unit_flap_gate_btn">
+          <widget class="QPushButton" name="clear_strge_unit_max_depth_btn">
            <property name="sizePolicy">
             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
              <horstretch>0</horstretch>
@@ -2848,7 +2902,7 @@ inlets/junctions</string>
           </widget>
          </item>
          <item>
-          <widget class="QPushButton" name="clear_strge_unit_allow_discharge_btn">
+          <widget class="QPushButton" name="clear_strge_unit_initial_depth_btn">
            <property name="sizePolicy">
             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
              <horstretch>0</horstretch>
@@ -2873,7 +2927,7 @@ inlets/junctions</string>
           </widget>
          </item>
          <item>
-          <widget class="QPushButton" name="clear_strge_unit_type_btn">
+          <widget class="QPushButton" name="clear_strge_unit_external_inflow_btn">
            <property name="sizePolicy">
             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
              <horstretch>0</horstretch>
@@ -2898,7 +2952,7 @@ inlets/junctions</string>
           </widget>
          </item>
          <item>
-          <widget class="QPushButton" name="clear_strge_unit_water_depth_btn">
+          <widget class="QPushButton" name="clear_strge_unit_treatment_btn">
            <property name="sizePolicy">
             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
              <horstretch>0</horstretch>
@@ -2923,7 +2977,7 @@ inlets/junctions</string>
           </widget>
          </item>
          <item>
-          <widget class="QPushButton" name="clear_strge_unit_tidal_curve_btn">
+          <widget class="QPushButton" name="clear_strge_unit_ponded_area_btn">
            <property name="sizePolicy">
             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
              <horstretch>0</horstretch>
@@ -2948,7 +3002,7 @@ inlets/junctions</string>
           </widget>
          </item>
          <item>
-          <widget class="QPushButton" name="clear_strge_unit_time_series_btn">
+          <widget class="QPushButton" name="clear_strge_unit_evap_factor_btn">
            <property name="sizePolicy">
             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
              <horstretch>0</horstretch>
@@ -2973,7 +3027,7 @@ inlets/junctions</string>
           </widget>
          </item>
          <item>
-          <widget class="QPushButton" name="clear_strge_unit_time_series_btn_3">
+          <widget class="QPushButton" name="clear_strge_unit_infiltration_btn">
            <property name="sizePolicy">
             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
              <horstretch>0</horstretch>
@@ -3005,7 +3059,7 @@ inlets/junctions</string>
           <x>450</x>
           <y>50</y>
           <width>379</width>
-          <height>251</height>
+          <height>274</height>
          </rect>
         </property>
         <layout class="QHBoxLayout" name="horizontalLayout_43">
@@ -3014,7 +3068,7 @@ inlets/junctions</string>
            <item>
             <widget class="QLabel" name="label_194">
              <property name="sizePolicy">
-              <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+              <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
                <horstretch>0</horstretch>
                <verstretch>0</verstretch>
               </sizepolicy>
@@ -3022,11 +3076,17 @@ inlets/junctions</string>
              <property name="minimumSize">
               <size>
                <width>100</width>
-               <height>0</height>
+               <height>22</height>
+              </size>
+             </property>
+             <property name="maximumSize">
+              <size>
+               <width>16777215</width>
+               <height>22</height>
               </size>
              </property>
              <property name="text">
-              <string>Storage Unit Name</string>
+              <string>Infiltration Method</string>
              </property>
              <property name="alignment">
               <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -3036,7 +3096,7 @@ inlets/junctions</string>
            <item>
             <widget class="QLabel" name="label_191">
              <property name="sizePolicy">
-              <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+              <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
                <horstretch>0</horstretch>
                <verstretch>0</verstretch>
               </sizepolicy>
@@ -3044,11 +3104,17 @@ inlets/junctions</string>
              <property name="minimumSize">
               <size>
                <width>100</width>
-               <height>0</height>
+               <height>22</height>
+              </size>
+             </property>
+             <property name="maximumSize">
+              <size>
+               <width>16777215</width>
+               <height>22</height>
               </size>
              </property>
              <property name="text">
-              <string>Invert Elevation</string>
+              <string>Suction Head</string>
              </property>
              <property name="alignment">
               <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -3058,7 +3124,7 @@ inlets/junctions</string>
            <item>
             <widget class="QLabel" name="label_189">
              <property name="sizePolicy">
-              <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+              <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
                <horstretch>0</horstretch>
                <verstretch>0</verstretch>
               </sizepolicy>
@@ -3066,11 +3132,17 @@ inlets/junctions</string>
              <property name="minimumSize">
               <size>
                <width>100</width>
-               <height>0</height>
+               <height>22</height>
+              </size>
+             </property>
+             <property name="maximumSize">
+              <size>
+               <width>16777215</width>
+               <height>22</height>
               </size>
              </property>
              <property name="text">
-              <string>Max. Depth</string>
+              <string>Conductivity</string>
              </property>
              <property name="alignment">
               <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -3080,7 +3152,7 @@ inlets/junctions</string>
            <item>
             <widget class="QLabel" name="label_188">
              <property name="sizePolicy">
-              <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+              <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
                <horstretch>0</horstretch>
                <verstretch>0</verstretch>
               </sizepolicy>
@@ -3088,7 +3160,13 @@ inlets/junctions</string>
              <property name="minimumSize">
               <size>
                <width>100</width>
-               <height>0</height>
+               <height>22</height>
+              </size>
+             </property>
+             <property name="maximumSize">
+              <size>
+               <width>16777215</width>
+               <height>22</height>
               </size>
              </property>
              <property name="font">
@@ -3097,7 +3175,7 @@ inlets/junctions</string>
               </font>
              </property>
              <property name="text">
-              <string>Initial Depth</string>
+              <string>Initial Deficit</string>
              </property>
              <property name="alignment">
               <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -3107,7 +3185,7 @@ inlets/junctions</string>
            <item>
             <widget class="QLabel" name="label_190">
              <property name="sizePolicy">
-              <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+              <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
                <horstretch>0</horstretch>
                <verstretch>0</verstretch>
               </sizepolicy>
@@ -3115,11 +3193,17 @@ inlets/junctions</string>
              <property name="minimumSize">
               <size>
                <width>100</width>
-               <height>0</height>
+               <height>22</height>
+              </size>
+             </property>
+             <property name="maximumSize">
+              <size>
+               <width>16777215</width>
+               <height>22</height>
               </size>
              </property>
              <property name="text">
-              <string>External Inflow</string>
+              <string>Storage Curve</string>
              </property>
              <property name="alignment">
               <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -3129,7 +3213,7 @@ inlets/junctions</string>
            <item>
             <widget class="QLabel" name="label_193">
              <property name="sizePolicy">
-              <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+              <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
                <horstretch>0</horstretch>
                <verstretch>0</verstretch>
               </sizepolicy>
@@ -3137,7 +3221,13 @@ inlets/junctions</string>
              <property name="minimumSize">
               <size>
                <width>100</width>
-               <height>0</height>
+               <height>22</height>
+              </size>
+             </property>
+             <property name="maximumSize">
+              <size>
+               <width>16777215</width>
+               <height>22</height>
               </size>
              </property>
              <property name="font">
@@ -3146,7 +3236,7 @@ inlets/junctions</string>
               </font>
              </property>
              <property name="text">
-              <string>Treatment</string>
+              <string>Coefficient</string>
              </property>
              <property name="alignment">
               <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -3156,7 +3246,7 @@ inlets/junctions</string>
            <item>
             <widget class="QLabel" name="label_192">
              <property name="sizePolicy">
-              <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+              <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
                <horstretch>0</horstretch>
                <verstretch>0</verstretch>
               </sizepolicy>
@@ -3164,7 +3254,13 @@ inlets/junctions</string>
              <property name="minimumSize">
               <size>
                <width>100</width>
-               <height>0</height>
+               <height>22</height>
+              </size>
+             </property>
+             <property name="maximumSize">
+              <size>
+               <width>16777215</width>
+               <height>22</height>
               </size>
              </property>
              <property name="font">
@@ -3173,7 +3269,7 @@ inlets/junctions</string>
               </font>
              </property>
              <property name="text">
-              <string>Ponded Area</string>
+              <string>Exponent</string>
              </property>
              <property name="alignment">
               <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -3183,7 +3279,7 @@ inlets/junctions</string>
            <item>
             <widget class="QLabel" name="label_187">
              <property name="sizePolicy">
-              <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+              <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
                <horstretch>0</horstretch>
                <verstretch>0</verstretch>
               </sizepolicy>
@@ -3191,7 +3287,13 @@ inlets/junctions</string>
              <property name="minimumSize">
               <size>
                <width>100</width>
-               <height>0</height>
+               <height>22</height>
+              </size>
+             </property>
+             <property name="maximumSize">
+              <size>
+               <width>16777215</width>
+               <height>22</height>
               </size>
              </property>
              <property name="font">
@@ -3200,7 +3302,40 @@ inlets/junctions</string>
               </font>
              </property>
              <property name="text">
-              <string>Evaporation Factor</string>
+              <string>Constant</string>
+             </property>
+             <property name="alignment">
+              <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QLabel" name="label_213">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="minimumSize">
+              <size>
+               <width>100</width>
+               <height>22</height>
+              </size>
+             </property>
+             <property name="maximumSize">
+              <size>
+               <width>16777215</width>
+               <height>22</height>
+              </size>
+             </property>
+             <property name="font">
+              <font>
+               <strikeout>false</strikeout>
+              </font>
+             </property>
+             <property name="text">
+              <string>Curve Name</string>
              </property>
              <property name="alignment">
               <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -3212,7 +3347,7 @@ inlets/junctions</string>
          <item>
           <layout class="QVBoxLayout" name="verticalLayout_49">
            <item>
-            <widget class="QgsFieldComboBox" name="strge_unit_name_FieldCbo_2">
+            <widget class="QgsFieldComboBox" name="strge_unit_infil_method_FieldCbo">
              <property name="sizePolicy">
               <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
                <horstretch>0</horstretch>
@@ -3237,7 +3372,7 @@ inlets/junctions</string>
             </widget>
            </item>
            <item>
-            <widget class="QgsFieldComboBox" name="strge_unit_invert_elevation_FieldCbo_2">
+            <widget class="QgsFieldComboBox" name="strge_unit_suction_head_FieldCbo">
              <property name="sizePolicy">
               <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
                <horstretch>0</horstretch>
@@ -3262,7 +3397,7 @@ inlets/junctions</string>
             </widget>
            </item>
            <item>
-            <widget class="QgsFieldComboBox" name="strge_unit_flap_gate_FieldCbo_2">
+            <widget class="QgsFieldComboBox" name="strge_unit_conductivity_FieldCbo">
              <property name="sizePolicy">
               <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
                <horstretch>0</horstretch>
@@ -3287,7 +3422,7 @@ inlets/junctions</string>
             </widget>
            </item>
            <item>
-            <widget class="QgsFieldComboBox" name="strge_unit_allow_discharge_FieldCbo_2">
+            <widget class="QgsFieldComboBox" name="strge_unit_initial_deficit_FieldCbo">
              <property name="sizePolicy">
               <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
                <horstretch>0</horstretch>
@@ -3312,7 +3447,7 @@ inlets/junctions</string>
             </widget>
            </item>
            <item>
-            <widget class="QgsFieldComboBox" name="strge_unit_type_FieldCbo_2">
+            <widget class="QgsFieldComboBox" name="strge_unit_storage_curve_FieldCbo">
              <property name="sizePolicy">
               <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
                <horstretch>0</horstretch>
@@ -3337,7 +3472,7 @@ inlets/junctions</string>
             </widget>
            </item>
            <item>
-            <widget class="QgsFieldComboBox" name="strge_unit_water_depth_FieldCbo_2">
+            <widget class="QgsFieldComboBox" name="strge_unit_coeficient_FieldCbo">
              <property name="sizePolicy">
               <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
                <horstretch>0</horstretch>
@@ -3362,7 +3497,7 @@ inlets/junctions</string>
             </widget>
            </item>
            <item>
-            <widget class="QgsFieldComboBox" name="strge_unit_tidal_curve_FieldCbo_2">
+            <widget class="QgsFieldComboBox" name="strge_unit_exponent_FieldCbo">
              <property name="sizePolicy">
               <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
                <horstretch>0</horstretch>
@@ -3387,7 +3522,32 @@ inlets/junctions</string>
             </widget>
            </item>
            <item>
-            <widget class="QgsFieldComboBox" name="strge_unit_time_series_FieldCbo_2">
+            <widget class="QgsFieldComboBox" name="strge_unit_constant_FieldCbo">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="minimumSize">
+              <size>
+               <width>230</width>
+               <height>22</height>
+              </size>
+             </property>
+             <property name="maximumSize">
+              <size>
+               <width>16777215</width>
+               <height>22</height>
+              </size>
+             </property>
+             <property name="maxVisibleItems">
+              <number>20</number>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QgsFieldComboBox" name="strge_unit_curve_name_FieldCbo">
              <property name="sizePolicy">
               <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
                <horstretch>0</horstretch>
@@ -3421,12 +3581,12 @@ inlets/junctions</string>
           <x>840</x>
           <y>50</y>
           <width>24</width>
-          <height>251</height>
+          <height>272</height>
          </rect>
         </property>
         <layout class="QVBoxLayout" name="verticalLayout_50">
          <item>
-          <widget class="QPushButton" name="clear_strge_unit_name_btn_2">
+          <widget class="QPushButton" name="clear_strge_infil_method_btn">
            <property name="sizePolicy">
             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
              <horstretch>0</horstretch>
@@ -3451,7 +3611,7 @@ inlets/junctions</string>
           </widget>
          </item>
          <item>
-          <widget class="QPushButton" name="clear_strge_unit_invert_elevation_btn_2">
+          <widget class="QPushButton" name="clear_strge_unit_suction_head_btn">
            <property name="sizePolicy">
             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
              <horstretch>0</horstretch>
@@ -3476,7 +3636,7 @@ inlets/junctions</string>
           </widget>
          </item>
          <item>
-          <widget class="QPushButton" name="clear_strge_unit_flap_gate_btn_2">
+          <widget class="QPushButton" name="clear_strge_unit_conductivity_btn">
            <property name="sizePolicy">
             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
              <horstretch>0</horstretch>
@@ -3501,7 +3661,7 @@ inlets/junctions</string>
           </widget>
          </item>
          <item>
-          <widget class="QPushButton" name="clear_strge_unit_allow_discharge_btn_2">
+          <widget class="QPushButton" name="clear_strge_unit_initial_deficit_btn">
            <property name="sizePolicy">
             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
              <horstretch>0</horstretch>
@@ -3526,7 +3686,7 @@ inlets/junctions</string>
           </widget>
          </item>
          <item>
-          <widget class="QPushButton" name="clear_strge_unit_type_btn_2">
+          <widget class="QPushButton" name="clear_strge_storage_curve_btn">
            <property name="sizePolicy">
             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
              <horstretch>0</horstretch>
@@ -3551,7 +3711,7 @@ inlets/junctions</string>
           </widget>
          </item>
          <item>
-          <widget class="QPushButton" name="clear_strge_unit_water_depth_btn_2">
+          <widget class="QPushButton" name="clear_strge_unit_coefficient_btn">
            <property name="sizePolicy">
             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
              <horstretch>0</horstretch>
@@ -3576,7 +3736,7 @@ inlets/junctions</string>
           </widget>
          </item>
          <item>
-          <widget class="QPushButton" name="clear_strge_unit_tidal_curve_btn_2">
+          <widget class="QPushButton" name="clear_strge_unit_exponent_btn">
            <property name="sizePolicy">
             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
              <horstretch>0</horstretch>
@@ -3601,7 +3761,32 @@ inlets/junctions</string>
           </widget>
          </item>
          <item>
-          <widget class="QPushButton" name="clear_strge_unit_time_series_btn_2">
+          <widget class="QPushButton" name="clear_strge_unit_constant_btn">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="minimumSize">
+            <size>
+             <width>22</width>
+             <height>22</height>
+            </size>
+           </property>
+           <property name="maximumSize">
+            <size>
+             <width>22</width>
+             <height>22</height>
+            </size>
+           </property>
+           <property name="text">
+            <string>x</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="clear_strge_unit_curve_name_btn">
            <property name="sizePolicy">
             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
              <horstretch>0</horstretch>
@@ -3631,7 +3816,7 @@ inlets/junctions</string>
         <property name="geometry">
          <rect>
           <x>500</x>
-          <y>320</y>
+          <y>340</y>
           <width>251</width>
           <height>34</height>
          </rect>
