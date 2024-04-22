@@ -19,7 +19,7 @@ from qgis.PyQt.QtCore import QSettings
 from qgis.PyQt.QtWidgets import QMessageBox
 
 from ..flo2d_hdf5.hdf5_descriptions import CONTROL, GRID, NEIGHBORS, STORMDRAIN, BC, CHANNEL, HYSTRUCT, INFIL, RAIN, \
-    REDUCTION_FACTORS, LEVEE, EVAPOR, FLOODPLAIN, GUTTER, TAILINGS
+    REDUCTION_FACTORS, LEVEE, EVAPOR, FLOODPLAIN, GUTTER, TAILINGS, SPATIALLY_VARIABLE
 from ..utils import Msge
 
 try:
@@ -122,6 +122,12 @@ class ParseHDF5:
         return group
 
     @property
+    def spatially_variable_group(self):
+        group_name = "Input/Spatially Variable"
+        group = HDF5Group(group_name)
+        return group
+
+    @property
     def hystruc_group(self):
         group_name = "Input/Hydraulic Structures"
         group = HDF5Group(group_name)
@@ -173,7 +179,6 @@ class ParseHDF5:
         grouped_datasets_list = [
             self.control_group,
             self.grid_group,
-            self.neighbors_group,
             self.bc_group
         ]
         return grouped_datasets_list
@@ -191,7 +196,7 @@ class ParseHDF5:
             hdf5_group = hdf5_file[group.name]
             ds = hdf5_group.create_dataset(dataset.name, data=dataset.data, compression="gzip")
             attributes_dicts = [CONTROL, GRID, NEIGHBORS, STORMDRAIN, BC, CHANNEL, HYSTRUCT, INFIL, RAIN,
-                                REDUCTION_FACTORS, LEVEE, EVAPOR, FLOODPLAIN, GUTTER, TAILINGS]
+                                REDUCTION_FACTORS, LEVEE, EVAPOR, FLOODPLAIN, GUTTER, TAILINGS, SPATIALLY_VARIABLE]
 
             for attributes_dict in attributes_dicts:
                 if dataset.name in attributes_dict:

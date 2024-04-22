@@ -143,10 +143,9 @@ REDUCTION_FACTORS = {
     "WRF": "Floodplain Width Reduction",
 }
 
-# TOLER = {
-#     "TOLER": "Numerical Stability Control Data",
-#     "TOLSPATIAL": "Spatially Variable Tolerance Values"
-# }
+SPATIALLY_VARIABLE = {
+    "TOLSPATIAL": "Spatially Variable Tolerance Values"
+}
 
 LEVEE = {
     "LEVEE": "Levee and Failure Data",

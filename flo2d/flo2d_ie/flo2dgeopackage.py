@@ -4382,26 +4382,24 @@ class Flo2dGeoPackage(GeoPackageUtils):
             tol_poly_sql = """SELECT fid, tol FROM tolspatial ORDER BY fid;"""
             tol_cells_sql = """SELECT grid_fid FROM tolspatial_cells WHERE area_fid = ? ORDER BY grid_fid;"""
 
-            line1 = "{0}  {1}\n"
+            two_values = "{0}  {1}\n"
 
-            tol_poly_rows = self.execute(tol_poly_sql).fetchall()  # A list of pairs (fid number, tolerance value),
-            # one for each tolerance polygon.                                                       #(fid, tol), that is, (polygon fid, tolerance value)
+            tol_poly_rows = self.execute(tol_poly_sql).fetchall()  # A list of pairs (fid number, tolerance value)
+
             if not tol_poly_rows:
                 return False
             else:
                 pass
 
-            cont_group = self.parser.control_group
-            cont_group.create_dataset('TOLSPATIAL', [])
-            # tolspatial_dat = os.path.join(outdir, "TOLSPATIAL.DAT")  # path and name of file to write
+            spatially_variable_group = self.parser.spatially_variable_group
+            spatially_variable_group.create_dataset('TOLSPATIAL', [])
 
             for fid, tol in tol_poly_rows:
                 for row in self.execute(tol_cells_sql, (fid,)):
                     gid = row[0]
-                    cont_group.datasets["TOLSPATIAL"].data.append(create_array(line1, 2, np.float_, gid, tol))
-                    # t.write(line1.format(gid, tol))
+                    spatially_variable_group.datasets["TOLSPATIAL"].data.append(create_array(two_values, 2, np.float_, gid, tol))
 
-            self.parser.write_groups(cont_group)
+            self.parser.write_groups(spatially_variable_group)
             return True
 
         except Exception as e:
