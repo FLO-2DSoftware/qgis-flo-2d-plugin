@@ -5375,16 +5375,16 @@ class Flo2dGeoPackage(GeoPackageUtils):
             else:
                 pass
 
-            floodplain_group = self.parser.floodplain_group
-            floodplain_group.create_dataset('SHALLOWN_SPATIAL', [])
+            spatially_variable_group = self.parser.spatially_variable_group
+            spatially_variable_group.create_dataset('SHALLOWN_SPATIAL', [])
 
             for fid, shallow_n in shallow_rows:
                 for row in self.execute(cell_sql, (fid,)):
                     gid = row[0]
-                    floodplain_group.datasets["SHALLOWN_SPATIAL"].data.append(
-                        create_array(line1, 2, np.string_, gid, shallow_n))
+                    spatially_variable_group.datasets["SHALLOWN_SPATIAL"].data.append(
+                        create_array(line1, 2, np.float_, gid, shallow_n))
 
-            self.parser.write_groups(floodplain_group)
+            self.parser.write_groups(spatially_variable_group)
             return True
 
         except Exception as e:

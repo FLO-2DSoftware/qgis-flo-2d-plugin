@@ -146,6 +146,7 @@ REDUCTION_FACTORS = {
 SPATIALLY_VARIABLE = {
     "TOLSPATIAL": "Spatially Variable Tolerance Values",
     "FPFROUDE": "Spatially Variable Froude Values",
+    "SHALLOWN_SPATIAL": "Spatially Variable Shallow-n Values",
 }
 
 LEVEE = {
