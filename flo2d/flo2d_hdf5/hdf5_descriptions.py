@@ -166,7 +166,8 @@ FLOODPLAIN = {
 }
 
 GUTTER = {
-    "GUTTER": "Floodplain Street Element Gutter Area"
+    "GUTTER_GLOBAL": "Gutter Global Data",
+    "GUTTER_DATA": "Gutter Global"
 }
 
 TAILINGS = {

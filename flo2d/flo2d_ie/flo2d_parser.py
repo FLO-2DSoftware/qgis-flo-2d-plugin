@@ -164,7 +164,7 @@ class ParseHDF5:
 
     @property
     def gutter_group(self):
-        group_name = "Input/Gutters"
+        group_name = "Input/Gutter"
         group = HDF5Group(group_name)
         return group
 

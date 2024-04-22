@@ -4465,8 +4465,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
             """SELECT grid_fid, line_fid FROM gutter_cells WHERE line_fid = ? ORDER BY grid_fid;"""
         )
 
-        line1 = "{0} {1} {2}\n"
-        line2 = "G  " + "   {}" * 5 + "\n"
+        three_values = "{0} {1} {2}\n"
+        line2 = " {}" * 5 + "\n"
 
         head = self.execute(gutter_globals_sql).fetchone()
 
@@ -4482,10 +4482,10 @@ class Flo2dGeoPackage(GeoPackageUtils):
             pass
 
         gutter_group = self.parser.gutter_group
-        gutter_group.create_dataset('GUTTER', [])
+        gutter_group.create_dataset('GUTTER_DATA', [])
+        gutter_group.create_dataset('GUTTER_GLOBAL', [])
 
-        gutter_group.datasets["GUTTER"].data.append(create_array(line1, 6, np.string_, tuple(head[1:])))
-        # g.write(line1.format(*head[1:]))
+        gutter_group.datasets["GUTTER_GLOBAL"].data.append(create_array(three_values, 3, np.float_, tuple(head[1:])))
 
         if gutter_poly_rows:
             for (
@@ -4503,9 +4503,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     grid_ID = row[0]
                     area = row[1]
                     if area:
-                        gutter_group.datasets["GUTTER"].data.append(
-                            create_array(line2, 6, np.string_, grid_ID, width, height, n_value, direction))
-                        # g.write(line2.format(grid_ID, width, height, n_value, direction))
+                        gutter_group.datasets["GUTTER_DATA"].data.append(
+                            create_array(line2, 5, np.float_, grid_ID, width, height, n_value, direction))
 
         if gutter_line_rows:
             for (
@@ -4523,9 +4522,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     grid_ID = row[0]
                     line = row[1]
                     if line:
-                        gutter_group.datasets["GUTTER"].data.append(
-                            create_array(line2, 6, np.string_, grid_ID, width, height, n_value, direction))
-                        # g.write(line2.format(grid_ID, width, height, n_value, direction))
+                        gutter_group.datasets["GUTTER_DATA"].data.append(
+                            create_array(line2, 5, np.float_, grid_ID, width, height, n_value, direction))
 
         self.parser.write_groups(gutter_group)
         return True
