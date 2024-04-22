@@ -5299,22 +5299,22 @@ class Flo2dGeoPackage(GeoPackageUtils):
             fpfroude_sql = """SELECT fid, froudefp FROM fpfroude ORDER BY fid;"""
             cell_sql = """SELECT grid_fid FROM fpfroude_cells WHERE area_fid = ? ORDER BY grid_fid;"""
 
-            line1 = "F {0} {1}\n"
+            line1 = "{0} {1}\n"
 
             fpfroude_rows = self.execute(fpfroude_sql).fetchall()
             if not fpfroude_rows:
                 return False
             else:
                 pass
-            floodplain_group = self.parser.floodplain_group
-            floodplain_group.create_dataset('FPFROUDE', [])
+            spatially_variable_group = self.parser.spatially_variable_group
+            spatially_variable_group.create_dataset('FPFROUDE', [])
 
             for fid, froudefp in fpfroude_rows:
                 for row in self.execute(cell_sql, (fid,)):
                     gid = row[0]
-                    floodplain_group.datasets["FPFROUDE"].data.append(create_array(line1, 3, np.string_, gid, froudefp))
+                    spatially_variable_group.datasets["FPFROUDE"].data.append(create_array(line1, 2, np.float_, gid, froudefp))
 
-            self.parser.write_groups(floodplain_group)
+            self.parser.write_groups(spatially_variable_group)
             return True
 
         except Exception as e:
