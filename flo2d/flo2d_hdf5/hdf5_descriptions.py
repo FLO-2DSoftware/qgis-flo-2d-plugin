@@ -160,9 +160,8 @@ EVAPOR = {
 }
 
 FLOODPLAIN = {
-    "SHALLOWN_SPATIAL": "Array of Grid Elements for Spatially Variable Shallow N",
-    "FPXSEC": "Floodplain Cross-Sections",
-    "FPFROUDE": "Floodplain Limiting Froude Numbers"
+    "FPXSEC_DATA": "Floodplain Cross-Sections Data",
+    "FPXSEC_GLOBAL": "Floodplain Cross-Sections Global",
 }
 
 GUTTER = {
