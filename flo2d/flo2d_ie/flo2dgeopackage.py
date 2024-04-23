@@ -4213,7 +4213,6 @@ class Flo2dGeoPackage(GeoPackageUtils):
         Function to export mult data to hdf5 file
         """
 
-        rtrn = True
         if self.is_table_empty("mult_cells") and self.is_table_empty("simple_mult_cells"):
             return False
 
@@ -4225,19 +4224,19 @@ class Flo2dGeoPackage(GeoPackageUtils):
         head = self.execute(mult_sql).fetchone()
         mults = []
 
-        channel_group = self.parser.channel_group
+        mult_group = self.parser.mult_group
         # Check if there is any multiple channel cells defined.
         if not self.is_table_empty("mult_cells"):
             try:
                 # Multiple Channels (not simplified):
                 mult_cell_sql = """SELECT grid_fid, wdr, dm, nodchns, xnmult FROM mult_cells ORDER BY grid_fid ;"""
-                line1 = " {}" * 8 + "\n"
-                line2 = " {}" * 5 + "\n"
+                global_data_values = " {}" * 8 + "\n"
+                five_values = " {}" * 5 + "\n"
 
-                channel_group.create_dataset('Mult', [])
+                mult_group.create_dataset('MULT_GLOBAL', [])
+                mult_group.create_dataset('MULT', [])
 
-                channel_group.datasets["Mult"].data.append(create_array(line1, 8, np.string_, head[1:]))
-                # m.write(line1.format(*head[1:]).replace("None", ""))
+                mult_group.datasets["MULT_GLOBAL"].data.append(create_array(global_data_values, 8, np.float_, head[1:]))
 
                 mult_cells = self.execute(mult_cell_sql).fetchall()
 
@@ -4249,8 +4248,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
                 for row in mults:
                     vals = [x if x is not None else "" for x in row]
-                    channel_group.datasets["Mult"].data.append(create_array(line2, 8, np.string_, tuple(vals)))
-                    # m.write(line2.format(*vals))
+                    mult_group.datasets["MULT"].data.append(create_array(five_values, 5, np.float_, tuple(vals)))
 
             except Exception as e:
                 QApplication.restoreOverrideCursor()
@@ -4261,36 +4259,35 @@ class Flo2dGeoPackage(GeoPackageUtils):
             try:
                 # Simplified Multiple Channels:
                 simple_mult_cell_sql = """SELECT DISTINCT grid_fid FROM simple_mult_cells ORDER BY grid_fid;"""
-                line1 = "{}" + "\n"
-                line2 = "{}" + "\n"
+                global_data_values = "{}" + "\n"
+                grid_values = "{}" + "\n"
 
                 isany = self.execute(simple_mult_cell_sql).fetchone()
                 if isany:
-                    channel_group.create_dataset('Simple Mult', [])
+                    mult_group.create_dataset('SIMPLE_MULT', [])
+                    mult_group.create_dataset('SIMPLE_MULT_GLOBAL', [])
                     repeats = ""
 
-                    channel_group.datasets["Simple Mult"].data.append(create_array(line1, 1, np.string_, head[9]))
-                    # sm.write(line1.format(head[9]))
+                    mult_group.datasets["SIMPLE_MULT_GLOBAL"].data.append(create_array(global_data_values, 1, np.float_, head[9]))
+
                     for row in self.execute(simple_mult_cell_sql):
                         # See if grid number in row is any grid element in mults:
                         if [item for item in mults if item[0] == row[0]]:
                             repeats += str(row[0]) + "  "
                         else:
                             vals = [x if x is not None else "" for x in row]
-                            channel_group.datasets["Simple Mult"].data.append(
-                                create_array(line2, 1, np.string_, tuple(vals)))
-                            # sm.write(line2.format(*vals))
-                if repeats:
-                    self.uc.log_info("Cells repeated in simple mult cells: " + repeats)
-                self.parser.write_groups(channel_group)
-                return True
+                            mult_group.datasets["SIMPLE_MULT"].data.append(
+                                create_array(grid_values, 1, np.int_, tuple(vals)))
+                # if repeats:
+                #     self.uc.log_info("Cells repeated in simple mult cells: " + repeats)
 
             except Exception as e:
                 QApplication.restoreOverrideCursor()
                 self.uc.show_error("ERROR 101218.1611: exporting SIMPLE_MULT.DAT failed!.\n", e)
                 return False
 
-        return rtrn
+        self.parser.write_groups(mult_group)
+        return True
 
     def export_mult_dat(self, outdir):
         rtrn = True

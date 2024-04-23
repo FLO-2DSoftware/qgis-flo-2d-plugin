@@ -19,7 +19,7 @@ from qgis.PyQt.QtCore import QSettings
 from qgis.PyQt.QtWidgets import QMessageBox
 
 from ..flo2d_hdf5.hdf5_descriptions import CONTROL, GRID, NEIGHBORS, STORMDRAIN, BC, CHANNEL, HYSTRUCT, INFIL, RAIN, \
-    REDUCTION_FACTORS, LEVEE, EVAPOR, FLOODPLAIN, GUTTER, TAILINGS, SPATIALLY_VARIABLE
+    REDUCTION_FACTORS, LEVEE, EVAPOR, FLOODPLAIN, GUTTER, TAILINGS, SPATIALLY_VARIABLE, MULT
 from ..utils import Msge
 
 try:
@@ -140,6 +140,12 @@ class ParseHDF5:
         return group
 
     @property
+    def mult_group(self):
+        group_name = "Input/Multiple Channels"
+        group = HDF5Group(group_name)
+        return group
+
+    @property
     def floodplain_group(self):
         group_name = "Input/Floodplain"
         group = HDF5Group(group_name)
@@ -196,7 +202,8 @@ class ParseHDF5:
             hdf5_group = hdf5_file[group.name]
             ds = hdf5_group.create_dataset(dataset.name, data=dataset.data, compression="gzip")
             attributes_dicts = [CONTROL, GRID, NEIGHBORS, STORMDRAIN, BC, CHANNEL, HYSTRUCT, INFIL, RAIN,
-                                REDUCTION_FACTORS, LEVEE, EVAPOR, FLOODPLAIN, GUTTER, TAILINGS, SPATIALLY_VARIABLE]
+                                REDUCTION_FACTORS, LEVEE, EVAPOR, FLOODPLAIN, GUTTER, TAILINGS, SPATIALLY_VARIABLE,
+                                MULT]
 
             for attributes_dict in attributes_dicts:
                 if dataset.name in attributes_dict:

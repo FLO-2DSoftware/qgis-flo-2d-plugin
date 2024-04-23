@@ -173,3 +173,10 @@ GUTTER = {
 TAILINGS = {
     "TAILINGS": "Tailings Depth Data"
 }
+
+MULT = {
+    "MULT_GLOBAL": "Multiple Channels Global Parameters",
+    "MULT": "Multiple Channels Data",
+    "SIMPLE_MULT": "Simplified Multiple Channels Data",
+    "SIMPLE_MULT_GLOBAL": "Simplified Multiple Channels Global Parameters"
+}
