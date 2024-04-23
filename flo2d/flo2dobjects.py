@@ -603,20 +603,20 @@ class ChannelSegment(GeoPackageUtils):
                     xsi.set_profile_data()
                 except Flo2dError as e:
                     return False, repr(e)
-            else:
-                # this is natural cross-section
-                try:
-                    xsi.get_profile_data()
-                    xsup.get_profile_data()
-                    xslo.get_profile_data()
-                    d_bed = xslo.profile_data["bed_elev"] - xsup.profile_data["bed_elev"]
-                    dh = icoef * d_bed
-                    xsi.shift_nxsec(round(dh, 3))
-                except Flo2dError as e:
-                    return False, repr(e)
-                except KeyError:
-                    msg = "Interpolation failed on cross sections with 'fid': {}!".format(xsi.row["user_xs_fid"])
-                    return False, msg
+            # else:
+            #     # this is natural cross-section
+            #     try:
+            #         xsi.get_profile_data()
+            #         xsup.get_profile_data()
+            #         xslo.get_profile_data()
+            #         d_bed = xslo.profile_data["bed_elev"] - xsup.profile_data["bed_elev"]
+            #         dh = icoef * d_bed
+            #         xsi.shift_nxsec(round(dh, 3))
+            #     except Flo2dError as e:
+            #         return False, repr(e)
+            #     except KeyError:
+            #         msg = "Interpolation failed on cross sections with 'fid': {}!".format(xsi.row["user_xs_fid"])
+            #         return False, msg
 
         return True, "Interpolation successful!"
 
