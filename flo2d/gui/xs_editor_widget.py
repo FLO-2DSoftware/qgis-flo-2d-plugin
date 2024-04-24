@@ -132,7 +132,8 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         self.delete_schema_btn.clicked.connect(self.delete_schematize_data)
         self.schematize_xs_btn.clicked.connect(self.schematize_channels)
         self.check_schematized_channel_btn.clicked.connect(self.check_schematized_channel)
-        self.interpolate_channel_elevation_btn.clicked.connect(self.interpolate_channel_elevation)
+        # self.interpolate_channel_elevation_btn.clicked.connect(self.interpolate_channel_elevation)
+        self.interpolate_channel_elevation_btn.clicked.connect(self.interpolate_xs_values)
         self.confluences_btn.clicked.connect(self.create_confluences)
         self.delete_confluences_btn.clicked.connect(self.delete_confluences)
         self.interpolate_channel_n_btn.clicked.connect(self.interpolate_channel_n)
@@ -197,12 +198,17 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         qry = "SELECT fid FROM chan;"
         fids = self.gutils.execute(qry).fetchall()
         for fid in fids:
-            seg = ChannelSegment(int(fid[0]), self.con, self.iface)
-            res, msg = seg.interpolate_bed()
-            if not res:
-                self.uc.log_info(msg)
-                self.uc.show_warn("WARNING 060319.1740: " + msg)
-                return False
+            channel_type = self.gutils.execute(f"SELECT type FROM chan_elems WHERE seg_fid = '{int(fid[0])}'").fetchall()
+            channel_type_list = [item[0] for item in channel_type]
+            if all(item in {'T', 'R'} for item in channel_type_list):
+                seg = ChannelSegment(int(fid[0]), self.con, self.iface)
+                res, msg = seg.interpolate_bed()
+                if not res:
+                    self.uc.log_info(msg)
+                    self.uc.show_warn("WARNING 060319.1740: " + msg)
+                    return False
+        self.interpolate_channel_elevation()
+
         return True
 
     def populate_xsec_type_cbo(self):
@@ -533,30 +539,6 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         x3, y3 = [x2 + ((bankelr - bankell + fcd) * zr * 1.0), bankelr]
         self.xi = [x0, x1, x2, x3]
         self.yi = [y0, y1, y2, y3]
-
-    # def _create_rectangular_xy(self):
-    # data = []
-    # for i in range(self.xs_data_model.rowCount()):
-    # data.append(m_fdata(self.xs_data_model, i, 0))
-    # bankell, bankelr, fcw, fcd = data
-    # x0, y0 = [0, bankell]
-    # x1, y1 = [0, bankell - fcd]
-    # x2, y2 = [fcw, bankell - fcd]
-    # x3, y3 = [fcw, bankelr]
-    # self.xi = [x0, x1, x2, x3]
-    # self.yi = [y0, y1, y2, y3]
-    #
-    # def _create_trapezoidal_xy(self):
-    # data = []
-    # for i in range(self.xs_data_model.rowCount()):
-    # data.append(m_fdata(self.xs_data_model, i, 0))
-    # bankell, bankelr, fcw, fcd, zl, zr = data
-    # x0, y0 = [0, bankell]
-    # x1, y1 = [x0 + zl * fcd, bankell - fcd]
-    # x2, y2 = [x1 + fcw, bankell - fcd]
-    # x3, y3 = [x2 + ((bankelr - bankell + fcd) * zr * 1.0), bankelr]
-    # self.xi = [x0, x1, x2, x3]
-    # self.yi = [y0, y1, y2, y3]
 
     def _create_natural_xy(self):
         self.xi, self.yi = [[], []]
@@ -1171,6 +1153,27 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         rbank = self.lyrs.data["rbank"]["qlyr"]
         self.lyrs.lyrs_to_repaint = [rbank]
         self.lyrs.repaint_layers()
+
+    def interpolate_xs_values(self):
+        if self.gutils.is_table_empty("grid"):
+            self.uc.bar_warn("WARNING 060319.1754: There is no grid! Please create it before running tool.")
+            return
+        if self.gutils.is_table_empty("chan"):
+            self.uc.bar_warn(
+                "WARNING 060319.1755: There are no cross-sections! Please create them before running tool."
+            )
+            return
+        if not self.interp_bed_and_banks():
+            QApplication.restoreOverrideCursor()
+            self.uc.show_warn(
+                "WARNING 060319.1756: Interpolation of cross-sections values failed! " "Please check your User Layers."
+            )
+            return
+        else:
+            current_fid = self.xs_cbo.currentData()
+            self.current_xsec_changed(current_fid)
+            QApplication.restoreOverrideCursor()
+            self.uc.show_info("Interpolation of cross-sections values finished!")
 
     def interpolate_channel_elevation(self):
         """

@@ -4149,7 +4149,7 @@ class Flo2D(object):
             "user_bc_polygons": self.show_bc_editor,
             "user_struct": self.show_struct_editor,
             "struct": self.show_struct_editor,
-            "chan": self.show_profile,
+            # "chan": self.show_profile,
             "user_swmm_nodes": self.show_sd_node_info,
             "user_swmm_conduits": None,
             "user_swmm_weirs": None,
