@@ -3238,25 +3238,18 @@ class Flo2dGeoPackage(GeoPackageUtils):
         chan_t_sql = """SELECT elem_fid, bankell, bankelr, fcw, fcd, zl, zr FROM chan_t WHERE elem_fid = ?;"""
         chan_n_sql = """SELECT elem_fid, nxsecnum FROM chan_n WHERE elem_fid = ?;"""
 
-        chan_wsel_sql = """SELECT istart, wselstart, iend, wselend FROM chan_wsel ORDER BY fid;"""
-        chan_conf_sql = """SELECT chan_elem_fid FROM chan_confluences ORDER BY fid;"""
+        chan_wsel_sql = """SELECT seg_fid, istart, wselstart, iend, wselend FROM chan_wsel ORDER BY fid;"""
+        chan_conf_sql = """SELECT conf_fid, type, chan_elem_fid FROM chan_confluences ORDER BY fid;"""
         chan_e_sql = """SELECT grid_fid FROM noexchange_chan_cells ORDER BY fid;"""
 
-        segment = "   {0:.2f}   {1:.2f}   {2:.2f}   {3}\n"
-        chan_r = "R" + "  {}" * 7 + "\n"
-        chan_v = "V" + "  {}" * 19 + "\n"
-        chan_t = "T" + "  {}" * 9 + "\n"
-        chan_n = "N" + "  {}" * 4 + "\n"
+        segment = "{}  {}  {}  {}  {}\n"
         chanbank = " {0: <10} {1}\n"
-        wsel = "{0} {1:.2f}\n"
-        conf = " C {0}  {1}\n"
-        chan_e = " E {0}\n"
 
         sqls = {
-            "R": [chan_r_sql, chan_r, 3, 6],
-            "V": [chan_v_sql, chan_v, 3, 5],
-            "T": [chan_t_sql, chan_t, 3, 6],
-            "N": [chan_n_sql, chan_n, 1, 2],
+            "R": [chan_r_sql, 3, 6],
+            "V": [chan_v_sql, 3, 5],
+            "T": [chan_t_sql, 3, 6],
+            "N": [chan_n_sql, 1, 2],
         }
 
         chan_rows = self.execute(chan_sql).fetchall()
@@ -3266,7 +3259,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             pass
 
         channel_group = self.parser.channel_group
-        channel_group.create_dataset('CHAN', [])
+        channel_group.create_dataset('CHAN_GLOBAL', [])
         channel_group.create_dataset('CHANBANK', [])
 
         ISED = self.gutils.get_cont_par("ISED")
@@ -3275,11 +3268,10 @@ class Flo2dGeoPackage(GeoPackageUtils):
             row = [x if x is not None else "0" for x in row]
             fid = row[0]
             if ISED == "0":
-                row[4] = ""
-            channel_group.datasets["CHAN"].data.append(create_array(segment, 20, np.string_, tuple(row[1:5])))
+                row[4] = -9999
+            channel_group.datasets["CHAN_GLOBAL"].data.append(create_array(segment, 5, np.float_, tuple(row)))
             # Writes depinitial, froudc, roughadj, isedn from 'chan' table (schematic layer).
-            # A single line for each channel segment. The next lines will be the grid elements of
-            # this channel segment.
+            # A single line for each channel segment.
             for elems in self.execute(
                     chan_elems_sql, (fid,)
             ):  # each 'elems' is a list [(fid, rbankgrid, fcn, xlen, type)] from
@@ -3295,7 +3287,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     xlen,
                     typ,
                 ) = elems  # Separates values of list into individual variables.
-                sql, line, fcn_idx, xlen_idx = sqls[
+                sql, fcn_idx, xlen_idx = sqls[
                     typ
                 ]  # depending on 'typ' (R,V,T, or N) select sql (the SQLite SELECT statement to execute),
                 # line (format to write), fcn_idx (?), and xlen_idx (?)
@@ -3309,25 +3301,81 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 res.insert(
                     xlen_idx, xlen
                 )  # Add ´xlen' (coming from table ´chan_elems' (cross sections) to 'res' list in position 'xlen_idx'.
-                channel_group.datasets["CHAN"].data.append(create_array(line, 20, np.string_, tuple(res)))
-                channel_group.datasets["CHANBANK"].data.append(create_array(chanbank, 20, np.string_, eid, rbank))
 
+                if typ == 'R':
+                    data = ([fid] + res)
+                    try:
+                        channel_group.datasets["CHAN_RECTANGULAR"].data.append(data)
+                    except:
+                        channel_group.create_dataset('CHAN_RECTANGULAR', [])
+                        channel_group.datasets["CHAN_RECTANGULAR"].data.append(data)
+
+                if typ == 'V':
+                    data = ([fid] + res)
+                    try:
+                        channel_group.datasets["CHAN_VARIABLE"].data.append(data)
+                    except:
+                        channel_group.create_dataset('CHAN_VARIABLE', [])
+                        channel_group.datasets["CHAN_VARIABLE"].data.append(data)
+
+                if typ == 'T':
+                    data = ([fid] + res)
+                    try:
+                        channel_group.datasets["CHAN_TRAPEZOIDAL"].data.append(data)
+                    except:
+                        channel_group.create_dataset('CHAN_TRAPEZOIDAL', [])
+                        channel_group.datasets["CHAN_TRAPEZOIDAL"].data.append(data)
+
+                if typ == 'N':
+                    data = ([fid] + res)
+                    try:
+                        channel_group.datasets["CHAN_NATURAL"].data.append(data)
+                    except:
+                        channel_group.create_dataset('CHAN_NATURAL', [])
+                        channel_group.datasets["CHAN_NATURAL"].data.append(data)
+
+                channel_group.datasets["CHANBANK"].data.append(create_array(chanbank, 2, np.int_, eid, rbank))
+
+        segment_added = []
         for row in self.execute(chan_wsel_sql):
-            channel_group.datasets["CHAN"].data.append(create_array(wsel, 20, np.string_, tuple(row[:2])))
-            channel_group.datasets["CHAN"].data.append(create_array(wsel, 20, np.string_, tuple(row[2:])))
+            if row[0] not in segment_added:
+                (
+                    seg_fid,
+                    istart,
+                    wselstart,
+                    iend,
+                    wselend,
+                ) = row
+                try:
+                    channel_group.datasets["WSE_START"].data.append([seg_fid, istart, wselstart])
+                    channel_group.datasets["WSE_END"].data.append([seg_fid, iend, wselend])
+                except:
+                    channel_group.create_dataset('WSE_START', [])
+                    channel_group.datasets["WSE_START"].data.append([seg_fid, istart, wselstart])
+                    channel_group.create_dataset('WSE_END', [])
+                    channel_group.datasets["WSE_END"].data.append([seg_fid, iend, wselend])
+                finally:
+                    segment_added.append(row[0])
 
-        pairs = []
         for row in self.execute(chan_conf_sql):
-            chan_elem = row[0]
-            if not pairs:
-                pairs.append(chan_elem)
-            else:
-                pairs.append(chan_elem)
-                channel_group.datasets["CHAN"].data.append(create_array(conf, 20, np.string_, tuple(pairs)))
-                del pairs[:]
+            (
+                conf_fid,
+                typ,
+                chan_elem_fid,
+            ) = row
+
+            try:
+                channel_group.datasets["CONFLUENCES"].data.append([conf_fid, typ, chan_elem_fid])
+            except:
+                channel_group.create_dataset('CONFLUENCES', [])
+                channel_group.datasets["CONFLUENCES"].data.append([conf_fid, typ, chan_elem_fid])
 
         for row in self.execute(chan_e_sql):
-            channel_group.datasets["CHAN"].data.append(create_array(chan_e, 20, np.string_, row[0]))
+            try:
+                channel_group.datasets["NOEXCHANGE"].data.append(row[0])
+            except:
+                channel_group.create_dataset('NOEXCHANGE', [])
+                channel_group.datasets["NOEXCHANGE"].data.append(row[0])
 
         self.parser.write_groups(channel_group)
         return True
@@ -3461,9 +3509,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             chan_n_sql = """SELECT nxsecnum, xsecname FROM chan_n ORDER BY nxsecnum;"""
             xsec_sql = """SELECT xi, yi FROM xsec_n_data WHERE chan_n_nxsecnum = ? ORDER BY fid;"""
 
-            xsec_line = """X     {0}  {1}\n"""
-            pkt_line = """ {0:<10} {1: >10}\n"""
-            nr = "{0:.2f}"
+            xsec_line = """{0}  {1}\n"""
 
             chan_n = self.execute(chan_n_sql).fetchall()
             if not chan_n:
@@ -3472,11 +3518,13 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 pass
 
             channel_group = self.parser.channel_group
-            channel_group.create_dataset('XSEC', [])
+            channel_group.create_dataset('XSEC_NAME', [])
+            channel_group.create_dataset('XSEC_DATA', [])
+
             for nxecnum, xsecname in chan_n:
-                channel_group.datasets["XSEC"].data.append(create_array(xsec_line, 3, np.string_, nxecnum, xsecname))
+                channel_group.datasets["XSEC_NAME"].data.append(create_array(xsec_line, 2, np.string_, tuple([nxecnum, xsecname])))
                 for xi, yi in self.execute(xsec_sql, (nxecnum,)):
-                    channel_group.datasets["XSEC"].data.append(create_array(pkt_line, 3, np.string_, xi, yi))
+                    channel_group.datasets["XSEC_DATA"].data.append([nxecnum, xi, yi])
 
             self.parser.write_groups(channel_group)
             return True

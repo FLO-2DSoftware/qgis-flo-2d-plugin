@@ -100,10 +100,15 @@ BC = {
 }
 
 CHANNEL = {
-    "CHAN": "Channel Data",
+    "CHAN_GLOBAL": "Channel Global Data",
+    "CHAN_NATURAL": "Natural Channel Data",
+    "CHAN_RECTANGULAR": "Rectangular Channel Global Data",
+    "CHAN_TRAPEZOIDAL": "Trapezoidal Channel Global Data",
     "CHANBANK": "Channel Bank Data",
-    "XSEC": "Cross Section Data",
-    "STREET": "Street Data"
+    "CONFLUENCES": "Confluences Data",
+    "XSEC_DATA": "Cross Section Data",
+    "XSEC_NAME": "Cross Section Name",
+    "NOEXCHANGE": "No Exchange Grids",
 }
 
 HYSTRUCT = {
