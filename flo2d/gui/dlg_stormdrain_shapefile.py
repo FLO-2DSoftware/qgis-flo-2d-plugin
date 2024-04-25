@@ -70,6 +70,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
         self.SDSF_buttonBox.button(QDialogButtonBox.Save).setText("Assign Selected Fields")
         self.inlets_shapefile_cbo.currentIndexChanged.connect(self.populate_inlet_attributes)
         self.outfalls_shapefile_cbo.currentIndexChanged.connect(self.populate_outfall_attributes)
+        self.strge_unit_shapefile_cbo.currentIndexChanged.connect(self.populate_storage_units_attributes)
         self.conduits_shapefile_cbo.currentIndexChanged.connect(self.populate_conduit_attributes)
         self.pumps_shapefile_cbo.currentIndexChanged.connect(self.populate_pump_attributes)
         self.orifices_shapefile_cbo.currentIndexChanged.connect(self.populate_orifices_attributes)
@@ -326,6 +327,37 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                 e,
             )
 
+
+    def populate_storage_units_attributes(self, idx):
+        try:
+            uri = self.strge_unit_shapefile_cbo.itemData(idx)
+            lyr_id = self.lyrs.layer_exists_in_group(uri)
+            self.current_lyr = self.lyrs.get_layer_tree_item(lyr_id).layer()
+
+            for combo in self.strge_unit_fields_groupBox.findChildren(QComboBox):
+                combo.clear()
+                combo.setLayer(self.current_lyr)
+
+            nFeatures = self.current_lyr.featureCount()
+            self.strge_unit_fields_groupBox.setTitle(
+                "Storage Units Fields Selection (from '"
+                + self.strge_unit_shapefile_cbo.currentText()
+                + "' layer with "
+                + str(nFeatures)
+                + " features (points))"
+            )
+
+            self.restore_SD_shapefile_storage_units_field_names()
+
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.uc.show_error(
+                "ERROR 250424.1025: there are not defined or visible point layers to select storage units components!"
+                + "\n__________________________________________________",
+                e,
+            )
+
+
     def populate_conduit_attributes(self, idx):
         try:
             uri = self.conduits_shapefile_cbo.itemData(idx)
@@ -513,7 +545,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
     def clear_outfall_time_series(self):
         self.outfall_time_series_FieldCbo.setCurrentIndex(-1)
 
-    # CLEAR STORAGE UNITS FIELDS:
+    # CLEAR FIELDS:
     
     def clear_fieldCombo(self, fieldCombo):
         fieldCombo.setCurrentIndex(-1)
@@ -2232,6 +2264,38 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
 
         else:
             self.clear_all_outfall_attributes()
+
+    def restore_SD_shapefile_storage_units_field_names(self):
+        pass
+        # Storage Units:
+        # s = QSettings()
+        # layer = "" if s.value("FLO-2D/sf_conduits_layer_name") is None else s.value("FLO-2D/sf_conduits_layer_name")
+        # if layer == self.conduits_shapefile_cbo.currentText():
+        #     lyr = self.lyrs.get_layer_by_name(layer, group=self.lyrs.group).layer()
+        #     field_names = [field.name() for field in lyr.fields()]            
+        #
+        #     self.conduit_name_FieldCbo.setCurrentIndex(self.restore_field("FLO-2D/sf_conduits_name", field_names))
+        #     self.conduit_from_inlet_FieldCbo.setCurrentIndex(self.restore_field("FLO-2D/sf_conduits_from_inlet", field_names))
+        #     self.conduit_to_outlet_FieldCbo.setCurrentIndex(self.restore_field("FLO-2D/sf_conduits_to_outlet", field_names))
+        #     self.conduit_inlet_offset_FieldCbo.setCurrentIndex(self.restore_field("FLO-2D/sf_conduits_inlet_offset", field_names))
+        #     self.conduit_outlet_offset_FieldCbo.setCurrentIndex(self.restore_field("FLO-2D/sf_conduits_outlet_offset", field_names))
+        #     self.conduit_shape_FieldCbo.setCurrentIndex(self.restore_field("FLO-2D/sf_conduits_shape", field_names))
+        #     self.conduit_barrels_FieldCbo.setCurrentIndex(self.restore_field("FLO-2D/sf_conduits_barrels", field_names))
+        #     self.conduit_max_depth_FieldCbo.setCurrentIndex(self.restore_field("FLO-2D/sf_conduits_max_depth", field_names))
+        #     self.conduit_geom2_FieldCbo.setCurrentIndex(self.restore_field("FLO-2D/sf_conduits_geom2", field_names))
+        #     self.conduit_geom3_FieldCbo.setCurrentIndex(self.restore_field("FLO-2D/sf_conduits_geom3", field_names))
+        #     self.conduit_geom4_FieldCbo.setCurrentIndex(self.restore_field("FLO-2D/sf_conduits_geom4", field_names))
+        #     self.conduit_length_FieldCbo.setCurrentIndex(self.restore_field("FLO-2D/sf_conduits_length", field_names))
+        #     self.conduit_manning_FieldCbo.setCurrentIndex(self.restore_field("FLO-2D/sf_conduits_manning", field_names))
+        #     self.conduit_initial_flow_FieldCbo.setCurrentIndex(self.restore_field("FLO-2D/sf_conduits_initial_flow", field_names))
+        #     self.conduit_max_flow_FieldCbo.setCurrentIndex(self.restore_field("FLO-2D/sf_conduits_max_flow", field_names))
+        #     self.conduit_entry_loss_FieldCbo.setCurrentIndex(self.restore_field("FLO-2D/sf_conduits_entry_loss", field_names))
+        #     self.conduit_exit_loss_FieldCbo.setCurrentIndex(self.restore_field("FLO-2D/sf_conduits_exit_loss", field_names))
+        #     self.conduit_average_loss_FieldCbo.setCurrentIndex(self.restore_field("FLO-2D/sf_conduits_average_loss", field_names))
+        #     self.conduit_flap_gate_FieldCbo.setCurrentIndex(self.restore_field("FLO-2D/sf_conduits_flap_gate", field_names))
+        #
+        # else:
+        #     self.clear_all_conduit_attributes()
 
     def restore_SD_shapefile_conduit_field_names(self):
         # Conduits:
