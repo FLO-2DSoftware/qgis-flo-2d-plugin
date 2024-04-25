@@ -32,6 +32,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
         self.con = con
         self.gutils = GeoPackageUtils(con, iface)
         self.user_swmm_nodes_lyr = self.lyrs.data["user_swmm_nodes"]["qlyr"]
+        self.user_swmm_storage_units_lyr = self.lyrs.data["user_swmm_storage_units"]["qlyr"]
         self.user_swmm_conduits_lyr = self.lyrs.data["user_swmm_conduits"]["qlyr"]
         self.user_swmm_pumps_lyr = self.lyrs.data["user_swmm_pumps"]["qlyr"]
         self.user_swmm_orifices_lyr = self.lyrs.data["user_swmm_orifices"]["qlyr"]
@@ -100,6 +101,26 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
         self.clear_outfall_water_depth_btn.clicked.connect(self.clear_outfall_water_depth)
         self.clear_outfall_tidal_curve_btn.clicked.connect(self.clear_outfall_tidal_curve)
         self.clear_outfall_time_series_btn.clicked.connect(self.clear_outfall_time_series)
+
+        # Connections to clear storage units fields.
+        self.clear_strge_unit_name_btn.clicked.connect(lambda: self.clear_fieldCombo(self.strge_unit_name_FieldCbo))
+        self.clear_strge_unit_invert_elevation_btn.clicked.connect(lambda: self.clear_fieldCombo(self.strge_unit_invert_elevation_FieldCbo))
+        self.clear_strge_unit_max_depth_btn.clicked.connect(lambda: self.clear_fieldCombo(self.strge_unit_max_depth_FieldCbo))
+        self.clear_strge_unit_initial_depth_btn.clicked.connect(lambda: self.clear_fieldCombo(self.strge_unit_initial_depth_FieldCbo))
+        self.clear_strge_unit_external_inflow_btn.clicked.connect(lambda: self.clear_fieldCombo(self.strge_unit_external_inflow_FieldCbo))
+        self.clear_strge_unit_ponded_area_btn.clicked.connect(lambda: self.clear_fieldCombo(self.strge_unit_ponded_area_FieldCbo))
+        self.clear_strge_unit_evap_factor_btn.clicked.connect(lambda: self.clear_fieldCombo(self.strge_unit_evap_factor_FieldCbo))
+        self.clear_strge_unit_treatment_btn.clicked.connect(lambda: self.clear_fieldCombo(self.strge_unit_treatment_FieldCbo))
+        self.clear_strge_unit_infiltration_btn.clicked.connect(lambda: self.clear_fieldCombo(self.strge_unit_infiltration_FieldCbo))
+        self.clear_strge_infil_method_btn.clicked.connect(lambda: self.clear_fieldCombo(self.strge_unit_infil_method_FieldCbo))
+        self.clear_strge_unit_suction_head_btn.clicked.connect(lambda: self.clear_fieldCombo(self.strge_unit_suction_head_FieldCbo))
+        self.clear_strge_unit_conductivity_btn.clicked.connect(lambda: self.clear_fieldCombo(self.strge_unit_conductivity_FieldCbo))
+        self.clear_strge_unit_initial_deficit_btn.clicked.connect(lambda: self.clear_fieldCombo(self.strge_unit_initial_deficit_FieldCbo))
+        self.clear_strge_storage_curve_btn.clicked.connect(lambda: self.clear_fieldCombo(self.strge_unit_storage_curve_FieldCbo))
+        self.clear_strge_unit_coefficient_btn.clicked.connect(lambda: self.clear_fieldCombo(self.strge_unit_coefficient_FieldCbo))
+        self.clear_strge_unit_exponent_btn.clicked.connect(lambda: self.clear_fieldCombo(self.strge_unit_exponent_FieldCbo))
+        self.clear_strge_unit_constant_btn.clicked.connect(lambda: self.clear_fieldCombo(self.strge_unit_constant_FieldCbo))
+        self.clear_strge_unit_curve_name_btn.clicked.connect(lambda: self.clear_fieldCombo(self.strge_unit_curve_name_FieldCbo))
 
         # Connections to clear conduits fields.
         self.clear_conduit_name_btn.clicked.connect(self.clear_conduit_name)
@@ -491,6 +512,11 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
 
     def clear_outfall_time_series(self):
         self.outfall_time_series_FieldCbo.setCurrentIndex(-1)
+
+    # CLEAR STORAGE UNITS FIELDS:
+    
+    def clear_fieldCombo(self, fieldCombo):
+        fieldCombo.setCurrentIndex(-1)
 
     # CLEAR CONDUITS FIELDS:
 
