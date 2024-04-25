@@ -185,3 +185,14 @@ MULT = {
     "SIMPLE_MULT": "Simplified Multiple Channels Data",
     "SIMPLE_MULT_GLOBAL": "Simplified Multiple Channels Global Parameters"
 }
+
+SD = {
+    "SWMMFLO_DATA": "Storm Drain Inlet Data",
+    "SWMMFLO_NAME": "Storm Drain Inlet Name",
+    "SWMMFLORT": "Storm Drain Type 4 Rating Table",
+    "SWMMOUTF_DATA": "Storm Drain Outfall Data",
+    "SWMMOUTF_NAME": "Storm Drain Outfall Name",
+    "SDCLOGGING": "Storm Drain Blockage Method",
+    "SWMMFLODROPBOX": "Storm Drain Dropbox Data"
+
+}

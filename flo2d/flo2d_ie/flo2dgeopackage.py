@@ -5478,10 +5478,9 @@ class Flo2dGeoPackage(GeoPackageUtils):
             if self.is_table_empty("swmmflo"):
                 return False
 
-            swmmflo_sql = """SELECT swmmchar, swmm_jt, swmm_iden, intype, swmm_length, swmm_width, 
+            swmmflo_sql = """SELECT fid, swmmchar, swmm_jt, swmm_iden, intype, swmm_length, swmm_width, 
                                     swmm_height, swmm_coeff, swmm_feature, curbheight
                              FROM swmmflo ORDER BY fid;"""
-            line1 = "{0}  {1} {2} {3} {4} {5} {6} {7} {8} {9}\n"
 
             swmmflo_rows = self.execute(swmmflo_sql).fetchall()
             if not swmmflo_rows:
@@ -5490,22 +5489,40 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 pass
 
             stormdrain_group = self.parser.stormdrain_group
-            stormdrain_group.create_dataset('SWMMFLO', [])
+            stormdrain_group.create_dataset('SWMMFLO_DATA', [])
+            stormdrain_group.create_dataset('SWMMFLO_NAME', [])
 
+            swmmflo_name = "{}  {}\n"
             for row in swmmflo_rows:
-                new_row = []
-                if row[2][0] in ["I", "i"]:  # First letter of name (swmm_iden) is
-                    # "I" or "i" for inlet,
-                    # "IM" or "im" for manhole
-                    # "j" or "J" for junctions
-                    # "O" or "o" for outfalls.
-                    for i, item in enumerate(row, 1):
-                        new_row.append(item if item is not None else 0)
-                    if new_row[1] < 1:
-                        self.uc.bar_warn("WARNING: invalid grid number in 'swmmflo' (Storm Drain. SD Inlets) layer !")
-                    else:
-                        stormdrain_group.datasets["SWMMFLO"].data.append(
-                            create_array(line1, 10, np.string_, tuple(new_row)))
+                (
+                    fid,
+                    swmmchar,
+                    swmm_jt,
+                    swmm_iden,
+                    intype,
+                    swmm_length,
+                    swmm_width,
+                    swmm_height,
+                    swmm_coeff,
+                    swmm_feature,
+                    curbheight
+                ) = row
+
+                if intype != 0:
+                    stormdrain_group.datasets["SWMMFLO_NAME"].data.append(
+                        create_array(swmmflo_name, 2, np.string_, tuple([fid, swmm_iden])))
+
+                    stormdrain_group.datasets["SWMMFLO_DATA"].data.append([
+                        fid,
+                        swmm_jt,
+                        intype,
+                        swmm_length,
+                        swmm_width,
+                        swmm_height,
+                        swmm_coeff,
+                        swmm_feature,
+                        curbheight
+                    ])
 
             self.parser.write_groups(stormdrain_group)
             return True
@@ -5571,12 +5588,18 @@ class Flo2dGeoPackage(GeoPackageUtils):
         if self.is_table_empty("swmmflort") and self.is_table_empty("swmmflo_culvert"):
             return False
 
-        swmmflort_sql = "SELECT fid, grid_fid, name FROM swmmflort ORDER BY grid_fid;"
-        data_sql = "SELECT depth, q FROM swmmflort_data WHERE swmm_rt_fid = ? ORDER BY depth;"
+        # swmmflort_sql = "SELECT fid, grid_fid, name FROM swmmflort ORDER BY grid_fid;"
+        # data_sql = "SELECT depth, q FROM swmmflort_data WHERE swmm_rt_fid = ? ORDER BY depth;"
         #             line1 = 'D {0}\n'
-        line1 = "D {0}  {1}\n"
-        line2 = "N {0}  {1}\n"
-        errors = ""
+        # line1 = "D {0}  {1}\n"
+        # line2 = "N {0}  {1}\n"
+        # errors = ""
+        swmmflort_sql = """
+                        SELECT swmmflo.fid as FID, depth, q
+                        FROM swmmflort_data
+                        JOIN swmmflort ON swmmflort_data.swmm_rt_fid = swmmflort.fid
+                        JOIN swmmflo ON swmmflort.grid_fid = swmmflo.swmm_jt;
+                        """
         swmmflort_rows = self.execute(swmmflort_sql).fetchall()
 
         if not swmmflort_rows and self.is_table_empty("swmmflo_culvert"):
@@ -5585,115 +5608,137 @@ class Flo2dGeoPackage(GeoPackageUtils):
             pass
 
         stormdrain_group = self.parser.stormdrain_group
-        stormdrain_group.create_dataset('SWMMFLORT', [])
 
-        error_mentioned = False
-        for fid, gid, rtname in swmmflort_rows:
-            rtname = rtname.strip()
-            if gid is not None:
-                if str(gid).strip() != "":
-                    if rtname is None or rtname == "":
-                        errors += "* Grid element " + str(gid) + " has an empty rating table name.\n"
-                    else:
-                        inlet_type_qry = "SELECT intype FROM swmmflo WHERE swmm_jt = ?;"
-                        inlet_type = self.execute(inlet_type_qry, (gid,)).fetchall()
-                        if inlet_type is not None:
-                            # TODO: there may be more than one record. Why? Some may have intype = 4.
-                            if len(inlet_type) > 1:
-                                errors += "* Grid element " + str(gid) + " has has more than one inlet.\n"
-                            # See if there is a type 4:
-                            inlet_type_qry2 = "SELECT intype FROM swmmflo WHERE swmm_jt = ? AND intype = '4';"
-                            inlet_type = self.execute(inlet_type_qry2, (gid,)).fetchone()
-                            if inlet_type is not None:
-                                rows = self.execute(data_sql, (fid,)).fetchone()
-                                if not rows:
-                                    inlet_name = self.execute(
-                                        "SELECT name FROM user_swmm_nodes WHERE grid = ?;",
-                                        (gid,),
-                                    ).fetchone()
-                                    if inlet_name != None:
-                                        if inlet_name[0] == "":
-                                            errors += (
-                                                    "* No data found for a rating table named '"
-                                                    + rtname
-                                                    + "' for grid element "
-                                                    + str(gid)
-                                                    + ".\n"
-                                            )
-                                        else:
-                                            errors += (
-                                                    "* No data found for a rating table named '"
-                                                    + rtname
-                                                    + "' for inlet '"
-                                                    + inlet_name[0]
-                                                    + "' for grid element "
-                                                    + str(gid)
-                                                    + ".\n"
-                                            )
-                                else:
-                                    if not self.gutils.is_table_empty("user_swmm_nodes"):
-                                        inlet_name = self.execute(
-                                            "SELECT name FROM user_swmm_nodes WHERE grid = ?;",
-                                            (gid,),
-                                        ).fetchone()
-                                        if inlet_name != None:
-                                            if inlet_name[0] != "":
-                                                stormdrain_group.datasets["SWMMFLORT"].data.append(
-                                                    create_array(line1, 3, np.string_, gid, inlet_name[0]))
-                                                table = self.execute(data_sql, (fid,)).fetchall()
-                                                if table:
-                                                    for row in table:
-                                                        stormdrain_group.datasets["SWMMFLORT"].data.append(
-                                                            create_array(line2, 3, np.string_, row))
-                                                else:
-                                                    errors += (
-                                                            "* Could not find data for rating table '"
-                                                            + rtname
-                                                            + "' for grid element "
-                                                            + str(gid)
-                                                            + ".\n"
-                                                    )
-                                    else:
-                                        if not error_mentioned:
-                                            errors += "Storm Drain Nodes layer in User Layers is empty.\nSWMMFLORT.DAT may be incomplete!"
-                                            error_mentioned = True
-            else:
-                errors += "* Unknown grid element in Rating Table.\n"
-        culverts = self.gutils.execute(
-            "SELECT grid_fid, name, cdiameter, typec, typeen, cubase, multbarrels FROM swmmflo_culvert ORDER BY fid;"
-        ).fetchall()
-        # TODO: Check Culverts when exporting to hdf5
-        if culverts:
-            for culv in culverts:
-                (
-                    grid_fid,
-                    name,
-                    cdiameter,
-                    typec,
-                    typeen,
-                    cubase,
-                    multbarrels,
-                ) = culv
-                if grid_fid:
-                    stormdrain_group.datasets["SWMMFLORT"].data.append(
-                        create_array("S " + str(grid_fid) + " " + name + " " + str(cdiameter) + "\n", 3, np.string_))
-                    # s.write("S " + str(grid_fid) + " " + name + " " + str(cdiameter) + "\n")
-                    stormdrain_group.datasets["SWMMFLORT"].data.append(
-                        create_array(
-                            "F " + str(typec) + " " + str(typeen) + " " + str(cubase) + " " + str(multbarrels) + "\n",
-                            3, np.string_))
-                    # s.write(
-                    #     "F " + str(typec) + " " + str(typeen) + " " + str(cubase) + " " + str(multbarrels) + "\n"
-                    # )
-                else:
-                    if name:
-                        errors += "* Unknown grid element for Culverts eq. " + name + ".\n"
-                    else:
-                        errors += "* Unknown grid element in Culverts eq. table.\n"
-        if errors:
-            QApplication.restoreOverrideCursor()
-            self.uc.show_info("WARNING 040319.0521:\n\n" + errors)
-            QApplication.setOverrideCursor(Qt.WaitCursor)
+        for fid, depth, q in swmmflort_rows:
+            try:
+                stormdrain_group.datasets["RATING_TABLE"].data.append([fid, depth, q])
+            except:
+                stormdrain_group.create_dataset('RATING_TABLE', [])
+                stormdrain_group.datasets["RATING_TABLE"].data.append([fid, depth, q])
+
+        culverts_sql = """
+                        SELECT swmmflo.fid as FID, cdiameter, typec, typeen, cubase, multbarrels
+                        FROM swmmflo_culvert
+                        JOIN swmmflo ON swmmflo_culvert.grid_fid = swmmflo.swmm_jt;
+                        """
+
+        culverts_rows = self.execute(culverts_sql).fetchall()
+
+        for fid, cdiameter, typec, typeen, cubase, multbarrels in culverts_rows:
+            try:
+                stormdrain_group.datasets["CULVERT_EQUATIONS"].data.append([fid, cdiameter, typec, typeen, cubase, multbarrels])
+            except:
+                stormdrain_group.create_dataset('CULVERT_EQUATIONS', [])
+                stormdrain_group.datasets["CULVERT_EQUATIONS"].data.append([fid, cdiameter, typec, typeen, cubase, multbarrels])
+
+
+        # error_mentioned = False
+        # for fid, gid, rtname in swmmflort_rows:
+        #     rtname = rtname.strip()
+        #     if gid is not None:
+        #         if str(gid).strip() != "":
+        #             if rtname is None or rtname == "":
+        #                 errors += "* Grid element " + str(gid) + " has an empty rating table name.\n"
+        #             else:
+        #                 inlet_type_qry = "SELECT intype FROM swmmflo WHERE swmm_jt = ?;"
+        #                 inlet_type = self.execute(inlet_type_qry, (gid,)).fetchall()
+        #                 if inlet_type is not None:
+        #                     # TODO: there may be more than one record. Why? Some may have intype = 4.
+        #                     if len(inlet_type) > 1:
+        #                         errors += "* Grid element " + str(gid) + " has has more than one inlet.\n"
+        #                     # See if there is a type 4:
+        #                     inlet_type_qry2 = "SELECT intype FROM swmmflo WHERE swmm_jt = ? AND intype = '4';"
+        #                     inlet_type = self.execute(inlet_type_qry2, (gid,)).fetchone()
+        #                     if inlet_type is not None:
+        #                         rows = self.execute(data_sql, (fid,)).fetchone()
+        #                         if not rows:
+        #                             inlet_name = self.execute(
+        #                                 "SELECT name FROM user_swmm_nodes WHERE grid = ?;",
+        #                                 (gid,),
+        #                             ).fetchone()
+        #                             if inlet_name != None:
+        #                                 if inlet_name[0] == "":
+        #                                     errors += (
+        #                                             "* No data found for a rating table named '"
+        #                                             + rtname
+        #                                             + "' for grid element "
+        #                                             + str(gid)
+        #                                             + ".\n"
+        #                                     )
+        #                                 else:
+        #                                     errors += (
+        #                                             "* No data found for a rating table named '"
+        #                                             + rtname
+        #                                             + "' for inlet '"
+        #                                             + inlet_name[0]
+        #                                             + "' for grid element "
+        #                                             + str(gid)
+        #                                             + ".\n"
+        #                                     )
+        #                         else:
+        #                             if not self.gutils.is_table_empty("user_swmm_nodes"):
+        #                                 inlet_name = self.execute(
+        #                                     "SELECT name FROM user_swmm_nodes WHERE grid = ?;",
+        #                                     (gid,),
+        #                                 ).fetchone()
+        #                                 if inlet_name != None:
+        #                                     if inlet_name[0] != "":
+        #                                         stormdrain_group.datasets["SWMMFLORT"].data.append(
+        #                                             create_array(line1, 3, np.string_, gid, inlet_name[0]))
+        #                                         table = self.execute(data_sql, (fid,)).fetchall()
+        #                                         if table:
+        #                                             for row in table:
+        #                                                 stormdrain_group.datasets["SWMMFLORT"].data.append(
+        #                                                     create_array(line2, 3, np.string_, row))
+        #                                         else:
+        #                                             errors += (
+        #                                                     "* Could not find data for rating table '"
+        #                                                     + rtname
+        #                                                     + "' for grid element "
+        #                                                     + str(gid)
+        #                                                     + ".\n"
+        #                                             )
+        #                             else:
+        #                                 if not error_mentioned:
+        #                                     errors += "Storm Drain Nodes layer in User Layers is empty.\nSWMMFLORT.DAT may be incomplete!"
+        #                                     error_mentioned = True
+        #     else:
+        #         errors += "* Unknown grid element in Rating Table.\n"
+        # culverts = self.gutils.execute(
+        #     "SELECT grid_fid, name, cdiameter, typec, typeen, cubase, multbarrels FROM swmmflo_culvert ORDER BY fid;"
+        # ).fetchall()
+        # # TODO: Check Culverts when exporting to hdf5
+        # if culverts:
+        #     for culv in culverts:
+        #         (
+        #             grid_fid,
+        #             name,
+        #             cdiameter,
+        #             typec,
+        #             typeen,
+        #             cubase,
+        #             multbarrels,
+        #         ) = culv
+        #         if grid_fid:
+        #             stormdrain_group.datasets["SWMMFLORT"].data.append(
+        #                 create_array("S " + str(grid_fid) + " " + name + " " + str(cdiameter) + "\n", 3, np.string_))
+        #             # s.write("S " + str(grid_fid) + " " + name + " " + str(cdiameter) + "\n")
+        #             stormdrain_group.datasets["SWMMFLORT"].data.append(
+        #                 create_array(
+        #                     "F " + str(typec) + " " + str(typeen) + " " + str(cubase) + " " + str(multbarrels) + "\n",
+        #                     3, np.string_))
+        #             # s.write(
+        #             #     "F " + str(typec) + " " + str(typeen) + " " + str(cubase) + " " + str(multbarrels) + "\n"
+        #             # )
+        #         else:
+        #             if name:
+        #                 errors += "* Unknown grid element for Culverts eq. " + name + ".\n"
+        #             else:
+        #                 errors += "* Unknown grid element in Culverts eq. table.\n"
+        # if errors:
+        #     QApplication.restoreOverrideCursor()
+        #     self.uc.show_info("WARNING 040319.0521:\n\n" + errors)
+        #     QApplication.setOverrideCursor(Qt.WaitCursor)
 
         self.parser.write_groups(stormdrain_group)
         return True
@@ -5853,21 +5898,30 @@ class Flo2dGeoPackage(GeoPackageUtils):
         try:
             if self.is_table_empty("swmmoutf"):
                 return False
-            swmmoutf_sql = """SELECT name, grid_fid, outf_flo FROM swmmoutf ORDER BY fid;"""
-
-            line1 = "{0}  {1}  {2}\n"
+            swmmoutf_sql = """SELECT fid, name, grid_fid, outf_flo FROM swmmoutf ORDER BY fid;"""
 
             swmmoutf_rows = self.execute(swmmoutf_sql).fetchall()
             if not swmmoutf_rows:
                 return False
             else:
                 pass
+
             stormdrain_group = self.parser.stormdrain_group
-            stormdrain_group.create_dataset('SWMMOUTF', [])
+            stormdrain_group.create_dataset('SWMMOUTF_DATA', [])
+            stormdrain_group.create_dataset('SWMMOUTF_NAME', [])
+
+            swmmoutf_name = "{}  {}\n"
 
             for row in swmmoutf_rows:
-                stormdrain_group.datasets["SWMMOUTF"].data.append(create_array(line1, 3, np.string_, row))
-                # s.write(line1.format(*row))
+                (
+                    fid,
+                    name,
+                    grid_fid,
+                    outf_flo
+                ) = row
+
+                stormdrain_group.datasets["SWMMOUTF_DATA"].data.append([fid, grid_fid, outf_flo])
+                stormdrain_group.datasets["SWMMOUTF_NAME"].data.append(create_array(swmmoutf_name, 2, np.string_, tuple([fid, name])))
 
             self.parser.write_groups(stormdrain_group)
             return True
