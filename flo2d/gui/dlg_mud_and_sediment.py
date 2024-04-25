@@ -86,9 +86,7 @@ class MudAndSedimentDialog(qtBaseClass, uiDialog):
         set_icon(self.sed_delete_rating_curve_dp_btn, "remove.svg")
         set_icon(self.add_rigid_bed_btn, "add.svg")
         set_icon(self.delete_rigid_bed_btn, "remove.svg")
-
-        self.rigid_bed_area_lbl.setVisible(False)
-        self.sed_rigid_bed_area_cbo.setVisible(False)
+        set_icon(self.revert_changes_sed_btn, "mActionUndo.svg")
 
         self.sed_size_fraction_tblw.setColumnWidth(0, 170)
         self.sed_size_fraction_tblw.setColumnWidth(1, 90)
@@ -304,55 +302,35 @@ class MudAndSedimentDialog(qtBaseClass, uiDialog):
         self.sed_rating_curve_grp.setChecked(self.sed_rating_curve_grp.isChecked())
 
     def show_mud(self):
-        # self.gutils.set_cont_par("MUD", 1)
-        # self.gutils.set_cont_par("ISED", 0)
-        self.mud_sediment_tabWidget.setTabEnabled(0, True)
-        self.mud_sediment_tabWidget.setTabEnabled(1, False)
-        self.mud_sediment_tabWidget.setTabEnabled(2, False)
-        self.mud_sediment_tabWidget.setTabEnabled(3, False)
-        self.mud_sediment_tabWidget.setStyleSheet(
-            "QTabBar::tab::disabled {width: 0; height: 0; margin: 0; padding: 0; border: none;} "
-        )
-        self.mud_sediment_tabWidget.setCurrentIndex(0)
+        """
+        Function to enable the Mudflow / Debris Transport
+        """
+        self.mud_debris_grp.setVisible(True)
+        self.sed_trans_grp.setVisible(False)
 
     def show_sediment(self):
-        # self.gutils.set_cont_par("MUD", 0)
-        # self.gutils.set_cont_par("ISED", 1)
-        self.mud_sediment_tabWidget.setTabEnabled(0, False)
-        self.mud_sediment_tabWidget.setTabEnabled(1, True)
-        self.mud_sediment_tabWidget.setTabEnabled(2, False)
-        self.mud_sediment_tabWidget.setTabEnabled(3, False)
-        self.mud_sediment_tabWidget.setStyleSheet(
-            "QTabBar::tab::disabled {width: 0; height: 0; margin: 0; padding: 0; border: none;} "
-        )
-        self.mud_sediment_tabWidget.setCurrentIndex(1)
+        """
+        Function to enable the Sediment Transport
+        """
+        self.mud_debris_grp.setVisible(False)
+        self.sed_trans_grp.setVisible(True)
 
         # Load Size Fractions tables:
         self.load_size_fraction_main_table()
 
     def show_two_phase(self):
-        # self.gutils.set_cont_par("MUD", 1)
-        # self.gutils.set_cont_par("ISED", 1)
-        self.mud_sediment_tabWidget.setTabEnabled(0, True)
-        self.mud_sediment_tabWidget.setTabEnabled(1, True)
-        self.mud_sediment_tabWidget.setTabEnabled(2, False)
-        self.mud_sediment_tabWidget.setTabEnabled(3, False)
-        self.mud_sediment_tabWidget.setStyleSheet(
-            "QTabBar::tab::disabled {width: 0; height: 0; margin: 0; padding: 0; border: none;} "
-        )
-        self.mud_sediment_tabWidget.setCurrentIndex(0)
+        """
+        Function to enable both Mudflow / Debris and the Sediment Transport
+        """
+        self.mud_debris_grp.setVisible(True)
+        self.sed_trans_grp.setVisible(True)
 
     def show_none(self):
-        # self.gutils.set_cont_par("MUD", 0)
-        # self.gutils.set_cont_par("ISED", 0)
-        self.mud_sediment_tabWidget.setTabEnabled(0, False)
-        self.mud_sediment_tabWidget.setTabEnabled(1, False)
-        self.mud_sediment_tabWidget.setTabEnabled(2, False)
-        self.mud_sediment_tabWidget.setTabEnabled(3, False)
-        self.mud_sediment_tabWidget.setStyleSheet(
-            "QTabBar::tab::disabled {width: 0; height: 0; margin: 0; padding: 0; border: none;} "
-        )
-        self.mud_sediment_tabWidget.setCurrentIndex(2)
+        """
+        Function to disable all groups
+        """
+        self.mud_debris_grp.setVisible(False)
+        self.sed_trans_grp.setVisible(False)
 
     def sed_transp_restore_defaults(self):
         # Restore mud defaults:
