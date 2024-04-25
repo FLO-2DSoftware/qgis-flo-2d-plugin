@@ -3088,6 +3088,8 @@ class Flo2D(object):
                 "export_swmmflo",
                 "export_swmmflort",
                 "export_swmmoutf",
+                "export_sdclogging",
+                "export_swmmflodropbox",
                 "export_evapor",
                 "export_street",
                 "export_shallowNSpatial",
@@ -3164,6 +3166,7 @@ class Flo2D(object):
                     export_calls.remove("export_swmmflo")
                     export_calls.remove("export_swmmflort")
                     export_calls.remove("export_swmmoutf")
+                    export_calls.remove("export_sdclogging")
 
                 # if "Spatial Shallow-n" not in dlg_components.components:
                 #     export_calls.remove("export_shallowNSpatial")
