@@ -3853,7 +3853,7 @@ inlets/junctions</string>
          </widget>
         </item>
         <item>
-         <widget class="QComboBox" name="strge_unit_shapefile_cbo">
+         <widget class="QComboBox" name="strge_units_shapefile_cbo">
           <property name="sizePolicy">
            <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
             <horstretch>0</horstretch>
