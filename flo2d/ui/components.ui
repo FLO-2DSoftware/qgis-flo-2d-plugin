@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>650</width>
+    <width>663</width>
     <height>331</height>
    </rect>
   </property>
@@ -26,19 +26,6 @@
    <property name="sizeConstraint">
     <enum>QLayout::SetMinAndMaxSize</enum>
    </property>
-   <item row="7" column="1">
-    <spacer name="horizontalSpacer_3">
-     <property name="orientation">
-      <enum>Qt::Horizontal</enum>
-     </property>
-     <property name="sizeHint" stdset="0">
-      <size>
-       <width>40</width>
-       <height>20</height>
-      </size>
-     </property>
-    </spacer>
-   </item>
    <item row="0" column="0" colspan="3">
     <widget class="QLabel" name="file_lbl">
      <property name="text">
@@ -389,16 +376,6 @@
      </item>
     </layout>
    </item>
-   <item row="7" column="0">
-    <widget class="QCheckBox" name="remove_files_chbox">
-     <property name="enabled">
-      <bool>false</bool>
-     </property>
-     <property name="text">
-      <string>Remove FPLAIN.DAT, CADPTS.DAT, and NEIGHBORS.DAT</string>
-     </property>
-    </widget>
-   </item>
    <item row="4" column="1">
     <layout class="QGridLayout" name="gridLayout_2">
      <item row="1" column="0">
@@ -568,6 +545,16 @@
       </size>
      </property>
     </spacer>
+   </item>
+   <item row="7" column="0" colspan="2">
+    <widget class="QCheckBox" name="remove_files_chbox">
+     <property name="enabled">
+      <bool>false</bool>
+     </property>
+     <property name="text">
+      <string>Remove FPLAIN.DAT, CADPTS.DAT, and NEIGHBORS.DAT</string>
+     </property>
+    </widget>
    </item>
   </layout>
  </widget>

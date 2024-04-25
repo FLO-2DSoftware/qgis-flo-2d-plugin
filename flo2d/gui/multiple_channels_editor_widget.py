@@ -1,4 +1,5 @@
 #  -*- coding: utf-8 -*-
+from PyQt5.QtWidgets import QApplication
 
 # FLO-2D Preprocessor tools for QGIS
 # Copyright © 2021 Lutra Consulting for FLO-2D

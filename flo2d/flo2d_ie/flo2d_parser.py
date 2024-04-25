@@ -19,7 +19,7 @@ from qgis.PyQt.QtCore import QSettings
 from qgis.PyQt.QtWidgets import QMessageBox
 
 from ..flo2d_hdf5.hdf5_descriptions import CONTROL, GRID, NEIGHBORS, STORMDRAIN, BC, CHANNEL, HYSTRUCT, INFIL, RAIN, \
-    REDUCTION_FACTORS, TOLER, LEVEE, EVAPOR, FLOODPLAIN, GUTTER, TAILINGS
+    REDUCTION_FACTORS, LEVEE, EVAPOR, FLOODPLAIN, GUTTER, TAILINGS, SPATIALLY_VARIABLE, MULT, SD
 from ..utils import Msge
 
 try:
@@ -63,58 +63,8 @@ class ParseHDF5:
 
     @property
     def control_group(self):
-        group_name = "Input/Control"
-        group_datasets = [
-            "SIMUL",
-            "TOUT",
-            "LGPLOT",
-            "METRIC",
-            "IBACKUP",
-            "build",
-            "ICHANNEL",
-            "MSTREET",
-            "LEVEE",
-            "IWRFS",
-            "IMULTC",
-            "IRAIN",
-            "INFIL",
-            "IEVAP",
-            "MUD",
-            "ISED",
-            "IMODFLOW",
-            "SWMM",
-            "IHYDRSTRUCT",
-            "IFLOODWAY",
-            "IDEBRV",
-            "AMANN",
-            "DEPTHDUR",
-            "XCONC",
-            "XARF",
-            "FROUDL",
-            "SHALLOWN",
-            "ENCROACH",
-            "NOPRTFP",
-            "DEPRESSDEPTH",
-            "NOPRTC",
-            "ITIMTEP",
-            "TIMTEP",
-            "STARTIMTEP",
-            "ENDTIMTEP",
-            "GRAPTIM",
-            "TOLGLOBAL",
-            "DEPTOL",
-            "WAVEMAX",
-            "COURCHAR_C",
-            "COURANTFP",
-            "COURANTC",
-            "COURANTST",
-            "COURCHAR_T",
-            "TIME_ACCEL",
-            "TOLGLOBAL",
-        ]
+        group_name = "Input/Control Parameters"
         group = HDF5Group(group_name)
-        for dataset_name in group_datasets:
-            group.create_dataset(dataset_name)
         return group
 
     @property
@@ -126,20 +76,20 @@ class ParseHDF5:
     @property
     def grid_group(self):
         group_name = "Input/Grid"
-        group_datasets = ["GRIDCODE", "MANNING", "X", "Y", "ELEVATION"]
+        group_datasets = ["GRIDCODE", "MANNING", "COORDINATES", "ELEVATION", "NEIGHBOURS"]
         group = HDF5Group(group_name)
         for dataset_name in group_datasets:
             group.create_dataset(dataset_name, [])
         return group
 
-    @property
-    def neighbors_group(self):
-        group_name = "Input/Grid/Neighbors"
-        group_datasets = ["N", "E", "S", "W", "NE", "SE", "SW", "NW"]
-        group = HDF5Group(group_name)
-        for dataset_name in group_datasets:
-            group.create_dataset(dataset_name, [])
-        return group
+    # @property
+    # def neighbors_group(self):
+    #     group_name = "Input/Grid/Neighbors"
+    #     group_datasets = ["N", "E", "S", "W", "NE", "SE", "SW", "NW"]
+    #     group = HDF5Group(group_name)
+    #     for dataset_name in group_datasets:
+    #         group.create_dataset(dataset_name, [])
+    #     return group
 
     @property
     def bc_group(self):
@@ -172,6 +122,12 @@ class ParseHDF5:
         return group
 
     @property
+    def spatially_variable_group(self):
+        group_name = "Input/Spatially Variable"
+        group = HDF5Group(group_name)
+        return group
+
+    @property
     def hystruc_group(self):
         group_name = "Input/Hydraulic Structures"
         group = HDF5Group(group_name)
@@ -180,6 +136,18 @@ class ParseHDF5:
     @property
     def channel_group(self):
         group_name = "Input/Channels"
+        group = HDF5Group(group_name)
+        return group
+
+    @property
+    def SD_group(self):
+        group_name = "Input/Storm Drain"
+        group = HDF5Group(group_name)
+        return group
+
+    @property
+    def mult_group(self):
+        group_name = "Input/Multiple Channels"
         group = HDF5Group(group_name)
         return group
 
@@ -208,7 +176,7 @@ class ParseHDF5:
 
     @property
     def gutter_group(self):
-        group_name = "Input/Gutters"
+        group_name = "Input/Gutter"
         group = HDF5Group(group_name)
         return group
 
@@ -223,7 +191,6 @@ class ParseHDF5:
         grouped_datasets_list = [
             self.control_group,
             self.grid_group,
-            self.neighbors_group,
             self.bc_group
         ]
         return grouped_datasets_list
@@ -241,7 +208,8 @@ class ParseHDF5:
             hdf5_group = hdf5_file[group.name]
             ds = hdf5_group.create_dataset(dataset.name, data=dataset.data, compression="gzip")
             attributes_dicts = [CONTROL, GRID, NEIGHBORS, STORMDRAIN, BC, CHANNEL, HYSTRUCT, INFIL, RAIN,
-                                REDUCTION_FACTORS, TOLER, LEVEE, EVAPOR, FLOODPLAIN, GUTTER, TAILINGS]
+                                REDUCTION_FACTORS, LEVEE, EVAPOR, FLOODPLAIN, GUTTER, TAILINGS, SPATIALLY_VARIABLE,
+                                MULT, SD]
 
             for attributes_dict in attributes_dicts:
                 if dataset.name in attributes_dict:
