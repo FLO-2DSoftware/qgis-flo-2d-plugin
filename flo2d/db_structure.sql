@@ -158,7 +158,7 @@ CREATE TABLE "reservoirs" (
     "grid_fid" INTEGER,
     "wsel" REAL DEFAULT 0.0,
     "n_value" REAL DEFAULT 0.25,  
-    "use_n_value" INTEGER, 
+    "use_n_value" INTEGER DEFAULT 1,
 	"tailings" REAL DEFAULT -1.0,
     "note" TEXT
 );
@@ -2746,7 +2746,7 @@ CREATE TABLE "user_reservoirs" (
     "name" TEXT,
     "wsel" REAL DEFAULT 0.0,
     "n_value" REAL DEFAULT 0.25, 
-    "use_n_value" INTEGER, 
+    "use_n_value" INTEGER DEFAULT 1,
 	"tailings" REAL DEFAULT -1.0,
     "notes" TEXT
 );
