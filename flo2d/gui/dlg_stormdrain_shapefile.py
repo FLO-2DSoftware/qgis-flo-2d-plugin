@@ -32,7 +32,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
         self.con = con
         self.gutils = GeoPackageUtils(con, iface)
         self.user_swmm_nodes_lyr = self.lyrs.data["user_swmm_nodes"]["qlyr"]
-        self.user_swmm_storage_units_lyr = self.lyrs.data["user_swmm_storage_units"]["qlyr"]
+        self.user_swmm_strge_units_lyr = self.lyrs.data["user_swmm_storage_units"]["qlyr"]
         self.user_swmm_conduits_lyr = self.lyrs.data["user_swmm_conduits"]["qlyr"]
         self.user_swmm_pumps_lyr = self.lyrs.data["user_swmm_pumps"]["qlyr"]
         self.user_swmm_orifices_lyr = self.lyrs.data["user_swmm_orifices"]["qlyr"]
@@ -196,7 +196,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
 
         self.load_inlets = False
         self.load_outfalls = False
-        self.load_storage_units = False
+        self.load_strge_units = False
         self.load_conduits = False
         self.load_pumps = False
         self.load_orifices = False
@@ -849,6 +849,10 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
             if combo_outfall.currentIndex() != -1:
                 self.load_outfalls = True
                 break
+        for combo_strge_unit in self.strge_unit_fields_groupBox.findChildren(QComboBox):
+            if combo_strge_unit.currentIndex() != -1:
+                self.load_strge_units = True
+                break            
         for combo_conduit in self.conduits_fields_groupBox.findChildren(QComboBox):
             if combo_conduit.currentIndex() != -1:
                 self.load_conduits = True
@@ -878,6 +882,11 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                 QApplication.restoreOverrideCursor()
                 self.uc.show_info("The 'Outfall Name' field must be selected if the Outfalls component is picked!")
                 return
+        if self.load_strge_units:
+            if self.strge_unit_name_FieldCbo.currentText() == "":
+                QApplication.restoreOverrideCursor()
+                self.uc.show_info("The 'Storage Unit Name' field must be selected if the Storage Units component is picked!")
+                return            
         if self.load_conduits:
             if self.conduit_name_FieldCbo.currentText() == "":
                 QApplication.restoreOverrideCursor()
@@ -902,6 +911,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
         if (
             not self.load_inlets
             and not self.load_outfalls
+            and not self.load_strge_units
             and not self.load_conduits
             and not self.load_pumps
             and not self.load_orifices
@@ -913,6 +923,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
         else:
             self.load_inlets_from_shapefile()
             self.load_outfalls_from_shapefile()
+            self.load_strge_units_from_shapefile()
             self.load_conduits_from_shapefile()
             self.load_pumps_from_shapefile()
             self.load_orifices_from_shapefile()
@@ -1329,6 +1340,189 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                     e,
                 )
                 self.load_outfalls = False
+
+    def load_strge_units_from_shapefile(self):
+        if self.load_strge_units:
+            try:
+                QApplication.setOverrideCursor(Qt.WaitCursor)
+                fields = self.user_swmm_strge_units_lyr.fields()
+                new_feats = []
+                outside_strge_units = ""
+        
+                strge_units_shapefile = self.strge_units_shapefile_cbo.currentText()
+                lyr = self.lyrs.get_layer_by_name(strge_units_shapefile, self.lyrs.group).layer()
+                strge_units_shapefile_fts = lyr.getFeatures()
+        
+                for f in strge_units_shapefile_fts:
+                    name = (
+                        f[self.strge_unit_name_FieldCbo.currentText()]
+                        if self.strge_unit_name_FieldCbo.currentText() != ""
+                        else ""
+                    )
+                    invert_elev = (
+                        f[self.strge_unit_invert_elevation_FieldCbo.currentText()]
+                        if self.strge_unit_invert_elevation_FieldCbo.currentText() != ""
+                        else 0.0
+                    )
+                    max_depth = (
+                        f[self.strge_unit_max_depth_FieldCbo.currentText()]
+                        if self.strge_unit_max_depth_FieldCbo.currentText() != ""
+                        else 0.0
+                    )                    
+                    initial_depth = (
+                        f[self.strge_unit_initial_depth_FieldCbo.currentText()]
+                        if self.strge_unit_initial_depth_FieldCbo.currentText() != ""
+                        else 0.0
+                    )                       
+                    external_inflow = (
+                        f[self.strge_unit_external_inflow_FieldCbo.currentText()]
+                        if self.strge_unit_external_inflow_FieldCbo.currentText() != ""
+                        else "False"
+                    )                       
+                    ponded_area = (
+                        f[self.strge_unit_ponded_area_FieldCbo.currentText()]
+                        if self.strge_unit_ponded_area_FieldCbo.currentText() != ""
+                        else 0.0
+                    )                       
+                    evap_factor = (
+                        f[self.strge_unit_evap_factor_FieldCbo.currentText()]
+                        if self.strge_unit_evap_factor_FieldCbo.currentText() != ""
+                        else 0.0
+                    )                       
+                    treatment = (
+                        f[self.strge_unit_treatment_FieldCbo.currentText()]
+                        if self.strge_unit_treatment_FieldCbo.currentText() != ""
+                        else "NO"
+                    )                       
+                    infiltration = (
+                        f[self.strge_unit_infiltration_FieldCbo.currentText()]
+                        if self.strge_unit_infiltration_FieldCbo.currentText() != ""
+                        else "False"
+                    )                       
+                    infil_method = (
+                        f[self.strge_unit_infil_method_FieldCbo.currentText()]
+                        if self.strge_unit_infil_method_FieldCbo.currentText() != ""
+                        else "GREEN_AMPT"
+                    )                       
+                    suction_head = (
+                        f[self.strge_unit_suction_head_FieldCbo.currentText()]
+                        if self.strge_unit_suction_head_FieldCbo.currentText() != ""
+                        else 0.0
+                    )                       
+                    conductivity = (
+                        f[self.strge_unit_conductivity_FieldCbo.currentText()]
+                        if self.strge_unit_conductivity_FieldCbo.currentText() != ""
+                        else 0.0
+                    )                       
+                    initial_deficit = (
+                        f[self.strge_unit_initial_deficit_FieldCbo.currentText()]
+                        if self.strge_unit_initial_deficit_FieldCbo.currentText() != ""
+                        else 0.0
+                    )                       
+                    storage_curve = (
+                        f[self.strge_unit_storage_curve_FieldCbo.currentText()]
+                        if self.strge_unit_storage_curve_FieldCbo.currentText() != ""
+                        else "FUNCTIONAL"
+                    )                       
+                    coefficient = (
+                        f[self.strge_unit_coefficient_FieldCbo.currentText()]
+                        if self.strge_unit_coefficient_FieldCbo.currentText() != ""
+                        else 0.0
+                    )                       
+                    exponent = (
+                        f[self.strge_unit_exponent_FieldCbo.currentText()]
+                        if self.strge_unit_exponent_FieldCbo.currentText() != ""
+                        else 0.0
+                    )                       
+                    constant = (
+                        f[self.strge_unit_constant_FieldCbo.currentText()]
+                        if self.strge_unit_constant_FieldCbo.currentText() != ""
+                        else 0.0
+                    )                       
+                    curve_name = (
+                        f[self.strge_unit_curve_name_FieldCbo.currentText()]
+                        if self.strge_unit_curve_name_FieldCbo.currentText() != ""
+                        else "*"
+                    )                       
+        
+                    feat = QgsFeature()
+                    feat.setFields(fields)
+        
+                    if f.geometry() is None:
+                        self.uc.show_warn("WARNING 250424.1943: Error processing geometry of storage unit  " + name)
+                        continue
+        
+                    geom = f.geometry()
+                    if geom is None or geom.type() != 0:
+                        self.uc.show_warn("WARNING 250424.1944: Error processing geometry of storage unit  " + name)
+                        continue
+        
+                    point = geom.asPoint()
+                    if point is None:
+                        self.uc.show_warn("WARNING 250424.1945: Storage unit  " + name + "  is faulty!")
+                        continue
+        
+                    cell = self.gutils.grid_on_point(point.x(), point.y())
+                    if cell is None:
+                        outside_strge_units += "\n" + name
+                        continue
+        
+                    new_geom = QgsGeometry.fromPointXY(point)
+                    feat.setGeometry(new_geom)
+        
+                    feat.setAttribute("grid", cell)
+                    feat.setAttribute("name", name)
+                    feat.setAttribute("invert_elev", invert_elev)
+                    feat.setAttribute("max_depth", max_depth)
+                    feat.setAttribute("init_depth", initial_depth)
+                    feat.setAttribute("external_inflow", external_inflow)
+                    feat.setAttribute("treatment", treatment)
+                    feat.setAttribute("ponded_area", ponded_area)
+                    feat.setAttribute("evap_factor", evap_factor)
+                    feat.setAttribute("infiltration", infiltration)
+                    feat.setAttribute("infil_method", infil_method)
+                    feat.setAttribute("suction_head", suction_head)
+                    feat.setAttribute("conductivity", conductivity)
+                    feat.setAttribute("initial_deficit", initial_deficit)
+                    feat.setAttribute("storage_curve", storage_curve)
+                    feat.setAttribute("coefficient", coefficient)
+                    feat.setAttribute("exponent", exponent)
+                    feat.setAttribute("constant", constant)
+                    feat.setAttribute("curve_name", curve_name)
+        
+                    new_feats.append(feat)
+        
+                if new_feats:
+                    if not self.strge_unit_append_chbox.isChecked():
+                        remove_features(self.user_swmm_strge_units_lyr)
+        
+                    self.user_swmm_strge_units_lyr.startEditing()
+                    self.user_swmm_strge_units_lyr.addFeatures(new_feats)
+                    self.user_swmm_strge_units_lyr.commitChanges()
+                    self.user_swmm_strge_units_lyr.updateExtents()
+                    self.user_swmm_strge_units_lyr.triggerRepaint()
+                    self.user_swmm_strge_units_lyr.removeSelection()
+                else:
+                    self.load_strge_units = False
+        
+                QApplication.restoreOverrideCursor()
+        
+                if outside_strge_units != "":
+                    self.uc.show_warn(
+                        "WARNING 250424.2002: The following storage units are outside the computational domain!\n"
+                        + outside_strge_units
+                    )
+        
+            except Exception as e:
+                QApplication.restoreOverrideCursor()
+                self.uc.show_error(
+                    "ERROR 250424.2003: creation of Storm Drain Storage Units layer failed after reading "
+                    + str(len(new_feats))
+                    + " storage units!"
+                    + "\n__________________________________________________",
+                    e,
+                )
+                self.load_strge_units = False
 
     def load_conduits_from_shapefile(self):
         if self.load_conduits:
