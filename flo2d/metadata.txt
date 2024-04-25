@@ -612,7 +612,7 @@ homepage=https://flo-2d.com/qgis-plugin
 tracker=https://github.com/FLO-2DSoftware/qgis-flo-2d-plugin/issues
 repository=https://github.com/FLO-2DSoftware/qgis-flo-2d-plugin
 category=Plugins
-icon=img/F2D 400 Transparent.png
+icon=img/FLO.svg
 # experimental flag
 experimental=False
 

@@ -3996,7 +3996,7 @@ class Flo2D(object):
 
     @staticmethod
     def show_help():
-        QDesktopServices.openUrl(QUrl("https://flo-2dsoftware.github.io/qgis-flo-2d-plugin/"))
+        QDesktopServices.openUrl(QUrl("https://flo-2dsoftware.github.io/FLO-2D-Documentation/Plugin1000/toolbar/index.html"))
 
     def schematize_levees(self):
         """
