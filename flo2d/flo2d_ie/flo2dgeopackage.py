@@ -29,13 +29,17 @@ from ..utils import BC_BORDER, float_or_zero, get_BC_Border
 from .flo2d_parser import ParseDAT, ParseHDF5
 
 
-def create_array(line_format, max_columns, *args):
+def create_array(line_format, max_columns, array_type, *args):
     if len(args) == 1 and isinstance(args[0], tuple):
         values = line_format.format(*args[0]).split()
     else:
         values = line_format.format(*args).split()
-    array = np.array(values[:max_columns] + [""] * (max_columns - len(values)), dtype=np.string_)
+    array = np.array(values[:max_columns] + [""] * (max_columns - len(values)), dtype=array_type)
     return array
+
+
+def check_outflow_condition(variables):
+    return all(val == 0 for val in variables)
 
 
 class Flo2dGeoPackage(GeoPackageUtils):
@@ -134,7 +138,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
         if self.parsed_format == self.FORMAT_DAT:
             return self.import_topo_dat()
         elif self.parsed_format == self.FORMAT_HDF5:
-            pass # TODO implement this on the hdf5 project
+            pass  # TODO implement this on the hdf5 project
             # return self.import_topo_dat_hdf5()
 
     def import_topo_dat(self):
@@ -167,7 +171,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
         if self.parsed_format == self.FORMAT_DAT:
             return self.import_manning_n_dat()
         elif self.parsed_format == self.FORMAT_HDF5:
-            pass # TODO implement this on the hdf5 project
+            pass  # TODO implement this on the hdf5 project
             # return self.import_topo_dat_hdf5()
 
     def import_manning_n_dat(self):
@@ -610,7 +614,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
         irinters = int(header[1])
         data_len = len(data)
         grid_count = data_len // irinters
-        data_gen = (data[i : i + grid_count] for i in range(0, data_len, grid_count))
+        data_gen = (data[i: i + grid_count] for i in range(0, data_len, grid_count))
         time_interval = 0
         for data_series in data_gen:
             for row in data_series:
@@ -1025,8 +1029,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
             warnng = ""
             if no_struct != "":
                 warnng += (
-                    "WARNING 111122.0446:\nThese cells in BRIDGE_XSEC.DAT have no hydraulic structure defined in HYSTRUC.DAT:\n\n"
-                    + no_struct
+                        "WARNING 111122.0446:\nThese cells in BRIDGE_XSEC.DAT have no hydraulic structure defined in HYSTRUC.DAT:\n\n"
+                        + no_struct
                 )
             if value_missing:
                 warnng += "\n\nThere are values missing in BRIDGE_XSEC.DAT"
@@ -1647,7 +1651,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                         gid, inlet_name, cdiameter, params = row[1:]
                     except ValueError as e:
                         raise ValueError("Wrong Culvert Eq. definition in line 'S' of SWMMFLORT.DAT")
-                        continue  
+                        continue
 
                 if row[0] == "D":  # Rating Table
                     swmmflort_rows.append((gid, name))
@@ -1660,7 +1664,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                         pass
                     elif int(gid) < 1:
                         pass
-                    else:    
+                    else:
                         culvert_rows.append(
                             (
                                 gid,
@@ -1671,7 +1675,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                                 row[4][0][2],
                                 row[4][0][3],
                             )
-                    )
+                        )
 
             if swmmflort_rows:
                 self.clear_tables("swmmflort")
@@ -1773,32 +1777,72 @@ class Flo2dGeoPackage(GeoPackageUtils):
         # try:
         cont_group = self.parser.control_group
 
-        sql = """SELECT name, value FROM cont;"""
-        for option_name, option_value in self.execute(sql).fetchall():
-            dataset_data = np.string_([option_value]) if option_value is not None else np.string_([""])
-            cont_group.create_dataset(option_name, dataset_data)
+        cont_variables = [
+            "SIMUL",
+            "TOUT",
+            "LGPLOT",
+            "METRIC",
+            "IBACKUP",
+            "ICHANNEL",
+            "MSTREET",
+            "LEVEE",
+            "IWRFS",
+            "IMULTC",
+            "IRAIN",
+            "INFIL",
+            "IEVAP",
+            "MUD",
+            "ISED",
+            "IMODFLOW",
+            "SWMM",
+            "IHYDRSTRUCT",
+            "IFLOODWAY",
+            "IDEBRV",
+            "AMANN",
+            "DEPTHDUR",
+            "XCONC",
+            "XARF",
+            "FROUDL",
+            "SHALLOWN",
+            "ENCROACH",
+            "NOPRTFP",
+            "DEPRESSDEPTH",
+            "NOPRTC",
+            "ITIMTEP",
+            "TIMTEP",
+            "STARTIMTEP",
+            "ENDTIMTEP",
+            "GRAPTIM",
+        ]
 
-        tol_group = self.parser.tol_group
-        tol_group.create_dataset('TOLER', [])
-        parser = ParseDAT()
-        options = {o: v if v is not None else "" for o, v in self.execute(sql).fetchall()}
-        rline = " {0}"
-        for row in parser.toler_rows:
-            lst = ""
-            for o in row:
-                if o not in options:
-                    continue
-                val = options[o]
-                lst += rline.format(val)  # Second line 'C' (Courant values) writes 1, 2, or 3 values depending
-                # if channels and/or streets are simulated
-            lst += "\n"
-            if lst.isspace() is False:
-                tol_group.datasets["TOLER"].data.append(create_array(lst, 4))
-                # t.write(lst)
+        tol_variables = [
+            "TOLGLOBAL",
+            "DEPTOL",
+            "COURANTFP",
+            "COURANTC",
+            "COURANTST",
+            "TIME_ACCEL"
+        ]
+
+        cont_group.create_dataset('CONT', [])
+        for var in cont_variables:
+            sql = f"""SELECT value FROM cont WHERE name = '{var}';"""
+            value = self.execute(sql).fetchone()[0]
+            if value is not None:
+                cont_group.datasets["CONT"].data.append(float(value))
             else:
-                pass
+                cont_group.datasets["CONT"].data.append(-9999)
 
-        self.parser.write_groups(cont_group, tol_group)
+        cont_group.create_dataset('TOLER', [])
+        for var in tol_variables:
+            sql = f"""SELECT value FROM cont WHERE name = '{var}';"""
+            value = self.execute(sql).fetchone()[0]
+            if value is not None:
+                cont_group.datasets["TOLER"].data.append(float(value))
+            else:
+                cont_group.datasets["TOLER"].data.append(-9999)
+
+        self.parser.write_groups(cont_group)
         return True
         # except Exception as e:
         #     QApplication.restoreOverrideCursor()
@@ -1866,20 +1910,20 @@ class Flo2dGeoPackage(GeoPackageUtils):
                             if options["ITIMTEP"] != "0" and float_or_zero(options["ENDTIMTEP"]) > 0.0:
                                 _itimtep = ("11", "21", "31", "41", "51")[int(options["ITIMTEP"]) - 1]
                                 if (
-                                    float_or_zero(options["STARTIMTEP"]) == 0.0
-                                    and float_or_zero(options["ENDTIMTEP"]) == 0.0
+                                        float_or_zero(options["STARTIMTEP"]) == 0.0
+                                        and float_or_zero(options["ENDTIMTEP"]) == 0.0
                                 ):
                                     lst = " " + _itimtep + " " + options["TIMTEP"]
                                 else:
                                     lst = (
-                                        " "
-                                        + _itimtep
-                                        + " "
-                                        + options["TIMTEP"]
-                                        + " "
-                                        + options["STARTIMTEP"]
-                                        + " "
-                                        + options["ENDTIMTEP"]
+                                            " "
+                                            + _itimtep
+                                            + " "
+                                            + options["TIMTEP"]
+                                            + " "
+                                            + options["STARTIMTEP"]
+                                            + " "
+                                            + options["ENDTIMTEP"]
                                     )
                             else:
                                 lst = " " + options["ITIMTEP"] + " " + options["TIMTEP"]
@@ -1923,6 +1967,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             records = self.execute(sql)
             nulls = 0
             grid_group = self.parser.grid_group
+            coordinates_line = "{0} {1}"
             for row in records:
                 fid, man, elev, geom = row
                 if man is None or elev is None:
@@ -1935,8 +1980,13 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 grid_group.datasets["GRIDCODE"].data.append(fid)
                 grid_group.datasets["MANNING"].data.append(man)
                 grid_group.datasets["ELEVATION"].data.append(elev)
-                grid_group.datasets["X"].data.append(x)
-                grid_group.datasets["Y"].data.append(y)
+                grid_group.datasets["COORDINATES"].data.append(
+                    create_array(coordinates_line, 2, np.float_, tuple([x, y])))
+                # grid_group.datasets["X"].data.append(x)
+                # grid_group.datasets["Y"].data.append(y)
+            neighbors_line = "{0} {1} {2} {3} {4} {5} {6} {7}"
+            for row in grid_compas_neighbors(self.gutils):
+                grid_group.datasets["NEIGHBOURS"].data.append(create_array(neighbors_line, 8, np.int_, tuple(row)))
             self.parser.write_groups(grid_group)
             if nulls > 0:
                 QApplication.restoreOverrideCursor()
@@ -2005,26 +2055,29 @@ class Flo2dGeoPackage(GeoPackageUtils):
             QApplication.setOverrideCursor(Qt.WaitCursor)
             return False
 
-    def export_neighbours(self):
-        if self.parsed_format == self.FORMAT_DAT:
-            raise NotImplementedError("Exporting NEIGHBOURS.DAT is not supported!")
-        elif self.parsed_format == self.FORMAT_HDF5:
-            return self.export_neighbours_hdf5()
-
-    def export_neighbours_hdf5(self):
-        try:
-            neighbors_group = self.parser.neighbors_group
-            for row in grid_compas_neighbors(self.gutils):
-                directions = ["N", "E", "S", "W", "NE", "SE", "SW", "NW"]
-                for direction, neighbor_gid in zip(directions, row):
-                    neighbors_group.datasets[direction].data.append(neighbor_gid)
-            self.parser.write_groups(neighbors_group)
-            return True
-        except Exception as e:
-            QApplication.restoreOverrideCursor()
-            self.uc.show_error("ERROR: exporting grid neighbors data failed!.\n", e)
-            QApplication.setOverrideCursor(Qt.WaitCursor)
-            return False
+    # def export_neighbours(self):
+    #     if self.parsed_format == self.FORMAT_DAT:
+    #         raise NotImplementedError("Exporting NEIGHBOURS.DAT is not supported!")
+    #     elif self.parsed_format == self.FORMAT_HDF5:
+    #         return self.export_neighbours_hdf5()
+    #
+    # def export_neighbours_hdf5(self):
+    #     # try:
+    #     grid_group = self.parser.grid_group
+    #     neighbors_line = "{0} {1} {2} {3} {4} {5} {6} {7}"
+    #     for row in grid_compas_neighbors(self.gutils):
+    #         # self.uc.log_info(str(row))
+    #         grid_group.datasets["NEIGHBORS"].data.append(create_array(neighbors_line, 8, np.float_, tuple(row)))
+    #         # directions = ["N", "E", "S", "W", "NE", "SE", "SW", "NW"]
+    #         # for direction, neighbor_gid in zip(directions, row):
+    #         #     grid_group.datasets[direction].data.append(neighbor_gid)
+    #     #self.parser.write_groups(grid_group)
+    #     return True
+    #     # except Exception as e:
+    #     #     QApplication.restoreOverrideCursor()
+    #     #     self.uc.show_error("ERROR: exporting grid neighbors data failed!.\n", e)
+    #     #     QApplication.setOverrideCursor(Qt.WaitCursor)
+    #     #     return False
 
     def export_inflow(self, output=None):
         if self.parsed_format == self.FORMAT_DAT:
@@ -2039,31 +2092,37 @@ class Flo2dGeoPackage(GeoPackageUtils):
         if self.is_table_empty("inflow") and self.is_table_empty("reservoirs"):
             return False
         cont_sql = """SELECT value FROM cont WHERE name = ?;"""
-        inflow_sql = """SELECT fid, time_series_fid, ident, inoutfc FROM inflow WHERE bc_fid = ?;"""
+        inflow_sql = """SELECT fid, time_series_fid, ident, inoutfc FROM inflow WHERE fid = ?;"""
         inflow_cells_sql = """SELECT inflow_fid, grid_fid FROM inflow_cells ORDER BY inflow_fid, grid_fid;"""
         ts_data_sql = (
-            """SELECT time, value, value2 FROM inflow_time_series_data WHERE series_fid = ? ORDER BY fid;"""
+            """SELECT series_fid, time, value, value2 FROM inflow_time_series_data WHERE series_fid = ? ORDER BY fid;"""
         )
 
-        head_line = " {0: <15} {1}"
-        inf_line = "{0: <15} {1: <15} {2}"
-        tsd_line = "H   {0: <15} {1: <15} {2}"
+        three_values = "{0}  {1}  {2}"
+        four_values = "{0}  {1}  {2}  {3}"
+        five_values = "{0}  {1}  {2}  {3}  {4}"
 
-        ideplt = self.execute(cont_sql, ("IDEPLT",)).fetchone()
-        ihourdaily = self.execute(cont_sql, ("IHOURDAILY",)).fetchone()
+        ideplt = self.execute(cont_sql, ("IDEPLT",)).fetchone()[0]
+        ihourdaily = self.execute(cont_sql, ("IHOURDAILY",)).fetchone()[0]
 
-        # TODO: Need to implement correct export for ideplt and ihourdaily parameters
         if ihourdaily is None:
-            ihourdaily = (0,)
+            ihourdaily = 0
         if ideplt is None:
-            first_gid = self.execute("""SELECT grid_fid FROM inflow_cells ORDER BY fid LIMIT 1;""").fetchone()
-            ideplt = first_gid if first_gid is not None else (0,)
+            first_gid = self.execute("""SELECT grid_fid FROM inflow_cells ORDER BY fid LIMIT 1;""").fetchone()[0]
+            ideplt = first_gid if first_gid is not None else 0
+
+        inflow_global = [float(ihourdaily), float(ideplt)]
+
+        bc_group = self.parser.bc_group
+        bc_group.create_dataset('Inflow/INF_GLOBAL', [])
+        for data in inflow_global:
+            bc_group.datasets["Inflow/INF_GLOBAL"].data.append(data)
 
         previous_iid = -1
         row = None
 
         warning = ""
-        inflow_lines = []
+        ts_series_fid = []
 
         if not self.is_table_empty("inflow"):
             for iid, gid in self.execute(inflow_cells_sql):
@@ -2071,8 +2130,6 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     row = self.execute(inflow_sql, (iid,)).fetchone()
                     if row:
                         row = [x if x is not None and x != "" else 0 for x in row]
-                        if previous_iid == -1:
-                            inflow_lines.append(head_line.format(ihourdaily[0], ideplt[0]))
                         previous_iid = iid
                     else:
                         warning += (
@@ -2086,61 +2143,61 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 else:
                     pass
 
-                fid, ts_fid, ident, inoutfc = row  # ident is 'F' or 'C'
-                inflow_lines.append(inf_line.format(ident, inoutfc, gid))
-                series = self.execute(ts_data_sql, (ts_fid,))
-                for tsd_row in series:
-                    tsd_row = [x if x is not None else "" for x in tsd_row]
-                    inflow_lines.append(tsd_line.format(*tsd_row).rstrip())
+                fid, ts_fid, ident, inoutfc = row
+                if ident == 'F':
+                    try:
+                        bc_group.datasets["Inflow/INF_GRID"].data.append(
+                            create_array(four_values, 4, np.int_, (0, inoutfc, gid, ts_fid)))
+                        if ts_fid not in ts_series_fid:
+                            for tsd_row in self.execute(ts_data_sql, (ts_fid,)):
+                                tsd_row = [x if (x is not None and x != "") else -9999 for x in tsd_row]
+                                bc_group.datasets["Inflow/TS_INF_DATA"].data.append(
+                                    create_array(four_values, 4, np.float_, tuple(tsd_row)))
+                            ts_series_fid.append(ts_fid)
+                    except:
+                        bc_group.create_dataset('Inflow/INF_GRID', [])
+                        bc_group.datasets["Inflow/INF_GRID"].data.append(
+                            create_array(four_values, 4, np.int_, (0, inoutfc, gid, ts_fid)))
+                        bc_group.create_dataset('Inflow/TS_INF_DATA', [])
+                        for tsd_row in self.execute(ts_data_sql, (ts_fid,)):
+                            tsd_row = [x if (x is not None and x != "") else -9999 for x in tsd_row]
+                            bc_group.datasets["Inflow/TS_INF_DATA"].data.append(
+                                create_array(four_values, 4, np.float_, tuple(tsd_row)))
+                        ts_series_fid.append(ts_fid)
+
+                if ident == 'C':
+                    try:
+                        bc_group.datasets["Inflow/INF_GRID"].data.append(
+                            create_array(four_values, 4, np.int_, (1, inoutfc, gid, ts_fid)))
+                        if ts_fid not in ts_series_fid:
+                            for tsd_row in self.execute(ts_data_sql, (ts_fid,)):
+                                tsd_row = [x if (x is not None and x != "") else -9999 for x in tsd_row]
+                                bc_group.datasets["Inflow/TS_INF_DATA"].data.append(
+                                    create_array(four_values, 4, np.float_, tuple(tsd_row)))
+                            ts_series_fid.append(ts_fid)
+                    except:
+                        bc_group.create_dataset('Inflow/INF_GRID', [])
+                        bc_group.datasets["Inflow/INF_GRID"].data.append(
+                            create_array(four_values, 4, np.int_, (1, inoutfc, gid, ts_fid)))
+                        bc_group.create_dataset('Inflow/TS_INF_DATA', [])
+                        for tsd_row in self.execute(ts_data_sql, (ts_fid,)):
+                            tsd_row = [x if (x is not None and x != "") else -9999 for x in tsd_row]
+                            bc_group.datasets["Inflow/TS_INF_DATA"].data.append(
+                                create_array(four_values, 4, np.float_, tuple(tsd_row)))
+                        ts_series_fid.append(ts_fid)
 
         if not self.is_table_empty("reservoirs"):
+
+            bc_group.create_dataset('Inflow/RESERVOIRS', [])
             schematic_reservoirs_sql = (
                 """SELECT grid_fid, wsel, n_value, use_n_value, tailings FROM reservoirs ORDER BY fid;"""
             )
-
-            res_line1a = "R   {0: <15} {1:<10.2f} {2:<10.2f}"
-            res_line1at = "R   {0: <15} {1:<10.2f} {4:<10.2f} {2:<10.2f}"
-
-            res_line1b = "R   {0: <15} {1:<10.2f}"
-            res_line1bt = "R   {0: <15} {1:<10.2f} {2:<10.2f}"
-
-            res_line2a = "R     {0: <15} {1:<10.2f} {2:<10.2f}"
-            res_line2at = "R     {0: <15} {1:<10.2f} {4:<10.2f} {2:<10.2f}"
-
-            res_line2b = "R     {0: <15} {1:<10.2f}"
-            res_line2bt = "R     {0: <15} {1:<10.2f} {4:<10.2f}"
-
             for res in self.execute(schematic_reservoirs_sql):
-                res = [x if x is not None else "" for x in res]
+                res = [x if (x is not None and x != "") else -9999 for x in res]
+                bc_group.datasets["Inflow/RESERVOIRS"].data.append(
+                    create_array(five_values, 5, np.float_, tuple(res)))
 
-                if res[3] == 1:  # write n value
-                    if res[4] == -1.0:
-                        # Do not write tailings
-                        inflow_lines.append(res_line2a.format(*res))
-                    else:
-                        # Write tailings:
-                        inflow_lines.append(res_line2at.format(*res))
-                else:  # do not write n value
-                    if res[4] == -1.0:
-                        # Do not write tailings:
-                        inflow_lines.append(res_line2b.format(*res))
-                    else:
-                        # Write tailings:
-                        inflow_lines.append(res_line2bt.format(*res))
-
-        if inflow_lines:
-            bc_group = self.parser.bc_group
-            bc_group.create_dataset('INFLOW', [])
-            for line in inflow_lines:
-                if line:
-                    values = line.split()
-                    c1 = values[0]
-                    c2 = values[1]
-                    c3 = values[2] if len(values) == 3 else ""
-                    data_array = np.array([c1, c2, c3], dtype=np.string_)
-                    bc_group.datasets["INFLOW"].data.append(data_array)
-            self.parser.write_groups(bc_group)
-
+        self.parser.write_groups(bc_group)
         return True
 
     def export_inflow_dat(self, outdir):
@@ -2162,7 +2219,6 @@ class Flo2dGeoPackage(GeoPackageUtils):
             ideplt = self.execute(cont_sql, ("IDEPLT",)).fetchone()
             ihourdaily = self.execute(cont_sql, ("IHOURDAILY",)).fetchone()
 
-            # TODO: Need to implement correct export for ideplt and ihourdaily parameters
             if ihourdaily is None:
                 ihourdaily = (0,)
             if ideplt is None:
@@ -2187,11 +2243,11 @@ class Flo2dGeoPackage(GeoPackageUtils):
                             previous_iid = iid
                         else:
                             warning += (
-                                "Data for inflow in cell "
-                                + str(gid)
-                                + " not found in 'Inflow' table (wrong inflow 'id' "
-                                + str(iid)
-                                + " in 'Inflow Cells' table).\n\n"
+                                    "Data for inflow in cell "
+                                    + str(gid)
+                                    + " not found in 'Inflow' table (wrong inflow 'id' "
+                                    + str(iid)
+                                    + " in 'Inflow Cells' table).\n\n"
                             )
                             continue
                     else:
@@ -2289,7 +2345,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
             for row in rows:
                 # t.write(line1.format(*row))
-                tailings_group.datasets["TAILINGS"].data.append(create_array(line1, 2, tuple(row)))
+                tailings_group.datasets["TAILINGS"].data.append(create_array(line1, 2, np.string_, tuple(row)))
 
             self.parser.write_groups(tailings_group)
             return True
@@ -2372,7 +2428,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
                             previous_oid = oid
                         else:
                             warning += (
-                                "<br>* Cell " + str(gid) + " in 'outflow_cells' table points to 'outflow' table with"
+                                    "<br>* Cell " + str(
+                                gid) + " in 'outflow_cells' table points to 'outflow' table with"
                             )
                             warning += "<br> 'outflow_fid' = " + str(oid) + ".<br>"
                             continue
@@ -2447,7 +2504,6 @@ class Flo2dGeoPackage(GeoPackageUtils):
         """
 
         # check if there are any outflows defined.
-        # try:
         if self.is_table_empty("outflow") or self.is_table_empty("outflow_cells"):
             return False
 
@@ -2455,16 +2511,13 @@ class Flo2dGeoPackage(GeoPackageUtils):
         SELECT fid, fp_out, chan_out, hydro_out, chan_tser_fid, chan_qhpar_fid, chan_qhtab_fid, fp_tser_fid
         FROM outflow WHERE fid = ?;"""
         outflow_cells_sql = """SELECT outflow_fid, grid_fid FROM outflow_cells ORDER BY outflow_fid, grid_fid;"""
-        qh_params_data_sql = """SELECT hmax, coef, exponent FROM qh_params_data WHERE params_fid = ?;"""
-        qh_table_data_sql = """SELECT depth, q FROM qh_table_data WHERE table_fid = ? ORDER BY fid;"""
-        ts_data_sql = """SELECT time, value FROM outflow_time_series_data WHERE series_fid = ? ORDER BY fid;"""
+        qh_params_data_sql = """SELECT params_fid, hmax, coef, exponent FROM qh_params_data WHERE params_fid = ?;"""
+        qh_table_data_sql = """SELECT table_fid, depth, q FROM qh_table_data WHERE table_fid = ? ORDER BY fid;"""
+        ts_data_sql = """SELECT series_fid, time, value FROM outflow_time_series_data WHERE series_fid = ? ORDER BY fid;"""
 
-        k_line = "K  {0}\n"
-        qh_params_line = "H  {0}  {1}  {2}\n"
-        qh_table_line = "T  {0}  {1}\n"
-        n_line = "N     {0}  {1}\n"
-        ts_line = "S  {0}  {1}\n"
-        o_line = "{0}  {1}\n"
+        two_values = "{0}  {1}\n"
+        three_values = "{0}  {1}  {2}\n"
+        four_values = "{0}  {1}  {2}  {3}\n"
 
         out_cells = self.execute(outflow_cells_sql).fetchall()
         if not out_cells:
@@ -2472,12 +2525,12 @@ class Flo2dGeoPackage(GeoPackageUtils):
         else:
             pass
         bc_group = self.parser.bc_group
-        bc_group.create_dataset('OUTFLOW', [])
 
-        floodplains = {}
         previous_oid = -1
         row = None
-        border = get_BC_Border()
+        ts_series_fid = []
+        qh_params_fid = []
+        qh_table_fid = []
 
         warning = ""
 
@@ -2489,7 +2542,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     previous_oid = oid
                 else:
                     warning += (
-                        "<br>* Cell " + str(gid) + " in 'outflow_cells' table points to 'outflow' table with"
+                            "<br>* Cell " + str(gid) + " in 'outflow_cells' table points to 'outflow' table with"
                     )
                     warning += "<br> 'outflow_fid' = " + str(oid) + ".<br>"
                     continue
@@ -2507,44 +2560,155 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     chan_qhtab_fid,
                     fp_tser_fid,
                 ) = row
-                if gid not in floodplains and (fp_out == 1 or hydro_out > 0):
-                    floodplains[gid] = hydro_out
-                if chan_out == 1:
-                    bc_group.datasets["OUTFLOW"].data.append(create_array(k_line, 4, gid))
-                    for qh_params_values in self.execute(qh_params_data_sql, (chan_qhpar_fid,)):
-                        bc_group.datasets["OUTFLOW"].data.append(create_array(qh_params_line, 4, qh_params_values))
-                    for qh_table_values in self.execute(qh_table_data_sql, (chan_qhtab_fid,)):
-                        bc_group.datasets["OUTFLOW"].data.append(create_array(qh_table_line, 4, qh_table_values))
-                else:
-                    pass
 
-                if chan_tser_fid > 0 or fp_tser_fid > 0:
-                    if border is not None:
-                        if gid in border:
-                            continue
-                    nostacfp = 1 if chan_tser_fid == 1 else 0
-                    bc_group.datasets["OUTFLOW"].data.append(create_array(n_line, 4, gid, nostacfp))
-                    series_fid = chan_tser_fid if chan_tser_fid > 0 else fp_tser_fid
-                    for ts_line_values in self.execute(ts_data_sql, (series_fid,)):
-                        bc_group.datasets["OUTFLOW"].data.append(create_array(ts_line, 4, ts_line_values))
-                else:
-                    pass
+                # 1. Floodplain outflow (no hydrograph)
+                variables = (chan_out, hydro_out, chan_tser_fid, chan_qhpar_fid, chan_qhtab_fid, fp_tser_fid)
+                if fp_out == 1 and check_outflow_condition(variables):
+                    try:
+                        bc_group.datasets["Outflow/FP_OUT_GRID"].data.append(gid)
+                    except:
+                        bc_group.create_dataset('Outflow/FP_OUT_GRID', [])
+                        bc_group.datasets["Outflow/FP_OUT_GRID"].data.append(gid)
+                    continue
 
-        # Write O1, O2, ... lines:
-        for gid, hydro_out in sorted(iter(floodplains.items()), key=lambda items: (items[1], items[0])):
-            #                     if border is not None:
-            #                         if gid in border:
-            #                             continue
-            ident = "O{0}".format(hydro_out) if hydro_out > 0 else "O"
-            bc_group.datasets["OUTFLOW"].data.append(create_array(o_line, 4, ident, gid))
-            if border is not None:
-                if gid in border:
-                    border.remove(gid)
+                # 2. Channel outflow (no hydrograph)
+                variables = (fp_out, hydro_out, chan_tser_fid, chan_qhpar_fid, chan_qhtab_fid, fp_tser_fid)
+                if chan_out == 1 and check_outflow_condition(variables):
+                    try:
+                        bc_group.datasets["Outflow/CH_OUT_GRID"].data.append(gid)
+                    except:
+                        bc_group.create_dataset('Outflow/CH_OUT_GRID', [])
+                        bc_group.datasets["Outflow/CH_OUT_GRID"].data.append(gid)
+                    continue
 
-        # Write lines 'O cell_id':
-        if border is not None:
-            for b in border:
-                bc_group.datasets["OUTFLOW"].data.append(create_array(o_line, 4, "0", b))
+                # 3. Floodplain and channel outflow (no hydrograph)
+                variables = (hydro_out, chan_tser_fid, chan_qhpar_fid, chan_qhtab_fid, fp_tser_fid)
+                if fp_out == 1 and chan_out == 1 and check_outflow_condition(variables):
+                    try:
+                        bc_group.datasets["Outflow/FP_OUT_GRID"].data.append(gid)
+                    except:
+                        bc_group.create_dataset('Outflow/FP_OUT_GRID', [])
+                        bc_group.datasets["Outflow/FP_OUT_GRID"].data.append(gid)
+                    try:
+                        bc_group.datasets["Outflow/CH_OUT_GRID"].data.append(gid)
+                    except:
+                        bc_group.create_dataset('Outflow/CH_OUT_GRID', [])
+                        bc_group.datasets["Outflow/CH_OUT_GRID"].data.append(gid)
+                    continue
+
+                # 4. Outflow with hydrograph
+                variables = (fp_out, chan_out, chan_tser_fid, chan_qhpar_fid, chan_qhtab_fid, fp_tser_fid)
+                if hydro_out != 0 and check_outflow_condition(variables):
+                    try:
+                        bc_group.datasets["Outflow/HYD_OUT_GRID"].data.append(
+                            create_array(two_values, 2, np.int_, (hydro_out, gid)))
+                    except:
+                        bc_group.create_dataset('Outflow/HYD_OUT_GRID', [])
+                        bc_group.datasets["Outflow/HYD_OUT_GRID"].data.append(
+                            create_array(two_values, 2, np.int_, (hydro_out, gid)))
+                    continue
+
+                # Time-stage BCs
+                variables = (hydro_out, chan_qhpar_fid, chan_qhtab_fid)
+                if check_outflow_condition(variables):
+                    # 5. Time-stage for floodplain
+                    if fp_tser_fid != 0:
+                        try:
+                            bc_group.datasets["Outflow/TS_OUT_GRID"].data.append(
+                                create_array(three_values, 3, np.int_, (gid, 0, fp_tser_fid)))
+                            if fp_tser_fid not in ts_series_fid:
+                                for ts_line_values in self.execute(ts_data_sql, (fp_tser_fid,)):
+                                    bc_group.datasets["Outflow/TS_OUT_DATA"].data.append(
+                                        create_array(three_values, 3, np.float_, ts_line_values))
+                                ts_series_fid.append(fp_tser_fid)
+                        except:
+                            bc_group.create_dataset('Outflow/TS_OUT_GRID', [])
+                            bc_group.datasets["Outflow/TS_OUT_GRID"].data.append(
+                                create_array(three_values, 3, np.int_, (gid, 0, fp_tser_fid)))
+                            bc_group.create_dataset('Outflow/TS_OUT_DATA', [])
+                            for ts_line_values in self.execute(ts_data_sql, (fp_tser_fid,)):
+                                bc_group.datasets["Outflow/TS_OUT_DATA"].data.append(
+                                    create_array(three_values, 3, np.float_, ts_line_values))
+                            ts_series_fid.append(fp_tser_fid)
+                    # 6. Time-stage for channel
+                    if chan_tser_fid != 0:
+                        try:
+                            bc_group.datasets["Outflow/TS_OUT_GRID"].data.append(
+                                create_array(three_values, 3, np.int_, (gid, 1, chan_tser_fid)))
+                            if chan_tser_fid not in ts_series_fid:
+                                for ts_line_values in self.execute(ts_data_sql, (chan_tser_fid,)):
+                                    bc_group.datasets["Outflow/TS_OUT_DATA"].data.append(
+                                        create_array(three_values, 3, np.float_, ts_line_values))
+                                ts_series_fid.append(chan_tser_fid)
+                        except:
+                            bc_group.create_dataset('Outflow/TS_OUT_GRID', [])
+                            bc_group.datasets["Outflow/TS_OUT_GRID"].data.append(
+                                create_array(three_values, 3, np.int_, (gid, 1, chan_tser_fid)))
+                            bc_group.create_dataset('Outflow/TS_OUT_DATA', [])
+                            for ts_line_values in self.execute(ts_data_sql, (chan_tser_fid,)):
+                                bc_group.datasets["Outflow/TS_OUT_DATA"].data.append(
+                                    create_array(three_values, 3, np.float_, ts_line_values))
+                            ts_series_fid.append(chan_tser_fid)
+                    # Free floodplain
+                    if fp_out == 1 and check_outflow_condition(variables):
+                        try:
+                            bc_group.datasets["Outflow/FP_OUT_GRID"].data.append(gid)
+                        except:
+                            bc_group.create_dataset('Outflow/FP_OUT_GRID', [])
+                            bc_group.datasets["Outflow/FP_OUT_GRID"].data.append(gid)
+                    # Free channel
+                    if chan_out == 1:
+                        try:
+                            bc_group.datasets["Outflow/CH_OUT_GRID"].data.append(gid)
+                        except:
+                            bc_group.create_dataset('Outflow/CH_OUT_GRID', [])
+                            bc_group.datasets["Outflow/CH_OUT_GRID"].data.append(gid)
+                    continue
+
+                # 9. Channel Depth-Discharge Power Regression (qh-params)
+                variables = (fp_out, hydro_out, chan_tser_fid, chan_qhtab_fid, fp_tser_fid)
+                if chan_out == 1 and chan_qhpar_fid != 0 and check_outflow_condition(variables):
+                    try:
+                        bc_group.datasets["Outflow/QH_PARAMS_GRID"].data.append(
+                            create_array(two_values, 2, np.int_, (gid, chan_qhpar_fid)))
+                        if chan_qhpar_fid not in qh_params_fid:
+                            for qh_params_values in self.execute(qh_params_data_sql, (chan_qhpar_fid,)):
+                                bc_group.datasets["Outflow/QH_PARAMS"].data.append(
+                                    create_array(four_values, 4, np.float_, qh_params_values))
+                            qh_params_fid.append(chan_qhpar_fid)
+                    except:
+                        bc_group.create_dataset('Outflow/QH_PARAMS_GRID', [])
+                        bc_group.datasets["Outflow/QH_PARAMS_GRID"].data.append(
+                            create_array(two_values, 2, np.int_, (gid, chan_qhpar_fid))
+                        )
+                        bc_group.create_dataset('Outflow/QH_PARAMS', [])
+                        for qh_params_values in self.execute(qh_params_data_sql, (chan_qhpar_fid,)):
+                            bc_group.datasets["Outflow/QH_PARAMS"].data.append(
+                                create_array(four_values, 4, np.float_, qh_params_values))
+                        qh_params_fid.append(chan_qhpar_fid)
+                    continue
+
+                # 10. Channel Depth-Discharge (qh-table)
+                variables = (fp_out, hydro_out, chan_tser_fid, chan_qhpar_fid, fp_tser_fid)
+                if chan_out == 1 and chan_qhtab_fid != 0 and check_outflow_condition(variables):
+                    try:
+                        bc_group.datasets["Outflow/QH_TABLE_GRID"].data.append(
+                            create_array(two_values, 2, np.int_, (gid, chan_qhtab_fid)))
+                        if chan_qhtab_fid not in qh_table_fid:
+                            for qh_table_values in self.execute(qh_table_data_sql, (chan_qhtab_fid,)):
+                                bc_group.datasets["Outflow/QH_TABLE"].data.append(
+                                    create_array(three_values, 3, np.float_, qh_table_values))
+                            qh_table_fid.append(chan_qhtab_fid)
+                    except:
+                        bc_group.create_dataset('Outflow/QH_TABLE_GRID', [])
+                        bc_group.datasets["Outflow/QH_TABLE_GRID"].data.append(
+                            create_array(two_values, 2, np.int_, (gid, chan_qhtab_fid)))
+                        bc_group.create_dataset('Outflow/QH_TABLE', [])
+                        for qh_table_values in self.execute(qh_table_data_sql, (chan_qhtab_fid,)):
+                            bc_group.datasets["Outflow/QH_TABLE"].data.append(
+                                create_array(three_values, 3, np.float_, qh_table_values))
+                        qh_table_fid.append(chan_qhtab_fid)
+                    continue
 
         self.parser.write_groups(bc_group)
         QApplication.restoreOverrideCursor()
@@ -2553,11 +2717,6 @@ class Flo2dGeoPackage(GeoPackageUtils):
             msg += "<br><br><FONT COLOR=red>Did you schematize the Boundary Conditions?</FONT>"
             self.uc.show_warn(msg)
         return True
-
-        # except Exception as e:
-        #     QApplication.restoreOverrideCursor()
-        #     self.uc.show_error("ERROR 101218.1543: exporting OUTFLOW.DAT failed!.\n", e)
-        #     return False
 
     def export_rain(self, output=None):
         if self.parsed_format == self.FORMAT_DAT:
@@ -2580,12 +2739,10 @@ class Flo2dGeoPackage(GeoPackageUtils):
         ts_data_sql = """SELECT time, value FROM rain_time_series_data WHERE series_fid = ? ORDER BY fid;"""
         rain_cells_sql = """SELECT grid_fid, arf FROM rain_arf_cells ORDER BY fid;"""
 
-        rain_line1 = "{0}  {1}\n"
-        rain_line2 = "{0}   {1}  {2}  {3}\n"
-        tsd_line3 = "R {0}   {1}\n"  # Rainfall Time series distribution
-        rain_line4 = "{0}   {1}\n"
+        rain_global = "{0}  {1}   {2}   {3}   {4}   {5}\n"
+        tsd_line = "{0}   {1}\n"  # Rainfall Time series distribution
 
-        cell_line5 = "{0: <10} {1}\n"
+        cell_line = "{0: <10} {1}\n"
 
         rain_row = self.execute(
             rain_sql
@@ -2598,34 +2755,45 @@ class Flo2dGeoPackage(GeoPackageUtils):
             pass
 
         rain_group = self.parser.rain_group
-        rain_group.create_dataset('RAIN', [])
+        rain_group.create_dataset('RAIN_GLOBAL', [])
 
-        rain_group.datasets["RAIN"].data.append(create_array(rain_line1, 4, rain_row[1:3]))
-        rain_group.datasets["RAIN"].data.append(create_array(rain_line2, 4, rain_row[3:7]))
+        for global_data in rain_row[1:9]:
+            if global_data == "":
+                global_data = 0
+            rain_group.datasets["RAIN_GLOBAL"].data.append(global_data)
+        # rain_group.datasets["RAIN"].data.append(create_array(rain_line2, 4, rain_row[3:7]))
 
         fid = rain_row[
             0
         ]  # time_series_fid (pointer to the 'rain_time_series_data' table where the pairs (time , distribution) are.
+        rain_group.create_dataset('RAIN_DATA', [])
         for row in self.execute(ts_data_sql, (fid,)):
             if None not in row:  # Writes 3rd. lines if rain_time_series_data exists (Rainfall distribution).
-                rain_group.datasets["RAIN"].data.append(create_array(tsd_line3, 4, row))
+                rain_group.datasets["RAIN_DATA"].data.append(create_array(tsd_line, 2, np.float_, row))
                 # This is a time series created from the Rainfall Distribution tool in the Rain Editor,
                 # selected from a list
 
-        if rain_row[6] == 1:  # if movingstorm from rain = 0, omit this line.
-            if (
-                rain_row[-1] is not None
-            ):  # row[-1] is the last value of tuple (time_series_fid, irainreal, irainbuilding, tot_rainfall,
-                # rainabs, irainarf, movingstorm, rainspeed, iraindir).
-                rain_group.datasets["RAIN"].data.append(create_array(rain_line4, 4, rain_row[-2:]))
-            else:
-                pass
-        else:
-            pass
+        # if rain_row[6] == 1:  # if movingstorm from rain = 0, omit this line.
+        #     if (
+        #         rain_row[-1] is not None
+        #     ):  # row[-1] is the last value of tuple (time_series_fid, irainreal, irainbuilding, tot_rainfall,
+        #         # rainabs, irainarf, movingstorm, rainspeed, iraindir).
+        #         rain_group.datasets["RAIN"].data.append(create_array(rain_line4, 4, rain_row[-2:]))
+        #     else:
+        #         pass
+        # else:
+        #     pass
 
         if rain_row[5] == 1:  # if irainarf from rain = 0, omit this line.
+            rain_group.create_dataset('RAIN_ARF', [])
             for row in self.execute(rain_cells_sql):
-                rain_group.datasets["RAIN"].data.append(create_array(cell_line5, 4, row[0], "{0:.3f}".format(row[1])))
+                rain_group.datasets["RAIN_ARF"].data.append(create_array(
+                    cell_line,
+                    2,
+                    np.float_,
+                    row[0],
+                    "{0:.3f}".format(row[1])
+                ))
 
         self.parser.write_groups(rain_group)
         return True
@@ -2682,7 +2850,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
             if rain_row[6] == 1:  # if movingstorm from rain = 0, omit this line.
                 if (
-                    rain_row[-1] is not None
+                        rain_row[-1] is not None
                 ):  # row[-1] is the last value of tuple (time_series_fid, irainreal, irainbuilding, tot_rainfall,
                     # rainabs, irainarf, movingstorm, rainspeed, iraindir).
                     r.write(
@@ -2846,18 +3014,17 @@ class Flo2dGeoPackage(GeoPackageUtils):
         horton_sql = """SELECT grid_fid,fhorti, fhortf, deca FROM infil_cells_horton ORDER BY grid_fid;"""
         chan_sql = """SELECT grid_fid, hydconch FROM infil_chan_elems ORDER by grid_fid;"""
 
-        line1 = "{0}"
-        line2 = "\n" + "  {}" * 6
-        line3 = "\n" + "  {}" * 3
-        line4 = "\n{0}"
-        line4ab = "\nR  {0}  {1}  {2}"
-        line5 = "\n{0}  {1}"
-        line6 = "\nF {0:<8} {1:<7.4f} {2:<7.4f} {3:<7.4f} {4:<7.4f} {5:<7.4f} {6:<7.4f}"
-        #         line6 = '\n' + 'F' + '  {}' * 7
-        line7 = "\nS  {0}  {1}"
-        line8 = "\nC  {0}  {1}"
-        line9 = "\nI {0:<7.4f} {1:<7.4f} {2:<7.4f}"
-        line10 = "\nH  {0:<8} {1:<7.4f} {2:<7.4f} {3:<7.4f}"
+        # line1 = "{0}"
+        # line2 = "\n" + "  {}" * 6
+        # line3 = "\n" + "  {}" * 3
+        # line4 = "\n{0}"
+        line4ab = "\n{0}  {1}  {2}"
+        # line5 = "\n{0}  {1}"
+        line6 = "\n{0:<8} {1:<7.4f} {2:<7.4f} {3:<7.4f} {4:<7.4f} {5:<7.4f} {6:<7.4f}"
+        line7 = "\n{0}  {1}"
+        line8 = "\n{0}  {1}"
+        # line9 = "\nI {0:<7.4f} {1:<7.4f} {2:<7.4f}"
+        line10 = "\n{0:<8} {1:<7.4f} {2:<7.4f} {3:<7.4f}"
 
         infil_row = self.execute(infil_sql).fetchone()
         if infil_row is None:
@@ -2866,7 +3033,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             pass
 
         infil_group = self.parser.infil_group
-        infil_group.create_dataset('INFIL', [])
+        infil_group.create_dataset('INFIL_METHOD', [])
 
         gen = [x if x is not None else "" for x in infil_row[1:]]
         v1, v2, v3, v4, v5, v9 = (
@@ -2878,32 +3045,110 @@ class Flo2dGeoPackage(GeoPackageUtils):
             gen[13:],
         )
 
-        infil_group.datasets["INFIL"].data.append(create_array(line1, 8, v1))
-        if v1 == 1 or v1 == 3:
-            infil_group.datasets["INFIL"].data.append(create_array(line2, 8, tuple(v2)))
-            infil_group.datasets["INFIL"].data.append(create_array(line3, 8, tuple(v3)))
+        infil_group.datasets["INFIL_METHOD"].data.append(v1)
+
+        # GA
+        if v1 == 1:
+            infil_group.create_dataset('INFIL_GA_GLOBAL', [])
+            # v2: ABSTR SATI SATF POROS SOILD INFCHAN
+            for var in v2:
+                infil_group.datasets["INFIL_GA_GLOBAL"].data.append(var)
+            # v3: HYDCALL SOILALL HYDCADJ
+            for var in v3:
+                infil_group.datasets["INFIL_GA_GLOBAL"].data.append(var)
+
+            ga_cells_row = self.execute(green_sql).fetchone()
+            if ga_cells_row is not None:
+                infil_group.create_dataset('INFIL_GA_CELLS', [])
+                for row in self.execute(green_sql):
+                    infil_group.datasets["INFIL_GA_CELLS"].data.append(create_array(line6, 7, np.float_, row))
+
+            # v2[5]: INFCHAN
             if v2[5] == 1:
-                infil_group.datasets["INFIL"].data.append(create_array(line4, 8, tuple(v4)))
-            for row in self.execute(infil_r_sql):
-                row = [x if x is not None else "" for x in row]
-                infil_group.datasets["INFIL"].data.append(create_array(line4ab, 8, row))
-        if v1 == 2 or v1 == 3:
-            if any(v5) is True:
-                infil_group.datasets["INFIL"].data.append(create_array(line5, 8, tuple(v5)))
-            else:
-                pass
-        for row in self.execute(green_sql):
-            infil_group.datasets["INFIL"].data.append(create_array(line6, 8, row))
-        for row in self.execute(scs_sql):
-            infil_group.datasets["INFIL"].data.append(create_array(line7, 8, row))
-        for row in self.execute(chan_sql):
-            infil_group.datasets["INFIL"].data.append(create_array(line8, 8, row))
-        if any(v9) is True:
-            infil_group.datasets["INFIL"].data.append(create_array(line9, 8, tuple(v9)))
-        else:
-            pass
-        for row in self.execute(horton_sql):
-            infil_group.datasets["INFIL"].data.append(create_array(line10, 8, row))
+                infil_group.create_dataset('INFIL_CHAN_GLOBAL', [])
+                infil_group.datasets["INFIL_CHAN_GLOBAL"].data.append(v4)
+
+                infil_chan_seg = self.execute(infil_r_sql).fetchone()
+                if infil_chan_seg is not None:
+                    infil_group.create_dataset('INFIL_CHAN_SEG', [])
+                    for row in self.execute(infil_r_sql):
+                        row = [x if (x is not None and x != "") else -9999 for x in row]
+                        infil_group.datasets["INFIL_CHAN_SEG"].data.append(
+                            create_array(line4ab, 3, np.float_, tuple(row)))
+
+                infil_chan_elems = self.execute(chan_sql).fetchone()
+                if infil_chan_elems is not None:
+                    infil_group.create_dataset('INFIL_CHAN_ELEMS', [])
+                    for row in self.execute(chan_sql):
+                        infil_group.datasets["INFIL_CHAN_ELEMS"].data.append(create_array(line8, 2, np.float_, row))
+
+        if v1 == 2:
+            infil_group.create_dataset('INFIL_SCS_GLOBAL', [])
+            # v5: SCSNALL ABSTR1
+            for var in v5:
+                infil_group.datasets["INFIL_SCS_GLOBAL"].data.append(var
+                                                                     )
+            scs_cells_row = self.execute(scs_sql).fetchone()
+            if scs_cells_row is not None:
+                infil_group.create_dataset('INFIL_SCS_CELLS', [])
+                for row in self.execute(scs_sql):
+                    infil_group.datasets["INFIL_SCS_CELLS"].data.append(create_array(line7, 2, np.float_, row))
+
+        if v1 == 3:
+            infil_group.create_dataset('INFIL_GA_GLOBAL', [])
+            # v2: ABSTR SATI SATF POROS SOILD INFCHAN
+            for var in v2:
+                infil_group.datasets["INFIL_GA_GLOBAL"].data.append(var)
+            # v3: HYDCALL SOILALL HYDCADJ
+            for var in v3:
+                infil_group.datasets["INFIL_GA_GLOBAL"].data.append(var)
+
+            ga_cells_row = self.execute(green_sql).fetchone()
+            if ga_cells_row is not None:
+                infil_group.create_dataset('INFIL_GA_CELLS', [])
+                for row in self.execute(green_sql):
+                    infil_group.datasets["INFIL_GA_CELLS"].data.append(create_array(line6, 7, np.float_, row))
+
+            infil_group.create_dataset('INFIL_SCS_GLOBAL', [])
+            # v5: SCSNALL ABSTR1
+            for var in v5:
+                infil_group.datasets["INFIL_SCS_GLOBAL"].data.append(var
+                                                                     )
+            scs_cells_row = self.execute(scs_sql).fetchone()
+            if scs_cells_row is not None:
+                infil_group.create_dataset('INFIL_SCS_CELLS', [])
+                for row in self.execute(scs_sql):
+                    infil_group.datasets["INFIL_SCS_CELLS"].data.append(create_array(line7, 2, np.float_, row))
+
+            # v2[5]: INFCHAN
+            if v2[5] == 1:
+                infil_group.create_dataset('INFIL_CHAN_GLOBAL', [])
+                infil_group.datasets["INFIL_CHAN_GLOBAL"].data.append(v4)
+
+                infil_chan_seg = self.execute(infil_r_sql).fetchone()
+                if infil_chan_seg is not None:
+                    infil_group.create_dataset('INFIL_CHAN_SEG', [])
+                    for row in self.execute(infil_r_sql):
+                        row = [x if (x is not None and x != "") else -9999 for x in row]
+                        infil_group.datasets["INFIL_CHAN_SEG"].data.append(
+                            create_array(line4ab, 3, np.float_, tuple(row)))
+
+                infil_chan_elems = self.execute(chan_sql).fetchone()
+                if infil_chan_elems is not None:
+                    infil_group.create_dataset('INFIL_CHAN_ELEMS', [])
+                    for row in self.execute(chan_sql):
+                        infil_group.datasets["INFIL_CHAN_ELEMS"].data.append(create_array(line8, 2, np.float_, row))
+
+        if v1 == 4:
+            infil_group.create_dataset('INFIL_HORTON_GLOBAL', [])
+            for var in v9:
+                infil_group.datasets["INFIL_HORTON_GLOBAL"].data.append(var)
+            horton_cells_row = self.execute(horton_sql).fetchone()
+            if horton_cells_row is not None:
+                infil_group.create_dataset('INFIL_HORTON_CELLS', [])
+                for row in self.execute(horton_sql):
+                    infil_group.datasets["INFIL_HORTON_CELLS"].data.append(create_array(line10, 4, np.float_, row))
+
         self.parser.write_groups(infil_group)
         return True
 
@@ -2943,14 +3188,14 @@ class Flo2dGeoPackage(GeoPackageUtils):
             evap_group.create_dataset('EVAPOR', [])
             # evapor = os.path.join(outdir, "EVAPOR.DAT")
 
-            evap_group.datasets["EVAPOR"].data.append(create_array(head, 3, evapor_row))
+            evap_group.datasets["EVAPOR"].data.append(create_array(head, 3, np.string_, evapor_row))
             # e.write(head.format(*evapor_row))
             for mrow in self.execute(evapor_month_sql):
                 month = mrow[0]
-                evap_group.datasets["EVAPOR"].data.append(create_array(monthly, 3, mrow))
+                evap_group.datasets["EVAPOR"].data.append(create_array(monthly, 3, np.string_, mrow))
                 # e.write(monthly.format(*mrow))
                 for hrow in self.execute(evapor_hour_sql, (month,)):
-                    evap_group.datasets["EVAPOR"].data.append(create_array(hourly, 3, hrow))
+                    evap_group.datasets["EVAPOR"].data.append(create_array(hourly, 3, np.string_, hrow))
                     # e.write(hourly.format(*hrow))
 
             self.parser.write_groups(evap_group)
@@ -2995,7 +3240,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             self.uc.show_error("ERROR 101218.1544: exporting EVAPOR.DAT failed!.\n", e)
             return False
 
-    def export_chan(self, output = None):
+    def export_chan(self, output=None):
         if self.parsed_format == self.FORMAT_DAT:
             return self.export_chan_dat(output)
         elif self.parsed_format == self.FORMAT_HDF5:
@@ -3019,25 +3264,18 @@ class Flo2dGeoPackage(GeoPackageUtils):
         chan_t_sql = """SELECT elem_fid, bankell, bankelr, fcw, fcd, zl, zr FROM chan_t WHERE elem_fid = ?;"""
         chan_n_sql = """SELECT elem_fid, nxsecnum FROM chan_n WHERE elem_fid = ?;"""
 
-        chan_wsel_sql = """SELECT istart, wselstart, iend, wselend FROM chan_wsel ORDER BY fid;"""
-        chan_conf_sql = """SELECT chan_elem_fid FROM chan_confluences ORDER BY fid;"""
+        chan_wsel_sql = """SELECT seg_fid, istart, wselstart, iend, wselend FROM chan_wsel ORDER BY fid;"""
+        chan_conf_sql = """SELECT conf_fid, type, chan_elem_fid FROM chan_confluences ORDER BY fid;"""
         chan_e_sql = """SELECT grid_fid FROM noexchange_chan_cells ORDER BY fid;"""
 
-        segment = "   {0:.2f}   {1:.2f}   {2:.2f}   {3}\n"
-        chan_r = "R" + "  {}" * 7 + "\n"
-        chan_v = "V" + "  {}" * 19 + "\n"
-        chan_t = "T" + "  {}" * 9 + "\n"
-        chan_n = "N" + "  {}" * 4 + "\n"
+        segment = "{}  {}  {}  {}  {}\n"
         chanbank = " {0: <10} {1}\n"
-        wsel = "{0} {1:.2f}\n"
-        conf = " C {0}  {1}\n"
-        chan_e = " E {0}\n"
 
         sqls = {
-            "R": [chan_r_sql, chan_r, 3, 6],
-            "V": [chan_v_sql, chan_v, 3, 5],
-            "T": [chan_t_sql, chan_t, 3, 6],
-            "N": [chan_n_sql, chan_n, 1, 2],
+            "R": [chan_r_sql, 3, 6],
+            "V": [chan_v_sql, 3, 5],
+            "T": [chan_t_sql, 3, 6],
+            "N": [chan_n_sql, 1, 2],
         }
 
         chan_rows = self.execute(chan_sql).fetchall()
@@ -3047,7 +3285,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             pass
 
         channel_group = self.parser.channel_group
-        channel_group.create_dataset('CHAN', [])
+        channel_group.create_dataset('CHAN_GLOBAL', [])
         channel_group.create_dataset('CHANBANK', [])
 
         ISED = self.gutils.get_cont_par("ISED")
@@ -3056,13 +3294,12 @@ class Flo2dGeoPackage(GeoPackageUtils):
             row = [x if x is not None else "0" for x in row]
             fid = row[0]
             if ISED == "0":
-                row[4] = ""
-            channel_group.datasets["CHAN"].data.append(create_array(segment, 20, tuple(row[1:5])))
+                row[4] = -9999
+            channel_group.datasets["CHAN_GLOBAL"].data.append(create_array(segment, 5, np.float_, tuple(row)))
             # Writes depinitial, froudc, roughadj, isedn from 'chan' table (schematic layer).
-            # A single line for each channel segment. The next lines will be the grid elements of
-            # this channel segment.
+            # A single line for each channel segment.
             for elems in self.execute(
-                chan_elems_sql, (fid,)
+                    chan_elems_sql, (fid,)
             ):  # each 'elems' is a list [(fid, rbankgrid, fcn, xlen, type)] from
                 # 'chan_elems' table (the cross sections in the schematic layer),
                 #  that has the 'fid' value indicated (the channel segment id).
@@ -3076,7 +3313,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     xlen,
                     typ,
                 ) = elems  # Separates values of list into individual variables.
-                sql, line, fcn_idx, xlen_idx = sqls[
+                sql, fcn_idx, xlen_idx = sqls[
                     typ
                 ]  # depending on 'typ' (R,V,T, or N) select sql (the SQLite SELECT statement to execute),
                 # line (format to write), fcn_idx (?), and xlen_idx (?)
@@ -3090,25 +3327,81 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 res.insert(
                     xlen_idx, xlen
                 )  # Add ´xlen' (coming from table ´chan_elems' (cross sections) to 'res' list in position 'xlen_idx'.
-                channel_group.datasets["CHAN"].data.append(create_array(line, 20, tuple(res)))
-                channel_group.datasets["CHANBANK"].data.append(create_array(chanbank, 20, eid, rbank))
 
+                if typ == 'R':
+                    data = ([fid] + res)
+                    try:
+                        channel_group.datasets["CHAN_RECTANGULAR"].data.append(data)
+                    except:
+                        channel_group.create_dataset('CHAN_RECTANGULAR', [])
+                        channel_group.datasets["CHAN_RECTANGULAR"].data.append(data)
+
+                if typ == 'V':
+                    data = ([fid] + res)
+                    try:
+                        channel_group.datasets["CHAN_VARIABLE"].data.append(data)
+                    except:
+                        channel_group.create_dataset('CHAN_VARIABLE', [])
+                        channel_group.datasets["CHAN_VARIABLE"].data.append(data)
+
+                if typ == 'T':
+                    data = ([fid] + res)
+                    try:
+                        channel_group.datasets["CHAN_TRAPEZOIDAL"].data.append(data)
+                    except:
+                        channel_group.create_dataset('CHAN_TRAPEZOIDAL', [])
+                        channel_group.datasets["CHAN_TRAPEZOIDAL"].data.append(data)
+
+                if typ == 'N':
+                    data = ([fid] + res)
+                    try:
+                        channel_group.datasets["CHAN_NATURAL"].data.append(data)
+                    except:
+                        channel_group.create_dataset('CHAN_NATURAL', [])
+                        channel_group.datasets["CHAN_NATURAL"].data.append(data)
+
+                channel_group.datasets["CHANBANK"].data.append(create_array(chanbank, 2, np.int_, eid, rbank))
+
+        segment_added = []
         for row in self.execute(chan_wsel_sql):
-            channel_group.datasets["CHAN"].data.append(create_array(wsel, 20, tuple(row[:2])))
-            channel_group.datasets["CHAN"].data.append(create_array(wsel, 20, tuple(row[2:])))
+            if row[0] not in segment_added:
+                (
+                    seg_fid,
+                    istart,
+                    wselstart,
+                    iend,
+                    wselend,
+                ) = row
+                try:
+                    channel_group.datasets["WSE_START"].data.append([seg_fid, istart, wselstart])
+                    channel_group.datasets["WSE_END"].data.append([seg_fid, iend, wselend])
+                except:
+                    channel_group.create_dataset('WSE_START', [])
+                    channel_group.datasets["WSE_START"].data.append([seg_fid, istart, wselstart])
+                    channel_group.create_dataset('WSE_END', [])
+                    channel_group.datasets["WSE_END"].data.append([seg_fid, iend, wselend])
+                finally:
+                    segment_added.append(row[0])
 
-        pairs = []
         for row in self.execute(chan_conf_sql):
-            chan_elem = row[0]
-            if not pairs:
-                pairs.append(chan_elem)
-            else:
-                pairs.append(chan_elem)
-                channel_group.datasets["CHAN"].data.append(create_array(conf, 20, tuple(pairs)))
-                del pairs[:]
+            (
+                conf_fid,
+                typ,
+                chan_elem_fid,
+            ) = row
+
+            try:
+                channel_group.datasets["CONFLUENCES"].data.append([conf_fid, typ, chan_elem_fid])
+            except:
+                channel_group.create_dataset('CONFLUENCES', [])
+                channel_group.datasets["CONFLUENCES"].data.append([conf_fid, typ, chan_elem_fid])
 
         for row in self.execute(chan_e_sql):
-            channel_group.datasets["CHAN"].data.append(create_array(chan_e, 20, row[0]))
+            try:
+                channel_group.datasets["NOEXCHANGE"].data.append(row[0])
+            except:
+                channel_group.create_dataset('NOEXCHANGE', [])
+                channel_group.datasets["NOEXCHANGE"].data.append(row[0])
 
         self.parser.write_groups(channel_group)
         return True
@@ -3173,7 +3466,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 # A single line for each channel segment. The next lines will be the grid elements of
                 # this channel segment.
                 for elems in self.execute(
-                    chan_elems_sql, (fid,)
+                        chan_elems_sql, (fid,)
                 ):  # each 'elems' is a list [(fid, rbankgrid, fcn, xlen, type)] from
                     # 'chan_elems' table (the cross sections in the schematic layer),
                     #  that has the 'fid' value indicated (the channel segment id).
@@ -3228,7 +3521,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
     #             self.uc.show_error("ERROR 101218.1623: exporting CHAN.DAT failed!.\n", e)
     #             return False
 
-    def export_xsec(self, output = None):
+    def export_xsec(self, output=None):
         if self.parsed_format == self.FORMAT_DAT:
             return self.export_xsec_dat(output)
         elif self.parsed_format == self.FORMAT_HDF5:
@@ -3242,9 +3535,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             chan_n_sql = """SELECT nxsecnum, xsecname FROM chan_n ORDER BY nxsecnum;"""
             xsec_sql = """SELECT xi, yi FROM xsec_n_data WHERE chan_n_nxsecnum = ? ORDER BY fid;"""
 
-            xsec_line = """X     {0}  {1}\n"""
-            pkt_line = """ {0:<10} {1: >10}\n"""
-            nr = "{0:.2f}"
+            xsec_line = """{0}  {1}\n"""
 
             chan_n = self.execute(chan_n_sql).fetchall()
             if not chan_n:
@@ -3253,11 +3544,13 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 pass
 
             channel_group = self.parser.channel_group
-            channel_group.create_dataset('XSEC', [])
+            channel_group.create_dataset('XSEC_NAME', [])
+            channel_group.create_dataset('XSEC_DATA', [])
+
             for nxecnum, xsecname in chan_n:
-                channel_group.datasets["XSEC"].data.append(create_array(xsec_line, 3, nxecnum, xsecname))
+                channel_group.datasets["XSEC_NAME"].data.append(create_array(xsec_line, 2, np.string_, tuple([nxecnum, xsecname])))
                 for xi, yi in self.execute(xsec_sql, (nxecnum,)):
-                    channel_group.datasets["XSEC"].data.append(create_array(pkt_line, 3, xi, yi))
+                    channel_group.datasets["XSEC_DATA"].data.append([nxecnum, xi, yi])
 
             self.parser.write_groups(channel_group)
             return True
@@ -3296,36 +3589,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             self.uc.show_error("ERROR 101218.1607:  exporting XSEC.DAT  failed!.\n", e)
             return False
 
-    def export_xsec_dat(self, outdir):
-        try:
-            chan_n_sql = """SELECT nxsecnum, xsecname FROM chan_n ORDER BY nxsecnum;"""
-            xsec_sql = """SELECT xi, yi FROM xsec_n_data WHERE chan_n_nxsecnum = ? ORDER BY fid;"""
-
-            xsec_line = """X     {0}  {1}\n"""
-            pkt_line = """ {0:<10} {1: >10}\n"""
-            nr = "{0:.2f}"
-
-            chan_n = self.execute(chan_n_sql).fetchall()
-            if not chan_n:
-                return False
-            else:
-                pass
-
-            xsec = os.path.join(outdir, "XSEC.DAT")
-            with open(xsec, "w") as x:
-                for nxecnum, xsecname in chan_n:
-                    x.write(xsec_line.format(nxecnum, xsecname))
-                    for xi, yi in self.execute(xsec_sql, (nxecnum,)):
-                        x.write(pkt_line.format(nr.format(xi), nr.format(yi)))
-
-            return True
-
-        except Exception as e:
-            QApplication.restoreOverrideCursor()
-            self.uc.show_error("ERROR 101218.1607:  exporting XSEC.DAT  failed!.\n", e)
-            return False
-
-    def export_hystruc(self, output = None):
+    def export_hystruc(self, output=None):
         if self.parsed_format == self.FORMAT_DAT:
             return self.export_hystruc_dat(output)
         elif self.parsed_format == self.FORMAT_HDF5:
@@ -3355,29 +3619,58 @@ class Flo2dGeoPackage(GeoPackageUtils):
         ratt_sql = """SELECT * FROM rat_table WHERE struct_fid = ? ORDER BY fid;"""
         culvert_sql = """SELECT * FROM culvert_equations WHERE struct_fid = ? ORDER BY fid;"""
         storm_sql = """SELECT * FROM storm_drains WHERE struct_fid = ? ORDER BY fid;"""
-        bridge_a_sql = """SELECT fid, struct_fid, IBTYPE, COEFF, C_PRIME_USER, KF_COEF, KWW_COEF,  KPHI_COEF, KY_COEF, KX_COEF, KJ_COEF 
-                            FROM bridge_variables WHERE struct_fid = ? ORDER BY fid;"""
-        bridge_b_sql = """SELECT fid, struct_fid, BOPENING, BLENGTH, BN_VALUE, UPLENGTH12, LOWCHORD,
-                                 DECKHT, DECKLENGTH, PIERWIDTH, SLUICECOEFADJ, ORIFICECOEFADJ, 
-                                COEFFWEIRB, WINGWALL_ANGLE, PHI_ANGLE, LBTOEABUT, RBTOEABUT 
-                              FROM bridge_variables WHERE struct_fid = ? ORDER BY fid;"""
+        bridge_sql = """SELECT fid, 
+                               struct_fid, 
+                               IBTYPE, 
+                               COEFF, 
+                               C_PRIME_USER, 
+                               KF_COEF, 
+                               KWW_COEF,  
+                               KPHI_COEF, 
+                               KY_COEF, 
+                               KX_COEF, 
+                               KJ_COEF,
+                               BOPENING, 
+                               BLENGTH, 
+                               BN_VALUE, 
+                               UPLENGTH12, 
+                               LOWCHORD,
+                               DECKHT, 
+                               DECKLENGTH, 
+                               PIERWIDTH, 
+                               SLUICECOEFADJ, 
+                               ORIFICECOEFADJ, 
+                               COEFFWEIRB, 
+                               WINGWALL_ANGLE, 
+                               PHI_ANGLE, 
+                               LBTOEABUT, 
+                               RBTOEABUT 
+                        FROM bridge_variables WHERE struct_fid = ? ORDER BY fid;"""
 
-        line1 = "S" + "  {}" * 9 + "\n"
+        # line1 = "S" + "  {}" * 9 + "\n"
         line2 = "C" + "  {}" * 5 + "\n"
         line3 = "R" + "  {}" * 5 + "\n"
-        line4 = "T" + "  {}" * 3 + "\n"
+
         line5 = "F" + "  {}" * 6 + "\n"
         line6 = "D" + "  {}" * 2 + "\n"
         line7a = "B" + "  {}" * 9 + "\n"
         line7b = "B" + "  {}" * 15 + "\n"
 
+        two_values = "{}  {}\n"
+        three_values = "{}  {}  {}\n"
+        four_values = "{}  {}  {}  {}\n"
+        five_values = "{}  {}  {}  {}  {}\n"
+        six_values = "{}  {}  {}  {}  {}  {}\n"
+        seven_values = "{}  {}  {}  {}  {}  {}  {}\n"
+        nine_values = "{}  {}  {}  {}  {}  {}  {}  {}  {}\n"
+        eleven_values = "{}  {}  {}  {}  {}  {}  {}  {}  {}  {}  {}\n"
+        tfive_values = "{}" + " {}" * 24 + "\n"
+
         pairs = [
             [ratc_sql, line2],  # rating curve  ('C' lines)
-            [repl_ratc_sql, line3],  # rating curve replacement ('R' lines)
-            [ratt_sql, line4],  # rating table ('T' lines)
+            [ratt_sql, three_values],  # rating table ('T' lines)
             [culvert_sql, line5],  # culvert equation ('F' lines)
-            [bridge_a_sql, line7a],  # bridge ('B' lines a)
-            [bridge_b_sql, line7b],  # bridge ('B' lines b)
+            [bridge_sql, line7a],  # bridge ('B' lines a
             [storm_sql, line6],  # storm drains ('D' lines)
         ]
 
@@ -3387,51 +3680,119 @@ class Flo2dGeoPackage(GeoPackageUtils):
         else:
             pass
 
-        # hystruc = os.path.join(outdir, "HYSTRUC.DAT")
         hystruc_group = self.parser.hystruc_group
-        hystruc_group.create_dataset('HYSTRUC', [])
+        hystruc_group.create_dataset('STR_CONTROL', [])
+        hystruc_group.create_dataset('STR_NAME', [])
 
-        d_lines = []
         for stru in hystruc_rows:
             fid = stru[0]
             vals1 = [x if x is not None and x != "" else 0 for x in stru[2:8]]
             vals2 = [x if x is not None and x != "" else 0.0 for x in stru[8:11]]
             vals = vals1 + vals2
-            hystruc_group.datasets["HYSTRUC"].data.append(create_array(line1, 16, tuple(vals)))
-            # h.write(line1.format(*vals))
-            type = stru[4]  #  0: rating curve
+            (
+                struct_name,
+                ifporchan,
+                icurvtable,
+                inflonod,
+                outflonod,
+                inoutcont,
+                headrefel,
+                clength,
+                cdiameter
+            ) = vals
+            hystruc_group.datasets["STR_CONTROL"].data.append(create_array(
+                nine_values,
+                9,
+                np.float_,
+                fid,
+                ifporchan,
+                icurvtable,
+                inflonod,
+                outflonod,
+                inoutcont,
+                headrefel,
+                clength,
+                cdiameter))
+            hystruc_group.datasets["STR_NAME"].data.append(create_array(two_values, 2, np.string_, fid, struct_name))
+
+            #  0: rating curve
             #  1: rating table
             #  2: culvert equation
             #  3: bridge routine
+
+            type = stru[4]
+
             for i, (qry, line) in enumerate(pairs):
                 if (
-                    (type == 0 and i == 0)  # rating curve line 'C'
-                    or (type == 0 and i == 1)  # rating curve line 'R'
-                    or (type == 1 and i == 2)  # rating table
-                    or (type == 2 and i == 3)  # culvert equation
-                    or (type == 3 and i == 4)  # bridge routine lines a
-                    or (type == 3 and i == 5)  # bridge routine lines b
-                    or i == 6  # storm drains
+                        (type == 0 and i == 0)  # rating curve
+                        or (type == 1 and i == 1)  # rating table
+                        or (type == 2 and i == 2)  # culvert equation
+                        or (type == 3 and i == 3)  # bridge routine
+                        or i == 4  # storm drains
                 ):
                     for row in self.execute(qry, (fid,)):
                         if row:
-                            subvals = [x if x is not None else "0.0" for x in row[2:]]
-                            if i == 3:  # Culvert equation.
-                                subvals[-1] = subvals[-1] if subvals[-1] not in [None, "0", "0.0"] else 1
-                            if i == 4:  # bridge routine lines a. Assign correct bridge type configuration.
-                                t = subvals[0]
-                                t = 1 if t == 1 else 2 if (t == 2 or t == 3) else 3 if (t == 4 or t == 5) else 4
-                                subvals[0] = t
-                            if i == 6:
-                                d_lines.append(line.format(*subvals))
-                            else:
-                                hystruc_group.datasets["HYSTRUC"].data.append(create_array(line, 16, tuple(subvals)))
-                                # h.write(line.format(*subvals))
+                            subvals = [x if x is not None else 0.0 for x in row[1:]]
 
-        # TODO: Fix the D lines for HDF5
-        # if d_lines:
-        #     for dl in d_lines:
-        #         h.write(dl)
+                            if i == 0:  # Rating curve line 'C' and 'R'
+                                # Replacement rating curve
+                                rrc_row = self.execute(repl_ratc_sql, (fid,)).fetchone()
+                                if rrc_row:
+                                    rrc_row = [x if x is not None else 0.0 for x in rrc_row[2:]]
+                                    try:
+                                        hystruc_group.datasets["RATING_CURVE"].data.append(
+                                            create_array(eleven_values, 11, np.float_, tuple(subvals + rrc_row)))
+                                    except:
+                                        hystruc_group.create_dataset('RATING_CURVE', [])
+                                        hystruc_group.datasets["RATING_CURVE"].data.append(
+                                            create_array(eleven_values, 11, np.float_, tuple(subvals + rrc_row)))
+                                else:
+                                    try:
+                                        hystruc_group.datasets["RATING_CURVE"].data.append(
+                                            create_array(eleven_values, 11, np.float_, tuple(subvals + (5 * [0]))))
+                                    except:
+                                        hystruc_group.create_dataset('RATING_CURVE', [])
+                                        hystruc_group.datasets["RATING_CURVE"].data.append(
+                                            create_array(eleven_values, 11, np.float_, tuple(subvals + (5 * [0]))))
+
+                            if i == 1:  # Rating table
+                                try:
+                                    hystruc_group.datasets["RATING_TABLE"].data.append(
+                                    create_array(four_values, 4, np.float_, tuple(subvals)))
+                                except:
+                                    hystruc_group.create_dataset('RATING_TABLE', [])
+                                    hystruc_group.datasets["RATING_TABLE"].data.append(
+                                    create_array(four_values, 4, np.float_, tuple(subvals)))
+
+                            if i == 2:  # Culvert equation.
+                                subvals[-1] = subvals[-1] if subvals[-1] not in [None, "0", "0.0"] else 1
+                                try:
+                                    hystruc_group.datasets["CULVERT_EQUATIONS"].data.append(
+                                        create_array(seven_values, 7, np.float_, tuple(subvals)))
+                                except:
+                                    hystruc_group.create_dataset('CULVERT_EQUATIONS', [])
+                                    hystruc_group.datasets["CULVERT_EQUATIONS"].data.append(
+                                        create_array(seven_values, 7, np.float_, tuple(subvals)))
+
+                            if i == 3:  # Bridge routine line
+                                try:
+                                    hystruc_group.datasets["BRIDGE_VARIABLES"].data.append(
+                                        create_array(tfive_values, 25, np.float_, tuple(subvals)))
+                                except:
+                                    hystruc_group.create_dataset('BRIDGE_VARIABLES', [])
+                                    hystruc_group.datasets["BRIDGE_VARIABLES"].data.append(
+                                        create_array(tfive_values, 25, np.float_, tuple(subvals)))
+
+                            if i == 4:
+                                try:
+                                    hystruc_group.datasets["STORM_DRAIN"].data.append(
+                                        create_array(three_values, 3, np.float_, tuple(subvals)))
+                                except:
+                                    hystruc_group.create_dataset('STORM_DRAIN', [])
+                                    hystruc_group.datasets["STORM_DRAIN"].data.append(
+                                        create_array(three_values, 3, np.float_, tuple(subvals)))
+                            else:
+                                pass
 
         self.parser.write_groups(hystruc_group)
         return True
@@ -3502,19 +3863,19 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     vals2 = [x if x is not None and x != "" else 0.0 for x in stru[8:11]]
                     vals = vals1 + vals2
                     h.write(line1.format(*vals))
-                    type = stru[4]  #  0: rating curve
+                    type = stru[4]  # 0: rating curve
                     #  1: rating table
                     #  2: culvert equation
                     #  3: bridge routine
                     for i, (qry, line) in enumerate(pairs):
                         if (
-                            (type == 0 and i == 0)  # rating curve line 'C'
-                            or (type == 0 and i == 1)  # rating curve line 'R'
-                            or (type == 1 and i == 2)  # rating table
-                            or (type == 2 and i == 3)  # culvert equation
-                            or (type == 3 and i == 4)  # bridge routine lines a
-                            or (type == 3 and i == 5)  # bridge routine lines b
-                            or i == 6  # storm drains
+                                (type == 0 and i == 0)  # rating curve line 'C'
+                                or (type == 0 and i == 1)  # rating curve line 'R'
+                                or (type == 1 and i == 2)  # rating table
+                                or (type == 2 and i == 3)  # culvert equation
+                                or (type == 3 and i == 4)  # bridge routine lines a
+                                or (type == 3 and i == 5)  # bridge routine lines b
+                                or i == 6  # storm drains
                         ):
                             for row in self.execute(qry, (fid,)):
                                 if row:
@@ -3540,7 +3901,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             self.uc.show_error("ERROR 101218.1608: exporting HYSTRUC.DAT failed!.\n", e)
             return False
 
-    def export_bridge_xsec(self, output = None):
+    def export_bridge_xsec(self, output=None):
         if self.parsed_format == self.FORMAT_DAT:
             return self.export_bridge_xsec_dat(output)
         elif self.parsed_format == self.FORMAT_HDF5:
@@ -3566,7 +3927,6 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
             hystruc_group = self.parser.hystruc_group
             hystruc_group.create_dataset('BRIDGE_XSEC', [])
-            # bridge = os.path.join(outdir, "BRIDGE_XSEC.DAT")
 
             for stru in hystruc_rows:
                 struct_fid = stru[0]
@@ -3575,14 +3935,11 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 if not bridge_rows:
                     continue
                 else:
-                    line1 = "X  " + str(in_node) + "\n"
-                    hystruc_group.datasets["BRIDGE_XSEC"].data.append(create_array(line1, 3))
-                    # b.write("X  " + str(in_node) + "\n")
+
                     for row in bridge_rows:
                         row = [x if x not in [NULL, None, "None", "none"] else 0 for x in row]
-                        line2 = str(row[0]) + "  " + str(row[1]) + "  " + str(row[2]) + "\n"
-                        hystruc_group.datasets["BRIDGE_XSEC"].data.append(create_array(line2, 3))
-                        # b.write(str(row[0]) + "  " + str(row[1]) + "  " + str(row[2]) + "\n")
+                        line = str(in_node) + "  " + str(row[0]) + "  " + str(row[1]) + "  " + str(row[2]) + "\n"
+                        hystruc_group.datasets["BRIDGE_XSEC"].data.append(create_array(line, 4, np.float_))
 
             self.parser.write_groups(hystruc_group)
             return True
@@ -3630,7 +3987,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             self.uc.show_error("ERROR 101122.0753: exporting BRIDGE_XSEC.DAT failed!.\n", e)
             return False
 
-    def export_bridge_coeff_data(self, output = None):
+    def export_bridge_coeff_data(self, output=None):
         if self.parsed_format == self.FORMAT_DAT:
             return self.export_bridge_coeff_data_dat(output)
         elif self.parsed_format == self.FORMAT_HDF5:
@@ -3650,7 +4007,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             data = []
             with open(src, 'r') as bridge_coeff_data:
                 for line in bridge_coeff_data:
-                    hystruc_group.datasets["BRIDGE_COEFF_DATA"].data.append(create_array(line, 13))
+                    hystruc_group.datasets["BRIDGE_COEFF_DATA"].data.append(create_array(line, 13, np.string_))
 
             self.parser.write_groups(hystruc_group)
             return True
@@ -3675,7 +4032,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             self.uc.show_error("ERROR 101122.0754: exporting BRIDGE_COEFF_DATA.DAT failed!.\n", e)
             return False
 
-    def export_street(self, output = None):
+    def export_street(self, output=None):
         if self.parsed_format == self.FORMAT_DAT:
             return self.export_street_dat(output)
         elif self.parsed_format == self.FORMAT_HDF5:
@@ -3707,17 +4064,17 @@ class Flo2dGeoPackage(GeoPackageUtils):
             channel_group = self.parser.channel_group
             channel_group.create_dataset('STREET', [])
 
-            channel_group.datasets["STREET"].data.append(create_array(line1, 5, tuple(head[1:])))
+            channel_group.datasets["STREET"].data.append(create_array(line1, 5, np.string_, tuple(head[1:])))
             # s.write(line1.format(*head[1:]))
             seg_fid = 1
             for i, sts in enumerate(self.execute(streets_sql), 1):
-                channel_group.datasets["STREET"].data.append(create_array(line2, 5, sts))
+                channel_group.datasets["STREET"].data.append(create_array(line2, 5, np.string_, sts))
                 # s.write(line2.format(*sts))
                 for seg in self.execute(streets_seg_sql, (i,)):
-                    channel_group.datasets["STREET"].data.append(create_array(line3, 5, seg))
+                    channel_group.datasets["STREET"].data.append(create_array(line3, 5, np.string_, seg))
                     # s.write(line3.format(*seg))
                     for elem in self.execute(streets_elem_sql, (seg_fid,)):
-                        channel_group.datasets["STREET"].data.append(create_array(line4, 5, elem))
+                        channel_group.datasets["STREET"].data.append(create_array(line4, 5, np.string_, elem))
                         # s.write(line4.format(*elem))
                     seg_fid += 1
 
@@ -3857,46 +4214,27 @@ class Flo2dGeoPackage(GeoPackageUtils):
                          FROM blocked_cells WHERE arf < 1 ORDER BY grid_fid;"""
             collapse_sql = """SELECT collapse FROM user_blocked_areas WHERE fid = ?;"""
 
-            line1 = "S  {}\n"
-            line2 = " T   {}\n"
+            # line1 = "{}\n"
+            # line2 = "{}\n"
             line3 = "{0:<8} {1:<5.2f} {2:<5.2f} {3:<5.2f} {4:<5.2f} {5:<5.2f} {6:<5.2f} {7:<5.2f} {8:5.2f} {9:<5.2f}\n"
             option = self.execute(cont_sql).fetchone()
             if option is None:
-                # TODO: We need to implement correct export of 'IARFBLOCKMOD'
                 option = ("IARFBLOCKMOD", 0)
 
-            # arf = os.path.join(outdir, "ARF.DAT")
             arfwrf_group = self.parser.arfwrf_group
-            arfwrf_group.create_dataset('ARF', [])
+            arfwrf_group.create_dataset('ARF_GLOBAL', [])
 
-            # with open(arf, "w") as a:
             head = option[-1]
             if head is not None:
-                arfwrf_group.datasets["ARF"].data.append(create_array(line1, 10, head))
-                # a.write(line1.format(head))
+                arfwrf_group.datasets["ARF_GLOBAL"].data.append(float(head))
             else:
                 pass
 
             # Totally blocked grid elements:
-            for row in self.execute(tbc_sql):
-                collapse = self.execute(collapse_sql, (row[1],)).fetchone()
-                if collapse:
-                    cll = collapse[0]
-                else:
-                    cll = 0
-                cll = [cll if cll is not None else 0]
-                cell = row[0]
-                if cll[0] == 1:
-                    cell = -cell
-                arfwrf_group.datasets["ARF"].data.append(create_array(line2, 10, cell))
-                # a.write(line2.format(cell))
-
-            # Partially blocked grid elements:
-            for row in self.execute(pbc_sql):
-                row = [x if x is not None else "" for x in row]
-                # Is there any side blocked? If not omit it:
-                any_blocked = sum(row) - row[0] - row[1]
-                if any_blocked > 0:
+            totally_blocked_grid = self.execute(tbc_sql).fetchone()
+            if totally_blocked_grid is not None:
+                arfwrf_group.create_dataset('ARF_TOTALLY_BLOCKED', [])
+                for row in self.execute(tbc_sql):
                     collapse = self.execute(collapse_sql, (row[1],)).fetchone()
                     if collapse:
                         cll = collapse[0]
@@ -3904,11 +4242,32 @@ class Flo2dGeoPackage(GeoPackageUtils):
                         cll = 0
                     cll = [cll if cll is not None else 0]
                     cell = row[0]
-                    arf_value = row[2]
                     if cll[0] == 1:
-                        arf_value = -arf_value
-                    # a.write(line3.format(cell, arf_value, *row[3:]))
-                    arfwrf_group.datasets["ARF"].data.append(create_array(line3, 10, cell, arf_value, *row[3:]))
+                        cell = -cell
+                    arfwrf_group.datasets["ARF_TOTALLY_BLOCKED"].data.append(cell)
+
+            # Partially blocked grid elements:
+            partially_blocked_grid = self.execute(pbc_sql).fetchone()
+            if partially_blocked_grid is not None:
+                arfwrf_group.create_dataset('ARF_PARTIALLY_BLOCKED', [])
+                for row in self.execute(pbc_sql):
+                    row = [x if x is not None else "" for x in row]
+                    # Is there any side blocked? If not omit it:
+                    any_blocked = sum(row) - row[0] - row[1]
+                    if any_blocked > 0:
+                        collapse = self.execute(collapse_sql, (row[1],)).fetchone()
+                        if collapse:
+                            cll = collapse[0]
+                        else:
+                            cll = 0
+                        cll = [cll if cll is not None else 0]
+                        cell = row[0]
+                        arf_value = row[2]
+                        if cll[0] == 1:
+                            arf_value = -arf_value
+                        arfwrf_group.datasets["ARF_PARTIALLY_BLOCKED"].data.append(
+                            create_array(line3, 10, np.float_, cell, arf_value, *row[3:]))
+
             self.parser.write_groups(arfwrf_group)
             return True
 
@@ -3928,7 +4287,6 @@ class Flo2dGeoPackage(GeoPackageUtils):
         Function to export mult data to hdf5 file
         """
 
-        rtrn = True
         if self.is_table_empty("mult_cells") and self.is_table_empty("simple_mult_cells"):
             return False
 
@@ -3940,19 +4298,19 @@ class Flo2dGeoPackage(GeoPackageUtils):
         head = self.execute(mult_sql).fetchone()
         mults = []
 
-        channel_group = self.parser.channel_group
+        mult_group = self.parser.mult_group
         # Check if there is any multiple channel cells defined.
         if not self.is_table_empty("mult_cells"):
             try:
                 # Multiple Channels (not simplified):
                 mult_cell_sql = """SELECT grid_fid, wdr, dm, nodchns, xnmult FROM mult_cells ORDER BY grid_fid ;"""
-                line1 = " {}" * 8 + "\n"
-                line2 = " {}" * 5 + "\n"
+                global_data_values = " {}" * 8 + "\n"
+                five_values = " {}" * 5 + "\n"
 
-                channel_group.create_dataset('Mult', [])
+                mult_group.create_dataset('MULT_GLOBAL', [])
+                mult_group.create_dataset('MULT', [])
 
-                channel_group.datasets["Mult"].data.append(create_array(line1, 8, head[1:]))
-                # m.write(line1.format(*head[1:]).replace("None", ""))
+                mult_group.datasets["MULT_GLOBAL"].data.append(create_array(global_data_values, 8, np.float_, head[1:]))
 
                 mult_cells = self.execute(mult_cell_sql).fetchall()
 
@@ -3964,8 +4322,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
                 for row in mults:
                     vals = [x if x is not None else "" for x in row]
-                    channel_group.datasets["Mult"].data.append(create_array(line2, 8, tuple(vals)))
-                    # m.write(line2.format(*vals))
+                    mult_group.datasets["MULT"].data.append(create_array(five_values, 5, np.float_, tuple(vals)))
 
             except Exception as e:
                 QApplication.restoreOverrideCursor()
@@ -3976,35 +4333,35 @@ class Flo2dGeoPackage(GeoPackageUtils):
             try:
                 # Simplified Multiple Channels:
                 simple_mult_cell_sql = """SELECT DISTINCT grid_fid FROM simple_mult_cells ORDER BY grid_fid;"""
-                line1 = "{}" + "\n"
-                line2 = "{}" + "\n"
+                global_data_values = "{}" + "\n"
+                grid_values = "{}" + "\n"
 
                 isany = self.execute(simple_mult_cell_sql).fetchone()
                 if isany:
-                    channel_group.create_dataset('Simple Mult', [])
+                    mult_group.create_dataset('SIMPLE_MULT', [])
+                    mult_group.create_dataset('SIMPLE_MULT_GLOBAL', [])
                     repeats = ""
 
-                    channel_group.datasets["Simple Mult"].data.append(create_array(line1, 1, head[9]))
-                    # sm.write(line1.format(head[9]))
+                    mult_group.datasets["SIMPLE_MULT_GLOBAL"].data.append(create_array(global_data_values, 1, np.float_, head[9]))
+
                     for row in self.execute(simple_mult_cell_sql):
                         # See if grid number in row is any grid element in mults:
                         if [item for item in mults if item[0] == row[0]]:
                             repeats += str(row[0]) + "  "
                         else:
                             vals = [x if x is not None else "" for x in row]
-                            channel_group.datasets["Simple Mult"].data.append(create_array(line2, 1, tuple(vals)))
-                            # sm.write(line2.format(*vals))
-                if repeats:
-                    self.uc.log_info("Cells repeated in simple mult cells: " + repeats)
-                self.parser.write_groups(channel_group)
-                return True
+                            mult_group.datasets["SIMPLE_MULT"].data.append(
+                                create_array(grid_values, 1, np.int_, tuple(vals)))
+                # if repeats:
+                #     self.uc.log_info("Cells repeated in simple mult cells: " + repeats)
 
             except Exception as e:
                 QApplication.restoreOverrideCursor()
                 self.uc.show_error("ERROR 101218.1611: exporting SIMPLE_MULT.DAT failed!.\n", e)
                 return False
 
-        return rtrn
+        self.parser.write_groups(mult_group)
+        return True
 
     def export_mult_dat(self, outdir):
         rtrn = True
@@ -4096,26 +4453,24 @@ class Flo2dGeoPackage(GeoPackageUtils):
             tol_poly_sql = """SELECT fid, tol FROM tolspatial ORDER BY fid;"""
             tol_cells_sql = """SELECT grid_fid FROM tolspatial_cells WHERE area_fid = ? ORDER BY grid_fid;"""
 
-            line1 = "{0}  {1}\n"
+            two_values = "{0}  {1}\n"
 
-            tol_poly_rows = self.execute(tol_poly_sql).fetchall()  # A list of pairs (fid number, tolerance value),
-            # one for each tolerance polygon.                                                       #(fid, tol), that is, (polygon fid, tolerance value)
+            tol_poly_rows = self.execute(tol_poly_sql).fetchall()  # A list of pairs (fid number, tolerance value)
+
             if not tol_poly_rows:
                 return False
             else:
                 pass
 
-            tol_group = self.parser.tol_group
-            tol_group.create_dataset('TOLSPATIAL', [])
-            # tolspatial_dat = os.path.join(outdir, "TOLSPATIAL.DAT")  # path and name of file to write
+            spatially_variable_group = self.parser.spatially_variable_group
+            spatially_variable_group.create_dataset('TOLSPATIAL', [])
 
             for fid, tol in tol_poly_rows:
                 for row in self.execute(tol_cells_sql, (fid,)):
                     gid = row[0]
-                    tol_group.datasets["TOLSPATIAL"].data.append(create_array(line1, 2, gid, tol))
-                    # t.write(line1.format(gid, tol))
+                    spatially_variable_group.datasets["TOLSPATIAL"].data.append(create_array(two_values, 2, np.float_, gid, tol))
 
-            self.parser.write_groups(tol_group)
+            self.parser.write_groups(spatially_variable_group)
             return True
 
         except Exception as e:
@@ -4181,8 +4536,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
             """SELECT grid_fid, line_fid FROM gutter_cells WHERE line_fid = ? ORDER BY grid_fid;"""
         )
 
-        line1 = "{0} {1} {2}\n"
-        line2 = "G  " + "   {}" * 5 + "\n"
+        three_values = "{0} {1} {2}\n"
+        line2 = " {}" * 5 + "\n"
 
         head = self.execute(gutter_globals_sql).fetchone()
 
@@ -4198,10 +4553,10 @@ class Flo2dGeoPackage(GeoPackageUtils):
             pass
 
         gutter_group = self.parser.gutter_group
-        gutter_group.create_dataset('GUTTER', [])
+        gutter_group.create_dataset('GUTTER_DATA', [])
+        gutter_group.create_dataset('GUTTER_GLOBAL', [])
 
-        gutter_group.datasets["GUTTER"].data.append(create_array(line1, 6, tuple(head[1:])))
-        # g.write(line1.format(*head[1:]))
+        gutter_group.datasets["GUTTER_GLOBAL"].data.append(create_array(three_values, 3, np.float_, tuple(head[1:])))
 
         if gutter_poly_rows:
             for (
@@ -4219,8 +4574,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     grid_ID = row[0]
                     area = row[1]
                     if area:
-                        gutter_group.datasets["GUTTER"].data.append(create_array(line2, 6, grid_ID, width, height, n_value, direction))
-                        # g.write(line2.format(grid_ID, width, height, n_value, direction))
+                        gutter_group.datasets["GUTTER_DATA"].data.append(
+                            create_array(line2, 5, np.float_, grid_ID, width, height, n_value, direction))
 
         if gutter_line_rows:
             for (
@@ -4238,9 +4593,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     grid_ID = row[0]
                     line = row[1]
                     if line:
-                        gutter_group.datasets["GUTTER"].data.append(
-                            create_array(line2, 6, grid_ID, width, height, n_value, direction))
-                        # g.write(line2.format(grid_ID, width, height, n_value, direction))
+                        gutter_group.datasets["GUTTER_DATA"].data.append(
+                            create_array(line2, 5, np.float_, grid_ID, width, height, n_value, direction))
 
         self.parser.write_groups(gutter_group)
         return True
@@ -4288,16 +4642,16 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
                 if gutter_poly_rows:
                     for (
-                        fid,
-                        width,
-                        height,
-                        n_value,
-                        direction,
+                            fid,
+                            width,
+                            height,
+                            n_value,
+                            direction,
                     ) in (
-                        gutter_poly_rows
+                            gutter_poly_rows
                     ):  # One tuple for each polygon.                    # self.uc.show_info("fid %s, width: %s, height: %s , heign_value: %s, direction: %s" % (fid, width, height, n_value, direction))
                         for row in self.execute(
-                            gutter_area_cells_sql, (fid,)
+                                gutter_area_cells_sql, (fid,)
                         ):  # Gets each cell number that pairs with area_fid.
                             grid_ID = row[0]
                             area = row[1]
@@ -4306,16 +4660,16 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
                 if gutter_line_rows:
                     for (
-                        fid,
-                        width,
-                        height,
-                        n_value,
-                        direction,
+                            fid,
+                            width,
+                            height,
+                            n_value,
+                            direction,
                     ) in (
-                        gutter_line_rows
+                            gutter_line_rows
                     ):  # One tuple for each line.                    # self.uc.show_info("fid %s, width: %s, height: %s , heign_value: %s, direction: %s" % (fid, width, height, n_value, direction))
                         for row in self.execute(
-                            gutter_line_cells_sql, (fid,)
+                                gutter_line_cells_sql, (fid,)
                         ):  # Gets each cell number that pairs with line_fid.
                             grid_ID = row[0]
                             line = row[1]
@@ -4387,13 +4741,14 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
             if MUD in ["1", "2"] and m_data is not None:
                 # Mud/debris transport or 2 phase flow:
-                sed_group.datasets["Sediment Data"].data.append(create_array(line1, 10, m_data))
+                sed_group.datasets["Sediment Data"].data.append(create_array(line1, 10, np.string_, m_data))
                 # s.write(line1.format(*m_data))
 
                 if int(self.gutils.get_cont_par("IDEBRV")) == 1:
                     for aid, debrisv in self.execute(areas_d_sql):
                         gid = self.execute(cells_d_sql, (aid,)).fetchone()[0]
-                        sed_group.datasets["Sediment Data"].data.append(create_array(line5, 10, gid, debrisv))
+                        sed_group.datasets["Sediment Data"].data.append(
+                            create_array(line5, 10, np.string_, gid, debrisv))
                         # s.write(line5.format(gid, debrisv))
                 e_data = None
 
@@ -4401,33 +4756,35 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 # Sediment Transport or 2 phase flow:
                 e_data = ce_data[-1]
 
-                sed_group.datasets["Sediment Data"].data.append(create_array(line2, 10, tuple(ce_data[:-1])))
+                sed_group.datasets["Sediment Data"].data.append(
+                    create_array(line2, 10, np.string_, tuple(ce_data[:-1])))
                 # s.write(line2.format(*ce_data[:-1]))
 
                 for row in self.execute(sed_z_sql):
                     dist_fid = row[0]
-                    sed_group.datasets["Sediment Data"].data.append(create_array(line3, 10, tuple(row[1:])))
+                    sed_group.datasets["Sediment Data"].data.append(create_array(line3, 10, np.string_, tuple(row[1:])))
                     # s.write(line3.format(*row[1:]))
                     for prow in self.execute(sed_p_sql, (dist_fid,)):
-                        sed_group.datasets["Sediment Data"].data.append(create_array(line4, 10, prow))
+                        sed_group.datasets["Sediment Data"].data.append(create_array(line4, 10, np.string_, prow))
                         # s.write(line4.format(*prow))
 
                 if e_data is not None:
-                    sed_group.datasets["Sediment Data"].data.append(create_array(line6, 10, e_data))
+                    sed_group.datasets["Sediment Data"].data.append(create_array(line6, 10, np.string_, e_data))
                     # s.write(line6.format(e_data))
 
                 for row in self.execute(cells_r_sql):
-                    sed_group.datasets["Sediment Data"].data.append(create_array(line7, 10, row))
+                    sed_group.datasets["Sediment Data"].data.append(create_array(line7, 10, np.string_, row))
                     # s.write(line7.format(*row))
 
                 for row in self.execute(areas_s_sql):
                     aid = row[0]
                     dist_fid = row[1]
                     gid = self.execute(cells_s_sql, (aid,)).fetchone()[0]
-                    sed_group.datasets["Sediment Data"].data.append(create_array(line8, 10, gid, tuple(row[2:])))
+                    sed_group.datasets["Sediment Data"].data.append(
+                        create_array(line8, 10, np.string_, gid, tuple(row[2:])))
                     # s.write(line8.format(gid, *row[2:]))
                     for nrow in self.execute(data_n_sql, (dist_fid,)):
-                        sed_group.datasets["Sediment Data"].data.append(create_array(line9, 10, nrow))
+                        sed_group.datasets["Sediment Data"].data.append(create_array(line9, 10, np.string_, nrow))
                         # s.write(line9.format(*nrow))
 
                 areas_g = self.execute(areas_g_sql)
@@ -4436,7 +4793,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
                         gids = self.execute(cells_g_sql, (aid,)).fetchall()
                         if gids:
                             for g in gids:
-                                sed_group.datasets["Sediment Data"].data.append(create_array(line10, 10, tuple(g[0]), group_fid))
+                                sed_group.datasets["Sediment Data"].data.append(
+                                    create_array(line10, 10, np.string_, tuple(g[0]), group_fid))
                                 # s.write(line10.format(g[0], group_fid))
 
             self.parser.write_groups(sed_group)
@@ -4557,52 +4915,66 @@ class Flo2dGeoPackage(GeoPackageUtils):
         # try:
         if self.is_table_empty("levee_data"):
             return False
+
         levee_gen_sql = """SELECT raiselev, ilevfail, gfragchar, gfragprob FROM levee_general;"""
         levee_data_sql = """SELECT grid_fid, ldir, levcrest FROM levee_data ORDER BY grid_fid, fid;"""
-        levee_fail_sql = """SELECT * FROM levee_failure ORDER BY grid_fid, fid;"""
+        levee_fail_sql = """SELECT grid_fid,
+                                   lfaildir, 
+                                   failevel,
+                                   failtime,
+                                   levbase,
+                                   failwidthmax,
+                                   failrate,
+                                   failwidrate 
+                                   FROM levee_failure ORDER BY grid_fid, fid;"""
         levee_frag_sql = """SELECT grid_fid, levfragchar, levfragprob FROM levee_fragility ORDER BY grid_fid;"""
 
-        line1 = "{0}  {1}\n"
-        line2 = "L  {0}\n"
-        line3 = "D  {0}  {1}\n"
-        line4 = "F  {0}\n"
-        line5 = "W  {0}  {1}  {2}  {3}  {4}  {5}  {6}\n"
+        # line1 = "{0}  {1}\n"
+        # line3 = "{0}  {1}  {2}\n"
+        # line4 = "F  {0}\n"
+        # line5 = "W  {0}  {1}  {2}  {3}  {4}  {5}  {6}\n"
         line6 = "C  {0}  {1}\n"
         line7 = "P  {0}  {1}  {2}\n"
 
         general = self.execute(levee_gen_sql).fetchone()
         if general is None:
-            # TODO: Need to implement correct export for levee_general, levee_failure and levee_fragility
             general = (0, 0, None, None)
         head = general[:2]
         glob_frag = general[2:]
 
         levee_group = self.parser.levee_group
-        levee_group.create_dataset('LEVEE', [])
 
-        levee_group.datasets["LEVEE"].data.append(create_array(line1, 8, head))
-        levee_rows = groupby(self.execute(levee_data_sql), key=itemgetter(0))
-        for gid, directions in levee_rows:
-            levee_group.datasets["LEVEE"].data.append(create_array(line2, 8, gid))
-            for row in directions:
-                levee_group.datasets["LEVEE"].data.append(create_array(line3, 8, row[1:]))
+        levee_group.create_dataset('LEVEE_GLOBAL', [])
+        levee_group.datasets["LEVEE_GLOBAL"].data.append(np.array(head, dtype=float))
+
+        levee_group.create_dataset('LEVEE_DATA', [])
+        levee_data = self.execute(levee_data_sql).fetchall()
+        for data in levee_data:
+            levee_group.datasets["LEVEE_DATA"].data.append(np.array([data[0], data[1], data[2]], dtype=float))
+
+        # levee_group.create_dataset('LEVEE', [])
+
         if head[1] == 1:
-            fail_rows = groupby(self.execute(levee_fail_sql), key=itemgetter(1))
-            for gid, directions in fail_rows:
-                levee_group.datasets["LEVEE"].data.append(create_array(line4, 8, gid))
-                for row in directions:
-                    rowl = list(row)
-                    for i in range(0, len(rowl)):
-                        rowl[i] = rowl[i] if rowl[i] is not None else 0
-                        rowl[i] = rowl[i] if rowl[i] != "None" else 0
-                    row = tuple(rowl)
-                    levee_group.datasets["LEVEE"].data.append(create_array(line5, 8, row[2:]))
-        if None not in glob_frag:
-            levee_group.datasets["LEVEE"].data.append(create_array(line6, 8, glob_frag))
-        else:
-            pass
-        for row in self.execute(levee_frag_sql):
-            levee_group.datasets["LEVEE"].data.append(create_array(line7, 8, row))
+            levee_group.create_dataset('LEVEE_FAILURE', [])
+            levee_failure = self.execute(levee_fail_sql).fetchall()
+            for failure in levee_failure:
+                levee_group.datasets["LEVEE_FAILURE"].data.append(np.array([
+                    failure[0],
+                    failure[1],
+                    failure[2],
+                    failure[3],
+                    failure[4],
+                    failure[5],
+                    failure[6],
+                    failure[7]],
+                    dtype=float))
+
+        # if None not in glob_frag:
+        #     levee_group.datasets["LEVEE"].data.append(create_array(line6, 8, np.string_, glob_frag))
+        # else:
+        #     pass
+        # for row in self.execute(levee_frag_sql):
+        #     levee_group.datasets["LEVEE"].data.append(create_array(line7, 8, np.string_, row))
 
         self.parser.write_groups(levee_group)
         return True
@@ -4679,15 +5051,13 @@ class Flo2dGeoPackage(GeoPackageUtils):
         """
         Function to export floodplain cross-section data to hdf5 file
         """
-        # try:
+
         if self.is_table_empty("fpxsec"):
             return False
+
         cont_sql = """SELECT name, value FROM cont WHERE name = 'NXPRT';"""
         fpxsec_sql = """SELECT fid, iflo, nnxsec FROM fpxsec ORDER BY fid;"""
         cell_sql = """SELECT grid_fid FROM fpxsec_cells WHERE fpxsec_fid = ? ORDER BY grid_fid;"""
-
-        line1 = "P  {}\n"
-        line2 = "X {0} {1} {2}\n"
 
         option = self.execute(cont_sql).fetchone()
         if option is None:
@@ -4701,30 +5071,28 @@ class Flo2dGeoPackage(GeoPackageUtils):
             grids = self.execute(cell_sql, (fid,)).fetchall()
             if len(grids) > max_grid:
                 max_grid = len(grids)
-        max_grid += 3
+        max_grid += 2
 
         floodplain_group = self.parser.floodplain_group
-        floodplain_group.create_dataset('FPXSEC', [])
-        # fpxsec = os.path.join(outdir, "FPXSEC.DAT")
+        floodplain_group.create_dataset('FPXSEC_DATA', [])
+        floodplain_group.create_dataset('FPXSEC_GLOBAL', [])
 
         head = option[-1]
-        floodplain_group.datasets["FPXSEC"].data.append(create_array(line1, max_grid, head))
-        # f.write(line1.format(head))
+        floodplain_group.datasets["FPXSEC_GLOBAL"].data.append(int(head))
 
         for row in self.execute(fpxsec_sql):
             fid, iflo, nnxsec = row
             grids = self.execute(cell_sql, (fid,))
             grids_txt = " ".join(["{}".format(x[0]) for x in grids])
-            floodplain_group.datasets["FPXSEC"].data.append(create_array(line2, max_grid, iflo, nnxsec, grids_txt))
-            # f.write(line2.format(iflo, nnxsec, grids_txt))
+            grids_list = [int(num) for num in grids_txt.split()]
+            fpxsec = [iflo, nnxsec] + grids_list
+            fpxsec.extend([-9999] * (max_grid - len(fpxsec)))
+            values_str = "{} " * len(fpxsec)
+            floodplain_group.datasets["FPXSEC_DATA"].data.append(
+                create_array(values_str, max_grid, np.int_, tuple(fpxsec)))
 
         self.parser.write_groups(floodplain_group)
         return True
-
-        # except Exception as e:
-        #     QApplication.restoreOverrideCursor()
-        #     self.uc.show_error("ERROR 101218.1613: exporting FPXSEC.DAT failed!.\n", e)
-        #     return False
 
     def export_fpxsec_dat(self, outdir):
         # check if there are any floodplain cross section defined.
@@ -4838,7 +5206,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             for row in global_rows:
                 # Write 'B1' line (general variables):
                 row_slice = [str(x) if x is not None else "" for x in row[b1]]
-                levee_group.datasets["Breach"].data.append(create_array(bline, 10, c, " ".join(row_slice)))
+                levee_group.datasets["Breach"].data.append(create_array(bline, 10, np.string_, c, " ".join(row_slice)))
 
                 # Write G1,G2,G3,G4 lines if 'Use Global Data' checkbox is selected in Global Breach Data dialog:
                 if not local_rows:
@@ -4846,7 +5214,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
                         for gslice, dslice, line in parts:
                             row_slice = [str(x) if x is not None else "" for x in row[gslice]]
                             if any(row_slice) is True:
-                                levee_group.datasets["Breach"].data.append(create_array(line, 10, "G", "  ".join(row_slice)))
+                                levee_group.datasets["Breach"].data.append(
+                                    create_array(line, 10, np.string_, "G", "  ".join(row_slice)))
                             else:
                                 pass
 
@@ -4858,17 +5227,18 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 row_slice = [str(x) if x is not None else "" for x in row[b2]]
                 row_slice[0] = str(gid)
                 row_slice[1] = str(int(row_slice[1]))
-                levee_group.datasets["Breach"].data.append(create_array(bline, 10, c, " ".join(row_slice)))
+                levee_group.datasets["Breach"].data.append(create_array(bline, 10, np.string_, c, " ".join(row_slice)))
                 for gslice, dslice, line in parts:
                     row_slice = [str(x) if x is not None else "" for x in row[dslice]]
                     if any(row_slice) is True:
-                        levee_group.datasets["Breach"].data.append(create_array(line, 10, "D", "  ".join(row_slice)))
+                        levee_group.datasets["Breach"].data.append(
+                            create_array(line, 10, np.string_, "D", "  ".join(row_slice)))
                     else:
                         pass
             c += 1
 
             for row in fragility_rows:
-                levee_group.datasets["Breach"].data.append(create_array(fline, 10, row))
+                levee_group.datasets["Breach"].data.append(create_array(fline, 10, np.string_, row))
 
             self.parser.write_groups(levee_group)
             return True
@@ -4998,22 +5368,22 @@ class Flo2dGeoPackage(GeoPackageUtils):
             fpfroude_sql = """SELECT fid, froudefp FROM fpfroude ORDER BY fid;"""
             cell_sql = """SELECT grid_fid FROM fpfroude_cells WHERE area_fid = ? ORDER BY grid_fid;"""
 
-            line1 = "F {0} {1}\n"
+            line1 = "{0} {1}\n"
 
             fpfroude_rows = self.execute(fpfroude_sql).fetchall()
             if not fpfroude_rows:
                 return False
             else:
                 pass
-            floodplain_group = self.parser.floodplain_group
-            floodplain_group.create_dataset('FPFROUDE', [])
+            spatially_variable_group = self.parser.spatially_variable_group
+            spatially_variable_group.create_dataset('FPFROUDE', [])
 
             for fid, froudefp in fpfroude_rows:
                 for row in self.execute(cell_sql, (fid,)):
                     gid = row[0]
-                    floodplain_group.datasets["FPFROUDE"].data.append(create_array(line1, 3, gid, froudefp))
+                    spatially_variable_group.datasets["FPFROUDE"].data.append(create_array(line1, 2, np.float_, gid, froudefp))
 
-            self.parser.write_groups(floodplain_group)
+            self.parser.write_groups(spatially_variable_group)
             return True
 
         except Exception as e:
@@ -5074,15 +5444,16 @@ class Flo2dGeoPackage(GeoPackageUtils):
             else:
                 pass
 
-            floodplain_group = self.parser.floodplain_group
-            floodplain_group.create_dataset('SHALLOWN_SPATIAL', [])
+            spatially_variable_group = self.parser.spatially_variable_group
+            spatially_variable_group.create_dataset('SHALLOWN_SPATIAL', [])
 
             for fid, shallow_n in shallow_rows:
                 for row in self.execute(cell_sql, (fid,)):
                     gid = row[0]
-                    floodplain_group.datasets["SHALLOWN_SPATIAL"].data.append(create_array(line1, 2, gid, shallow_n))
+                    spatially_variable_group.datasets["SHALLOWN_SPATIAL"].data.append(
+                        create_array(line1, 2, np.float_, gid, shallow_n))
 
-            self.parser.write_groups(floodplain_group)
+            self.parser.write_groups(spatially_variable_group)
             return True
 
         except Exception as e:
@@ -5147,10 +5518,9 @@ class Flo2dGeoPackage(GeoPackageUtils):
             if self.is_table_empty("swmmflo"):
                 return False
 
-            swmmflo_sql = """SELECT swmmchar, swmm_jt, swmm_iden, intype, swmm_length, swmm_width, 
+            swmmflo_sql = """SELECT fid, swmmchar, swmm_jt, swmm_iden, intype, swmm_length, swmm_width, 
                                     swmm_height, swmm_coeff, swmm_feature, curbheight
                              FROM swmmflo ORDER BY fid;"""
-            line1 = "{0}  {1} {2} {3} {4} {5} {6} {7} {8} {9}\n"
 
             swmmflo_rows = self.execute(swmmflo_sql).fetchall()
             if not swmmflo_rows:
@@ -5159,21 +5529,40 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 pass
 
             stormdrain_group = self.parser.stormdrain_group
-            stormdrain_group.create_dataset('SWMMFLO', [])
+            stormdrain_group.create_dataset('SWMMFLO_DATA', [])
+            stormdrain_group.create_dataset('SWMMFLO_NAME', [])
 
+            swmmflo_name = "{}  {}\n"
             for row in swmmflo_rows:
-                new_row = []
-                if row[2][0] in ["I", "i"]:  # First letter of name (swmm_iden) is
-                    # "I" or "i" for inlet,
-                    # "IM" or "im" for manhole
-                    # "j" or "J" for junctions
-                    # "O" or "o" for outfalls.
-                    for i, item in enumerate(row, 1):
-                        new_row.append(item if item is not None else 0)
-                    if new_row[1] < 1:
-                        self.uc.bar_warn("WARNING: invalid grid number in 'swmmflo' (Storm Drain. SD Inlets) layer !")
-                    else:
-                        stormdrain_group.datasets["SWMMFLO"].data.append(create_array(line1, 10, tuple(new_row)))
+                (
+                    fid,
+                    swmmchar,
+                    swmm_jt,
+                    swmm_iden,
+                    intype,
+                    swmm_length,
+                    swmm_width,
+                    swmm_height,
+                    swmm_coeff,
+                    swmm_feature,
+                    curbheight
+                ) = row
+
+                if intype != 0:
+                    stormdrain_group.datasets["SWMMFLO_NAME"].data.append(
+                        create_array(swmmflo_name, 2, np.string_, tuple([fid, swmm_iden])))
+
+                    stormdrain_group.datasets["SWMMFLO_DATA"].data.append([
+                        fid,
+                        swmm_jt,
+                        intype,
+                        swmm_length,
+                        swmm_width,
+                        swmm_height,
+                        swmm_coeff,
+                        swmm_feature,
+                        curbheight
+                    ])
 
             self.parser.write_groups(stormdrain_group)
             return True
@@ -5213,7 +5602,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
                         for i, item in enumerate(row, 1):
                             new_row.append(item if item is not None else 0)
                         if new_row[1] < 1:
-                            self.uc.bar_warn("WARNING: invalid grid number in 'swmmflo' (Storm Drain. SD Inlets) layer !")  
+                            self.uc.bar_warn(
+                                "WARNING: invalid grid number in 'swmmflo' (Storm Drain. SD Inlets) layer !")
                         else:
                             s.write(line1.format(*new_row))
 
@@ -5293,12 +5683,18 @@ class Flo2dGeoPackage(GeoPackageUtils):
         if self.is_table_empty("swmmflort") and self.is_table_empty("swmmflo_culvert"):
             return False
 
-        swmmflort_sql = "SELECT fid, grid_fid, name FROM swmmflort ORDER BY grid_fid;"
-        data_sql = "SELECT depth, q FROM swmmflort_data WHERE swmm_rt_fid = ? ORDER BY depth;"
+        # swmmflort_sql = "SELECT fid, grid_fid, name FROM swmmflort ORDER BY grid_fid;"
+        # data_sql = "SELECT depth, q FROM swmmflort_data WHERE swmm_rt_fid = ? ORDER BY depth;"
         #             line1 = 'D {0}\n'
-        line1 = "D {0}  {1}\n"
-        line2 = "N {0}  {1}\n"
-        errors = ""
+        # line1 = "D {0}  {1}\n"
+        # line2 = "N {0}  {1}\n"
+        # errors = ""
+        swmmflort_sql = """
+                        SELECT swmmflo.fid as FID, depth, q
+                        FROM swmmflort_data
+                        JOIN swmmflort ON swmmflort_data.swmm_rt_fid = swmmflort.fid
+                        JOIN swmmflo ON swmmflort.grid_fid = swmmflo.swmm_jt;
+                        """
         swmmflort_rows = self.execute(swmmflort_sql).fetchall()
 
         if not swmmflort_rows and self.is_table_empty("swmmflo_culvert"):
@@ -5307,113 +5703,137 @@ class Flo2dGeoPackage(GeoPackageUtils):
             pass
 
         stormdrain_group = self.parser.stormdrain_group
-        stormdrain_group.create_dataset('SWMMFLORT', [])
 
-        error_mentioned = False
-        for fid, gid, rtname in swmmflort_rows:
-            rtname = rtname.strip()
-            if gid is not None:
-                if str(gid).strip() != "":
-                    if rtname is None or rtname == "":
-                        errors += "* Grid element " + str(gid) + " has an empty rating table name.\n"
-                    else:
-                        inlet_type_qry = "SELECT intype FROM swmmflo WHERE swmm_jt = ?;"
-                        inlet_type = self.execute(inlet_type_qry, (gid,)).fetchall()
-                        if inlet_type is not None:
-                            # TODO: there may be more than one record. Why? Some may have intype = 4.
-                            if len(inlet_type) > 1:
-                                errors += "* Grid element " + str(gid) + " has has more than one inlet.\n"
-                            # See if there is a type 4:
-                            inlet_type_qry2 = "SELECT intype FROM swmmflo WHERE swmm_jt = ? AND intype = '4';"
-                            inlet_type = self.execute(inlet_type_qry2, (gid,)).fetchone()
-                            if inlet_type is not None:
-                                rows = self.execute(data_sql, (fid,)).fetchone()
-                                if not rows:
-                                    inlet_name = self.execute(
-                                        "SELECT name FROM user_swmm_nodes WHERE grid = ?;",
-                                        (gid,),
-                                    ).fetchone()
-                                    if inlet_name != None:
-                                        if inlet_name[0] == "":
-                                            errors += (
-                                                "* No data found for a rating table named '"
-                                                + rtname
-                                                + "' for grid element "
-                                                + str(gid)
-                                                + ".\n"
-                                            )
-                                        else:
-                                            errors += (
-                                                "* No data found for a rating table named '"
-                                                + rtname
-                                                + "' for inlet '"
-                                                + inlet_name[0]
-                                                + "' for grid element "
-                                                + str(gid)
-                                                + ".\n"
-                                            )
-                                else:
-                                    if not self.gutils.is_table_empty("user_swmm_nodes"):
-                                        inlet_name = self.execute(
-                                            "SELECT name FROM user_swmm_nodes WHERE grid = ?;",
-                                            (gid,),
-                                        ).fetchone()
-                                        if inlet_name != None:
-                                            if inlet_name[0] != "":
-                                                stormdrain_group.datasets["SWMMFLORT"].data.append(
-                                                    create_array(line1, 3, gid, inlet_name[0]))
-                                                table = self.execute(data_sql, (fid,)).fetchall()
-                                                if table:
-                                                    for row in table:
-                                                        stormdrain_group.datasets["SWMMFLORT"].data.append(
-                                                            create_array(line2, 3, row))
-                                                else:
-                                                    errors += (
-                                                        "* Could not find data for rating table '"
-                                                        + rtname
-                                                        + "' for grid element "
-                                                        + str(gid)
-                                                        + ".\n"
-                                                    )
-                                    else:
-                                        if not error_mentioned:
-                                            errors += "Storm Drain Nodes layer in User Layers is empty.\nSWMMFLORT.DAT may be incomplete!"
-                                            error_mentioned = True
-            else:
-                errors += "* Unknown grid element in Rating Table.\n"
-        culverts = self.gutils.execute(
-            "SELECT grid_fid, name, cdiameter, typec, typeen, cubase, multbarrels FROM swmmflo_culvert ORDER BY fid;"
-        ).fetchall()
-        # TODO: Check Culverts when exporting to hdf5
-        if culverts:
-            for culv in culverts:
-                (
-                    grid_fid,
-                    name,
-                    cdiameter,
-                    typec,
-                    typeen,
-                    cubase,
-                    multbarrels,
-                ) = culv
-                if grid_fid:
-                    stormdrain_group.datasets["SWMMFLORT"].data.append(
-                        create_array("S " + str(grid_fid) + " " + name + " " + str(cdiameter) + "\n", 3))
-                    # s.write("S " + str(grid_fid) + " " + name + " " + str(cdiameter) + "\n")
-                    stormdrain_group.datasets["SWMMFLORT"].data.append(
-                        create_array("F " + str(typec) + " " + str(typeen) + " " + str(cubase) + " " + str(multbarrels) + "\n", 3))
-                    # s.write(
-                    #     "F " + str(typec) + " " + str(typeen) + " " + str(cubase) + " " + str(multbarrels) + "\n"
-                    # )
-                else:
-                    if name:
-                        errors += "* Unknown grid element for Culverts eq. " + name +".\n"
-                    else:
-                        errors += "* Unknown grid element in Culverts eq. table.\n"
-        if errors:
-            QApplication.restoreOverrideCursor()
-            self.uc.show_info("WARNING 040319.0521:\n\n" + errors)
-            QApplication.setOverrideCursor(Qt.WaitCursor)
+        for fid, depth, q in swmmflort_rows:
+            try:
+                stormdrain_group.datasets["RATING_TABLE"].data.append([fid, depth, q])
+            except:
+                stormdrain_group.create_dataset('RATING_TABLE', [])
+                stormdrain_group.datasets["RATING_TABLE"].data.append([fid, depth, q])
+
+        culverts_sql = """
+                        SELECT swmmflo.fid as FID, cdiameter, typec, typeen, cubase, multbarrels
+                        FROM swmmflo_culvert
+                        JOIN swmmflo ON swmmflo_culvert.grid_fid = swmmflo.swmm_jt;
+                        """
+
+        culverts_rows = self.execute(culverts_sql).fetchall()
+
+        for fid, cdiameter, typec, typeen, cubase, multbarrels in culverts_rows:
+            try:
+                stormdrain_group.datasets["CULVERT_EQUATIONS"].data.append([fid, cdiameter, typec, typeen, cubase, multbarrels])
+            except:
+                stormdrain_group.create_dataset('CULVERT_EQUATIONS', [])
+                stormdrain_group.datasets["CULVERT_EQUATIONS"].data.append([fid, cdiameter, typec, typeen, cubase, multbarrels])
+
+
+        # error_mentioned = False
+        # for fid, gid, rtname in swmmflort_rows:
+        #     rtname = rtname.strip()
+        #     if gid is not None:
+        #         if str(gid).strip() != "":
+        #             if rtname is None or rtname == "":
+        #                 errors += "* Grid element " + str(gid) + " has an empty rating table name.\n"
+        #             else:
+        #                 inlet_type_qry = "SELECT intype FROM swmmflo WHERE swmm_jt = ?;"
+        #                 inlet_type = self.execute(inlet_type_qry, (gid,)).fetchall()
+        #                 if inlet_type is not None:
+        #                     # TODO: there may be more than one record. Why? Some may have intype = 4.
+        #                     if len(inlet_type) > 1:
+        #                         errors += "* Grid element " + str(gid) + " has has more than one inlet.\n"
+        #                     # See if there is a type 4:
+        #                     inlet_type_qry2 = "SELECT intype FROM swmmflo WHERE swmm_jt = ? AND intype = '4';"
+        #                     inlet_type = self.execute(inlet_type_qry2, (gid,)).fetchone()
+        #                     if inlet_type is not None:
+        #                         rows = self.execute(data_sql, (fid,)).fetchone()
+        #                         if not rows:
+        #                             inlet_name = self.execute(
+        #                                 "SELECT name FROM user_swmm_nodes WHERE grid = ?;",
+        #                                 (gid,),
+        #                             ).fetchone()
+        #                             if inlet_name != None:
+        #                                 if inlet_name[0] == "":
+        #                                     errors += (
+        #                                             "* No data found for a rating table named '"
+        #                                             + rtname
+        #                                             + "' for grid element "
+        #                                             + str(gid)
+        #                                             + ".\n"
+        #                                     )
+        #                                 else:
+        #                                     errors += (
+        #                                             "* No data found for a rating table named '"
+        #                                             + rtname
+        #                                             + "' for inlet '"
+        #                                             + inlet_name[0]
+        #                                             + "' for grid element "
+        #                                             + str(gid)
+        #                                             + ".\n"
+        #                                     )
+        #                         else:
+        #                             if not self.gutils.is_table_empty("user_swmm_nodes"):
+        #                                 inlet_name = self.execute(
+        #                                     "SELECT name FROM user_swmm_nodes WHERE grid = ?;",
+        #                                     (gid,),
+        #                                 ).fetchone()
+        #                                 if inlet_name != None:
+        #                                     if inlet_name[0] != "":
+        #                                         stormdrain_group.datasets["SWMMFLORT"].data.append(
+        #                                             create_array(line1, 3, np.string_, gid, inlet_name[0]))
+        #                                         table = self.execute(data_sql, (fid,)).fetchall()
+        #                                         if table:
+        #                                             for row in table:
+        #                                                 stormdrain_group.datasets["SWMMFLORT"].data.append(
+        #                                                     create_array(line2, 3, np.string_, row))
+        #                                         else:
+        #                                             errors += (
+        #                                                     "* Could not find data for rating table '"
+        #                                                     + rtname
+        #                                                     + "' for grid element "
+        #                                                     + str(gid)
+        #                                                     + ".\n"
+        #                                             )
+        #                             else:
+        #                                 if not error_mentioned:
+        #                                     errors += "Storm Drain Nodes layer in User Layers is empty.\nSWMMFLORT.DAT may be incomplete!"
+        #                                     error_mentioned = True
+        #     else:
+        #         errors += "* Unknown grid element in Rating Table.\n"
+        # culverts = self.gutils.execute(
+        #     "SELECT grid_fid, name, cdiameter, typec, typeen, cubase, multbarrels FROM swmmflo_culvert ORDER BY fid;"
+        # ).fetchall()
+        # # TODO: Check Culverts when exporting to hdf5
+        # if culverts:
+        #     for culv in culverts:
+        #         (
+        #             grid_fid,
+        #             name,
+        #             cdiameter,
+        #             typec,
+        #             typeen,
+        #             cubase,
+        #             multbarrels,
+        #         ) = culv
+        #         if grid_fid:
+        #             stormdrain_group.datasets["SWMMFLORT"].data.append(
+        #                 create_array("S " + str(grid_fid) + " " + name + " " + str(cdiameter) + "\n", 3, np.string_))
+        #             # s.write("S " + str(grid_fid) + " " + name + " " + str(cdiameter) + "\n")
+        #             stormdrain_group.datasets["SWMMFLORT"].data.append(
+        #                 create_array(
+        #                     "F " + str(typec) + " " + str(typeen) + " " + str(cubase) + " " + str(multbarrels) + "\n",
+        #                     3, np.string_))
+        #             # s.write(
+        #             #     "F " + str(typec) + " " + str(typeen) + " " + str(cubase) + " " + str(multbarrels) + "\n"
+        #             # )
+        #         else:
+        #             if name:
+        #                 errors += "* Unknown grid element for Culverts eq. " + name + ".\n"
+        #             else:
+        #                 errors += "* Unknown grid element in Culverts eq. table.\n"
+        # if errors:
+        #     QApplication.restoreOverrideCursor()
+        #     self.uc.show_info("WARNING 040319.0521:\n\n" + errors)
+        #     QApplication.setOverrideCursor(Qt.WaitCursor)
 
         self.parser.write_groups(stormdrain_group)
         return True
@@ -5440,7 +5860,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             line2 = "N {0}  {1}\n"
             errors = ""
             swmmflort_rows = self.execute(swmmflort_sql).fetchall()
-            if not swmmflort_rows and self.is_table_empty("swmmflo_culvert") :
+            if not swmmflort_rows and self.is_table_empty("swmmflo_culvert"):
                 return False
             else:
                 pass
@@ -5473,21 +5893,21 @@ class Flo2dGeoPackage(GeoPackageUtils):
                                             if inlet_name != None:
                                                 if inlet_name[0] == "":
                                                     errors += (
-                                                        "* No data found for a rating table named '"
-                                                        + rtname
-                                                        + "' for grid element "
-                                                        + str(gid)
-                                                        + ".\n"
+                                                            "* No data found for a rating table named '"
+                                                            + rtname
+                                                            + "' for grid element "
+                                                            + str(gid)
+                                                            + ".\n"
                                                     )
                                                 else:
                                                     errors += (
-                                                        "* No data found for a rating table named '"
-                                                        + rtname
-                                                        + "' for inlet '"
-                                                        + inlet_name[0]
-                                                        + "' for grid element "
-                                                        + str(gid)
-                                                        + ".\n"
+                                                            "* No data found for a rating table named '"
+                                                            + rtname
+                                                            + "' for inlet '"
+                                                            + inlet_name[0]
+                                                            + "' for grid element "
+                                                            + str(gid)
+                                                            + ".\n"
                                                     )
                                         else:
                                             if not self.gutils.is_table_empty("user_swmm_nodes"):
@@ -5506,11 +5926,11 @@ class Flo2dGeoPackage(GeoPackageUtils):
                                                                 s.write(line2.format(*row))
                                                         else:
                                                             errors += (
-                                                                "* Could not find data for rating table '"
-                                                                + rtname
-                                                                + "' for grid element "
-                                                                + str(gid)
-                                                                + ".\n"
+                                                                    "* Could not find data for rating table '"
+                                                                    + rtname
+                                                                    + "' for grid element "
+                                                                    + str(gid)
+                                                                    + ".\n"
                                                             )
                                             else:
                                                 if not error_mentioned:
@@ -5518,10 +5938,11 @@ class Flo2dGeoPackage(GeoPackageUtils):
                                                     error_mentioned = True
                                 else:
                                     errors += (
-                                        "* Rating table " + rtname + " doesn't have an inlet associated with node " + str(gid)+ ".\n"
-                                    )                                                        
+                                            "* Rating table " + rtname + " doesn't have an inlet associated with node " + str(
+                                        gid) + ".\n"
+                                    )
                     else:
-                        errors += "* Unknown grid element for Rating Table " + rtname + ".\n"                                   
+                        errors += "* Unknown grid element for Rating Table " + rtname + ".\n"
                 culverts = self.gutils.execute(
                     "SELECT grid_fid, name, cdiameter, typec, typeen, cubase, multbarrels FROM swmmflo_culvert ORDER BY fid;"
                 ).fetchall()
@@ -5539,12 +5960,13 @@ class Flo2dGeoPackage(GeoPackageUtils):
                         if grid_fid:
                             s.write("S " + str(grid_fid) + " " + name + " " + str(cdiameter) + "\n")
                             s.write(
-                                "F " + str(typec) + " " + str(typeen) + " " + str(cubase) + " " + str(multbarrels) + "\n"
+                                "F " + str(typec) + " " + str(typeen) + " " + str(cubase) + " " + str(
+                                    multbarrels) + "\n"
                             )
                         else:
                             if name:
-                                errors += "* Unknown grid element for Culverts eq. " + name +".\n"
-                            else:    
+                                errors += "* Unknown grid element for Culverts eq. " + name + ".\n"
+                            else:
                                 errors += "* Unknown grid element in Culverts eq. table.\n"
             if errors:
                 QApplication.setOverrideCursor(Qt.ArrowCursor)
@@ -5571,21 +5993,30 @@ class Flo2dGeoPackage(GeoPackageUtils):
         try:
             if self.is_table_empty("swmmoutf"):
                 return False
-            swmmoutf_sql = """SELECT name, grid_fid, outf_flo FROM swmmoutf ORDER BY fid;"""
-
-            line1 = "{0}  {1}  {2}\n"
+            swmmoutf_sql = """SELECT fid, name, grid_fid, outf_flo FROM swmmoutf ORDER BY fid;"""
 
             swmmoutf_rows = self.execute(swmmoutf_sql).fetchall()
             if not swmmoutf_rows:
                 return False
             else:
                 pass
+
             stormdrain_group = self.parser.stormdrain_group
-            stormdrain_group.create_dataset('SWMMOUTF', [])
+            stormdrain_group.create_dataset('SWMMOUTF_DATA', [])
+            stormdrain_group.create_dataset('SWMMOUTF_NAME', [])
+
+            swmmoutf_name = "{}  {}\n"
 
             for row in swmmoutf_rows:
-                stormdrain_group.datasets["SWMMOUTF"].data.append(create_array(line1, 3, row))
-                # s.write(line1.format(*row))
+                (
+                    fid,
+                    name,
+                    grid_fid,
+                    outf_flo
+                ) = row
+
+                stormdrain_group.datasets["SWMMOUTF_DATA"].data.append([fid, grid_fid, outf_flo])
+                stormdrain_group.datasets["SWMMOUTF_NAME"].data.append(create_array(swmmoutf_name, 2, np.string_, tuple([fid, name])))
 
             self.parser.write_groups(stormdrain_group)
             return True
@@ -5680,4 +6111,3 @@ class Flo2dGeoPackage(GeoPackageUtils):
             QApplication.restoreOverrideCursor()
             self.uc.show_error("ERROR 101218.1622: exporting WSTIME.DAT failed!.\n", e)
             return False
-
