@@ -185,6 +185,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
 
         self.clear_all_inlets_btn.clicked.connect(self.clear_all_inlet_attributes)
         self.clear_all_outfalls_btn.clicked.connect(self.clear_all_outfall_attributes)
+        self.clear_all_strge_units_btn.clicked.connect(self.clear_all_strge_units_attributes)
         self.clear_all_conduits_btn.clicked.connect(self.clear_all_conduit_attributes)
         self.clear_all_pumps_btn.clicked.connect(self.clear_all_pump_attributes)
         self.clear_all_orifices_btn.clicked.connect(self.clear_all_orifice_attributes)
@@ -2241,6 +2242,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
     def clear_all_SD_shapefile_fields(self):
         self.clear_all_inlet_attributes()
         self.clear_all_outfall_attributes()
+        self.clear_all_strge_units_attributes()
         self.clear_all_conduit_attributes()
         self.clear_all_pump_attributes()
         self.clear_all_orifice_attributes()
