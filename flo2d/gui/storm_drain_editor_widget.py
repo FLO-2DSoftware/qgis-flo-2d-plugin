@@ -17,6 +17,8 @@ from datetime import date, datetime, time, timedelta
 from math import floor, isnan, modf
 from pathlib import Path
 
+import h5py
+import numpy as np
 from qgis._core import QgsFeatureRequest
 from qgis.core import (
     NULL,
@@ -69,6 +71,7 @@ from qgis.PyQt.QtWidgets import (
 import pyqtgraph as pg
 
 from .dlg_sd_profile_view import SDProfileView
+from ..flo2d_ie.flo2dgeopackage import Flo2dGeoPackage
 from ..flo2d_ie.swmm_io import StormDrainProject
 from ..flo2d_tools.grid_tools import spatial_index
 from ..flo2d_tools.schema2user_tools import remove_features
@@ -2534,7 +2537,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         else:
             return "Cancel"
 
-    def export_storm_drain_INP_file(self):
+    def export_storm_drain_INP_file(self, hdf5_dir=None, hdf5_file=None):
         """
         Writes <name>.INP file
         (<name> exists or is given by user in initial file dialog).
@@ -2559,34 +2562,40 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             s = QSettings()
             last_dir = s.value("FLO-2D/lastGdsDir", "")
             QApplication.setOverrideCursor(Qt.ArrowCursor)
-            swmm_dir = QFileDialog.getExistingDirectory(
-                None,
-                "Select directory where SWMM.INP file will be exported",
-                directory=last_dir,
-                options=QFileDialog.ShowDirsOnly,
-            )
-            QApplication.restoreOverrideCursor()
-            if not swmm_dir:
-                return
-
-            swmm_file = swmm_dir + r"\SWMM.INP"
-            if os.path.isfile(swmm_file):
-                QApplication.setOverrideCursor(Qt.ArrowCursor)
-                replace = self.uc.question("SWMM.INP already exists.\n\n" + "Would you like to replace it?")
+            if not hdf5_dir and not hdf5_file:
+                swmm_dir = QFileDialog.getExistingDirectory(
+                    None,
+                    "Select directory where SWMM.INP file will be exported",
+                    directory=last_dir,
+                    options=QFileDialog.ShowDirsOnly,
+                )
                 QApplication.restoreOverrideCursor()
-                if not replace:
+                if not swmm_dir:
                     return
-                
+
+                swmm_file = swmm_dir + r"\SWMM.INP"
+                if os.path.isfile(swmm_file):
+                    QApplication.setOverrideCursor(Qt.ArrowCursor)
+                    replace = self.uc.question("SWMM.INP already exists.\n\n" + "Would you like to replace it?")
+                    QApplication.restoreOverrideCursor()
+                    if not replace:
+                        return
+
+                if os.path.isfile(swmm_file):
+                    # File exist, therefore import groups:
+                    INP_groups = self.split_INP_into_groups_dictionary_by_tags_to_export(swmm_file)
+                else:
+                    # File doen't exists.Create groups.
+                    pass
+
+            else:
+                swmm_file = hdf5_dir + r"\SWMM.INP"
+                if os.path.isfile(swmm_file):
+                    os.remove(swmm_file)
+
             s.setValue("FLO-2D/lastGdsDir", os.path.dirname(swmm_file))
             s.setValue("FLO-2D/lastSWMMDir", os.path.dirname(swmm_file))
             last_dir = s.value("FLO-2D/lastGdsDir", "")
-
-            if os.path.isfile(swmm_file):
-                # File exist, therefore import groups:
-                INP_groups = self.split_INP_into_groups_dictionary_by_tags_to_export(swmm_file)
-            else:
-                # File doen't exists.Create groups.
-                pass
 
             # Show dialog with [TITLE], [OPTIONS], and [REPORT], with values taken from existing .INP file (if selected),
             # and project units, start date, report start.
@@ -3590,7 +3599,6 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                     )
                     
                 QApplication.restoreOverrideCursor()
-                    
                     
         except Exception as e:
             self.uc.show_error("ERROR 160618.0634: couldn't export .INP file!", e)

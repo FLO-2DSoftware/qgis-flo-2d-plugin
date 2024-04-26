@@ -193,6 +193,7 @@ SD = {
     "SWMMOUTF_DATA": "Storm Drain Outfall Data",
     "SWMMOUTF_NAME": "Storm Drain Outfall Name",
     "SDCLOGGING": "Storm Drain Blockage Method",
-    "SWMMFLODROPBOX": "Storm Drain Dropbox Data"
-
+    "SWMMFLODROPBOX": "Storm Drain Dropbox Data",
+    "SWMM_INP": "SWMM Input File",
+    "SWMM_INI": "SWMM Configuration File",
 }

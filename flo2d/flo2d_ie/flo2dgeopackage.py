@@ -15,6 +15,7 @@ from math import isclose
 from operator import itemgetter
 
 import numpy as np
+from PyQt5.QtCore import QSettings
 from qgis._core import QgsMessageLog
 from qgis.PyQt import QtCore, QtGui
 from qgis.core import NULL, QgsApplication
@@ -5507,6 +5508,46 @@ class Flo2dGeoPackage(GeoPackageUtils):
             return self.export_sdclogging_dat(output)
         elif self.parsed_format == self.FORMAT_HDF5:
             return self.export_sdclogging_hdf5()
+
+    def export_swmminp(self, output=None):
+        if self.parsed_format == self.FORMAT_HDF5:
+            return self.export_swmminp_hdf5()
+
+    def export_swmminp_hdf5(self):
+        """
+        Function to export swmm inp to the hdf5 file
+        """
+
+        s = QSettings()
+        swmm_dir = s.value("FLO-2D/lastSWMMDir", "")
+        swmm_input_file_path = swmm_dir + r"\SWMM.INP"
+        swmm_ini_file_path = swmm_dir + r"\SWMM.INI"
+
+        if os.path.isfile(swmm_input_file_path) and os.path.isfile(swmm_ini_file_path):
+
+            stormdrain_group = self.parser.stormdrain_group
+            stormdrain_group.create_dataset('SWMM_INP', [])
+            stormdrain_group.create_dataset('SWMM_INI', [])
+
+            # Read the entire SWMM input file
+            with open(swmm_input_file_path, 'r') as swmm_input_file:
+                swmm_input_contents = swmm_input_file.read()
+
+            stormdrain_group.datasets["SWMM_INP"].data.append(swmm_input_contents)
+
+            # Read the entire SWMM ini file
+            with open(swmm_ini_file_path, 'r') as swmm_ini_file:
+                swmm_ini_contents = swmm_ini_file.read()
+
+            stormdrain_group.datasets["SWMM_INI"].data.append(swmm_ini_contents)
+
+            self.parser.write_groups(stormdrain_group)
+
+            # os.remove(swmm_input_file_path)
+            # os.remove(swmm_ini_file_path)
+            return True
+        else:
+            return False
 
     def export_swmmflo_hdf5(self):
         """

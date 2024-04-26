@@ -3090,6 +3090,7 @@ class Flo2D(object):
                 "export_swmmoutf",
                 "export_sdclogging",
                 "export_swmmflodropbox",
+                "export_swmminp",
                 "export_evapor",
                 "export_street",
                 "export_shallowNSpatial",
@@ -3129,8 +3130,8 @@ class Flo2D(object):
                 if "Breach" not in dlg_components.components:
                     export_calls.remove("export_breach")
 
-                # if "Gutters" not in dlg_components.components:
-                #     export_calls.remove("export_gutter")
+                if "Gutters" not in dlg_components.components:
+                    export_calls.remove("export_gutter")
 
                 if "Infiltration" not in dlg_components.components:
                     export_calls.remove("export_infil")
@@ -3155,9 +3156,8 @@ class Flo2D(object):
                     # else:
                     xsecs = self.gutils.execute("SELECT fid FROM struct WHERE icurvtable = 3").fetchone()
                     if not xsecs:
-                        if os.path.isfile(outdir + r"\BRIDGE_XSEC.DAT"):
-                            os.remove(outdir + r"\BRIDGE_XSEC.DAT")
                         export_calls.remove("export_bridge_xsec")
+                        # export_calls.remove("export_bridge_coeff_data")
 
                 if "Rain" not in dlg_components.components:
                     export_calls.remove("export_rain")
@@ -3167,26 +3167,34 @@ class Flo2D(object):
                     export_calls.remove("export_swmmflort")
                     export_calls.remove("export_swmmoutf")
                     export_calls.remove("export_sdclogging")
+                    export_calls.remove("export_swmmflodropbox")
+                    export_calls.remove("export_swmminp")
 
-                # if "Spatial Shallow-n" not in dlg_components.components:
-                #     export_calls.remove("export_shallowNSpatial")
+                if "Spatial Shallow-n" not in dlg_components.components:
+                    export_calls.remove("export_shallowNSpatial")
 
-                # if "Spatial Tolerance" not in dlg_components.components:
-                #     export_calls.remove("export_tolspatial")
+                if "Spatial Tolerance" not in dlg_components.components:
+                    export_calls.remove("export_tolspatial")
 
                 if "Spatial Froude" not in dlg_components.components:
                     export_calls.remove("export_fpfroude")
 
-                # if "Manning's n and Topo" not in dlg_components.components:
-                #     export_calls.remove("export_mannings_n_topo")
+                if "Manning's n and Topo" not in dlg_components.components:
+                    export_calls.remove("export_mannings_n_topo")
 
                 if "export_swmmflort" in export_calls:
+                    QApplication.restoreOverrideCursor()
                     if not self.uc.question(
                             "Did you schematize Storm Drains? Do you want to export Storm Drain files?"
                     ):
                         export_calls.remove("export_swmmflo")
                         export_calls.remove("export_swmmflort")
                         export_calls.remove("export_swmmoutf")
+                        export_calls.remove("export_swmmflodropbox")
+                        export_calls.remove("export_sdclogging")
+                        export_calls.remove("export_swmminp")
+                    else:
+                        self.f2d_widget.storm_drain_editor.export_storm_drain_INP_file(outdir, output_hdf5)
                 try:
                     s = QSettings()
                     s.setValue("FLO-2D/lastGdsDir", outdir)
@@ -3194,6 +3202,7 @@ class Flo2D(object):
                     QApplication.setOverrideCursor(Qt.WaitCursor)
                     self.call_IO_methods(export_calls, True)
                     self.uc.bar_info("Flo2D model exported to " + output_hdf5, dur=3)
+
                 finally:
                     QApplication.restoreOverrideCursor()
                     if self.f2g.export_messages != "":
