@@ -2760,6 +2760,7 @@ class Flo2D(object):
                 )
 
             finally:
+                self.gutils.enable_geom_triggers()
                 msg = ""
                 if call_string == "import_swmmflo":
                     self.clean_rating_tables()

@@ -259,6 +259,7 @@ class StorageUnitsDialog(qtBaseClass, uiDialog):
     def validate_user_swmm_storage_units_cell(self, data, row_number, cell):
         if cell == 14:
             if data not in ["FUNCTIONAL", "TABULAR"]:
+                data = data if data is not None else "NULL"
                 self.warnings += "\n'" + data + "' in (row, column) (" + str(row_number + 1) + ", " + str(cell +1 ) + "). Changed to 'FUNCTIONAL'\n"
                 data = "FUNCTIONAL"
         return data
