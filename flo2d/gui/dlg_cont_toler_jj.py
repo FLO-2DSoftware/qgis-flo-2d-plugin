@@ -335,17 +335,6 @@ class ContToler_JJ(qtBaseClass, uiDialog):
                     "dec": 4,
                 },
             ],
-            [
-                "WAVEMAX",
-                {
-                    "label": "Wavemax Sensitivity",
-                    "type": "r",
-                    "dat": "TOLER",
-                    "min": 0,
-                    "max": 2,
-                    "dec": 2,
-                },
-            ],
         ]
     )
 

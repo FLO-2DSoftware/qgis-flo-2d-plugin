@@ -342,7 +342,7 @@ class ParseDAT(object):
             ["GRAPTIM"],
         ]
         self.toler_rows = [
-            ["TOLGLOBAL", "DEPTOL", "WAVEMAX"],
+            ["TOLGLOBAL", "DEPTOL", ""],
             ["COURCHAR_C", "COURANTFP", "COURANTC", "COURANTST"],
             ["COURCHAR_T", "TIME_ACCEL"],
         ]

@@ -169,7 +169,6 @@ class GeoPackageUtils(object):
         ["TIME_ACCEL", "Timestep Sensitivity"],
         ["DEPTOL", "Percent Change in Depth"],
         ["NOPRTC", "Detailed Channel Output Options"],
-        ["WAVEMAX", "Wavemax Sensitivity"],
         ["MUD", "Mudflow Switch"],
         ["COURANTFP", "Courant Stability FP"],
         ["SWMM", "Storm Drain Switch"],
