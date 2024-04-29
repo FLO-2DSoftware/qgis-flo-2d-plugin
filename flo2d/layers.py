@@ -462,6 +462,19 @@ class Layers(object):
                     },
                 ),
                 (
+                    "user_tailings",
+                    {
+                        "name": "Tailings",
+                        "sgroup": "User Layers",
+                        "ssgroup": "Boundary Conditions",
+                        "styles": ["user_tailings.qml"],
+                        "attrs_edit_widgets": {},
+                        "module": ["all"],
+                        "readonly": False,
+                        "advanced": False
+                    },
+                ),
+                (
                     "user_infiltration",
                     {
                         "name": "Infiltration Areas",
@@ -969,8 +982,9 @@ class Layers(object):
                     "tailing_cells",
                     {
                         "name": "Tailing Cells",
-                        "sgroup": "Tables",
-                        "styles": None,
+                        "sgroup": "Schematic Layers",
+                        "ssgroup": "Boundary Conditions",
+                        "styles": ["tailing_cells.qml"],
                         "attrs_edit_widgets": {},
                         "readonly": True,
                         "advanced": True

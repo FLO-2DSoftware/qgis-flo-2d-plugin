@@ -1719,11 +1719,18 @@ SELECT gpkgAddGeometryTriggers('gutter_cells', 'geom');
 -- TAILINGS.DAT
 
 CREATE TABLE "tailing_cells" (
-    "fid" INTEGER NOT NULL PRIMARY KEY, 
-    "grid_fid" INTEGER, -- equal to fid from grid table
-	"thickness" REAL DEFAULT 0.00
+    "fid" INTEGER NOT NULL PRIMARY KEY,
+    "user_tal_fid" INTEGER,
+    "name" TEXT,
+    "grid" INTEGER,
+    "tailings_surf_elev" REAL DEFAULT 0.0,
+    "water_surf_elev" REAL DEFAULT 0.0,
+    "concentration" REAL DEFAULT 0.0
 );
-INSERT INTO gpkg_contents (table_name, data_type) VALUES ('tailing_cells', 'aspatial');
+-- INSERT INTO gpkg_contents (table_name, data_type) VALUES ('tailing_cells', 'aspatial');
+INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('tailing_cells', 'features', 4326);
+SELECT gpkgAddGeometryColumn('tailing_cells', 'geom', 'POLYGON', 0, 0, 0);
+SELECT gpkgAddGeometryTriggers('tailing_cells', 'geom');
 
 -- TOLSPATIAL.DAT
 
@@ -2753,6 +2760,18 @@ CREATE TABLE "user_reservoirs" (
 INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('user_reservoirs', 'features', 4326);
 SELECT gpkgAddGeometryColumn('user_reservoirs', 'geom', 'POINT', 0, 0, 0);
 SELECT gpkgAddGeometryTriggers('user_reservoirs', 'geom');
+
+CREATE TABLE "user_tailings" (
+    "fid" INTEGER PRIMARY KEY NOT NULL,
+    "name" TEXT,
+    "tailings_surf_elev" REAL DEFAULT 0.0,
+    "water_surf_elev" REAL DEFAULT 0.0,
+    "concentration" REAL DEFAULT 0.0,
+    "notes" TEXT
+);
+INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('user_tailings', 'features', 4326);
+SELECT gpkgAddGeometryColumn('user_tailings', 'geom', 'POLYGON', 0, 0, 0);
+SELECT gpkgAddGeometryTriggers('user_tailings', 'geom');
 
 CREATE TABLE "user_infiltration" (
     "fid" INTEGER PRIMARY KEY NOT NULL,

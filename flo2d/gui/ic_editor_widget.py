@@ -18,7 +18,7 @@ import processing
 from qgis.core import QgsFeatureRequest
 from qgis.PyQt.QtWidgets import QInputDialog
 
-from ..flo2dobjects import Reservoir
+from ..flo2dobjects import Reservoir, Tailings
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
 from ..utils import is_number
@@ -38,44 +38,46 @@ class ICEditorWidget(qtBaseClass, uiDialog):
         self.gutils = None
         self.uc = UserCommunication(iface, "FLO-2D")
 
-        # set button icons
-        set_icon(self.add_user_res_btn, "add_reservoir.svg")
-        set_icon(self.save_changes_btn, "mActionSaveAllEdits.svg")
-        set_icon(self.revert_changes_btn, "mActionUndo.svg")
-        set_icon(self.delete_res_btn, "mActionDeleteSelected.svg")
-        set_icon(self.schem_res_btn, "schematize_res.svg")
-        set_icon(self.rename_res_btn, "change_name.svg")
+        self.res_lyr = self.lyrs.data["user_reservoirs"]["qlyr"]
+        self.chan_lyr = self.lyrs.data["chan"]["qlyr"]
+        self.tal_lyr = self.lyrs.data["user_tailings"]["qlyr"]
 
         # connections Reservoir
         self.add_user_res_btn.clicked.connect(self.create_user_res)
-        self.save_changes_btn.clicked.connect(self.save_res_lyr_edits)
-        self.revert_changes_btn.clicked.connect(self.revert_res_lyr_edits)
-        self.delete_res_btn.clicked.connect(self.delete_cur_res)
+        self.revert_res_changes_btn.clicked.connect(self.revert_res_lyr_edits)
         self.schem_res_btn.clicked.connect(self.schematize_res)
+        self.delete_schem_res_btn.clicked.connect(self.delete_schematize_res)
         self.rename_res_btn.clicked.connect(self.rename_res)
+        self.delete_res_btn.clicked.connect(self.delete_cur_res)
+        self.clear_res_rb_btn.clicked.connect(self.lyrs.clear_rubber)
         self.res_cbo.activated.connect(self.cur_res_changed)
         self.res_ini_sbox.editingFinished.connect(self.save_res)
         self.chan_seg_cbo.activated.connect(self.cur_seg_changed)
         self.seg_ini_sbox.editingFinished.connect(self.save_chan_seg)
 
-        # Tailings
-        self.tailings_layer = None
+        # connections Channels
+        self.clear_chan_rb_btn.clicked.connect(self.lyrs.clear_rubber)
 
         # connections Tailings
         self.add_tailings_btn.clicked.connect(self.create_tailings)
-        self.save_tailings_btn.clicked.connect(self.save_tailings_edits)
+        self.revert_tal_changes_btn.clicked.connect(self.revert_tal_lyr_edits)
         self.delete_tailings_btn.clicked.connect(self.delete_tailings)
-        self.export_tailings_btn.clicked.connect(self.export_tailings)
-        self.user_polygon_cb.stateChanged.connect(self.populate_tailings_cbo)
+        self.delete_schem_tal_btn.clicked.connect(self.delete_schematize_tal)
+        self.schem_tal_btn.clicked.connect(self.schematize_tal)
+        self.tailings_cbo.activated.connect(self.cur_tal_changed)
+        self.rename_tal_btn.clicked.connect(self.rename_tal)
+        self.clear_tal_rb_btn.clicked.connect(self.lyrs.clear_rubber)
+        # self.export_tailings_btn.clicked.connect(self.export_tailings)
+        # self.center_tal_chbox.clicked.connect(self. )
+        # self.user_polygon_cb.stateChanged.connect(self.populate_tailings_cbo)
 
     def populate_cbos(self, fid=None, show_last_edited=False):
         if not self.iface.f2d["con"]:
             return
-        self.res_lyr = self.lyrs.data["user_reservoirs"]["qlyr"]
-        self.chan_lyr = self.lyrs.data["chan"]["qlyr"]
-        self.res_cbo.clear()
-        self.chan_seg_cbo.clear()
+
         self.gutils = GeoPackageUtils(self.iface.f2d["con"], self.iface)
+        # reservoir
+        self.res_cbo.clear()
         res_qry = """SELECT fid, name FROM user_reservoirs ORDER BY name COLLATE NOCASE"""
         rows = self.gutils.execute(res_qry).fetchall()
         max_fid = self.gutils.get_max("user_reservoirs")
@@ -94,6 +96,13 @@ class ICEditorWidget(qtBaseClass, uiDialog):
         rows = self.gutils.execute(seg_qry).fetchall()
         for i, row in enumerate(rows):
             self.chan_seg_cbo.addItem(row[1], row[0])
+        # tailings
+        self.tailings_cbo.clear()
+        tal_qry = """SELECT fid, name FROM user_tailings ORDER BY name COLLATE NOCASE"""
+        rows = self.gutils.execute(tal_qry).fetchall()
+        for i, row in enumerate(rows):
+            self.tailings_cbo.addItem(row[1], row[0])
+        self.cur_tal_changed(cur_res_idx)
 
     def cur_res_changed(self, cur_idx):
         wsel = -1.0
@@ -123,10 +132,38 @@ class ICEditorWidget(qtBaseClass, uiDialog):
             x, y = feat.geometry().centroid().asPoint()
             center_canvas(self.iface, x, y)
 
+    def cur_tal_changed(self, cur_idx):
+        tailings_surf_elev = 0
+        water_surf_elev = 0
+        concentration = 0
+        self.tal_fid = self.tailings_cbo.itemData(self.tailings_cbo.currentIndex())
+        self.tailings = Tailings(self.tal_fid, self.iface.f2d["con"], self.iface)
+        self.tailings.get_row()
+        if is_number(self.tailings.tailings_surf_elev):
+            tailings_surf_elev = float(self.tailings.tailings_surf_elev)
+        if is_number(self.tailings.water_surf_elev):
+            water_surf_elev = float(self.tailings.water_surf_elev)
+        if is_number(self.tailings.concentration):
+            concentration = float(self.tailings.concentration)
+        self.tailings_elev_sb.setValue(tailings_surf_elev)
+        self.wse_sb.setValue(water_surf_elev)
+        self.concentration_sb.setValue(concentration)
+        self.show_tal_rb()
+
+        if self.center_res_chbox.isChecked():
+            feat = next(self.tal_lyr.getFeatures(QgsFeatureRequest(self.tailings.fid)))
+            x, y = feat.geometry().centroid().asPoint()
+            center_canvas(self.iface, x, y)
+
     def show_res_rb(self):
         if not self.reservoir.fid:
             return
         self.lyrs.show_feat_rubber(self.res_lyr.id(), self.reservoir.fid)
+
+    def show_tal_rb(self):
+        if not self.tailings.fid:
+            return
+        self.lyrs.show_feat_rubber(self.tal_lyr.id(), self.tailings.fid)
 
     def show_chan_rb(self):
         if not self.seg_fid:
@@ -134,7 +171,17 @@ class ICEditorWidget(qtBaseClass, uiDialog):
         self.lyrs.show_feat_rubber(self.chan_lyr.id(), self.seg_fid)
 
     def create_user_res(self):
-        self.lyrs.enter_edit_mode("user_reservoirs")
+
+        if self.lyrs.any_lyr_in_edit('user_reservoirs'):
+            self.uc.bar_info(f"Reservoir saved!")
+            self.uc.log_info(f"Reservoir saved!")
+            self.lyrs.save_lyrs_edits('user_reservoirs')
+            self.add_user_res_btn.setChecked(False)
+            self.gutils.fill_empty_reservoir_names()
+            self.populate_cbos()
+            return
+        else:
+            self.lyrs.enter_edit_mode("user_reservoirs")
 
     def save_res_lyr_edits(self):
         if not self.gutils or not self.lyrs.any_lyr_in_edit("user_reservoirs"):
@@ -163,6 +210,21 @@ class ICEditorWidget(qtBaseClass, uiDialog):
         self.reservoir.name = new_name
         self.save_res()
 
+    def rename_tal(self):
+        if not self.tailings_cbo.count():
+            return
+        new_name, ok = QInputDialog.getText(None, "Change name", "New name:")
+        if not ok or not new_name:
+            return
+        if not self.tailings_cbo.findText(new_name) == -1:
+            msg = "WARNING 060319.1722: Tailings with name {} already exists in the database. Please, choose another name.".format(
+                new_name
+            )
+            self.uc.show_warn(msg)
+            return
+        self.tailings.name = new_name
+        self.save_tal()
+
     def repaint_reservoirs(self):
         self.lyrs.lyrs_to_repaint = [
             self.lyrs.data["reservoirs"]["qlyr"],
@@ -170,9 +232,23 @@ class ICEditorWidget(qtBaseClass, uiDialog):
         ]
         self.lyrs.repaint_layers()
 
+    def repaint_tailings(self):
+        self.lyrs.lyrs_to_repaint = [
+            self.lyrs.data["user_tailings"]["qlyr"],
+            self.lyrs.data["tailing_cells"]["qlyr"],
+        ]
+        self.lyrs.repaint_layers()
+
     def revert_res_lyr_edits(self):
         user_res_edited = self.lyrs.rollback_lyrs_edits("user_reservoirs")
         if user_res_edited:
+            self.add_user_res_btn.setChecked(False)
+            self.populate_cbos()
+
+    def revert_tal_lyr_edits(self):
+        user_tal_edited = self.lyrs.rollback_lyrs_edits("user_tailings")
+        if user_tal_edited:
+            self.add_tailings_btn.setChecked(False)
             self.populate_cbos()
 
     def delete_cur_res(self):
@@ -185,6 +261,30 @@ class ICEditorWidget(qtBaseClass, uiDialog):
         self.repaint_reservoirs()
         self.lyrs.clear_rubber()
         self.populate_cbos()
+
+    def delete_schematize_res(self):
+        """
+        Function to delete the schematic data related to reservoirs
+        """
+        user_rsvs = self.gutils.execute("SELECT Count(*) FROM reservoirs").fetchone()[0]
+        if user_rsvs > 0:
+            self.gutils.execute("DELETE FROM reservoirs;")
+            self.repaint_reservoirs()
+            self.lyrs.clear_rubber()
+            self.uc.bar_info(f"{user_rsvs} schematized reservoirs deleted!")
+            self.uc.log_info(f"{user_rsvs} schematized reservoirs deleted!")
+
+    def delete_schematize_tal(self):
+        """
+        Function to delete the schematic data related to tailings
+        """
+        user_tal = self.gutils.execute("SELECT Count(*) FROM tailing_cells").fetchone()[0]
+        if user_tal > 0:
+            self.gutils.execute("DELETE FROM tailing_cells;")
+            self.repaint_tailings()
+            self.lyrs.clear_rubber()
+            self.uc.bar_info(f"{user_tal} schematized tailings deleted!")
+            self.uc.log_info(f"{user_tal} schematized tailings deleted!")
 
     def schematize_res(self):
         user_rsvs = self.gutils.execute("SELECT Count(*) FROM user_reservoirs").fetchone()[0]
@@ -200,7 +300,8 @@ class ICEditorWidget(qtBaseClass, uiDialog):
             self.gutils.execute("DELETE FROM reservoirs;")
             self.gutils.execute(ins_qry)
             self.repaint_reservoirs()
-            self.uc.show_info(str(user_rsvs) + " user reservoirs schematized!")
+            self.uc.bar_info(str(user_rsvs) + " user reservoirs schematized!")
+            self.uc.log_info(str(user_rsvs) + " user reservoirs schematized!")
         else:
             sch_rsvs = self.gutils.execute("SELECT Count(*) FROM reservoirs").fetchone()[0]
             if sch_rsvs > 0:
@@ -214,12 +315,55 @@ class ICEditorWidget(qtBaseClass, uiDialog):
                     self.gutils.execute("DELETE FROM reservoirs;")
                     self.repaint_reservoirs()
             else:
-                self.uc.show_info("There aren't any user reservoirs!")
+                self.uc.bar_warn("There aren't any user reservoirs!")
+
+    def schematize_tal(self):
+        """
+        Function to schematize the tailings
+        """
+        user_tal = self.gutils.execute("SELECT Count(*) FROM user_tailings").fetchone()[0]
+        if user_tal > 0:
+            ins_qry = """INSERT INTO tailing_cells (user_tal_fid, name, grid, tailings_surf_elev, water_surf_elev, concentration, geom)
+                        SELECT
+                            ut.fid, ut.name, g.fid, ut.tailings_surf_elev, ut.water_surf_elev, ut.concentration, g.geom
+                        FROM
+                            grid AS g, user_tailings AS ut
+                        WHERE
+                            ST_Intersects(CastAutomagic(g.geom), CastAutomagic(ut.geom));
+                        """
+
+            self.gutils.execute("DELETE FROM tailing_cells;")
+            self.gutils.execute(ins_qry)
+            self.repaint_tailings()
+            self.uc.bar_info(str(user_tal) + " user tailings schematized!")
+            self.uc.log_info(str(user_tal) + " user tailings schematized!")
+        else:
+            sch_tal = self.gutils.execute("SELECT Count(*) FROM tailing_cells").fetchone()[0]
+            if sch_tal > 0:
+                if self.uc.question(
+                        "There aren't any user tailings."
+                        + "\nBut there are "
+                        + str(sch_tal)
+                        + " schematic tailings."
+                        + "\n\nDo you want to delete them?"
+                ):
+                    self.gutils.execute("DELETE FROM tailing_cells;")
+                    self.repaint_tailings()
+            else:
+                self.uc.bar_warn("There aren't any user tailings!")
+                self.uc.log_info("There aren't any user tailings!")
 
     def save_res(self):
         self.reservoir.wsel = self.res_ini_sbox.value()
         self.reservoir.set_row()
         self.populate_cbos(fid=self.reservoir.fid)
+
+    def save_tal(self):
+        self.tailings.tailings_surf_elev = self.tailings_elev_sb.value()
+        self.tailings.water_surf_elev = self.wse_sb.value()
+        self.tailings.concentration = self.concentration_sb.value()
+        self.tailings.set_row()
+        self.populate_cbos(fid=self.tailings.fid)
 
     def save_chan_seg(self):
         fid = self.chan_seg_cbo.itemData(self.chan_seg_cbo.currentIndex())
@@ -240,22 +384,26 @@ class ICEditorWidget(qtBaseClass, uiDialog):
 
     def create_tailings(self):
         """
-        Start editing the tailings shapefile
+        Start editing tailings
         """
-        self.tailings_layer = QgsVectorLayer('Polygon', 'Tailings', "memory")
-        self.tailings_layer.setCrs(QgsProject.instance().crs())
-        QgsProject.instance().addMapLayers([self.tailings_layer])
-        self.iface.setActiveLayer(self.tailings_layer)
-        self.tailings_layer.startEditing()
-        self.iface.actionAddFeature().trigger()
+        if self.lyrs.any_lyr_in_edit('user_tailings'):
+            self.uc.bar_info(f"Tailings saved!")
+            self.uc.log_info(f"Tailings saved!")
+            self.lyrs.save_lyrs_edits('user_tailings')
+            self.add_tailings_btn.setChecked(False)
+            self.gutils.fill_empty_tailings_names()
+            self.populate_cbos()
+            return
+        else:
+            self.lyrs.enter_edit_mode("user_tailings")
 
     def save_tailings_edits(self):
         """
         Save the tailings shapefile
         """
-        self.tailings_layer.commitChanges()
+        self.tal_lyr.commitChanges()
         self.tailings_cbo.clear()
-        self.tailings_cbo.addItem(self.tailings_layer.name(), self.tailings_layer.dataProvider().dataSourceUri())
+        self.tailings_cbo.addItem(self.tal_lyr.name(), self.tal_lyr.dataProvider().dataSourceUri())
 
         # enable the elevations
         self.tailings_elev_sb.setEnabled(True)
@@ -268,38 +416,17 @@ class ICEditorWidget(qtBaseClass, uiDialog):
 
     def delete_tailings(self):
         """
-        Delete the tailings shapefile
+        Delete tailings
         """
         if not self.tailings_cbo.count():
             return
         q = "Are you sure you want delete the current tailings?"
         if not self.uc.question(q):
             return
-
-        if self.tailings_layer is not None:
-            try:
-                layer_id = self.tailings_layer.id()
-                if QgsProject.instance().mapLayers().get(layer_id) is not None:
-                    QgsProject.instance().removeMapLayer(layer_id)
-            except Exception as e:
-                self.uc.show_warn(f"Error deleting tailings layer: {str(e)}")
-
-        self.tailings_cbo.clear()
-        self.iface.mapCanvas().refreshAllLayers()
-
-        # disable the buttons
-        self.tailings_elev_sb.setEnabled(False)
-        self.wse_sb.setEnabled(False)
-        self.export_tailings_btn.setEnabled(False)
-        self.concentration_sb.setEnabled(False)
-        self.label_3.setEnabled(False)
-        self.label_4.setEnabled(False)
-        self.label_5.setEnabled(False)
-        self.tailings_cbo.setEnabled(False)
-
-        # set the spin box to zero
-        self.tailings_elev_sb.setValue(0)
-        self.wse_sb.setValue(0)
+        self.tailings.del_row()
+        self.repaint_tailings()
+        self.lyrs.clear_rubber()
+        self.populate_cbos()
 
     def populate_tailings_cbo(self):
         """
@@ -402,9 +529,10 @@ class ICEditorWidget(qtBaseClass, uiDialog):
                             line = f"{id_value}{' '.join(formatted_values)}{formatted_cv}"
                             txt_file.write(line + '\n')
 
-            self.uc.show_info("Export complete!")
+            self.uc.log_info("Export complete!")
+            self.uc.bar_info("Export complete!")
             if self.uc.question(f"Would you like to remove the intermediate calculation shapefiles?"):
-                QgsProject.instance().removeMapLayers([self.tailings_layer.id()])
+                QgsProject.instance().removeMapLayers([self.tal_lyr.id()])
                 self.tailings_cbo.clear()
                 self.iface.mapCanvas().refreshAllLayers()
                 return
@@ -419,12 +547,12 @@ class ICEditorWidget(qtBaseClass, uiDialog):
         """
         if self.user_polygon_cb.isChecked():
             selected_layer_name = self.tailings_cbo.currentText()
-            self.tailings_layer = QgsProject.instance().mapLayersByName(selected_layer_name)[0]
+            self.tal_lyr = QgsProject.instance().mapLayersByName(selected_layer_name)[0]
 
         grid = self.lyrs.get_layer_by_name("Grid", self.lyrs.group).layer()
 
         intersection = processing.run("native:intersection", {'INPUT': grid,
-                                                              'OVERLAY': self.tailings_layer,
+                                                              'OVERLAY': self.tal_lyr,
                                                               'INPUT_FIELDS': ['fid', 'elevation'],
                                                               'OVERLAY_FIELDS': [],
                                                               'OVERLAY_FIELDS_PREFIX': '',

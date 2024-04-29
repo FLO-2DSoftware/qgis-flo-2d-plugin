@@ -1516,6 +1516,50 @@ class Reservoir(GeoPackageUtils):
         qry = "DELETE FROM user_reservoirs WHERE fid=?"
         self.execute(qry, (self.fid,))
 
+class Tailings(GeoPackageUtils):
+    """
+    Tailings data representation.
+    """
+
+    columns = ["fid", "name", "tailings_surf_elev", "water_surf_elev",  "concentration", "notes"]
+
+    def __init__(self, fid, con, iface):
+        super(Tailings, self).__init__(con, iface)
+        self.fid = fid
+        self.row = None
+        self.name = None
+        self.tailings_surf_elev = None
+        self.water_surf_elev = None
+        self.concentration = None
+
+    def get_row(self):
+        qry = "SELECT * FROM user_tailings WHERE fid = ?;"
+        data = self.execute(qry, (self.fid,)).fetchone()
+        if not data:
+            return
+        values = [x if x is not None else "" for x in data]
+        self.row = OrderedDict(list(zip(self.columns, values)))
+        self.name = self.row["name"]
+        self.tailings_surf_elev = self.row["tailings_surf_elev"]
+        self.water_surf_elev = self.row["water_surf_elev"]
+        self.concentration = self.row["concentration"]
+        return self.row
+
+    def set_row(self):
+        qry = """UPDATE user_tailings SET
+            name = '{0}',
+            tailings_surf_elev = {1},
+            water_surf_elev = {2},
+            concentration = {3}
+        WHERE fid = {4};""".format(
+            self.name,  self.tailings_surf_elev, self.water_surf_elev, self.concentration, self.fid
+        )
+        self.execute(qry)
+
+    def del_row(self):
+        qry = "DELETE FROM user_tailings WHERE fid=?"
+        self.execute(qry, (self.fid,))
+
 
 class Structure(GeoPackageUtils):
     """
