@@ -105,7 +105,10 @@ class ICEditorWidget(qtBaseClass, uiDialog):
         self.cur_tal_changed(cur_res_idx)
 
     def cur_res_changed(self, cur_idx):
-        wsel = -1.0
+        if not self.res_cbo.count():
+            self.res_ini_sbox.setValue(0)
+            return
+        wsel = 0
         self.res_fid = self.res_cbo.itemData(self.res_cbo.currentIndex())
         self.reservoir = Reservoir(self.res_fid, self.iface.f2d["con"], self.iface)
         self.reservoir.get_row()
@@ -119,7 +122,10 @@ class ICEditorWidget(qtBaseClass, uiDialog):
             center_canvas(self.iface, x, y)
 
     def cur_seg_changed(self, cur_idx):
-        depini = -1.0
+        if not self.chan_seg_cbo.count():
+            self.seg_ini_sbox.setValue(0)
+            return
+        depini = 0
         self.seg_fid = self.chan_seg_cbo.itemData(self.chan_seg_cbo.currentIndex())
         qry = "SELECT depinitial FROM chan WHERE fid = ?;"
         di = self.gutils.execute(qry, (self.seg_fid,)).fetchone()
@@ -133,6 +139,11 @@ class ICEditorWidget(qtBaseClass, uiDialog):
             center_canvas(self.iface, x, y)
 
     def cur_tal_changed(self, cur_idx):
+        if not self.tailings_cbo.count():
+            self.tailings_elev_sb.setValue(0)
+            self.wse_sb.setValue(0)
+            self.concentration_sb.setValue(0)
+            return
         tailings_surf_elev = 0
         water_surf_elev = 0
         concentration = 0
