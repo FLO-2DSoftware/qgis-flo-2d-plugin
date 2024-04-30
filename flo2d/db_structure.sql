@@ -1424,7 +1424,7 @@ INSERT INTO gpkg_contents (table_name, data_type) VALUES ('swmm_time_series_data
 CREATE TABLE "swmm_tidal_curve" (
     "fid" INTEGER NOT NULL PRIMARY KEY,
     "tidal_curve_name" TEXT UNIQUE ON CONFLICT REPLACE, -- 
-    "tidal_curve_description" TEXT DEFAULT ""
+    "tidal_curve_description" TEXT DEFAULT ''
 );
 INSERT INTO gpkg_contents (table_name, data_type) VALUES ('swmm_tidal_curve', 'aspatial');
 
@@ -1444,11 +1444,11 @@ CREATE TABLE "user_swmm_storage_units" (
 	"max_depth" REAL DEFAULT 0,
 	"init_depth" REAL DEFAULT 0,
     "external_inflow" TEXT DEFAULT 'False',
-    "treatment" TEXT DEFAULT "NO",
+    "treatment" TEXT DEFAULT 'NO',
 	"ponded_area" REAL DEFAULT 0,
 	"evap_factor" REAL DEFAULT 0,
 	"infiltration" TEXT DEFAULT 'False',
-	"infil_method" TEXT DEFAULT "GREEN_AMPT",
+	"infil_method" TEXT DEFAULT 'GREEN_AMPT',
 	"suction_head" REAL DEFAULT 0,
 	"conductivity" REAL DEFAULT 0,
 	"initial_deficit" REAL DEFAULT 0,
@@ -1456,11 +1456,20 @@ CREATE TABLE "user_swmm_storage_units" (
 	"coefficient" REAL DEFAULT 0,
 	"exponent" REAL DEFAULT 0,
 	"constant" REAL DEFAULT 0,
-	"curve_name" TEXT DEFAULT "*"
+	"curve_name" TEXT DEFAULT '*'
 );
 INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('user_swmm_storage_units', 'features', 4326);
 SELECT gpkgAddGeometryColumn('user_swmm_storage_units', 'geom', 'POINT', 0, 0, 0);
 SELECT gpkgAddGeometryTriggers('user_swmm_storage_units', 'geom');
+
+INSERT INTO trigger_control (name, enabled) VALUES ('default_storage_unit_name', 1);
+CREATE TRIGGER "default_storage_unit_name"
+    AFTER INSERT ON "user_swmm_storage_units"
+    BEGIN
+        UPDATE "user_swmm_storage_units"
+        SET name = ('Storage_Unit_' || cast(NEW."fid" AS TEXT)) 
+        WHERE "fid" = NEW."fid" AND NEW."name" IS NULL;
+    END;
 
 CREATE TABLE "user_swmm_conduits" (
     "fid" INTEGER PRIMARY KEY NOT NULL,
@@ -1509,7 +1518,7 @@ CREATE TABLE "swmm_pumps_curve_data" (
     "fid" INTEGER NOT NULL PRIMARY KEY,
     "pump_curve_name" TEXT, 
     "pump_curve_type" TEXT,
-    "description" TEXT DEFAULT "",
+    "description" TEXT DEFAULT '',
     "x_value" REAL DEFAULT 0.0,
     "y_value" REAL DEFAULT 0.0
 );
@@ -1519,7 +1528,7 @@ CREATE TABLE "swmm_other_curves" (
     "fid" INTEGER NOT NULL PRIMARY KEY,
     "name" TEXT, 
     "type" TEXT,
-    "description" TEXT DEFAULT "",
+    "description" TEXT DEFAULT '',
     "x_value" REAL DEFAULT 0.0,
     "y_value" REAL DEFAULT 0.0
 );
@@ -1554,7 +1563,7 @@ CREATE TABLE "user_swmm_weirs" (
     "weir_crest_height" REAL DEFAULT 0.0,      -- [WEIRS] Inlet Offset in EPA SWMM
     "weir_disch_coeff" REAL DEFAULT 0.0,       -- [WEIRS] 
     "weir_flap_gate" TEXT DEFAULT 'NO',        -- [WEIRS]
-    "weir_end_contrac" TEXT DEFAULT "0",       -- [WEIRS]
+    "weir_end_contrac" TEXT DEFAULT '0',       -- [WEIRS]
     "weir_end_coeff" REAL DEFAULT 0.0,         -- [WEIRS]
     "weir_shape" TEXT,                         -- [XSECTION] 
     "weir_height" REAL DEFAULT 0.0,            -- [XSECTIONS] Geom1

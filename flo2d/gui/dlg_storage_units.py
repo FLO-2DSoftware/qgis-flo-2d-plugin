@@ -150,7 +150,7 @@ class StorageUnitsDialog(qtBaseClass, uiDialog):
                             exponent,
                             constant,
                             curve_name           
-                    FROM user_swmm_storage_units ORDER BY name ASC;"""
+                    FROM user_swmm_storage_units;"""
                     
             rows = self.gutils.execute(qry).fetchall()
             if not rows:
@@ -223,21 +223,24 @@ class StorageUnitsDialog(qtBaseClass, uiDialog):
                     item.setData(Qt.EditRole, data)
                     self.storages_tblw.setItem(row_number, cell, item)
     
-            self.storages_cbo.model().sort(Qt.AscendingOrder)
+            self.storages_tblw.setSortingEnabled(True)
+            
+            # self.storages_cbo.model().sort(0)
+            self.storages_cbo.setCurrentIndex(0)
             self.storages_tblw.sortItems(0, Qt.AscendingOrder)
             self.storages_tblw.selectRow(0)
-            self.storages_tblw.setStyleSheet("QTableWidget::item:selected { background-color: lightblue; color: black; }")
-        
-            self.block = False
 
+            self.storages_tblw.setStyleSheet("QTableWidget::item:selected { background-color: lightblue; color: black; }")
+            
             if self.warnings != "":
                 QApplication.setOverrideCursor(Qt.ArrowCursor)
                 result = ScrollMessageBox2(QMessageBox.Warning,"Issues found!", "WARNING 070224.1902: wrong values found:\n" + self.warnings)      
                 result.exec_()  
                 QApplication.restoreOverrideCursor()
                 
-            self.storages_cbo.setCurrentIndex(0)
             self.enable_external_inflow()
+            
+            self.block = False
             
             self.highlight_storage_cell(self.grid_element_le.text())
         
