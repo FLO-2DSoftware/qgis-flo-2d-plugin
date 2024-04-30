@@ -346,6 +346,9 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         self.end_node_cbo.currentIndexChanged.connect(lambda: self.center_node("End"))
         self.center_chbox.clicked.connect(self.clear_sd_rubber)
 
+        swmm = 1 if self.gutils.get_cont_par("SWMM") == "1" else 0
+        self.simulate_stormdrain_chbox.setChecked(swmm)
+
     def setup_connection(self):
         con = self.iface.f2d["con"]
         if con is None:
