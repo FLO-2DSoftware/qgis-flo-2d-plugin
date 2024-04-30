@@ -235,7 +235,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         set_icon(self.revert_changes_btn, "mActionUndo.svg")
         set_icon(self.sd_delete_btn, "mActionDeleteSelected.svg")
         set_icon(self.schema_storm_drain_btn, "schematize_res.svg")
-        set_icon(self.sd_help_btn, "help_contents.svg")
+        set_icon(self.sd_help_btn, "help.svg")
 
         set_icon(self.SD_show_type4_btn, "show_cont_table.svg")
         set_icon(self.SD_add_one_type4_btn, "add_table_data.svg")
