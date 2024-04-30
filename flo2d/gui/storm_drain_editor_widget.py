@@ -230,10 +230,10 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         self.inlet_not_found = []
         self.outlet_not_found = []
 
-        set_icon(self.create_point_btn, "mActionCapturePoint.svg")
-        set_icon(self.save_changes_btn, "mActionSaveAllEdits.svg")
-        set_icon(self.revert_changes_btn, "mActionUndo.svg")
-        set_icon(self.sd_delete_btn, "mActionDeleteSelected.svg")
+        # set_icon(self.create_point_btn, "mActionCapturePoint.svg")
+        # set_icon(self.save_changes_btn, "mActionSaveAllEdits.svg")
+        # set_icon(self.revert_changes_btn, "mActionUndo.svg")
+        # set_icon(self.sd_delete_btn, "mActionDeleteSelected.svg")
         set_icon(self.schema_storm_drain_btn, "schematize_res.svg")
         set_icon(self.sd_help_btn, "help.svg")
 
@@ -288,10 +288,10 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         self.inletRT = InletRatingTable(self.con, self.iface)
         self.PumpCurv = PumpCurves(self.con, self.iface)
 
-        self.create_point_btn.clicked.connect(self.create_swmm_point)
-        self.save_changes_btn.clicked.connect(self.save_swmm_edits)
-        self.revert_changes_btn.clicked.connect(self.revert_swmm_lyr_edits)
-        self.sd_delete_btn.clicked.connect(self.delete_cur_swmm)
+        # self.create_point_btn.clicked.connect(self.create_swmm_point)
+        # self.save_changes_btn.clicked.connect(self.save_swmm_edits)
+        # self.revert_changes_btn.clicked.connect(self.revert_swmm_lyr_edits)
+        # self.sd_delete_btn.clicked.connect(self.delete_cur_swmm)
         self.schema_storm_drain_btn.clicked.connect(self.schematize_swmm)
         self.sd_help_btn.clicked.connect(self.sd_help)
 
