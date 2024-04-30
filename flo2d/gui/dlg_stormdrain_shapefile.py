@@ -1064,7 +1064,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                     )
                     drboxarea = (
                         f[self.inlets_dropbox_area_FieldCbo.currentText()]
-                        if self.inlets_dropbox_area_FieldCbo.currentText() != ""
+                        if self.inlets_dropbox_area_FieldCbo.currentText() != "" and name[0] != "J"
                         else 0
                     )                    
 
