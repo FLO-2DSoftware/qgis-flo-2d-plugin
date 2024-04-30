@@ -770,23 +770,6 @@
        </property>
       </widget>
      </item>
-     <item row="0" column="4">
-      <widget class="QToolButton" name="create_discharge_plots_btn">
-       <property name="enabled">
-        <bool>false</bool>
-       </property>
-       <property name="toolTip">
-        <string>Export discharge plots</string>
-       </property>
-       <property name="text">
-        <string/>
-       </property>
-       <property name="icon">
-        <iconset>
-         <normaloff>../img/export_SD_discharge.svg</normaloff>../img/export_SD_discharge.svg</iconset>
-       </property>
-      </widget>
-     </item>
     </layout>
    </item>
    <item row="4" column="0">

@@ -4521,7 +4521,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
 
         if intersection:
             with open(RPT_file) as f:
-               if not intersection in f.read():
+                if not intersection in f.read():
                     self.uc.bar_error("Node " + intersection + " not found in file " + RPT_file)
                     # QApplication.restoreOverrideCursor()
                     self.uc.bar_warn("WARNING 111123.1742: Node " + intersection + " not found in file\n\n" + RPT_file +
