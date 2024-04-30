@@ -5688,7 +5688,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             if self.is_table_empty("user_swmm_nodes"):
                 return False
             
-            qry = """SELECT name, grid, drboxarea  FROM user_swmm_nodes WHERE (sd_type = 'I' OR sd_type = 'J') AND drboxarea > 0.0;"""
+            qry = """SELECT name, grid, drboxarea  FROM user_swmm_nodes WHERE SUBSTR(name, 1,1) NOT LIKE 'J%'  AND drboxarea > 0.0;"""
             rows = self.gutils.execute(qry).fetchall()
             if rows:
                 line1 = "{0:16} {1:<10} {2:<10.2f}\n"
