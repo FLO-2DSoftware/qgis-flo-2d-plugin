@@ -353,28 +353,6 @@
       <string>.INP File</string>
      </property>
      <layout class="QGridLayout" name="gridLayout_2">
-      <item row="0" column="1">
-       <widget class="QToolButton" name="export_inp_btn">
-        <property name="minimumSize">
-         <size>
-          <width>130</width>
-          <height>22</height>
-         </size>
-        </property>
-        <property name="maximumSize">
-         <size>
-          <width>16777215</width>
-          <height>22</height>
-         </size>
-        </property>
-        <property name="focusPolicy">
-         <enum>Qt::StrongFocus</enum>
-        </property>
-        <property name="text">
-         <string>Export SWMM.INP ...</string>
-        </property>
-       </widget>
-      </item>
       <item row="0" column="0">
        <widget class="QPushButton" name="import_inp_btn">
         <property name="sizePolicy">
@@ -397,6 +375,39 @@
         </property>
         <property name="text">
          <string>Import SWMM.INP ...</string>
+        </property>
+        <property name="icon">
+         <iconset>
+          <normaloff>../img/import_swmm.svg</normaloff>../img/import_swmm.svg</iconset>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="1">
+       <widget class="QPushButton" name="export_inp_btn">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="minimumSize">
+         <size>
+          <width>130</width>
+          <height>22</height>
+         </size>
+        </property>
+        <property name="maximumSize">
+         <size>
+          <width>16777215</width>
+          <height>22</height>
+         </size>
+        </property>
+        <property name="text">
+         <string>Export SWMM.INP ...</string>
+        </property>
+        <property name="icon">
+         <iconset>
+          <normaloff>../img/export_swmm.svg</normaloff>../img/export_swmm.svg</iconset>
         </property>
        </widget>
       </item>
@@ -1074,7 +1085,6 @@
   <tabstop>simulate_stormdrain_chbox</tabstop>
   <tabstop>import_shapefile_btn</tabstop>
   <tabstop>import_inp_btn</tabstop>
-  <tabstop>export_inp_btn</tabstop>
   <tabstop>SD_nodes_components_cbo</tabstop>
   <tabstop>SD_links_components_cbo</tabstop>
   <tabstop>SD_type4_cbo</tabstop>
