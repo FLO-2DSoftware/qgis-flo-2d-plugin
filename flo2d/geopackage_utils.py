@@ -264,7 +264,8 @@ class GeoPackageUtils(object):
         'user_spatial_shallow_n', 'user_elevation_polygons', 'user_bc_points',
         'user_bc_lines', 'user_bc_polygons', 'all_schem_bc', 'user_reservoirs',
         'user_infiltration', 'user_effective_impervious_area', 'raincell',
-        'raincell_data', 'buildings_areas', 'buildings_stats', 'user_tailings'
+        'raincell_data', 'buildings_areas', 'buildings_stats', 'user_tailings',
+        'user_tailing_reservoirs', 'tailing_reservoirs', 'tailing_cells'
     ]
 
     def __init__(self, con, iface):
@@ -835,6 +836,12 @@ class GeoPackageUtils(object):
         qry = """UPDATE user_tailings SET name = 'Tailings ' ||  cast(fid as text) WHERE name IS NULL;"""
         self.execute(qry)
         qry = """UPDATE user_tailings SET tailings_surf_elev = 0.0 WHERE tailings_surf_elev IS NULL;"""
+        self.execute(qry)
+
+    def fill_empty_point_tailings_names(self):
+        qry = """UPDATE user_tailing_reservoirs SET name = 'Tailings ' ||  cast(fid as text) WHERE name IS NULL;"""
+        self.execute(qry)
+        qry = """UPDATE user_tailing_reservoirs SET tailings = 0.0 WHERE tailings IS NULL;"""
         self.execute(qry)
 
     def fill_empty_inflow_names(self):

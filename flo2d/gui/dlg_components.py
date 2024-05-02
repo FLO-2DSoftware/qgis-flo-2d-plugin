@@ -229,7 +229,7 @@ class ComponentsDialog(qtBaseClass, uiDialog):
                 self.outflow_elements_chbox.setChecked(True)
                 self.outflow_elements_chbox.setEnabled(True)
 
-            if not self.gutils.is_table_empty("inflow") or not self.gutils.is_table_empty("reservoirs"):
+            if not self.gutils.is_table_empty("inflow") or not self.gutils.is_table_empty("reservoirs") or not self.gutils.is_table_empty("tailing_reservoirs"):
                 self.inflow_elements_chbox.setChecked(True)
                 self.inflow_elements_chbox.setEnabled(True)
 
@@ -317,6 +317,10 @@ class ComponentsDialog(qtBaseClass, uiDialog):
                 self.mannings_n_and_Topo_chbox.setChecked(True)
                 self.mannings_n_and_Topo_chbox.setEnabled(True)
 
+            if not self.gutils.is_table_empty("tailing_cells"):
+                self.tailings_chbox.setChecked(True)
+                self.tailings_chbox.setEnabled(True)
+
         else:
             QApplication.restoreOverrideCursor()
             self.uc.show_info("ERROR 240619.0704: Wrong components in/out selection!")
@@ -384,6 +388,9 @@ class ComponentsDialog(qtBaseClass, uiDialog):
 
         if self.mannings_n_and_Topo_chbox.isChecked():
             self.components.append("Manning's n and Topo")
+
+        if self.tailings_chbox.isChecked():
+            self.components.append("Tailings")
 
     def unselect_all(self):
         self.check_components(self.select_all_chbox.isChecked())

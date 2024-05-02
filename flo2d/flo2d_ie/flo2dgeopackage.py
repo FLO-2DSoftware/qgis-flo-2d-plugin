@@ -2204,7 +2204,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
     def export_inflow_dat(self, outdir):
         # check if there are any inflows defined
         try:
-            if self.is_table_empty("inflow") and self.is_table_empty("reservoirs"):
+            if self.is_table_empty("inflow") and self.is_table_empty("reservoirs") and self.is_table_empty("tailing_reservoirs"):
                 return False
             cont_sql = """SELECT value FROM cont WHERE name = ?;"""
             inflow_sql = """SELECT fid, time_series_fid, ident, inoutfc FROM inflow WHERE fid = ?;"""
@@ -2261,40 +2261,63 @@ class Flo2dGeoPackage(GeoPackageUtils):
                         tsd_row = [x if x is not None else "" for x in tsd_row]
                         inflow_lines.append(tsd_line.format(*tsd_row).rstrip())
 
+            mud = self.gutils.get_cont_par("MUD")
+            ised = self.gutils.get_cont_par("ISED")
+
             if not self.is_table_empty("reservoirs"):
-                schematic_reservoirs_sql = (
-                    """SELECT grid_fid, wsel, n_value, use_n_value, tailings FROM reservoirs ORDER BY fid;"""
-                )
+                if mud == '0':
+                    schematic_reservoirs_sql = (
+                        """SELECT grid_fid, wsel, n_value FROM reservoirs ORDER BY fid;"""
+                    )
 
-                res_line1a = "R   {0: <15} {1:<10.2f} {2:<10.2f}"
-                res_line1at = "R   {0: <15} {1:<10.2f} {4:<10.2f} {2:<10.2f}"
+                    res_line1a = "R   {0: <15} {1:<10.2f} {2:<10.2f}"
 
-                res_line1b = "R   {0: <15} {1:<10.2f}"
-                res_line1bt = "R   {0: <15} {1:<10.2f} {2:<10.2f}"
+                    for res in self.execute(schematic_reservoirs_sql):
+                        res = [x if x is not None else "" for x in res]
+                        inflow_lines.append(res_line1a.format(*res))
+                if mud == '2':
+                    schematic_reservoirs_sql = (
+                        """SELECT grid_fid, wsel, 0 AS tailings, n_value FROM reservoirs ORDER BY fid;"""
+                    )
 
-                res_line2a = "R     {0: <15} {1:<10.2f} {2:<10.2f}"
-                res_line2at = "R     {0: <15} {1:<10.2f} {4:<10.2f} {2:<10.2f}"
+                    res_line1a = "R   {0: <15} {1:<10.2f} {2:<10.2f} {3:<10.2f}"
 
-                res_line2b = "R     {0: <15} {1:<10.2f}"
-                res_line2bt = "R     {0: <15} {1:<10.2f} {4:<10.2f}"
+                    for res in self.execute(schematic_reservoirs_sql):
+                        res = [x if x is not None else "" for x in res]
+                        inflow_lines.append(res_line1a.format(*res))
 
-                for res in self.execute(schematic_reservoirs_sql):
-                    res = [x if x is not None else "" for x in res]
+            if not self.is_table_empty("tailing_reservoirs"):
+                if mud == '2':
+                    schematic_tailing_reservoirs_sql = (
+                        """SELECT grid_fid, wsel, tailings, n_value FROM tailing_reservoirs ORDER BY fid;"""
+                    )
 
-                    if res[3] == 1:  # write n value
-                        if res[4] == -1.0:
-                            # Do not write tailings
-                            inflow_lines.append(res_line2a.format(*res))
-                        else:
-                            # Write tailings:
-                            inflow_lines.append(res_line2at.format(*res))
-                    else:  # do not write n value
-                        if res[4] == -1.0:
-                            # Do not write tailings:
-                            inflow_lines.append(res_line2b.format(*res))
-                        else:
-                            # Write tailings:
-                            inflow_lines.append(res_line2bt.format(*res))
+                    res_line1at = "R   {0: <15} {1:<10.2f} {2:<10.2f} {3:<10.2f}"
+
+                    for res in self.execute(schematic_tailing_reservoirs_sql):
+                        res = [x if x is not None else "" for x in res]
+                        inflow_lines.append(res_line1at.format(*res))
+                if mud == '1':
+                    schematic_tailing_reservoirs_sql = (
+                        """SELECT grid_fid, tailings, n_value FROM tailing_reservoirs ORDER BY fid;"""
+                    )
+
+                    res_line1at = "R   {0: <15} {1:<10.2f} {2:<10.2f}"
+
+                    for res in self.execute(schematic_tailing_reservoirs_sql):
+                        res = [x if x is not None else "" for x in res]
+                        inflow_lines.append(res_line1at.format(*res))
+
+                if mud == '0' and ised == '1':
+                    schematic_tailing_reservoirs_sql = (
+                        """SELECT grid_fid, tailings, n_value FROM tailing_reservoirs ORDER BY fid;"""
+                    )
+
+                    res_line1at = "R   {0: <15} {1:<10.2f} {2:<10.2f}"
+
+                    for res in self.execute(schematic_tailing_reservoirs_sql):
+                        res = [x if x is not None else "" for x in res]
+                        inflow_lines.append(res_line1at.format(*res))
 
             if inflow_lines:
                 with open(inflow, "w") as inf:
@@ -2361,18 +2384,52 @@ class Flo2dGeoPackage(GeoPackageUtils):
             if self.is_table_empty("tailing_cells"):
                 return False
 
-            tailings_sql = """SELECT grid_fid, thickness FROM tailing_cells ORDER BY grid_fid;"""
-            line1 = "{0}  {1}\n"
+            tailings_sql = """SELECT grid, tailings_surf_elev, water_surf_elev, concentration FROM tailing_cells ORDER BY grid;"""
+            concentration_sql = """SELECT 
+                                CASE WHEN COUNT(*) > 0 THEN True
+                                     ELSE False
+                                END AS result
+                                FROM 
+                                    tailing_cells
+                                WHERE 
+                                    concentration <> 0 OR concentration IS NULL;"""
 
             rows = self.execute(tailings_sql).fetchall()
             if not rows:
                 return False
+
+            cv = self.execute(concentration_sql).fetchone()[0]
+            MUD = self.gutils.get_cont_par("MUD")
+            ISED = self.gutils.get_cont_par("ISED")
+
+            two_values = "{0}  {1}\n"
+            three_values = "{0}  {1}  {2}\n"
+
+            # Don't export any tailings related file
+            if MUD == '0' and ISED == '0':
+                return False
+            # TAILINGS.DAT and TAILINGS_CV.DAT
+            elif MUD == '1' or ISED == '1':
+                # Export TAILINGS_CV.DAT
+                if cv == 1:
+                    tailings_cv = os.path.join(outdir, "TAILINGS_CV.DAT")
+                    with open(tailings_cv, "w") as t:
+                        for row in rows:
+                            t.write(three_values.format(*[row[0], row[1], row[3]]))
+                # Export TAILINGS.DAT
+                else:
+                    tailings = os.path.join(outdir, "TAILINGS.DAT")
+                    with open(tailings, "w") as t:
+                        for row in rows:
+                            t.write(two_values.format(*[row[0], row[1]]))
+            # TAILINGS_STACK_DEPTH.DAT
+            elif MUD == '2':
+                stack = os.path.join(outdir, "TAILINGS_STACK_DEPTH.DAT")
+                with open(stack, "w") as t:
+                    for row in rows:
+                        t.write(three_values.format(*[row[0], row[2], row[1]]))
             else:
-                pass
-            tailingsf = os.path.join(outdir, "TAILINGS.DAT")
-            with open(tailingsf, "w") as t:
-                for row in rows:
-                    t.write(line1.format(*row))
+                return False
 
             return True
 

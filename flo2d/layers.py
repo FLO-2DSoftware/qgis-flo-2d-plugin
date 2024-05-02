@@ -462,9 +462,22 @@ class Layers(object):
                     },
                 ),
                 (
+                    "user_tailing_reservoirs",
+                    {
+                        "name": "Tailing Reservoirs",
+                        "sgroup": "User Layers",
+                        "ssgroup": "Boundary Conditions",
+                        "styles": ["user_tailing_reservoirs.qml"],
+                        "attrs_edit_widgets": {},
+                        "module": ["all"],
+                        "readonly": False,
+                        "advanced": False
+                    },
+                ),
+                (
                     "user_tailings",
                     {
-                        "name": "Tailings",
+                        "name": "Tailing Stacks",
                         "sgroup": "User Layers",
                         "ssgroup": "Boundary Conditions",
                         "styles": ["user_tailings.qml"],
@@ -685,6 +698,18 @@ class Layers(object):
                         "sgroup": "Schematic Layers",
                         "ssgroup": "Boundary Conditions",
                         "styles": ["reservoirs.qml"],
+                        "attrs_edit_widgets": {},
+                        "readonly": False,
+                        "advanced": False
+                    },
+                ),
+                (
+                    "tailing_reservoirs",
+                    {
+                        "name": "Tailing Reservoirs",
+                        "sgroup": "Schematic Layers",
+                        "ssgroup": "Boundary Conditions",
+                        "styles": ["tailing_reservoirs.qml"],
                         "attrs_edit_widgets": {},
                         "readonly": False,
                         "advanced": False

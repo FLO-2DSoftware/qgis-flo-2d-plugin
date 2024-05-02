@@ -1483,7 +1483,7 @@ class Reservoir(GeoPackageUtils):
     Reservoir data representation.
     """
 
-    columns = ["fid", "name", "wsel", "notes"]
+    columns = ["fid", "name", "wsel", "n_value", "notes"]
 
     def __init__(self, fid, con, iface):
         super(Reservoir, self).__init__(con, iface)
@@ -1491,6 +1491,7 @@ class Reservoir(GeoPackageUtils):
         self.row = None
         self.name = None
         self.wsel = None
+        self.n_value = None
 
     def get_row(self):
         qry = "SELECT * FROM user_reservoirs WHERE fid = ?;"
@@ -1501,20 +1502,23 @@ class Reservoir(GeoPackageUtils):
         self.row = OrderedDict(list(zip(self.columns, values)))
         self.name = self.row["name"]
         self.wsel = self.row["wsel"]
+        self.n_value = self.row["n_value"]
         return self.row
 
     def set_row(self):
         qry = """UPDATE user_reservoirs SET
             name = '{0}',
-            wsel = {1}
-        WHERE fid = {2};""".format(
-            self.name, self.wsel, self.fid
+            wsel = {1},
+            n_value = {2}
+        WHERE fid = {3};""".format(
+            self.name, self.wsel, self.n_value, self.fid
         )
         self.execute(qry)
 
     def del_row(self):
         qry = "DELETE FROM user_reservoirs WHERE fid=?"
         self.execute(qry, (self.fid,))
+
 
 class Tailings(GeoPackageUtils):
     """
@@ -1558,6 +1562,51 @@ class Tailings(GeoPackageUtils):
 
     def del_row(self):
         qry = "DELETE FROM user_tailings WHERE fid=?"
+        self.execute(qry, (self.fid,))
+
+
+class TailingsReservoir(GeoPackageUtils):
+    """
+    Tailings Reservoir data representation.
+    """
+
+    columns = ["fid", "name", "wsel", "tailings", "n_value", "notes"]
+
+    def __init__(self, fid, con, iface):
+        super(TailingsReservoir, self).__init__(con, iface)
+        self.fid = fid
+        self.row = None
+        self.name = None
+        self.wsel = None
+        self.tailings = None
+        self.n_value = None
+
+    def get_row(self):
+        qry = "SELECT * FROM user_tailing_reservoirs WHERE fid = ?;"
+        data = self.execute(qry, (self.fid,)).fetchone()
+        if not data:
+            return
+        values = [x if x is not None else "" for x in data]
+        self.row = OrderedDict(list(zip(self.columns, values)))
+        self.name = self.row["name"]
+        self.wsel = self.row["wsel"]
+        self.tailings = self.row["tailings"]
+        self.n_value = self.row["n_value"]
+        return self.row
+
+    def set_row(self):
+        qry = """UPDATE user_tailing_reservoirs SET
+            name = '{0}',
+            wsel = {1},
+            tailings = {2},
+            n_value = {3}
+        WHERE fid = {4};""".format(
+            self.name,  self.wsel, self.tailings, self.n_value, self.fid
+        )
+        self.execute(qry)
+
+    def del_row(self):
+        qry = "DELETE FROM user_tailing_reservoirs WHERE fid=?"
         self.execute(qry, (self.fid,))
 
 

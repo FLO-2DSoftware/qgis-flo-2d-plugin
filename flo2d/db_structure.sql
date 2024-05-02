@@ -157,15 +157,27 @@ CREATE TABLE "reservoirs" (
     "name" TEXT,
     "grid_fid" INTEGER,
     "wsel" REAL DEFAULT 0.0,
-    "n_value" REAL DEFAULT 0.25,  
-    "use_n_value" INTEGER DEFAULT 1,
-	"tailings" REAL DEFAULT -1.0,
+    "n_value" REAL DEFAULT 0.25,
     "note" TEXT
 );
 INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('reservoirs', 'features', 4326);
 SELECT gpkgAddGeometryColumn('reservoirs', 'geom', 'POLYGON', 0, 0, 0);
 SELECT gpkgAddGeometryTriggers('reservoirs', 'geom');
--- SELECT gpkgAddSpatialIndex('reservoirs', 'geom');
+
+CREATE TABLE "tailing_reservoirs" (
+    "fid" INTEGER PRIMARY KEY NOT NULL,
+    "user_tal_res_fid" INTEGER,
+    "name" TEXT,
+    "grid_fid" INTEGER,
+    "wsel" REAL DEFAULT 0.0,
+	"tailings" REAL DEFAULT 0.0,
+	"n_value" REAL DEFAULT 0.25,
+    "note" TEXT
+);
+INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('tailing_reservoirs', 'features', 4326);
+SELECT gpkgAddGeometryColumn('tailing_reservoirs', 'geom', 'POLYGON', 0, 0, 0);
+SELECT gpkgAddGeometryTriggers('tailing_reservoirs', 'geom');
+
 
 CREATE TABLE "inflow_time_series" (
     "fid" INTEGER PRIMARY KEY NOT NULL,
@@ -2752,14 +2764,24 @@ CREATE TABLE "user_reservoirs" (
     "fid" INTEGER PRIMARY KEY NOT NULL,
     "name" TEXT,
     "wsel" REAL DEFAULT 0.0,
-    "n_value" REAL DEFAULT 0.25, 
-    "use_n_value" INTEGER DEFAULT 1,
-	"tailings" REAL DEFAULT -1.0,
+    "n_value" REAL DEFAULT 0.25,
     "notes" TEXT
 );
 INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('user_reservoirs', 'features', 4326);
 SELECT gpkgAddGeometryColumn('user_reservoirs', 'geom', 'POINT', 0, 0, 0);
 SELECT gpkgAddGeometryTriggers('user_reservoirs', 'geom');
+
+CREATE TABLE "user_tailing_reservoirs" (
+    "fid" INTEGER PRIMARY KEY NOT NULL,
+    "name" TEXT,
+    "wsel" REAL DEFAULT 0.0,
+	"tailings" REAL DEFAULT 0.0,
+	"n_value" REAL DEFAULT 0.25,
+    "notes" TEXT
+);
+INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('user_tailing_reservoirs', 'features', 4326);
+SELECT gpkgAddGeometryColumn('user_tailing_reservoirs', 'geom', 'POINT', 0, 0, 0);
+SELECT gpkgAddGeometryTriggers('user_tailing_reservoirs', 'geom');
 
 CREATE TABLE "user_tailings" (
     "fid" INTEGER PRIMARY KEY NOT NULL,

@@ -96,7 +96,7 @@ from .flo2d_tools.schema2user_tools import SchemaSWMMConverter
 from collections import OrderedDict, defaultdict
 
 from .geopackage_utils import GeoPackageUtils, connection_required, database_disconnect, database_connect
-from .gui import dlg_settings
+from .gui import dlg_settings, f2d_main_widget
 from .gui.dlg_components import ComponentsDialog
 from .gui.dlg_cont_toler_jj import ContToler_JJ
 from .gui.dlg_evap_editor import EvapEditorDialog
@@ -114,6 +114,7 @@ from .gui.dlg_update_gpkg import UpdateGpkg
 from .gui.dlg_user2schema import User2SchemaDialog
 from .gui.f2d_main_widget import FLO2DWidget
 from .gui.grid_info_widget import GridInfoWidget
+from .gui.ic_editor_widget import ICEditorWidget
 from .gui.plot_widget import PlotWidget
 from .gui.storm_drain_editor_widget import StormDrainEditorWidget
 from .gui.table_editor_widget import TableEditorWidget
@@ -2905,6 +2906,8 @@ class Flo2D(object):
 
                 if "Inflow Elements" not in dlg_components.components:
                     export_calls.remove("export_inflow")
+
+                if "Tailings" not in dlg_components.components:
                     export_calls.remove("export_tailings")
 
                 if "Levees" not in dlg_components.components:
@@ -3000,6 +3003,28 @@ class Flo2D(object):
 
                 finally:
 
+                    if "export_tailings" in export_calls:
+                        MUD = self.gutils.get_cont_par("MUD")
+                        concentration_sql = """SELECT 
+                                            CASE WHEN COUNT(*) > 0 THEN True
+                                                 ELSE False
+                                            END AS result
+                                            FROM 
+                                                tailing_cells
+                                            WHERE 
+                                                concentration <> 0 OR concentration IS NULL;"""
+                        cv = self.gutils.execute(concentration_sql).fetchone()[0]
+                        # TAILINGS.DAT and TAILINGS_CV.DAT
+                        if MUD == '1':
+                            # Export TAILINGS_CV.DAT
+                            if cv == 1:
+                                new_files_used = self.files_used.replace("TAILINGS.DAT\n", "TAILINGS_CV.DAT\n")
+                                self.files_used = new_files_used
+                        # TAILINGS_STACK_DEPTH.DAT
+                        elif MUD == '2':
+                            new_files_used = self.files_used.replace("TAILINGS.DAT\n", "TAILINGS_STACK_DEPTH.DAT\n")
+                            self.files_used = new_files_used
+
                     if "export_swmmflo" in export_calls:
                         self.f2d_widget.storm_drain_editor.export_storm_drain_INP_file()
 
@@ -3034,7 +3059,7 @@ class Flo2D(object):
                     if self.files_used != "":
                         
                         QApplication.setOverrideCursor(Qt.ArrowCursor)
-                        info =  "Files exported to\n" + outdir + "\n\n" + self.files_used
+                        info = "Files exported to\n" + outdir + "\n\n" + self.files_used
                         self.uc.show_info(info)
                         QApplication.restoreOverrideCursor()
 

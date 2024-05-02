@@ -82,15 +82,6 @@ class ParseHDF5:
             group.create_dataset(dataset_name, [])
         return group
 
-    # @property
-    # def neighbors_group(self):
-    #     group_name = "Input/Grid/Neighbors"
-    #     group_datasets = ["N", "E", "S", "W", "NE", "SE", "SW", "NW"]
-    #     group = HDF5Group(group_name)
-    #     for dataset_name in group_datasets:
-    #         group.create_dataset(dataset_name, [])
-    #     return group
-
     @property
     def bc_group(self):
         group_name = "Input/Boundary Conditions"
@@ -300,6 +291,8 @@ class ParseDAT(object):
             "TOPO.DAT": None,
             "INFLOW.DAT": None,
             "TAILINGS.DAT": None,
+            "TAILINGS_CV.DAT": None,
+            "TAILINGS_STACK_DEPTH.DAT": None,
             "OUTFLOW.DAT": None,
             "RAIN.DAT": None,
             "RAINCELL.DAT": None,
