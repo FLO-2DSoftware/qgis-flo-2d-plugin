@@ -25,6 +25,9 @@
   <property name="windowTitle">
    <string>FLO-2D Control and Tolerance Variables</string>
   </property>
+  <property name="toolTip">
+   <string/>
+  </property>
   <property name="modal">
    <bool>true</bool>
   </property>
@@ -1299,6 +1302,9 @@
                         <height>16777215</height>
                        </size>
                       </property>
+                      <property name="toolTip">
+                       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;LGPLOT = 0 will display screen text scrolling the simulation time, minimum timestep and volume conservation.&lt;/p&gt;&lt;p&gt;LGPLOT = 1 will display nothing. Use this switch position with batch runs or to run FLOPRO.EXE silently.&lt;/p&gt;&lt;p&gt;LGPLOT = 2 displays the graphical floodwave progression over the grid system (flow depth) and inflow hydrograph.&lt;/p&gt;&lt;p&gt;If there are more than 200k elments, this switch is set to 0.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                      </property>
                       <property name="text">
                        <string>Graphics Display</string>
                       </property>
@@ -1365,6 +1371,9 @@
                         <height>16777215</height>
                        </size>
                       </property>
+                      <property name="toolTip">
+                       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;TOUT - Output interval (hrs) that hydraulic data is reported to the various output files *.OUT.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                      </property>
                       <property name="text">
                        <string>Output Interval (hrs)</string>
                       </property>
@@ -1395,6 +1404,9 @@
                         <width>16777215</width>
                         <height>16777215</height>
                        </size>
+                      </property>
+                      <property name="toolTip">
+                       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;SIMUL - Total simulation time (hrs).&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                       </property>
                       <property name="text">
                        <string>Simulation Time (hrs)</string>
@@ -1458,6 +1470,9 @@
                         <height>16777215</height>
                        </size>
                       </property>
+                      <property name="toolTip">
+                       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;GRAPTIM - Not used if display mode is text or batch. If project grid count exceeds 200k, GRAPTIM will not be used.&lt;/p&gt;&lt;p&gt;Note: Regardless of the project size, this display method will slow simulation time significantly. &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                      </property>
                       <property name="text">
                        <string>Update Time Interval (hrs)</string>
                       </property>
@@ -1488,6 +1503,9 @@
                         <width>16777215</width>
                         <height>16777215</height>
                        </size>
+                      </property>
+                      <property name="toolTip">
+                       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;METRIC = 0 for english units.&lt;/p&gt;&lt;p&gt;METRIC = 1 for metric units.&lt;/p&gt;&lt;p&gt;See Table 2.1 Data Input Manual to review the units used by FLO-2D.&lt;/p&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                       </property>
                       <property name="text">
                        <string>Units</string>
@@ -1614,7 +1632,7 @@
                        </sizepolicy>
                       </property>
                       <property name="toolTip">
-                       <string>IBACKUP</string>
+                       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;IBACKUP = 0 Off.&lt;/p&gt;&lt;p&gt;IBACKUP = 1 creates a backup file of all the data files with a *.BAC extension for data error troubleshooting. It also enables the model to be resumed following termination from the last output interval. &lt;/p&gt;&lt;p&gt;IBACKUP = 2 enables elevation changes for outflow nodes made at runtime to be permanently written to the FPLAIN.RGH file. &lt;/p&gt;&lt;p&gt;(see comment 10 Data Input Manual).&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                       </property>
                       <property name="layoutDirection">
                        <enum>Qt::LeftToRight</enum>
