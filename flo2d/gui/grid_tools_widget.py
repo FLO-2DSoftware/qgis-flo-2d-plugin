@@ -29,6 +29,7 @@ from qgis.PyQt.QtWidgets import (
     QWidget,
 )
 
+from .dlg_sampling_rc import SamplingRCDialog
 from ..flo2d_tools.grid_tools import (
     ZonalStatistics,
     ZonalStatisticsOther,
@@ -102,6 +103,7 @@ class GridToolsWidget(qtBaseClass, uiDialog):
         self.point_elevation_btn.clicked.connect(self.point_elevation)
         self.xyz_elevation_btn.clicked.connect(self.xyz_elevation)
         self.polygon_elevation_btn.clicked.connect(self.correct_elevation)
+        self.rc_elevation_btn.clicked.connect(self.rc_elevation)
         self.roughness_btn.clicked.connect(self.get_roughness)
         self.arfwrf_btn.clicked.connect(self.eval_arfwrf)
         self.froude_btn.clicked.connect(self.eval_froude)
@@ -310,6 +312,35 @@ class GridToolsWidget(qtBaseClass, uiDialog):
             QApplication.restoreOverrideCursor()
             self.uc.log_info(traceback.format_exc())
             self.uc.show_warn("WARNING 060319.1710: Probing grid elevation failed! Please check your raster layer.")
+
+    def rc_elevation(self):
+        """
+        Function to calculate the Surface Water Rating Tables from a point layer
+        """
+        if self.gutils.is_table_empty("user_model_boundary"):
+            self.uc.bar_warn("There is no computational domain! Please digitize it before running tool.")
+            return
+        if self.gutils.is_table_empty("grid"):
+            self.uc.bar_warn("There is no grid! Please create it before running tool.")
+            return
+        cell_size = self.get_cell_size()
+        dlg = SamplingRCDialog(self.con, self.iface, self.lyrs, cell_size)
+        ok = dlg.exec_()
+        if ok:
+            pass
+        else:
+            return
+        try:
+            QApplication.setOverrideCursor(Qt.WaitCursor)
+            # res = dlg.probe_elevation()
+            dlg.create_elev_rc(cell_size)
+            QApplication.restoreOverrideCursor()
+            # if res:
+            #     dlg.show_probing_result_info()
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.uc.log_info(traceback.format_exc())
+            self.uc.show_warn("ERROR")
 
     def raster_roughness(self):
         if self.gutils.is_table_empty("user_model_boundary"):
