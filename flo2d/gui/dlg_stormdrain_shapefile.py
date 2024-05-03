@@ -1085,7 +1085,11 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                         self.uc.show_warn("WARNING 060319.1656: Inlet/junction  " + name + "  is faulty!")
                         continue
 
-                    cell = self.gutils.grid_on_point(point.x(), point.y())
+                    try:
+                        cell = self.gutils.grid_on_point(point.x(), point.y())
+                    except:
+                        cell = None
+                        
                     if cell is None:
                         outside_inlets += "\n" + name
                         continue
@@ -1179,7 +1183,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
 
                 if outside_inlets != "":
                     self.uc.show_warn(
-                        "WARNING 060319.1657: The following inlets/junctions are outside the computational domain!\n"
+                        "WARNING 060319.1657: Wrong coordinates. The following inlets/junctions may be outside the computational domain!\n"
                         + outside_inlets
                     )
 
