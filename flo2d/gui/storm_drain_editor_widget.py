@@ -230,12 +230,12 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         self.inlet_not_found = []
         self.outlet_not_found = []
 
-        set_icon(self.create_point_btn, "mActionCapturePoint.svg")
-        set_icon(self.save_changes_btn, "mActionSaveAllEdits.svg")
-        set_icon(self.revert_changes_btn, "mActionUndo.svg")
-        set_icon(self.sd_delete_btn, "mActionDeleteSelected.svg")
+        # set_icon(self.create_point_btn, "mActionCapturePoint.svg")
+        # set_icon(self.save_changes_btn, "mActionSaveAllEdits.svg")
+        # set_icon(self.revert_changes_btn, "mActionUndo.svg")
+        # set_icon(self.sd_delete_btn, "mActionDeleteSelected.svg")
         set_icon(self.schema_storm_drain_btn, "schematize_res.svg")
-        set_icon(self.sd_help_btn, "help_contents.svg")
+        set_icon(self.sd_help_btn, "help.svg")
 
         set_icon(self.SD_show_type4_btn, "show_cont_table.svg")
         set_icon(self.SD_add_one_type4_btn, "add_table_data.svg")
@@ -288,10 +288,10 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         self.inletRT = InletRatingTable(self.con, self.iface)
         self.PumpCurv = PumpCurves(self.con, self.iface)
 
-        self.create_point_btn.clicked.connect(self.create_swmm_point)
-        self.save_changes_btn.clicked.connect(self.save_swmm_edits)
-        self.revert_changes_btn.clicked.connect(self.revert_swmm_lyr_edits)
-        self.sd_delete_btn.clicked.connect(self.delete_cur_swmm)
+        # self.create_point_btn.clicked.connect(self.create_swmm_point)
+        # self.save_changes_btn.clicked.connect(self.save_swmm_edits)
+        # self.revert_changes_btn.clicked.connect(self.revert_swmm_lyr_edits)
+        # self.sd_delete_btn.clicked.connect(self.delete_cur_swmm)
         self.schema_storm_drain_btn.clicked.connect(self.schematize_swmm)
         self.sd_help_btn.clicked.connect(self.sd_help)
 
@@ -322,7 +322,10 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
 
         self.import_inp_btn.clicked.connect(lambda: self.import_storm_drain_INP_file("Choose", True))
         self.export_inp_btn.clicked.connect(self.export_storm_drain_INP_file)
-
+        
+        # self.import_inp2_btn.clicked.connect(lambda: self.import_storm_drain_INP_file("Choose", True))
+        # self.export_inp2_btn.clicked.connect(self.export_storm_drain_INP_file)
+               
         self.pump_curve_cbo.activated.connect(self.current_cbo_pump_curve_index_changed)
         self.pump_curve_cbo.currentIndexChanged.connect(self.refresh_PC_PlotAndTable)
 
@@ -345,6 +348,9 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         self.start_node_cbo.currentIndexChanged.connect(lambda: self.center_node("Start"))
         self.end_node_cbo.currentIndexChanged.connect(lambda: self.center_node("End"))
         self.center_chbox.clicked.connect(self.clear_sd_rubber)
+
+        swmm = 1 if self.gutils.get_cont_par("SWMM") == "1" else 0
+        self.simulate_stormdrain_chbox.setChecked(swmm)
 
     def setup_connection(self):
         con = self.iface.f2d["con"]
@@ -475,7 +481,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         # self.populate_swmm()
     
     def sd_help(self):
-        QDesktopServices.openUrl(QUrl("https://flo-2dsoftware.github.io/FLO-2D-Documentation/Plugin1000/widgets/storm-drain-editor/Storm%20Drain.html"))        
+        QDesktopServices.openUrl(QUrl("https://flo-2dsoftware.github.io/FLO-2D-Documentation/Plugin1000/widgets/storm-drain-editor/index.html"))        
 
     def save_attrs(self):
         swmm_dict = self.swmm_name_cbo.itemData(self.swmm_idx)
@@ -4521,7 +4527,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
 
         if intersection:
             with open(RPT_file) as f:
-               if not intersection in f.read():
+                if not intersection in f.read():
                     self.uc.bar_error("Node " + intersection + " not found in file " + RPT_file)
                     # QApplication.restoreOverrideCursor()
                     self.uc.bar_warn("WARNING 111123.1742: Node " + intersection + " not found in file\n\n" + RPT_file +
