@@ -323,10 +323,9 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         self.import_inp_btn.clicked.connect(lambda: self.import_storm_drain_INP_file("Choose", True))
         self.export_inp_btn.clicked.connect(self.export_storm_drain_INP_file)
         
-        self.import_inp2_btn.clicked.connect(lambda: self.import_storm_drain_INP_file("Choose", True))
-        self.export_inp2_btn.clicked.connect(self.export_storm_drain_INP_file)
+        # self.import_inp2_btn.clicked.connect(lambda: self.import_storm_drain_INP_file("Choose", True))
+        # self.export_inp2_btn.clicked.connect(self.export_storm_drain_INP_file)
                
-
         self.pump_curve_cbo.activated.connect(self.current_cbo_pump_curve_index_changed)
         self.pump_curve_cbo.currentIndexChanged.connect(self.refresh_PC_PlotAndTable)
 
@@ -482,7 +481,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         # self.populate_swmm()
     
     def sd_help(self):
-        QDesktopServices.openUrl(QUrl("https://flo-2dsoftware.github.io/FLO-2D-Documentation/Plugin1000/widgets/storm-drain-editor/Storm%20Drain.html"))        
+        QDesktopServices.openUrl(QUrl("https://flo-2dsoftware.github.io/FLO-2D-Documentation/Plugin1000/widgets/storm-drain-editor/index.html"))        
 
     def save_attrs(self):
         swmm_dict = self.swmm_name_cbo.itemData(self.swmm_idx)

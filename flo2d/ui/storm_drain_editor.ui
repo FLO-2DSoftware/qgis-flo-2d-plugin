@@ -226,34 +226,6 @@
      <item>
       <layout class="QHBoxLayout" name="horizontalLayout_4">
        <item>
-        <widget class="QToolButton" name="import_inp2_btn">
-         <property name="toolTip">
-          <string>Import SWMM.INP file</string>
-         </property>
-         <property name="text">
-          <string>...</string>
-         </property>
-         <property name="icon">
-          <iconset>
-           <normaloff>../img/import_swmm.svg</normaloff>../img/import_swmm.svg</iconset>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QToolButton" name="export_inp2_btn">
-         <property name="toolTip">
-          <string>Export SWMM.INP file</string>
-         </property>
-         <property name="text">
-          <string>...</string>
-         </property>
-         <property name="icon">
-          <iconset>
-           <normaloff>../img/export_swmm.svg</normaloff>../img/export_swmm.svg</iconset>
-         </property>
-        </widget>
-       </item>
-       <item>
         <widget class="QToolButton" name="schema_storm_drain_btn">
          <property name="enabled">
           <bool>true</bool>
