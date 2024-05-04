@@ -3847,7 +3847,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
        
         no_inlet = ""
         no_outlet = ""
-        tab = 20
+        tabs3 = "\t\t\t"
         layer = (
             self.user_swmm_conduits_lyr
             if link_name == "Conduits"
@@ -3867,7 +3867,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             link_outlet_fld_idx = link_fields.lookupField(link_outlet)
 
             nodes_features, nodes_index = spatial_index(SD_all_nodes_layer)
-            buffer_distance, segments = 5.0, 5
+            buffer_distance, segments = 0.0, 0
             link_nodes = {}
             for feat in layer.getFeatures():
                 fid = feat.id()
@@ -3900,16 +3900,14 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 if closest_inlet_feat is not None:
                     inlet_name = closest_inlet_feat["name"]
                 else:
-                    no_inlet += f"{feat[2].ljust(tab, ' ')}{feat[1].ljust(tab, ' ')}{link_name.ljust(tab, ' ')}" + "\n"
+                    no_inlet += feat[2] + tabs3 + feat[1] + tabs3 + link_name + "\n"
                     continue
-                    # inlet_name = feat[2] # Assign current inlet. 
                     
                 if closest_outlet_feat is not None:
                     outlet_name = closest_outlet_feat["name"]
                 else:
-                    no_outlet += f"{feat[3].ljust(tab, ' ')}{feat[1].ljust(tab, ' ')}{link_name.ljust(tab, ' ')}" + "\n"
+                    no_outlet += feat[3] + tabs3 + feat[1] + tabs3 + link_name + "\n"
                     continue
-                    # outlet_name = feat[3] # Assign current outlet.
     
                 link_nodes[fid] = inlet_name, outlet_name                  
                 
@@ -3926,16 +3924,15 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             self.auto_assign_msg +="* " + str(len(link_nodes)) + " " + link_name + "" + "\n"
             QgsMessageLog.logMessage(msg,level=Qgis.Info, )
             
-            hyphens = '-' * 50
+            hyphens = '-' * 66 + "\n"
             if no_inlet:
-                self.no_nodes = f"{'Inlet Name '.ljust(tab, ' ')}{'Link Name  '.ljust(tab, ' ')}{'Link Type  '.ljust(tab, ' ')}" + "\n" + \
-                           f"{hyphens.ljust(tab, ' ')}" + "\n" + no_inlet
+                self.no_nodes = "Inlet Name" + "\t\t" + "Link Name" + "\t\t" + "Link Type" + "\t\t" + "\n" + hyphens + no_inlet                
             if no_outlet:
-                header = f"{'Outlet Name'.ljust(tab, ' ')}{'Link Name  '.ljust(tab, ' ')}{'Link Type  '.ljust(tab, ' ')}" + "\n" 
+                header = "Outlet Name" + "\t\t" + "Link Name" + "\t\t" + "Link Type" + "\t\t" + "\n"                  
                 if self.no_nodes == "":
-                    self.no_nodes = header + f"{hyphens.ljust(tab, ' ')}" + no_outlet
+                    self.no_nodes = header + hyphens +  no_outlet
                 else: 
-                    self.no_nodes += "\n" + header + f"{hyphens.ljust(tab, ' ')}" + no_outlet      
+                    self.no_nodes += "\n" + header + hyphens +  no_outlet 
            
         except Exception as e:
             QApplication.restoreOverrideCursor()
@@ -5222,13 +5219,16 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             self.auto_assign_link_nodes("Orifices", "orifice_inlet", "orifice_outlet", SD_all_nodes_layer)
             self.auto_assign_link_nodes("Weirs", "weir_inlet", "weir_outlet", SD_all_nodes_layer)
             if self.no_nodes != "":
-                    self.uc.show_msg("The following nodes (inlets or outlets) could not be found for the indicated links:\n\n" + self.no_nodes, 600, "error") 
+                    msg = "The following nodes (inlets or outlets) could not be found for the indicated links:\n\n" + self.no_nodes
+                    result2 = ScrollMessageBox2(QMessageBox.Warning, "Missing inlets and/or outlets", msg)
+                    result2.exec_()
+
             
             self.uc.show_info("Inlet and Outlet nodes successfully assigned to:\n\n" + self.auto_assign_msg)
 
         except Exception as e:
             QApplication.restoreOverrideCursor()
-            self.uc.bar_error("Auto-assign link nodes failed!")
+            self.uc.bar_error("ERROR 040524.0706: Auto-assign link nodes failed!")
             return False    
         finally:    
             # Remove temporary layer:
