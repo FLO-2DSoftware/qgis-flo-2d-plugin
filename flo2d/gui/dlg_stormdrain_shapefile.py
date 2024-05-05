@@ -201,6 +201,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
         self.load_pumps = False
         self.load_orifices = False
         self.load_weirs = False
+        self.no_in_out = ""
 
         self.unit = int(self.gutils.get_cont_par("METRIC"))
 
@@ -942,35 +943,21 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                 or self.load_orifices
                 or self.load_weirs
             ):
+                
+                if len(self.no_in_out) > 0:
+                    self.uc.show_warn(
+                        "WARNING 040524.0806:\nLinks with no inlet and/or outlet:\n"
+                        + str(self.no_in_out)
+                        + "\n\nThe value '?' will be assigned to the missing inlets and/or outlets.\nThey will cause errors during their processing.\n\n"
+                        + "Did you select the 'From Inlet' and 'To Oulet' fields in the shapefile?\n\n"
+                        + "You can also use the 'Auto-assign link nodes' button to automatically fill the node names required for the link connections."
+                    )
+                
                 self.uc.show_info(
                     "Importing Nodes and Links finished!\n\n"
                     + "Use the Components (Nodes and Links) buttons in the Storm Drain Editor to view/edit data.\n\n"
                     + "Complete the storm drain by clicking the Schematize Storm Drain Components button."
                 )
-
-                # self.uc.show_info(
-                #     "Importing Storm Drain nodes and/or links data finished!\n\n"
-                #     + "The 'Storm Drain Conduits', 'Storm Drain Pumps', and/or  'Storm Drain Nodes' layers were created in the 'User Layers' group.\n\n"
-                #     "Use the Components (Nodes and Links) in the Storm Drain Editor widget to see/edit their attributes.\n\n"
-                #     "NOTE: the 'Schematize Storm Drain Components' button  in the Storm Drain Editor widget will update the 'Storm Drain' layer group, required to "
-                #     "later export the .DAT files used by the FLO-2D model."
-                # )
-            # elif not (load_inlets or load_outfalls) and load_conduits and load_pumps:
-            #     self.uc.show_info(
-            #         "Importing Storm Drain conduits data finished!\n\n"
-            #         + "The 'Storm Drain Conduits' and 'Storm Drain Pumps' layers were created in the 'User Layers' group.\n\n"
-            #         "Use the Components (Nodes and Links) in the Storm Drain Editor widget to see/edit their attributes.\n\n"
-            #         "NOTE: the 'Schematize Storm Drain Components' button  in the Storm Drain Editor widget will update the 'Storm Drain' layer group, required to "
-            #         "later export the .DAT files used by the FLO-2D model."
-            #     )
-            # elif (load_inlets or load_outfalls) and not load_conduits:
-            #     self.uc.show_info(
-            #         "Importing Storm Drain nodes data finished!\n\n"
-            #         + "The 'Storm Drain Nodes' layer was created in the 'User Layers' group.\n\n"
-            #         "Use the Components (Nodes and Links) in the Storm Drain Editor widget to see/edit their attributes.\n\n"
-            #         "NOTE: the 'Schematize Storm Drain Components' button  in the Storm Drain Editor widget will update the 'Storm Drain' layer group, required to "
-            #         "later export the .DAT files used by the FLO-2D model."
-            #     )
 
             else:
                 self.uc.show_info("No Storm Drain nodes or links selected!")
@@ -1553,11 +1540,15 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                         if self.conduit_from_inlet_FieldCbo.currentText() != ""
                         else "?"
                     )
+                    conduit_inlet = conduit_inlet if conduit_inlet != NULL else "?"
+                    
                     conduit_outlet = (
                         f[self.conduit_to_outlet_FieldCbo.currentText()]
                         if self.conduit_to_outlet_FieldCbo.currentText() != ""
                         else "?"
                     )
+                    conduit_outlet = conduit_outlet if conduit_outlet != NULL else "?"
+                    
                     conduit_inlet_offset = (
                         f[self.conduit_inlet_offset_FieldCbo.currentText()]
                         if self.conduit_inlet_offset_FieldCbo.currentText() != ""
@@ -1758,13 +1749,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                 QApplication.restoreOverrideCursor()
 
                 if no_in_out != 0:
-                    self.uc.show_warn(
-                        "WARNING 060319.1703:\n"
-                        + str(no_in_out)
-                        + " conduits have no inlet and/or outlet!\n\n"
-                        + "The value '?' will be assigned to the missing inlets and/or outlets.\nThey will cause errors during their processing.\n\n"
-                        + "Did you select the 'From Inlet' and 'To Oulet' fields in the shapefile?"
-                    )
+                    self.no_in_out += "\n" + str(no_in_out) + " conduits."
 
                 if outside_conduits != "":
                     self.uc.show_warn(
@@ -1806,12 +1791,15 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                         if self.pump_from_inlet_FieldCbo.currentText() != ""
                         else "?"
                     )
+                    pump_inlet = pump_inlet if pump_inlet != NULL else "?"
+                    
                     pump_outlet = (
                         f[self.pump_to_outlet_FieldCbo.currentText()]
                         if self.pump_to_outlet_FieldCbo.currentText() != ""
                         else "?"
                     )
-
+                    pump_outlet = pump_outlet if pump_outlet != NULL else "?"
+                    
                     status = (
                         f[self.pump_initial_status_FieldCbo.currentText()]
                         if self.pump_initial_status_FieldCbo.currentText() != ""
@@ -1906,13 +1894,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                 QApplication.restoreOverrideCursor()
 
                 if no_in_out != 0:
-                    self.uc.show_warn(
-                        "WARNING 280222.1030:\n"
-                        + str(no_in_out)
-                        + " pumps have no inlet and/or outlet!\n\n"
-                        + "The value '?' will be assigned to the missing inlets and/or outlets.\nThey will cause errors during their processing.\n\n"
-                        + "Did you select the 'From Inlet' and 'To Oulet' fields in the pumps shapefile?"
-                    )
+                    self.no_in_out += "\n" + str(no_in_out) + " pumps."
 
                 if outside_pumps != "":
                     self.uc.show_warn(
@@ -1964,11 +1946,15 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                         if self.orifice_from_inlet_FieldCbo.currentText() != ""
                         else "?"
                     )
+                    orifice_inlet = orifice_inlet if orifice_inlet != NULL else "?"
+                    
                     orifice_outlet = (
                         f[self.orifice_to_outlet_FieldCbo.currentText()]
                         if self.orifice_to_outlet_FieldCbo.currentText() != ""
                         else "?"
                     )
+                    orifice_outlet = orifice_outlet if orifice_outlet != NULL else "?"
+                    
                     orifice_type = (
                         f[self.orifice_type_FieldCbo.currentText()]
                         if self.orifice_type_FieldCbo.currentText() in ["SIDE", "BOTTOM"]
@@ -2068,13 +2054,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                 QApplication.restoreOverrideCursor()
 
                 if no_in_out != 0:
-                    self.uc.show_warn(
-                        "WARNING 110422.0810:\n"
-                        + str(no_in_out)
-                        + " orifices have no inlet and/or outlet!\n\n"
-                        + "The value '?' will be assigned to the missing inlets and/or outlets.\nThey will cause errors during their processing.\n\n"
-                        + "Did you select the 'From Inlet' and 'To Oulet' fields in the orifices shapefile?"
-                    )
+                    self.no_in_out += "\n" + str(no_in_out) + " orifices."
 
                 if outside_orifices != "":
                     self.uc.show_warn(
@@ -2117,11 +2097,15 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                         if self.weir_from_inlet_FieldCbo.currentText() != ""
                         else "?"
                     )
+                    weir_inlet = weir_inlet if weir_inlet != NULL else "?"
+                    
                     weir_outlet = (
                         f[self.weir_to_outlet_FieldCbo.currentText()]
                         if self.weir_to_outlet_FieldCbo.currentText() != ""
                         else "?"
                     )
+                    weir_outlet = weir_outlet if weir_outlet != NULL else "?"
+                    
                     weir_type = (
                         f[self.weir_type_FieldCbo.currentText()]
                         if self.weir_type_FieldCbo.currentText() != ""
@@ -2246,13 +2230,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                 QApplication.restoreOverrideCursor()
 
                 if no_in_out != 0:
-                    self.uc.show_warn(
-                        "WARNING 120422.0844:\n"
-                        + str(no_in_out)
-                        + " weirs have no inlet and/or outlet!\n\n"
-                        + "The value '?' will be assigned to the missing inlets and/or outlets.\nThey will cause errors during their processing.\n\n"
-                        + "Did you select the 'From Inlet' and 'To Oulet' fields in the orifices shapefile?"
-                    )
+                    self.no_in_out += "\n" + str(no_in_out) + "  weirs."
 
                 if outside_weirs != "":
                     self.uc.show_warn(

@@ -27,9 +27,13 @@ from qgis.PyQt.QtWidgets import (
     QVBoxLayout,
     QWidget,
     QSpacerItem,
+    QPushButton,
+    QSpinBox,
+    QVBoxLayout,
+    QHBoxLayout,    
 )
 from PyQt5.QtGui import QFont
-
+from PyQt5.QtWidgets import QLineEdit
 
 class UserCommunication(object):
     """
@@ -262,7 +266,58 @@ class ScrollMessageBox2(QMessageBox):
         grd = self.findChild(QGridLayout)
         lbl = QLabel(chldn[1].text(), self)
         lbl.setWordWrap(True)
+        
+        font = QFont("Courier")
+        lbl.setFont(font)
+                
         scrll.setWidget(lbl)
-        scrll.setMinimumSize(700, 100)
+        scrll.setMinimumSize(750, 100)
         grd.addWidget(scrll, 1, 1, 1, self.layout().columnCount())
         chldn[1].setText("")
+
+class TwoInputsDialog(QDialog):
+    def __init__(self, label_text, first_label, first_value, second_label, second_value):
+        super(TwoInputsDialog, self).__init__()
+
+        self.setWindowTitle("FLO-2D")
+        self.label = QLabel(label_text, self)
+        self.first_label = QLabel(first_label, self)
+        self.first_input = QSpinBox(self)
+        self.first_input.setFixedWidth(70)
+        self.first_input.setMaximum(1000)
+        self.first_input.setValue(first_value)
+        first_input_layout = QHBoxLayout()
+        first_input_layout.addWidget(self.first_label)
+        first_input_layout.addWidget(self.first_input)
+        first_input_layout.setAlignment(Qt.AlignCenter)        
+              
+        layout = QVBoxLayout(self)
+        layout.addWidget(self.label, alignment=Qt.AlignCenter)
+        layout.addSpacing(20)
+        layout.addLayout(first_input_layout) 
+              
+        if second_label:
+            self.second_label = QLabel(second_label, self)
+            self.second_input = QSpinBox(self)
+            self.second_input.setFixedWidth(70)
+            self.first_input.setMaximum(1000)
+            self.Second_input.setValue(second_value)
+            second_input_layout = QHBoxLayout()
+            second_input_layout.addWidget(self.second_label)
+            second_input_layout.addWidget(self.second_input)
+            second_input_layout.setAlignment(Qt.AlignCenter)
+            layout.addLayout(second_input_layout)
+                       
+        self.yes_button = QPushButton('Yes', self)
+        self.yes_button.clicked.connect(self.accept)
+        self.no_button = QPushButton('No', self)
+        self.no_button.clicked.connect(self.reject)
+
+        button_layout = QHBoxLayout()
+        button_layout.addStretch(1)
+        button_layout.addWidget(self.yes_button)
+        button_layout.addWidget(self.no_button)
+        button_layout.setAlignment(Qt.AlignCenter)
+
+        layout.addSpacing(20)
+        layout.addLayout(button_layout)
