@@ -3867,6 +3867,8 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             link_nodes = {}
             inlet_assignments = 0
             outlet_assignments = 0
+            no_in = 0
+            no_out = 0
             for feat in layer.getFeatures():
                 fid = feat.id()
                 geom = feat.geometry()
@@ -3906,6 +3908,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                     
                     # continue
                     inlet_name = "?"
+                    no_in += 1
                     
                 if closest_outlet_feat is not None:
                     outlet_name = closest_outlet_feat["name"]
@@ -3918,6 +3921,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                     
                     # continue
                     outlet_name = "?"
+                    no_out += 1
                     
                 link_nodes[fid] = inlet_name, outlet_name                  
                 
@@ -3933,9 +3937,16 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             msg ="Inlet and Outlet nodes assigned to " + str(len(link_nodes)) + " " + link_name + "!"
             QgsMessageLog.logMessage(msg,level=Qgis.Info, )
             
-            self.auto_assign_msg +="* " + str(inlet_assignments) + " inlet assignments to " + link_name + "" + "\n"
-            self.auto_assign_msg +="* " + str(outlet_assignments) + " outlet assignments to " + link_name + "" + "\n\n"
-
+            if inlet_assignments > 0:
+                self.auto_assign_msg +="✓ " + str(inlet_assignments) + " inlet assignments to " + link_name + "" + "\n"
+            if outlet_assignments > 0: 
+                self.auto_assign_msg +="✓ " + str(outlet_assignments) + " outlet assignments to " + link_name + "" + "\n"
+            if no_in > 0:
+                self.auto_assign_msg += "x   " + str(no_in) + " inlets not found for " + link_name + "" + "\n"
+            if no_out > 0:   
+                self.auto_assign_msg += "x   " + str(no_out)  + " outlets not found for " + link_name + "" + "\n"
+            self.auto_assign_msg += "\n"
+            
             hyphens = '-' * 60 + "\n"
             header = "       Inlet/Outlet Name      Link Name           Link Type" + "\n" + \
                      "-----------------------------------------------------------"
@@ -5274,12 +5285,15 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             self.auto_assign_link_nodes("Pumps", "pump_inlet", "pump_outlet", SD_all_nodes_layer)
             self.auto_assign_link_nodes("Orifices", "orifice_inlet", "orifice_outlet", SD_all_nodes_layer)
             self.auto_assign_link_nodes("Weirs", "weir_inlet", "weir_outlet", SD_all_nodes_layer)
+            success = ""
             if self.no_nodes != "":
                     msg = "The following nodes (inlets or outlets) could not" + "\n" + "be found for the indicated links:\n\n" + self.no_nodes
                     result2 = ScrollMessageBox2(QMessageBox.Warning, "Missing inlets and outlets", msg)
                     result2.exec_()
-
-            self.uc.show_info("Inlet and Outlet nodes successfully assigned to:\n\n" + self.auto_assign_msg)
+            else:        
+                    success = " Success! all inlets and outlets nodes where assigned.\n\n"
+                    
+            self.uc.show_info("Assignments to Inlet and Outlet nodes:\n\n" + success + self.auto_assign_msg)
 
         except Exception as e:
             QApplication.restoreOverrideCursor()
