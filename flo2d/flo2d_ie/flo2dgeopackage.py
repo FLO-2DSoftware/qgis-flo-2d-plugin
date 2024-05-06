@@ -2990,8 +2990,6 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 for row in self.execute(chan_sql):
                     i.write(line8.format(*row))
                 if any(v9) is True:
-                    if self.gutils.get_cont_par("METRIC") == "1":
-                        v2h = round(v2h / 25.4,2)
                     i.write(line2h.format(str(v2h)))
                     i.write(line9.format(*v9))
                 else:
@@ -3151,8 +3149,6 @@ class Flo2dGeoPackage(GeoPackageUtils):
             infil_group.create_dataset('INFIL_HORTON_GLOBAL', [])
             for var in v9:
                 infil_group.datasets["INFIL_HORTON_GLOBAL"].data.append(var)
-            if self.gutils.get_cont_par("METRIC") == "1":
-                v2h = round(v2h / 25.4, 2)
             infil_group.datasets["INFIL_HORTON_GLOBAL"].data.append(v2h)
             horton_cells_row = self.execute(horton_sql).fetchone()
             if horton_cells_row is not None:
