@@ -73,6 +73,7 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
             "fhortoni",
             "fhortonf",
             "decaya",
+            "fhortonia"
         ]
         self.infil_columns = [
             "green_char",
@@ -87,6 +88,7 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
             "fhorti",
             "fhortf",
             "deca",
+            "fhortia"
         ]
         self.imethod_groups = {
             1: {self.iglobal.green_grp},
@@ -637,7 +639,7 @@ class InfilGlobal(uiDialog_glob, qtBaseClass_glob):
 
     def populate_infilglobals(self):
         qry = """SELECT infmethod, abstr, sati, satf, poros, soild, infchan, hydcall, soilall,
-                hydcadj, hydcxx, scsnall, abstr1, fhortoni, fhortonf, decaya FROM infil"""
+                hydcadj, hydcxx, scsnall, abstr1, fhortoni, fhortonf, decaya, fhortonia FROM infil"""
 
         try:
             infil_glob = self.gutils.execute(qry).fetchone()
@@ -658,6 +660,7 @@ class InfilGlobal(uiDialog_glob, qtBaseClass_glob):
                 self.spin_fhortoni.setValue(infil_glob[13] if infil_glob[13] is not None else 0.0)
                 self.spin_fhortonf.setValue(infil_glob[14] if infil_glob[14] is not None else 0.0)
                 self.spin_decaya.setValue(infil_glob[15] if infil_glob[15] is not None else 0.0)
+                self.spin_fhortonia.setValue(infil_glob[16] if infil_glob[16] is not None else 0.0)
             else:
                 self.spin_abstr.setValue(0.0)
                 self.spin_sati.setValue(0.7)
@@ -674,6 +677,7 @@ class InfilGlobal(uiDialog_glob, qtBaseClass_glob):
                 self.spin_fhortoni.setValue(0.0)
                 self.spin_fhortonf.setValue(0.0)
                 self.spin_decaya.setValue(0.0)
+                self.spin_fhortonia.setValue(0.0)
         except Exception as e:
             QApplication.restoreOverrideCursor()
             self.uc.show_warn("ERROR 280320.1625: load of infiltration globals failed!")

@@ -345,7 +345,7 @@ class SchemaInfiltrationConverter(SchemaConverter):
             "soil_depth",
         ]
         self.scs_columns = ["scsn"]
-        self.horton_columns = ["fhorti", "fhortf", "deca"]
+        self.horton_columns = ["fhorti", "fhortf", "deca", "fhorti"]
         self.chan_columns = ["hydconch"]
 
         self.lyrs_cols = [
