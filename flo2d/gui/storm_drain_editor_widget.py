@@ -288,15 +288,10 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         self.inletRT = InletRatingTable(self.con, self.iface)
         self.PumpCurv = PumpCurves(self.con, self.iface)
 
-        # self.create_point_btn.clicked.connect(self.create_swmm_point)
-        # self.save_changes_btn.clicked.connect(self.save_swmm_edits)
-        # self.revert_changes_btn.clicked.connect(self.revert_swmm_lyr_edits)
-        # self.sd_delete_btn.clicked.connect(self.delete_cur_swmm)
         self.schema_storm_drain_btn.clicked.connect(self.schematize_swmm)
         self.sd_help_btn.clicked.connect(self.sd_help)
 
         self.SD_show_type4_btn.clicked.connect(self.SD_show_type4_table_and_plot)
-        # self.SD_add_one_type4_btn.clicked.connect(self.SD_add_one_type4)
         self.SD_add_predefined_type4_btn.clicked.connect(self.SD_import_type4)
         self.SD_remove_type4_btn.clicked.connect(self.SD_delete_type4)
         self.SD_rename_type4_btn.clicked.connect(self.SD_rename_type4)
@@ -319,19 +314,12 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
 
         self.pump_curve_type_cbo.currentIndexChanged.connect(self.update_pump_curve_data)
         self.pump_curve_description_le.textChanged.connect(self.update_pump_curve_data)
-
-        # self.import_inp_btn.clicked.connect(lambda: self.import_storm_drain_INP_file("Choose", True))
-        # self.export_inp_btn.clicked.connect(self.export_storm_drain_INP_file)
-        
-        # self.import_inp2_btn.clicked.connect(lambda: self.import_storm_drain_INP_file("Choose", True))
-        # self.export_inp2_btn.clicked.connect(self.export_storm_drain_INP_file)
                
         self.pump_curve_cbo.activated.connect(self.current_cbo_pump_curve_index_changed)
         self.pump_curve_cbo.currentIndexChanged.connect(self.refresh_PC_PlotAndTable)
 
         self.simulate_stormdrain_chbox.clicked.connect(self.simulate_stormdrain)
         self.import_shapefile_btn.clicked.connect(self.import_hydraulics)
-        # self.create_discharge_plots_btn.clicked.connect(self.create_SD_discharge_table_and_plots)
 
         self.SD_type4_cbo.activated.connect(self.SD_show_type4_table_and_plot)
 
