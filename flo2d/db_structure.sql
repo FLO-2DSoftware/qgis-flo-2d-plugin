@@ -749,7 +749,8 @@ CREATE TABLE "infil" (
     "abstr1" REAL DEFAULT 0.0, -- ABSTR1, SCS global floodplain rainfall abstraction or interception
     "fhortoni" REAL DEFAULT 0.0, -- FHORTONI, global Horton’s equation initial infiltration rate
     "fhortonf" REAL DEFAULT 0.0, -- FHORTONF, global Horton’s equation final infiltration rate
-    "decaya" REAL DEFAULT 0.0 --DECAYA, Horton’s equation decay coefficient
+    "decaya" REAL DEFAULT 0.0, --DECAYA, Horton’s equation decay coefficient
+    "fhortonia" REAL DEFAULT 0.0 --FHORTONIA, Horton’s initial abstraction
 );
 INSERT INTO gpkg_contents (table_name, data_type) VALUES ('infil', 'aspatial');
 

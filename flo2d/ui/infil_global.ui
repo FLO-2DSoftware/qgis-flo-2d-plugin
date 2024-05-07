@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>564</width>
-    <height>419</height>
+    <width>568</width>
+    <height>428</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -66,7 +66,7 @@ Average global hydraulic conductivity for the entire channel.
       <item row="4" column="0">
        <widget class="QCheckBox" name="cb_infchan">
         <property name="enabled">
-         <bool>true</bool>
+         <bool>false</bool>
         </property>
         <property name="text">
          <string>Channel Infiltration</string>
@@ -432,64 +432,21 @@ Variables higher than 99 will be reset to 99.</string>
       <property name="horizontalSpacing">
        <number>10</number>
       </property>
-      <item row="0" column="3">
-       <widget class="QLabel" name="label_12">
-        <property name="toolTip">
-         <string>FHORTONF
-Global Horton final infiltration rate.
-(in/hr both unit systems)</string>
+      <item row="0" column="2">
+       <spacer name="horizontalSpacer_2">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
         </property>
-        <property name="text">
-         <string>Final Rate</string>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>40</width>
+          <height>20</height>
+         </size>
         </property>
-        <property name="alignment">
-         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-        </property>
-        <property name="wordWrap">
-         <bool>true</bool>
-        </property>
-       </widget>
+       </spacer>
       </item>
       <item row="0" column="4">
        <widget class="QDoubleSpinBox" name="spin_fhortonf">
-        <property name="decimals">
-         <number>4</number>
-        </property>
-        <property name="maximum">
-         <double>100000.000000000000000</double>
-        </property>
-       </widget>
-      </item>
-      <item row="0" column="6">
-       <widget class="QLabel" name="label_14">
-        <property name="toolTip">
-         <string>DECAYA
-Horton global decay coefficient.
-(1/second)</string>
-        </property>
-        <property name="text">
-         <string>Decay Coeff.</string>
-        </property>
-        <property name="alignment">
-         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-        </property>
-        <property name="wordWrap">
-         <bool>true</bool>
-        </property>
-       </widget>
-      </item>
-      <item row="0" column="1">
-       <widget class="QDoubleSpinBox" name="spin_fhortoni">
-        <property name="decimals">
-         <number>4</number>
-        </property>
-        <property name="maximum">
-         <double>100000.000000000000000</double>
-        </property>
-       </widget>
-      </item>
-      <item row="0" column="7">
-       <widget class="QDoubleSpinBox" name="spin_decaya">
         <property name="decimals">
          <number>4</number>
         </property>
@@ -516,8 +473,18 @@ Global Horton initial infiltration rate.
         </property>
        </widget>
       </item>
-      <item row="0" column="2">
-       <spacer name="horizontalSpacer_2">
+      <item row="0" column="1">
+       <widget class="QDoubleSpinBox" name="spin_fhortoni">
+        <property name="decimals">
+         <number>4</number>
+        </property>
+        <property name="maximum">
+         <double>100000.000000000000000</double>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="5">
+       <spacer name="horizontalSpacer_3">
         <property name="orientation">
          <enum>Qt::Horizontal</enum>
         </property>
@@ -529,8 +496,93 @@ Global Horton initial infiltration rate.
         </property>
        </spacer>
       </item>
-      <item row="0" column="5">
-       <spacer name="horizontalSpacer_3">
+      <item row="0" column="3">
+       <widget class="QLabel" name="label_12">
+        <property name="toolTip">
+         <string>FHORTONF
+Global Horton final infiltration rate.
+(in/hr both unit systems)</string>
+        </property>
+        <property name="text">
+         <string>Final Rate</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+        </property>
+        <property name="wordWrap">
+         <bool>true</bool>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="7">
+       <widget class="QDoubleSpinBox" name="spin_decaya">
+        <property name="decimals">
+         <number>4</number>
+        </property>
+        <property name="maximum">
+         <double>100000.000000000000000</double>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="6">
+       <widget class="QLabel" name="label_14">
+        <property name="toolTip">
+         <string>DECAYA
+Horton global decay coefficient.
+(1/second)</string>
+        </property>
+        <property name="text">
+         <string>Decay Coeff.</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+        </property>
+        <property name="wordWrap">
+         <bool>true</bool>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="5" colspan="3">
+       <spacer name="horizontalSpacer_4">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>40</width>
+          <height>20</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+      <item row="1" column="4">
+       <widget class="QDoubleSpinBox" name="spin_fhortonia">
+        <property name="decimals">
+         <number>4</number>
+        </property>
+        <property name="maximum">
+         <double>100000.000000000000000</double>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="3">
+       <widget class="QLabel" name="label_9">
+        <property name="toolTip">
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;FHORTONIA\nHorton global floodplain rainfall abstraction or interception.\n(in or mm)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+        </property>
+        <property name="text">
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Initial Abst.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+        </property>
+        <property name="wordWrap">
+         <bool>true</bool>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="0" colspan="3">
+       <spacer name="horizontalSpacer_5">
         <property name="orientation">
          <enum>Qt::Horizontal</enum>
         </property>
