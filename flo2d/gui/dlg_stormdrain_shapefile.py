@@ -241,7 +241,6 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                 self.outfalls_shapefile_cbo.setCurrentIndex(idx)
                 self.populate_outfall_attributes(self.outfalls_shapefile_cbo.currentIndex())
 
-
             previous_strge_unit = "" if s.value("FLO-2D/sf_strge_units_layer_name") is None else s.value("FLO-2D/sf_strge_units_layer_name")
             idx = self.strge_units_shapefile_cbo.findText(previous_strge_unit)
             if idx != -1:

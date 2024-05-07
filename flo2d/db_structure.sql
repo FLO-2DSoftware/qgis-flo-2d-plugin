@@ -36,6 +36,14 @@ CREATE TABLE metadata (
 );
 INSERT INTO gpkg_contents (table_name, data_type) VALUES ('metadata', 'aspatial');
 
+-- The Storm Drain table field connector
+CREATE TABLE sd_fields (
+    "fid" INTEGER NOT NULL PRIMARY KEY,
+    "name" TEXT NOT NULL UNIQUE ON CONFLICT REPLACE,
+    "field" TEXT
+);
+INSERT INTO gpkg_contents (table_name, data_type) VALUES ('sd_fields', 'aspatial');
+
 
 -- The main table with model control parameters (from CONT.DAT and others)
 CREATE TABLE cont (
