@@ -115,7 +115,7 @@ from .gui.dlg_user2schema import User2SchemaDialog
 from .gui.f2d_main_widget import FLO2DWidget
 from .gui.grid_info_widget import GridInfoWidget
 from .gui.plot_widget import PlotWidget
-from .gui.storm_drain_editor_widget import StormDrainEditorWidget
+from .gui.storm_drain_editor_widget import StormDrainEditorWidget, INP_GroupsDialog
 from .gui.table_editor_widget import TableEditorWidget
 from .layers import Layers
 from .misc.invisible_lyrs_grps import InvisibleLayersAndGroups
@@ -348,11 +348,6 @@ class Flo2D(object):
                     "Open FLO-2D Project",
                     lambda: self.flo_open_project(),
                 ),
-                # (
-                #     os.path.join(self.plugin_dir, "img/mActionSaveGeoPackageLayer.svg"),
-                #     "Save FLO-2D Project",
-                #     lambda: self.flo_save_project(),
-                # ),
                 (
                     os.path.join(self.plugin_dir, "img/gpkg.svg"),
                     "FLO-2D GeoPackage Management",
@@ -367,11 +362,6 @@ class Flo2D(object):
             callback=None,
             parent=self.iface.mainWindow(),
             menu=(
-                # (
-                #     os.path.join(self.plugin_dir, "img/gpkg2gpkg.svg"),
-                #     "Import from GeoPackage",
-                #     lambda: self.import_from_gpkg(),
-                # ),
                 (
                     os.path.join(self.plugin_dir, "img/import_gds.svg"),
                     "Import data (*.DAT) files",
@@ -396,6 +386,16 @@ class Flo2D(object):
                     os.path.join(self.plugin_dir, "img/export_hdf5.svg"),
                     "Export to HDF5",
                     lambda: self.export_hdf5(),
+                ),
+                (
+                    os.path.join(self.plugin_dir, "img/import_swmm.svg"),
+                    "Import from INP",
+                    lambda: self.import_inp(),
+                ),
+                (
+                    os.path.join(self.plugin_dir, "img/export_swmm.svg"),
+                    "Export to INP",
+                    lambda: self.export_inp(),
                 ),
                 (
                     os.path.join(self.plugin_dir, "img/import_ras.svg"),
@@ -3231,6 +3231,22 @@ class Flo2D(object):
             self.setup_dock_widgets()
         finally:
             QApplication.restoreOverrideCursor()
+
+    @connection_required
+    def import_inp(self):
+        """
+        Function to export FLO-2D to SWMM's INP file
+        """
+        sd_editor = StormDrainEditorWidget(self.iface, self.f2d_plot, self.f2d_table, self.lyrs)
+        sd_editor.import_storm_drain_INP_file("Choose", True)
+
+    @connection_required
+    def export_inp(self):
+        """
+        Function to import SWMM's INP file to FLO-2D project
+        """
+        sd_editor = StormDrainEditorWidget(self.iface, self.f2d_plot, self.f2d_table, self.lyrs)
+        sd_editor.export_storm_drain_INP_file()
 
     @connection_required
     def import_from_ras(self):

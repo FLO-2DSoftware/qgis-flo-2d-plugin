@@ -320,8 +320,8 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         self.pump_curve_type_cbo.currentIndexChanged.connect(self.update_pump_curve_data)
         self.pump_curve_description_le.textChanged.connect(self.update_pump_curve_data)
 
-        self.import_inp_btn.clicked.connect(lambda: self.import_storm_drain_INP_file("Choose", True))
-        self.export_inp_btn.clicked.connect(self.export_storm_drain_INP_file)
+        # self.import_inp_btn.clicked.connect(lambda: self.import_storm_drain_INP_file("Choose", True))
+        # self.export_inp_btn.clicked.connect(self.export_storm_drain_INP_file)
         
         # self.import_inp2_btn.clicked.connect(lambda: self.import_storm_drain_INP_file("Choose", True))
         # self.export_inp2_btn.clicked.connect(self.export_storm_drain_INP_file)
