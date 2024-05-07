@@ -322,24 +322,27 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         self.pump_curve_type_cbo.currentIndexChanged.connect(self.update_pump_curve_data)
         self.pump_curve_description_le.textChanged.connect(self.update_pump_curve_data)
 
+        # self.import_inp_btn.clicked.connect(lambda: self.import_storm_drain_INP_file("Choose", True))
+        # self.export_inp_btn.clicked.connect(self.export_storm_drain_INP_file)
+        
         self.import_inp_btn.clicked.connect(lambda: self.import_storm_drain_INP_file("Choose", True))
         self.export_inp_btn.clicked.connect(self.export_storm_drain_INP_file)
-        
-        # self.import_inp2_btn.clicked.connect(lambda: self.import_storm_drain_INP_file("Choose", True))
-        # self.export_inp2_btn.clicked.connect(self.export_storm_drain_INP_file)
+
+        self.import_shapefile_btn.clicked.connect(self.import_hydraulics)
+        self.auto_assign_link_nodes_btn.clicked.connect(self.auto_assign)
                
         self.pump_curve_cbo.activated.connect(self.current_cbo_pump_curve_index_changed)
         self.pump_curve_cbo.currentIndexChanged.connect(self.refresh_PC_PlotAndTable)
 
         self.simulate_stormdrain_chbox.clicked.connect(self.simulate_stormdrain)
-        self.import_shapefile_btn.clicked.connect(self.import_hydraulics)
+        # self.import_shapefile_btn.clicked.connect(self.import_hydraulics)
         # self.create_discharge_plots_btn.clicked.connect(self.create_SD_discharge_table_and_plots)
 
         self.SD_type4_cbo.activated.connect(self.SD_show_type4_table_and_plot)
 
         self.SD_nodes_components_cbo.currentIndexChanged.connect(self.nodes_component_changed)
         self.SD_links_components_cbo.currentIndexChanged.connect(self.links_component_changed)
-        self.auto_assign_link_nodes_btn.clicked.connect(self.auto_assign)
+        # self.auto_assign_link_nodes_btn.clicked.connect(self.auto_assign)
         
         self.populate_type4_combo()
         self.populate_pump_curves_and_data()
