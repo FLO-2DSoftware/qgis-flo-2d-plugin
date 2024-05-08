@@ -2145,8 +2145,9 @@ class Layers(object):
         grp = self.root.findGroup(group) if group is not None else self.root
         if grp:
             for lyr in grp.findLayers():
-                if normpath(lyr.layer().dataProvider().dataSourceUri()) == normpath(uri):
-                    return lyr.layer().id()
+                if lyr:
+                    if normpath(lyr.layer().dataProvider().dataSourceUri()) == normpath(uri):
+                        return lyr.layer().id()
         return None
 
     @staticmethod

@@ -1010,8 +1010,13 @@ class Flo2D(object):
                     gpkg_layer.setRenderer(layer.renderer().clone())
                     gpkg_layer.triggerRepaint()
                     root = self.project.layerTreeRoot()
-                    flo2d_name = f"FLO-2D_{self.gutils.get_metadata_par('PROJ_NAME')}"
                     group_name = "External Layers"
+                    tree_layer = root.findLayer(layer.id())
+                    if tree_layer:
+                        layer_parent = tree_layer.parent()
+                        if layer_parent and layer_parent.name() == "Storm Drain":
+                            group_name = layer_parent.name()
+                    flo2d_name = f"FLO-2D_{self.gutils.get_metadata_par('PROJ_NAME')}"
                     flo2d_grp = root.findGroup(flo2d_name)
                     if flo2d_grp.findGroup(group_name):
                         group = flo2d_grp.findGroup(group_name)
