@@ -12,7 +12,8 @@ import os
 import tempfile
 from subprocess import PIPE, STDOUT, Popen
 
-from qgis._core import QgsWkbTypes, QgsGeometry, QgsFeatureRequest
+import processing
+from qgis._core import QgsWkbTypes, QgsGeometry, QgsFeatureRequest, QgsCoordinateReferenceSystem, QgsProject
 from qgis.core import QgsRasterLayer
 from qgis.PyQt.QtCore import QSettings
 from qgis.PyQt.QtWidgets import QFileDialog
@@ -22,7 +23,51 @@ from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
 from .ui_utils import load_ui
 
+import numpy as np
+
 uiDialog, qtBaseClass = load_ui("sampling_rc")
+
+
+def idw_interpolation(points, query_point, power=2, num_neighbors=2):
+    """
+    Perform IDW interpolation to estimate the z value at the query_point using nearby points.
+
+    Args:
+        points (numpy.ndarray): A numpy array of shape (N, 3) where each row represents (x, y, z) of a known point.
+        query_point (numpy.ndarray): The query point as a numpy array of shape (2,) representing (x, y) coordinates.
+        power (float): The power parameter for the IDW formula (default is 2).
+        num_neighbors (int): Number of nearest neighbors to use for interpolation (default is 3).
+
+    Returns:
+        float: The estimated z value at the query_point.
+    """
+    x_query, y_query = query_point
+    distances = np.zeros((len(points),))
+
+    # Calculate distances from query_point to all other points
+    distances = np.sqrt((points[:, 0] - x_query) ** 2 + (points[:, 1] - y_query) ** 2)
+
+    # Combine distances with points array
+    distances_points = np.column_stack((distances, points))
+
+    # Sort points based on distance
+    distances_points = distances_points[distances_points[:, 0].argsort()]
+
+    # Take the closest num_neighbors points
+    selected_points = distances_points[:num_neighbors]
+
+    # Calculate weighted z value using IDW formula
+    weighted_sum = np.sum(selected_points[:, 3] / selected_points[:, 0] ** power)
+    sum_weights = np.sum(1 / selected_points[:, 0] ** power)
+
+    # Avoid division by zero
+    if sum_weights == 0:
+        return None
+
+    # Calculate the interpolated z value
+    interpolated_z = weighted_sum / sum_weights
+
+    return interpolated_z
 
 
 class SamplingRCDialog(qtBaseClass, uiDialog):
@@ -99,18 +144,36 @@ class SamplingRCDialog(qtBaseClass, uiDialog):
             self.uc.bar_warn("There is no grid! Please create it before running tool.")
             return
 
+        grid_extent = self.grid_lyr.extent()
+        xMaximum = grid_extent.xMaximum()
+        yMaximum = grid_extent.yMaximum() - 0.5
+        xMinimum = grid_extent.xMinimum() + 0.5
+        yMinimum = grid_extent.yMinimum()
+
+        subcells_centroids = processing.run("native:creategrid", {'TYPE': 0,
+                                             'EXTENT': f'{xMinimum},{xMaximum},{yMaximum},{yMinimum} [{self.grid_lyr.crs().authid()}]',
+                                             'HSPACING': 1, 'VSPACING': 1, 'HOVERLAY': 0, 'VOVERLAY': 0,
+                                             'CRS': QgsCoordinateReferenceSystem(self.grid_lyr.crs().authid()),
+                                             'OUTPUT': 'TEMPORARY_OUTPUT'})['OUTPUT']
+
         grid_elems = self.grid_lyr.getFeatures()
-        self.points_feats, self.points_index = spatial_index(self.current_lyr)
+        dtm_feats, dtm_index = spatial_index(self.current_lyr)
+        subcell_feats, subcell_index = spatial_index(subcells_centroids)
 
         for feat in grid_elems:
             geom = feat.geometry()
             geos_geom = QgsGeometry.createGeometryEngine(geom.constGet())
             geos_geom.prepareGeometry()
-            fids = self.points_index.intersects(geom.boundingBox())
-            for fid in fids:
-                point_feat = self.points_feats[fid]
-                self.uc.log_info(str(feat["fid"]))
-                self.uc.log_info(str(point_feat['ELEVATION']))
+            subcell_index_on_grid_element = subcell_index.intersects(geom.boundingBox())
+            for sub_idx in subcell_index_on_grid_element:
+                self.uc.log_info(str(sub_idx))
+            # for index in subcell_index_on_grid_element:
+
+            # fids = self.points_index.intersects(geom.boundingBox())
+            # for fid in fids:
+            #     point_feat = self.points_feats[fid]
+                # self.uc.log_info(str(feat["fid"]))
+                # self.uc.log_info(str(point_feat['ELEVATION']))
                 # other_geom = point_feat.geometry()
                 # isin = geos_geom.intersects(other_geom.constGet())
                 # if isin is True:
@@ -119,9 +182,11 @@ class SamplingRCDialog(qtBaseClass, uiDialog):
                 #     pass
             break
 
-            # self.uc.log_info(str(feat["fid"]))
-
-
+        # processing.run("native:creategrid", {'TYPE': 0,
+        #                                      'EXTENT': '654735.810000000,655275.810000000,960661.810000000,961171.810000000 [EPSG:2223]',
+        #                                      'HSPACING': 1, 'VSPACING': 1, 'HOVERLAY': 0, 'VOVERLAY': 0,
+        #                                      'CRS': QgsCoordinateReferenceSystem('EPSG:2223'),
+        #                                      'OUTPUT': 'TEMPORARY_OUTPUT'})
 
     # def probe_elevation(self):
     #     """
