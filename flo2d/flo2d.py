@@ -4081,7 +4081,7 @@ class Flo2D(object):
                         
         if 6 in methods_numbers:  # Storm Drains:
             self.uc.show_info(
-                "To complete the Storm Drain functionality 'Import SWMM.INP' from the Storm Drain Editor widget."
+                "To complete the Storm Drain functionality, select 'Import from .INP' from the 'FLO-2D' toolbar."
             )
 
     @connection_required
