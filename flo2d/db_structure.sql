@@ -1743,6 +1743,17 @@ CREATE TABLE "tolspatial_cells" (
 );
 INSERT INTO gpkg_contents (table_name, data_type) VALUES ('tolspatial_cells', 'aspatial');
 
+-- OUTRC.DAT
+
+CREATE TABLE "outrc" (
+    "fid" INTEGER NOT NULL PRIMARY KEY,
+    "grid_fid" INTEGER, -- grid cell
+    "depthrt" REAL, -- Increment flow depth for the volumetric rating table
+    "volrt" REAL -- Volume for each incremental depth.
+
+);
+INSERT INTO gpkg_contents (table_name, data_type) VALUES ('outrc', 'aspatial');
+
 -- WSURF.DAT
 
 CREATE TABLE "wsurf" (

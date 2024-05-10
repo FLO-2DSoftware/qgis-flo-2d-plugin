@@ -13,12 +13,13 @@ import tempfile
 from subprocess import PIPE, STDOUT, Popen
 
 import processing
+from PyQt5.QtWidgets import QProgressDialog, QApplication
 from qgis._core import QgsWkbTypes, QgsGeometry, QgsFeatureRequest, QgsCoordinateReferenceSystem, QgsProject
 from qgis.core import QgsRasterLayer
 from qgis.PyQt.QtCore import QSettings
 from qgis.PyQt.QtWidgets import QFileDialog
 
-from ..flo2d_tools.grid_tools import grid_has_empty_elev, raster2grid, spatial_index
+from ..flo2d_tools.grid_tools import grid_has_empty_elev, raster2grid, spatial_index, number_of_elements
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
 from .ui_utils import load_ui
@@ -144,126 +145,130 @@ class SamplingRCDialog(qtBaseClass, uiDialog):
             self.uc.bar_warn("There is no grid! Please create it before running tool.")
             return
 
+        self.gutils.clear_tables('outrc')
+
         grid_extent = self.grid_lyr.extent()
         xMaximum = grid_extent.xMaximum()
         yMaximum = grid_extent.yMaximum() - 0.5
         xMinimum = grid_extent.xMinimum() + 0.5
         yMinimum = grid_extent.yMinimum()
 
-        subcells_centroids = processing.run("native:creategrid", {'TYPE': 0,
+        subcells = processing.run("native:creategrid", {'TYPE': 0,
                                              'EXTENT': f'{xMinimum},{xMaximum},{yMaximum},{yMinimum} [{self.grid_lyr.crs().authid()}]',
                                              'HSPACING': 1, 'VSPACING': 1, 'HOVERLAY': 0, 'VOVERLAY': 0,
                                              'CRS': QgsCoordinateReferenceSystem(self.grid_lyr.crs().authid()),
                                              'OUTPUT': 'TEMPORARY_OUTPUT'})['OUTPUT']
 
-        grid_elems = self.grid_lyr.getFeatures()
-        dtm_feats, dtm_index = spatial_index(self.current_lyr)
-        subcell_feats, subcell_index = spatial_index(subcells_centroids)
+        dtm_points_array = np.empty((0, 3), dtype=float)
+        dtm_points = self.current_lyr.getFeatures()
+        for dtm_point in dtm_points:
+            dtm_point_attribute = dtm_point.attributes()
+            dtm_point_geometry = dtm_point.geometry()
+            x = dtm_point_geometry.asPoint().x()
+            y = dtm_point_geometry.asPoint().y()
+            dtm_points_array = np.append(dtm_points_array, [[x, y, dtm_point_attribute[1]]], axis=0)
 
-        for feat in grid_elems:
-            geom = feat.geometry()
-            geos_geom = QgsGeometry.createGeometryEngine(geom.constGet())
-            geos_geom.prepareGeometry()
-            subcell_index_on_grid_element = subcell_index.intersects(geom.boundingBox())
-            for sub_idx in subcell_index_on_grid_element:
-                self.uc.log_info(str(sub_idx))
-            # for index in subcell_index_on_grid_element:
+        grid_elements = self.grid_lyr.getFeatures()
 
-            # fids = self.points_index.intersects(geom.boundingBox())
-            # for fid in fids:
-            #     point_feat = self.points_feats[fid]
-                # self.uc.log_info(str(feat["fid"]))
-                # self.uc.log_info(str(point_feat['ELEVATION']))
-                # other_geom = point_feat.geometry()
-                # isin = geos_geom.intersects(other_geom.constGet())
-                # if isin is True:
-                #     points.append(point_feat[self.field])
-                # else:
-                #     pass
-            break
+        n_cells = number_of_elements(self.gutils, self.grid_lyr)
 
-        # processing.run("native:creategrid", {'TYPE': 0,
-        #                                      'EXTENT': '654735.810000000,655275.810000000,960661.810000000,961171.810000000 [EPSG:2223]',
-        #                                      'HSPACING': 1, 'VSPACING': 1, 'HOVERLAY': 0, 'VOVERLAY': 0,
-        #                                      'CRS': QgsCoordinateReferenceSystem('EPSG:2223'),
-        #                                      'OUTPUT': 'TEMPORARY_OUTPUT'})
+        progDialog = QProgressDialog("Creating rating tables...", None, 0, n_cells)
+        progDialog.setModal(True)
+        progDialog.setValue(0)
+        progDialog.show()
 
-    # def probe_elevation(self):
-    #     """
-    #     Resample raster to be aligned with the grid, then probe values and update elements elevation attr.
-    #     """
-    #     self.src_raster = self.srcRasterCbo.itemData(self.srcRasterCbo.currentIndex())
-    #     self.get_worp_opts_data()
-    #     opts = [
-    #         "-of GTiff",
-    #         "-ot {}".format(self.RTYPE[self.raster_type]),
-    #         "-tr {0} {0}".format(self.cell_size),
-    #         '-s_srs "{}"'.format(self.src_srs),
-    #         '-t_srs "{}"'.format(self.out_srs),
-    #         "-te {}".format(" ".join([str(c) for c in self.output_bounds])),
-    #         '-te_srs "{}"'.format(self.out_srs),
-    #         "-ovr {}".format(self.ovrCbo.itemData(self.ovrCbo.currentIndex())),
-    #         "-dstnodata {}".format(self.src_nodata),
-    #         "-r {}".format(self.algCbo.itemData(self.algCbo.currentIndex())),
-    #         "-co COMPRESS=LZW",
-    #         "-wo OPTIMIZE_SIZE=TRUE",
-    #     ]
-    #     if self.multiThreadChBox.isChecked():
-    #         opts.append("-multi -wo NUM_THREADS=ALL_CPUS")
-    #     else:
-    #         pass
-    #     temp_dir = tempfile.gettempdir()
-    #     temp_file_path = os.path.join(temp_dir, "elevation_interpolated.tif")
-    #     cmd = 'gdalwarp {} "{}" "{}"'.format(" ".join([opt for opt in opts]), self.src_raster, temp_file_path)
-    #     print(cmd)
-    #     with open(os.devnull, 'r') as devnull:
-    #         proc = Popen(
-    #             cmd,
-    #             shell=True,
-    #             stdin=devnull,
-    #             stdout=PIPE,
-    #             stderr=STDOUT,
-    #             universal_newlines=True,
-    #         )
-    #     out = proc.communicate()
-    #     for line in out:
-    #         self.uc.log_info(line)
-    #     # Fill NODATA raster cells if desired
-    #     if self.fillNoDataChBox.isChecked():
-    #         self.fill_nodata()
-    #     else:
-    #         pass
-    #     sampler = raster2grid(self.grid, temp_file_path)
-    #
-    #     qry = "UPDATE grid SET elevation=? WHERE fid=?;"
-    #     self.con.executemany(qry, sampler)
-    #     self.con.commit()
-    #
-    #     os.remove(temp_file_path)
-    #
-    #     return True
-    #
-    # def fill_nodata(self):
-    #     opts = ["-md {}".format(self.radiusSBox.value())]
-    #     cmd = 'gdal_fillnodata {} "{}"'.format(" ".join([opt for opt in opts]), self.out_raster)
-    #     with open(os.devnull, 'r') as devnull:
-    #         proc = Popen(
-    #             cmd,
-    #             shell=True,
-    #             stdin=devnull,
-    #             stdout=PIPE,
-    #             stderr=STDOUT,
-    #             universal_newlines=True,
-    #         )
-    #     out = proc.communicate()
-    #     for line in out:
-    #         self.uc.log_info(line)
-    #
-    # def show_probing_result_info(self):
-    #     null_nr = grid_has_empty_elev(self.gutils)
-    #     if null_nr:
-    #         msg = "Sampling done.\n"
-    #         msg += "Warning: There are {} grid elements that have no elevation value.".format(null_nr)
-    #         self.uc.show_info(msg)
-    #     else:
-    #         self.uc.show_info("Sampling done.")
+        outrc_rcdata = []  # Initialize outside the loop to accumulate data
+
+        for j, grid in enumerate(grid_elements):
+            grid_geometry = grid.geometry()
+            grid_fid = grid.attributes()[0]
+
+            elevations = []
+            subcell_centroids = subcells.getFeatures()
+            for subcell in subcell_centroids:
+                if subcell.geometry().intersects(grid_geometry):
+                    subcell_geometry = subcell.geometry()
+                    x = subcell_geometry.asPoint().x()
+                    y = subcell_geometry.asPoint().y()
+                    elevation_interpolated = idw_interpolation(dtm_points_array, np.array([x, y]))
+                    elevations.append(elevation_interpolated)
+
+            elev_sorted = sorted(elevations)
+            max_elev = max(elevations)
+            min_elev = min(elevations)
+            dh = (max_elev - min_elev) / 10  # dh subdivided into 11 steps
+
+            # Organize the elevation ranges
+            elev_ranges = [round(min_elev + dh * i, 3) for i in range(11)]
+
+            # Calculate the volumes
+            volume = []
+            for elev_range in elev_ranges:
+                volume_accumulator = 0
+                for elev in elev_sorted:
+                    if elev == min_elev:
+                        volume_accumulator = 0
+                    elif elev < elev_range:
+                        volume_accumulator += (max_elev - elev)
+                volume.append(round(volume_accumulator, 3))
+
+            # Prepare data for insertion
+            data = [(grid_fid, elev, vol) for elev, vol in zip(elev_ranges, volume)]
+            outrc_rcdata.extend(data)  # Extend outrc_rcdata with data for current grid
+
+            QApplication.processEvents()
+            progDialog.setValue(j + 1)
+
+        # Execute the insert operation outside the loop
+        if outrc_rcdata:
+            self.gutils.execute_many("INSERT INTO outrc (grid_fid, depthrt, volrt) VALUES (?, ?, ?);", outrc_rcdata)
+
+        # progDialog = QProgressDialog("Creating rating tables...", None, 0, n_cells)
+        # progDialog.setModal(True)
+        # progDialog.setValue(0)
+        # progDialog.show()
+        # j = 0
+        #
+        # for grid in grid_elements:
+        #     outrc_rcdata = []
+        #
+        #     grid_geometry = grid.geometry()
+        #     grid_fid = grid.attributes()[0]
+        #
+        #     elevations = []
+        #     subcell_centroids = subcells.getFeatures()
+        #     for subcell in subcell_centroids:
+        #         if subcell.geometry().intersects(grid_geometry):
+        #             subcell_geometry = subcell.geometry()
+        #             x = subcell_geometry.asPoint().x()
+        #             y = subcell_geometry.asPoint().y()
+        #             elevation_interpolated = idw_interpolation(dtm_points_array, np.array([x, y]))
+        #             elevations.append(elevation_interpolated)
+        #
+        #     elev_sorted = sorted(elevations)
+        #     max_elev = max(elevations)
+        #     min_elev = min(elevations)
+        #     dh = (max_elev - min_elev) / 10  # dh subdivided into 11 steps
+        #
+        #     # Organize the elevation
+        #     elev_ranges = [round(min_elev, 2)]
+        #     for i in range(1, 11):
+        #         elev_ranges.append(round(min_elev + dh * i, 3))
+        #
+        #     # Calculate the volumes
+        #     volume = []
+        #     for elev_range in elev_ranges:
+        #         volume_accumulator = 0
+        #         for elev in elev_sorted:
+        #             if elev < elev_range:
+        #                 volume_accumulator += (max_elev - elev)
+        #         volume.append(round(volume_accumulator, 3))
+        #
+        #     data = [(grid_fid, x, y) for x, y in zip(elev_ranges, volume)]
+        #     outrc_rcdata.append(data)
+        #
+        #     self.gutils.execute_many(f"INSERT INTO outrc (grid_fid, depthrt, volrt) VALUES (?, ?, ?);", outrc_rcdata)
+        #
+        #     j += 1
+        #     QApplication.processEvents()
+        #     progDialog.setValue(j)

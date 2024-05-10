@@ -928,6 +928,17 @@ class Layers(object):
                     },
                 ),
                 (
+                    "outrc",
+                    {
+                        "name": "Surface Water Rating Tables",
+                        "sgroup": "Tables",
+                        "styles": None,
+                        "attrs_edit_widgets": {},
+                        "readonly": True,
+                        "advanced": True
+                    },
+                ),
+                (
                     "fpfroude_cells",
                     {
                         "name": "Froude Cells",
