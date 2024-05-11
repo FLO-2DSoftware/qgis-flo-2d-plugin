@@ -218,7 +218,9 @@ class StorageUnitsDialog(qtBaseClass, uiDialog):
                             if index == -1:
                                 index = 0
                             self.tabular_curves_cbo.setCurrentIndex(index)                      
-                                            
+                    
+                    if cell == 6:
+                        data = 0.0                        
                     item.setData(Qt.EditRole, data)
                     self.storages_tblw.setItem(row_number, cell, item)
     

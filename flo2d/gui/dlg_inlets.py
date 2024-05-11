@@ -229,6 +229,8 @@ class InletNodesDialog(qtBaseClass, uiDialog):
                     # See if rating tables or Culvert eq. exist:
                     if cell == 0:
                         inlet = data
+                    if cell == 6:
+                        data = 0.0  
                     if cell == 16:
                         if data:  # data is the rating table or Culvert eq. name for cell 16.
                             data = data.strip()
