@@ -307,7 +307,7 @@ class InletNodesDialog(qtBaseClass, uiDialog):
                 "Max. Depth",  # INP
                 "Init. Depth",  # INP
                 "Surcharge Depth",  # INP
-                "(Disabled)",  # INP
+                "(Disabled)",  # INP (ponded area)
                 "Inlet Drain Type",  # FLO-2D. SWMMFLO.DAT: INTYPE
                 "Length/Perimeter",  # FLO-2D. SWMMFLO.DAT: SWMMlenght
                 "Width/Area",  # FLO-2D. SWMMFLO.DAT: SWMMwidth

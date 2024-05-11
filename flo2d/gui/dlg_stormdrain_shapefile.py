@@ -113,8 +113,8 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
             lambda: self.clear_fieldCombo(self.strge_unit_initial_depth_FieldCbo))
         self.clear_strge_unit_external_inflow_btn.clicked.connect(
             lambda: self.clear_fieldCombo(self.strge_unit_external_inflow_FieldCbo))
-        self.clear_strge_unit_ponded_area_btn.clicked.connect(
-            lambda: self.clear_fieldCombo(self.strge_unit_ponded_area_FieldCbo))
+        # self.clear_strge_unit_ponded_area_btn.clicked.connect(
+        #     lambda: self.clear_fieldCombo(self.strge_unit_ponded_area_FieldCbo))
         self.clear_strge_unit_evap_factor_btn.clicked.connect(
             lambda: self.clear_fieldCombo(self.strge_unit_evap_factor_FieldCbo))
         self.clear_strge_unit_treatment_btn.clicked.connect(
@@ -778,7 +778,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
         self.strge_unit_max_depth_FieldCbo.setCurrentIndex(-1)
         self.strge_unit_initial_depth_FieldCbo.setCurrentIndex(-1)
         self.strge_unit_external_inflow_FieldCbo.setCurrentIndex(-1)
-        self.strge_unit_ponded_area_FieldCbo.setCurrentIndex(-1)
+        # self.strge_unit_ponded_area_FieldCbo.setCurrentIndex(-1)
         self.strge_unit_evap_factor_FieldCbo.setCurrentIndex(-1)
         self.strge_unit_treatment_FieldCbo.setCurrentIndex(-1)
         self.strge_unit_infiltration_FieldCbo.setCurrentIndex(-1)
@@ -1390,13 +1390,14 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                     external_inflow = (
                         f[self.strge_unit_external_inflow_FieldCbo.currentText()]
                         if self.strge_unit_external_inflow_FieldCbo.currentText() != ""
-                        else "False"
-                    )
-                    ponded_area = (
-                        f[self.strge_unit_ponded_area_FieldCbo.currentText()]
-                        if self.strge_unit_ponded_area_FieldCbo.currentText() != ""
-                        else 0.0
-                    )
+                        else "False")
+
+                    ponded_area = 0.0
+                    # ponded_area = (
+                    #     f[self.strge_unit_ponded_area_FieldCbo.currentText()]
+                    #     if self.strge_unit_ponded_area_FieldCbo.currentText() != ""
+                    #     else 0.0
+                    # )
                     evap_factor = (
                         f[self.strge_unit_evap_factor_FieldCbo.currentText()]
                         if self.strge_unit_evap_factor_FieldCbo.currentText() != ""
@@ -2317,7 +2318,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
             'sf_strge_unit_max_depth': self.strge_unit_max_depth_FieldCbo.currentText(),
             'sf_strge_unit_initial_depth': self.strge_unit_initial_depth_FieldCbo.currentText(),
             'sf_strge_unit_external_inflow': self.strge_unit_external_inflow_FieldCbo.currentText(),
-            'sf_strge_unit_ponded_area': self.strge_unit_ponded_area_FieldCbo.currentText(),
+            # 'sf_strge_unit_ponded_area': self.strge_unit_ponded_area_FieldCbo.currentText(),
             'sf_strge_unit_evap_factor': self.strge_unit_evap_factor_FieldCbo.currentText(),
             'sf_strge_unit_treatment': self.strge_unit_treatment_FieldCbo.currentText(),
             'sf_strge_unit_infiltration': self.strge_unit_infiltration_FieldCbo.currentText(),
@@ -2561,8 +2562,8 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                     self.restore_field("sf_strge_unit_initial_depth", field_names))
                 self.strge_unit_external_inflow_FieldCbo.setCurrentIndex(
                     self.restore_field("sf_strge_unit_external_inflow", field_names))
-                self.strge_unit_ponded_area_FieldCbo.setCurrentIndex(
-                    self.restore_field("sf_strge_unit_ponded_area", field_names))
+                # self.strge_unit_ponded_area_FieldCbo.setCurrentIndex(
+                #     self.restore_field("sf_strge_unit_ponded_area", field_names))
                 self.strge_unit_evap_factor_FieldCbo.setCurrentIndex(
                     self.restore_field("sf_strge_unit_evap_factor", field_names))
                 self.strge_unit_treatment_FieldCbo.setCurrentIndex(
@@ -2604,8 +2605,8 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                     self.strge_unit_initial_depth_FieldCbo.setCurrentIndex(index)
                 if "external" in field_name.lower():
                     self.strge_unit_external_inflow_FieldCbo.setCurrentIndex(index)
-                if "pond" in field_name.lower():
-                    self.strge_unit_ponded_area_FieldCbo.setCurrentIndex(index)
+                # if "pond" in field_name.lower():
+                #     self.strge_unit_ponded_area_FieldCbo.setCurrentIndex(index)
                 if "evap" in field_name.lower():
                     self.strge_unit_evap_factor_FieldCbo.setCurrentIndex(index)
                 if "treat" in field_name.lower():
