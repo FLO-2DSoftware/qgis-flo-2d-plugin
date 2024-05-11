@@ -2697,7 +2697,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                                     0 if row[2] is None else row[2],
                                     0 if row[3] is None else row[3],
                                     0 if row[4] is None else row[4],
-                                    0 if row[5] is None else row[5],
+                                    0,
                                 )
                                 swmm_inp_file.write(line.format(*row))
                     except Exception as e:
@@ -2797,7 +2797,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                                     0 if lrow[5] is None else '%g'%lrow[5],
                                     0 if lrow[6] is None else '%g'%lrow[6],
                                     0 if lrow[7] is None else '%g'%lrow[7],
-                                    0 if lrow[8] is None else '%g'%lrow[8],
+                                    0,
                                     0 if lrow[9] is None else '%g'%lrow[9],
                                     0 if lrow[10] is None else '%g'%lrow[10],
                                     0 if lrow[11] is None else '%g'%lrow[11],

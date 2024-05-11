@@ -2452,39 +2452,6 @@ inlets/junctions</string>
             </widget>
            </item>
            <item>
-            <widget class="QLabel" name="label_183">
-             <property name="sizePolicy">
-              <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-               <horstretch>0</horstretch>
-               <verstretch>0</verstretch>
-              </sizepolicy>
-             </property>
-             <property name="minimumSize">
-              <size>
-               <width>100</width>
-               <height>22</height>
-              </size>
-             </property>
-             <property name="maximumSize">
-              <size>
-               <width>16777215</width>
-               <height>22</height>
-              </size>
-             </property>
-             <property name="font">
-              <font>
-               <strikeout>false</strikeout>
-              </font>
-             </property>
-             <property name="text">
-              <string>Ponded Area</string>
-             </property>
-             <property name="alignment">
-              <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-             </property>
-            </widget>
-           </item>
-           <item>
             <widget class="QLabel" name="label_184">
              <property name="sizePolicy">
               <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
@@ -2689,31 +2656,6 @@ inlets/junctions</string>
            </item>
            <item>
             <widget class="QgsFieldComboBox" name="strge_unit_external_inflow_FieldCbo">
-             <property name="sizePolicy">
-              <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
-               <horstretch>0</horstretch>
-               <verstretch>0</verstretch>
-              </sizepolicy>
-             </property>
-             <property name="minimumSize">
-              <size>
-               <width>230</width>
-               <height>22</height>
-              </size>
-             </property>
-             <property name="maximumSize">
-              <size>
-               <width>16777215</width>
-               <height>22</height>
-              </size>
-             </property>
-             <property name="maxVisibleItems">
-              <number>20</number>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QgsFieldComboBox" name="strge_unit_ponded_area_FieldCbo">
              <property name="sizePolicy">
               <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
                <horstretch>0</horstretch>
@@ -2952,31 +2894,6 @@ inlets/junctions</string>
           </widget>
          </item>
          <item>
-          <widget class="QPushButton" name="clear_strge_unit_ponded_area_btn">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-           <property name="minimumSize">
-            <size>
-             <width>22</width>
-             <height>22</height>
-            </size>
-           </property>
-           <property name="maximumSize">
-            <size>
-             <width>22</width>
-             <height>22</height>
-            </size>
-           </property>
-           <property name="text">
-            <string>x</string>
-           </property>
-          </widget>
-         </item>
-         <item>
           <widget class="QPushButton" name="clear_strge_unit_evap_factor_btn">
            <property name="sizePolicy">
             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
@@ -3057,9 +2974,9 @@ inlets/junctions</string>
         <property name="geometry">
          <rect>
           <x>450</x>
-          <y>50</y>
+          <y>33</y>
           <width>379</width>
-          <height>274</height>
+          <height>291</height>
          </rect>
         </property>
         <layout class="QHBoxLayout" name="horizontalLayout_43">
@@ -3579,9 +3496,9 @@ inlets/junctions</string>
         <property name="geometry">
          <rect>
           <x>840</x>
-          <y>50</y>
+          <y>31</y>
           <width>24</width>
-          <height>272</height>
+          <height>291</height>
          </rect>
         </property>
         <layout class="QVBoxLayout" name="verticalLayout_50">
