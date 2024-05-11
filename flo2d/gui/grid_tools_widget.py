@@ -46,7 +46,7 @@ from ..flo2d_tools.grid_tools import (
     poly2poly_geos,
     render_grid_elevations2,
     square_grid,
-    update_roughness,
+    update_roughness, grid_compas_neighbors,
 )
 from ..geopackage_utils import GeoPackageUtils
 from ..gui.dlg_arf_wrf import EvaluateReductionFactorsDialog
@@ -250,8 +250,47 @@ class GridToolsWidget(qtBaseClass, uiDialog):
             default = self.gutils.get_cont_par("MANNING")
             self.gutils.execute("UPDATE grid SET n_value=?;", (default,))
 
-            # Update grid_lyr:
             grid_lyr = self.lyrs.data["grid"]["qlyr"]
+            dangling = False
+            for idx, row in enumerate(grid_compas_neighbors(self.gutils), start=1):
+                n = row[0]
+                e = row[1]
+                s = row[2]
+                w = row[3]
+                ne = row[4]
+                se = row[5]
+                sw = row[6]
+                nw = row[7]
+                cardinal_directions = sum(1 for var in [n, e, s, w] if var == 0)
+                ordinal_directions = sum(1 for var in [ne, se, sw, nw] if var == 0)
+                # Check if at least 3 directions are zero -> dangling grid element
+                if cardinal_directions >= 3 or (ordinal_directions >= 3 and cardinal_directions == 4):
+                    dangling = True
+                    delete_grid_elem_query = f"DELETE FROM grid WHERE fid = {idx};"
+                    self.gutils.execute(delete_grid_elem_query)
+
+            if dangling:
+                create_temp_table_query = """
+                CREATE TABLE temp_table AS
+                SELECT *, ROW_NUMBER() OVER () - 1 AS new_fid
+                FROM grid;
+                """
+                self.gutils.execute(create_temp_table_query)
+
+                # Delete data from the original table
+                delete_data_query = "DELETE FROM grid;"
+                self.gutils.execute(delete_data_query)
+
+                # Copy data from the temporary table back to the original table
+                copy_data_query = "INSERT INTO grid SELECT new_fid, col, row, n_value, elevation, water_elevation, " \
+                                  "flow_depth, geom FROM temp_table;"
+                self.gutils.execute(copy_data_query)
+
+                # Drop the temporary table
+                drop_temp_table_query = "DROP TABLE temp_table;"
+                self.gutils.execute(drop_temp_table_query)
+
+            # Update grid_lyr:
             self.lyrs.update_layer_extents(grid_lyr)
             if grid_lyr:
                 grid_lyr.triggerRepaint()
