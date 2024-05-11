@@ -14,6 +14,7 @@ import traceback
 
 from PyQt5.QtCore import QUrl
 from PyQt5.QtGui import QDesktopServices
+from PyQt5.QtWidgets import QProgressDialog
 from qgis.PyQt import QtCore, QtGui
 from qgis.core import NULL, Qgis, QgsFeature, QgsGeometry, QgsMessageLog, QgsWkbTypes
 from qgis.PyQt import QtWidgets
@@ -29,6 +30,7 @@ from qgis.PyQt.QtWidgets import (
     QWidget,
 )
 
+from .grid_info_widget import GridInfoWidget
 from ..flo2d_tools.grid_tools import (
     ZonalStatistics,
     ZonalStatisticsOther,
@@ -250,7 +252,15 @@ class GridToolsWidget(qtBaseClass, uiDialog):
             default = self.gutils.get_cont_par("MANNING")
             self.gutils.execute("UPDATE grid SET n_value=?;", (default,))
 
-            grid_lyr = self.lyrs.data["grid"]["qlyr"]
+            n_cells = number_of_elements(self.gutils, grid_lyr)
+
+            progDialog = QProgressDialog("Checking grid elements. Please wait...", None, 0, n_cells)
+            progDialog.setModal(True)
+            progDialog.setValue(0)
+            progDialog.show()
+            QApplication.processEvents()
+            i = 0
+
             dangling = False
             for idx, row in enumerate(grid_compas_neighbors(self.gutils), start=1):
                 n = row[0]
@@ -269,10 +279,13 @@ class GridToolsWidget(qtBaseClass, uiDialog):
                     delete_grid_elem_query = f"DELETE FROM grid WHERE fid = {idx};"
                     self.gutils.execute(delete_grid_elem_query)
 
+                progDialog.setValue(i)
+                i += 1
+
             if dangling:
                 create_temp_table_query = """
                 CREATE TABLE temp_table AS
-                SELECT *, ROW_NUMBER() OVER () - 1 AS new_fid
+                SELECT *, ROW_NUMBER() OVER () AS new_fid
                 FROM grid;
                 """
                 self.gutils.execute(create_temp_table_query)
@@ -291,6 +304,7 @@ class GridToolsWidget(qtBaseClass, uiDialog):
                 self.gutils.execute(drop_temp_table_query)
 
             # Update grid_lyr:
+            grid_lyr = self.lyrs.data["grid"]["qlyr"]
             self.lyrs.update_layer_extents(grid_lyr)
             if grid_lyr:
                 grid_lyr.triggerRepaint()
