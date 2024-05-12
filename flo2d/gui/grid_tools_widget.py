@@ -14,6 +14,7 @@ import traceback
 
 from PyQt5.QtCore import QUrl
 from PyQt5.QtGui import QDesktopServices
+from PyQt5.QtWidgets import QProgressDialog
 from qgis.PyQt import QtCore, QtGui
 from qgis.core import NULL, Qgis, QgsFeature, QgsGeometry, QgsMessageLog, QgsWkbTypes
 from qgis.PyQt import QtWidgets
@@ -29,6 +30,7 @@ from qgis.PyQt.QtWidgets import (
     QWidget,
 )
 
+from .grid_info_widget import GridInfoWidget
 from ..flo2d_tools.grid_tools import (
     ZonalStatistics,
     ZonalStatisticsOther,
@@ -46,7 +48,7 @@ from ..flo2d_tools.grid_tools import (
     poly2poly_geos,
     render_grid_elevations2,
     square_grid,
-    update_roughness,
+    update_roughness, grid_compas_neighbors,
 )
 from ..geopackage_utils import GeoPackageUtils
 from ..gui.dlg_arf_wrf import EvaluateReductionFactorsDialog
@@ -249,6 +251,57 @@ class GridToolsWidget(qtBaseClass, uiDialog):
             # Assign default manning value (as set in Control layer ('cont')
             default = self.gutils.get_cont_par("MANNING")
             self.gutils.execute("UPDATE grid SET n_value=?;", (default,))
+
+            n_cells = number_of_elements(self.gutils, grid_lyr)
+
+            progDialog = QProgressDialog("Checking grid elements. Please wait...", None, 0, n_cells)
+            progDialog.setModal(True)
+            progDialog.setValue(0)
+            progDialog.show()
+            QApplication.processEvents()
+            i = 0
+
+            dangling = False
+            for idx, row in enumerate(grid_compas_neighbors(self.gutils), start=1):
+                n = row[0]
+                e = row[1]
+                s = row[2]
+                w = row[3]
+                ne = row[4]
+                se = row[5]
+                sw = row[6]
+                nw = row[7]
+                cardinal_directions = sum(1 for var in [n, e, s, w] if var == 0)
+                ordinal_directions = sum(1 for var in [ne, se, sw, nw] if var == 0)
+                # Check if at least 3 directions are zero -> dangling grid element
+                if cardinal_directions >= 3 or (ordinal_directions >= 3 and cardinal_directions == 4):
+                    dangling = True
+                    delete_grid_elem_query = f"DELETE FROM grid WHERE fid = {idx};"
+                    self.gutils.execute(delete_grid_elem_query)
+
+                progDialog.setValue(i)
+                i += 1
+
+            if dangling:
+                create_temp_table_query = """
+                CREATE TABLE temp_table AS
+                SELECT *, ROW_NUMBER() OVER () AS new_fid
+                FROM grid;
+                """
+                self.gutils.execute(create_temp_table_query)
+
+                # Delete data from the original table
+                delete_data_query = "DELETE FROM grid;"
+                self.gutils.execute(delete_data_query)
+
+                # Copy data from the temporary table back to the original table
+                copy_data_query = "INSERT INTO grid SELECT new_fid, col, row, n_value, elevation, water_elevation, " \
+                                  "flow_depth, geom FROM temp_table;"
+                self.gutils.execute(copy_data_query)
+
+                # Drop the temporary table
+                drop_temp_table_query = "DROP TABLE temp_table;"
+                self.gutils.execute(drop_temp_table_query)
 
             # Update grid_lyr:
             grid_lyr = self.lyrs.data["grid"]["qlyr"]
