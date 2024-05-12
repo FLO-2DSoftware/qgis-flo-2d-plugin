@@ -99,11 +99,14 @@ class StreetEditorWidget(qtBaseClass, uiDialog):
         else:
             return
         self.lyrs.clear_rubber()
-        if self.street_center_chbox.isChecked():
-            self.lyrs.show_feat_rubber(self.street_lyr.id(), fid)
-            feat = next(self.street_lyr.getFeatures(QgsFeatureRequest(fid)))
-            x, y = feat.geometry().centroid().asPoint()
-            center_canvas(self.iface, x, y)
+        if self.street_center_btn.isChecked():
+            try:
+                self.lyrs.show_feat_rubber(self.street_lyr.id(), fid)
+                feat = next(self.street_lyr.getFeatures(QgsFeatureRequest(fid)))
+                x, y = feat.geometry().centroid().asPoint()
+                center_canvas(self.iface, x, y)
+            except:
+                pass  
 
     def create_street_line(self):
         if not self.lyrs.enter_edit_mode("user_streets"):

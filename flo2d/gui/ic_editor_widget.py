@@ -104,7 +104,7 @@ class ICEditorWidget(qtBaseClass, uiDialog):
             wsel = float(self.reservoir.wsel)
         self.res_ini_sbox.setValue(wsel)
         self.show_res_rb()
-        if self.center_res_chbox.isChecked():
+        if self.center_res_btn.isChecked():
             feat = next(self.res_lyr.getFeatures(QgsFeatureRequest(self.reservoir.fid)))
             x, y = feat.geometry().centroid().asPoint()
             center_canvas(self.iface, x, y)
@@ -118,7 +118,7 @@ class ICEditorWidget(qtBaseClass, uiDialog):
             depini = float(di[0])
         self.seg_ini_sbox.setValue(depini)
         self.show_chan_rb()
-        if self.center_seg_chbox.isChecked():
+        if self.center_seg_btn.isChecked():
             feat = next(self.chan_lyr.getFeatures(QgsFeatureRequest(self.seg_fid)))
             x, y = feat.geometry().centroid().asPoint()
             center_canvas(self.iface, x, y)

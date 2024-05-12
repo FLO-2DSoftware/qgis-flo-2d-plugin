@@ -398,7 +398,7 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
                 else:
                     continue
         self.lyrs.clear_rubber()
-        if self.center_chbox.isChecked():
+        if self.infil_center_btn.isChecked():
             ifid = infil_dict["fid"]
             self.lyrs.show_feat_rubber(self.infil_lyr.id(), ifid)
             feat = next(self.infil_lyr.getFeatures(QgsFeatureRequest(ifid)))

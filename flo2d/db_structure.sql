@@ -2347,7 +2347,7 @@ SELECT gpkgAddGeometryTriggers('user_levee_lines', 'geom');
 
 CREATE TABLE "user_streets" (
     "fid" INTEGER PRIMARY KEY NOT NULL,
-    "name" TEXT DEFAULT '',
+    "name" TEXT,
     "n_value" REAL DEFAULT 0, -- STMAN(L), optional spatially variable street n-value within a given grid element. 0 for global
     "elevation" REAL DEFAULT 0, -- ELSTR(L), optional street elevation. If 0, the model will assign the street elevation as grid element elevation
     "curb_height" REAL DEFAULT 0, -- DEPX(L) or DEPEX(L), optional curb height, 0 to use global DEPX
@@ -2358,6 +2358,15 @@ INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('user_streets'
 SELECT gpkgAddGeometryColumn('user_streets', 'geom', 'LINESTRING', 0, 0, 0);
 SELECT gpkgAddGeometryTriggers('user_streets', 'geom');
 -- SELECT gpkgAddSpatialIndex('user_streets', 'geom');
+
+INSERT INTO trigger_control (name, enabled) VALUES ('default_street_name', 1);
+CREATE TRIGGER "default_street_name"
+    AFTER INSERT ON "user_streets"
+    BEGIN
+        UPDATE "user_streets"
+        SET name = ('Street_' || cast(NEW."fid" AS TEXT))
+        WHERE "fid" = NEW."fid" AND NEW."name" IS NULL;
+    END;
 
 CREATE TABLE "user_roughness" (
     "fid" INTEGER PRIMARY KEY NOT NULL,
