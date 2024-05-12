@@ -70,9 +70,16 @@
          </spacer>
         </item>
         <item>
-         <widget class="QCheckBox" name="center_res_chbox">
+         <widget class="QToolButton" name="center_res_btn">
           <property name="text">
-           <string>center</string>
+           <string/>
+          </property>
+          <property name="icon">
+           <iconset>
+            <normaloff>../img/eye-svgrepo-com.svg</normaloff>../img/eye-svgrepo-com.svg</iconset>
+          </property>
+          <property name="checkable">
+           <bool>true</bool>
           </property>
          </widget>
         </item>
@@ -233,9 +240,16 @@
          </spacer>
         </item>
         <item>
-         <widget class="QCheckBox" name="center_seg_chbox">
+         <widget class="QToolButton" name="center_seg_btn">
           <property name="text">
-           <string>center</string>
+           <string/>
+          </property>
+          <property name="icon">
+           <iconset>
+            <normaloff>../img/eye-svgrepo-com.svg</normaloff>../img/eye-svgrepo-com.svg</iconset>
+          </property>
+          <property name="checkable">
+           <bool>true</bool>
           </property>
          </widget>
         </item>
@@ -642,11 +656,11 @@
   <tabstop>revert_changes_btn</tabstop>
   <tabstop>delete_res_btn</tabstop>
   <tabstop>schem_res_btn</tabstop>
-  <tabstop>center_res_chbox</tabstop>
+  <tabstop>center_res_btn</tabstop>
   <tabstop>res_cbo</tabstop>
   <tabstop>rename_res_btn</tabstop>
   <tabstop>res_ini_sbox</tabstop>
-  <tabstop>center_seg_chbox</tabstop>
+  <tabstop>center_seg_btn</tabstop>
   <tabstop>chan_seg_cbo</tabstop>
   <tabstop>seg_ini_sbox</tabstop>
   <tabstop>add_tailings_btn</tabstop>
