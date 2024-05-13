@@ -957,7 +957,7 @@ class GreenAmptDialog(uiDialog_green, qtBaseClass_green):
         # Verify if the user would like to save the intermediate calculation layers
         saveLayers = False
         answer = QMessageBox.question(self.iface.mainWindow(), 'NRCS G&A parameters',
-                                      'Save intermediate calculation layers as temporary layers?', QMessageBox.Yes,
+                                      'Save intermediate calculation layers into the geopackage?', QMessageBox.Yes,
                                       QMessageBox.No)
         if answer == QMessageBox.Yes:
             saveLayers = True
@@ -1037,7 +1037,7 @@ class GreenAmptDialog(uiDialog_green, qtBaseClass_green):
         layers = []
         temp_layers = []
         answer = QMessageBox.question(self.iface.mainWindow(), 'OSM land use',
-                                      'Save intermediate calculation layers as temporary layers into the geopackage?',
+                                      'Save intermediate calculation layers into the geopackage?',
                                       QMessageBox.Yes,
                                       QMessageBox.No)
         if answer == QMessageBox.Yes:

@@ -1,5 +1,6 @@
 import requests
 import processing
+from qgis._core import QgsVectorFileWriter
 from qgis.core import (QgsDistanceArea, QgsFeature, QgsField,
                        QgsGeometry, QgsProcessing, QgsVectorLayer, QgsProject)
 from qgis.PyQt.QtCore import QVariant
@@ -222,7 +223,7 @@ class SsurgoSoil(object):
 
             self.soil_chorizon.setName("chorizon")
 
-        if self.saveLayers: QgsProject.instance().addMapLayer(self.soil_chorizon)
+        if self.saveLayers: self.saveSoilDataToGpkg(self.soil_chorizon)
 
     def downloadChfrags(self):
         """Method for downloading the chfrags layer using PostRequest"""
@@ -272,7 +273,7 @@ class SsurgoSoil(object):
             self.soil_chfrags = self.reprojectLayer(self.soil_chfrags, QgsProject.instance().crs())
 
             self.soil_chfrags.setName("chfrags")
-        if self.saveLayers: QgsProject.instance().addMapLayer(self.soil_chfrags)
+        if self.saveLayers: self.saveSoilDataToGpkg(self.soil_chfrags)
 
     def downloadComp(self):
         """Method for downloading the component layer using PostRequest"""
@@ -322,7 +323,7 @@ class SsurgoSoil(object):
 
             self.soil_comp.setName("component")
 
-        if self.saveLayers: QgsProject.instance().addMapLayer(self.soil_comp)
+        if self.saveLayers: self.saveSoilDataToGpkg(self.soil_comp)
 
     def combineSsurgoLayers(self):
         """Method for combining the chorizon and chfrags layer"""
@@ -330,7 +331,7 @@ class SsurgoSoil(object):
         self.ssurgo_layer = self.joinLayers(self.ssurgo_layer, self.soil_comp)
         self.ssurgo_layer = self.deleteHoles(self.ssurgo_layer)
         self.ssurgo_layer.setName("ssurgo")
-        if self.saveLayers: QgsProject.instance().addMapLayer(self.ssurgo_layer)
+        if self.saveLayers: self.saveSoilDataToGpkg(self.ssurgo_layer)
 
     def calculateGAparameters(self):
         """Method for calculating the G&A parameters based on JE Fuller"""
@@ -524,7 +525,11 @@ class SsurgoSoil(object):
             self.soil_layer.updateExtents()
 
             self.soil_layer.setName("soil_layer")
-            QgsProject.instance().addMapLayer(self.soil_layer)
+
+            if self.saveLayers:
+                self.saveSoilDataToGpkg(self.soil_layer)
+            else:
+                QgsProject.instance().addMapLayer(self.soil_layer)
 
     def soil_lyr(self):
         return self.soil_layer
@@ -613,3 +618,38 @@ class SsurgoSoil(object):
                      }
         return processing.run("native:deleteholes", alg_params)["OUTPUT"]
 
+    def saveSoilDataToGpkg(self, layer):
+        """
+        Function to save the soil layer into the gpkg
+        """
+        gpkg_path = self.gutils.get_gpkg_path()
+        root_group = QgsProject.instance().layerTreeRoot()
+        flo2d_name = f"FLO-2D_{self.gutils.get_metadata_par('PROJ_NAME')}"
+        group_name = "SSURGO Generator"
+        flo2d_grp = root_group.findGroup(flo2d_name)
+        if flo2d_grp.findGroup(group_name):
+            group = flo2d_grp.findGroup(group_name)
+        else:
+            group = flo2d_grp.insertGroup(-1, group_name)
+
+        options = QgsVectorFileWriter.SaveVectorOptions()
+        options.driverName = "GPKG"
+        options.includeZ = True
+        options.overrideGeometryType = layer.wkbType()
+        options.layerName = layer.name()
+        options.actionOnExistingFile = QgsVectorFileWriter.CreateOrOverwriteLayer
+        QgsVectorFileWriter.writeAsVectorFormatV3(
+            layer,
+            gpkg_path,
+            QgsProject.instance().transformContext(),
+            options)
+        # Add back to the project
+        gpkg_uri = f"{gpkg_path}|layername={layer.name()}"
+        gpkg_layer = QgsVectorLayer(gpkg_uri, layer.name(), "ogr")
+        QgsProject.instance().addMapLayer(gpkg_layer, False)
+        gpkg_layer.setRenderer(layer.renderer().clone())
+        gpkg_layer.triggerRepaint()
+        group.insertLayer(0, gpkg_layer)
+        layer = QgsProject.instance().mapLayersByName(gpkg_layer.name())[0]
+        myLayerNode = root_group.findLayer(layer.id())
+        myLayerNode.setExpanded(False)
