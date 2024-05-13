@@ -1450,7 +1450,7 @@ class GreenAmptDialog(uiDialog_green, qtBaseClass_green):
                     gpkg_path = self.gutils.get_gpkg_path()
 
                     flo2d_name = f"FLO-2D_{self.gutils.get_metadata_par('PROJ_NAME')}"
-                    group_name = "Green Ampt Generator"
+                    group_name = "OSM Generator"
                     flo2d_grp = root_group.findGroup(flo2d_name)
                     if flo2d_grp.findGroup(group_name):
                         group = flo2d_grp.findGroup(group_name)
