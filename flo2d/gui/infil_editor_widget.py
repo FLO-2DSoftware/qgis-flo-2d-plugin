@@ -12,11 +12,12 @@ from collections import OrderedDict
 from itertools import chain
 from math import isnan
 
-from PyQt5.QtCore import QVariant
+from PyQt5.QtCore import QVariant, QUrl
 from PyQt5.QtWidgets import QFileDialog
 from qgis._core import QgsField, QgsVectorLayer, QgsRasterLayer, QgsProcessing, QgsLayerTreeRegistryBridge
 from qgis.core import QgsFeatureRequest, QgsWkbTypes, QgsProject
 from qgis.PyQt.QtCore import QSettings, Qt, pyqtSignal, pyqtSlot
+from PyQt5.QtGui import QDesktopServices
 from qgis.PyQt.QtGui import QStandardItem, QStandardItemModel
 from qgis.PyQt.QtWidgets import (QApplication, QCheckBox, QDoubleSpinBox,
                                  QInputDialog, QSpinBox, QProgressDialog,
@@ -116,6 +117,7 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
         self.delete_btn.clicked.connect(self.delete_cur_infil)
         self.change_name_btn.clicked.connect(self.rename_infil)
         self.schema_btn.clicked.connect(self.schematize_infiltration)
+        self.infiltration_help_btn.clicked.connect(self.infiltration_help)
         self.global_params.clicked.connect(self.show_global_params)
         self.iglobal.global_changed.connect(self.show_groups)
         self.fplain_grp.toggled.connect(self.floodplain_checked)
@@ -480,6 +482,9 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
                 + "\n__________________________________________________",
                 e,
             )
+
+    def infiltration_help(self):
+        QDesktopServices.openUrl(QUrl("https://flo-2dsoftware.github.io/FLO-2D-Documentation/Plugin1000/widgets/infiltration-editor/index.html"))        
 
     def calculate_green_ampt(self):
         dlg = GreenAmptDialog(self.iface, self.lyrs)
