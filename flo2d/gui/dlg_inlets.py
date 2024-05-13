@@ -13,6 +13,7 @@ from _ast import Or
 from datetime import datetime
 from math import isnan
 
+from PyQt5.QtGui import QKeySequence
 from PyQt5.QtWidgets import QUndoStack
 from qgis.PyQt import QtCore
 from qgis.core import QgsFeatureRequest
@@ -1379,6 +1380,9 @@ class InflowTimeSeriesDialog(qtBaseClass, uiDialog):
         self.inflow_time_series_tblw.itemChanged.connect(self.ts_tblw_changed)
         self.add_time_data_btn.clicked.connect(self.add_time)
         self.delete_time_data_btn.clicked.connect(self.delete_time)
+        self.copy_btn.clicked.connect(self.copy_selection)
+        self.paste_btn.clicked.connect(self.paste)
+        self.clear_btn.clicked.connect(self.clear)
 
         self.populate_time_series_dialog()
 
@@ -1603,3 +1607,81 @@ class InflowTimeSeriesDialog(qtBaseClass, uiDialog):
         self.inflow_time_series_tblw.removeRow(self.inflow_time_series_tblw.currentRow())
         self.inflow_time_series_tblw.selectRow(0)
         self.inflow_time_series_tblw.setFocus()
+
+    def copy_selection(self):
+        selection = self.inflow_time_series_tblw.selectedIndexes()
+        if selection:
+            rows = sorted(index.row() for index in selection)
+            columns = sorted(index.column() for index in selection)
+            rowcount = rows[-1] - rows[0] + 1
+            colcount = columns[-1] - columns[0] + 1
+            table = [[""] * colcount for _ in range(rowcount)]
+            for index in selection:
+                row = index.row() - rows[0]
+                column = index.column() - columns[0]
+                table[row][column] = str(index.data())
+            stream = io.StringIO()
+            csv.writer(stream, delimiter="\t").writerows(table)
+            QApplication.clipboard().setText(stream.getvalue())
+
+    def paste(self):
+        QApplication.setOverrideCursor(Qt.WaitCursor)
+
+        # Get the clipboard text
+        clipboard_text = QApplication.clipboard().text()
+        if not clipboard_text:
+            QApplication.restoreOverrideCursor()
+            return
+
+        # Split clipboard data into rows and columns
+        rows = clipboard_text.split("\n")
+        num_rows = len(rows)
+        if num_rows == 0:
+            QApplication.restoreOverrideCursor()
+            return
+
+        # Get the top-left selected cell
+        selection = self.inflow_time_series_tblw.selectionModel().selection()
+        if not selection:
+            QApplication.restoreOverrideCursor()
+            return
+
+        top_left_idx = selection[0].topLeft()
+        sel_row = top_left_idx.row()
+        sel_col = top_left_idx.column()
+
+        # Calculate required row and column counts
+        num_cols = max(row.count("\t") + 1 for row in rows) if rows else 0
+        new_row_count = sel_row + num_rows
+        new_col_count = sel_col + num_cols
+
+        # Adjust table row count if necessary
+        current_row_count = self.inflow_time_series_tblw.rowCount()
+        if new_row_count > current_row_count:
+            self.inflow_time_series_tblw.setRowCount(new_row_count)
+
+        # Adjust table column count if necessary
+        current_col_count = self.inflow_time_series_tblw.columnCount()
+        if new_col_count > current_col_count:
+            self.inflow_time_series_tblw.setColumnCount(new_col_count)
+
+        # Paste data into the table
+        for row_idx, row in enumerate(rows):
+            columns = row.split("\t")
+            for col_idx, col in enumerate(columns):
+                item = QTableWidgetItem(col.strip())
+                self.inflow_time_series_tblw.setItem(sel_row + row_idx, sel_col + col_idx, item)
+
+        QApplication.restoreOverrideCursor()
+
+    def clear(self):
+        self.inflow_time_series_tblw.setRowCount(0)
+
+    def keyPressEvent(self, event):
+        if event.matches(QKeySequence.Copy):
+            self.copy_selection()
+        elif event.matches(QKeySequence.Paste):
+            self.paste()
+        else:
+            super().keyPressEvent(event)
+
