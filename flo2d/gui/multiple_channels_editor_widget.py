@@ -1,9 +1,11 @@
 #  -*- coding: utf-8 -*-
-from PyQt5.QtWidgets import QApplication
 
 # FLO-2D Preprocessor tools for QGIS
 # Copyright © 2021 Lutra Consulting for FLO-2D
 
+from PyQt5.QtWidgets import QApplication
+from PyQt5.QtCore import QUrl
+from PyQt5.QtGui import QDesktopServices
 from ..geopackage_utils import GeoPackageUtils
 from ..gui.dlg_individual_multiple_channels import (
     IndividualMultipleChannelsDialog,
@@ -45,6 +47,7 @@ class MultipleChannelsEditorWidget(qtBaseClass, uiDialog):
             self.populate_multiple_channels_widget()
 
             self.mc_incremental_dbox.valueChanged.connect(self.update_global_multiple_channels_data)
+            self.multiple_channels_help_btn.clicked.connect(self.multiple_channels_help)
             self.mc_width_dbox.valueChanged.connect(self.update_global_multiple_channels_data)
             self.mc_depth_dbox.valueChanged.connect(self.update_global_multiple_channels_data)
             self.mc_number_sbox.valueChanged.connect(self.update_global_multiple_channels_data)
@@ -101,6 +104,9 @@ class MultipleChannelsEditorWidget(qtBaseClass, uiDialog):
                 simple_n,
             ),
         )
+
+    def multiple_channels_help(self):
+        QDesktopServices.openUrl(QUrl("https://flo-2dsoftware.github.io/FLO-2D-Documentation/Plugin1000/widgets/multiple-channels-editor/Multiple%20Channel%20Editor.html"))        
 
     def show_individual_multiple_channels_dialog(self):
         """
