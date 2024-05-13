@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
-
+import csv
+import io
 # FLO-2D Preprocessor tools for QGIS
 
 # This program is free software; you can redistribute it and/or
@@ -12,6 +13,8 @@ from _ast import Or
 from datetime import datetime
 from math import isnan
 
+from PyQt5.QtWidgets import QUndoStack
+from qgis.PyQt import QtCore
 from qgis.core import QgsFeatureRequest
 from qgis.PyQt.QtCore import NULL, QDate, QDateTime, QRegExp, QSettings, Qt, QTime
 from qgis.PyQt.QtGui import QColor, QDoubleValidator, QRegExpValidator
@@ -1189,11 +1192,17 @@ class InflowPatternDialog(qtBaseClass, uiDialog):
         self.con = None
         self.gutils = None
 
+        self.multipliers_tblw.undoStack = QUndoStack(self)
+
         self.setup_connection()
 
         self.pattern_buttonBox.accepted.connect(self.save_pattern)
 
         self.populate_pattern_dialog()
+
+        self.copy_btn.clicked.connect(self.copy_selection)
+        self.paste_btn.clicked.connect(self.paste)
+        self.delete_btn.clicked.connect(self.delete)
 
     def setup_connection(self):
         con = self.iface.f2d["con"]
@@ -1242,13 +1251,17 @@ class InflowPatternDialog(qtBaseClass, uiDialog):
             self.gutils.execute(delete_sql, (self.name_le.text(),))
             insert_sql = "INSERT INTO swmm_inflow_patterns (pattern_name, pattern_description, hour, multiplier) VALUES (?, ?, ? ,?);"
             for i in range(1, 25):
+                if self.multipliers_tblw.item(i - 1, 0):
+                    item = self.multipliers_tblw.item(i - 1, 0).text()
+                else:
+                    item = 1
                 self.gutils.execute(
                     insert_sql,
                     (
                         self.name_le.text(),
                         self.description_le.text(),
                         str(i),
-                        self.multipliers_tblw.item(i - 1, 0).text(),
+                        item,
                     ),
                 )
 
@@ -1258,6 +1271,82 @@ class InflowPatternDialog(qtBaseClass, uiDialog):
 
     def get_name(self):
         return self.pattern_name
+
+    def copy_selection(self):
+        selection = self.multipliers_tblw.selectedIndexes()
+        if selection:
+            rows = sorted(index.row() for index in selection)
+            columns = sorted(index.column() for index in selection)
+            rowcount = rows[-1] - rows[0] + 1
+            colcount = columns[-1] - columns[0] + 1
+            table = [[""] * colcount for _ in range(rowcount)]
+            for index in selection:
+                row = index.row() - rows[0]
+                column = index.column() - columns[0]
+                table[row][column] = str(index.data())
+            stream = io.StringIO()
+            csv.writer(stream, delimiter="\t").writerows(table)
+            QApplication.clipboard().setText(stream.getvalue())
+
+    def paste(self):
+        QApplication.setOverrideCursor(Qt.WaitCursor)
+
+        # Get the clipboard text
+        clipboard_text = QApplication.clipboard().text()
+        if not clipboard_text:
+            QApplication.restoreOverrideCursor()
+            return
+
+        # Split clipboard data into rows and columns
+        rows = clipboard_text.split("\t")
+        num_rows = len(rows)
+        if num_rows == 0:
+            QApplication.restoreOverrideCursor()
+            return
+
+        # Get the top-left selected cell
+        selection = self.multipliers_tblw.selectionModel().selection()
+        if not selection:
+            QApplication.restoreOverrideCursor()
+            return
+
+        top_left_idx = selection[0].topLeft()
+        sel_row = top_left_idx.row()
+        sel_col = top_left_idx.column()
+
+        # Insert rows if necessary
+        if sel_row + num_rows > self.multipliers_tblw.rowCount():
+            self.multipliers_tblw.setRowCount(sel_row + num_rows)
+
+        # Insert columns if necessary (adjust table columns if paste exceeds current column count)
+        num_cols = rows[0].count("\t") + 1
+        if sel_col + num_cols > self.multipliers_tblw.columnCount():
+            self.multipliers_tblw.setColumnCount(sel_col + num_cols)
+
+        # Paste data into the table
+        for row_idx, row in enumerate(rows):
+            columns = row.split("\t")
+            for col_idx, col in enumerate(columns):
+                item = QTableWidgetItem(col.strip())
+                self.multipliers_tblw.setItem(sel_row + row_idx, sel_col + col_idx, item)
+
+        QApplication.restoreOverrideCursor()
+
+    def delete(self):
+        selected_rows = []
+        table_widget = self.multipliers_tblw
+
+        # Get selected row indices
+        for item in table_widget.selectedItems():
+            if item.row() not in selected_rows:
+                selected_rows.append(item.row())
+
+        # Sort selected row indices in descending order to avoid issues with row removal
+        selected_rows.sort(reverse=True)
+
+        # Remove selected rows
+        for row in selected_rows:
+            table_widget.removeRow(row)
 
 
 uiDialog, qtBaseClass = load_ui("storm_drain_inflow_time_series")
