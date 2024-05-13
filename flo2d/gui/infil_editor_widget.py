@@ -14,7 +14,8 @@ from math import isnan
 
 from PyQt5.QtCore import QVariant, QUrl
 from PyQt5.QtWidgets import QFileDialog
-from qgis._core import QgsField, QgsVectorLayer, QgsRasterLayer, QgsProcessing, QgsLayerTreeRegistryBridge
+from qgis._core import QgsField, QgsVectorLayer, QgsRasterLayer, QgsProcessing, QgsLayerTreeRegistryBridge, \
+    QgsLayerTreeLayer, QgsMapLayer, QgsVectorFileWriter
 from qgis.core import QgsFeatureRequest, QgsWkbTypes, QgsProject
 from qgis.PyQt.QtCore import QSettings, Qt, pyqtSignal, pyqtSlot
 from PyQt5.QtGui import QDesktopServices
@@ -425,7 +426,8 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
             sl = self.slices[imethod]
             columns = self.infil_columns[sl]
             cellSize = float(self.gutils.get_cont_par("CELLSIZE"))
-            infiltration_grids = list(poly2grid(cellSize, self.grid_lyr, self.infil_lyr, None, True, False, False, 1, *columns))
+            infiltration_grids = list(
+                poly2grid(cellSize, self.grid_lyr, self.infil_lyr, None, True, False, False, 1, *columns))
             self.gutils.clear_tables(
                 "infil_cells_green",
                 "infil_cells_scs",
@@ -813,6 +815,7 @@ class ChannelDialog(uiDialog_chan, qtBaseClass_chan):
 
 uiDialog_green, qtBaseClass_green = load_ui("infil_green_ampt")
 
+
 class GreenAmptDialog(uiDialog_green, qtBaseClass_green):
     def __init__(self, iface, lyrs):
         qtBaseClass_green.__init__(self)
@@ -959,7 +962,8 @@ class GreenAmptDialog(uiDialog_green, qtBaseClass_green):
         # Verify if the user would like to save the intermediate calculation layers
         saveLayers = False
         answer = QMessageBox.question(self.iface.mainWindow(), 'NRCS G&A parameters',
-                                     'Save intermediate calculation layers as temporary layers?', QMessageBox.Yes, QMessageBox.No)
+                                      'Save intermediate calculation layers into the geopackage?', QMessageBox.Yes,
+                                      QMessageBox.No)
         if answer == QMessageBox.Yes:
             saveLayers = True
 
@@ -1038,7 +1042,8 @@ class GreenAmptDialog(uiDialog_green, qtBaseClass_green):
         layers = []
         temp_layers = []
         answer = QMessageBox.question(self.iface.mainWindow(), 'OSM land use',
-                                      'Save intermediate calculation layers as temporary layers?', QMessageBox.Yes,
+                                      'Save intermediate calculation layers into the geopackage?',
+                                      QMessageBox.Yes,
                                       QMessageBox.No)
         if answer == QMessageBox.Yes:
             saveLayers = True
@@ -1144,7 +1149,7 @@ class GreenAmptDialog(uiDialog_green, qtBaseClass_green):
                                                            commercial_3.name(),
                                                            commercial_4.name(),
                                                            commercial_5.name()],
-                                                           2), "C")
+                                                          2), "C")
                 QgsProject.instance().addMapLayer(c)
                 layers.append(c)
 
@@ -1199,21 +1204,21 @@ class GreenAmptDialog(uiDialog_green, qtBaseClass_green):
                 temp_layers.append(green_area_14)
 
                 lpc = QgsRasterLayer(osm.landuse_calculator(park,
-                                                          [park.name(),
-                                                           green_area_1.name(),
-                                                           green_area_2.name(),
-                                                           green_area_3.name(),
-                                                           green_area_4.name(),
-                                                           green_area_5.name(),
-                                                           green_area_6.name(),
-                                                           green_area_7.name(),
-                                                           green_area_8.name(),
-                                                           green_area_9.name(),
-                                                           green_area_10.name(),
-                                                           green_area_11.name(),
-                                                           green_area_12.name(),
-                                                           green_area_13.name()],
-                                                           3), "LPC")
+                                                            [park.name(),
+                                                             green_area_1.name(),
+                                                             green_area_2.name(),
+                                                             green_area_3.name(),
+                                                             green_area_4.name(),
+                                                             green_area_5.name(),
+                                                             green_area_6.name(),
+                                                             green_area_7.name(),
+                                                             green_area_8.name(),
+                                                             green_area_9.name(),
+                                                             green_area_10.name(),
+                                                             green_area_11.name(),
+                                                             green_area_12.name(),
+                                                             green_area_13.name()],
+                                                            3), "LPC")
                 QgsProject.instance().addMapLayer(lpc)
                 layers.append(lpc)
 
@@ -1229,10 +1234,10 @@ class GreenAmptDialog(uiDialog_green, qtBaseClass_green):
                 temp_layers.append(water_2)
 
                 watr = QgsRasterLayer(osm.landuse_calculator(water,
-                                                            [water.name(),
-                                                             water_2.name(),
-                                                             ],
-                                                            4), "WATR")
+                                                             [water.name(),
+                                                              water_2.name(),
+                                                              ],
+                                                             4), "WATR")
                 QgsProject.instance().addMapLayer(watr)
                 layers.append(watr)
 
@@ -1245,9 +1250,9 @@ class GreenAmptDialog(uiDialog_green, qtBaseClass_green):
                 temp_layers.append(agricultural)
 
                 ag = QgsRasterLayer(osm.landuse_calculator(agricultural,
-                                                             [agricultural.name(),
-                                                              ],
-                                                             5), "AG")
+                                                           [agricultural.name(),
+                                                            ],
+                                                           5), "AG")
                 QgsProject.instance().addMapLayer(ag)
                 layers.append(ag)
 
@@ -1266,11 +1271,11 @@ class GreenAmptDialog(uiDialog_green, qtBaseClass_green):
                 temp_layers.append(undeveloped_3)
 
                 ndr = QgsRasterLayer(osm.landuse_calculator(undeveloped_1,
-                                                             [undeveloped_1.name(),
-                                                              undeveloped_2.name(),
-                                                              undeveloped_3.name(),
-                                                              ],
-                                                             6), "NDR")
+                                                            [undeveloped_1.name(),
+                                                             undeveloped_2.name(),
+                                                             undeveloped_3.name(),
+                                                             ],
+                                                            6), "NDR")
                 QgsProject.instance().addMapLayer(ndr)
                 layers.append(ndr)
 
@@ -1289,11 +1294,11 @@ class GreenAmptDialog(uiDialog_green, qtBaseClass_green):
                 temp_layers.append(desert_3)
 
                 dl = QgsRasterLayer(osm.landuse_calculator(desert_1,
-                                                            [desert_1.name(),
-                                                             desert_2.name(),
-                                                             desert_3.name()
-                                                             ],
-                                                            7), "DL")
+                                                           [desert_1.name(),
+                                                            desert_2.name(),
+                                                            desert_3.name()
+                                                            ],
+                                                           7), "DL")
                 QgsProject.instance().addMapLayer(dl)
                 layers.append(dl)
 
@@ -1324,15 +1329,15 @@ class GreenAmptDialog(uiDialog_green, qtBaseClass_green):
                 temp_layers.append(industrial_7)
 
                 i = QgsRasterLayer(osm.landuse_calculator(industrial_1,
-                                                            [industrial_1.name(),
-                                                             industrial_2.name(),
-                                                             industrial_3.name(),
-                                                             industrial_4.name(),
-                                                             industrial_5.name(),
-                                                             industrial_6.name(),
-                                                             industrial_7.name()
-                                                             ],
-                                                            8), "I")
+                                                          [industrial_1.name(),
+                                                           industrial_2.name(),
+                                                           industrial_3.name(),
+                                                           industrial_4.name(),
+                                                           industrial_5.name(),
+                                                           industrial_6.name(),
+                                                           industrial_7.name()
+                                                           ],
+                                                          8), "I")
                 QgsProject.instance().addMapLayer(i)
                 layers.append(i)
 
@@ -1341,15 +1346,15 @@ class GreenAmptDialog(uiDialog_green, qtBaseClass_green):
                 pd.setValue(9)
 
                 land_cover = QgsRasterLayer(osm.landuse_rasterizor(lpc,
-                                                          [mdr.name(),
-                                                           c.name(),
-                                                           lpc.name(),
-                                                           watr.name(),
-                                                           ag.name(),
-                                                           ndr.name(),
-                                                           dl.name(),
-                                                           i.name()]),
-                                                           "land_use")
+                                                                   [mdr.name(),
+                                                                    c.name(),
+                                                                    lpc.name(),
+                                                                    watr.name(),
+                                                                    ag.name(),
+                                                                    ndr.name(),
+                                                                    dl.name(),
+                                                                    i.name()]),
+                                            "land_use")
                 QgsProject.instance().addMapLayer(land_cover)
                 layers.append(land_cover)
 
@@ -1398,10 +1403,10 @@ class GreenAmptDialog(uiDialog_green, qtBaseClass_green):
                     if feature['DN'] == 3:
                         feature['landuse_category'] = "Lawns/Parks/Cemeteries"
                         feature['InitAbs'] = 0.2 * unit_conversion
-                        feature['RTIMP'] = 0 # assumed
+                        feature['RTIMP'] = 0  # assumed
                         feature['VegCov'] = 80
                         feature['Sat'] = "normal"
-                    if feature['DN'] == 4: # DOUBLE CHECK
+                    if feature['DN'] == 4:  # DOUBLE CHECK
                         feature['landuse_category'] = "Water"
                         feature['InitAbs'] = 0
                         feature['RTIMP'] = 0
@@ -1416,8 +1421,8 @@ class GreenAmptDialog(uiDialog_green, qtBaseClass_green):
                     if feature['DN'] == 6:
                         feature['landuse_category'] = "Undeveloped Desert Rangeland"
                         feature['InitAbs'] = 0.35 * unit_conversion
-                        feature['RTIMP'] = 0 # assumed
-                        feature['VegCov'] = 0 # assumed
+                        feature['RTIMP'] = 0  # assumed
+                        feature['VegCov'] = 0  # assumed
                         feature['Sat'] = "normal"
                     if feature['DN'] == 7:
                         feature['landuse_category'] = "Desert Landscaping"
@@ -1437,16 +1442,93 @@ class GreenAmptDialog(uiDialog_green, qtBaseClass_green):
                 land_cover_vector.commitChanges()
 
                 QgsProject.instance().addMapLayer(land_cover_vector)
-
-                pd.setValue(11)
-                pd.close()
+                layers.append(land_cover_vector)
 
                 for layer in temp_layers:
                     QgsProject.instance().removeMapLayer(layer)
 
-                if saveLayers == False:
+                if not saveLayers:
                     for layer in layers:
-                        QgsProject.instance().removeMapLayer(layer)
+                        if layer != land_cover_vector:
+                            QgsProject.instance().removeMapLayer(layer)
+                else:
+                    gpkg_path = self.gutils.get_gpkg_path()
+
+                    flo2d_name = f"FLO-2D_{self.gutils.get_metadata_par('PROJ_NAME')}"
+                    group_name = "OSM Generator"
+                    flo2d_grp = root_group.findGroup(flo2d_name)
+                    if flo2d_grp.findGroup(group_name):
+                        group = flo2d_grp.findGroup(group_name)
+                    else:
+                        group = flo2d_grp.insertGroup(-1, group_name)
+
+                    for layer in layers:
+                        # Check if it is vector or raster
+                        if layer.type() == QgsMapLayer.VectorLayer and layer.isSpatial():
+                            # Save to gpkg
+                            options = QgsVectorFileWriter.SaveVectorOptions()
+                            options.driverName = "GPKG"
+                            options.includeZ = True
+                            options.overrideGeometryType = layer.wkbType()
+                            options.layerName = layer.name()
+                            options.actionOnExistingFile = QgsVectorFileWriter.CreateOrOverwriteLayer
+                            QgsVectorFileWriter.writeAsVectorFormatV3(
+                                layer,
+                                gpkg_path,
+                                QgsProject.instance().transformContext(),
+                                options)
+                            # Add back to the project
+                            gpkg_uri = f"{gpkg_path}|layername={layer.name()}"
+                            gpkg_layer = QgsVectorLayer(gpkg_uri, layer.name(), "ogr")
+                            QgsProject.instance().addMapLayer(gpkg_layer, False)
+                            gpkg_layer.setRenderer(layer.renderer().clone())
+                            gpkg_layer.triggerRepaint()
+                            group.insertLayer(0, gpkg_layer)
+                            if layer.name() == "landuse_layer":
+                                land_cover_vector = gpkg_layer
+                            layer = QgsProject.instance().mapLayersByName(gpkg_layer.name())[0]
+                            myLayerNode = root_group.findLayer(layer.id())
+                            myLayerNode.setExpanded(False)
+
+                            # Delete layer that is not in the gpkg
+                            QgsProject.instance().removeMapLayer(layer)
+
+                        elif layer.type() == QgsMapLayer.RasterLayer:
+                            # Save to gpkg
+                            layer_name = layer.name().replace(" ", "_")
+                            if layer.name() != "OSM":
+                                params = {'INPUT': f'{layer.dataProvider().dataSourceUri()}',
+                                          'TARGET_CRS': None,
+                                          'NODATA': None,
+                                          'COPY_SUBDATASETS': False,
+                                          'OPTIONS': '',
+                                          'EXTRA': f'-co APPEND_SUBDATASET=YES -co RASTER_TABLE={layer_name} -ot Float32',
+                                          'DATA_TYPE': 0,
+                                          'OUTPUT': f'{gpkg_path}'}
+                            else:
+                                params = {'INPUT': f'{layer.dataProvider().dataSourceUri()}',
+                                          'TARGET_CRS': None,
+                                          'NODATA': None,
+                                          'COPY_SUBDATASETS': False,
+                                          'OPTIONS': '',
+                                          'EXTRA': f'-co APPEND_SUBDATASET=YES -co RASTER_TABLE={layer_name} -ot Byte',
+                                          'DATA_TYPE': 0,
+                                          'OUTPUT': f'{gpkg_path}'}
+
+                            processing.run("gdal:translate", params)
+
+                            gpkg_uri = f"GPKG:{gpkg_path}:{layer_name}"
+                            gpkg_layer = QgsRasterLayer(gpkg_uri, layer_name, "gdal")
+                            QgsProject.instance().addMapLayer(gpkg_layer, False)
+                            gpkg_layer.setRenderer(layer.renderer().clone())
+                            gpkg_layer.triggerRepaint()
+                            group.insertLayer(0, gpkg_layer)
+                            # Delete layer that is not in the gpkg
+                            QgsProject.instance().removeMapLayer(layer)
+
+                            layer = QgsProject.instance().mapLayersByName(gpkg_layer.name())[0]
+                            myLayerNode = root_group.findLayer(layer.id())
+                            myLayerNode.setExpanded(False)
 
                 self.land_cbo.insertItem(0, land_cover_vector.name(), land_cover_vector)
                 self.land_cbo.setCurrentIndex(0)
@@ -1454,6 +1536,10 @@ class GreenAmptDialog(uiDialog_green, qtBaseClass_green):
                 self.vc_cbo.setCurrentIndex(5)
                 self.ia_cbo.setCurrentIndex(3)
                 self.rtimpl_cbo.setCurrentIndex(4)
+                self.iface.mapCanvas().refresh()
+
+                pd.setValue(11)
+                pd.close()
 
         except Exception as e:
             self.uc.log_info(traceback.format_exc())
@@ -1464,6 +1550,7 @@ class GreenAmptDialog(uiDialog_green, qtBaseClass_green):
             )
 
         return
+
 
 uiDialog_scs, qtBaseClass_scs = load_ui("infil_scs")
 
@@ -1504,7 +1591,7 @@ class SCSDialog(uiDialog_scs, qtBaseClass_scs):
             lyrs = self.lyrs.list_group_vlayers()
             for l in lyrs:
                 if l.geometryType() == QgsWkbTypes.PolygonGeometry:
-                    if l.featureCount() > 0:                   
+                    if l.featureCount() > 0:
                         lyr_name = l.name()
                         self.single_lyr_cbo.addItem(lyr_name, l)
                         self.multi_lyr_cbo.addItem(lyr_name, l)
@@ -1599,7 +1686,8 @@ class SCSDialog(uiDialog_scs, qtBaseClass_scs):
         """
         s = QSettings()
         last_elev_raster_dir = s.value("FLO-2D/lastScsRasterDir", "")
-        self.src, __ = QFileDialog.getOpenFileName(None, "Choose SCS Curve Number raster...", directory=last_elev_raster_dir)
+        self.src, __ = QFileDialog.getOpenFileName(None, "Choose SCS Curve Number raster...",
+                                                   directory=last_elev_raster_dir)
         if not self.src:
             return
         s.setValue("FLO-2D/lastScsRasterDir", os.path.dirname(self.src))
@@ -1607,5 +1695,3 @@ class SCSDialog(uiDialog_scs, qtBaseClass_scs):
             bname = os.path.basename(self.src)
             self.raster_lyr_cbo.addItem(bname, self.src)
             self.raster_lyr_cbo.setCurrentIndex(len(self.raster_lyr_cbo) - 1)
-
-
