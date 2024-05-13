@@ -17,7 +17,8 @@ import processing
 
 from qgis.core import QgsFeatureRequest
 from qgis.PyQt.QtWidgets import QInputDialog
-
+from PyQt5.QtCore import QUrl
+from PyQt5.QtGui import QDesktopServices
 from ..flo2dobjects import Reservoir
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
@@ -51,6 +52,7 @@ class ICEditorWidget(qtBaseClass, uiDialog):
         self.save_changes_btn.clicked.connect(self.save_res_lyr_edits)
         self.revert_changes_btn.clicked.connect(self.revert_res_lyr_edits)
         self.delete_res_btn.clicked.connect(self.delete_cur_res)
+        self.res_help_btn.clicked.connect(self.help_res)
         self.schem_res_btn.clicked.connect(self.schematize_res)
         self.rename_res_btn.clicked.connect(self.rename_res)
         self.res_cbo.activated.connect(self.cur_res_changed)
@@ -185,6 +187,9 @@ class ICEditorWidget(qtBaseClass, uiDialog):
         self.repaint_reservoirs()
         self.lyrs.clear_rubber()
         self.populate_cbos()
+
+    def help_res(self):
+        QDesktopServices.openUrl(QUrl("https://flo-2dsoftware.github.io/FLO-2D-Documentation/Plugin1000/widgets/initial-condition-editor/Initial%20Condition%20Editor.html#"))        
 
     def schematize_res(self):
         user_rsvs = self.gutils.execute("SELECT Count(*) FROM user_reservoirs").fetchone()[0]

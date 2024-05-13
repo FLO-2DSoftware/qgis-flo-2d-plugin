@@ -6,7 +6,8 @@
 from ..geopackage_utils import GeoPackageUtils
 from ..gui.dlg_channel_geometry import ChannelGeometryDialog
 from ..user_communication import UserCommunication
-
+from PyQt5.QtCore import QUrl
+from PyQt5.QtGui import QDesktopServices
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
 # as published by the Free Software Foundation; either version 2
@@ -41,6 +42,7 @@ class ChannelsEditorWidget(qtBaseClass, uiDialog):
             self.initial_flow_elements_grp.toggled.connect(self.fill_starting_and_ending_water_elevations)
             self.view_channel_geometry_btn.clicked.connect(self.show_channel_segments_dialog)
             self.channel_segment_cbo.currentIndexChanged.connect(self.show_channel_segment_dependencies)
+            self.schematized_channels_help_btn.clicked.connect(self.schematized_channels_help)
             self.first_element_box.valueChanged.connect(self.update_first)
             self.starting_water_elev_dbox.valueChanged.connect(self.update_starting)
             self.last_element_box.valueChanged.connect(self.update_last)
@@ -103,6 +105,9 @@ class ChannelsEditorWidget(qtBaseClass, uiDialog):
         self.roughness_adjust_coeff_dbox.setValue(data_chan[3])
         equation = data_chan[4] - 1 if data_chan[4] is not None else 0
         self.transport_eq_cbo.setCurrentIndex(equation)
+
+    def schematized_channels_help(self):
+        QDesktopServices.openUrl(QUrl("https://flo-2dsoftware.github.io/FLO-2D-Documentation/Plugin1000/widgets/schematized-channel-editor/Schematized%20Channel%20Editor.html"))        
 
     def show_channel_segments_dialog(self):
         """

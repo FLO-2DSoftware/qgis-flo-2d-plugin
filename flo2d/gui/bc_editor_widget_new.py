@@ -2,8 +2,8 @@
 import time
 from math import isnan
 
-from PyQt5.QtCore import QSettings
-from PyQt5.QtGui import QColor
+from PyQt5.QtCore import QSettings, QUrl
+from PyQt5.QtGui import QColor, QDesktopServices
 from PyQt5.QtWidgets import QInputDialog, QApplication, QFileDialog, QProgressDialog, QMessageBox, QMainWindow
 from qgis._core import QgsMessageLog, QgsProject, QgsVectorLayer, QgsMapLayer, QgsFeatureRequest, QgsPoint, QgsFeature, \
     QgsGeometry, QgsPointXY
@@ -81,6 +81,7 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
         # Connections
         self.inflow_grpbox.toggled.connect(self.add_shapes)
         self.outflow_grpbox.toggled.connect(self.add_shapes)
+        self.bc_help_btn.clicked.connect(self.bc_help)
 
         # Inflow
         self.inflow_bc_name_cbo.activated.connect(
@@ -220,6 +221,9 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
         if self.inflow_grpbox.isChecked() or self.outflow_grpbox.isChecked():
             self.populate_inflows()
             self.populate_outflows()
+
+    def bc_help(self):
+        QDesktopServices.openUrl(QUrl("https://flo-2dsoftware.github.io/FLO-2D-Documentation/Plugin1000/widgets/boundary-condition-editor/index.html"))        
 
     def save_changes(self):
         """
