@@ -323,7 +323,7 @@
          </property>
          <property name="font">
           <font>
-           <italic>true</italic>
+           <italic>false</italic>
           </font>
          </property>
          <property name="text">
@@ -892,7 +892,7 @@
                  </property>
                  <property name="font">
                   <font>
-                   <italic>true</italic>
+                   <italic>false</italic>
                    <kerning>true</kerning>
                   </font>
                  </property>
@@ -949,7 +949,7 @@
                  </property>
                  <property name="font">
                   <font>
-                   <italic>true</italic>
+                   <italic>false</italic>
                    <underline>false</underline>
                    <strikeout>false</strikeout>
                   </font>
@@ -1007,7 +1007,7 @@
                  </property>
                  <property name="font">
                   <font>
-                   <italic>true</italic>
+                   <italic>false</italic>
                    <underline>false</underline>
                    <strikeout>false</strikeout>
                   </font>
@@ -1083,7 +1083,7 @@
                  </property>
                  <property name="font">
                   <font>
-                   <italic>true</italic>
+                   <italic>false</italic>
                    <underline>false</underline>
                    <strikeout>false</strikeout>
                   </font>
@@ -1154,7 +1154,7 @@
                  </property>
                  <property name="font">
                   <font>
-                   <italic>true</italic>
+                   <italic>false</italic>
                    <underline>false</underline>
                    <strikeout>false</strikeout>
                   </font>
@@ -1227,7 +1227,7 @@
                  </property>
                  <property name="font">
                   <font>
-                   <italic>true</italic>
+                   <italic>false</italic>
                    <underline>false</underline>
                    <strikeout>false</strikeout>
                   </font>
@@ -1353,7 +1353,7 @@
                   </size>
                  </property>
                  <property name="text">
-                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Time for Clogging &lt;span style=&quot; font-size:10pt; vertical-align:super;&quot;&gt;(3&lt;/span&gt;&lt;span style=&quot; font-size:11pt; vertical-align:super;&quot;&gt;) &lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Time for Clogging &lt;span style=&quot; font-size:10pt; vertical-align:super;&quot;&gt;(3&lt;/span&gt;&lt;span style=&quot; font-size:11pt; vertical-align:super;&quot;&gt;)&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                  </property>
                  <property name="alignment">
                   <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -1413,7 +1413,7 @@
                   </size>
                  </property>
                  <property name="text">
-                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt; Dropbox Area &lt;span style=&quot; font-size:10pt; vertical-align:super;&quot;&gt; (4&lt;/span&gt;&lt;span style=&quot; font-size:11pt; vertical-align:super;&quot;&gt;) &lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Dropbox Area &lt;span style=&quot; font-size:10pt; vertical-align:super;&quot;&gt;(4&lt;/span&gt;&lt;span style=&quot; font-size:11pt; vertical-align:super;&quot;&gt;)&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                  </property>
                  <property name="alignment">
                   <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -1487,7 +1487,7 @@
             <number>0</number>
            </property>
            <property name="text">
-            <string>Values for files:    (1) SWMMFL.DAT       (2) SWMMFLORT.DAT     (3) SDCLOGGING.DAT    (4) SWMMFLODROPBOX.DAT</string>
+            <string>Values for files:    (1) SWMMFLO.DAT       (2) SWMMFLORT.DAT     (3) SDCLOGGING.DAT    (4) SWMMFLODROPBOX.DAT</string>
            </property>
            <property name="textFormat">
             <enum>Qt::PlainText</enum>
