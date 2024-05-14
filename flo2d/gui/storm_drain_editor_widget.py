@@ -230,7 +230,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         self.no_nodes = ""
         self.inlet_not_found = []
         self.outlet_not_found = []
-        self.buffer_distance = 5
+        self.buffer_distance = 3
 
         # set_icon(self.create_point_btn, "mActionCapturePoint.svg")
         # set_icon(self.save_changes_btn, "mActionSaveAllEdits.svg")
