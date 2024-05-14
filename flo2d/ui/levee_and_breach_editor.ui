@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>569</width>
+    <width>570</width>
     <height>657</height>
    </rect>
   </property>
@@ -98,7 +98,7 @@
                </size>
               </property>
               <property name="toolTip">
-               <string>Levees and Braech Help</string>
+               <string>Levees and Breach Help</string>
               </property>
               <property name="text">
                <string>...</string>

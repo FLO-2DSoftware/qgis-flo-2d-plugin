@@ -2,11 +2,14 @@
 <ui version="4.0">
  <class>CONTOLERdlg</class>
  <widget class="QDialog" name="CONTOLERdlg">
+  <property name="enabled">
+   <bool>true</bool>
+  </property>
   <property name="geometry">
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>934</width>
+    <width>972</width>
     <height>581</height>
    </rect>
   </property>
@@ -26,7 +29,7 @@
    <string>FLO-2D Control and Tolerance Variables</string>
   </property>
   <property name="toolTip">
-   <string/>
+   <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
   </property>
   <property name="modal">
    <bool>true</bool>
@@ -95,8 +98,8 @@
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>914</width>
-        <height>528</height>
+        <width>997</width>
+        <height>1076</height>
        </rect>
       </property>
       <property name="sizePolicy">
@@ -155,10 +158,10 @@
                  <property name="title">
                   <string>Switches</string>
                  </property>
-                 <property name="collapsed">
+                 <property name="collapsed" stdset="0">
                   <bool>true</bool>
                  </property>
-                 <property name="saveCollapsedState">
+                 <property name="saveCollapsedState" stdset="0">
                   <bool>false</bool>
                  </property>
                  <layout class="QGridLayout" name="gridLayout_13">
@@ -200,7 +203,7 @@
                           </sizepolicy>
                          </property>
                          <property name="toolTip">
-                          <string>INFIL</string>
+                          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;INFIL&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Set up the infiltration data before turning this switch on.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                          </property>
                          <property name="text">
                           <string>Infiltration</string>
@@ -216,7 +219,7 @@
                           </sizepolicy>
                          </property>
                          <property name="toolTip">
-                          <string>IRAIN</string>
+                          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;IRAIN&lt;/span&gt;&lt;/p&gt;&lt;p&gt;This switch is default ON. But it won't produce any rainfall data in RAIN.DAT unless the rainfall is created in the project.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                          </property>
                          <property name="layoutDirection">
                           <enum>Qt::LeftToRight</enum>
@@ -238,7 +241,7 @@
                           </sizepolicy>
                          </property>
                          <property name="toolTip">
-                          <string>IMODFLOW</string>
+                          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;IMODFLOW&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Set up the modflow data before using this switch.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                          </property>
                          <property name="text">
                           <string>MODFLO-2D Modelling</string>
@@ -254,7 +257,7 @@
                           </sizepolicy>
                          </property>
                          <property name="toolTip">
-                          <string>IEVAL</string>
+                          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;IEVAP&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Set up evaporation data before turning on this switch.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                          </property>
                          <property name="text">
                           <string>Evaporation</string>
@@ -270,7 +273,7 @@
                           </sizepolicy>
                          </property>
                          <property name="toolTip">
-                          <string>SWMM</string>
+                          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;SWMM&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Set up the storm drain model before turning this switch on.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                          </property>
                          <property name="text">
                           <string>Storm Drain</string>
@@ -279,11 +282,17 @@
                        </item>
                        <item row="1" column="2">
                         <widget class="QCheckBox" name="VOL_RATING_TABLES">
+                         <property name="enabled">
+                          <bool>false</bool>
+                         </property>
                          <property name="sizePolicy">
                           <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
                            <horstretch>0</horstretch>
                            <verstretch>0</verstretch>
                           </sizepolicy>
+                         </property>
+                         <property name="toolTip">
+                          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Volume Rating Table&lt;/span&gt;&lt;/p&gt;&lt;p&gt;This checkbox is not an on off switch.  It is simply a switch so that QGIS knows to export the OUTRC.DAT file.  &lt;/p&gt;&lt;p&gt;This tool is disabled until the final revision and testing for that processor.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                          </property>
                          <property name="text">
                           <string>Volume Rating Tables</string>
@@ -297,6 +306,9 @@
                            <horstretch>0</horstretch>
                            <verstretch>0</verstretch>
                           </sizepolicy>
+                         </property>
+                         <property name="toolTip">
+                          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;MUD and ISED&lt;/span&gt;&lt;/p&gt;&lt;p&gt;This menu interacts with two switches in cont.dat.&lt;/p&gt;&lt;p&gt;MUD = 0 and ISED = 0 clear water.&lt;/p&gt;&lt;p&gt;MUD = 1 and ISED = 0 for Hyperconcentrated flow routine.&lt;/p&gt;&lt;p&gt;MUD = 0 and ISED = 0 for Sediment transport flow routine.&lt;/p&gt;&lt;p&gt;MUD = 2 and ISED = 0 for Two phase flow routine.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                          </property>
                          <property name="text">
                           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Mud/Debris/Sediment&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
@@ -324,7 +336,7 @@
                           </size>
                          </property>
                          <property name="toolTip">
-                          <string>MUD / ISED</string>
+                          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;MUD and ISED&lt;/span&gt;&lt;/p&gt;&lt;p&gt;This menu interacts with two switches in cont.dat.&lt;/p&gt;&lt;p&gt;MUD = 0 and ISED = 0 clear water.&lt;/p&gt;&lt;p&gt;MUD = 1 and ISED = 0 for Hyperconcentrated flow routine.&lt;/p&gt;&lt;p&gt;MUD = 0 and ISED = 0 for Sediment transport flow routine.&lt;/p&gt;&lt;p&gt;MUD = 2 and ISED = 0 for Two phase flow routine.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                          </property>
                          <item>
                           <property name="text">
@@ -395,7 +407,7 @@
                           </sizepolicy>
                          </property>
                          <property name="toolTip">
-                          <string>ICHANNEL</string>
+                          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;ICHANNEL&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Build 1D channel data before turning on this switch.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                          </property>
                          <property name="text">
                           <string>Main Channel</string>
@@ -411,7 +423,7 @@
                           </sizepolicy>
                          </property>
                          <property name="toolTip">
-                          <string>MSTREET</string>
+                          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;MSTREET&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Set up streets using the 1D street tool before turning on this switch.&lt;/p&gt;&lt;p&gt;Note: 1D streets are not as commonly modeled now that urban models use grid element sizes around 20 ft wide.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                          </property>
                          <property name="text">
                           <string>Streets</string>
@@ -427,7 +439,7 @@
                           </sizepolicy>
                          </property>
                          <property name="toolTip">
-                          <string>IWRFS</string>
+                          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;IWRFS&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Set up Blocked areas and calculate ARFs and WRFs before turning on this switch.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                          </property>
                          <property name="text">
                           <string>Area Reduction Factors (ARF)</string>
@@ -443,7 +455,7 @@
                           </sizepolicy>
                          </property>
                          <property name="toolTip">
-                          <string>IMULTC</string>
+                          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;IMULTC&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Set up multiple channel rill and gulley data before turning on this switch.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                          </property>
                          <property name="text">
                           <string>Multiple Channels (Rills and Guillies)</string>
@@ -459,7 +471,7 @@
                           </sizepolicy>
                          </property>
                          <property name="toolTip">
-                          <string>LEVEE</string>
+                          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;LEVEE&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Set up levees, dams, walls or berms using the Levee Tool before turning on this switch.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                          </property>
                          <property name="text">
                           <string>Levees</string>
@@ -510,7 +522,7 @@
                           </sizepolicy>
                          </property>
                          <property name="toolTip">
-                          <string>IHYDRSTRUCT</string>
+                          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;IHYDRSTRUCT&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Set this switch after creating hydraulic structure data.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                          </property>
                          <property name="text">
                           <string>Hydraulic Structures</string>
@@ -526,7 +538,7 @@
                           </sizepolicy>
                          </property>
                          <property name="toolTip">
-                          <string>IDEBRV</string>
+                          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;IDEBRV&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Set IDEBRV = 1 if a debris basin volume should be filled before routing the flow hydrograph.&lt;/p&gt;&lt;p&gt;Debris basin volume is set in SED.DAT.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                          </property>
                          <property name="text">
                           <string>Debris Basin</string>
@@ -542,7 +554,7 @@
                           </sizepolicy>
                          </property>
                          <property name="toolTip">
-                          <string>IFLOODWAY</string>
+                          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;IFLOODWAY&lt;/span&gt;&lt;/p&gt;&lt;p&gt;IFLOODWAY = 1, a floodway analysis will be performed in the subsequent FLO-2D simulation. An initial FLO-2D flood simulation must be completed prior to a floodway simulation.  Set this switch along with ENCROACH in cont.dat.  &lt;/p&gt;&lt;p&gt;IFLOODWAY = 2, a base flow analysis where DEPFP.OUT from a previous simulation is used to set a base flow limit.  Run again to see a time to value greater than the depth in DEPFP.OUT.  Results reported in BASE_FLOW_TIME.OUT.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                          </property>
                          <property name="text">
                           <string>Floodway Analysis</string>
@@ -581,10 +593,10 @@
                  <property name="title">
                   <string notr="true">Time Lapse Output</string>
                  </property>
-                 <property name="collapsed">
+                 <property name="collapsed" stdset="0">
                   <bool>true</bool>
                  </property>
-                 <property name="saveCollapsedState">
+                 <property name="saveCollapsedState" stdset="0">
                   <bool>false</bool>
                  </property>
                  <layout class="QGridLayout" name="gridLayout_16">
@@ -608,6 +620,9 @@
                       <height>16777215</height>
                      </size>
                     </property>
+                    <property name="toolTip">
+                     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Use Time Interval Group&lt;/p&gt;&lt;p&gt;Uncheck this group unless a limited time interval is required.  &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                    </property>
                     <property name="title">
                      <string>Use Time Interval</string>
                     </property>
@@ -616,6 +631,9 @@
                     </property>
                     <property name="checkable">
                      <bool>true</bool>
+                    </property>
+                    <property name="checked">
+                     <bool>false</bool>
                     </property>
                     <layout class="QGridLayout" name="gridLayout_14">
                      <item row="0" column="0">
@@ -665,6 +683,9 @@
                            <height>16777215</height>
                           </size>
                          </property>
+                         <property name="toolTip">
+                          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;STARTIMTEP&lt;/p&gt;&lt;p&gt;(hours)&lt;/p&gt;&lt;p&gt;Start time for the time series output data (hours). Set this value to any time 0 to ENDTIMTEP. It should represent the delayed start of time dependant data.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                         </property>
                          <property name="text">
                           <string>Start Time</string>
                          </property>
@@ -692,6 +713,9 @@
                            <width>16777215</width>
                            <height>16777215</height>
                           </size>
+                         </property>
+                         <property name="toolTip">
+                          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;ENDTIMTEP&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(hours)&lt;/p&gt;&lt;p&gt;The end time for the delayed time series output data (hours). Should be greater than STARTTIMTEP and up to SIMUL.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                          </property>
                          <property name="text">
                           <string>End Time</string>
@@ -754,7 +778,7 @@
                        </size>
                       </property>
                       <property name="toolTip">
-                       <string>TIMTEP</string>
+                       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;ITIMTEP&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(hours)&lt;/p&gt;&lt;p&gt;Output interval (hrs) that the flow depth, resolved velocity, x-velocity, y-velocity and water surface elevation datasets are reported to the TIMDEP output files for a post-simulation flood animation. TIMTEP should be a multiple of TOUT.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                       </property>
                       <property name="minimum">
                        <double>0.000000000000000</double>
@@ -850,7 +874,7 @@
                        </size>
                       </property>
                       <property name="toolTip">
-                       <string>ITIMTEP</string>
+                       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;ITIMTEP&lt;/span&gt;&lt;/p&gt;&lt;p&gt;0 = No time series output is written.&lt;/p&gt;&lt;p&gt;1 = TIMDEP.OUT and TIMDEP_NC4.out are written.&lt;/p&gt;&lt;p&gt;2 = TIMDEP.HDF5 files is written.&lt;/p&gt;&lt;p&gt;3 = TIMDEPNC.HDF5 file is written.&lt;/p&gt;&lt;p&gt;4 = All time series output is written.&lt;/p&gt;&lt;p&gt;5 = Extract a time series for specific cells. Requires TIMDEPCELL.DAT&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                       </property>
                       <item>
                        <property name="text">
@@ -913,10 +937,10 @@
                  <property name="title">
                   <string>Global Data Modification</string>
                  </property>
-                 <property name="collapsed">
+                 <property name="collapsed" stdset="0">
                   <bool>true</bool>
                  </property>
-                 <property name="saveCollapsedState">
+                 <property name="saveCollapsedState" stdset="0">
                   <bool>false</bool>
                  </property>
                  <layout class="QGridLayout" name="gridLayout_9">
@@ -929,6 +953,9 @@
                         <horstretch>0</horstretch>
                         <verstretch>0</verstretch>
                        </sizepolicy>
+                      </property>
+                      <property name="toolTip">
+                       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;FROUDL&lt;/span&gt;&lt;/p&gt;&lt;p&gt;0 to 5&lt;/p&gt;&lt;p&gt;Limiting Froude number for overland flow. When FROUDL is exceeded, the floodplain n-value is increased by 0.001 for that grid element for the next timestep.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                       </property>
                       <property name="text">
                        <string>Floodplain Limiting Froude No.</string>
@@ -971,6 +998,9 @@
                         <verstretch>0</verstretch>
                        </sizepolicy>
                       </property>
+                      <property name="toolTip">
+                       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;SHALLOWN&lt;/span&gt;&lt;/p&gt;&lt;p&gt;0 = off&lt;/p&gt;&lt;p&gt;&amp;gt; 0 = n value replacemnt for shallow depth.&lt;/p&gt;&lt;p&gt;Flow roughness n-value for shallow overland flow (flow depth &amp;lt; 0.2 ft or 0.06 m).&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                      </property>
                       <property name="text">
                        <string>Shallow Flow n-value</string>
                       </property>
@@ -1011,6 +1041,9 @@
                         <horstretch>0</horstretch>
                         <verstretch>0</verstretch>
                        </sizepolicy>
+                      </property>
+                      <property name="toolTip">
+                       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;AMANN&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Increments the floodplain Manning’s n roughness coefficient at runtime.&lt;/p&gt;&lt;p&gt;AMANN = 0, n = n&lt;/p&gt;&lt;p&gt;ABS(AMANN) &amp;lt; 1, n = n + AMANN (positive or negative)&lt;/p&gt;&lt;p&gt;AMANN &amp;gt; 1, n = n * AMANN (positive)&lt;/p&gt;&lt;p&gt;AMANN &amp;lt; -1, n = n * (1 + AMANN) where AMANN is negative&lt;/p&gt;&lt;p&gt;After AMANN is applied, the shallow n is applied.&lt;/p&gt;&lt;p&gt;AMANN = -99 no depth integrate n-value adjustment and no adjustment for exceeding Courant number.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                       </property>
                       <property name="text">
                        <string>n-value Adjustment</string>
@@ -1056,6 +1089,9 @@
                         <verstretch>0</verstretch>
                        </sizepolicy>
                       </property>
+                      <property name="toolTip">
+                       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;XCONC&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Volumetric concentration to bulk the inflow discharge hydrograph (channel or floodplain). &lt;/p&gt;&lt;p&gt;XCONC = 0 for clear water.&lt;/p&gt;&lt;p&gt;XCONC = 0.20 for a concentration of 20% by volume. &lt;/p&gt;&lt;p&gt;XCONC = 0.5 and MUD = 2 for Global Mudflow Tailings Concentration for Tailings Dam failure.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                      </property>
                       <property name="text">
                        <string>Bulking Concentration</string>
                       </property>
@@ -1100,6 +1136,9 @@
                         <verstretch>0</verstretch>
                        </sizepolicy>
                       </property>
+                      <property name="toolTip">
+                       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;DEPTHDUR&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(ft or m) &lt;/p&gt;&lt;p&gt;Depth duration analysis. When a flow depth greater than DEPTHDUR is computed, the time duration of inundation for that grid element is tracked and reported in the DEPTHDUR.OUT file.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                      </property>
                       <property name="text">
                        <string>Flow Depth for Depth Duration Analysis</string>
                       </property>
@@ -1134,6 +1173,9 @@
                         <horstretch>0</horstretch>
                         <verstretch>0</verstretch>
                        </sizepolicy>
+                      </property>
+                      <property name="toolTip">
+                       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;ENCROACH&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(ft or m)&lt;/p&gt;&lt;p&gt;The floodway encroachment increase in flow depth (ft or m).&lt;/p&gt;&lt;p&gt;The IFLOODWAY switch must be set to 1 and a previous FLO-2D simulation must be completed for the project to generate the maximum water surface elevations.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                       </property>
                       <property name="text">
                        <string>Encroachment Depth</string>
@@ -1176,6 +1218,9 @@
                         <verstretch>0</verstretch>
                        </sizepolicy>
                       </property>
+                      <property name="toolTip">
+                       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;XARF&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Global area reduction factor applied to all grid elements. &lt;/p&gt;&lt;p&gt;A typical value for XARF of 0.10 indicates that 10% of each grid element surface is not available.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                      </property>
                       <property name="text">
                        <string>Area Reduction Factor</string>
                       </property>
@@ -1213,6 +1258,9 @@
                         <horstretch>0</horstretch>
                         <verstretch>0</verstretch>
                        </sizepolicy>
+                      </property>
+                      <property name="toolTip">
+                       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;ARFBLOCKMOD&lt;/span&gt; (ARF.DAT)&lt;/p&gt;&lt;p&gt;Setting IARFBLOCKMOD = 0.9 will change the ARF = 1. to ARF = 0.9 for all the totally blocked elements.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                       </property>
                       <property name="text">
                        <string>Global ARF = 1 Revision</string>
@@ -1273,10 +1321,10 @@
                  <property name="title">
                   <string>Time Control and Plot Variables</string>
                  </property>
-                 <property name="collapsed">
+                 <property name="collapsed" stdset="0">
                   <bool>true</bool>
                  </property>
-                 <property name="saveCollapsedState">
+                 <property name="saveCollapsedState" stdset="0">
                   <bool>false</bool>
                  </property>
                  <layout class="QGridLayout" name="gridLayout_6">
@@ -1303,7 +1351,7 @@
                        </size>
                       </property>
                       <property name="toolTip">
-                       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;LGPLOT = 0 will display screen text scrolling the simulation time, minimum timestep and volume conservation.&lt;/p&gt;&lt;p&gt;LGPLOT = 1 will display nothing. Use this switch position with batch runs or to run FLOPRO.EXE silently.&lt;/p&gt;&lt;p&gt;LGPLOT = 2 displays the graphical floodwave progression over the grid system (flow depth) and inflow hydrograph.&lt;/p&gt;&lt;p&gt;If there are more than 200k elments, this switch is set to 0.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;LGPLOT&lt;/span&gt; = 0, TEXT Mode will display screen scrolling text during the run that includes the simulation time, minimum timestep and volume conservation.&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;LGPLOT&lt;/span&gt; = 1, BATCH Mode will display nothing. Use this switch position with BATCH runs or to run silently.&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;LGPLOT&lt;/span&gt; = 2, GRAPHIC Mode displays the floodwave progression over the grid system (flow depth) and inflow hydrograph.&lt;/p&gt;&lt;p&gt;If there are more than 200k elments, Graphic mode is disabled.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                       </property>
                       <property name="text">
                        <string>Graphics Display</string>
@@ -1372,7 +1420,7 @@
                        </size>
                       </property>
                       <property name="toolTip">
-                       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;TOUT - Output interval (hrs) that hydraulic data is reported to the various output files *.OUT.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;TOUT &lt;/span&gt;&lt;/p&gt;&lt;p&gt;Output interval (hrs) that hydraulic data is reported to the various output files *.OUT.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                       </property>
                       <property name="text">
                        <string>Output Interval (hrs)</string>
@@ -1406,7 +1454,7 @@
                        </size>
                       </property>
                       <property name="toolTip">
-                       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;SIMUL - Total simulation time (hrs).&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;SIMUL &lt;/span&gt;&lt;/p&gt;&lt;p&gt;Total simulation time (hrs).&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                       </property>
                       <property name="text">
                        <string>Simulation Time (hrs)</string>
@@ -1471,7 +1519,7 @@
                        </size>
                       </property>
                       <property name="toolTip">
-                       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;GRAPTIM - Not used if display mode is text or batch. If project grid count exceeds 200k, GRAPTIM will not be used.&lt;/p&gt;&lt;p&gt;Note: Regardless of the project size, this display method will slow simulation time significantly. &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;GRAPTIM&lt;/span&gt;&lt;/p&gt;&lt;p&gt;If Display Mode is TEXT or BATCH, this variable is not needed.&lt;/p&gt;&lt;p&gt;If Display Mode is GRAPHIC, this is the update interval of the display.&lt;/p&gt;&lt;p&gt;If project grid count exceeds 200k, GRAPTIM will not be used.&lt;/p&gt;&lt;p&gt;Note: Regardless of the project size, this display method will slow simulation time significantly. &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                       </property>
                       <property name="text">
                        <string>Update Time Interval (hrs)</string>
@@ -1505,7 +1553,7 @@
                        </size>
                       </property>
                       <property name="toolTip">
-                       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;METRIC = 0 for english units.&lt;/p&gt;&lt;p&gt;METRIC = 1 for metric units.&lt;/p&gt;&lt;p&gt;See Table 2.1 Data Input Manual to review the units used by FLO-2D.&lt;/p&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;METRIC&lt;/span&gt; = 0 for english units.&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;METRIC&lt;/span&gt; = 1 for metric units.&lt;/p&gt;&lt;p&gt;See Table 2.1 in the Data Input Manual to review the units used by FLO-2D.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                       </property>
                       <property name="text">
                        <string>Units</string>
@@ -1623,7 +1671,20 @@
                       </property>
                      </widget>
                     </item>
-                    <item row="6" column="0" colspan="6">
+                    <item row="1" column="4" rowspan="5" colspan="2">
+                     <spacer name="horizontalSpacer_4">
+                      <property name="orientation">
+                       <enum>Qt::Horizontal</enum>
+                      </property>
+                      <property name="sizeHint" stdset="0">
+                       <size>
+                        <width>40</width>
+                        <height>20</height>
+                       </size>
+                      </property>
+                     </spacer>
+                    </item>
+                    <item row="6" column="0" colspan="5">
                      <widget class="QCheckBox" name="IBACKUP">
                       <property name="sizePolicy">
                        <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
@@ -1642,19 +1703,6 @@
                       </property>
                      </widget>
                     </item>
-                    <item row="1" column="4" rowspan="5" colspan="2">
-                     <spacer name="horizontalSpacer_4">
-                      <property name="orientation">
-                       <enum>Qt::Horizontal</enum>
-                      </property>
-                      <property name="sizeHint" stdset="0">
-                       <size>
-                        <width>40</width>
-                        <height>20</height>
-                       </size>
-                      </property>
-                     </spacer>
-                    </item>
                    </layout>
                   </item>
                  </layout>
@@ -1671,10 +1719,10 @@
                  <property name="title">
                   <string>Floodplain/Channel Display Options</string>
                  </property>
-                 <property name="collapsed">
+                 <property name="collapsed" stdset="0">
                   <bool>true</bool>
                  </property>
-                 <property name="saveCollapsedState">
+                 <property name="saveCollapsedState" stdset="0">
                   <bool>false</bool>
                  </property>
                  <layout class="QGridLayout" name="gridLayout_8">
@@ -1701,7 +1749,7 @@
                        </size>
                       </property>
                       <property name="toolTip">
-                       <string>DEPRESSDEP</string>
+                       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                       </property>
                       <property name="minimum">
                        <double>0.000000000000000</double>
@@ -1722,6 +1770,9 @@
                         <verstretch>0</verstretch>
                        </sizepolicy>
                       </property>
+                      <property name="toolTip">
+                       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;NOPRTC&lt;/span&gt; = 0, the BASE.OUT channel data is reported.&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;NOPRTC&lt;/span&gt; = 1, the BASE.OUT channel outflow data is not reported.&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;NOPRTC&lt;/span&gt; = 2, the BASE.OUT file is not reported.&lt;/p&gt;&lt;p&gt;Default = 2 because the BASE.OUT file slows the computation time significantly.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                      </property>
                       <property name="text">
                        <string>Channel Display</string>
                       </property>
@@ -1737,6 +1788,9 @@
                         <horstretch>0</horstretch>
                         <verstretch>0</verstretch>
                        </sizepolicy>
+                      </property>
+                      <property name="toolTip">
+                       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;DEPRESSDEP&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(ft or m)&lt;/p&gt;&lt;p&gt;This variable has two purposes.&lt;/p&gt;&lt;p&gt;1. Identifies depressed grid elements that are lower than all contiguous nodes. Depressed elements may be real, but in most cases isolated depressed elements are a result of poor topographic data. They can cause instability or artificially high velocities.&lt;/p&gt;&lt;p&gt;2. Identifies low levee crest elevations. A typical value of 1 to 3 ft.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                       </property>
                       <property name="text">
                        <string>Depress Depth</string>
@@ -1767,7 +1821,7 @@
                        </size>
                       </property>
                       <property name="toolTip">
-                       <string>NOPRTFP</string>
+                       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                       </property>
                       <property name="currentIndex">
                        <number>2</number>
@@ -1802,6 +1856,9 @@
                         <verstretch>0</verstretch>
                        </sizepolicy>
                       </property>
+                      <property name="toolTip">
+                       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;NOPRTFP&lt;/span&gt; = 0, the BASE.OUT floodplain flow data is reported.&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;NOPRTFP&lt;/span&gt; = 1, the BASE.OUT floodplain outflow data is not reported.&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;NOPRTFP&lt;/span&gt; = 2, BASE.OUT is not written. This reduces the time for writing model output.&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;NOPRTFP&lt;/span&gt; = 3, only floodplain outflow data is reported to the BASE.OUT file.&lt;/p&gt;&lt;p&gt;Default = 2.&lt;/p&gt;&lt;p&gt;BASE.OUT output data can increase the total runtime because it can report data on the timestep interval rather than the output interval.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                      </property>
                       <property name="text">
                        <string>Floodplain Display</string>
                       </property>
@@ -1831,7 +1888,7 @@
                        </size>
                       </property>
                       <property name="toolTip">
-                       <string>NOPRTC</string>
+                       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                       </property>
                       <property name="currentIndex">
                        <number>2</number>
@@ -1891,7 +1948,7 @@
                <property name="title">
                 <string>Courant Numbers</string>
                </property>
-               <property name="collapsed">
+               <property name="collapsed" stdset="0">
                 <bool>true</bool>
                </property>
                <layout class="QGridLayout" name="gridLayout_25">
@@ -2099,7 +2156,7 @@
                <property name="title">
                 <string>Numerical Stability Parameters</string>
                </property>
-               <property name="collapsed">
+               <property name="collapsed" stdset="0">
                 <bool>true</bool>
                </property>
                <layout class="QGridLayout" name="gridLayout_22">
