@@ -1648,6 +1648,8 @@ class InflowTimeSeriesDialog(qtBaseClass, uiDialog):
 
         # Split clipboard data into rows and columns
         rows = clipboard_text.split("\n")
+        if rows[-1] == '':  # Remove the extra empty line at the end if present
+            rows = rows[:-1]
         num_rows = len(rows)
         if num_rows == 0:
             QApplication.restoreOverrideCursor()
@@ -1663,20 +1665,14 @@ class InflowTimeSeriesDialog(qtBaseClass, uiDialog):
         sel_row = top_left_idx.row()
         sel_col = top_left_idx.column()
 
-        # Calculate required row and column counts
-        num_cols = max(row.count("\t") + 1 for row in rows) if rows else 0
-        new_row_count = sel_row + num_rows
-        new_col_count = sel_col + num_cols
+        # Insert rows if necessary
+        if sel_row + num_rows > self.inflow_time_series_tblw.rowCount():
+            self.inflow_time_series_tblw.setRowCount(sel_row + num_rows)
 
-        # Adjust table row count if necessary
-        current_row_count = self.inflow_time_series_tblw.rowCount()
-        if new_row_count > current_row_count:
-            self.inflow_time_series_tblw.setRowCount(new_row_count)
-
-        # Adjust table column count if necessary
-        current_col_count = self.inflow_time_series_tblw.columnCount()
-        if new_col_count > current_col_count:
-            self.inflow_time_series_tblw.setColumnCount(new_col_count)
+        # Insert columns if necessary (adjust table columns if paste exceeds current column count)
+        num_cols = rows[0].count("\t") + 1
+        if sel_col + num_cols > self.inflow_time_series_tblw.columnCount():
+            self.inflow_time_series_tblw.setColumnCount(sel_col + num_cols)
 
         # Paste data into the table
         for row_idx, row in enumerate(rows):
