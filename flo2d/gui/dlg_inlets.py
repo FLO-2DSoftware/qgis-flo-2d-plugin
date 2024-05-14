@@ -1285,9 +1285,12 @@ class InflowPatternDialog(qtBaseClass, uiDialog):
                 row = index.row() - rows[0]
                 column = index.column() - columns[0]
                 table[row][column] = str(index.data())
+
             stream = io.StringIO()
-            csv.writer(stream, delimiter="\t").writerows(table)
-            QApplication.clipboard().setText(stream.getvalue())
+            csv.writer(stream, delimiter='\t').writerows(table)
+            clipboard_text = stream.getvalue()
+            clipboard_text = clipboard_text.replace("\t", "\n")  # To fix the tabulation issue
+            QApplication.clipboard().setText(clipboard_text)
 
     def paste(self):
         QApplication.setOverrideCursor(Qt.WaitCursor)
@@ -1299,7 +1302,9 @@ class InflowPatternDialog(qtBaseClass, uiDialog):
             return
 
         # Split clipboard data into rows and columns
-        rows = clipboard_text.split("\t")
+        rows = clipboard_text.split("\n")
+        if rows[-1] == '':  # Remove the extra empty line at the end if present
+            rows = rows[:-1]
         num_rows = len(rows)
         if num_rows == 0:
             QApplication.restoreOverrideCursor()
@@ -1349,6 +1354,13 @@ class InflowPatternDialog(qtBaseClass, uiDialog):
         for row in selected_rows:
             table_widget.removeRow(row)
 
+    def keyPressEvent(self, event):
+        if event.matches(QKeySequence.Copy):
+            self.copy_selection()
+        elif event.matches(QKeySequence.Paste):
+            self.paste()
+        else:
+            super().keyPressEvent(event)
 
 uiDialog, qtBaseClass = load_ui("storm_drain_inflow_time_series")
 
