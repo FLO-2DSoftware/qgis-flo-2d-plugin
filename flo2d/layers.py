@@ -761,6 +761,17 @@ class Layers(object):
                     },
                 ),
                 (
+                    "swmm_control",
+                    {
+                        "name": "Storm Drain Control",
+                        "sgroup": "Storm Drain Tables",
+                        "styles": None,
+                        "attrs_edit_widgets": {},
+                        "readonly": False,
+                        "advanced": True
+                    },
+                ),
+                (
                     "swmm_inflows",
                     {
                         "name": "Storm Drain Inflows",

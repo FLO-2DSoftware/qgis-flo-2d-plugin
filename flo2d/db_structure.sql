@@ -1583,6 +1583,15 @@ INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('user_swmm_wei
 SELECT gpkgAddGeometryColumn('user_swmm_weirs', 'geom', 'LINESTRING', 0, 0, 0);
 SELECT gpkgAddGeometryTriggers('user_swmm_weirs', 'geom');
 
+-- SWMM Control Data
+
+-- The Storm Drain table field connector
+CREATE TABLE swmm_control (
+    "fid" INTEGER NOT NULL PRIMARY KEY,
+    "name" TEXT NOT NULL UNIQUE ON CONFLICT REPLACE,
+    "value" TEXT
+);
+INSERT INTO gpkg_contents (table_name, data_type) VALUES ('swmm_control', 'aspatial');
 
 -- SWMMFLO.DAT
 
