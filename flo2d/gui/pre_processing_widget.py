@@ -9,8 +9,9 @@
 # of the License, or (at your option) any later version
 
 import processing
-from PyQt5.QtCore import QVariant
+from PyQt5.QtCore import QVariant, QUrl
 from PyQt5.QtWidgets import QFileDialog
+from PyQt5.QtGui import QDesktopServices
 
 from ..user_communication import UserCommunication
 from .ui_utils import load_ui
@@ -43,6 +44,7 @@ class PreProcessingWidget(qtBaseClass, uiDialog):
         self.dam_area_tool_btn.clicked.connect(self.create_dam_area)
         self.save_changes_dam_btn.clicked.connect(self.save_dam_edits)
         self.delete_dam_btn.clicked.connect(self.delete_cur_dam)
+        self.pre_processing_help_btn.clicked.connect(self.pre_processing_help)
         self.estimate_btn.clicked.connect(self.estimate_reservoir)
 
         # connections channel
@@ -122,6 +124,9 @@ class PreProcessingWidget(qtBaseClass, uiDialog):
         self.save_changes_channel_btn.setEnabled(False)
         self.delete_channel_btn.setEnabled(False)
         self.label_3.setEnabled(False)
+
+    def pre_processing_help(self):
+        QDesktopServices.openUrl(QUrl("https://flo-2dsoftware.github.io/FLO-2D-Documentation/Plugin1000/widgets/pre-processing-tools/Pre-Processing%20Tools.html"))        
 
     def create_channel(self):
         """

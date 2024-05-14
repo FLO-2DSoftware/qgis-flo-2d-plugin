@@ -264,7 +264,7 @@ class GeoPackageUtils(object):
         'user_spatial_shallow_n', 'user_elevation_polygons', 'user_bc_points',
         'user_bc_lines', 'user_bc_polygons', 'all_schem_bc', 'user_reservoirs',
         'user_infiltration', 'user_effective_impervious_area', 'raincell',
-        'raincell_data', 'buildings_areas', 'buildings_stats', 'outrc'
+        'raincell_data', 'buildings_areas', 'buildings_stats', 'sd_fields',  'outrc'
     ]
 
     def __init__(self, con, iface):

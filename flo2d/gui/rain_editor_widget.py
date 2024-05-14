@@ -17,7 +17,8 @@ from qgis.core import QgsProject
 from qgis.PyQt.QtCore import QSettings, Qt
 from qgis.PyQt.QtGui import QColor
 from qgis.PyQt.QtWidgets import QApplication, QFileDialog, QInputDialog, QMessageBox
-
+from PyQt5.QtCore import QUrl
+from PyQt5.QtGui import QDesktopServices
 from ..flo2d_ie.flo2dgeopackage import Flo2dGeoPackage
 from ..flo2d_ie.rainfall_io import ASCProcessor, HDFProcessor
 from ..flo2dobjects import Rain
@@ -92,6 +93,7 @@ class RainEditorWidget(qtBaseClass, uiDialog):
         self.simulate_rain_grp.toggled.connect(self.set_rain)
         self.realtime_rainfall_grp.toggled.connect(self.set_realtime)
         self.building_chbox.stateChanged.connect(self.set_building)
+        self.rain_help_btn.clicked.connect(self.rain_help)
         self.spatial_variation_grp.toggled.connect(self.set_arf)
         self.moving_storm_grp.toggled.connect(self.set_moving_storm)
         self.moving_storm_speed_dbox.editingFinished.connect(self.set_moving_storm_speed)
@@ -610,6 +612,9 @@ class RainEditorWidget(qtBaseClass, uiDialog):
             return
         self.rain.irainbuilding = self.building_chbox.isChecked()
         self.rain.set_row()
+
+    def rain_help(self):
+        QDesktopServices.openUrl(QUrl("https://flo-2dsoftware.github.io/FLO-2D-Documentation/Plugin1000/widgets/rain-editor/Rain%20Editor.html"))        
 
     def set_arf(self):
         if not self.rain:

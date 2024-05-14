@@ -94,7 +94,7 @@ class StorageUnitsDialog(qtBaseClass, uiDialog):
         self.initial_depth_dbox.valueChanged.connect(self.initial_depth_dbox_valueChanged)
         self.external_inflow_chbox.stateChanged.connect(self.external_inflow_checked)
         self.external_inflow_btn.clicked.connect(self.show_external_inflow_dlg)
-        self.ponded_area_dbox.valueChanged.connect(self.ponded_area_dbox_valueChanged)
+        # self.ponded_area_dbox.valueChanged.connect(self.ponded_area_dbox_valueChanged)
         self.evap_factor_dbox.valueChanged.connect(self.evap_factor_dbox_valueChanged)
         self.infiltration_grp.toggled.connect(self.infiltration_grp_checked)
         self.suction_head_dbox.valueChanged.connect(self.suction_head_dbox_valueChanged)          
@@ -150,7 +150,7 @@ class StorageUnitsDialog(qtBaseClass, uiDialog):
                             exponent,
                             constant,
                             curve_name           
-                    FROM user_swmm_storage_units ORDER BY name ASC;"""
+                    FROM user_swmm_storage_units;"""
                     
             rows = self.gutils.execute(qry).fetchall()
             if not rows:
@@ -169,8 +169,7 @@ class StorageUnitsDialog(qtBaseClass, uiDialog):
                 for cell, data in enumerate(row_data):
                     data = self.validate_user_swmm_storage_units_cell(data,row_number, cell )
                     item = QTableWidgetItem()
-                    if cell in [0, 1, 5, 8, 9, 10, 14, 18]:
-                    # if cell == 0 or cell == 1 or cell == 5 or cell == 8 or cell == 9  or cell == 10 or cell == 14 or cell == 18:
+                    if cell in [0, 1, 5, 6, 8, 9, 10, 14, 18]:
                         item.setFlags(item.flags() & ~Qt.ItemIsEditable)
                 
                     # Fill the list of inlet names:
@@ -189,8 +188,8 @@ class StorageUnitsDialog(qtBaseClass, uiDialog):
                             self.initial_depth_dbox.setValue(data if data is not None else 0)
                         elif cell == 5:
                             self.external_inflow_chbox.setChecked(True if is_true(data) else False)
-                        elif cell == 6:    
-                            self.ponded_area_dbox.setValue(data if data is not None else 0)
+                        # elif cell == 6:    
+                        #     self.ponded_area_dbox.setValue(data if data is not None else 0)
                         elif cell == 7:
                             self.evap_factor_dbox.setValue(data if data is not None else 0) 
                         elif cell == 8:
@@ -219,25 +218,30 @@ class StorageUnitsDialog(qtBaseClass, uiDialog):
                             if index == -1:
                                 index = 0
                             self.tabular_curves_cbo.setCurrentIndex(index)                      
-                                            
+                    
+                    if cell == 6:
+                        data = 0.0                        
                     item.setData(Qt.EditRole, data)
                     self.storages_tblw.setItem(row_number, cell, item)
     
-            self.storages_cbo.model().sort(Qt.AscendingOrder)
+            self.storages_tblw.setSortingEnabled(True)
+            
+            # self.storages_cbo.model().sort(0)
+            self.storages_cbo.setCurrentIndex(0)
             self.storages_tblw.sortItems(0, Qt.AscendingOrder)
             self.storages_tblw.selectRow(0)
-            self.storages_tblw.setStyleSheet("QTableWidget::item:selected { background-color: lightblue; color: black; }")
-        
-            self.block = False
 
+            self.storages_tblw.setStyleSheet("QTableWidget::item:selected { background-color: lightblue; color: black; }")
+            
             if self.warnings != "":
                 QApplication.setOverrideCursor(Qt.ArrowCursor)
                 result = ScrollMessageBox2(QMessageBox.Warning,"Issues found!", "WARNING 070224.1902: wrong values found:\n" + self.warnings)      
                 result.exec_()  
                 QApplication.restoreOverrideCursor()
                 
-            self.storages_cbo.setCurrentIndex(0)
             self.enable_external_inflow()
+            
+            self.block = False
             
             self.highlight_storage_cell(self.grid_element_le.text())
         
@@ -276,7 +280,7 @@ class StorageUnitsDialog(qtBaseClass, uiDialog):
                 "Max. Depth",
                 "Init. Depth" ,
                 "External Inflow",
-                "Ponded Area",
+                "(disabled)",  # ponded area
                 "Evap. Factor",
                 "Treatment",
                 "Infiltration",
@@ -307,8 +311,8 @@ class StorageUnitsDialog(qtBaseClass, uiDialog):
     def external_inflow_chbox_stateChanged(self):
         self.checkbox_valueChanged(self.external_inflow_chbox, 5)
         
-    def ponded_area_dbox_valueChanged(self):
-        self.box_valueChanged(self.ponded_area_dbox, 6)  
+    # def ponded_area_dbox_valueChanged(self):
+    #     self.box_valueChanged(self.ponded_area_dbox, 6)  
         
     def evap_factor_dbox_valueChanged(self):
         self.box_valueChanged(self.evap_factor_dbox, 7) 
@@ -416,19 +420,6 @@ class StorageUnitsDialog(qtBaseClass, uiDialog):
         if col in [0, 1, 5, 8, 9, 10, 14, 18]:
             item.setFlags(Qt.ItemIsSelectable | Qt.ItemIsEnabled)
         self.storages_tblw.setItem(row, col, item)        
-        
-        
-        # if not self.block:
-        #     storage = self.storages_cbo.currentText()
-        #     row = 0
-        #     for i in range(1, self.storages_tblw.rowCount() - 1):
-        #         name = self.storages_tblw.item(i, 0).text()
-        #         if name == storage:
-        #             row = i
-        #             break
-        #     item = QTableWidgetItem()
-        #     item.setData(Qt.EditRole, widget.value())
-        #     self.storages_tblw.setItem(row, col, item)
 
     def checkbox_valueChanged(self, widget, col):
         row = self.storages_cbo.currentIndex()
@@ -490,7 +481,7 @@ class StorageUnitsDialog(qtBaseClass, uiDialog):
         self.max_depth_dbox.setValue(float_or_zero(self.storages_tblw.item(row, 3)))
         self.initial_depth_dbox.setValue(float_or_zero(self.storages_tblw.item(row, 4)))
         self.external_inflow_chbox.setChecked(True if self.storages_tblw.item(row, 5).text() == "True" else False)
-        self.ponded_area_dbox.setValue(float_or_zero(self.storages_tblw.item(row, 6)))
+        # self.ponded_area_dbox.setValue(float_or_zero(self.storages_tblw.item(row, 6)))
         self.evap_factor_dbox.setValue(float_or_zero(self.storages_tblw.item(row, 7)))
         self.infiltration_grp.setChecked(True if self.storages_tblw.item(row, 9).text() == "True" else False)
         self.suction_head_dbox.setValue(float_or_zero(self.storages_tblw.item(row, 11)))
@@ -553,7 +544,7 @@ class StorageUnitsDialog(qtBaseClass, uiDialog):
                 self.max_depth_dbox.setValue(float_or_zero(self.storages_tblw.item(row, 3)))
                 self.initial_depth_dbox.setValue(float_or_zero(self.storages_tblw.item(row, 4)))
                 self.external_inflow_chbox.setChecked(True if self.storages_tblw.item(row, 5).text() == "True" else False)
-                self.ponded_area_dbox.setValue(float_or_zero(self.storages_tblw.item(row, 6)))
+                # self.ponded_area_dbox.setValue(float_or_zero(self.storages_tblw.item(row, 6)))
                 self.evap_factor_dbox.setValue(float_or_zero(self.storages_tblw.item(row, 7)))
                 self.treatment_cbo.setCurrentIndex(0)
                 self.infiltration_grp.setChecked(True if self.storages_tblw.item(row, 9).text() == "True" else False)
@@ -678,10 +669,11 @@ class StorageUnitsDialog(qtBaseClass, uiDialog):
                 item = self.storages_tblw.item(row, 5)
                 if item is not None:
                     external_inflow = str(item.text()) if str(item.text()) in ["True", "False"]  else "False"
-                    
-                item = self.storages_tblw.item(row, 6)
-                if item is not None:
-                    ponded_area = str(item.text()) if str(item.text()) != "" else "0"
+                
+                ponded_area = 0
+                # item = self.storages_tblw.item(row, 6)
+                # if item is not None:
+                #     ponded_area = str(item.text()) if str(item.text()) != "" else "0"
 
                 item = self.storages_tblw.item(row, 7)
                 if item is not None:

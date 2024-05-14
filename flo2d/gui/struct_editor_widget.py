@@ -18,7 +18,7 @@ from collections import OrderedDict
 from math import isnan
 
 from PyQt5 import QtGui
-from PyQt5.QtGui import QClipboard
+from PyQt5.QtGui import QClipboard, QDesktopServices
 from PyQt5.QtWidgets import QApplication
 from qgis.core import QgsApplication, QgsFeatureRequest
 from qgis.PyQt import QtGui
@@ -34,7 +34,7 @@ from qgis.PyQt.QtCore import (
 )
 from qgis.PyQt.QtGui import QColor
 from qgis.PyQt.QtWidgets import QApplication, QFileDialog, QInputDialog, QTableView
-
+from PyQt5.QtCore import QUrl
 from ..flo2dobjects import Structure
 from ..geopackage_utils import GeoPackageUtils
 from ..gui.dlg_bridges import BridgesDialog
@@ -96,6 +96,7 @@ class StructEditorWidget(qtBaseClass, uiDialog):
         self.revert_changes_btn.clicked.connect(self.cancel_struct_lyrs_edits)
         self.delete_struct_btn.clicked.connect(self.delete_struct)
         self.schem_struct_btn.clicked.connect(self.schematize_struct)
+        self.structures_help_btn.clicked.connect(self.structures_help)
         self.struct_cbo.activated.connect(self.struct_changed)
         self.type_cbo.activated.connect(self.type_changed)
         self.rating_cbo.activated.connect(self.rating_changed)
@@ -321,6 +322,9 @@ class StructEditorWidget(qtBaseClass, uiDialog):
             ) 
         else: 
             self.uc.show_warn("WARNING 151203.0646: Error during Hydraulic Structures schematization!")              
+
+    def structures_help(self):
+        QDesktopServices.openUrl(QUrl("https://flo-2dsoftware.github.io/FLO-2D-Documentation/Plugin1000/widgets/hydraulic-structure-editor/Hydraulic%20Structure%20Editor.html"))        
 
     def clear_structs_data_widgets(self):
         self.storm_drain_cap_sbox.clear()

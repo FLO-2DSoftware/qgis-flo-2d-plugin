@@ -13,7 +13,8 @@ from PyQt5.QtGui import QColor
 from qgis.PyQt.QtCore import Qt
 from qgis.PyQt.QtWidgets import QApplication
 from qgis._core import QgsMessageLog, QgsSymbol, QgsRuleBasedRenderer
-
+from PyQt5.QtCore import QUrl
+from PyQt5.QtGui import QDesktopServices
 from ..geopackage_utils import GeoPackageUtils
 from ..gui.dlg_breach import (
     GlobalBreachDialog,
@@ -42,6 +43,7 @@ class LeveeAndBreachEditorWidget(qtBaseClass, uiDialog):
 
         set_icon(self.levee_elevation_tool_btn, "set_levee_elev.svg")
         self.levee_elevation_tool_btn.clicked.connect(self.levee_elevation_tool)
+        self.levees_and_breach_help_btn.clicked.connect(self.levees_and_breach_help)
 
         set_icon(self.create_breach_location_btn, "mActionCapturePoint.svg")
         self.create_breach_location_btn.clicked.connect(self.create_point_breach)
@@ -106,6 +108,9 @@ class LeveeAndBreachEditorWidget(qtBaseClass, uiDialog):
 
     def levee_elevation_tool(self):
         return
+    
+    def levees_and_breach_help(self):
+        QDesktopServices.openUrl(QUrl("https://flo-2dsoftware.github.io/FLO-2D-Documentation/Plugin1000/widgets/levees-breach-editor/Levees%20Breach%20Editor.html"))        
 
     def create_point_breach(self):
         if not self.lyrs.enter_edit_mode("breach"):
