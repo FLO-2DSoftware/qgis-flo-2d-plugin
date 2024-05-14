@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>261</width>
-    <height>184</height>
+    <width>265</width>
+    <height>182</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -16,17 +16,17 @@
   <layout class="QGridLayout" name="gridLayout">
    <item row="2" column="3" colspan="3">
     <layout class="QGridLayout" name="gridLayout_3">
-     <item row="1" column="1">
-      <widget class="QToolButton" name="arfwrf_btn">
+     <item row="0" column="1">
+      <widget class="QToolButton" name="raster_elevation_btn">
        <property name="toolTip">
-        <string>Calculate reduction factors (ARF and WRF)</string>
+        <string>Sampling grid elevation from raster layer</string>
        </property>
        <property name="text">
         <string>...</string>
        </property>
        <property name="icon">
         <iconset>
-         <normaloff>../img/eval_arfwrf.svg</normaloff>../img/eval_arfwrf.svg</iconset>
+         <normaloff>../img/sample_elev.svg</normaloff>../img/sample_elev.svg</iconset>
        </property>
        <property name="iconSize">
         <size>
@@ -56,69 +56,6 @@
        </property>
       </widget>
      </item>
-     <item row="1" column="4">
-      <widget class="QToolButton" name="shallow_n_btn">
-       <property name="acceptDrops">
-        <bool>true</bool>
-       </property>
-       <property name="toolTip">
-        <string>Sampling spatial shallow-n values</string>
-       </property>
-       <property name="text">
-        <string>...</string>
-       </property>
-       <property name="icon">
-        <iconset>
-         <normaloff>../img/sample_shallow_n.svg</normaloff>../img/sample_shallow_n.svg</iconset>
-       </property>
-       <property name="iconSize">
-        <size>
-         <width>25</width>
-         <height>25</height>
-        </size>
-       </property>
-      </widget>
-     </item>
-     <item row="1" column="3">
-      <widget class="QToolButton" name="froude_btn">
-       <property name="toolTip">
-        <string>Sampling limiting Froude numbers</string>
-       </property>
-       <property name="text">
-        <string>...</string>
-       </property>
-       <property name="icon">
-        <iconset>
-         <normaloff>../img/sample_froude.svg</normaloff>../img/sample_froude.svg</iconset>
-       </property>
-       <property name="iconSize">
-        <size>
-         <width>25</width>
-         <height>25</height>
-        </size>
-       </property>
-      </widget>
-     </item>
-     <item row="1" column="0">
-      <widget class="QToolButton" name="raster_roughness_btn">
-       <property name="toolTip">
-        <string>Sampling grid roughness from raster</string>
-       </property>
-       <property name="text">
-        <string>...</string>
-       </property>
-       <property name="icon">
-        <iconset>
-         <normaloff>../img/sample_raster_roughness.svg</normaloff>../img/sample_raster_roughness.svg</iconset>
-       </property>
-       <property name="iconSize">
-        <size>
-         <width>25</width>
-         <height>25</height>
-        </size>
-       </property>
-      </widget>
-     </item>
      <item row="0" column="0">
       <widget class="QToolButton" name="create_grid_btn">
        <property name="toolTip">
@@ -130,86 +67,6 @@
        <property name="icon">
         <iconset>
          <normaloff>../img/create_grid.svg</normaloff>../img/create_grid.svg</iconset>
-       </property>
-       <property name="iconSize">
-        <size>
-         <width>25</width>
-         <height>25</height>
-        </size>
-       </property>
-      </widget>
-     </item>
-     <item row="2" column="2">
-      <widget class="QToolButton" name="tailings_btn">
-       <property name="toolTip">
-        <string>Sampling tailings</string>
-       </property>
-       <property name="text">
-        <string>...</string>
-       </property>
-       <property name="icon">
-        <iconset>
-         <normaloff>../img/sample_tailings.svg</normaloff>../img/sample_tailings.svg</iconset>
-       </property>
-       <property name="iconSize">
-        <size>
-         <width>25</width>
-         <height>25</height>
-        </size>
-       </property>
-      </widget>
-     </item>
-     <item row="2" column="1">
-      <widget class="QToolButton" name="other_variable_btn">
-       <property name="toolTip">
-        <string>Assign water elevations/flow depths to grid from points layer</string>
-       </property>
-       <property name="text">
-        <string>...</string>
-       </property>
-       <property name="icon">
-        <iconset>
-         <normaloff>../img/sample_grid_variable.svg</normaloff>../img/sample_grid_variable.svg</iconset>
-       </property>
-       <property name="iconSize">
-        <size>
-         <width>25</width>
-         <height>25</height>
-        </size>
-       </property>
-      </widget>
-     </item>
-     <item row="2" column="0">
-      <widget class="QToolButton" name="noexchange_btn">
-       <property name="toolTip">
-        <string>Sample no-exchange channel cells</string>
-       </property>
-       <property name="text">
-        <string>...</string>
-       </property>
-       <property name="icon">
-        <iconset>
-         <normaloff>../img/sample_noexchange.svg</normaloff>../img/sample_noexchange.svg</iconset>
-       </property>
-       <property name="iconSize">
-        <size>
-         <width>25</width>
-         <height>25</height>
-        </size>
-       </property>
-      </widget>
-     </item>
-     <item row="1" column="2">
-      <widget class="QToolButton" name="tolerance_btn">
-       <property name="toolTip">
-        <string>Sampling spatial tolerance values</string>
-       </property>
-       <property name="text">
-        <string>...</string>
-       </property>
-       <property name="icon">
-        <iconset>
-         <normaloff>../img/sample_tolerance.svg</normaloff>../img/sample_tolerance.svg</iconset>
        </property>
        <property name="iconSize">
         <size>
@@ -259,6 +116,129 @@
        </property>
       </widget>
      </item>
+     <item row="0" column="5">
+      <widget class="QToolButton" name="roughness_btn">
+       <property name="toolTip">
+        <string>Sampling roughness</string>
+       </property>
+       <property name="text">
+        <string>...</string>
+       </property>
+       <property name="icon">
+        <iconset>
+         <normaloff>../img/sample_manning.svg</normaloff>../img/sample_manning.svg</iconset>
+       </property>
+       <property name="iconSize">
+        <size>
+         <width>25</width>
+         <height>25</height>
+        </size>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="0">
+      <widget class="QToolButton" name="raster_roughness_btn">
+       <property name="toolTip">
+        <string>Sampling grid roughness from raster</string>
+       </property>
+       <property name="text">
+        <string>...</string>
+       </property>
+       <property name="icon">
+        <iconset>
+         <normaloff>../img/sample_raster_roughness.svg</normaloff>../img/sample_raster_roughness.svg</iconset>
+       </property>
+       <property name="iconSize">
+        <size>
+         <width>25</width>
+         <height>25</height>
+        </size>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="1">
+      <widget class="QToolButton" name="arfwrf_btn">
+       <property name="toolTip">
+        <string>Calculate reduction factors (ARF and WRF)</string>
+       </property>
+       <property name="text">
+        <string>...</string>
+       </property>
+       <property name="icon">
+        <iconset>
+         <normaloff>../img/eval_arfwrf.svg</normaloff>../img/eval_arfwrf.svg</iconset>
+       </property>
+       <property name="iconSize">
+        <size>
+         <width>25</width>
+         <height>25</height>
+        </size>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="2">
+      <widget class="QToolButton" name="tolerance_btn">
+       <property name="toolTip">
+        <string>Sampling spatial tolerance values</string>
+       </property>
+       <property name="text">
+        <string>...</string>
+       </property>
+       <property name="icon">
+        <iconset>
+         <normaloff>../img/sample_tolerance.svg</normaloff>../img/sample_tolerance.svg</iconset>
+       </property>
+       <property name="iconSize">
+        <size>
+         <width>25</width>
+         <height>25</height>
+        </size>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="3">
+      <widget class="QToolButton" name="froude_btn">
+       <property name="toolTip">
+        <string>Sampling limiting Froude numbers</string>
+       </property>
+       <property name="text">
+        <string>...</string>
+       </property>
+       <property name="icon">
+        <iconset>
+         <normaloff>../img/sample_froude.svg</normaloff>../img/sample_froude.svg</iconset>
+       </property>
+       <property name="iconSize">
+        <size>
+         <width>25</width>
+         <height>25</height>
+        </size>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="4">
+      <widget class="QToolButton" name="shallow_n_btn">
+       <property name="acceptDrops">
+        <bool>true</bool>
+       </property>
+       <property name="toolTip">
+        <string>Sampling spatial shallow-n values</string>
+       </property>
+       <property name="text">
+        <string>...</string>
+       </property>
+       <property name="icon">
+        <iconset>
+         <normaloff>../img/sample_shallow_n.svg</normaloff>../img/sample_shallow_n.svg</iconset>
+       </property>
+       <property name="iconSize">
+        <size>
+         <width>25</width>
+         <height>25</height>
+        </size>
+       </property>
+      </widget>
+     </item>
      <item row="1" column="5">
       <widget class="QToolButton" name="gutter_btn">
        <property name="acceptDrops">
@@ -282,17 +262,17 @@
        </property>
       </widget>
      </item>
-     <item row="0" column="5">
-      <widget class="QToolButton" name="roughness_btn">
+     <item row="2" column="0">
+      <widget class="QToolButton" name="noexchange_btn">
        <property name="toolTip">
-        <string>Sampling roughness</string>
+        <string>Sample no-exchange channel cells</string>
        </property>
        <property name="text">
         <string>...</string>
        </property>
        <property name="icon">
         <iconset>
-         <normaloff>../img/sample_manning.svg</normaloff>../img/sample_manning.svg</iconset>
+         <normaloff>../img/sample_noexchange.svg</normaloff>../img/sample_noexchange.svg</iconset>
        </property>
        <property name="iconSize">
         <size>
@@ -302,17 +282,37 @@
        </property>
       </widget>
      </item>
-     <item row="0" column="1">
-      <widget class="QToolButton" name="raster_elevation_btn">
+     <item row="2" column="1">
+      <widget class="QToolButton" name="other_variable_btn">
        <property name="toolTip">
-        <string>Sampling grid elevation from raster layer</string>
+        <string>Assign water elevations/flow depths to grid from points layer</string>
        </property>
        <property name="text">
         <string>...</string>
        </property>
        <property name="icon">
         <iconset>
-         <normaloff>../img/sample_elev.svg</normaloff>../img/sample_elev.svg</iconset>
+         <normaloff>../img/sample_grid_variable.svg</normaloff>../img/sample_grid_variable.svg</iconset>
+       </property>
+       <property name="iconSize">
+        <size>
+         <width>25</width>
+         <height>25</height>
+        </size>
+       </property>
+      </widget>
+     </item>
+     <item row="2" column="2">
+      <widget class="QToolButton" name="tailings_btn">
+       <property name="toolTip">
+        <string>Sampling tailings</string>
+       </property>
+       <property name="text">
+        <string>...</string>
+       </property>
+       <property name="icon">
+        <iconset>
+         <normaloff>../img/sample_tailings.svg</normaloff>../img/sample_tailings.svg</iconset>
        </property>
        <property name="iconSize">
         <size>
@@ -350,19 +350,6 @@
         </size>
        </property>
       </widget>
-     </item>
-     <item row="2" column="4" colspan="2">
-      <spacer name="horizontalSpacer">
-       <property name="orientation">
-        <enum>Qt::Horizontal</enum>
-       </property>
-       <property name="sizeHint" stdset="0">
-        <size>
-         <width>40</width>
-         <height>20</height>
-        </size>
-       </property>
-      </spacer>
      </item>
     </layout>
    </item>
