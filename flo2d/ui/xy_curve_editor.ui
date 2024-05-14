@@ -364,9 +364,8 @@
         <bool>false</bool>
        </property>
        <property name="rowCount">
-        <number>1</number>
+        <number>0</number>
        </property>
-       <row/>
        <column>
         <property name="text">
          <string>X</string>

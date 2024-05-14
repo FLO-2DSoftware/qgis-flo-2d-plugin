@@ -1410,6 +1410,7 @@ class InflowTimeSeriesDialog(qtBaseClass, uiDialog):
         self.loading = True
         if self.time_series_name == "":
             self.use_table_radio.setChecked(True)
+            self.add_time()
             pass
         else:
             series_sql = "SELECT * FROM swmm_time_series WHERE time_series_name = ?"

@@ -739,6 +739,9 @@ class OutfallTimeSeriesDialog(qtBaseClass, uiDialog):
         self.outfall_time_series_tblw.itemChanged.connect(self.ts_tblw_changed)
         self.add_time_data_btn.clicked.connect(self.add_time)
         self.delete_time_data_btn.clicked.connect(self.delete_time)
+        self.copy_btn.clicked.connect(self.copy_selection)
+        self.paste_btn.clicked.connect(self.paste)
+        self.clear_btn.clicked.connect(self.clear)
 
         self.populate_time_series_dialog()
 
@@ -755,6 +758,7 @@ class OutfallTimeSeriesDialog(qtBaseClass, uiDialog):
         self.loading = True
         if self.time_series_name == "":
             self.use_table_radio.setChecked(True)
+            self.add_time()
             pass
         else:
             series_sql = "SELECT * FROM swmm_time_series WHERE time_series_name = ?;"
@@ -965,6 +969,79 @@ class OutfallTimeSeriesDialog(qtBaseClass, uiDialog):
         self.outfall_time_series_tblw.selectRow(0)
         self.outfall_time_series_tblw.setFocus()
 
+    def copy_selection(self):
+        selection = self.outfall_time_series_tblw.selectedIndexes()
+        if selection:
+            rows = sorted(index.row() for index in selection)
+            columns = sorted(index.column() for index in selection)
+            rowcount = rows[-1] - rows[0] + 1
+            colcount = columns[-1] - columns[0] + 1
+            table = [[""] * colcount for _ in range(rowcount)]
+            for index in selection:
+                row = index.row() - rows[0]
+                column = index.column() - columns[0]
+                table[row][column] = str(index.data())
+            stream = io.StringIO()
+            csv.writer(stream, delimiter="\t").writerows(table)
+            QApplication.clipboard().setText(stream.getvalue())
+
+    def paste(self):
+        QApplication.setOverrideCursor(Qt.WaitCursor)
+
+        # Get the clipboard text
+        clipboard_text = QApplication.clipboard().text()
+        if not clipboard_text:
+            QApplication.restoreOverrideCursor()
+            return
+
+        # Split clipboard data into rows and columns
+        rows = clipboard_text.split("\n")
+        if rows[-1] == '':  # Remove the extra empty line at the end if present
+            rows = rows[:-1]
+        num_rows = len(rows)
+        if num_rows == 0:
+            QApplication.restoreOverrideCursor()
+            return
+
+        # Get the top-left selected cell
+        selection = self.outfall_time_series_tblw.selectionModel().selection()
+        if not selection:
+            QApplication.restoreOverrideCursor()
+            return
+
+        top_left_idx = selection[0].topLeft()
+        sel_row = top_left_idx.row()
+        sel_col = top_left_idx.column()
+
+        # Insert rows if necessary
+        if sel_row + num_rows > self.outfall_time_series_tblw.rowCount():
+            self.outfall_time_series_tblw.setRowCount(sel_row + num_rows)
+
+        # Insert columns if necessary (adjust table columns if paste exceeds current column count)
+        num_cols = rows[0].count("\t") + 1
+        if sel_col + num_cols > self.outfall_time_series_tblw.columnCount():
+            self.outfall_time_series_tblw.setColumnCount(sel_col + num_cols)
+
+        # Paste data into the table
+        for row_idx, row in enumerate(rows):
+            columns = row.split("\t")
+            for col_idx, col in enumerate(columns):
+                item = QTableWidgetItem(col.strip())
+                self.outfall_time_series_tblw.setItem(sel_row + row_idx, sel_col + col_idx, item)
+
+        QApplication.restoreOverrideCursor()
+
+    def clear(self):
+        self.outfall_time_series_tblw.setRowCount(0)
+
+    def keyPressEvent(self, event):
+        if event.matches(QKeySequence.Copy):
+            self.copy_selection()
+        elif event.matches(QKeySequence.Paste):
+            self.paste()
+        else:
+            super().keyPressEvent(event)
+
 class TidalHourDelegate(QStyledItemDelegate):
     def createEditor(self, parent, option, index):
         editor = super(TidalHourDelegate, self).createEditor(parent, option, index)
@@ -1022,7 +1099,7 @@ class CurveEditorDialog(qtBaseClass, uiDialog):
             self.gutils = GeoPackageUtils(self.con, self.iface)
 
     def populate_curve_dialog(self):
-        # Empty polymorphic method to be overwritten by a child derived class.
+        self.add_curve()
         pass
     
     def is_ok_to_save_curve(self):
