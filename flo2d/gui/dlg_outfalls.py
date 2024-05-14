@@ -916,12 +916,6 @@ class OutfallTimeSeriesDialog(qtBaseClass, uiDialog):
     def get_name(self):
         return self.time_series_name
 
-    def outfall_time_series_tblw(self):
-        self.uc.show_info("Clicked")
-
-    def time_series_model_changed(self, i, j):
-        self.uc.show_info("Changed")
-
     def ts_tblw_changed(self, Qitem):
         if not self.loading:
             text = Qitem.text()
