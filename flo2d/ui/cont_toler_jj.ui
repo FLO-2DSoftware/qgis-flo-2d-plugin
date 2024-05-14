@@ -28,9 +28,6 @@
   <property name="windowTitle">
    <string>FLO-2D Control and Tolerance Variables</string>
   </property>
-  <property name="toolTip">
-   <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-  </property>
   <property name="modal">
    <bool>true</bool>
   </property>
@@ -98,8 +95,8 @@
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>997</width>
-        <height>1076</height>
+        <width>952</width>
+        <height>528</height>
        </rect>
       </property>
       <property name="sizePolicy">
@@ -158,10 +155,10 @@
                  <property name="title">
                   <string>Switches</string>
                  </property>
-                 <property name="collapsed" stdset="0">
+                 <property name="collapsed">
                   <bool>true</bool>
                  </property>
-                 <property name="saveCollapsedState" stdset="0">
+                 <property name="saveCollapsedState">
                   <bool>false</bool>
                  </property>
                  <layout class="QGridLayout" name="gridLayout_13">
@@ -593,10 +590,10 @@
                  <property name="title">
                   <string notr="true">Time Lapse Output</string>
                  </property>
-                 <property name="collapsed" stdset="0">
+                 <property name="collapsed">
                   <bool>true</bool>
                  </property>
-                 <property name="saveCollapsedState" stdset="0">
+                 <property name="saveCollapsedState">
                   <bool>false</bool>
                  </property>
                  <layout class="QGridLayout" name="gridLayout_16">
@@ -937,10 +934,10 @@
                  <property name="title">
                   <string>Global Data Modification</string>
                  </property>
-                 <property name="collapsed" stdset="0">
+                 <property name="collapsed">
                   <bool>true</bool>
                  </property>
-                 <property name="saveCollapsedState" stdset="0">
+                 <property name="saveCollapsedState">
                   <bool>false</bool>
                  </property>
                  <layout class="QGridLayout" name="gridLayout_9">
@@ -1321,10 +1318,10 @@
                  <property name="title">
                   <string>Time Control and Plot Variables</string>
                  </property>
-                 <property name="collapsed" stdset="0">
+                 <property name="collapsed">
                   <bool>true</bool>
                  </property>
-                 <property name="saveCollapsedState" stdset="0">
+                 <property name="saveCollapsedState">
                   <bool>false</bool>
                  </property>
                  <layout class="QGridLayout" name="gridLayout_6">
@@ -1719,10 +1716,10 @@
                  <property name="title">
                   <string>Floodplain/Channel Display Options</string>
                  </property>
-                 <property name="collapsed" stdset="0">
+                 <property name="collapsed">
                   <bool>true</bool>
                  </property>
-                 <property name="saveCollapsedState" stdset="0">
+                 <property name="saveCollapsedState">
                   <bool>false</bool>
                  </property>
                  <layout class="QGridLayout" name="gridLayout_8">
@@ -1948,7 +1945,7 @@
                <property name="title">
                 <string>Courant Numbers</string>
                </property>
-               <property name="collapsed" stdset="0">
+               <property name="collapsed">
                 <bool>true</bool>
                </property>
                <layout class="QGridLayout" name="gridLayout_25">
@@ -2156,7 +2153,7 @@
                <property name="title">
                 <string>Numerical Stability Parameters</string>
                </property>
-               <property name="collapsed" stdset="0">
+               <property name="collapsed">
                 <bool>true</bool>
                </property>
                <layout class="QGridLayout" name="gridLayout_22">
