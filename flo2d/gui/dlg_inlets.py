@@ -1451,9 +1451,9 @@ class InflowTimeSeriesDialog(qtBaseClass, uiDialog):
                                             c = "0" * (4 - len(c)) + c
                                         data = a + "/" + b + "/" + c
                                     except:
-                                        data = "00/00/0000"
+                                        data = ""
                                 else:
-                                    data = "00/00/0000"
+                                    data = ""
                             if col == 1:
                                 if data:
                                     try:
@@ -1462,7 +1462,7 @@ class InflowTimeSeriesDialog(qtBaseClass, uiDialog):
                                             a = "0" + a
                                         data = a + ":" + b
                                     except:
-                                        data = "00:00"    
+                                        data = "00:00"
                                 else:
                                     data = "00:00"
                             if col == 2:
@@ -1575,22 +1575,35 @@ class InflowTimeSeriesDialog(qtBaseClass, uiDialog):
         self.uc.show_info("Changed")
 
     def ts_tblw_changed(self, Qitem):
+
         if not self.loading:
+            column = Qitem.column()
             text = Qitem.text()
-            if "/" in text:
-                a, b, c = text.split("/")
-                if len(a) < 2:
-                    a = "0" * (2 - len(a)) + a
-                if len(b) < 2:
-                    b = "0" * (2 - len(b)) + b
-                if len(c) < 4:
-                    c = "0" * (4 - len(c)) + c
-                text = a + "/" + b + "/" + c
-            if ":" in text:
-                a, b = text.split(":")
-                if len(a) == 1:
-                    a = "0" + a
-                text = a + ":" + b
+
+            if column == 0:  # First column (Date)
+                if "/" in text:
+                    a, b, c = text.split("/")
+                    if len(a) < 2:
+                        a = "0" * (2 - len(a)) + a
+                    if len(b) < 2:
+                        b = "0" * (2 - len(b)) + b
+                    if len(c) < 4:
+                        c = "0" * (4 - len(c)) + c
+                    text = a + "/" + b + "/" + c
+
+            elif column == 1:  # Second column (Time)
+                if text == "":
+                    text = "00:00"
+                if ":" in text:
+                    a, b = text.split(":")
+                    if len(a) == 1:
+                        a = "0" + a
+                    text = a + ":" + b
+
+            elif column == 2:  # Third column (value)
+                if text == "":
+                    text = "0.0"
+
             Qitem.setText(text)
 
     def add_time(self):
@@ -1598,14 +1611,26 @@ class InflowTimeSeriesDialog(qtBaseClass, uiDialog):
         row_number = self.inflow_time_series_tblw.rowCount() - 1
 
         item = QTableWidgetItem()
-        d = QDate.currentDate()
-        d = str(d.month()) + "/" + str(d.day()) + "/" + str(d.year())
-        item.setData(Qt.DisplayRole, d)
+
+        # Code for current date
+        # d = QDate.currentDate()
+        # d = str(d.month()) + "/" + str(d.day()) + "/" + str(d.year())
+        # item.setData(Qt.DisplayRole, d)
+
+        # Code for empty item
+        item.setData(Qt.DisplayRole, "")
+
         self.inflow_time_series_tblw.setItem(row_number, 0, item)
 
         item = QTableWidgetItem()
-        t = QTime.currentTime()
-        t = str(t.hour()) + ":" + str(t.minute())
+
+        # Code for current time
+        # t = QTime.currentTime()
+        # t = str(t.hour()) + ":" + str(t.minute())
+        # item.setData(Qt.DisplayRole, t)
+
+        # Code for starting time equal 00:00
+        t = "00:00"
         item.setData(Qt.DisplayRole, t)
         self.inflow_time_series_tblw.setItem(row_number, 1, item)
 
