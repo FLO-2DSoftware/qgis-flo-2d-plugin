@@ -197,6 +197,10 @@ class OutfallNodesDialog(qtBaseClass, uiDialog):
                     ):  # We need 2nd. col_number: 'OUT3' in the example above, and its fid from row_data[0]
                         self.outfall_cbo.addItem(data, row_data[0])
 
+                    if col_number == 5:
+                        data = "1" if is_true(data) else "0"  
+                        item.setData(Qt.DisplayRole, data) 
+
                     # Fill all text boxes with data of first feature of query (first element in table user_swmm_nodes):
                     if row_number == 0:
                         data = 0 if data is None else data
@@ -208,6 +212,7 @@ class OutfallNodesDialog(qtBaseClass, uiDialog):
                             self.flap_gate_chbox.setChecked(True if is_true(data) else False)
                         elif col_number == 5:
                             self.allow_discharge_chbox.setChecked(True if is_true(data) else False)
+                            
                         elif col_number == 6:
                             data = str(data).upper()
                             if data in self.outfalls_tuple:
@@ -235,7 +240,7 @@ class OutfallNodesDialog(qtBaseClass, uiDialog):
                             txt = "*" if data == "..." else str(data) if not type(data) == str else data
                             idx = self.time_series_cbo.findText(txt)
                             self.time_series_cbo.setCurrentIndex(idx)
-
+     
                     if col_number > 0:  # For this row disable some elements and omit fid number
                         if col_number in (1, 2, 4, 5, 6, 8, 9):
                             item.setFlags(Qt.ItemIsSelectable | Qt.ItemIsEnabled)
