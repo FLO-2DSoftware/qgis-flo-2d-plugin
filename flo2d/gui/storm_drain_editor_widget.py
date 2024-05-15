@@ -246,8 +246,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         set_icon(self.SD_add_predefined_type4_btn, "mActionOpenFile.svg")
         set_icon(self.SD_remove_type4_btn, "mActionDeleteSelected.svg")
         set_icon(self.SD_rename_type4_btn, "change_name.svg")
-        
-        set_icon(self.show_pump_table_btn, "show_cont_table.svg")
+
         set_icon(self.add_pump_curve_btn, "add_table_data.svg")
         set_icon(self.add_predefined_pump_curve_btn, "mActionOpenFile.svg")
         set_icon(self.remove_pump_curve_btn, "mActionDeleteSelected.svg")
@@ -303,7 +302,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         self.SD_remove_type4_btn.clicked.connect(self.SD_delete_type4)
         self.SD_rename_type4_btn.clicked.connect(self.SD_rename_type4)
 
-        self.show_pump_table_btn.clicked.connect(self.show_pump_curve_table_and_plot)
+        self.pump_curve_cbo.currentIndexChanged.connect(self.show_pump_curve_table_and_plot)
         self.add_pump_curve_btn.clicked.connect(self.add_one_pump_curve)
         self.add_predefined_pump_curve_btn.clicked.connect(self.SD_import_pump_curves)
         self.remove_pump_curve_btn.clicked.connect(self.delete_pump_curve)
@@ -5643,7 +5642,6 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         curve_fid = self.pump_curve_cbo.itemData(idx)
         curve_name = self.pump_curve_cbo.currentText()
         if curve_fid is None:
-            #             self.uc.bar_warn("No curve table defined!")
             return
 
         self.curve_data = self.PumpCurv.get_pump_curve_data(curve_name)
@@ -5705,6 +5703,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             self.d1.append(m_fdata(self.pumps_data_model, i, 0))
             self.d2.append(m_fdata(self.pumps_data_model, i, 1))
         self.plot.update_item(self.plot_item_name, [self.d1, self.d2])
+        self.plot.auto_range()
 
     def add_one_pump_curve(self):
         self.add_single_pump_curve()
