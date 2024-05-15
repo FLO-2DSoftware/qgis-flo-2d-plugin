@@ -799,9 +799,9 @@ class OutfallTimeSeriesDialog(qtBaseClass, uiDialog):
                                             c = "0" * (4 - len(c)) + c
                                         data = a + "/" + b + "/" + c
                                     except:
-                                        data = "          "
+                                        data = ""
                                 else:
-                                    data = "          "
+                                    data = ""
                             if col == 1: # Time
                                 if data:
                                     try:
@@ -918,21 +918,33 @@ class OutfallTimeSeriesDialog(qtBaseClass, uiDialog):
 
     def ts_tblw_changed(self, Qitem):
         if not self.loading:
+            column = Qitem.column()
             text = Qitem.text()
-            if "/" in text:
-                a, b, c = text.split("/")
-                if len(a) < 2:
-                    a = "0" * (2 - len(a)) + a
-                if len(b) < 2:
-                    b = "0" * (2 - len(b)) + b
-                if len(c) < 4:
-                    c = "0" * (4 - len(c)) + c
-                text = a + "/" + b + "/" + c
-            if ":" in text:
-                a, b = text.split(":")
-                if len(a) == 1:
-                    a = "0" + a
-                text = a + ":" + b
+
+            if column == 0:  # First column (Date)
+                if "/" in text:
+                    a, b, c = text.split("/")
+                    if len(a) < 2:
+                        a = "0" * (2 - len(a)) + a
+                    if len(b) < 2:
+                        b = "0" * (2 - len(b)) + b
+                    if len(c) < 4:
+                        c = "0" * (4 - len(c)) + c
+                    text = a + "/" + b + "/" + c
+
+            elif column == 1:  # Second column (Time)
+                if text == "":
+                    text = "00:00"
+                if ":" in text:
+                    a, b = text.split(":")
+                    if len(a) == 1:
+                        a = "0" + a
+                    text = a + ":" + b
+
+            elif column == 2:  # Third column (value)
+                if text == "":
+                    text = "0.0"
+
             Qitem.setText(text)
 
     def add_time(self):
@@ -940,14 +952,26 @@ class OutfallTimeSeriesDialog(qtBaseClass, uiDialog):
         row_number = self.outfall_time_series_tblw.rowCount() - 1
 
         item = QTableWidgetItem()
-        d = QDate.currentDate()
-        d = str(d.month()) + "/" + str(d.day()) + "/" + str(d.year())
-        item.setData(Qt.DisplayRole, d)
+
+        # Code for current date
+        # d = QDate.currentDate()
+        # d = str(d.month()) + "/" + str(d.day()) + "/" + str(d.year())
+        # item.setData(Qt.DisplayRole, d)
+
+        # Code for empty item
+        item.setData(Qt.DisplayRole, "")
+
         self.outfall_time_series_tblw.setItem(row_number, 0, item)
 
         item = QTableWidgetItem()
-        t = QTime.currentTime()
-        t = str(t.hour()) + ":" + str(t.minute())
+
+        # Code for current time
+        # t = QTime.currentTime()
+        # t = str(t.hour()) + ":" + str(t.minute())
+        # item.setData(Qt.DisplayRole, t)
+
+        # Code for starting time equal 00:00
+        t = "00:00"
         item.setData(Qt.DisplayRole, t)
         self.outfall_time_series_tblw.setItem(row_number, 1, item)
 
