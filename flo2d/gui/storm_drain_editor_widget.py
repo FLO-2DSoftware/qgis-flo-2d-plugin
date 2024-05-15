@@ -4050,49 +4050,51 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                             if culvert:
                                 if len(culvert) == 7:
                                     grid_fid, name, cdiameter, typec, typeen, cubase, multbarrels = culvert
-                                    if name:
-                                        grid_sql = "SELECT grid FROM user_swmm_nodes WHERE name = ?;"
-                                        grid = self.gutils.execute(grid_sql, (name,)).fetchone()
-                                        if grid:
-                                            exists = self.gutils.execute("SELECT * FROM swmmflo_culvert WHERE name = ?;", (name,)).fetchone()
-                                            if exists:
-                                                # Remove existing from swmmflo_culvert table:
-                                                culvert_existed += 1
-                                                self.gutils.execute("DELETE FROM swmmflo_culvert WHERE name = ?;", (name,))
-                                            # Insert new Culvert eq:
-                                            qry = """INSERT OR REPLACE INTO swmmflo_culvert 
-                                                    (grid_fid, name, cdiameter, typec, typeen, cubase, multbarrels) 
-                                                    VALUES (?, ?, ?, ?, ?, ?, ?);"""
-                                            self.gutils.execute(
-                                                qry, (grid[0], name, cdiameter, typec, typeen, cubase, multbarrels)
-                                            )
+                                if len(culvert) == 6:
+                                    name, cdiameter, typec, typeen, cubase, multbarrels = culvert
+                                if name:
+                                    grid_sql = "SELECT grid FROM user_swmm_nodes WHERE name = ?;"
+                                    grid = self.gutils.execute(grid_sql, (name,)).fetchone()
+                                    if grid:
+                                        exists = self.gutils.execute("SELECT * FROM swmmflo_culvert WHERE name = ?;", (name,)).fetchone()
+                                        if exists:
+                                            # Remove existing from swmmflo_culvert table:
+                                            culvert_existed += 1
+                                            self.gutils.execute("DELETE FROM swmmflo_culvert WHERE name = ?;", (name,))
+                                        # Insert new Culvert eq:
+                                        qry = """INSERT OR REPLACE INTO swmmflo_culvert 
+                                                (grid_fid, name, cdiameter, typec, typeen, cubase, multbarrels) 
+                                                VALUES (?, ?, ?, ?, ?, ?, ?);"""
+                                        self.gutils.execute(
+                                            qry, (grid[0], name, cdiameter, typec, typeen, cubase, multbarrels)
+                                        )
 
-                                            assignments[name] = "C"
+                                        assignments[name] = "C"
 
-                                            # Include Culvert eq. in dropdown list of type 4s:
-                                            self.add_type4("CulvertEquation", file_name)
-                                            # Assign Culvert name to user_swmm_nodes:
-                                            assign_rt_name_sql = (
-                                                "UPDATE user_swmm_nodes SET rt_name = ? WHERE name =?;"
-                                            )
-                                            self.gutils.execute(assign_rt_name_sql, (name, name))
+                                        # Include Culvert eq. in dropdown list of type 4s:
+                                        self.add_type4("CulvertEquation", file_name)
+                                        # Assign Culvert name to user_swmm_nodes:
+                                        assign_rt_name_sql = (
+                                            "UPDATE user_swmm_nodes SET rt_name = ? WHERE name =?;"
+                                        )
+                                        self.gutils.execute(assign_rt_name_sql, (name, name))
 
-                                            # See if there is a rating table with the same name:
-                                            in_rt = self.gutils.execute(
-                                                "SELECT * FROM swmmflort WHERE name = ?;", (name,)
+                                        # See if there is a rating table with the same name:
+                                        in_rt = self.gutils.execute(
+                                            "SELECT * FROM swmmflort WHERE name = ?;", (name,)
+                                        ).fetchone()
+                                        if in_rt:
+                                            # Remove existing rating table:
+
+                                            swmm_fid = self.gutils.execute(
+                                                "SELECT fid FROM swmmflort WHERE name = ?", (name,)
                                             ).fetchone()
-                                            if in_rt:
-                                                # Remove existing rating table:
-
-                                                swmm_fid = self.gutils.execute(
-                                                    "SELECT fid FROM swmmflort WHERE name = ?", (name,)
-                                                ).fetchone()
-                                                self.gutils.execute("DELETE FROM swmmflort WHERE name = ?;", (name,))
-                                                # Data in 'swmmflort_data' is deleted with already defined trigger.
-                                                # self.gutils.execute("DELETE FROM swmmflort_data WHERE swmm_rt_fid = ?;", (swmm_fid[0],))
-                                                # already_a_rt += 1
-                                        else:
-                                            no_culvert_grids.append((name, name))
+                                            self.gutils.execute("DELETE FROM swmmflort WHERE name = ?;", (name,))
+                                            # Data in 'swmmflort_data' is deleted with already defined trigger.
+                                            # self.gutils.execute("DELETE FROM swmmflort_data WHERE swmm_rt_fid = ?;", (swmm_fid[0],))
+                                            # already_a_rt += 1
+                                    else:
+                                        no_culvert_grids.append((name, name))
                                 else:
                                     # badCulverts += 1
                                     pass
