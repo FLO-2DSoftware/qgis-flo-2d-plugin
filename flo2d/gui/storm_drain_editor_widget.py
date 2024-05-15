@@ -19,6 +19,7 @@ from pathlib import Path
 
 import h5py
 import numpy as np
+from PyQt5.QtWidgets import QStyledItemDelegate
 from qgis._core import QgsFeatureRequest
 from qgis.core import (
     NULL,
@@ -91,6 +92,8 @@ from ..utils import float_or_zero, int_or_zero, is_number, is_true, m_fdata
 from .table_editor_widget import CommandItemEdit, StandardItem, StandardItemModel
 from .ui_utils import load_ui, set_icon, try_disconnect, center_canvas
 from ..flo2d_ie.flo2d_parser import ParseDAT
+
+SDTableRole = Qt.UserRole + 1
 
 uiDialog, qtBaseClass = load_ui("inp_groups")
 
@@ -239,7 +242,6 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         set_icon(self.schema_storm_drain_btn, "schematize_res.svg")
         set_icon(self.sd_help_btn, "help.svg")
 
-        set_icon(self.SD_show_type4_btn, "show_cont_table.svg")
         set_icon(self.SD_add_one_type4_btn, "add_table_data.svg")
         set_icon(self.SD_add_predefined_type4_btn, "mActionOpenFile.svg")
         set_icon(self.SD_remove_type4_btn, "mActionDeleteSelected.svg")
@@ -293,7 +295,10 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         self.schema_storm_drain_btn.clicked.connect(self.schematize_swmm)
         self.sd_help_btn.clicked.connect(self.sd_help)
 
-        self.SD_show_type4_btn.clicked.connect(self.SD_show_type4_table_and_plot)
+        self.SD_type4_cbo.currentIndexChanged.connect(self.SD_show_type4_table_and_plot)
+        delegate = SDTablesDelegate(self.SD_type4_cbo)
+        self.SD_type4_cbo.setItemDelegate(delegate)
+
         self.SD_add_predefined_type4_btn.clicked.connect(self.SD_import_type4)
         self.SD_remove_type4_btn.clicked.connect(self.SD_delete_type4)
         self.SD_rename_type4_btn.clicked.connect(self.SD_rename_type4)
@@ -4762,22 +4767,37 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         self.SD_show_type4_table_and_plot()
 
     def populate_type4_combo(self):
+        """
+        Populate the Rating Tables/Culvert Equations on the combobox
+        """
         self.SD_type4_cbo.clear()
         duplicates = ""
         # Load rating tables:
-        for row in self.inletRT.get_rating_tables():
-            rt_fid, name = [x if x is not None else "" for x in row]
-            if name != "":
-                if self.SD_type4_cbo.findText(name) == -1:
-                    self.SD_type4_cbo.addItem(name, rt_fid)
-                else:
-                    duplicates += name + "\n"
+        sd_rating_tables = self.inletRT.get_rating_tables()
+        if sd_rating_tables:
+            self.SD_type4_cbo.addItem("Rating Tables")
+            row_index = self.SD_type4_cbo.model().rowCount() - 1
+            flags = self.SD_type4_cbo.model().item(row_index).flags()
+            self.SD_type4_cbo.model().item(row_index).setFlags(flags & ~Qt.ItemIsSelectable)
+            self.SD_type4_cbo.model().item(row_index).setData(True,  SDTableRole)
+            for row in sd_rating_tables:
+                rt_fid, name = [x if x is not None else "" for x in row]
+                if name != "":
+                    if self.SD_type4_cbo.findText(name) == -1:
+                        self.SD_type4_cbo.addItem(name, rt_fid)
+                    else:
+                        duplicates += name + "\n"
 
         # Load Culvert equations:
         culverts = self.gutils.execute(
             "SELECT fid, grid_fid, name, cdiameter, typec, typeen, cubase, multbarrels FROM swmmflo_culvert ORDER BY fid;"
         ).fetchall()
         if culverts:
+            self.SD_type4_cbo.addItem("Culvert Equations")
+            row_index = self.SD_type4_cbo.model().rowCount() - 1
+            flags = self.SD_type4_cbo.model().item(row_index).flags()
+            self.SD_type4_cbo.model().item(row_index).setFlags(flags & ~Qt.ItemIsSelectable)
+            self.SD_type4_cbo.model().item(row_index).setData(True,  Qt.UserRole + 1)
             for culv in culverts:
                 fid, grid_fid, name, cdiameter, typec, typeen, cubase, multbarrels = culv
                 if name and name != "":
@@ -4920,7 +4940,6 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         fid = self.SD_type4_cbo.itemData(idx)
         name = self.SD_type4_cbo.currentText()
         if fid is None:
-            #             self.uc.bar_warn("No table defined!")
             return
     
         in_culvert = self.gutils.execute(
@@ -4967,7 +4986,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             self.tview.setModel(self.inlet_data_model)
             self.inlet_data_model.clear()
             self.inlet_data_model.setHorizontalHeaderLabels(["Depth", "Q"])
-            self.d1, self.d2= [[], []]
+            self.d1, self.d2 = [[], []]
     
             for row in self.inlet_series_data:
                 items = [StandardItem("{:.4f}".format(x)) if x is not None else StandardItem("") for x in row]
@@ -4987,7 +5006,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             for i in range(self.inlet_data_model.rowCount()):
                 self.tview.setRowHeight(i, 20)
     
-            self.update_rt_plot()
+            # self.update_rt_plot()
 
     def show_discharge_table_and_plot(self, node, units,
                                       RPTseries, 
@@ -5566,7 +5585,6 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         self.plot_item_name = "Rating Table:   " + name
         self.plot.add_item(self.plot_item_name, [self.d1, self.d2], col=QColor("#0018d4"))
 
-     
     def update_rt_plot(self):
         if not self.plot_item_name:
             return
@@ -5574,8 +5592,8 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         for i in range(self.inlet_data_model.rowCount()):
             self.d1.append(m_fdata(self.inlet_data_model, i, 0))
             self.d2.append(m_fdata(self.inlet_data_model, i, 1))
-        self.plot.update_item(self.plot_item_name, [self.d1, self.d2])
 
+        self.plot.update_item(self.plot_item_name, [self.d1, self.d2])
 
     def update_discharge_plot(self):
         # if not self.plot_item_name:
@@ -5909,3 +5927,11 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             index = self.end_node_cbo.findText(name)
             if index != -1:
                 self.end_node_cbo.setCurrentIndex(index)
+
+class SDTablesDelegate(QStyledItemDelegate):
+    def initStyleOption(self, option, index):
+        super(SDTablesDelegate, self).initStyleOption(option, index)
+        a = index.data(SDTableRole)
+        if index.data(SDTableRole):
+            option.font.setBold(True)
+            option.font.setItalic(True)
