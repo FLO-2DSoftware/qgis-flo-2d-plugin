@@ -198,7 +198,7 @@ class OutfallNodesDialog(qtBaseClass, uiDialog):
                         self.outfall_cbo.addItem(data, row_data[0])
 
                     if col_number == 5:
-                        data = "1" if is_true(data) else "0"  
+                        data = data if data in ["1", "0"] else "1" if is_true(data) else "0"  
                         item.setData(Qt.DisplayRole, data) 
 
                     # Fill all text boxes with data of first feature of query (first element in table user_swmm_nodes):
@@ -631,7 +631,7 @@ class OutfallNodesDialog(qtBaseClass, uiDialog):
 
     def save_outfalls(self):
         """
-        Save changes of user_swmm_nodes layer.
+        Save changes to user_swmm_nodes layer and swmmoutf
         """
         # self.save_attrs()
         update_qry = """
@@ -647,7 +647,9 @@ class OutfallNodesDialog(qtBaseClass, uiDialog):
                             tidal_curve = ?,
                             time_series = ?
                         WHERE fid = ?;"""
-
+                        
+        insert_swmmoutf_sql = ["""INSERT INTO swmmoutf (name, grid_fid, outf_flo) VALUES""", 3]
+        
         for row in range(0, self.outfalls_tblw.rowCount()):
             item = QTableWidgetItem()
 
@@ -672,7 +674,7 @@ class OutfallNodesDialog(qtBaseClass, uiDialog):
             item = self.outfalls_tblw.item(row, 4)
             if item is not None:
                 allow_discharge = str(True if is_true(item.text()) else False)
-
+                discharge = "1" if is_true(item.text()) else "0"
             item = self.outfalls_tblw.item(row, 5)
             if item is not None:
                 outfall_type = str(item.text())
@@ -712,7 +714,11 @@ class OutfallNodesDialog(qtBaseClass, uiDialog):
                     fid,
                 ),
             )
-
+            
+            insert_swmmoutf_sql += [(name, grid, discharge)]
+            
+        self.gutils.clear_tables("swmmoutf")
+        self.gutils.batch_execute(insert_swmmoutf_sql)         
 
 uiDialog, qtBaseClass = load_ui("storm_drain_outfall_time_series")
 class OutfallTimeSeriesDialog(qtBaseClass, uiDialog):
