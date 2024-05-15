@@ -447,7 +447,7 @@ class OutfallNodesDialog(qtBaseClass, uiDialog):
         if col in (0, 1, 3, 4, 5, 7, 8):
             item.setFlags(Qt.ItemIsSelectable | Qt.ItemIsEnabled)
         self.outfalls_tblw.setItem(row, col, item)
-        self.outfalls_tblw.item(row, col).setText("True" if widget.isChecked() else "False")
+        self.outfalls_tblw.item(row, col).setText("1" if widget.isChecked() else "0")
 
     def combo_valueChanged(self, widget, col):
         row = self.outfall_cbo.currentIndex()
