@@ -33,46 +33,6 @@
     <number>6</number>
    </property>
    <item>
-    <layout class="QGridLayout" name="gridLayout_3">
-     <item row="0" column="3">
-      <spacer name="horizontalSpacer_14">
-       <property name="orientation">
-        <enum>Qt::Horizontal</enum>
-       </property>
-       <property name="sizeHint" stdset="0">
-        <size>
-         <width>40</width>
-         <height>20</height>
-        </size>
-       </property>
-      </spacer>
-     </item>
-     <item row="0" column="1">
-      <widget class="QLabel" name="label_14">
-       <property name="text">
-        <string>Mud/Debris/Sediment</string>
-       </property>
-      </widget>
-     </item>
-     <item row="0" column="2">
-      <widget class="QComboBox" name="mud_switch_cbo"/>
-     </item>
-     <item row="0" column="0">
-      <spacer name="horizontalSpacer_13">
-       <property name="orientation">
-        <enum>Qt::Horizontal</enum>
-       </property>
-       <property name="sizeHint" stdset="0">
-        <size>
-         <width>40</width>
-         <height>20</height>
-        </size>
-       </property>
-      </spacer>
-     </item>
-    </layout>
-   </item>
-   <item>
     <widget class="QGroupBox" name="reservoir_grp">
      <property name="title">
       <string>Reservoir</string>

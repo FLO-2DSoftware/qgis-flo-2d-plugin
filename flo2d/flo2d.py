@@ -3304,6 +3304,7 @@ class Flo2D(object):
                 if save:
                     try:
                         if dlg_control.save_parameters_JJ():
+                            self.f2d_widget.ic_editor.populate_cbos()
                             self.uc.bar_info("Parameters saved!", dur=3)
                             break
                     except Exception as e:
@@ -4018,6 +4019,7 @@ class Flo2D(object):
                 if dlg_ms.ok_to_save():
                     try:
                         dlg_ms.save_mud_sediment()
+                        self.f2d_widget.ic_editor.populate_cbos()
                         repeat = False
                     except Exception as e:
                         self.uc.show_error(

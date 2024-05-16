@@ -86,12 +86,10 @@ class ICEditorWidget(qtBaseClass, uiDialog):
         self.wse_sb.editingFinished.connect(self.save_tal)
         self.concentration_sb.editingFinished.connect(self.save_tal)
 
-        mud_switches = ["None",
-                        "Mud/Debris",
-                        "Sediment Transport",
-                        "Two Phase"]
+    def populate_cbos(self, fid=None, show_last_edited=False):
 
-        self.mud_switch_cbo.addItems(mud_switches)
+        if not self.iface.f2d["con"]:
+            return
 
         mud_switch = self.gutils.get_cont_par("MUD")
         sed_switch = self.gutils.get_cont_par("ISED")
@@ -99,7 +97,6 @@ class ICEditorWidget(qtBaseClass, uiDialog):
         if mud_switch == '0' and sed_switch == '0':
             self.reservoir_grp.setHidden(False)
             self.tailings_grp.setHidden(True)
-            self.mud_switch_cbo.setCurrentIndex(0)
         # Mud/debris
         if mud_switch == '1' and sed_switch == '0':
             self.reservoir_grp.setHidden(True)
@@ -108,7 +105,6 @@ class ICEditorWidget(qtBaseClass, uiDialog):
             self.wse_tal_res_sb.setEnabled(False)
             self.wse_sb.setEnabled(False)
             self.wse_sb.setValue(0)
-            self.mud_switch_cbo.setCurrentIndex(1)
         # Sediment Transport
         if mud_switch == '0' and sed_switch == '1':
             self.reservoir_grp.setHidden(False)
@@ -117,21 +113,12 @@ class ICEditorWidget(qtBaseClass, uiDialog):
             self.wse_tal_res_sb.setValue(0)
             self.wse_sb.setEnabled(False)
             self.wse_sb.setValue(0)
-            self.mud_switch_cbo.setCurrentIndex(2)
         # two-phase
         if mud_switch == '2' and sed_switch == '0':
             self.reservoir_grp.setHidden(False)
             self.tailings_grp.setHidden(False)
             self.wse_tal_res_sb.setEnabled(True)
             self.wse_sb.setEnabled(True)
-            self.mud_switch_cbo.setCurrentIndex(3)
-
-        self.mud_switch_cbo.currentIndexChanged.connect(self.enableGroups)
-
-    def populate_cbos(self, fid=None, show_last_edited=False):
-
-        if not self.iface.f2d["con"]:
-            return
 
         # reservoir
         self.res_cbo.clear()
@@ -167,6 +154,8 @@ class ICEditorWidget(qtBaseClass, uiDialog):
         for i, row in enumerate(rows_tal_res):
             self.tailing_res_cbo.addItem(row[1], row[0])
         self.cur_tal_res_changed(cur_res_idx)
+
+        self.lyrs.clear_rubber()
 
     def cur_res_changed(self, cur_idx):
         if not self.res_cbo.count():
@@ -688,160 +677,4 @@ class ICEditorWidget(qtBaseClass, uiDialog):
         self.repaint_tailings_res()
         self.lyrs.clear_rubber()
         self.populate_cbos()
-
-    def enableGroups(self):
-        """
-        Function to enable the groups based on the MUD switch
-        """
-        # None
-        if self.mud_switch_cbo.currentIndex() == 0:
-            self.reservoir_grp.setHidden(False)
-            self.tailings_grp.setHidden(True)
-            self.gutils.set_cont_par("ISED", 0)
-            self.gutils.set_cont_par("MUD", 0)
-        # Mudflow
-        if self.mud_switch_cbo.currentIndex() == 1:
-            self.reservoir_grp.setHidden(True)
-            self.tailings_grp.setHidden(False)
-            self.wse_tal_res_sb.setEnabled(False)
-            self.wse_tal_res_sb.setValue(0)
-            self.wse_sb.setEnabled(False)
-            self.wse_sb.setValue(0)
-            self.gutils.set_cont_par("ISED", 0)
-            self.gutils.set_cont_par("MUD", 1)
-        # Sediment Transport
-        if self.mud_switch_cbo.currentIndex() == 2:
-            self.reservoir_grp.setHidden(True)
-            self.tailings_grp.setHidden(False)
-            self.wse_tal_res_sb.setEnabled(False)
-            self.wse_tal_res_sb.setValue(0)
-            self.wse_sb.setEnabled(False)
-            self.wse_sb.setValue(0)
-            self.gutils.set_cont_par("MUD", 0)
-            self.gutils.set_cont_par("ISED", 1)
-        #  Two Phase
-        if self.mud_switch_cbo.currentIndex() == 3:
-            self.reservoir_grp.setHidden(False)
-            self.tailings_grp.setHidden(False)
-            self.wse_tal_res_sb.setEnabled(True)
-            self.wse_sb.setEnabled(True)
-            self.gutils.set_cont_par("MUD", 2)
-            self.gutils.set_cont_par("ISED", 0)
-
-    # def disable_reservoirs(self):
-    #     """
-    #     Function to disable the reservoirs
-    #     """
-    #     self.uc.log_info("disable_reservoirs")
-    #     self.add_user_res_btn.setEnabled(False)
-    #     self.revert_res_changes_btn.setEnabled(False)
-    #     self.schem_res_btn.setEnabled(False)
-    #     self.delete_schem_res_btn.setEnabled(False)
-    #     self.label_6.setEnabled(False)
-    #     self.res_cbo.setEnabled(False)
-    #     self.rename_res_btn.setEnabled(False)
-    #     self.delete_res_btn.setEnabled(False)
-    #     self.clear_res_rb_btn.setEnabled(False)
-    #     self.center_res_chbox.setEnabled(False)
-    #     self.label_2.setEnabled(False)
-    #     self.res_ini_sbox.setEnabled(False)
-    #     self.label_12.setEnabled(False)
-    #     self.res_n_sbox.setEnabled(False)
-    #     self.label.setEnabled(False)
-    #     self.chan_seg_cbo.setEnabled(False)
-    #     self.clear_chan_rb_btn.setEnabled(False)
-    #     self.center_seg_chbox.setEnabled(False)
-    #     self.label_7.setEnabled(False)
-    #     self.seg_ini_sbox.setEnabled(False)
-    #
-    # def disable_tailings(self):
-    #     """
-    #     Function to disable the tailings
-    #     """
-    #     self.uc.log_info("disable_tailings")
-    #     self.tailings_grp.setEnabled(False)
-    #     self.add_point_tailings_btn.setEnabled(False)
-    #     self.add_tailings_btn.setEnabled(False)
-    #     self.revert_tal_changes_btn.setEnabled(False)
-    #     self.schem_tal_btn.setEnabled(False)
-    #     self.delete_schem_tal_btn.setEnabled(False)
-    #     self.label_9.setEnabled(False)
-    #     self.tailing_res_cbo.setEnabled(False)
-    #     self.rename_tal_res_btn.setEnabled(False)
-    #     self.delete_tal_res_btn.setEnabled(False)
-    #     self.clear_tal_res_rb_btn.setEnabled(False)
-    #     self.center_tal_res_chbox.setEnabled(False)
-    #     self.label_10.setEnabled(False)
-    #     self.tal_res_elev_sb.setEnabled(False)
-    #     self.label_11.setEnabled(False)
-    #     self.wse_tal_res_sb.setEnabled(False)
-    #     self.label_13.setEnabled(False)
-    #     self.tal_n_sbox.setEnabled(False)
-    #     self.label_8.setEnabled(False)
-    #     self.tailings_cbo.setEnabled(False)
-    #     self.rename_tal_btn.setEnabled(False)
-    #     self.delete_tailings_btn.setEnabled(False)
-    #     self.clear_tal_rb_btn.setEnabled(False)
-    #     self.center_tal_chbox.setEnabled(False)
-    #     self.label_3.setEnabled(False)
-    #     self.tailings_elev_sb.setEnabled(False)
-    #     self.label_4.setEnabled(False)
-    #     self.wse_sb.setEnabled(False)
-    #     self.label_5.setEnabled(False)
-    #     self.concentration_sb.setEnabled(False)
-    #
-    # def enable_all(self):
-    #     """
-    #     Function to enable all
-    #     """
-    #     self.uc.log_info("enable_all")
-    #     self.add_user_res_btn.setEnabled(True)
-    #     self.revert_res_changes_btn.setEnabled(True)
-    #     self.schem_res_btn.setEnabled(True)
-    #     self.delete_schem_res_btn.setEnabled(True)
-    #     self.label_6.setEnabled(True)
-    #     self.res_cbo.setEnabled(True)
-    #     self.rename_res_btn.setEnabled(True)
-    #     self.delete_res_btn.setEnabled(True)
-    #     self.clear_res_rb_btn.setEnabled(True)
-    #     self.center_res_chbox.setEnabled(True)
-    #     self.label_2.setEnabled(True)
-    #     self.res_ini_sbox.setEnabled(True)
-    #     self.label_12.setEnabled(True)
-    #     self.res_n_sbox.setEnabled(True)
-    #     self.label.setEnabled(True)
-    #     self.chan_seg_cbo.setEnabled(True)
-    #     self.clear_chan_rb_btn.setEnabled(True)
-    #     self.center_seg_chbox.setEnabled(True)
-    #     self.label_7.setEnabled(True)
-    #     self.seg_ini_sbox.setEnabled(True)
-    #     self.add_point_tailings_btn.setEnabled(True)
-    #     self.add_tailings_btn.setEnabled(True)
-    #     self.revert_tal_changes_btn.setEnabled(True)
-    #     self.schem_tal_btn.setEnabled(True)
-    #     self.delete_schem_tal_btn.setEnabled(True)
-    #     self.label_9.setEnabled(True)
-    #     self.tailing_res_cbo.setEnabled(True)
-    #     self.rename_tal_res_btn.setEnabled(True)
-    #     self.delete_tal_res_btn.setEnabled(True)
-    #     self.clear_tal_res_rb_btn.setEnabled(True)
-    #     self.center_tal_res_chbox.setEnabled(True)
-    #     self.label_10.setEnabled(True)
-    #     self.tal_res_elev_sb.setEnabled(True)
-    #     self.label_11.setEnabled(True)
-    #     self.wse_tal_res_sb.setEnabled(True)
-    #     self.label_13.setEnabled(True)
-    #     self.tal_n_sbox.setEnabled(True)
-    #     self.label_8.setEnabled(True)
-    #     self.tailings_cbo.setEnabled(True)
-    #     self.rename_tal_btn.setEnabled(True)
-    #     self.delete_tailings_btn.setEnabled(True)
-    #     self.clear_tal_rb_btn.setEnabled(True)
-    #     self.center_tal_chbox.setEnabled(True)
-    #     self.label_3.setEnabled(True)
-    #     self.tailings_elev_sb.setEnabled(True)
-    #     self.label_4.setEnabled(True)
-    #     self.wse_sb.setEnabled(True)
-    #     self.label_5.setEnabled(True)
-    #     self.concentration_sb.setEnabled(True)
 
