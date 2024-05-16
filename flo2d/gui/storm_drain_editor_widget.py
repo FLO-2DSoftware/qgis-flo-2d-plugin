@@ -4336,7 +4336,6 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
     def import_hydraulics(self):
         """
         Shows import shapefile dialog.
-
         """
         if self.gutils.is_table_empty("user_model_boundary"):
             self.uc.bar_warn("There is no computational domain! Please digitize it before running tool.")

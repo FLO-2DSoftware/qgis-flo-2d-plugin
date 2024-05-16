@@ -993,7 +993,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                 outside_inlets = ""
                 inlets_shapefile = self.inlets_shapefile_cbo.currentText()
                 group = self.lyrs.group
-                lyr = self.lyrs.get_layer_by_name(inlets_shapefile, group=self.lyrs.group).layer()
+                lyr = self.lyrs.get_layer_by_name(inlets_shapefile).layer()
 
                 inlets_shapefile_fts = lyr.getFeatures()
                 modified = 0
@@ -1225,7 +1225,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                 outside_outfalls = ""
 
                 outfalls_shapefile = self.outfalls_shapefile_cbo.currentText()
-                lyr = self.lyrs.get_layer_by_name(outfalls_shapefile, self.lyrs.group).layer()
+                lyr = self.lyrs.get_layer_by_name(outfalls_shapefile).layer()
                 outfalls_shapefile_fts = lyr.getFeatures()
 
                 for f in outfalls_shapefile_fts:
@@ -1363,7 +1363,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                 outside_strge_units = ""
 
                 strge_units_shapefile = self.strge_units_shapefile_cbo.currentText()
-                lyr = self.lyrs.get_layer_by_name(strge_units_shapefile, self.lyrs.group).layer()
+                lyr = self.lyrs.get_layer_by_name(strge_units_shapefile).layer()
                 strge_units_shapefile_fts = lyr.getFeatures()
 
                 for f in strge_units_shapefile_fts:
@@ -1547,7 +1547,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                 outside_conduits = ""
 
                 conduits_shapefile = self.conduits_shapefile_cbo.currentText()
-                lyr = self.lyrs.get_layer_by_name(conduits_shapefile, self.lyrs.group).layer()
+                lyr = self.lyrs.get_layer_by_name(conduits_shapefile).layer()
                 conduits_shapefile_fts = lyr.getFeatures()
                 no_in_out = 0
 
@@ -1800,7 +1800,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                 wrong_status = 0
 
                 pumps_shapefile = self.pumps_shapefile_cbo.currentText()
-                lyr = self.lyrs.get_layer_by_name(pumps_shapefile, self.lyrs.group).layer()
+                lyr = self.lyrs.get_layer_by_name(pumps_shapefile).layer()
                 pumps_shapefile_fts = lyr.getFeatures()
                 no_in_out = 0
 
@@ -1953,7 +1953,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                 outside_orifices = ""
 
                 orifices_shapefile = self.orifices_shapefile_cbo.currentText()
-                lyr = self.lyrs.get_layer_by_name(orifices_shapefile, self.lyrs.group).layer()
+                lyr = self.lyrs.get_layer_by_name(orifices_shapefile).layer()
                 orifices_shapefile_fts = lyr.getFeatures()
                 no_in_out = 0
 
@@ -2104,7 +2104,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                 outside_weirs = ""
 
                 weirs_shapefile = self.weirs_shapefile_cbo.currentText()
-                lyr = self.lyrs.get_layer_by_name(weirs_shapefile, self.lyrs.group).layer()
+                lyr = self.lyrs.get_layer_by_name(weirs_shapefile).layer()
                 weirs_shapefile_fts = lyr.getFeatures()
                 no_in_out = 0
                 wrong_types = 0
@@ -2420,7 +2420,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
         layer = "" if sf_inlets_layer_name is None else sf_inlets_layer_name[0]
         if layer != "":
             if layer == self.inlets_shapefile_cbo.currentText():
-                lyr = self.lyrs.get_layer_by_name(layer, group=self.lyrs.group).layer()
+                lyr = self.lyrs.get_layer_by_name(layer).layer()
                 field_names = [field.name() for field in lyr.fields()]
                 self.inlets_name_FieldCbo.setCurrentIndex(
                     self.restore_field("sf_inlets_name", field_names))
@@ -2455,7 +2455,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
             else:
                 self.clear_all_inlet_attributes()
         elif layer == "":
-            lyr = self.lyrs.get_layer_by_name(self.inlets_shapefile_cbo.currentText(), group=self.lyrs.group).layer()
+            lyr = self.lyrs.get_layer_by_name(self.inlets_shapefile_cbo.currentText()).layer()
             lyr_fields = lyr.fields()
             for index, field in enumerate(lyr_fields):
                 field_name = field.name()
@@ -2498,7 +2498,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
         layer = "" if sf_outfalls_layer_name is None else sf_outfalls_layer_name[0]
         if layer != "":
             if layer == self.outfalls_shapefile_cbo.currentText():
-                lyr = self.lyrs.get_layer_by_name(layer, group=self.lyrs.group).layer()
+                lyr = self.lyrs.get_layer_by_name(layer).layer()
                 field_names = [field.name() for field in lyr.fields()]
 
                 self.outfall_name_FieldCbo.setCurrentIndex(
@@ -2520,7 +2520,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
             else:
                 self.clear_all_outfall_attributes()
         elif layer == "":
-            lyr = self.lyrs.get_layer_by_name(self.outfalls_shapefile_cbo.currentText(), group=self.lyrs.group).layer()
+            lyr = self.lyrs.get_layer_by_name(self.outfalls_shapefile_cbo.currentText()).layer()
             lyr_fields = lyr.fields()
             for index, field in enumerate(lyr_fields):
                 field_name = field.name()
@@ -2550,7 +2550,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
         layer = "" if sf_strge_units_layer_name is None else sf_strge_units_layer_name[0]
         if layer != "":
             if layer == self.strge_units_shapefile_cbo.currentText():
-                lyr = self.lyrs.get_layer_by_name(layer, group=self.lyrs.group).layer()
+                lyr = self.lyrs.get_layer_by_name(layer).layer()
                 field_names = [field.name() for field in lyr.fields()]
                 self.strge_unit_name_FieldCbo.setCurrentIndex(
                     self.restore_field("sf_strge_unit_name", field_names))
@@ -2591,7 +2591,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
             else:
                 self.clear_all_strge_units_attributes()
         elif layer == "":
-            lyr = self.lyrs.get_layer_by_name(self.strge_units_shapefile_cbo.currentText(), group=self.lyrs.group).layer()
+            lyr = self.lyrs.get_layer_by_name(self.strge_units_shapefile_cbo.currentText()).layer()
             lyr_fields = lyr.fields()
             for index, field in enumerate(lyr_fields):
                 field_name = field.name()
@@ -2640,7 +2640,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
         layer = "" if sf_conduits_layer_name is None else sf_conduits_layer_name[0]
         if layer != "":
             if layer == self.conduits_shapefile_cbo.currentText():
-                lyr = self.lyrs.get_layer_by_name(layer, group=self.lyrs.group).layer()
+                lyr = self.lyrs.get_layer_by_name(layer).layer()
                 field_names = [field.name() for field in lyr.fields()]
 
                 self.conduit_name_FieldCbo.setCurrentIndex(
@@ -2685,7 +2685,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
             else:
                 self.clear_all_conduit_attributes()
         elif layer == "":
-            lyr = self.lyrs.get_layer_by_name(self.conduits_shapefile_cbo.currentText(), group=self.lyrs.group).layer()
+            lyr = self.lyrs.get_layer_by_name(self.conduits_shapefile_cbo.currentText()).layer()
             lyr_fields = lyr.fields()
             for index, field in enumerate(lyr_fields):
                 field_name = field.name()
@@ -2736,7 +2736,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
         layer = "" if sf_pumps_layer_name is None else sf_pumps_layer_name[0]
         if layer != "":
             if layer == self.pumps_shapefile_cbo.currentText():
-                lyr = self.lyrs.get_layer_by_name(layer, group=self.lyrs.group).layer()
+                lyr = self.lyrs.get_layer_by_name(layer).layer()
                 field_names = [field.name() for field in lyr.fields()]
 
                 self.pump_name_FieldCbo.setCurrentIndex(
@@ -2761,7 +2761,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
             else:
                 self.clear_all_pump_attributes()
         elif layer == "":
-            lyr = self.lyrs.get_layer_by_name(self.pumps_shapefile_cbo.currentText(), group=self.lyrs.group).layer()
+            lyr = self.lyrs.get_layer_by_name(self.pumps_shapefile_cbo.currentText()).layer()
             lyr_fields = lyr.fields()
             for index, field in enumerate(lyr_fields):
                 field_name = field.name()
@@ -2792,7 +2792,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
         layer = "" if sf_orifices_layer_name is None else sf_orifices_layer_name[0]
         if layer != "":
             if layer == self.orifices_shapefile_cbo.currentText():
-                lyr = self.lyrs.get_layer_by_name(layer, group=self.lyrs.group).layer()
+                lyr = self.lyrs.get_layer_by_name(layer).layer()
                 field_names = [field.name() for field in lyr.fields()]
 
                 self.orifice_name_FieldCbo.setCurrentIndex(
@@ -2821,7 +2821,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
             else:
                 self.clear_all_orifice_attributes()
         elif layer == "":
-            lyr = self.lyrs.get_layer_by_name(self.orifices_shapefile_cbo.currentText(), group=self.lyrs.group).layer()
+            lyr = self.lyrs.get_layer_by_name(self.orifices_shapefile_cbo.currentText()).layer()
             lyr_fields = lyr.fields()
             for index, field in enumerate(lyr_fields):
                 field_name = field.name()
@@ -2856,7 +2856,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
         layer = "" if sf_weirs_layer_name is None else sf_weirs_layer_name[0]
         if layer != "":
             if layer == self.weirs_shapefile_cbo.currentText():
-                lyr = self.lyrs.get_layer_by_name(layer, group=self.lyrs.group).layer()
+                lyr = self.lyrs.get_layer_by_name(layer).layer()
                 field_names = [field.name() for field in lyr.fields()]
 
                 self.weir_name_FieldCbo.setCurrentIndex(
@@ -2888,7 +2888,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
             else:
                 self.clear_all_weir_attributes()
         elif layer == "":
-            lyr = self.lyrs.get_layer_by_name(self.weirs_shapefile_cbo.currentText(), group=self.lyrs.group).layer()
+            lyr = self.lyrs.get_layer_by_name(self.weirs_shapefile_cbo.currentText()).layer()
             lyr_fields = lyr.fields()
             for index, field in enumerate(lyr_fields):
                 field_name = field.name()
