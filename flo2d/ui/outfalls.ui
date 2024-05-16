@@ -332,6 +332,25 @@
         </item>
         <item row="1" column="0">
          <layout class="QGridLayout" name="gridLayout_9">
+          <item row="2" column="0">
+           <widget class="QComboBox" name="allow_discharge_btn">
+            <item>
+             <property name="text">
+              <string>0. No Discharge</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>1. Fill Outfall to the Rim Elevation</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>2. Not Prefilled Outfall Start Dry</string>
+             </property>
+            </item>
+           </widget>
+          </item>
           <item row="0" column="0">
            <widget class="QCheckBox" name="flap_gate_chbox">
             <property name="text">
@@ -339,7 +358,7 @@
             </property>
            </widget>
           </item>
-          <item row="1" column="0">
+          <item row="3" column="0">
            <widget class="QCheckBox" name="allow_discharge_chbox">
             <property name="font">
              <font>
@@ -348,6 +367,13 @@
             </property>
             <property name="text">
              <string>Allow Discharge (SWMMOUTF.DAT)</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="0">
+           <widget class="QLabel" name="label_6">
+            <property name="text">
+             <string>Allow Discharge</string>
             </property>
            </widget>
           </item>
