@@ -5398,16 +5398,11 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                     + str(grid_fid)
                     + ".\nDo you want to delete it?.\n"
                 ):
-                    if self.uc.question(
-                        "CONFIRM:  Delete rating table '"
-                        + type4_name
-                        + "' assigned to grid element "
-                        + str(grid_fid)
-                        + " ?"
-                    ):
-                        idx = self.SD_type4_cbo.currentIndex()
-                        rt_fid = self.SD_type4_cbo.itemData(idx)
-                        self.inletRT.del_rating_table(rt_fid)
+                    idx = self.SD_type4_cbo.currentIndex()
+                    rt_fid = self.SD_type4_cbo.itemData(idx)
+                    self.inletRT.del_rating_table(rt_fid)
+                    self.uc.log_info(f"Rating table {type4_name} assigned to grid element {grid_fid} deleted.")
+                    self.uc.bar_info(f"Rating table {type4_name} assigned to grid element {grid_fid} deleted.")
 
         # Delete Culvert Equation:
         qry = """SELECT grid_fid, name FROM swmmflo_culvert WHERE name = ?"""
@@ -5439,20 +5434,15 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                     + str(grid_fid)
                     + ".\nDo you want to delete it?.\n"
                 ):
-                    if self.uc.question(
-                        "CONFIRM:  Delete Culvert equation table '"
-                        + type4_name
-                        + "' assigned to grid element "
-                        + str(grid_fid)
-                        + " ?"
-                    ):
-                        idx = self.SD_type4_cbo.currentIndex()
-                        name = self.SD_type4_cbo.currentText()
-                        fid = self.SD_type4_cbo.itemData(idx)
-                        qry = "UPDATE user_swmm_nodes SET rt_fid = ?, rt_name = ? WHERE name = ?;"
-                        self.gutils.execute(qry, (None, None, name))
-                        qry = "DELETE FROM swmmflo_culvert WHERE name = ?;"
-                        self.gutils.execute(qry, (name,))
+                    idx = self.SD_type4_cbo.currentIndex()
+                    name = self.SD_type4_cbo.currentText()
+                    fid = self.SD_type4_cbo.itemData(idx)
+                    qry = "UPDATE user_swmm_nodes SET rt_fid = ?, rt_name = ? WHERE name = ?;"
+                    self.gutils.execute(qry, (None, None, name))
+                    qry = "DELETE FROM swmmflo_culvert WHERE name = ?;"
+                    self.gutils.execute(qry, (name,))
+                    self.uc.log_info(f"Culvert Equation {type4_name} assigned to grid element {grid_fid} deleted.")
+                    self.uc.bar_info(f"Culvert Equation {type4_name} assigned to grid element {grid_fid} deleted.")
 
         self.populate_type4_and_data()
 
