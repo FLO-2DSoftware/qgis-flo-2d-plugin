@@ -415,35 +415,6 @@
          </widget>
         </item>
         <item>
-         <widget class="QToolButton" name="SD_show_type4_btn">
-          <property name="enabled">
-           <bool>true</bool>
-          </property>
-          <property name="minimumSize">
-           <size>
-            <width>0</width>
-            <height>0</height>
-           </size>
-          </property>
-          <property name="maximumSize">
-           <size>
-            <width>24</width>
-            <height>24</height>
-           </size>
-          </property>
-          <property name="toolTip">
-           <string>Show inlet type 4 data</string>
-          </property>
-          <property name="text">
-           <string/>
-          </property>
-          <property name="icon">
-           <iconset>
-            <normaloff>../img/show_cont_table.svg</normaloff>../img/show_cont_table.svg</iconset>
-          </property>
-         </widget>
-        </item>
-        <item>
          <widget class="QToolButton" name="SD_add_one_type4_btn">
           <property name="enabled">
            <bool>true</bool>
@@ -612,35 +583,6 @@
           </property>
           <property name="duplicatesEnabled">
            <bool>false</bool>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QToolButton" name="show_pump_table_btn">
-          <property name="enabled">
-           <bool>true</bool>
-          </property>
-          <property name="minimumSize">
-           <size>
-            <width>0</width>
-            <height>0</height>
-           </size>
-          </property>
-          <property name="maximumSize">
-           <size>
-            <width>24</width>
-            <height>24</height>
-           </size>
-          </property>
-          <property name="toolTip">
-           <string>Show pump curve</string>
-          </property>
-          <property name="text">
-           <string/>
-          </property>
-          <property name="icon">
-           <iconset>
-            <normaloff>../img/show_cont_table.svg</normaloff>../img/show_cont_table.svg</iconset>
           </property>
          </widget>
         </item>
@@ -1002,13 +944,11 @@
   <tabstop>SD_nodes_components_cbo</tabstop>
   <tabstop>SD_links_components_cbo</tabstop>
   <tabstop>SD_type4_cbo</tabstop>
-  <tabstop>SD_show_type4_btn</tabstop>
   <tabstop>SD_add_one_type4_btn</tabstop>
   <tabstop>SD_add_predefined_type4_btn</tabstop>
   <tabstop>SD_remove_type4_btn</tabstop>
   <tabstop>SD_rename_type4_btn</tabstop>
   <tabstop>pump_curve_cbo</tabstop>
-  <tabstop>show_pump_table_btn</tabstop>
   <tabstop>add_pump_curve_btn</tabstop>
   <tabstop>add_predefined_pump_curve_btn</tabstop>
   <tabstop>remove_pump_curve_btn</tabstop>
