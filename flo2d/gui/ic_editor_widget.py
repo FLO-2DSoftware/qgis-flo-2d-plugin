@@ -50,6 +50,7 @@ class ICEditorWidget(qtBaseClass, uiDialog):
         self.add_user_res_btn.clicked.connect(self.create_user_res)
         self.revert_res_changes_btn.clicked.connect(self.revert_res_lyr_edits)
         self.schem_res_btn.clicked.connect(self.schematize_res)
+        self.help_res_btn.clicked.connect(self.help_res)
         self.delete_schem_res_btn.clicked.connect(self.delete_schematize_res)
         self.rename_res_btn.clicked.connect(self.rename_res)
         self.delete_res_btn.clicked.connect(self.delete_cur_res)
@@ -72,6 +73,7 @@ class ICEditorWidget(qtBaseClass, uiDialog):
         self.delete_tailings_btn.clicked.connect(self.delete_tailings)
         self.delete_schem_tal_btn.clicked.connect(self.delete_schematize_tal)
         self.schem_tal_btn.clicked.connect(self.schematize_tal)
+        self.help_tal_btn.clicked.connect(self.help_res)
         # tailing res
         self.tailing_res_cbo.activated.connect(self.cur_tal_res_changed)
         self.rename_tal_res_btn.clicked.connect(self.rename_tal_res)
@@ -177,7 +179,7 @@ class ICEditorWidget(qtBaseClass, uiDialog):
         self.res_ini_sbox.setValue(wsel)
         self.res_n_sbox.setValue(n_value)
         self.show_res_rb()
-        if self.center_res_btn.isChecked():
+        if self.center_res_chbox.isChecked():
             feat = next(self.res_lyr.getFeatures(QgsFeatureRequest(self.reservoir.fid)))
             x, y = feat.geometry().centroid().asPoint()
             center_canvas(self.iface, x, y)
@@ -194,7 +196,7 @@ class ICEditorWidget(qtBaseClass, uiDialog):
             depini = float(self.chan_seg.depinitial)
         self.seg_ini_sbox.setValue(depini)
         self.show_chan_rb()
-        if self.center_seg_btn.isChecked():
+        if self.center_seg_chbox.isChecked():
             feat = next(self.chan_lyr.getFeatures(QgsFeatureRequest(self.seg_fid)))
             x, y = feat.geometry().centroid().asPoint()
             center_canvas(self.iface, x, y)
@@ -250,7 +252,7 @@ class ICEditorWidget(qtBaseClass, uiDialog):
         self.show_tal_res_rb()
 
         if self.center_tal_res_chbox.isChecked():
-            feat = next(self.tal_lyr.getFeatures(QgsFeatureRequest(self.tailings_reservoir.fid)))
+            feat = next(self.tal_res_lyr.getFeatures(QgsFeatureRequest(self.tailings_reservoir.fid)))
             x, y = feat.geometry().centroid().asPoint()
             center_canvas(self.iface, x, y)
 
