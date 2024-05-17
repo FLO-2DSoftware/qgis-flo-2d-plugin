@@ -279,54 +279,34 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
         errors = ""
 
-        try:  # See if n_value exists in table:
-            self.execute("SELECT n_value FROM reservoirs")
-            # Yes, n_value exists.
-            try:  # See if tailings exists in table:
-                self.execute("SELECT tailings FROM reservoirs")
-                # Yes, tailings exists
-                schematic_reservoirs_sql = [
-                    """INSERT INTO reservoirs (grid_fid, wsel, n_value, use_n_value, tailings, geom) VALUES""",
-                    6,
-                ]
-                user_reservoirs_sql = [
-                    """INSERT INTO user_reservoirs (wsel, n_value, use_n_value, tailings, geom) VALUES""",
-                    5,
-                ]
+        # Reservoirs
+        schematic_reservoirs_sql = [
+            """INSERT INTO reservoirs (grid_fid, wsel, n_value, geom) VALUES""",
+            4,
+        ]
+        user_reservoirs_sql = [
+            """INSERT INTO user_reservoirs (wsel, n_value, geom) VALUES""",
+            3,
+        ]
 
-                with_n_values = True
-                with_tailings = True
-            except:
-                # tailings doesn't exist.
-                schematic_reservoirs_sql = [
-                    """INSERT INTO reservoirs (grid_fid, wsel, n_value, use_n_value, geom) VALUES""",
-                    5,
-                ]
-                user_reservoirs_sql = [
-                    """INSERT INTO user_reservoirs (wsel, n_value, use_n_value, geom) VALUES""",
-                    4,
-                ]
-                with_n_values = True
-                with_tailings = False
-        except:
-            # n_value doesn't exist.
-            schematic_reservoirs_sql = [
-                """INSERT INTO reservoirs (grid_fid, wsel, geom) VALUES""",
-                3,
-            ]
-            user_reservoirs_sql = [
-                """INSERT INTO user_reservoirs (wsel, geom) VALUES""",
-                2,
-            ]
-            with_n_values = False
-            with_tailingss = False
+        # Tailings Reservoirs
+        schematic_tailings_reservoirs_sql = [
+            """INSERT INTO tailing_reservoirs (grid_fid, wsel, n_value, tailings, geom) VALUES""",
+            5,
+        ]
+        user_tailing_reservoirs = [
+            """INSERT INTO user_tailing_reservoirs (wsel, n_value, tailings, geom) VALUES""",
+            4,
+        ]
 
         try:
             self.clear_tables(
                 "inflow",
                 "inflow_cells",
                 "reservoirs",
+                "tailing_reservoirs",
                 "user_reservoirs",
+                "user_tailing_reservoirs",
                 "inflow_time_series",
                 "inflow_time_series_data",
             )
@@ -357,60 +337,43 @@ class Flo2dGeoPackage(GeoPackageUtils):
             gids = list(res.keys())
             cells = self.grid_centroids(gids)
             for gid in res:
-                value = ()
                 row = res[gid]["row"]
-                grid = row[1]
-                wsel = row[2]
                 square = self.build_square(cells[gid], self.shrink)
                 centroid = self.single_centroid(gid, buffers=True)
-                if with_n_values and with_tailings:
-                    if len(row) == 3:
-                        # R  grid  wsel:
-                        value = (wsel, "0.25", False, "-1.0")
-                    elif len(row) == 4:
-                        # R  grid  wsel  n_value_or_tailing:
-                        if float_or_zero(row[3]) > 1.0:
-                            # 3rd. value is a tailing depth:
-                            value = (wsel, "0.25", False, row[3])
-                        else:
-                            # 3rd. value is n_value:
-                            value = (wsel, row[3], True, "-1.0")
+                # one-phase simulation
+                if len(row) == 4:
+                    grid = row[1]
+                    wsel = row[2]
+                    n_value = row[3]
+                    user_value = (wsel, n_value)
+                    schema_value = (grid, wsel, n_value)
+                    schematic_reservoirs_sql += [(*schema_value, square)]
+                    user_reservoirs_sql += [(*user_value, centroid)]
+                # two-phase simulation
+                if len(row) == 5:
+                    grid = row[1]
+                    wsel = row[2]
+                    tail = row[3]
+                    n_value = row[4]
+                    user_value = (wsel, n_value, tail)
+                    schema_value = (grid, wsel, n_value, tail)
+                    schematic_tailings_reservoirs_sql += [(*schema_value, square)]
+                    user_tailing_reservoirs += [(*user_value, centroid)]
 
-                    elif len(row) == 5:
-                        # R  grid  wsel  tailing  n_value:
-                        value = (wsel, row[4], True, row[3])
-                    else:
-                        errors += "R line with more than 5 values"
-
-                elif with_n_values and not with_tailings:
-                    if len(row) == 3:
-                        # R  grid  wsel:
-                        value = (wsel, "0.25", False)
-                    elif len(row) == 4:
-                        # R  grid  wsel  n_value:
-                        value = (wsel, row[3], True)
-                    else:
-                        errors += "Inflow table without tailings. R line with more than 4 values"
-
-                elif not with_n_values and not with_tailings:
-                    if len(row) == 3:
-                        # R  grid  wsel:
-                        value = wsel
-                    else:
-                        errors += "Inflow table without n_values and tailings. R line with more than 3 values"
-
-                if value:
-                    user_reservoirs_sql += [(*value, centroid)]
-                    value2 = (grid, *value, square)
-                    schematic_reservoirs_sql += [value2]
-
-            self.batch_execute(user_reservoirs_sql)
-            self.batch_execute(schematic_reservoirs_sql)
-
-            qry = """UPDATE user_reservoirs SET name = 'Reservoir ' ||  cast(fid as text);"""
-            self.execute(qry)
-            qry = """UPDATE reservoirs SET user_res_fid = fid, name = 'Reservoir ' ||  cast(fid as text);"""
-            self.execute(qry)
+            if user_reservoirs_sql and schematic_reservoirs_sql:
+                self.batch_execute(user_reservoirs_sql)
+                self.batch_execute(schematic_reservoirs_sql)
+                qry = """UPDATE user_reservoirs SET name = 'Reservoir ' ||  cast(fid as text);"""
+                self.execute(qry)
+                qry = """UPDATE reservoirs SET user_res_fid = fid, name = 'Reservoir ' ||  cast(fid as text);"""
+                self.execute(qry)
+            if user_tailing_reservoirs and schematic_tailings_reservoirs_sql:
+                self.batch_execute(user_tailing_reservoirs)
+                self.batch_execute(schematic_tailings_reservoirs_sql)
+                qry = """UPDATE user_tailing_reservoirs SET name = 'Tal Reservoir ' ||  cast(fid as text);"""
+                self.execute(qry)
+                qry = """UPDATE tailing_reservoirs SET user_tal_res_fid = fid, name = 'Tal Reservoir ' ||  cast(fid as text);"""
+                self.execute(qry)
 
         except Exception as e:
             self.uc.log_info(traceback.format_exc())
@@ -1601,10 +1564,10 @@ class Flo2dGeoPackage(GeoPackageUtils):
         self.batch_execute(swmmflo_sql)
 
     def import_swmmflodropbox(self):
-        try: 
+        try:
             data = self.parser.parse_swmmflodropbox()
             for row in data:
-                name  = row[0]
+                name = row[0]
                 area = row[2]
                 self.gutils.execute("UPDATE user_swmm_nodes SET drboxarea = ? WHERE name = ?", (area, name))
             return True
@@ -1612,10 +1575,10 @@ class Flo2dGeoPackage(GeoPackageUtils):
             return False
 
     def import_sdclogging(self):
-        try: 
+        try:
             data = self.parser.parse_sdclogging()
             for row in data:
-                name  = row[2]
+                name = row[2]
                 clog_fact = row[3]
                 clog_time = row[4]
                 self.gutils.execute("""UPDATE user_swmm_nodes
@@ -1624,8 +1587,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             return True
         except:
             return False
-        
-        
+
     def import_swmmflort(self):
         """
         Reads SWMMFLORT.DAT (Rating Tables).
@@ -2205,7 +2167,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
     def export_inflow_dat(self, outdir):
         # check if there are any inflows defined
         try:
-            if self.is_table_empty("inflow") and self.is_table_empty("reservoirs") and self.is_table_empty("tailing_reservoirs"):
+            if self.is_table_empty("inflow") and self.is_table_empty("reservoirs") and self.is_table_empty(
+                    "tailing_reservoirs"):
                 return False
             cont_sql = """SELECT value FROM cont WHERE name = ?;"""
             inflow_sql = """SELECT fid, time_series_fid, ident, inoutfc FROM inflow WHERE fid = ?;"""
@@ -3612,7 +3575,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
             channel_group.create_dataset('XSEC_DATA', [])
 
             for nxecnum, xsecname in chan_n:
-                channel_group.datasets["XSEC_NAME"].data.append(create_array(xsec_line, 2, np.string_, tuple([nxecnum, xsecname])))
+                channel_group.datasets["XSEC_NAME"].data.append(
+                    create_array(xsec_line, 2, np.string_, tuple([nxecnum, xsecname])))
                 for xi, yi in self.execute(xsec_sql, (nxecnum,)):
                     channel_group.datasets["XSEC_DATA"].data.append([nxecnum, xi, yi])
 
@@ -3822,11 +3786,11 @@ class Flo2dGeoPackage(GeoPackageUtils):
                             if i == 1:  # Rating table
                                 try:
                                     hystruc_group.datasets["RATING_TABLE"].data.append(
-                                    create_array(four_values, 4, np.float_, tuple(subvals)))
+                                        create_array(four_values, 4, np.float_, tuple(subvals)))
                                 except:
                                     hystruc_group.create_dataset('RATING_TABLE', [])
                                     hystruc_group.datasets["RATING_TABLE"].data.append(
-                                    create_array(four_values, 4, np.float_, tuple(subvals)))
+                                        create_array(four_values, 4, np.float_, tuple(subvals)))
 
                             if i == 2:  # Culvert equation.
                                 subvals[-1] = subvals[-1] if subvals[-1] not in [None, "0", "0.0"] else 1
@@ -4406,7 +4370,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     mult_group.create_dataset('SIMPLE_MULT_GLOBAL', [])
                     repeats = ""
 
-                    mult_group.datasets["SIMPLE_MULT_GLOBAL"].data.append(create_array(global_data_values, 1, np.float_, head[9]))
+                    mult_group.datasets["SIMPLE_MULT_GLOBAL"].data.append(
+                        create_array(global_data_values, 1, np.float_, head[9]))
 
                     for row in self.execute(simple_mult_cell_sql):
                         # See if grid number in row is any grid element in mults:
@@ -4532,7 +4497,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
             for fid, tol in tol_poly_rows:
                 for row in self.execute(tol_cells_sql, (fid,)):
                     gid = row[0]
-                    spatially_variable_group.datasets["TOLSPATIAL"].data.append(create_array(two_values, 2, np.float_, gid, tol))
+                    spatially_variable_group.datasets["TOLSPATIAL"].data.append(
+                        create_array(two_values, 2, np.float_, gid, tol))
 
             self.parser.write_groups(spatially_variable_group)
             return True
@@ -5445,7 +5411,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
             for fid, froudefp in fpfroude_rows:
                 for row in self.execute(cell_sql, (fid,)):
                     gid = row[0]
-                    spatially_variable_group.datasets["FPFROUDE"].data.append(create_array(line1, 2, np.float_, gid, froudefp))
+                    spatially_variable_group.datasets["FPFROUDE"].data.append(
+                        create_array(line1, 2, np.float_, gid, froudefp))
 
             self.parser.write_groups(spatially_variable_group)
             return True
@@ -5750,7 +5717,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
         try:
             if self.is_table_empty("user_swmm_nodes"):
                 return False
-            
+
             qry = """SELECT name, grid, drboxarea  FROM user_swmm_nodes WHERE SUBSTR(name, 1,1) NOT LIKE 'J%'  AND drboxarea > 0.0;"""
             rows = self.gutils.execute(qry).fetchall()
             if rows:
@@ -5766,7 +5733,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 if os.path.isfile(outdir + r"\SWMMFLODROPBOX.DAT"):
                     os.remove(outdir + r"\SWMMFLODROPBOX.DAT")
                 return False
-                    
+
         except Exception as e:
             QApplication.restoreOverrideCursor()
             self.uc.show_error("ERROR 120424.0449: exporting SWMMFLODROPBOX.DAT failed!.\n", e)
@@ -5803,7 +5770,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
         try:
             if self.is_table_empty("user_swmm_nodes"):
                 return False
-            
+
             qry = """SELECT grid, name, swmm_clogging_factor, swmm_time_for_clogging
                      FROM user_swmm_nodes 
                      WHERE (sd_type = 'I' OR sd_type = 'J') AND swmm_clogging_factor > 0.0 AND swmm_time_for_clogging > 0.0;"""
@@ -5821,7 +5788,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 if os.path.isfile(outdir + r"\SDCLOGGING.DAT"):
                     os.remove(outdir + r"\SDCLOGGING.DAT")
                 return False
-                    
+
         except Exception as e:
             QApplication.restoreOverrideCursor()
             self.uc.show_error("ERROR 140424.1828: exporting SDCLOGGING.DAT failed!.\n", e)
@@ -5872,10 +5839,12 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
         for fid, cdiameter, typec, typeen, cubase, multbarrels in culverts_rows:
             try:
-                stormdrain_group.datasets["CULVERT_EQUATIONS"].data.append([fid, cdiameter, typec, typeen, cubase, multbarrels])
+                stormdrain_group.datasets["CULVERT_EQUATIONS"].data.append(
+                    [fid, cdiameter, typec, typeen, cubase, multbarrels])
             except:
                 stormdrain_group.create_dataset('CULVERT_EQUATIONS', [])
-                stormdrain_group.datasets["CULVERT_EQUATIONS"].data.append([fid, cdiameter, typec, typeen, cubase, multbarrels])
+                stormdrain_group.datasets["CULVERT_EQUATIONS"].data.append(
+                    [fid, cdiameter, typec, typeen, cubase, multbarrels])
 
         self.parser.write_groups(stormdrain_group)
         return True
@@ -6053,7 +6022,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 ) = row
 
                 stormdrain_group.datasets["SWMMOUTF_DATA"].data.append([fid, grid_fid, outf_flo])
-                stormdrain_group.datasets["SWMMOUTF_NAME"].data.append(create_array(swmmoutf_name, 2, np.string_, tuple([fid, name])))
+                stormdrain_group.datasets["SWMMOUTF_NAME"].data.append(
+                    create_array(swmmoutf_name, 2, np.string_, tuple([fid, name])))
 
             self.parser.write_groups(stormdrain_group)
             return True
