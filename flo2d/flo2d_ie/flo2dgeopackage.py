@@ -2373,8 +2373,18 @@ class Flo2dGeoPackage(GeoPackageUtils):
             if self.is_table_empty("tailing_cells"):
                 return False
 
-            tailings_sql = """SELECT grid_fid, thickness FROM tailing_cells ORDER BY grid_fid;"""
-            line1 = "{0}  {1}\n"
+            tailings_sql = """
+            SELECT grid, tailings_surf_elev, water_surf_elev, concentration FROM tailing_cells ORDER BY grid;
+            """
+            concentration_sql = """SELECT 
+                                CASE WHEN COUNT(*) > 0 THEN True
+                                     ELSE False
+                                END AS result
+                                FROM 
+                                    tailing_cells
+                                WHERE 
+                                    concentration <> 0 OR concentration IS NULL;"""
+            line1 = "{0}  {1}  {2}  {3}\n"
 
             rows = self.execute(tailings_sql).fetchall()
             if not rows:
@@ -2383,19 +2393,56 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 pass
 
             tailings_group = self.parser.tailings_group
-            tailings_group.create_dataset('TAILINGS', [])
-            # tailingsf = os.path.join(outdir, "TAILINGS.DAT")
+            # tailings_group.create_dataset('TAILINGS', [])
+            #
+            # for row in rows:
+            #     tailings_group.datasets["TAILINGS"].data.append(create_array(line1, 4, np.float_, tuple(row)))
 
-            for row in rows:
-                # t.write(line1.format(*row))
-                tailings_group.datasets["TAILINGS"].data.append(create_array(line1, 2, np.string_, tuple(row)))
+            cv = self.execute(concentration_sql).fetchone()[0]
+            MUD = self.gutils.get_cont_par("MUD")
+            ISED = self.gutils.get_cont_par("ISED")
+
+            # Don't export any tailings
+            if MUD == '0' and ISED == '0':
+                return False
+
+            # TAILINGS and TAILINGS_CV
+            elif MUD == '1' or ISED == '1':
+                # Export TAILINGS_CV
+                if cv == 1:
+                    for row in rows:
+                        try:
+                            tailings_group.datasets["TAILINGS_CV"].data.append([row[0], row[1], row[3]])
+                        except:
+                            tailings_group.create_dataset('TAILINGS_CV', [])
+                            tailings_group.datasets["TAILINGS_CV"].data.append([row[0], row[1], row[3]])
+
+                # Export TAILINGS.DAT
+                else:
+                    for row in rows:
+                        try:
+                            tailings_group.datasets["TAILINGS"].data.append([row[0], row[1]])
+                        except:
+                            tailings_group.create_dataset('TAILINGS', [])
+                            tailings_group.datasets["TAILINGS"].data.append([row[0], row[1]])
+
+            # TAILINGS_STACK_DEPTH.DAT
+            elif MUD == '2':
+                for row in rows:
+                    try:
+                        tailings_group.datasets["TAILINGS_STACK_DEPTH"].data.append([row[0], row[2], row[1]])
+                    except:
+                        tailings_group.create_dataset('TAILINGS_STACK_DEPTH', [])
+                        tailings_group.datasets["TAILINGS_STACK_DEPTH"].data.append([row[0], row[2], row[1]])
+            else:
+                return False
 
             self.parser.write_groups(tailings_group)
             return True
 
         except Exception as e:
             QApplication.restoreOverrideCursor()
-            self.uc.show_error("ERROR 040822.0442: exporting TAILINGS.DAT failed!.\n", e)
+            self.uc.show_error("ERROR 040822.0442: exporting TAILINGS.HDF5 failed!.\n", e)
             return False
 
     def export_tailings_dat(self, outdir):

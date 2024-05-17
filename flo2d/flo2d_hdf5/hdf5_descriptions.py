@@ -124,7 +124,9 @@ GUTTER = {
 }
 
 TAILINGS = {
-    "TAILINGS": "Tailings Depth Data"
+    "TAILINGS": "Tailings Depth Data",
+    "TAILINGS_CV": "Tailings Depth & Concentration Data",
+    "TAILINGS_STACK_DEPTH": "Water & Tailings Depth Data",
 }
 
 MULT = {
