@@ -124,6 +124,7 @@ class ICEditorWidget(qtBaseClass, uiDialog):
             self.tailings_grp.setHidden(False)
             self.wse_tal_res_sb.setEnabled(True)
             self.wse_sb.setEnabled(True)
+            self.concentration_sb.setEnabled(False)
 
         # reservoir
         self.res_cbo.clear()
