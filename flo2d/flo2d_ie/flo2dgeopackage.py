@@ -2053,7 +2053,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
         """
         Function to export inflow data to hdf5
         """
-        if self.is_table_empty("inflow") and self.is_table_empty("reservoirs"):
+        if self.is_table_empty("inflow") and self.is_table_empty("reservoirs") and self.is_table_empty("tailing_reservoirs"):
             return False
         cont_sql = """SELECT value FROM cont WHERE name = ?;"""
         inflow_sql = """SELECT fid, time_series_fid, ident, inoutfc FROM inflow WHERE fid = ?;"""
@@ -2150,18 +2150,38 @@ class Flo2dGeoPackage(GeoPackageUtils):
                                 create_array(four_values, 4, np.float_, tuple(tsd_row)))
                         ts_series_fid.append(ts_fid)
 
+        if not self.is_table_empty("tailing_reservoirs"):
+
+            schematic_tailings_reservoirs_sql = (
+                """SELECT grid_fid, wsel, tailings, n_value FROM tailing_reservoirs ORDER BY fid;"""
+            )
+            for res in self.execute(schematic_tailings_reservoirs_sql):
+                res = [x if (x is not None and x != "") else -9999 for x in res]
+                try:
+                    bc_group.datasets["Inflow/RESERVOIRS"].data.append(
+                        create_array(four_values, 4, np.float_, tuple(res)))
+                except:
+                    bc_group.create_dataset('Inflow/RESERVOIRS', [])
+                    bc_group.datasets["Inflow/RESERVOIRS"].data.append(
+                        create_array(four_values, 4, np.float_, tuple(res)))
+
         if not self.is_table_empty("reservoirs"):
 
-            bc_group.create_dataset('Inflow/RESERVOIRS', [])
             schematic_reservoirs_sql = (
-                """SELECT grid_fid, wsel, n_value, use_n_value, tailings FROM reservoirs ORDER BY fid;"""
+                """SELECT grid_fid, wsel, n_value, -9999 FROM reservoirs ORDER BY fid;"""
             )
             for res in self.execute(schematic_reservoirs_sql):
                 res = [x if (x is not None and x != "") else -9999 for x in res]
-                bc_group.datasets["Inflow/RESERVOIRS"].data.append(
-                    create_array(five_values, 5, np.float_, tuple(res)))
+                try:
+                    bc_group.datasets["Inflow/RESERVOIRS"].data.append(
+                        create_array(four_values, 4, np.float_, tuple(res)))
+                except:
+                    bc_group.create_dataset('Inflow/RESERVOIRS', [])
+                    bc_group.datasets["Inflow/RESERVOIRS"].data.append(
+                        create_array(four_values, 4, np.float_, tuple(res)))
 
         self.parser.write_groups(bc_group)
+
         return True
 
     def export_inflow_dat(self, outdir):
