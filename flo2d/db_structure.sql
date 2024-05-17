@@ -1360,7 +1360,7 @@ CREATE TABLE "user_swmm_nodes" (
 	    "curbheight" REAL DEFAULT 0,
 	    "swmm_clogging_factor" REAL DEFAULT 0,
 	    "swmm_time_for_clogging" REAL DEFAULT 0,
-	    "swmm_allow_discharge" TEXT DEFAULT 'False',
+	    "swmm_allow_discharge" TEXT DEFAULT '0',
 	------------------------------------
 
 	--VARIABLE FOR SWMMFLODROPBOX.DAT 

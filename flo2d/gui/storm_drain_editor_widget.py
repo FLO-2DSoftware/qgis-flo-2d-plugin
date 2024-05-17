@@ -623,8 +623,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 #                                 self.gutils.execute("UPDATE swmmflort SET grid_fid = NULL WHERE fid = ?;", (row[0],))
 
                 elif sd_type == "O":
-                    outf_flo = 1 if is_true(this_user_node["swmm_allow_discharge"]) else 0
-                    #                     outf_flo = 1 if is_true([this_user_node[col] for col in self.outlet_columns]) else 0
+                    outf_flo = this_user_node["swmm_allow_discharge"]
                     row = [grid_fid, grid_fid, name, outf_flo]
                     outlets.append(row)
                 else:
@@ -1240,6 +1239,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
 
                 flapgate = values["tide_gate"] if "tide_gate" in values else "False"
                 flapgate = "True" if is_true(flapgate) else "False"
+
                 allow_discharge = values["swmm_allow_discharge"] if "swmm_allow_discharge" in values else "False"
                 allow_discharge = "True" if is_true(allow_discharge) else "False"
 
