@@ -504,9 +504,24 @@ class ParseDAT(object):
 
     def parse_tailings(self):
         tailings = self.dat_files["TAILINGS.DAT"]
-        par = self.single_parser(tailings)
-        data = [row for row in par]
-        return data
+        if tailings is not None:
+            par = self.single_parser(tailings)
+            data = [row for row in par]
+            return data
+
+    def parse_tailings_cv(self):
+        tailings = self.dat_files["TAILINGS_CV.DAT"]
+        if tailings is not None:
+            par = self.single_parser(tailings)
+            data = [row for row in par]
+            return data
+
+    def parse_tailings_sd(self):
+        tailings = self.dat_files["TAILINGS_STACK_DEPTH.DAT"]
+        if tailings is not None:
+            par = self.single_parser(tailings)
+            data = [row for row in par]
+            return data
 
     def parse_outflow(self, outflow=None):
         if outflow is None:

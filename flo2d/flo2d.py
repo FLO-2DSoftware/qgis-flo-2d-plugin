@@ -2695,6 +2695,8 @@ class Flo2D(object):
             "TOLSPATIAL.DAT": "import_tolspatial",
             "INFLOW.DAT": "import_inflow",
             "TAILINGS.DAT": "import_tailings",
+            "TAILINGS_CV.DAT": "import_tailings",
+            "TAILINGS_STACK_DEPTH.DAT": "import_tailings",
             "OUTFLOW.DAT": "import_outflow",
             "RAIN.DAT": "import_rain",
             "RAINCELL.DAT": "import_raincell",

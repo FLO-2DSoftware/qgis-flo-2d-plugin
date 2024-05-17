@@ -277,8 +277,6 @@ class Flo2dGeoPackage(GeoPackageUtils):
             4,
         ]
 
-        errors = ""
-
         # Reservoirs
         schematic_reservoirs_sql = [
             """INSERT INTO reservoirs (grid_fid, wsel, n_value, geom) VALUES""",
@@ -380,16 +378,53 @@ class Flo2dGeoPackage(GeoPackageUtils):
             self.uc.show_error("ERROR 070719.1051: Import inflows failed!.", e)
 
     def import_tailings(self):
-        tailingsf_sql = [
-            """INSERT INTO tailing_cells (grid_fid, thickness) VALUES""",
-            2,
+        tailings_sql = [
+            """INSERT INTO tailing_cells (grid, tailings_surf_elev, water_surf_elev, concentration, geom) VALUES""",
+            5,
         ]
+        tailings_cv_sql = [
+            """INSERT INTO tailing_cells (grid, tailings_surf_elev, water_surf_elev, concentration, geom) VALUES""",
+            5,
+        ]
+        tailings_sd_sql = [
+            """INSERT INTO tailing_cells (grid, tailings_surf_elev, water_surf_elev, concentration, geom) VALUES""",
+            5,
+        ]
+
         self.clear_tables("tailing_cells")
+
+        # TAILINGS.DAT
         data = self.parser.parse_tailings()
-        for row in data:
-            grid_fid, thinkness = row
-            tailingsf_sql += [(grid_fid, thinkness)]
-        self.batch_execute(tailingsf_sql)
+        if data:
+            for row in data:
+                grid_fid, tailings_surf_elev = row
+                square = self.build_square(self.grid_centroids([grid_fid])[grid_fid], self.shrink)
+                tailings_sql += [(grid_fid, tailings_surf_elev, 0, 0, square)]
+            self.batch_execute(tailings_sql)
+            qry = """UPDATE tailing_cells SET name = 'Tailings ' ||  cast(fid as text);"""
+            self.execute(qry)
+
+        # TAILINGS_CV.DAT
+        data = self.parser.parse_tailings_cv()
+        if data:
+            for row in data:
+                grid_fid, tailings_surf_elev, concentration = row
+                square = self.build_square(self.grid_centroids([grid_fid])[grid_fid], self.shrink)
+                tailings_cv_sql += [(grid_fid, tailings_surf_elev, 0, concentration, square)]
+            self.batch_execute(tailings_cv_sql)
+            qry = """UPDATE tailing_cells SET name = 'Tailings ' ||  cast(fid as text);"""
+            self.execute(qry)
+
+        # TAILINGS_STACK_DEPTH.DAT
+        data = self.parser.parse_tailings_sd()
+        if data:
+            for row in data:
+                grid_fid, water_surf_elev, tailings_surf_elev = row
+                square = self.build_square(self.grid_centroids([grid_fid])[grid_fid], self.shrink)
+                tailings_sd_sql += [(grid_fid, water_surf_elev, tailings_surf_elev, 0, square)]
+            self.batch_execute(tailings_sd_sql)
+            qry = """UPDATE tailing_cells SET name = 'Tailings ' ||  cast(fid as text);"""
+            self.execute(qry)
 
     def import_outflow(self):
         outflow_sql = [
