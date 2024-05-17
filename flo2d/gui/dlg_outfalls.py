@@ -90,7 +90,8 @@ class OutfallNodesDialog(qtBaseClass, uiDialog):
         # self.grid_element.valueChanged.connect(self.grid_element_valueChanged)
         self.invert_elevation_dbox.valueChanged.connect(self.invert_elevation_dbox_valueChanged)
         self.flap_gate_chbox.stateChanged.connect(self.flap_gate_chbox_stateChanged)
-        self.allow_discharge_chbox.stateChanged.connect(self.allow_discharge_chbox_stateChanged)
+        self.allow_discharge_cbo.currentIndexChanged.connect(self.allow_discharge_cbo_currentIndexChanged)
+        # self.allow_discharge_chbox.stateChanged.connect(self.allow_discharge_chbox_stateChanged)
         self.outfall_type_cbo.currentIndexChanged.connect(self.out_fall_type_cbo_currentIndexChanged)
         self.water_depth_dbox.valueChanged.connect(self.water_depth_dbox_valueChanged)
         self.tidal_curve_cbo.currentIndexChanged.connect(self.tidal_curve_cbo_currentIndexChanged)
@@ -159,6 +160,13 @@ class OutfallNodesDialog(qtBaseClass, uiDialog):
                 QApplication.restoreOverrideCursor()
                 return
 
+            # # Replace 'swmm_allow_discharge' with 'outf_flo' of 'swmmoutf' table:
+            # outf_flo_qry = "SELECT outf_flo FROM swmmoutf WHERE name = ?;"
+                            
+            # for r in rows:
+            #     outf_flo = self.gutils.execute("SELECT outf_flo FROM swmmoutf WHERE name = ?;", (r[1],)).fetchone()
+            #     r[5] = outf_flo
+
             self.block = True
 
             # Fill list of time series names:
@@ -177,6 +185,8 @@ class OutfallNodesDialog(qtBaseClass, uiDialog):
                     self.tidal_curve_cbo.addItem(name[0].strip())
             self.tidal_curve_cbo.addItem("")
 
+
+            outf_flo_qry = "SELECT outf_flo FROM swmmoutf WHERE name = ?;"
             # Fill table:
             self.outfalls_tblw.setRowCount(0)
             for row_number, row_data in enumerate(
@@ -198,6 +208,15 @@ class OutfallNodesDialog(qtBaseClass, uiDialog):
                         col_number == 1
                     ):  # We need 2nd. col_number: 'OUT3' in the example above, and its fid from row_data[0]
                         self.outfall_cbo.addItem(data, row_data[0])
+ 
+                    if col_number == 5:
+                        outf_flo = self.gutils.execute(outf_flo_qry, (row_data[1],)).fetchone()
+                        item.setData(Qt.DisplayRole, outf_flo[0]) 
+
+                        
+                        
+                        # data = data if data in ["0", "1", "2"] else "0"
+                        # item.setData(Qt.DisplayRole, data) 
 
                     # Fill all text boxes with data of first feature of query (first element in table user_swmm_nodes):
                     if row_number == 0:
@@ -208,8 +227,17 @@ class OutfallNodesDialog(qtBaseClass, uiDialog):
                             self.invert_elevation_dbox.setValue(data if data is not None else 0)
                         elif col_number == 4:
                             self.flap_gate_chbox.setChecked(True if is_true(data) else False)
+                            
+                            
+                            
+                            
                         elif col_number == 5:
-                            self.allow_discharge_chbox.setChecked(True if is_true(data) else False)
+                            # self.allow_discharge_chbox.setChecked(True if is_true(data) else False)
+                            outf_flo = self.gutils.execute(outf_flo_qry, (row_data[1],)).fetchone()
+                            # idx = self.allow_discharge_cbo.findText(outf_flo[0])
+                            self.allow_discharge_cbo.setCurrentIndex(outf_flo[0])                           
+  
+
                         elif col_number == 6:
                             data = str(data).upper()
                             if data in self.outfalls_tuple:
@@ -237,7 +265,7 @@ class OutfallNodesDialog(qtBaseClass, uiDialog):
                             txt = "*" if data == "..." else str(data) if not type(data) == str else data
                             idx = self.time_series_cbo.findText(txt)
                             self.time_series_cbo.setCurrentIndex(idx)
-
+     
                     if col_number > 0:  # For this row disable some elements and omit fid number
                         if col_number in (1, 2, 4, 5, 6, 8, 9):
                             item.setFlags(Qt.ItemIsSelectable | Qt.ItemIsEnabled)
@@ -269,8 +297,11 @@ class OutfallNodesDialog(qtBaseClass, uiDialog):
     def flap_gate_chbox_stateChanged(self):
         self.checkbox_valueChanged(self.flap_gate_chbox, 3)
 
-    def allow_discharge_chbox_stateChanged(self):
-        self.checkbox_valueChanged(self.allow_discharge_chbox, 4)
+    def allow_discharge_cbo_currentIndexChanged(self):
+        self.combo_valueChanged(self.allow_discharge_cbo, 4)
+
+    # def allow_discharge_chbox_stateChanged(self):
+    #     self.checkbox_valueChanged(self.allow_discharge_chbox, 4)
 
     def out_fall_type_cbo_currentIndexChanged(self):
         QApplication.setOverrideCursor(Qt.WaitCursor)
@@ -449,7 +480,7 @@ class OutfallNodesDialog(qtBaseClass, uiDialog):
         if col in (0, 1, 3, 4, 5, 7, 8):
             item.setFlags(Qt.ItemIsSelectable | Qt.ItemIsEnabled)
         self.outfalls_tblw.setItem(row, col, item)
-        self.outfalls_tblw.item(row, col).setText("True" if widget.isChecked() else "False")
+        self.outfalls_tblw.item(row, col).setText("1" if widget.isChecked() else "0")
 
     def combo_valueChanged(self, widget, col):
         row = self.outfall_cbo.currentIndex()
@@ -476,7 +507,14 @@ class OutfallNodesDialog(qtBaseClass, uiDialog):
             self.grid_element_txt.setText(self.outfalls_tblw.item(row, 1).text())
             self.invert_elevation_dbox.setValue(float_or_zero(self.outfalls_tblw.item(row, 2)))
             self.flap_gate_chbox.setChecked(True if is_true(self.outfalls_tblw.item(row, 3).text()) else False)
-            self.allow_discharge_chbox.setChecked(True if is_true(self.outfalls_tblw.item(row, 4).text()) else False)
+            
+            # Allow discharge:
+            txt = self.outfalls_tblw.item(row, 4).text()
+            idx = self.allow_discharge_cbo.findText(txt)
+            self.allow_discharge_cbo.setCurrentIndex(idx)
+        
+            # self.allow_discharge_chbox.setChecked(True if is_true(self.outfalls_tblw.item(row, 4).text()) else False)
+            
             # Set index of outfall_type_cbo (a combo) depending of text contents:
             item = self.outfalls_tblw.item(row, 5)
             if item is not None:
@@ -534,10 +572,9 @@ class OutfallNodesDialog(qtBaseClass, uiDialog):
 
             item = self.outfalls_tblw.item(row, 4)
             if item is not None:
-                self.allow_discharge_chbox.setChecked(True if is_true(item.text()) else False)
-
-            #                                             True if item.text() == 'true' or item.text() == 'True' or item.text() == '1' else False)
-
+                index = self.allow_discharge_cbo.findText(item.text())
+                self.allow_discharge_cbo.setCurrentIndex(index)
+                
             item = self.outfalls_tblw.item(row, 5)
             if item is not None:
                 itemTxt = item.text().upper()
@@ -628,7 +665,7 @@ class OutfallNodesDialog(qtBaseClass, uiDialog):
 
     def save_outfalls(self):
         """
-        Save changes of user_swmm_nodes layer.
+        Save changes to user_swmm_nodes layer and swmmoutf
         """
         # self.save_attrs()
         update_qry = """
@@ -644,7 +681,9 @@ class OutfallNodesDialog(qtBaseClass, uiDialog):
                             tidal_curve = ?,
                             time_series = ?
                         WHERE fid = ?;"""
-
+                        
+        insert_swmmoutf_sql = ["""INSERT INTO swmmoutf (name, grid_fid, outf_flo) VALUES""", 3]
+        
         for row in range(0, self.outfalls_tblw.rowCount()):
             item = QTableWidgetItem()
 
@@ -668,7 +707,8 @@ class OutfallNodesDialog(qtBaseClass, uiDialog):
 
             item = self.outfalls_tblw.item(row, 4)
             if item is not None:
-                allow_discharge = str(True if is_true(item.text()) else False)
+                allow_discharge = str(item.text())
+                discharge = item.text()[0]
 
             item = self.outfalls_tblw.item(row, 5)
             if item is not None:
@@ -709,7 +749,11 @@ class OutfallNodesDialog(qtBaseClass, uiDialog):
                     fid,
                 ),
             )
-
+            
+            insert_swmmoutf_sql += [(name, grid, discharge)]
+            
+        self.gutils.clear_tables("swmmoutf")
+        self.gutils.batch_execute(insert_swmmoutf_sql)         
 
 uiDialog, qtBaseClass = load_ui("storm_drain_outfall_time_series")
 class OutfallTimeSeriesDialog(qtBaseClass, uiDialog):

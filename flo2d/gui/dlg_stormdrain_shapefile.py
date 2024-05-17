@@ -1189,7 +1189,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                     feat.setAttribute("swmm_clogging_factor", swmm_clogging_factor)
                     feat.setAttribute("swmm_time_for_clogging", swmm_time_for_clogging)
                     feat.setAttribute("drboxarea", drboxarea)
-                    feat.setAttribute("swmm_allow_discharge", "True")
+                    feat.setAttribute("swmm_allow_discharge", "0")
                     feat.setAttribute("water_depth", 0)
                     feat.setAttribute("rt_fid", 0)
                     feat.setAttribute("outf_flo", 0)
@@ -1276,12 +1276,14 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                         else ""
                     )
                     flapgate = "True" if is_true(flapgate) else "False"
+                    
                     swmm_allow_discharge = (
                         f[self.outfall_allow_discharge_FieldCbo.currentText()]
                         if self.outfall_allow_discharge_FieldCbo.currentText() != ""
                         else ""
                     )
-                    swmm_allow_discharge = "True" if is_true(swmm_allow_discharge) else "False"
+                    swmm_allow_discharge = swmm_allow_discharge if swmm_allow_discharge in ["0","1","2"] else "0"
+                    
                     outfall_type = (
                         f[self.outfall_type_FieldCbo.currentText()]
                         if self.outfall_type_FieldCbo.currentText() != ""
