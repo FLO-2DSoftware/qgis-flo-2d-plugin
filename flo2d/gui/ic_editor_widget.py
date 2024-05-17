@@ -18,7 +18,7 @@ import processing
 from qgis.core import QgsFeatureRequest
 from qgis.PyQt.QtWidgets import QInputDialog
 
-from ..flo2dobjects import Reservoir, Tailings, TailingsReservoir
+from ..flo2dobjects import Reservoir, Tailings, TailingsReservoir, ChannelSegment
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
 from ..utils import is_number
@@ -56,10 +56,12 @@ class ICEditorWidget(qtBaseClass, uiDialog):
         self.res_cbo.activated.connect(self.cur_res_changed)
         self.res_ini_sbox.editingFinished.connect(self.save_res)
         self.res_n_sbox.editingFinished.connect(self.save_res)
-        self.chan_seg_cbo.activated.connect(self.cur_seg_changed)
-        self.seg_ini_sbox.editingFinished.connect(self.save_chan_seg)
 
         # connections Channels
+        self.chan_seg_cbo.activated.connect(self.cur_seg_changed)
+        self.seg_ini_sbox.editingFinished.connect(self.save_chan_seg)
+        self.rename_seg_btn.clicked.connect(self.rename_chan)
+        self.delete_seg_btn.clicked.connect(self.delete_chan)
         self.clear_chan_rb_btn.clicked.connect(self.lyrs.clear_rubber)
 
         # connections Tailings
@@ -136,11 +138,11 @@ class ICEditorWidget(qtBaseClass, uiDialog):
         self.cur_res_changed(cur_res_idx)
         # channel
         self.chan_seg_cbo.clear()
-        seg_qry = """SELECT fid, name FROM chan ORDER BY name COLLATE NOCASE"""
+        seg_qry = """SELECT fid, name, depinitial FROM chan ORDER BY name COLLATE NOCASE"""
         rows = self.gutils.execute(seg_qry).fetchall()
         for i, row in enumerate(rows):
             self.chan_seg_cbo.addItem(row[1], row[0])
-
+        self.cur_seg_changed(cur_res_idx)
         # tailings
         self.tailings_cbo.clear()
         tal_qry = """SELECT fid, name FROM user_tailings ORDER BY name COLLATE NOCASE"""
@@ -155,6 +157,7 @@ class ICEditorWidget(qtBaseClass, uiDialog):
             self.tailing_res_cbo.addItem(row[1], row[0])
         self.cur_tal_res_changed(cur_res_idx)
 
+        self.check_cbos()
         self.lyrs.clear_rubber()
 
     def cur_res_changed(self, cur_idx):
@@ -184,10 +187,10 @@ class ICEditorWidget(qtBaseClass, uiDialog):
             return
         depini = 0
         self.seg_fid = self.chan_seg_cbo.itemData(self.chan_seg_cbo.currentIndex())
-        qry = "SELECT depinitial FROM chan WHERE fid = ?;"
-        di = self.gutils.execute(qry, (self.seg_fid,)).fetchone()
-        if di and is_number(di[0]):
-            depini = float(di[0])
+        self.chan_seg = ChannelSegment(self.seg_fid, self.iface.f2d["con"], self.iface)
+        self.chan_seg.get_row()
+        if is_number(self.chan_seg.depinitial):
+            depini = float(self.chan_seg.depinitial)
         self.seg_ini_sbox.setValue(depini)
         self.show_chan_rb()
         if self.center_seg_chbox.isChecked():
@@ -310,6 +313,21 @@ class ICEditorWidget(qtBaseClass, uiDialog):
         self.reservoir.name = new_name
         self.save_res()
 
+    def rename_chan(self):
+        if not self.chan_seg_cbo.count():
+            return
+        new_name, ok = QInputDialog.getText(None, "Change name", "New name:")
+        if not ok or not new_name:
+            return
+        if not self.chan_seg_cbo.findText(new_name) == -1:
+            msg = "WARNING 060319.1722: Channel with name {} already exists in the database. Please, choose another name.".format(
+                new_name
+            )
+            self.uc.show_warn(msg)
+            return
+        self.chan_seg.name = new_name
+        self.save_chan_seg()
+
     def rename_tal(self):
         if not self.tailings_cbo.count():
             return
@@ -347,6 +365,14 @@ class ICEditorWidget(qtBaseClass, uiDialog):
         self.lyrs.lyrs_to_repaint = [
             self.lyrs.data["reservoirs"]["qlyr"],
             self.lyrs.data["user_reservoirs"]["qlyr"],
+        ]
+        self.lyrs.repaint_layers()
+
+    def repaint_chan_seg(self):
+        self.lyrs.lyrs_to_repaint = [
+            self.lyrs.data["chan"]["qlyr"],
+            self.lyrs.data["chan_elems"]["qlyr"],
+            self.lyrs.data["rbank"]["qlyr"]
         ]
         self.lyrs.repaint_layers()
 
@@ -587,18 +613,9 @@ class ICEditorWidget(qtBaseClass, uiDialog):
         self.populate_cbos(fid=self.tailings_reservoir.fid)
 
     def save_chan_seg(self):
-        fid = self.chan_seg_cbo.itemData(self.chan_seg_cbo.currentIndex())
-        dini = self.seg_ini_sbox.value()
-        qry = "UPDATE chan SET depinitial = ? WHERE fid = ?;"
-        if fid:
-            if fid > 0:
-                self.gutils.execute(
-                    qry,
-                    (
-                        dini,
-                        fid,
-                    ),
-                )
+        self.chan_seg.depinitial = self.seg_ini_sbox.value()
+        self.chan_seg.set_row()
+        self.populate_cbos(fid=self.chan_seg.fid)
 
     def save_seg_init_depth(self):
         pass
@@ -650,6 +667,20 @@ class ICEditorWidget(qtBaseClass, uiDialog):
         self.label_4.setEnabled(True)
         self.label_5.setEnabled(True)
 
+    def delete_chan(self):
+        """
+        Delete schematized channel
+        """
+        if not self.chan_seg_cbo.count():
+            return
+        q = "Are you sure you want delete the current schematized channel?"
+        if not self.uc.question(q):
+            return
+        self.chan_seg.del_row()
+        self.repaint_chan_seg()
+        self.lyrs.clear_rubber()
+        self.populate_cbos()
+
     def delete_tailings(self):
         """
         Delete tailings
@@ -677,4 +708,17 @@ class ICEditorWidget(qtBaseClass, uiDialog):
         self.repaint_tailings_res()
         self.lyrs.clear_rubber()
         self.populate_cbos()
+
+    def check_cbos(self):
+        """
+        Function to adjust the cbos based on the simulation type
+        """
+        # Block tailings stacks (TAILINGS_*.DAT) if reservoirs are assigned (INFLOW.DAT).
+        if self.res_cbo.count() != 0 or self.tailing_res_cbo.count() != 0:
+            pass
+
+        # Block reservoirs (INFLOW.DAT) if tailings (TAILINGS_*.DAT) are assigned.
+        if self.tailings_cbo.count() != 0:
+            pass
+
 

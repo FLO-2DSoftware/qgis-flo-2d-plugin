@@ -603,23 +603,38 @@ class ChannelSegment(GeoPackageUtils):
                     xsi.set_profile_data()
                 except Flo2dError as e:
                     return False, repr(e)
-            # else:
-            #     # this is natural cross-section
-            #     try:
-            #         xsi.get_profile_data()
-            #         xsup.get_profile_data()
-            #         xslo.get_profile_data()
-            #         d_bed = xslo.profile_data["bed_elev"] - xsup.profile_data["bed_elev"]
-            #         dh = icoef * d_bed
-            #         xsi.shift_nxsec(round(dh, 3))
-            #     except Flo2dError as e:
-            #         return False, repr(e)
-            #     except KeyError:
-            #         msg = "Interpolation failed on cross sections with 'fid': {}!".format(xsi.row["user_xs_fid"])
-            #         return False, msg
 
         return True, "Interpolation successful!"
 
+    def set_row(self):
+        # update user left bank
+        qry = """UPDATE user_left_bank SET
+            name = '{0}',
+            depinitial = {1}
+        WHERE fid = {2};""".format(
+            self.name, self.depinitial, self.fid
+        )
+        self.execute(qry)
+
+        # update chan
+        qry = """UPDATE chan SET
+            name = '{0}',
+            depinitial = {1}
+        WHERE fid = {2};""".format(
+            self.name, self.depinitial, self.fid
+        )
+        self.execute(qry)
+
+    def del_row(self):
+        # chan
+        qry = "DELETE FROM chan WHERE fid=?"
+        self.execute(qry, (self.fid,))
+        # chan_elems
+        qry = "DELETE FROM chan_elems WHERE seg_fid=?"
+        self.execute(qry, (self.fid,))
+        #rbank
+        qry = "DELETE FROM rbank WHERE chan_seg_fid=?"
+        self.execute(qry, (self.fid,))
 
 class Inflow(GeoPackageUtils):
     """
