@@ -641,8 +641,9 @@ class Flo2dGeoPackage(GeoPackageUtils):
             "fhortoni",
             "fhortonf",
             "decaya",
+            "fhortonia"
         ]
-        infil_sql = ["INSERT INTO infil (" + ", ".join(infil_params) + ") VALUES", 16]
+        infil_sql = ["INSERT INTO infil (" + ", ".join(infil_params) + ") VALUES", 17]
         infil_seg_sql = [
             """INSERT INTO infil_chan_seg (chan_seg_fid, hydcx, hydcxfinal, soildepthcx) VALUES""",
             4,
@@ -2986,11 +2987,12 @@ class Flo2dGeoPackage(GeoPackageUtils):
             infil_r_sql = """SELECT hydcx, hydcxfinal, soildepthcx FROM infil_chan_seg ORDER BY chan_seg_fid, fid;"""
             green_sql = """SELECT grid_fid, hydc, soils, dtheta, abstrinf, rtimpf, soil_depth FROM infil_cells_green ORDER by grid_fid;"""
             scs_sql = """SELECT grid_fid,scsn FROM infil_cells_scs ORDER BY grid_fid;"""
-            horton_sql = """SELECT grid_fid,fhorti, fhortf, deca FROM infil_cells_horton ORDER BY grid_fid;"""
+            horton_sql = """SELECT grid_fid, fhorti, fhortf, deca FROM infil_cells_horton ORDER BY grid_fid;"""
             chan_sql = """SELECT grid_fid, hydconch FROM infil_chan_elems ORDER by grid_fid;"""
 
             line1 = "{0}"
             line2 = "\n" + "  {}" * 6
+            line2h = "\n{0}"
             line3 = "\n" + "  {}" * 3
             line4 = "\n{0}"
             line4ab = "\nR  {0}  {1}  {2}"
@@ -3010,13 +3012,14 @@ class Flo2dGeoPackage(GeoPackageUtils):
             infil = os.path.join(outdir, "INFIL.DAT")
             with open(infil, "w") as i:
                 gen = [x if x is not None else "" for x in infil_row[1:]]
-                v1, v2, v3, v4, v5, v9 = (
+                v1, v2, v3, v4, v5, v9, v2h = (
                     gen[0],
                     gen[1:7],
                     gen[7:10],
                     gen[10:11],
                     gen[11:13],
-                    gen[13:],
+                    gen[13:16],
+                    gen[16]
                 )
                 i.write(line1.format(v1))
                 if v1 == 1 or v1 == 3:
@@ -3044,6 +3047,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 for row in self.execute(chan_sql):
                     i.write(line8.format(*row))
                 if any(v9) is True:
+                    i.write(line2h.format(str(v2h)))
                     i.write(line9.format(*v9))
                 else:
                     pass
@@ -3094,13 +3098,14 @@ class Flo2dGeoPackage(GeoPackageUtils):
         infil_group.create_dataset('INFIL_METHOD', [])
 
         gen = [x if x is not None else "" for x in infil_row[1:]]
-        v1, v2, v3, v4, v5, v9 = (
+        v1, v2, v3, v4, v5, v9, v2h = (
             gen[0],
             gen[1:7],
             gen[7:10],
             gen[10:11],
             gen[11:13],
-            gen[13:],
+            gen[13:16],
+            gen[16]
         )
 
         infil_group.datasets["INFIL_METHOD"].data.append(v1)
@@ -3201,6 +3206,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             infil_group.create_dataset('INFIL_HORTON_GLOBAL', [])
             for var in v9:
                 infil_group.datasets["INFIL_HORTON_GLOBAL"].data.append(var)
+            infil_group.datasets["INFIL_HORTON_GLOBAL"].data.append(v2h)
             horton_cells_row = self.execute(horton_sql).fetchone()
             if horton_cells_row is not None:
                 infil_group.create_dataset('INFIL_HORTON_CELLS', [])
@@ -5745,7 +5751,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             if self.is_table_empty("user_swmm_nodes"):
                 return False
             
-            qry = """SELECT name, grid, drboxarea  FROM user_swmm_nodes WHERE (sd_type = 'I' OR sd_type = 'J') AND drboxarea > 0.0;"""
+            qry = """SELECT name, grid, drboxarea  FROM user_swmm_nodes WHERE SUBSTR(name, 1,1) NOT LIKE 'J%'  AND drboxarea > 0.0;"""
             rows = self.gutils.execute(qry).fetchall()
             if rows:
                 line1 = "{0:16} {1:<10} {2:<10.2f}\n"

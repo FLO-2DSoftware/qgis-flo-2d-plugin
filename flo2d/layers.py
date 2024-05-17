@@ -799,6 +799,17 @@ class Layers(object):
                     },
                 ),
                 (
+                    "swmm_control",
+                    {
+                        "name": "Storm Drain Control",
+                        "sgroup": "Storm Drain Tables",
+                        "styles": None,
+                        "attrs_edit_widgets": {},
+                        "readonly": False,
+                        "advanced": True
+                    },
+                ),
+                (
                     "swmm_inflows",
                     {
                         "name": "Storm Drain Inflows",
@@ -958,6 +969,17 @@ class Layers(object):
                     "tolspatial_cells",
                     {
                         "name": "Tolerance Cells",
+                        "sgroup": "Tables",
+                        "styles": None,
+                        "attrs_edit_widgets": {},
+                        "readonly": True,
+                        "advanced": True
+                    },
+                ),
+                (
+                    "outrc",
+                    {
+                        "name": "Surface Water Rating Tables",
                         "sgroup": "Tables",
                         "styles": None,
                         "attrs_edit_widgets": {},

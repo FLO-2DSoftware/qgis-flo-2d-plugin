@@ -594,6 +594,7 @@ class ParseDAT(object):
     def parse_infil(self):
         infil = self.dat_files["INFIL.DAT"]
         line1 = ["INFMETHOD"]
+        line2h = ["FHORTONIA"]
         line2 = ["ABSTR", "SATI", "SATF", "POROS", "SOILD", "INFCHAN"]
         line3 = ["HYDCALL", "SOILALL", "HYDCADJ"]
         line5 = ["SCSNALL", "ABSTR1"]
@@ -607,6 +608,8 @@ class ParseDAT(object):
                 data["HYDCXX"] = next(par)[0]
             else:
                 pass
+        elif method == "4":
+            data.update(list(zip(line2h, next(par))))
         else:
             pass
         chars = {"R": 4, "F": 8, "S": 3, "C": 3, "H": 5}

@@ -19,6 +19,8 @@ from math import isnan
 
 from PyQt5.QtWidgets import QProgressDialog
 from qgis._core import QgsMessageLog, QgsProcessingFeatureSourceDefinition, QgsUnitTypes
+from PyQt5.QtGui import QDesktopServices
+from PyQt5.QtCore import QUrl  
 from qgis._gui import QgsDockWidget
 from qgis.core import (
     NULL,
@@ -128,6 +130,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         self.save_xs_changes_btn.clicked.connect(self.save_user_xsections_lyr_edits)
         self.revert_changes_btn.clicked.connect(self.cancel_user_lyr_edits)
         self.delete_btn.clicked.connect(self.delete_xs)
+        self.xs_help_btn.clicked.connect(self.xs_help)        
         self.delete_user_btn.clicked.connect(self.delete_user_data)
         self.delete_schema_btn.clicked.connect(self.delete_schematize_data)
         self.schematize_xs_btn.clicked.connect(self.schematize_channels)
@@ -618,6 +621,10 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         except Exception as e:
             self.populate_xsec_cbo()
         self.repaint_xs()
+
+    
+    def xs_help(self):
+        QDesktopServices.openUrl(QUrl("https://flo-2dsoftware.github.io/FLO-2D-Documentation/Plugin1000/widgets/cross-sections-editor/Cross%20Sections%20Editor.html"))        
 
     def delete_user_data(self):
         """

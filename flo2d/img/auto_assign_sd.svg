@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   height="24"
+   width="24"
+   version="1.1"
+   id="svg16"
+   sodipodi:docname="auto_assign_sd.svg"
+   inkscape:version="1.3 (0e150ed6c4, 2023-07-21)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <defs
+     id="defs16" />
+  <sodipodi:namedview
+     id="namedview16"
+     pagecolor="#505050"
+     bordercolor="#eeeeee"
+     borderopacity="1"
+     inkscape:showpageshadow="0"
+     inkscape:pageopacity="0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     inkscape:zoom="33.875"
+     inkscape:cx="12"
+     inkscape:cy="12"
+     inkscape:window-width="1920"
+     inkscape:window-height="1009"
+     inkscape:window-x="1912"
+     inkscape:window-y="81"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="svg16" />
+  <path
+     d="m9.7 14.868 2.756-2.152-1.134-.654z"
+     style="stroke-width:.5;stroke-linecap:square;stroke:#969696;fill:#969696;stroke-linejoin:round;stroke-dashoffset:.5"
+     id="path1" />
+  <path
+     d="m15.593 2.22-5.248 9.084"
+     style="opacity:.5;fill:#fce94f;stroke:#8b7617;stroke-width:.75;stroke-linecap:round;stroke-linejoin:round;stroke-dashoffset:.5"
+     id="path2" />
+  <path
+     d="m9.231 14.717.54-3.55 1.133.654z"
+     style="stroke-width:.5;stroke-linecap:square;stroke:#e6e6e6;fill:#e6e6e6;stroke-linejoin:round;stroke-dashoffset:.5"
+     id="path3" />
+  <path
+     d="m2.5 7.5h19v14h-19z"
+     fill="#e6e6e6"
+     stroke="#6e97c4"
+     id="path4" />
+  <path
+     d="m2.5 2.5h19v5h-19z"
+     fill="#bad9ec"
+     stroke="#6e97c4"
+     id="path5" />
+  <g
+     fill="none"
+     id="g9">
+    <path
+       d="m5 5h6"
+       stroke="#6e97c4"
+       stroke-width="2"
+       id="path6" />
+    <path
+       d="m5 9.5h3"
+       stroke="#999"
+       id="path7" />
+    <path
+       d="m11 9.5h8"
+       stroke="#999"
+       id="path8" />
+    <path
+       d="m5 12.5h3m-3 3h4"
+       stroke="#999"
+       id="path9" />
+  </g>
+  <g
+     stroke-dashoffset=".5"
+     stroke-linejoin="round"
+     id="g16">
+    <path
+       d="m9.882 10.937 3.408 1.967-4.068 2.945z"
+       fill="#505050"
+       stroke="#505050"
+       stroke-linecap="round"
+       stroke-width=".75"
+       id="path12" />
+    <path
+       d="m15.458 1.286 3.408 1.966-5.576 9.652-3.408-1.967z"
+       fill="#fcb64f"
+       stroke="#b56411"
+       stroke-linecap="round"
+       stroke-width=".75"
+       id="path13" />
+    <g
+       stroke-width="2"
+       id="g15">
+      <path
+         d="m16.843 2.383-5.368 9.208"
+         fill="none"
+         opacity=".5"
+         stroke="#fcffff"
+         id="path14" />
+      <path
+         d="m18 3-5.386 9.244"
+         fill-opacity=".588"
+         opacity=".25"
+         stroke="#000"
+         id="path15" />
+    </g>
+  </g>
+</svg>

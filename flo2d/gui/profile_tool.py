@@ -10,11 +10,12 @@
 
 from operator import itemgetter
 
-from PyQt5.QtCore import QSettings
+from PyQt5.QtCore import QSettings, QUrl
 from qgis._core import QgsMessageLog
 from qgis.core import QgsFeatureRequest, QgsProject, QgsRaster
 from qgis.PyQt.QtCore import Qt
 from qgis.PyQt.QtGui import QColor, QStandardItem, QStandardItemModel
+from PyQt5.QtGui import QDesktopServices
 
 from .table_editor_widget import StandardItemModel, StandardItem
 from ..flo2dobjects import ChannelSegment
@@ -91,6 +92,7 @@ class ProfileTool(qtBaseClass, uiDialog):
         self.rprofile_radio.setChecked(True)
         self.field_combo.setDisabled(True)
         self.rprofile_radio.toggled.connect(self.check_mode)
+        self.profile_help_btn.clicked.connect(self.profile_help)
         self.raster_combo.currentIndexChanged.connect(self.plot_raster_data)
         self.field_combo.currentIndexChanged.connect(self.plot_schema_data)
 
@@ -314,6 +316,9 @@ class ProfileTool(qtBaseClass, uiDialog):
                 return
             self.populate_fields()
             self.plot_schema_data()
+
+    def profile_help(self):
+        QDesktopServices.openUrl(QUrl("https://flo-2dsoftware.github.io/FLO-2D-Documentation/Plugin1000/widgets/profile-tool/Profile%20Tool.html"))        
 
     def populate_rasters(self):
         """

@@ -17,7 +17,8 @@ import processing
 
 from qgis.core import QgsFeatureRequest
 from qgis.PyQt.QtWidgets import QInputDialog
-
+from PyQt5.QtCore import QUrl
+from PyQt5.QtGui import QDesktopServices
 from ..flo2dobjects import Reservoir, Tailings, TailingsReservoir, ChannelSegment
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
@@ -176,7 +177,7 @@ class ICEditorWidget(qtBaseClass, uiDialog):
         self.res_ini_sbox.setValue(wsel)
         self.res_n_sbox.setValue(n_value)
         self.show_res_rb()
-        if self.center_res_chbox.isChecked():
+        if self.center_res_btn.isChecked():
             feat = next(self.res_lyr.getFeatures(QgsFeatureRequest(self.reservoir.fid)))
             x, y = feat.geometry().centroid().asPoint()
             center_canvas(self.iface, x, y)
@@ -193,7 +194,7 @@ class ICEditorWidget(qtBaseClass, uiDialog):
             depini = float(self.chan_seg.depinitial)
         self.seg_ini_sbox.setValue(depini)
         self.show_chan_rb()
-        if self.center_seg_chbox.isChecked():
+        if self.center_seg_btn.isChecked():
             feat = next(self.chan_lyr.getFeatures(QgsFeatureRequest(self.seg_fid)))
             x, y = feat.geometry().centroid().asPoint()
             center_canvas(self.iface, x, y)
@@ -412,7 +413,7 @@ class ICEditorWidget(qtBaseClass, uiDialog):
         self.repaint_reservoirs()
         self.lyrs.clear_rubber()
         self.populate_cbos()
-
+        
     def delete_schematize_res(self):
         """
         Function to delete the schematic data related to reservoirs
@@ -444,6 +445,9 @@ class ICEditorWidget(qtBaseClass, uiDialog):
             self.lyrs.clear_rubber()
             self.uc.bar_info(f"{user_tal_res} schematized tailings deleted!")
             self.uc.log_info(f"{user_tal_res} schematized tailings deleted!")
+            
+    def help_res(self):
+        QDesktopServices.openUrl(QUrl("https://flo-2dsoftware.github.io/FLO-2D-Documentation/Plugin1000/widgets/initial-condition-editor/Initial%20Condition%20Editor.html#"))        
 
     def schematize_res(self):
         user_rsvs = self.gutils.execute("SELECT Count(*) FROM user_reservoirs").fetchone()[0]
