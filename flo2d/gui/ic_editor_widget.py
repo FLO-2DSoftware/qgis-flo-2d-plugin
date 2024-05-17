@@ -713,12 +713,27 @@ class ICEditorWidget(qtBaseClass, uiDialog):
         """
         Function to adjust the cbos based on the simulation type
         """
+        self.tailings_stack_grp.setEnabled(True)
+        self.tailings_res_grp.setEnabled(True)
+        self.water_res_grp.setEnabled(True)
+        self.add_tailings_btn.setEnabled(True)
+        self.add_point_tailings_btn.setEnabled(True)
+        self.add_user_res_btn.setEnabled(True)
+
         # Block tailings stacks (TAILINGS_*.DAT) if reservoirs are assigned (INFLOW.DAT).
         if self.res_cbo.count() != 0 or self.tailing_res_cbo.count() != 0:
-            pass
+            self.tailings_stack_grp.setEnabled(False)
+            self.add_tailings_btn.setEnabled(False)
+            self.tailings_res_grp.setEnabled(True)
+            self.water_res_grp.setEnabled(True)
+            self.add_user_res_btn.setEnabled(True)
 
         # Block reservoirs (INFLOW.DAT) if tailings (TAILINGS_*.DAT) are assigned.
         if self.tailings_cbo.count() != 0:
-            pass
+            self.tailings_stack_grp.setEnabled(True)
+            self.tailings_res_grp.setEnabled(False)
+            self.add_point_tailings_btn.setEnabled(False)
+            self.water_res_grp.setEnabled(False)
+            self.add_user_res_btn.setEnabled(False)
 
 
