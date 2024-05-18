@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>438</width>
-    <height>518</height>
+    <width>442</width>
+    <height>527</height>
    </rect>
   </property>
   <property name="minimumSize">
@@ -111,6 +111,23 @@
          <property name="icon">
           <iconset>
            <normaloff>../img/auto_assign_sd.svg</normaloff>../img/auto_assign_sd.svg</iconset>
+         </property>
+         <property name="iconSize">
+          <size>
+           <width>24</width>
+           <height>24</height>
+          </size>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QToolButton" name="sd_control_btn">
+         <property name="text">
+          <string/>
+         </property>
+         <property name="icon">
+          <iconset>
+           <normaloff>../img/sd_control.svg</normaloff>../img/sd_control.svg</iconset>
          </property>
          <property name="iconSize">
           <size>

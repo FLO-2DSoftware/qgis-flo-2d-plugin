@@ -292,6 +292,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         self.PumpCurv = PumpCurves(self.con, self.iface)
 
         self.schema_storm_drain_btn.clicked.connect(self.schematize_swmm)
+        self.sd_control_btn.clicked.connect(self.open_sd_control)
         self.sd_help_btn.clicked.connect(self.sd_help)
 
         self.SD_type4_cbo.currentIndexChanged.connect(self.SD_show_type4_table_and_plot)
@@ -5917,6 +5918,15 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             index = self.end_node_cbo.findText(name)
             if index != -1:
                 self.end_node_cbo.setCurrentIndex(index)
+
+    def open_sd_control(self):
+        """
+        Function to open and retrieve the data from the sd_control table
+        """
+        dlg_INP_groups = INP_GroupsDialog(self.con, self.iface)
+        ok = dlg_INP_groups.exec_()
+        if ok:
+            pass
 
 class SDTablesDelegate(QStyledItemDelegate):
     def initStyleOption(self, option, index):
