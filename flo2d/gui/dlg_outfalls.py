@@ -227,17 +227,13 @@ class OutfallNodesDialog(qtBaseClass, uiDialog):
                             self.invert_elevation_dbox.setValue(data if data is not None else 0)
                         elif col_number == 4:
                             self.flap_gate_chbox.setChecked(True if is_true(data) else False)
-                            
-                            
-                            
-                            
+
                         elif col_number == 5:
                             # self.allow_discharge_chbox.setChecked(True if is_true(data) else False)
                             outf_flo = self.gutils.execute(outf_flo_qry, (row_data[1],)).fetchone()
                             # idx = self.allow_discharge_cbo.findText(outf_flo[0])
                             self.allow_discharge_cbo.setCurrentIndex(outf_flo[0])                           
   
-
                         elif col_number == 6:
                             data = str(data).upper()
                             if data in self.outfalls_tuple:

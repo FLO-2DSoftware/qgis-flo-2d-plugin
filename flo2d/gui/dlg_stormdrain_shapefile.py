@@ -1282,7 +1282,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                         if self.outfall_allow_discharge_FieldCbo.currentText() != ""
                         else ""
                     )
-                    swmm_allow_discharge = swmm_allow_discharge if swmm_allow_discharge in ["0","1","2"] else "0"
+                    swmm_allow_discharge = str(swmm_allow_discharge) if swmm_allow_discharge in ["0", "1", "2", 0, 1, 2]  else "0"
                     
                     outfall_type = (
                         f[self.outfall_type_FieldCbo.currentText()]
