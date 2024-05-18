@@ -401,6 +401,11 @@
                 <height>16777215</height>
                </size>
               </property>
+              <property name="toolTip">
+               <string>0. Off
+1. Fill outfall to the rim elevation
+2. Not prefilled outfall. Start dry</string>
+              </property>
               <property name="text">
                <string>Allow Discharge</string>
               </property>
@@ -428,6 +433,11 @@
                 <width>50</width>
                 <height>16777215</height>
                </size>
+              </property>
+              <property name="toolTip">
+               <string>0. Off
+1. Fill outfall to the rim elevation
+2. Not prefilled outfall. Start dry</string>
               </property>
               <item>
                <property name="text">
