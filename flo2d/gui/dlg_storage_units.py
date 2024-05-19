@@ -69,6 +69,8 @@ class StorageUnitsDialog(qtBaseClass, uiDialog):
         set_icon(self.zoom_out_storage_btn, "zoom_out.svg")
         set_icon(self.open_tabular_curve_btn, "open_dialog.svg")
 
+        self.storages_tblw.horizontalHeader().hideSection(6)
+
         self.save_this_storage_btn.setVisible(False)
         self.plot = plot
         self.table = table
