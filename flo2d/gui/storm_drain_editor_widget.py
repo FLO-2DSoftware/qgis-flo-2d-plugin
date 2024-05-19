@@ -2363,8 +2363,43 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 self.uc.show_error("ERROR 080422.1115: creation of Storm Drain Weirs layer failed!", e)
                 QApplication.restoreOverrideCursor()
             finally:
-                QApplication.restoreOverrideCursor() 
-                
+                QApplication.restoreOverrideCursor()
+
+        # CONTROL: Add control data to the swmm_control table
+        self.gutils.clear_tables("swmm_control")
+
+        try:
+            QApplication.setOverrideCursor(Qt.WaitCursor)
+            """
+            This portion of the code saves the SWMM control data to the geopackage 
+
+            Adds values to "swmm_control" table with attributes taken from
+            the *.INP file. 
+
+            """
+
+            # INP TITLE ##################################################
+            title_list = storm_drain.select_this_INP_group("title")
+            for item in title_list:
+                if item != "":
+                    qry = f"INSERT INTO swmm_control (name, value) VALUES ('TITLE', '{item}');"
+                    self.gutils.execute(qry)
+
+            # INP OPTIONS ##################################################
+            options_list = storm_drain.select_this_INP_group("options")
+            for option in options_list:
+                if option != "":
+                    name = option.split()[0]
+                    value = option.split()[1]
+                    qry = f"INSERT INTO swmm_control (name, value) VALUES ('{name}', '{value}');"
+                    self.gutils.execute(qry)
+
+            QApplication.restoreOverrideCursor()
+
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.uc.show_error("Saving Storm Drain Control data failed!", e)
+
         if (
             complete_or_create == "Create New"
             and len(new_nodes) == 0
