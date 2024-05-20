@@ -2627,17 +2627,8 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
 
             s = QSettings()
             last_dir = s.value("FLO-2D/lastGdsDir", "")
-            QApplication.setOverrideCursor(Qt.ArrowCursor)
             if not hdf5_dir and not hdf5_file:
-                swmm_dir = QFileDialog.getExistingDirectory(
-                    None,
-                    "Select directory where SWMM.INP file will be exported",
-                    directory=last_dir,
-                    options=QFileDialog.ShowDirsOnly,
-                )
-                QApplication.restoreOverrideCursor()
-                if not swmm_dir:
-                    return
+                swmm_dir = last_dir
 
                 swmm_file = swmm_dir + r"\SWMM.INP"
                 if os.path.isfile(swmm_file):
