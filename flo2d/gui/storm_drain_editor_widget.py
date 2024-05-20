@@ -109,36 +109,6 @@ class INP_GroupsDialog(qtBaseClass, uiDialog):
         self.uc = UserCommunication(iface, "FLO-2D")
         self.polulate_INP_values()
 
-        # self.control_cbos = {
-        #     'TITLE': self.titleTextEdit,
-        #     'FLOW_UNITS': self.flow_units_cbo,
-        #     # 'INFILTRATION':
-        #     'FLOW_ROUTING': self.flow_routing_cbo,
-        #     'START_DATE': self.start_date,
-        #     'START_TIME': self.start_time,
-        #     'REPORT_START_DATE': self.report_start_date,
-        #     'REPORT_START_TIME': self.report_start_time,
-        #     'END_DATE': self.end_date,
-        #     'END_TIME': self.end_time,
-        #     # 'SWEEP_START': self.
-        #     # 'SWEEP_END': self.
-        #     # 'DRY_DAYS': self.
-        #     'REPORT_STEP': self.report_stp_time,
-        #     # 'WET_STEP': self.
-        #     # 'DRY_STEP': self.
-        #     # 'ROUTING_STEP': self.
-        #     # 'ALLOW_PONDING': self.
-        #     'INERTIAL_DAMPING': self.inertial_damping_cbo,
-        #     # 'VARIABLE_STEP': self.
-        #     # 'LENGTHENING_STEP': self.
-        #     # 'MIN_SURFAREA': self.
-        #     'NORMAL_FLOW_LIMITED': self.normal_flow_limited_cbo,
-        #     'SKIP_STEADY_STATE': self.skip_steady_state_cbo,
-        #     'FORCE_MAIN_EQUATION': self.force_main_equation_cbo,
-        #     'LINK_OFFSETS': self.link_offsets_cbo,
-        #     'MIN_SLOPE': self.min_slop_dbox,
-        # }
-
     def polulate_INP_values(self):
         """
         Populate the values on the storm drain control dialog
