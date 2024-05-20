@@ -7,7 +7,7 @@
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 
-from qgis.core import NULL, QgsFeature, QgsGeometry, QgsWkbTypes
+from qgis.core import NULL, QgsFeature, QgsGeometry, QgsWkbTypes, QgsFieldProxyModel
 from qgis.gui import QgsFieldComboBox
 from qgis.PyQt.QtCore import QSettings, Qt
 from qgis.PyQt.QtWidgets import QApplication, QComboBox, QDialogButtonBox
@@ -327,6 +327,10 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
             for combo_inlets in self.inlets_fields_groupBox.findChildren(QComboBox):
                 combo_inlets.clear()
                 combo_inlets.setLayer(self.current_lyr)
+                # By default allow only numeric types:
+                combo_inlets.setFilters(QgsFieldProxyModel.Numeric | QgsFieldProxyModel.Int)                    
+
+            self.inlets_name_FieldCbo.setFilters(QgsFieldProxyModel.String) 
 
             nFeatures = self.current_lyr.featureCount()
             self.inlets_fields_groupBox.setTitle(
@@ -358,6 +362,11 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
             for combo_outfalls in self.outfalls_fields_groupBox.findChildren(QComboBox):
                 combo_outfalls.clear()
                 combo_outfalls.setLayer(self.current_lyr)
+                # By default allow only numeric types:
+                combo_outfalls.setFilters(QgsFieldProxyModel.Numeric | QgsFieldProxyModel.Int)             
+
+            self.outfall_name_FieldCbo.setFilters(QgsFieldProxyModel.String) 
+            self.outfall_type_FieldCbo.setFilters(QgsFieldProxyModel.String) 
 
             nFeatures = self.current_lyr.featureCount()
             self.outfalls_fields_groupBox.setTitle(
@@ -389,6 +398,16 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
             for combo in self.strge_unit_fields_groupBox.findChildren(QComboBox):
                 combo.clear()
                 combo.setLayer(self.current_lyr)
+                # By default allow only numeric types:
+                combo.setFilters(QgsFieldProxyModel.Numeric | QgsFieldProxyModel.Int)
+                
+            self.strge_unit_name_FieldCbo.setFilters(QgsFieldProxyModel.String)
+            self.strge_unit_external_inflow_FieldCbo.setFilters(QgsFieldProxyModel.String)
+            self.strge_unit_treatment_FieldCbo.setFilters(QgsFieldProxyModel.String)
+            self.strge_unit_infiltration_FieldCbo.setFilters(QgsFieldProxyModel.String)
+            self.strge_unit_infil_method_FieldCbo.setFilters(QgsFieldProxyModel.String)
+            self.strge_unit_storage_curve_FieldCbo.setFilters(QgsFieldProxyModel.String)
+            self.strge_unit_curve_name_FieldCbo.setFilters(QgsFieldProxyModel.String)
 
             nFeatures = self.current_lyr.featureCount()
             self.strge_unit_fields_groupBox.setTitle(
