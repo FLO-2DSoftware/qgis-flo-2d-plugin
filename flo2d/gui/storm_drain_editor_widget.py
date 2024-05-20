@@ -109,19 +109,51 @@ class INP_GroupsDialog(qtBaseClass, uiDialog):
         self.uc = UserCommunication(iface, "FLO-2D")
         self.polulate_INP_values()
 
+        # self.control_cbos = {
+        #     'TITLE': self.titleTextEdit,
+        #     'FLOW_UNITS': self.flow_units_cbo,
+        #     # 'INFILTRATION':
+        #     'FLOW_ROUTING': self.flow_routing_cbo,
+        #     'START_DATE': self.start_date,
+        #     'START_TIME': self.start_time,
+        #     'REPORT_START_DATE': self.report_start_date,
+        #     'REPORT_START_TIME': self.report_start_time,
+        #     'END_DATE': self.end_date,
+        #     'END_TIME': self.end_time,
+        #     # 'SWEEP_START': self.
+        #     # 'SWEEP_END': self.
+        #     # 'DRY_DAYS': self.
+        #     'REPORT_STEP': self.report_stp_time,
+        #     # 'WET_STEP': self.
+        #     # 'DRY_STEP': self.
+        #     # 'ROUTING_STEP': self.
+        #     # 'ALLOW_PONDING': self.
+        #     'INERTIAL_DAMPING': self.inertial_damping_cbo,
+        #     # 'VARIABLE_STEP': self.
+        #     # 'LENGTHENING_STEP': self.
+        #     # 'MIN_SURFAREA': self.
+        #     'NORMAL_FLOW_LIMITED': self.normal_flow_limited_cbo,
+        #     'SKIP_STEADY_STATE': self.skip_steady_state_cbo,
+        #     'FORCE_MAIN_EQUATION': self.force_main_equation_cbo,
+        #     'LINK_OFFSETS': self.link_offsets_cbo,
+        #     'MIN_SLOPE': self.min_slop_dbox,
+        # }
+
     def polulate_INP_values(self):
+        """
+        Populate the values on the storm drain control dialog
+        """
+
         try:
-            today = date.today()
+            start_date = date.today()
+            report_start_date = date.today()
             simul_time = float(self.gutils.get_cont_par("SIMUL"))
+            end_date = start_date + timedelta(hours=simul_time)
+
             frac, whole = modf(simul_time / 24)
             frac, whole = modf(frac * 24)
-            unit = int(self.gutils.get_cont_par("METRIC"))
-            # [OPTIONS]:
-            self.flow_units_cbo.setCurrentIndex(unit)
-            self.start_date.setDate(today)
-            self.report_start_date.setDate(today)
-            self.end_date.setDate(today + timedelta(hours=simul_time))
-            self.end_time.setTime(time(int(whole), int(frac * 60)))
+
+            end_time = time(int(whole), int(frac * 60))
 
             tout = float(self.gutils.get_cont_par("TOUT"))
 
@@ -129,10 +161,38 @@ class INP_GroupsDialog(qtBaseClass, uiDialog):
             hours = int(hours)
             mins = int(mins * 60)
 
-            time_string = timedelta(hours=tout)
+            report_time = QTime(hours, mins)
 
-            t = QTime(hours, mins)
-            self.report_stp_time.setTime(t)
+            if not self.gutils.is_table_empty('swmm_control'):
+
+                swmm_control_data = self.gutils.execute("SELECT name, value FROM swmm_control").fetchall()
+                for control_data in swmm_control_data:
+                    name = control_data[0]
+                    value = control_data[1]
+                    if name == 'START_DATE':
+                        date_object = datetime.strptime(value, '%m/%d/%Y')
+                        start_date = date_object.date()
+                    if name == 'REPORT_START_DATE':
+                        date_object = datetime.strptime(value, '%m/%d/%Y')
+                        report_start_date = date_object.date()
+                    if name == 'END_DATE':
+                        date_object = datetime.strptime(value, '%m/%d/%Y')
+                        end_date = date_object.date()
+                    if name == 'END_TIME':
+                        time_object = datetime.strptime(value, '%H:%M:%S')
+                        end_time = time_object.time()
+                    if name == 'REPORT_STEP':
+                        time_object = datetime.strptime(value, '%H:%M:%S')
+                        report_time = time_object.time()
+
+            unit = int(self.gutils.get_cont_par("METRIC"))
+            self.flow_units_cbo.setCurrentIndex(unit)
+            self.uc.log_info(str(start_date))
+            self.start_date.setDate(start_date)
+            self.report_start_date.setDate(report_start_date)
+            self.end_date.setDate(end_date)
+            self.end_time.setTime(end_time)
+            self.report_stp_time.setTime(report_time)
 
         except Exception as e:
             QApplication.restoreOverrideCursor()
@@ -5962,6 +6022,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         ok = dlg_INP_groups.exec_()
         if ok:
             pass
+
 
 class SDTablesDelegate(QStyledItemDelegate):
     def initStyleOption(self, option, index):

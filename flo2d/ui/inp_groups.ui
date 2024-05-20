@@ -913,6 +913,9 @@ and with SD time series</string>
 be synchronized with simulation time 
 and with SD time series</string>
             </property>
+            <property name="displayFormat">
+             <string>HH:mm:ss</string>
+            </property>
            </widget>
           </item>
          </layout>
