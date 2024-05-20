@@ -139,25 +139,78 @@ class INP_GroupsDialog(qtBaseClass, uiDialog):
                 for control_data in swmm_control_data:
                     name = control_data[0]
                     value = control_data[1]
+
+                    if name == 'TITLE':
+                        self.titleTextEdit.setPlainText(value)
+                        continue
+                    if name == 'FLOW_UNITS':
+                        self.flow_units_cbo.setCurrentText(value)
+                        continue
+                    if name == 'FLOW_ROUTING':
+                        self.flow_routing_cbo.setCurrentText(value)
+                        continue
                     if name == 'START_DATE':
                         date_object = datetime.strptime(value, '%m/%d/%Y')
                         start_date = date_object.date()
+                        continue
+                    if name == 'START_TIME':
+                        time_object = datetime.strptime(value, '%H:%M:%S')
+                        start_time = time_object.time()
+                        self.start_time.setTime(start_time)
+                        continue
                     if name == 'REPORT_START_DATE':
                         date_object = datetime.strptime(value, '%m/%d/%Y')
                         report_start_date = date_object.date()
+                    if name == 'REPORT_START_TIME':
+                        time_object = datetime.strptime(value, '%H:%M:%S')
+                        report_start_time = time_object.time()
+                        self.report_start_time.setTime(report_start_time)
+                        continue
                     if name == 'END_DATE':
                         date_object = datetime.strptime(value, '%m/%d/%Y')
                         end_date = date_object.date()
+                        continue
                     if name == 'END_TIME':
                         time_object = datetime.strptime(value, '%H:%M:%S')
                         end_time = time_object.time()
+                        continue
                     if name == 'REPORT_STEP':
                         time_object = datetime.strptime(value, '%H:%M:%S')
                         report_time = time_object.time()
+                        continue
+                    if name == 'INERTIAL_DAMPING':
+                        self.inertial_damping_cbo.setCurrentText(value)
+                        continue
+                    if name == 'NORMAL_FLOW_LIMITED':
+                        self.normal_flow_limited_cbo.setCurrentText(value)
+                        continue
+                    if name == 'SKIP_STEADY_STATE':
+                        self.skip_steady_state_cbo.setCurrentText(value)
+                        continue
+                    if name == 'FORCE_MAIN_EQUATION':
+                        self.force_main_equation_cbo.setCurrentText(value)
+                        continue
+                    if name == 'LINK_OFFSETS':
+                        self.link_offsets_cbo.setCurrentText(value)
+                        continue
+                    if name == 'MIN_SLOPE':
+                        self.min_slop_dbox.setValue(float(value))
+                        continue
+                    if name == 'INPUT':
+                        self.input_cbo.setCurrentText(value)
+                        continue
+                    if name == 'CONTROLS':
+                        self.controls_cbo.setCurrentText(value)
+                        continue
+                    if name == 'NODES':
+                        self.nodes_cbo.setCurrentText(value)
+                        continue
+                    if name == 'LINKS':
+                        self.links_cbo.setCurrentText(value)
+                        continue
 
             unit = int(self.gutils.get_cont_par("METRIC"))
             self.flow_units_cbo.setCurrentIndex(unit)
-            self.uc.log_info(str(start_date))
             self.start_date.setDate(start_date)
             self.report_start_date.setDate(report_start_date)
             self.end_date.setDate(end_date)
@@ -171,6 +224,40 @@ class INP_GroupsDialog(qtBaseClass, uiDialog):
                 + "\n__________________________________________________",
                 e,
             )
+
+    def save_INP_control(self):
+        """
+        Function to save the INP control data
+        """
+
+        # clear current data on the swmm_control table
+        self.gutils.clear_tables('swmm_control')
+
+        control_cbos = {
+            'TITLE': self.titleTextEdit.toPlainText(),
+            'FLOW_UNITS': self.flow_units_cbo.currentText(),
+            'FLOW_ROUTING': self.flow_routing_cbo.currentText(),
+            'START_DATE': self.start_date.date().toString('MM/dd/yyyy'),
+            'START_TIME': self.start_time.time().toString('HH:mm:ss'),
+            'REPORT_START_DATE': self.report_start_date.date().toString('MM/dd/yyyy'),
+            'REPORT_START_TIME': self.report_start_time.time().toString('HH:mm:ss'),
+            'END_DATE': self.end_date.date().toString('MM/dd/yyyy'),
+            'END_TIME': self.end_time.time().toString('HH:mm:ss'),
+            'REPORT_STEP': self.report_stp_time.time().toString('HH:mm:ss'),
+            'INERTIAL_DAMPING': self.inertial_damping_cbo.currentText(),
+            'NORMAL_FLOW_LIMITED': self.normal_flow_limited_cbo.currentText(),
+            'SKIP_STEADY_STATE': self.skip_steady_state_cbo.currentText(),
+            'FORCE_MAIN_EQUATION': self.force_main_equation_cbo.currentText(),
+            'LINK_OFFSETS': self.link_offsets_cbo.currentText(),
+            'MIN_SLOPE': self.min_slop_dbox.value(),
+            'INPUT': self.input_cbo.currentText(),
+            'CONTROLS': self.controls_cbo.currentText(),
+            'NODES': self.nodes_cbo.currentText(),
+            'LINKS': self.links_cbo.currentText(),
+        }
+
+        for key, value in control_cbos.items():
+            self.gutils.execute(f"INSERT INTO swmm_control (name, value) VALUES ('{key}', '{value}');")
 
 
 uiDialog, qtBaseClass = load_ui("storm_drain_editor")
@@ -2411,12 +2498,21 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                     qry = f"INSERT INTO swmm_control (name, value) VALUES ('TITLE', '{item}');"
                     self.gutils.execute(qry)
 
-            # INP OPTIONS ##################################################
+            # INP OPTIONS ################################################
             options_list = storm_drain.select_this_INP_group("options")
             for option in options_list:
                 if option != "":
                     name = option.split()[0]
                     value = option.split()[1]
+                    qry = f"INSERT INTO swmm_control (name, value) VALUES ('{name}', '{value}');"
+                    self.gutils.execute(qry)
+
+            # REPORT OPTIONS #############################################
+            report_list = storm_drain.select_this_INP_group("report")
+            for report in report_list:
+                if report != "":
+                    name = report.split()[0]
+                    value = report.split()[1]
                     qry = f"INSERT INTO swmm_control (name, value) VALUES ('{name}', '{value}');"
                     self.gutils.execute(qry)
 
@@ -2610,7 +2706,6 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         """
 
         try:
-            self.uc.clear_bar_messages()
 
             if self.gutils.is_table_empty("user_swmm_nodes"):
                 self.uc.show_warn(
@@ -2670,52 +2765,56 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 # INP TITLE ##################################################
                 # items = self.select_this_INP_group(INP_groups, "title")
                 swmm_inp_file.write("[TITLE]")
-                title = self.gutils.execute("SELECT name FROM swmm_control WHERE name = 'TITLE'").fetchone()
+                title = self.gutils.execute("SELECT value FROM swmm_control WHERE name = 'TITLE'").fetchone()[0]
                 swmm_inp_file.write("\n" + title + "\n")
 
                 # INP OPTIONS ##################################################
                 # items = self.select_this_INP_group(INP_groups, "options")
                 swmm_inp_file.write("\n[OPTIONS]")
-                flow_units = self.gutils.execute("SELECT name FROM swmm_control WHERE name = 'FLOW_UNITS'").fetchone()
+                flow_units = self.gutils.execute("SELECT value FROM swmm_control WHERE name = 'FLOW_UNITS'").fetchone()[0]
                 swmm_inp_file.write("\nFLOW_UNITS           " + flow_units)
                 swmm_inp_file.write("\nINFILTRATION         HORTON")
-                flow_routing = self.gutils.execute("SELECT name FROM swmm_control WHERE name = 'FLOW_ROUTING'").fetchone()
+                flow_routing = self.gutils.execute("SELECT value FROM swmm_control WHERE name = 'FLOW_ROUTING'").fetchone()[0]
                 swmm_inp_file.write("\nFLOW_ROUTING         " + flow_routing)
-                start_date = self.gutils.execute("SELECT name FROM swmm_control WHERE name = 'START_DATE'").fetchone()
+                start_date = self.gutils.execute("SELECT value FROM swmm_control WHERE name = 'START_DATE'").fetchone()[0]
                 swmm_inp_file.write("\nSTART_DATE           " + start_date)
-                start_time = self.gutils.execute("SELECT name FROM swmm_control WHERE name = 'START_TIME'").fetchone()
+                start_time = self.gutils.execute("SELECT value FROM swmm_control WHERE name = 'START_TIME'").fetchone()[0]
                 swmm_inp_file.write("\nSTART_TIME           " + start_time)
-                report_start_date = self.gutils.execute("SELECT name FROM swmm_control WHERE name = 'REPORT_START_DATE'").fetchone()
+                report_start_date = self.gutils.execute("SELECT value FROM swmm_control WHERE name = 'REPORT_START_DATE'").fetchone()[0]
                 swmm_inp_file.write("\nREPORT_START_DATE    " + report_start_date)
-                report_start_time = self.gutils.execute("SELECT name FROM swmm_control WHERE name = 'REPORT_START_TIME'").fetchone()
+                report_start_time = self.gutils.execute("SELECT value FROM swmm_control WHERE name = 'REPORT_START_TIME'").fetchone()[0]
                 swmm_inp_file.write("\nREPORT_START_TIME    " + report_start_time)
-                end_date = self.gutils.execute("SELECT name FROM swmm_control WHERE name = 'END_DATE'").fetchone()
+                end_date = self.gutils.execute("SELECT value FROM swmm_control WHERE name = 'END_DATE'").fetchone()[0]
                 swmm_inp_file.write("\nEND_DATE             " + end_date)
-                end_time = self.gutils.execute("SELECT name FROM swmm_control WHERE name = 'END_TIME'").fetchone()
+                end_time = self.gutils.execute("SELECT value FROM swmm_control WHERE name = 'END_TIME'").fetchone()[0]
                 swmm_inp_file.write("\nEND_TIME             " + end_time)
                 swmm_inp_file.write("\nSWEEP_START          01/01")
                 swmm_inp_file.write("\nSWEEP_END            12/31")
                 swmm_inp_file.write("\nDRY_DAYS             0")
-                report_step = self.gutils.execute("SELECT name FROM swmm_control WHERE name = 'REPORT_STEP'").fetchone()
+                report_step = self.gutils.execute("SELECT value FROM swmm_control WHERE name = 'REPORT_STEP'").fetchone()[0]
                 swmm_inp_file.write("\nREPORT_STEP          " + report_step)
                 swmm_inp_file.write("\nWET_STEP             00:05:00")
                 swmm_inp_file.write("\nDRY_STEP             01:00:00")
                 swmm_inp_file.write("\nROUTING_STEP         00:01:00")
                 swmm_inp_file.write("\nALLOW_PONDING        NO")
-                inertial_damping = self.gutils.execute("SELECT name FROM swmm_control WHERE name = 'INERTIAL_DAMPING'").fetchone()
+                inertial_damping = self.gutils.execute("SELECT value FROM swmm_control WHERE name = 'INERTIAL_DAMPING'").fetchone()[0]
                 swmm_inp_file.write("\nINERTIAL_DAMPING     " + inertial_damping)
                 swmm_inp_file.write("\nVARIABLE_STEP        0.75")
                 swmm_inp_file.write("\nLENGTHENING_STEP     0")
                 swmm_inp_file.write("\nMIN_SURFAREA         0")
-                normal_flow_limited = self.gutils.execute("SELECT name FROM swmm_control WHERE name = 'NORMAL_FLOW_LIMITED'").fetchone()
+                normal_flow_limited = self.gutils.execute("SELECT value FROM swmm_control WHERE name = 'NORMAL_FLOW_LIMITED'").fetchone()[0]
                 swmm_inp_file.write("\nNORMAL_FLOW_LIMITED  " + normal_flow_limited)
-                skip_steady_state = self.gutils.execute("SELECT name FROM swmm_control WHERE name = 'SKIP_STEADY_STATE'").fetchone()
+                skip_steady_state = self.gutils.execute("SELECT value FROM swmm_control WHERE name = 'SKIP_STEADY_STATE'").fetchone()[0]
                 swmm_inp_file.write("\nSKIP_STEADY_STATE    " + skip_steady_state)
-                force_main_equation = self.gutils.execute("SELECT name FROM swmm_control WHERE name = 'FORCE_MAIN_EQUATION'").fetchone()
+                force_main_equation = self.gutils.execute("SELECT value FROM swmm_control WHERE name = 'FORCE_MAIN_EQUATION'").fetchone()[0]
+                if force_main_equation == 'Darcy-Weisbach (D-W)':
+                    force_main_equation = "D-W"
+                else:
+                    force_main_equation = "H-W"
                 swmm_inp_file.write("\nFORCE_MAIN_EQUATION  " + force_main_equation)
-                link_offsets = self.gutils.execute("SELECT name FROM swmm_control WHERE name = 'LINK_OFFSETS'").fetchone()
+                link_offsets = self.gutils.execute("SELECT value FROM swmm_control WHERE name = 'LINK_OFFSETS'").fetchone()[0]
                 swmm_inp_file.write("\nLINK_OFFSETS         " + link_offsets)
-                min_slope = self.gutils.execute("SELECT name FROM swmm_control WHERE name = 'MIN_SLOPE'").fetchone()
+                min_slope = self.gutils.execute("SELECT value FROM swmm_control WHERE name = 'MIN_SLOPE'").fetchone()[0]
                 swmm_inp_file.write("\nMIN_SLOPE            " + min_slope)
 
                 # INP JUNCTIONS ##################################################
@@ -3468,20 +3567,19 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                     return
 
                 # INP REPORT ##################################################
-                items = self.select_this_INP_group(INP_groups, "report")
+                # items = self.select_this_INP_group(INP_groups, "report")
                 swmm_inp_file.write("\n\n[REPORT]")
-                #                     if items is not None:
-                #                         for line in items[1:]:
-                #                             swmm_inp_file.write("\n" + line)
-                #                     else:
-                #                         swmm_inp_file.write('\n')
-                swmm_inp_file.write("\nINPUT           " + dlg_INP_groups.input_cbo.currentText())
-                swmm_inp_file.write("\nCONTROLS        " + dlg_INP_groups.controls_cbo.currentText())
+                input = self.gutils.execute("SELECT value FROM swmm_control WHERE name = 'INPUT'").fetchone()[0]
+                swmm_inp_file.write("\nINPUT           " + input)
+                controls = self.gutils.execute("SELECT value FROM swmm_control WHERE name = 'CONTROLS'").fetchone()[0]
+                swmm_inp_file.write("\nCONTROLS        " + controls)
                 swmm_inp_file.write("\nSUBCATCHMENTS   NONE")
-                swmm_inp_file.write("\nNODES           " + dlg_INP_groups.nodes_cbo.currentText())
-                swmm_inp_file.write("\nLINKS           " + dlg_INP_groups.links_cbo.currentText())
+                nodes = self.gutils.execute("SELECT value FROM swmm_control WHERE name = 'NODES'").fetchone()[0]
+                swmm_inp_file.write("\nNODES           " + nodes)
+                links = self.gutils.execute("SELECT value FROM swmm_control WHERE name = 'LINKS'").fetchone()[0]
+                swmm_inp_file.write("\nLINKS           " + links)
 
-                # INP COORDINATES ###################################################
+                # INP COORDINATES ##############################################
                 try:
                     swmm_inp_file.write("\n")
                     swmm_inp_file.write("\n[COORDINATES]")
@@ -3565,7 +3663,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                     ini_file.write("\nCurrent=1")
 
             QApplication.setOverrideCursor(Qt.ArrowCursor)
-            self.uc.show_info(
+            self.uc.log_info(
                 swmm_file
                 + "\n\nfile saved with:\n\n"
                 + str(len(junctions_rows))
@@ -5968,7 +6066,9 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         dlg_INP_groups = INP_GroupsDialog(self.con, self.iface)
         ok = dlg_INP_groups.exec_()
         if ok:
-            pass
+            self.uc.bar_info("Storm Drain control data saved!")
+            self.uc.log_info("Storm Drain control data saved!")
+            dlg_INP_groups.save_INP_control()
 
 
 class SDTablesDelegate(QStyledItemDelegate):

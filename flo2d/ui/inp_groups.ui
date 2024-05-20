@@ -1261,12 +1261,12 @@ and with SD time series</string>
             </property>
             <item>
              <property name="text">
-              <string>Hazen-William (H-W)    </string>
+              <string>Hazen-William (H-W)</string>
              </property>
             </item>
             <item>
              <property name="text">
-              <string>Darcy-Weisbach (D-W)  </string>
+              <string>Darcy-Weisbach (D-W)</string>
              </property>
             </item>
            </widget>

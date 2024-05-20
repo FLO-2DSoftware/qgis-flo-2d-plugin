@@ -2986,8 +2986,6 @@ class Flo2D(object):
                     # the methods in the class Flo2dGeoPackage to export (write) the
                     # FLO-2D .DAT files
 
-                    self.uc.bar_info("Flo2D model exported to " + outdir, dur=3)
-
                 finally:
 
                     if "export_swmmflo" in export_calls:
@@ -3033,6 +3031,8 @@ class Flo2D(object):
                         info = "WARNINGS 100424.0613:\n\n" + self.f2g.export_messages
                         self.uc.show_info(info)
                         QApplication.restoreOverrideCursor()
+
+                    self.uc.bar_info("Flo2D model exported to " + outdir, dur=3)
 
         QApplication.restoreOverrideCursor()
 
