@@ -6023,7 +6023,12 @@ class Flo2dGeoPackage(GeoPackageUtils):
             swmmoutf = os.path.join(outdir, "SWMMOUTF.DAT")
             with open(swmmoutf, "w") as s:
                 for row in swmmoutf_rows:
-                    s.write(line1.format(*row))
+                    name, grid_fid, outf_flo = row
+                    if isinstance(outf_flo, str):
+                        outf_flo = 1 if outf_flo.lower() == 'true' else 0
+                    else:
+                        outf_flo = int(outf_flo)
+                    s.write(line1.format(name, grid_fid, outf_flo))
 
             return True
 
