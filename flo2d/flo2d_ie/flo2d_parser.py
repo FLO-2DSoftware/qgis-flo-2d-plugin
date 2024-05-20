@@ -82,15 +82,6 @@ class ParseHDF5:
             group.create_dataset(dataset_name, [])
         return group
 
-    # @property
-    # def neighbors_group(self):
-    #     group_name = "Input/Grid/Neighbors"
-    #     group_datasets = ["N", "E", "S", "W", "NE", "SE", "SW", "NW"]
-    #     group = HDF5Group(group_name)
-    #     for dataset_name in group_datasets:
-    #         group.create_dataset(dataset_name, [])
-    #     return group
-
     @property
     def bc_group(self):
         group_name = "Input/Boundary Conditions"
@@ -300,6 +291,8 @@ class ParseDAT(object):
             "TOPO.DAT": None,
             "INFLOW.DAT": None,
             "TAILINGS.DAT": None,
+            "TAILINGS_CV.DAT": None,
+            "TAILINGS_STACK_DEPTH.DAT": None,
             "OUTFLOW.DAT": None,
             "RAIN.DAT": None,
             "RAINCELL.DAT": None,
@@ -511,9 +504,24 @@ class ParseDAT(object):
 
     def parse_tailings(self):
         tailings = self.dat_files["TAILINGS.DAT"]
-        par = self.single_parser(tailings)
-        data = [row for row in par]
-        return data
+        if tailings is not None:
+            par = self.single_parser(tailings)
+            data = [row for row in par]
+            return data
+
+    def parse_tailings_cv(self):
+        tailings = self.dat_files["TAILINGS_CV.DAT"]
+        if tailings is not None:
+            par = self.single_parser(tailings)
+            data = [row for row in par]
+            return data
+
+    def parse_tailings_sd(self):
+        tailings = self.dat_files["TAILINGS_STACK_DEPTH.DAT"]
+        if tailings is not None:
+            par = self.single_parser(tailings)
+            data = [row for row in par]
+            return data
 
     def parse_outflow(self, outflow=None):
         if outflow is None:

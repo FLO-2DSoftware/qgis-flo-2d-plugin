@@ -96,7 +96,7 @@ from .flo2d_tools.schema2user_tools import SchemaSWMMConverter
 from collections import OrderedDict, defaultdict
 
 from .geopackage_utils import GeoPackageUtils, connection_required, database_disconnect, database_connect
-from .gui import dlg_settings
+from .gui import dlg_settings, f2d_main_widget
 from .gui.dlg_components import ComponentsDialog
 from .gui.dlg_cont_toler_jj import ContToler_JJ
 from .gui.dlg_evap_editor import EvapEditorDialog
@@ -114,6 +114,7 @@ from .gui.dlg_update_gpkg import UpdateGpkg
 from .gui.dlg_user2schema import User2SchemaDialog
 from .gui.f2d_main_widget import FLO2DWidget
 from .gui.grid_info_widget import GridInfoWidget
+from .gui.ic_editor_widget import ICEditorWidget
 from .gui.plot_widget import PlotWidget
 from .gui.storm_drain_editor_widget import StormDrainEditorWidget, INP_GroupsDialog
 from .gui.table_editor_widget import TableEditorWidget
@@ -1999,6 +2000,7 @@ class Flo2D(object):
                         "swmm_tidal_curve_data",
                         "swmm_pumps_curve_data",
                         "swmm_other_curves",
+                        "tailing_reservoirs",
                         "tolspatial",
                         "tolspatial_cells",
                         "user_bc_lines",
@@ -2321,6 +2323,7 @@ class Flo2D(object):
                     "swmmflort",
                     "swmmflort_data",
                     "swmmoutf",
+                    "tailing_reservoirs",
                     "tolspatial",
                     "tolspatial_cells",
                     "user_bc_lines",
@@ -2692,6 +2695,8 @@ class Flo2D(object):
             "TOLSPATIAL.DAT": "import_tolspatial",
             "INFLOW.DAT": "import_inflow",
             "TAILINGS.DAT": "import_tailings",
+            "TAILINGS_CV.DAT": "import_tailings",
+            "TAILINGS_STACK_DEPTH.DAT": "import_tailings",
             "OUTFLOW.DAT": "import_outflow",
             "RAIN.DAT": "import_rain",
             "RAINCELL.DAT": "import_raincell",
@@ -2910,6 +2915,8 @@ class Flo2D(object):
 
                 if "Inflow Elements" not in dlg_components.components:
                     export_calls.remove("export_inflow")
+
+                if "Tailings" not in dlg_components.components:
                     export_calls.remove("export_tailings")
 
                 if "Levees" not in dlg_components.components:
@@ -3005,6 +3012,28 @@ class Flo2D(object):
 
                 finally:
 
+                    if "export_tailings" in export_calls:
+                        MUD = self.gutils.get_cont_par("MUD")
+                        concentration_sql = """SELECT 
+                                            CASE WHEN COUNT(*) > 0 THEN True
+                                                 ELSE False
+                                            END AS result
+                                            FROM 
+                                                tailing_cells
+                                            WHERE 
+                                                concentration <> 0 OR concentration IS NULL;"""
+                        cv = self.gutils.execute(concentration_sql).fetchone()[0]
+                        # TAILINGS.DAT and TAILINGS_CV.DAT
+                        if MUD == '1':
+                            # Export TAILINGS_CV.DAT
+                            if cv == 1:
+                                new_files_used = self.files_used.replace("TAILINGS.DAT\n", "TAILINGS_CV.DAT\n")
+                                self.files_used = new_files_used
+                        # TAILINGS_STACK_DEPTH.DAT
+                        elif MUD == '2':
+                            new_files_used = self.files_used.replace("TAILINGS.DAT\n", "TAILINGS_STACK_DEPTH.DAT\n")
+                            self.files_used = new_files_used
+
                     if "export_swmmflo" in export_calls:
                         self.f2d_widget.storm_drain_editor.export_storm_drain_INP_file()
 
@@ -3039,7 +3068,7 @@ class Flo2D(object):
                     if self.files_used != "":
                         
                         QApplication.setOverrideCursor(Qt.ArrowCursor)
-                        info =  "Files exported to\n" + outdir + "\n\n" + self.files_used
+                        info = "Files exported to\n" + outdir + "\n\n" + self.files_used
                         self.uc.show_info(info)
                         QApplication.restoreOverrideCursor()
 
@@ -3300,6 +3329,7 @@ class Flo2D(object):
                 if save:
                     try:
                         if dlg_control.save_parameters_JJ():
+                            self.f2d_widget.ic_editor.populate_cbos()
                             self.uc.bar_info("Parameters saved!", dur=3)
                             break
                     except Exception as e:
@@ -4014,6 +4044,7 @@ class Flo2D(object):
                 if dlg_ms.ok_to_save():
                     try:
                         dlg_ms.save_mud_sediment()
+                        self.f2d_widget.ic_editor.populate_cbos()
                         repeat = False
                     except Exception as e:
                         self.uc.show_error(
