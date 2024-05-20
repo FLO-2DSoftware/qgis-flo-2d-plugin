@@ -109,11 +109,13 @@ class INP_GroupsDialog(qtBaseClass, uiDialog):
         self.uc = UserCommunication(iface, "FLO-2D")
         self.polulate_INP_values()
 
+        self.advanced_options_chbox.stateChanged.connect(self.set_advanced_grps)
+
     def polulate_INP_values(self):
         """
         Populate the values on the storm drain control dialog
         """
-
+        self.set_advanced_grps()
         try:
             start_date = date.today()
             report_start_date = date.today()
@@ -142,9 +144,6 @@ class INP_GroupsDialog(qtBaseClass, uiDialog):
 
                     if name == 'TITLE':
                         self.titleTextEdit.setPlainText(value)
-                        continue
-                    if name == 'FLOW_UNITS':
-                        self.flow_units_cbo.setCurrentText(value)
                         continue
                     if name == 'FLOW_ROUTING':
                         self.flow_routing_cbo.setCurrentText(value)
@@ -258,6 +257,26 @@ class INP_GroupsDialog(qtBaseClass, uiDialog):
 
         for key, value in control_cbos.items():
             self.gutils.execute(f"INSERT INTO swmm_control (name, value) VALUES ('{key}', '{value}');")
+
+    def set_advanced_grps(self):
+        """
+        Function to make the advanced groups visible or not
+        """
+        if self.advanced_options_chbox.isChecked():
+            self.advanced_options_grp.setHidden(False)
+            self.hardwired_options_grp.setHidden(False)
+            self.label_9.setHidden(False)
+            self.report_start_date.setHidden(False)
+            self.label_10.setHidden(False)
+            self.report_start_time.setHidden(False)
+
+        else:
+            self.advanced_options_grp.setHidden(True)
+            self.hardwired_options_grp.setHidden(True)
+            self.label_9.setHidden(True)
+            self.report_start_date.setHidden(True)
+            self.label_10.setHidden(True)
+            self.report_start_time.setHidden(True)
 
 
 uiDialog, qtBaseClass = load_ui("storm_drain_editor")
@@ -3671,9 +3690,12 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                     ini_file.write("\nCurrent=1")
 
             QApplication.setOverrideCursor(Qt.ArrowCursor)
+            if set_dat_dir:
+                self.uc.bar_info(f"SWMM.INP exported to {swmm_dir}!")
+
             self.uc.log_info(
                 swmm_file
-                + "\n\nfile saved with:\n\n"
+                + "\n"
                 + str(len(junctions_rows))
                 + "\t[JUNCTIONS]\n"
                 + str(len(outfalls_rows))
