@@ -8,6 +8,7 @@
 # of the License, or (at your option) any later version
 
 from qgis.core import NULL, QgsFeature, QgsGeometry, QgsWkbTypes, QgsFieldProxyModel
+from PyQt5.QtCore import QVariant
 from qgis.gui import QgsFieldComboBox
 from qgis.PyQt.QtCore import QSettings, Qt
 from qgis.PyQt.QtWidgets import QApplication, QComboBox, QDialogButtonBox
@@ -324,13 +325,37 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
             lyr_id = self.lyrs.layer_exists_in_group(uri)
             self.current_lyr = self.lyrs.get_layer_tree_item(lyr_id).layer()
 
-            for combo_inlets in self.inlets_fields_groupBox.findChildren(QComboBox):
-                combo_inlets.clear()
-                combo_inlets.setLayer(self.current_lyr)
-                # By default allow only numeric types:
-                combo_inlets.setFilters(QgsFieldProxyModel.Numeric | QgsFieldProxyModel.Int)                    
-
-            self.inlets_name_FieldCbo.setFilters(QgsFieldProxyModel.String) 
+            # List of combo boxes that should be filtered to string fields:
+            string_combos = [self.inlets_fields_groupBox.findChild(QgsFieldComboBox, 'inlets_name_FieldCbo'),
+                             self.inlets_fields_groupBox.findChild(QgsFieldComboBox, 'inlets_type_FieldCbo'),                         
+                             ]
+            
+            # List of combo boxes that should be filtered to numeric fields:
+            numeric_combos = [self.inlets_fields_groupBox.findChild(QgsFieldComboBox, 'inlets_invert_elevation_FieldCbo'),    
+                              self.inlets_fields_groupBox.findChild(QgsFieldComboBox, 'inlets_max_depth_FieldCbo'),
+                              self.inlets_fields_groupBox.findChild(QgsFieldComboBox, 'inlets_init_depth_FieldCbo'),
+                              self.inlets_fields_groupBox.findChild(QgsFieldComboBox, 'inlets_surcharge_depth_FieldCbo'),
+                              self.inlets_fields_groupBox.findChild(QgsFieldComboBox, 'inlets_weir_coeff_FieldCbo'), 
+                              self.inlets_fields_groupBox.findChild(QgsFieldComboBox, 'inlets_feature_FieldCbo'),
+                              self.inlets_fields_groupBox.findChild(QgsFieldComboBox, 'inlets_curb_height_FieldCbo'),
+                              self.inlets_fields_groupBox.findChild(QgsFieldComboBox, 'inlets_clogging_factor_FieldCbo'),
+                              self.inlets_fields_groupBox.findChild(QgsFieldComboBox, 'inlets_time_for_clogging_FieldCbo'),                              
+                              self.inlets_fields_groupBox.findChild(QgsFieldComboBox, 'inlets_dropbox_area_FieldCbo'),
+                              self.inlets_fields_groupBox.findChild(QgsFieldComboBox, 'inlets_length_perimeter_FieldCbo'),                              
+                              self.inlets_fields_groupBox.findChild(QgsFieldComboBox, 'inlets_width_area_FieldCbo'),                              
+                              self.inlets_fields_groupBox.findChild(QgsFieldComboBox, 'inlets_height_sag_surch_FieldCbo'),                              
+                              self.inlets_fields_groupBox.findChild(QgsFieldComboBox, 'inlets_dropbox_area_FieldCbo'),                              
+                              ]
+            
+            for combo in string_combos:
+                combo.clear()
+                combo.setLayer(self.current_lyr)
+                combo.setFilters(QgsFieldProxyModel.String)  # Only show string fields
+            
+            for combo in numeric_combos:
+                combo.clear()
+                combo.setLayer(self.current_lyr)
+                combo.setFilters(QgsFieldProxyModel.Numeric)  # Only show numeric fields
 
             nFeatures = self.current_lyr.featureCount()
             self.inlets_fields_groupBox.setTitle(
@@ -355,19 +380,35 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
         try:
             if idx == -1:
                 return
+            
             uri = self.outfalls_shapefile_cbo.itemData(idx)
             lyr_id = self.lyrs.layer_exists_in_group(uri)
             self.current_lyr = self.lyrs.get_layer_tree_item(lyr_id).layer()
 
-            for combo_outfalls in self.outfalls_fields_groupBox.findChildren(QComboBox):
-                combo_outfalls.clear()
-                combo_outfalls.setLayer(self.current_lyr)
-                # By default allow only numeric types:
-                combo_outfalls.setFilters(QgsFieldProxyModel.Numeric | QgsFieldProxyModel.Int)             
-
-            self.outfall_name_FieldCbo.setFilters(QgsFieldProxyModel.String) 
-            self.outfall_type_FieldCbo.setFilters(QgsFieldProxyModel.String) 
-
+            # List of combo boxes that should be filtered to string fields:
+            string_combos = [self.outfalls_fields_groupBox.findChild(QgsFieldComboBox, 'outfall_name_FieldCbo'),
+                             self.outfalls_fields_groupBox.findChild(QgsFieldComboBox, 'outfall_flap_gate_FieldCbo'),
+                             self.outfalls_fields_groupBox.findChild(QgsFieldComboBox, 'outfall_type_FieldCbo'),
+                             self.outfalls_fields_groupBox.findChild(QgsFieldComboBox, 'outfall_allow_discharge_FieldCbo'),
+                             self.outfalls_fields_groupBox.findChild(QgsFieldComboBox, 'outfall_tidal_curve_FieldCbo'),
+                             self.outfalls_fields_groupBox.findChild(QgsFieldComboBox, 'outfall_time_series_FieldCbo')                             
+                             ]
+            
+            # List of combo boxes that should be filtered to numeric fields:
+            numeric_combos = [self.outfalls_fields_groupBox.findChild(QgsFieldComboBox, 'outfall_invert_elevation_FieldCbo'),    
+                              self.outfalls_fields_groupBox.findChild(QgsFieldComboBox, 'outfall_water_depth_FieldCbo'),
+                              ]
+            
+            for combo in string_combos:
+                combo.clear()
+                combo.setLayer(self.current_lyr)
+                combo.setFilters(QgsFieldProxyModel.String)  # Only show string fields
+            
+            for combo in numeric_combos:
+                combo.clear()
+                combo.setLayer(self.current_lyr)
+                combo.setFilters(QgsFieldProxyModel.Numeric)  # Only show numeric fields
+    
             nFeatures = self.current_lyr.featureCount()
             self.outfalls_fields_groupBox.setTitle(
                 "Outfalls Fields Selection (from '"
@@ -395,19 +436,39 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
             lyr_id = self.lyrs.layer_exists_in_group(uri)
             self.current_lyr = self.lyrs.get_layer_tree_item(lyr_id).layer()
 
-            for combo in self.strge_unit_fields_groupBox.findChildren(QComboBox):
+            # List of combo boxes that should be filtered to string fields:
+            string_combos = [self.strge_unit_fields_groupBox.findChild(QgsFieldComboBox, 'strge_unit_name_FieldCbo'),
+                             self.strge_unit_fields_groupBox.findChild(QgsFieldComboBox, 'strge_unit_external_inflow_FieldCbo'), 
+                             self.strge_unit_fields_groupBox.findChild(QgsFieldComboBox, 'strge_unit_treatment_FieldCbo'),                         
+                             self.strge_unit_fields_groupBox.findChild(QgsFieldComboBox, 'strge_unit_infiltration_FieldCbo'),                         
+                             self.strge_unit_fields_groupBox.findChild(QgsFieldComboBox, 'strge_unit_infil_method_FieldCbo'),                         
+                             self.strge_unit_fields_groupBox.findChild(QgsFieldComboBox, 'strge_unit_storage_curve_FieldCbo'),                         
+                             self.strge_unit_fields_groupBox.findChild(QgsFieldComboBox, 'strge_unit_curve_name_FieldCbo'),                         
+
+                             ]
+            
+            # List of combo boxes that should be filtered to numeric fields:
+            numeric_combos = [self.strge_unit_fields_groupBox.findChild(QgsFieldComboBox, 'strge_unit_invert_elevation_FieldCbo'),    
+                              self.strge_unit_fields_groupBox.findChild(QgsFieldComboBox, 'strge_unit_max_depth_FieldCbo'),
+                              self.strge_unit_fields_groupBox.findChild(QgsFieldComboBox, 'strge_unit_initial_depth_FieldCbo'),
+                              self.strge_unit_fields_groupBox.findChild(QgsFieldComboBox, 'strge_unit_evap_factor_FieldCbo'), 
+                              self.strge_unit_fields_groupBox.findChild(QgsFieldComboBox, 'strge_unit_suction_head_FieldCbo'),
+                              self.strge_unit_fields_groupBox.findChild(QgsFieldComboBox, 'strge_unit_conductivity_FieldCbo'),
+                              self.strge_unit_fields_groupBox.findChild(QgsFieldComboBox, 'strge_unit_initial_deficit_FieldCbo'),
+                              self.strge_unit_fields_groupBox.findChild(QgsFieldComboBox, 'strge_unit_coefficient_FieldCbo'),                              
+                              self.strge_unit_fields_groupBox.findChild(QgsFieldComboBox, 'strge_unit_exponent_FieldCbo'),
+                              self.strge_unit_fields_groupBox.findChild(QgsFieldComboBox, 'strge_unit_constant_FieldCbo'),                                                        
+                              ]
+            
+            for combo in string_combos:
                 combo.clear()
                 combo.setLayer(self.current_lyr)
-                # By default allow only numeric types:
-                combo.setFilters(QgsFieldProxyModel.Numeric | QgsFieldProxyModel.Int)
-                
-            self.strge_unit_name_FieldCbo.setFilters(QgsFieldProxyModel.String)
-            self.strge_unit_external_inflow_FieldCbo.setFilters(QgsFieldProxyModel.String)
-            self.strge_unit_treatment_FieldCbo.setFilters(QgsFieldProxyModel.String)
-            self.strge_unit_infiltration_FieldCbo.setFilters(QgsFieldProxyModel.String)
-            self.strge_unit_infil_method_FieldCbo.setFilters(QgsFieldProxyModel.String)
-            self.strge_unit_storage_curve_FieldCbo.setFilters(QgsFieldProxyModel.String)
-            self.strge_unit_curve_name_FieldCbo.setFilters(QgsFieldProxyModel.String)
+                combo.setFilters(QgsFieldProxyModel.String)  # Only show string fields
+            
+            for combo in numeric_combos:
+                combo.clear()
+                combo.setLayer(self.current_lyr)
+                combo.setFilters(QgsFieldProxyModel.Numeric)  # Only show numeric fields
 
             nFeatures = self.current_lyr.featureCount()
             self.strge_unit_fields_groupBox.setTitle(
@@ -436,9 +497,40 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
             lyr_id = self.lyrs.layer_exists_in_group(uri)
             self.current_lyr = self.lyrs.get_layer_tree_item(lyr_id).layer()
 
-            for combo_conduits in self.conduits_fields_groupBox.findChildren(QComboBox):
-                combo_conduits.clear()
-                combo_conduits.setLayer(self.current_lyr)
+            # List of combo boxes that should be filtered to string fields:
+            string_combos = [self.conduits_fields_groupBox.findChild(QgsFieldComboBox, 'conduit_name_FieldCbo'),
+                             self.conduits_fields_groupBox.findChild(QgsFieldComboBox, 'conduit_from_inlet_FieldCbo'), 
+                             self.conduits_fields_groupBox.findChild(QgsFieldComboBox, 'conduit_to_outlet_FieldCbo'),                         
+                             self.conduits_fields_groupBox.findChild(QgsFieldComboBox, 'conduit_shape_FieldCbo'),                         
+                             self.conduits_fields_groupBox.findChild(QgsFieldComboBox, 'conduit_flap_gate_FieldCbo'),                                                
+                             ]
+            
+            # List of combo boxes that should be filtered to numeric fields:
+            numeric_combos = [self.conduits_fields_groupBox.findChild(QgsFieldComboBox, 'conduit_inlet_offset_FieldCbo'),    
+                              self.conduits_fields_groupBox.findChild(QgsFieldComboBox, 'conduit_outlet_offset_FieldCbo'),
+                              self.conduits_fields_groupBox.findChild(QgsFieldComboBox, 'conduit_barrels_FieldCbo'),
+                              self.conduits_fields_groupBox.findChild(QgsFieldComboBox, 'conduit_max_depth_FieldCbo'), 
+                              self.conduits_fields_groupBox.findChild(QgsFieldComboBox, 'conduit_geom2_FieldCbo'),
+                              self.conduits_fields_groupBox.findChild(QgsFieldComboBox, 'conduit_geom3_FieldCbo'),
+                              self.conduits_fields_groupBox.findChild(QgsFieldComboBox, 'conduit_geom4_FieldCbo'),
+                              self.conduits_fields_groupBox.findChild(QgsFieldComboBox, 'conduit_length_FieldCbo'),                              
+                              self.conduits_fields_groupBox.findChild(QgsFieldComboBox, 'conduit_manning_FieldCbo'),
+                              self.conduits_fields_groupBox.findChild(QgsFieldComboBox, 'conduit_initial_flow_FieldCbo'),
+                              self.conduits_fields_groupBox.findChild(QgsFieldComboBox, 'conduit_max_flow_FieldCbo'),                              
+                              self.conduits_fields_groupBox.findChild(QgsFieldComboBox, 'conduit_entry_loss_FieldCbo'),
+                              self.conduits_fields_groupBox.findChild(QgsFieldComboBox, 'conduit_exit_loss_FieldCbo'),  
+                              self.conduits_fields_groupBox.findChild(QgsFieldComboBox, 'conduit_average_loss_FieldCbo'),                              
+                              ]
+            
+            for combo in string_combos:
+                combo.clear()
+                combo.setLayer(self.current_lyr)
+                combo.setFilters(QgsFieldProxyModel.String)  # Only show string fields
+            
+            for combo in numeric_combos:
+                combo.clear()
+                combo.setLayer(self.current_lyr)
+                combo.setFilters(QgsFieldProxyModel.Numeric)  # Only show numeric fields
 
             nFeatures = self.current_lyr.featureCount()
             self.conduits_fields_groupBox.setTitle(
@@ -467,9 +559,28 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
             lyr_id = self.lyrs.layer_exists_in_group(uri)
             self.current_lyr = self.lyrs.get_layer_tree_item(lyr_id).layer()
 
-            for combo_pumps in self.pumps_fields_groupBox.findChildren(QComboBox):
-                combo_pumps.clear()
-                combo_pumps.setLayer(self.current_lyr)
+            # List of combo boxes that should be filtered to string fields:
+            string_combos = [self.pumps_fields_groupBox.findChild(QgsFieldComboBox, 'pump_name_FieldCbo'),
+                             self.pumps_fields_groupBox.findChild(QgsFieldComboBox, 'pump_from_inlet_FieldCbo'), 
+                             self.pumps_fields_groupBox.findChild(QgsFieldComboBox, 'pump_to_outlet_FieldCbo'),                         
+                             self.pumps_fields_groupBox.findChild(QgsFieldComboBox, 'pump_curve_name_FieldCbo'),                         
+                             self.pumps_fields_groupBox.findChild(QgsFieldComboBox, 'pump_initial_status_FieldCbo')                                                
+                             ]
+            
+            # List of combo boxes that should be filtered to numeric fields:
+            numeric_combos = [self.pumps_fields_groupBox.findChild(QgsFieldComboBox, 'pump_startup_depth_FieldCbo'),    
+                              self.pumps_fields_groupBox.findChild(QgsFieldComboBox, 'pump_shutoff_depth_FieldCbo')                           
+                              ]
+            
+            for combo in string_combos:
+                combo.clear()
+                combo.setLayer(self.current_lyr)
+                combo.setFilters(QgsFieldProxyModel.String)  # Only show string fields
+            
+            for combo in numeric_combos:
+                combo.clear()
+                combo.setLayer(self.current_lyr)
+                combo.setFilters(QgsFieldProxyModel.Numeric)  # Only show numeric fields
 
             nFeatures = self.current_lyr.featureCount()
             self.pumps_fields_groupBox.setTitle(
@@ -498,9 +609,34 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
             lyr_id = self.lyrs.layer_exists_in_group(uri)
             self.current_lyr = self.lyrs.get_layer_tree_item(lyr_id).layer()
 
-            for combo_orifices in self.orifices_fields_groupBox.findChildren(QComboBox):
-                combo_orifices.clear()
-                combo_orifices.setLayer(self.current_lyr)
+            # List of combo boxes that should be filtered to string fields:
+            string_combos = [self.orifices_fields_groupBox.findChild(QgsFieldComboBox, 'orifice_name_FieldCbo'),
+                             self.orifices_fields_groupBox.findChild(QgsFieldComboBox, 'orifice_from_inlet_FieldCbo'), 
+                             self.orifices_fields_groupBox.findChild(QgsFieldComboBox, 'orifice_to_outlet_FieldCbo'),                         
+                             self.orifices_fields_groupBox.findChild(QgsFieldComboBox, 'orifice_type_FieldCbo'),                         
+                             self.orifices_fields_groupBox.findChild(QgsFieldComboBox, 'orifice_flap_gate_FieldCbo'),
+                             self.orifices_fields_groupBox.findChild(QgsFieldComboBox, 'orifice_shape_FieldCbo')                                              
+
+
+                             ]
+            
+            # List of combo boxes that should be filtered to numeric fields:
+            numeric_combos = [self.orifices_fields_groupBox.findChild(QgsFieldComboBox, 'orifice_crest_height_FieldCbo'),    
+                              self.orifices_fields_groupBox.findChild(QgsFieldComboBox, 'orifice_discharge_coeff_FieldCbo'),
+                              self.orifices_fields_groupBox.findChild(QgsFieldComboBox, 'orifice_time_open_close_FieldCbo'),
+                              self.orifices_fields_groupBox.findChild(QgsFieldComboBox, 'orifice_height_FieldCbo'), 
+                              self.orifices_fields_groupBox.findChild(QgsFieldComboBox, 'orifice_width_FieldCbo')                           
+                              ]
+            
+            for combo in string_combos:
+                combo.clear()
+                combo.setLayer(self.current_lyr)
+                combo.setFilters(QgsFieldProxyModel.String)  # Only show string fields
+            
+            for combo in numeric_combos:
+                combo.clear()
+                combo.setLayer(self.current_lyr)
+                combo.setFilters(QgsFieldProxyModel.Numeric)  # Only show numeric fields
 
             nFeatures = self.current_lyr.featureCount()
             self.orifices_fields_groupBox.setTitle(
@@ -529,9 +665,34 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
             lyr_id = self.lyrs.layer_exists_in_group(uri)
             self.current_lyr = self.lyrs.get_layer_tree_item(lyr_id).layer()
 
-            for combo_weirs in self.weirs_fields_groupBox.findChildren(QComboBox):
-                combo_weirs.clear()
-                combo_weirs.setLayer(self.current_lyr)
+            # List of combo boxes that should be filtered to string fields:
+            string_combos = [self.weirs_fields_groupBox.findChild(QgsFieldComboBox, 'weir_name_FieldCbo'),
+                             self.weirs_fields_groupBox.findChild(QgsFieldComboBox, 'weir_from_inlet_FieldCbo'), 
+                             self.weirs_fields_groupBox.findChild(QgsFieldComboBox, 'weir_to_outlet_FieldCbo'),                         
+                             self.weirs_fields_groupBox.findChild(QgsFieldComboBox, 'weir_type_FieldCbo'),                         
+                             self.weirs_fields_groupBox.findChild(QgsFieldComboBox, 'weir_flap_gate_FieldCbo'),                                    
+                             self.weirs_fields_groupBox.findChild(QgsFieldComboBox, 'weir_shape_FieldCbo')
+                             ]
+            
+            # List of combo boxes that should be filtered to numeric fields:
+            numeric_combos = [self.weirs_fields_groupBox.findChild(QgsFieldComboBox, 'weir_crest_height_FieldCbo'),    
+                              self.weirs_fields_groupBox.findChild(QgsFieldComboBox, 'weir_discharge_coeff_FieldCbo'),
+                              self.weirs_fields_groupBox.findChild(QgsFieldComboBox, 'weir_end_contrac_FieldCbo'),     
+                              self.weirs_fields_groupBox.findChild(QgsFieldComboBox, 'weir_end_coeff_FieldCbo'),
+                              self.weirs_fields_groupBox.findChild(QgsFieldComboBox, 'weir_height_FieldCbo'), 
+                              self.weirs_fields_groupBox.findChild(QgsFieldComboBox, 'weir_length_FieldCbo'),
+                              self.weirs_fields_groupBox.findChild(QgsFieldComboBox, 'weir_side_slope_FieldCbo')
+                              ]
+            
+            for combo in string_combos:
+                combo.clear()
+                combo.setLayer(self.current_lyr)
+                combo.setFilters(QgsFieldProxyModel.String)  # Only show string fields
+            
+            for combo in numeric_combos:
+                combo.clear()
+                combo.setLayer(self.current_lyr)
+                combo.setFilters(QgsFieldProxyModel.Numeric)  # Only show numeric fields
 
             nFeatures = self.current_lyr.featureCount()
             self.weirs_fields_groupBox.setTitle(
@@ -2471,36 +2632,22 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
             if layer == self.inlets_shapefile_cbo.currentText():
                 lyr = self.lyrs.get_layer_by_name(layer).layer()
                 field_names = [field.name() for field in lyr.fields()]
-                self.inlets_name_FieldCbo.setCurrentIndex(
-                    self.restore_field("sf_inlets_name", field_names))
-                self.inlets_type_FieldCbo.setCurrentIndex(
-                    self.restore_field("sf_inlets_type", field_names))
-                self.inlets_invert_elevation_FieldCbo.setCurrentIndex(
-                    self.restore_field("sf_inlets_invert_elevation", field_names))
-                self.inlets_max_depth_FieldCbo.setCurrentIndex(
-                    self.restore_field("sf_inlets_max_depth", field_names))
-                self.inlets_init_depth_FieldCbo.setCurrentIndex(
-                    self.restore_field("sf_inlets_init_depth", field_names))
-                self.inlets_surcharge_depth_FieldCbo.setCurrentIndex(
-                    self.restore_field("sf_inlets_surcharge_depth", field_names))
-                self.inlets_length_perimeter_FieldCbo.setCurrentIndex(
-                    self.restore_field("sf_inlets_length_perimeter", field_names))
-                self.inlets_width_area_FieldCbo.setCurrentIndex(
-                    self.restore_field("sf_inlets_width_area", field_names))
-                self.inlets_height_sag_surch_FieldCbo.setCurrentIndex(
-                    self.restore_field("sf_inlets_height_sag_surch", field_names))
-                self.inlets_weir_coeff_FieldCbo.setCurrentIndex(
-                    self.restore_field("sf_inlets_weir_coeff", field_names))
-                self.inlets_feature_FieldCbo.setCurrentIndex(
-                    self.restore_field("sf_inlets_feature", field_names))
-                self.inlets_curb_height_FieldCbo.setCurrentIndex(
-                    self.restore_field("sf_inlets_curb_height", field_names))
-                self.inlets_clogging_factor_FieldCbo.setCurrentIndex(
-                    self.restore_field("sf_inlets_clogging_factor", field_names))
-                self.inlets_time_for_clogging_FieldCbo.setCurrentIndex(
-                    self.restore_field("sf_inlets_time_for_clogging", field_names))
-                self.inlets_dropbox_area_FieldCbo.setCurrentIndex(
-                    self.restore_field("sf_inlets_dropbox_area", field_names))
+                
+                self.inlets_name_FieldCbo.setField(self.restore_field_name("sf_inlets_name", field_names))
+                self.inlets_type_FieldCbo.setField(self.restore_field_name("sf_inlets_type", field_names))
+                self.inlets_invert_elevation_FieldCbo.setField(self.restore_field_name("sf_inlets_invert_elevation", field_names))
+                self.inlets_max_depth_FieldCbo.setField(self.restore_field_name("sf_inlets_max_depth", field_names))
+                self.inlets_init_depth_FieldCbo.setField(self.restore_field_name("sf_inlets_init_depth", field_names))
+                self.inlets_surcharge_depth_FieldCbo.setField(self.restore_field_name("sf_inlets_surcharge_depth", field_names))
+                self.inlets_length_perimeter_FieldCbo.setField(self.restore_field_name("sf_inlets_length_perimeter", field_names))
+                self.inlets_width_area_FieldCbo.setField(self.restore_field_name("sf_inlets_width_area", field_names))
+                self.inlets_height_sag_surch_FieldCbo.setField( self.restore_field_name("sf_inlets_height_sag_surch", field_names))
+                self.inlets_weir_coeff_FieldCbo.setField(self.restore_field_name("sf_inlets_weir_coeff", field_names))
+                self.inlets_feature_FieldCbo.setField(self.restore_field_name("sf_inlets_feature", field_names))
+                self.inlets_curb_height_FieldCbo.setField(self.restore_field_name("sf_inlets_curb_height", field_names))
+                self.inlets_clogging_factor_FieldCbo.setField( self.restore_field_name("sf_inlets_clogging_factor", field_names))
+                self.inlets_time_for_clogging_FieldCbo.setField(self.restore_field_name("sf_inlets_time_for_clogging", field_names))
+                self.inlets_dropbox_area_FieldCbo.setField(self.restore_field_name("sf_inlets_dropbox_area", field_names))
             else:
                 self.clear_all_inlet_attributes()
         elif layer == "":
@@ -2551,22 +2698,16 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                 lyr = self.lyrs.get_layer_by_name(layer).layer()
                 field_names = [field.name() for field in lyr.fields()]
 
-                self.outfall_name_FieldCbo.setCurrentIndex(
-                    self.restore_field("sf_outfalls_name", field_names))
-                self.outfall_invert_elevation_FieldCbo.setCurrentIndex(
-                    self.restore_field("sf_outfalls_invert_elevation", field_names))
-                self.outfall_flap_gate_FieldCbo.setCurrentIndex(
-                    self.restore_field("sf_outfalls_flap_gate", field_names))
-                self.outfall_allow_discharge_FieldCbo.setCurrentIndex(
-                    self.restore_field("sf_outfalls_allow_discharge", field_names))
-                self.outfall_type_FieldCbo.setCurrentIndex(
-                    self.restore_field("sf_outfalls_type", field_names))
-                self.outfall_water_depth_FieldCbo.setCurrentIndex(
-                    self.restore_field("sf_outfalls_water_depth", field_names))
-                self.outfall_tidal_curve_FieldCbo.setCurrentIndex(
-                    self.restore_field("sf_outfalls_tidal_curve", field_names))
-                self.outfall_time_series_FieldCbo.setCurrentIndex(
-                    self.restore_field("sf_outfalls_time_series", field_names))
+                self.outfall_name_FieldCbo.setField(self.restore_field_name("sf_outfalls_name", field_names))
+                self.outfall_name_FieldCbo.setField(self.restore_field_name("sf_outfalls_name", field_names))
+                self.outfall_invert_elevation_FieldCbo.setField(self.restore_field_name("sf_outfalls_invert_elevation", field_names))
+                self.outfall_flap_gate_FieldCbo.setField(self.restore_field_name("sf_outfalls_flap_gate", field_names))
+                self.outfall_allow_discharge_FieldCbo.setField(self.restore_field_name("sf_outfalls_allow_discharge", field_names))
+                self.outfall_type_FieldCbo.setField(self.restore_field_name("sf_outfalls_type", field_names))
+                self.outfall_water_depth_FieldCbo.setField(self.restore_field_name("sf_outfalls_water_depth", field_names))
+                self.outfall_tidal_curve_FieldCbo.setField(self.restore_field_name("sf_outfalls_tidal_curve", field_names))
+                self.outfall_time_series_FieldCbo.setField(self.restore_field_name("sf_outfalls_time_series", field_names))
+
             else:
                 self.clear_all_outfall_attributes()
         elif layer == "":
@@ -2602,42 +2743,24 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
             if layer == self.strge_units_shapefile_cbo.currentText():
                 lyr = self.lyrs.get_layer_by_name(layer).layer()
                 field_names = [field.name() for field in lyr.fields()]
-                self.strge_unit_name_FieldCbo.setCurrentIndex(
-                    self.restore_field("sf_strge_unit_name", field_names))
-                self.strge_unit_invert_elevation_FieldCbo.setCurrentIndex(
-                    self.restore_field("sf_strge_unit_invert_elevation", field_names))
-                self.strge_unit_max_depth_FieldCbo.setCurrentIndex(
-                    self.restore_field("sf_strge_unit_max_depth", field_names))
-                self.strge_unit_initial_depth_FieldCbo.setCurrentIndex(
-                    self.restore_field("sf_strge_unit_initial_depth", field_names))
-                self.strge_unit_external_inflow_FieldCbo.setCurrentIndex(
-                    self.restore_field("sf_strge_unit_external_inflow", field_names))
-                # self.strge_unit_ponded_area_FieldCbo.setCurrentIndex(
-                #     self.restore_field("sf_strge_unit_ponded_area", field_names))
-                self.strge_unit_evap_factor_FieldCbo.setCurrentIndex(
-                    self.restore_field("sf_strge_unit_evap_factor", field_names))
-                self.strge_unit_treatment_FieldCbo.setCurrentIndex(
-                    self.restore_field("sf_strge_unit_treatment", field_names))
-                self.strge_unit_infiltration_FieldCbo.setCurrentIndex(
-                    self.restore_field("sf_strge_unit_infiltration", field_names))
-                self.strge_unit_infil_method_FieldCbo.setCurrentIndex(
-                    self.restore_field("sf_strge_unit_infil_method", field_names))
-                self.strge_unit_suction_head_FieldCbo.setCurrentIndex(
-                    self.restore_field("sf_strge_unit_suction_head", field_names))
-                self.strge_unit_conductivity_FieldCbo.setCurrentIndex(
-                    self.restore_field("sf_strge_unit_conductivity", field_names))
-                self.strge_unit_initial_deficit_FieldCbo.setCurrentIndex(
-                    self.restore_field("sf_strge_unit_initial_deficit", field_names))
-                self.strge_unit_storage_curve_FieldCbo.setCurrentIndex(
-                    self.restore_field("sf_strge_unit_storage_curve", field_names))
-                self.strge_unit_coefficient_FieldCbo.setCurrentIndex(
-                    self.restore_field("sf_strge_unit_coefficient", field_names))
-                self.strge_unit_exponent_FieldCbo.setCurrentIndex(
-                    self.restore_field("sf_strge_unit_exponent", field_names))
-                self.strge_unit_constant_FieldCbo.setCurrentIndex(
-                    self.restore_field("sf_strge_unit_constant", field_names))
-                self.strge_unit_curve_name_FieldCbo.setCurrentIndex(
-                    self.restore_field("sf_strge_unit_curve_name", field_names))
+                
+                self.strge_unit_name_FieldCbo.setField(self.restore_field_name("sf_strge_unit_name", field_names))
+                self.strge_unit_invert_elevation_FieldCbo.setField(self.restore_field_name("sf_strge_unit_invert_elevation", field_names))
+                self.strge_unit_max_depth_FieldCbo.setField(self.restore_field_name("sf_strge_unit_max_depth", field_names))
+                self.strge_unit_initial_depth_FieldCbo.setField(self.restore_field_name("sf_strge_unit_initial_depth", field_names))
+                self.strge_unit_external_inflow_FieldCbo.setField(self.restore_field_name("sf_strge_unit_external_inflow", field_names))
+                self.strge_unit_evap_factor_FieldCbo.setField(self.restore_field_name("sf_strge_unit_evap_factor", field_names))
+                self.strge_unit_treatment_FieldCbo.setField(self.restore_field_name("sf_strge_unit_treatment", field_names))
+                self.strge_unit_infiltration_FieldCbo.setField(self.restore_field_name("sf_strge_unit_infiltration", field_names))
+                self.strge_unit_infil_method_FieldCbo.setField(self.restore_field_name("sf_strge_unit_infil_method", field_names))
+                self.strge_unit_suction_head_FieldCbo.setField(self.restore_field_name("sf_strge_unit_suction_head", field_names))
+                self.strge_unit_conductivity_FieldCbo.setField(self.restore_field_name("sf_strge_unit_conductivity", field_names))
+                self.strge_unit_initial_deficit_FieldCbo.setField(self.restore_field_name("sf_strge_unit_initial_deficit", field_names))
+                self.strge_unit_storage_curve_FieldCbo.setField(self.restore_field_name("sf_strge_unit_storage_curve", field_names))
+                self.strge_unit_coefficient_FieldCbo.setField(self.restore_field_name("sf_strge_unit_coefficient", field_names))
+                self.strge_unit_exponent_FieldCbo.setField(self.restore_field_name("sf_strge_unit_exponent", field_names))
+                self.strge_unit_constant_FieldCbo.setField(self.restore_field_name("sf_strge_unit_constant", field_names))
+                self.strge_unit_curve_name_FieldCbo.setField(self.restore_field_name("sf_strge_unit_curve_name", field_names))
             else:
                 self.clear_all_strge_units_attributes()
         elif layer == "":
@@ -2694,44 +2817,25 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                 lyr = self.lyrs.get_layer_by_name(layer).layer()
                 field_names = [field.name() for field in lyr.fields()]
 
-                self.conduit_name_FieldCbo.setCurrentIndex(
-                    self.restore_field("sf_conduits_name", field_names))
-                self.conduit_from_inlet_FieldCbo.setCurrentIndex(
-                    self.restore_field("sf_conduits_from_inlet", field_names))
-                self.conduit_to_outlet_FieldCbo.setCurrentIndex(
-                    self.restore_field("sf_conduits_to_outlet", field_names))
-                self.conduit_inlet_offset_FieldCbo.setCurrentIndex(
-                    self.restore_field("sf_conduits_inlet_offset", field_names))
-                self.conduit_outlet_offset_FieldCbo.setCurrentIndex(
-                    self.restore_field("sf_conduits_outlet_offset", field_names))
-                self.conduit_shape_FieldCbo.setCurrentIndex(
-                    self.restore_field("sf_conduits_shape", field_names))
-                self.conduit_barrels_FieldCbo.setCurrentIndex(
-                    self.restore_field("sf_conduits_barrels", field_names))
-                self.conduit_max_depth_FieldCbo.setCurrentIndex(
-                    self.restore_field("sf_conduits_max_depth", field_names))
-                self.conduit_geom2_FieldCbo.setCurrentIndex(
-                    self.restore_field("sf_conduits_geom2", field_names))
-                self.conduit_geom3_FieldCbo.setCurrentIndex(
-                    self.restore_field("sf_conduits_geom3", field_names))
-                self.conduit_geom4_FieldCbo.setCurrentIndex(
-                    self.restore_field("sf_conduits_geom4", field_names))
-                self.conduit_length_FieldCbo.setCurrentIndex(
-                    self.restore_field("sf_conduits_length", field_names))
-                self.conduit_manning_FieldCbo.setCurrentIndex(
-                    self.restore_field("sf_conduits_manning", field_names))
-                self.conduit_initial_flow_FieldCbo.setCurrentIndex(
-                    self.restore_field("sf_conduits_initial_flow", field_names))
-                self.conduit_max_flow_FieldCbo.setCurrentIndex(
-                    self.restore_field("sf_conduits_max_flow", field_names))
-                self.conduit_entry_loss_FieldCbo.setCurrentIndex(
-                    self.restore_field("sf_conduits_entry_loss", field_names))
-                self.conduit_exit_loss_FieldCbo.setCurrentIndex(
-                    self.restore_field("sf_conduits_exit_loss", field_names))
-                self.conduit_average_loss_FieldCbo.setCurrentIndex(
-                    self.restore_field("sf_conduits_average_loss", field_names))
-                self.conduit_flap_gate_FieldCbo.setCurrentIndex(
-                    self.restore_field("sf_conduits_flap_gate", field_names))
+                self.conduit_name_FieldCbo.setField(self.restore_field_name("sf_conduits_name", field_names))
+                self.conduit_from_inlet_FieldCbo.setField(self.restore_field_name("sf_conduits_from_inlet", field_names))
+                self.conduit_to_outlet_FieldCbo.setField(self.restore_field_name("sf_conduits_to_outlet", field_names))
+                self.conduit_inlet_offset_FieldCbo.setField(self.restore_field_name("sf_conduits_inlet_offset", field_names))
+                self.conduit_outlet_offset_FieldCbo.setField(self.restore_field_name("sf_conduits_outlet_offset", field_names))
+                self.conduit_shape_FieldCbo.setField(self.restore_field_name("sf_conduits_shape", field_names))
+                self.conduit_barrels_FieldCbo.setField(self.restore_field_name("sf_conduits_barrels", field_names))
+                self.conduit_max_depth_FieldCbo.setField(self.restore_field_name("sf_conduits_max_depth", field_names))
+                self.conduit_geom2_FieldCbo.setField(self.restore_field_name("sf_conduits_geom2", field_names))
+                self.conduit_geom3_FieldCbo.setField(self.restore_field_name("sf_conduits_geom3", field_names))
+                self.conduit_geom4_FieldCbo.setField(self.restore_field_name("sf_conduits_geom4", field_names))
+                self.conduit_length_FieldCbo.setField(self.restore_field_name("sf_conduits_length", field_names))
+                self.conduit_manning_FieldCbo.setField(self.restore_field_name("sf_conduits_manning", field_names))
+                self.conduit_initial_flow_FieldCbo.setField(self.restore_field_name("sf_conduits_initial_flow", field_names))
+                self.conduit_max_flow_FieldCbo.setField(self.restore_field_name("sf_conduits_max_flow", field_names))
+                self.conduit_entry_loss_FieldCbo.setField(self.restore_field_name("sf_conduits_entry_loss", field_names))
+                self.conduit_exit_loss_FieldCbo.setField(self.restore_field_name("sf_conduits_exit_loss", field_names))
+                self.conduit_average_loss_FieldCbo.setField(self.restore_field_name("sf_conduits_average_loss", field_names))
+                self.conduit_flap_gate_FieldCbo.setField(self.restore_field_name("sf_conduits_flap_gate", field_names))
 
             else:
                 self.clear_all_conduit_attributes()
@@ -2791,24 +2895,15 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                 lyr = self.lyrs.get_layer_by_name(layer).layer()
                 field_names = [field.name() for field in lyr.fields()]
 
-                self.pump_name_FieldCbo.setCurrentIndex(
-                    self.restore_field("sf_pump_name", field_names))
-                self.pump_from_inlet_FieldCbo.setCurrentIndex(
-                    self.restore_field("sf_pump_from_inlet", field_names))
-                self.pump_to_outlet_FieldCbo.setCurrentIndex(
-                    self.restore_field("sf_pump_to_outlet", field_names))
-                self.pump_initial_status_FieldCbo.setCurrentIndex(
-                    self.restore_field("sf_pump_init_status", field_names))
-                self.pump_startup_depth_FieldCbo.setCurrentIndex(
-                    self.restore_field("sf_pump_startup_depth", field_names))
-                self.pump_shutoff_depth_FieldCbo.setCurrentIndex(
-                    self.restore_field("sf_pump_shutoff_depth", field_names))
-                self.pump_curve_name_FieldCbo.setCurrentIndex(
-                    self.restore_field("sf_pump_curve_name", field_names))
-                self.pump_curve_type_FieldCbo.setCurrentIndex(
-                    self.restore_field("sf_pump_curve_type", field_names))
-                self.pump_curve_description_FieldCbo.setCurrentIndex(
-                    self.restore_field("sf_pump_curve_description", field_names))
+                self.pump_name_FieldCbo.setField(self.restore_field_name("sf_pump_name", field_names))
+                self.pump_from_inlet_FieldCbo.setField(self.restore_field_name("sf_pump_from_inlet", field_names))
+                self.pump_to_outlet_FieldCbo.setField(self.restore_field_name("sf_pump_to_outlet", field_names))
+                self.pump_initial_status_FieldCbo.setField( self.restore_field_name("sf_pump_init_status", field_names))
+                self.pump_startup_depth_FieldCbo.setField(self.restore_field_name("sf_pump_startup_depth", field_names))
+                self.pump_shutoff_depth_FieldCbo.setField(self.restore_field_name("sf_pump_shutoff_depth", field_names))
+                self.pump_curve_name_FieldCbo.setField(self.restore_field_name("sf_pump_curve_name", field_names))
+                self.pump_curve_type_FieldCbo.setField(self.restore_field_name("sf_pump_curve_type", field_names))
+                self.pump_curve_description_FieldCbo.setField(self.restore_field_name("sf_pump_curve_description", field_names))
 
             else:
                 self.clear_all_pump_attributes()
@@ -2848,28 +2943,17 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                 lyr = self.lyrs.get_layer_by_name(layer).layer()
                 field_names = [field.name() for field in lyr.fields()]
 
-                self.orifice_name_FieldCbo.setCurrentIndex(
-                    self.restore_field("sf_orifice_name", field_names))
-                self.orifice_from_inlet_FieldCbo.setCurrentIndex(
-                    self.restore_field("sf_orifice_from_inlet", field_names))
-                self.orifice_to_outlet_FieldCbo.setCurrentIndex(
-                    self.restore_field("sf_orifice_to_outlet", field_names))
-                self.orifice_type_FieldCbo.setCurrentIndex(
-                    self.restore_field("sf_orifice_type", field_names))
-                self.orifice_crest_height_FieldCbo.setCurrentIndex(
-                    self.restore_field("sf_orifice_crest_height", field_names))
-                self.orifice_discharge_coeff_FieldCbo.setCurrentIndex(
-                    self.restore_field("sf_orifice_disch_coeff", field_names))
-                self.orifice_flap_gate_FieldCbo.setCurrentIndex(
-                    self.restore_field("sf_orifice_flap_gate", field_names))
-                self.orifice_time_open_close_FieldCbo.setCurrentIndex(
-                    self.restore_field("sf_orifice_open_close_time", field_names))
-                self.orifice_shape_FieldCbo.setCurrentIndex(
-                    self.restore_field("sf_orifice_shape", field_names))
-                self.orifice_height_FieldCbo.setCurrentIndex(
-                    self.restore_field("sf_orifice_height", field_names))
-                self.orifice_width_FieldCbo.setCurrentIndex(
-                    self.restore_field("sf_orifice_width", field_names))
+                self.orifice_name_FieldCbo.setField( self.restore_field_name("sf_orifice_name", field_names))
+                self.orifice_from_inlet_FieldCbo.setField(self.restore_field_name("sf_orifice_from_inlet", field_names))
+                self.orifice_to_outlet_FieldCbo.setField(self.restore_field_name("sf_orifice_to_outlet", field_names))
+                self.orifice_type_FieldCbo.setField( self.restore_field_name("sf_orifice_type", field_names))
+                self.orifice_crest_height_FieldCbo.setField(self.restore_field_name("sf_orifice_crest_height", field_names))
+                self.orifice_discharge_coeff_FieldCbo.setField(self.restore_field_name("sf_orifice_disch_coeff", field_names))
+                self.orifice_flap_gate_FieldCbo.setField(self.restore_field_name("sf_orifice_flap_gate", field_names))
+                self.orifice_time_open_close_FieldCbo.setField(self.restore_field_name("sf_orifice_open_close_time", field_names))
+                self.orifice_shape_FieldCbo.setField(self.restore_field_name("sf_orifice_shape", field_names))
+                self.orifice_height_FieldCbo.setField(self.restore_field_name("sf_orifice_height", field_names))
+                self.orifice_width_FieldCbo.setField(self.restore_field_name("sf_orifice_width", field_names))
 
             else:
                 self.clear_all_orifice_attributes()
@@ -2913,32 +2997,19 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                 lyr = self.lyrs.get_layer_by_name(layer).layer()
                 field_names = [field.name() for field in lyr.fields()]
 
-                self.weir_name_FieldCbo.setCurrentIndex(
-                    self.restore_field("sf_weir_name", field_names))
-                self.weir_from_inlet_FieldCbo.setCurrentIndex(
-                    self.restore_field("sf_weir_from_inlet", field_names))
-                self.weir_to_outlet_FieldCbo.setCurrentIndex(
-                    self.restore_field("sf_weir_to_outlet", field_names))
-                self.weir_type_FieldCbo.setCurrentIndex(
-                    self.restore_field("sf_weir_type", field_names))
-                self.weir_crest_height_FieldCbo.setCurrentIndex(
-                    self.restore_field("sf_weir_crest_height", field_names))
-                self.weir_discharge_coeff_FieldCbo.setCurrentIndex(
-                    self.restore_field("sf_weir_disch_coeff", field_names))
-                self.weir_flap_gate_FieldCbo.setCurrentIndex(
-                    self.restore_field("sf_weir_flap_gate", field_names))
-                self.weir_end_contrac_FieldCbo.setCurrentIndex(
-                    self.restore_field("sf_weir_end_contrac", field_names))
-                self.weir_end_coeff_FieldCbo.setCurrentIndex(
-                    self.restore_field("sf_weir_end_coeff", field_names))
-                self.weir_side_slope_FieldCbo.setCurrentIndex(
-                    self.restore_field("sf_weir_side_slope", field_names))
-                self.weir_shape_FieldCbo.setCurrentIndex(
-                    self.restore_field("sf_weir_shape", field_names))
-                self.weir_height_FieldCbo.setCurrentIndex(
-                    self.restore_field("sf_weir_height", field_names))
-                self.weir_length_FieldCbo.setCurrentIndex(
-                    self.restore_field("sf_weir_length", field_names))
+                self.weir_name_FieldCbo.setField(self.restore_field_name("sf_weir_name", field_names))
+                self.weir_from_inlet_FieldCbo.setField(self.restore_field_name("sf_weir_from_inlet", field_names))
+                self.weir_to_outlet_FieldCbo.setField(self.restore_field_name("sf_weir_to_outlet", field_names))
+                self.weir_type_FieldCbo.setField(self.restore_field_name("sf_weir_type", field_names))
+                self.weir_crest_height_FieldCbo.setField(self.restore_field_name("sf_weir_crest_height", field_names))
+                self.weir_discharge_coeff_FieldCbo.setField(self.restore_field_name("sf_weir_disch_coeff", field_names))
+                self.weir_flap_gate_FieldCbo.setField(self.restore_field_name("sf_weir_flap_gate", field_names))
+                self.weir_end_contrac_FieldCbo.setField(self.restore_field_name("sf_weir_end_contrac", field_names))
+                self.weir_end_coeff_FieldCbo.setField( self.restore_field_name("sf_weir_end_coeff", field_names))
+                self.weir_side_slope_FieldCbo.setField(self.restore_field_name("sf_weir_side_slope", field_names))
+                self.weir_shape_FieldCbo.setField(self.restore_field_name("sf_weir_shape", field_names))
+                self.weir_height_FieldCbo.setField( self.restore_field_name("sf_weir_height", field_names))
+                self.weir_length_FieldCbo.setField(self.restore_field_name("sf_weir_length", field_names))
             else:
                 self.clear_all_weir_attributes()
         elif layer == "":
@@ -2988,3 +3059,8 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                 self.gutils.execute(f"INSERT INTO sd_fields (name, field) VALUES ('{field}', '')")
                 return -1
         return -1
+
+    def restore_field_name(self, field, field_names):
+        field_name = self.gutils.execute(f"SELECT field FROM sd_fields WHERE name = '{field}'").fetchone()
+        val = "" if field_name is None else field_name[0]
+        return val
