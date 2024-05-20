@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>663</width>
-    <height>331</height>
+    <width>667</width>
+    <height>340</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -38,8 +38,8 @@
    </item>
    <item row="4" column="2">
     <layout class="QGridLayout" name="gridLayout_3">
-     <item row="3" column="0">
-      <widget class="QCheckBox" name="gutters_chbox">
+     <item row="6" column="0">
+      <widget class="QCheckBox" name="mannings_n_and_Topo_chbox">
        <property name="enabled">
         <bool>false</bool>
        </property>
@@ -50,45 +50,7 @@
         </sizepolicy>
        </property>
        <property name="text">
-        <string>Gutters</string>
-       </property>
-       <property name="checked">
-        <bool>false</bool>
-       </property>
-      </widget>
-     </item>
-     <item row="1" column="0">
-      <widget class="QCheckBox" name="spatial_tolerance_chbox">
-       <property name="enabled">
-        <bool>false</bool>
-       </property>
-       <property name="sizePolicy">
-        <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
-         <horstretch>0</horstretch>
-         <verstretch>0</verstretch>
-        </sizepolicy>
-       </property>
-       <property name="text">
-        <string>Spatial Tolerance</string>
-       </property>
-       <property name="checked">
-        <bool>false</bool>
-       </property>
-      </widget>
-     </item>
-     <item row="5" column="0">
-      <widget class="QCheckBox" name="mudflo_chbox">
-       <property name="enabled">
-        <bool>false</bool>
-       </property>
-       <property name="sizePolicy">
-        <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
-         <horstretch>0</horstretch>
-         <verstretch>0</verstretch>
-        </sizepolicy>
-       </property>
-       <property name="text">
-        <string>MODFLO-2D</string>
+        <string>Manning's n  and Topo</string>
        </property>
        <property name="checked">
         <bool>false</bool>
@@ -114,8 +76,8 @@
        </property>
       </widget>
      </item>
-     <item row="6" column="0">
-      <widget class="QCheckBox" name="mannings_n_and_Topo_chbox">
+     <item row="2" column="0">
+      <widget class="QCheckBox" name="spatial_froude_chbox">
        <property name="enabled">
         <bool>false</bool>
        </property>
@@ -126,7 +88,45 @@
         </sizepolicy>
        </property>
        <property name="text">
-        <string>Manning's n  and Topo</string>
+        <string>Spatial Froude</string>
+       </property>
+       <property name="checked">
+        <bool>false</bool>
+       </property>
+      </widget>
+     </item>
+     <item row="3" column="0">
+      <widget class="QCheckBox" name="gutters_chbox">
+       <property name="enabled">
+        <bool>false</bool>
+       </property>
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="text">
+        <string>Gutters</string>
+       </property>
+       <property name="checked">
+        <bool>false</bool>
+       </property>
+      </widget>
+     </item>
+     <item row="5" column="0">
+      <widget class="QCheckBox" name="mudflo_chbox">
+       <property name="enabled">
+        <bool>false</bool>
+       </property>
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="text">
+        <string>MODFLO-2D</string>
        </property>
        <property name="checked">
         <bool>false</bool>
@@ -152,8 +152,8 @@
        </property>
       </widget>
      </item>
-     <item row="2" column="0">
-      <widget class="QCheckBox" name="spatial_froude_chbox">
+     <item row="1" column="0">
+      <widget class="QCheckBox" name="spatial_tolerance_chbox">
        <property name="enabled">
         <bool>false</bool>
        </property>
@@ -164,12 +164,25 @@
         </sizepolicy>
        </property>
        <property name="text">
-        <string>Spatial Froude</string>
+        <string>Spatial Tolerance</string>
        </property>
        <property name="checked">
         <bool>false</bool>
        </property>
       </widget>
+     </item>
+     <item row="7" column="0">
+      <spacer name="verticalSpacer_5">
+       <property name="orientation">
+        <enum>Qt::Vertical</enum>
+       </property>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>20</width>
+         <height>40</height>
+        </size>
+       </property>
+      </spacer>
      </item>
     </layout>
    </item>
@@ -241,8 +254,8 @@
      <property name="sizeConstraint">
       <enum>QLayout::SetMinAndMaxSize</enum>
      </property>
-     <item row="5" column="0">
-      <widget class="QCheckBox" name="levees_chbox">
+     <item row="3" column="0">
+      <widget class="QCheckBox" name="outflow_elements_chbox">
        <property name="enabled">
         <bool>false</bool>
        </property>
@@ -253,7 +266,7 @@
         </sizepolicy>
        </property>
        <property name="text">
-        <string>Levees</string>
+        <string>Outflow Elements</string>
        </property>
        <property name="checked">
         <bool>false</bool>
@@ -279,44 +292,6 @@
        </property>
       </widget>
      </item>
-     <item row="1" column="0">
-      <widget class="QCheckBox" name="reduction_factors_chbox">
-       <property name="enabled">
-        <bool>false</bool>
-       </property>
-       <property name="sizePolicy">
-        <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
-         <horstretch>0</horstretch>
-         <verstretch>0</verstretch>
-        </sizepolicy>
-       </property>
-       <property name="text">
-        <string>Reduction Factors</string>
-       </property>
-       <property name="checked">
-        <bool>false</bool>
-       </property>
-      </widget>
-     </item>
-     <item row="3" column="0">
-      <widget class="QCheckBox" name="outflow_elements_chbox">
-       <property name="enabled">
-        <bool>false</bool>
-       </property>
-       <property name="sizePolicy">
-        <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
-         <horstretch>0</horstretch>
-         <verstretch>0</verstretch>
-        </sizepolicy>
-       </property>
-       <property name="text">
-        <string>Outflow Elements</string>
-       </property>
-       <property name="checked">
-        <bool>false</bool>
-       </property>
-      </widget>
-     </item>
      <item row="4" column="0">
       <widget class="QCheckBox" name="inflow_elements_chbox">
        <property name="enabled">
@@ -330,25 +305,6 @@
        </property>
        <property name="text">
         <string>Inflow Elements</string>
-       </property>
-       <property name="checked">
-        <bool>false</bool>
-       </property>
-      </widget>
-     </item>
-     <item row="6" column="0">
-      <widget class="QCheckBox" name="breach_chbox">
-       <property name="enabled">
-        <bool>false</bool>
-       </property>
-       <property name="sizePolicy">
-        <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
-         <horstretch>0</horstretch>
-         <verstretch>0</verstretch>
-        </sizepolicy>
-       </property>
-       <property name="text">
-        <string>Breach</string>
        </property>
        <property name="checked">
         <bool>false</bool>
@@ -374,10 +330,140 @@
        </property>
       </widget>
      </item>
+     <item row="6" column="0">
+      <widget class="QCheckBox" name="breach_chbox">
+       <property name="enabled">
+        <bool>false</bool>
+       </property>
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="text">
+        <string>Breach</string>
+       </property>
+       <property name="checked">
+        <bool>false</bool>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="0">
+      <widget class="QCheckBox" name="reduction_factors_chbox">
+       <property name="enabled">
+        <bool>false</bool>
+       </property>
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="text">
+        <string>Reduction Factors</string>
+       </property>
+       <property name="checked">
+        <bool>false</bool>
+       </property>
+      </widget>
+     </item>
+     <item row="5" column="0">
+      <widget class="QCheckBox" name="levees_chbox">
+       <property name="enabled">
+        <bool>false</bool>
+       </property>
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="text">
+        <string>Levees</string>
+       </property>
+       <property name="checked">
+        <bool>false</bool>
+       </property>
+      </widget>
+     </item>
+     <item row="7" column="0">
+      <widget class="QCheckBox" name="tailings_chbox">
+       <property name="enabled">
+        <bool>false</bool>
+       </property>
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="text">
+        <string>Tailings</string>
+       </property>
+      </widget>
+     </item>
     </layout>
    </item>
    <item row="4" column="1">
     <layout class="QGridLayout" name="gridLayout_2">
+     <item row="4" column="0">
+      <widget class="QCheckBox" name="hydr_struct_chbox">
+       <property name="enabled">
+        <bool>false</bool>
+       </property>
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="text">
+        <string>Hydraulic Structures</string>
+       </property>
+       <property name="checked">
+        <bool>false</bool>
+       </property>
+      </widget>
+     </item>
+     <item row="2" column="0">
+      <widget class="QCheckBox" name="storm_drain_chbox">
+       <property name="enabled">
+        <bool>false</bool>
+       </property>
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="text">
+        <string>Storm Drain</string>
+       </property>
+       <property name="checked">
+        <bool>false</bool>
+       </property>
+      </widget>
+     </item>
+     <item row="6" column="0">
+      <widget class="QCheckBox" name="floodplain_xs_chbox">
+       <property name="enabled">
+        <bool>false</bool>
+       </property>
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="text">
+        <string>Floodplain Cross Sections</string>
+       </property>
+       <property name="checked">
+        <bool>false</bool>
+       </property>
+      </widget>
+     </item>
      <item row="1" column="0">
       <widget class="QCheckBox" name="infiltration_chbox">
        <property name="enabled">
@@ -416,8 +502,8 @@
        </property>
       </widget>
      </item>
-     <item row="2" column="0">
-      <widget class="QCheckBox" name="storm_drain_chbox">
+     <item row="5" column="0">
+      <widget class="QCheckBox" name="multiple_channels_chbox">
        <property name="enabled">
         <bool>false</bool>
        </property>
@@ -428,7 +514,7 @@
         </sizepolicy>
        </property>
        <property name="text">
-        <string>Storm Drain</string>
+        <string>Multiple Channels</string>
        </property>
        <property name="checked">
         <bool>false</bool>
@@ -454,62 +540,18 @@
        </property>
       </widget>
      </item>
-     <item row="4" column="0">
-      <widget class="QCheckBox" name="hydr_struct_chbox">
-       <property name="enabled">
-        <bool>false</bool>
+     <item row="7" column="0">
+      <spacer name="verticalSpacer_4">
+       <property name="orientation">
+        <enum>Qt::Vertical</enum>
        </property>
-       <property name="sizePolicy">
-        <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
-         <horstretch>0</horstretch>
-         <verstretch>0</verstretch>
-        </sizepolicy>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>20</width>
+         <height>40</height>
+        </size>
        </property>
-       <property name="text">
-        <string>Hydraulic Structures</string>
-       </property>
-       <property name="checked">
-        <bool>false</bool>
-       </property>
-      </widget>
-     </item>
-     <item row="5" column="0">
-      <widget class="QCheckBox" name="multiple_channels_chbox">
-       <property name="enabled">
-        <bool>false</bool>
-       </property>
-       <property name="sizePolicy">
-        <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
-         <horstretch>0</horstretch>
-         <verstretch>0</verstretch>
-        </sizepolicy>
-       </property>
-       <property name="text">
-        <string>Multiple Channels</string>
-       </property>
-       <property name="checked">
-        <bool>false</bool>
-       </property>
-      </widget>
-     </item>
-     <item row="6" column="0">
-      <widget class="QCheckBox" name="floodplain_xs_chbox">
-       <property name="enabled">
-        <bool>false</bool>
-       </property>
-       <property name="sizePolicy">
-        <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
-         <horstretch>0</horstretch>
-         <verstretch>0</verstretch>
-        </sizepolicy>
-       </property>
-       <property name="text">
-        <string>Floodplain Cross Sections</string>
-       </property>
-       <property name="checked">
-        <bool>false</bool>
-       </property>
-      </widget>
+      </spacer>
      </item>
     </layout>
    </item>
