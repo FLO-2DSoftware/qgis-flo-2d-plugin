@@ -2695,7 +2695,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         else:
             return "Cancel"
 
-    def export_storm_drain_INP_file(self, hdf5_dir=None, hdf5_file=None):
+    def export_storm_drain_INP_file(self, hdf5_dir=None, hdf5_file=None, set_dat_dir=False):
         """
         Writes <name>.INP file
         (<name> exists or is given by user in initial file dialog).
@@ -2719,7 +2719,15 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             s = QSettings()
             last_dir = s.value("FLO-2D/lastGdsDir", "")
             if not hdf5_dir and not hdf5_file:
-                swmm_dir = last_dir
+                if set_dat_dir:
+                    swmm_dir = QFileDialog.getExistingDirectory(
+                        None,
+                        "Select directory where SWMM.INP file will be exported",
+                        directory=last_dir,
+                        options=QFileDialog.ShowDirsOnly,
+                    )
+                else:
+                    swmm_dir = last_dir
 
                 swmm_file = swmm_dir + r"\SWMM.INP"
                 if os.path.isfile(swmm_file):

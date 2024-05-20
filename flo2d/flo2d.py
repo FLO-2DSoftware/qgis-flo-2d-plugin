@@ -3236,7 +3236,7 @@ class Flo2D(object):
         Function to import SWMM's INP file to FLO-2D project
         """
         sd_editor = StormDrainEditorWidget(self.iface, self.f2d_plot, self.f2d_table, self.lyrs)
-        sd_editor.export_storm_drain_INP_file()
+        sd_editor.export_storm_drain_INP_file(set_dat_dir=True)
 
     @connection_required
     def import_from_ras(self):
