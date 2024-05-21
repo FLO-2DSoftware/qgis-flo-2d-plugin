@@ -169,10 +169,10 @@ class INP_GroupsDialog(qtBaseClass, uiDialog):
                         date_object = datetime.strptime(value, '%m/%d/%Y')
                         end_date = date_object.date()
                         continue
-                    if name == 'END_TIME':
-                        time_object = datetime.strptime(value, '%H:%M:%S')
-                        end_time = time_object.time()
-                        continue
+                    # if name == 'END_TIME':
+                    #     time_object = datetime.strptime(value, '%H:%M:%S')
+                    #     end_time = time_object.time()
+                    #     continue
                     if name == 'REPORT_STEP':
                         time_object = datetime.strptime(value, '%H:%M:%S')
                         report_time = time_object.time()
