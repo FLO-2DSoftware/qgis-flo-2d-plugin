@@ -2828,7 +2828,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 swmm_inp_file.write("\nROUTING_STEP         00:01:00")
                 swmm_inp_file.write("\nALLOW_PONDING        NO")
                 # inertial_damping = self.gutils.execute("SELECT value FROM swmm_control WHERE name = 'INERTIAL_DAMPING'").fetchone()[0]
-                swmm_inp_file.write("\nINERTIAL_DAMPING     DAMPEN")
+                swmm_inp_file.write("\nINERTIAL_DAMPING     PARTIAL")
                 swmm_inp_file.write("\nVARIABLE_STEP        0.75")
                 swmm_inp_file.write("\nLENGTHENING_STEP     0")
                 swmm_inp_file.write("\nMIN_SURFAREA         0")
