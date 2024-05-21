@@ -122,6 +122,9 @@
        </item>
        <item>
         <widget class="QToolButton" name="sd_control_btn">
+         <property name="toolTip">
+          <string>Set storm drain control variables</string>
+         </property>
          <property name="text">
           <string/>
          </property>

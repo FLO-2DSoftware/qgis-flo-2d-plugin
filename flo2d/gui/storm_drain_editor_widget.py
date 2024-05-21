@@ -127,9 +127,9 @@ class INP_GroupsDialog(qtBaseClass, uiDialog):
 
             end_time = time(int(whole), int(frac * 60))
 
-            tout = float(self.gutils.get_cont_par("TOUT"))
+            report_time = float(self.gutils.get_cont_par("TOUT"))
 
-            mins, hours = modf(tout)
+            mins, hours = modf(report_time)
             hours = int(hours)
             mins = int(mins * 60)
 
@@ -145,9 +145,9 @@ class INP_GroupsDialog(qtBaseClass, uiDialog):
                     if name == 'TITLE':
                         self.titleTextEdit.setPlainText(value)
                         continue
-                    if name == 'FLOW_ROUTING':
-                        self.flow_routing_cbo.setCurrentText(value)
-                        continue
+                    # if name == 'FLOW_ROUTING':
+                    #     self.flow_routing_cbo.setCurrentText(value)
+                    #     continue
                     if name == 'START_DATE':
                         date_object = datetime.strptime(value, '%m/%d/%Y')
                         start_date = date_object.date()
@@ -177,12 +177,12 @@ class INP_GroupsDialog(qtBaseClass, uiDialog):
                         time_object = datetime.strptime(value, '%H:%M:%S')
                         report_time = time_object.time()
                         continue
-                    if name == 'INERTIAL_DAMPING':
-                        self.inertial_damping_cbo.setCurrentText(value)
-                        continue
-                    if name == 'NORMAL_FLOW_LIMITED':
-                        self.normal_flow_limited_cbo.setCurrentText(value)
-                        continue
+                    # if name == 'INERTIAL_DAMPING':
+                    #     self.inertial_damping_cbo.setCurrentText(value)
+                    #     continue
+                    # if name == 'NORMAL_FLOW_LIMITED':
+                    #     self.normal_flow_limited_cbo.setCurrentText(value)
+                    #     continue
                     if name == 'SKIP_STEADY_STATE':
                         self.skip_steady_state_cbo.setCurrentText(value)
                         continue
@@ -209,6 +209,9 @@ class INP_GroupsDialog(qtBaseClass, uiDialog):
                         continue
 
             unit = int(self.gutils.get_cont_par("METRIC"))
+            self.flow_routing_cbo.setCurrentIndex(0)
+            self.inertial_damping_cbo.setCurrentIndex(0)
+            self.normal_flow_limited_cbo.setCurrentIndex(0)
             self.flow_units_cbo.setCurrentIndex(unit)
             self.start_date.setDate(start_date)
             self.report_start_date.setDate(report_start_date)
@@ -2801,8 +2804,8 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 flow_units = self.gutils.execute("SELECT value FROM swmm_control WHERE name = 'FLOW_UNITS'").fetchone()[0]
                 swmm_inp_file.write("\nFLOW_UNITS           " + flow_units)
                 swmm_inp_file.write("\nINFILTRATION         HORTON")
-                flow_routing = self.gutils.execute("SELECT value FROM swmm_control WHERE name = 'FLOW_ROUTING'").fetchone()[0]
-                swmm_inp_file.write("\nFLOW_ROUTING         " + flow_routing)
+                # flow_routing = self.gutils.execute("SELECT value FROM swmm_control WHERE name = 'FLOW_ROUTING'").fetchone()[0]
+                swmm_inp_file.write("\nFLOW_ROUTING         DYNWAVE")
                 start_date = self.gutils.execute("SELECT value FROM swmm_control WHERE name = 'START_DATE'").fetchone()[0]
                 swmm_inp_file.write("\nSTART_DATE           " + start_date)
                 start_time = self.gutils.execute("SELECT value FROM swmm_control WHERE name = 'START_TIME'").fetchone()[0]
@@ -2824,13 +2827,13 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 swmm_inp_file.write("\nDRY_STEP             01:00:00")
                 swmm_inp_file.write("\nROUTING_STEP         00:01:00")
                 swmm_inp_file.write("\nALLOW_PONDING        NO")
-                inertial_damping = self.gutils.execute("SELECT value FROM swmm_control WHERE name = 'INERTIAL_DAMPING'").fetchone()[0]
-                swmm_inp_file.write("\nINERTIAL_DAMPING     " + inertial_damping)
+                # inertial_damping = self.gutils.execute("SELECT value FROM swmm_control WHERE name = 'INERTIAL_DAMPING'").fetchone()[0]
+                swmm_inp_file.write("\nINERTIAL_DAMPING     PARTIAL")
                 swmm_inp_file.write("\nVARIABLE_STEP        0.75")
                 swmm_inp_file.write("\nLENGTHENING_STEP     0")
                 swmm_inp_file.write("\nMIN_SURFAREA         0")
-                normal_flow_limited = self.gutils.execute("SELECT value FROM swmm_control WHERE name = 'NORMAL_FLOW_LIMITED'").fetchone()[0]
-                swmm_inp_file.write("\nNORMAL_FLOW_LIMITED  " + normal_flow_limited)
+                # normal_flow_limited = self.gutils.execute("SELECT value FROM swmm_control WHERE name = 'NORMAL_FLOW_LIMITED'").fetchone()[0]
+                swmm_inp_file.write("\nNORMAL_FLOW_LIMITED  BOTH")
                 skip_steady_state = self.gutils.execute("SELECT value FROM swmm_control WHERE name = 'SKIP_STEADY_STATE'").fetchone()[0]
                 swmm_inp_file.write("\nSKIP_STEADY_STATE    " + skip_steady_state)
                 force_main_equation = self.gutils.execute("SELECT value FROM swmm_control WHERE name = 'FORCE_MAIN_EQUATION'").fetchone()[0]

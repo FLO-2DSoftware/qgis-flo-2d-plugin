@@ -3283,11 +3283,16 @@ class Flo2D(object):
             while True:
                 save = dlg_control.exec_()
                 if save:
+                    QApplication.setOverrideCursor(Qt.WaitCursor)
                     try:
                         if dlg_control.save_parameters_JJ():
                             self.uc.bar_info("Parameters saved!", dur=3)
+                            QApplication.restoreOverrideCursor()
                             break
+                        else:
+                            QApplication.restoreOverrideCursor()
                     except Exception as e:
+                        QApplication.restoreOverrideCursor()
                         self.uc.show_error("ERROR 110618.1828: Could not save FLO-2D parameters!", e)
                         return
                 else:
