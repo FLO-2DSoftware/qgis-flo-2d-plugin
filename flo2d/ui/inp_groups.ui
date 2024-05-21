@@ -439,22 +439,7 @@ p, li { white-space: pre-wrap; }
             </property>
             <item>
              <property name="text">
-              <string>PARTIAL</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>KEEP</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>DAMPING</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>IGNORE</string>
+              <string>DAMPEN</string>
              </property>
             </item>
            </widget>

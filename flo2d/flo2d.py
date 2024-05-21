@@ -1236,8 +1236,27 @@ class Flo2D(object):
             s.setValue("FLO-2D/lastGdsDir", outdir)
 
             dlg_components = ComponentsDialog(self.con, self.iface, self.lyrs, "out")
+
+            # Check the presence of fplain cadpts neighbors dat files
+            files = [
+                    "FPLAIN.DAT",
+                    "CADPTS.DAT",
+                    "NEIGHBORS.DAT"
+            ]
+            for file in files:
+                file_path = os.path.join(outdir, file)
+                if os.path.exists(file_path):
+                    dlg_components.remove_files_chbox.setEnabled(True)
+                    break
+
             ok = dlg_components.exec_()
             if ok:
+                if dlg_components.remove_files_chbox.isChecked():
+                    for file in files:
+                        file_path = os.path.join(outdir, file)
+                        if os.path.exists(file_path):
+                            os.remove(file_path)
+
                 if "Channels" not in dlg_components.components:
                     export_calls.remove("export_chan")
                     export_calls.remove("export_xsec")
@@ -1253,6 +1272,9 @@ class Flo2D(object):
 
                 if "Inflow Elements" not in dlg_components.components:
                     export_calls.remove("export_inflow")
+                    export_calls.remove("export_tailings")
+
+                if "Tailings" not in dlg_components.components:
                     export_calls.remove("export_tailings")
 
                 if "Levees" not in dlg_components.components:
@@ -1300,10 +1322,6 @@ class Flo2D(object):
                     export_calls.remove("export_swmmoutf")
                     export_calls.remove("export_swmmflodropbox")
                     export_calls.remove("export_sdclogging")
-                    
-                else:
-                    self.uc.show_info("Storm Drain features not allowed on the Quick Run FLO-2D Pro.")
-                    return
 
                 if "Spatial Shallow-n" not in dlg_components.components:
                     export_calls.remove("export_shallowNSpatial")
@@ -1323,7 +1341,6 @@ class Flo2D(object):
                     s = QSettings()
                     s.setValue("FLO-2D/lastGdsDir", outdir)
 
-                    QApplication.setOverrideCursor(Qt.WaitCursor)
                     self.call_IO_methods(export_calls, True, outdir)
 
                     # The strings list 'export_calls', contains the names of
@@ -1331,10 +1348,30 @@ class Flo2D(object):
                     # FLO-2D .DAT files
 
                     self.uc.bar_info("Flo2D model exported to " + outdir, dur=3)
-                    QApplication.restoreOverrideCursor()
 
                 finally:
-                    QApplication.restoreOverrideCursor()
+
+                    if "export_tailings" in export_calls:
+                        MUD = self.gutils.get_cont_par("MUD")
+                        concentration_sql = """SELECT 
+                                               CASE WHEN COUNT(*) > 0 THEN True
+                                                    ELSE False
+                                               END AS result
+                                               FROM 
+                                                   tailing_cells
+                                               WHERE 
+                                                   concentration <> 0 OR concentration IS NULL;"""
+                        cv = self.gutils.execute(concentration_sql).fetchone()[0]
+                        # TAILINGS.DAT and TAILINGS_CV.DAT
+                        if MUD == '1':
+                            # Export TAILINGS_CV.DAT
+                            if cv == 1:
+                                new_files_used = self.files_used.replace("TAILINGS.DAT\n", "TAILINGS_CV.DAT\n")
+                                self.files_used = new_files_used
+                        # TAILINGS_STACK_DEPTH.DAT
+                        elif MUD == '2':
+                            new_files_used = self.files_used.replace("TAILINGS.DAT\n", "TAILINGS_STACK_DEPTH.DAT\n")
+                            self.files_used = new_files_used
 
                     if "export_swmmflo" in export_calls:
                         self.f2d_widget.storm_drain_editor.export_storm_drain_INP_file()
