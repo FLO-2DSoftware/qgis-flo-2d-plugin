@@ -68,7 +68,7 @@ from qgis.PyQt.QtWidgets import (
     qApp,
 )
 from qgis.utils import plugins
-from urllib3.contrib import _securetransport
+# from urllib3.contrib import _securetransport
 from .flo2d_ie.flo2dgeopackage import Flo2dGeoPackage
 from .flo2d_tools.channel_profile_tool import ChannelProfile
 from .flo2d_tools.flopro_tools import (
