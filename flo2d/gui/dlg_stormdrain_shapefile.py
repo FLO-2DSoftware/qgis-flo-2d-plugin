@@ -326,12 +326,11 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
             self.current_lyr = self.lyrs.get_layer_tree_item(lyr_id).layer()
 
             # List of combo boxes that should be filtered to string fields:
-            string_combos = [self.inlets_fields_groupBox.findChild(QgsFieldComboBox, 'inlets_name_FieldCbo'),
-                             self.inlets_fields_groupBox.findChild(QgsFieldComboBox, 'inlets_type_FieldCbo'),                         
+            string_combos = [self.inlets_fields_groupBox.findChild(QgsFieldComboBox, 'inlets_name_FieldCbo')                            
                              ]
             
             # List of combo boxes that should be filtered to numeric fields:
-            numeric_combos = [self.inlets_fields_groupBox.findChild(QgsFieldComboBox, 'inlets_invert_elevation_FieldCbo'),    
+            numeric_combos = [self.inlets_fields_groupBox.findChild(QgsFieldComboBox, 'inlets_invert_elevation_FieldCbo'), 
                               self.inlets_fields_groupBox.findChild(QgsFieldComboBox, 'inlets_max_depth_FieldCbo'),
                               self.inlets_fields_groupBox.findChild(QgsFieldComboBox, 'inlets_init_depth_FieldCbo'),
                               self.inlets_fields_groupBox.findChild(QgsFieldComboBox, 'inlets_surcharge_depth_FieldCbo'),
@@ -346,7 +345,8 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                               self.inlets_fields_groupBox.findChild(QgsFieldComboBox, 'inlets_height_sag_surch_FieldCbo'),                              
                               self.inlets_fields_groupBox.findChild(QgsFieldComboBox, 'inlets_dropbox_area_FieldCbo'),                              
                               ]
-            
+
+            all_combos = [self.inlets_fields_groupBox.findChild(QgsFieldComboBox, 'inlets_type_FieldCbo')]            
             for combo in string_combos:
                 combo.clear()
                 combo.setLayer(self.current_lyr)
@@ -356,7 +356,12 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                 combo.clear()
                 combo.setLayer(self.current_lyr)
                 combo.setFilters(QgsFieldProxyModel.Numeric)  # Only show numeric fields
-
+                
+            for combo in all_combos:
+                combo.clear()
+                combo.setLayer(self.current_lyr)
+                combo.setFilters(QgsFieldProxyModel.AllTypes)  # Show all types              
+           
             nFeatures = self.current_lyr.featureCount()
             self.inlets_fields_groupBox.setTitle(
                 "Inlets Fields Selection (from '"
