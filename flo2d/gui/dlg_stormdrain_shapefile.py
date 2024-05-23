@@ -2662,35 +2662,50 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                 for index, field in enumerate(lyr_fields):
                     field_name = field.name()
                     if "name" in field_name.lower():
-                        self.conduit_length_FieldCbo.setCurrentIndex(index)
+                        self.inlets_name_FieldCbo.setCurrentIndex(self.find_index_with_substring(self.inlets_name_FieldCbo, "name"))
+                        # self.inlets_name_FieldCbo.setCurrentIndex(index)
                     if "type" in field_name.lower():
-                        self.inlets_type_FieldCbo.setCurrentIndex(index)
+                        self.inlets_type_FieldCbo.setCurrentIndex(self.find_index_with_substring(self.inlets_type_FieldCbo, "type"))
+                        # self.inlets_type_FieldCbo.setCurrentIndex(index)
                     if "elev" in field_name.lower():
-                        self.inlets_invert_elevation_FieldCbo.setCurrentIndex(index)
+                        self.inlets_invert_elevation_FieldCbo.setCurrentIndex(self.find_index_with_substring(self.inlets_invert_elevation_FieldCbo, "elev"))
+                        # self.inlets_invert_elevation_FieldCbo.setCurrentIndex(index)
                     if "max" in field_name.lower():
-                        self.inlets_max_depth_FieldCbo.setCurrentIndex(index)
+                        self.inlets_max_depth_FieldCbo.setCurrentIndex(self.find_index_with_substring(self.inlets_max_depth_FieldCbo, "max"))
+                        # self.inlets_max_depth_FieldCbo.setCurrentIndex(index)
                     if "init" in field_name.lower():
-                        self.inlets_init_depth_FieldCbo.setCurrentIndex(index)
+                        self.inlets_init_depth_FieldCbo.setCurrentIndex(self.find_index_with_substring(self.inlets_init_depth_FieldCbo, "init"))
+                        # self.inlets_init_depth_FieldCbo.setCurrentIndex(index)
                     if "surch" in field_name.lower():
-                        self.inlets_surcharge_depth_FieldCbo.setCurrentIndex(index)
+                        self.inlets_surcharge_depth_FieldCbo.setCurrentIndex(self.find_index_with_substring(self.inlets_surcharge_depth_FieldCbo, "surch"))
+                        # self.inlets_surcharge_depth_FieldCbo.setCurrentIndex(index)
                     if "len" in field_name.lower():
-                        self.inlets_length_perimeter_FieldCbo.setCurrentIndex(index)
+                        self.inlets_length_perimeter_FieldCbo.setCurrentIndex(self.find_index_with_substring(self.inlets_length_perimeter_FieldCbo, "len"))
+                        # self.inlets_length_perimeter_FieldCbo.setCurrentIndex(index)
                     if "width" in field_name.lower():
-                        self.inlets_width_area_FieldCbo.setCurrentIndex(index)
+                        self.inlets_width_area_FieldCbo.setCurrentIndex(self.find_index_with_substring(self.inlets_width_area_FieldCbo, "width"))
+                        # self.inlets_width_area_FieldCbo.setCurrentIndex(index)
                     if "height" in field_name.lower():
-                        self.inlets_height_sag_surch_FieldCbo.setCurrentIndex(index)
+                        self.inlets_height_sag_surch_FieldCbo.setCurrentIndex(self.find_index_with_substring(self.inlets_height_sag_surch_FieldCbo, "height"))
+                        # self.inlets_height_sag_surch_FieldCbo.setCurrentIndex(index)
                     if "coeff" in field_name.lower():
-                        self.inlets_weir_coeff_FieldCbo.setCurrentIndex(index)
+                        self.inlets_weir_coeff_FieldCbo.setCurrentIndex(self.find_index_with_substring(self.inlets_weir_coeff_FieldCbo, "coeff"))
+                        # self.inlets_weir_coeff_FieldCbo.setCurrentIndex(index)
                     if "feature" in field_name.lower():
-                        self.inlets_feature_FieldCbo.setCurrentIndex(index)
+                        self.inlets_feature_FieldCbo.setCurrentIndex(self.find_index_with_substring(self.inlets_feature_FieldCbo, "feature"))
+                        # self.inlets_feature_FieldCbo.setCurrentIndex(index)
                     if "curb" in field_name.lower():
-                        self.inlets_curb_height_FieldCbo.setCurrentIndex(index)
+                        self.inlets_curb_height_FieldCbo.setCurrentIndex(self.find_index_with_substring(self.inlets_curb_height_FieldCbo, "curb"))
+                        # self.inlets_curb_height_FieldCbo.setCurrentIndex(index)
                     if "factor" in field_name.lower():
-                        self.inlets_clogging_factor_FieldCbo.setCurrentIndex(index)
+                        self.inlets_clogging_factor_FieldCbo.setCurrentIndex(self.find_index_with_substring(self.inlets_clogging_factor_FieldCbo, "factor"))
+                        # self.inlets_clogging_factor_FieldCbo.setCurrentIndex(index)
                     if "time" in field_name.lower():
-                        self.inlets_time_for_clogging_FieldCbo.setCurrentIndex(index)
+                        self.inlets_time_for_clogging_FieldCbo.setCurrentIndex(self.find_index_with_substring(self.inlets_time_for_clogging_FieldCbo, "time"))
+                        # self.inlets_time_for_clogging_FieldCbo.setCurrentIndex(index)
                     if "box" in field_name.lower():
-                        self.inlets_dropbox_area_FieldCbo.setCurrentIndex(index)
+                        self.inlets_dropbox_area_FieldCbo.setCurrentIndex(self.find_index_with_substring(self.inlets_dropbox_area_FieldCbo, "box"))
+                        # self.inlets_dropbox_area_FieldCbo.setCurrentIndex(index)
         else:
             self.clear_all_inlet_attributes()
 
@@ -3069,3 +3084,9 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
         field_name = self.gutils.execute(f"SELECT field FROM sd_fields WHERE name = '{field}'").fetchone()
         val = "" if field_name is None else field_name[0]
         return val
+
+    def find_index_with_substring(self, combo_box, substring):
+        for i in range(combo_box.count()):
+            if substring in combo_box.itemText(i).lower():
+                return i
+        return -1
