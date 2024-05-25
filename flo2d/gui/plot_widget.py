@@ -33,7 +33,7 @@ class PlotWidget(QWidget):
         self.layout = QVBoxLayout()
         self.pw = pg.PlotWidget()
         self.plot = self.pw.getPlotItem()
-        self.plot.showGrid(x=True, y=True)
+        self.plot.showGrid(True, True, 0.25)
         self.layout.addWidget(self.pw)
         self.setLayout(self.layout)
         self.plot.scene().sigMouseClicked.connect(self.mouse_clicked)
