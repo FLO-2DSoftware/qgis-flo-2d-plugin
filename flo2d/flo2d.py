@@ -811,7 +811,6 @@ class Flo2D(object):
             s = QSettings()
             s.setValue("FLO-2D/last_flopro_project", os.path.dirname(gpkg_path_adj))
             s.setValue("FLO-2D/lastGdsDir", os.path.dirname(gpkg_path_adj))
-            s.setValue("FLO-2D/advanced_layers", False)
 
             contact = dlg_settings.lineEdit_au.text()
             email = dlg_settings.lineEdit_co.text()
