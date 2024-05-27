@@ -4315,15 +4315,20 @@ class Flo2D(object):
         if gpkg_path_adj in layer_source_adj:
             return False
 
-        # Check 2: Check if it is an online raster or located in a MapCrafter folder
-        if "type=xyz" in layer.source() or "MapCrafter" in layer.source():
+        # Check 2: Check based on the provider if the layer is raster or vector
+        providers = ['ogr', 'gpkg', 'spatialite', 'memory', 'delimitedtext', 'gdal']
+        if layer.dataProvider().name() not in providers:
             return False
 
-        # Check 3: If the file is a raster
+        # Check 3: Check if it is an online raster or located in a MapCrafter folder
+        if "MapCrafter" in layer.source():
+            return False
+
+        # Check 4: If the file is a raster
         if isinstance(layer, QgsVectorLayer):
             return True
 
-        # Check 4: If the file is a vector
+        # Check 5: If the file is a vector
         if isinstance(layer, QgsRasterLayer):
             return True
 
