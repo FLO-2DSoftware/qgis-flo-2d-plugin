@@ -90,6 +90,7 @@ class GpkgManagementDialog(qtBaseClass, uiDialog):
                 QgsProject.instance().removeMapLayer(layer_id)
 
         self.iface.mapCanvas().refreshAllLayers()
+        self.gutils.execute('VACUUM')
         self.uc.bar_info("External layer(s) deleted from the GeoPackage.")
         self.listWidget.clear()
         self.populate_user_lyrs()
