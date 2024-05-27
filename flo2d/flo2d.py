@@ -40,7 +40,7 @@ import pip
 from qgis.PyQt import QtCore, QtGui
 from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QApplication, QToolButton, QProgressDialog
-from osgeo import gdal
+from osgeo import gdal, ogr
 from qgis._core import QgsMessageLog, QgsCoordinateReferenceSystem, QgsMapSettings, QgsProjectMetadata, \
     QgsMapRendererParallelJob, QgsLayerTreeLayer, QgsVectorLayerExporter, QgsVectorFileWriter, QgsVectorLayer, \
     QgsMapLayer, QgsRasterFileWriter, QgsRasterLayer, QgsLayerTreeGroup, QgsField
@@ -811,7 +811,6 @@ class Flo2D(object):
             s = QSettings()
             s.setValue("FLO-2D/last_flopro_project", os.path.dirname(gpkg_path_adj))
             s.setValue("FLO-2D/lastGdsDir", os.path.dirname(gpkg_path_adj))
-            s.setValue("FLO-2D/advanced_layers", False)
 
             contact = dlg_settings.lineEdit_au.text()
             email = dlg_settings.lineEdit_co.text()
@@ -918,6 +917,55 @@ class Flo2D(object):
                         self.gutils.set_metadata_par("CRS", crs.authid())
                         uri = f'geopackage:{new_gpkg_path}?projectName={proj_name + "_v1.0.0"}'
                         gpkg_path = new_gpkg_path
+
+                        # add ported external layers back into the project
+                        gpkg_tables = self.gutils.current_gpkg_tables
+                        tab_sql = """SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'gpkg_%' AND name NOT LIKE 'rtree_%';"""
+                        tabs = [row[0] for row in self.gutils.execute(tab_sql)]
+                        for table in tabs:
+                            if table not in gpkg_tables and table not in ['sqlite_sequence', 'qgis_projects']:
+                                try:
+                                    ds = ogr.Open(gpkg_path)
+                                    layer = ds.GetLayerByName(table)
+                                    # Vector
+                                    self.uc.log_info(table)
+                                    if layer.GetGeomType() != ogr.wkbNone:
+                                        gpkg_uri = f"{gpkg_path}|layername={table}"
+                                        gpkg_layer = QgsVectorLayer(gpkg_uri, table, "ogr")
+                                        self.project.addMapLayer(gpkg_layer, False)
+                                        root = self.project.layerTreeRoot()
+                                        group_name = "External Layers"
+                                        flo2d_name = f"FLO-2D_{self.gutils.get_metadata_par('PROJ_NAME')}"
+                                        flo2d_grp = root.findGroup(flo2d_name)
+                                        if flo2d_grp.findGroup(group_name):
+                                            group = flo2d_grp.findGroup(group_name)
+                                        else:
+                                            group = flo2d_grp.insertGroup(-1, group_name)
+                                        group.insertLayer(0, gpkg_layer)
+                                        continue
+                                except Exception as e:
+                                    pass
+
+                                try:
+                                    raster_ds = gdal.Open(f"GPKG:{new_gpkg_path}:{table}", gdal.OF_READONLY)
+                                    if raster_ds:
+                                        gpkg_uri = f"GPKG:{gpkg_path}:{table}"
+                                        gpkg_layer = QgsRasterLayer(gpkg_uri, table, "gdal")
+                                        self.project.addMapLayer(gpkg_layer, False)
+                                        root = self.project.layerTreeRoot()
+                                        flo2d_name = f"FLO-2D_{self.gutils.get_metadata_par('PROJ_NAME')}"
+                                        group_name = "External Layers"
+                                        flo2d_grp = root.findGroup(flo2d_name)
+                                        if flo2d_grp.findGroup(group_name):
+                                            group = flo2d_grp.findGroup(group_name)
+                                        else:
+                                            group = flo2d_grp.insertGroup(-1, group_name)
+                                        group.insertLayer(0, gpkg_layer)
+                                        self.lyrs.collapse_flo2d_subgroup(flo2d_name, group_name)
+
+                                except Exception as e:
+                                    pass
+
                         QApplication.restoreOverrideCursor()
                 else:
                     self.uc.log_info("Connection closed")
@@ -4267,15 +4315,20 @@ class Flo2D(object):
         if gpkg_path_adj in layer_source_adj:
             return False
 
-        # Check 2: Check if it is an online raster or located in a MapCrafter folder
-        if "type=xyz" in layer.source() or "MapCrafter" in layer.source():
+        # Check 2: Check based on the provider if the layer is raster or vector
+        providers = ['ogr', 'gpkg', 'spatialite', 'memory', 'delimitedtext', 'gdal']
+        if layer.dataProvider().name() not in providers:
             return False
 
-        # Check 3: If the file is a raster
+        # Check 3: Check if it is an online raster or located in a MapCrafter folder
+        if "MapCrafter" in layer.source():
+            return False
+
+        # Check 4: If the file is a raster
         if isinstance(layer, QgsVectorLayer):
             return True
 
-        # Check 4: If the file is a vector
+        # Check 5: If the file is a vector
         if isinstance(layer, QgsRasterLayer):
             return True
 
