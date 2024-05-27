@@ -5697,7 +5697,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                  
                 # Ensure adjusted_d1 has one more point than adjusted_d2
                 adjusted_d1.append(adjusted_d1[1])
-                stepped_curve = pg.PlotDataItem(adjusted_d1, adjusted_d2, pen=QColor("#0018d4"), stepMode=True)
+                stepped_curve = pg.PlotDataItem(adjusted_d1, adjusted_d2, pen=QColor("#0018d4"), stepMode="center")
                 self.plot.plot.addItem(stepped_curve)
         else:
             self.plot.add_item(self.plot_item_name, [self.d1, self.d2], col=QColor("#0018d4"))
