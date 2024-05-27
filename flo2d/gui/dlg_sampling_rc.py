@@ -215,7 +215,6 @@ class SamplingRCDialog(qtBaseClass, uiDialog):
                         volume_accumulator += (elev_range - elev)
                 volume.append(round(volume_accumulator, 3))
 
-
             # Prepare data for insertion
             data = [(grid_fid, elev, vol) for elev, vol in zip(elev_ranges, volume)]
             outrc_rcdata.extend(data)  # Extend outrc_rcdata with data for current grid
@@ -226,53 +225,6 @@ class SamplingRCDialog(qtBaseClass, uiDialog):
         # Execute the insert operation outside the loop
         if outrc_rcdata:
             self.gutils.execute_many("INSERT INTO outrc (grid_fid, depthrt, volrt) VALUES (?, ?, ?);", outrc_rcdata)
+            self.uc.log_info("Surface Water Rating Tables (OUTRC) created!")
+            self.uc.bar_info("Surface Water Rating Tables (OUTRC) created!")
 
-        # progDialog = QProgressDialog("Creating rating tables...", None, 0, n_cells)
-        # progDialog.setModal(True)
-        # progDialog.setValue(0)
-        # progDialog.show()
-        # j = 0
-        #
-        # for grid in grid_elements:
-        #     outrc_rcdata = []
-        #
-        #     grid_geometry = grid.geometry()
-        #     grid_fid = grid.attributes()[0]
-        #
-        #     elevations = []
-        #     subcell_centroids = subcells.getFeatures()
-        #     for subcell in subcell_centroids:
-        #         if subcell.geometry().intersects(grid_geometry):
-        #             subcell_geometry = subcell.geometry()
-        #             x = subcell_geometry.asPoint().x()
-        #             y = subcell_geometry.asPoint().y()
-        #             elevation_interpolated = idw_interpolation(dtm_points_array, np.array([x, y]))
-        #             elevations.append(elevation_interpolated)
-        #
-        #     elev_sorted = sorted(elevations)
-        #     max_elev = max(elevations)
-        #     min_elev = min(elevations)
-        #     dh = (max_elev - min_elev) / 10  # dh subdivided into 11 steps
-        #
-        #     # Organize the elevation
-        #     elev_ranges = [round(min_elev, 2)]
-        #     for i in range(1, 11):
-        #         elev_ranges.append(round(min_elev + dh * i, 3))
-        #
-        #     # Calculate the volumes
-        #     volume = []
-        #     for elev_range in elev_ranges:
-        #         volume_accumulator = 0
-        #         for elev in elev_sorted:
-        #             if elev < elev_range:
-        #                 volume_accumulator += (max_elev - elev)
-        #         volume.append(round(volume_accumulator, 3))
-        #
-        #     data = [(grid_fid, x, y) for x, y in zip(elev_ranges, volume)]
-        #     outrc_rcdata.append(data)
-        #
-        #     self.gutils.execute_many(f"INSERT INTO outrc (grid_fid, depthrt, volrt) VALUES (?, ?, ?);", outrc_rcdata)
-        #
-        #     j += 1
-        #     QApplication.processEvents()
-        #     progDialog.setValue(j)
