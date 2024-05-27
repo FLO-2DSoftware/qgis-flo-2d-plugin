@@ -383,17 +383,17 @@ class GridToolsWidget(qtBaseClass, uiDialog):
             pass
         else:
             return
-        try:
-            QApplication.setOverrideCursor(Qt.WaitCursor)
-            # res = dlg.probe_elevation()
-            dlg.create_elev_rc(cell_size)
-            QApplication.restoreOverrideCursor()
-            # if res:
-            #     dlg.show_probing_result_info()
-        except Exception as e:
-            QApplication.restoreOverrideCursor()
-            self.uc.log_info(traceback.format_exc())
-            self.uc.show_warn("ERROR")
+        # try:
+        QApplication.setOverrideCursor(Qt.WaitCursor)
+        # res = dlg.probe_elevation()
+        dlg.create_elev_rc(cell_size)
+        QApplication.restoreOverrideCursor()
+        # if res:
+        #     dlg.show_probing_result_info()
+        # except Exception as e:
+        #     QApplication.restoreOverrideCursor()
+        #     self.uc.log_info(traceback.format_exc())
+        #     self.uc.show_warn("ERROR")
 
     def raster_roughness(self):
         if self.gutils.is_table_empty("user_model_boundary"):

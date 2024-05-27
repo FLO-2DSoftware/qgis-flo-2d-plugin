@@ -29,7 +29,7 @@ import numpy as np
 uiDialog, qtBaseClass = load_ui("sampling_rc")
 
 
-def idw_interpolation(points, query_point, power=2, num_neighbors=2):
+def idw_interpolation(points, query_point, power, num_neighbors):
     """
     Perform IDW interpolation to estimate the z value at the query_point using nearby points.
 
@@ -89,7 +89,6 @@ class SamplingRCDialog(qtBaseClass, uiDialog):
         self.current_lyr = None
         self.points_index = None
         self.points_feats = None
-        self.min_dtm_sb = 20
         self.populate_point_shape_cbo()
         self.grid_lyr = self.lyrs.data["grid"]["qlyr"]
 
@@ -190,27 +189,32 @@ class SamplingRCDialog(qtBaseClass, uiDialog):
                     subcell_geometry = subcell.geometry()
                     x = subcell_geometry.asPoint().x()
                     y = subcell_geometry.asPoint().y()
-                    elevation_interpolated = idw_interpolation(dtm_points_array, np.array([x, y]))
+                    elevation_interpolated = idw_interpolation(dtm_points_array,
+                                                               np.array([x, y]),
+                                                               self.power_sb.value(),
+                                                               self.neighbors_sb.value())
                     elevations.append(elevation_interpolated)
 
             elev_sorted = sorted(elevations)
             max_elev = max(elevations)
             min_elev = min(elevations)
-            dh = (max_elev - min_elev) / 10  # dh subdivided into 11 steps
+            dh = (max_elev - min_elev) / self.subd_sb.value()  # dh subdivided into 11 steps
 
             # Organize the elevation ranges
-            elev_ranges = [round(min_elev + dh * i, 3) for i in range(11)]
+            elev_ranges = [round(min_elev + dh * i, 3) for i in range(self.subd_sb.value() + 1)]
 
             # Calculate the volumes
             volume = []
             for elev_range in elev_ranges:
+                if round(elev_range, 2) == round(min_elev, 2):
+                    volume.append(round(0, 3))
+                    continue
                 volume_accumulator = 0
                 for elev in elev_sorted:
-                    if elev == min_elev:
-                        volume_accumulator = 0
-                    elif elev < elev_range:
-                        volume_accumulator += (max_elev - elev)
+                    if elev < elev_range:
+                        volume_accumulator += (elev_range - elev)
                 volume.append(round(volume_accumulator, 3))
+
 
             # Prepare data for insertion
             data = [(grid_fid, elev, vol) for elev, vol in zip(elev_ranges, volume)]
