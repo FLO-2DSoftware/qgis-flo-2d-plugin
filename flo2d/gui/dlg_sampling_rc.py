@@ -165,7 +165,7 @@ class SamplingRCDialog(qtBaseClass, uiDialog):
             dtm_point_geometry = dtm_point.geometry()
             x = dtm_point_geometry.asPoint().x()
             y = dtm_point_geometry.asPoint().y()
-            dtm_points_array = np.append(dtm_points_array, [[x, y, dtm_point_attribute[1]]], axis=0)
+            dtm_points_array = np.append(dtm_points_array, [[x, y, dtm_point_attribute[1]]], axis=0) # TODO: Fix the field position
 
         grid_elements = self.grid_lyr.getFeatures()
 
