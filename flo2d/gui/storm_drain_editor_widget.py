@@ -1377,7 +1377,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 flapgate = "True" if is_true(flapgate) else "False"
 
                 allow_discharge = values["swmm_allow_discharge"] if "swmm_allow_discharge" in values else "False"
-                allow_discharge = "True" if is_true(allow_discharge) else "False"
+                allow_discharge = "1" if is_true(allow_discharge) else "0"
 
                 rim_elev = junction_invert_elev + max_depth if junction_invert_elev and max_depth else 0
 
