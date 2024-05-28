@@ -9,7 +9,7 @@
 
 from collections import OrderedDict
 
-from PyQt5.QtCore import QCoreApplication
+from PyQt5.QtCore import QCoreApplication, Qt
 from qgis.PyQt import QtCore
 from qgis.PyQt.QtWidgets import QApplication, QCheckBox, QDoubleSpinBox, qApp
 from qgis._core import QgsMessageLog
@@ -483,6 +483,7 @@ class ContToler_JJ(qtBaseClass, uiDialog):
 
     def save_parameters_JJ(self):
         try:
+            QApplication.setOverrideCursor(Qt.WaitCursor)
             if self.use_time_interval_grp.isChecked():
                 if not self.ENDTIMTEP.value() > self.STARTIMTEP.value():
                     self.uc.show_warn("WARNING 220522.0526: time lapse end time must be greater than start time.")
@@ -547,6 +548,7 @@ class ContToler_JJ(qtBaseClass, uiDialog):
 
             old_IDEBRV = self.IDEBRV.isChecked()
 
+            QApplication.restoreOverrideCursor()
             return True
 
         except Exception as e:

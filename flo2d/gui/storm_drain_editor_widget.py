@@ -5855,10 +5855,26 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             if plot_scene is not None:
                 plot_scene.removeItem(self.plot.plot.legend)
         self.plot.plot.addLegend()
-
+    
         self.plot_item_name = "Pump Curve:   " + name
         self.plot.plot.setTitle("Pump Curve:   " + name)
-        self.plot.add_item(self.plot_item_name, [self.d1, self.d2], col=QColor("#0018d4"))
+        
+        currentPump = self.pump_curve_type_cbo.currentText()
+        if currentPump == "Pump1" or currentPump == "Pump2":
+            # Insert the (0, 0) and (0, d2[1]) points
+            if self.d1 and self.d2:
+                adjusted_d1 = [0] + self.d1
+                
+                self.d2  = self.d2[1:] + [self.d2[0]]
+
+                adjusted_d2= [0] + self.d2  
+                 
+                # Ensure adjusted_d1 has one more point than adjusted_d2
+                adjusted_d1.append(adjusted_d1[1])
+                stepped_curve = pg.PlotDataItem(adjusted_d1, adjusted_d2, pen=QColor("#0018d4"), stepMode="center")
+                self.plot.plot.addItem(stepped_curve)
+        else:
+            self.plot.add_item(self.plot_item_name, [self.d1, self.d2], col=QColor("#0018d4"))
 
     def update_pump_plot(self):
         if not self.plot_item_name:

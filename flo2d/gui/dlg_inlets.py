@@ -67,6 +67,8 @@ class InletNodesDialog(qtBaseClass, uiDialog):
         set_icon(self.zoom_in_inlet_btn, "zoom_in.svg")
         set_icon(self.zoom_out_inlet_btn, "zoom_out.svg")
 
+        self.inlets_tblw.horizontalHeader().hideSection(6)
+        
         self.save_this_inlet_btn.setVisible(False)
         self.inletRT = None
         self.plot = plot
