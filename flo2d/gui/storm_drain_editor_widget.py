@@ -3842,7 +3842,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
 
         save = dlg_inlets.exec_()
         if save:
-            self.uc.show_info(
+            self.uc.bar_info(
                 "Inlets saved to 'Storm Drain-Inlets' User Layer!\n\n"
                 + "Schematize it from the 'Storm Drain Editor' widget before saving into SWMMOUTF.DAT"
             )
