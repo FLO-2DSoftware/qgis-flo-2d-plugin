@@ -3804,10 +3804,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         if save:
             try:
                 dlg_outfalls.save_outfalls()
-                self.uc.bar_info(
-                    "Outfalls saved to 'Storm Drain-Outfalls' User Layer!\n\n"
-                    + "Schematize it from the 'Storm Drain Editor' widget before saving into SWMMOUTF.DAT"
-                )
+                self.uc.bar_info("Outfalls saved to 'Storm Drain-Outfalls' User Layer.")
             except Exception:
                 self.uc.bar_warn("Could not save outfalls! Please check if they are correct.")
                 return
@@ -3842,10 +3839,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
 
         save = dlg_inlets.exec_()
         if save:
-            self.uc.bar_info(
-                "Inlets saved to 'Storm Drain-Inlets' User Layer!\n\n"
-                + "Schematize it from the 'Storm Drain Editor' widget before saving into SWMMOUTF.DAT"
-            )
+            self.uc.bar_info("Inlets saved to 'Storm Drain-Inlets' User Layer.")
             self.populate_type4_combo()
 
         elif not save:
@@ -3903,10 +3897,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         if save:
             try:
                 dlg_conduits.save_conduits()
-                self.uc.bar_info(
-                    "Conduits saved to 'Storm Drain-Conduits' User Layer!\n\n"
-                    + "Schematize it from the 'Storm Drain Editor' widget before saving into SWMMOUTF.DAT"
-                )
+                self.uc.bar_info("Conduits saved to 'Storm Drain-Conduits' User Layer.")
             except Exception:
                 self.uc.bar_warn("Could not save conduits! Please check if they are correct.")
                 return
@@ -3933,10 +3924,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         if save:
             try:
                 dlg_pumps.save_pumps()
-                self.uc.bar_info(
-                    "Pumps saved to 'Storm Drain-Pumps' User Layer!\n\n"
-                    + "Schematize it from the 'Storm Drain Editor' widget before saving into SWMMOUTF.DAT"
-                )
+                self.uc.bar_info("Pumps saved to 'Storm Drain-Pumps' User Layer.")
             except Exception:
                 self.uc.bar_warn("Could not save pumps! Please check if they are correct.")
                 return
@@ -3963,10 +3951,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         if save:
             try:
                 dlg_orifices.save_orifices()
-                self.uc.bar_info(
-                    "Orifices saved to 'Storm Drain Orifices' User Layer!\n\n"
-                    + "Schematize it from the 'Storm Drain Editor' widget before saving into SWMMOUTF.DAT"
-                )
+                self.uc.bar_info("Orifices saved to 'Storm Drain Orifices' User Layer.")
             except Exception:
                 self.uc.bar_warn("Could not save orifices! Please check if they are correct.")
                 return
@@ -3993,10 +3978,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         if save:
             try:
                 dlg_weirs.save_weirs()
-                self.uc.bar_info(
-                    "Weirs saved to 'Storm Drain Weirs' User Layer!\n\n"
-                    + "Schematize it from the 'Storm Drain Editor' widget before saving into SWMMOUTF.DAT"
-                )
+                self.uc.bar_info("Weirs saved to 'Storm Drain Weirs' User Layer.")
             except Exception:
                 self.uc.bar_warn("Could not save weirs! Please check if they are correct.")
                 return
