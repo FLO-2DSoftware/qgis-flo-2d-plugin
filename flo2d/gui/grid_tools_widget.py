@@ -386,7 +386,7 @@ class GridToolsWidget(qtBaseClass, uiDialog):
         # try:
         QApplication.setOverrideCursor(Qt.WaitCursor)
         # res = dlg.probe_elevation()
-        dlg.create_elev_rc(cell_size)
+        dlg.create_elev_rc()
         QApplication.restoreOverrideCursor()
         # if res:
         #     dlg.show_probing_result_info()
