@@ -6,12 +6,12 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>404</width>
-    <height>170</height>
+    <width>400</width>
+    <height>164</height>
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Dialog</string>
+   <string>Surface Water Rating Tables Sampling</string>
   </property>
   <layout class="QGridLayout" name="gridLayout_2">
    <item row="0" column="0">
@@ -148,19 +148,6 @@
        </property>
       </widget>
      </item>
-     <item row="1" column="3" colspan="2">
-      <widget class="QCheckBox" name="multithread_chbox">
-       <property name="layoutDirection">
-        <enum>Qt::RightToLeft</enum>
-       </property>
-       <property name="text">
-        <string>Multithread</string>
-       </property>
-       <property name="checked">
-        <bool>false</bool>
-       </property>
-      </widget>
-     </item>
      <item row="6" column="0" colspan="5">
       <spacer name="verticalSpacer">
        <property name="orientation">
@@ -197,13 +184,16 @@
        </property>
       </widget>
      </item>
-     <item row="1" column="2">
+     <item row="0" column="1" colspan="3">
+      <widget class="QComboBox" name="lyr_cbo"/>
+     </item>
+     <item row="1" column="2" colspan="3">
       <spacer name="horizontalSpacer_2">
        <property name="orientation">
         <enum>Qt::Horizontal</enum>
        </property>
        <property name="sizeType">
-        <enum>QSizePolicy::Fixed</enum>
+        <enum>QSizePolicy::Preferred</enum>
        </property>
        <property name="sizeHint" stdset="0">
         <size>
@@ -212,9 +202,6 @@
         </size>
        </property>
       </spacer>
-     </item>
-     <item row="0" column="1" colspan="3">
-      <widget class="QComboBox" name="lyr_cbo"/>
      </item>
     </layout>
    </item>
