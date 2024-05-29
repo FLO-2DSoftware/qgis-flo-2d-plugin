@@ -132,11 +132,19 @@ class SamplingRCDialog(qtBaseClass, uiDialog):
         if isinstance(self.current_lyr, QgsVectorLayer):
             self.point_lyr_field_cbo.setHidden(False)
             self.label_3.setHidden(False)
+            self.power_sb.setHidden(False)
+            self.label_4.setHidden(False)
+            self.neighbors_sb.setHidden(False)
+            self.label_5.setHidden(False)
             self.point_lyr_field_cbo.setLayer(self.current_lyr)
             self.point_lyr_field_cbo.setCurrentIndex(0)
         elif isinstance(self.current_lyr, QgsRasterLayer):
             self.point_lyr_field_cbo.setHidden(True)
             self.label_3.setHidden(True)
+            self.power_sb.setHidden(True)
+            self.label_4.setHidden(True)
+            self.neighbors_sb.setHidden(True)
+            self.label_5.setHidden(True)
             self.point_lyr_field_cbo.setCurrentIndex(-1)
 
     def browse_src_pointshape(self):
@@ -154,13 +162,10 @@ class SamplingRCDialog(qtBaseClass, uiDialog):
             self.lyr_cbo.addItem(bname, self.src)
             self.lyr_cbo.setCurrentIndex(len(self.lyr_cbo) - 1)
 
-    # WORKING GOOD
     def create_elev_rc(self):
         """
         Function to create the outrc
         """
-        # t = QTime.currentTime()
-        # self.uc.log_info('0 ' + str(t.hour()) + ":" + str(t.minute()) + ":" + str(t.second()))
 
         if self.gutils.is_table_empty("grid"):
             self.uc.bar_warn("There is no grid! Please create it before running tool.")
@@ -205,6 +210,11 @@ class SamplingRCDialog(qtBaseClass, uiDialog):
                 dtm_points_array = np.append(dtm_points_array,
                                              [[x, y, dtm_point_attribute[self.point_lyr_field_cbo.currentIndex()]]],
                                              axis=0)
+
+            if len(dtm_points_array) / len(grid_elements) < self.min_dtm_sb.value():
+                self.uc.log_info("Not sufficient DTM points to run this process!")
+                self.uc.bar_info("Not sufficient DTM points to run this process!")
+                return
 
             for j, grid in enumerate(grid_elements):
                 grid_geometry = grid.geometry()
@@ -301,7 +311,6 @@ class SamplingRCDialog(qtBaseClass, uiDialog):
                     if round(elev_range, 2) == round(min_elev, 2):
                         volume.append(round(0, 3))
                     else:
-                        self.uc.log_info(str(elev_range))
                         vol = processing.run("native:rastersurfacevolume",
                                              {'INPUT': raster_layer,
                                               'BAND': 1,
@@ -325,7 +334,6 @@ class SamplingRCDialog(qtBaseClass, uiDialog):
 
             for j, grid in enumerate(grid_elements):
 
-                # grid_geometry = grid.geometry()
                 grid_fid = grid.attributes()[0]
                 self.grid_lyr.selectByIds([grid_fid])
 
@@ -355,6 +363,9 @@ class SamplingRCDialog(qtBaseClass, uiDialog):
                 provider = raster_on_grid.dataProvider()
                 band = 1  # Assuming band 1 is the elevation
                 stats = provider.bandStatistics(band)
+                n_elements = stats.elementCount
+                if n_elements < self.min_dtm_sb.value():
+                    continue
                 min_elev = stats.minimumValue
                 max_elev = stats.maximumValue
                 dh = (max_elev - min_elev) / self.subd_sb.value()
@@ -386,55 +397,7 @@ class SamplingRCDialog(qtBaseClass, uiDialog):
                 self.grid_lyr.removeSelection()
 
         # Execute the insert operation outside the loop
-        t = QTime.currentTime()
-        self.uc.log_info('4 ' + str(t.hour()) + ":" + str(t.minute()) + ":" + str(t.second()))
         if len(outrc_rcdata) > 0:
             self.gutils.execute_many("INSERT INTO outrc (grid_fid, depthrt, volrt) VALUES (?, ?, ?);", outrc_rcdata)
             self.uc.log_info("Surface Water Rating Tables (OUTRC) created!")
             self.uc.bar_info("Surface Water Rating Tables (OUTRC) created!")
-
-    def create_raster_from_xyz(self, x_coords, y_coords, elevations, pixel_size=1.0):
-        # Create a bounding box
-        min_x, max_x = min(x_coords), max(x_coords)
-        min_y, max_y = min(y_coords), max(y_coords)
-
-        # Define the grid dimensions
-        x_res = int((max_x - min_x) / pixel_size) + 1
-        y_res = int((max_y - min_y) / pixel_size) + 1
-
-        # Create a numpy array to hold the elevation data
-        elevation_array = np.full((y_res, x_res), np.nan)
-
-        # Populate the elevation array with the elevations
-        for x, y, elev in zip(x_coords, y_coords, elevations):
-            x_idx = int((x - min_x) / pixel_size)
-            y_idx = int((max_y - y) / pixel_size)  # y needs to be flipped because arrays are top-down
-            elevation_array[y_idx, x_idx] = elev
-
-        # Create a GDAL raster dataset
-        driver = gdal.GetDriverByName('MEM')
-        raster_ds = driver.Create('', x_res, y_res, 1, gdal.GDT_Float32)
-
-        # Set the geotransform
-        geotransform = (min_x, pixel_size, 0, max_y, 0, -pixel_size)
-        raster_ds.SetGeoTransform(geotransform)
-
-        # Set the spatial reference
-        srs = osr.SpatialReference()
-        epsg_code = int(QgsProject.instance().crs().authid().split(":")[1])  # Extract the EPSG code as an integer
-        srs.ImportFromEPSG(epsg_code)
-        raster_ds.SetProjection(srs.ExportToWkt())
-
-        # Write the data to the raster band
-        band = raster_ds.GetRasterBand(1)
-        band.WriteArray(elevation_array)
-
-        # Set NoData value
-        band.SetNoDataValue(np.nan)
-
-        # Create a VRT dataset that references the in-memory dataset
-        vrt_driver = gdal.GetDriverByName('VRT')
-        vrt_ds = vrt_driver.CreateCopy('', raster_ds)
-
-        return vrt_ds
-
