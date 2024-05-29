@@ -16,6 +16,7 @@ import processing
 from concurrent.futures import ThreadPoolExecutor
 from PyQt5.QtCore import QTime
 from PyQt5.QtWidgets import QProgressDialog, QApplication
+from osgeo import gdal, osr
 from qgis._core import QgsWkbTypes, QgsGeometry, QgsFeatureRequest, QgsCoordinateReferenceSystem, QgsProject, \
     QgsPointXY, QgsVectorLayer, QgsProcessingFeatureSourceDefinition, QgsExpression
 from qgis.core import QgsRasterLayer
@@ -205,49 +206,120 @@ class SamplingRCDialog(qtBaseClass, uiDialog):
                                              [[x, y, dtm_point_attribute[self.point_lyr_field_cbo.currentIndex()]]],
                                              axis=0)
 
-            if self.multithread_chbox.isChecked():
-                pass
-            else:
-                for j, grid in enumerate(grid_elements):
-                    grid_geometry = grid.geometry()
-                    grid_fid = grid.attributes()[0]
+            for j, grid in enumerate(grid_elements):
+                grid_geometry = grid.geometry()
+                grid_fid = grid.attributes()[0]
 
-                    elevations = []
-                    subcell_centroids = subcells.getFeatures()
+                elevations = []
+                x_coords = []
+                y_coords = []
 
-                    for subcell in subcell_centroids:
-                        if subcell.geometry().intersects(grid_geometry):
-                            subcell_geometry = subcell.geometry()
-                            x = subcell_geometry.asPoint().x()
-                            y = subcell_geometry.asPoint().y()
-                            elevation_interpolated = idw_interpolation(dtm_points_array,
-                                                                       np.array([x, y]),
-                                                                       self.power_sb.value(),
-                                                                       self.neighbors_sb.value())
-                            elevations.append(elevation_interpolated)
+                subcell_centroids = subcells.getFeatures()
 
-                    elev_sorted = sorted(elevations)
-                    max_elev = max(elevations)
-                    min_elev = min(elevations)
-                    dh = (max_elev - min_elev) / self.subd_sb.value()
+                for subcell in subcell_centroids:
+                    if subcell.geometry().intersects(grid_geometry):
+                        subcell_geometry = subcell.geometry()
+                        x = subcell_geometry.asPoint().x()
+                        y = subcell_geometry.asPoint().y()
+                        elevation_interpolated = idw_interpolation(dtm_points_array,
+                                                                   np.array([x, y]),
+                                                                   self.power_sb.value(),
+                                                                   self.neighbors_sb.value())
+                        x_coords.append(x)
+                        y_coords.append(y)
+                        elevations.append(elevation_interpolated)
 
-                    # Organize the elevation ranges
-                    elev_ranges = [round(min_elev + dh * i, 3) for i in range(self.subd_sb.value() + 1)]
+                # Convert the lists to numpy arrays
+                x = np.array(x_coords)
+                y = np.array(y_coords)
+                elevation = np.array(elevations)
 
-                    # Calculate the volumes
-                    volume = []
-                    for elev_range in elev_ranges:
-                        if abs(elev_range - min_elev) < 0.01:
-                            volume.append(0.0)
-                            continue
-                        volume_accumulator = sum(elev_range - elev for elev in elev_sorted if elev < elev_range)
-                        volume.append(round(volume_accumulator, 3))
+                # Define the grid size
+                x_unique = np.unique(x)
+                y_unique = np.unique(y)
 
-                    # Prepare data for insertion
-                    data = [(grid_fid, elev, vol) for elev, vol in zip(elev_ranges, volume)]
-                    outrc_rcdata.extend(data)  # Extend outrc_rcdata with data for current grid
+                x_res = len(x_unique)
+                y_res = len(y_unique)
 
-                    progDialog.setValue(j + 1)
+                # Create an empty array for the raster
+                raster_array = np.full((y_res, x_res), np.nan)
+
+                # Fill the array with elevation data
+                for i in range(len(elevation)):
+                    x_idx = np.where(x_unique == x[i])[0][0]
+                    y_idx = np.where(y_unique == y[i])[0][0]
+                    raster_array[y_idx, x_idx] = elevation[i]
+
+                # Replace np.nan with some nodata value if needed, e.g., -9999
+                nodata_value = -9999
+                raster_array = np.nan_to_num(raster_array, nan=nodata_value)
+
+                # Create the raster file in a temporary location
+                temp_file = tempfile.NamedTemporaryFile(suffix='.tif', delete=False)
+                temp_file_path = temp_file.name
+                temp_file.close()  # We only need the name
+
+                driver = gdal.GetDriverByName('GTiff')
+                dataset = driver.Create(temp_file_path, x_res, y_res, 1, gdal.GDT_Float32)
+
+                # Define the geotransform and projection
+                x_min, x_max = x_unique.min(), x_unique.max()
+                y_min, y_max = y_unique.min(), y_unique.max()
+
+                pixel_width = (x_max - x_min) / (x_res - 1)
+                pixel_height = (y_max - y_min) / (y_res - 1)
+                geotransform = (x_min, pixel_width, 0, y_min, 0, pixel_height)
+                dataset.SetGeoTransform(geotransform)
+
+                # Define a spatial reference
+                srs = osr.SpatialReference()
+                epsg_code = int(QgsProject.instance().crs().authid().split(":")[1])
+                srs.ImportFromEPSG(epsg_code)
+                dataset.SetProjection(srs.ExportToWkt())
+
+                # Write the data to the raster band
+                band = dataset.GetRasterBand(1)
+                band.WriteArray(raster_array)
+                band.SetNoDataValue(nodata_value)
+
+                # Flush and close the dataset
+                dataset.FlushCache()
+                dataset = None
+
+                # Load the temporary raster file into QGIS
+                raster_layer = QgsRasterLayer(temp_file_path, "Temporary Raster")
+
+                elev_sorted = sorted(elevations)
+                max_elev = max(elevations)
+                min_elev = min(elevations)
+                dh = (max_elev - min_elev) / self.subd_sb.value()
+
+                # Organize the elevation ranges
+                elev_ranges = [round(min_elev + dh * i, 3) for i in range(self.subd_sb.value() + 1)]
+                volume = []
+                for elev_range in elev_ranges:
+                    if round(elev_range, 2) == round(min_elev, 2):
+                        volume.append(round(0, 3))
+                    else:
+                        self.uc.log_info(str(elev_range))
+                        vol = processing.run("native:rastersurfacevolume",
+                                             {'INPUT': raster_layer,
+                                              'BAND': 1,
+                                              'LEVEL': float(elev_range),
+                                              'METHOD': 1,
+                                              'OUTPUT_HTML_FILE': 'TEMPORARY_OUTPUT'}
+                                             )['VOLUME'] * (- 1)
+
+                        volume.append(round(vol, 3))
+
+                # Prepare data for insertion
+                data = [(grid_fid, elev, vol) for elev, vol in zip(elev_ranges, volume)]
+                outrc_rcdata.extend(data)  # Extend outrc_rcdata with data for current grid
+
+                del raster_layer
+                os.remove(temp_file_path)
+
+                progDialog.setValue(j + 1)
 
         elif isinstance(self.current_lyr, QgsRasterLayer):
 
@@ -285,8 +357,6 @@ class SamplingRCDialog(qtBaseClass, uiDialog):
                 stats = provider.bandStatistics(band)
                 min_elev = stats.minimumValue
                 max_elev = stats.maximumValue
-                self.uc.log_info(str(min_elev))
-                self.uc.log_info(str(max_elev))
                 dh = (max_elev - min_elev) / self.subd_sb.value()
 
                 # Organize the elevation ranges
@@ -322,3 +392,49 @@ class SamplingRCDialog(qtBaseClass, uiDialog):
             self.gutils.execute_many("INSERT INTO outrc (grid_fid, depthrt, volrt) VALUES (?, ?, ?);", outrc_rcdata)
             self.uc.log_info("Surface Water Rating Tables (OUTRC) created!")
             self.uc.bar_info("Surface Water Rating Tables (OUTRC) created!")
+
+    def create_raster_from_xyz(self, x_coords, y_coords, elevations, pixel_size=1.0):
+        # Create a bounding box
+        min_x, max_x = min(x_coords), max(x_coords)
+        min_y, max_y = min(y_coords), max(y_coords)
+
+        # Define the grid dimensions
+        x_res = int((max_x - min_x) / pixel_size) + 1
+        y_res = int((max_y - min_y) / pixel_size) + 1
+
+        # Create a numpy array to hold the elevation data
+        elevation_array = np.full((y_res, x_res), np.nan)
+
+        # Populate the elevation array with the elevations
+        for x, y, elev in zip(x_coords, y_coords, elevations):
+            x_idx = int((x - min_x) / pixel_size)
+            y_idx = int((max_y - y) / pixel_size)  # y needs to be flipped because arrays are top-down
+            elevation_array[y_idx, x_idx] = elev
+
+        # Create a GDAL raster dataset
+        driver = gdal.GetDriverByName('MEM')
+        raster_ds = driver.Create('', x_res, y_res, 1, gdal.GDT_Float32)
+
+        # Set the geotransform
+        geotransform = (min_x, pixel_size, 0, max_y, 0, -pixel_size)
+        raster_ds.SetGeoTransform(geotransform)
+
+        # Set the spatial reference
+        srs = osr.SpatialReference()
+        epsg_code = int(QgsProject.instance().crs().authid().split(":")[1])  # Extract the EPSG code as an integer
+        srs.ImportFromEPSG(epsg_code)
+        raster_ds.SetProjection(srs.ExportToWkt())
+
+        # Write the data to the raster band
+        band = raster_ds.GetRasterBand(1)
+        band.WriteArray(elevation_array)
+
+        # Set NoData value
+        band.SetNoDataValue(np.nan)
+
+        # Create a VRT dataset that references the in-memory dataset
+        vrt_driver = gdal.GetDriverByName('VRT')
+        vrt_ds = vrt_driver.CreateCopy('', raster_ds)
+
+        return vrt_ds
+
