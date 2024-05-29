@@ -2692,10 +2692,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         self.pump_curve_cbo.blockSignals(True)
         self.update_pump_curve_data()
         self.pump_curve_cbo.blockSignals(False)
-        
 
-        self.uc.show_warn("hererererre")
-        
         QApplication.restoreOverrideCursor()
         return True
 
