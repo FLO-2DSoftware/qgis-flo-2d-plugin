@@ -462,7 +462,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         self.pump_curve_description_le.textChanged.connect(self.update_pump_curve_data)
                
         self.pump_curve_cbo.activated.connect(self.current_cbo_pump_curve_index_changed)
-        self.pump_curve_cbo.currentIndexChanged.connect(self.refresh_PC_PlotAndTable)
+        # self.pump_curve_cbo.currentIndexChanged.connect(self.refresh_PC_PlotAndTable)
 
         self.simulate_stormdrain_chbox.clicked.connect(self.simulate_stormdrain)
         self.import_shapefile_btn.clicked.connect(self.import_hydraulics)
@@ -2692,6 +2692,9 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         self.pump_curve_cbo.blockSignals(True)
         self.update_pump_curve_data()
         self.pump_curve_cbo.blockSignals(False)
+        
+
+        self.uc.show_warn("hererererre")
         
         QApplication.restoreOverrideCursor()
         return True
@@ -5829,6 +5832,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         for i in range(self.pumps_data_model.rowCount()):
             self.tview.setRowHeight(i, 20)
         self.update_pump_plot()
+        self.show_pump_curve_type_and_description()
 
     def create_pump_plot(self, name):
         self.plot.clear()
