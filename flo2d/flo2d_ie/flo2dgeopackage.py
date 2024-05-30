@@ -2359,6 +2359,44 @@ class Flo2dGeoPackage(GeoPackageUtils):
             self.uc.show_error("ERROR 101218.1542: exporting INFLOW.DAT failed!.\n", e)
             return False
 
+    def export_outrc(self, output=None):
+        if self.parsed_format == self.FORMAT_DAT:
+            return self.export_outrc_dat(output)
+        elif self.parsed_format == self.FORMAT_HDF5:
+            pass
+
+    def export_outrc_dat(self, outdir):
+        """
+        Function to export the outrc to the DAT file
+        """
+        try:
+            if self.is_table_empty("outrc"):
+                return False
+
+            outrc_sql = """SELECT DISTINCT grid_fid FROM outrc ORDER BY grid_fid"""
+
+            rows = self.execute(outrc_sql).fetchall()
+            if not rows:
+                return False
+
+            one_value = "N  {0}\n"
+            two_values = "P  {0}  {1}\n"
+
+            outrc = os.path.join(outdir, "OUTRC.DAT")
+            with open(outrc, "w") as t:
+                for row in rows:
+                    t.write(one_value.format(row[0]))
+                    outrc_data_sql = f"""SELECT depthrt, volrt FROM outrc WHERE grid_fid = {row[0]} ORDER BY depthrt;"""
+                    outrc_data = self.execute(outrc_data_sql).fetchall()
+                    for data in outrc_data:
+                        t.write(two_values.format(*[round(data[0], 2), round(data[1], 2)]))
+            return True
+
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.uc.show_error("ERROR 040822.0442: exporting OUTRC.DAT failed!.\n", e)
+            return False
+
     def export_tailings(self, output=None):
         if self.parsed_format == self.FORMAT_DAT:
             return self.export_tailings_dat(output)

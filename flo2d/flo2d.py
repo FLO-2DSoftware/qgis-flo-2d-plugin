@@ -1204,6 +1204,7 @@ class Flo2D(object):
                 "export_cont_toler",
                 "export_tolspatial",
                 "export_inflow",
+                "export_outrc",
                 "export_tailings",
                 "export_outflow",
                 "export_rain",
@@ -1255,6 +1256,9 @@ class Flo2D(object):
                 if "Inflow Elements" not in dlg_components.components:
                     export_calls.remove("export_inflow")
                     export_calls.remove("export_tailings")
+
+                if "Surface Water Rating Tables" not in dlg_components.components:
+                    export_calls.remove("export_outrc")
 
                 if "Levees" not in dlg_components.components:
                     export_calls.remove("export_levee")
@@ -2847,6 +2851,7 @@ class Flo2D(object):
                 "export_tolspatial",
                 "export_inflow",
                 "export_tailings",
+                'export_outrc',
                 "export_outflow",
                 "export_rain",
                 "export_evapor",
@@ -2918,6 +2923,9 @@ class Flo2D(object):
 
                 if "Tailings" not in dlg_components.components:
                     export_calls.remove("export_tailings")
+
+                if "Surface Water Rating Tables" not in dlg_components.components:
+                    export_calls.remove("export_outrc")
 
                 if "Levees" not in dlg_components.components:
                     export_calls.remove("export_levee")
@@ -3131,6 +3139,7 @@ class Flo2D(object):
                 "export_shallowNSpatial",
                 "export_gutter",
                 "export_tailings",
+                "export_outrc",
                 "export_tolspatial"
             ]
 
