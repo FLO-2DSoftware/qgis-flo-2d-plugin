@@ -3663,6 +3663,37 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                     self.uc.show_error("ERROR 070618.1623: error while exporting [COORDINATES] to .INP file!", e)
                     return
 
+                # INP VERTICES ##############################################
+
+                try:
+                    swmm_inp_file.write("\n")
+                    swmm_inp_file.write("\n[VERTICES]")
+                    swmm_inp_file.write("\n;;Link           X-Coord            Y-Coord           ")
+                    swmm_inp_file.write("\n;;-------------- ------------------ ------------------")
+
+                    line = "\n{0:16} {1:<18} {2:<18}"
+
+                    sd_conduits_lyr = self.lyrs.data["user_swmm_conduits"]["qlyr"]
+
+                    if sd_conduits_lyr.geometryType() == QgsWkbTypes.LineGeometry:
+                        for feature in sd_conduits_lyr.getFeatures():
+                            geom = feature.geometry()
+                            conduit_name = feature['conduit_name']
+                            # Ensure the geometry is of single type
+                            if QgsWkbTypes.isSingleType(geom.wkbType()):
+                                # Get the points of the polyline
+                                polyline = geom.asPolyline()
+                                # Check if there are more than two points (start and end)
+                                if len(polyline) > 2:
+                                    # Print the coordinates of the interior nodes
+                                    for pnt in polyline[1:-1]:
+                                        swmm_inp_file.write(line.format(conduit_name, pnt.x(), pnt.y()))
+
+                except Exception as e:
+                    QApplication.restoreOverrideCursor()
+                    self.uc.show_error("ERROR 070618.1623: error while exporting [VERTICES] to .INP file!", e)
+                    return
+
                 # FUTURE GROUPS ##################################################
                 future_groups = [
                     "FILES",
