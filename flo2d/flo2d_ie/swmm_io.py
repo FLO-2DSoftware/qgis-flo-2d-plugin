@@ -1016,7 +1016,7 @@ class StormDrainProject(object):
                                 else:
                                     continue 
                         else:
-                            description = ""
+                            # description = ""
                             continue    
                            
                     items = c.split()
