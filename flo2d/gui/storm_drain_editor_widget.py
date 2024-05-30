@@ -1076,6 +1076,9 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 storm_drain.create_INP_conduits_dictionary_with_conduits()
                 storm_drain.add_LOSSES_to_INP_conduits_dictionary()
 
+                # Vertices:
+                storm_drain.create_INP_vertices_dictionary_with_vertices()
+
                 # Pumps:
                 storm_drain.create_INP_pumps_dictionary_with_pumps()
 
@@ -1838,7 +1841,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 Creates Storm Drain Conduits layer (Users layers)
         
                 Creates "user_swmm_conduits" layer with attributes taken from
-                the [CONDUITS], [LOSSES], and [XSECTIONS] groups.
+                the [CONDUITS], [LOSSES], [VERTICES], and [XSECTIONS] groups.
         
                 """
         
@@ -1937,10 +1940,24 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                                     outside_conduits += n_spaces + name + "\n"
                         else:
                             conduit_outlets_not_found += "      " +  name + "\n" 
-                                        
-        
+
                     if conduit_inlet in self.all_nodes and conduit_outlet in self.all_nodes:
-                        geom = QgsGeometry.fromPolylineXY([QgsPointXY(x1, y1), QgsPointXY(x2, y2)])
+                        if name in storm_drain.INP_vertices:
+                            # Add starting point
+                            points_list = [QgsPointXY(x1, y1)]
+
+                            # Add vertices
+                            for x, y in zip(storm_drain.INP_vertices[name][0], storm_drain.INP_vertices[name][1]):
+                                points_list.append(QgsPointXY(float(x), float(y)))
+
+                            # Add ending point
+                            points_list.append(QgsPointXY(x2, y2))
+
+                            # Create the Geometry
+                            self.uc.log_info(str(points_list))
+                            geom = QgsGeometry.fromPolylineXY(points_list)
+                        else:
+                            geom = QgsGeometry.fromPolylineXY([QgsPointXY(x1, y1), QgsPointXY(x2, y2)])
                     else:
                         continue
                     

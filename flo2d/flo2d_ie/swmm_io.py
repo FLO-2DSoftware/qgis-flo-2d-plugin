@@ -30,6 +30,7 @@ class StormDrainProject(object):
         self.INP_patterns = []
         self.INP_timeseries = []
         self.INP_conduits = {}
+        self.INP_vertices = {}
 
         self.INP_pumps = {}
         self.INP_curves = []
@@ -540,6 +541,28 @@ class StormDrainProject(object):
         except Exception as e:
             self.uc.bar_warn("WARNING 221121.1018: Reading conduits from SWMM input data failed!")
 
+    def create_INP_vertices_dictionary_with_vertices(self):
+        try:
+            vertices = self.select_this_INP_group("verti")
+            if vertices:
+                x_list = []
+                y_list = []
+                for vert in vertices:
+                    if not vert or vert[0] in self.ignore:
+                        continue
+
+                    vert_name, vert_x, vert_y = vert.split()
+                    if vert_name in self.INP_vertices:
+                        x_list.append(vert_x)
+                        y_list.append(vert_y)
+                    else:
+                        x_list = [vert_x]
+                        y_list = [vert_y]
+                    self.INP_vertices[vert_name] = (x_list, y_list)
+
+        except Exception as e:
+            self.uc.bar_warn("WARNING 221121.1018: Reading vertices from SWMM input data failed!")
+
     def create_INP_pumps_dictionary_with_pumps(self):
         try:
             pumps_cols = [
@@ -1009,7 +1032,6 @@ class StormDrainProject(object):
                 if not c or c[0] in self.ignore:
                     if c:
                         description = ""
-                        self.uc.log_info(str(c))
                         if c[1]:
                             if c[1] != ";": # This is a description:
                                 description = c[1:]
