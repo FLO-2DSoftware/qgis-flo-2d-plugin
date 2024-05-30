@@ -1774,6 +1774,7 @@ class Flo2D(object):
             "import_mannings_n_topo",
             "import_inflow",
             "import_tailings",
+            "import_outrc",
             "import_outflow",
             "import_rain",
             "import_raincell",
@@ -1858,6 +1859,9 @@ class Flo2D(object):
                     if "Inflow Elements" not in dlg_components.components:
                         import_calls.remove("import_inflow")
                         import_calls.remove("import_tailings")
+
+                    if "Surface Water Rating Tables" not in dlg_components.components:
+                        import_calls.remove("import_outrc")
 
                     if "Levees" not in dlg_components.components:
                         import_calls.remove("import_levee")
@@ -2465,6 +2469,7 @@ class Flo2D(object):
             "import_tolspatial",
             "import_inflow",
             "import_tailings",
+            "import_outrc",
             "import_outflow",
             "import_rain",
             "import_raincell",
@@ -2545,6 +2550,9 @@ class Flo2D(object):
                         import_calls.remove("import_inflow")
                         import_calls.remove("import_tailings")
 
+                    if "Surface Water Rating Tables" not in dlg_components.components:
+                        import_calls.remove("import_outrc")
+
                     if "Levees" not in dlg_components.components:
                         import_calls.remove("import_levee")
 
@@ -2568,6 +2576,9 @@ class Flo2D(object):
 
                     if "Evaporation" not in dlg_components.components:
                         import_calls.remove("import_evapor")
+
+                    if "Surface Water Rating Tables" not in dlg_components.components:
+                        import_calls.remove("import_outrc")
 
                     if "Hydraulic  Structures" not in dlg_components.components:
                         import_calls.remove("import_hystruc")
@@ -2701,6 +2712,7 @@ class Flo2D(object):
             "TAILINGS.DAT": "import_tailings",
             "TAILINGS_CV.DAT": "import_tailings",
             "TAILINGS_STACK_DEPTH.DAT": "import_tailings",
+            "OUTRC.DAT": "import_outrc",
             "OUTFLOW.DAT": "import_outflow",
             "RAIN.DAT": "import_rain",
             "RAINCELL.DAT": "import_raincell",

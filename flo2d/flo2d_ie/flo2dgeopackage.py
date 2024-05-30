@@ -377,6 +377,30 @@ class Flo2dGeoPackage(GeoPackageUtils):
             self.uc.log_info(traceback.format_exc())
             self.uc.show_error("ERROR 070719.1051: Import inflows failed!.", e)
 
+    def import_outrc(self):
+        """
+        Function to import the OUTRC.DAT file into the project
+        """
+        outrc_sql = [
+            """INSERT INTO outrc (grid_fid, depthrt, volrt) VALUES""",
+            3,
+        ]
+
+        self.clear_tables("outrc")
+
+        # OUTRC.DAT
+        data = self.parser.parse_outrc()
+        if data:
+            for row in data:
+                if len(row) == 2:
+                    grid_fid = row[1]
+                    continue
+                if len(row) == 3:
+                    depthrt = row[1]
+                    volrt = row[2]
+                outrc_sql += [(grid_fid, depthrt, volrt)]
+            self.batch_execute(outrc_sql)
+
     def import_tailings(self):
         tailings_sql = [
             """INSERT INTO tailing_cells (grid, tailings_surf_elev, water_surf_elev, concentration, geom) VALUES""",
