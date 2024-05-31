@@ -2812,7 +2812,9 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 # INP TITLE ##################################################
                 # items = self.select_this_INP_group(INP_groups, "title")
                 swmm_inp_file.write("[TITLE]")
-                title = self.gutils.execute("SELECT value FROM swmm_control WHERE name = 'TITLE'").fetchone()[0]
+                title = self.gutils.execute("SELECT value FROM swmm_control WHERE name = 'TITLE'").fetchone()
+                if not title:
+                    title = "INP file exported by FLO-2D"
                 swmm_inp_file.write("\n" + title + "\n")
 
                 # INP OPTIONS ##################################################
