@@ -2748,6 +2748,8 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                         directory=last_dir,
                         options=QFileDialog.ShowDirsOnly,
                     )
+                    if not swmm_dir:
+                        return                    
                 else:
                     swmm_dir = last_dir
 
