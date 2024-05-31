@@ -1333,8 +1333,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                     elif "out_type" in values:
                         sd_type = "O"
                     elif name[0] in ["I", "i"]:
-                        skipped_inlets += 1
-                        continue  # Skip inlets defined by initial "I" or "i". Only consider inlets in [SUBCATCHMENTS]
+                        sd_type = "I"
                     else:
                         sd_type = "J"
 
@@ -1954,7 +1953,6 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                             points_list.append(QgsPointXY(x2, y2))
 
                             # Create the Geometry
-                            self.uc.log_info(str(points_list))
                             geom = QgsGeometry.fromPolylineXY(points_list)
                         else:
                             geom = QgsGeometry.fromPolylineXY([QgsPointXY(x1, y1), QgsPointXY(x2, y2)])
@@ -2709,8 +2707,16 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         self.pump_curve_cbo.blockSignals(True)
         self.update_pump_curve_data()
         self.pump_curve_cbo.blockSignals(False)
-        
+
         QApplication.restoreOverrideCursor()
+
+        dlg_INP_groups = INP_GroupsDialog(self.con, self.iface)
+        ok = dlg_INP_groups.exec_()
+        if ok:
+            self.uc.bar_info("Storm Drain control data saved!")
+            self.uc.log_info("Storm Drain control data saved!")
+            dlg_INP_groups.save_INP_control()
+
         return True
 
     def import_INP_action(self):
@@ -2815,7 +2821,9 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 title = self.gutils.execute("SELECT value FROM swmm_control WHERE name = 'TITLE'").fetchone()
                 if not title:
                     title = "INP file exported by FLO-2D"
-                swmm_inp_file.write("\n" + title + "\n")
+                    swmm_inp_file.write("\n" + title + "\n")
+                else:
+                    swmm_inp_file.write("\n" + title[0] + "\n")
 
                 # INP OPTIONS ##################################################
                 # items = self.select_this_INP_group(INP_groups, "options")
@@ -2856,7 +2864,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 skip_steady_state = self.gutils.execute("SELECT value FROM swmm_control WHERE name = 'SKIP_STEADY_STATE'").fetchone()[0]
                 swmm_inp_file.write("\nSKIP_STEADY_STATE    " + skip_steady_state)
                 force_main_equation = self.gutils.execute("SELECT value FROM swmm_control WHERE name = 'FORCE_MAIN_EQUATION'").fetchone()[0]
-                if force_main_equation == 'Darcy-Weisbach (D-W)':
+                if force_main_equation in ['Darcy-Weisbach (D-W)', 'D-W']:
                     force_main_equation = "D-W"
                 else:
                     force_main_equation = "H-W"
