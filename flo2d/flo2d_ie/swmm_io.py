@@ -1023,21 +1023,34 @@ class StormDrainProject(object):
             self.uc.bar_warn("WARNING 221121.1022: Reading time series from SWMM input data failed!")
 
     def create_INP_curves_list_with_curves(self):
-        # try:
-        prev_type = ""
-        msg = ""
-        curves = self.select_this_INP_group("curves")
-        if curves:
-            for c in curves:
-                if not c or c[0] in self.ignore:
-                    if c:
-                        description = ""
-                        if c[1]:
-                            if c[1] != ";": # This is a description:
-                                description = c[1:]
-                                continue
-                            else:
-                                continue
+        try:
+            prev_type = ""
+            msg = ""
+            curves = self.select_this_INP_group("curves")
+            if curves:
+                for c in curves:
+                    if not c or c[0] in self.ignore:
+                        if c:
+                            description = ""
+                            if c[1]:
+                                if c[1] != ";": # This is a description:
+                                    description = c[1:]
+                                    continue
+                                else:
+                                    continue 
+                        else:
+                            # description = ""
+                            continue    
+                           
+                    items = c.split()
+                    if len(items) == 4:
+                        prev_type = items[1]
+                        items.insert(len(items),description)
+                        self.INP_curves.append(items)
+                    elif len(items) == 3:
+                        items.insert(1, prev_type)
+                        items.insert(len(items),description)
+                        self.INP_curves.append(items)
                     else:
                         description = ""
                         continue

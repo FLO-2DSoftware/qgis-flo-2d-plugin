@@ -602,7 +602,7 @@
            <enum>QComboBox::InsertAtBottom</enum>
           </property>
           <property name="duplicatesEnabled">
-           <bool>false</bool>
+           <bool>true</bool>
           </property>
          </widget>
         </item>

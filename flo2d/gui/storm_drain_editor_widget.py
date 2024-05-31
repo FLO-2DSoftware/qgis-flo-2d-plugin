@@ -462,7 +462,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         self.pump_curve_description_le.textChanged.connect(self.update_pump_curve_data)
                
         self.pump_curve_cbo.activated.connect(self.current_cbo_pump_curve_index_changed)
-        self.pump_curve_cbo.currentIndexChanged.connect(self.refresh_PC_PlotAndTable)
+        # self.pump_curve_cbo.currentIndexChanged.connect(self.refresh_PC_PlotAndTable)
 
         self.simulate_stormdrain_chbox.clicked.connect(self.simulate_stormdrain)
         self.import_shapefile_btn.clicked.connect(self.import_hydraulics)
@@ -1379,7 +1379,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 flapgate = "True" if is_true(flapgate) else "False"
 
                 allow_discharge = values["swmm_allow_discharge"] if "swmm_allow_discharge" in values else "False"
-                allow_discharge = "True" if is_true(allow_discharge) else "False"
+                allow_discharge = "1" if is_true(allow_discharge) else "0"
 
                 rim_elev = junction_invert_elev + max_depth if junction_invert_elev and max_depth else 0
 
@@ -2771,6 +2771,8 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                         directory=last_dir,
                         options=QFileDialog.ShowDirsOnly,
                     )
+                    if not swmm_dir:
+                        return                    
                 else:
                     swmm_dir = last_dir
 
@@ -3862,10 +3864,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         if save:
             try:
                 dlg_outfalls.save_outfalls()
-                self.uc.bar_info(
-                    "Outfalls saved to 'Storm Drain-Outfalls' User Layer!\n\n"
-                    + "Schematize it from the 'Storm Drain Editor' widget before saving into SWMMOUTF.DAT"
-                )
+                self.uc.bar_info("Outfalls saved to 'Storm Drain-Outfalls' User Layer.")
             except Exception:
                 self.uc.bar_warn("Could not save outfalls! Please check if they are correct.")
                 return
@@ -3900,10 +3899,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
 
         save = dlg_inlets.exec_()
         if save:
-            self.uc.show_info(
-                "Inlets saved to 'Storm Drain-Inlets' User Layer!\n\n"
-                + "Schematize it from the 'Storm Drain Editor' widget before saving into SWMMOUTF.DAT"
-            )
+            self.uc.bar_info("Inlets saved to 'Storm Drain-Inlets' User Layer.")
             self.populate_type4_combo()
 
         elif not save:
@@ -3961,10 +3957,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         if save:
             try:
                 dlg_conduits.save_conduits()
-                self.uc.bar_info(
-                    "Conduits saved to 'Storm Drain-Conduits' User Layer!\n\n"
-                    + "Schematize it from the 'Storm Drain Editor' widget before saving into SWMMOUTF.DAT"
-                )
+                self.uc.bar_info("Conduits saved to 'Storm Drain-Conduits' User Layer.")
             except Exception:
                 self.uc.bar_warn("Could not save conduits! Please check if they are correct.")
                 return
@@ -3991,10 +3984,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         if save:
             try:
                 dlg_pumps.save_pumps()
-                self.uc.bar_info(
-                    "Pumps saved to 'Storm Drain-Pumps' User Layer!\n\n"
-                    + "Schematize it from the 'Storm Drain Editor' widget before saving into SWMMOUTF.DAT"
-                )
+                self.uc.bar_info("Pumps saved to 'Storm Drain-Pumps' User Layer.")
             except Exception:
                 self.uc.bar_warn("Could not save pumps! Please check if they are correct.")
                 return
@@ -4021,10 +4011,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         if save:
             try:
                 dlg_orifices.save_orifices()
-                self.uc.bar_info(
-                    "Orifices saved to 'Storm Drain Orifices' User Layer!\n\n"
-                    + "Schematize it from the 'Storm Drain Editor' widget before saving into SWMMOUTF.DAT"
-                )
+                self.uc.bar_info("Orifices saved to 'Storm Drain Orifices' User Layer.")
             except Exception:
                 self.uc.bar_warn("Could not save orifices! Please check if they are correct.")
                 return
@@ -4051,10 +4038,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         if save:
             try:
                 dlg_weirs.save_weirs()
-                self.uc.bar_info(
-                    "Weirs saved to 'Storm Drain Weirs' User Layer!\n\n"
-                    + "Schematize it from the 'Storm Drain Editor' widget before saving into SWMMOUTF.DAT"
-                )
+                self.uc.bar_info("Weirs saved to 'Storm Drain Weirs' User Layer.")
             except Exception:
                 self.uc.bar_warn("Could not save weirs! Please check if they are correct.")
                 return
@@ -5905,6 +5889,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         for i in range(self.pumps_data_model.rowCount()):
             self.tview.setRowHeight(i, 20)
         self.update_pump_plot()
+        self.show_pump_curve_type_and_description()
 
     def create_pump_plot(self, name):
         self.plot.clear()
