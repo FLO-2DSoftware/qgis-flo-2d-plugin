@@ -336,7 +336,7 @@ class GeoPackageUtils(object):
                       """
                 update_tables_sql.append(sql)
 
-            if table == 'sqlite_sequence' or table == 'qgis_projects':
+            if table == 'sqlite_sequence' or table == 'qgis_projects' or table == 'rain_arf_areas':
                 continue
 
             # check if it is a vector layer

@@ -922,8 +922,17 @@ class Flo2D(object):
                         gpkg_tables = self.gutils.current_gpkg_tables
                         tab_sql = """SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'gpkg_%' AND name NOT LIKE 'rtree_%';"""
                         tabs = [row[0] for row in self.gutils.execute(tab_sql)]
+                        do_not_port = [
+                            'sqlite_sequence',
+                            'qgis_projects',
+                            'infil_areas_scs',
+                            'infil_areas_green',
+                            'infil_areas_horton',
+                            'rain_arf_areas',
+                            'infil_areas_chan',
+                        ]
                         for table in tabs:
-                            if table not in gpkg_tables and table not in ['sqlite_sequence', 'qgis_projects']:
+                            if table not in gpkg_tables and table not in do_not_port:
                                 try:
                                     ds = ogr.Open(gpkg_path)
                                     layer = ds.GetLayerByName(table)
