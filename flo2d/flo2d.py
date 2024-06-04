@@ -193,6 +193,7 @@ class Flo2D(object):
         # connections
         self.project.readProject.connect(self.load_gpkg_from_proj)
         self.project.writeProject.connect(self.flo_save_project)
+        self.project.layersAdded.connect(self.changeLayerAdditionMode)
 
         self.uc.clear_bar_messages()
         QApplication.restoreOverrideCursor()
@@ -4395,4 +4396,11 @@ class Flo2D(object):
 
         # Save the result
         picture.save(thumbnail)
+
+    def changeLayerAdditionMode(self):
+        """
+        Function to force all layers added to the user on the top of the layer tree
+        """
+        # self.project.layerTreeRegistryBridge().setLayerInsertionPoint(self.project.layerTreeRoot(), 0)
+        self.iface.layerTreeView().setCurrentIndex(self.iface.layerTreeView().layerTreeModel().node2index(self.project.layerTreeRoot()))
 
