@@ -561,7 +561,7 @@ class StormDrainProject(object):
                     self.INP_vertices[vert_name] = (x_list, y_list)
 
         except Exception as e:
-            self.uc.bar_warn("WARNING 221121.1018: Reading vertices from SWMM input data failed!")
+            self.uc.bar_warn("WARNING 050624.0625: Reading vertices from SWMM input data failed!")
 
     def create_INP_pumps_dictionary_with_pumps(self):
         try:
@@ -1069,10 +1069,10 @@ class StormDrainProject(object):
 
             if msg:
                 msg = (
-                    "WARNING 251121.0538: error reading the following lines from [CURVES] group.\nMaybe curve names with spaces?:\n\n"
+                    "WARNING 050624.0627: error reading the following lines from [CURVES] group.\nMaybe curve names with spaces?:\n\n"
                     + msg
                 )
                 self.uc.show_warn(msg)
 
-        # except Exception as e:
-        #     self.uc.show_error("ERROR 241121.0529: Reading pump curves from SWMM input data failed!", e)
+        except Exception as e:
+            self.uc.show_error("ERROR 050624.0628: Reading pump curves from SWMM input data failed!", e)
