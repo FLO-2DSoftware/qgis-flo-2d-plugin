@@ -1045,7 +1045,7 @@ class StormDrainProject(object):
                     items = c.split()
                     if len(items) == 4:
                         prev_type = items[1]
-                        items.insert(len(items),description)
+                        items.insert(len(items), description)
                         self.INP_curves.append(items)
                     elif len(items) == 3:
                         items.insert(1, prev_type)
@@ -1072,7 +1072,7 @@ class StormDrainProject(object):
                     "WARNING 050624.0627: error reading the following lines from [CURVES] group.\nMaybe curve names with spaces?:\n\n"
                     + msg
                 )
-                self.uc.show_warn(msg)
+                self.uc.log_info(msg)
 
         except Exception as e:
             self.uc.show_error("ERROR 050624.0628: Reading pump curves from SWMM input data failed!", e)
