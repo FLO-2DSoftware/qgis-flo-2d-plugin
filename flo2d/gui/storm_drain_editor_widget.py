@@ -3703,7 +3703,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
 
                 except Exception as e:
                     QApplication.restoreOverrideCursor()
-                    self.uc.show_error("ERROR 070618.1623: error while exporting [VERTICES] to .INP file!", e)
+                    self.uc.show_error("ERROR 050624.0633: error while exporting [VERTICES] to .INP file!", e)
                     return
 
                 # FUTURE GROUPS ##################################################
