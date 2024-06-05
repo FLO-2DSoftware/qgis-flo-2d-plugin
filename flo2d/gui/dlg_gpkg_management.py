@@ -213,12 +213,13 @@ class GpkgManagementDialog(qtBaseClass, uiDialog):
 
                 self.gutils.execute(f"INSERT INTO external_layers (name, type) VALUES ('{layer_name}', 'external');")
             QApplication.restoreOverrideCursor()
-            self.uc.bar_info(f"Selected layers successfully added to the Geopackage!")
-            self.uc.log_info(f"Selected layers successfully added to the Geopackage!")
 
             if len(not_added) > 0:
                 layers_not_added = ', '.join(map(str, not_added))
                 self.uc.show_info(f"The following layers were not added to the GeoPackage: \n\n {layers_not_added}")
+
+        self.uc.bar_info(f"FLO-2D Geopackage Management saved!")
+        self.uc.log_info(f"FLO-2D Geopackage Management saved!")
 
         QApplication.restoreOverrideCursor()
         self.close()
