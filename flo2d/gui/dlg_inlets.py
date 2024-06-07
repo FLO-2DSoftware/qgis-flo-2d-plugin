@@ -113,6 +113,7 @@ class InletNodesDialog(qtBaseClass, uiDialog):
         self.time_for_clogging_dbox.valueChanged.connect(self.time_for_clogging_dbox_valueChanged)
         self.dropbox_area_dbox.valueChanged.connect(self.dropbox_area_dbox_valueChanged)
         self.inlets_tblw.cellClicked.connect(self.inlets_tblw_cell_clicked)
+        self.inlets_tblw.cellChanged.connect(self.inlets_tblw_cell_changed)
         self.inlet_rating_table_cbo.currentIndexChanged.connect(self.inlet_rating_table_cbo_changed)
 
         self.inlets_tblw.verticalHeader().sectionClicked.connect(self.onVerticalSectionClicked)
@@ -164,7 +165,8 @@ class InletNodesDialog(qtBaseClass, uiDialog):
                 return
     
             self.block = True
-    
+            self.inlets_tblw.blockSignals(self.block)
+
             self.inlets_tblw.setRowCount(0)
             no_rt = ""
             existing_rts = []
@@ -293,6 +295,7 @@ class InletNodesDialog(qtBaseClass, uiDialog):
             self.enable_external_inflow()
     
             self.block = False
+            self.inlets_tblw.blockSignals(self.block)
     
             self.highlight_inlet_cell(self.grid_element_le.text())
     
@@ -506,55 +509,122 @@ class InletNodesDialog(qtBaseClass, uiDialog):
 
     def inlets_tblw_cell_clicked(self, row, column):
         QApplication.setOverrideCursor(Qt.WaitCursor)
-        self.inlet_cbo.blockSignals(True)
-        name = self.inlets_tblw.item(row, 0).text().strip()
-        idx = self.inlet_cbo.findText(name)
-        self.inlet_cbo.setCurrentIndex(idx)
-        self.inlet_cbo.blockSignals(False)
+        try:
+            self.inlet_cbo.blockSignals(True)
+            name = self.inlets_tblw.item(row, 0).text().strip()
+            idx = self.inlet_cbo.findText(name)
+            self.inlet_cbo.setCurrentIndex(idx)
+            self.inlet_cbo.blockSignals(False)
 
-        self.block = True
+            self.block = True
 
-        self.grid_element_le.setText(self.inlets_tblw.item(row, 1).text())
-        self.invert_elevation_dbox.setValue(float_or_zero(self.inlets_tblw.item(row, 2)))
-        self.max_depth_dbox.setValue(float_or_zero(self.inlets_tblw.item(row, 3)))
-        self.initial_depth_dbox.setValue(float_or_zero(self.inlets_tblw.item(row, 4)))
-        self.surcharge_depth_dbox.setValue(float_or_zero(self.inlets_tblw.item(row, 5)))
-        # self.ponded_area_dbox.setValue(float_or_zero(self.inlets_tblw.item(row, 6)))
+            self.grid_element_le.setText(self.inlets_tblw.item(row, 1).text())
+            self.invert_elevation_dbox.setValue(float_or_zero(self.inlets_tblw.item(row, 2)))
+            self.max_depth_dbox.setValue(float_or_zero(self.inlets_tblw.item(row, 3)))
+            self.initial_depth_dbox.setValue(float_or_zero(self.inlets_tblw.item(row, 4)))
+            self.surcharge_depth_dbox.setValue(float_or_zero(self.inlets_tblw.item(row, 5)))
+            # self.ponded_area_dbox.setValue(float_or_zero(self.inlets_tblw.item(row, 6)))
 
-        val = self.inlets_tblw.item(row, 7).text().strip()
-        # Check that type and name are consistent:
-        if (name[0:2] in ["I1", "I2", "I3", "I4", "I5"] and name[1] != val) or (name[0:3] == "IM5" and name[2] != val):
-            self.uc.bar_warn("Inlet name " + name + " and type '" + val + "' do not correspond!")
-        index = int(val) - 1 if val != "" else 0
-        index = 5 if index == 4 else index
-        if index > 5:
-            self.uc.bar_warn("Inlet " + name + " has incorrect drain type!")
-        # index = 5 if index > 5 else 0 if index < 0 else index
+            val = self.inlets_tblw.item(row, 7).text().strip()
+            # Check that type and name are consistent:
+            if (name[0:2] in ["I1", "I2", "I3", "I4", "I5"] and name[1] != val) or (name[0:3] == "IM5" and name[2] != val):
+                self.uc.bar_warn("Inlet name " + name + " and type '" + val + "' do not correspond!")
+            index = int(val) - 1 if val != "" else 0
+            index = 5 if index == 4 else index
+            if index > 5:
+                self.uc.bar_warn("Inlet " + name + " has incorrect drain type!")
+            # index = 5 if index > 5 else 0 if index < 0 else index
 
-        self.inlet_drain_type_cbo.setCurrentIndex(index)
+            self.inlet_drain_type_cbo.setCurrentIndex(index)
 
-        self.length_dbox.setValue(float_or_zero(self.inlets_tblw.item(row, 8)))
-        self.width_dbox.setValue(float_or_zero(self.inlets_tblw.item(row, 9)))
-        self.height_dbox.setValue(float_or_zero(self.inlets_tblw.item(row, 10)))
-        self.weir_coeff_dbox.setValue(float_or_zero(self.inlets_tblw.item(row, 11)))
-        self.feature_sbox.setValue(float_or_zero(self.inlets_tblw.item(row, 12)))
-        self.curb_height_dbox.setValue(float_or_zero(self.inlets_tblw.item(row, 13)))
-        self.clogging_factor_dbox.setValue(float_or_zero(self.inlets_tblw.item(row, 14)))
-        self.time_for_clogging_dbox.setValue(float_or_zero(self.inlets_tblw.item(row, 15)))
-        self.dropbox_area_dbox.setValue(float_or_zero(self.inlets_tblw.item(row, 17)))
+            self.length_dbox.setValue(float_or_zero(self.inlets_tblw.item(row, 8)))
+            self.width_dbox.setValue(float_or_zero(self.inlets_tblw.item(row, 9)))
+            self.height_dbox.setValue(float_or_zero(self.inlets_tblw.item(row, 10)))
+            self.weir_coeff_dbox.setValue(float_or_zero(self.inlets_tblw.item(row, 11)))
+            self.feature_sbox.setValue(int_or_zero(self.inlets_tblw.item(row, 12)))
+            self.curb_height_dbox.setValue(float_or_zero(self.inlets_tblw.item(row, 13)))
+            self.clogging_factor_dbox.setValue(float_or_zero(self.inlets_tblw.item(row, 14)))
+            self.time_for_clogging_dbox.setValue(float_or_zero(self.inlets_tblw.item(row, 15)))
+            self.dropbox_area_dbox.setValue(float_or_zero(self.inlets_tblw.item(row, 17)))
 
-        rt_name = self.inlets_tblw.item(row, 16).text().strip()
-        rt_name = rt_name if rt_name is not None else ""
-        idx = self.inlet_rating_table_cbo.findText(rt_name)
-        self.inlet_rating_table_cbo.setCurrentIndex(idx)
+            rt_name = self.inlets_tblw.item(row, 16).text().strip()
+            rt_name = rt_name if rt_name is not None else ""
+            idx = self.inlet_rating_table_cbo.findText(rt_name)
+            self.inlet_rating_table_cbo.setCurrentIndex(idx)
 
-        self.enable_external_inflow()
+            self.enable_external_inflow()
 
-        self.block = False
+            self.block = False
 
-        self.highlight_inlet_cell(self.grid_element_le.text())
+            self.highlight_inlet_cell(self.grid_element_le.text())
 
-        QApplication.restoreOverrideCursor()
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.uc.show_error("Error populating inlet values!", e)
+        finally:
+            QApplication.restoreOverrideCursor()
+
+    def inlets_tblw_cell_changed(self, row, column):
+        """
+        Function to update the data on the dialog when anything is changed on the table
+        """
+        QApplication.setOverrideCursor(Qt.WaitCursor)
+        try:
+            self.inlet_cbo.blockSignals(True)
+            name = self.inlets_tblw.item(row, 0).text()
+            self.inlet_cbo.setItemText(self.inlet_cbo.currentIndex(), name)
+            self.inlet_cbo.setCurrentIndex(self.inlet_cbo.currentIndex())
+
+            self.inlet_cbo.blockSignals(False)
+
+            self.block = True
+
+            self.grid_element_le.setText(self.inlets_tblw.item(row, 1).text())
+            self.invert_elevation_dbox.setValue(float_or_zero(self.inlets_tblw.item(row, 2)))
+            self.max_depth_dbox.setValue(float_or_zero(self.inlets_tblw.item(row, 3)))
+            self.initial_depth_dbox.setValue(float_or_zero(self.inlets_tblw.item(row, 4)))
+            self.surcharge_depth_dbox.setValue(float_or_zero(self.inlets_tblw.item(row, 5)))
+            # self.ponded_area_dbox.setValue(float_or_zero(self.inlets_tblw.item(row, 6)))
+
+            val = self.inlets_tblw.item(row, 7).text().strip()
+            # Check that type and name are consistent:
+            if (name[0:2] in ["I1", "I2", "I3", "I4", "I5"] and name[1] != val) or (name[0:3] == "IM5" and name[2] != val):
+                self.uc.bar_warn("Inlet name " + name + " and type '" + val + "' do not correspond!")
+            index = int(val) - 1 if val != "" else 0
+            index = 5 if index == 4 else index
+            if index > 5:
+                self.uc.bar_warn("Inlet " + name + " has incorrect drain type!")
+            # index = 5 if index > 5 else 0 if index < 0 else index
+
+            self.inlet_drain_type_cbo.setCurrentIndex(index)
+
+            self.length_dbox.setValue(float_or_zero(self.inlets_tblw.item(row, 8)))
+            self.width_dbox.setValue(float_or_zero(self.inlets_tblw.item(row, 9)))
+            self.height_dbox.setValue(float_or_zero(self.inlets_tblw.item(row, 10)))
+            self.weir_coeff_dbox.setValue(float_or_zero(self.inlets_tblw.item(row, 11)))
+            self.feature_sbox.setValue(int_or_zero(self.inlets_tblw.item(row, 12)))
+            self.curb_height_dbox.setValue(float_or_zero(self.inlets_tblw.item(row, 13)))
+            self.clogging_factor_dbox.setValue(float_or_zero(self.inlets_tblw.item(row, 14)))
+            self.time_for_clogging_dbox.setValue(float_or_zero(self.inlets_tblw.item(row, 15)))
+            self.dropbox_area_dbox.setValue(float_or_zero(self.inlets_tblw.item(row, 17)))
+
+            rt_name = self.inlets_tblw.item(row, 16).text().strip()
+            rt_name = rt_name if rt_name is not None else ""
+            idx = self.inlet_rating_table_cbo.findText(rt_name)
+            self.inlet_rating_table_cbo.setCurrentIndex(idx)
+
+            self.enable_external_inflow()
+
+            self.block = False
+
+            self.highlight_inlet_cell(self.grid_element_le.text())
+
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.uc.show_error("Error populating inlet values!", e)
+        finally:
+            QApplication.restoreOverrideCursor()
+
 
     def fill_individual_controls_with_current_inlet_in_table(self):
         # Highlight row in table:
