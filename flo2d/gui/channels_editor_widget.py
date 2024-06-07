@@ -99,13 +99,14 @@ class ChannelsEditorWidget(qtBaseClass, uiDialog):
             self.ending_water_elev_dbox.setValue(data_wsel[3])
             self.initial_flow_elements_grp.setChecked(True)
 
-        qry_chan = """SELECT isedn, depinitial, froudc, roughadj, isedn FROM chan WHERE fid = ?;"""
+        qry_chan = """SELECT isedn, depinitial, froudc, roughadj, isedn, ibaseflow FROM chan WHERE fid = ?;"""
         data_chan = self.gutils.execute(qry_chan, (idx,)).fetchone()
         self.initial_flow_for_all_dbox.setValue(data_chan[1])
         self.max_froude_number_dbox.setValue(data_chan[2])
         self.roughness_adjust_coeff_dbox.setValue(data_chan[3])
         equation = data_chan[4] - 1 if data_chan[4] is not None else 0
         self.transport_eq_cbo.setCurrentIndex(equation)
+        self.channel_bedflow_dbox.setValue(data_chan[5])
 
     def schematized_channels_help(self):
         QDesktopServices.openUrl(QUrl("https://flo-2dsoftware.github.io/FLO-2D-Documentation/Plugin1000/widgets/schematized-channel-editor/Schematized%20Channel%20Editor.html"))        
