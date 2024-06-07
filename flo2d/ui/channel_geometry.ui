@@ -6,12 +6,12 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>972</width>
+    <width>1161</width>
     <height>944</height>
    </rect>
   </property>
   <property name="sizePolicy">
-   <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+   <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
     <horstretch>0</horstretch>
     <verstretch>0</verstretch>
    </sizepolicy>
@@ -19,7 +19,7 @@
   <property name="windowTitle">
    <string>Schematic Channel Segments</string>
   </property>
-  <layout class="QGridLayout" name="gridLayout_31">
+  <layout class="QGridLayout" name="gridLayout_9">
    <item row="0" column="0">
     <widget class="QLabel" name="label">
      <property name="text">
@@ -53,13 +53,10 @@
      <property name="checkable">
       <bool>false</bool>
      </property>
-     <layout class="QGridLayout" name="gridLayout_9">
-      <item row="0" column="0" rowspan="2">
-       <layout class="QGridLayout" name="gridLayout_4">
-        <property name="sizeConstraint">
-         <enum>QLayout::SetFixedSize</enum>
-        </property>
-        <item row="0" column="0">
+     <layout class="QGridLayout" name="gridLayout_4">
+      <item row="0" column="0">
+       <layout class="QVBoxLayout" name="verticalLayout_2">
+        <item>
          <widget class="QLabel" name="label_20">
           <property name="sizePolicy">
            <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
@@ -84,7 +81,7 @@
           </property>
          </widget>
         </item>
-        <item row="1" column="0">
+        <item>
          <widget class="QDoubleSpinBox" name="max_froude_number_dbox">
           <property name="sizePolicy">
            <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
@@ -108,12 +105,9 @@
         </item>
        </layout>
       </item>
-      <item row="0" column="1" rowspan="2">
-       <layout class="QGridLayout" name="gridLayout_8">
-        <property name="sizeConstraint">
-         <enum>QLayout::SetFixedSize</enum>
-        </property>
-        <item row="0" column="0">
+      <item row="0" column="1">
+       <layout class="QVBoxLayout" name="verticalLayout_3">
+        <item>
          <widget class="QLabel" name="label_21">
           <property name="sizePolicy">
            <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
@@ -138,7 +132,7 @@
           </property>
          </widget>
         </item>
-        <item row="1" column="0">
+        <item>
          <widget class="QDoubleSpinBox" name="roughness_adjust_coeff_dbox">
           <property name="sizePolicy">
            <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
@@ -163,94 +157,149 @@
        </layout>
       </item>
       <item row="0" column="2">
-       <widget class="QLabel" name="label_22">
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-          <horstretch>0</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
-        </property>
-        <property name="minimumSize">
-         <size>
-          <width>281</width>
-          <height>0</height>
-         </size>
-        </property>
-        <property name="toolTip">
-         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;ISEDN&lt;/p&gt;&lt;p&gt;Sediment transport equation or data group for routing by size fractions for the channel segment. Set ISED = 1 in the CONT.DAT file to use this option. Choose one of the two following options for each channel segment:&lt;/p&gt;&lt;p&gt;For sediment routing without size fractions: Set ISEDN(K) = 1 - 11 (one of eleven sediment transport equations).&lt;/p&gt;&lt;p&gt;or&lt;/p&gt;&lt;p&gt;For sediment routing with size fractions: Set ISEDN(K) = sediment data group (Line 3 in SED.DAT which includes a sediment transport equation).&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-        </property>
-        <property name="text">
-         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Transport equation (if ISED = 1 in CONT.DAT)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-        </property>
-        <property name="wordWrap">
-         <bool>true</bool>
-        </property>
-       </widget>
+       <layout class="QVBoxLayout" name="verticalLayout">
+        <item>
+         <widget class="QLabel" name="label_22">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="minimumSize">
+           <size>
+            <width>281</width>
+            <height>0</height>
+           </size>
+          </property>
+          <property name="toolTip">
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;ISEDN&lt;/p&gt;&lt;p&gt;Sediment transport equation or data group for routing by size fractions for the channel segment. Set ISED = 1 in the CONT.DAT file to use this option. Choose one of the two following options for each channel segment:&lt;/p&gt;&lt;p&gt;For sediment routing without size fractions: Set ISEDN(K) = 1 - 11 (one of eleven sediment transport equations).&lt;/p&gt;&lt;p&gt;or&lt;/p&gt;&lt;p&gt;For sediment routing with size fractions: Set ISEDN(K) = sediment data group (Line 3 in SED.DAT which includes a sediment transport equation).&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+          </property>
+          <property name="text">
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Transport equation (if ISED = 1 in CONT.DAT)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+          </property>
+          <property name="wordWrap">
+           <bool>true</bool>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QComboBox" name="transport_eq_cbo">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <item>
+           <property name="text">
+            <string>Zeller and Fullerton</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>Yang</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>Englund and Hansen</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>Ackers and Hansen</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>Laursen</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>Toffaleti</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>Woo-MPM</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>MPM-Smart</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>Karim-Kennedy</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>Parker, Klingeman &amp; McLean</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>Van Rijn</string>
+           </property>
+          </item>
+         </widget>
+        </item>
+       </layout>
       </item>
-      <item row="1" column="2">
-       <widget class="QComboBox" name="transport_eq_cbo">
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-          <horstretch>0</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
-        </property>
+      <item row="0" column="3">
+       <layout class="QVBoxLayout" name="verticalLayout_4">
         <item>
-         <property name="text">
-          <string>Zeller and Fullerton</string>
-         </property>
+         <widget class="QLabel" name="label_34">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="minimumSize">
+           <size>
+            <width>147</width>
+            <height>0</height>
+           </size>
+          </property>
+          <property name="toolTip">
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;IBASEFLOW&lt;/p&gt;&lt;p&gt;Baseflow of a channel to establish a flow condition for floodwave arrival time. Place this line after each segment if more than one segment is used.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+          </property>
+          <property name="text">
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Channel Baseflow&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+          </property>
+          <property name="wordWrap">
+           <bool>true</bool>
+          </property>
+         </widget>
         </item>
         <item>
-         <property name="text">
-          <string>Yang</string>
-         </property>
+         <widget class="QDoubleSpinBox" name="channel_baseflow_dbox">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="buttonSymbols">
+           <enum>QAbstractSpinBox::UpDownArrows</enum>
+          </property>
+          <property name="decimals">
+           <number>4</number>
+          </property>
+          <property name="maximum">
+           <double>9999999.000000000000000</double>
+          </property>
+          <property name="singleStep">
+           <double>1.000000000000000</double>
+          </property>
+         </widget>
         </item>
-        <item>
-         <property name="text">
-          <string>Englund and Hansen</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>Ackers and Hansen</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>Laursen</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>Toffaleti</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>Woo-MPM</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>MPM-Smart</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>Karim-Kennedy</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>Parker, Klingeman &amp; McLean</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>Van Rijn</string>
-         </property>
-        </item>
-       </widget>
+       </layout>
       </item>
      </layout>
     </widget>
@@ -262,47 +311,25 @@
      </property>
      <property name="sizeHint" stdset="0">
       <size>
-       <width>214</width>
-       <height>20</height>
+       <width>211</width>
+       <height>17</height>
       </size>
      </property>
     </spacer>
    </item>
    <item row="2" column="0" colspan="3">
-    <widget class="QGroupBox" name="initial_flow_grp">
-     <property name="sizePolicy">
-      <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-       <horstretch>0</horstretch>
-       <verstretch>0</verstretch>
-      </sizepolicy>
-     </property>
-     <property name="minimumSize">
-      <size>
-       <width>911</width>
-       <height>56</height>
-      </size>
-     </property>
+    <widget class="QgsCollapsibleGroupBox" name="timeAndPlotGroupBox">
      <property name="title">
-      <string>Initail flow depth</string>
+      <string>Time Control and Plot Variables</string>
      </property>
-     <property name="checkable">
+     <property name="collapsed" stdset="0">
+      <bool>true</bool>
+     </property>
+     <property name="saveCollapsedState" stdset="0">
       <bool>false</bool>
      </property>
-     <layout class="QGridLayout" name="gridLayout_26">
+     <layout class="QGridLayout" name="gridLayout_8">
       <item row="0" column="0">
-       <spacer name="horizontalSpacer">
-        <property name="orientation">
-         <enum>Qt::Horizontal</enum>
-        </property>
-        <property name="sizeHint" stdset="0">
-         <size>
-          <width>132</width>
-          <height>20</height>
-         </size>
-        </property>
-       </spacer>
-      </item>
-      <item row="0" column="1">
        <layout class="QGridLayout" name="gridLayout_25">
         <item row="0" column="0">
          <layout class="QGridLayout" name="gridLayout_24">
@@ -569,26 +596,13 @@
         </item>
        </layout>
       </item>
-      <item row="0" column="2">
-       <spacer name="horizontalSpacer_2">
-        <property name="orientation">
-         <enum>Qt::Horizontal</enum>
-        </property>
-        <property name="sizeHint" stdset="0">
-         <size>
-          <width>132</width>
-          <height>20</height>
-         </size>
-        </property>
-       </spacer>
-      </item>
      </layout>
     </widget>
    </item>
    <item row="3" column="0" colspan="3">
     <widget class="QGroupBox" name="grid_element_grp">
      <property name="sizePolicy">
-      <sizepolicy hsizetype="Fixed" vsizetype="Expanding">
+      <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
        <horstretch>0</horstretch>
        <verstretch>0</verstretch>
       </sizepolicy>
@@ -1507,6 +1521,14 @@
    </item>
   </layout>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>QgsCollapsibleGroupBox</class>
+   <extends>QGroupBox</extends>
+   <header>qgscollapsiblegroupbox.h</header>
+   <container>1</container>
+  </customwidget>
+ </customwidgets>
  <resources/>
  <connections>
   <connection>
