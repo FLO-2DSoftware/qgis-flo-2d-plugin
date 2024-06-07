@@ -39,6 +39,7 @@ class ChannelsEditorWidget(qtBaseClass, uiDialog):
             self.max_froude_number_dbox.valueChanged.connect(self.update_froude)
             self.roughness_adjust_coeff_dbox.valueChanged.connect(self.update_roughness)
             self.transport_eq_cbo.currentIndexChanged.connect(self.update_transport_eq)
+            self.channel_bedflow_dbox.valueChanged.connect(self.update_baseflow)
             self.initial_flow_elements_grp.toggled.connect(self.fill_starting_and_ending_water_elevations)
             self.view_channel_geometry_btn.clicked.connect(self.show_channel_segments_dialog)
             self.channel_segment_cbo.currentIndexChanged.connect(self.show_channel_segment_dependencies)
@@ -164,6 +165,12 @@ class ChannelsEditorWidget(qtBaseClass, uiDialog):
         qry = """UPDATE chan SET froudc = ? WHERE fid = ?;"""
         idx = self.channel_segment_cbo.currentIndex() + 1
         value = self.max_froude_number_dbox.value()
+        self.gutils.execute(qry, (value, idx))
+
+    def update_baseflow(self):
+        qry = """UPDATE chan SET ibaseflow = ? WHERE fid = ?;"""
+        idx = self.channel_segment_cbo.currentIndex() + 1
+        value = self.channel_bedflow_dbox.value()
         self.gutils.execute(qry, (value, idx))
 
     def update_roughness(self):
