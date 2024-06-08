@@ -52,7 +52,7 @@ class ChannelsEditorWidget(qtBaseClass, uiDialog):
             self.populate_channels_widget()
 
     def populate_channels_widget(self):
-        qry_chan = """SELECT fid, name, depinitial, froudc, roughadj, isedn FROM chan ORDER BY fid;"""
+        qry_chan = """SELECT fid, name, depinitial, froudc, roughadj, isedn, ibaseflow FROM chan ORDER BY fid;"""
         rows_chan = self.gutils.execute(qry_chan).fetchall()
         if not rows_chan:
             return
@@ -64,6 +64,7 @@ class ChannelsEditorWidget(qtBaseClass, uiDialog):
                 self.max_froude_number_dbox.setValue(row[3])
                 equation = row[5] - 1 if row[5] is not None else 0
                 self.transport_eq_cbo.setCurrentIndex(equation)
+                self.channel_bedflow_dbox.setValue(row[5])
 
         qry_chan_wsel = "SELECT seg_fid, istart, wselstart, iend, wselend FROM chan_wsel"
         rows_chan_wsel = self.gutils.execute(qry_chan_wsel).fetchall()
@@ -123,6 +124,7 @@ class ChannelsEditorWidget(qtBaseClass, uiDialog):
 
         dlg_channels = ChannelGeometryDialog(self.iface, self.lyrs)
         close = dlg_channels.exec_()
+        self.show_channel_segment_dependencies()
         # if close:
         #     try:
         #         self.uc.bar_info('Channel data saved!', dur=3)
