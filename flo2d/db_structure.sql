@@ -2216,6 +2216,7 @@ CREATE TABLE "user_left_bank" (
     "froudc" REAL DEFAULT 0, -- FROUDC, max Froude channel number
     "roughadj" REAL DEFAULT 0, -- ROUGHADJ, coefficient for depth adjustment
     "isedn" INTEGER DEFAULT 0, -- ISEDN, sediment transport equation or data
+	"ibaseflow" REAL DEFAULT 0, -- IBASEFLOW, chanel baseflow discharge
     "rank" INTEGER,
     "notes" TEXT
 );
