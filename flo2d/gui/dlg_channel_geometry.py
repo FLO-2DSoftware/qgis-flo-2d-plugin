@@ -86,6 +86,8 @@ class ChannelGeometryDialog(qtBaseClass, uiDialog):
         self.max_froude_number_dbox.valueChanged.connect(self.update_froude)
         self.roughness_adjust_coeff_dbox.valueChanged.connect(self.roughness_adjust_coeff_dbox_valueChanged)
         self.transport_eq_cbo.currentIndexChanged.connect(self.update_transport_eq)
+        self.channel_baseflow_dbox.valueChanged.connect(self.update_channel_baseflow)
+        
         self.initial_flow_elems_grp.toggled.connect(self.fill_starting_and_ending_water_elevations)
         self.first_elem_box.valueChanged.connect(self.update_first)
         self.starting_water_elev_dbox.valueChanged.connect(self.update_starting)
@@ -125,7 +127,7 @@ class ChannelGeometryDialog(qtBaseClass, uiDialog):
 
     def populate_channels_dialog(self):
         # Fill dropdown list of segments and load global data of 1rs channel segment.
-        qry_chan = """SELECT fid, name, depinitial, froudc, roughadj, isedn FROM chan ORDER BY fid;"""
+        qry_chan = """SELECT fid, name, depinitial, froudc, roughadj, isedn, ibaseflow FROM chan ORDER BY fid;"""
         qry_chan_wsel = "SELECT seg_fid, istart, wselstart, iend, wselend FROM chan_wsel"
 
         rows_chan = self.gutils.execute(qry_chan).fetchall()
@@ -140,6 +142,7 @@ class ChannelGeometryDialog(qtBaseClass, uiDialog):
                 self.max_froude_number_dbox.setValue(row[3])
                 equation = row[5] - 1 if row[5] is not None else 0
                 self.transport_eq_cbo.setCurrentIndex(equation)
+                self.channel_baseflow_dbox.setValue(row[6])
 
         rows_chan_wsel = self.gutils.execute(qry_chan_wsel).fetchall()
         if not rows_chan_wsel:
@@ -307,13 +310,14 @@ class ChannelGeometryDialog(qtBaseClass, uiDialog):
             self.ending_water_elev_dbox.setValue(data_wsel[3])
             self.initial_flow_elems_grp.setChecked(True)
 
-        qry_chan = """SELECT isedn, depinitial, froudc, roughadj, isedn FROM chan WHERE fid = ?;"""
+        qry_chan = """SELECT isedn, depinitial, froudc, roughadj, isedn, ibaseflow FROM chan WHERE fid = ?;"""
         data_chan = self.gutils.execute(qry_chan, (idx,)).fetchone()
         self.initial_flow_for_all_dbox.setValue(data_chan[1])
         self.max_froude_number_dbox.setValue(data_chan[2])
         self.roughness_adjust_coeff_dbox.setValue(data_chan[3])
         equation = data_chan[4] - 1 if data_chan[4] is not None else 0
         self.transport_eq_cbo.setCurrentIndex(equation)
+        self.channel_baseflow_dbox.setValue(data_chan[5])
 
     def fill_starting_and_ending_water_elevations(self):
         sql_in = """INSERT INTO chan_wsel (seg_fid, istart, wselstart, iend, wselend) VALUES (?,?,?,?,?);"""
@@ -617,6 +621,12 @@ class ChannelGeometryDialog(qtBaseClass, uiDialog):
         qry = """UPDATE chan SET froudc = ? WHERE fid = ?;"""
         idx = self.channel_segment_cbo.currentIndex() + 1
         value = self.max_froude_number_dbox.value()
+        self.gutils.execute(qry, (value, idx))
+
+    def update_channel_baseflow(self):
+        qry = """UPDATE chan SET ibaseflow = ? WHERE fid = ?;"""
+        idx = self.channel_segment_cbo.currentIndex() + 1
+        value = self.channel_baseflow_dbox.value()
         self.gutils.execute(qry, (value, idx))
 
     def update_roughness(self):
