@@ -13,6 +13,10 @@ from PyQt5.QtGui import QDesktopServices
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 from .ui_utils import load_ui
+from ..flo2d_tools.grid_tools import (
+    highlight_selected_segment,
+    highlight_selected_xsection_a,
+)
 
 uiDialog, qtBaseClass = load_ui("channels_editor")
 
@@ -118,6 +122,8 @@ class ChannelsEditorWidget(qtBaseClass, uiDialog):
             self.load_channel_segments_data()
             self.uc.bar_error("Channel missing!")
             self.channel_segment_cbo.blockSignals(False)
+  
+        highlight_selected_segment(self.lyrs.data["chan"]["qlyr"], self.channel_segment_cbo.currentIndex() + 1)
             
     def schematized_channels_help(self):
         QDesktopServices.openUrl(QUrl("https://flo-2dsoftware.github.io/FLO-2D-Documentation/Plugin1000/widgets/schematized-channel-editor/Schematized%20Channel%20Editor.html"))        
