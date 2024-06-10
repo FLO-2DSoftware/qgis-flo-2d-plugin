@@ -1516,7 +1516,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                     except:
                         cell = None
 
-                    if cell is None and swmm_allow_discharge == '0':
+                    if cell is None and swmm_allow_discharge == '1':
                         outside_outfalls += "\n" + name
                         continue
 
@@ -1716,7 +1716,6 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                         continue
 
                     cell = self.gutils.grid_on_point(point.x(), point.y())
-                    self.uc.log_info(str(external_inflow))
                     if cell is None and external_inflow == 'NO':
                         outside_strge_units += "\n" + name
                         continue
@@ -1919,6 +1918,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                         if not (conduit_name in outside_conduits):
                             outside_conduits.append(conduit_name)
                             continue
+
                     # Conduit inlet is outside the grid and it is an Inlet
                     elif conduit_inlet_cell is None and conduit_inlet.startswith("I"):
                         if not (conduit_name in outside_conduits):
