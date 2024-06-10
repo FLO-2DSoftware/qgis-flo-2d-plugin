@@ -1218,21 +1218,17 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
 
     def load_inlets_from_shapefile(self):
         if self.load_inlets:
-            mame = ""
             try:
                 QApplication.setOverrideCursor(Qt.WaitCursor)
                 fields = self.user_swmm_nodes_lyr.fields()
                 new_feats = []
                 outside_inlets = ""
                 inlets_shapefile = self.inlets_shapefile_cbo.currentText()
-                group = self.lyrs.group
                 lyr = self.lyrs.get_layer_by_name(inlets_shapefile).layer()
 
                 inlets_shapefile_fts = lyr.getFeatures()
                 modified = 0
                 for f in inlets_shapefile_fts:
-                    grid = 0
-                    sd_type = "I"
                     name = (
                         f[self.inlets_name_FieldCbo.currentText()]
                         if self.inlets_name_FieldCbo.currentText() != ""
@@ -1331,7 +1327,8 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                     except:
                         cell = None
 
-                    if cell is None:
+                    # Inlet outside the grid
+                    if cell is None and name.startswith("I"):
                         outside_inlets += "\n" + name
                         continue
 
@@ -1423,8 +1420,11 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                 QApplication.restoreOverrideCursor()
 
                 if outside_inlets != "":
-                    self.uc.show_warn(
-                        "WARNING 060319.1657: Wrong coordinates. The following inlets/junctions may be outside the computational domain!\n"
+                    self.uc.bar_info(
+                        "WARNING 060319.1657: Inlets/junctions are outside the computational domain!"
+                    )
+                    self.uc.log_info(
+                        "WARNING 060319.1657: The following inlets/junctions are outside the computational domain!\n"
                         + outside_inlets
                     )
 
@@ -1462,14 +1462,11 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                 outfalls_shapefile_fts = lyr.getFeatures()
 
                 for f in outfalls_shapefile_fts:
-                    grid = 0
-                    sd_type = "O"
                     name = (
                         f[self.outfall_name_FieldCbo.currentText()]
                         if self.outfall_name_FieldCbo.currentText() != ""
                         else ""
                     )
-                    intype = 1
                     outfall_invert_elev = (
                         f[self.outfall_invert_elevation_FieldCbo.currentText()]
                         if self.outfall_invert_elevation_FieldCbo.currentText() != ""
@@ -1514,8 +1511,12 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                         self.uc.show_warn("WARNING 060319.1659: Outfall  " + name + "  is faulty!")
                         continue
 
-                    cell = self.gutils.grid_on_point(point.x(), point.y())
-                    if cell is None:
+                    try:
+                        cell = self.gutils.grid_on_point(point.x(), point.y())
+                    except:
+                        cell = None
+
+                    if cell is None and swmm_allow_discharge == '0':
                         outside_outfalls += "\n" + name
                         continue
 
@@ -1573,7 +1574,10 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                 QApplication.restoreOverrideCursor()
 
                 if outside_outfalls != "":
-                    self.uc.show_warn(
+                    self.uc.bar_info(
+                        "WARNING 060319.1700: Outfalls are outside the computational domain!"
+                    )
+                    self.uc.log_info(
                         "WARNING 060319.1700: The following outfalls are outside the computational domain!\n"
                         + outside_outfalls
                     )
@@ -1712,7 +1716,8 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                         continue
 
                     cell = self.gutils.grid_on_point(point.x(), point.y())
-                    if cell is None:
+                    self.uc.log_info(str(external_inflow))
+                    if cell is None and external_inflow == 'NO':
                         outside_strge_units += "\n" + name
                         continue
 
@@ -1757,7 +1762,10 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                 QApplication.restoreOverrideCursor()
 
                 if outside_strge_units != "":
-                    self.uc.show_warn(
+                    self.uc.bar_info(
+                        "WARNING 250424.2002: Storage units are outside the computational domain!"
+                    )
+                    self.uc.log_info(
                         "WARNING 250424.2002: The following storage units are outside the computational domain!\n"
                         + outside_strge_units
                     )
@@ -1779,7 +1787,8 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                 QApplication.setOverrideCursor(Qt.WaitCursor)
                 fields = self.user_swmm_conduits_lyr.fields()
                 new_feats = []
-                outside_conduits = ""
+                outside_conduits = []
+                inlets_outlets_inside = []
 
                 conduits_shapefile = self.conduits_shapefile_cbo.currentText()
                 lyr = self.lyrs.get_layer_by_name(conduits_shapefile).layer()
@@ -1903,16 +1912,17 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                         self.uc.show_warn("WARNING 060319.1702: Conduit  " + conduit_name + "  is faulty!")
                         continue
 
-                    cell = self.gutils.grid_on_point(points[0].x(), points[0].y())
-                    if cell is None:
+                    conduit_inlet_cell = self.gutils.grid_on_point(points[0].x(), points[0].y())
+                    conduit_outlet_cell = self.gutils.grid_on_point(points[len(points) - 1].x(), points[len(points) - 1].y())
+                    # Both ends of the conduit is outside the grid
+                    if conduit_inlet_cell is None and conduit_outlet_cell is None:
                         if not (conduit_name in outside_conduits):
-                            outside_conduits += "\n" + conduit_name
+                            outside_conduits.append(conduit_name)
                             continue
-
-                    cell = self.gutils.grid_on_point(points[1].x(), points[1].y())
-                    if cell is None:
+                    # Conduit inlet is outside the grid and it is an Inlet
+                    elif conduit_inlet_cell is None and conduit_inlet.startswith("I"):
                         if not (conduit_name in outside_conduits):
-                            outside_conduits += "\n" + conduit_name
+                            outside_conduits.append(conduit_name)
                             continue
 
                     new_geom = QgsGeometry.fromPolylineXY(points)
@@ -1989,11 +1999,14 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                     )
 
                     new_feats.append(feat)
+                    if conduit_inlet not in inlets_outlets_inside:
+                        inlets_outlets_inside.append(conduit_inlet)
+                    if conduit_outlet not in inlets_outlets_inside:
+                        inlets_outlets_inside.append(conduit_outlet)
 
                 if new_feats:
                     if not self.conduits_append_chbox.isChecked():
                         remove_features(self.user_swmm_conduits_lyr)
-
                     self.user_swmm_conduits_lyr.startEditing()
                     self.user_swmm_conduits_lyr.addFeatures(new_feats)
                     self.user_swmm_conduits_lyr.commitChanges()
@@ -2003,15 +2016,29 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                 else:
                     self.load_conduits = False
 
+                # Remove junctions not connected to conduits
+                self.user_swmm_nodes_lyr.startEditing()
+                for feat in self.user_swmm_nodes_lyr.getFeatures():
+                    node_name = feat['name']
+                    if len(inlets_outlets_inside) > 1:
+                        if node_name not in inlets_outlets_inside:
+                            self.user_swmm_nodes_lyr.deleteFeature(feat.id())
+                self.user_swmm_nodes_lyr.commitChanges()
+                self.user_swmm_nodes_lyr.updateExtents()
+                self.user_swmm_nodes_lyr.triggerRepaint()
+
                 QApplication.restoreOverrideCursor()
 
                 if no_in_out != 0:
                     self.no_in_out += "\n" + str(no_in_out) + " conduits."
 
-                if outside_conduits != "":
-                    self.uc.show_warn(
+                if len(outside_conduits) > 0:
+                    self.uc.bar_info(
+                        "WARNING 231220.0954: Conduits are outside the computational domain!"
+                    )
+                    self.uc.log_info(
                         "WARNING 231220.0954: The following conduits are outside the computational domain!\n"
-                        + outside_conduits
+                        + '\n'.join(outside_conduits)
                     )
 
             except Exception as e:
@@ -2513,6 +2540,17 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                     e,
                 )
                 self.load_weirs = False
+
+    # def post_process_outside_features(self):
+    #     """
+    #     Function to remove features that are not connected to the grid.
+    #     """
+    #     junctions_connected_to_conduits = []
+    #     if self.load_conduits:
+    #         conduits_weirs_shapefile = self.weirs_shapefile_cbo.currentText()
+    #         lyr = self.lyrs.get_layer_by_name(weirs_shapefile).layer()
+    #     if self.load_outfalls:
+    #             outfalls_shapefile_fts = lyr.getFeatures()
 
     def cancel_message(self):
         self.uc.bar_info("No data was selected!")
