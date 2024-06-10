@@ -728,8 +728,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
         QApplication.setOverrideCursor(Qt.WaitCursor)
 
         chan_sql = [
-            """INSERT INTO chan (geom, depinitial, froudc, roughadj, isedn) VALUES""",
-            5,
+            """INSERT INTO chan (geom, depinitial, froudc, roughadj, isedn, ibaseflow) VALUES""",
+            6,
         ]
         chan_elems_sql = [
             """INSERT INTO chan_elems (geom, fid, seg_fid, nr_in_seg, rbankgrid, fcn, xlen, type) VALUES""",
@@ -786,6 +786,11 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
             segments, wsel, confluence, noexchange = self.parser.parse_chan()
             for i, seg in enumerate(segments, 1):
+                bLine = "0.0"
+                if seg[-1][0] == "B":
+                    bLine = seg[-1][1] 
+                    seg.pop()  
+                    
                 xs = seg[-1]  # Last element from segment. [-1] means count from right, last from right.
                 gids = []
                 for ii, row in enumerate(xs, 1):  # Adds counter ii to iterable.
@@ -800,9 +805,10 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     gids.append(gid)
                     chan_elems_sql += [(geom, gid, i, ii, rbank, fcn, xlen, char)]
                     sql += [tuple(params)]
-                options = seg[:-1]
+                options = seg[:-1] + [bLine]
                 geom = self.build_linestring(gids)
                 chan_sql += [(geom,) + tuple(options)]
+                
 
             for row in wsel:
                 chan_wsel_sql += [tuple(row)]
