@@ -128,8 +128,6 @@ class ChannelGeometryDialog(qtBaseClass, uiDialog):
     def populate_channels_dialog(self):
         # Fill dropdown list of segments and load global data of 1rs channel segment.
         qry_chan = """SELECT fid, name, depinitial, froudc, roughadj, isedn, ibaseflow FROM chan ORDER BY fid;"""
-        qry_chan_wsel = "SELECT seg_fid, istart, wselstart, iend, wselend FROM chan_wsel"
-
         rows_chan = self.gutils.execute(qry_chan).fetchall()
         if not rows_chan:
             return
@@ -144,6 +142,7 @@ class ChannelGeometryDialog(qtBaseClass, uiDialog):
                 self.transport_eq_cbo.setCurrentIndex(equation)
                 self.channel_baseflow_dbox.setValue(row[6])
 
+        qry_chan_wsel = "SELECT seg_fid, istart, wselstart, iend, wselend FROM chan_wsel"
         rows_chan_wsel = self.gutils.execute(qry_chan_wsel).fetchall()
         if not rows_chan_wsel:
             return
@@ -297,7 +296,8 @@ class ChannelGeometryDialog(qtBaseClass, uiDialog):
             return
 
         idx = self.channel_segment_cbo.currentIndex() + 1
-
+        chan_name = self.channel_segment_cbo.currentText()
+        
         qry_wsel = """SELECT istart, wselstart, iend, wselend FROM chan_wsel WHERE seg_fid = ?;"""
         data_wsel = self.gutils.execute(qry_wsel, (idx,)).fetchone()
         if data_wsel is None:
@@ -312,13 +312,16 @@ class ChannelGeometryDialog(qtBaseClass, uiDialog):
 
         qry_chan = """SELECT isedn, depinitial, froudc, roughadj, isedn, ibaseflow FROM chan WHERE fid = ?;"""
         data_chan = self.gutils.execute(qry_chan, (idx,)).fetchone()
-        self.initial_flow_for_all_dbox.setValue(data_chan[1])
-        self.max_froude_number_dbox.setValue(data_chan[2])
-        self.roughness_adjust_coeff_dbox.setValue(data_chan[3])
-        equation = data_chan[4] - 1 if data_chan[4] is not None else 0
-        self.transport_eq_cbo.setCurrentIndex(equation)
-        self.channel_baseflow_dbox.setValue(data_chan[5])
-
+        if data_chan:
+            self.initial_flow_for_all_dbox.setValue(data_chan[1])
+            self.max_froude_number_dbox.setValue(data_chan[2])
+            self.roughness_adjust_coeff_dbox.setValue(data_chan[3])
+            equation = data_chan[4] - 1 if data_chan[4] is not None else 0
+            self.transport_eq_cbo.setCurrentIndex(equation)
+            self.channel_baseflow_dbox.setValue(data_chan[5])
+        else:    
+            self.uc.bar_error("Channel missing!")
+            
     def fill_starting_and_ending_water_elevations(self):
         sql_in = """INSERT INTO chan_wsel (seg_fid, istart, wselstart, iend, wselend) VALUES (?,?,?,?,?);"""
         sql_out = """DELETE from chan_wsel WHERE seg_fid = ?;"""

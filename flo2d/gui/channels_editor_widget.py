@@ -52,20 +52,8 @@ class ChannelsEditorWidget(qtBaseClass, uiDialog):
             self.populate_channels_widget()
 
     def populate_channels_widget(self):
-        qry_chan = """SELECT fid, name, depinitial, froudc, roughadj, isedn, ibaseflow FROM chan ORDER BY fid;"""
-        rows_chan = self.gutils.execute(qry_chan).fetchall()
-        if not rows_chan:
-            return
-        self.channel_segment_cbo.clear()
-        for row in rows_chan:
-            self.channel_segment_cbo.addItem(str(row[1]))
-            if row[0] == 1:
-                self.roughness_adjust_coeff_dbox.setValue(row[4])
-                self.max_froude_number_dbox.setValue(row[3])
-                equation = row[5] - 1 if row[5] is not None else 0
-                self.transport_eq_cbo.setCurrentIndex(equation)
-                self.channel_baseflow_dbox.setValue(row[6])
-
+        self.load_channel_segments_data()
+        
         qry_chan_wsel = "SELECT seg_fid, istart, wselstart, iend, wselend FROM chan_wsel"
         rows_chan_wsel = self.gutils.execute(qry_chan_wsel).fetchall()
         if not rows_chan_wsel:
@@ -81,12 +69,28 @@ class ChannelsEditorWidget(qtBaseClass, uiDialog):
 
     #         self.uc.bar_warn('Schematized Channel Editor populated!.')
 
+    def load_channel_segments_data(self):
+        qry_chan = """SELECT fid, name, depinitial, froudc, roughadj, isedn, ibaseflow FROM chan ORDER BY fid;"""
+        rows_chan = self.gutils.execute(qry_chan).fetchall()
+        if not rows_chan:
+            return
+        self.channel_segment_cbo.clear()
+        for row in rows_chan:
+            self.channel_segment_cbo.addItem(str(row[1]))
+            if row[0] == 1:
+                self.roughness_adjust_coeff_dbox.setValue(row[4])
+                self.max_froude_number_dbox.setValue(row[3])
+                equation = row[5] - 1 if row[5] is not None else 0
+                self.transport_eq_cbo.setCurrentIndex(equation)
+                self.channel_baseflow_dbox.setValue(row[6])          
+        
     def show_channel_segment_dependencies(self):
         if self.gutils.is_table_empty("chan"):
             self.uc.bar_warn("Schematized Channel Segments (left bank) Layer is empty!.")
             return
 
         idx = self.channel_segment_cbo.currentIndex() + 1
+        chan_name = self.channel_segment_cbo.currentText()
 
         qry_wsel = """SELECT istart, wselstart, iend, wselend FROM chan_wsel WHERE seg_fid = ?;"""
         data_wsel = self.gutils.execute(qry_wsel, (idx,)).fetchone()
@@ -102,13 +106,19 @@ class ChannelsEditorWidget(qtBaseClass, uiDialog):
 
         qry_chan = """SELECT isedn, depinitial, froudc, roughadj, isedn, ibaseflow FROM chan WHERE fid = ?;"""
         data_chan = self.gutils.execute(qry_chan, (idx,)).fetchone()
-        self.initial_flow_for_all_dbox.setValue(data_chan[1])
-        self.max_froude_number_dbox.setValue(data_chan[2])
-        self.roughness_adjust_coeff_dbox.setValue(data_chan[3])
-        equation = data_chan[4] - 1 if data_chan[4] is not None else 0
-        self.transport_eq_cbo.setCurrentIndex(equation)
-        self.channel_baseflow_dbox.setValue(data_chan[5])
-
+        if data_chan:
+            self.initial_flow_for_all_dbox.setValue(data_chan[1])
+            self.max_froude_number_dbox.setValue(data_chan[2])
+            self.roughness_adjust_coeff_dbox.setValue(data_chan[3])
+            equation = data_chan[4] - 1 if data_chan[4] is not None else 0
+            self.transport_eq_cbo.setCurrentIndex(equation)
+            self.channel_baseflow_dbox.setValue(data_chan[5])
+        else:
+            self.channel_segment_cbo.blockSignals(True)
+            self.load_channel_segments_data()
+            self.uc.bar_error("Channel missing!")
+            self.channel_segment_cbo.blockSignals(False)
+            
     def schematized_channels_help(self):
         QDesktopServices.openUrl(QUrl("https://flo-2dsoftware.github.io/FLO-2D-Documentation/Plugin1000/widgets/schematized-channel-editor/Schematized%20Channel%20Editor.html"))        
 

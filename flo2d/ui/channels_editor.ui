@@ -297,8 +297,7 @@
            <widget class="QLabel" name="label">
             <property name="toolTip">
              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;IBASEFLOW&lt;/p&gt;&lt;p&gt;Baseflow of a channel to establish a flow condition for floodwave
-arrival time. Place this line after each segment if more than one
-segment is used.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+arrival time segment is used.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
             </property>
             <property name="text">
              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Channel Baseflow&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
