@@ -1923,7 +1923,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                             continue
 
                     # Conduit inlet is outside the grid and it is an Inlet
-                    elif conduit_inlet_cell is None and conduit_inlet.startswith("I"):
+                    elif conduit_inlet_cell is None and conduit_inlet.lower().startswith("i"):
                         if not (conduit_name in outside_conduits):
                             outside_conduits.append(conduit_name)
                             continue
@@ -2061,8 +2061,9 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                 QApplication.setOverrideCursor(Qt.WaitCursor)
                 fields = self.user_swmm_pumps_lyr.fields()
                 new_feats = []
-                outside_pumps = ""
+                outside_pumps = []
                 wrong_status = 0
+                inlets_outlets_inside = []
 
                 pumps_shapefile = self.pumps_shapefile_cbo.currentText()
                 lyr = self.lyrs.get_layer_by_name(pumps_shapefile).layer()
@@ -2133,15 +2134,18 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                         self.uc.show_warn("WARNING 280222.0951: Pump  " + pump_name + " is faulty!")
                         continue
 
-                    cell = self.gutils.grid_on_point(points[0].x(), points[0].y())
-                    if cell is None:
-                        outside_pumps += "\n" + pump_name
-                        continue
-
-                    cell = self.gutils.grid_on_point(points[1].x(), points[1].y())
-                    if cell is None:
-                        outside_pumps += "\n" + pump_name
-                        continue
+                    pump_inlet_cell = self.gutils.grid_on_point(points[0].x(), points[0].y())
+                    pump_outlet_cell = self.gutils.grid_on_point(points[len(points) - 1].x(), points[len(points) - 1].y())
+                    # Both ends of the pump is outside the grid
+                    if pump_inlet_cell is None and pump_outlet_cell is None:
+                        if not (pump_name in outside_pumps):
+                            outside_pumps.append(pump_name)
+                            continue
+                    # Pump inlet is outside the grid and it is an Inlet
+                    elif pump_inlet_cell is None and pump_inlet.lower().startswith("i"):
+                        if not (pump_name in outside_pumps):
+                            outside_pumps.append(pump_name)
+                            continue
 
                     new_geom = QgsGeometry.fromPolylineXY(points)
                     feat.setGeometry(new_geom)
@@ -2164,6 +2168,10 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                     )
 
                     new_feats.append(feat)
+                    if pump_inlet not in inlets_outlets_inside:
+                        inlets_outlets_inside.append(pump_inlet)
+                    if pump_outlet not in inlets_outlets_inside:
+                        inlets_outlets_inside.append(pump_outlet)
 
                 if new_feats:
                     if not self.pumps_append_chbox.isChecked():
@@ -2178,20 +2186,38 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                 else:
                     self.load_pumps = False
 
+                # Remove junctions not connected to conduits
+                self.user_swmm_nodes_lyr.startEditing()
+                for feat in self.user_swmm_nodes_lyr.getFeatures():
+                    node_name = feat['name']
+                    if len(inlets_outlets_inside) > 1:
+                        if node_name not in inlets_outlets_inside:
+                            self.user_swmm_nodes_lyr.deleteFeature(feat.id())
+                self.user_swmm_nodes_lyr.commitChanges()
+                self.user_swmm_nodes_lyr.updateExtents()
+                self.user_swmm_nodes_lyr.triggerRepaint()
+
                 QApplication.restoreOverrideCursor()
 
                 if no_in_out != 0:
                     self.no_in_out += "\n" + str(no_in_out) + " pumps."
 
-                if outside_pumps != "":
-                    self.uc.show_warn(
-                        "WARNING 220222.1031: The following pumps are outside the computational domain!\n"
-                        + outside_pumps
+                if len(outside_pumps) > 0:
+
+                    self.uc.bar_info(
+                        "WARNING 220222.1031: Pumps are outside the computational domain!"
+                    )
+                    self.uc.log_info(
+                        "WARNING 220222.1031: Pumps are outside the computational domain!"
+                        + '\n'.join(outside_pumps)
                     )
 
                 if wrong_status > 0:
-                    self.uc.show_info(
-                        "WARNING 010322.1054: there were "
+                    self.uc.bar_warn(
+                        "WARNING 010322.1054: There were pumps with wrong initial status!\n\n"
+                    )
+                    self.uc.log_info(
+                        "WARNING 010322.1054: There were "
                         + str(wrong_status)
                         + " pumps with wrong initial status!\n\n"
                         + "All wrong initial status were changed to 'OFF'.\n\n"
