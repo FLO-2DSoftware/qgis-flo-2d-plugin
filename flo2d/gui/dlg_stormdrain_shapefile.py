@@ -1716,7 +1716,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                         continue
 
                     cell = self.gutils.grid_on_point(point.x(), point.y())
-                    if cell is None and external_inflow == 'NO':
+                    if cell is None and name.lower().startswith("i"):
                         outside_strge_units += "\n" + name
                         continue
 
