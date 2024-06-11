@@ -2499,9 +2499,6 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             finally:
                 QApplication.restoreOverrideCursor()
 
-        # Check the storm drain system for dangling conduits
-        self.check_sd_system()
-
         # CONTROL: Add control data to the swmm_control table
         self.gutils.clear_tables("swmm_control")
 
