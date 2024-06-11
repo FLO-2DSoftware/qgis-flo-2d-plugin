@@ -2643,7 +2643,6 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 "later export the .DAT files used by the FLO-2D model."
             )
 
-
         node_items = outside_nodes + outside_storages
         if len(node_items) > 0:
             self.uc.bar_warn("Storm Drain points outside the domain! Check log for more information.")
@@ -2655,7 +2654,6 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             self.uc.bar_warn("Storm Drain links outside the domain! Check log for more information.")
             link_items = "WARNING 221220.0337:\nThe following links extend outside the domain:\n\n" + link_items
             self.uc.log_info(link_items)
-
 
         if storm_drain.status_report:
             result2 = ScrollMessageBox2(QMessageBox.Warning, "Storm Drain import status", storm_drain.status_report)

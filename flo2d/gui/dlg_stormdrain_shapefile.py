@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-
+from qgis._core import QgsProject, QgsVectorLayer, QgsFields, QgsField
 # FLO-2D Preprocessor tools for QGIS
 
 # This program is free software; you can redistribute it and/or
@@ -13,6 +13,7 @@ from qgis.gui import QgsFieldComboBox
 from qgis.PyQt.QtCore import QSettings, Qt
 from qgis.PyQt.QtWidgets import QApplication, QComboBox, QDialogButtonBox
 
+from ..flo2d_tools.grid_tools import spatial_index
 from ..flo2d_tools.schema2user_tools import remove_features
 from ..geopackage_utils import GeoPackageUtils, extractPoints
 from ..user_communication import UserCommunication
@@ -1183,6 +1184,8 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
             self.load_pumps_from_shapefile()
             self.load_orifices_from_shapefile()
             self.load_weirs_from_shapefile()
+
+            self.check_sd_system()
 
             self.save_storm_drain_shapefile_field_names()
 
@@ -2541,16 +2544,149 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                 )
                 self.load_weirs = False
 
-    # def post_process_outside_features(self):
-    #     """
-    #     Function to remove features that are not connected to the grid.
-    #     """
-    #     junctions_connected_to_conduits = []
-    #     if self.load_conduits:
-    #         conduits_weirs_shapefile = self.weirs_shapefile_cbo.currentText()
-    #         lyr = self.lyrs.get_layer_by_name(weirs_shapefile).layer()
-    #     if self.load_outfalls:
-    #             outfalls_shapefile_fts = lyr.getFeatures()
+    def check_sd_system(self):
+        """
+        Function to check the storm drain system for conduits that does not have nodes connected
+        """
+
+        if self.gutils.is_table_empty('user_swmm_conduits'):
+            return
+
+        # Check for unknown (?) conduit inlet or conduit outlet
+        dangling_conduits = self.gutils.execute("SELECT fid, conduit_name FROM user_swmm_conduits WHERE conduit_inlet = '?' or conduit_outlet = '?'").fetchall()
+        if dangling_conduits:
+            # try to assign the conduits inlets and outlets
+            self.auto_assign()
+            # remove the remaining conduits
+            self.gutils.execute("DELETE FROM user_swmm_conduits WHERE conduit_inlet = '?' or conduit_outlet = '?'")
+            self.user_swmm_conduits_lyr.updateExtents()
+            self.user_swmm_conduits_lyr.triggerRepaint()
+            self.user_swmm_conduits_lyr.removeSelection()
+        else:
+            return
+
+    def auto_assign(self):
+        """
+        Function to auto assign conduits inlets and outlets
+        """
+        layer1 = QgsProject.instance().mapLayersByName('Storm Drain Nodes')[0]
+        layer2 = QgsProject.instance().mapLayersByName('Storm Drain Storage Units')[0]
+        # Create a new memory layer for point geometries
+        SD_all_nodes_layer = QgsVectorLayer("Point", 'SD All Points', 'memory')
+
+        fields = QgsFields()
+        fields.append(QgsField('name', QVariant.String))
+
+        pr = SD_all_nodes_layer.dataProvider()
+
+        pr.addAttributes(fields)
+        SD_all_nodes_layer.updateFields()
+
+        # Iterate through features and add point geometries
+        for layer in [layer1, layer2]:
+            for feature in layer.getFeatures():
+                point_geometry = feature.geometry()
+                new_feature = QgsFeature(fields)
+                new_feature.setGeometry(point_geometry)
+                new_feature['name'] = feature['name']
+                pr.addFeatures([new_feature])
+
+        # Add the new layer to the map
+        QgsProject.instance().addMapLayer(SD_all_nodes_layer, False)
+
+        self.auto_assign_link_nodes("Conduits", "conduit_inlet", "conduit_outlet", SD_all_nodes_layer)
+        self.auto_assign_link_nodes("Pumps", "pump_inlet", "pump_outlet", SD_all_nodes_layer)
+        self.auto_assign_link_nodes("Orifices", "orifice_inlet", "orifice_outlet", SD_all_nodes_layer)
+        self.auto_assign_link_nodes("Weirs", "weir_inlet", "weir_outlet", SD_all_nodes_layer)
+
+        QgsProject.instance().removeMapLayer(SD_all_nodes_layer)
+        del SD_all_nodes_layer
+
+    def auto_assign_link_nodes(self, link_name, link_inlet, link_outlet, SD_all_nodes_layer):
+        """Auto assign Conduits, Pumps, orifices, or Weirs  (user layer) Inlet and Outlet names
+           based on closest (5ft) nodes to their endpoints."""
+
+        layer = (
+            self.user_swmm_conduits_lyr
+            if link_name == "Conduits"
+            else self.user_swmm_pumps_lyr
+            if link_name == "Pumps"
+            else self.user_swmm_orifices_lyr
+            if link_name == "Orifices"
+            else self.user_swmm_weirs_lyr
+            if link_name == "Weirs"
+            else self.user_swmm_conduits_lyr
+        )
+
+        try:
+            QApplication.setOverrideCursor(Qt.WaitCursor)
+            link_fields = layer.fields()
+            link_inlet_fld_idx = link_fields.lookupField(link_inlet)
+            link_outlet_fld_idx = link_fields.lookupField(link_outlet)
+
+            nodes_features, nodes_index = spatial_index(SD_all_nodes_layer)
+            segments = 5
+            link_nodes = {}
+            inlet_assignments = 0
+            outlet_assignments = 0
+            no_in = 0
+            no_out = 0
+            for feat in layer.getFeatures():
+                fid = feat.id()
+                geom = feat.geometry()
+                geom_poly = geom.asPolyline()
+                start_pnt, end_pnt = geom_poly[0], geom_poly[-1]
+                start_geom = QgsGeometry.fromPointXY(start_pnt)
+                end_geom = QgsGeometry.fromPointXY(end_pnt)
+                start_buffer = start_geom.buffer(5, segments)
+                end_buffer = end_geom.buffer(5, segments)
+                start_nodes, end_nodes = [], []
+
+                start_nodes_ids = nodes_index.intersects(start_buffer.boundingBox())
+                for node_id in start_nodes_ids:
+                    node_feat = nodes_features[node_id]
+                    if node_feat.geometry().within(start_buffer):
+                        start_nodes.append(node_feat)
+
+                end_nodes_ids = nodes_index.intersects(end_buffer.boundingBox())
+                for node_id in end_nodes_ids:
+                    node_feat = nodes_features[node_id]
+                    if node_feat.geometry().within(end_buffer):
+                        end_nodes.append(node_feat)
+
+                start_nodes.sort(key=lambda f: f.geometry().distance(start_geom))
+                end_nodes.sort(key=lambda f: f.geometry().distance(end_geom))
+                closest_inlet_feat = start_nodes[0] if start_nodes else None
+                closest_outlet_feat = end_nodes[0] if end_nodes else None
+
+                if closest_inlet_feat is not None:
+                    inlet_name = closest_inlet_feat["name"]
+                    inlet_assignments += 1
+                else:
+                    inlet_name = "?"
+                    no_in += 1
+
+                if closest_outlet_feat is not None:
+                    outlet_name = closest_outlet_feat["name"]
+                    outlet_assignments += 1
+                else:
+                    outlet_name = "?"
+                    no_out += 1
+
+                link_nodes[fid] = inlet_name, outlet_name
+
+            layer.startEditing()
+            for fid, (in_name, out_name) in link_nodes.items():
+                layer.changeAttributeValue(fid, link_inlet_fld_idx, in_name)
+                layer.changeAttributeValue(fid, link_outlet_fld_idx, out_name)
+            layer.commitChanges()
+            layer.triggerRepaint()
+
+            QApplication.restoreOverrideCursor()
+
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.uc.show_error("ERROR 210322.0429: Couldn't assign " + link_name + " nodes!", e)
 
     def cancel_message(self):
         self.uc.bar_info("No data was selected!")
