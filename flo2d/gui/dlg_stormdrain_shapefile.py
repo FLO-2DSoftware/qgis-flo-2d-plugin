@@ -1201,18 +1201,10 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                     or self.load_weirs
             ):
 
-                if len(self.no_in_out) > 0:
-                    self.uc.show_warn(
-                        "WARNING 040524.0806:\nLinks with no inlet and/or outlet:\n"
-                        + str(self.no_in_out)
-                        + "\n\nThe value '?' will be assigned to the missing inlets and/or outlets.\nThey will cause errors during their processing.\n\n"
-                        + "Did you select the 'From Inlet' and 'To Oulet' fields in the shapefile?\n\n"
-                        + "You can also use the 'Auto-assign link nodes' button to automatically fill the node names required for the link connections."
-                    )
-
-                self.uc.show_info(
+                self.uc.bar_info("Importing Nodes and Links finished!")
+                self.uc.log_info(
                     "Importing Nodes and Links finished!\n\n"
-                    + "Use the Components (Nodes and Links) buttons in the Storm Drain Editor to view/edit data.\n\n"
+                    + "Use the Components (Nodes and Links) buttons in the Storm Drain Editor to view/edit data.\n"
                     + "Complete the storm drain by clicking the Schematize Storm Drain Components button."
                 )
 
@@ -1423,7 +1415,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                 QApplication.restoreOverrideCursor()
 
                 if outside_inlets != "":
-                    self.uc.bar_info(
+                    self.uc.bar_warn(
                         "WARNING 060319.1657: Inlets/junctions are outside the computational domain!"
                     )
                     self.uc.log_info(
@@ -1433,6 +1425,10 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
 
                 if modified > 0:
                     self.uc.bar_warn(
+                        "WARNING 050820.1901: Weir Coefficients in shapefile are outside valid ranges! "
+                        + "Default values were assigned."
+                    )
+                    self.uc.log_info(
                         "WARNING 050820.1901: "
                         + str(modified)
                         + " Weir Coefficients in shapefile are outside valid ranges. "
@@ -1577,7 +1573,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                 QApplication.restoreOverrideCursor()
 
                 if outside_outfalls != "":
-                    self.uc.bar_info(
+                    self.uc.bar_warn(
                         "WARNING 060319.1700: Outfalls are outside the computational domain!"
                     )
                     self.uc.log_info(
@@ -1764,7 +1760,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                 QApplication.restoreOverrideCursor()
 
                 if outside_strge_units != "":
-                    self.uc.bar_info(
+                    self.uc.bar_warn(
                         "WARNING 250424.2002: Storage units are outside the computational domain!"
                     )
                     self.uc.log_info(
@@ -2036,7 +2032,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                     self.no_in_out += "\n" + str(no_in_out) + " conduits."
 
                 if len(outside_conduits) > 0:
-                    self.uc.bar_info(
+                    self.uc.bar_warn(
                         "WARNING 231220.0954: Conduits are outside the computational domain!"
                     )
                     self.uc.log_info(
@@ -2186,7 +2182,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                 else:
                     self.load_pumps = False
 
-                # Remove junctions not connected to conduits
+                # Remove junctions not connected to pumps
                 self.user_swmm_nodes_lyr.startEditing()
                 for feat in self.user_swmm_nodes_lyr.getFeatures():
                     node_name = feat['name']
@@ -2204,11 +2200,11 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
 
                 if len(outside_pumps) > 0:
 
-                    self.uc.bar_info(
+                    self.uc.bar_warn(
                         "WARNING 220222.1031: Pumps are outside the computational domain!"
                     )
                     self.uc.log_info(
-                        "WARNING 220222.1031: Pumps are outside the computational domain!"
+                        "WARNING 220222.1031: Pumps are outside the computational domain!\n"
                         + '\n'.join(outside_pumps)
                     )
 
@@ -2241,7 +2237,8 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                 QApplication.setOverrideCursor(Qt.WaitCursor)
                 fields = self.user_swmm_orifices_lyr.fields()
                 new_feats = []
-                outside_orifices = ""
+                outside_orifices = []
+                inlets_outlets_inside = []
 
                 orifices_shapefile = self.orifices_shapefile_cbo.currentText()
                 lyr = self.lyrs.get_layer_by_name(orifices_shapefile).layer()
@@ -2325,15 +2322,20 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                         self.uc.show_warn("WARNING 1104220809.0951: Orifice  " + orifice_name + " is faulty!")
                         continue
 
-                    cell = self.gutils.grid_on_point(points[0].x(), points[0].y())
-                    if cell is None:
-                        outside_orifices += "\n" + orifice_name
-                        continue
+                    orifice_inlet_cell = self.gutils.grid_on_point(points[0].x(), points[0].y())
+                    orifice_outlet_cell = self.gutils.grid_on_point(points[len(points) - 1].x(),
+                                                                    points[len(points) - 1].y())
+                    # Both ends of the orifice is outside the grid
+                    if orifice_inlet_cell is None and orifice_outlet_cell is None:
+                        if not (orifice_name in outside_orifices):
+                            outside_orifices.append(orifice_name)
+                            continue
 
-                    cell = self.gutils.grid_on_point(points[1].x(), points[1].y())
-                    if cell is None:
-                        outside_orifices += "\n" + orifice_name
-                        continue
+                    # Orifice inlet is outside the grid and it is an Inlet
+                    elif orifice_inlet_cell is None and orifice_inlet.lower().startswith("i"):
+                        if not (orifice_name in outside_orifices):
+                            outside_orifices.append(orifice_name)
+                            continue
 
                     new_geom = QgsGeometry.fromPolylineXY(points)
                     feat.setGeometry(new_geom)
@@ -2349,7 +2351,12 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                     feat.setAttribute("orifice_shape", orifice_shape)
                     feat.setAttribute("orifice_height", orifice_height)
                     feat.setAttribute("orifice_width", orifice_width)
+
                     new_feats.append(feat)
+                    if orifice_inlet not in inlets_outlets_inside:
+                        inlets_outlets_inside.append(orifice_inlet)
+                    if orifice_outlet not in inlets_outlets_inside:
+                        inlets_outlets_inside.append(orifice_outlet)
 
                 if new_feats:
                     if not self.orifices_append_chbox.isChecked():
@@ -2364,15 +2371,29 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                 else:
                     self.load_orifices = False
 
+                # Remove junctions not connected to orifices
+                self.user_swmm_nodes_lyr.startEditing()
+                for feat in self.user_swmm_nodes_lyr.getFeatures():
+                    node_name = feat['name']
+                    if len(inlets_outlets_inside) > 1:
+                        if node_name not in inlets_outlets_inside:
+                            self.user_swmm_nodes_lyr.deleteFeature(feat.id())
+                self.user_swmm_nodes_lyr.commitChanges()
+                self.user_swmm_nodes_lyr.updateExtents()
+                self.user_swmm_nodes_lyr.triggerRepaint()
+
                 QApplication.restoreOverrideCursor()
 
                 if no_in_out != 0:
                     self.no_in_out += "\n" + str(no_in_out) + " orifices."
 
-                if outside_orifices != "":
-                    self.uc.show_warn(
+                if len(outside_orifices) > 0:
+                    self.uc.bar_warn(
+                        "WARNING 110422.0811: Orifices are outside the computational domain!"
+                    )
+                    self.uc.log_info(
                         "WARNING 110422.0811: The following orifices are outside the computational domain!\n"
-                        + outside_orifices
+                        + '\n'.join(outside_orifices)
                     )
 
             except Exception as e:
@@ -2392,7 +2413,8 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                 QApplication.setOverrideCursor(Qt.WaitCursor)
                 fields = self.user_swmm_weirs_lyr.fields()
                 new_feats = []
-                outside_weirs = ""
+                outside_weirs = []
+                inlets_outlets_inside = []
 
                 weirs_shapefile = self.weirs_shapefile_cbo.currentText()
                 lyr = self.lyrs.get_layer_by_name(weirs_shapefile).layer()
@@ -2499,15 +2521,20 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                         self.uc.show_warn("WARNING 120422.0837: Weir  " + weir_name + " is faulty!")
                         continue
 
-                    cell = self.gutils.grid_on_point(points[0].x(), points[0].y())
-                    if cell is None:
-                        outside_weirs += "\n" + weir_name
-                        continue
+                    weir_inlet_cell = self.gutils.grid_on_point(points[0].x(), points[0].y())
+                    weir_outlet_cell = self.gutils.grid_on_point(points[len(points) - 1].x(),
+                                                                    points[len(points) - 1].y())
+                    # Both ends of the weir is outside the grid
+                    if weir_inlet_cell is None and weir_outlet_cell is None:
+                        if not (weir_name in outside_weirs):
+                            outside_weirs.append(weir_name)
+                            continue
 
-                    cell = self.gutils.grid_on_point(points[1].x(), points[1].y())
-                    if cell is None:
-                        outside_weirs += "\n" + weir_name
-                        continue
+                    # Weir inlet is outside the grid and it is an Inlet
+                    elif weir_inlet_cell is None and weir_inlet.lower().startswith("i"):
+                        if not (weir_name in outside_weirs):
+                            outside_weirs.append(weir_name)
+                            continue
 
                     new_geom = QgsGeometry.fromPolylineXY(points)
                     feat.setGeometry(new_geom)
@@ -2527,6 +2554,11 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                     feat.setAttribute("weir_length", weir_length)
                     new_feats.append(feat)
 
+                    if weir_inlet not in inlets_outlets_inside:
+                        inlets_outlets_inside.append(weir_inlet)
+                    if weir_outlet not in inlets_outlets_inside:
+                        inlets_outlets_inside.append(weir_outlet)
+
                 if new_feats:
                     if not self.weirs_append_chbox.isChecked():
                         remove_features(self.user_swmm_weirs_lyr)
@@ -2540,15 +2572,29 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                 else:
                     self.load_weirs = False
 
+                # Remove junctions not connected to weirs
+                self.user_swmm_nodes_lyr.startEditing()
+                for feat in self.user_swmm_nodes_lyr.getFeatures():
+                    node_name = feat['name']
+                    if len(inlets_outlets_inside) > 1:
+                        if node_name not in inlets_outlets_inside:
+                            self.user_swmm_nodes_lyr.deleteFeature(feat.id())
+                self.user_swmm_nodes_lyr.commitChanges()
+                self.user_swmm_nodes_lyr.updateExtents()
+                self.user_swmm_nodes_lyr.triggerRepaint()
+
                 QApplication.restoreOverrideCursor()
 
                 if no_in_out != 0:
                     self.no_in_out += "\n" + str(no_in_out) + "  weirs."
 
-                if outside_weirs != "":
-                    self.uc.show_warn(
+                if len(outside_weirs) > 0:
+                    self.uc.bar_warn(
+                        "WARNING 110422.0845: Weirs are outside the computational domain!"
+                    )
+                    self.uc.log_info(
                         "WARNING 110422.0845: The following weirs are outside the computational domain!\n"
-                        + outside_weirs
+                        + '\n'.join(outside_weirs)
                     )
 
                 msg = ""
@@ -2572,24 +2618,56 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
 
     def check_sd_system(self):
         """
-        Function to check the storm drain system for conduits that does not have nodes connected
+        Function to check the storm drain system for links that does not have nodes connected
         """
 
-        if self.gutils.is_table_empty('user_swmm_conduits'):
-            return
-
         # Check for unknown (?) conduit inlet or conduit outlet
-        dangling_conduits = self.gutils.execute("SELECT fid, conduit_name FROM user_swmm_conduits WHERE conduit_inlet = '?' or conduit_outlet = '?'").fetchall()
-        if dangling_conduits:
-            # try to assign the conduits inlets and outlets
-            self.auto_assign()
-            # remove the remaining conduits
-            self.gutils.execute("DELETE FROM user_swmm_conduits WHERE conduit_inlet = '?' or conduit_outlet = '?'")
-            self.user_swmm_conduits_lyr.updateExtents()
-            self.user_swmm_conduits_lyr.triggerRepaint()
-            self.user_swmm_conduits_lyr.removeSelection()
-        else:
-            return
+        if not self.gutils.is_table_empty('user_swmm_conduits'):
+            dangling_conduits = self.gutils.execute("SELECT fid, conduit_name FROM user_swmm_conduits WHERE conduit_inlet = '?' or conduit_outlet = '?'").fetchall()
+            if dangling_conduits:
+                # try to assign the conduits inlets and outlets
+                self.auto_assign()
+                # remove the remaining conduits
+                self.gutils.execute("DELETE FROM user_swmm_conduits WHERE conduit_inlet = '?' or conduit_outlet = '?'")
+                self.user_swmm_conduits_lyr.updateExtents()
+                self.user_swmm_conduits_lyr.triggerRepaint()
+                self.user_swmm_conduits_lyr.removeSelection()
+
+        # Check for unknown (?) weir inlet or weir outlet
+        if not self.gutils.is_table_empty('user_swmm_weirs'):
+            dangling_weirs = self.gutils.execute("SELECT fid, weir_name FROM user_swmm_weirs WHERE weir_inlet = '?' or weir_outlet = '?'").fetchall()
+            if dangling_weirs:
+                # try to assign the weirs inlets and outlets
+                self.auto_assign()
+                # remove the remaining weirs
+                self.gutils.execute("DELETE FROM user_swmm_weirs WHERE weir_inlet = '?' or weir_outlet = '?'")
+                self.user_swmm_weirs_lyr.updateExtents()
+                self.user_swmm_weirs_lyr.triggerRepaint()
+                self.user_swmm_weirs_lyr.removeSelection()
+
+        # Check for unknown (?) orifices inlet or orifices outlet
+        if not self.gutils.is_table_empty('user_swmm_orifices'):
+            dangling_orifices = self.gutils.execute("SELECT fid, orifice_name FROM user_swmm_orifices WHERE orifice_inlet = '?' or orifice_outlet = '?'").fetchall()
+            if dangling_orifices:
+                # try to assign the orifices inlets and outlets
+                self.auto_assign()
+                # remove the remaining orifices
+                self.gutils.execute("DELETE FROM user_swmm_orifices WHERE orifice_inlet = '?' or orifice_outlet = '?'")
+                self.user_swmm_orifices_lyr.updateExtents()
+                self.user_swmm_orifices_lyr.triggerRepaint()
+                self.user_swmm_orifices_lyr.removeSelection()
+
+        # Check for unknown (?) pumps inlet or pumps outlet
+        if not self.gutils.is_table_empty('user_swmm_pumps'):
+            dangling_pumps = self.gutils.execute("SELECT fid, pump_name FROM user_swmm_pumps WHERE pump_inlet = '?' or pump_outlet = '?'").fetchall()
+            if dangling_pumps:
+                # try to assign the pumps inlets and outlets
+                self.auto_assign()
+                # remove the remaining pumps
+                self.gutils.execute("DELETE FROM user_swmm_pumps WHERE pump_inlet = '?' or pump_outlet = '?'")
+                self.user_swmm_pumps_lyr.updateExtents()
+                self.user_swmm_pumps_lyr.triggerRepaint()
+                self.user_swmm_pumps_lyr.removeSelection()
 
     def auto_assign(self):
         """
