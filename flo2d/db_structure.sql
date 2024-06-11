@@ -36,6 +36,14 @@ CREATE TABLE metadata (
 );
 INSERT INTO gpkg_contents (table_name, data_type) VALUES ('metadata', 'aspatial');
 
+-- The external_layers table
+CREATE TABLE external_layers (
+    "fid" INTEGER NOT NULL PRIMARY KEY,
+    "name" TEXT NOT NULL UNIQUE ON CONFLICT REPLACE,
+    "type" TEXT
+);
+INSERT INTO gpkg_contents (table_name, data_type) VALUES ('external_layers', 'aspatial');
+
 -- The Storm Drain table field connector
 CREATE TABLE sd_fields (
     "fid" INTEGER NOT NULL PRIMARY KEY,

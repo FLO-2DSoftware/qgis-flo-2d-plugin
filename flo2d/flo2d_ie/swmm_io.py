@@ -30,6 +30,7 @@ class StormDrainProject(object):
         self.INP_patterns = []
         self.INP_timeseries = []
         self.INP_conduits = {}
+        self.INP_vertices = {}
 
         self.INP_pumps = {}
         self.INP_curves = []
@@ -540,6 +541,28 @@ class StormDrainProject(object):
         except Exception as e:
             self.uc.bar_warn("WARNING 221121.1018: Reading conduits from SWMM input data failed!")
 
+    def create_INP_vertices_dictionary_with_vertices(self):
+        try:
+            vertices = self.select_this_INP_group("verti")
+            if vertices:
+                x_list = []
+                y_list = []
+                for vert in vertices:
+                    if not vert or vert[0] in self.ignore:
+                        continue
+
+                    vert_name, vert_x, vert_y = vert.split()
+                    if vert_name in self.INP_vertices:
+                        x_list.append(vert_x)
+                        y_list.append(vert_y)
+                    else:
+                        x_list = [vert_x]
+                        y_list = [vert_y]
+                    self.INP_vertices[vert_name] = (x_list, y_list)
+
+        except Exception as e:
+            self.uc.bar_warn("WARNING 050624.0625: Reading vertices from SWMM input data failed!")
+
     def create_INP_pumps_dictionary_with_pumps(self):
         try:
             pumps_cols = [
@@ -1022,21 +1045,34 @@ class StormDrainProject(object):
                     items = c.split()
                     if len(items) == 4:
                         prev_type = items[1]
-                        items.insert(len(items),description)
+                        items.insert(len(items), description)
                         self.INP_curves.append(items)
                     elif len(items) == 3:
                         items.insert(1, prev_type)
                         items.insert(len(items),description)
                         self.INP_curves.append(items)
                     else:
-                        msg += c + "\n"
+                        description = ""
+                        continue
 
-                if msg:
-                    msg = (
-                        "WARNING 251121.0538: error reading the following lines from [CURVES] group.\nMaybe curve names with spaces?:\n\n"
-                        + msg
-                    )
-                    self.uc.show_warn(msg)
+                items = c.split()
+                if len(items) == 4:
+                    prev_type = items[1]
+                    items.insert(len(items),description)
+                    self.INP_curves.append(items)
+                elif len(items) == 3:
+                    items.insert(1, prev_type)
+                    items.insert(len(items),description)
+                    self.INP_curves.append(items)
+                else:
+                    msg += c + "\n"
+
+            if msg:
+                msg = (
+                    "WARNING 050624.0627: error reading the following lines from [CURVES] group.\nMaybe curve names with spaces?:\n\n"
+                    + msg
+                )
+                self.uc.log_info(msg)
 
         except Exception as e:
-            self.uc.show_error("ERROR 241121.0529: Reading pump curves from SWMM input data failed!", e)
+            self.uc.show_error("ERROR 050624.0628: Reading pump curves from SWMM input data failed!", e)

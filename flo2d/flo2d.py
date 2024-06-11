@@ -193,6 +193,7 @@ class Flo2D(object):
         # connections
         self.project.readProject.connect(self.load_gpkg_from_proj)
         self.project.writeProject.connect(self.flo_save_project)
+        self.project.layersAdded.connect(self.changeLayerAdditionMode)
 
         self.uc.clear_bar_messages()
         QApplication.restoreOverrideCursor()
@@ -922,8 +923,17 @@ class Flo2D(object):
                         gpkg_tables = self.gutils.current_gpkg_tables
                         tab_sql = """SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'gpkg_%' AND name NOT LIKE 'rtree_%';"""
                         tabs = [row[0] for row in self.gutils.execute(tab_sql)]
+                        do_not_port = [
+                            'sqlite_sequence',
+                            'qgis_projects',
+                            'infil_areas_scs',
+                            'infil_areas_green',
+                            'infil_areas_horton',
+                            'rain_arf_areas',
+                            'infil_areas_chan',
+                        ]
                         for table in tabs:
-                            if table not in gpkg_tables and table not in ['sqlite_sequence', 'qgis_projects']:
+                            if table not in gpkg_tables and table not in do_not_port:
                                 try:
                                     ds = ogr.Open(gpkg_path)
                                     layer = ds.GetLayerByName(table)
@@ -1022,6 +1032,7 @@ class Flo2D(object):
         checked_layers = False
         not_added = []
 
+        QApplication.setOverrideCursor(Qt.WaitCursor)
         for layer_id, layer in layers.items():
             if self.check_layer_source(layer, gpkg_path):
                 if not checked_layers:
@@ -1032,100 +1043,33 @@ class Flo2D(object):
                     msg += "    No is faster and has a smaller GeoPackage, but if the paths change, the external data must be reloaded."
                     QApplication.restoreOverrideCursor()
                     answer = self.uc.customized_question("FLO-2D", msg)
+                    dlg_gpkg_management = GpkgManagementDialog(self.iface, self.lyrs, self.gutils)
                     if answer == QMessageBox.Yes:
+                        dlg_gpkg_management.show()
+                        while True:
+                            ok = dlg_gpkg_management.exec_()
+                            if ok:
+                                QApplication.setOverrideCursor(Qt.WaitCursor)
+                                dlg_gpkg_management.save_layers()
+                                QApplication.restoreOverrideCursor()
+                                return
+                            else:
+                                return
+
+                    elif answer == QMessageBox.No:
                         QApplication.setOverrideCursor(Qt.WaitCursor)
-                        checked_layers = True
+                        dlg_gpkg_management.populate_user_lyrs()
+                        dlg_gpkg_management.save_layers()
+                        QApplication.restoreOverrideCursor()
+                        return
                     else:
-                        QApplication.setOverrideCursor(Qt.WaitCursor)
+                        QApplication.restoreOverrideCursor()
                         break
-                # Check if it is vector or raster
-                if layer.type() == QgsMapLayer.VectorLayer and layer.isSpatial():
-                    # Save to gpkg
-                    options = QgsVectorFileWriter.SaveVectorOptions()
-                    options.driverName = "GPKG"
-                    options.includeZ = True
-                    options.overrideGeometryType = layer.wkbType()
-                    options.layerName = layer.name()
-                    options.actionOnExistingFile = QgsVectorFileWriter.CreateOrOverwriteLayer
-                    QgsVectorFileWriter.writeAsVectorFormatV3(
-                        layer,
-                        gpkg_path,
-                        QgsProject.instance().transformContext(),
-                        options)
-                    # Add back to the project
-                    gpkg_uri = f"{gpkg_path}|layername={layer.name()}"
-                    gpkg_layer = QgsVectorLayer(gpkg_uri, layer.name(), "ogr")
-                    self.project.addMapLayer(gpkg_layer, False)
-                    gpkg_layer.setRenderer(layer.renderer().clone())
-                    gpkg_layer.triggerRepaint()
-                    root = self.project.layerTreeRoot()
-                    group_name = "External Layers"
-                    tree_layer = root.findLayer(layer.id())
-                    if tree_layer:
-                        layer_parent = tree_layer.parent()
-                        if layer_parent and layer_parent.name() == "Storm Drain":
-                            group_name = layer_parent.name()
-                    flo2d_name = f"FLO-2D_{self.gutils.get_metadata_par('PROJ_NAME')}"
-                    flo2d_grp = root.findGroup(flo2d_name)
-                    if flo2d_grp.findGroup(group_name):
-                        group = flo2d_grp.findGroup(group_name)
-                    else:
-                        group = flo2d_grp.insertGroup(-1, group_name)
-                    group.insertLayer(0, gpkg_layer)
-
-                    layer = self.project.mapLayersByName(gpkg_layer.name())[0]
-                    myLayerNode = root.findLayer(layer.id())
-                    myLayerNode.setExpanded(False)
-
-                    # Delete layer that is not in the gpkg
-                    self.project.removeMapLayer(layer_id)
-                elif layer.type() == QgsMapLayer.RasterLayer:
-                    if layer.dataProvider().bandCount() > 1:
-                        not_added.append(layer.name())
-                        continue
-                    # Save to gpkg
-                    layer_name = layer.name().replace(" ", "_")
-                    params = {'INPUT': f'{layer.dataProvider().dataSourceUri()}',
-                              'TARGET_CRS': None,
-                              'NODATA': None,
-                              'COPY_SUBDATASETS': False,
-                              'OPTIONS': '',
-                              'EXTRA': f'-co APPEND_SUBDATASET=YES -co RASTER_TABLE={layer_name} -ot Float32',
-                              'DATA_TYPE': 0,
-                              'OUTPUT': f'{gpkg_path}'}
-
-                    processing.run("gdal:translate", params)
-
-                    gpkg_uri = f"GPKG:{gpkg_path}:{layer_name}"
-                    gpkg_layer = QgsRasterLayer(gpkg_uri, layer_name, "gdal")
-                    self.project.addMapLayer(gpkg_layer, False)
-                    gpkg_layer.setRenderer(layer.renderer().clone())
-                    gpkg_layer.triggerRepaint()
-                    root = self.project.layerTreeRoot()
-                    flo2d_name = f"FLO-2D_{self.gutils.get_metadata_par('PROJ_NAME')}"
-                    group_name = "External Layers"
-                    flo2d_grp = root.findGroup(flo2d_name)
-                    if flo2d_grp.findGroup(group_name):
-                        group = flo2d_grp.findGroup(group_name)
-                    else:
-                        group = flo2d_grp.insertGroup(-1, group_name)
-                    group.insertLayer(0, gpkg_layer)
-                    # Delete layer that is not in the gpkg
-                    self.project.removeMapLayer(layer_id)
-
-                    layer = self.project.mapLayersByName(gpkg_layer.name())[0]
-                    myLayerNode = root.findLayer(layer.id())
-                    myLayerNode.setExpanded(False)
-                else:
-                    not_added.append(layer.name())
 
         QApplication.restoreOverrideCursor()
 
-        if len(not_added) > 0:
-            layers_not_added = ', '.join(map(str, not_added))
-            self.uc.show_info(f"The following layers were not added to the GeoPackage: \n\n {layers_not_added}")
-
         self.uc.bar_info("FLO-2D-Project saved!")
+        self.uc.log_info("FLO-2D-Project saved!")
 
     @connection_required
     def gpkg_management(self):
@@ -4339,6 +4283,12 @@ class Flo2D(object):
         gpkg_path_adj = gpkg_path.replace("\\", "/")
         layer_source_adj = layer.source().replace("\\", "/")
 
+        # Check 0: Layer already on the external_layers table
+        qry = f"SELECT * FROM external_layers WHERE name = '{layer.name()}';"
+        data = self.gutils.execute(qry).fetchone()
+        if data:
+            return False
+
         # Check 1: Path cannot be equal to gpkg_path
         if gpkg_path_adj in layer_source_adj:
             return False
@@ -4386,4 +4336,11 @@ class Flo2D(object):
 
         # Save the result
         picture.save(thumbnail)
+
+    def changeLayerAdditionMode(self):
+        """
+        Function to force all layers added to the user on the top of the layer tree
+        """
+        # self.project.layerTreeRegistryBridge().setLayerInsertionPoint(self.project.layerTreeRoot(), 0)
+        self.iface.layerTreeView().setCurrentIndex(self.iface.layerTreeView().layerTreeModel().node2index(self.project.layerTreeRoot()))
 

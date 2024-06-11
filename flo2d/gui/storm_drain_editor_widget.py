@@ -1045,6 +1045,9 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 storm_drain.create_INP_conduits_dictionary_with_conduits()
                 storm_drain.add_LOSSES_to_INP_conduits_dictionary()
 
+                # Vertices:
+                storm_drain.create_INP_vertices_dictionary_with_vertices()
+
                 # Pumps:
                 storm_drain.create_INP_pumps_dictionary_with_pumps()
 
@@ -1299,8 +1302,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                     elif "out_type" in values:
                         sd_type = "O"
                     elif name[0] in ["I", "i"]:
-                        skipped_inlets += 1
-                        continue  # Skip inlets defined by initial "I" or "i". Only consider inlets in [SUBCATCHMENTS]
+                        sd_type = "I"
                     else:
                         sd_type = "J"
 
@@ -1817,7 +1819,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 Creates Storm Drain Conduits layer (Users layers)
         
                 Creates "user_swmm_conduits" layer with attributes taken from
-                the [CONDUITS], [LOSSES], and [XSECTIONS] groups.
+                the [CONDUITS], [LOSSES], [VERTICES], and [XSECTIONS] groups.
         
                 """
         
@@ -1923,7 +1925,21 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                         continue
 
                     if conduit_inlet in self.all_nodes and conduit_outlet in self.all_nodes:
-                        geom = QgsGeometry.fromPolylineXY([QgsPointXY(x1, y1), QgsPointXY(x2, y2)])
+                        if name in storm_drain.INP_vertices:
+                            # Add starting point
+                            points_list = [QgsPointXY(x1, y1)]
+
+                            # Add vertices
+                            for x, y in zip(storm_drain.INP_vertices[name][0], storm_drain.INP_vertices[name][1]):
+                                points_list.append(QgsPointXY(float(x), float(y)))
+
+                            # Add ending point
+                            points_list.append(QgsPointXY(x2, y2))
+
+                            # Create the Geometry
+                            geom = QgsGeometry.fromPolylineXY(points_list)
+                        else:
+                            geom = QgsGeometry.fromPolylineXY([QgsPointXY(x1, y1), QgsPointXY(x2, y2)])
                     else:
                         continue
                     
@@ -2670,6 +2686,14 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         self.pump_curve_cbo.blockSignals(False)
 
         QApplication.restoreOverrideCursor()
+
+        dlg_INP_groups = INP_GroupsDialog(self.con, self.iface)
+        ok = dlg_INP_groups.exec_()
+        if ok:
+            self.uc.bar_info("Storm Drain control data saved!")
+            self.uc.log_info("Storm Drain control data saved!")
+            dlg_INP_groups.save_INP_control()
+
         return True
 
     def import_INP_action(self):
@@ -2773,8 +2797,12 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 # INP TITLE ##################################################
                 # items = self.select_this_INP_group(INP_groups, "title")
                 swmm_inp_file.write("[TITLE]")
-                title = self.gutils.execute("SELECT value FROM swmm_control WHERE name = 'TITLE'").fetchone()[0]
-                swmm_inp_file.write("\n" + title + "\n")
+                title = self.gutils.execute("SELECT value FROM swmm_control WHERE name = 'TITLE'").fetchone()
+                if not title:
+                    title = "INP file exported by FLO-2D"
+                    swmm_inp_file.write("\n" + title + "\n")
+                else:
+                    swmm_inp_file.write("\n" + title[0] + "\n")
 
                 # INP OPTIONS ##################################################
                 # items = self.select_this_INP_group(INP_groups, "options")
@@ -2815,7 +2843,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 skip_steady_state = self.gutils.execute("SELECT value FROM swmm_control WHERE name = 'SKIP_STEADY_STATE'").fetchone()[0]
                 swmm_inp_file.write("\nSKIP_STEADY_STATE    " + skip_steady_state)
                 force_main_equation = self.gutils.execute("SELECT value FROM swmm_control WHERE name = 'FORCE_MAIN_EQUATION'").fetchone()[0]
-                if force_main_equation == 'Darcy-Weisbach (D-W)':
+                if force_main_equation in ['Darcy-Weisbach (D-W)', 'D-W']:
                     force_main_equation = "D-W"
                 else:
                     force_main_equation = "H-W"
@@ -3622,6 +3650,37 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 except Exception as e:
                     QApplication.restoreOverrideCursor()
                     self.uc.show_error("ERROR 070618.1623: error while exporting [COORDINATES] to .INP file!", e)
+                    return
+
+                # INP VERTICES ##############################################
+
+                try:
+                    swmm_inp_file.write("\n")
+                    swmm_inp_file.write("\n[VERTICES]")
+                    swmm_inp_file.write("\n;;Link           X-Coord            Y-Coord           ")
+                    swmm_inp_file.write("\n;;-------------- ------------------ ------------------")
+
+                    line = "\n{0:16} {1:<18} {2:<18}"
+
+                    sd_conduits_lyr = self.lyrs.data["user_swmm_conduits"]["qlyr"]
+
+                    if sd_conduits_lyr.geometryType() == QgsWkbTypes.LineGeometry:
+                        for feature in sd_conduits_lyr.getFeatures():
+                            geom = feature.geometry()
+                            conduit_name = feature['conduit_name']
+                            # Ensure the geometry is of single type
+                            if QgsWkbTypes.isSingleType(geom.wkbType()):
+                                # Get the points of the polyline
+                                polyline = geom.asPolyline()
+                                # Check if there are more than two points (start and end)
+                                if len(polyline) > 2:
+                                    # Print the coordinates of the interior nodes
+                                    for pnt in polyline[1:-1]:
+                                        swmm_inp_file.write(line.format(conduit_name, pnt.x(), pnt.y()))
+
+                except Exception as e:
+                    QApplication.restoreOverrideCursor()
+                    self.uc.show_error("ERROR 050624.0633: error while exporting [VERTICES] to .INP file!", e)
                     return
 
                 # FUTURE GROUPS ##################################################
