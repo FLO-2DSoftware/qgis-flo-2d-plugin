@@ -1390,8 +1390,18 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 x = float(values["x"])
                 y = float(values["y"])
                 grid = self.gutils.grid_on_point(x, y)
-                if grid is None:
+                # Inlets
+                if grid is None and name[0].lower().startswith('i'):
                     outside_nodes += n_spaces + name + "\toutside domain.\n"
+                    continue
+                # # Junctions
+                # if grid is None and name[0].lower().startswith('j') and allow_discharge == '1':
+                #     outside_nodes += n_spaces + name + "\toutside domain.\n"
+                #     continue
+                # # Outfalls
+                # if grid is None and name[0].lower().startswith('o'):
+                #     outside_nodes += n_spaces + name + "\toutside domain.\n"
+                #     continue
 
                 if grid:
                     elev = self.gutils.grid_value(grid, "elevation")
@@ -1864,7 +1874,8 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                                        xsections_geom4  = ?
                                  WHERE conduit_name = ?;"""
         
-                fields = self.user_swmm_conduits_lyr.fields()       
+                fields = self.user_swmm_conduits_lyr.fields()
+                inlets_outlets_inside = []
                 for name, values in list(storm_drain.INP_conduits.items()):
         
                     conduit_inlet = values["conduit_inlet"] if "conduit_inlet" in values else None
@@ -1911,34 +1922,37 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                     feat = QgsFeature()
                     feat.setFields(fields)
 
-                    if not conduit_inlet in self.all_nodes:
-                        conduit_inlets_not_found += "      " +  name + "\n"
-                    else:
-                        if "x" in self.all_nodes[conduit_inlet] and "x" in self.all_nodes[conduit_inlet]:
-                            x1 = float(self.all_nodes[conduit_inlet]["x"])
-                            y1 = float(self.all_nodes[conduit_inlet]["y"])                        
-                            grid = self.gutils.grid_on_point(x1, y1)
-                            if grid is None:
-                                if not name in outside_conduits:
-                                    outside_conduits += n_spaces + name + "\n"
-                        else:
-                            if not name in outside_conduits:
-                                outside_conduits += n_spaces + name + "\n"                                       
-                                    
-                    if not conduit_outlet in self.all_nodes:
-                        conduit_outlets_not_found += "      " +  name + "\n"
-                    else:
-                        if "x" in self.all_nodes[conduit_outlet] and "y" in self.all_nodes[conduit_outlet]:
-                            x2 = float(self.all_nodes[conduit_outlet]["x"])
-                            y2 = float(self.all_nodes[conduit_outlet]["y"])
-                            grid = self.gutils.grid_on_point(x2, y2)
-                            if grid is None:
-                                if not name in outside_conduits:
-                                    outside_conduits += n_spaces + name + "\n"
-                        else:
-                            conduit_outlets_not_found += "      " +  name + "\n" 
-                                        
-        
+                    if conduit_inlet not in self.all_nodes:
+                        conduit_inlets_not_found += f"      {name}\n"
+                        continue
+
+                    if conduit_outlet not in self.all_nodes:
+                        conduit_outlets_not_found += f"      {name}\n"
+                        continue
+
+                    inlet_coords = self.all_nodes[conduit_inlet]
+                    if "x" not in inlet_coords or "y" not in inlet_coords:
+                        outside_conduits += f"{n_spaces}{name}\n"
+                        continue
+
+                    outlet_coords = self.all_nodes[conduit_outlet]
+                    if "x" not in outlet_coords or "y" not in outlet_coords:
+                        conduit_outlets_not_found += f"      {name}\n"
+                        continue
+
+                    x1, y1 = float(inlet_coords["x"]), float(inlet_coords["y"])
+                    x2, y2 = float(outlet_coords["x"]), float(outlet_coords["y"])
+
+                    # Both ends of the conduit is outside the grid
+                    if self.gutils.grid_on_point(x1, y1) is None and self.gutils.grid_on_point(x2, y2) is None:
+                        outside_conduits += f"{n_spaces}{name}\n"
+                        continue
+
+                    # Conduit inlet is outside the grid, and it is an Inlet
+                    if self.gutils.grid_on_point(x1, y1) is None and conduit_inlet.lower().startswith("i"):
+                        outside_conduits += f"{n_spaces}{name}\n"
+                        continue
+
                     if conduit_inlet in self.all_nodes and conduit_outlet in self.all_nodes:
                         geom = QgsGeometry.fromPolylineXY([QgsPointXY(x1, y1), QgsPointXY(x2, y2)])
                     else:
@@ -2027,6 +2041,11 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                             feat.setAttribute("xsections_geom4", conduit_xsections_geom4)
                 
                             new_conduits.append(feat)
+
+                    if conduit_inlet not in inlets_outlets_inside:
+                        inlets_outlets_inside.append(conduit_inlet)
+                    if conduit_outlet not in inlets_outlets_inside:
+                        inlets_outlets_inside.append(conduit_outlet)
         
                 if len(new_conduits) != 0:
                     self.user_swmm_conduits_lyr.startEditing()
@@ -2035,7 +2054,18 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                     self.user_swmm_conduits_lyr.updateExtents()
                     self.user_swmm_conduits_lyr.triggerRepaint()
                     self.user_swmm_conduits_lyr.removeSelection()
-        
+
+                # Remove junctions not connected to conduits
+                self.user_swmm_nodes_lyr.startEditing()
+                for feat in self.user_swmm_nodes_lyr.getFeatures():
+                    node_name = feat['name']
+                    if len(inlets_outlets_inside) > 1:
+                        if node_name not in inlets_outlets_inside:
+                            self.user_swmm_nodes_lyr.deleteFeature(feat.id())
+                self.user_swmm_nodes_lyr.commitChanges()
+                self.user_swmm_nodes_lyr.updateExtents()
+                self.user_swmm_nodes_lyr.triggerRepaint()
+
             except Exception as e:
                 QApplication.setOverrideCursor(Qt.ArrowCursor)
                 self.uc.show_error("ERROR 050618.1804: creation of Storm Drain Conduits layer failed!", e)
@@ -2647,37 +2677,42 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
 
         node_items = outside_nodes + outside_storages
         if len(node_items) > 0:
-            node_items = ("Inlets/Junctions/Outflows:\n"  + outside_nodes if len(outside_nodes) > 0 else  "") + \
-                    ("Storage Units:\n" + outside_storages if len(outside_storages) > 0 else "") 
-            
+            self.uc.bar_warn("Storm Drain points outside the domain! Check log for more information.")
+            # self.uc.log_info("Problematic Storm Drain points!")
+            # node_items = ("Inlets/Junctions/Outflows:\n"  + outside_nodes if len(outside_nodes) > 0 else  "") + \
+            #         ("Storage Units:\n" + outside_storages if len(outside_storages) > 0 else "")
+            # self.uc.log_info(node_items)
             node_items = "WARNING 221220.0336:\nPoints with no coordinates or outside the domain:\n\n" + node_items
-            msgBox = QMessageBox()
-            msgBox.setIcon(QMessageBox.Warning)
-            msgBox.setWindowTitle("Problematic Storm Drain points")
-            msgBox.setStandardButtons(QMessageBox.Close)  # Close button instead of OK
-            layout = QHBoxLayout()
-            label = QLabel(node_items)
-            layout.addWidget(label)
-            msgBox.layout().addWidget(label)           
-            msgBox.exec_()   
+            self.uc.log_info(node_items)
+            # msgBox = QMessageBox()
+            # msgBox.setIcon(QMessageBox.Warning)
+            # msgBox.setWindowTitle("Problematic Storm Drain points")
+            # msgBox.setStandardButtons(QMessageBox.Close)  # Close button instead of OK
+            # layout = QHBoxLayout()
+            # label = QLabel(node_items)
+            # layout.addWidget(label)
+            # msgBox.layout().addWidget(label)
+            # msgBox.exec_()
 
         link_items = outside_conduits + outside_pumps + outside_orifices +  outside_weirs 
         if len(link_items) > 0:
-            link_items = ("Conduits:\n"  + outside_conduits if len(outside_conduits) > 0 else  "") + \
-                    ("Pumps:\n" + outside_pumps if len(outside_pumps) > 0 else "") + \
-                    ("Orifices:\n" + outside_orifices if len(outside_orifices) > 0 else "") + \
-                    ("Weirs:\n" + outside_weirs  if len(outside_weirs) > 0 else "")  
+            self.uc.bar_warn("Storm Drain links outside the domain! Check log for more information.")
+            # link_items = ("Conduits:\n"  + outside_conduits if len(outside_conduits) > 0 else  "") + \
+            #         ("Pumps:\n" + outside_pumps if len(outside_pumps) > 0 else "") + \
+            #         ("Orifices:\n" + outside_orifices if len(outside_orifices) > 0 else "") + \
+            #         ("Weirs:\n" + outside_weirs  if len(outside_weirs) > 0 else "")
 
-            link_items = "WARNING 221220.0337:\nThe following links extend outside the domain:\n\n" + link_items                                          
-            msgBox = QMessageBox()
-            msgBox.setIcon(QMessageBox.Warning)
-            msgBox.setWindowTitle("Storm Drain links outside domain")
-            msgBox.setStandardButtons(QMessageBox.Close)  # Close button instead of OK
-            layout = QHBoxLayout()
-            label = QLabel(link_items)
-            layout.addWidget(label)
-            msgBox.layout().addWidget(label)           
-            msgBox.exec_()
+            link_items = "WARNING 221220.0337:\nThe following links extend outside the domain:\n\n" + link_items
+            self.uc.log_info(link_items)
+            # msgBox = QMessageBox()
+            # msgBox.setIcon(QMessageBox.Warning)
+            # msgBox.setWindowTitle("Storm Drain links outside domain")
+            # msgBox.setStandardButtons(QMessageBox.Close)  # Close button instead of OK
+            # layout = QHBoxLayout()
+            # label = QLabel(link_items)
+            # layout.addWidget(label)
+            # msgBox.layout().addWidget(label)
+            # msgBox.exec_()
 
         if storm_drain.status_report:
             result2 = ScrollMessageBox2(QMessageBox.Warning, "Storm Drain import status", storm_drain.status_report)
