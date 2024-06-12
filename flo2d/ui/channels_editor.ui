@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>401</width>
-    <height>429</height>
+    <width>740</width>
+    <height>646</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -25,7 +25,7 @@
   <property name="windowTitle">
    <string>FLO-2D Widget</string>
   </property>
-  <layout class="QGridLayout" name="gridLayout_5">
+  <layout class="QGridLayout" name="gridLayout_3">
    <item row="0" column="0">
     <widget class="QLabel" name="label_19">
      <property name="enabled">
@@ -52,7 +52,7 @@
      </property>
     </widget>
    </item>
-   <item row="0" column="2">
+   <item row="0" column="3">
     <widget class="QToolButton" name="schematized_channels_help_btn">
      <property name="enabled">
       <bool>true</bool>
@@ -87,7 +87,7 @@
      </property>
     </widget>
    </item>
-   <item row="1" column="0" colspan="3">
+   <item row="1" column="0" colspan="4">
     <widget class="QGroupBox" name="segment_control_grp">
      <property name="enabled">
       <bool>true</bool>
@@ -110,182 +110,226 @@
      <property name="checkable">
       <bool>false</bool>
      </property>
-     <layout class="QGridLayout" name="gridLayout_4">
+     <layout class="QGridLayout" name="gridLayout_2">
       <item row="0" column="0">
-       <layout class="QGridLayout" name="gridLayout_2">
-        <item row="0" column="0">
-         <widget class="QLabel" name="label_20">
-          <property name="sizePolicy">
-           <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-            <horstretch>0</horstretch>
-            <verstretch>0</verstretch>
-           </sizepolicy>
-          </property>
-          <property name="toolTip">
-           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;FROUDC&lt;/p&gt;&lt;p&gt;Maximum channel Froude number if the Froude number exceeds FROUDC, the Manning’s n roughness value is increased by 0.001. Set FROUDC = 0 for no adjustments of the n-value in a given channel segment. The increased nvalues are reported in the ROUGH.OUT and CHAN.RGH files.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-          </property>
-          <property name="text">
-           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Maximun Froude number&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-          </property>
-          <property name="wordWrap">
-           <bool>true</bool>
-          </property>
-         </widget>
+       <layout class="QHBoxLayout" name="horizontalLayout">
+        <item>
+         <layout class="QVBoxLayout" name="verticalLayout">
+          <item>
+           <widget class="QLabel" name="label_20">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="toolTip">
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;FROUDC&lt;/p&gt;&lt;p&gt;Maximum channel Froude number if the Froude number exceeds FROUDC, the Manning’s n roughness value is increased by 0.001. Set FROUDC = 0 for no adjustments of the n-value in a given channel segment. The increased nvalues are reported in the ROUGH.OUT and CHAN.RGH files.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            </property>
+            <property name="text">
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Maximun Froude number&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            </property>
+            <property name="wordWrap">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QDoubleSpinBox" name="max_froude_number_dbox">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="buttonSymbols">
+             <enum>QAbstractSpinBox::UpDownArrows</enum>
+            </property>
+            <property name="decimals">
+             <number>4</number>
+            </property>
+            <property name="maximum">
+             <double>9999999.000000000000000</double>
+            </property>
+            <property name="singleStep">
+             <double>1.000000000000000</double>
+            </property>
+           </widget>
+          </item>
+         </layout>
         </item>
-        <item row="1" column="0">
-         <widget class="QDoubleSpinBox" name="max_froude_number_dbox">
-          <property name="sizePolicy">
-           <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-            <horstretch>0</horstretch>
-            <verstretch>0</verstretch>
-           </sizepolicy>
-          </property>
-          <property name="buttonSymbols">
-           <enum>QAbstractSpinBox::UpDownArrows</enum>
-          </property>
-          <property name="decimals">
-           <number>4</number>
-          </property>
-          <property name="maximum">
-           <double>9999999.000000000000000</double>
-          </property>
-          <property name="singleStep">
-           <double>1.000000000000000</double>
-          </property>
-         </widget>
+        <item>
+         <layout class="QVBoxLayout" name="verticalLayout_2">
+          <item>
+           <widget class="QLabel" name="label_21">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="toolTip">
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;ROUGHADJ&lt;/p&gt;&lt;p&gt;A coefficient used in the depth adjustment of the Manning’s n-value and the shallown value for channel segments.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            </property>
+            <property name="text">
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Roughness adjustment coefficient&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            </property>
+            <property name="wordWrap">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QDoubleSpinBox" name="roughness_adjust_coeff_dbox">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="buttonSymbols">
+             <enum>QAbstractSpinBox::UpDownArrows</enum>
+            </property>
+            <property name="decimals">
+             <number>4</number>
+            </property>
+            <property name="maximum">
+             <double>99999999.000000000000000</double>
+            </property>
+            <property name="singleStep">
+             <double>1.000000000000000</double>
+            </property>
+           </widget>
+          </item>
+         </layout>
         </item>
-       </layout>
-      </item>
-      <item row="0" column="1">
-       <layout class="QGridLayout" name="gridLayout_3">
-        <item row="1" column="0">
-         <widget class="QDoubleSpinBox" name="roughness_adjust_coeff_dbox">
-          <property name="sizePolicy">
-           <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-            <horstretch>0</horstretch>
-            <verstretch>0</verstretch>
-           </sizepolicy>
-          </property>
-          <property name="buttonSymbols">
-           <enum>QAbstractSpinBox::UpDownArrows</enum>
-          </property>
-          <property name="decimals">
-           <number>4</number>
-          </property>
-          <property name="maximum">
-           <double>99999999.000000000000000</double>
-          </property>
-          <property name="singleStep">
-           <double>1.000000000000000</double>
-          </property>
-         </widget>
+        <item>
+         <layout class="QVBoxLayout" name="verticalLayout_3">
+          <item>
+           <widget class="QLabel" name="label_22">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="toolTip">
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;ISEDN&lt;/p&gt;&lt;p&gt;Sediment transport equation or data group for routing by size fractions for the channel segment. Set ISED = 1 in the CONT.DAT file to use this option. Choose one of the two following options for each channel segment:&lt;/p&gt;&lt;p&gt;For sediment routing without size fractions: Set ISEDN(K) = 1 - 11 (one of eleven sediment transport equations).&lt;/p&gt;&lt;p&gt;or&lt;/p&gt;&lt;p&gt;For sediment routing with size fractions: Set ISEDN(K) = sediment data group (Line 3 in SED.DAT which includes a sediment transport equation).&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            </property>
+            <property name="text">
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Transport equation (if ISED = 1 in CONT.DAT)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            </property>
+            <property name="wordWrap">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QComboBox" name="transport_eq_cbo">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <item>
+             <property name="text">
+              <string>Zeller and Fullerton</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Yang</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Englund and Hansen</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Ackers and Hansen</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Laursen</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Toffaleti</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Woo-MPM</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>MPM-Smart</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Karim-Kennedy</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Parker, Klingeman &amp; McLean</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Van Rijn</string>
+             </property>
+            </item>
+           </widget>
+          </item>
+         </layout>
         </item>
-        <item row="0" column="0">
-         <widget class="QLabel" name="label_21">
-          <property name="sizePolicy">
-           <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-            <horstretch>0</horstretch>
-            <verstretch>0</verstretch>
-           </sizepolicy>
-          </property>
-          <property name="toolTip">
-           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;ROUGHADJ&lt;/p&gt;&lt;p&gt;A coefficient used in the depth adjustment of the Manning’s n-value and the shallown value for channel segments.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-          </property>
-          <property name="text">
-           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Roughness adjustment coefficient&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-          </property>
-          <property name="wordWrap">
-           <bool>true</bool>
-          </property>
-         </widget>
-        </item>
-       </layout>
-      </item>
-      <item row="0" column="2">
-       <layout class="QGridLayout" name="gridLayout_7">
-        <item row="2" column="0">
-         <widget class="QComboBox" name="transport_eq_cbo">
-          <property name="sizePolicy">
-           <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-            <horstretch>0</horstretch>
-            <verstretch>0</verstretch>
-           </sizepolicy>
-          </property>
+        <item>
+         <layout class="QVBoxLayout" name="verticalLayout_4">
           <item>
-           <property name="text">
-            <string>Zeller and Fullerton</string>
-           </property>
+           <widget class="QLabel" name="label">
+            <property name="toolTip">
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;IBASEFLOW&lt;/p&gt;&lt;p&gt;Baseflow of a channel to establish a flow condition for floodwave
+arrival time segment is used.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            </property>
+            <property name="text">
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Channel Baseflow&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            </property>
+            <property name="wordWrap">
+             <bool>true</bool>
+            </property>
+           </widget>
           </item>
           <item>
-           <property name="text">
-            <string>Yang</string>
-           </property>
+           <widget class="QDoubleSpinBox" name="channel_baseflow_dbox">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="buttonSymbols">
+             <enum>QAbstractSpinBox::UpDownArrows</enum>
+            </property>
+            <property name="decimals">
+             <number>4</number>
+            </property>
+            <property name="maximum">
+             <double>9999999.000000000000000</double>
+            </property>
+            <property name="singleStep">
+             <double>1.000000000000000</double>
+            </property>
+           </widget>
           </item>
-          <item>
-           <property name="text">
-            <string>Englund and Hansen</string>
-           </property>
-          </item>
-          <item>
-           <property name="text">
-            <string>Ackers and Hansen</string>
-           </property>
-          </item>
-          <item>
-           <property name="text">
-            <string>Laursen</string>
-           </property>
-          </item>
-          <item>
-           <property name="text">
-            <string>Toffaleti</string>
-           </property>
-          </item>
-          <item>
-           <property name="text">
-            <string>Woo-MPM</string>
-           </property>
-          </item>
-          <item>
-           <property name="text">
-            <string>MPM-Smart</string>
-           </property>
-          </item>
-          <item>
-           <property name="text">
-            <string>Karim-Kennedy</string>
-           </property>
-          </item>
-          <item>
-           <property name="text">
-            <string>Parker, Klingeman &amp; McLean</string>
-           </property>
-          </item>
-          <item>
-           <property name="text">
-            <string>Van Rijn</string>
-           </property>
-          </item>
-         </widget>
-        </item>
-        <item row="1" column="0">
-         <widget class="QLabel" name="label_22">
-          <property name="sizePolicy">
-           <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-            <horstretch>0</horstretch>
-            <verstretch>0</verstretch>
-           </sizepolicy>
-          </property>
-          <property name="toolTip">
-           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;ISEDN&lt;/p&gt;&lt;p&gt;Sediment transport equation or data group for routing by size fractions for the channel segment. Set ISED = 1 in the CONT.DAT file to use this option. Choose one of the two following options for each channel segment:&lt;/p&gt;&lt;p&gt;For sediment routing without size fractions: Set ISEDN(K) = 1 - 11 (one of eleven sediment transport equations).&lt;/p&gt;&lt;p&gt;or&lt;/p&gt;&lt;p&gt;For sediment routing with size fractions: Set ISEDN(K) = sediment data group (Line 3 in SED.DAT which includes a sediment transport equation).&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-          </property>
-          <property name="text">
-           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Transport equation (if ISED = 1 in CONT.DAT)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-          </property>
-          <property name="wordWrap">
-           <bool>true</bool>
-          </property>
-         </widget>
+         </layout>
         </item>
        </layout>
       </item>
@@ -525,7 +569,7 @@
      </property>
     </widget>
    </item>
-   <item row="4" column="1">
+   <item row="4" column="2">
     <spacer name="verticalSpacer">
      <property name="orientation">
       <enum>Qt::Vertical</enum>

@@ -711,6 +711,9 @@ class ParseDAT(object):
                     segments[-1][-1].append(row + xsec + rbank)
                 except StopIteration:
                     return
+                
+            elif char == "B":
+                segments[-1].append(row)
 
             elif char == "C":
                 confluence.append(row)
