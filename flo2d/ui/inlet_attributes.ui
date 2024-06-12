@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>301</width>
-    <height>617</height>
+    <width>297</width>
+    <height>608</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -40,8 +40,8 @@
        </property>
        <property name="iconSize">
         <size>
-         <width>25</width>
-         <height>25</height>
+         <width>20</width>
+         <height>20</height>
         </size>
        </property>
       </widget>
@@ -57,28 +57,24 @@
        </property>
        <property name="iconSize">
         <size>
-         <width>25</width>
-         <height>25</height>
+         <width>20</width>
+         <height>20</height>
         </size>
        </property>
       </widget>
      </item>
      <item>
-      <widget class="QToolButton" name="save_btn">
-       <property name="text">
-        <string>...</string>
+      <spacer name="horizontalSpacer_2">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
        </property>
-       <property name="icon">
-        <iconset>
-         <normaloff>../img/mActionSaveAllEdits.svg</normaloff>../img/mActionSaveAllEdits.svg</iconset>
-       </property>
-       <property name="iconSize">
+       <property name="sizeHint" stdset="0">
         <size>
-         <width>25</width>
-         <height>25</height>
+         <width>40</width>
+         <height>20</height>
         </size>
        </property>
-      </widget>
+      </spacer>
      </item>
     </layout>
    </item>
@@ -150,7 +146,7 @@
          <widget class="QLabel" name="label_18">
           <property name="minimumSize">
            <size>
-            <width>100</width>
+            <width>150</width>
             <height>0</height>
            </size>
           </property>
@@ -173,7 +169,18 @@
          </widget>
         </item>
         <item row="0" column="1">
-         <widget class="QComboBox" name="comboBox_2"/>
+         <widget class="QComboBox" name="sd_type_cbo">
+          <item>
+           <property name="text">
+            <string>Inlet</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>Outlet</string>
+           </property>
+          </item>
+         </widget>
         </item>
         <item row="3" column="0">
          <widget class="QLabel" name="label_8">
@@ -183,34 +190,83 @@
          </widget>
         </item>
         <item row="1" column="1">
-         <widget class="QSpinBox" name="spinBox"/>
+         <widget class="QSpinBox" name="intype_sb">
+          <property name="minimum">
+           <number>1</number>
+          </property>
+          <property name="maximum">
+           <number>5</number>
+          </property>
+         </widget>
         </item>
         <item row="2" column="1">
-         <widget class="QDoubleSpinBox" name="doubleSpinBox_5"/>
+         <widget class="QDoubleSpinBox" name="swmm_length_dsb">
+          <property name="maximum">
+           <double>100000.000000000000000</double>
+          </property>
+         </widget>
         </item>
         <item row="3" column="1">
-         <widget class="QDoubleSpinBox" name="doubleSpinBox_6"/>
+         <widget class="QDoubleSpinBox" name="swmm_width_dsb">
+          <property name="maximum">
+           <double>100000.000000000000000</double>
+          </property>
+         </widget>
         </item>
         <item row="4" column="1">
-         <widget class="QDoubleSpinBox" name="doubleSpinBox_7"/>
+         <widget class="QDoubleSpinBox" name="swmm_height_dsb">
+          <property name="maximum">
+           <double>100000.000000000000000</double>
+          </property>
+         </widget>
         </item>
         <item row="5" column="1">
-         <widget class="QDoubleSpinBox" name="doubleSpinBox_8"/>
+         <widget class="QDoubleSpinBox" name="swmm_coeff_dsb">
+          <property name="minimum">
+           <double>2.500000000000000</double>
+          </property>
+          <property name="maximum">
+           <double>3.500000000000000</double>
+          </property>
+          <property name="value">
+           <double>3.000000000000000</double>
+          </property>
+         </widget>
         </item>
         <item row="6" column="1">
-         <widget class="QSpinBox" name="spinBox_2"/>
+         <widget class="QSpinBox" name="swmm_feature_sb">
+          <property name="maximum">
+           <number>2</number>
+          </property>
+         </widget>
         </item>
         <item row="7" column="1">
-         <widget class="QDoubleSpinBox" name="doubleSpinBox_9"/>
+         <widget class="QDoubleSpinBox" name="curbheight_dsb">
+          <property name="maximum">
+           <double>100000.000000000000000</double>
+          </property>
+         </widget>
         </item>
         <item row="8" column="1">
-         <widget class="QDoubleSpinBox" name="doubleSpinBox_10"/>
+         <widget class="QDoubleSpinBox" name="swmm_clogging_factor_dsb">
+          <property name="maximum">
+           <double>100.000000000000000</double>
+          </property>
+         </widget>
         </item>
         <item row="9" column="1">
-         <widget class="QDoubleSpinBox" name="doubleSpinBox_11"/>
+         <widget class="QDoubleSpinBox" name="swmm_time_for_clogging_dsb">
+          <property name="maximum">
+           <double>100000.000000000000000</double>
+          </property>
+         </widget>
         </item>
         <item row="10" column="1">
-         <widget class="QDoubleSpinBox" name="doubleSpinBox_12"/>
+         <widget class="QDoubleSpinBox" name="drboxarea_dsb">
+          <property name="maximum">
+           <double>100000.000000000000000</double>
+          </property>
+         </widget>
         </item>
        </layout>
       </item>
@@ -226,10 +282,14 @@
       <item row="0" column="0">
        <layout class="QGridLayout" name="gridLayout_2">
         <item row="2" column="1">
-         <widget class="QComboBox" name="comboBox"/>
+         <widget class="QComboBox" name="external_inflow_cbo"/>
         </item>
         <item row="3" column="1">
-         <widget class="QDoubleSpinBox" name="doubleSpinBox"/>
+         <widget class="QDoubleSpinBox" name="junction_invert_elev_dsb">
+          <property name="maximum">
+           <double>100000.000000000000000</double>
+          </property>
+         </widget>
         </item>
         <item row="1" column="0">
          <widget class="QLabel" name="label">
@@ -239,7 +299,11 @@
          </widget>
         </item>
         <item row="6" column="1">
-         <widget class="QDoubleSpinBox" name="doubleSpinBox_4"/>
+         <widget class="QDoubleSpinBox" name="surcharge_depth_dsb">
+          <property name="maximum">
+           <double>100000.000000000000000</double>
+          </property>
+         </widget>
         </item>
         <item row="4" column="0">
          <widget class="QLabel" name="label_5">
@@ -249,7 +313,11 @@
          </widget>
         </item>
         <item row="4" column="1">
-         <widget class="QDoubleSpinBox" name="doubleSpinBox_2"/>
+         <widget class="QDoubleSpinBox" name="max_depth_dsb">
+          <property name="maximum">
+           <double>100000.000000000000000</double>
+          </property>
+         </widget>
         </item>
         <item row="2" column="0">
          <widget class="QLabel" name="label_3">
@@ -259,7 +327,7 @@
          </widget>
         </item>
         <item row="1" column="1">
-         <widget class="QLineEdit" name="lineEdit"/>
+         <widget class="QLineEdit" name="name_le"/>
         </item>
         <item row="5" column="0">
          <widget class="QLabel" name="label_10">
@@ -276,13 +344,17 @@
          </widget>
         </item>
         <item row="5" column="1">
-         <widget class="QDoubleSpinBox" name="doubleSpinBox_3"/>
+         <widget class="QDoubleSpinBox" name="init_depth_dsb">
+          <property name="maximum">
+           <double>100000.000000000000000</double>
+          </property>
+         </widget>
         </item>
         <item row="0" column="0">
          <widget class="QLabel" name="label_2">
           <property name="minimumSize">
            <size>
-            <width>100</width>
+            <width>150</width>
             <height>0</height>
            </size>
           </property>
@@ -305,7 +377,7 @@
          </widget>
         </item>
         <item row="0" column="1">
-         <widget class="QLabel" name="label_6">
+         <widget class="QLabel" name="grid_lbl">
           <property name="enabled">
            <bool>false</bool>
           </property>

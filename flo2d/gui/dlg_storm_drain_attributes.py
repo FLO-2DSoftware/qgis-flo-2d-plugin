@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QDockWidget
 
 # FLO-2D Preprocessor tools for QGIS
@@ -31,3 +32,80 @@ class InletAttributes(qtBaseClass, uiDialog):
         self.dock_widget = QDockWidget("", self.iface.mainWindow())
         self.dock_widget.setObjectName("Inlets/Junctions")
         self.dock_widget.setWidget(self)
+
+        self.previous_node = None
+        self.next_node = None
+
+    def populate_attributes(self, fid):
+        """
+        Function to populate the attributes
+        """
+        if not fid:
+            return
+
+        # Get the attributes
+        attributes = self.gutils.execute(
+                                            f"""SELECT 
+                                                grid,
+                                                name, 
+                                                external_inflow, 
+                                                junction_invert_elev, 
+                                                max_depth,
+                                                init_depth,
+                                                surcharge_depth,
+                                                sd_type,
+                                                intype,
+                                                swmm_length, 
+                                                swmm_width, 
+                                                swmm_height, 
+                                                swmm_coeff, 
+                                                swmm_feature,
+                                                curbheight,
+                                                swmm_clogging_factor, 
+                                                swmm_time_for_clogging,
+                                                drboxarea
+                                            FROM
+                                                user_swmm_nodes
+                                            WHERE
+                                                fid = {fid};"""
+                                         ).fetchall()[0]
+
+        # Assign attributes to the dialog
+        self.grid_lbl.setText(str(attributes[0]))
+        self.name_le.setText(str(attributes[1]))
+        # self.external_inflow = attributes[2]
+        self.junction_invert_elev_dsb.setValue(float(attributes[3]))
+        self.max_depth_dsb.setValue(float(attributes[4]))
+        self.init_depth_dsb.setValue(float(attributes[5]))
+        self.surcharge_depth_dsb.setValue(float(attributes[6]))
+        if str(attributes[7]).lower().startswith("i"):
+            sd_type = 'Inlet'
+        else:
+            sd_type = 'Outlet'
+        self.sd_type_cbo.setCurrentIndex(self.sd_type_cbo.findText(sd_type))
+        self.intype_sb.setValue(int(attributes[8]))
+        self.swmm_length_dsb.setValue(float(attributes[9]))
+        self.swmm_width_dsb.setValue(float(attributes[10]))
+        self.swmm_height_dsb.setValue(float(attributes[11]))
+        self.swmm_coeff_dsb.setValue(float(attributes[12]))
+        self.swmm_feature_sb.setValue(int(attributes[13]))
+        self.curbheight_dsb.setValue(float(attributes[14]))
+        self.swmm_clogging_factor_dsb.setValue(float(attributes[15]))
+        self.swmm_time_for_clogging_dsb.setValue(float(attributes[16]))
+        self.drboxarea_dsb.setValue(float(attributes[17]))
+
+    def dock_widget(self):
+        """ Close and delete the dock widget. """
+        if self.dock_widget:
+            self.iface.removeDockWidget(self.dock_widget)
+            self.dock_widget.close()
+            self.dock_widget.deleteLater()
+            self.dock_widget = None
+
+
+
+
+
+
+
+

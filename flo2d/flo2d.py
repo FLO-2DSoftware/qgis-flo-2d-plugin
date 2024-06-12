@@ -39,7 +39,7 @@ from PyQt5.QtCore import QVariant
 import pip
 from qgis.PyQt import QtCore, QtGui
 from PyQt5.QtGui import QFont
-from PyQt5.QtWidgets import QApplication, QToolButton, QProgressDialog
+from PyQt5.QtWidgets import QApplication, QToolButton, QProgressDialog, QDockWidget
 from osgeo import gdal, ogr
 from qgis._core import QgsMessageLog, QgsCoordinateReferenceSystem, QgsMapSettings, QgsProjectMetadata, \
     QgsMapRendererParallelJob, QgsLayerTreeLayer, QgsVectorLayerExporter, QgsVectorFileWriter, QgsVectorLayer, \
@@ -185,6 +185,7 @@ class Flo2D(object):
         self.f2d_table_dock = None
         self.f2d_dock = None
         self.f2d_grid_info_dock = None
+        self.f2d_inlets_junctions_dock = None
         self.create_map_tools()
         self.crs = None
         self.cur_info_table = None
@@ -3597,17 +3598,22 @@ class Flo2D(object):
         """
         Show the selected sd node attributes
         """
+        if self.f2d_inlets_junctions_dock:
+            self.iface.removeDockWidget(self.f2d_inlets_junctions_dock)
+            self.f2d_inlets_junctions_dock.close()
+            self.f2d_inlets_junctions_dock.deleteLater()
+            self.f2d_inlets_junctions_dock = None
+
         name = self.gutils.execute("SELECT name FROM user_swmm_nodes WHERE fid = ?", (fid,)).fetchone()
         self.uc.bar_info("Selected Storm Drain Node: " + str(name[0]))
+
         dlg = InletAttributes(self.con, self.iface, self.lyrs)
-        dlg.dock_widget.setFloating(False)
         self.iface.addDockWidget(Qt.RightDockWidgetArea, dlg.dock_widget)
+        dlg.dock_widget.setFloating(False)
+        dlg.populate_attributes(fid)
         dlg.dock_widget.show()
-        # ok = dlg.exec_()
-        # if ok:
-        #     pass
-        # else:
-        #     return
+
+        self.f2d_inlets_junctions_dock = dlg.dock_widget
 
     @connection_required
     def show_struct_hydrograph(self, fid=None):
