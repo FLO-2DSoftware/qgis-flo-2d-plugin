@@ -110,6 +110,7 @@ from .gui.dlg_ras_import import RasImportDialog
 from .gui.dlg_schem_xs_info import SchemXsecEditorDialog
 from .gui.dlg_schema2user import Schema2UserDialog
 from .gui.dlg_settings import SettingsDialog
+from .gui.dlg_storm_drain_attributes import InletAttributes
 from .gui.dlg_update_gpkg import UpdateGpkg
 from .gui.dlg_user2schema import User2SchemaDialog
 from .gui.f2d_main_widget import FLO2DWidget
@@ -3582,7 +3583,7 @@ class Flo2D(object):
         self.f2d_widget.struct_editor.populate_structs(struct_fid=fid)
 
     @connection_required
-    def show_sd_node_info(self, fid=None, extra=""):
+    def show_sd_node_profile(self, fid=None, extra=""):
         """
         Show the selected sd node info
         """
@@ -3590,6 +3591,23 @@ class Flo2D(object):
         self.uc.bar_info("Selected Storm Drain Node: " + str(name[0]))
         self.f2d_widget.storm_drain_editor.center_chbox.setChecked(True)
         self.f2d_widget.storm_drain_editor.update_profile_cbos(extra, name[0])
+
+    @connection_required
+    def show_sd_node_attributes(self, fid=None):
+        """
+        Show the selected sd node attributes
+        """
+        name = self.gutils.execute("SELECT name FROM user_swmm_nodes WHERE fid = ?", (fid,)).fetchone()
+        self.uc.bar_info("Selected Storm Drain Node: " + str(name[0]))
+        dlg = InletAttributes(self.con, self.iface, self.lyrs)
+        dlg.dock_widget.setFloating(False)
+        self.iface.addDockWidget(Qt.RightDockWidgetArea, dlg.dock_widget)
+        dlg.dock_widget.show()
+        # ok = dlg.exec_()
+        # if ok:
+        #     pass
+        # else:
+        #     return
 
     @connection_required
     def show_struct_hydrograph(self, fid=None):
@@ -4252,9 +4270,7 @@ class Flo2D(object):
                 self.cur_profile_table = table
                 self.show_sd_discharge(fid)
             else:
-                show_editor = self.editors_map[table]
-                self.cur_info_table = table
-                show_editor(fid, extra)
+                self.show_sd_node_profile(fid, extra)
         if table == 'user_swmm_conduits':
             #show_editor = self.editors_map[table]
             self.cur_profile_table = table
@@ -4291,7 +4307,7 @@ class Flo2D(object):
             "user_struct": self.show_struct_editor,
             "struct": self.show_struct_editor,
             # "chan": self.show_profile,
-            "user_swmm_nodes": self.show_sd_node_info,
+            "user_swmm_nodes": self.show_sd_node_attributes,
             # "user_swmm_nodes": None,
             "user_swmm_conduits": None,
             "user_swmm_weirs": None,

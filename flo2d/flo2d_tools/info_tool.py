@@ -57,7 +57,8 @@ class InfoTool(QgsMapToolIdentify):
             "user_bc_lines",
             "user_bc_polygons",
             "user_struct",
-            "struct"
+            "struct",
+            "user_swmm_nodes"
         ]
         # try:
         res = self.identify(e.x(), e.y(), self.lyrs_list, QgsMapToolIdentify.TopDownAll)
@@ -83,33 +84,40 @@ class InfoTool(QgsMapToolIdentify):
             sm[i] = QMenu(ln)
             actions[i] = {}
 
-            if ln == "Storm Drain Nodes":
-                sd_layer = self.lyrs.get_layer_by_name("Storm Drain Nodes", group=self.lyrs.group).layer()
-                for j, fid in enumerate(lyrs_found[ln]["fids"]):
+            # if ln == "Storm Drain Nodes":
+            #     sd_layer = self.lyrs.get_layer_by_name("Storm Drain Nodes", group=self.lyrs.group).layer()
+            #     for j, fid in enumerate(lyrs_found[ln]["fids"]):
+            #         feat = next(sd_layer.getFeatures(QgsFeatureRequest(fid)))
+            #         name = feat["name"]
+            #         grid = feat["grid"]
+            #         ssm = QMenu(name + " (" + str(grid) + ")")
+            #         sm[i].addMenu(ssm)
+            #
+            #         # Add "Start Node" action
+            #         start_action = QAction("Start Node", None)
+            #         start_action.hovered.connect(functools.partial(self.show_rubber, lid, fid))
+            #         start_action.triggered.connect(functools.partial(self.pass_res, tab, fid, "Start"))
+            #         ssm.addAction(start_action)
+            #
+            #         # Add "End Node" action
+            #         end_action = QAction("End Node", None)
+            #         end_action.hovered.connect(functools.partial(self.show_rubber, lid, fid))
+            #         end_action.triggered.connect(functools.partial(self.pass_res, tab, fid, "End"))
+            #         ssm.addAction(end_action)
+
+            # else:
+            for j, fid in enumerate(lyrs_found[ln]["fids"]):
+                if ln == "Storm Drain Nodes":
+                    sd_layer = self.lyrs.get_layer_by_name("Storm Drain Nodes", group=self.lyrs.group).layer()
                     feat = next(sd_layer.getFeatures(QgsFeatureRequest(fid)))
                     name = feat["name"]
                     grid = feat["grid"]
-                    ssm = QMenu(name + " (" + str(grid) + ")")
-                    sm[i].addMenu(ssm)
-
-                    # Add "Start Node" action
-                    start_action = QAction("Start Node", None)
-                    start_action.hovered.connect(functools.partial(self.show_rubber, lid, fid))
-                    start_action.triggered.connect(functools.partial(self.pass_res, tab, fid, "Start"))
-                    ssm.addAction(start_action)
-
-                    # Add "End Node" action
-                    end_action = QAction("End Node", None)
-                    end_action.hovered.connect(functools.partial(self.show_rubber, lid, fid))
-                    end_action.triggered.connect(functools.partial(self.pass_res, tab, fid, "End"))
-                    ssm.addAction(end_action)
-
-            else:
-                for j, fid in enumerate(lyrs_found[ln]["fids"]):
+                    actions[i][j] = QAction(name + " (" + str(grid) + ")", None)
+                else:
                     actions[i][j] = QAction(str(fid), None)
-                    actions[i][j].hovered.connect(functools.partial(self.show_rubber, lid, fid))
-                    actions[i][j].triggered.connect(functools.partial(self.pass_res, tab, fid))
-                    sm[i].addAction(actions[i][j])
+                actions[i][j].hovered.connect(functools.partial(self.show_rubber, lid, fid))
+                actions[i][j].triggered.connect(functools.partial(self.pass_res, tab, fid))
+                sm[i].addAction(actions[i][j])
 
             popup.addMenu(sm[i])
         popup.exec_(self.canvas.mapToGlobal(QPoint(e.pos().x() + 30, e.pos().y() + 30)))
