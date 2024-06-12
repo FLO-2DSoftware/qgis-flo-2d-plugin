@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from PyQt5.QtCore import Qt
+from PyQt5.QtGui import QColor
 from PyQt5.QtWidgets import QDockWidget
 
 # FLO-2D Preprocessor tools for QGIS
@@ -58,6 +59,11 @@ class InletAttributes(qtBaseClass, uiDialog):
 
         self.user_swmm_nodes_lyr = self.lyrs.data["user_swmm_nodes"]["qlyr"]
 
+        self.dock_widget.visibilityChanged.connect(self.clear_rubber)
+
+        self.next_btn.clicked.connect(self.populate_next_node)
+        self.previous_btn.clicked.connect(self.populate_previous_node)
+
     def populate_attributes(self, fid):
         """
         Function to populate the attributes
@@ -66,6 +72,7 @@ class InletAttributes(qtBaseClass, uiDialog):
             return
 
         self.current_node = fid
+        self.lyrs.show_feat_rubber(self.user_swmm_nodes_lyr.id(), fid, QColor(Qt.red))
 
         # Get the attributes
         attributes = self.gutils.execute(
@@ -118,7 +125,38 @@ class InletAttributes(qtBaseClass, uiDialog):
         self.swmm_time_for_clogging_dsb.setValue(float(attributes[16]))
         self.drboxarea_dsb.setValue(float(attributes[17]))
 
-        # Find the next and previous nodes TODO
+        self.previous_btn.setEnabled(False)
+        self.next_btn.setEnabled(False)
+
+        self.next_node = self.gutils.execute(
+            f"""
+            SELECT 
+                conduit_inlet
+            FROM 
+                user_swmm_conduits
+            WHERE 
+                conduit_outlet = '{str(attributes[1])}' LIMIT 1;
+            """
+        ).fetchall()
+
+        if self.next_node:
+            self.next_btn.setEnabled(True)
+            self.next_lbl.setText(self.next_node[0][0])
+
+        self.previous_node = self.gutils.execute(
+            f"""
+            SELECT 
+                conduit_outlet
+            FROM 
+                user_swmm_conduits
+            WHERE 
+                conduit_inlet = '{str(attributes[1])}' LIMIT 1;
+            """
+        ).fetchall()
+
+        if self.previous_node:
+            self.previous_btn.setEnabled(True)
+            self.previous_lbl.setText(self.previous_node[0][0])
 
     def save_inlets_junctions(self):
         """
@@ -168,18 +206,60 @@ class InletAttributes(qtBaseClass, uiDialog):
 
         self.user_swmm_nodes_lyr.triggerRepaint()
 
+        # UPDATE THE CONDUITS TODO
+
     def dock_widget(self):
         """ Close and delete the dock widget. """
         if self.dock_widget:
+            self.uc.log_info("TTteste")
             self.iface.removeDockWidget(self.dock_widget)
             self.dock_widget.close()
             self.dock_widget.deleteLater()
             self.dock_widget = None
 
+    def clear_rubber(self):
+        """
+        Function to clear the rubber when closing the widget
+        """
+        self.lyrs.clear_rubber()
 
+    def populate_next_node(self):
+        """
+        Function to populate data when the user clicks on the next btn
+        """
+        next_node_name = self.next_lbl.text()
 
+        fid = self.gutils.execute(
+            f"""
+            SELECT
+                fid
+            FROM
+                user_swmm_nodes
+            WHERE
+                name = '{next_node_name}'
+            """
+        ).fetchone()
 
+        if fid:
+            self.populate_attributes(fid[0])
 
+    def populate_previous_node(self):
+        """
+        Function to populate data when the user clicks on the previous btn
+        """
+        previous_node_name = self.previous_lbl.text()
 
+        fid = self.gutils.execute(
+            f"""
+            SELECT
+                fid
+            FROM
+                user_swmm_nodes
+            WHERE
+                name = '{previous_node_name}'
+            """
+        ).fetchone()
 
+        if fid:
+            self.populate_attributes(fid[0])
 
