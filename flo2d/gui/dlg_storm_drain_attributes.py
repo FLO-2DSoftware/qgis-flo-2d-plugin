@@ -33,8 +33,30 @@ class InletAttributes(qtBaseClass, uiDialog):
         self.dock_widget.setObjectName("Inlets/Junctions")
         self.dock_widget.setWidget(self)
 
+        self.current_node = None
         self.previous_node = None
         self.next_node = None
+
+        # Connections
+        self.name_le.editingFinished.connect(self.save_inlets_junctions)
+        # self.external_inflow.editingFinished.connect(self.save_inlets_junctions)
+        self.junction_invert_elev_dsb.editingFinished.connect(self.save_inlets_junctions)
+        self.max_depth_dsb.editingFinished.connect(self.save_inlets_junctions)
+        self.init_depth_dsb.editingFinished.connect(self.save_inlets_junctions)
+        self.surcharge_depth_dsb.editingFinished.connect(self.save_inlets_junctions)
+        self.sd_type_cbo.currentTextChanged.connect(self.save_inlets_junctions)
+        self.intype_sb.editingFinished.connect(self.save_inlets_junctions)
+        self.swmm_length_dsb.editingFinished.connect(self.save_inlets_junctions)
+        self.swmm_width_dsb.editingFinished.connect(self.save_inlets_junctions)
+        self.swmm_height_dsb.editingFinished.connect(self.save_inlets_junctions)
+        self.swmm_coeff_dsb.editingFinished.connect(self.save_inlets_junctions)
+        self.swmm_feature_sb.editingFinished.connect(self.save_inlets_junctions)
+        self.curbheight_dsb.editingFinished.connect(self.save_inlets_junctions)
+        self.swmm_clogging_factor_dsb.editingFinished.connect(self.save_inlets_junctions)
+        self.swmm_time_for_clogging_dsb.editingFinished.connect(self.save_inlets_junctions)
+        self.drboxarea_dsb.editingFinished.connect(self.save_inlets_junctions)
+
+        self.user_swmm_nodes_lyr = self.lyrs.data["user_swmm_nodes"]["qlyr"]
 
     def populate_attributes(self, fid):
         """
@@ -42,6 +64,8 @@ class InletAttributes(qtBaseClass, uiDialog):
         """
         if not fid:
             return
+
+        self.current_node = fid
 
         # Get the attributes
         attributes = self.gutils.execute(
@@ -93,6 +117,56 @@ class InletAttributes(qtBaseClass, uiDialog):
         self.swmm_clogging_factor_dsb.setValue(float(attributes[15]))
         self.swmm_time_for_clogging_dsb.setValue(float(attributes[16]))
         self.drboxarea_dsb.setValue(float(attributes[17]))
+
+        # Find the next and previous nodes TODO
+
+    def save_inlets_junctions(self):
+        """
+        Function to save the inlets everytime an attribute is changed
+        """
+        name = self.name_le.text()
+        # external_inflow = self..value()
+        junction_invert_elev = self.junction_invert_elev_dsb.value()
+        max_depth = self.max_depth_dsb.value()
+        init_depth = self.init_depth_dsb.value()
+        surcharge_depth = self.surcharge_depth_dsb.value()
+        sd_type = self.sd_type_cbo.currentText()[0]
+        intype = self.intype_sb.value()
+        swmm_length = self.swmm_length_dsb.value()
+        swmm_width = self.swmm_width_dsb.value()
+        swmm_height = self.swmm_height_dsb.value()
+        swmm_coeff = self.swmm_coeff_dsb.value()
+        swmm_feature = self.swmm_feature_sb.value()
+        curbheight = self.curbheight_dsb.value()
+        swmm_clogging_factor = self.swmm_clogging_factor_dsb.value()
+        swmm_time_for_clogging = self.swmm_time_for_clogging_dsb.value()
+        drboxarea = self.drboxarea_dsb.value()
+
+        self.gutils.execute(f"""
+                                UPDATE 
+                                    user_swmm_nodes
+                                SET 
+                                    name = '{name}',
+                                    junction_invert_elev = '{junction_invert_elev}',
+                                    max_depth = '{max_depth}',
+                                    init_depth = '{init_depth}',
+                                    surcharge_depth = '{surcharge_depth}',
+                                    sd_type = '{sd_type}',
+                                    intype = '{intype}',
+                                    swmm_length = '{swmm_length}', 
+                                    swmm_width = '{swmm_width}', 
+                                    swmm_height = '{swmm_height}', 
+                                    swmm_coeff = '{swmm_coeff}', 
+                                    swmm_feature = '{swmm_feature}',
+                                    curbheight = '{curbheight}',
+                                    swmm_clogging_factor = '{swmm_clogging_factor}', 
+                                    swmm_time_for_clogging = '{swmm_time_for_clogging}',
+                                    drboxarea = '{drboxarea}'
+                                WHERE 
+                                    fid = '{self.current_node}';
+                            """)
+
+        self.user_swmm_nodes_lyr.triggerRepaint()
 
     def dock_widget(self):
         """ Close and delete the dock widget. """
