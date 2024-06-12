@@ -6086,7 +6086,6 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         if node_type == "Start":
             index = self.start_node_cbo.findText(name)
             if index != -1:
-                self.uc.log_info(str(index))
                 self.start_node_cbo.setCurrentIndex(index)
         if node_type == "End":
             index = self.end_node_cbo.findText(name)

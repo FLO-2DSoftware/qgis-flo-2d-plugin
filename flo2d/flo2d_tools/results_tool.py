@@ -23,15 +23,16 @@ from qgis.PyQt.QtWidgets import QAction, QMenu
 
 
 class ResultsTool(QgsMapToolIdentify):
-    feature_picked = pyqtSignal(str, int)  # Defines a new own signal 'feature_picked' with 2 arguments of
+    feature_picked = pyqtSignal(str, int, object)  # Defines a new own signal 'feature_picked' with 2 arguments of
     # type str and int, respectively, that will be 'emmited' on the signal.
     # See self.feature_picked.emit(table, fid), where 'table' will be the table ´chan' and
     # 'fid' the id fid of the segment selected.
 
-    def __init__(self, canvas, lyrs):
+    def __init__(self, canvas, lyrs, uc):
         self.canvas = canvas
         self.lyrs = lyrs
         self.rb = None
+        self.uc = uc
         # self.profile_tabs = ["chan"]
         self.canvas.setCursor(Qt.CrossCursor)
         QgsMapToolIdentify.__init__(self, self.canvas)
@@ -87,6 +88,7 @@ class ResultsTool(QgsMapToolIdentify):
                 lyrs_found[lyr_name]["fids"].append(fid)
         popup = QMenu()
         sm = {}
+        ssm = {}
         actions = {}
         for i, ln in enumerate(lyrs_found.keys()):
             lid = lyrs_found[ln]["lid"]
@@ -94,51 +96,72 @@ class ResultsTool(QgsMapToolIdentify):
             sm[i] = QMenu(ln)
             actions[i] = {}
 
-            for j, fid in enumerate(lyrs_found[ln]["fids"]):
-                if ln == "Storm Drain Nodes":
-                    sd_layer = self.lyrs.get_layer_by_name("Storm Drain Nodes", group=self.lyrs.group).layer()
+            if ln == "Storm Drain Nodes":
+                sd_layer = self.lyrs.get_layer_by_name("Storm Drain Nodes", group=self.lyrs.group).layer()
+                for j, fid in enumerate(lyrs_found[ln]["fids"]):
                     feat = next(sd_layer.getFeatures(QgsFeatureRequest(fid)))
                     name = feat["name"]
                     grid = feat["grid"]
-                    actions[i][j] = QAction(name + " (" + str(grid) + ")", None)
-                elif ln == "Storm Drain Conduits":
-                    sd_layer = self.lyrs.get_layer_by_name("Storm Drain Conduits", group=self.lyrs.group).layer()
-                    feat = next(sd_layer.getFeatures(QgsFeatureRequest(fid)))
-                    name = feat["conduit_name"]
-                    actions[i][j] = QAction(name, None)
-                elif ln == "Storm Drain Weirs":
-                    sd_layer = self.lyrs.get_layer_by_name("Storm Drain Weirs", group=self.lyrs.group).layer()
-                    feat = next(sd_layer.getFeatures(QgsFeatureRequest(fid)))
-                    name = feat["weir_name"]
-                    actions[i][j] = QAction(name, None)
-                elif ln == "Storm Drain Orifices":
-                    sd_layer = self.lyrs.get_layer_by_name("Storm Drain Orifices", group=self.lyrs.group).layer()
-                    feat = next(sd_layer.getFeatures(QgsFeatureRequest(fid)))
-                    name = feat["orifice_name"]
-                    actions[i][j] = QAction(name, None)
-                elif ln == "Storm Drain Pumps":
-                    sd_layer = self.lyrs.get_layer_by_name("Storm Drain Pumps", group=self.lyrs.group).layer()
-                    feat = next(sd_layer.getFeatures(QgsFeatureRequest(fid)))
-                    name = feat["pump_name"]
-                    actions[i][j] = QAction(name, None)
-                elif ln == "Floodplain Cross Sections Cells":
-                    fp_cells_layer = self.lyrs.get_layer_by_name("Floodplain Cross Sections Cells", group=self.lyrs.group).layer()
-                    feat = next(fp_cells_layer.getFeatures(QgsFeatureRequest(fid)))
-                    grid = feat["grid_fid"]
-                    actions[i][j] = QAction(str(grid), None)
-                else:
-                    actions[i][j] = QAction(str(fid), None)
-                actions[i][j].hovered.connect(functools.partial(self.show_rubber, lid, fid))
-                actions[i][j].triggered.connect(functools.partial(self.pass_res, tab, fid))
-                sm[i].addAction(actions[i][j])
+                    ssm = QMenu(name + " (" + str(grid) + ")")
+                    sm[i].addMenu(ssm)
+
+                    # Results
+                    results_action = QAction("See Results", None)
+                    results_action.hovered.connect(functools.partial(self.show_rubber, lid, fid))
+                    results_action.triggered.connect(functools.partial(self.pass_res, tab, fid, "See Results"))
+                    ssm.addAction(results_action)
+
+                    # Add "Start Node" action
+                    start_action = QAction("Start Node", None)
+                    start_action.hovered.connect(functools.partial(self.show_rubber, lid, fid))
+                    start_action.triggered.connect(functools.partial(self.pass_res, tab, fid, "Start"))
+                    ssm.addAction(start_action)
+
+                    # Add "End Node" action
+                    end_action = QAction("End Node", None)
+                    end_action.hovered.connect(functools.partial(self.show_rubber, lid, fid))
+                    end_action.triggered.connect(functools.partial(self.pass_res, tab, fid, "End"))
+                    ssm.addAction(end_action)
+            else:
+                for j, fid in enumerate(lyrs_found[ln]["fids"]):
+                    if ln == "Storm Drain Conduits":
+                        sd_layer = self.lyrs.get_layer_by_name("Storm Drain Conduits", group=self.lyrs.group).layer()
+                        feat = next(sd_layer.getFeatures(QgsFeatureRequest(fid)))
+                        name = feat["conduit_name"]
+                        actions[i][j] = QAction(name, None)
+                    elif ln == "Storm Drain Weirs":
+                        sd_layer = self.lyrs.get_layer_by_name("Storm Drain Weirs", group=self.lyrs.group).layer()
+                        feat = next(sd_layer.getFeatures(QgsFeatureRequest(fid)))
+                        name = feat["weir_name"]
+                        actions[i][j] = QAction(name, None)
+                    elif ln == "Storm Drain Orifices":
+                        sd_layer = self.lyrs.get_layer_by_name("Storm Drain Orifices", group=self.lyrs.group).layer()
+                        feat = next(sd_layer.getFeatures(QgsFeatureRequest(fid)))
+                        name = feat["orifice_name"]
+                        actions[i][j] = QAction(name, None)
+                    elif ln == "Storm Drain Pumps":
+                        sd_layer = self.lyrs.get_layer_by_name("Storm Drain Pumps", group=self.lyrs.group).layer()
+                        feat = next(sd_layer.getFeatures(QgsFeatureRequest(fid)))
+                        name = feat["pump_name"]
+                        actions[i][j] = QAction(name, None)
+                    elif ln == "Floodplain Cross Sections Cells":
+                        fp_cells_layer = self.lyrs.get_layer_by_name("Floodplain Cross Sections Cells", group=self.lyrs.group).layer()
+                        feat = next(fp_cells_layer.getFeatures(QgsFeatureRequest(fid)))
+                        grid = feat["grid_fid"]
+                        actions[i][j] = QAction(str(grid), None)
+                    else:
+                        actions[i][j] = QAction(str(fid), None)
+                    actions[i][j].hovered.connect(functools.partial(self.show_rubber, lid, fid))
+                    actions[i][j].triggered.connect(functools.partial(self.pass_res, tab, fid))
+                    sm[i].addAction(actions[i][j])
             popup.addMenu(sm[i])
         popup.exec_(
             self.canvas.mapToGlobal(QPoint(e.pos().x() + 30, e.pos().y() + 30))
         )  # Shows popup menu with list of selected
         # channel left bank (shematized) (selected from table 'Chan')
 
-    def pass_res(self, table, fid):
-        self.feature_picked.emit(table, fid)  # Calls get_feature_profile()
+    def pass_res(self, table, fid, extra=None):
+        self.feature_picked.emit(table, fid, extra)
         self.clear_rubber()
 
     def show_rubber(self, lyr_id, fid):

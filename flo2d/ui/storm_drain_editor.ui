@@ -944,7 +944,7 @@
           </property>
           <property name="icon">
            <iconset>
-            <normaloff>../PycharmProjects/qgis-flo-2d-plugin/flo2d/img/eye-svgrepo-com.svg</normaloff>../PycharmProjects/qgis-flo-2d-plugin/flo2d/img/eye-svgrepo-com.svg</iconset>
+            <normaloff>../img/eye-svgrepo-com.svg</normaloff>../img/eye-svgrepo-com.svg</iconset>
           </property>
           <property name="checkable">
            <bool>true</bool>

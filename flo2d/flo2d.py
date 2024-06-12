@@ -4215,7 +4215,7 @@ class Flo2D(object):
         self.canvas = self.iface.mapCanvas()
         self.info_tool = InfoTool(self.canvas, self.lyrs, self.uc)
         self.grid_info_tool = GridInfoTool(self.uc, self.canvas, self.lyrs)
-        self.results_tool = ResultsTool(self.canvas, self.lyrs)
+        self.results_tool = ResultsTool(self.canvas, self.lyrs, self.uc)
 
     def get_feature_info(self, table, fid, extra):
         try:
@@ -4230,7 +4230,7 @@ class Flo2D(object):
             else:
                 show_editor(fid)
 
-    def get_feature_profile(self, table, fid):
+    def get_feature_profile(self, table, fid, extra):
         # try:
         if table == 'chan':
             self.cur_profile_table = table
@@ -4248,9 +4248,13 @@ class Flo2D(object):
             self.cur_profile_table = table
             self.show_struct_hydrograph(fid)
         if table == 'user_swmm_nodes':
-            #show_editor = self.editors_map[table]
-            self.cur_profile_table = table
-            self.show_sd_discharge(fid)
+            if extra == "See Results":
+                self.cur_profile_table = table
+                self.show_sd_discharge(fid)
+            else:
+                show_editor = self.editors_map[table]
+                self.cur_info_table = table
+                show_editor(fid, extra)
         if table == 'user_swmm_conduits':
             #show_editor = self.editors_map[table]
             self.cur_profile_table = table
@@ -4288,6 +4292,7 @@ class Flo2D(object):
             "struct": self.show_struct_editor,
             # "chan": self.show_profile,
             "user_swmm_nodes": self.show_sd_node_info,
+            # "user_swmm_nodes": None,
             "user_swmm_conduits": None,
             "user_swmm_weirs": None,
             "user_swmm_orifices": None,
