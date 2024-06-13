@@ -36,6 +36,14 @@ CREATE TABLE metadata (
 );
 INSERT INTO gpkg_contents (table_name, data_type) VALUES ('metadata', 'aspatial');
 
+-- The external_layers table
+CREATE TABLE external_layers (
+    "fid" INTEGER NOT NULL PRIMARY KEY,
+    "name" TEXT NOT NULL UNIQUE ON CONFLICT REPLACE,
+    "type" TEXT
+);
+INSERT INTO gpkg_contents (table_name, data_type) VALUES ('external_layers', 'aspatial');
+
 -- The Storm Drain table field connector
 CREATE TABLE sd_fields (
     "fid" INTEGER NOT NULL PRIMARY KEY,
@@ -486,6 +494,7 @@ CREATE TABLE "chan" (
     "froudc" REAL DEFAULT 0, -- FROUDC, max Froude channel number
     "roughadj" REAL DEFAULT 0, -- ROUGHADJ, coefficient for depth adjustment
     "isedn" INTEGER DEFAULT 0, -- ISEDN, sediment transport equation or data
+    "ibaseflow" REAL DEFAULT 0, -- IBASEFLOW, chanel baseflow discharge
     "notes" TEXT,
     "user_lbank_fid" INTEGER, -- FID of parent left bank line,
     "rank" INTEGER
@@ -2207,6 +2216,7 @@ CREATE TABLE "user_left_bank" (
     "froudc" REAL DEFAULT 0, -- FROUDC, max Froude channel number
     "roughadj" REAL DEFAULT 0, -- ROUGHADJ, coefficient for depth adjustment
     "isedn" INTEGER DEFAULT 0, -- ISEDN, sediment transport equation or data
+	"ibaseflow" REAL DEFAULT 0, -- IBASEFLOW, chanel baseflow discharge
     "rank" INTEGER,
     "notes" TEXT
 );

@@ -109,30 +109,115 @@ class INP_GroupsDialog(qtBaseClass, uiDialog):
         self.uc = UserCommunication(iface, "FLO-2D")
         self.polulate_INP_values()
 
+        self.advanced_options_chbox.stateChanged.connect(self.set_advanced_grps)
+
     def polulate_INP_values(self):
+        """
+        Populate the values on the storm drain control dialog
+        """
+        self.set_advanced_grps()
         try:
-            today = date.today()
+            start_date = date.today()
+            report_start_date = date.today()
             simul_time = float(self.gutils.get_cont_par("SIMUL"))
+            end_date = start_date + timedelta(hours=simul_time)
+
             frac, whole = modf(simul_time / 24)
             frac, whole = modf(frac * 24)
-            unit = int(self.gutils.get_cont_par("METRIC"))
-            # [OPTIONS]:
-            self.flow_units_cbo.setCurrentIndex(unit)
-            self.start_date.setDate(today)
-            self.report_start_date.setDate(today)
-            self.end_date.setDate(today + timedelta(hours=simul_time))
-            self.end_time.setTime(time(int(whole), int(frac * 60)))
 
-            tout = float(self.gutils.get_cont_par("TOUT"))
+            end_time = time(int(whole), int(frac * 60))
 
-            mins, hours = modf(tout)
+            report_time = float(self.gutils.get_cont_par("TOUT"))
+
+            mins, hours = modf(report_time)
             hours = int(hours)
             mins = int(mins * 60)
 
-            time_string = timedelta(hours=tout)
+            report_time = QTime(hours, mins)
 
-            t = QTime(hours, mins)
-            self.report_stp_time.setTime(t)
+            if not self.gutils.is_table_empty('swmm_control'):
+
+                swmm_control_data = self.gutils.execute("SELECT name, value FROM swmm_control").fetchall()
+                for control_data in swmm_control_data:
+                    name = control_data[0]
+                    value = control_data[1]
+
+                    if name == 'TITLE':
+                        self.titleTextEdit.setPlainText(value)
+                        continue
+                    # if name == 'FLOW_ROUTING':
+                    #     self.flow_routing_cbo.setCurrentText(value)
+                    #     continue
+                    if name == 'START_DATE':
+                        date_object = datetime.strptime(value, '%m/%d/%Y')
+                        start_date = date_object.date()
+                        continue
+                    if name == 'START_TIME':
+                        time_object = datetime.strptime(value, '%H:%M:%S')
+                        start_time = time_object.time()
+                        self.start_time.setTime(start_time)
+                        continue
+                    if name == 'REPORT_START_DATE':
+                        date_object = datetime.strptime(value, '%m/%d/%Y')
+                        report_start_date = date_object.date()
+                    if name == 'REPORT_START_TIME':
+                        time_object = datetime.strptime(value, '%H:%M:%S')
+                        report_start_time = time_object.time()
+                        self.report_start_time.setTime(report_start_time)
+                        continue
+                    if name == 'END_DATE':
+                        date_object = datetime.strptime(value, '%m/%d/%Y')
+                        end_date = date_object.date()
+                        continue
+                    # if name == 'END_TIME':
+                    #     time_object = datetime.strptime(value, '%H:%M:%S')
+                    #     end_time = time_object.time()
+                    #     continue
+                    if name == 'REPORT_STEP':
+                        time_object = datetime.strptime(value, '%H:%M:%S')
+                        report_time = time_object.time()
+                        continue
+                    # if name == 'INERTIAL_DAMPING':
+                    #     self.inertial_damping_cbo.setCurrentText(value)
+                    #     continue
+                    # if name == 'NORMAL_FLOW_LIMITED':
+                    #     self.normal_flow_limited_cbo.setCurrentText(value)
+                    #     continue
+                    if name == 'SKIP_STEADY_STATE':
+                        self.skip_steady_state_cbo.setCurrentText(value)
+                        continue
+                    if name == 'FORCE_MAIN_EQUATION':
+                        self.force_main_equation_cbo.setCurrentText(value)
+                        continue
+                    if name == 'LINK_OFFSETS':
+                        self.link_offsets_cbo.setCurrentText(value)
+                        continue
+                    if name == 'MIN_SLOPE':
+                        self.min_slop_dbox.setValue(float(value))
+                        continue
+                    if name == 'INPUT':
+                        self.input_cbo.setCurrentText(value)
+                        continue
+                    if name == 'CONTROLS':
+                        self.controls_cbo.setCurrentText(value)
+                        continue
+                    if name == 'NODES':
+                        self.nodes_cbo.setCurrentText(value)
+                        continue
+                    if name == 'LINKS':
+                        self.links_cbo.setCurrentText(value)
+                        continue
+
+            unit = int(self.gutils.get_cont_par("METRIC"))
+            self.flow_routing_cbo.setCurrentIndex(0)
+            self.inertial_damping_cbo.setCurrentIndex(0)
+            self.normal_flow_limited_cbo.setCurrentIndex(0)
+            self.flow_units_cbo.setCurrentIndex(unit)
+            self.start_date.setDate(start_date)
+            self.report_start_date.setDate(report_start_date)
+            self.end_date.setDate(end_date)
+            self.end_time.setTime(end_time)
+            self.report_stp_time.setTime(report_time)
 
         except Exception as e:
             QApplication.restoreOverrideCursor()
@@ -141,6 +226,60 @@ class INP_GroupsDialog(qtBaseClass, uiDialog):
                 + "\n__________________________________________________",
                 e,
             )
+
+    def save_INP_control(self):
+        """
+        Function to save the INP control data
+        """
+
+        # clear current data on the swmm_control table
+        self.gutils.clear_tables('swmm_control')
+
+        control_cbos = {
+            'TITLE': self.titleTextEdit.toPlainText(),
+            'FLOW_UNITS': self.flow_units_cbo.currentText(),
+            'FLOW_ROUTING': self.flow_routing_cbo.currentText(),
+            'START_DATE': self.start_date.date().toString('MM/dd/yyyy'),
+            'START_TIME': self.start_time.time().toString('HH:mm:ss'),
+            'REPORT_START_DATE': self.report_start_date.date().toString('MM/dd/yyyy'),
+            'REPORT_START_TIME': self.report_start_time.time().toString('HH:mm:ss'),
+            'END_DATE': self.end_date.date().toString('MM/dd/yyyy'),
+            'END_TIME': self.end_time.time().toString('HH:mm:ss'),
+            'REPORT_STEP': self.report_stp_time.time().toString('HH:mm:ss'),
+            'INERTIAL_DAMPING': self.inertial_damping_cbo.currentText(),
+            'NORMAL_FLOW_LIMITED': self.normal_flow_limited_cbo.currentText(),
+            'SKIP_STEADY_STATE': self.skip_steady_state_cbo.currentText(),
+            'FORCE_MAIN_EQUATION': self.force_main_equation_cbo.currentText(),
+            'LINK_OFFSETS': self.link_offsets_cbo.currentText(),
+            'MIN_SLOPE': self.min_slop_dbox.value(),
+            'INPUT': self.input_cbo.currentText(),
+            'CONTROLS': self.controls_cbo.currentText(),
+            'NODES': self.nodes_cbo.currentText(),
+            'LINKS': self.links_cbo.currentText(),
+        }
+
+        for key, value in control_cbos.items():
+            self.gutils.execute(f"INSERT INTO swmm_control (name, value) VALUES ('{key}', '{value}');")
+
+    def set_advanced_grps(self):
+        """
+        Function to make the advanced groups visible or not
+        """
+        if self.advanced_options_chbox.isChecked():
+            self.advanced_options_grp.setHidden(False)
+            self.hardwired_options_grp.setHidden(False)
+            self.label_9.setHidden(False)
+            self.report_start_date.setHidden(False)
+            self.label_10.setHidden(False)
+            self.report_start_time.setHidden(False)
+
+        else:
+            self.advanced_options_grp.setHidden(True)
+            self.hardwired_options_grp.setHidden(True)
+            self.label_9.setHidden(True)
+            self.report_start_date.setHidden(True)
+            self.label_10.setHidden(True)
+            self.report_start_time.setHidden(True)
 
 
 uiDialog, qtBaseClass = load_ui("storm_drain_editor")
@@ -292,6 +431,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         self.PumpCurv = PumpCurves(self.con, self.iface)
 
         self.schema_storm_drain_btn.clicked.connect(self.schematize_swmm)
+        self.sd_control_btn.clicked.connect(self.open_sd_control)
         self.sd_help_btn.clicked.connect(self.sd_help)
 
         self.SD_type4_cbo.currentIndexChanged.connect(self.SD_show_type4_table_and_plot)
@@ -322,7 +462,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         self.pump_curve_description_le.textChanged.connect(self.update_pump_curve_data)
                
         self.pump_curve_cbo.activated.connect(self.current_cbo_pump_curve_index_changed)
-        self.pump_curve_cbo.currentIndexChanged.connect(self.refresh_PC_PlotAndTable)
+        # self.pump_curve_cbo.currentIndexChanged.connect(self.refresh_PC_PlotAndTable)
 
         self.simulate_stormdrain_chbox.clicked.connect(self.simulate_stormdrain)
         self.import_shapefile_btn.clicked.connect(self.import_hydraulics)
@@ -450,13 +590,6 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         self.lyrs.save_lyrs_edits("user_swmm_nodes")
         after = self.gutils.count("user_swmm_nodes")
 
-    #         if after > before:
-    #             self.swmm_idx = after - 1
-    #         elif self.swmm_idx >= 0:
-    #             self.save_attrs()
-    #         else:
-    #             return
-    #         self.populate_swmm()
 
     def revert_swmm_lyr_edits(self):
         user_swmm_nodes_edited = self.lyrs.rollback_lyrs_edits("user_swmm_nodes")
@@ -597,30 +730,6 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                     row[10] = int("1" if is_true(row[9]) else "0")
                     row = [0 if v == NULL else v for v in row]
                     inlets.append(row)
-
-                    # Manage Rating Table:
-                #                     intype = this_user_node['intype']
-                #                     if intype == 4:
-                #                         if rt_name is not None and rt_name != "":
-                #                             row = self.gutils.execute("SELECT * WHERE grid_fid = ? AND name = ?;", (grid_fid, rt_name,))
-                #                             if not row or row[0] is None or row[1] is None or row[1] == "":
-                #                                 # There is no entry for this inlet in rating table. Add it.
-                #                                 # See if rating table has an item with the RT name:
-                #                                 row = self.gutils.execute("SELECT * FROM swmmflort WHERE name = ?;", (rt_name,))
-                #                                 if row:
-                #                                    rt_inserts.append([grid_fid, rt_name])
-                #
-                #
-                #
-                #
-                #
-                #                                 rt_inserts.append([grid_fid, rt_name])
-                #                     else:
-                #                         # See if it in Rating Table. If so, assign NULL to grid_fid but keep reference of RT name to RT data:
-                #                         row = self.gutils.execute("SELECT * FROM swmmflort WHERE grid_fid = ? AND name = ?;", (this_user_node['grid'], this_user_node['rt_name'],))
-                #                         if row:
-                #                             if row[1] == grid_fid:
-                #                                 self.gutils.execute("UPDATE swmmflort SET grid_fid = NULL WHERE fid = ?;", (row[0],))
 
                 elif sd_type == "O":
                     outf_flo = this_user_node["swmm_allow_discharge"]
@@ -821,10 +930,6 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         """
         self.uc.clear_bar_messages()
 
-        # if self.gutils.is_table_empty("user_model_boundary"):
-        #     self.uc.bar_warn("There is no computational domain! Please digitize it before running tool.")
-        #     return False
-
         if self.gutils.is_table_empty("grid"):
             self.uc.bar_warn("There is no grid! Please create it before running tool.")
             return False
@@ -939,6 +1044,9 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 # Conduits:
                 storm_drain.create_INP_conduits_dictionary_with_conduits()
                 storm_drain.add_LOSSES_to_INP_conduits_dictionary()
+
+                # Vertices:
+                storm_drain.create_INP_vertices_dictionary_with_vertices()
 
                 # Pumps:
                 storm_drain.create_INP_pumps_dictionary_with_pumps()
@@ -1194,8 +1302,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                     elif "out_type" in values:
                         sd_type = "O"
                     elif name[0] in ["I", "i"]:
-                        skipped_inlets += 1
-                        continue  # Skip inlets defined by initial "I" or "i". Only consider inlets in [SUBCATCHMENTS]
+                        sd_type = "I"
                     else:
                         sd_type = "J"
 
@@ -1241,7 +1348,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 flapgate = "True" if is_true(flapgate) else "False"
 
                 allow_discharge = values["swmm_allow_discharge"] if "swmm_allow_discharge" in values else "False"
-                allow_discharge = "True" if is_true(allow_discharge) else "False"
+                allow_discharge = "1" if is_true(allow_discharge) else "0"
 
                 rim_elev = junction_invert_elev + max_depth if junction_invert_elev and max_depth else 0
 
@@ -1254,8 +1361,18 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 x = float(values["x"])
                 y = float(values["y"])
                 grid = self.gutils.grid_on_point(x, y)
-                if grid is None:
+                # Inlets
+                if grid is None and name[0].lower().startswith('i'):
                     outside_nodes += n_spaces + name + "\toutside domain.\n"
+                    continue
+                # # Junctions
+                # if grid is None and name[0].lower().startswith('j') and allow_discharge == '1':
+                #     outside_nodes += n_spaces + name + "\toutside domain.\n"
+                #     continue
+                # # Outfalls
+                # if grid is None and name[0].lower().startswith('o'):
+                #     outside_nodes += n_spaces + name + "\toutside domain.\n"
+                #     continue
 
                 if grid:
                     elev = self.gutils.grid_value(grid, "elevation")
@@ -1702,7 +1819,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 Creates Storm Drain Conduits layer (Users layers)
         
                 Creates "user_swmm_conduits" layer with attributes taken from
-                the [CONDUITS], [LOSSES], and [XSECTIONS] groups.
+                the [CONDUITS], [LOSSES], [VERTICES], and [XSECTIONS] groups.
         
                 """
         
@@ -1728,7 +1845,8 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                                        xsections_geom4  = ?
                                  WHERE conduit_name = ?;"""
         
-                fields = self.user_swmm_conduits_lyr.fields()       
+                fields = self.user_swmm_conduits_lyr.fields()
+                inlets_outlets_inside = []
                 for name, values in list(storm_drain.INP_conduits.items()):
         
                     conduit_inlet = values["conduit_inlet"] if "conduit_inlet" in values else None
@@ -1775,36 +1893,53 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                     feat = QgsFeature()
                     feat.setFields(fields)
 
-                    if not conduit_inlet in self.all_nodes:
-                        conduit_inlets_not_found += "      " +  name + "\n"
-                    else:
-                        if "x" in self.all_nodes[conduit_inlet] and "x" in self.all_nodes[conduit_inlet]:
-                            x1 = float(self.all_nodes[conduit_inlet]["x"])
-                            y1 = float(self.all_nodes[conduit_inlet]["y"])                        
-                            grid = self.gutils.grid_on_point(x1, y1)
-                            if grid is None:
-                                if not name in outside_conduits:
-                                    outside_conduits += n_spaces + name + "\n"
-                        else:
-                            if not name in outside_conduits:
-                                outside_conduits += n_spaces + name + "\n"                                       
-                                    
-                    if not conduit_outlet in self.all_nodes:
-                        conduit_outlets_not_found += "      " +  name + "\n"
-                    else:
-                        if "x" in self.all_nodes[conduit_outlet] and "y" in self.all_nodes[conduit_outlet]:
-                            x2 = float(self.all_nodes[conduit_outlet]["x"])
-                            y2 = float(self.all_nodes[conduit_outlet]["y"])
-                            grid = self.gutils.grid_on_point(x2, y2)
-                            if grid is None:
-                                if not name in outside_conduits:
-                                    outside_conduits += n_spaces + name + "\n"
-                        else:
-                            conduit_outlets_not_found += "      " +  name + "\n" 
-                                        
-        
+                    if conduit_inlet not in self.all_nodes:
+                        conduit_inlets_not_found += f"      {name}\n"
+                        continue
+
+                    if conduit_outlet not in self.all_nodes:
+                        conduit_outlets_not_found += f"      {name}\n"
+                        continue
+
+                    inlet_coords = self.all_nodes[conduit_inlet]
+                    if "x" not in inlet_coords or "y" not in inlet_coords:
+                        outside_conduits += f"{n_spaces}{name}\n"
+                        continue
+
+                    outlet_coords = self.all_nodes[conduit_outlet]
+                    if "x" not in outlet_coords or "y" not in outlet_coords:
+                        conduit_outlets_not_found += f"      {name}\n"
+                        continue
+
+                    x1, y1 = float(inlet_coords["x"]), float(inlet_coords["y"])
+                    x2, y2 = float(outlet_coords["x"]), float(outlet_coords["y"])
+
+                    # Both ends of the conduit is outside the grid
+                    if self.gutils.grid_on_point(x1, y1) is None and self.gutils.grid_on_point(x2, y2) is None:
+                        outside_conduits += f"{n_spaces}{name}\n"
+                        continue
+
+                    # Conduit inlet is outside the grid, and it is an Inlet
+                    if self.gutils.grid_on_point(x1, y1) is None and conduit_inlet.lower().startswith("i"):
+                        outside_conduits += f"{n_spaces}{name}\n"
+                        continue
+
                     if conduit_inlet in self.all_nodes and conduit_outlet in self.all_nodes:
-                        geom = QgsGeometry.fromPolylineXY([QgsPointXY(x1, y1), QgsPointXY(x2, y2)])
+                        if name in storm_drain.INP_vertices:
+                            # Add starting point
+                            points_list = [QgsPointXY(x1, y1)]
+
+                            # Add vertices
+                            for x, y in zip(storm_drain.INP_vertices[name][0], storm_drain.INP_vertices[name][1]):
+                                points_list.append(QgsPointXY(float(x), float(y)))
+
+                            # Add ending point
+                            points_list.append(QgsPointXY(x2, y2))
+
+                            # Create the Geometry
+                            geom = QgsGeometry.fromPolylineXY(points_list)
+                        else:
+                            geom = QgsGeometry.fromPolylineXY([QgsPointXY(x1, y1), QgsPointXY(x2, y2)])
                     else:
                         continue
                     
@@ -1891,6 +2026,11 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                             feat.setAttribute("xsections_geom4", conduit_xsections_geom4)
                 
                             new_conduits.append(feat)
+
+                    if conduit_inlet not in inlets_outlets_inside:
+                        inlets_outlets_inside.append(conduit_inlet)
+                    if conduit_outlet not in inlets_outlets_inside:
+                        inlets_outlets_inside.append(conduit_outlet)
         
                 if len(new_conduits) != 0:
                     self.user_swmm_conduits_lyr.startEditing()
@@ -1899,7 +2039,18 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                     self.user_swmm_conduits_lyr.updateExtents()
                     self.user_swmm_conduits_lyr.triggerRepaint()
                     self.user_swmm_conduits_lyr.removeSelection()
-        
+
+                # Remove junctions not connected to conduits
+                self.user_swmm_nodes_lyr.startEditing()
+                for feat in self.user_swmm_nodes_lyr.getFeatures():
+                    node_name = feat['name']
+                    if len(inlets_outlets_inside) > 1:
+                        if node_name not in inlets_outlets_inside:
+                            self.user_swmm_nodes_lyr.deleteFeature(feat.id())
+                self.user_swmm_nodes_lyr.commitChanges()
+                self.user_swmm_nodes_lyr.updateExtents()
+                self.user_swmm_nodes_lyr.triggerRepaint()
+
             except Exception as e:
                 QApplication.setOverrideCursor(Qt.ArrowCursor)
                 self.uc.show_error("ERROR 050618.1804: creation of Storm Drain Conduits layer failed!", e)
@@ -2362,8 +2513,52 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 self.uc.show_error("ERROR 080422.1115: creation of Storm Drain Weirs layer failed!", e)
                 QApplication.restoreOverrideCursor()
             finally:
-                QApplication.restoreOverrideCursor() 
-                
+                QApplication.restoreOverrideCursor()
+
+        # CONTROL: Add control data to the swmm_control table
+        self.gutils.clear_tables("swmm_control")
+
+        try:
+            QApplication.setOverrideCursor(Qt.WaitCursor)
+            """
+            This portion of the code saves the SWMM control data to the geopackage 
+
+            Adds values to "swmm_control" table with attributes taken from
+            the *.INP file. 
+
+            """
+
+            # INP TITLE ##################################################
+            title_list = storm_drain.select_this_INP_group("title")
+            for item in title_list:
+                if item != "":
+                    qry = f"INSERT INTO swmm_control (name, value) VALUES ('TITLE', '{item}');"
+                    self.gutils.execute(qry)
+
+            # INP OPTIONS ################################################
+            options_list = storm_drain.select_this_INP_group("options")
+            for option in options_list:
+                if option != "":
+                    name = option.split()[0]
+                    value = option.split()[1]
+                    qry = f"INSERT INTO swmm_control (name, value) VALUES ('{name}', '{value}');"
+                    self.gutils.execute(qry)
+
+            # REPORT OPTIONS #############################################
+            report_list = storm_drain.select_this_INP_group("report")
+            for report in report_list:
+                if report != "":
+                    name = report.split()[0]
+                    value = report.split()[1]
+                    qry = f"INSERT INTO swmm_control (name, value) VALUES ('{name}', '{value}');"
+                    self.gutils.execute(qry)
+
+            QApplication.restoreOverrideCursor()
+
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.uc.show_error("Saving Storm Drain Control data failed!", e)
+
         if (
             complete_or_create == "Create New"
             and len(new_nodes) == 0
@@ -2464,40 +2659,17 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 "later export the .DAT files used by the FLO-2D model."
             )
 
-
         node_items = outside_nodes + outside_storages
         if len(node_items) > 0:
-            node_items = ("Inlets/Junctions/Outflows:\n"  + outside_nodes if len(outside_nodes) > 0 else  "") + \
-                    ("Storage Units:\n" + outside_storages if len(outside_storages) > 0 else "") 
-            
+            self.uc.bar_warn("Storm Drain points outside the domain! Check log for more information.")
             node_items = "WARNING 221220.0336:\nPoints with no coordinates or outside the domain:\n\n" + node_items
-            msgBox = QMessageBox()
-            msgBox.setIcon(QMessageBox.Warning)
-            msgBox.setWindowTitle("Problematic Storm Drain points")
-            msgBox.setStandardButtons(QMessageBox.Close)  # Close button instead of OK
-            layout = QHBoxLayout()
-            label = QLabel(node_items)
-            layout.addWidget(label)
-            msgBox.layout().addWidget(label)           
-            msgBox.exec_()   
+            self.uc.log_info(node_items)
 
         link_items = outside_conduits + outside_pumps + outside_orifices +  outside_weirs 
         if len(link_items) > 0:
-            link_items = ("Conduits:\n"  + outside_conduits if len(outside_conduits) > 0 else  "") + \
-                    ("Pumps:\n" + outside_pumps if len(outside_pumps) > 0 else "") + \
-                    ("Orifices:\n" + outside_orifices if len(outside_orifices) > 0 else "") + \
-                    ("Weirs:\n" + outside_weirs  if len(outside_weirs) > 0 else "")  
-
-            link_items = "WARNING 221220.0337:\nThe following links extend outside the domain:\n\n" + link_items                                          
-            msgBox = QMessageBox()
-            msgBox.setIcon(QMessageBox.Warning)
-            msgBox.setWindowTitle("Storm Drain links outside domain")
-            msgBox.setStandardButtons(QMessageBox.Close)  # Close button instead of OK
-            layout = QHBoxLayout()
-            label = QLabel(link_items)
-            layout.addWidget(label)
-            msgBox.layout().addWidget(label)           
-            msgBox.exec_()
+            self.uc.bar_warn("Storm Drain links outside the domain! Check log for more information.")
+            link_items = "WARNING 221220.0337:\nThe following links extend outside the domain:\n\n" + link_items
+            self.uc.log_info(link_items)
 
         if storm_drain.status_report:
             result2 = ScrollMessageBox2(QMessageBox.Warning, "Storm Drain import status", storm_drain.status_report)
@@ -2512,8 +2684,16 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         self.pump_curve_cbo.blockSignals(True)
         self.update_pump_curve_data()
         self.pump_curve_cbo.blockSignals(False)
-        
+
         QApplication.restoreOverrideCursor()
+
+        dlg_INP_groups = INP_GroupsDialog(self.con, self.iface)
+        ok = dlg_INP_groups.exec_()
+        if ok:
+            self.uc.bar_info("Storm Drain control data saved!")
+            self.uc.log_info("Storm Drain control data saved!")
+            dlg_INP_groups.save_INP_control()
+
         return True
 
     def import_INP_action(self):
@@ -2537,7 +2717,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         else:
             return "Cancel"
 
-    def export_storm_drain_INP_file(self, hdf5_dir=None, hdf5_file=None):
+    def export_storm_drain_INP_file(self, hdf5_dir=None, hdf5_file=None, set_dat_dir=False):
         """
         Writes <name>.INP file
         (<name> exists or is given by user in initial file dialog).
@@ -2548,7 +2728,6 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         """
 
         try:
-            self.uc.clear_bar_messages()
 
             if self.gutils.is_table_empty("user_swmm_nodes"):
                 self.uc.show_warn(
@@ -2561,17 +2740,18 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
 
             s = QSettings()
             last_dir = s.value("FLO-2D/lastGdsDir", "")
-            QApplication.setOverrideCursor(Qt.ArrowCursor)
             if not hdf5_dir and not hdf5_file:
-                swmm_dir = QFileDialog.getExistingDirectory(
-                    None,
-                    "Select directory where SWMM.INP file will be exported",
-                    directory=last_dir,
-                    options=QFileDialog.ShowDirsOnly,
-                )
-                QApplication.restoreOverrideCursor()
-                if not swmm_dir:
-                    return
+                if set_dat_dir:
+                    swmm_dir = QFileDialog.getExistingDirectory(
+                        None,
+                        "Select directory where SWMM.INP file will be exported",
+                        directory=last_dir,
+                        options=QFileDialog.ShowDirsOnly,
+                    )
+                    if not swmm_dir:
+                        return                    
+                else:
+                    swmm_dir = last_dir
 
                 swmm_file = swmm_dir + r"\SWMM.INP"
                 if os.path.isfile(swmm_file):
@@ -2599,1006 +2779,1037 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
 
             # Show dialog with [TITLE], [OPTIONS], and [REPORT], with values taken from existing .INP file (if selected),
             # and project units, start date, report start.
-            QApplication.setOverrideCursor(Qt.ArrowCursor)
-            dlg_INP_groups = INP_GroupsDialog(self.con, self.iface)
-            ok = dlg_INP_groups.exec_()
-            QApplication.restoreOverrideCursor()
-            if ok:
-                start_date = NULL
-                end_date = NULL
-                non_sync_dates = 0
+            # QApplication.setOverrideCursor(Qt.ArrowCursor)
+            # dlg_INP_groups = INP_GroupsDialog(self.con, self.iface)
+            # ok = dlg_INP_groups.exec_()
+            # QApplication.restoreOverrideCursor()
+            # if ok:
+            start_date = NULL
+            end_date = NULL
+            non_sync_dates = 0
 
-                with open(swmm_file, "w") as swmm_inp_file:
-                    no_in_out_conduits = 0
-                    no_in_out_pumps = 0
-                    no_in_out_orifices = 0
-                    no_in_out_weirs = 0
+            with open(swmm_file, "w") as swmm_inp_file:
+                no_in_out_conduits = 0
+                no_in_out_pumps = 0
+                no_in_out_orifices = 0
+                no_in_out_weirs = 0
 
-                    # INP TITLE ##################################################
-                    items = self.select_this_INP_group(INP_groups, "title")
-                    swmm_inp_file.write("[TITLE]")
-                    #                     if items is not None:
-                    #                         for line in items[1:]:
-                    #                             swmm_inp_file.write("\n" + line)
-                    #                     else:
-                    swmm_inp_file.write("\n" + dlg_INP_groups.titleTextEdit.toPlainText() + "\n")
+                # INP TITLE ##################################################
+                # items = self.select_this_INP_group(INP_groups, "title")
+                swmm_inp_file.write("[TITLE]")
+                title = self.gutils.execute("SELECT value FROM swmm_control WHERE name = 'TITLE'").fetchone()
+                if not title:
+                    title = "INP file exported by FLO-2D"
+                    swmm_inp_file.write("\n" + title + "\n")
+                else:
+                    swmm_inp_file.write("\n" + title[0] + "\n")
 
-                    # INP OPTIONS ##################################################
-                    items = self.select_this_INP_group(INP_groups, "options")
-                    swmm_inp_file.write("\n[OPTIONS]")
-                    #                     if items is not None:
-                    #                         for line in items[1:]:
-                    #                             swmm_inp_file.write("\n" + line)
-                    #                     else:
-                    #                         swmm_inp_file.write('\n')
-                    swmm_inp_file.write("\nFLOW_UNITS           " + dlg_INP_groups.flow_units_cbo.currentText())
-                    swmm_inp_file.write("\nINFILTRATION         HORTON")
-                    swmm_inp_file.write("\nFLOW_ROUTING         " + dlg_INP_groups.flow_routing_cbo.currentText())
-                    start_date = dlg_INP_groups.start_date.date().toString("MM/dd/yyyy")
-                    swmm_inp_file.write("\nSTART_DATE           " + start_date)
+                # INP OPTIONS ##################################################
+                # items = self.select_this_INP_group(INP_groups, "options")
+                swmm_inp_file.write("\n[OPTIONS]")
+                flow_units = self.gutils.execute("SELECT value FROM swmm_control WHERE name = 'FLOW_UNITS'").fetchone()[0]
+                swmm_inp_file.write("\nFLOW_UNITS           " + flow_units)
+                swmm_inp_file.write("\nINFILTRATION         HORTON")
+                # flow_routing = self.gutils.execute("SELECT value FROM swmm_control WHERE name = 'FLOW_ROUTING'").fetchone()[0]
+                swmm_inp_file.write("\nFLOW_ROUTING         DYNWAVE")
+                start_date = self.gutils.execute("SELECT value FROM swmm_control WHERE name = 'START_DATE'").fetchone()[0]
+                swmm_inp_file.write("\nSTART_DATE           " + start_date)
+                start_time = self.gutils.execute("SELECT value FROM swmm_control WHERE name = 'START_TIME'").fetchone()[0]
+                swmm_inp_file.write("\nSTART_TIME           " + start_time)
+                report_start_date = self.gutils.execute("SELECT value FROM swmm_control WHERE name = 'REPORT_START_DATE'").fetchone()[0]
+                swmm_inp_file.write("\nREPORT_START_DATE    " + report_start_date)
+                report_start_time = self.gutils.execute("SELECT value FROM swmm_control WHERE name = 'REPORT_START_TIME'").fetchone()[0]
+                swmm_inp_file.write("\nREPORT_START_TIME    " + report_start_time)
+                end_date = self.gutils.execute("SELECT value FROM swmm_control WHERE name = 'END_DATE'").fetchone()[0]
+                swmm_inp_file.write("\nEND_DATE             " + end_date)
+                end_time = self.gutils.execute("SELECT value FROM swmm_control WHERE name = 'END_TIME'").fetchone()[0]
+                swmm_inp_file.write("\nEND_TIME             " + end_time)
+                swmm_inp_file.write("\nSWEEP_START          01/01")
+                swmm_inp_file.write("\nSWEEP_END            12/31")
+                swmm_inp_file.write("\nDRY_DAYS             0")
+                report_step = self.gutils.execute("SELECT value FROM swmm_control WHERE name = 'REPORT_STEP'").fetchone()[0]
+                swmm_inp_file.write("\nREPORT_STEP          " + report_step)
+                swmm_inp_file.write("\nWET_STEP             00:05:00")
+                swmm_inp_file.write("\nDRY_STEP             01:00:00")
+                swmm_inp_file.write("\nROUTING_STEP         00:01:00")
+                swmm_inp_file.write("\nALLOW_PONDING        NO")
+                # inertial_damping = self.gutils.execute("SELECT value FROM swmm_control WHERE name = 'INERTIAL_DAMPING'").fetchone()[0]
+                swmm_inp_file.write("\nINERTIAL_DAMPING     PARTIAL")
+                swmm_inp_file.write("\nVARIABLE_STEP        0.75")
+                swmm_inp_file.write("\nLENGTHENING_STEP     0")
+                swmm_inp_file.write("\nMIN_SURFAREA         0")
+                # normal_flow_limited = self.gutils.execute("SELECT value FROM swmm_control WHERE name = 'NORMAL_FLOW_LIMITED'").fetchone()[0]
+                swmm_inp_file.write("\nNORMAL_FLOW_LIMITED  BOTH")
+                skip_steady_state = self.gutils.execute("SELECT value FROM swmm_control WHERE name = 'SKIP_STEADY_STATE'").fetchone()[0]
+                swmm_inp_file.write("\nSKIP_STEADY_STATE    " + skip_steady_state)
+                force_main_equation = self.gutils.execute("SELECT value FROM swmm_control WHERE name = 'FORCE_MAIN_EQUATION'").fetchone()[0]
+                if force_main_equation in ['Darcy-Weisbach (D-W)', 'D-W']:
+                    force_main_equation = "D-W"
+                else:
+                    force_main_equation = "H-W"
+                swmm_inp_file.write("\nFORCE_MAIN_EQUATION  " + force_main_equation)
+                link_offsets = self.gutils.execute("SELECT value FROM swmm_control WHERE name = 'LINK_OFFSETS'").fetchone()[0]
+                swmm_inp_file.write("\nLINK_OFFSETS         " + link_offsets)
+                min_slope = self.gutils.execute("SELECT value FROM swmm_control WHERE name = 'MIN_SLOPE'").fetchone()[0]
+                swmm_inp_file.write("\nMIN_SLOPE            " + min_slope)
 
-                    swmm_inp_file.write(
-                        "\nSTART_TIME           " + dlg_INP_groups.start_time.time().toString("hh:mm:ss")
-                    )
-                    swmm_inp_file.write(
-                        "\nREPORT_START_DATE    " + dlg_INP_groups.report_start_date.date().toString("MM/dd/yyyy")
-                    )
-                    swmm_inp_file.write(
-                        "\nREPORT_START_TIME    " + dlg_INP_groups.report_start_time.time().toString("hh:mm:ss")
-                    )
-                    end_date = dlg_INP_groups.end_date.date().toString("MM/dd/yyyy")
-                    swmm_inp_file.write("\nEND_DATE             " + end_date)
-                    swmm_inp_file.write("\nEND_TIME             " + dlg_INP_groups.end_time.time().toString("hh:mm:ss"))
-                    swmm_inp_file.write("\nSWEEP_START          01/01")
-                    swmm_inp_file.write("\nSWEEP_END            12/31")
-                    swmm_inp_file.write("\nDRY_DAYS             0")
-                    swmm_inp_file.write(
-                        "\nREPORT_STEP          " + dlg_INP_groups.report_stp_time.time().toString("hh:mm:ss")
-                    )
-                    swmm_inp_file.write("\nWET_STEP             00:05:00")
-                    swmm_inp_file.write("\nDRY_STEP             01:00:00")
-                    swmm_inp_file.write("\nROUTING_STEP         00:01:00")
-                    swmm_inp_file.write("\nALLOW_PONDING        NO")
-                    swmm_inp_file.write("\nINERTIAL_DAMPING     " + dlg_INP_groups.inertial_damping_cbo.currentText())
-                    swmm_inp_file.write("\nVARIABLE_STEP        0.75")
-                    swmm_inp_file.write("\nLENGTHENING_STEP     0")
-                    swmm_inp_file.write("\nMIN_SURFAREA         0")
-                    swmm_inp_file.write(
-                        "\nNORMAL_FLOW_LIMITED  " + dlg_INP_groups.normal_flow_limited_cbo.currentText()
-                    )
-                    swmm_inp_file.write("\nSKIP_STEADY_STATE    " + dlg_INP_groups.skip_steady_state_cbo.currentText())
-                    if dlg_INP_groups.force_main_equation_cbo.currentIndex() == 0:
-                        equation = "H-W"
+                # INP JUNCTIONS ##################################################
+                try:
+                    SD_junctions_sql = """SELECT name, junction_invert_elev, max_depth, init_depth, surcharge_depth, ponded_area
+                                      FROM user_swmm_nodes WHERE sd_type = "I" or sd_type = "i" or sd_type = "J" ORDER BY fid;"""
+
+                    junctions_rows = self.gutils.execute(SD_junctions_sql).fetchall()
+                    if not junctions_rows:
+                        pass
                     else:
-                        equation = "D-W"
-                    swmm_inp_file.write("\nFORCE_MAIN_EQUATION  " + equation)
-                    swmm_inp_file.write("\nLINK_OFFSETS         " + dlg_INP_groups.link_offsets_cbo.currentText())
-                    swmm_inp_file.write("\nMIN_SLOPE            " + str(dlg_INP_groups.min_slop_dbox.value()))
-
-                    # INP JUNCTIONS ##################################################
-                    try:
-                        SD_junctions_sql = """SELECT name, junction_invert_elev, max_depth, init_depth, surcharge_depth, ponded_area
-                                          FROM user_swmm_nodes WHERE sd_type = "I" or sd_type = "i" or sd_type = "J" ORDER BY fid;"""
-
-                        junctions_rows = self.gutils.execute(SD_junctions_sql).fetchall()
-                        if not junctions_rows:
-                            pass
-                        else:
-                            swmm_inp_file.write("\n")
-                            swmm_inp_file.write("\n[JUNCTIONS]")
-                            swmm_inp_file.write("\n;;               Invert     Max.       Init.      Surcharge  Ponded")
-                            swmm_inp_file.write("\n;;Name           Elev.      Depth      Depth      Depth      Area")
-                            swmm_inp_file.write(
-                                "\n;;-------------- ---------- ---------- ---------- ---------- ----------"
-                            )
-
-                            line = "\n{0:16} {1:<10.2f} {2:<10.2f} {3:<10.2f} {4:<10.2f} {5:<10.2f}"
-
-                            for row in junctions_rows:
-                                row = (
-                                    row[0],
-                                    0 if row[1] is None else row[1],
-                                    0 if row[2] is None else row[2],
-                                    0 if row[3] is None else row[3],
-                                    0 if row[4] is None else row[4],
-                                    0,
-                                )
-                                swmm_inp_file.write(line.format(*row))
-                    except Exception as e:
-                        QApplication.restoreOverrideCursor()
-                        self.uc.show_error("ERROR 070618.0851: error while exporting [JUNCTIONS] to .INP file!", e)
-                        return
-
-                    # INP OUTFALLS ###################################################
-                    try:
-                        SD_outfalls_sql = """SELECT name, outfall_invert_elev, outfall_type, time_series, tidal_curve, flapgate, water_depth 
-                                          FROM user_swmm_nodes  WHERE sd_type = "O"  ORDER BY fid;"""
-
-                        outfalls_rows = self.gutils.execute(SD_outfalls_sql).fetchall()
-                        if not outfalls_rows:
-                            pass
-                        else:
-                            swmm_inp_file.write("\n")
-                            swmm_inp_file.write("\n[OUTFALLS]")
-                            swmm_inp_file.write("\n;;               Invert     Outfall      Stage/Table       Tide")
-                            swmm_inp_file.write("\n;;Name           Elev.      Type         Time Series       Gate")
-                            swmm_inp_file.write("\n;;-------------- ---------- ------------ ----------------  ----")
-
-                            line = "\n{0:16} {1:<10.2f} {2:<11} {3:<18} {4:<16}"
-
-                            for row in outfalls_rows:
-                                lrow = list(row)
-                                lrow = [
-                                    lrow[0],
-                                    0 if lrow[1] is None else lrow[1],
-                                    0 if lrow[2] is None else lrow[2],
-                                    "   " if lrow[3] is None else lrow[3],
-                                    0 if lrow[4] is None else lrow[4],
-                                    0 if lrow[5] is None else lrow[5],
-                                    0 if lrow[6] is None else lrow[6],
-                                ]
-                                lrow[3] = "*" if lrow[3] == "..." else "*" if lrow[3] == "" else lrow[3]
-                                lrow[4] = "*" if lrow[4] == "..." else "*" if lrow[4] == "" else lrow[4]
-                                lrow[2] = lrow[2].upper().strip()
-                                if not lrow[2] in ("FIXED", "FREE", "NORMAL", "TIDAL", "TIMESERIES"):
-                                    lrow[2] = "NORMAL"
-                                lrow[2] = (
-                                    "TIDAL"
-                                    if lrow[2] == "TIDAL CURVE"
-                                    else "TIMESERIES"
-                                    if lrow[2] == "TIME SERIES"
-                                    else lrow[2]
-                                )
-
-                                # Set 3rt. value:
-                                if lrow[2] == "FREE" or lrow[2] == "NORMAL":
-                                    lrow[3] = "    "
-                                elif lrow[2] == "TIMESERIES":
-                                    lrow[3] = lrow[3]
-                                elif lrow[2] == "TIDAL":
-                                    lrow[3] = lrow[4]
-                                elif lrow[2] == "FIXED":
-                                    lrow[3] = lrow[6]
-
-                                lrow[5] = "YES" if lrow[5] in ("True", "true", "Yes", "yes", "1") else "NO"
-                                swmm_inp_file.write(line.format(lrow[0], lrow[1], lrow[2], lrow[3], lrow[5]))
-
-                    except Exception as e:
-                        QApplication.restoreOverrideCursor()
-                        self.uc.show_error("ERROR 070618.1619: error while exporting [OUTFALLS] to .INP file!", e)
-                        return
-
-                    # INP STORAGE ###################################################
-                    try:
-                        SD_storages_sql = """SELECT name, invert_elev, max_depth, init_depth, storage_curve,
-                                                    coefficient, exponent, constant, ponded_area, 
-                                                    evap_factor, suction_head, conductivity, initial_deficit, curve_name, infiltration
-                                             FROM user_swmm_storage_units;"""
-
-                        storages_rows = self.gutils.execute(SD_storages_sql).fetchall()
-                        if not storages_rows:
-                            pass
-                        else:
-                            swmm_inp_file.write("\n")
-                            swmm_inp_file.write("\n[STORAGE]")
-                            swmm_inp_file.write("\n;;               Invert   Max.     Init.    Storage    Curve                      Ponded   Evap.")
-                            swmm_inp_file.write("\n;;Name           Elev.    Depth    Depth    Curve      Params                     Area     Frac.    Infiltration Parameters")
-                            swmm_inp_file.write("\n;;-------------- -------- -------- -------- ---------- -------- -------- -------- -------- -------- -----------------------")
-
-                            line_functional_with_infil = "\n{0:16} {1:<8} {2:<8} {3:<8} {4:<10} {5:<8} {6:<8} {7:<8} {8:<8} {9:<8} {10:<8} {11:<8} {12:<8}"
-                            line_tabular_with_infil = "\n{0:16} {1:<8} {2:<8} {3:<8} {4:<10} {5:<26} {6:<8} {7:<8} {8:<8} {9:<8} {10:<8}"
-                            line_functional_no_infil = "\n{0:16} {1:<8} {2:<8} {3:<8} {4:<10} {5:<8} {6:<8} {7:<8} {8:<8} {9:<8}"
-                            line_tabular_no_infil = "\n{0:16} {1:<8} {2:<8} {3:<8} {4:<10} {5:<26} {6:<8} {7:<8}"
-
-                            for row in storages_rows:
-                                lrow = list(row)
-                                lrow = [
-                                    lrow[0],
-                                    0 if lrow[1] is None else '%g'%lrow[1],
-                                    0 if lrow[2] is None else '%g'%lrow[2],
-                                    0 if lrow[3] is None else '%g'%lrow[3],
-                                    "FUNCTIONAL" if lrow[4] is None else lrow[4],
-                                    0 if lrow[5] is None else '%g'%lrow[5],
-                                    0 if lrow[6] is None else '%g'%lrow[6],
-                                    0 if lrow[7] is None else '%g'%lrow[7],
-                                    0,
-                                    0 if lrow[9] is None else '%g'%lrow[9],
-                                    0 if lrow[10] is None else '%g'%lrow[10],
-                                    0 if lrow[11] is None else '%g'%lrow[11],
-                                    0 if lrow[12] is None else '%g'%lrow[12],
-                                    lrow[13],
-                                    lrow[14]
-                                ]
-                                if lrow[4] == "FUNCTIONAL": 
-                                    if lrow[14]== "True":
-                                        swmm_inp_file.write(line_functional_with_infil.format(lrow[0], lrow[1], lrow[2], lrow[3], lrow[4], lrow[5],
-                                                                    lrow[6], lrow[7], lrow[8], lrow[9], 
-                                                                    lrow[10], lrow[11], lrow[12]))
-                                    else:
-                                        swmm_inp_file.write(line_functional_no_infil.format(lrow[0], lrow[1], lrow[2], lrow[3], lrow[4], lrow[5],
-                                                                    lrow[6], lrow[7], lrow[8], lrow[9]))                                         
-                                            
-                                else:
-                                    if lrow[14]=="True":
-                                        swmm_inp_file.write(line_tabular_with_infil.format(lrow[0], lrow[1], lrow[2], lrow[3], lrow[4],
-                                                                lrow[13], lrow[8], lrow[9], 
-                                                                lrow[10], lrow[11], lrow[12]))
-                                    else:    
-                                        swmm_inp_file.write(line_tabular_no_infil.format(lrow[0], lrow[1], lrow[2], lrow[3], lrow[4],
-                                                                lrow[13], lrow[8], lrow[9]))                                        
-
-                    except Exception as e:
-                        QApplication.restoreOverrideCursor()
-                        self.uc.show_error("ERROR 160224.0541: error while exporting [STORAGE] to .INP file!", e)
-                        return
-
-                    # INP CONDUITS ###################################################
-
-                    try:
-                        SD_conduits_sql = """SELECT conduit_name, conduit_inlet, conduit_outlet, conduit_length, conduit_manning, conduit_inlet_offset, 
-                                                conduit_outlet_offset, conduit_init_flow, conduit_max_flow 
-                                          FROM user_swmm_conduits ORDER BY fid;"""
-
-                        conduits_rows = self.gutils.execute(SD_conduits_sql).fetchall()
-                        if not conduits_rows:
-                            pass
-                        else:
-                            swmm_inp_file.write("\n")
-                            swmm_inp_file.write("\n[CONDUITS]")
-                            swmm_inp_file.write(
-                                "\n;;               Inlet            Outlet                      Manning    Inlet      Outlet     Init.      Max."
-                            )
-                            swmm_inp_file.write(
-                                "\n;;Name           Node             Node             Length     N          Offset     Offset     Flow       Flow"
-                            )
-                            swmm_inp_file.write(
-                                "\n;;-------------- ---------------- ---------------- ---------- ---------- ---------- ---------- ---------- ----------"
-                            )
-
-                            line = "\n{0:16} {1:<16} {2:<16} {3:<10.2f} {4:<10.3f} {5:<10.2f} {6:<10.2f} {7:<10.2f} {8:<10.2f}"
-
-                            for row in conduits_rows:
-                                row = (
-                                    row[0],
-                                    "?" if row[1] is None or row[1] == "" else row[1],
-                                    "?" if row[2] is None or row[2] == "" else row[2],
-                                    0 if row[3] is None else row[3],
-                                    0 if row[4] is None else row[4],
-                                    0 if row[5] is None else row[5],
-                                    0 if row[6] is None else row[6],
-                                    0 if row[7] is None else row[7],
-                                    0 if row[8] is None else row[8],
-                                )
-                                if row[1] == "?" or row[2] == "?":
-                                    no_in_out_conduits += 1
-                                swmm_inp_file.write(line.format(*row))
-                    except Exception as e:
-                        QApplication.restoreOverrideCursor()
-                        self.uc.show_error("ERROR 070618.1620: error while exporting [CONDUITS] to .INP file!", e)
-                        return
-
-                    # INP PUMPS ###################################################
-                    try:
-                        SD_pumps_sql = """SELECT pump_name, pump_inlet, pump_outlet, pump_curve, pump_init_status, 
-                                            pump_startup_depth, pump_shutoff_depth 
-                                            FROM user_swmm_pumps ORDER BY fid;"""
-
-                        pumps_rows = self.gutils.execute(SD_pumps_sql).fetchall()
-                        if not pumps_rows:
-                            pass
-                        else:
-                            swmm_inp_file.write("\n")
-                            swmm_inp_file.write("\n[PUMPS]")
-                            swmm_inp_file.write(
-                                "\n;;               Inlet            Outlet           Pump             Init.      Startup    Shutup"
-                            )
-                            swmm_inp_file.write(
-                                "\n;;Name           Node             Node             Curve            Status     Depth      Depth"
-                            )
-                            swmm_inp_file.write(
-                                "\n;;-------------- ---------------- ---------------- ---------------- ---------- ---------- -------"
-                            )
-
-                            line = "\n{0:16} {1:<16} {2:<16} {3:<16} {4:<10} {5:<10.2f} {6:<10.2f}"
-
-                            for row in pumps_rows:
-                                row = (
-                                    row[0],
-                                    "?" if row[1] is None or row[1] == "" else row[1],
-                                    "?" if row[2] is None or row[2] == "" else row[2],
-                                    "*" if row[3] is None else row[3],
-                                    "OFF" if row[4] is None else row[4],
-                                    0 if row[5] is None else row[5],
-                                    0 if row[6] is None else row[6],
-                                )
-                                if row[1] == "?" or row[2] == "?":
-                                    no_in_out_pumps += 1
-                                swmm_inp_file.write(line.format(*row))
-                    except Exception as e:
-                        QApplication.restoreOverrideCursor()
-                        self.uc.show_error("ERROR 271121.0515: error while exporting [PUMPS] to .INP file!", e)
-                        return
-
-                    # INP ORIFICES ###################################################
-                    try:
-                        SD_orifices_sql = """SELECT orifice_name, orifice_inlet, orifice_outlet, orifice_type, orifice_crest_height, 
-                                            orifice_disch_coeff, orifice_flap_gate, orifice_open_close_time 
-                                            FROM user_swmm_orifices ORDER BY fid;"""
-
-                        orifices_rows = self.gutils.execute(SD_orifices_sql).fetchall()
-                        if not orifices_rows:
-                            pass
-                        else:
-                            swmm_inp_file.write("\n")
-                            swmm_inp_file.write("\n[ORIFICES]")
-                            swmm_inp_file.write(
-                                "\n;;               Inlet            Outlet           Orifice      Crest      Disch.      Flap      Open/Close"
-                            )
-                            swmm_inp_file.write(
-                                "\n;;Name           Node             Node             Type         Height     Coeff.      Gate      Time"
-                            )
-                            swmm_inp_file.write(
-                                "\n;;-------------- ---------------- ---------------- ------------ ---------- ----------- --------- -----------"
-                            )
-
-                            line = "\n{0:16} {1:<16} {2:<16} {3:<12} {4:<10.2f} {5:<11.2f} {6:<9} {7:<9.2f}"
-
-                            for row in orifices_rows:
-                                row = (
-                                    row[0],
-                                    "?" if row[1] is None or row[1] == "" else row[1],
-                                    "?" if row[2] is None or row[2] == "" else row[2],
-                                    "SIDE" if row[3] is None else row[3],
-                                    0 if row[4] is None else row[4],
-                                    0 if row[5] is None else row[5],
-                                    "NO" if row[6] is None else row[6],
-                                    0 if row[7] is None else row[7],
-                                )
-                                if row[1] == "?" or row[2] == "?":
-                                    no_in_out_orifices += 1
-                                swmm_inp_file.write(line.format(*row))
-                    except Exception as e:
-                        QApplication.restoreOverrideCursor()
-                        self.uc.show_error("ERROR 310322.1548: error while exporting [ORIFICES] to .INP file!", e)
-                        return
-
-                    # INP WEIRS ###################################################
-                    try:
-                        SD_weirs_sql = """SELECT weir_name, weir_inlet, weir_outlet, weir_type, weir_crest_height, 
-                                            weir_disch_coeff, weir_flap_gate, weir_end_contrac, weir_end_coeff 
-                                            FROM user_swmm_weirs ORDER BY fid;"""
-
-                        weirs_rows = self.gutils.execute(SD_weirs_sql).fetchall()
-                        if not weirs_rows:
-                            pass
-                        else:
-                            swmm_inp_file.write("\n")
-                            swmm_inp_file.write("\n[WEIRS]")
-                            swmm_inp_file.write(
-                                "\n;;               Inlet            Outlet           Weir         Crest      Disch.      Flap      End      End"
-                            )
-                            swmm_inp_file.write(
-                                "\n;;Name           Node             Node             Type         Height     Coeff.      Gate      Con.     Coeff."
-                            )
-                            swmm_inp_file.write(
-                                "\n;;-------------- ---------------- ---------------- ------------ ---------- ----------- --------- -------  ---------"
-                            )
-
-                            line = "\n{0:16} {1:<16} {2:<16} {3:<12} {4:<10.2f} {5:<11.2f} {6:<9} {7:<8} {8:<9.2f}"
-
-                            for row in weirs_rows:
-                                row = (
-                                    row[0],
-                                    "?" if row[1] is None or row[1] == "" else row[1],
-                                    "?" if row[2] is None or row[2] == "" else row[2],
-                                    "TRANSVERSE" if row[3] is None else row[3],
-                                    0 if row[4] is None else row[4],
-                                    0 if row[5] is None else row[5],
-                                    "NO" if row[6] is None else row[6],
-                                    "0" if row[7] is None else row[7],
-                                    0 if row[8] is None else row[8],
-                                )
-                                if row[1] == "?" or row[2] == "?":
-                                    no_in_out_weirs += 1
-                                swmm_inp_file.write(line.format(*row))
-                    except Exception as e:
-                        QApplication.restoreOverrideCursor()
-                        self.uc.show_error("ERROR 090422.0557: error while exporting [WEIRS] to .INP file!", e)
-                        return
-
-                    # INP XSECTIONS ###################################################
-                    try:
                         swmm_inp_file.write("\n")
-                        swmm_inp_file.write("\n[XSECTIONS]")
+                        swmm_inp_file.write("\n[JUNCTIONS]")
+                        swmm_inp_file.write("\n;;               Invert     Max.       Init.      Surcharge  Ponded")
+                        swmm_inp_file.write("\n;;Name           Elev.      Depth      Depth      Depth      Area")
                         swmm_inp_file.write(
-                            "\n;;Link           Shape        Geom1      Geom2      Geom3      Geom4      Barrels"
+                            "\n;;-------------- ---------- ---------- ---------- ---------- ----------"
+                        )
+
+                        line = "\n{0:16} {1:<10.2f} {2:<10.2f} {3:<10.2f} {4:<10.2f} {5:<10.2f}"
+
+                        for row in junctions_rows:
+                            row = (
+                                row[0],
+                                0 if row[1] is None else row[1],
+                                0 if row[2] is None else row[2],
+                                0 if row[3] is None else row[3],
+                                0 if row[4] is None else row[4],
+                                0,
+                            )
+                            swmm_inp_file.write(line.format(*row))
+                except Exception as e:
+                    QApplication.restoreOverrideCursor()
+                    self.uc.show_error("ERROR 070618.0851: error while exporting [JUNCTIONS] to .INP file!", e)
+                    return
+
+                # INP OUTFALLS ###################################################
+                try:
+                    SD_outfalls_sql = """SELECT name, outfall_invert_elev, outfall_type, time_series, tidal_curve, flapgate, water_depth 
+                                      FROM user_swmm_nodes  WHERE sd_type = "O"  ORDER BY fid;"""
+
+                    outfalls_rows = self.gutils.execute(SD_outfalls_sql).fetchall()
+                    if not outfalls_rows:
+                        pass
+                    else:
+                        swmm_inp_file.write("\n")
+                        swmm_inp_file.write("\n[OUTFALLS]")
+                        swmm_inp_file.write("\n;;               Invert     Outfall      Stage/Table       Tide")
+                        swmm_inp_file.write("\n;;Name           Elev.      Type         Time Series       Gate")
+                        swmm_inp_file.write("\n;;-------------- ---------- ------------ ----------------  ----")
+
+                        line = "\n{0:16} {1:<10.2f} {2:<11} {3:<18} {4:<16}"
+
+                        for row in outfalls_rows:
+                            lrow = list(row)
+                            lrow = [
+                                lrow[0],
+                                0 if lrow[1] is None else lrow[1],
+                                0 if lrow[2] is None else lrow[2],
+                                "   " if lrow[3] is None else lrow[3],
+                                0 if lrow[4] is None else lrow[4],
+                                0 if lrow[5] is None else lrow[5],
+                                0 if lrow[6] is None else lrow[6],
+                            ]
+                            lrow[3] = "*" if lrow[3] == "..." else "*" if lrow[3] == "" else lrow[3]
+                            lrow[4] = "*" if lrow[4] == "..." else "*" if lrow[4] == "" else lrow[4]
+                            lrow[2] = lrow[2].upper().strip()
+                            if not lrow[2] in ("FIXED", "FREE", "NORMAL", "TIDAL", "TIMESERIES"):
+                                lrow[2] = "NORMAL"
+                            lrow[2] = (
+                                "TIDAL"
+                                if lrow[2] == "TIDAL CURVE"
+                                else "TIMESERIES"
+                                if lrow[2] == "TIME SERIES"
+                                else lrow[2]
+                            )
+
+                            # Set 3rt. value:
+                            if lrow[2] == "FREE" or lrow[2] == "NORMAL":
+                                lrow[3] = "    "
+                            elif lrow[2] == "TIMESERIES":
+                                lrow[3] = lrow[3]
+                            elif lrow[2] == "TIDAL":
+                                lrow[3] = lrow[4]
+                            elif lrow[2] == "FIXED":
+                                lrow[3] = lrow[6]
+
+                            lrow[5] = "YES" if lrow[5] in ("True", "true", "Yes", "yes", "1") else "NO"
+                            swmm_inp_file.write(line.format(lrow[0], lrow[1], lrow[2], lrow[3], lrow[5]))
+
+                except Exception as e:
+                    QApplication.restoreOverrideCursor()
+                    self.uc.show_error("ERROR 070618.1619: error while exporting [OUTFALLS] to .INP file!", e)
+                    return
+
+                # INP STORAGE ###################################################
+                try:
+                    SD_storages_sql = """SELECT name, invert_elev, max_depth, init_depth, storage_curve,
+                                                coefficient, exponent, constant, ponded_area, 
+                                                evap_factor, suction_head, conductivity, initial_deficit, curve_name, infiltration
+                                         FROM user_swmm_storage_units;"""
+
+                    storages_rows = self.gutils.execute(SD_storages_sql).fetchall()
+                    if not storages_rows:
+                        pass
+                    else:
+                        swmm_inp_file.write("\n")
+                        swmm_inp_file.write("\n[STORAGE]")
+                        swmm_inp_file.write("\n;;               Invert   Max.     Init.    Storage    Curve                      Ponded   Evap.")
+                        swmm_inp_file.write("\n;;Name           Elev.    Depth    Depth    Curve      Params                     Area     Frac.    Infiltration Parameters")
+                        swmm_inp_file.write("\n;;-------------- -------- -------- -------- ---------- -------- -------- -------- -------- -------- -----------------------")
+
+                        line_functional_with_infil = "\n{0:16} {1:<8} {2:<8} {3:<8} {4:<10} {5:<8} {6:<8} {7:<8} {8:<8} {9:<8} {10:<8} {11:<8} {12:<8}"
+                        line_tabular_with_infil = "\n{0:16} {1:<8} {2:<8} {3:<8} {4:<10} {5:<26} {6:<8} {7:<8} {8:<8} {9:<8} {10:<8}"
+                        line_functional_no_infil = "\n{0:16} {1:<8} {2:<8} {3:<8} {4:<10} {5:<8} {6:<8} {7:<8} {8:<8} {9:<8}"
+                        line_tabular_no_infil = "\n{0:16} {1:<8} {2:<8} {3:<8} {4:<10} {5:<26} {6:<8} {7:<8}"
+
+                        for row in storages_rows:
+                            lrow = list(row)
+                            lrow = [
+                                lrow[0],
+                                0 if lrow[1] is None else '%g'%lrow[1],
+                                0 if lrow[2] is None else '%g'%lrow[2],
+                                0 if lrow[3] is None else '%g'%lrow[3],
+                                "FUNCTIONAL" if lrow[4] is None else lrow[4],
+                                0 if lrow[5] is None else '%g'%lrow[5],
+                                0 if lrow[6] is None else '%g'%lrow[6],
+                                0 if lrow[7] is None else '%g'%lrow[7],
+                                0,
+                                0 if lrow[9] is None else '%g'%lrow[9],
+                                0 if lrow[10] is None else '%g'%lrow[10],
+                                0 if lrow[11] is None else '%g'%lrow[11],
+                                0 if lrow[12] is None else '%g'%lrow[12],
+                                lrow[13],
+                                lrow[14]
+                            ]
+                            if lrow[4] == "FUNCTIONAL":
+                                if lrow[14]== "True":
+                                    swmm_inp_file.write(line_functional_with_infil.format(lrow[0], lrow[1], lrow[2], lrow[3], lrow[4], lrow[5],
+                                                                lrow[6], lrow[7], lrow[8], lrow[9],
+                                                                lrow[10], lrow[11], lrow[12]))
+                                else:
+                                    swmm_inp_file.write(line_functional_no_infil.format(lrow[0], lrow[1], lrow[2], lrow[3], lrow[4], lrow[5],
+                                                                lrow[6], lrow[7], lrow[8], lrow[9]))
+
+                            else:
+                                if lrow[14]=="True":
+                                    swmm_inp_file.write(line_tabular_with_infil.format(lrow[0], lrow[1], lrow[2], lrow[3], lrow[4],
+                                                            lrow[13], lrow[8], lrow[9],
+                                                            lrow[10], lrow[11], lrow[12]))
+                                else:
+                                    swmm_inp_file.write(line_tabular_no_infil.format(lrow[0], lrow[1], lrow[2], lrow[3], lrow[4],
+                                                            lrow[13], lrow[8], lrow[9]))
+
+                except Exception as e:
+                    QApplication.restoreOverrideCursor()
+                    self.uc.show_error("ERROR 160224.0541: error while exporting [STORAGE] to .INP file!", e)
+                    return
+
+                # INP CONDUITS ###################################################
+
+                try:
+                    SD_conduits_sql = """SELECT conduit_name, conduit_inlet, conduit_outlet, conduit_length, conduit_manning, conduit_inlet_offset, 
+                                            conduit_outlet_offset, conduit_init_flow, conduit_max_flow 
+                                      FROM user_swmm_conduits ORDER BY fid;"""
+
+                    conduits_rows = self.gutils.execute(SD_conduits_sql).fetchall()
+                    if not conduits_rows:
+                        pass
+                    else:
+                        swmm_inp_file.write("\n")
+                        swmm_inp_file.write("\n[CONDUITS]")
+                        swmm_inp_file.write(
+                            "\n;;               Inlet            Outlet                      Manning    Inlet      Outlet     Init.      Max."
                         )
                         swmm_inp_file.write(
-                            "\n;;-------------- ------------ ---------- ---------- ---------- ---------- ----------"
+                            "\n;;Name           Node             Node             Length     N          Offset     Offset     Flow       Flow"
+                        )
+                        swmm_inp_file.write(
+                            "\n;;-------------- ---------------- ---------------- ---------- ---------- ---------- ---------- ---------- ----------"
                         )
 
-                        # XSections from user conduits:
-                        SD_xsections_1_sql = """SELECT conduit_name, xsections_shape, xsections_max_depth, xsections_geom2, 
-                                                xsections_geom3, xsections_geom4, xsections_barrels
-                                          FROM user_swmm_conduits ORDER BY fid;"""
+                        line = "\n{0:16} {1:<16} {2:<16} {3:<10.2f} {4:<10.3f} {5:<10.2f} {6:<10.2f} {7:<10.2f} {8:<10.2f}"
 
-                        line = "\n{0:16} {1:<13} {2:<10.2f} {3:<10.2f} {4:<10.3f} {5:<10.2f} {6:<10}"
-                        xsections_rows_1 = self.gutils.execute(SD_xsections_1_sql).fetchall()
-                        if not xsections_rows_1:
-                            pass
-                        else:
-                            no_xs = 0
+                        for row in conduits_rows:
+                            row = (
+                                row[0],
+                                "?" if row[1] is None or row[1] == "" else row[1],
+                                "?" if row[2] is None or row[2] == "" else row[2],
+                                0 if row[3] is None else row[3],
+                                0 if row[4] is None else row[4],
+                                0 if row[5] is None else row[5],
+                                0 if row[6] is None else row[6],
+                                0 if row[7] is None else row[7],
+                                0 if row[8] is None else row[8],
+                            )
+                            if row[1] == "?" or row[2] == "?":
+                                no_in_out_conduits += 1
+                            swmm_inp_file.write(line.format(*row))
+                except Exception as e:
+                    QApplication.restoreOverrideCursor()
+                    self.uc.show_error("ERROR 070618.1620: error while exporting [CONDUITS] to .INP file!", e)
+                    return
 
-                            for row in xsections_rows_1:
-                                lrow = list(row)
-                                lrow = (
-                                    "?" if lrow[0] is None or lrow[0] == "" else lrow[0],
-                                    "?" if lrow[1] is None or lrow[0] == "" else lrow[1],
-                                    "?" if lrow[2] is None or lrow[0] == "" else lrow[2],
-                                    "?" if lrow[3] is None or lrow[0] == "" else lrow[3],
-                                    "?" if lrow[4] is None or lrow[0] == "" else lrow[4],
-                                    "?" if lrow[5] is None or lrow[0] == "" else lrow[5],
-                                    "?" if lrow[6] is None or lrow[0] == "" else lrow[6],
-                                )
-                                if (
-                                    row[0] == "?"
-                                    or row[1] == "?"
-                                    or row[2] == "?"
-                                    or row[3] == "?"
-                                    or row[4] == "?"
-                                    or row[5] == "?"
-                                    or row[6] == "?"
-                                ):
-                                    no_xs += 1
-                                lrow = (
-                                    lrow[0],
-                                    lrow[1],
-                                    0.0 if lrow[2] == "?" else lrow[2],
-                                    0.0 if lrow[3] == "?" else lrow[3],
-                                    0.0 if lrow[4] == "?" else lrow[4],
-                                    0.0 if lrow[5] == "?" else lrow[5],
-                                    0.0 if lrow[6] == "?" else lrow[6],
-                                )
-                                row = tuple(lrow)
-                                swmm_inp_file.write(line.format(*row))
+                # INP PUMPS ###################################################
+                try:
+                    SD_pumps_sql = """SELECT pump_name, pump_inlet, pump_outlet, pump_curve, pump_init_status, 
+                                        pump_startup_depth, pump_shutoff_depth 
+                                        FROM user_swmm_pumps ORDER BY fid;"""
 
-                        # XSections from user orifices:
-                        SD_xsections_2_sql = """SELECT orifice_name, orifice_shape, orifice_height, orifice_width
-                                          FROM user_swmm_orifices ORDER BY fid;"""
+                    pumps_rows = self.gutils.execute(SD_pumps_sql).fetchall()
+                    if not pumps_rows:
+                        pass
+                    else:
+                        swmm_inp_file.write("\n")
+                        swmm_inp_file.write("\n[PUMPS]")
+                        swmm_inp_file.write(
+                            "\n;;               Inlet            Outlet           Pump             Init.      Startup    Shutup"
+                        )
+                        swmm_inp_file.write(
+                            "\n;;Name           Node             Node             Curve            Status     Depth      Depth"
+                        )
+                        swmm_inp_file.write(
+                            "\n;;-------------- ---------------- ---------------- ---------------- ---------- ---------- -------"
+                        )
 
-                        line = "\n{0:16} {1:<13} {2:<10.2f} {3:<10.2f} {4:<10.2f} {5:<10.2f} {6:<10}"
-                        xsections_rows_2 = self.gutils.execute(SD_xsections_2_sql).fetchall()
-                        if not xsections_rows_2:
-                            pass
-                        else:
-                            no_xs = 0
+                        line = "\n{0:16} {1:<16} {2:<16} {3:<16} {4:<10} {5:<10.2f} {6:<10.2f}"
 
-                            for row in xsections_rows_2:
-                                lrow = list(row)
-                                lrow = (
-                                    "?" if lrow[0] is None or lrow[0] == "" else lrow[0],
-                                    "?" if lrow[1] is None or lrow[0] == "" else lrow[1],
-                                    "?" if lrow[2] is None or lrow[0] == "" else lrow[2],
-                                    "?" if lrow[3] is None or lrow[0] == "" else lrow[3],
-                                    0.0,
-                                    0.0,
-                                    0,
-                                )
-                                if row[0] == "?" or row[1] == "?" or row[2] == "?" or row[3] == "?":
-                                    no_xs += 1
-                                lrow = (
-                                    lrow[0],
-                                    lrow[1],
-                                    0.0 if lrow[2] == "?" else lrow[2],
-                                    0.0 if lrow[3] == "?" else 0.0 if lrow[1] == "CIRCULAR" else lrow[3],
-                                    0.0,
-                                    0.0,
-                                    " ",
-                                )
-                                row = tuple(lrow)
-                                swmm_inp_file.write(line.format(*row))
+                        for row in pumps_rows:
+                            row = (
+                                row[0],
+                                "?" if row[1] is None or row[1] == "" else row[1],
+                                "?" if row[2] is None or row[2] == "" else row[2],
+                                "*" if row[3] is None else row[3],
+                                "OFF" if row[4] is None else row[4],
+                                0 if row[5] is None else row[5],
+                                0 if row[6] is None else row[6],
+                            )
+                            if row[1] == "?" or row[2] == "?":
+                                no_in_out_pumps += 1
+                            swmm_inp_file.write(line.format(*row))
+                except Exception as e:
+                    QApplication.restoreOverrideCursor()
+                    self.uc.show_error("ERROR 271121.0515: error while exporting [PUMPS] to .INP file!", e)
+                    return
 
-                        # XSections from user weirs:
-                        SD_xsections_3_sql = """SELECT weir_name, weir_shape, weir_height, weir_length, weir_side_slope, weir_side_slope
-                                          FROM user_swmm_weirs ORDER BY fid;"""
+                # INP ORIFICES ###################################################
+                try:
+                    SD_orifices_sql = """SELECT orifice_name, orifice_inlet, orifice_outlet, orifice_type, orifice_crest_height, 
+                                        orifice_disch_coeff, orifice_flap_gate, orifice_open_close_time 
+                                        FROM user_swmm_orifices ORDER BY fid;"""
 
-                        line = "\n{0:16} {1:<13} {2:<10.2f} {3:<10.2f} {4:<10.2f} {5:<10.2f} {6:<10}"
-                        xsections_rows_3 = self.gutils.execute(SD_xsections_3_sql).fetchall()
-                        if not xsections_rows_3:
-                            pass
-                        else:
-                            no_xs = 0
+                    orifices_rows = self.gutils.execute(SD_orifices_sql).fetchall()
+                    if not orifices_rows:
+                        pass
+                    else:
+                        swmm_inp_file.write("\n")
+                        swmm_inp_file.write("\n[ORIFICES]")
+                        swmm_inp_file.write(
+                            "\n;;               Inlet            Outlet           Orifice      Crest      Disch.      Flap      Open/Close"
+                        )
+                        swmm_inp_file.write(
+                            "\n;;Name           Node             Node             Type         Height     Coeff.      Gate      Time"
+                        )
+                        swmm_inp_file.write(
+                            "\n;;-------------- ---------------- ---------------- ------------ ---------- ----------- --------- -----------"
+                        )
 
-                            for row in xsections_rows_3:
-                                lrow = list(row)
-                                lrow = (
-                                    "?" if lrow[0] is None or lrow[0] == "" else lrow[0],
-                                    "?" if lrow[1] is None or lrow[0] == "" else lrow[1],
-                                    "?" if lrow[2] is None or lrow[0] == "" else lrow[2],
-                                    "?" if lrow[3] is None or lrow[0] == "" else lrow[3],
-                                    "?" if lrow[4] is None or lrow[4] == "" else lrow[4],
-                                    "?" if lrow[5] is None or lrow[5] == "" else lrow[5],
-                                    0,
-                                )
-                                if row[0] == "?" or row[1] == "?" or row[2] == "?" or row[3] == "?":
-                                    no_xs += 1
-                                lrow = (
-                                    lrow[0],
-                                    lrow[1],
-                                    0.0 if lrow[2] == "?" else lrow[2],
-                                    0.0 if lrow[3] == "?" else 0.0 if lrow[1] == "CIRCULAR" else lrow[3],
-                                    0.0 if lrow[4] == "?" else lrow[4],
-                                    0.0 if lrow[5] == "?" else lrow[5],
-                                    " ",
-                                )
-                                row = tuple(lrow)
-                                swmm_inp_file.write(line.format(*row))
+                        line = "\n{0:16} {1:<16} {2:<16} {3:<12} {4:<10.2f} {5:<11.2f} {6:<9} {7:<9.2f}"
 
-                    except Exception as e:
-                        QApplication.restoreOverrideCursor()
-                        self.uc.show_error("ERROR 090422.0601: error while exporting [XSECTIONS] to .INP file!", e)
-                        return
+                        for row in orifices_rows:
+                            row = (
+                                row[0],
+                                "?" if row[1] is None or row[1] == "" else row[1],
+                                "?" if row[2] is None or row[2] == "" else row[2],
+                                "SIDE" if row[3] is None else row[3],
+                                0 if row[4] is None else row[4],
+                                0 if row[5] is None else row[5],
+                                "NO" if row[6] is None else row[6],
+                                0 if row[7] is None else row[7],
+                            )
+                            if row[1] == "?" or row[2] == "?":
+                                no_in_out_orifices += 1
+                            swmm_inp_file.write(line.format(*row))
+                except Exception as e:
+                    QApplication.restoreOverrideCursor()
+                    self.uc.show_error("ERROR 310322.1548: error while exporting [ORIFICES] to .INP file!", e)
+                    return
 
-                    # INP LOSSES ###################################################
-                    try:
-                        SD_losses_sql = """SELECT conduit_name, losses_inlet, losses_outlet, losses_average, losses_flapgate
-                                          FROM user_swmm_conduits ORDER BY fid;"""
+                # INP WEIRS ###################################################
+                try:
+                    SD_weirs_sql = """SELECT weir_name, weir_inlet, weir_outlet, weir_type, weir_crest_height, 
+                                        weir_disch_coeff, weir_flap_gate, weir_end_contrac, weir_end_coeff 
+                                        FROM user_swmm_weirs ORDER BY fid;"""
 
-                        losses_rows = self.gutils.execute(SD_losses_sql).fetchall()
-                        if not losses_rows:
-                            pass
-                        else:
-                            swmm_inp_file.write("\n")
-                            swmm_inp_file.write("\n[LOSSES]")
-                            swmm_inp_file.write("\n;;Link           Inlet      Outlet     Average    Flap Gate")
-                            swmm_inp_file.write("\n;;-------------- ---------- ---------- ---------- ----------")
+                    weirs_rows = self.gutils.execute(SD_weirs_sql).fetchall()
+                    if not weirs_rows:
+                        pass
+                    else:
+                        swmm_inp_file.write("\n")
+                        swmm_inp_file.write("\n[WEIRS]")
+                        swmm_inp_file.write(
+                            "\n;;               Inlet            Outlet           Weir         Crest      Disch.      Flap      End      End"
+                        )
+                        swmm_inp_file.write(
+                            "\n;;Name           Node             Node             Type         Height     Coeff.      Gate      Con.     Coeff."
+                        )
+                        swmm_inp_file.write(
+                            "\n;;-------------- ---------------- ---------------- ------------ ---------- ----------- --------- -------  ---------"
+                        )
 
-                            line = "\n{0:16} {1:<10} {2:<10} {3:<10.2f} {4:<10}"
+                        line = "\n{0:16} {1:<16} {2:<16} {3:<12} {4:<10.2f} {5:<11.2f} {6:<9} {7:<8} {8:<9.2f}"
 
-                            for row in losses_rows:
-                                lrow = list(row)
-                                lrow[4] = "YES" if lrow[4] in ("True", "true", "Yes", "yes", "1") else "NO"
-                                swmm_inp_file.write(line.format(*lrow))
-                    except Exception as e:
-                        QApplication.restoreOverrideCursor()
-                        self.uc.show_error("ERROR 070618.1622: error while exporting [LOSSES] to .INP file!", e)
-                        return
+                        for row in weirs_rows:
+                            row = (
+                                row[0],
+                                "?" if row[1] is None or row[1] == "" else row[1],
+                                "?" if row[2] is None or row[2] == "" else row[2],
+                                "TRANSVERSE" if row[3] is None else row[3],
+                                0 if row[4] is None else row[4],
+                                0 if row[5] is None else row[5],
+                                "NO" if row[6] is None else row[6],
+                                "0" if row[7] is None else row[7],
+                                0 if row[8] is None else row[8],
+                            )
+                            if row[1] == "?" or row[2] == "?":
+                                no_in_out_weirs += 1
+                            swmm_inp_file.write(line.format(*row))
+                except Exception as e:
+                    QApplication.restoreOverrideCursor()
+                    self.uc.show_error("ERROR 090422.0557: error while exporting [WEIRS] to .INP file!", e)
+                    return
 
-                    # INP CONTROLS ##################################################
-                    items = self.select_this_INP_group(INP_groups, "controls")
-                    swmm_inp_file.write("\n\n[CONTROLS]")
+                # INP XSECTIONS ###################################################
+                try:
+                    swmm_inp_file.write("\n")
+                    swmm_inp_file.write("\n[XSECTIONS]")
+                    swmm_inp_file.write(
+                        "\n;;Link           Shape        Geom1      Geom2      Geom3      Geom4      Barrels"
+                    )
+                    swmm_inp_file.write(
+                        "\n;;-------------- ------------ ---------- ---------- ---------- ---------- ----------"
+                    )
+
+                    # XSections from user conduits:
+                    SD_xsections_1_sql = """SELECT conduit_name, xsections_shape, xsections_max_depth, xsections_geom2, 
+                                            xsections_geom3, xsections_geom4, xsections_barrels
+                                      FROM user_swmm_conduits ORDER BY fid;"""
+
+                    line = "\n{0:16} {1:<13} {2:<10.2f} {3:<10.2f} {4:<10.3f} {5:<10.2f} {6:<10}"
+                    xsections_rows_1 = self.gutils.execute(SD_xsections_1_sql).fetchall()
+                    if not xsections_rows_1:
+                        pass
+                    else:
+                        no_xs = 0
+
+                        for row in xsections_rows_1:
+                            lrow = list(row)
+                            lrow = (
+                                "?" if lrow[0] is None or lrow[0] == "" else lrow[0],
+                                "?" if lrow[1] is None or lrow[0] == "" else lrow[1],
+                                "?" if lrow[2] is None or lrow[0] == "" else lrow[2],
+                                "?" if lrow[3] is None or lrow[0] == "" else lrow[3],
+                                "?" if lrow[4] is None or lrow[0] == "" else lrow[4],
+                                "?" if lrow[5] is None or lrow[0] == "" else lrow[5],
+                                "?" if lrow[6] is None or lrow[0] == "" else lrow[6],
+                            )
+                            if (
+                                row[0] == "?"
+                                or row[1] == "?"
+                                or row[2] == "?"
+                                or row[3] == "?"
+                                or row[4] == "?"
+                                or row[5] == "?"
+                                or row[6] == "?"
+                            ):
+                                no_xs += 1
+                            lrow = (
+                                lrow[0],
+                                lrow[1],
+                                0.0 if lrow[2] == "?" else lrow[2],
+                                0.0 if lrow[3] == "?" else lrow[3],
+                                0.0 if lrow[4] == "?" else lrow[4],
+                                0.0 if lrow[5] == "?" else lrow[5],
+                                0.0 if lrow[6] == "?" else lrow[6],
+                            )
+                            row = tuple(lrow)
+                            swmm_inp_file.write(line.format(*row))
+
+                    # XSections from user orifices:
+                    SD_xsections_2_sql = """SELECT orifice_name, orifice_shape, orifice_height, orifice_width
+                                      FROM user_swmm_orifices ORDER BY fid;"""
+
+                    line = "\n{0:16} {1:<13} {2:<10.2f} {3:<10.2f} {4:<10.2f} {5:<10.2f} {6:<10}"
+                    xsections_rows_2 = self.gutils.execute(SD_xsections_2_sql).fetchall()
+                    if not xsections_rows_2:
+                        pass
+                    else:
+                        no_xs = 0
+
+                        for row in xsections_rows_2:
+                            lrow = list(row)
+                            lrow = (
+                                "?" if lrow[0] is None or lrow[0] == "" else lrow[0],
+                                "?" if lrow[1] is None or lrow[0] == "" else lrow[1],
+                                "?" if lrow[2] is None or lrow[0] == "" else lrow[2],
+                                "?" if lrow[3] is None or lrow[0] == "" else lrow[3],
+                                0.0,
+                                0.0,
+                                0,
+                            )
+                            if row[0] == "?" or row[1] == "?" or row[2] == "?" or row[3] == "?":
+                                no_xs += 1
+                            lrow = (
+                                lrow[0],
+                                lrow[1],
+                                0.0 if lrow[2] == "?" else lrow[2],
+                                0.0 if lrow[3] == "?" else 0.0 if lrow[1] == "CIRCULAR" else lrow[3],
+                                0.0,
+                                0.0,
+                                " ",
+                            )
+                            row = tuple(lrow)
+                            swmm_inp_file.write(line.format(*row))
+
+                    # XSections from user weirs:
+                    SD_xsections_3_sql = """SELECT weir_name, weir_shape, weir_height, weir_length, weir_side_slope, weir_side_slope
+                                      FROM user_swmm_weirs ORDER BY fid;"""
+
+                    line = "\n{0:16} {1:<13} {2:<10.2f} {3:<10.2f} {4:<10.2f} {5:<10.2f} {6:<10}"
+                    xsections_rows_3 = self.gutils.execute(SD_xsections_3_sql).fetchall()
+                    if not xsections_rows_3:
+                        pass
+                    else:
+                        no_xs = 0
+
+                        for row in xsections_rows_3:
+                            lrow = list(row)
+                            lrow = (
+                                "?" if lrow[0] is None or lrow[0] == "" else lrow[0],
+                                "?" if lrow[1] is None or lrow[0] == "" else lrow[1],
+                                "?" if lrow[2] is None or lrow[0] == "" else lrow[2],
+                                "?" if lrow[3] is None or lrow[0] == "" else lrow[3],
+                                "?" if lrow[4] is None or lrow[4] == "" else lrow[4],
+                                "?" if lrow[5] is None or lrow[5] == "" else lrow[5],
+                                0,
+                            )
+                            if row[0] == "?" or row[1] == "?" or row[2] == "?" or row[3] == "?":
+                                no_xs += 1
+                            lrow = (
+                                lrow[0],
+                                lrow[1],
+                                0.0 if lrow[2] == "?" else lrow[2],
+                                0.0 if lrow[3] == "?" else 0.0 if lrow[1] == "CIRCULAR" else lrow[3],
+                                0.0 if lrow[4] == "?" else lrow[4],
+                                0.0 if lrow[5] == "?" else lrow[5],
+                                " ",
+                            )
+                            row = tuple(lrow)
+                            swmm_inp_file.write(line.format(*row))
+
+                except Exception as e:
+                    QApplication.restoreOverrideCursor()
+                    self.uc.show_error("ERROR 090422.0601: error while exporting [XSECTIONS] to .INP file!", e)
+                    return
+
+                # INP LOSSES ###################################################
+                try:
+                    SD_losses_sql = """SELECT conduit_name, losses_inlet, losses_outlet, losses_average, losses_flapgate
+                                      FROM user_swmm_conduits ORDER BY fid;"""
+
+                    losses_rows = self.gutils.execute(SD_losses_sql).fetchall()
+                    if not losses_rows:
+                        pass
+                    else:
+                        swmm_inp_file.write("\n")
+                        swmm_inp_file.write("\n[LOSSES]")
+                        swmm_inp_file.write("\n;;Link           Inlet      Outlet     Average    Flap Gate")
+                        swmm_inp_file.write("\n;;-------------- ---------- ---------- ---------- ----------")
+
+                        line = "\n{0:16} {1:<10} {2:<10} {3:<10.2f} {4:<10}"
+
+                        for row in losses_rows:
+                            lrow = list(row)
+                            lrow[4] = "YES" if lrow[4] in ("True", "true", "Yes", "yes", "1") else "NO"
+                            swmm_inp_file.write(line.format(*lrow))
+                except Exception as e:
+                    QApplication.restoreOverrideCursor()
+                    self.uc.show_error("ERROR 070618.1622: error while exporting [LOSSES] to .INP file!", e)
+                    return
+
+                # INP CONTROLS ##################################################
+                items = self.select_this_INP_group(INP_groups, "controls")
+                swmm_inp_file.write("\n\n[CONTROLS]")
+                if items is not None:
+                    for line in items[1:]:
+                        if line != "":
+                            swmm_inp_file.write("\n" + line)
+                else:
+                    swmm_inp_file.write("\n")
+
+                # INP INFLOWS ###################################################
+                try:
+                    SD_inflows_sql = """SELECT node_name, constituent, baseline, pattern_name, time_series_name, scale_factor
+                                      FROM swmm_inflows ORDER BY fid;"""
+                    inflows_rows = self.gutils.execute(SD_inflows_sql).fetchall()
+                    if not inflows_rows:
+                        pass
+                    else:
+                        swmm_inp_file.write("\n")
+                        swmm_inp_file.write("\n[INFLOWS]")
+                        swmm_inp_file.write(
+                            "\n;;Node           Constituent      Time Series      Type     Mfactor  Sfactor  Baseline Pattern"
+                        )
+                        swmm_inp_file.write(
+                            "\n;;-------------- ---------------- ---------------- -------- -------- -------- -------- --------"
+                        )
+                        line = "\n{0:16} {1:<16} {2:<16} {3:<7}  {4:<8} {5:<8.2f} {6:<8.2f} {7:<10}"
+                        for row in inflows_rows:
+                            lrow = [
+                                row[0],
+                                row[1],
+                                row[4] if row[4] != "" else '""',
+                                row[1],
+                                "1.0",
+                                row[5],
+                                row[2],
+                                row[3] if row[3] is not None else "",
+                            ]
+                            swmm_inp_file.write(line.format(*lrow))
+                except Exception as e:
+                    QApplication.restoreOverrideCursor()
+                    self.uc.show_error("ERROR 230220.0751.1622: error while exporting [INFLOWS] to .INP file!", e)
+                    return
+
+                # INP CURVES ###################################################
+                try:
+                    # Pumps:
+                    SD_pump_curves_sql = """SELECT pump_curve_name, pump_curve_type, x_value, y_value, description
+                                      FROM swmm_pumps_curve_data ORDER BY fid;"""
+                    pump_curves_rows = self.gutils.execute(SD_pump_curves_sql).fetchall()
+
+                    # Tidal:
+                    SD_tidal_curves_data_sql = """SELECT tidal_curve_name, hour, stage
+                                      FROM swmm_tidal_curve_data ORDER BY fid;"""
+                    tidal_curves_data_rows = self.gutils.execute(SD_tidal_curves_data_sql).fetchall()
+
+                    # Other:
+                    SD_other_curves_sql = """SELECT name, type, x_value, y_value, description
+                                      FROM swmm_other_curves ORDER BY fid;"""
+                    other_curves_rows = self.gutils.execute(SD_other_curves_sql).fetchall()
+
+                    if not other_curves_rows and not pump_curves_rows and not tidal_curves_data_rows:
+                        pass
+                    else:
+                        swmm_inp_file.write("\n")
+                        swmm_inp_file.write("\n[CURVES]")
+                        swmm_inp_file.write("\n;;Name           Type       X-Value    Y-Value")
+                        swmm_inp_file.write("\n;;-------------- ---------- ---------- ----------")
+
+                        # Write curves of type 'PumpN' (N being 1,2,3, or 4):
+                        line1 = "\n{0:16} {1:<10} {2:<10.2f} {3:<10.2f}"
+                        name = ""
+                        for row in pump_curves_rows:
+                            lrow = list(row)
+                            if lrow[0] == name:
+                                lrow[1] = "     "
+                            else:
+                                swmm_inp_file.write("\n")
+                                if lrow[4]:
+                                    swmm_inp_file.write("\n;" + lrow[4])
+                                name = lrow[0]
+                            swmm_inp_file.write(line1.format(*lrow))
+
+                        # Write curves of type 'Tidal'
+                        qry_SD_tidal_curve = """SELECT tidal_curve_description
+                                      FROM swmm_tidal_curve WHERE tidal_curve_name = ?;"""
+                        line2 = "\n{0:16} {1:<10} {2:<10} {3:<10}"
+                        name = ""
+                        for row in tidal_curves_data_rows:
+                            lrow = [row[0], "Tidal", row[1], row[2]]
+                            if lrow[0] == name:
+                                lrow[1] = "     "
+                            else:
+                                descr = self.gutils.execute(qry_SD_tidal_curve, (lrow[0],)).fetchone()
+                                swmm_inp_file.write("\n")
+                                if descr[0]:
+                                    swmm_inp_file.write("\n;" + descr[0])
+                                name = lrow[0]
+                            swmm_inp_file.write(line2.format(*lrow))
+
+                        # Write all other curves in storm_drain.INP_curves:
+                        name = ""
+                        for row in other_curves_rows:
+                            lrow = list(row)
+                            if lrow[0] == name:
+                                lrow[1] = "     "
+                            else:
+                                swmm_inp_file.write("\n")
+                                if lrow[4]:
+                                    swmm_inp_file.write("\n;" + lrow[4])
+                                name = lrow[0]
+                            swmm_inp_file.write(line1.format(*lrow))
+
+                except Exception as e:
+                    QApplication.restoreOverrideCursor()
+                    self.uc.show_error(
+                        "ERROR 281121.0453: error while exporting [CURVES] to .INP file!\n"
+                        + "Is the name or type of the curve missing in 'Storm Drain Pumps Curve Data' table?",
+                        e,
+                    )
+                    return
+
+                # INP TIMESERIES ###################################################
+                try:
+                    swmm_inp_file.write("\n")
+                    swmm_inp_file.write("\n[TIMESERIES]")
+                    swmm_inp_file.write("\n;;Name           Date       Time       Value     ")
+                    swmm_inp_file.write("\n;;-------------- ---------- ---------- ----------")
+
+                    SD_time_series_sql = """SELECT time_series_name, 
+                                                        time_series_description, 
+                                                        time_series_file,
+                                                        time_series_data
+                                      FROM swmm_time_series ORDER BY fid;"""
+
+                    SD_time_series_data_sql = """SELECT                                 
+                                                        date, 
+                                                        time,
+                                                        value
+                                      FROM swmm_time_series_data WHERE time_series_name = ?;"""
+
+                    line1 = "\n;{0:16}"
+                    line2 = "\n{0:16} {1:<10} {2:<50}"
+                    line3 = "\n{0:16} {1:<10} {2:<10} {3:<7.4f}"
+
+                    time_series_rows = self.gutils.execute(SD_time_series_sql).fetchall()
+                    if not time_series_rows:
+                        pass
+                    else:
+                        for row in time_series_rows:
+                            if row[3] == "False":  # Inflow data comes from file:
+                                description = [row[1]]
+                                swmm_inp_file.write(line1.format(*description))
+                                fileName = row[2].strip()
+                                # fileName = os.path.basename(row[2].strip())
+                                file = '"' + fileName + '"'
+                                file = os.path.normpath(file)
+                                lrow2 = [row[0], "FILE", file]
+                                swmm_inp_file.write(line2.format(*lrow2))
+                                swmm_inp_file.write("\n;")
+                            else:
+                                # Inflow data given in table 'swmm_time_series_data':
+                                name = row[0]
+                                time_series_data = self.gutils.execute(SD_time_series_data_sql, (name,)).fetchall()
+                                if not time_series_data:
+                                    pass
+                                else:
+                                    description = [row[1]]
+                                    swmm_inp_file.write(line1.format(*description))
+                                    for data in time_series_data:
+                                        date = data[0] if data[0] is not None else "          "
+                                        swmm_inp_file.write(
+                                            line3.format(
+                                                name if name is not None else " ",
+                                                date,
+                                                data[1] if data[1] is not None else "00:00",
+                                                data[2] if data[2] is not None else 0.0,
+                                            )
+                                        )
+                                        try:
+                                            d0 = datetime.strptime(date, "%m/%d/%Y").date()
+                                            start = datetime.strptime(start_date, "%m/%d/%Y").date()
+                                            end = datetime.strptime(end_date, "%m/%d/%Y").date()
+                                            if d0 < start or d0 > end:
+                                                non_sync_dates += 1
+                                        except ValueError:
+                                            non_sync_dates += 1
+                                    swmm_inp_file.write("\n;")
+
+                except Exception as e:
+                    QApplication.restoreOverrideCursor()
+                    self.uc.show_error("ERROR 230220.1005: error while exporting [TIMESERIES] to .INP file!", e)
+                    return
+
+                # INP PATTERNS ###################################################
+                try:
+                    swmm_inp_file.write("\n")
+                    swmm_inp_file.write("\n[PATTERNS]")
+                    swmm_inp_file.write("\n;;Name           Type       Multipliers")
+                    swmm_inp_file.write("\n;;-------------- ---------- -----------")
+
+                    SD_inflow_patterns_sql = """SELECT pattern_name, pattern_description, hour, multiplier
+                                      FROM swmm_inflow_patterns ORDER BY fid;"""
+
+                    line0 = "\n;{0:16}"
+                    line1 = "\n{0:16} {1:<10} {2:<10.2f} {3:<10.2f} {4:<10.2f} {5:<10.2f} {6:<10.2f} {6:<10.2f}"
+                    pattern_rows = self.gutils.execute(SD_inflow_patterns_sql).fetchall()
+                    if not pattern_rows:
+                        pass
+                    else:
+                        i = 1
+                        for row in pattern_rows:
+                            # First line:
+                            if i == 1:  # Beginning of first line:
+                                lrow0 = [row[1]]
+                                swmm_inp_file.write(line0.format(*lrow0))
+                                lrow1 = [row[0], "HOURLY", row[3]]
+                                i += 1
+                            elif i < 7:  # Rest of first line:
+                                lrow1.append(row[3])
+                                i += 1
+                            elif i == 7:
+                                swmm_inp_file.write(line1.format(*lrow1))
+                                lrow1 = [row[0], "   ", row[3]]
+                                i += 1
+
+                            # Second line
+                            elif i > 7 and i < 13:
+                                lrow1.append(row[3])
+                                i += 1
+                            elif i == 13:
+                                swmm_inp_file.write(line1.format(*lrow1))
+                                lrow1 = [row[0], "   ", row[3]]
+                                i += 1
+
+                            # Third line:
+                            elif i > 13 and i < 19:
+                                lrow1.append(row[3])
+                                i += 1
+                            elif i == 19:
+                                swmm_inp_file.write(line1.format(*lrow1))
+                                lrow1 = [row[0], "   ", row[3]]
+                                i += 1
+
+                            # Fourth line:
+                            elif i > 19 and i < 24:
+                                lrow1.append(row[3])
+                                i += 1
+                            elif i == 24:
+                                swmm_inp_file.write(line1.format(*lrow1))
+                                lrow1 = [row[0], "   ", row[3]]
+                                i = 1
+
+                                swmm_inp_file.write("\n")
+
+                except Exception as e:
+                    QApplication.restoreOverrideCursor()
+                    self.uc.show_error("ERROR 240220.0737: error while exporting [PATTERNS] to .INP file!", e)
+                    return
+
+                # INP REPORT ##################################################
+                # items = self.select_this_INP_group(INP_groups, "report")
+                swmm_inp_file.write("\n\n[REPORT]")
+                input = self.gutils.execute("SELECT value FROM swmm_control WHERE name = 'INPUT'").fetchone()[0]
+                swmm_inp_file.write("\nINPUT           " + input)
+                controls = self.gutils.execute("SELECT value FROM swmm_control WHERE name = 'CONTROLS'").fetchone()[0]
+                swmm_inp_file.write("\nCONTROLS        " + controls)
+                swmm_inp_file.write("\nSUBCATCHMENTS   NONE")
+                nodes = self.gutils.execute("SELECT value FROM swmm_control WHERE name = 'NODES'").fetchone()[0]
+                swmm_inp_file.write("\nNODES           " + nodes)
+                links = self.gutils.execute("SELECT value FROM swmm_control WHERE name = 'LINKS'").fetchone()[0]
+                swmm_inp_file.write("\nLINKS           " + links)
+
+                # INP COORDINATES ##############################################
+                try:
+                    swmm_inp_file.write("\n")
+                    swmm_inp_file.write("\n[COORDINATES]")
+                    swmm_inp_file.write("\n;;Node           X-Coord            Y-Coord ")
+                    swmm_inp_file.write("\n;;-------------- ------------------ ------------------")
+
+                    SD_nodes_coords_sql = """SELECT name, ST_AsText(ST_Centroid(GeomFromGPB(geom)))
+                                      FROM user_swmm_nodes ORDER BY fid;"""
+
+                    line = "\n{0:16} {1:<18} {2:<18}"
+                    coordinates_rows = self.gutils.execute(SD_nodes_coords_sql).fetchall()
+                    if not coordinates_rows:
+                        pass
+                    else:
+                        for row in coordinates_rows:
+                            x = row[:2][1].strip("POINT()").split()[0]
+                            y = row[:2][1].strip("POINT()").split()[1]
+                            swmm_inp_file.write(line.format(row[0], x, y))
+
+                    SD_storage_coords_sql = """SELECT name, ST_AsText(ST_Centroid(GeomFromGPB(geom)))
+                                      FROM user_swmm_storage_units ORDER BY fid;"""
+
+                    line = "\n{0:16} {1:<18} {2:<18}"
+                    coordinates_rows = self.gutils.execute(SD_storage_coords_sql).fetchall()
+                    if not coordinates_rows:
+                        pass
+                    else:
+                        for row in coordinates_rows:
+                            x = row[:2][1].strip("POINT()").split()[0]
+                            y = row[:2][1].strip("POINT()").split()[1]
+                            swmm_inp_file.write(line.format(row[0], x, y))
+                except Exception as e:
+                    QApplication.restoreOverrideCursor()
+                    self.uc.show_error("ERROR 070618.1623: error while exporting [COORDINATES] to .INP file!", e)
+                    return
+
+                # INP VERTICES ##############################################
+
+                try:
+                    swmm_inp_file.write("\n")
+                    swmm_inp_file.write("\n[VERTICES]")
+                    swmm_inp_file.write("\n;;Link           X-Coord            Y-Coord           ")
+                    swmm_inp_file.write("\n;;-------------- ------------------ ------------------")
+
+                    line = "\n{0:16} {1:<18} {2:<18}"
+
+                    sd_conduits_lyr = self.lyrs.data["user_swmm_conduits"]["qlyr"]
+
+                    if sd_conduits_lyr.geometryType() == QgsWkbTypes.LineGeometry:
+                        for feature in sd_conduits_lyr.getFeatures():
+                            geom = feature.geometry()
+                            conduit_name = feature['conduit_name']
+                            # Ensure the geometry is of single type
+                            if QgsWkbTypes.isSingleType(geom.wkbType()):
+                                # Get the points of the polyline
+                                polyline = geom.asPolyline()
+                                # Check if there are more than two points (start and end)
+                                if len(polyline) > 2:
+                                    # Print the coordinates of the interior nodes
+                                    for pnt in polyline[1:-1]:
+                                        swmm_inp_file.write(line.format(conduit_name, pnt.x(), pnt.y()))
+
+                except Exception as e:
+                    QApplication.restoreOverrideCursor()
+                    self.uc.show_error("ERROR 050624.0633: error while exporting [VERTICES] to .INP file!", e)
+                    return
+
+                # FUTURE GROUPS ##################################################
+                future_groups = [
+                    "FILES",
+                    "RAINGAGES",
+                    "HYDROGRAPHS",
+                    "PROFILES",
+                    "EVAPORATION",
+                    "TEMPERATURE",
+                    "SUBCATCHMENTS",
+                    "SUBAREAS",
+                    "INFILTRATION",
+                    "AQUIFERS",
+                    "GROUNDWATER",
+                    "SNOWPACKS",
+                    "DIVIDERS",
+                    "OUTLETS",
+                    "TRANSECTS",
+                    "POLLUTANTS",
+                    "LANDUSES",
+                    "COVERAGES",
+                    "BUILDUP",
+                    "WASHOFF",
+                    "TREATMENT",
+                    "DWF",
+                    "RDII",
+                    "LOADINGS",
+                    "TAGS",
+                    "MAP",
+                ]
+
+                for group in future_groups:
+                    items = self.select_this_INP_group(INP_groups, group.lower())
                     if items is not None:
+                        swmm_inp_file.write("\n\n[" + group + "]")
                         for line in items[1:]:
                             if line != "":
                                 swmm_inp_file.write("\n" + line)
-                    else:
-                        swmm_inp_file.write("\n")
 
-                    # INP INFLOWS ###################################################
-                    try:
-                        SD_inflows_sql = """SELECT node_name, constituent, baseline, pattern_name, time_series_name, scale_factor
-                                          FROM swmm_inflows ORDER BY fid;"""
-                        inflows_rows = self.gutils.execute(SD_inflows_sql).fetchall()
-                        if not inflows_rows:
-                            pass
-                        else:
-                            swmm_inp_file.write("\n")
-                            swmm_inp_file.write("\n[INFLOWS]")
-                            swmm_inp_file.write(
-                                "\n;;Node           Constituent      Time Series      Type     Mfactor  Sfactor  Baseline Pattern"
-                            )
-                            swmm_inp_file.write(
-                                "\n;;-------------- ---------------- ---------------- -------- -------- -------- -------- --------"
-                            )
-                            line = "\n{0:16} {1:<16} {2:<16} {3:<7}  {4:<8} {5:<8.2f} {6:<8.2f} {7:<10}"
-                            for row in inflows_rows:
-                                lrow = [
-                                    row[0],
-                                    row[1],
-                                    row[4] if row[4] != "" else '""',
-                                    row[1],
-                                    "1.0",
-                                    row[5],
-                                    row[2],
-                                    row[3] if row[3] is not None else "",
-                                ]
-                                swmm_inp_file.write(line.format(*lrow))
-                    except Exception as e:
-                        QApplication.restoreOverrideCursor()
-                        self.uc.show_error("ERROR 230220.0751.1622: error while exporting [INFLOWS] to .INP file!", e)
-                        return
+                file = last_dir + "/SWMM.INI"
+                with open(file, "w") as ini_file:
+                    ini_file.write("[SWMM5]")
+                    ini_file.write("\nVersion=50022")
+                    ini_file.write("\n[Results]")
+                    ini_file.write("\nSaved=1")
+                    ini_file.write("\nCurrent=1")
 
-                    # INP CURVES ###################################################
-                    try:
-                        # Pumps:
-                        SD_pump_curves_sql = """SELECT pump_curve_name, pump_curve_type, x_value, y_value, description
-                                          FROM swmm_pumps_curve_data ORDER BY fid;"""
-                        pump_curves_rows = self.gutils.execute(SD_pump_curves_sql).fetchall()
+            QApplication.setOverrideCursor(Qt.ArrowCursor)
+            if set_dat_dir:
+                self.uc.bar_info(f"SWMM.INP exported to {swmm_dir}!")
 
-                        # Tidal:
-                        SD_tidal_curves_data_sql = """SELECT tidal_curve_name, hour, stage
-                                          FROM swmm_tidal_curve_data ORDER BY fid;"""
-                        tidal_curves_data_rows = self.gutils.execute(SD_tidal_curves_data_sql).fetchall()
-                        
-                        # Other:
-                        SD_other_curves_sql = """SELECT name, type, x_value, y_value, description
-                                          FROM swmm_other_curves ORDER BY fid;"""
-                        other_curves_rows = self.gutils.execute(SD_other_curves_sql).fetchall()                        
-                        
-                        if not other_curves_rows and not pump_curves_rows and not tidal_curves_data_rows:
-                            pass
-                        else:
-                            swmm_inp_file.write("\n")
-                            swmm_inp_file.write("\n[CURVES]")
-                            swmm_inp_file.write("\n;;Name           Type       X-Value    Y-Value")
-                            swmm_inp_file.write("\n;;-------------- ---------- ---------- ----------")
+            self.uc.log_info(
+                swmm_file
+                + "\n"
+                + str(len(junctions_rows))
+                + "\t[JUNCTIONS]\n"
+                + str(len(outfalls_rows))
+                + "\t[OUTFALLS]\n"
+                + str(len(storages_rows))
+                + "\t[STORAGE]\n"
+                + str(len(conduits_rows))
+                + "\t[CONDUITS]\n"
+                + str(len(pumps_rows))
+                + "\t[PUMPS]\n"
+                + str(len(pump_curves_rows))
+                + "\t[CURVES]\n"
+                + str(len(orifices_rows))
+                + "\t[ORIFICES]\n"
+                + str(len(weirs_rows))
+                + "\t[WEIRS]\n"
+                + str(len(xsections_rows_1) + len(xsections_rows_2) + len(xsections_rows_3))
+                + "\t[XSECTIONS]\n"
+                + str(len(losses_rows))
+                + "\t[LOSSES]\n"
+                + str(len(coordinates_rows))
+                + "\t[COORDINATES]\n"
+                + str(len(inflows_rows))
+                + "\t[INFLOWS]\n"
+                + str(len(time_series_rows))
+                + "\t[TIMESERIES]\n"
+                + str(int(len(pattern_rows) / 24))
+                + "\t[PATTERNS]"
+            )
 
-                            # Write curves of type 'PumpN' (N being 1,2,3, or 4):
-                            line1 = "\n{0:16} {1:<10} {2:<10.2f} {3:<10.2f}"
-                            name = ""
-                            for row in pump_curves_rows:
-                                lrow = list(row)
-                                if lrow[0] == name:
-                                    lrow[1] = "     "
-                                else:
-                                    swmm_inp_file.write("\n")
-                                    if lrow[4]: 
-                                        swmm_inp_file.write("\n;" + lrow[4])
-                                    name = lrow[0]
-                                swmm_inp_file.write(line1.format(*lrow))
-
-                            # Write curves of type 'Tidal'
-                            qry_SD_tidal_curve = """SELECT tidal_curve_description
-                                          FROM swmm_tidal_curve WHERE tidal_curve_name = ?;"""
-                            line2 = "\n{0:16} {1:<10} {2:<10} {3:<10}"
-                            name = ""
-                            for row in tidal_curves_data_rows:
-                                lrow = [row[0], "Tidal", row[1], row[2]]
-                                if lrow[0] == name:
-                                    lrow[1] = "     "
-                                else:
-                                    descr = self.gutils.execute(qry_SD_tidal_curve, (lrow[0],)).fetchone()
-                                    swmm_inp_file.write("\n")
-                                    if descr[0]:
-                                        swmm_inp_file.write("\n;" + descr[0])
-                                    name = lrow[0]
-                                swmm_inp_file.write(line2.format(*lrow))
-                                
-                            # Write all other curves in storm_drain.INP_curves:
-                            name = ""
-                            for row in other_curves_rows:
-                                lrow = list(row)
-                                if lrow[0] == name:
-                                    lrow[1] = "     "
-                                else:
-                                    swmm_inp_file.write("\n")
-                                    if lrow[4]:
-                                        swmm_inp_file.write("\n;" + lrow[4])
-                                    name = lrow[0]
-                                swmm_inp_file.write(line1.format(*lrow))                            
-
-                    except Exception as e:
-                        QApplication.restoreOverrideCursor()
-                        self.uc.show_error(
-                            "ERROR 281121.0453: error while exporting [CURVES] to .INP file!\n"
-                            + "Is the name or type of the curve missing in 'Storm Drain Pumps Curve Data' table?",
-                            e,
-                        )
-                        return
-
-                    # INP TIMESERIES ###################################################
-                    try:
-                        swmm_inp_file.write("\n")
-                        swmm_inp_file.write("\n[TIMESERIES]")
-                        swmm_inp_file.write("\n;;Name           Date       Time       Value     ")
-                        swmm_inp_file.write("\n;;-------------- ---------- ---------- ----------")
-
-                        SD_time_series_sql = """SELECT time_series_name, 
-                                                            time_series_description, 
-                                                            time_series_file,
-                                                            time_series_data
-                                          FROM swmm_time_series ORDER BY fid;"""
-
-                        SD_time_series_data_sql = """SELECT                                 
-                                                            date, 
-                                                            time,
-                                                            value
-                                          FROM swmm_time_series_data WHERE time_series_name = ?;"""
-
-                        line1 = "\n;{0:16}"
-                        line2 = "\n{0:16} {1:<10} {2:<50}"
-                        line3 = "\n{0:16} {1:<10} {2:<10} {3:<7.4f}"
-
-                        time_series_rows = self.gutils.execute(SD_time_series_sql).fetchall()
-                        if not time_series_rows:
-                            pass
-                        else:
-                            for row in time_series_rows:
-                                if row[3] == "False":  # Inflow data comes from file:
-                                    description = [row[1]]
-                                    swmm_inp_file.write(line1.format(*description))
-                                    fileName = row[2].strip()
-                                    # fileName = os.path.basename(row[2].strip())
-                                    file = '"' + fileName + '"'
-                                    file = os.path.normpath(file)
-                                    lrow2 = [row[0], "FILE", file]
-                                    swmm_inp_file.write(line2.format(*lrow2))
-                                    swmm_inp_file.write("\n;")
-                                else:
-                                    # Inflow data given in table 'swmm_time_series_data':
-                                    name = row[0]
-                                    time_series_data = self.gutils.execute(SD_time_series_data_sql, (name,)).fetchall()
-                                    if not time_series_data:
-                                        pass
-                                    else:
-                                        description = [row[1]]
-                                        swmm_inp_file.write(line1.format(*description))
-                                        for data in time_series_data:
-                                            date = data[0] if data[0] is not None else "          "
-                                            swmm_inp_file.write(
-                                                line3.format(
-                                                    name if name is not None else " ",
-                                                    date,
-                                                    data[1] if data[1] is not None else "00:00",
-                                                    data[2] if data[2] is not None else 0.0,
-                                                )
-                                            )
-                                            try:
-                                                d0 = datetime.strptime(date, "%m/%d/%Y").date()
-                                                start = datetime.strptime(start_date, "%m/%d/%Y").date()
-                                                end = datetime.strptime(end_date, "%m/%d/%Y").date()
-                                                if d0 < start or d0 > end:
-                                                    non_sync_dates += 1
-                                            except ValueError:
-                                                non_sync_dates += 1
-                                        swmm_inp_file.write("\n;")
-
-                    except Exception as e:
-                        QApplication.restoreOverrideCursor()
-                        self.uc.show_error("ERROR 230220.1005: error while exporting [TIMESERIES] to .INP file!", e)
-                        return
-
-                    # INP PATTERNS ###################################################
-                    try:
-                        swmm_inp_file.write("\n")
-                        swmm_inp_file.write("\n[PATTERNS]")
-                        swmm_inp_file.write("\n;;Name           Type       Multipliers")
-                        swmm_inp_file.write("\n;;-------------- ---------- -----------")
-
-                        SD_inflow_patterns_sql = """SELECT pattern_name, pattern_description, hour, multiplier
-                                          FROM swmm_inflow_patterns ORDER BY fid;"""
-
-                        line0 = "\n;{0:16}"
-                        line1 = "\n{0:16} {1:<10} {2:<10.2f} {3:<10.2f} {4:<10.2f} {5:<10.2f} {6:<10.2f} {6:<10.2f}"
-                        pattern_rows = self.gutils.execute(SD_inflow_patterns_sql).fetchall()
-                        if not pattern_rows:
-                            pass
-                        else:
-                            i = 1
-                            for row in pattern_rows:
-                                # First line:
-                                if i == 1:  # Beginning of first line:
-                                    lrow0 = [row[1]]
-                                    swmm_inp_file.write(line0.format(*lrow0))
-                                    lrow1 = [row[0], "HOURLY", row[3]]
-                                    i += 1
-                                elif i < 7:  # Rest of first line:
-                                    lrow1.append(row[3])
-                                    i += 1
-                                elif i == 7:
-                                    swmm_inp_file.write(line1.format(*lrow1))
-                                    lrow1 = [row[0], "   ", row[3]]
-                                    i += 1
-
-                                # Second line
-                                elif i > 7 and i < 13:
-                                    lrow1.append(row[3])
-                                    i += 1
-                                elif i == 13:
-                                    swmm_inp_file.write(line1.format(*lrow1))
-                                    lrow1 = [row[0], "   ", row[3]]
-                                    i += 1
-
-                                # Third line:
-                                elif i > 13 and i < 19:
-                                    lrow1.append(row[3])
-                                    i += 1
-                                elif i == 19:
-                                    swmm_inp_file.write(line1.format(*lrow1))
-                                    lrow1 = [row[0], "   ", row[3]]
-                                    i += 1
-
-                                # Fourth line:
-                                elif i > 19 and i < 24:
-                                    lrow1.append(row[3])
-                                    i += 1
-                                elif i == 24:
-                                    swmm_inp_file.write(line1.format(*lrow1))
-                                    lrow1 = [row[0], "   ", row[3]]
-                                    i = 1
-
-                                    swmm_inp_file.write("\n")
-
-                    except Exception as e:
-                        QApplication.restoreOverrideCursor()
-                        self.uc.show_error("ERROR 240220.0737: error while exporting [PATTERNS] to .INP file!", e)
-                        return
-
-                    # INP REPORT ##################################################
-                    items = self.select_this_INP_group(INP_groups, "report")
-                    swmm_inp_file.write("\n\n[REPORT]")
-                    #                     if items is not None:
-                    #                         for line in items[1:]:
-                    #                             swmm_inp_file.write("\n" + line)
-                    #                     else:
-                    #                         swmm_inp_file.write('\n')
-                    swmm_inp_file.write("\nINPUT           " + dlg_INP_groups.input_cbo.currentText())
-                    swmm_inp_file.write("\nCONTROLS        " + dlg_INP_groups.controls_cbo.currentText())
-                    swmm_inp_file.write("\nSUBCATCHMENTS   NONE")
-                    swmm_inp_file.write("\nNODES           " + dlg_INP_groups.nodes_cbo.currentText())
-                    swmm_inp_file.write("\nLINKS           " + dlg_INP_groups.links_cbo.currentText())
-
-                    # INP COORDINATES ###################################################
-                    try:
-                        swmm_inp_file.write("\n")
-                        swmm_inp_file.write("\n[COORDINATES]")
-                        swmm_inp_file.write("\n;;Node           X-Coord            Y-Coord ")
-                        swmm_inp_file.write("\n;;-------------- ------------------ ------------------")
-
-                        SD_nodes_coords_sql = """SELECT name, ST_AsText(ST_Centroid(GeomFromGPB(geom)))
-                                          FROM user_swmm_nodes ORDER BY fid;"""
-
-                        line = "\n{0:16} {1:<18} {2:<18}"
-                        coordinates_rows = self.gutils.execute(SD_nodes_coords_sql).fetchall()
-                        if not coordinates_rows:
-                            pass
-                        else:
-                            for row in coordinates_rows:
-                                x = row[:2][1].strip("POINT()").split()[0]
-                                y = row[:2][1].strip("POINT()").split()[1]
-                                swmm_inp_file.write(line.format(row[0], x, y))
-                                
-                        SD_storage_coords_sql = """SELECT name, ST_AsText(ST_Centroid(GeomFromGPB(geom)))
-                                          FROM user_swmm_storage_units ORDER BY fid;"""
-
-                        line = "\n{0:16} {1:<18} {2:<18}"
-                        coordinates_rows = self.gutils.execute(SD_storage_coords_sql).fetchall()
-                        if not coordinates_rows:
-                            pass
-                        else:
-                            for row in coordinates_rows:
-                                x = row[:2][1].strip("POINT()").split()[0]
-                                y = row[:2][1].strip("POINT()").split()[1]
-                                swmm_inp_file.write(line.format(row[0], x, y))                                
-                    except Exception as e:
-                        QApplication.restoreOverrideCursor()
-                        self.uc.show_error("ERROR 070618.1623: error while exporting [COORDINATES] to .INP file!", e)
-                        return
-
-                    # FUTURE GROUPS ##################################################
-                    future_groups = [
-                        "FILES",
-                        "RAINGAGES",
-                        "HYDROGRAPHS",
-                        "PROFILES",
-                        "EVAPORATION",
-                        "TEMPERATURE",
-                        "SUBCATCHMENTS",
-                        "SUBAREAS",
-                        "INFILTRATION",
-                        "AQUIFERS",
-                        "GROUNDWATER",
-                        "SNOWPACKS",
-                        "DIVIDERS",
-                        "OUTLETS",
-                        "TRANSECTS",
-                        "POLLUTANTS",
-                        "LANDUSES",
-                        "COVERAGES",
-                        "BUILDUP",
-                        "WASHOFF",
-                        "TREATMENT",
-                        "DWF",
-                        "RDII",
-                        "LOADINGS",
-                        "TAGS",
-                        "MAP",
-                    ]
-
-                    for group in future_groups:
-                        items = self.select_this_INP_group(INP_groups, group.lower())
-                        if items is not None:
-                            swmm_inp_file.write("\n\n[" + group + "]")
-                            for line in items[1:]:
-                                if line != "":
-                                    swmm_inp_file.write("\n" + line)
-
-                    file = last_dir + "/SWMM.INI"
-                    with open(file, "w") as ini_file:
-                        ini_file.write("[SWMM5]")
-                        ini_file.write("\nVersion=50022")
-                        ini_file.write("\n[Results]")
-                        ini_file.write("\nSaved=1")
-                        ini_file.write("\nCurrent=1")
-
-                QApplication.setOverrideCursor(Qt.ArrowCursor)
-                self.uc.show_info(
-                    swmm_file
-                    + "\n\nfile saved with:\n\n"
-                    + str(len(junctions_rows))
-                    + "\t[JUNCTIONS]\n"
-                    + str(len(outfalls_rows))
-                    + "\t[OUTFALLS]\n"
-                    + str(len(storages_rows))
-                    + "\t[STORAGE]\n"                    
-                    + str(len(conduits_rows))
-                    + "\t[CONDUITS]\n"
-                    + str(len(pumps_rows))
-                    + "\t[PUMPS]\n"
-                    + str(len(pump_curves_rows))
-                    + "\t[CURVES]\n"                    
-                    + str(len(orifices_rows))
-                    + "\t[ORIFICES]\n"
-                    + str(len(weirs_rows))
-                    + "\t[WEIRS]\n"
-                    + str(len(xsections_rows_1) + len(xsections_rows_2) + len(xsections_rows_3))
-                    + "\t[XSECTIONS]\n"
-                    + str(len(losses_rows))
-                    + "\t[LOSSES]\n"
-                    + str(len(coordinates_rows))
-                    + "\t[COORDINATES]\n"
-                    + str(len(inflows_rows))
-                    + "\t[INFLOWS]\n"
-                    + str(len(time_series_rows))
-                    + "\t[TIMESERIES]\n"
-                    + str(int(len(pattern_rows) / 24))
-                    + "\t[PATTERNS]"
+            warn = ""
+            if no_in_out_conduits != 0:
+                warn += (
+                    "* "
+                    + str(no_in_out_conduits)
+                    + " conduits have no inlet and/or outlet!\nThe value '?' was written in [CONDUITS] group.\n\n"
                 )
-                
-                warn = ""
-                if no_in_out_conduits != 0:
-                    warn += (
-                        "* "
-                        + str(no_in_out_conduits)
-                        + " conduits have no inlet and/or outlet!\nThe value '?' was written in [CONDUITS] group.\n\n"
-                    )
 
-                if no_in_out_pumps != 0:
-                    warn += (
-                        "* "
-                        + str(no_in_out_pumps)
-                        + " pumps have no inlet and/or outlet!\nThe value '?' was written in [PUMPS] group.\n\n"
-                    )
+            if no_in_out_pumps != 0:
+                warn += (
+                    "* "
+                    + str(no_in_out_pumps)
+                    + " pumps have no inlet and/or outlet!\nThe value '?' was written in [PUMPS] group.\n\n"
+                )
 
-                if no_in_out_orifices != 0:
-                    warn += (
-                        "* "
-                        + str(no_in_out_orifices)
-                        + " orifices have no inlet and/or outlet!\nThe value '?' was written in [ORIFICES] group.\n\n"
-                    )
+            if no_in_out_orifices != 0:
+                warn += (
+                    "* "
+                    + str(no_in_out_orifices)
+                    + " orifices have no inlet and/or outlet!\nThe value '?' was written in [ORIFICES] group.\n\n"
+                )
 
-                if no_in_out_weirs != 0:
-                    warn += (
-                        "* "
-                        + str(no_in_out_weirs)
-                        + " weirs have no inlet and/or outlet!\nThe value '?' was written in [WEIRS] group.\n\n"
-                    )
+            if no_in_out_weirs != 0:
+                warn += (
+                    "* "
+                    + str(no_in_out_weirs)
+                    + " weirs have no inlet and/or outlet!\nThe value '?' was written in [WEIRS] group.\n\n"
+                )
 
-                if non_sync_dates > 0:
-                    warn += (
-                        "* "
-                        + str(non_sync_dates)
-                        + " time series dates are outside the start and end times of the simulation!\nSee [TIMESERIES] group.\n\n"
-                    )
+            if non_sync_dates > 0:
+                warn += (
+                    "* "
+                    + str(non_sync_dates)
+                    + " time series dates are outside the start and end times of the simulation!\nSee [TIMESERIES] group.\n\n"
+                )
 
-                if warn != "":
-                    self.uc.show_warn(
-                        "WARNING 090422.0554: SWMM.INP file:\n\n"
-                        + warn
-                        + "Please review these issues because they will cause errors during their processing."
-                    )
-                    
-                QApplication.restoreOverrideCursor()
+            if warn != "":
+                self.uc.show_warn(
+                    "WARNING 090422.0554: SWMM.INP file:\n\n"
+                    + warn
+                    + "Please review these issues because they will cause errors during their processing."
+                )
+
+            QApplication.restoreOverrideCursor()
                     
         except Exception as e:
             self.uc.show_error("ERROR 160618.0634: couldn't export .INP file!", e)
@@ -3630,10 +3841,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         if save:
             try:
                 dlg_outfalls.save_outfalls()
-                self.uc.bar_info(
-                    "Outfalls saved to 'Storm Drain-Outfalls' User Layer!\n\n"
-                    + "Schematize it from the 'Storm Drain Editor' widget before saving into SWMMOUTF.DAT"
-                )
+                self.uc.bar_info("Outfalls saved to 'Storm Drain-Outfalls' User Layer.")
             except Exception:
                 self.uc.bar_warn("Could not save outfalls! Please check if they are correct.")
                 return
@@ -3668,10 +3876,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
 
         save = dlg_inlets.exec_()
         if save:
-            self.uc.show_info(
-                "Inlets saved to 'Storm Drain-Inlets' User Layer!\n\n"
-                + "Schematize it from the 'Storm Drain Editor' widget before saving into SWMMOUTF.DAT"
-            )
+            self.uc.bar_info("Inlets saved to 'Storm Drain-Inlets' User Layer.")
             self.populate_type4_combo()
 
         elif not save:
@@ -3729,10 +3934,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         if save:
             try:
                 dlg_conduits.save_conduits()
-                self.uc.bar_info(
-                    "Conduits saved to 'Storm Drain-Conduits' User Layer!\n\n"
-                    + "Schematize it from the 'Storm Drain Editor' widget before saving into SWMMOUTF.DAT"
-                )
+                self.uc.bar_info("Conduits saved to 'Storm Drain-Conduits' User Layer.")
             except Exception:
                 self.uc.bar_warn("Could not save conduits! Please check if they are correct.")
                 return
@@ -3759,10 +3961,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         if save:
             try:
                 dlg_pumps.save_pumps()
-                self.uc.bar_info(
-                    "Pumps saved to 'Storm Drain-Pumps' User Layer!\n\n"
-                    + "Schematize it from the 'Storm Drain Editor' widget before saving into SWMMOUTF.DAT"
-                )
+                self.uc.bar_info("Pumps saved to 'Storm Drain-Pumps' User Layer.")
             except Exception:
                 self.uc.bar_warn("Could not save pumps! Please check if they are correct.")
                 return
@@ -3789,10 +3988,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         if save:
             try:
                 dlg_orifices.save_orifices()
-                self.uc.bar_info(
-                    "Orifices saved to 'Storm Drain Orifices' User Layer!\n\n"
-                    + "Schematize it from the 'Storm Drain Editor' widget before saving into SWMMOUTF.DAT"
-                )
+                self.uc.bar_info("Orifices saved to 'Storm Drain Orifices' User Layer.")
             except Exception:
                 self.uc.bar_warn("Could not save orifices! Please check if they are correct.")
                 return
@@ -3819,21 +4015,12 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         if save:
             try:
                 dlg_weirs.save_weirs()
-                self.uc.bar_info(
-                    "Weirs saved to 'Storm Drain Weirs' User Layer!\n\n"
-                    + "Schematize it from the 'Storm Drain Editor' widget before saving into SWMMOUTF.DAT"
-                )
+                self.uc.bar_info("Weirs saved to 'Storm Drain Weirs' User Layer.")
             except Exception:
                 self.uc.bar_warn("Could not save weirs! Please check if they are correct.")
                 return
 
         self.lyrs.clear_rubber()
-
-    # def auto_assign_conduit_nodes(self):
-    #     self.auto_assign_link_nodes("Conduits", "conduit_inlet", "conduit_outlet")
-    #
-    # def auto_assign_pump_nodes(self):
-    #     self.auto_assign_link_nodes("Pumps", "pump_inlet", "pump_outlet")
 
     def auto_assign_link_nodes(self, link_name, link_inlet, link_outlet, SD_all_nodes_layer):
         """Auto assign Conduits, Pumps, orifices, or Weirs  (user layer) Inlet and Outlet names
@@ -3956,31 +4143,10 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                     self.no_nodes = header
                 self.no_nodes += "\n" + no_inlet
 
-                # header = "{:<20}{:<20}{:<20}".format("Inlet Name", "Link Name", "Link Type") + "\n"
-                # # header = "Inlet Name" + "\t\t" + "Link Name" + "\t\t" + "Link Type" + "\t\t" + "\n"
-                # if self.no_nodes == "":
-                #     self.no_nodes = header + hyphens +  no_inlet
-                # else:
-                #     self.no_nodes += "\n" +  no_inlet
             if no_outlet:
                 if self.no_nodes == "":
                     self.no_nodes = header
                 self.no_nodes += "\n" + no_outlet
-
-                # header = "{:<20}{:<20}{:<20}".format("Outlet Name", "Link Name", "Link Type") + "\n"
-                # # header = "Outlet Name" + "\t\t" + "Link Name" + "\t\t" + "Link Type" + "\t\t" + "\n"
-                # if self.no_nodes == "":
-                #     self.no_nodes = header + hyphens +  no_outlet
-                # else:
-                #     self.no_nodes += "\n" +  no_outlet
-
-            # if link_name == "Conduits":
-            #
-            # elif link_name == "Pumps":
-            #
-            # elif link_name == "Orifices":
-            #
-            # elif link_name == "Weirs":
 
         except Exception as e:
             QApplication.restoreOverrideCursor()
@@ -5673,6 +5839,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         for i in range(self.pumps_data_model.rowCount()):
             self.tview.setRowHeight(i, 20)
         self.update_pump_plot()
+        self.show_pump_curve_type_and_description()
 
     def create_pump_plot(self, name):
         self.plot.clear()
@@ -5933,6 +6100,18 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             index = self.end_node_cbo.findText(name)
             if index != -1:
                 self.end_node_cbo.setCurrentIndex(index)
+
+    def open_sd_control(self):
+        """
+        Function to open and retrieve the data from the sd_control table
+        """
+        dlg_INP_groups = INP_GroupsDialog(self.con, self.iface)
+        ok = dlg_INP_groups.exec_()
+        if ok:
+            self.uc.bar_info("Storm Drain control data saved!")
+            self.uc.log_info("Storm Drain control data saved!")
+            dlg_INP_groups.save_INP_control()
+
 
 class SDTablesDelegate(QStyledItemDelegate):
     def initStyleOption(self, option, index):

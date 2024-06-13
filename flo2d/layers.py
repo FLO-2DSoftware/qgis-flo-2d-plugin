@@ -1029,8 +1029,7 @@ class Layers(object):
                     "tailing_cells",
                     {
                         "name": "Tailing Cells",
-                        "sgroup": "Schematic Layers",
-                        "ssgroup": "Boundary Conditions",
+                        "sgroup": "Boundary Conditions Tables",
                         "styles": ["tailing_cells.qml"],
                         "attrs_edit_widgets": {},
                         "readonly": True,

@@ -34,6 +34,7 @@ from ..geopackage_utils import (
     database_create,
     database_disconnect,
 )
+from ..misc.invisible_lyrs_grps import InvisibleLayersAndGroups
 from ..user_communication import UserCommunication
 from ..utils import is_number, get_plugin_version, get_flo2dpro_version
 from .ui_utils import load_ui
@@ -46,6 +47,7 @@ class SettingsDialog(qtBaseClass, uiDialog):
         qtBaseClass.__init__(self)
         uiDialog.__init__(self)
         self.iface = iface
+        self.ilg = InvisibleLayersAndGroups(self.iface)
         self.setupUi(self)
         self.uc = UserCommunication(iface, "FLO-2D")
         self.setModal(True)
@@ -367,10 +369,37 @@ class SettingsDialog(qtBaseClass, uiDialog):
             ok = dlg.exec_()
             if not ok:
                 return
-            flo2d_dir, project_dir = dlg.get_parameters()
+            flo2d_dir, project_dir, advanced_layers = dlg.get_parameters()
             s = QSettings()
             s.setValue("FLO-2D/lastGdsDir", project_dir)
             s.setValue("FLO-2D/last_flopro", flo2d_dir)
+
+            if advanced_layers != s.value("FLO-2D/advanced_layers", ""):
+                # show advanced layers
+                if advanced_layers:
+                    s.setValue("FLO-2D/advanced_layers", True)
+                    lyrs = self.lyrs.data
+                    for key, value in lyrs.items():
+                        group = value.get("sgroup")
+                        subsubgroup = value.get("ssgroup")
+                        self.ilg.unhideLayer(self.lyrs.data[key]["qlyr"])
+                        self.ilg.unhideGroup(group)
+                        self.ilg.unhideGroup(subsubgroup, group)
+
+                # hide advanced layers
+                else:
+                    s.setValue("FLO-2D/advanced_layers", False)
+                    lyrs = self.lyrs.data
+                    for key, value in lyrs.items():
+                        advanced = value.get("advanced")
+                        if advanced:
+                            subgroup = value.get("sgroup")
+                            subsubgroup = value.get("ssgroup")
+                            self.ilg.hideLayer(self.lyrs.data[key]["qlyr"])
+                            if subsubgroup == "Gutters" or subsubgroup == "Multiple Channels" or subsubgroup == "Streets":
+                                self.ilg.hideGroup(subsubgroup, subgroup)
+                            else:
+                                self.ilg.hideGroup(subgroup)
 
             if project_dir != "" and flo2d_dir != "":
                 s.setValue("FLO-2D/run_settings", True)

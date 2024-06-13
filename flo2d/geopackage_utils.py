@@ -13,12 +13,14 @@ from collections import defaultdict
 from functools import wraps
 
 from PyQt5.QtWidgets import QProgressDialog, QApplication
-from qgis._core import QgsMessageLog
-from qgis.core import QgsGeometry
+from osgeo import ogr, gdal
+from qgis._core import QgsMessageLog, QgsVectorLayer, QgsProject, QgsRasterLayer, QgsMapLayer
+from qgis.core import QgsGeometry, QgsVectorFileWriter
 from .user_communication import UserCommunication
 
 import sqlite3
 
+import processing
 
 def connection_required(fn):
     """
@@ -265,7 +267,7 @@ class GeoPackageUtils(object):
         'user_bc_lines', 'user_bc_polygons', 'all_schem_bc', 'user_reservoirs',
         'user_infiltration', 'user_effective_impervious_area', 'raincell',
         'raincell_data', 'buildings_areas', 'buildings_stats', 'sd_fields', 'outrc', 'swmm_control',
-        'user_tailings', 'user_tailing_reservoirs', 'tailing_reservoirs', 'tailing_cells'
+        'user_tailings', 'user_tailing_reservoirs', 'tailing_reservoirs', 'tailing_cells', 'external_layers'
     ]
 
     def __init__(self, con, iface):
@@ -296,6 +298,8 @@ class GeoPackageUtils(object):
 
         # Update old tables
         update_tables_sql = []
+        is_not_vector = []
+        is_not_raster = []
         for table in tables_only_in_other_gpkg:
             if table == "infil_areas_green":
                 sql = """
@@ -331,6 +335,57 @@ class GeoPackageUtils(object):
                         JOIN other.infil_areas_chan ON other.infil_chan_elems.infil_area_fid = other.infil_areas_chan.fid;
                       """
                 update_tables_sql.append(sql)
+
+            if table == 'sqlite_sequence' or table == 'qgis_projects' or table == 'rain_arf_areas':
+                continue
+
+            # check if it is a vector layer
+            try:
+                ds = ogr.Open(other_gpkg)
+                layer = ds.GetLayerByName(table)
+                # Vector
+                if layer.GetGeomType() != ogr.wkbNone:
+                    source_layer = QgsVectorLayer(other_gpkg + "|layername=" + table, table, "ogr")
+                    options = QgsVectorFileWriter.SaveVectorOptions()
+                    options.driverName = "GPKG"
+                    options.includeZ = True
+                    options.overrideGeometryType = source_layer.wkbType()
+                    options.layerName = source_layer.name()
+                    options.actionOnExistingFile = QgsVectorFileWriter.CreateOrOverwriteLayer
+                    QgsVectorFileWriter.writeAsVectorFormatV3(
+                        source_layer,
+                        self.get_gpkg_path(),
+                        QgsProject.instance().transformContext(),
+                        options)
+                    is_not_vector.append(table)
+                    continue
+            except Exception as e:
+                pass
+
+            try:
+                raster_ds = gdal.Open(f"GPKG:{other_gpkg}:{table}", gdal.OF_READONLY)
+                if raster_ds:
+                    source_layer = QgsRasterLayer(f"GPKG:{other_gpkg}:" + table, table, "gdal")
+                    layer_name = source_layer.name().replace(" ", "_")
+                    params = {'INPUT': f'{source_layer.dataProvider().dataSourceUri()}',
+                              'TARGET_CRS': None,
+                              'NODATA': None,
+                              'COPY_SUBDATASETS': False,
+                              'OPTIONS': '',
+                              'EXTRA': f'-co APPEND_SUBDATASET=YES -co RASTER_TABLE={layer_name} -ot Float32',
+                              'DATA_TYPE': 0,
+                              'OUTPUT': f'{self.get_gpkg_path()}'}
+
+                    processing.run("gdal:translate", params)
+                    is_not_raster.append(table)
+
+            except Exception as e:
+                pass
+
+            if table in is_not_raster and table in is_not_vector:
+                self.uc.log_info("Error while porting {table} to the new Geopackage! Please, add it manually.")
+                self.uc.bar_error("Error while porting {table} to the new Geopackage! Please, add it manually.")
+
         if len(update_tables_sql) != 0:
             for sql in update_tables_sql:
                 try:

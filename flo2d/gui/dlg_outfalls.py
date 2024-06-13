@@ -160,13 +160,6 @@ class OutfallNodesDialog(qtBaseClass, uiDialog):
                 QApplication.restoreOverrideCursor()
                 return
 
-            # # Replace 'swmm_allow_discharge' with 'outf_flo' of 'swmmoutf' table:
-            # outf_flo_qry = "SELECT outf_flo FROM swmmoutf WHERE name = ?;"
-                            
-            # for r in rows:
-            #     outf_flo = self.gutils.execute("SELECT outf_flo FROM swmmoutf WHERE name = ?;", (r[1],)).fetchone()
-            #     r[5] = outf_flo
-
             self.block = True
 
             # Fill list of time series names:
@@ -211,12 +204,10 @@ class OutfallNodesDialog(qtBaseClass, uiDialog):
  
                     if col_number == 5:
                         outf_flo = self.gutils.execute(outf_flo_qry, (row_data[1],)).fetchone()
-                        item.setData(Qt.DisplayRole, outf_flo[0]) 
-
-                        
-                        
-                        # data = data if data in ["0", "1", "2"] else "0"
-                        # item.setData(Qt.DisplayRole, data) 
+                        if outf_flo:
+                            item.setData(Qt.DisplayRole, outf_flo[0]) 
+                        else:
+                            item.setData(Qt.DisplayRole, "0")   
 
                     # Fill all text boxes with data of first feature of query (first element in table user_swmm_nodes):
                     if row_number == 0:
@@ -231,8 +222,11 @@ class OutfallNodesDialog(qtBaseClass, uiDialog):
                         elif col_number == 5:
                             # self.allow_discharge_chbox.setChecked(True if is_true(data) else False)
                             outf_flo = self.gutils.execute(outf_flo_qry, (row_data[1],)).fetchone()
-                            # idx = self.allow_discharge_cbo.findText(outf_flo[0])
-                            self.allow_discharge_cbo.setCurrentIndex(outf_flo[0])                           
+                            
+                            if outf_flo:
+                                self.allow_discharge_cbo.setCurrentIndex(outf_flo[0])  
+                            else:
+                                self.allow_discharge_cbo.setCurrentIndex(0)                            
   
                         elif col_number == 6:
                             data = str(data).upper()

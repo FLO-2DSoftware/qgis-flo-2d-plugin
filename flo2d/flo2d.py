@@ -40,7 +40,7 @@ import pip
 from qgis.PyQt import QtCore, QtGui
 from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QApplication, QToolButton, QProgressDialog
-from osgeo import gdal
+from osgeo import gdal, ogr
 from qgis._core import QgsMessageLog, QgsCoordinateReferenceSystem, QgsMapSettings, QgsProjectMetadata, \
     QgsMapRendererParallelJob, QgsLayerTreeLayer, QgsVectorLayerExporter, QgsVectorFileWriter, QgsVectorLayer, \
     QgsMapLayer, QgsRasterFileWriter, QgsRasterLayer, QgsLayerTreeGroup, QgsField
@@ -193,6 +193,7 @@ class Flo2D(object):
         # connections
         self.project.readProject.connect(self.load_gpkg_from_proj)
         self.project.writeProject.connect(self.flo_save_project)
+        self.project.layersAdded.connect(self.changeLayerAdditionMode)
 
         self.uc.clear_bar_messages()
         QApplication.restoreOverrideCursor()
@@ -811,7 +812,6 @@ class Flo2D(object):
             s = QSettings()
             s.setValue("FLO-2D/last_flopro_project", os.path.dirname(gpkg_path_adj))
             s.setValue("FLO-2D/lastGdsDir", os.path.dirname(gpkg_path_adj))
-            s.setValue("FLO-2D/advanced_layers", False)
 
             contact = dlg_settings.lineEdit_au.text()
             email = dlg_settings.lineEdit_co.text()
@@ -918,6 +918,64 @@ class Flo2D(object):
                         self.gutils.set_metadata_par("CRS", crs.authid())
                         uri = f'geopackage:{new_gpkg_path}?projectName={proj_name + "_v1.0.0"}'
                         gpkg_path = new_gpkg_path
+
+                        # add ported external layers back into the project
+                        gpkg_tables = self.gutils.current_gpkg_tables
+                        tab_sql = """SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'gpkg_%' AND name NOT LIKE 'rtree_%';"""
+                        tabs = [row[0] for row in self.gutils.execute(tab_sql)]
+                        do_not_port = [
+                            'sqlite_sequence',
+                            'qgis_projects',
+                            'infil_areas_scs',
+                            'infil_areas_green',
+                            'infil_areas_horton',
+                            'rain_arf_areas',
+                            'infil_areas_chan',
+                        ]
+                        for table in tabs:
+                            if table not in gpkg_tables and table not in do_not_port:
+                                try:
+                                    ds = ogr.Open(gpkg_path)
+                                    layer = ds.GetLayerByName(table)
+                                    # Vector
+                                    self.uc.log_info(table)
+                                    if layer.GetGeomType() != ogr.wkbNone:
+                                        gpkg_uri = f"{gpkg_path}|layername={table}"
+                                        gpkg_layer = QgsVectorLayer(gpkg_uri, table, "ogr")
+                                        self.project.addMapLayer(gpkg_layer, False)
+                                        root = self.project.layerTreeRoot()
+                                        group_name = "External Layers"
+                                        flo2d_name = f"FLO-2D_{self.gutils.get_metadata_par('PROJ_NAME')}"
+                                        flo2d_grp = root.findGroup(flo2d_name)
+                                        if flo2d_grp.findGroup(group_name):
+                                            group = flo2d_grp.findGroup(group_name)
+                                        else:
+                                            group = flo2d_grp.insertGroup(-1, group_name)
+                                        group.insertLayer(0, gpkg_layer)
+                                        continue
+                                except Exception as e:
+                                    pass
+
+                                try:
+                                    raster_ds = gdal.Open(f"GPKG:{new_gpkg_path}:{table}", gdal.OF_READONLY)
+                                    if raster_ds:
+                                        gpkg_uri = f"GPKG:{gpkg_path}:{table}"
+                                        gpkg_layer = QgsRasterLayer(gpkg_uri, table, "gdal")
+                                        self.project.addMapLayer(gpkg_layer, False)
+                                        root = self.project.layerTreeRoot()
+                                        flo2d_name = f"FLO-2D_{self.gutils.get_metadata_par('PROJ_NAME')}"
+                                        group_name = "External Layers"
+                                        flo2d_grp = root.findGroup(flo2d_name)
+                                        if flo2d_grp.findGroup(group_name):
+                                            group = flo2d_grp.findGroup(group_name)
+                                        else:
+                                            group = flo2d_grp.insertGroup(-1, group_name)
+                                        group.insertLayer(0, gpkg_layer)
+                                        self.lyrs.collapse_flo2d_subgroup(flo2d_name, group_name)
+
+                                except Exception as e:
+                                    pass
+
                         QApplication.restoreOverrideCursor()
                 else:
                     self.uc.log_info("Connection closed")
@@ -974,6 +1032,7 @@ class Flo2D(object):
         checked_layers = False
         not_added = []
 
+        QApplication.setOverrideCursor(Qt.WaitCursor)
         for layer_id, layer in layers.items():
             if self.check_layer_source(layer, gpkg_path):
                 if not checked_layers:
@@ -984,100 +1043,33 @@ class Flo2D(object):
                     msg += "    No is faster and has a smaller GeoPackage, but if the paths change, the external data must be reloaded."
                     QApplication.restoreOverrideCursor()
                     answer = self.uc.customized_question("FLO-2D", msg)
+                    dlg_gpkg_management = GpkgManagementDialog(self.iface, self.lyrs, self.gutils)
                     if answer == QMessageBox.Yes:
+                        dlg_gpkg_management.show()
+                        while True:
+                            ok = dlg_gpkg_management.exec_()
+                            if ok:
+                                QApplication.setOverrideCursor(Qt.WaitCursor)
+                                dlg_gpkg_management.save_layers()
+                                QApplication.restoreOverrideCursor()
+                                return
+                            else:
+                                return
+
+                    elif answer == QMessageBox.No:
                         QApplication.setOverrideCursor(Qt.WaitCursor)
-                        checked_layers = True
+                        dlg_gpkg_management.populate_user_lyrs()
+                        dlg_gpkg_management.save_layers()
+                        QApplication.restoreOverrideCursor()
+                        return
                     else:
-                        QApplication.setOverrideCursor(Qt.WaitCursor)
+                        QApplication.restoreOverrideCursor()
                         break
-                # Check if it is vector or raster
-                if layer.type() == QgsMapLayer.VectorLayer and layer.isSpatial():
-                    # Save to gpkg
-                    options = QgsVectorFileWriter.SaveVectorOptions()
-                    options.driverName = "GPKG"
-                    options.includeZ = True
-                    options.overrideGeometryType = layer.wkbType()
-                    options.layerName = layer.name()
-                    options.actionOnExistingFile = QgsVectorFileWriter.CreateOrOverwriteLayer
-                    QgsVectorFileWriter.writeAsVectorFormatV3(
-                        layer,
-                        gpkg_path,
-                        QgsProject.instance().transformContext(),
-                        options)
-                    # Add back to the project
-                    gpkg_uri = f"{gpkg_path}|layername={layer.name()}"
-                    gpkg_layer = QgsVectorLayer(gpkg_uri, layer.name(), "ogr")
-                    self.project.addMapLayer(gpkg_layer, False)
-                    gpkg_layer.setRenderer(layer.renderer().clone())
-                    gpkg_layer.triggerRepaint()
-                    root = self.project.layerTreeRoot()
-                    group_name = "External Layers"
-                    tree_layer = root.findLayer(layer.id())
-                    if tree_layer:
-                        layer_parent = tree_layer.parent()
-                        if layer_parent and layer_parent.name() == "Storm Drain":
-                            group_name = layer_parent.name()
-                    flo2d_name = f"FLO-2D_{self.gutils.get_metadata_par('PROJ_NAME')}"
-                    flo2d_grp = root.findGroup(flo2d_name)
-                    if flo2d_grp.findGroup(group_name):
-                        group = flo2d_grp.findGroup(group_name)
-                    else:
-                        group = flo2d_grp.insertGroup(-1, group_name)
-                    group.insertLayer(0, gpkg_layer)
-
-                    layer = self.project.mapLayersByName(gpkg_layer.name())[0]
-                    myLayerNode = root.findLayer(layer.id())
-                    myLayerNode.setExpanded(False)
-
-                    # Delete layer that is not in the gpkg
-                    self.project.removeMapLayer(layer_id)
-                elif layer.type() == QgsMapLayer.RasterLayer:
-                    if layer.dataProvider().bandCount() > 1:
-                        not_added.append(layer.name())
-                        continue
-                    # Save to gpkg
-                    layer_name = layer.name().replace(" ", "_")
-                    params = {'INPUT': f'{layer.dataProvider().dataSourceUri()}',
-                              'TARGET_CRS': None,
-                              'NODATA': None,
-                              'COPY_SUBDATASETS': False,
-                              'OPTIONS': '',
-                              'EXTRA': f'-co APPEND_SUBDATASET=YES -co RASTER_TABLE={layer_name} -ot Float32',
-                              'DATA_TYPE': 0,
-                              'OUTPUT': f'{gpkg_path}'}
-
-                    processing.run("gdal:translate", params)
-
-                    gpkg_uri = f"GPKG:{gpkg_path}:{layer_name}"
-                    gpkg_layer = QgsRasterLayer(gpkg_uri, layer_name, "gdal")
-                    self.project.addMapLayer(gpkg_layer, False)
-                    gpkg_layer.setRenderer(layer.renderer().clone())
-                    gpkg_layer.triggerRepaint()
-                    root = self.project.layerTreeRoot()
-                    flo2d_name = f"FLO-2D_{self.gutils.get_metadata_par('PROJ_NAME')}"
-                    group_name = "External Layers"
-                    flo2d_grp = root.findGroup(flo2d_name)
-                    if flo2d_grp.findGroup(group_name):
-                        group = flo2d_grp.findGroup(group_name)
-                    else:
-                        group = flo2d_grp.insertGroup(-1, group_name)
-                    group.insertLayer(0, gpkg_layer)
-                    # Delete layer that is not in the gpkg
-                    self.project.removeMapLayer(layer_id)
-
-                    layer = self.project.mapLayersByName(gpkg_layer.name())[0]
-                    myLayerNode = root.findLayer(layer.id())
-                    myLayerNode.setExpanded(False)
-                else:
-                    not_added.append(layer.name())
 
         QApplication.restoreOverrideCursor()
 
-        if len(not_added) > 0:
-            layers_not_added = ', '.join(map(str, not_added))
-            self.uc.show_info(f"The following layers were not added to the GeoPackage: \n\n {layers_not_added}")
-
         self.uc.bar_info("FLO-2D-Project saved!")
+        self.uc.log_info("FLO-2D-Project saved!")
 
     @connection_required
     def gpkg_management(self):
@@ -1238,8 +1230,27 @@ class Flo2D(object):
             s.setValue("FLO-2D/lastGdsDir", outdir)
 
             dlg_components = ComponentsDialog(self.con, self.iface, self.lyrs, "out")
+
+            # Check the presence of fplain cadpts neighbors dat files
+            files = [
+                    "FPLAIN.DAT",
+                    "CADPTS.DAT",
+                    "NEIGHBORS.DAT"
+            ]
+            for file in files:
+                file_path = os.path.join(outdir, file)
+                if os.path.exists(file_path):
+                    dlg_components.remove_files_chbox.setEnabled(True)
+                    break
+
             ok = dlg_components.exec_()
             if ok:
+                if dlg_components.remove_files_chbox.isChecked():
+                    for file in files:
+                        file_path = os.path.join(outdir, file)
+                        if os.path.exists(file_path):
+                            os.remove(file_path)
+
                 if "Channels" not in dlg_components.components:
                     export_calls.remove("export_chan")
                     export_calls.remove("export_xsec")
@@ -1257,8 +1268,13 @@ class Flo2D(object):
                     export_calls.remove("export_inflow")
                     export_calls.remove("export_tailings")
 
+<<<<<<< outrc_v3
                 if "Surface Water Rating Tables" not in dlg_components.components:
                     export_calls.remove("export_outrc")
+=======
+                if "Tailings" not in dlg_components.components:
+                    export_calls.remove("export_tailings")
+>>>>>>> master
 
                 if "Levees" not in dlg_components.components:
                     export_calls.remove("export_levee")
@@ -1305,10 +1321,6 @@ class Flo2D(object):
                     export_calls.remove("export_swmmoutf")
                     export_calls.remove("export_swmmflodropbox")
                     export_calls.remove("export_sdclogging")
-                    
-                else:
-                    self.uc.show_info("Storm Drain features not allowed on the Quick Run FLO-2D Pro.")
-                    return
 
                 if "Spatial Shallow-n" not in dlg_components.components:
                     export_calls.remove("export_shallowNSpatial")
@@ -1328,7 +1340,6 @@ class Flo2D(object):
                     s = QSettings()
                     s.setValue("FLO-2D/lastGdsDir", outdir)
 
-                    QApplication.setOverrideCursor(Qt.WaitCursor)
                     self.call_IO_methods(export_calls, True, outdir)
 
                     # The strings list 'export_calls', contains the names of
@@ -1336,10 +1347,30 @@ class Flo2D(object):
                     # FLO-2D .DAT files
 
                     self.uc.bar_info("Flo2D model exported to " + outdir, dur=3)
-                    QApplication.restoreOverrideCursor()
 
                 finally:
-                    QApplication.restoreOverrideCursor()
+
+                    if "export_tailings" in export_calls:
+                        MUD = self.gutils.get_cont_par("MUD")
+                        concentration_sql = """SELECT 
+                                               CASE WHEN COUNT(*) > 0 THEN True
+                                                    ELSE False
+                                               END AS result
+                                               FROM 
+                                                   tailing_cells
+                                               WHERE 
+                                                   concentration <> 0 OR concentration IS NULL;"""
+                        cv = self.gutils.execute(concentration_sql).fetchone()[0]
+                        # TAILINGS.DAT and TAILINGS_CV.DAT
+                        if MUD == '1':
+                            # Export TAILINGS_CV.DAT
+                            if cv == 1:
+                                new_files_used = self.files_used.replace("TAILINGS.DAT\n", "TAILINGS_CV.DAT\n")
+                                self.files_used = new_files_used
+                        # TAILINGS_STACK_DEPTH.DAT
+                        elif MUD == '2':
+                            new_files_used = self.files_used.replace("TAILINGS.DAT\n", "TAILINGS_STACK_DEPTH.DAT\n")
+                            self.files_used = new_files_used
 
                     if "export_swmmflo" in export_calls:
                         self.f2d_widget.storm_drain_editor.export_storm_drain_INP_file()
@@ -3002,21 +3033,6 @@ class Flo2D(object):
                 if "Manning's n and Topo" not in dlg_components.components:
                     export_calls.remove("export_mannings_n_topo")
 
-                if "export_swmmflort" in export_calls:
-                    QApplication.setOverrideCursor(Qt.ArrowCursor)
-                    if not self.uc.question(
-                            "Did you schematize Storm Drains? Do you want to export Storm Drain files?"
-                    ):
-                        export_calls.remove("export_swmmflo")
-                        export_calls.remove("export_swmmflort")
-                        export_calls.remove("export_swmmoutf")
-                        export_calls.remove("export_swmmflodropbox")
-                        export_calls.remove("export_sdclogging")
-                        
-                    QApplication.restoreOverrideCursor()    
-
-                # QApplication.setOverrideCursor(Qt.WaitCursor)
-
                 try:
                     s = QSettings()
                     s.setValue("FLO-2D/lastGdsDir", outdir)
@@ -3027,8 +3043,6 @@ class Flo2D(object):
                     # The strings list 'export_calls', contains the names of
                     # the methods in the class Flo2dGeoPackage to export (write) the
                     # FLO-2D .DAT files
-
-                    self.uc.bar_info("Flo2D model exported to " + outdir, dur=3)
 
                 finally:
 
@@ -3097,6 +3111,8 @@ class Flo2D(object):
                         info = "WARNINGS 100424.0613:\n\n" + self.f2g.export_messages
                         self.uc.show_info(info)
                         QApplication.restoreOverrideCursor()
+
+                    self.uc.bar_info("Flo2D model exported to " + outdir, dur=3)
 
         QApplication.restoreOverrideCursor()
 
@@ -3292,8 +3308,9 @@ class Flo2D(object):
         """
         Function to export FLO-2D to SWMM's INP file
         """
-        sd_editor = StormDrainEditorWidget(self.iface, self.f2d_plot, self.f2d_table, self.lyrs)
-        sd_editor.import_storm_drain_INP_file("Choose", True)
+        # sd_editor = StormDrainEditorWidget(self.iface, self.f2d_plot, self.f2d_table, self.lyrs)
+        # sd_editor.import_storm_drain_INP_file("Choose", True)
+        self.f2d_widget.storm_drain_editor.import_storm_drain_INP_file("Choose", True)
 
     @connection_required
     def export_inp(self):
@@ -3301,7 +3318,7 @@ class Flo2D(object):
         Function to import SWMM's INP file to FLO-2D project
         """
         sd_editor = StormDrainEditorWidget(self.iface, self.f2d_plot, self.f2d_table, self.lyrs)
-        sd_editor.export_storm_drain_INP_file()
+        sd_editor.export_storm_drain_INP_file(set_dat_dir=True)
 
     @connection_required
     def import_from_ras(self):
@@ -3348,12 +3365,17 @@ class Flo2D(object):
             while True:
                 save = dlg_control.exec_()
                 if save:
+                    QApplication.setOverrideCursor(Qt.WaitCursor)
                     try:
                         if dlg_control.save_parameters_JJ():
                             self.f2d_widget.ic_editor.populate_cbos()
                             self.uc.bar_info("Parameters saved!", dur=3)
+                            QApplication.restoreOverrideCursor()
                             break
+                        else:
+                            QApplication.restoreOverrideCursor()
                     except Exception as e:
+                        QApplication.restoreOverrideCursor()
                         self.uc.show_error("ERROR 110618.1828: Could not save FLO-2D parameters!", e)
                         return
                 else:
@@ -4284,19 +4306,30 @@ class Flo2D(object):
         gpkg_path_adj = gpkg_path.replace("\\", "/")
         layer_source_adj = layer.source().replace("\\", "/")
 
+        # Check 0: Layer already on the external_layers table
+        qry = f"SELECT * FROM external_layers WHERE name = '{layer.name()}';"
+        data = self.gutils.execute(qry).fetchone()
+        if data:
+            return False
+
         # Check 1: Path cannot be equal to gpkg_path
         if gpkg_path_adj in layer_source_adj:
             return False
 
-        # Check 2: Check if it is an online raster or located in a MapCrafter folder
-        if "type=xyz" in layer.source() or "MapCrafter" in layer.source():
+        # Check 2: Check based on the provider if the layer is raster or vector
+        providers = ['ogr', 'gpkg', 'spatialite', 'memory', 'delimitedtext', 'gdal']
+        if layer.dataProvider().name() not in providers:
             return False
 
-        # Check 3: If the file is a raster
+        # Check 3: Check if it is an online raster or located in a MapCrafter folder
+        if "MapCrafter" in layer.source():
+            return False
+
+        # Check 4: If the file is a raster
         if isinstance(layer, QgsVectorLayer):
             return True
 
-        # Check 4: If the file is a vector
+        # Check 5: If the file is a vector
         if isinstance(layer, QgsRasterLayer):
             return True
 
@@ -4326,4 +4359,11 @@ class Flo2D(object):
 
         # Save the result
         picture.save(thumbnail)
+
+    def changeLayerAdditionMode(self):
+        """
+        Function to force all layers added to the user on the top of the layer tree
+        """
+        # self.project.layerTreeRegistryBridge().setLayerInsertionPoint(self.project.layerTreeRoot(), 0)
+        self.iface.layerTreeView().setCurrentIndex(self.iface.layerTreeView().layerTreeModel().node2index(self.project.layerTreeRoot()))
 

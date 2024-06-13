@@ -13,6 +13,10 @@ from PyQt5.QtGui import QDesktopServices
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 from .ui_utils import load_ui
+from ..flo2d_tools.grid_tools import (
+    highlight_selected_segment,
+    highlight_selected_xsection_a,
+)
 
 uiDialog, qtBaseClass = load_ui("channels_editor")
 
@@ -27,6 +31,7 @@ class ChannelsEditorWidget(qtBaseClass, uiDialog):
         self.setupUi(self)
         self.uc = UserCommunication(iface, "FLO-2D")
         self.grid_lyr = None
+        self.first_time = True
 
     def setup_connection(self):
         con = self.iface.f2d["con"]
@@ -39,6 +44,7 @@ class ChannelsEditorWidget(qtBaseClass, uiDialog):
             self.max_froude_number_dbox.valueChanged.connect(self.update_froude)
             self.roughness_adjust_coeff_dbox.valueChanged.connect(self.update_roughness)
             self.transport_eq_cbo.currentIndexChanged.connect(self.update_transport_eq)
+            self.channel_baseflow_dbox.valueChanged.connect(self.update_baseflow)
             self.initial_flow_elements_grp.toggled.connect(self.fill_starting_and_ending_water_elevations)
             self.view_channel_geometry_btn.clicked.connect(self.show_channel_segments_dialog)
             self.channel_segment_cbo.currentIndexChanged.connect(self.show_channel_segment_dependencies)
@@ -51,19 +57,8 @@ class ChannelsEditorWidget(qtBaseClass, uiDialog):
             self.populate_channels_widget()
 
     def populate_channels_widget(self):
-        qry_chan = """SELECT fid, name, depinitial, froudc, roughadj, isedn FROM chan ORDER BY fid;"""
-        rows_chan = self.gutils.execute(qry_chan).fetchall()
-        if not rows_chan:
-            return
-        self.channel_segment_cbo.clear()
-        for row in rows_chan:
-            self.channel_segment_cbo.addItem(str(row[1]))
-            if row[0] == 1:
-                self.roughness_adjust_coeff_dbox.setValue(row[4])
-                self.max_froude_number_dbox.setValue(row[3])
-                equation = row[5] - 1 if row[5] is not None else 0
-                self.transport_eq_cbo.setCurrentIndex(equation)
-
+        self.load_channel_segments_data()
+        
         qry_chan_wsel = "SELECT seg_fid, istart, wselstart, iend, wselend FROM chan_wsel"
         rows_chan_wsel = self.gutils.execute(qry_chan_wsel).fetchall()
         if not rows_chan_wsel:
@@ -79,12 +74,28 @@ class ChannelsEditorWidget(qtBaseClass, uiDialog):
 
     #         self.uc.bar_warn('Schematized Channel Editor populated!.')
 
+    def load_channel_segments_data(self):
+        qry_chan = """SELECT fid, name, depinitial, froudc, roughadj, isedn, ibaseflow FROM chan ORDER BY fid;"""
+        rows_chan = self.gutils.execute(qry_chan).fetchall()
+        if not rows_chan:
+            return
+        self.channel_segment_cbo.clear()
+        for row in rows_chan:
+            self.channel_segment_cbo.addItem(str(row[1]))
+            if row[0] == 1:
+                self.roughness_adjust_coeff_dbox.setValue(row[4])
+                self.max_froude_number_dbox.setValue(row[3])
+                equation = row[5] - 1 if row[5] is not None else 0
+                self.transport_eq_cbo.setCurrentIndex(equation)
+                self.channel_baseflow_dbox.setValue(row[6])          
+        
     def show_channel_segment_dependencies(self):
         if self.gutils.is_table_empty("chan"):
             self.uc.bar_warn("Schematized Channel Segments (left bank) Layer is empty!.")
             return
 
         idx = self.channel_segment_cbo.currentIndex() + 1
+        chan_name = self.channel_segment_cbo.currentText()
 
         qry_wsel = """SELECT istart, wselstart, iend, wselend FROM chan_wsel WHERE seg_fid = ?;"""
         data_wsel = self.gutils.execute(qry_wsel, (idx,)).fetchone()
@@ -98,14 +109,26 @@ class ChannelsEditorWidget(qtBaseClass, uiDialog):
             self.ending_water_elev_dbox.setValue(data_wsel[3])
             self.initial_flow_elements_grp.setChecked(True)
 
-        qry_chan = """SELECT isedn, depinitial, froudc, roughadj, isedn FROM chan WHERE fid = ?;"""
+        qry_chan = """SELECT isedn, depinitial, froudc, roughadj, isedn, ibaseflow FROM chan WHERE fid = ?;"""
         data_chan = self.gutils.execute(qry_chan, (idx,)).fetchone()
-        self.initial_flow_for_all_dbox.setValue(data_chan[1])
-        self.max_froude_number_dbox.setValue(data_chan[2])
-        self.roughness_adjust_coeff_dbox.setValue(data_chan[3])
-        equation = data_chan[4] - 1 if data_chan[4] is not None else 0
-        self.transport_eq_cbo.setCurrentIndex(equation)
-
+        if data_chan:
+            self.initial_flow_for_all_dbox.setValue(data_chan[1])
+            self.max_froude_number_dbox.setValue(data_chan[2])
+            self.roughness_adjust_coeff_dbox.setValue(data_chan[3])
+            equation = data_chan[4] - 1 if data_chan[4] is not None else 0
+            self.transport_eq_cbo.setCurrentIndex(equation)
+            self.channel_baseflow_dbox.setValue(data_chan[5])
+        else:
+            self.channel_segment_cbo.blockSignals(True)
+            self.load_channel_segments_data()
+            self.uc.bar_error("Channel missing!")
+            self.channel_segment_cbo.blockSignals(False)
+  
+        if not self.first_time:
+            highlight_selected_segment(self.lyrs.data["chan"]["qlyr"], self.channel_segment_cbo.currentIndex() + 1)
+        else:
+            self.first_time = False
+            
     def schematized_channels_help(self):
         QDesktopServices.openUrl(QUrl("https://flo-2dsoftware.github.io/FLO-2D-Documentation/Plugin1000/widgets/schematized-channel-editor/Schematized%20Channel%20Editor.html"))        
 
@@ -121,6 +144,7 @@ class ChannelsEditorWidget(qtBaseClass, uiDialog):
 
         dlg_channels = ChannelGeometryDialog(self.iface, self.lyrs)
         close = dlg_channels.exec_()
+        self.show_channel_segment_dependencies()
         # if close:
         #     try:
         #         self.uc.bar_info('Channel data saved!', dur=3)
@@ -164,6 +188,12 @@ class ChannelsEditorWidget(qtBaseClass, uiDialog):
         qry = """UPDATE chan SET froudc = ? WHERE fid = ?;"""
         idx = self.channel_segment_cbo.currentIndex() + 1
         value = self.max_froude_number_dbox.value()
+        self.gutils.execute(qry, (value, idx))
+
+    def update_baseflow(self):
+        qry = """UPDATE chan SET ibaseflow = ? WHERE fid = ?;"""
+        idx = self.channel_segment_cbo.currentIndex() + 1
+        value = self.channel_baseflow_dbox.value()
         self.gutils.execute(qry, (value, idx))
 
     def update_roughness(self):
