@@ -20,7 +20,7 @@ from pathlib import Path
 import h5py
 import numpy as np
 from PyQt5.QtWidgets import QStyledItemDelegate
-from qgis._core import QgsFeatureRequest
+from qgis._core import QgsFeatureRequest, QgsEditFormConfig, QgsDefaultValue, QgsEditorWidgetSetup
 from qgis.core import (
     NULL,
     QgsArrowSymbolLayer,
@@ -73,6 +73,7 @@ from qgis.PyQt.QtWidgets import (
 import pyqtgraph as pg
 
 from .dlg_sd_profile_view import SDProfileView
+from .dlg_storm_drain_attributes import InletAttributes
 from ..flo2d_ie.flo2dgeopackage import Flo2dGeoPackage
 from ..flo2d_ie.swmm_io import StormDrainProject
 from ..flo2d_tools.grid_tools import spatial_index
@@ -90,7 +91,7 @@ from ..gui.dlg_weirs import WeirsDialog
 from ..user_communication import ScrollMessageBox, ScrollMessageBox2, UserCommunication,TwoInputsDialog
 from ..utils import float_or_zero, int_or_zero, is_number, is_true, m_fdata
 from .table_editor_widget import CommandItemEdit, StandardItem, StandardItemModel
-from .ui_utils import load_ui, set_icon, try_disconnect, center_canvas
+from .ui_utils import load_ui, set_icon, try_disconnect, center_canvas, field_reuse
 from ..flo2d_ie.flo2d_parser import ParseDAT
 
 SDTableRole = Qt.UserRole + 1
@@ -297,6 +298,8 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         self.lyrs = lyrs
         self.con = None
         self.gutils = None
+        self.inlets_junctions_dock = None
+        self.inlets_junctions_dlg = None
 
         self.system_units = {
             "CMS": ["m", "mps", "cms"],
@@ -485,6 +488,11 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
 
         swmm = 1 if self.gutils.get_cont_par("SWMM") == "1" else 0
         self.simulate_stormdrain_chbox.setChecked(swmm)
+
+        formConfig = self.user_swmm_nodes_lyr.editFormConfig()
+        formConfig.setUiForm(os.path.join(os.path.dirname(os.path.realpath(__file__)), "..", "ui", "inlet_attributes.ui"))
+        self.user_swmm_nodes_lyr.setEditFormConfig(formConfig)
+        field_reuse(self.user_swmm_nodes_lyr)
 
     def setup_connection(self):
         con = self.iface.f2d["con"]
@@ -6102,6 +6110,62 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             self.uc.bar_info("Storm Drain control data saved!")
             self.uc.log_info("Storm Drain control data saved!")
             dlg_INP_groups.save_INP_control()
+
+    # def start_editing(self):
+    #     """
+    #     Function to show the inlet_attributes dialog
+    #     """
+    #
+    #     if self.inlets_junctions_dock:
+    #         self.iface.removeDockWidget(self.inlets_junctions_dock)
+    #         self.inlets_junctions_dock.close()
+    #         self.inlets_junctions_dock.deleteLater()
+    #         self.inlets_junctions_dock = None
+    #
+    #     self.inlets_junctions_dlg = InletAttributes(self.con, self.iface, self.lyrs)
+    #     self.iface.addDockWidget(Qt.RightDockWidgetArea, self.inlets_junctions_dlg.dock_widget)
+    #     self.inlets_junctions_dlg.dock_widget.setFloating(False)
+    #     self.inlets_junctions_dlg.dock_widget.show()
+    #     self.inlets_junctions_dlg.inlet_junction_grpbox.setEnabled(False)
+    #     self.inlets_junctions_dlg.sd_features_grpbox.setEnabled(False)
+    #
+    #     self.inlets_junctions_dock = self.inlets_junctions_dlg.dock_widget
+    #
+    #     formConfig = self.user_swmm_nodes_lyr.editFormConfig()
+    #
+    #     config = {'IsMultiline': False, 'UseHtml': False}
+    #
+    #     self.user_swmm_nodes_lyr.editFormConfig().setWidgetConfig("TextEdit", config)
+    #     default_value = QgsDefaultValue()
+    #     default_value.setExpression("'12'")
+    #     field_index = self.user_swmm_nodes_lyr.fields().indexFromName(field)
+    #
+    #     # Set the default value for the specific field
+    #     layer.setDefaultValueDefinition(field_index, default_value)
+    #
+    #     # formConfig.setSuppress(QgsEditFormConfig.SuppressOn)
+    #
+    #     fields_to_show = ['name', 'feature', 'sd_type']
+    #
+    #     self.user_swmm_nodes_lyr.setEditFormConfig(formConfig)
+    #
+    # def feature_added(self, feature):
+    #     """
+    #     Function to populate data on the inlet_attributes dialog when a feature is added
+    #     """
+    #     self.inlets_junctions_dlg.inlet_junction_grpbox.setEnabled(True)
+    #     self.inlets_junctions_dlg.sd_features_grpbox.setEnabled(True)
+    #
+    #     # self.user_swmm_nodes_lyr.commitChanges()
+    #     #
+    #     # self.uc.log_info(str(feature.id()))
+    #
+    #     # formConfig = self.user_swmm_nodes_lyr.editFormConfig()
+    #     # # formConfig.setSuppress(QgsEditFormConfig.SuppressOn)
+    #     #
+    #     # fields_to_show = ['name', 'feature', 'sd_type']
+    #     #
+    #     # self.user_swmm_nodes_lyr.setEditFormConfig(formConfig)
 
 
 class SDTablesDelegate(QStyledItemDelegate):

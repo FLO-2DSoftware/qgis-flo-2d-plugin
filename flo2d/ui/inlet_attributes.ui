@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>301</width>
+    <width>304</width>
     <height>617</height>
    </rect>
   </property>
@@ -123,7 +123,7 @@
     </layout>
    </item>
    <item row="1" column="0">
-    <widget class="QGroupBox" name="groupBox_2">
+    <widget class="QGroupBox" name="sd_features_grpbox">
      <property name="title">
       <string>FLO-2D Storm Drain Features</string>
      </property>
@@ -213,7 +213,7 @@
          </widget>
         </item>
         <item row="0" column="1">
-         <widget class="QComboBox" name="sd_type_cbo">
+         <widget class="QComboBox" name="sd_type">
           <item>
            <property name="text">
             <string>Inlet</string>
@@ -234,7 +234,7 @@
          </widget>
         </item>
         <item row="1" column="1">
-         <widget class="QSpinBox" name="intype_sb">
+         <widget class="QSpinBox" name="intype">
           <property name="minimum">
            <number>1</number>
           </property>
@@ -244,28 +244,28 @@
          </widget>
         </item>
         <item row="2" column="1">
-         <widget class="QDoubleSpinBox" name="swmm_length_dsb">
+         <widget class="QDoubleSpinBox" name="swmm_length">
           <property name="maximum">
            <double>100000.000000000000000</double>
           </property>
          </widget>
         </item>
         <item row="3" column="1">
-         <widget class="QDoubleSpinBox" name="swmm_width_dsb">
+         <widget class="QDoubleSpinBox" name="swmm_width">
           <property name="maximum">
            <double>100000.000000000000000</double>
           </property>
          </widget>
         </item>
         <item row="4" column="1">
-         <widget class="QDoubleSpinBox" name="swmm_height_dsb">
+         <widget class="QDoubleSpinBox" name="swmm_height">
           <property name="maximum">
            <double>100000.000000000000000</double>
           </property>
          </widget>
         </item>
         <item row="5" column="1">
-         <widget class="QDoubleSpinBox" name="swmm_coeff_dsb">
+         <widget class="QDoubleSpinBox" name="swmm_coeff">
           <property name="minimum">
            <double>2.500000000000000</double>
           </property>
@@ -278,35 +278,35 @@
          </widget>
         </item>
         <item row="6" column="1">
-         <widget class="QSpinBox" name="swmm_feature_sb">
+         <widget class="QSpinBox" name="swmm_feature">
           <property name="maximum">
            <number>2</number>
           </property>
          </widget>
         </item>
         <item row="7" column="1">
-         <widget class="QDoubleSpinBox" name="curbheight_dsb">
+         <widget class="QDoubleSpinBox" name="curbheight">
           <property name="maximum">
            <double>100000.000000000000000</double>
           </property>
          </widget>
         </item>
         <item row="8" column="1">
-         <widget class="QDoubleSpinBox" name="swmm_clogging_factor_dsb">
+         <widget class="QDoubleSpinBox" name="swmm_clogging_factor">
           <property name="maximum">
            <double>100.000000000000000</double>
           </property>
          </widget>
         </item>
         <item row="9" column="1">
-         <widget class="QDoubleSpinBox" name="swmm_time_for_clogging_dsb">
+         <widget class="QDoubleSpinBox" name="swmm_time_for_clogging">
           <property name="maximum">
            <double>100000.000000000000000</double>
           </property>
          </widget>
         </item>
         <item row="10" column="1">
-         <widget class="QDoubleSpinBox" name="drboxarea_dsb">
+         <widget class="QDoubleSpinBox" name="drboxarea">
           <property name="maximum">
            <double>100000.000000000000000</double>
           </property>
@@ -318,7 +318,7 @@
     </widget>
    </item>
    <item row="0" column="0">
-    <widget class="QGroupBox" name="groupBox">
+    <widget class="QGroupBox" name="inlet_junction_grpbox">
      <property name="title">
       <string>Inlet/Junction Properties</string>
      </property>
@@ -326,10 +326,10 @@
       <item row="0" column="0">
        <layout class="QGridLayout" name="gridLayout_2">
         <item row="2" column="1">
-         <widget class="QComboBox" name="external_inflow_cbo"/>
+         <widget class="QComboBox" name="external_inflow"/>
         </item>
         <item row="3" column="1">
-         <widget class="QDoubleSpinBox" name="junction_invert_elev_dsb">
+         <widget class="QDoubleSpinBox" name="junction_invert_elev">
           <property name="maximum">
            <double>100000.000000000000000</double>
           </property>
@@ -343,7 +343,7 @@
          </widget>
         </item>
         <item row="6" column="1">
-         <widget class="QDoubleSpinBox" name="surcharge_depth_dsb">
+         <widget class="QDoubleSpinBox" name="surcharge_depth">
           <property name="maximum">
            <double>100000.000000000000000</double>
           </property>
@@ -357,7 +357,7 @@
          </widget>
         </item>
         <item row="4" column="1">
-         <widget class="QDoubleSpinBox" name="max_depth_dsb">
+         <widget class="QDoubleSpinBox" name="max_depth">
           <property name="maximum">
            <double>100000.000000000000000</double>
           </property>
@@ -371,7 +371,7 @@
          </widget>
         </item>
         <item row="1" column="1">
-         <widget class="QLineEdit" name="name_le"/>
+         <widget class="QLineEdit" name="name"/>
         </item>
         <item row="5" column="0">
          <widget class="QLabel" name="label_10">
@@ -388,7 +388,7 @@
          </widget>
         </item>
         <item row="5" column="1">
-         <widget class="QDoubleSpinBox" name="init_depth_dsb">
+         <widget class="QDoubleSpinBox" name="init_depth">
           <property name="maximum">
            <double>100000.000000000000000</double>
           </property>
@@ -421,7 +421,7 @@
          </widget>
         </item>
         <item row="0" column="1">
-         <widget class="QLabel" name="grid_lbl">
+         <widget class="QLabel" name="grid">
           <property name="enabled">
            <bool>false</bool>
           </property>

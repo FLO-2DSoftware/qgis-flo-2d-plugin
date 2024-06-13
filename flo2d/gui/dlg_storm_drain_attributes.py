@@ -39,23 +39,23 @@ class InletAttributes(qtBaseClass, uiDialog):
         self.next_node = None
 
         # Connections
-        self.name_le.editingFinished.connect(self.save_inlets_junctions)
+        self.name.editingFinished.connect(self.save_inlets_junctions)
         # self.external_inflow.editingFinished.connect(self.save_inlets_junctions)
-        self.junction_invert_elev_dsb.editingFinished.connect(self.save_inlets_junctions)
-        self.max_depth_dsb.editingFinished.connect(self.save_inlets_junctions)
-        self.init_depth_dsb.editingFinished.connect(self.save_inlets_junctions)
-        self.surcharge_depth_dsb.editingFinished.connect(self.save_inlets_junctions)
-        self.sd_type_cbo.currentTextChanged.connect(self.save_inlets_junctions)
-        self.intype_sb.editingFinished.connect(self.save_inlets_junctions)
-        self.swmm_length_dsb.editingFinished.connect(self.save_inlets_junctions)
-        self.swmm_width_dsb.editingFinished.connect(self.save_inlets_junctions)
-        self.swmm_height_dsb.editingFinished.connect(self.save_inlets_junctions)
-        self.swmm_coeff_dsb.editingFinished.connect(self.save_inlets_junctions)
-        self.swmm_feature_sb.editingFinished.connect(self.save_inlets_junctions)
-        self.curbheight_dsb.editingFinished.connect(self.save_inlets_junctions)
-        self.swmm_clogging_factor_dsb.editingFinished.connect(self.save_inlets_junctions)
-        self.swmm_time_for_clogging_dsb.editingFinished.connect(self.save_inlets_junctions)
-        self.drboxarea_dsb.editingFinished.connect(self.save_inlets_junctions)
+        self.junction_invert_elev.editingFinished.connect(self.save_inlets_junctions)
+        self.max_depth.editingFinished.connect(self.save_inlets_junctions)
+        self.init_depth.editingFinished.connect(self.save_inlets_junctions)
+        self.surcharge_depth.editingFinished.connect(self.save_inlets_junctions)
+        self.sd_type.currentTextChanged.connect(self.save_inlets_junctions)
+        self.intype.editingFinished.connect(self.save_inlets_junctions)
+        self.swmm_length.editingFinished.connect(self.save_inlets_junctions)
+        self.swmm_width.editingFinished.connect(self.save_inlets_junctions)
+        self.swmm_height.editingFinished.connect(self.save_inlets_junctions)
+        self.swmm_coeff.editingFinished.connect(self.save_inlets_junctions)
+        self.swmm_feature.editingFinished.connect(self.save_inlets_junctions)
+        self.curbheight.editingFinished.connect(self.save_inlets_junctions)
+        self.swmm_clogging_factor.editingFinished.connect(self.save_inlets_junctions)
+        self.swmm_time_for_clogging.editingFinished.connect(self.save_inlets_junctions)
+        self.drboxarea.editingFinished.connect(self.save_inlets_junctions)
 
         self.user_swmm_nodes_lyr = self.lyrs.data["user_swmm_nodes"]["qlyr"]
 
@@ -102,28 +102,28 @@ class InletAttributes(qtBaseClass, uiDialog):
                                          ).fetchall()[0]
 
         # Assign attributes to the dialog
-        self.grid_lbl.setText(str(attributes[0]))
-        self.name_le.setText(str(attributes[1]))
+        self.grid.setText(str(attributes[0]))
+        self.name.setText(str(attributes[1]))
         # self.external_inflow = attributes[2]
-        self.junction_invert_elev_dsb.setValue(float(attributes[3]))
-        self.max_depth_dsb.setValue(float(attributes[4]))
-        self.init_depth_dsb.setValue(float(attributes[5]))
-        self.surcharge_depth_dsb.setValue(float(attributes[6]))
+        self.junction_invert_elev.setValue(float(attributes[3]))
+        self.max_depth.setValue(float(attributes[4]))
+        self.init_depth.setValue(float(attributes[5]))
+        self.surcharge_depth.setValue(float(attributes[6]))
         if str(attributes[7]).lower().startswith("i"):
             sd_type = 'Inlet'
         else:
             sd_type = 'Outlet'
-        self.sd_type_cbo.setCurrentIndex(self.sd_type_cbo.findText(sd_type))
-        self.intype_sb.setValue(int(attributes[8]))
-        self.swmm_length_dsb.setValue(float(attributes[9]))
-        self.swmm_width_dsb.setValue(float(attributes[10]))
-        self.swmm_height_dsb.setValue(float(attributes[11]))
-        self.swmm_coeff_dsb.setValue(float(attributes[12]))
-        self.swmm_feature_sb.setValue(int(attributes[13]))
-        self.curbheight_dsb.setValue(float(attributes[14]))
-        self.swmm_clogging_factor_dsb.setValue(float(attributes[15]))
-        self.swmm_time_for_clogging_dsb.setValue(float(attributes[16]))
-        self.drboxarea_dsb.setValue(float(attributes[17]))
+        self.sd_type.setCurrentIndex(self.sd_type.findText(sd_type))
+        self.intype.setValue(int(attributes[8]))
+        self.swmm_length.setValue(float(attributes[9]))
+        self.swmm_width.setValue(float(attributes[10]))
+        self.swmm_height.setValue(float(attributes[11]))
+        self.swmm_coeff.setValue(float(attributes[12]))
+        self.swmm_feature.setValue(int(attributes[13]))
+        self.curbheight.setValue(float(attributes[14]))
+        self.swmm_clogging_factor.setValue(float(attributes[15]))
+        self.swmm_time_for_clogging.setValue(float(attributes[16]))
+        self.drboxarea.setValue(float(attributes[17]))
 
         self.previous_btn.setEnabled(False)
         self.next_btn.setEnabled(False)
@@ -168,23 +168,23 @@ class InletAttributes(qtBaseClass, uiDialog):
         if old_name_qry:
             old_name = old_name_qry[0][0]
 
-        name = self.name_le.text()
+        name = self.name.text()
         # external_inflow = self..value()
-        junction_invert_elev = self.junction_invert_elev_dsb.value()
-        max_depth = self.max_depth_dsb.value()
-        init_depth = self.init_depth_dsb.value()
-        surcharge_depth = self.surcharge_depth_dsb.value()
-        sd_type = self.sd_type_cbo.currentText()[0]
-        intype = self.intype_sb.value()
-        swmm_length = self.swmm_length_dsb.value()
-        swmm_width = self.swmm_width_dsb.value()
-        swmm_height = self.swmm_height_dsb.value()
-        swmm_coeff = self.swmm_coeff_dsb.value()
-        swmm_feature = self.swmm_feature_sb.value()
-        curbheight = self.curbheight_dsb.value()
-        swmm_clogging_factor = self.swmm_clogging_factor_dsb.value()
-        swmm_time_for_clogging = self.swmm_time_for_clogging_dsb.value()
-        drboxarea = self.drboxarea_dsb.value()
+        junction_invert_elev = self.junction_invert_elev.value()
+        max_depth = self.max_depth.value()
+        init_depth = self.init_depth.value()
+        surcharge_depth = self.surcharge_depth.value()
+        sd_type = self.sd_type.currentText()[0]
+        intype = self.intype.value()
+        swmm_length = self.swmm_length.value()
+        swmm_width = self.swmm_width.value()
+        swmm_height = self.swmm_height.value()
+        swmm_coeff = self.swmm_coeff.value()
+        swmm_feature = self.swmm_feature.value()
+        curbheight = self.curbheight.value()
+        swmm_clogging_factor = self.swmm_clogging_factor.value()
+        swmm_time_for_clogging = self.swmm_time_for_clogging.value()
+        drboxarea = self.drboxarea.value()
 
         self.gutils.execute(f"""
                                 UPDATE 
