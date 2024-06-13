@@ -1268,13 +1268,11 @@ class Flo2D(object):
                     export_calls.remove("export_inflow")
                     export_calls.remove("export_tailings")
 
-<<<<<<< outrc_v3
                 if "Surface Water Rating Tables" not in dlg_components.components:
                     export_calls.remove("export_outrc")
-=======
+
                 if "Tailings" not in dlg_components.components:
                     export_calls.remove("export_tailings")
->>>>>>> master
 
                 if "Levees" not in dlg_components.components:
                     export_calls.remove("export_levee")
