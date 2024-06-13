@@ -377,6 +377,30 @@ class Flo2dGeoPackage(GeoPackageUtils):
             self.uc.log_info(traceback.format_exc())
             self.uc.show_error("ERROR 070719.1051: Import inflows failed!.", e)
 
+    def import_outrc(self):
+        """
+        Function to import the OUTRC.DAT file into the project
+        """
+        outrc_sql = [
+            """INSERT INTO outrc (grid_fid, depthrt, volrt) VALUES""",
+            3,
+        ]
+
+        self.clear_tables("outrc")
+
+        # OUTRC.DAT
+        data = self.parser.parse_outrc()
+        if data:
+            for row in data:
+                if len(row) == 2:
+                    grid_fid = row[1]
+                    continue
+                if len(row) == 3:
+                    depthrt = row[1]
+                    volrt = row[2]
+                outrc_sql += [(grid_fid, depthrt, volrt)]
+            self.batch_execute(outrc_sql)
+
     def import_tailings(self):
         tailings_sql = [
             """INSERT INTO tailing_cells (grid, tailings_surf_elev, water_surf_elev, concentration, geom) VALUES""",
@@ -2363,6 +2387,44 @@ class Flo2dGeoPackage(GeoPackageUtils):
         except Exception as e:
             QApplication.restoreOverrideCursor()
             self.uc.show_error("ERROR 101218.1542: exporting INFLOW.DAT failed!.\n", e)
+            return False
+
+    def export_outrc(self, output=None):
+        if self.parsed_format == self.FORMAT_DAT:
+            return self.export_outrc_dat(output)
+        elif self.parsed_format == self.FORMAT_HDF5:
+            pass
+
+    def export_outrc_dat(self, outdir):
+        """
+        Function to export the outrc to the DAT file
+        """
+        try:
+            if self.is_table_empty("outrc"):
+                return False
+
+            outrc_sql = """SELECT DISTINCT grid_fid FROM outrc ORDER BY grid_fid"""
+
+            rows = self.execute(outrc_sql).fetchall()
+            if not rows:
+                return False
+
+            one_value = "N  {0}\n"
+            two_values = "P  {0}  {1}\n"
+
+            outrc = os.path.join(outdir, "OUTRC.DAT")
+            with open(outrc, "w") as t:
+                for row in rows:
+                    t.write(one_value.format(row[0]))
+                    outrc_data_sql = f"""SELECT depthrt, volrt FROM outrc WHERE grid_fid = {row[0]} ORDER BY depthrt;"""
+                    outrc_data = self.execute(outrc_data_sql).fetchall()
+                    for data in outrc_data:
+                        t.write(two_values.format(*[round(data[0], 2), round(data[1], 2)]))
+            return True
+
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.uc.show_error("ERROR 040822.0442: exporting OUTRC.DAT failed!.\n", e)
             return False
 
     def export_tailings(self, output=None):

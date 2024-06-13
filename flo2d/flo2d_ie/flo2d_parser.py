@@ -322,6 +322,7 @@ class ParseDAT(object):
             "WSURF.DAT": None,
             "GUTTER.DAT": None,
             "WSTIME.DAT": None,
+            "OUTRC.DAT": None,
         }
         self.cont_rows = [
             ["SIMUL", "TOUT", "LGPLOT", "METRIC", "IBACKUP", "build"],
@@ -506,6 +507,13 @@ class ParseDAT(object):
         tailings = self.dat_files["TAILINGS.DAT"]
         if tailings is not None:
             par = self.single_parser(tailings)
+            data = [row for row in par]
+            return data
+
+    def parse_outrc(self):
+        outrc = self.dat_files["OUTRC.DAT"]
+        if outrc is not None:
+            par = self.single_parser(outrc)
             data = [row for row in par]
             return data
 

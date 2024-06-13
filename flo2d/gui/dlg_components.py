@@ -321,6 +321,10 @@ class ComponentsDialog(qtBaseClass, uiDialog):
                 self.tailings_chbox.setChecked(True)
                 self.tailings_chbox.setEnabled(True)
 
+            if not self.gutils.is_table_empty("outrc"):
+                self.outrc_chbox.setChecked(True)
+                self.outrc_chbox.setEnabled(True)
+
         else:
             QApplication.restoreOverrideCursor()
             self.uc.show_info("ERROR 240619.0704: Wrong components in/out selection!")
@@ -391,6 +395,9 @@ class ComponentsDialog(qtBaseClass, uiDialog):
 
         if self.tailings_chbox.isChecked():
             self.components.append("Tailings")
+
+        if self.outrc_chbox.isChecked():
+            self.components.append("Surface Water Rating Tables")
 
     def unselect_all(self):
         self.check_components(self.select_all_chbox.isChecked())
