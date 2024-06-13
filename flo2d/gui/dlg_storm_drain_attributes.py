@@ -162,6 +162,12 @@ class InletAttributes(qtBaseClass, uiDialog):
         """
         Function to save the inlets everytime an attribute is changed
         """
+
+        old_name_qry = self.gutils.execute(f"""SELECT name FROM user_swmm_nodes WHERE fid = '{self.current_node}';""").fetchall()
+        old_name = ""
+        if old_name_qry:
+            old_name = old_name_qry[0][0]
+
         name = self.name_le.text()
         # external_inflow = self..value()
         junction_invert_elev = self.junction_invert_elev_dsb.value()
@@ -206,7 +212,49 @@ class InletAttributes(qtBaseClass, uiDialog):
 
         self.user_swmm_nodes_lyr.triggerRepaint()
 
-        # UPDATE THE CONDUITS TODO
+        # update the name on the user_swmm_conduits
+        if old_name != name:
+            update_inlets_qry = self.gutils.execute(
+                f"""
+                SELECT 
+                    fid
+                FROM 
+                    user_swmm_conduits
+                WHERE 
+                    conduit_inlet = '{old_name}';
+                """
+            ).fetchall()
+            if update_inlets_qry:
+                for inlet in update_inlets_qry:
+                    self.gutils.execute(f"""
+                                            UPDATE 
+                                                user_swmm_conduits
+                                            SET 
+                                                conduit_inlet = '{name}'
+                                            WHERE 
+                                                fid = '{inlet[0]}';
+                                        """)
+
+            update_outlets_qry = self.gutils.execute(
+                f"""
+                SELECT 
+                    fid
+                FROM 
+                    user_swmm_conduits
+                WHERE 
+                    conduit_outlet = '{old_name}';
+                """
+            ).fetchall()
+            if update_outlets_qry:
+                for outlet in update_outlets_qry:
+                    self.gutils.execute(f"""
+                                            UPDATE 
+                                                user_swmm_conduits
+                                            SET 
+                                                conduit_outlet = '{name}'
+                                            WHERE 
+                                                fid = '{outlet[0]}';
+                                        """)
 
     def dock_widget(self):
         """ Close and delete the dock widget. """
