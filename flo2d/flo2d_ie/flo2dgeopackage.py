@@ -805,9 +805,9 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     gids.append(gid)
                     chan_elems_sql += [(geom, gid, i, ii, rbank, fcn, xlen, char)]
                     sql += [tuple(params)]
-                options = seg[:-1] + [bLine]
+                options = seg[:-1]
                 geom = self.build_linestring(gids)
-                chan_sql += [(geom,) + tuple(options)]
+                chan_sql += [(geom,) + tuple(options + [bLine])]
                 
 
             for row in wsel:
@@ -3577,6 +3577,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 "T": [chan_t_sql, chan_t, 3, 6],
                 "N": [chan_n_sql, chan_n, 1, 2],
             }
+            bLines = ""
     
             chan_rows = self.execute(chan_sql).fetchall()
             if not chan_rows:
@@ -3634,7 +3635,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     
                     if row[5]: # ibaseflow
                         if str(row[5]) != "":
-                            c.write("B " + str(row[5]) + "\n")
+                            bLines += "B " + str(row[5]) + "\n"
+                            # c.write("B " + str(row[5]) + "\n")
                             
                 for row in self.execute(chan_wsel_sql):
                     c.write(wsel.format(*row[:2]))
@@ -3652,7 +3654,10 @@ class Flo2dGeoPackage(GeoPackageUtils):
     
                 for row in self.execute(chan_e_sql):
                     c.write(chan_e.format(row[0]))
-    
+                    
+                if bLines != "":
+                    c.write(bLines)
+                
             return True
 
         except Exception as e:

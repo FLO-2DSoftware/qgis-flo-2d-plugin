@@ -31,6 +31,7 @@ class ChannelsEditorWidget(qtBaseClass, uiDialog):
         self.setupUi(self)
         self.uc = UserCommunication(iface, "FLO-2D")
         self.grid_lyr = None
+        self.first_time = True
 
     def setup_connection(self):
         con = self.iface.f2d["con"]
@@ -123,7 +124,10 @@ class ChannelsEditorWidget(qtBaseClass, uiDialog):
             self.uc.bar_error("Channel missing!")
             self.channel_segment_cbo.blockSignals(False)
   
-        highlight_selected_segment(self.lyrs.data["chan"]["qlyr"], self.channel_segment_cbo.currentIndex() + 1)
+        if not self.first_time:
+            highlight_selected_segment(self.lyrs.data["chan"]["qlyr"], self.channel_segment_cbo.currentIndex() + 1)
+        else:
+            self.first_time = False
             
     def schematized_channels_help(self):
         QDesktopServices.openUrl(QUrl("https://flo-2dsoftware.github.io/FLO-2D-Documentation/Plugin1000/widgets/schematized-channel-editor/Schematized%20Channel%20Editor.html"))        
