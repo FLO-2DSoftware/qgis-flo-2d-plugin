@@ -105,7 +105,7 @@ class GridToolsWidget(qtBaseClass, uiDialog):
         self.point_elevation_btn.clicked.connect(self.point_elevation)
         self.xyz_elevation_btn.clicked.connect(self.xyz_elevation)
         self.polygon_elevation_btn.clicked.connect(self.correct_elevation)
-        self.rc_elevation_btn.clicked.connect(self.rc_elevation)
+        # self.rc_elevation_btn.clicked.connect(self.rc_elevation)
         self.roughness_btn.clicked.connect(self.get_roughness)
         self.arfwrf_btn.clicked.connect(self.eval_arfwrf)
         self.froude_btn.clicked.connect(self.eval_froude)
