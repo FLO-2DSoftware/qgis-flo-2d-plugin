@@ -805,9 +805,9 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     gids.append(gid)
                     chan_elems_sql += [(geom, gid, i, ii, rbank, fcn, xlen, char)]
                     sql += [tuple(params)]
-                options = seg[:-1] + [bLine]
+                options = seg[:-1]
                 geom = self.build_linestring(gids)
-                chan_sql += [(geom,) + tuple(options)]
+                chan_sql += [(geom,) + tuple(options + [bLine])]
                 
 
             for row in wsel:

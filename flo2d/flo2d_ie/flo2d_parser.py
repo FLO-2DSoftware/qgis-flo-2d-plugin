@@ -673,6 +673,7 @@ class ParseDAT(object):
         wsel = []
         confluence = []
         noexchange = []
+        baseflow = []
         shape = {"R": 8, "V": 20, "T": 10, "N": 5}
         chanchar = ["C", "E"]
         no_rb = ""
@@ -713,7 +714,8 @@ class ParseDAT(object):
                     return
                 
             elif char == "B":
-                segments[-1].append(row)
+                baseflow.append(row)
+                # segments[-1].append(row)
 
             elif char == "C":
                 confluence.append(row)
@@ -731,6 +733,12 @@ class ParseDAT(object):
                 "ERROR 010219.2020: These elements in CHAN.DAT have no right bank element in CHANBANK.DAT !\n" + no_rb,
                 "Error",
             )
+        for i in range(len(segments)):
+            try:
+                segments[i].append(baseflow[i])
+            except:
+                segments[i].append(['B', '0.0'])    
+              
         return segments, wsel, confluence, noexchange
 
     def parse_xsec(self):
