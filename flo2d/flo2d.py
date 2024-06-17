@@ -39,7 +39,7 @@ from PyQt5.QtCore import QVariant
 import pip
 from qgis.PyQt import QtCore, QtGui
 from PyQt5.QtGui import QFont
-from PyQt5.QtWidgets import QApplication, QToolButton, QProgressDialog, QDockWidget
+from PyQt5.QtWidgets import QApplication, QToolButton, QProgressDialog, QDockWidget, QTabWidget
 from osgeo import gdal, ogr
 from qgis._core import QgsMessageLog, QgsCoordinateReferenceSystem, QgsMapSettings, QgsProjectMetadata, \
     QgsMapRendererParallelJob, QgsLayerTreeLayer, QgsVectorLayerExporter, QgsVectorFileWriter, QgsVectorLayer, \
