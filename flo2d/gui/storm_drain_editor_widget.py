@@ -109,13 +109,13 @@ class INP_GroupsDialog(qtBaseClass, uiDialog):
         self.uc = UserCommunication(iface, "FLO-2D")
         self.polulate_INP_values()
 
-        self.advanced_options_chbox.stateChanged.connect(self.set_advanced_grps)
+        # self.advanced_options_chbox.stateChanged.connect(self.set_advanced_grps)
 
     def polulate_INP_values(self):
         """
         Populate the values on the storm drain control dialog
         """
-        self.set_advanced_grps()
+        # self.set_advanced_grps()
         try:
             start_date = date.today()
             report_start_date = date.today()
@@ -218,6 +218,9 @@ class INP_GroupsDialog(qtBaseClass, uiDialog):
             self.end_date.setDate(end_date)
             self.end_time.setTime(end_time)
             self.report_stp_time.setTime(report_time)
+            self.bottomGroup.setCollapsed(True)
+            self.topGroup.setCollapsed(True)
+            self.advanced_options_chbox.setVisible(False)
 
         except Exception as e:
             QApplication.restoreOverrideCursor()
@@ -266,6 +269,7 @@ class INP_GroupsDialog(qtBaseClass, uiDialog):
         Function to make the advanced groups visible or not
         """
         if self.advanced_options_chbox.isChecked():
+            self.bottomGroup.setCollapsed(False)
             self.advanced_options_grp.setHidden(False)
             self.hardwired_options_grp.setHidden(False)
             self.label_9.setHidden(False)
@@ -275,6 +279,7 @@ class INP_GroupsDialog(qtBaseClass, uiDialog):
 
         else:
             self.advanced_options_grp.setHidden(True)
+            self.bottomGroup.setCollapsed(True)
             self.hardwired_options_grp.setHidden(True)
             self.label_9.setHidden(True)
             self.report_start_date.setHidden(True)
