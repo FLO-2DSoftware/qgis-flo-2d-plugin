@@ -266,6 +266,7 @@ class INP_GroupsDialog(qtBaseClass, uiDialog):
         Function to make the advanced groups visible or not
         """
         if self.advanced_options_chbox.isChecked():
+            self.bottomGroup.setCollapsed(False)
             self.advanced_options_grp.setHidden(False)
             self.hardwired_options_grp.setHidden(False)
             self.label_9.setHidden(False)
@@ -275,6 +276,7 @@ class INP_GroupsDialog(qtBaseClass, uiDialog):
 
         else:
             self.advanced_options_grp.setHidden(True)
+            self.bottomGroup.setCollapsed(True)
             self.hardwired_options_grp.setHidden(True)
             self.label_9.setHidden(True)
             self.report_start_date.setHidden(True)
