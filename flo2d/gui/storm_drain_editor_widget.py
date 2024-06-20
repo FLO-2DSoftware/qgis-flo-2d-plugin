@@ -17,11 +17,6 @@ from datetime import date, datetime, time, timedelta
 from math import floor, isnan, modf
 from pathlib import Path
 
-try:
-    import h5py
-except ImportError:
-    pass
-
 import numpy as np
 from PyQt5.QtWidgets import QStyledItemDelegate
 from qgis._core import QgsFeatureRequest
