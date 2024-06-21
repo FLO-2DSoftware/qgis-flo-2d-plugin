@@ -317,7 +317,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         # self.pump_tview.setModel(self.pumps_data_model)
 
         self.grid_lyr = None
-        self.user_swmm_nodes_lyr = None
+        self.user_swmm_inlets_junctions_lyr = None
         self.user_swmm_storage_units_lyr = None
         self.user_swmm_conduits_lyr = None
         self.user_swmm_pumps_lyr = None
@@ -377,10 +377,6 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         self.outlet_not_found = []
         self.buffer_distance = 3
 
-        # set_icon(self.create_point_btn, "mActionCapturePoint.svg")
-        # set_icon(self.save_changes_btn, "mActionSaveAllEdits.svg")
-        # set_icon(self.revert_changes_btn, "mActionUndo.svg")
-        # set_icon(self.sd_delete_btn, "mActionDeleteSelected.svg")
         set_icon(self.schema_storm_drain_btn, "schematize_res.svg")
         set_icon(self.sd_help_btn, "help.svg")
 
@@ -409,7 +405,8 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         self.SD_add_one_type4_btn.setPopupMode(QToolButton.InstantPopup)
 
         self.grid_lyr = self.lyrs.data["grid"]["qlyr"]
-        self.user_swmm_nodes_lyr = self.lyrs.data["user_swmm_nodes"]["qlyr"]
+        self.user_swmm_inlets_junctions_lyr = self.lyrs.data["user_swmm_inlets_junctions"]["qlyr"]
+        self.user_swmm_outlets_lyr = self.lyrs.data["user_swmm_outlets"]["qlyr"]
         self.user_swmm_storage_units_lyr = self.lyrs.data["user_swmm_storage_units"]["qlyr"]
         self.user_swmm_conduits_lyr = self.lyrs.data["user_swmm_conduits"]["qlyr"]
         self.user_swmm_pumps_lyr = self.lyrs.data["user_swmm_pumps"]["qlyr"]
@@ -489,10 +486,14 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         swmm = 1 if self.gutils.get_cont_par("SWMM") == "1" else 0
         self.simulate_stormdrain_chbox.setChecked(swmm)
 
-        formConfig = self.user_swmm_nodes_lyr.editFormConfig()
-        formConfig.setUiForm(os.path.join(os.path.dirname(os.path.realpath(__file__)), "..", "ui", "inlet_attributes.ui"))
-        self.user_swmm_nodes_lyr.setEditFormConfig(formConfig)
-        field_reuse(self.user_swmm_nodes_lyr)
+        self.user_swmm_inlets_junctions_lyr.featureAdded.connect(self.inlet_junction_added)
+        self.user_swmm_outlets_lyr.featureAdded.connect(self.outlet_added)
+
+        formConfig = self.user_swmm_outlets_lyr.editFormConfig()
+        formConfig.setInitCodeSource(Qgis.AttributeFormPythonInitCodeSource(1))
+        formConfig.setUiForm(os.path.join(os.path.dirname(os.path.realpath(__file__)), "..", "ui", "outlet_attributes.ui"))
+        self.user_swmm_outlets_lyr.setEditFormConfig(formConfig)
+        field_reuse(self.user_swmm_outlets_lyr)
 
     def setup_connection(self):
         con = self.iface.f2d["con"]
@@ -581,7 +582,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             self.uc.bar_warn("There is no grid! Please create it before running tool.")
             return
 
-        if not self.lyrs.enter_edit_mode("user_swmm_nodes"):
+        if not self.lyrs.enter_edit_mode("user_swmm_inlets_junctions"):
             return
 
     def save_swmm_edits(self):
@@ -594,9 +595,9 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             self.uc.bar_warn("There is no grid! Please create it before running tool.")
             return
 
-        before = self.gutils.count("user_swmm_nodes")
-        self.lyrs.save_lyrs_edits("user_swmm_nodes")
-        after = self.gutils.count("user_swmm_nodes")
+        before = self.gutils.count("user_swmm_inlets_junctions")
+        self.lyrs.save_lyrs_edits("user_swmm_inlets_junctions")
+        after = self.gutils.count("user_swmm_inlets_junctions")
 
     #         if after > before:
     #             self.swmm_idx = after - 1
@@ -607,8 +608,8 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
     #         self.populate_swmm()
 
     def revert_swmm_lyr_edits(self):
-        user_swmm_nodes_edited = self.lyrs.rollback_lyrs_edits("user_swmm_nodes")
-        # if user_swmm_nodes_edited:
+        user_swmm_inlets_junctions_edited = self.lyrs.rollback_lyrs_edits("user_swmm_inlets_junctions")
+        # if user_swmm_inlets_junctions_edited:
         #     self.populate_swmm()
 
     def delete_cur_swmm(self):
@@ -618,7 +619,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         if not self.uc.question(q):
             return
         swmm_fid = self.swmm_name_cbo.itemData(self.swmm_idx)["fid"]
-        self.gutils.execute("DELETE FROM user_swmm_nodes WHERE fid = ?;", (swmm_fid,))
+        self.gutils.execute("DELETE FROM user_swmm_inlets_junctions WHERE fid = ?;", (swmm_fid,))
         self.swmm_lyr.triggerRepaint()
         # self.populate_swmm()
     
@@ -668,7 +669,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         col_gen = ("{}=?".format(c) for c in list(swmm_dict.keys()))
         col_names = ", ".join(col_gen)
         vals = list(swmm_dict.values()) + [fid]
-        update_qry = """UPDATE user_swmm_nodes SET {0} WHERE fid = ?;""".format(col_names)
+        update_qry = """UPDATE user_swmm_inlets_junctions SET {0} WHERE fid = ?;""".format(col_names)
         self.gutils.execute(update_qry, vals)
 
     def schematize_swmm(self):
@@ -708,7 +709,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         delete_rt = "DELETE FROM swmmflort WHERE fid = ?;"
 
         try:
-            if self.gutils.is_table_empty("user_swmm_nodes"):
+            if self.gutils.is_table_empty("user_swmm_inlets_junctions"):
                 self.uc.show_warn(
                     'User Layer "Storm Drain Nodes" is empty!\n\n'
                     + "Please import components from .INP file or shapefile, or convert from schematized Storm Drains."
@@ -722,7 +723,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             rt_inserts = []
             rt_updates = []
             rt_deletes = []
-            user_nodes = self.user_swmm_nodes_lyr.getFeatures()
+            user_nodes = self.user_swmm_inlets_junctions_lyr.getFeatures()
             for this_user_node in user_nodes:
                 geom = this_user_node.geometry()
                 if geom is None:
@@ -956,7 +957,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         """
         Reads a Storm Water Management Model (SWMM) .INP file.
 
-        Reads an .INP file and creates the "user_swmm_nodes" and "user_swmm_conduits" layers with
+        Reads an .INP file and creates the "user_swmm_inlets_junctions" and "user_swmm_conduits" layers with
         attributes taken from the [COORDINATES], [SUBCATCHMENTS], [JUNCTIONS], [OUTFALLS], [CONDUITS],
         [LOSSES], [XSECTIONS] groups of the .INP file.
         Also includes additional attributes used by the FLO-2D model.
@@ -1065,7 +1066,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 if mode == "Force import of SWMM.INP":
                     complete_or_create = "Keep and Complete"
                 else:
-                    if self.gutils.is_table_empty("user_swmm_nodes"):
+                    if self.gutils.is_table_empty("user_swmm_inlets_junctions"):
                         complete_or_create = "Create New"
                     else:
                         
@@ -1297,14 +1298,14 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             """
             Creates Storm Drain Nodes layer (Users layers).
 
-            Creates "user_swmm_nodes" layer with attributes taken from
+            Creates "user_swmm_inlets_junctions" layer with attributes taken from
             the [COORDINATES], [JUNCTIONS], and [OUTFALLS] groups.
 
             """
 
-            # Transfer data from "storm_drain.INP_dict" to "user_swmm_nodes" layer:
+            # Transfer data from "storm_drain.INP_dict" to "user_swmm_inlets_junctions" layer:
 
-            replace_user_swmm_nodes_sql = """UPDATE user_swmm_nodes 
+            replace_user_swmm_inlets_junctions_sql = """UPDATE user_swmm_inlets_junctions 
                              SET    geom = ?,
                                     junction_invert_elev = ?,
                                     max_depth = ?, 
@@ -1410,7 +1411,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
 
                 if complete_or_create == "Create New":
                     geom = QgsGeometry.fromPointXY(QgsPointXY(x, y))
-                    fields = self.user_swmm_nodes_lyr.fields()
+                    fields = self.user_swmm_inlets_junctions_lyr.fields()
                     feat = QgsFeature()
                     feat.setFields(fields)
                     feat.setGeometry(geom)
@@ -1453,12 +1454,12 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
 
                     new_nodes.append(feat)
 
-                else:  # Keep some existing data in user_swmm_nodes (e.g swmm_length, swmm_width, etc.)
-                    fid = self.gutils.execute("SELECT fid FROM user_swmm_nodes WHERE name = ?;", (name,)).fetchone()
-                    if fid:  # name already in user_swmm_nodes
+                else:  # Keep some existing data in user_swmm_inlets_junctions (e.g swmm_length, swmm_width, etc.)
+                    fid = self.gutils.execute("SELECT fid FROM user_swmm_inlets_junctions WHERE name = ?;", (name,)).fetchone()
+                    if fid:  # name already in user_swmm_inlets_junctions
                         try:
                             fid, wkt_geom = self.gutils.execute(
-                                "SELECT fid, ST_AsText(ST_Centroid(GeomFromGPB(geom))) FROM user_swmm_nodes WHERE name = ?;",
+                                "SELECT fid, ST_AsText(ST_Centroid(GeomFromGPB(geom))) FROM user_swmm_inlets_junctions WHERE name = ?;",
                                 (name,),
                             ).fetchone()
                         except Exception:
@@ -1472,7 +1473,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                             # geom = self.gutils.wkt_to_gpb(geom)
 
                             self.gutils.execute(
-                                replace_user_swmm_nodes_sql,
+                                replace_user_swmm_inlets_junctions_sql,
                                 (
                                     geom,
                                     junction_invert_elev,
@@ -1498,9 +1499,9 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                             )
                             updated_nodes += 1
 
-                    else:  # this name is not in user_swmm_nodes, include it:
+                    else:  # this name is not in user_swmm_inlets_junctions, include it:
                         geom = QgsGeometry.fromPointXY(QgsPointXY(x, y))
-                        fields = self.user_swmm_nodes_lyr.fields()
+                        fields = self.user_swmm_inlets_junctions_lyr.fields()
                         feat = QgsFeature()
                         feat.setFields(fields)
                         feat.setGeometry(geom)
@@ -1545,13 +1546,13 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                         updated_nodes += 1
 
             if complete_or_create == "Create New" and len(new_nodes) != 0:
-                remove_features(self.user_swmm_nodes_lyr)
-                self.user_swmm_nodes_lyr.startEditing()
-                self.user_swmm_nodes_lyr.addFeatures(new_nodes)
-                self.user_swmm_nodes_lyr.commitChanges()
-                self.user_swmm_nodes_lyr.updateExtents()
-                self.user_swmm_nodes_lyr.triggerRepaint()
-                self.user_swmm_nodes_lyr.removeSelection()
+                remove_features(self.user_swmm_inlets_junctions_lyr)
+                self.user_swmm_inlets_junctions_lyr.startEditing()
+                self.user_swmm_inlets_junctions_lyr.addFeatures(new_nodes)
+                self.user_swmm_inlets_junctions_lyr.commitChanges()
+                self.user_swmm_inlets_junctions_lyr.updateExtents()
+                self.user_swmm_inlets_junctions_lyr.triggerRepaint()
+                self.user_swmm_inlets_junctions_lyr.removeSelection()
                 
                 s = QSettings()
                 last_dir = s.value("FLO-2D/lastGdsDir", "")
@@ -1565,7 +1566,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                             for row in par:                    
                                 name  = row[0]
                                 area = row[2]
-                                self.gutils.execute("UPDATE user_swmm_nodes SET drboxarea = ? WHERE name = ?", (area, name))
+                                self.gutils.execute("UPDATE user_swmm_inlets_junctions SET drboxarea = ? WHERE name = ?", (area, name))
                         except:
                             self.uc.bar_error("Error while reading SWMMFLODROPBOX.DAT !")                  
 
@@ -1580,7 +1581,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                                 name  = row[2]
                                 clog_fact = row[3]
                                 clog_time = row[4]
-                                self.gutils.execute("""UPDATE user_swmm_nodes
+                                self.gutils.execute("""UPDATE user_swmm_inlets_junctions
                                                        SET swmm_clogging_factor = ?, swmm_time_for_clogging = ?
                                                        WHERE name = ?""", (clog_fact, clog_time, name))                            
                         except:
@@ -1590,12 +1591,12 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 # The option 'Keep existing and complete' already updated values taken from the .INP file.
                 # but include new ones:
                 if len(new_nodes) != 0:
-                    self.user_swmm_nodes_lyr.startEditing()
-                    self.user_swmm_nodes_lyr.addFeatures(new_nodes)
-                    self.user_swmm_nodes_lyr.commitChanges()
-                    self.user_swmm_nodes_lyr.updateExtents()
-                    self.user_swmm_nodes_lyr.triggerRepaint()
-                    self.user_swmm_nodes_lyr.removeSelection()
+                    self.user_swmm_inlets_junctions_lyr.startEditing()
+                    self.user_swmm_inlets_junctions_lyr.addFeatures(new_nodes)
+                    self.user_swmm_inlets_junctions_lyr.commitChanges()
+                    self.user_swmm_inlets_junctions_lyr.updateExtents()
+                    self.user_swmm_inlets_junctions_lyr.triggerRepaint()
+                    self.user_swmm_inlets_junctions_lyr.removeSelection()
 
         except Exception as e:
             QApplication.setOverrideCursor(Qt.ArrowCursor)
@@ -2737,7 +2738,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
 
         try:
 
-            if self.gutils.is_table_empty("user_swmm_nodes"):
+            if self.gutils.is_table_empty("user_swmm_inlets_junctions"):
                 self.uc.show_warn(
                     'User Layer "Storm Drain Nodes" is empty!\n\n'
                     + "Please import components from .INP file or shapefile, or convert from schematized Storm Drains."
@@ -2860,7 +2861,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 # INP JUNCTIONS ##################################################
                 try:
                     SD_junctions_sql = """SELECT name, junction_invert_elev, max_depth, init_depth, surcharge_depth, ponded_area
-                                      FROM user_swmm_nodes WHERE sd_type = "I" or sd_type = "i" or sd_type = "J" ORDER BY fid;"""
+                                      FROM user_swmm_inlets_junctions WHERE sd_type = "I" or sd_type = "i" or sd_type = "J" ORDER BY fid;"""
 
                     junctions_rows = self.gutils.execute(SD_junctions_sql).fetchall()
                     if not junctions_rows:
@@ -2894,7 +2895,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 # INP OUTFALLS ###################################################
                 try:
                     SD_outfalls_sql = """SELECT name, outfall_invert_elev, outfall_type, time_series, tidal_curve, flapgate, water_depth 
-                                      FROM user_swmm_nodes  WHERE sd_type = "O"  ORDER BY fid;"""
+                                      FROM user_swmm_inlets_junctions  WHERE sd_type = "O"  ORDER BY fid;"""
 
                     outfalls_rows = self.gutils.execute(SD_outfalls_sql).fetchall()
                     if not outfalls_rows:
@@ -3627,7 +3628,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                     swmm_inp_file.write("\n;;-------------- ------------------ ------------------")
 
                     SD_nodes_coords_sql = """SELECT name, ST_AsText(ST_Centroid(GeomFromGPB(geom)))
-                                      FROM user_swmm_nodes ORDER BY fid;"""
+                                      FROM user_swmm_inlets_junctions ORDER BY fid;"""
 
                     line = "\n{0:16} {1:<18} {2:<18}"
                     coordinates_rows = self.gutils.execute(SD_nodes_coords_sql).fetchall()
@@ -3793,7 +3794,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
 
         """
         # See if there are inlets:
-        if self.gutils.is_table_empty("user_swmm_nodes"):
+        if self.gutils.is_table_empty("user_swmm_inlets_junctions"):
             self.uc.show_warn(
                 'User Layer "Storm Drain Nodes" is empty!\n\n'
                 + "Please import components from .INP file or shapefile, or convert from schematized Storm Drains."
@@ -3801,7 +3802,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             return
 
         #  See if there are any Outlet nodes:
-        qry = """SELECT * FROM user_swmm_nodes WHERE sd_type = 'O';"""
+        qry = """SELECT * FROM user_swmm_inlets_junctions WHERE sd_type = 'O';"""
         rows = self.gutils.execute(qry).fetchall()
         if not rows:
             self.uc.bar_warn("No outfalls defined in 'Storm Drain Nodes' User Layer!")
@@ -3827,7 +3828,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
 
         """
         # See if table is empty:
-        if self.gutils.is_table_empty("user_swmm_nodes"):
+        if self.gutils.is_table_empty("user_swmm_inlets_junctions"):
             self.uc.show_warn(
                 'User Layer "Storm Drain Nodes" is empty!\n\n'
                 + "Please import components from .INP file or shapefile, or convert from schematized Storm Drains."
@@ -3835,7 +3836,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             return
 
         #  See if there are any Inlet nodes:
-        qry = """SELECT * FROM user_swmm_nodes WHERE sd_type = 'I' or sd_type = 'J';"""
+        qry = """SELECT * FROM user_swmm_inlets_junctions WHERE sd_type = 'I' or sd_type = 'J';"""
         rows = self.gutils.execute(qry).fetchall()
         if not rows:
             self.uc.show_info(
@@ -4166,7 +4167,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             self.uc.bar_warn("There is no grid! Please create it before running tool.")
             return
 
-        if self.gutils.is_table_empty("user_swmm_nodes"):
+        if self.gutils.is_table_empty("user_swmm_inlets_junctions"):
             self.uc.show_warn(
                 'User Layer "Storm Drain Nodes" is empty!\n\n'
                 + "Please import components from .INP file or shapefile, or convert from schematized Storm Drains."
@@ -4219,7 +4220,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                                 if len(culvert) == 6:
                                     name, cdiameter, typec, typeen, cubase, multbarrels = culvert
                                 if name:
-                                    grid_sql = "SELECT grid FROM user_swmm_nodes WHERE name = ?;"
+                                    grid_sql = "SELECT grid FROM user_swmm_inlets_junctions WHERE name = ?;"
                                     grid = self.gutils.execute(grid_sql, (name,)).fetchone()
                                     if grid:
                                         exists = self.gutils.execute("SELECT * FROM swmmflo_culvert WHERE name = ?;", (name,)).fetchone()
@@ -4239,9 +4240,9 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
 
                                         # Include Culvert eq. in dropdown list of type 4s:
                                         self.add_type4("CulvertEquation", file_name)
-                                        # Assign Culvert name to user_swmm_nodes:
+                                        # Assign Culvert name to user_swmm_inlets_junctions:
                                         assign_rt_name_sql = (
-                                            "UPDATE user_swmm_nodes SET rt_name = ? WHERE name =?;"
+                                            "UPDATE user_swmm_inlets_junctions SET rt_name = ? WHERE name =?;"
                                         )
                                         self.gutils.execute(assign_rt_name_sql, (name, name))
 
@@ -4294,15 +4295,15 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
 
                         # Assign grid number to the just added rating table to 'swmmflort' table:
                         set_grid_sql = "INSERT OR REPLACE INTO swmmflort (grid_fid, name) VALUES (?, ?)"
-                        grid_sql = "SELECT grid FROM user_swmm_nodes WHERE name = ?;"
+                        grid_sql = "SELECT grid FROM user_swmm_inlets_junctions WHERE name = ?;"
                         grid = self.gutils.execute(grid_sql, (file_name,)).fetchone()[0]
                         if grid:
                             self.gutils.execute(set_grid_sql, (grid, file_name))
 
                         assignments[file_name] = "R"
 
-                        # Assign rating table name to user_swmm_nodes:
-                        assign_rt_name_sql = "UPDATE user_swmm_nodes SET rt_name = ? WHERE name =?;"
+                        # Assign rating table name to user_swmm_inlets_junctions:
+                        assign_rt_name_sql = "UPDATE user_swmm_inlets_junctions SET rt_name = ? WHERE name =?;"
                         self.gutils.execute(assign_rt_name_sql, (file_name, file_name))
 
                         in_culvert = self.gutils.execute(
@@ -4341,7 +4342,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                     + "Would you like to change their drain type to 4?"
                 )
                 if answer:
-                    change_type_sql = "UPDATE user_swmm_nodes SET intype = ? WHERE name =?;"
+                    change_type_sql = "UPDATE user_swmm_inlets_junctions SET intype = ? WHERE name =?;"
                     for no4 in lst_no_type4:
                         self.gutils.execute(change_type_sql, (4, no4))
                     #                     lst_no_type4  = []
@@ -4845,7 +4846,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                     self.uc.bar_info("There is no SWMMOUTFIN.OUT file")
                 else:
                     outfall_discharge_to_FLO_2D = self.get_SWMMOUTFIN(SWMMOUTFIN_file)
-                    grid_sql = "SELECT grid FROM user_swmm_nodes WHERE name = ?;"
+                    grid_sql = "SELECT grid FROM user_swmm_inlets_junctions WHERE name = ?;"
                     grid = self.gutils.execute(grid_sql,(intersection,)).fetchone()
                     if grid:
                         grid = str(grid[0])
@@ -4979,7 +4980,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         self.start_node_cbo.clear()
         self.end_node_cbo.clear()
 
-        nodes_names = self.gutils.execute("SELECT name FROM user_swmm_nodes").fetchall()
+        nodes_names = self.gutils.execute("SELECT name FROM user_swmm_inlets_junctions").fetchall()
         if not nodes_names:
             return
 
@@ -5182,7 +5183,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             self.SD_table.after_delete.disconnect()
             self.SD_table.after_delete.connect(self.save_SD_table_data)
             
-            grid_sql = "SELECT grid FROM user_swmm_nodes WHERE name = ?;"
+            grid_sql = "SELECT grid FROM user_swmm_inlets_junctions WHERE name = ?;"
             grid = self.gutils.execute(grid_sql,(node,)).fetchone()
             if grid:
                 grid = str(grid[0])
@@ -5366,7 +5367,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         if file_name.upper() == "TYPE4CULVERT":
             return error0, error1, noInlet, no_4Type
         else:
-            user_inlet_qry = """SELECT name, intype FROM user_swmm_nodes WHERE name = ?;"""
+            user_inlet_qry = """SELECT name, intype FROM user_swmm_inlets_junctions WHERE name = ?;"""
             row = self.gutils.execute(user_inlet_qry, (file_name,)).fetchone()
             if not row:
                 noInlet = "There isn't an inlet with name " + file_name
@@ -5587,7 +5588,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 name = self.SD_type4_cbo.currentText()
                 fid = self.SD_type4_cbo.itemData(idx)
 
-                qry = "UPDATE user_swmm_nodes SET rt_fid = ?, rt_name = ? WHERE name = ?;"
+                qry = "UPDATE user_swmm_inlets_junctions SET rt_fid = ?, rt_name = ? WHERE name = ?;"
                 self.gutils.execute(qry, (None, None, name))
                 qry = "DELETE FROM swmmflo_culvert WHERE name = ?;"
                 self.gutils.execute(qry, (name,))            
@@ -5603,7 +5604,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                     idx = self.SD_type4_cbo.currentIndex()
                     name = self.SD_type4_cbo.currentText()
                     fid = self.SD_type4_cbo.itemData(idx)
-                    qry = "UPDATE user_swmm_nodes SET rt_fid = ?, rt_name = ? WHERE name = ?;"
+                    qry = "UPDATE user_swmm_inlets_junctions SET rt_fid = ?, rt_name = ? WHERE name = ?;"
                     self.gutils.execute(qry, (None, None, name))
                     qry = "DELETE FROM swmmflo_culvert WHERE name = ?;"
                     self.gutils.execute(qry, (name,))
@@ -5634,7 +5635,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             
         # Check that the RT or Culvert eq. is not already assigned to an inlet:
         already_a_RT_or_Culvert = self.gutils.execute(
-            "SELECT rt_name FROM user_swmm_nodes WHERE name = ?;", (name,)
+            "SELECT rt_name FROM user_swmm_inlets_junctions WHERE name = ?;", (name,)
             ).fetchone()  
         
         if already_a_RT_or_Culvert: 
@@ -5658,7 +5659,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             return
         
         inlet = self.gutils.execute(
-            "SELECT name FROM user_swmm_nodes WHERE name = ?;", (new_name,)
+            "SELECT name FROM user_swmm_inlets_junctions WHERE name = ?;", (new_name,)
             ).fetchone()        
         
         if not inlet:
@@ -5676,7 +5677,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         else:
             self.inletRT.set_rating_table_data_name(rt_fid, new_name)
 
-        self.gutils.execute("UPDATE user_swmm_nodes SET rt_name=? WHERE name=?;",(new_name, new_name,),)
+        self.gutils.execute("UPDATE user_swmm_inlets_junctions SET rt_name=? WHERE name=?;",(new_name, new_name,),)
 
         self.uc.show_warn("Type 4 condition assigned to inlet " + new_name)
           
@@ -6074,10 +6075,10 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             if node_type == "End":
                 node_name = self.end_node_cbo.currentText()
             request = QgsFeatureRequest().setFilterExpression(f'"name" = \'{node_name}\'')
-            feats = list(self.user_swmm_nodes_lyr.getFeatures(request))
+            feats = list(self.user_swmm_inlets_junctions_lyr.getFeatures(request))
             if feats:
                 feat = feats[0]
-                self.lyrs.show_feat_rubber(self.user_swmm_nodes_lyr.id(), request)
+                self.lyrs.show_feat_rubber(self.user_swmm_inlets_junctions_lyr.id(), request)
                 x, y = feat.geometry().centroid().asPoint()
                 center_canvas(self.iface, x, y)
 
@@ -6111,61 +6112,45 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             self.uc.log_info("Storm Drain control data saved!")
             dlg_INP_groups.save_INP_control()
 
-    # def start_editing(self):
-    #     """
-    #     Function to show the inlet_attributes dialog
-    #     """
-    #
-    #     if self.inlets_junctions_dock:
-    #         self.iface.removeDockWidget(self.inlets_junctions_dock)
-    #         self.inlets_junctions_dock.close()
-    #         self.inlets_junctions_dock.deleteLater()
-    #         self.inlets_junctions_dock = None
-    #
-    #     self.inlets_junctions_dlg = InletAttributes(self.con, self.iface, self.lyrs)
-    #     self.iface.addDockWidget(Qt.RightDockWidgetArea, self.inlets_junctions_dlg.dock_widget)
-    #     self.inlets_junctions_dlg.dock_widget.setFloating(False)
-    #     self.inlets_junctions_dlg.dock_widget.show()
-    #     self.inlets_junctions_dlg.inlet_junction_grpbox.setEnabled(False)
-    #     self.inlets_junctions_dlg.sd_features_grpbox.setEnabled(False)
-    #
-    #     self.inlets_junctions_dock = self.inlets_junctions_dlg.dock_widget
-    #
-    #     formConfig = self.user_swmm_nodes_lyr.editFormConfig()
-    #
-    #     config = {'IsMultiline': False, 'UseHtml': False}
-    #
-    #     self.user_swmm_nodes_lyr.editFormConfig().setWidgetConfig("TextEdit", config)
-    #     default_value = QgsDefaultValue()
-    #     default_value.setExpression("'12'")
-    #     field_index = self.user_swmm_nodes_lyr.fields().indexFromName(field)
-    #
-    #     # Set the default value for the specific field
-    #     layer.setDefaultValueDefinition(field_index, default_value)
-    #
-    #     # formConfig.setSuppress(QgsEditFormConfig.SuppressOn)
-    #
-    #     fields_to_show = ['name', 'feature', 'sd_type']
-    #
-    #     self.user_swmm_nodes_lyr.setEditFormConfig(formConfig)
-    #
-    # def feature_added(self, feature):
-    #     """
-    #     Function to populate data on the inlet_attributes dialog when a feature is added
-    #     """
-    #     self.inlets_junctions_dlg.inlet_junction_grpbox.setEnabled(True)
-    #     self.inlets_junctions_dlg.sd_features_grpbox.setEnabled(True)
-    #
-    #     # self.user_swmm_nodes_lyr.commitChanges()
-    #     #
-    #     # self.uc.log_info(str(feature.id()))
-    #
-    #     # formConfig = self.user_swmm_nodes_lyr.editFormConfig()
-    #     # # formConfig.setSuppress(QgsEditFormConfig.SuppressOn)
-    #     #
-    #     # fields_to_show = ['name', 'feature', 'sd_type']
-    #     #
-    #     # self.user_swmm_nodes_lyr.setEditFormConfig(formConfig)
+    def inlet_junction_added(self, fid):
+        """
+        Function to add an inlet/junction
+        """
+        feat = next(self.user_swmm_inlets_junctions_lyr.getFeatures(QgsFeatureRequest(fid)))
+        geom = feat.geometry()
+        if geom is None:
+            return
+        point = geom.asPoint()
+        grid_fid = self.gutils.grid_on_point(point.x(), point.y())
+
+        self.gutils.execute(f"""
+                                UPDATE 
+                                    user_swmm_inlets_junctions
+                                SET 
+                                    grid = '{grid_fid}'
+                                WHERE 
+                                    fid = '{fid}';
+                            """)
+
+    def outlet_added(self, fid):
+        """
+        Function to add an outlet
+        """
+        feat = next(self.user_swmm_outlets_lyr.getFeatures(QgsFeatureRequest(fid)))
+        geom = feat.geometry()
+        if geom is None:
+            return
+        point = geom.asPoint()
+        grid_fid = self.gutils.grid_on_point(point.x(), point.y())
+
+        self.gutils.execute(f"""
+                                UPDATE 
+                                    user_swmm_outlets
+                                SET 
+                                    grid = '{grid_fid}'
+                                WHERE 
+                                    fid = '{fid}';
+                            """)
 
 
 class SDTablesDelegate(QStyledItemDelegate):

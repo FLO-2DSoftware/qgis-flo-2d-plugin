@@ -2,6 +2,7 @@
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QColor
 from PyQt5.QtWidgets import QDockWidget, QComboBox, QSpinBox, QDoubleSpinBox
+from qgis._gui import QgsDockWidget
 
 from .dlg_inlets import ExternalInflowsDialog
 from .dlg_outfalls import OutfallTimeSeriesDialog, OutfallTidalCurveDialog
@@ -32,7 +33,7 @@ class InletAttributes(qtBaseClass, uiDialog):
         self.gutils = GeoPackageUtils(con, iface)
 
         # Create a dock widget
-        self.dock_widget = QDockWidget("Storm Drain", self.iface.mainWindow())
+        self.dock_widget = QgsDockWidget("Inlets/Junctions", self.iface.mainWindow())
         self.dock_widget.setObjectName("Inlets/Junctions")
         self.dock_widget.setWidget(self)
 
@@ -42,7 +43,6 @@ class InletAttributes(qtBaseClass, uiDialog):
 
         # Connections
         self.name.editingFinished.connect(self.save_inlets_junctions)
-        # self.external_inflow.editingFinished.connect(self.save_inlets_junctions)
         self.junction_invert_elev.editingFinished.connect(self.save_inlets_junctions)
         self.max_depth.editingFinished.connect(self.save_inlets_junctions)
         self.init_depth.editingFinished.connect(self.save_inlets_junctions)
@@ -58,17 +58,15 @@ class InletAttributes(qtBaseClass, uiDialog):
         self.swmm_time_for_clogging.editingFinished.connect(self.save_inlets_junctions)
         self.drboxarea.editingFinished.connect(self.save_inlets_junctions)
 
-        self.user_swmm_nodes_lyr = self.lyrs.data["user_swmm_nodes"]["qlyr"]
+        self.user_swmm_inlets_junctions_lyr = self.lyrs.data["user_swmm_inlets_junctions"]["qlyr"]
 
         self.dock_widget.visibilityChanged.connect(self.clear_rubber)
 
         self.next_btn.clicked.connect(self.populate_next_node)
         self.previous_btn.clicked.connect(self.populate_previous_node)
         self.external_btn.clicked.connect(self.show_external_inflow_dlg)
-        self.tidal_btn.clicked.connect(self.open_tidal_curve)
-        self.ts_btn.clicked.connect(self.open_time_series)
 
-        self.inlets_junctions_outfalls = {
+        self.inlets_junctions = {
             self.label_4: self.junction_invert_elev, # Inlets
             self.label_5: self.max_depth,
             self.label_10: self.init_depth,
@@ -83,54 +81,17 @@ class InletAttributes(qtBaseClass, uiDialog):
             self.label_15: self.swmm_clogging_factor,
             self.label_16: self.swmm_time_for_clogging,
             self.label_17: self.drboxarea,
-            self.label_21: self.outfall_invert_elev,  # Outfalls
-            self.label_20: self.flapgate,
-            self.label_6: self.swmm_allow_discharge,
-            self.label_25: self.outfall_type,
-            self.label_22: self.tidal_curve,
-            self.label_24: self.time_series
         }
         if self.sd_type.count() == 0:
             self.sd_type.addItem("Inlet")
-            self.sd_type.addItem("Outfall")
+            self.sd_type.addItem("Junction")
 
         if self.external_inflow.count() == 0:
             self.external_inflow.addItem("NO")
             self.external_inflow.addItem("YES")
 
-        if self.flapgate.count() == 0:
-            self.flapgate.addItem("NO")
-            self.flapgate.addItem("YES")
-
-        if self.swmm_allow_discharge.count() == 0:
-            self.swmm_allow_discharge.addItem("True")
-            self.swmm_allow_discharge.addItem("False")
-
-        if self.outfall_type.count() == 0:
-            outfalls = ["FIXED", "FREE", "NORMAL", "TIDAL", "TIMESERIES"]
-            self.outfall_type.addItems(outfalls)
-
-        tidal_curves = self.gutils.execute("SELECT tidal_curve_name FROM swmm_tidal_curve;").fetchall()
-        if tidal_curves:
-            self.tidal_curve.addItem('')
-            for tidal_curve in tidal_curves:
-                self.tidal_curve.addItem(tidal_curve[0])
-            self.tidal_curve.setCurrentIndex(-1)
-
-        time_series = self.gutils.execute("SELECT time_series_name FROM swmm_time_series;").fetchall()
-        if time_series:
-            self.time_series.addItem('')
-            for time_serie in time_series:
-                self.time_series.addItem(time_serie[0])
-            self.time_series.setCurrentIndex(-1)
-
         self.sd_type.currentIndexChanged.connect(self.save_inlets_junctions)
         self.external_inflow.currentIndexChanged.connect(self.external_inflow_btn_chk)
-        self.flapgate.currentIndexChanged.connect(self.save_flapgate)
-        self.outfall_type.currentIndexChanged.connect(self.save_inlets_junctions)
-        self.swmm_allow_discharge.currentIndexChanged.connect(self.save_allow_discharge)
-        self.tidal_curve.currentIndexChanged.connect(self.save_tidal)
-        self.time_series.currentIndexChanged.connect(self.save_ts)
 
     def populate_attributes(self, fid):
         """
@@ -140,7 +101,7 @@ class InletAttributes(qtBaseClass, uiDialog):
             return
 
         self.current_node = fid
-        self.lyrs.show_feat_rubber(self.user_swmm_nodes_lyr.id(), fid, QColor(Qt.red))
+        self.lyrs.show_feat_rubber(self.user_swmm_inlets_junctions_lyr.id(), fid, QColor(Qt.red))
 
         # Get the attributes
         attributes = self.gutils.execute(
@@ -162,15 +123,9 @@ class InletAttributes(qtBaseClass, uiDialog):
                     curbheight,
                     swmm_clogging_factor, 
                     swmm_time_for_clogging,
-                    drboxarea, 
-                    outfall_invert_elev,
-                    flapgate, 
-                    swmm_allow_discharge,
-                    outfall_type,
-                    tidal_curve,
-                    time_series                                         
+                    drboxarea                                     
                 FROM
-                    user_swmm_nodes
+                    user_swmm_inlets_junctions
                 WHERE
                     fid = {fid};"""
         ).fetchall()[0]
@@ -178,62 +133,23 @@ class InletAttributes(qtBaseClass, uiDialog):
         # Assign attributes to the dialog
         self.grid.setText(str(attributes[0]))
         self.name.setText(str(attributes[1]))
-        # Inlet
-        if str(attributes[2]).lower().startswith("i"):
+        if attributes[2].lower().startswith('i'):
             self.sd_type.setCurrentIndex(0)
-            self.external_btn.setHidden(False)
-            self.external_inflow.setHidden(False)
-            self.label_3.setHidden(False)
-            self.tidal_btn.setHidden(True)
-            self.ts_btn.setHidden(True)
-            if attributes[3] == 1:
-                external_inflow = 'YES'
-            else:
-                external_inflow = 'NO'
-            self.external_inflow.setCurrentText(external_inflow)
-            idx = 4
-            for key, value in self.inlets_junctions_outfalls.items():
-                if idx <= 17:
-                    key.setHidden(False)
-                    value.setHidden(False)
-                    if attributes[idx] is not None:
-                        if isinstance(value, QSpinBox) or isinstance(value, QDoubleSpinBox):
-                            value.setValue(attributes[idx])
-                        elif isinstance(value, QComboBox):
-                            value.setCurrentText(attributes[idx])
-                else:
-                    key.setHidden(True)
-                    value.setHidden(True)
-                idx += 1
-        # Outfall
         else:
             self.sd_type.setCurrentIndex(1)
-            self.external_btn.setHidden(True)
-            self.external_inflow.setHidden(True)
-            self.label_3.setHidden(True)
-            self.tidal_btn.setHidden(False)
-            self.ts_btn.setHidden(False)
-            idx = 3
-            for key, value in self.inlets_junctions_outfalls.items():
-                if idx > 17:
-                    key.setHidden(False)
-                    value.setHidden(False)
-                    if attributes[idx] is not None:
-                        if isinstance(value, QSpinBox) or isinstance(value, QDoubleSpinBox):
-                            value.setValue(attributes[idx])
-                        elif isinstance(value, QComboBox):
-                            # Flapgate
-                            if idx == 18:
-                                if attributes[idx] == 'False':
-                                    value.setCurrentIndex(0)
-                                else:
-                                    value.setCurrentIndex(1)
-                            else:
-                                value.setCurrentText(attributes[idx])
-                else:
-                    key.setHidden(True)
-                    value.setHidden(True)
-                idx += 1
+        if attributes[3] == 1:
+            external_inflow = 'YES'
+        else:
+            external_inflow = 'NO'
+        self.external_inflow.setCurrentText(external_inflow)
+        idx = 4
+        for key, value in self.inlets_junctions.items():
+            if attributes[idx] is not None:
+                if isinstance(value, QSpinBox) or isinstance(value, QDoubleSpinBox):
+                    value.setValue(attributes[idx])
+                elif isinstance(value, QComboBox):
+                    value.setCurrentText(attributes[idx])
+            idx += 1
 
         self.previous_btn.setEnabled(False)
         self.next_btn.setEnabled(False)
@@ -274,7 +190,7 @@ class InletAttributes(qtBaseClass, uiDialog):
         """
 
         old_name_qry = self.gutils.execute(
-            f"""SELECT name FROM user_swmm_nodes WHERE fid = '{self.current_node}';""").fetchall()
+            f"""SELECT name FROM user_swmm_inlets_junctions WHERE fid = '{self.current_node}';""").fetchall()
         old_name = ""
         if old_name_qry:
             old_name = old_name_qry[0][0]
@@ -295,25 +211,25 @@ class InletAttributes(qtBaseClass, uiDialog):
         swmm_clogging_factor = self.swmm_clogging_factor.value()
         swmm_time_for_clogging = self.swmm_time_for_clogging.value()
         drboxarea = self.drboxarea.value()
-        outfall_invert_elev = self.outfall_invert_elev.value()
-        if self.flapgate.currentIndex() == 0:
-            flapgate = 'False'
-        else:
-            flapgate = 'True'
-        swmm_allow_discharge = self.swmm_allow_discharge.currentText()
-        outfall_type = self.outfall_type.currentText()
-        if self.tidal_curve.count() > 0:
-            tidal_curve = ''
-        else:
-            tidal_curve = self.tidal_curve.currentText()
-        if self.time_series.count() > 0:
-            time_series = ''
-        else:
-            time_series = self.time_series.currentText()
+        # outfall_invert_elev = self.outfall_invert_elev.value()
+        # if self.flapgate.currentIndex() == 0:
+        #     flapgate = 'False'
+        # else:
+        #     flapgate = 'True'
+        # swmm_allow_discharge = self.swmm_allow_discharge.currentText()
+        # outfall_type = self.outfall_type.currentText()
+        # if self.tidal_curve.count() > 0:
+        #     tidal_curve = ''
+        # else:
+        #     tidal_curve = self.tidal_curve.currentText()
+        # if self.time_series.count() > 0:
+        #     time_series = ''
+        # else:
+        #     time_series = self.time_series.currentText()
 
         self.gutils.execute(f"""
                                 UPDATE 
-                                    user_swmm_nodes
+                                    user_swmm_inlets_junctions
                                 SET 
                                     name = '{name}',
                                     junction_invert_elev = '{junction_invert_elev}',
@@ -330,18 +246,366 @@ class InletAttributes(qtBaseClass, uiDialog):
                                     curbheight = '{curbheight}',
                                     swmm_clogging_factor = '{swmm_clogging_factor}', 
                                     swmm_time_for_clogging = '{swmm_time_for_clogging}',
-                                    drboxarea = '{drboxarea}',
-                                    outfall_invert_elev = '{outfall_invert_elev}',
-                                    flapgate = '{flapgate}', 
-                                    swmm_allow_discharge = '{swmm_allow_discharge}',
-                                    outfall_type = '{outfall_type}',
-                                    tidal_curve = '{tidal_curve}',
-                                    time_series = '{time_series}'       
+                                    drboxarea = '{drboxarea}'
                                 WHERE 
                                     fid = '{self.current_node}';
                             """)
 
-        self.user_swmm_nodes_lyr.triggerRepaint()
+        self.user_swmm_inlets_junctions_lyr.triggerRepaint()
+
+        # update the name on the user_swmm_conduits
+        if old_name != name:
+            update_inlets_qry = self.gutils.execute(
+                f"""
+                SELECT 
+                    fid
+                FROM 
+                    user_swmm_conduits
+                WHERE 
+                    conduit_inlet = '{old_name}';
+                """
+            ).fetchall()
+            if update_inlets_qry:
+                for inlet in update_inlets_qry:
+                    self.gutils.execute(f"""
+                                            UPDATE 
+                                                user_swmm_conduits
+                                            SET 
+                                                conduit_inlet = '{name}'
+                                            WHERE 
+                                                fid = '{inlet[0]}';
+                                        """)
+
+            update_outlets_qry = self.gutils.execute(
+                f"""
+                SELECT 
+                    fid
+                FROM 
+                    user_swmm_conduits
+                WHERE 
+                    conduit_outlet = '{old_name}';
+                """
+            ).fetchall()
+            if update_outlets_qry:
+                for outlet in update_outlets_qry:
+                    self.gutils.execute(f"""
+                                            UPDATE 
+                                                user_swmm_conduits
+                                            SET 
+                                                conduit_outlet = '{name}'
+                                            WHERE 
+                                                fid = '{outlet[0]}';
+                                        """)
+
+        self.populate_attributes(self.current_node)
+
+    def dock_widget(self):
+        """ Close and delete the dock widget. """
+        if self.dock_widget:
+            self.iface.removeDockWidget(self.dock_widget)
+            self.dock_widget.close()
+            self.dock_widget.deleteLater()
+            self.dock_widget = None
+
+    def clear_rubber(self):
+        """
+        Function to clear the rubber when closing the widget
+        """
+        self.lyrs.clear_rubber()
+
+    def populate_next_node(self):
+        """
+        Function to populate data when the user clicks on the next btn
+        """
+        next_node_name = self.next_lbl.text()
+
+        fid = self.gutils.execute(
+            f"""
+            SELECT
+                fid
+            FROM
+                user_swmm_inlets_junctions
+            WHERE
+                name = '{next_node_name}'
+            """
+        ).fetchone()
+
+        if fid:
+            self.populate_attributes(fid[0])
+
+    def populate_previous_node(self):
+        """
+        Function to populate data when the user clicks on the previous btn
+        """
+        previous_node_name = self.previous_lbl.text()
+
+        fid = self.gutils.execute(
+            f"""
+            SELECT
+                fid
+            FROM
+                user_swmm_inlets_junctions
+            WHERE
+                name = '{previous_node_name}'
+            """
+        ).fetchone()
+
+        if fid:
+            self.populate_attributes(fid[0])
+
+    def show_external_inflow_dlg(self):
+        """
+        Function to show the external inflow in the Inlets/Junctions
+        """
+        name = self.name.text()
+        if name == "":
+            return
+
+        dlg_external_inflow = ExternalInflowsDialog(self.iface, name)
+        dlg_external_inflow.setWindowTitle("Inlet/Junction " + name)
+        save = dlg_external_inflow.exec_()
+        if save:
+            inflow_sql = "SELECT baseline, pattern_name, time_series_name FROM swmm_inflows WHERE node_name = ?;"
+            inflow = self.gutils.execute(inflow_sql, (name,)).fetchone()
+            if inflow:
+                baseline = inflow[0]
+                pattern_name = inflow[1]
+                time_series_name = inflow[2]
+                if baseline == 0.0 and time_series_name == "":
+                    self.external_inflow.setCurrentIndex(0)
+                else:
+                    self.external_inflow.setCurrentIndex(1)
+
+            self.uc.bar_info("Storm Drain external inflow saved for inlet " + name)
+
+    def external_inflow_btn_chk(self):
+        """
+        Function to enable/disable the external inflow btn
+        """
+        external_inflow = self.external_inflow.currentText()
+
+        if external_inflow == 'YES':
+            self.external_btn.setEnabled(True)
+            external_inflow_bool = 1
+        else:
+            self.external_btn.setEnabled(False)
+            external_inflow_bool = 0
+
+        self.gutils.execute(f"""
+                                UPDATE 
+                                    user_swmm_inlets_junctions
+                                SET 
+                                    external_inflow = '{external_inflow_bool}'
+                                WHERE 
+                                    fid = '{self.current_node}';
+                            """)
+
+
+uiDialog, qtBaseClass = load_ui("outlet_attributes")
+
+
+class OutletAttributes(qtBaseClass, uiDialog):
+    def __init__(self, con, iface, layers):
+        qtBaseClass.__init__(self)
+        uiDialog.__init__(self)
+        self.iface = iface
+        self.lyrs = layers
+        self.setupUi(self)
+        self.uc = UserCommunication(iface, "FLO-2D")
+        self.con = con
+        self.gutils = GeoPackageUtils(con, iface)
+
+        # Create a dock widget
+        self.dock_widget = QgsDockWidget("Outlets", self.iface.mainWindow())
+        self.dock_widget.setObjectName("Outlets")
+        self.dock_widget.setWidget(self)
+
+        self.current_node = None
+        self.previous_node = None
+        self.next_node = None
+
+        # Connections
+        self.name.editingFinished.connect(self.save_outlets)
+        self.outfall_invert_elev.editingFinished.connect(self.save_outlets)
+        self.fixed_stage.editingFinished.connect(self.save_outlets)
+
+        self.user_swmm_outlets_lyr = self.lyrs.data["user_swmm_outlets"]["qlyr"]
+
+        self.dock_widget.visibilityChanged.connect(self.clear_rubber)
+
+        self.next_btn.clicked.connect(self.populate_next_node)
+        self.previous_btn.clicked.connect(self.populate_previous_node)
+
+        self.outlets = {
+            self.label_21: self.outfall_invert_elev,
+            self.label_20: self.flapgate,
+            self.label_23: self.fixed_stage,
+            self.label_22: self.tidal_curve,
+            self.label_24: self.time_series,
+            self.label_25: self.outfall_type,
+            self.label_6: self.swmm_allow_discharge,
+        }
+
+        # TODO ADJUST THE SYMBOLOGY FOR YES/NO
+
+        if self.flapgate.count() == 0:
+            self.flapgate.addItem("NO")
+            self.flapgate.addItem("YES")
+
+        if self.swmm_allow_discharge.count() == 0:
+            self.swmm_allow_discharge.addItem("True")
+            self.swmm_allow_discharge.addItem("False")
+
+        if self.outfall_type.count() == 0:
+            outfalls = ["FIXED", "FREE", "NORMAL", "TIDAL", "TIMESERIES"]
+            self.outfall_type.addItems(outfalls)
+
+        tidal_curves = self.gutils.execute("SELECT tidal_curve_name FROM swmm_tidal_curve;").fetchall()
+        self.tidal_curve.addItem('*')
+        if tidal_curves:
+            for tidal_curve in tidal_curves:
+                self.tidal_curve.addItem(tidal_curve[0])
+            self.tidal_curve.setCurrentIndex(0)
+
+        time_series = self.gutils.execute("SELECT time_series_name FROM swmm_time_series;").fetchall()
+        self.time_series.addItem('*')
+        if time_series:
+            for time_serie in time_series:
+                self.time_series.addItem(time_serie[0])
+            self.time_series.setCurrentIndex(0)
+
+        self.flapgate.currentIndexChanged.connect(self.save_flapgate)
+        self.outfall_type.currentIndexChanged.connect(self.save_outlets)
+        self.swmm_allow_discharge.currentIndexChanged.connect(self.save_allow_discharge)
+        self.tidal_curve.currentIndexChanged.connect(self.save_tidal)
+        self.time_series.currentIndexChanged.connect(self.save_ts)
+
+    def populate_attributes(self, fid):
+        """
+        Function to populate the attributes
+        """
+        if not fid:
+            return
+
+        self.current_node = fid
+        self.lyrs.show_feat_rubber(self.user_swmm_outlets_lyr.id(), fid, QColor(Qt.red))
+
+        # Get the attributes
+        attributes = self.gutils.execute(
+            f"""SELECT 
+                    grid,
+                    name, 
+                    outfall_invert_elev,
+                    flapgate, 
+                    fixed_stage, 
+                    tidal_curve,
+                    time_series,
+                    outfall_type,
+                    swmm_allow_discharge                              
+                FROM
+                    user_swmm_outlets
+                WHERE
+                    fid = {fid};"""
+        ).fetchall()[0]
+
+        # Assign attributes to the dialog
+        self.grid.setText(str(attributes[0]))
+        self.name.setText(str(attributes[1]))
+        idx = 2
+        for key, value in self.outlets.items():
+            if attributes[idx] is not None:
+                if isinstance(value, QSpinBox) or isinstance(value, QDoubleSpinBox):
+                    value.setValue(attributes[idx])
+                elif isinstance(value, QComboBox):
+                    # Flapgate
+                    if idx == 3:
+                        if attributes[idx] == 'False':
+                            value.setCurrentIndex(0)
+                        else:
+                            value.setCurrentIndex(1)
+                    else:
+                        value.setCurrentText(attributes[idx])
+            idx += 1
+
+        self.previous_btn.setEnabled(False)
+        self.next_btn.setEnabled(False)
+
+        self.next_node = self.gutils.execute(
+            f"""
+            SELECT 
+                conduit_inlet
+            FROM 
+                user_swmm_conduits
+            WHERE 
+                conduit_outlet = '{str(attributes[1])}' LIMIT 1;
+            """
+        ).fetchall()
+
+        if self.next_node:
+            self.next_btn.setEnabled(True)
+            self.next_lbl.setText(self.next_node[0][0])
+
+        self.previous_node = self.gutils.execute(
+            f"""
+            SELECT 
+                conduit_outlet
+            FROM 
+                user_swmm_conduits
+            WHERE 
+                conduit_inlet = '{str(attributes[1])}' LIMIT 1;
+            """
+        ).fetchall()
+
+        if self.previous_node:
+            self.previous_btn.setEnabled(True)
+            self.previous_lbl.setText(self.previous_node[0][0])
+
+    def save_outlets(self):
+        """
+        Function to save the outlets everytime an attribute is changed
+        """
+
+        old_name_qry = self.gutils.execute(
+            f"""SELECT name FROM user_swmm_outlets WHERE fid = '{self.current_node}';""").fetchall()
+        old_name = ""
+        if old_name_qry:
+            old_name = old_name_qry[0][0]
+
+        name = self.name.text()
+        outfall_invert_elev = self.outfall_invert_elev.value()
+        if self.flapgate.currentIndex() == 0:
+            flapgate = 'False'
+        else:
+            flapgate = 'True'
+        swmm_allow_discharge = self.swmm_allow_discharge.currentText()
+        outfall_type = self.outfall_type.currentText()
+        if self.tidal_curve.count() > 0:
+            tidal_curve = ''
+        else:
+            tidal_curve = self.tidal_curve.currentText()
+        if self.time_series.count() > 0:
+            time_series = ''
+        else:
+            time_series = self.time_series.currentText()
+        fixed_stage = self.fixed_stage.value()
+
+        self.gutils.execute(f"""
+                                UPDATE 
+                                    user_swmm_outlets
+                                SET 
+                                    name = '{name}',
+                                    outfall_invert_elev = '{outfall_invert_elev}',
+                                    flapgate = '{flapgate}',
+                                    swmm_allow_discharge = '{swmm_allow_discharge}',
+                                    outfall_type = '{outfall_type}',
+                                    tidal_curve = '{tidal_curve}',
+                                    time_series = '{time_series}',
+                                    fixed_stage = '{fixed_stage}'
+                                WHERE 
+                                    fid = '{self.current_node}';
+                            """)
+
+        self.user_swmm_outlets_lyr.triggerRepaint()
 
         # update the name on the user_swmm_conduits
         if old_name != name:
@@ -399,11 +663,11 @@ class InletAttributes(qtBaseClass, uiDialog):
             flapgate = 'True'
 
         self.gutils.execute(f"""
-                                UPDATE 
-                                    user_swmm_nodes
-                                SET 
-                                    flapgate = '{flapgate}' 
-                                WHERE 
+                                UPDATE
+                                    user_swmm_outlets
+                                SET
+                                    flapgate = '{flapgate}'
+                                WHERE
                                     fid = '{self.current_node}';
                             """)
 
@@ -412,15 +676,15 @@ class InletAttributes(qtBaseClass, uiDialog):
         Function to save only tidal to avoid signal errors
         """
         tidal_curve = self.tidal_curve.currentText()
-        if tidal_curve != '':
-            self.time_series.setCurrentIndex(-1)
+        if tidal_curve not in ['*', '']:
+            self.time_series.setCurrentIndex(0)
 
         self.gutils.execute(f"""
-                                UPDATE 
-                                    user_swmm_nodes
-                                SET 
-                                    tidal_curve = '{tidal_curve}' 
-                                WHERE 
+                                UPDATE
+                                    user_swmm_outlets
+                                SET
+                                    tidal_curve = '{tidal_curve}'
+                                WHERE
                                     fid = '{self.current_node}';
                             """)
 
@@ -429,15 +693,15 @@ class InletAttributes(qtBaseClass, uiDialog):
         Function to save only time_series to avoid signal errors
         """
         time_series = self.time_series.currentText()
-        if time_series != '':
-            self.tidal_curve.setCurrentIndex(-1)
+        if time_series not in ['*', '']:
+            self.tidal_curve.setCurrentIndex(0)
 
         self.gutils.execute(f"""
-                                UPDATE 
-                                    user_swmm_nodes
-                                SET 
-                                    time_series = '{time_series}' 
-                                WHERE 
+                                UPDATE
+                                    user_swmm_outlets
+                                SET
+                                    time_series = '{time_series}'
+                                WHERE
                                     fid = '{self.current_node}';
                             """)
 
@@ -448,18 +712,17 @@ class InletAttributes(qtBaseClass, uiDialog):
         allow_discharge = self.swmm_allow_discharge.currentText()
 
         self.gutils.execute(f"""
-                                UPDATE 
-                                    user_swmm_nodes
-                                SET 
-                                    swmm_allow_discharge = '{allow_discharge}' 
-                                WHERE 
+                                UPDATE
+                                    user_swmm_outlets
+                                SET
+                                    swmm_allow_discharge = '{allow_discharge}'
+                                WHERE
                                     fid = '{self.current_node}';
                             """)
 
     def dock_widget(self):
         """ Close and delete the dock widget. """
         if self.dock_widget:
-            self.uc.log_info("TTteste")
             self.iface.removeDockWidget(self.dock_widget)
             self.dock_widget.close()
             self.dock_widget.deleteLater()
@@ -482,7 +745,7 @@ class InletAttributes(qtBaseClass, uiDialog):
             SELECT
                 fid
             FROM
-                user_swmm_nodes
+                user_swmm_inlets_junctions
             WHERE
                 name = '{next_node_name}'
             """
@@ -502,7 +765,7 @@ class InletAttributes(qtBaseClass, uiDialog):
             SELECT
                 fid
             FROM
-                user_swmm_nodes
+                user_swmm_inlets_junctions
             WHERE
                 name = '{previous_node_name}'
             """
@@ -510,31 +773,6 @@ class InletAttributes(qtBaseClass, uiDialog):
 
         if fid:
             self.populate_attributes(fid[0])
-
-    def show_external_inflow_dlg(self):
-        """
-        Function to show the external inflow in the Inlets/Junctions
-        """
-        name = self.name.text()
-        if name == "":
-            return
-
-        dlg_external_inflow = ExternalInflowsDialog(self.iface, name)
-        dlg_external_inflow.setWindowTitle("Inlet/Junction " + name)
-        save = dlg_external_inflow.exec_()
-        if save:
-            inflow_sql = "SELECT baseline, pattern_name, time_series_name FROM swmm_inflows WHERE node_name = ?;"
-            inflow = self.gutils.execute(inflow_sql, (name,)).fetchone()
-            if inflow:
-                baseline = inflow[0]
-                pattern_name = inflow[1]
-                time_series_name = inflow[2]
-                if baseline == 0.0 and time_series_name == "":
-                    self.external_inflow.setCurrentIndex(0)
-                else:
-                    self.external_inflow.setCurrentIndex(1)
-
-            self.uc.bar_info("Storm Drain external inflow saved for inlet " + name)
 
     def open_tidal_curve(self):
         tidal_curve_name = self.tidal_curve.currentText()
@@ -584,7 +822,7 @@ class InletAttributes(qtBaseClass, uiDialog):
                         if names:
                             self.time_series.clear()
                             for name in names:
-                                self.time_series_cbo.addItem(name[0])
+                                self.time_series.addItem(name[0])
                             self.time_series.addItem("")
 
                             idx = self.time_series.findText(time_series_name)
@@ -596,24 +834,88 @@ class InletAttributes(qtBaseClass, uiDialog):
             else:
                 break
 
-    def external_inflow_btn_chk(self):
-        """
-        Function to enable/disable the external inflow btn
-        """
-        external_inflow = self.external_inflow.currentText()
 
-        if external_inflow == 'YES':
-            self.external_btn.setEnabled(True)
-            external_inflow_bool = 1
+uiDialog, qtBaseClass = load_ui("conduit_attributes")
+
+
+class ConduitAttributes(qtBaseClass, uiDialog):
+    def __init__(self, con, iface, layers):
+        qtBaseClass.__init__(self)
+        uiDialog.__init__(self)
+        self.iface = iface
+        self.lyrs = layers
+        self.setupUi(self)
+        self.uc = UserCommunication(iface, "FLO-2D")
+        self.con = con
+        self.gutils = GeoPackageUtils(con, iface)
+
+        # Create a dock widget
+        self.dock_widget = QDockWidget("Storm Drain", self.iface.mainWindow())
+        self.dock_widget.setObjectName("Conduits")
+        self.dock_widget.setWidget(self)
+
+        self.user_swmm_conduits_lyr = self.lyrs.data["user_swmm_conduits"]["qlyr"]
+
+        if self.losses_flapgate.count() == 0:
+            self.losses_flapgate.addItem("True")
+            self.losses_flapgate.addItem("False")
+
+    def populate_attributes(self, fid):
+        """
+        Function to populate the attributes
+        """
+        if not fid:
+            return
+
+        self.current_node = fid
+        self.lyrs.show_feat_rubber(self.user_swmm_conduits_lyr.id(), fid, QColor(Qt.red))
+
+        # Get the attributes
+        attributes = self.gutils.execute(
+            f"""SELECT 
+                    conduit_name,
+                    conduit_inlet, 
+                    conduit_outlet,
+                    conduit_length, 
+                    conduit_manning, 
+                    conduit_inlet_offset,
+                    conduit_outlet_offset,
+                    conduit_init_flow,
+                    conduit_max_flow,
+                    losses_inlet, 
+                    losses_outlet, 
+                    losses_average, 
+                    losses_flapgate, 
+                    xsections_shape,
+                    xsections_max_depth,
+                    xsections_geom2, 
+                    xsections_geom3,
+                    xsections_geom4,
+                    xsections_barrels                          
+                FROM
+                    user_swmm_conduits
+                WHERE
+                    fid = {fid};"""
+        ).fetchall()[0]
+
+        # self.conduit_name.
+        # self.conduit_inlet.
+        # self.conduit_outlet.
+        self.conduit_length.setValue(attributes[3])
+        self.conduit_manning.setValue(attributes[4])
+        self.conduit_inlet_offset.setValue(attributes[5])
+        self.conduit_outlet_offset.setValue(attributes[6])
+        self.conduit_init_flow.setValue(attributes[7])
+        self.conduit_max_flow.setValue(attributes[8])
+        self.losses_inlet.setValue(attributes[9])
+        self.losses_outlet.setValue(attributes[10])
+        self.losses_average.setValue(attributes[11])
+        if attributes[12] == 'False':
+            self.losses_flapgate.setCurrentIndex(1)
         else:
-            self.external_btn.setEnabled(False)
-            external_inflow_bool = 0
-
-        self.gutils.execute(f"""
-                                UPDATE 
-                                    user_swmm_nodes
-                                SET 
-                                    external_inflow = '{external_inflow_bool}'
-                                WHERE 
-                                    fid = '{self.current_node}';
-                            """)
+            self.losses_flapgate.setCurrentIndex(0)
+        self.xsections_max_depth.setValue(attributes[14])
+        self.xsections_geom2.setValue(attributes[15])
+        self.xsections_geom3.setValue(attributes[16])
+        self.xsections_geom4.setValue(attributes[17])
+        self.xsections_barrel.setValue(attributes[18])

@@ -142,7 +142,7 @@ class OutfallNodesDialog(qtBaseClass, uiDialog):
                             water_depth,
                             tidal_curve, 
                             time_series              
-                    FROM user_swmm_nodes WHERE sd_type = 'O';"""
+                    FROM user_swmm_inlets_junctions WHERE sd_type = 'O';"""
 
             rows = self.gutils.execute(qry).fetchall()  # rows is a list of tuples.
             if not rows:
@@ -202,7 +202,7 @@ class OutfallNodesDialog(qtBaseClass, uiDialog):
                         else:
                             item.setData(Qt.DisplayRole, "0")   
 
-                    # Fill all text boxes with data of first feature of query (first element in table user_swmm_nodes):
+                    # Fill all text boxes with data of first feature of query (first element in table user_swmm_inlets_junctions):
                     if row_number == 0:
                         data = 0 if data is None else data
                         # Grid
@@ -694,11 +694,11 @@ class OutfallNodesDialog(qtBaseClass, uiDialog):
 
     def save_outfalls(self):
         """
-        Save changes to user_swmm_nodes layer and swmmoutf
+        Save changes to user_swmm_inlets_junctions layer and swmmoutf
         """
         # self.save_attrs()
         update_qry = """
-                        UPDATE user_swmm_nodes
+                        UPDATE user_swmm_inlets_junctions
                         SET
                             name = ?, 
                             grid = ?, 

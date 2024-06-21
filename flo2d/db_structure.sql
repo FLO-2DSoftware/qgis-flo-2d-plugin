@@ -1338,7 +1338,7 @@ INSERT INTO gpkg_contents (table_name, data_type) VALUES ('fpfroude_cells', 'asp
 
 -- Storm Drain
 
-CREATE TABLE "user_swmm_nodes" (
+CREATE TABLE "user_swmm_inlets_junctions" (
     "fid" INTEGER PRIMARY KEY NOT NULL,
     "grid" INTEGER DEFAULT 0,
     "sd_type" TEXT DEFAULT 'I', -- CHECK ("sd_type" = 'I' OR "sd_type" = 'O'), --Inlet or Outfall
@@ -1346,60 +1346,67 @@ CREATE TABLE "user_swmm_nodes" (
     "intype" INTEGER DEFAULT 1, --FLO-2D Drain Type
 
     "external_inflow" INTEGER DEFAULT 0, --
-    
-    --VARIABLES FROM .INP [JUNCTIONS]:   
+
+    --VARIABLES FROM .INP [JUNCTIONS]:
 	    "junction_invert_elev" REAL DEFAULT 0,
 	    "max_depth" REAL DEFAULT 0,
 	    "init_depth" REAL DEFAULT 0,
 	    "surcharge_depth" REAL DEFAULT 0,
-	    "ponded_area" REAL DEFAULT 0,  
+	    "ponded_area" REAL DEFAULT 0,
     -----------------------------------
+
+	--VARIABLES FOR SWMMFLO.DAT
+	    "swmm_length" REAL DEFAULT 0,
+	    "swmm_width" REAL DEFAULT 0,
+	    "swmm_height" REAL DEFAULT 0,
+	    "swmm_coeff" REAL DEFAULT 0,
+	    "swmm_feature" INTEGER DEFAULT 0,
+	    "curbheight" REAL DEFAULT 0,
+	    "swmm_clogging_factor" REAL DEFAULT 0,
+	    "swmm_time_for_clogging" REAL DEFAULT 0,
+	------------------------------------
+
+	--VARIABLE FOR SWMMFLODROPBOX.DAT
+	"drboxarea" REAL DEFAULT 0.0
+
+);
+INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('user_swmm_inlets_junctions', 'features', 4326);
+SELECT gpkgAddGeometryColumn('user_swmm_inlets_junctions', 'geom', 'POINT', 0, 0, 0);
+SELECT gpkgAddGeometryTriggers('user_swmm_inlets_junctions', 'geom');
+
+CREATE TABLE "user_swmm_outlets" (
+    "fid" INTEGER PRIMARY KEY NOT NULL,
+    "grid" INTEGER DEFAULT 0,
+    "name" TEXT,
 
     --VARIABLES FROM .INP [OUTFALLS]:
     	"outfall_invert_elev" REAL DEFAULT 0,
 		"outfall_type" TEXT DEFAULT 'NORMAL',	 
 		"tidal_curve" TEXT DEFAULT '*',
 		"time_series" TEXT DEFAULT '*',
-	    "flapgate" TEXT DEFAULT 'False', 
-    -------------------------------------    
-
-	--VARIABLES FOR SWMMFLO.DAT    
-	    "swmm_length" REAL DEFAULT 0,
-	    "swmm_width" REAL DEFAULT 0,
-	    "swmm_height" REAL DEFAULT 0,
-	    "swmm_coeff" REAL DEFAULT 0,
-	    "swmm_feature" INTEGER DEFAULT 0,  
-	    "curbheight" REAL DEFAULT 0,
-	    "swmm_clogging_factor" REAL DEFAULT 0,
-	    "swmm_time_for_clogging" REAL DEFAULT 0,
-	    "swmm_allow_discharge" TEXT DEFAULT '0',
-	------------------------------------
-
-	--VARIABLE FOR SWMMFLODROPBOX.DAT 
-	"drboxarea" REAL DEFAULT 0.0,
-
-	"water_depth" REAL DEFAULT 0,
-    "rt_fid" INTEGER,
-    "rt_name" TEXT,
-    "outf_flo" INTEGER DEFAULT 0,
-    "invert_elev_inp" REAL DEFAULT 0,
-    "max_depth_inp" REAL DEFAULT 0,
-    "rim_elev_inp" REAL DEFAULT 0,
-    "rim_elev" REAL DEFAULT 0.00,
-    "ge_elev" REAL DEFAULT 0.00,
-    "difference" REAL DEFAULT 0.00,
-    "notes" TEXT
+		"fixed_stage" REAL DEFAULT 0,
+	    "flapgate" TEXT DEFAULT 'False',
+	    "swmm_allow_discharge" TEXT DEFAULT '0'
+    -------------------------------------
 
 );
-INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('user_swmm_nodes', 'features', 4326);
-SELECT gpkgAddGeometryColumn('user_swmm_nodes', 'geom', 'POINT', 0, 0, 0);
-SELECT gpkgAddGeometryTriggers('user_swmm_nodes', 'geom');
+INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('user_swmm_outlets', 'features', 4326);
+SELECT gpkgAddGeometryColumn('user_swmm_outlets', 'geom', 'POINT', 0, 0, 0);
+SELECT gpkgAddGeometryTriggers('user_swmm_outlets', 'geom');
 
-CREATE TRIGGER "default_swmm_name"
-    AFTER INSERT ON "user_swmm_nodes"
+CREATE TRIGGER "default_swmm_inlet_junction_name"
+    AFTER INSERT ON "user_swmm_inlets_junctions"
     BEGIN
-        UPDATE "user_swmm_nodes"
+        UPDATE "user_swmm_inlets_junctions"
         SET name = ('Storm_Drain_' || cast(NEW."fid" AS TEXT)) 
+        WHERE "fid" = NEW."fid" AND NEW."name" IS NULL;
+    END;
+
+CREATE TRIGGER "default_swmm_outlet_name"
+    AFTER INSERT ON "user_swmm_outlets"
+    BEGIN
+        UPDATE "user_swmm_outlets"
+        SET name = ('Storm_Drain_' || cast(NEW."fid" AS TEXT))
         WHERE "fid" = NEW."fid" AND NEW."name" IS NULL;
     END;
 

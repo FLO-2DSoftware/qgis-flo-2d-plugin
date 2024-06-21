@@ -32,7 +32,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
         self.uc = UserCommunication(iface, "FLO-2D")
         self.con = con
         self.gutils = GeoPackageUtils(con, iface)
-        self.user_swmm_nodes_lyr = self.lyrs.data["user_swmm_nodes"]["qlyr"]
+        self.user_swmm_inlets_junctions_lyr = self.lyrs.data["user_swmm_inlets_junctions"]["qlyr"]
         self.user_swmm_strge_units_lyr = self.lyrs.data["user_swmm_storage_units"]["qlyr"]
         self.user_swmm_conduits_lyr = self.lyrs.data["user_swmm_conduits"]["qlyr"]
         self.user_swmm_pumps_lyr = self.lyrs.data["user_swmm_pumps"]["qlyr"]
@@ -1221,7 +1221,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
             mame = ""
             try:
                 QApplication.setOverrideCursor(Qt.WaitCursor)
-                fields = self.user_swmm_nodes_lyr.fields()
+                fields = self.user_swmm_inlets_junctions_lyr.fields()
                 new_feats = []
                 outside_inlets = ""
                 inlets_shapefile = self.inlets_shapefile_cbo.currentText()
@@ -1409,14 +1409,14 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
 
                 if new_feats:
                     if not self.inlets_append_chbox.isChecked():
-                        remove_features(self.user_swmm_nodes_lyr)
+                        remove_features(self.user_swmm_inlets_junctions_lyr)
 
-                    self.user_swmm_nodes_lyr.startEditing()
-                    self.user_swmm_nodes_lyr.addFeatures(new_feats)
-                    self.user_swmm_nodes_lyr.commitChanges()
-                    self.user_swmm_nodes_lyr.updateExtents()
-                    self.user_swmm_nodes_lyr.triggerRepaint()
-                    self.user_swmm_nodes_lyr.removeSelection()
+                    self.user_swmm_inlets_junctions_lyr.startEditing()
+                    self.user_swmm_inlets_junctions_lyr.addFeatures(new_feats)
+                    self.user_swmm_inlets_junctions_lyr.commitChanges()
+                    self.user_swmm_inlets_junctions_lyr.updateExtents()
+                    self.user_swmm_inlets_junctions_lyr.triggerRepaint()
+                    self.user_swmm_inlets_junctions_lyr.removeSelection()
                 else:
                     self.load_inlets = False
 
@@ -1453,7 +1453,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
         if self.load_outfalls:
             try:
                 QApplication.setOverrideCursor(Qt.WaitCursor)
-                fields = self.user_swmm_nodes_lyr.fields()
+                fields = self.user_swmm_inlets_junctions_lyr.fields()
                 new_feats = []
                 outside_outfalls = ""
 
@@ -1559,14 +1559,14 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
 
                 if new_feats:
                     if not self.outfall_append_chbox.isChecked() and not self.load_inlets:
-                        remove_features(self.user_swmm_nodes_lyr)
+                        remove_features(self.user_swmm_inlets_junctions_lyr)
 
-                    self.user_swmm_nodes_lyr.startEditing()
-                    self.user_swmm_nodes_lyr.addFeatures(new_feats)
-                    self.user_swmm_nodes_lyr.commitChanges()
-                    self.user_swmm_nodes_lyr.updateExtents()
-                    self.user_swmm_nodes_lyr.triggerRepaint()
-                    self.user_swmm_nodes_lyr.removeSelection()
+                    self.user_swmm_inlets_junctions_lyr.startEditing()
+                    self.user_swmm_inlets_junctions_lyr.addFeatures(new_feats)
+                    self.user_swmm_inlets_junctions_lyr.commitChanges()
+                    self.user_swmm_inlets_junctions_lyr.updateExtents()
+                    self.user_swmm_inlets_junctions_lyr.triggerRepaint()
+                    self.user_swmm_inlets_junctions_lyr.removeSelection()
                 else:
                     self.load_outfalls = False
 

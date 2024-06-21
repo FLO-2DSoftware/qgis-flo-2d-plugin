@@ -58,7 +58,9 @@ class InfoTool(QgsMapToolIdentify):
             "user_bc_polygons",
             "user_struct",
             "struct",
-            "user_swmm_nodes"
+            "user_swmm_inlets_junctions",
+            "user_swmm_outlets",
+            "user_swmm_conduits"
         ]
         # try:
         res = self.identify(e.x(), e.y(), self.lyrs_list, QgsMapToolIdentify.TopDownAll)
@@ -84,35 +86,24 @@ class InfoTool(QgsMapToolIdentify):
             sm[i] = QMenu(ln)
             actions[i] = {}
 
-            # if ln == "Storm Drain Nodes":
-            #     sd_layer = self.lyrs.get_layer_by_name("Storm Drain Nodes", group=self.lyrs.group).layer()
-            #     for j, fid in enumerate(lyrs_found[ln]["fids"]):
-            #         feat = next(sd_layer.getFeatures(QgsFeatureRequest(fid)))
-            #         name = feat["name"]
-            #         grid = feat["grid"]
-            #         ssm = QMenu(name + " (" + str(grid) + ")")
-            #         sm[i].addMenu(ssm)
-            #
-            #         # Add "Start Node" action
-            #         start_action = QAction("Start Node", None)
-            #         start_action.hovered.connect(functools.partial(self.show_rubber, lid, fid))
-            #         start_action.triggered.connect(functools.partial(self.pass_res, tab, fid, "Start"))
-            #         ssm.addAction(start_action)
-            #
-            #         # Add "End Node" action
-            #         end_action = QAction("End Node", None)
-            #         end_action.hovered.connect(functools.partial(self.show_rubber, lid, fid))
-            #         end_action.triggered.connect(functools.partial(self.pass_res, tab, fid, "End"))
-            #         ssm.addAction(end_action)
-
-            # else:
             for j, fid in enumerate(lyrs_found[ln]["fids"]):
-                if ln == "Storm Drain Nodes":
-                    sd_layer = self.lyrs.get_layer_by_name("Storm Drain Nodes", group=self.lyrs.group).layer()
+                if ln == "Storm Drain Inlets/Junctions":
+                    sd_layer = self.lyrs.get_layer_by_name("Storm Drain Inlets/Junctions", group=self.lyrs.group).layer()
                     feat = next(sd_layer.getFeatures(QgsFeatureRequest(fid)))
                     name = feat["name"]
                     grid = feat["grid"]
                     actions[i][j] = QAction(name + " (" + str(grid) + ")", None)
+                elif ln == "Storm Drain Outlets":
+                    sd_layer = self.lyrs.get_layer_by_name("Storm Drain Outlets", group=self.lyrs.group).layer()
+                    feat = next(sd_layer.getFeatures(QgsFeatureRequest(fid)))
+                    name = feat["name"]
+                    grid = feat["grid"]
+                    actions[i][j] = QAction(name + " (" + str(grid) + ")", None)
+                elif ln == "Storm Drain Conduits":
+                    sd_layer = self.lyrs.get_layer_by_name("Storm Drain Conduits", group=self.lyrs.group).layer()
+                    feat = next(sd_layer.getFeatures(QgsFeatureRequest(fid)))
+                    name = feat["conduit_name"]
+                    actions[i][j] = QAction(name, None)
                 else:
                     actions[i][j] = QAction(str(fid), None)
                 actions[i][j].hovered.connect(functools.partial(self.show_rubber, lid, fid))

@@ -154,7 +154,7 @@ class InletNodesDialog(qtBaseClass, uiDialog):
                             swmm_time_for_clogging,
                             rt_name,
                             drboxarea         
-                    FROM user_swmm_nodes WHERE sd_type= 'I' or sd_type= 'J';"""
+                    FROM user_swmm_inlets_junctions WHERE sd_type= 'I' or sd_type= 'J';"""
             rows = self.gutils.execute(qry).fetchall()
             if not rows:
                 QApplication.setOverrideCursor(Qt.ArrowCursor)
@@ -196,7 +196,7 @@ class InletNodesDialog(qtBaseClass, uiDialog):
                     if cell == 0:
                         self.inlet_cbo.addItem(data)
     
-                    # Fill all text boxes with data of first feature of query (first cell in table user_swmm_nodes):
+                    # Fill all text boxes with data of first feature of query (first cell in table user_swmm_inlets_junctions):
                     if row_number == 0:
                         if cell == 1:
                             self.grid_element_le.setText(str(data))
@@ -754,7 +754,7 @@ class InletNodesDialog(qtBaseClass, uiDialog):
 
     def save_inlets(self):
         """
-        Save changes of user_swmm_nodes layer.
+        Save changes of user_swmm_inlets_junctions layer.
         """
         QApplication.setOverrideCursor(Qt.WaitCursor)
         try:
@@ -937,9 +937,9 @@ class InletNodesDialog(qtBaseClass, uiDialog):
                     )
                 )
 
-            # Update 'user_swmm_nodes' table:
+            # Update 'user_swmm_inlets_junctions' table:
             update_qry = """
-            UPDATE user_swmm_nodes
+            UPDATE user_swmm_inlets_junctions
             SET
                 name = ?, 
                 grid = ?, 
