@@ -1115,6 +1115,164 @@ class OrificeAttributes(qtBaseClass, uiDialog):
         self.lyrs.clear_rubber()
 
 
+uiDialog, qtBaseClass = load_ui("weir_attributes")
+
+
+class WeirAttributes(qtBaseClass, uiDialog):
+    def __init__(self, con, iface, layers):
+        qtBaseClass.__init__(self)
+        uiDialog.__init__(self)
+        self.iface = iface
+        self.lyrs = layers
+        self.setupUi(self)
+        self.uc = UserCommunication(iface, "FLO-2D")
+        self.con = con
+        self.gutils = GeoPackageUtils(con, iface)
+
+        # Create a dock widget
+        self.dock_widget = QgsDockWidget("Weirs", self.iface.mainWindow())
+        self.dock_widget.setObjectName("Weirs")
+        self.dock_widget.setWidget(self)
+
+        self.user_swmm_weirs_lyr = self.lyrs.data["user_swmm_weirs"]["qlyr"]
+        self.user_swmm_inlets_junctions_lyr = self.lyrs.data["user_swmm_inlets_junctions"]["qlyr"]
+
+        # Add junctions to the comboboxes
+        inlets_junctions = self.gutils.execute("SELECT name FROM user_swmm_inlets_junctions;").fetchall()
+        if inlets_junctions:
+            for inlets_junction in inlets_junctions:
+                self.weir_inlet.addItem(inlets_junction[0])
+                self.weir_outlet.addItem(inlets_junction[0])
+
+        if self.weir_type.count() == 0:
+            weir_type = ["TRANSVERSE", "SIDEFLOW", "V-NOTCH", "TRAPEZOIDAL"]
+            self.weir_type.addItems(weir_type)
+
+        if self.weir_flap_gate.count() == 0:
+            self.weir_flap_gate.addItem("NO")
+            self.weir_flap_gate.addItem("YES")
+
+        # if self.weir_shape.count() == 0:
+        #     self.weir_shape.addItem("CIRCULAR")
+        #     self.weir_shape.addItem("RECT_CLOSED")
+
+        self.weir_type.currentIndexChanged.connect(self.save_weirs)
+        self.weir_flap_gate.currentIndexChanged.connect(self.save_weirs)
+        # self.weir_shape.currentIndexChanged.connect(self.save_weirs)
+        self.weir_crest_height.editingFinished.connect(self.save_weirs)
+        self.weir_disch_coeff.editingFinished.connect(self.save_weirs)
+        self.weir_end_contrac.editingFinished.connect(self.save_weirs)
+        self.weir_end_coeff.editingFinished.connect(self.save_weirs)
+        self.weir_height.editingFinished.connect(self.save_weirs)
+        self.weir_length.editingFinished.connect(self.save_weirs)
+        self.weir_side_slope.editingFinished.connect(self.save_weirs)
+
+    def populate_attributes(self, fid):
+        """
+        Function to populate the attributes
+        """
+        if not fid:
+            return
+
+        self.clear_rubber()
+
+        self.current_node = fid
+        self.lyrs.show_feat_rubber(self.user_swmm_weirs_lyr.id(), fid, QColor(Qt.red))
+
+        # Get the attributes
+        attributes = self.gutils.execute(
+            f"""SELECT
+                    weir_name,
+                    weir_inlet,
+                    weir_outlet,
+                    weir_type,
+                    weir_crest_height,
+                    weir_disch_coeff,
+                    weir_flap_gate,
+                    weir_end_contrac,
+                    weir_end_coeff,
+                    weir_height,
+                    weir_length,
+                    weir_side_slope
+                FROM
+                    user_swmm_weirs
+                WHERE
+                    fid = {fid};"""
+        ).fetchall()[0]
+
+        self.weir_name.setText(attributes[0])
+        self.weir_inlet.setCurrentText(attributes[1])
+        self.weir_outlet.setCurrentText(attributes[2])
+        self.weir_type.setCurrentText(attributes[3])
+        self.weir_crest_height.setValue(attributes[4])
+        self.weir_disch_coeff.setValue(attributes[5])
+        self.weir_flap_gate.setCurrentText(attributes[6])
+        self.weir_end_contrac.setValue(float(attributes[7]))
+        self.weir_end_coeff.setValue(attributes[8])
+        self.weir_height.setValue(attributes[9])
+        self.weir_length.setValue(attributes[10])
+        self.weir_side_slope.setValue(attributes[11])
+
+    def save_weirs(self):
+        """
+        Function to save the weirs everytime an attribute is changed
+        """
+
+        weir_name = self.weir_name.text()
+        weir_inlet = self.weir_inlet.currentText()
+        weir_outlet = self.weir_outlet.currentText()
+        weir_type = self.weir_type.currentText()
+        weir_crest_height = self.weir_crest_height.value()
+        weir_disch_coeff = self.weir_disch_coeff.value()
+        weir_flap_gate = self.weir_flap_gate.currentText()
+        weir_end_contrac = self.weir_end_contrac.value()
+        weir_end_coeff = self.weir_end_coeff.value()
+        weir_height = self.weir_height.value()
+        weir_length = self.weir_length.value()
+        weir_side_slope = self.weir_side_slope.value()
+
+        self.gutils.execute(f"""
+                                UPDATE
+                                    user_swmm_weirs
+                                SET
+                                    weir_name = '{weir_name}',
+                                    weir_inlet = '{weir_inlet}',
+                                    weir_outlet = '{weir_outlet}',
+                                    weir_type = '{weir_type}',
+                                    weir_crest_height = '{weir_crest_height}',
+                                    weir_disch_coeff = '{weir_disch_coeff}',
+                                    weir_flap_gate = '{weir_flap_gate}',
+                                    weir_end_contrac = '{weir_end_contrac}',
+                                    weir_end_coeff = '{weir_end_coeff}',
+                                    weir_height = '{weir_height}',
+                                    weir_length = '{weir_length}',
+                                    weir_side_slope = '{weir_side_slope}'
+                                WHERE
+                                    fid = '{self.current_node}';
+                            """)
+
+        self.populate_attributes(self.current_node)
+
+        # # Green rubber the inlet
+        # if pump_inlet != '':
+        #     inlet_fid = self.gutils.execute(f"SELECT fid FROM user_swmm_inlets_junctions WHERE name = '{pump_inlet}'").fetchone()[0]
+        #     self.lyrs.show_feat_rubber(self.user_swmm_inlets_junctions_lyr.id(), inlet_fid, QColor(Qt.green), clear=False)
+        #
+        # # Blue rubber the outlet
+        # if pump_outlet != '':
+        #     outlet_fid = self.gutils.execute(f"SELECT fid FROM user_swmm_inlets_junctions WHERE name = '{pump_outlet}'").fetchone()[0]
+        #     self.lyrs.show_feat_rubber(self.user_swmm_inlets_junctions_lyr.id(), outlet_fid, QColor(Qt.blue), clear=False)
+        #
+        # self.user_swmm_inlets_junctions_lyr.triggerRepaint()
+        self.user_swmm_weirs_lyr.triggerRepaint()
+
+    def clear_rubber(self):
+        """
+        Function to clear the rubber when closing the widget
+        """
+        self.lyrs.clear_rubber()
+
+
 uiDialog, qtBaseClass = load_ui("conduit_attributes")
 
 

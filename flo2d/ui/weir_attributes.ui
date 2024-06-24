@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>395</width>
-    <height>400</height>
+    <width>391</width>
+    <height>430</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -24,8 +24,8 @@
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>375</width>
-        <height>380</height>
+        <width>350</width>
+        <height>434</height>
        </rect>
       </property>
       <layout class="QGridLayout" name="gridLayout_2">
@@ -45,31 +45,23 @@
        <item row="0" column="0">
         <widget class="QGroupBox" name="groupBox">
          <property name="title">
-          <string>Orifice Properties</string>
+          <string>Weir Properties</string>
          </property>
          <layout class="QGridLayout" name="gridLayout_4">
           <item row="0" column="0">
            <layout class="QGridLayout" name="gridLayout_3">
-            <item row="3" column="0">
-             <widget class="QLabel" name="label_4">
+            <item row="4" column="0">
+             <widget class="QLabel" name="label_5">
               <property name="text">
-               <string>Type</string>
+               <string>Crest Height</string>
               </property>
              </widget>
             </item>
-            <item row="1" column="0">
-             <widget class="QLabel" name="label_2">
-              <property name="text">
-               <string>Inlet</string>
-              </property>
-             </widget>
+            <item row="11" column="1">
+             <widget class="QDoubleSpinBox" name="weir_length"/>
             </item>
-            <item row="10" column="0">
-             <widget class="QLabel" name="label_11">
-              <property name="text">
-               <string>Width</string>
-              </property>
-             </widget>
+            <item row="2" column="1">
+             <widget class="QComboBox" name="weir_outlet"/>
             </item>
             <item row="5" column="0">
              <widget class="QLabel" name="label_6">
@@ -79,12 +71,75 @@
              </widget>
             </item>
             <item row="1" column="1">
-             <widget class="QComboBox" name="orifice_inlet"/>
+             <widget class="QComboBox" name="weir_inlet"/>
             </item>
-            <item row="4" column="0">
-             <widget class="QLabel" name="label_5">
+            <item row="1" column="0">
+             <widget class="QLabel" name="label_2">
               <property name="text">
-               <string>Crest Height</string>
+               <string>Inlet</string>
+              </property>
+             </widget>
+            </item>
+            <item row="8" column="1">
+             <widget class="QDoubleSpinBox" name="weir_end_coeff"/>
+            </item>
+            <item row="12" column="0">
+             <widget class="QLabel" name="label_12">
+              <property name="text">
+               <string>Side Slope</string>
+              </property>
+             </widget>
+            </item>
+            <item row="3" column="1">
+             <widget class="QComboBox" name="weir_type"/>
+            </item>
+            <item row="10" column="0">
+             <widget class="QLabel" name="label_10">
+              <property name="text">
+               <string>Height</string>
+              </property>
+             </widget>
+            </item>
+            <item row="7" column="1">
+             <widget class="QDoubleSpinBox" name="weir_end_contrac"/>
+            </item>
+            <item row="6" column="0">
+             <widget class="QLabel" name="label_7">
+              <property name="text">
+               <string>Flapgate</string>
+              </property>
+             </widget>
+            </item>
+            <item row="10" column="1">
+             <widget class="QDoubleSpinBox" name="weir_height"/>
+            </item>
+            <item row="2" column="0">
+             <widget class="QLabel" name="label_3">
+              <property name="text">
+               <string>Outlet</string>
+              </property>
+             </widget>
+            </item>
+            <item row="11" column="0">
+             <widget class="QLabel" name="label_11">
+              <property name="text">
+               <string>Length</string>
+              </property>
+             </widget>
+            </item>
+            <item row="6" column="1">
+             <widget class="QComboBox" name="weir_flap_gate"/>
+            </item>
+            <item row="0" column="1">
+             <widget class="QLineEdit" name="weir_name"/>
+            </item>
+            <item row="4" column="1">
+             <widget class="QDoubleSpinBox" name="weir_crest_height"/>
+            </item>
+            <item row="3" column="0">
+             <widget class="QLabel" name="label_4">
+              <property name="text">
+               <string>Type</string>
               </property>
              </widget>
             </item>
@@ -107,70 +162,35 @@
               </property>
              </widget>
             </item>
-            <item row="6" column="0">
-             <widget class="QLabel" name="label_7">
+            <item row="5" column="1">
+             <widget class="QDoubleSpinBox" name="weir_disch_coeff"/>
+            </item>
+            <item row="7" column="0">
+             <widget class="QLabel" name="label_8">
               <property name="text">
-               <string>Flapgate</string>
+               <string>End Contraction</string>
               </property>
              </widget>
             </item>
             <item row="8" column="0">
              <widget class="QLabel" name="label_9">
               <property name="text">
+               <string>End Coeff.</string>
+              </property>
+             </widget>
+            </item>
+            <item row="9" column="0">
+             <widget class="QLabel" name="label_13">
+              <property name="text">
                <string>Shape</string>
               </property>
              </widget>
             </item>
-            <item row="2" column="1">
-             <widget class="QComboBox" name="orifice_outlet"/>
-            </item>
-            <item row="7" column="0">
-             <widget class="QLabel" name="label_8">
-              <property name="text">
-               <string>Open/Close Time</string>
-              </property>
-             </widget>
-            </item>
-            <item row="3" column="1">
-             <widget class="QComboBox" name="orifice_type"/>
-            </item>
-            <item row="9" column="0">
-             <widget class="QLabel" name="label_10">
-              <property name="text">
-               <string>Height</string>
-              </property>
-             </widget>
-            </item>
-            <item row="0" column="1">
-             <widget class="QLineEdit" name="orifice_name"/>
-            </item>
-            <item row="2" column="0">
-             <widget class="QLabel" name="label_3">
-              <property name="text">
-               <string>Outlet</string>
-              </property>
-             </widget>
-            </item>
-            <item row="4" column="1">
-             <widget class="QDoubleSpinBox" name="orifice_crest_height"/>
-            </item>
-            <item row="5" column="1">
-             <widget class="QDoubleSpinBox" name="orifice_disch_coeff"/>
-            </item>
-            <item row="6" column="1">
-             <widget class="QComboBox" name="orifice_flap_gate"/>
-            </item>
-            <item row="7" column="1">
-             <widget class="QDoubleSpinBox" name="orifice_open_close_time"/>
-            </item>
-            <item row="8" column="1">
-             <widget class="QComboBox" name="orifice_shape"/>
-            </item>
             <item row="9" column="1">
-             <widget class="QDoubleSpinBox" name="orifice_height"/>
+             <widget class="QComboBox" name="weir_shape"/>
             </item>
-            <item row="10" column="1">
-             <widget class="QDoubleSpinBox" name="orifice_width"/>
+            <item row="12" column="1">
+             <widget class="QDoubleSpinBox" name="weir_side_slope"/>
             </item>
            </layout>
           </item>
