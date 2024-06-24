@@ -100,6 +100,8 @@ class InletAttributes(qtBaseClass, uiDialog):
         if not fid:
             return
 
+        self.clear_rubber()
+
         self.current_node = fid
         self.lyrs.show_feat_rubber(self.user_swmm_inlets_junctions_lyr.id(), fid, QColor(Qt.red))
 
@@ -473,6 +475,8 @@ class OutletAttributes(qtBaseClass, uiDialog):
         if not fid:
             return
 
+        self.clear_rubber()
+
         self.current_node = fid
         self.lyrs.show_feat_rubber(self.user_swmm_outlets_lyr.id(), fid, QColor(Qt.red))
 
@@ -825,6 +829,140 @@ class OutletAttributes(qtBaseClass, uiDialog):
                 break
 
 
+uiDialog, qtBaseClass = load_ui("pump_attributes")
+
+
+class PumpAttributes(qtBaseClass, uiDialog):
+    def __init__(self, con, iface, layers):
+        qtBaseClass.__init__(self)
+        uiDialog.__init__(self)
+        self.iface = iface
+        self.lyrs = layers
+        self.setupUi(self)
+        self.uc = UserCommunication(iface, "FLO-2D")
+        self.con = con
+        self.gutils = GeoPackageUtils(con, iface)
+
+        # Create a dock widget
+        self.dock_widget = QgsDockWidget("Pumps", self.iface.mainWindow())
+        self.dock_widget.setObjectName("Pumps")
+        self.dock_widget.setWidget(self)
+
+        self.user_swmm_pumps_lyr = self.lyrs.data["user_swmm_pumps"]["qlyr"]
+        self.user_swmm_inlets_junctions_lyr = self.lyrs.data["user_swmm_inlets_junctions"]["qlyr"]
+
+        if self.pump_init_status.count() == 0:
+            init_status = ["OFF", "ON"]
+            self.pump_init_status.addItems(init_status)
+
+        inlets_junctions = self.gutils.execute("SELECT name FROM user_swmm_inlets_junctions;").fetchall()
+        if inlets_junctions:
+            for inlets_junction in inlets_junctions:
+                self.pump_inlet.addItem(inlets_junction[0])
+                self.pump_outlet.addItem(inlets_junction[0])
+            self.pump_inlet.setCurrentIndex(-1)
+            self.pump_outlet.setCurrentIndex(-1)
+
+        pump_curves = self.gutils.execute("SELECT DISTINCT pump_curve_name FROM swmm_pumps_curve_data;").fetchall()
+        if pump_curves:
+            for pump_curve in pump_curves:
+                self.pump_curve.addItem(pump_curve[0])
+            self.pump_curve.setCurrentIndex(-1)
+
+        self.pump_name.editingFinished.connect(self.save_pumps)
+        self.pump_inlet.currentIndexChanged.connect(self.save_pumps)
+        self.pump_outlet.currentIndexChanged.connect(self.save_pumps)
+        self.pump_curve.currentIndexChanged.connect(self.save_pumps)
+        self.pump_init_status.currentIndexChanged.connect(self.save_pumps)
+        self.pump_startup_depth.editingFinished.connect(self.save_pumps)
+        self.pump_shutoff_depth.editingFinished.connect(self.save_pumps)
+
+    def populate_attributes(self, fid):
+        """
+        Function to populate the attributes
+        """
+        if not fid:
+            return
+
+        self.clear_rubber()
+
+        self.current_node = fid
+        self.lyrs.show_feat_rubber(self.user_swmm_pumps_lyr.id(), fid, QColor(Qt.red))
+
+        # Get the attributes
+        attributes = self.gutils.execute(
+            f"""SELECT 
+                    pump_name,
+                    pump_inlet, 
+                    pump_outlet,
+                    pump_curve, 
+                    pump_init_status, 
+                    pump_startup_depth,
+                    pump_shutoff_depth                      
+                FROM
+                    user_swmm_pumps
+                WHERE
+                    fid = {fid};"""
+        ).fetchall()[0]
+
+        self.pump_name.setText(attributes[0])
+        self.pump_inlet.setCurrentText(attributes[1])
+        self.pump_outlet.setCurrentText(attributes[2])
+        self.pump_curve.setCurrentText(attributes[3])
+        self.pump_init_status.setCurrentText(attributes[4])
+        self.pump_startup_depth.setValue(attributes[5])
+        self.pump_shutoff_depth.setValue(attributes[6])
+
+    def save_pumps(self):
+        """
+        Function to save the pumps everytime an attribute is changed
+        """
+
+        pump_name = self.pump_name.text()
+        pump_inlet = self.pump_inlet.currentText()
+        pump_outlet = self.pump_outlet.currentText()
+        pump_curve = self.pump_curve.currentText()
+        pump_init_status = self.pump_init_status.currentText()
+        pump_startup_depth = self.pump_startup_depth.value()
+        pump_shutoff_depth = self.pump_shutoff_depth.value()
+
+        self.gutils.execute(f"""
+                                UPDATE 
+                                    user_swmm_pumps
+                                SET 
+                                    pump_name = '{pump_name}',
+                                    pump_inlet = '{pump_inlet}',
+                                    pump_outlet = '{pump_outlet}',
+                                    pump_curve = '{pump_curve}',
+                                    pump_init_status = '{pump_init_status}',
+                                    pump_startup_depth = '{pump_startup_depth}',
+                                    pump_shutoff_depth = '{pump_shutoff_depth}'                               
+                                WHERE 
+                                    fid = '{self.current_node}';
+                            """)
+
+        self.populate_attributes(self.current_node)
+
+        # # Green rubber the inlet
+        # if pump_inlet != '':
+        #     inlet_fid = self.gutils.execute(f"SELECT fid FROM user_swmm_inlets_junctions WHERE name = '{pump_inlet}'").fetchone()[0]
+        #     self.lyrs.show_feat_rubber(self.user_swmm_inlets_junctions_lyr.id(), inlet_fid, QColor(Qt.green), clear=False)
+        #
+        # # Blue rubber the outlet
+        # if pump_outlet != '':
+        #     outlet_fid = self.gutils.execute(f"SELECT fid FROM user_swmm_inlets_junctions WHERE name = '{pump_outlet}'").fetchone()[0]
+        #     self.lyrs.show_feat_rubber(self.user_swmm_inlets_junctions_lyr.id(), outlet_fid, QColor(Qt.blue), clear=False)
+        #
+        # self.user_swmm_inlets_junctions_lyr.triggerRepaint()
+        self.user_swmm_pumps_lyr.triggerRepaint()
+
+    def clear_rubber(self):
+        """
+        Function to clear the rubber when closing the widget
+        """
+        self.lyrs.clear_rubber()
+
+
 uiDialog, qtBaseClass = load_ui("conduit_attributes")
 
 
@@ -845,6 +983,7 @@ class ConduitAttributes(qtBaseClass, uiDialog):
         self.dock_widget.setWidget(self)
 
         self.user_swmm_conduits_lyr = self.lyrs.data["user_swmm_conduits"]["qlyr"]
+        self.user_swmm_inlets_junctions_lyr = self.lyrs.data["user_swmm_inlets_junctions"]["qlyr"]
 
         if self.losses_flapgate.count() == 0:
             self.losses_flapgate.addItem("True")
@@ -901,6 +1040,8 @@ class ConduitAttributes(qtBaseClass, uiDialog):
         """
         if not fid:
             return
+
+        self.clear_rubber()
 
         self.current_node = fid
         self.lyrs.show_feat_rubber(self.user_swmm_conduits_lyr.id(), fid, QColor(Qt.red))
@@ -1005,4 +1146,22 @@ class ConduitAttributes(qtBaseClass, uiDialog):
                             """)
 
         self.populate_attributes(self.current_node)
+
+        # # Green rubber the inlet
+        # if self.conduit_inlet.text() != '':
+        #     conduit_fid = self.gutils.execute(f"SELECT fid FROM user_swmm_inlets_junctions WHERE name = '{self.conduit_inlet.text()}'").fetchone()[0]
+        #     self.lyrs.show_feat_rubber(self.user_swmm_inlets_junctions_lyr.id(), conduit_fid, QColor(Qt.green), clear=False)
+        #
+        # # Blue rubber the outlet
+        # if self.conduit_outlet.text() != '':
+        #     conduit_fid = self.gutils.execute(f"SELECT fid FROM user_swmm_inlets_junctions WHERE name = '{self.conduit_outlet.text()}'").fetchone()[0]
+        #     self.lyrs.show_feat_rubber(self.user_swmm_inlets_junctions_lyr.id(), conduit_fid, QColor(Qt.blue), clear=False)
+        #
+        # self.user_swmm_inlets_junctions_lyr.triggerRepaint()
         self.user_swmm_conduits_lyr.triggerRepaint()
+
+    def clear_rubber(self):
+        """
+        Function to clear the rubber when closing the widget
+        """
+        self.lyrs.clear_rubber()

@@ -508,6 +508,12 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         self.user_swmm_conduits_lyr.setEditFormConfig(formConfig)
         field_reuse(self.user_swmm_conduits_lyr)
 
+        formConfig = self.user_swmm_pumps_lyr.editFormConfig()
+        formConfig.setInitCodeSource(Qgis.AttributeFormPythonInitCodeSource(1))
+        formConfig.setUiForm(os.path.join(os.path.dirname(os.path.realpath(__file__)), "..", "ui", "pump_attributes.ui"))
+        self.user_swmm_pumps_lyr.setEditFormConfig(formConfig)
+        field_reuse(self.user_swmm_pumps_lyr)
+
     def setup_connection(self):
         con = self.iface.f2d["con"]
         if con is None:

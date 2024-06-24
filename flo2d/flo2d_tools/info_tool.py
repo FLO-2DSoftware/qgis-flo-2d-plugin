@@ -60,7 +60,8 @@ class InfoTool(QgsMapToolIdentify):
             "struct",
             "user_swmm_inlets_junctions",
             "user_swmm_outlets",
-            "user_swmm_conduits"
+            "user_swmm_conduits",
+            "user_swmm_pumps"
         ]
         # try:
         res = self.identify(e.x(), e.y(), self.lyrs_list, QgsMapToolIdentify.TopDownAll)
@@ -103,6 +104,11 @@ class InfoTool(QgsMapToolIdentify):
                     sd_layer = self.lyrs.get_layer_by_name("Storm Drain Conduits", group=self.lyrs.group).layer()
                     feat = next(sd_layer.getFeatures(QgsFeatureRequest(fid)))
                     name = feat["conduit_name"]
+                    actions[i][j] = QAction(name, None)
+                elif ln == "Storm Drain Pumps":
+                    sd_layer = self.lyrs.get_layer_by_name("Storm Drain Pumps", group=self.lyrs.group).layer()
+                    feat = next(sd_layer.getFeatures(QgsFeatureRequest(fid)))
+                    name = feat["pump_name"]
                     actions[i][j] = QAction(name, None)
                 else:
                     actions[i][j] = QAction(str(fid), None)
