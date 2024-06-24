@@ -211,21 +211,6 @@ class InletAttributes(qtBaseClass, uiDialog):
         swmm_clogging_factor = self.swmm_clogging_factor.value()
         swmm_time_for_clogging = self.swmm_time_for_clogging.value()
         drboxarea = self.drboxarea.value()
-        # outfall_invert_elev = self.outfall_invert_elev.value()
-        # if self.flapgate.currentIndex() == 0:
-        #     flapgate = 'False'
-        # else:
-        #     flapgate = 'True'
-        # swmm_allow_discharge = self.swmm_allow_discharge.currentText()
-        # outfall_type = self.outfall_type.currentText()
-        # if self.tidal_curve.count() > 0:
-        #     tidal_curve = ''
-        # else:
-        #     tidal_curve = self.tidal_curve.currentText()
-        # if self.time_series.count() > 0:
-        #     time_series = ''
-        # else:
-        #     time_series = self.time_series.currentText()
 
         self.gutils.execute(f"""
                                 UPDATE 
@@ -855,7 +840,7 @@ class ConduitAttributes(qtBaseClass, uiDialog):
         self.gutils = GeoPackageUtils(con, iface)
 
         # Create a dock widget
-        self.dock_widget = QDockWidget("Storm Drain", self.iface.mainWindow())
+        self.dock_widget = QgsDockWidget("Conduits", self.iface.mainWindow())
         self.dock_widget.setObjectName("Conduits")
         self.dock_widget.setWidget(self)
 
@@ -864,6 +849,51 @@ class ConduitAttributes(qtBaseClass, uiDialog):
         if self.losses_flapgate.count() == 0:
             self.losses_flapgate.addItem("True")
             self.losses_flapgate.addItem("False")
+
+        if self.xsections_shape.count() == 0:
+            xsections = [
+                "CIRCULAR",
+                "FORCE_MAIN",
+                "FILLED_CIRCULAR",
+                "RECT_CLOSED",
+                "RECT_OPEN",
+                "TRAPEZOIDAL",
+                "TRIANGULAR",
+                "HORIZ_ELLIPSE",
+                "VERT_ELLIPSE",
+                "ARCH",
+                "PARABOLIC",
+                "POWER",
+                "RECT_TRIANGULAR",
+                "RECT_ROUND",
+                "MODBASKETHANDLE",
+                "EGG",
+                "HORSESHOE",
+                "GOTHIC",
+                "CATENARY",
+                "SEMIELLIPTICAL",
+                "BASKETHANDLE",
+                "SEMICIRCULAR"
+            ]
+            self.xsections_shape.addItems(xsections)
+
+        self.conduit_name.editingFinished.connect(self.save_conduits)
+        self.conduit_length.editingFinished.connect(self.save_conduits)
+        self.conduit_manning.editingFinished.connect(self.save_conduits)
+        self.conduit_inlet_offset.editingFinished.connect(self.save_conduits)
+        self.conduit_outlet_offset.editingFinished.connect(self.save_conduits)
+        self.conduit_init_flow.editingFinished.connect(self.save_conduits)
+        self.conduit_max_flow.editingFinished.connect(self.save_conduits)
+        self.losses_inlet.editingFinished.connect(self.save_conduits)
+        self.losses_outlet.editingFinished.connect(self.save_conduits)
+        self.losses_average.editingFinished.connect(self.save_conduits)
+        self.losses_flapgate.currentIndexChanged.connect(self.save_conduits)
+        self.xsections_shape.currentIndexChanged.connect(self.save_conduits)
+        self.xsections_max_depth.editingFinished.connect(self.save_conduits)
+        self.xsections_geom2.editingFinished.connect(self.save_conduits)
+        self.xsections_geom3.editingFinished.connect(self.save_conduits)
+        self.xsections_geom4.editingFinished.connect(self.save_conduits)
+        self.xsections_barrels.editingFinished.connect(self.save_conduits)
 
     def populate_attributes(self, fid):
         """
@@ -903,9 +933,9 @@ class ConduitAttributes(qtBaseClass, uiDialog):
                     fid = {fid};"""
         ).fetchall()[0]
 
-        # self.conduit_name.
-        # self.conduit_inlet.
-        # self.conduit_outlet.
+        self.conduit_name.setText(str(attributes[0]))
+        self.conduit_inlet.setText(str(attributes[1]))
+        self.conduit_outlet.setText(str(attributes[2]))
         self.conduit_length.setValue(attributes[3])
         self.conduit_manning.setValue(attributes[4])
         self.conduit_inlet_offset.setValue(attributes[5])
@@ -919,8 +949,60 @@ class ConduitAttributes(qtBaseClass, uiDialog):
             self.losses_flapgate.setCurrentIndex(1)
         else:
             self.losses_flapgate.setCurrentIndex(0)
+        self.xsections_shape.setCurrentText(attributes[13])
         self.xsections_max_depth.setValue(attributes[14])
         self.xsections_geom2.setValue(attributes[15])
         self.xsections_geom3.setValue(attributes[16])
         self.xsections_geom4.setValue(attributes[17])
-        self.xsections_barrel.setValue(attributes[18])
+        self.xsections_barrels.setValue(attributes[18])
+
+    def save_conduits(self):
+        """
+        Function to save the conduits everytime an attribute is changed
+        """
+
+        conduit_name = self.conduit_name.text()
+        conduit_length = self.conduit_length.value()
+        conduit_manning = self.conduit_manning.value()
+        conduit_inlet_offset = self.conduit_inlet_offset.value()
+        conduit_outlet_offset = self.conduit_outlet_offset.value()
+        conduit_init_flow = self.conduit_init_flow.value()
+        conduit_max_flow = self.conduit_max_flow.value()
+        losses_inlet = self.losses_inlet.value()
+        losses_outlet = self.losses_outlet.value()
+        losses_average = self.losses_average.value()
+        losses_flapgate = self.losses_flapgate.currentText()
+        xsections_shape = self.xsections_shape.currentText()
+        xsections_max_depth = self.xsections_max_depth.value()
+        xsections_geom2 = self.xsections_geom2.value()
+        xsections_geom3 = self.xsections_geom3.value()
+        xsections_geom4 = self.xsections_geom4.value()
+        xsections_barrels = self.xsections_barrels.value()
+
+        self.gutils.execute(f"""
+                                UPDATE 
+                                    user_swmm_conduits
+                                SET 
+                                    conduit_name = '{conduit_name}',
+                                    conduit_length = '{conduit_length}',
+                                    conduit_manning = '{conduit_manning}',
+                                    conduit_inlet_offset = '{conduit_inlet_offset}',
+                                    conduit_outlet_offset = '{conduit_outlet_offset}',
+                                    conduit_init_flow = '{conduit_init_flow}',
+                                    conduit_max_flow = '{conduit_max_flow}',
+                                    losses_inlet = '{losses_inlet}',
+                                    losses_outlet = '{losses_outlet}',
+                                    losses_average = '{losses_average}',
+                                    losses_flapgate = '{losses_flapgate}',
+                                    xsections_shape = '{xsections_shape}',
+                                    xsections_max_depth = '{xsections_max_depth}',
+                                    xsections_geom2 = '{xsections_geom2}',
+                                    xsections_geom3 = '{xsections_geom3}',
+                                    xsections_geom4 = '{xsections_geom4}',
+                                    xsections_barrels = '{xsections_barrels}'                                    
+                                WHERE 
+                                    fid = '{self.current_node}';
+                            """)
+
+        self.populate_attributes(self.current_node)
+        self.user_swmm_conduits_lyr.triggerRepaint()

@@ -318,6 +318,236 @@
     </symbol>
   </SingleCategoryDiagramRenderer>
   <DiagramLayerSettings yPosColumn="-1" showColumn="-1" linePlacementFlags="10" placement="2" dist="0" xPosColumn="-1" priority="0" obstacle="0" zIndex="0" showAll="1"/>
+    <fieldConfiguration>
+    <field name="fid">
+      <editWidget type="TextEdit">
+        <config>
+          <Option/>
+        </config>
+      </editWidget>
+    </field>
+    <field name="conduit_name">
+      <editWidget type="TextEdit">
+        <config>
+          <Option/>
+        </config>
+      </editWidget>
+    </field>
+    <field name="conduit_inlet">
+      <editWidget type="TextEdit">
+        <config>
+          <Option/>
+        </config>
+      </editWidget>
+    </field>
+    <field name="conduit_outlet">
+      <editWidget type="TextEdit">
+        <config>
+          <Option/>
+        </config>
+      </editWidget>
+    </field>
+    <field name="conduit_length">
+      <editWidget type="TextEdit">
+        <config>
+          <Option/>
+        </config>
+      </editWidget>
+    </field>
+    <field name="conduit_manning">
+      <editWidget type="TextEdit">
+        <config>
+          <Option/>
+        </config>
+      </editWidget>
+    </field>
+    <field name="conduit_inlet_offset">
+      <editWidget type="TextEdit">
+        <config>
+          <Option/>
+        </config>
+      </editWidget>
+    </field>
+    <field name="conduit_outlet_offset">
+      <editWidget type="TextEdit">
+        <config>
+          <Option/>
+        </config>
+      </editWidget>
+    </field>
+    <field name="conduit_init_flow">
+      <editWidget type="TextEdit">
+        <config>
+          <Option/>
+        </config>
+      </editWidget>
+    </field>
+    <field name="conduit_max_flow">
+      <editWidget type="TextEdit">
+        <config>
+          <Option/>
+        </config>
+      </editWidget>
+    </field>
+    <field name="losses_inlet">
+      <editWidget type="TextEdit">
+        <config>
+          <Option/>
+        </config>
+      </editWidget>
+    </field>
+    <field name="losses_outlet">
+      <editWidget type="TextEdit">
+        <config>
+          <Option/>
+        </config>
+      </editWidget>
+    </field>
+    <field name="losses_average">
+      <editWidget type="TextEdit">
+        <config>
+          <Option type="Map">
+            <Option value="false" name="IsMultiline" type="bool"/>
+            <Option value="false" name="UseHtml" type="bool"/>
+          </Option>
+        </config>
+      </editWidget>
+    </field>
+    <field name="losses_flapgate">
+      <editWidget type="ValueMap">
+        <config>
+          <Option type="Map">
+            <Option name="map" type="List">
+              <Option type="Map">
+                <Option value="False" name="False" type="QString"/>
+              </Option>
+              <Option type="Map">
+                <Option value="True" name="True" type="QString"/>
+              </Option>
+            </Option>
+          </Option>
+        </config>
+      </editWidget>
+    </field>
+    <field name="xsections_shape">
+      <editWidget type="ValueMap">
+        <config>
+          <Option type="Map">
+            <Option name="map" type="List">
+              <Option type="Map">
+                <Option value="CIRCULAR" name="CIRCULAR" type="QString"/>
+              </Option>
+              <Option type="Map">
+                <Option value="FORCE_MAIN" name="FORCE_MAIN" type="QString"/>
+              </Option>
+              <Option type="Map">
+                <Option value="FILLED_CIRCULAR" name="FILLED_CIRCULAR" type="QString"/>
+              </Option>
+              <Option type="Map">
+                <Option value="RECT_CLOSED" name="RECT_CLOSED" type="QString"/>
+              </Option>
+              <Option type="Map">
+                <Option value="RECT_OPEN" name="RECT_OPEN" type="QString"/>
+              </Option>
+              <Option type="Map">
+                <Option value="TRAPEZOIDAL" name="TRAPEZOIDAL" type="QString"/>
+              </Option>
+              <Option type="Map">
+                <Option value="TRIANGULAR" name="TRIANGULAR" type="QString"/>
+              </Option>
+              <Option type="Map">
+                <Option value="HORIZ_ELLIPSE" name="HORIZ_ELLIPSE" type="QString"/>
+              </Option>
+              <Option type="Map">
+                <Option value="VERT_ELLIPSE" name="VERT_ELLIPSE" type="QString"/>
+              </Option>
+              <Option type="Map">
+                <Option value="ARCH" name="ARCH" type="QString"/>
+              </Option>
+              <Option type="Map">
+                <Option value="PARABOLIC" name="PARABOLIC" type="QString"/>
+              </Option>
+              <Option type="Map">
+                <Option value="POWER" name="POWER" type="QString"/>
+              </Option>
+              <Option type="Map">
+                <Option value="RECT_TRIANGULAR" name="RECT_TRIANGULAR" type="QString"/>
+              </Option>
+              <Option type="Map">
+                <Option value="RECT_ROUND" name="RECT_ROUND" type="QString"/>
+              </Option>
+              <Option type="Map">
+                <Option value="MODBASKETHANDLE" name="MODBASKETHANDLE" type="QString"/>
+              </Option>
+              <Option type="Map">
+                <Option value="EGG" name="EGG" type="QString"/>
+              </Option>
+              <Option type="Map">
+                <Option value="HORSESHOE" name="HORSESHOE" type="QString"/>
+              </Option>
+              <Option type="Map">
+                <Option value="GOTHIC" name="GOTHIC" type="QString"/>
+              </Option>
+              <Option type="Map">
+                <Option value="CATENARY" name="CATENARY" type="QString"/>
+              </Option>
+              <Option type="Map">
+                <Option value="SEMIELLIPTICAL" name="SEMIELLIPTICAL" type="QString"/>
+              </Option>
+              <Option type="Map">
+                <Option value="BASKETHANDLE" name="BASKETHANDLE" type="QString"/>
+              </Option>
+              <Option type="Map">
+                <Option value="SEMICIRCULAR" name="SEMICIRCULAR" type="QString"/>
+              </Option>
+            </Option>
+          </Option>
+        </config>
+      </editWidget>
+    </field>
+    <field name="xsections_max_depth">
+      <editWidget type="TextEdit">
+        <config>
+          <Option/>
+        </config>
+      </editWidget>
+    </field>
+    <field name="xsections_geom2">
+      <editWidget type="TextEdit">
+        <config>
+          <Option/>
+        </config>
+      </editWidget>
+    </field>
+    <field name="xsections_geom3">
+      <editWidget type="TextEdit">
+        <config>
+          <Option/>
+        </config>
+      </editWidget>
+    </field>
+    <field name="xsections_geom4">
+      <editWidget type="TextEdit">
+        <config>
+          <Option/>
+        </config>
+      </editWidget>
+    </field>
+    <field name="xsections_barrels">
+      <editWidget type="TextEdit">
+        <config>
+          <Option/>
+        </config>
+      </editWidget>
+    </field>
+    <field name="notes">
+      <editWidget type="TextEdit">
+        <config>
+          <Option/>
+        </config>
+      </editWidget>
+    </field>
+  </fieldConfiguration>
   <annotationform>.</annotationform>
   <aliases>
     <alias field="fid" index="0" name=""/>

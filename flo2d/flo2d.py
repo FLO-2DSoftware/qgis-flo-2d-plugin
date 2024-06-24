@@ -3674,9 +3674,12 @@ class Flo2D(object):
         self.uc.bar_info("Selected Storm Drain Conduit: " + str(conduit_name[0]))
 
         dlg = ConduitAttributes(self.con, self.iface, self.lyrs)
+        self.iface.mainWindow().addDockWidget(Qt.RightDockWidgetArea, dlg.dock_widget)
+        self.iface.mainWindow().tabifyDockWidget(self.f2d_dock, dlg.dock_widget)
         dlg.dock_widget.setFloating(False)
         dlg.populate_attributes(fid)
         dlg.dock_widget.show()
+        dlg.dock_widget.raise_()
 
         self.f2d_conduits_dock = dlg.dock_widget
 

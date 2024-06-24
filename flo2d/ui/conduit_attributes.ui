@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>391</width>
-    <height>800</height>
+    <height>628</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -25,7 +25,7 @@
         <x>0</x>
         <y>0</y>
         <width>371</width>
-        <height>780</height>
+        <height>608</height>
        </rect>
       </property>
       <layout class="QGridLayout" name="gridLayout_2">
@@ -123,7 +123,7 @@
              </widget>
             </item>
             <item row="5" column="1">
-             <widget class="QSpinBox" name="xsections_barrel"/>
+             <widget class="QSpinBox" name="xsections_barrels"/>
             </item>
            </layout>
           </item>
@@ -274,7 +274,7 @@
             <item row="6" column="0">
              <widget class="QLabel" name="label_7">
               <property name="text">
-               <string>Inlet Offset</string>
+               <string>Outlet Offset</string>
               </property>
              </widget>
             </item>
