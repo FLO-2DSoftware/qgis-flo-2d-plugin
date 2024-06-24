@@ -420,10 +420,19 @@
         </config>
       </editWidget>
     </field>
-    <field configurationFlags="NoFlag" name="orifice_type">
-      <editWidget type="TextEdit">
+     <field name="orifice_type">
+      <editWidget type="ValueMap">
         <config>
-          <Option/>
+          <Option type="Map">
+            <Option type="List" name="map">
+              <Option type="Map">
+                <Option type="QString" value="SIDE" name="SIDE"/>
+              </Option>
+              <Option type="Map">
+                <Option type="QString" value="BOTTOM" name="BOTTOM"/>
+              </Option>
+            </Option>
+          </Option>
         </config>
       </editWidget>
     </field>
@@ -441,10 +450,19 @@
         </config>
       </editWidget>
     </field>
-    <field configurationFlags="NoFlag" name="orifice_flap_gate">
-      <editWidget type="TextEdit">
+    <field name="orifice_flap_gate">
+      <editWidget type="ValueMap">
         <config>
-          <Option/>
+          <Option type="Map">
+            <Option type="List" name="map">
+              <Option type="Map">
+                <Option type="QString" value="NO" name="NO"/>
+              </Option>
+              <Option type="Map">
+                <Option type="QString" value="YES" name="YES"/>
+              </Option>
+            </Option>
+          </Option>
         </config>
       </editWidget>
     </field>
@@ -455,10 +473,19 @@
         </config>
       </editWidget>
     </field>
-    <field configurationFlags="NoFlag" name="orifice_shape">
-      <editWidget type="TextEdit">
+    <field name="orifice_shape">
+      <editWidget type="ValueMap">
         <config>
-          <Option/>
+          <Option type="Map">
+            <Option type="List" name="map">
+              <Option type="Map">
+                <Option type="QString" value="CIRCULAR" name="CIRCULAR"/>
+              </Option>
+              <Option type="Map">
+                <Option type="QString" value="RECT_CLOSED" name="RECT_CLOSED"/>
+              </Option>
+            </Option>
+          </Option>
         </config>
       </editWidget>
     </field>

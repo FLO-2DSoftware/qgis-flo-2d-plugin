@@ -963,6 +963,158 @@ class PumpAttributes(qtBaseClass, uiDialog):
         self.lyrs.clear_rubber()
 
 
+uiDialog, qtBaseClass = load_ui("orifice_attributes")
+
+
+class OrificeAttributes(qtBaseClass, uiDialog):
+    def __init__(self, con, iface, layers):
+        qtBaseClass.__init__(self)
+        uiDialog.__init__(self)
+        self.iface = iface
+        self.lyrs = layers
+        self.setupUi(self)
+        self.uc = UserCommunication(iface, "FLO-2D")
+        self.con = con
+        self.gutils = GeoPackageUtils(con, iface)
+
+        # Create a dock widget
+        self.dock_widget = QgsDockWidget("Orifices", self.iface.mainWindow())
+        self.dock_widget.setObjectName("Orifices")
+        self.dock_widget.setWidget(self)
+
+        self.user_swmm_orifices_lyr = self.lyrs.data["user_swmm_orifices"]["qlyr"]
+        self.user_swmm_inlets_junctions_lyr = self.lyrs.data["user_swmm_inlets_junctions"]["qlyr"]
+
+        # Add junctions to the comboboxes
+        inlets_junctions = self.gutils.execute("SELECT name FROM user_swmm_inlets_junctions;").fetchall()
+        if inlets_junctions:
+            for inlets_junction in inlets_junctions:
+                self.orifice_inlet.addItem(inlets_junction[0])
+                self.orifice_outlet.addItem(inlets_junction[0])
+
+        if self.orifice_type.count() == 0:
+            init_status = ["SIDE", "BOTTOM"]
+            self.orifice_type.addItems(init_status)
+
+        if self.orifice_flap_gate.count() == 0:
+            self.orifice_flap_gate.addItem("NO")
+            self.orifice_flap_gate.addItem("YES")
+
+        if self.orifice_shape.count() == 0:
+            self.orifice_shape.addItem("CIRCULAR")
+            self.orifice_shape.addItem("RECT_CLOSED")
+
+        self.orifice_type.currentIndexChanged.connect(self.save_orifices)
+        self.orifice_flap_gate.currentIndexChanged.connect(self.save_orifices)
+        self.orifice_shape.currentIndexChanged.connect(self.save_orifices)
+        self.orifice_crest_height.editingFinished.connect(self.save_orifices)
+        self.orifice_disch_coeff.editingFinished.connect(self.save_orifices)
+        self.orifice_open_close_time.editingFinished.connect(self.save_orifices)
+        self.orifice_height.editingFinished.connect(self.save_orifices)
+        self.orifice_width.editingFinished.connect(self.save_orifices)
+
+    def populate_attributes(self, fid):
+        """
+        Function to populate the attributes
+        """
+        if not fid:
+            return
+
+        self.clear_rubber()
+
+        self.current_node = fid
+        self.lyrs.show_feat_rubber(self.user_swmm_orifices_lyr.id(), fid, QColor(Qt.red))
+
+        # Get the attributes
+        attributes = self.gutils.execute(
+            f"""SELECT
+                    orifice_name,
+                    orifice_inlet,
+                    orifice_outlet,
+                    orifice_type,
+                    orifice_crest_height,
+                    orifice_disch_coeff,
+                    orifice_flap_gate,
+                    orifice_open_close_time,
+                    orifice_shape,
+                    orifice_height,
+                    orifice_width
+                FROM
+                    user_swmm_orifices
+                WHERE
+                    fid = {fid};"""
+        ).fetchall()[0]
+
+        self.orifice_name.setText(attributes[0])
+        self.orifice_inlet.setCurrentText(attributes[1])
+        self.orifice_outlet.setCurrentText(attributes[2])
+        self.orifice_type.setCurrentText(attributes[3])
+        self.orifice_crest_height.setValue(attributes[4])
+        self.orifice_disch_coeff.setValue(attributes[5])
+        self.orifice_flap_gate.setCurrentText(attributes[6])
+        self.orifice_open_close_time.setValue(attributes[7])
+        self.orifice_shape.setCurrentText(attributes[8])
+        self.orifice_height.setValue(attributes[9])
+        self.orifice_width.setValue(attributes[10])
+
+    def save_orifices(self):
+        """
+        Function to save the orifices everytime an attribute is changed
+        """
+
+        orifice_name = self.orifice_name.text()
+        orifice_inlet = self.orifice_inlet.currentText()
+        orifice_outlet = self.orifice_outlet.currentText()
+        orifice_type = self.orifice_type.currentText()
+        orifice_crest_height = self.orifice_crest_height.value()
+        orifice_disch_coeff = self.orifice_disch_coeff.value()
+        orifice_flap_gate = self.orifice_flap_gate.currentText()
+        orifice_open_close_time = self.orifice_open_close_time.value()
+        orifice_shape = self.orifice_shape.currentText()
+        orifice_height = self.orifice_height.value()
+        orifice_width = self.orifice_width.value()
+
+        self.gutils.execute(f"""
+                                UPDATE
+                                    user_swmm_orifices
+                                SET
+                                    orifice_name = '{orifice_name}',
+                                    orifice_inlet = '{orifice_inlet}',
+                                    orifice_outlet = '{orifice_outlet}',
+                                    orifice_type = '{orifice_type}',
+                                    orifice_crest_height = '{orifice_crest_height}',
+                                    orifice_disch_coeff = '{orifice_disch_coeff}',
+                                    orifice_flap_gate = '{orifice_flap_gate}',
+                                    orifice_open_close_time = '{orifice_open_close_time}',
+                                    orifice_shape = '{orifice_shape}',
+                                    orifice_height = '{orifice_height}',
+                                    orifice_width = '{orifice_width}'
+                                WHERE
+                                    fid = '{self.current_node}';
+                            """)
+
+        self.populate_attributes(self.current_node)
+
+        # # Green rubber the inlet
+        # if pump_inlet != '':
+        #     inlet_fid = self.gutils.execute(f"SELECT fid FROM user_swmm_inlets_junctions WHERE name = '{pump_inlet}'").fetchone()[0]
+        #     self.lyrs.show_feat_rubber(self.user_swmm_inlets_junctions_lyr.id(), inlet_fid, QColor(Qt.green), clear=False)
+        #
+        # # Blue rubber the outlet
+        # if pump_outlet != '':
+        #     outlet_fid = self.gutils.execute(f"SELECT fid FROM user_swmm_inlets_junctions WHERE name = '{pump_outlet}'").fetchone()[0]
+        #     self.lyrs.show_feat_rubber(self.user_swmm_inlets_junctions_lyr.id(), outlet_fid, QColor(Qt.blue), clear=False)
+        #
+        # self.user_swmm_inlets_junctions_lyr.triggerRepaint()
+        self.user_swmm_orifices_lyr.triggerRepaint()
+
+    def clear_rubber(self):
+        """
+        Function to clear the rubber when closing the widget
+        """
+        self.lyrs.clear_rubber()
+
+
 uiDialog, qtBaseClass = load_ui("conduit_attributes")
 
 
