@@ -487,6 +487,13 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         self.simulate_stormdrain_chbox.setChecked(swmm)
 
         self.user_swmm_inlets_junctions_lyr.featureAdded.connect(self.inlet_junction_added)
+
+        formConfig = self.user_swmm_inlets_junctions_lyr.editFormConfig()
+        formConfig.setInitCodeSource(Qgis.AttributeFormPythonInitCodeSource(1))
+        formConfig.setUiForm(os.path.join(os.path.dirname(os.path.realpath(__file__)), "..", "ui", "inlet_attributes.ui"))
+        self.user_swmm_inlets_junctions_lyr.setEditFormConfig(formConfig)
+        field_reuse(self.user_swmm_inlets_junctions_lyr)
+
         self.user_swmm_outlets_lyr.featureAdded.connect(self.outlet_added)
 
         formConfig = self.user_swmm_outlets_lyr.editFormConfig()

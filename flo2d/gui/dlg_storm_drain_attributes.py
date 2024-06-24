@@ -446,8 +446,6 @@ class OutletAttributes(qtBaseClass, uiDialog):
             self.label_6: self.swmm_allow_discharge,
         }
 
-        # TODO ADJUST THE SYMBOLOGY FOR YES/NO
-
         if self.flapgate.count() == 0:
             self.flapgate.addItem("NO")
             self.flapgate.addItem("YES")
@@ -479,6 +477,9 @@ class OutletAttributes(qtBaseClass, uiDialog):
         self.swmm_allow_discharge.currentIndexChanged.connect(self.save_allow_discharge)
         self.tidal_curve.currentIndexChanged.connect(self.save_tidal)
         self.time_series.currentIndexChanged.connect(self.save_ts)
+
+        self.tidal_btn.clicked.connect(self.open_tidal_curve)
+        self.ts_btn.clicked.connect(self.open_time_series)
 
     def populate_attributes(self, fid):
         """
@@ -579,12 +580,12 @@ class OutletAttributes(qtBaseClass, uiDialog):
             flapgate = 'True'
         swmm_allow_discharge = self.swmm_allow_discharge.currentText()
         outfall_type = self.outfall_type.currentText()
-        if self.tidal_curve.count() > 0:
-            tidal_curve = ''
+        if self.tidal_curve.count() == 0:
+            tidal_curve = '*'
         else:
             tidal_curve = self.tidal_curve.currentText()
-        if self.time_series.count() > 0:
-            time_series = ''
+        if self.time_series.count() == 0:
+            time_series = '*'
         else:
             time_series = self.time_series.currentText()
         fixed_stage = self.fixed_stage.value()
@@ -688,6 +689,8 @@ class OutletAttributes(qtBaseClass, uiDialog):
                                     fid = '{self.current_node}';
                             """)
 
+        self.save_outlets()
+
     def save_ts(self):
         """
         Function to save only time_series to avoid signal errors
@@ -704,6 +707,8 @@ class OutletAttributes(qtBaseClass, uiDialog):
                                 WHERE
                                     fid = '{self.current_node}';
                             """)
+
+        self.save_outlets()
 
     def save_allow_discharge(self):
         """
@@ -791,9 +796,9 @@ class OutletAttributes(qtBaseClass, uiDialog):
                         names = self.gutils.execute(time_curve_names_sql).fetchall()
                         if names:
                             self.tidal_curve.clear()
+                            self.tidal_curve.addItem("*")
                             for name in names:
                                 self.tidal_curve.addItem(name[0])
-                            self.tidal_curve.addItem("")
 
                             idx = self.tidal_curve.findText(tidal_curve_name)
                             self.tidal_curve.setCurrentIndex(idx)
@@ -821,9 +826,9 @@ class OutletAttributes(qtBaseClass, uiDialog):
                         names = self.gutils.execute(time_series_names_sql).fetchall()
                         if names:
                             self.time_series.clear()
+                            self.time_series.addItem("*")
                             for name in names:
                                 self.time_series.addItem(name[0])
-                            self.time_series.addItem("")
 
                             idx = self.time_series.findText(time_series_name)
                             self.time_series.setCurrentIndex(idx)
