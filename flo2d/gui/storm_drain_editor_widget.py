@@ -5448,6 +5448,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
 
             layer1 = QgsProject.instance().mapLayersByName('Storm Drain Inlets/Junctions')[0]
             layer2 = QgsProject.instance().mapLayersByName('Storm Drain Storage Units')[0]
+            layer3 = QgsProject.instance().mapLayersByName('Storm Drain Outlets')[0]
             # Create a new memory layer for point geometries
             SD_all_nodes_layer = QgsVectorLayer("Point", 'SD All Points', 'memory')
 
@@ -5468,10 +5469,6 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             else:
                 return
 
-            # if not self.uc.question("Do you want to overwrite Inlet and Outlet node names\n" +
-            #                            "for all conduits, pumps, orifices, and weirs?"):
-            #     return
-
             fields = QgsFields()
             fields.append(QgsField('name', QVariant.String))
 
@@ -5481,7 +5478,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             SD_all_nodes_layer.updateFields()
 
             # Iterate through features and add point geometries
-            for layer in [layer1, layer2]:
+            for layer in [layer1, layer2, layer3]:
                 for feature in layer.getFeatures():
                     point_geometry = feature.geometry()
                     new_feature = QgsFeature(fields)
@@ -5489,7 +5486,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                     new_feature['name'] = feature['name']
                     pr.addFeatures([new_feature])
 
-                    # Add the new layer to the map
+            # Add the new layer to the map
             QgsProject.instance().addMapLayer(SD_all_nodes_layer)
 
             self.auto_assign_msg = ""
