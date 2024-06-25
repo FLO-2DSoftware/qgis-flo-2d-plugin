@@ -111,7 +111,7 @@ from .gui.dlg_schem_xs_info import SchemXsecEditorDialog
 from .gui.dlg_schema2user import Schema2UserDialog
 from .gui.dlg_settings import SettingsDialog
 from .gui.dlg_storm_drain_attributes import InletAttributes, ConduitAttributes, OutletAttributes, PumpAttributes, \
-    OrificeAttributes, WeirAttributes
+    OrificeAttributes, WeirAttributes, StorageUnitAttributes
 from .gui.dlg_update_gpkg import UpdateGpkg
 from .gui.dlg_user2schema import User2SchemaDialog
 from .gui.f2d_main_widget import FLO2DWidget
@@ -192,6 +192,7 @@ class Flo2D(object):
         self.f2d_pumps_dock = None
         self.f2d_orifices_dock = None
         self.f2d_weirs_dock = None
+        self.f2d_storage_units_dock = None
         self.create_map_tools()
         self.crs = None
         self.cur_info_table = None
@@ -3714,6 +3715,31 @@ class Flo2D(object):
         self.f2d_orifices_dock = dlg.dock_widget
 
     @connection_required
+    def show_sd_storage_unit_attributes(self, fid=None):
+        """
+        Show the selected sd storage unit attributes
+        """
+        if self.f2d_storage_units_dock:
+            self.iface.removeDockWidget(self.f2d_storage_units_dock)
+            self.f2d_storage_units_dock.close()
+            self.f2d_storage_units_dock.deleteLater()
+            self.f2d_storage_units_dock = None
+
+        storage_unit_name = self.gutils.execute("SELECT name FROM user_swmm_storage_units WHERE fid = ?",
+                                           (fid,)).fetchone()
+        self.uc.bar_info("Selected Storm Drain Storage Unit: " + str(storage_unit_name[0]))
+
+        dlg = StorageUnitAttributes(self.con, self.iface, self.lyrs)
+        self.iface.mainWindow().addDockWidget(Qt.RightDockWidgetArea, dlg.dock_widget)
+        self.iface.mainWindow().tabifyDockWidget(self.f2d_dock, dlg.dock_widget)
+        dlg.dock_widget.setFloating(False)
+        dlg.populate_attributes(fid)
+        dlg.dock_widget.show()
+        dlg.dock_widget.raise_()
+
+        self.f2d_storage_units_dock = dlg.dock_widget
+
+    @connection_required
     def show_sd_pump_attributes(self, fid=None):
         """
         Show the selected sd pump attributes
@@ -4465,6 +4491,7 @@ class Flo2D(object):
             "user_swmm_weirs": self.show_sd_weir_attributes,
             "user_swmm_orifices": self.show_sd_orifice_attributes,
             "user_swmm_pumps": self.show_sd_pump_attributes,
+            "user_swmm_storage_units": self.show_sd_storage_unit_attributes,
         }
 
     def restore_settings(self):

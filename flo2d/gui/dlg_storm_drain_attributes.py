@@ -1475,3 +1475,295 @@ class ConduitAttributes(qtBaseClass, uiDialog):
         Function to clear the rubber when closing the widget
         """
         self.lyrs.clear_rubber()
+
+
+uiDialog, qtBaseClass = load_ui("storage_unit_attributes")
+
+class StorageUnitAttributes(qtBaseClass, uiDialog):
+    def __init__(self, con, iface, layers):
+        qtBaseClass.__init__(self)
+        uiDialog.__init__(self)
+        self.iface = iface
+        self.lyrs = layers
+        self.setupUi(self)
+        self.uc = UserCommunication(iface, "FLO-2D")
+        self.con = con
+        self.gutils = GeoPackageUtils(con, iface)
+
+        # Create a dock widget
+        self.dock_widget = QgsDockWidget("Storage Units", self.iface.mainWindow())
+        self.dock_widget.setObjectName("Storage Units")
+        self.dock_widget.setWidget(self)
+
+        if self.external_inflow.count() == 0:
+            self.external_inflow.addItem("NO")
+            self.external_inflow.addItem("YES")
+
+        if self.treatment.count() == 0:
+            self.treatment.addItem("NO")
+            self.treatment.addItem("YES")
+
+        if self.infil_method.count() == 0:
+            self.infil_method.addItem("GREEN_AMPT")
+
+        # tabular_curves = self.gutils.execute("SELECT tidal_curve_name FROM swmm_tidal_curve;").fetchall()
+        # self.tidal_curve.addItem('*')
+        # if tidal_curves:
+        #     for tidal_curve in tidal_curves:
+        #         self.tidal_curve.addItem(tidal_curve[0])
+        #     self.tidal_curve.setCurrentIndex(0)
+
+        # Connections
+        self.name.editingFinished.connect(self.save_storage_units)
+        self.max_depth.editingFinished.connect(self.save_storage_units)
+        self.init_depth.editingFinished.connect(self.save_storage_units)
+        self.invert_elev.editingFinished.connect(self.save_storage_units)
+        self.external_inflow.currentIndexChanged.connect(self.save_storage_units)
+        self.treatment.currentIndexChanged.connect(self.save_storage_units)
+        self.evap_factor.editingFinished.connect(self.save_storage_units)
+        self.infiltration_grpbox.toggled.connect(self.save_storage_units)
+        self.infil_method.currentIndexChanged.connect(self.save_storage_units)
+        self.suction_head.editingFinished.connect(self.save_storage_units)
+        self.conductivity.editingFinished.connect(self.save_storage_units)
+        self.initial_deficit.editingFinished.connect(self.save_storage_units)
+        self.functional_grpbox.toggled.connect(self.save_storage_units)
+        self.coefficient.editingFinished.connect(self.save_storage_units)
+        self.exponent.editingFinished.connect(self.save_storage_units)
+        self.constant.editingFinished.connect(self.save_storage_units)
+        self.tabular_grpbox.toggled.connect(self.save_storage_units)
+        self.curve_name.currentIndexChanged.connect(self.save_storage_units)
+
+        self.user_swmm_storage_units_lyr = self.lyrs.data["user_swmm_storage_units"]["qlyr"]
+
+    def populate_attributes(self, fid):
+        """
+        Function to populate the attributes
+        """
+
+        if not fid:
+            return
+
+        self.clear_rubber()
+
+        self.current_node = fid
+        self.lyrs.show_feat_rubber(self.user_swmm_storage_units_lyr.id(), fid, QColor(Qt.red))
+
+        # Get the attributes
+        attributes = self.gutils.execute(
+            f"""SELECT
+                    grid,
+                    name,
+                    max_depth,
+                    init_depth,
+                    invert_elev,
+                    external_inflow,
+                    treatment,
+                    evap_factor,
+                    infiltration,
+                    infil_method,
+                    suction_head,
+                    conductivity,
+                    initial_deficit,
+                    storage_curve,
+                    coefficient,
+                    exponent,
+                    constant,
+                    curve_name
+                FROM
+                    user_swmm_storage_units
+                WHERE
+                    fid = {fid};"""
+        ).fetchall()[0]
+
+        # Assign attributes to the dialog
+        self.grid.setText(str(attributes[0]))
+        self.name.setText(str(attributes[1]))
+        self.max_depth.setValue(attributes[2])
+        self.init_depth.setValue(attributes[3])
+        self.invert_elev.setValue(attributes[4])
+        if attributes[5] == 'True':
+            self.external_inflow.setCurrentText('YES')
+        else:
+            self.external_inflow.setCurrentText('NO')
+        self.treatment.setCurrentText(attributes[6])
+        self.evap_factor.setValue(attributes[7])
+        self.infiltration_grpbox.setChecked(True) if attributes[8] == 'True' else self.infiltration_grpbox.setChecked(False)
+        self.infil_method.setCurrentText(attributes[9])
+        self.suction_head.setValue(attributes[10])
+        self.conductivity.setValue(attributes[11])
+        self.initial_deficit.setValue(attributes[12])
+        self.functional_grpbox.setChecked(True) if attributes[13] == 'FUNCTIONAL' else self.functional_grpbox.setChecked(False)
+        self.coefficient.setValue(attributes[14])
+        self.exponent.setValue(attributes[15])
+        self.constant.setValue(attributes[16])
+        self.tabular_grpbox.setChecked(True) if attributes[13] == 'TABULAR' else self.tabular_grpbox.setChecked(False)
+        if attributes[17]:
+            self.curve_name.setCurrentText(attributes[17])
+
+    def save_storage_units(self):
+        """
+        Function to save the storage units everytime an attribute is changed
+        """
+
+        old_name_qry = self.gutils.execute(
+            f"""SELECT name FROM user_swmm_storage_units WHERE fid = '{self.current_node}';""").fetchall()
+        old_name = ""
+        if old_name_qry:
+            old_name = old_name_qry[0][0]
+
+        name = self.name.text()
+        max_depth = self.max_depth.value()
+        init_depth = self.init_depth.value()
+        invert_elev = self.invert_elev.value()
+        external_inflow = self.external_inflow.currentText()
+        treatment = self.treatment.currentText()
+        evap_factor = self.evap_factor.value()
+        infiltration = self.infiltration_grpbox.isChecked()
+        infil_method = self.infil_method.currentText()
+        suction_head = self.suction_head.value()
+        conductivity = self.conductivity.value()
+        initial_deficit = self.initial_deficit.value()
+        if self.functional_grpbox.isChecked():
+            storage_curve = 'FUNCTIONAL'
+        elif self.tabular_grpbox.isChecked():
+            storage_curve = 'TABULAR'
+        else:
+            storage_curve = ''
+        coefficient = self.coefficient.value()
+        exponent = self.exponent.value()
+        constant = self.constant.value()
+        curve_name = self.curve_name.currentText()
+
+        self.gutils.execute(f"""
+                                UPDATE
+                                    user_swmm_storage_units
+                                SET
+                                    name = '{name}',
+                                    max_depth = '{max_depth}',
+                                    init_depth = '{init_depth}',
+                                    invert_elev = '{invert_elev}',
+                                    external_inflow = '{external_inflow}',
+                                    treatment = '{treatment}',
+                                    evap_factor = '{evap_factor}',
+                                    infiltration = '{infiltration}',
+                                    infil_method = '{infil_method}',
+                                    suction_head = '{suction_head}',
+                                    conductivity = '{conductivity}',
+                                    initial_deficit = '{initial_deficit}',
+                                    storage_curve = '{storage_curve}',
+                                    coefficient = '{coefficient}',
+                                    exponent = '{exponent}',
+                                    constant = '{constant}',
+                                    curve_name = '{curve_name}'
+                                WHERE
+                                    fid = '{self.current_node}';
+                            """)
+
+        self.user_swmm_storage_units_lyr.triggerRepaint()
+
+        # update the name on the user_swmm_conduits
+        if old_name != name:
+            update_inlets_qry = self.gutils.execute(
+                f"""
+                SELECT
+                    fid
+                FROM
+                    user_swmm_conduits
+                WHERE
+                    conduit_inlet = '{old_name}';
+                """
+            ).fetchall()
+            if update_inlets_qry:
+                for inlet in update_inlets_qry:
+                    self.gutils.execute(f"""
+                                            UPDATE
+                                                user_swmm_conduits
+                                            SET
+                                                conduit_inlet = '{name}'
+                                            WHERE
+                                                fid = '{inlet[0]}';
+                                        """)
+
+            update_outlets_qry = self.gutils.execute(
+                f"""
+                SELECT
+                    fid
+                FROM
+                    user_swmm_conduits
+                WHERE
+                    conduit_outlet = '{old_name}';
+                """
+            ).fetchall()
+            if update_outlets_qry:
+                for outlet in update_outlets_qry:
+                    self.gutils.execute(f"""
+                                            UPDATE
+                                                user_swmm_conduits
+                                            SET
+                                                conduit_outlet = '{name}'
+                                            WHERE
+                                                fid = '{outlet[0]}';
+                                        """)
+
+        self.populate_attributes(self.current_node)
+
+    def dock_widget(self):
+        """ Close and delete the dock widget. """
+        if self.dock_widget:
+            self.iface.removeDockWidget(self.dock_widget)
+            self.dock_widget.close()
+            self.dock_widget.deleteLater()
+            self.dock_widget = None
+
+    def clear_rubber(self):
+        """
+        Function to clear the rubber when closing the widget
+        """
+        self.lyrs.clear_rubber()
+
+    # def show_external_inflow_dlg(self):
+    #     """
+    #     Function to show the external inflow in the Inlets/Junctions
+    #     """
+    #     name = self.name.text()
+    #     if name == "":
+    #         return
+    #
+    #     dlg_external_inflow = ExternalInflowsDialog(self.iface, name)
+    #     dlg_external_inflow.setWindowTitle("Inlet/Junction " + name)
+    #     save = dlg_external_inflow.exec_()
+    #     if save:
+    #         inflow_sql = "SELECT baseline, pattern_name, time_series_name FROM swmm_inflows WHERE node_name = ?;"
+    #         inflow = self.gutils.execute(inflow_sql, (name,)).fetchone()
+    #         if inflow:
+    #             baseline = inflow[0]
+    #             pattern_name = inflow[1]
+    #             time_series_name = inflow[2]
+    #             if baseline == 0.0 and time_series_name == "":
+    #                 self.external_inflow.setCurrentIndex(0)
+    #             else:
+    #                 self.external_inflow.setCurrentIndex(1)
+    #
+    #         self.uc.bar_info("Storm Drain external inflow saved for inlet " + name)
+
+    # def external_inflow_btn_chk(self):
+    #     """
+    #     Function to enable/disable the external inflow btn
+    #     """
+    #     external_inflow = self.external_inflow.currentText()
+    #
+    #     if external_inflow == 'YES':
+    #         self.external_btn.setEnabled(True)
+    #         external_inflow_bool = 1
+    #     else:
+    #         self.external_btn.setEnabled(False)
+    #         external_inflow_bool = 0
+    #
+    #     self.gutils.execute(f"""
+    #                             UPDATE
+    #                                 user_swmm_inlets_junctions
+    #                             SET
+    #                                 external_inflow = '{external_inflow_bool}'
+    #                             WHERE
+    #                                 fid = '{self.current_node}';
+    #                         """)

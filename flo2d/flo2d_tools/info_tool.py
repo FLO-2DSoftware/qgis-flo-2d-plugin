@@ -63,7 +63,8 @@ class InfoTool(QgsMapToolIdentify):
             "user_swmm_conduits",
             "user_swmm_pumps",
             "user_swmm_orifices",
-            "user_swmm_weirs"
+            "user_swmm_weirs",
+            "user_swmm_storage_units"
         ]
         # try:
         res = self.identify(e.x(), e.y(), self.lyrs_list, QgsMapToolIdentify.TopDownAll)
@@ -98,6 +99,12 @@ class InfoTool(QgsMapToolIdentify):
                     actions[i][j] = QAction(name + " (" + str(grid) + ")", None)
                 elif ln == "Storm Drain Outlets":
                     sd_layer = self.lyrs.get_layer_by_name("Storm Drain Outlets", group=self.lyrs.group).layer()
+                    feat = next(sd_layer.getFeatures(QgsFeatureRequest(fid)))
+                    name = feat["name"]
+                    grid = feat["grid"]
+                    actions[i][j] = QAction(name + " (" + str(grid) + ")", None)
+                elif ln == "Storm Drain Storage Units":
+                    sd_layer = self.lyrs.get_layer_by_name("Storm Drain Storage Units", group=self.lyrs.group).layer()
                     feat = next(sd_layer.getFeatures(QgsFeatureRequest(fid)))
                     name = feat["name"]
                     grid = feat["grid"]
