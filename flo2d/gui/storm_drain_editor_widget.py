@@ -748,7 +748,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         try:
             if self.gutils.is_table_empty("user_swmm_inlets_junctions"):
                 self.uc.show_warn(
-                    'User Layer "Storm Drain Nodes" is empty!\n\n'
+                    'User Layer "Storm Drain Inlets/Junctions" is empty!\n\n'
                     + "Please import components from .INP file or shapefile, or convert from schematized Storm Drains."
                 )
                 return False
@@ -768,7 +768,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                     self.uc.show_critical(
                         "ERROR 060319.1831: Schematizing of Storm Drains failed!\n\n"
                         + "Geometry (inlet or outlet) missing.\n\n"
-                        + "Please check user Storm Drain Nodes layer."
+                        + "Please check user Storm Drain Inlets/Junctions layer."
                     )
                     return False
                 point = geom.asPoint()
@@ -1333,7 +1333,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         QApplication.setOverrideCursor(Qt.WaitCursor)
         try:
             """
-            Creates Storm Drain Nodes layer (Users layers).
+            Creates Storm Drain Inlets/Junctions layer (Users layers).
 
             Creates "user_swmm_inlets_junctions" layer with attributes taken from
             the [COORDINATES], [JUNCTIONS], and [OUTFALLS] groups.
@@ -1638,7 +1638,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         except Exception as e:
             QApplication.setOverrideCursor(Qt.ArrowCursor)
             self.uc.show_error(
-                "ERROR 060319.1610: Creating Storm Drain Nodes layer failed!\n\n"
+                "ERROR 060319.1610: Creating Storm Drain Inlets/Junctions layer failed!\n\n"
                 + "Please check your SWMM input data.\nAre the nodes coordinates inside the computational domain?",
                 e,
             )
@@ -2637,7 +2637,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 "Importing Storm Drain data finished!\n\n"
                 + "* "
                 + str(len(new_nodes))
-                + " Nodes (inlets, junctions, and outfalls) were created in the 'Storm Drain Nodes' layer ('User Layers' group), and\n\n"
+                + " Inlets & junctions were created in the 'Storm Drain Inlets/Junctions' layer ('User Layers' group), and\n\n"
                 + "* "
                 + str(len(new_storages))
                 + " Storage Units in the 'Storm Drain Storage Units' layer ('User Layers' group), and\n\n"
@@ -2665,7 +2665,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 + "\n\n"
                 + "* "
                 + str(updated_nodes)
-                + " Nodes (inlets, junctions, and outfalls) in the 'Storm Drain Nodes' layer ('User Layers' group) were updated, and\n\n"
+                + " Inlets & junctions in the 'Storm Drain Inlets/Junctions' layer ('User Layers' group) were updated, and\n\n"
                 + "* "
                 + str(updated_storages)
                 + " Storage Units in the 'Storm Drain Storage Units' layer ('User Layers' group) were updated, and\n\n"
@@ -2777,7 +2777,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
 
             if self.gutils.is_table_empty("user_swmm_inlets_junctions"):
                 self.uc.show_warn(
-                    'User Layer "Storm Drain Nodes" is empty!\n\n'
+                    'User Layer "Storm Drain Inlets/Junctions" is empty!\n\n'
                     + "Please import components from .INP file or shapefile, or convert from schematized Storm Drains."
                 )
                 return
@@ -3833,7 +3833,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         # See if there are inlets:
         if self.gutils.is_table_empty("user_swmm_inlets_junctions"):
             self.uc.show_warn(
-                'User Layer "Storm Drain Nodes" is empty!\n\n'
+                'User Layer "Storm Drain Inlets/Junctions" is empty!\n\n'
                 + "Please import components from .INP file or shapefile, or convert from schematized Storm Drains."
             )
             return
@@ -3842,7 +3842,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         qry = """SELECT * FROM user_swmm_inlets_junctions WHERE sd_type = 'O';"""
         rows = self.gutils.execute(qry).fetchall()
         if not rows:
-            self.uc.bar_warn("No outfalls defined in 'Storm Drain Nodes' User Layer!")
+            self.uc.bar_warn("No outfalls defined in 'Storm Drain Outlets' User Layer!")
             return
 
         dlg_outfalls = OutfallNodesDialog(self.iface, self.lyrs)
@@ -3867,7 +3867,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         # See if table is empty:
         if self.gutils.is_table_empty("user_swmm_inlets_junctions"):
             self.uc.show_warn(
-                'User Layer "Storm Drain Nodes" is empty!\n\n'
+                'User Layer "Storm Drain Inlets/Junctions" is empty!\n\n'
                 + "Please import components from .INP file or shapefile, or convert from schematized Storm Drains."
             )
             return
@@ -3877,7 +3877,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         rows = self.gutils.execute(qry).fetchall()
         if not rows:
             self.uc.show_info(
-                "WARNING 280920.0422: No inlets/junctions defined (of type 'I' or 'J') in 'Storm Drain Nodes' User Layer!"
+                "WARNING 280920.0422: No inlets/junctions defined (of type 'I' or 'J') in 'Storm Drain Inlets/Junctions' User Layer!"
             )
             return
 
@@ -4206,7 +4206,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
 
         if self.gutils.is_table_empty("user_swmm_inlets_junctions"):
             self.uc.show_warn(
-                'User Layer "Storm Drain Nodes" is empty!\n\n'
+                'User Layer "Storm Drain Inlets/Junctions" is empty!\n\n'
                 + "Please import components from .INP file or shapefile, or convert from schematized Storm Drains."
             )
             return
@@ -4900,7 +4900,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                         else:
                             self.uc.bar_info("Node " + intersection + " is not in file SWMMOUTFIN.OUT")
                     else:
-                        self.uc.bar_info("Grid " + grid + " not found in Storm Drain Nodes!")
+                        self.uc.bar_info("Grid " + grid + " not found in Storm Drain Inlets/Junctions!")
 
                 # Plot discharge graph:
                 self.uc.bar_info("Discharge for node " + intersection + " from file  '" + RPT_file + "'")
@@ -5446,7 +5446,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
 
         try:
 
-            layer1 = QgsProject.instance().mapLayersByName('Storm Drain Nodes')[0]
+            layer1 = QgsProject.instance().mapLayersByName('Storm Drain Inlets/Junctions')[0]
             layer2 = QgsProject.instance().mapLayersByName('Storm Drain Storage Units')[0]
             # Create a new memory layer for point geometries
             SD_all_nodes_layer = QgsVectorLayer("Point", 'SD All Points', 'memory')

@@ -42,7 +42,7 @@
           </size>
          </property>
          <property name="toolTip">
-          <string>Convert User 'Storm Drain Nodes' to Schematic 'Storm Drains'</string>
+          <string>Convert User 'Storm Drain Inlets/Junctions' to Schematic 'Storm Drains'</string>
          </property>
          <property name="text">
           <string>...</string>

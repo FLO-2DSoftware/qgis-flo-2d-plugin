@@ -2202,7 +2202,7 @@ class Flo2D(object):
                             QApplication.restoreOverrideCursor()
                             self.uc.log_info(traceback.format_exc())
                             self.uc.show_error(
-                                "ERROR 040723.1749:\n\nConverting Schematic SD Inlets to User Storm Drain Nodes failed!"
+                                "ERROR 040723.1749:\n\nConverting Schematic SD Inlets to User Storm Drain Inlets/Junctions failed!"
                                 + "\n_______________________________________________________________",
                                 e,
                             )
@@ -2720,7 +2720,7 @@ class Flo2D(object):
                                 self.uc.log_info(traceback.format_exc())
                                 QApplication.restoreOverrideCursor()
                                 self.uc.show_error(
-                                    "ERROR 100623.1044:\n\nConverting Schematic SD Inlets to User Storm Drain Nodes failed!"
+                                    "ERROR 100623.1044:\n\nConverting Schematic SD Inlets to User Storm Drain Inlets/Junctions failed!"
                                     + "\n_______________________________________________________________",
                                     e,
                                 )

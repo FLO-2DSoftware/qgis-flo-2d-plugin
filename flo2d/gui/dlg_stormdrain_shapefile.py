@@ -33,6 +33,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
         self.con = con
         self.gutils = GeoPackageUtils(con, iface)
         self.user_swmm_inlets_junctions_lyr = self.lyrs.data["user_swmm_inlets_junctions"]["qlyr"]
+        self.user_swmm_outlets_lyr = self.lyrs.data["user_swmm_outlets"]["qlyr"]
         self.user_swmm_strge_units_lyr = self.lyrs.data["user_swmm_storage_units"]["qlyr"]
         self.user_swmm_conduits_lyr = self.lyrs.data["user_swmm_conduits"]["qlyr"]
         self.user_swmm_pumps_lyr = self.lyrs.data["user_swmm_pumps"]["qlyr"]
@@ -1207,14 +1208,17 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                         + "You can also use the 'Auto-assign link nodes' button to automatically fill the node names required for the link connections."
                     )
 
-                self.uc.show_info(
+                self.uc.bar_info(
+                    "Importing Nodes and Links finished!"
+                )
+                self.uc.log_info(
                     "Importing Nodes and Links finished!\n\n"
                     + "Use the Components (Nodes and Links) buttons in the Storm Drain Editor to view/edit data.\n\n"
                     + "Complete the storm drain by clicking the Schematize Storm Drain Components button."
                 )
 
             else:
-                self.uc.show_info("No Storm Drain nodes or links selected!")
+                self.uc.show_info("No Storm Drain Inlets/Junctions or links selected!")
 
     def load_inlets_from_shapefile(self):
         if self.load_inlets:
@@ -1346,11 +1350,6 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                     feat.setAttribute("max_depth", max_depth)
                     feat.setAttribute("init_depth", init_depth)
                     feat.setAttribute("surcharge_depth", surcharge_depth)
-                    feat.setAttribute("outfall_invert_elev", 0)
-                    feat.setAttribute("outfall_type", "NORMAL")
-                    feat.setAttribute("tidal_curve", "*")
-                    feat.setAttribute("time_series", "*")
-                    feat.setAttribute("flapgate", "False")
                     feat.setAttribute("swmm_length", swmm_length)
                     feat.setAttribute("swmm_width", swmm_width)
                     feat.setAttribute("swmm_height", swmm_height)
@@ -1394,16 +1393,6 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                     feat.setAttribute("swmm_clogging_factor", swmm_clogging_factor)
                     feat.setAttribute("swmm_time_for_clogging", swmm_time_for_clogging)
                     feat.setAttribute("drboxarea", drboxarea)
-                    feat.setAttribute("swmm_allow_discharge", "0")
-                    feat.setAttribute("water_depth", 0)
-                    feat.setAttribute("rt_fid", 0)
-                    feat.setAttribute("outf_flo", 0)
-                    feat.setAttribute("invert_elev_inp", 0)
-                    feat.setAttribute("max_depth_inp", 0)
-                    feat.setAttribute("rim_elev_inp", 0)
-                    feat.setAttribute("rim_elev", 0)
-                    feat.setAttribute("ge_elev", 0)
-                    feat.setAttribute("difference", 0)
 
                     new_feats.append(feat)
 
@@ -1441,7 +1430,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
             except Exception as e:
                 QApplication.restoreOverrideCursor()
                 self.uc.show_error(
-                    "ERROR 070618.0451: creation of Storm Drain Nodes (Inlets) layer failed after reading "
+                    "ERROR 070618.0451: creation of Storm Drain Inlets/Junctions layer failed after reading "
                     + str(len(new_feats))
                     + " inlets!"
                     + "\n__________________________________________________",
@@ -1453,7 +1442,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
         if self.load_outfalls:
             try:
                 QApplication.setOverrideCursor(Qt.WaitCursor)
-                fields = self.user_swmm_inlets_junctions_lyr.fields()
+                fields = self.user_swmm_outlets_lyr.fields()
                 new_feats = []
                 outside_outfalls = ""
 
@@ -1462,14 +1451,11 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                 outfalls_shapefile_fts = lyr.getFeatures()
 
                 for f in outfalls_shapefile_fts:
-                    grid = 0
-                    sd_type = "O"
                     name = (
                         f[self.outfall_name_FieldCbo.currentText()]
                         if self.outfall_name_FieldCbo.currentText() != ""
                         else ""
                     )
-                    intype = 1
                     outfall_invert_elev = (
                         f[self.outfall_invert_elevation_FieldCbo.currentText()]
                         if self.outfall_invert_elevation_FieldCbo.currentText() != ""
@@ -1487,7 +1473,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                         if self.outfall_allow_discharge_FieldCbo.currentText() != ""
                         else ""
                     )
-                    swmm_allow_discharge = str(swmm_allow_discharge) if swmm_allow_discharge in ["0", "1", "2", 0, 1, 2]  else "0"
+                    swmm_allow_discharge = str(swmm_allow_discharge) if swmm_allow_discharge in ["0", "1", "2", 0, 1, 2] else "0"
                     
                     outfall_type = (
                         f[self.outfall_type_FieldCbo.currentText()]
@@ -1523,50 +1509,27 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                     feat.setGeometry(new_geom)
 
                     feat.setAttribute("grid", cell)
-                    feat.setAttribute("sd_type", "O")
                     feat.setAttribute("name", name)
-                    feat.setAttribute("intype", 1)
-                    feat.setAttribute("junction_invert_elev", 0)
-                    feat.setAttribute("max_depth", 0)
-                    feat.setAttribute("init_depth", 0)
-                    feat.setAttribute("surcharge_depth", 0)
-                    feat.setAttribute("ponded_area", 0)
                     feat.setAttribute("outfall_invert_elev", outfall_invert_elev)
                     feat.setAttribute("outfall_type", outfall_type)
                     feat.setAttribute("tidal_curve", "...")
                     feat.setAttribute("time_series", "...")
+                    feat.setAttribute("fixed_stage", water_depth)
                     feat.setAttribute("flapgate", flapgate)
-                    feat.setAttribute("swmm_length", 0)
-                    feat.setAttribute("swmm_width", 0)
-                    feat.setAttribute("swmm_height", 0)
-                    feat.setAttribute("swmm_coeff", 0)
-                    feat.setAttribute("swmm_feature", 0)
-                    feat.setAttribute("curbheight", 0)
-                    feat.setAttribute("swmm_clogging_factor", 0)
-                    feat.setAttribute("swmm_time_for_clogging", 0)
                     feat.setAttribute("swmm_allow_discharge", swmm_allow_discharge)
-                    feat.setAttribute("water_depth", 0)
-                    feat.setAttribute("rt_fid", 0)
-                    feat.setAttribute("outf_flo", 0)
-                    feat.setAttribute("invert_elev_inp", 0)
-                    feat.setAttribute("max_depth_inp", 0)
-                    feat.setAttribute("rim_elev_inp", 0)
-                    feat.setAttribute("rim_elev", 0)
-                    feat.setAttribute("ge_elev", 0)
-                    feat.setAttribute("difference", 0)
 
                     new_feats.append(feat)
 
                 if new_feats:
                     if not self.outfall_append_chbox.isChecked() and not self.load_inlets:
-                        remove_features(self.user_swmm_inlets_junctions_lyr)
+                        remove_features(self.user_swmm_outlets_lyr)
 
-                    self.user_swmm_inlets_junctions_lyr.startEditing()
-                    self.user_swmm_inlets_junctions_lyr.addFeatures(new_feats)
-                    self.user_swmm_inlets_junctions_lyr.commitChanges()
-                    self.user_swmm_inlets_junctions_lyr.updateExtents()
-                    self.user_swmm_inlets_junctions_lyr.triggerRepaint()
-                    self.user_swmm_inlets_junctions_lyr.removeSelection()
+                    self.user_swmm_outlets_lyr.startEditing()
+                    self.user_swmm_outlets_lyr.addFeatures(new_feats)
+                    self.user_swmm_outlets_lyr.commitChanges()
+                    self.user_swmm_outlets_lyr.updateExtents()
+                    self.user_swmm_outlets_lyr.triggerRepaint()
+                    self.user_swmm_outlets_lyr.removeSelection()
                 else:
                     self.load_outfalls = False
 
@@ -1581,7 +1544,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
             except Exception as e:
                 QApplication.restoreOverrideCursor()
                 self.uc.show_error(
-                    "ERROR 070618.0454: creation of Storm Drain Nodes (Outfalls) layer failed after reading "
+                    "ERROR 070618.0454: Creation of Storm Drain Outlets layer failed after reading "
                     + str(len(new_feats))
                     + " outfalls!"
                     + "\n__________________________________________________",
@@ -2720,7 +2683,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                     self.inlets_dropbox_area_FieldCbo.setCurrentIndex(self.find_index_with_substring(self.inlets_dropbox_area_FieldCbo, "box"))   
         except Exception as e:
             QApplication.restoreOverrideCursor()
-            self.uc.show_info("ERROR 240524.1207: inlets shapefile " + self.inlets_shapefile_cbo.currentText() + " not found in the layers panel!")                                       
+            self.uc.bar_warn("ERROR 240524.1207: Inlets/Junctions shapefile " + self.inlets_shapefile_cbo.currentText() + " not found in the layers panel!")
 
     def restore_SD_shapefile_outfall_field_names(self):
         # Outfalls
@@ -2772,7 +2735,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                     self.outfall_time_series_FieldCbo.setCurrentIndex(self.find_index_with_substring(self.outfall_time_series_FieldCbo, "series")) 
         except Exception as e:
             QApplication.restoreOverrideCursor()
-            self.uc.show_info("ERROR 240524.1208: outfalls shapefile " + self.inlets_shapefile_cbo.currentText() + " not found in the layers panel!")                         
+            self.uc.bar_warn("ERROR 240524.1208: Outfalls shapefile " + self.inlets_shapefile_cbo.currentText() + " not found in the layers panel!")
         
     def restore_SD_shapefile_strge_units_field_names(self):
         # Storage Units:
@@ -2852,7 +2815,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                     self.strge_unit_curve_name_FieldCbo.setCurrentIndex(self.find_index_with_substring(self.strge_unit_curve_name_FieldCbo, "name"))
         except Exception as e:
             QApplication.restoreOverrideCursor()
-            self.uc.show_info("ERROR 240524.1216: storage units shapefile " + self.inlets_shapefile_cbo.currentText() + " not found in the layers panel!")  
+            self.uc.bar_warn("ERROR 240524.1216: Storage Units shapefile " + self.inlets_shapefile_cbo.currentText() + " not found in the layers panel!")
 
     def restore_SD_shapefile_conduit_field_names(self):
         # Conduits:
@@ -2937,7 +2900,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                     self.conduit_flap_gate_FieldCbo.setCurrentIndex(self.find_index_with_substring(self.conduit_flap_gate_FieldCbo, "flapgate"))        
         except Exception as e:
             QApplication.restoreOverrideCursor()
-            self.uc.show_info("ERROR 240524.1209: conduits shapefile " + self.inlets_shapefile_cbo.currentText() + " not found in the layers panel!")  
+            self.uc.bar_warn("ERROR 240524.1209: Conduits shapefile " + self.inlets_shapefile_cbo.currentText() + " not found in the layers panel!")
 
     def restore_SD_shapefile_pump_field_names(self):
         # Pumps:
@@ -2992,7 +2955,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                     self.pump_curve_description_FieldCbo.setCurrentIndex(self.find_index_with_substring(self.pump_curve_description_FieldCbo, "description"))        
         except Exception as e:
             QApplication.restoreOverrideCursor()
-            self.uc.show_info("ERROR 240524.1213: pumps shapefile " + self.inlets_shapefile_cbo.currentText() + " not found in the layers panel!")  
+            self.uc.bar_warn("ERROR 240524.1213: Pumps shapefile " + self.inlets_shapefile_cbo.currentText() + " not found in the layers panel!")
             
     def restore_SD_shapefile_orifice_field_names(self):
         # Orifices:
@@ -3053,7 +3016,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                     self.orifice_width_FieldCbo.setCurrentIndex(self.find_index_with_substring(self.orifice_width_FieldCbo, "width"))
         except Exception as e:
             QApplication.restoreOverrideCursor()
-            self.uc.show_info("ERROR 240524.1214: orifices shapefile " + self.inlets_shapefile_cbo.currentText() + " not found in the layers panel!")  
+            self.uc.bar_warn("ERROR 240524.1214: Orifices shapefile " + self.inlets_shapefile_cbo.currentText() + " not found in the layers panel!")
             
     def restore_SD_shapefile_weir_field_names(self):
         # Weirs:
@@ -3119,7 +3082,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                     self.weir_length_FieldCbo.setCurrentIndex(self.find_index_with_substring(self.weir_length_FieldCbo, "length"))    
         except Exception as e:
             QApplication.restoreOverrideCursor()
-            self.uc.show_info("ERROR 240524.1215: weirds shapefile " + self.inlets_shapefile_cbo.currentText() + " not found in the layers panel!")  
+            self.uc.bar_warn("ERROR 240524.1215: Weirs shapefile " + self.inlets_shapefile_cbo.currentText() + " not found in the layers panel!")
 
     def restore_field(self, field, field_names):
         field_name = self.gutils.execute(f"SELECT field FROM sd_fields WHERE name = '{field}'").fetchone()

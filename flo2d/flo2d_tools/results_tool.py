@@ -97,8 +97,8 @@ class ResultsTool(QgsMapToolIdentify):
             sm[i] = QMenu(ln)
             actions[i] = {}
 
-            if ln == "Storm Drain Nodes":
-                sd_layer = self.lyrs.get_layer_by_name("Storm Drain Nodes", group=self.lyrs.group).layer()
+            if ln == "Storm Drain Inlets/Junctions":
+                sd_layer = self.lyrs.get_layer_by_name("Storm Drain Inlets/Junctions", group=self.lyrs.group).layer()
                 for j, fid in enumerate(lyrs_found[ln]["fids"]):
                     feat = next(sd_layer.getFeatures(QgsFeatureRequest(fid)))
                     name = feat["name"]

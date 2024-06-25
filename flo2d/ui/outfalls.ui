@@ -23,7 +23,7 @@
    </sizepolicy>
   </property>
   <property name="windowTitle">
-   <string>Outfalls (as defined in 'Storm Drain Nodes-Outfalls' User Layer)</string>
+   <string>Outfalls (as defined in 'Storm Drain Outlets' User Layer)</string>
   </property>
   <property name="modal">
    <bool>true</bool>

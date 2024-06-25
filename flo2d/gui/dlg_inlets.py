@@ -60,7 +60,7 @@ class InletNodesDialog(qtBaseClass, uiDialog):
         self.gutils = None
 
         self.inlets_buttonBox.button(QDialogButtonBox.Save).setText(
-            "Save Inlet/Junctions to 'Storm Drain Nodes-Inlets/Junctions' User Layer"
+            "Save Inlet/Junctions to 'Storm Drain Inlets/Junctions-Inlets/Junctions' User Layer"
         )
         set_icon(self.find_inlet_cell_btn, "eye-svgrepo-com.svg")
         set_icon(self.external_inflow_btn, "open_dialog.svg")
@@ -159,7 +159,7 @@ class InletNodesDialog(qtBaseClass, uiDialog):
             if not rows:
                 QApplication.setOverrideCursor(Qt.ArrowCursor)
                 self.uc.show_info(
-                    "WARNING 280920.0421: No inlets/junctions defined (of type 'I' or 'J') in 'Storm Drain Nodes' User Layer!"
+                    "WARNING 280920.0421: No inlets/junctions defined (of type 'I' or 'J') in 'Storm Drain Inlets/Junctions' User Layer!"
                 )
                 QApplication.restoreOverrideCursor()
                 return
@@ -981,7 +981,7 @@ class InletNodesDialog(qtBaseClass, uiDialog):
         except Exception as e:
             QApplication.setOverrideCursor(Qt.ArrowCursor)
             self.uc.show_error(
-                "ERROR 020219.0812: couldn't save inlets/junction into User Storm Drain Nodes!"
+                "ERROR 020219.0812: couldn't save inlets/junction into User Storm Drain Inlets/Junctions!"
                 + "\n__________________________________________________",
                 e,
             )

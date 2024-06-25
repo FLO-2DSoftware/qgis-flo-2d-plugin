@@ -223,7 +223,7 @@ class Schema2UserDialog(qtBaseClass, uiDialog):
             self.uc.log_info(traceback.format_exc())
             QApplication.restoreOverrideCursor()
             self.uc.show_error(
-                "ERROR 040319.1915:\n\nConverting Schematic SD Inlets to User Storm Drain Nodes failed!"
+                "ERROR 040319.1915:\n\nConverting Schematic SD Inlets to User Storm Drain Inlets/Junctions failed!"
                 + "\n_______________________________________________________________",
                 e,
             )

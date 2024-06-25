@@ -20,7 +20,7 @@
    </sizepolicy>
   </property>
   <property name="windowTitle">
-   <string>Inlets/Junctions (as defined in 'Storm Drain Nodes-Inlets/Junctions' User Layer)</string>
+   <string>Inlets/Junctions (as defined in 'Storm Drain Inlets/Junctions' User Layer)</string>
   </property>
   <property name="sizeGripEnabled">
    <bool>false</bool>

@@ -147,7 +147,7 @@ class OutfallNodesDialog(qtBaseClass, uiDialog):
             rows = self.gutils.execute(qry).fetchall()  # rows is a list of tuples.
             if not rows:
                 QApplication.setOverrideCursor(Qt.ArrowCursor)
-                self.uc.show_info("WARNING 121121.0421: No outfalls in 'Storm Drain Nodes' User Layer!")
+                self.uc.show_info("WARNING 121121.0421: No outfalls in 'Storm Drain Outlets' User Layer!")
                 QApplication.restoreOverrideCursor()
                 return
 

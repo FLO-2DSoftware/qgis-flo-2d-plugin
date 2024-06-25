@@ -6042,7 +6042,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                                                             )
                                             else:
                                                 if not error_mentioned:
-                                                    errors += "Storm Drain Nodes layer in User Layers is empty.\nSWMMFLORT.DAT may be incomplete!\n"
+                                                    errors += "Storm Drain Inlets/Junctions layer in User Layers is empty.\nSWMMFLORT.DAT may be incomplete!\n"
                                                     error_mentioned = True
                                 else:
                                     errors += (
