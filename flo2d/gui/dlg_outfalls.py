@@ -139,10 +139,10 @@ class OutfallNodesDialog(qtBaseClass, uiDialog):
                             flapgate, 
                             swmm_allow_discharge,
                             outfall_type, 
-                            water_depth,
+                            fixed_stage,
                             tidal_curve, 
                             time_series              
-                    FROM user_swmm_inlets_junctions WHERE sd_type = 'O';"""
+                    FROM user_swmm_outlets;"""
 
             rows = self.gutils.execute(qry).fetchall()  # rows is a list of tuples.
             if not rows:
@@ -694,11 +694,11 @@ class OutfallNodesDialog(qtBaseClass, uiDialog):
 
     def save_outfalls(self):
         """
-        Save changes to user_swmm_inlets_junctions layer and swmmoutf
+        Save changes to user_swmm_outlets layer and swmmoutf
         """
         # self.save_attrs()
         update_qry = """
-                        UPDATE user_swmm_inlets_junctions
+                        UPDATE user_swmm_outlets
                         SET
                             name = ?, 
                             grid = ?, 
@@ -706,7 +706,7 @@ class OutfallNodesDialog(qtBaseClass, uiDialog):
                             flapgate = ?, 
                             swmm_allow_discharge = ?,
                             outfall_type = ?,
-                            water_depth = ?,
+                            fixed_stage = ?,
                             tidal_curve = ?,
                             time_series = ?
                         WHERE fid = ?;"""

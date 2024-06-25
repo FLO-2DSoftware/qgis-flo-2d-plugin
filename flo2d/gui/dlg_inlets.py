@@ -152,14 +152,14 @@ class InletNodesDialog(qtBaseClass, uiDialog):
                             curbheight,
                             swmm_clogging_factor,
                             swmm_time_for_clogging,
-                            rt_name,
+                            external_inflow,
                             drboxarea         
-                    FROM user_swmm_inlets_junctions WHERE sd_type= 'I' or sd_type= 'J';"""
+                    FROM user_swmm_inlets_junctions;"""
             rows = self.gutils.execute(qry).fetchall()
             if not rows:
                 QApplication.setOverrideCursor(Qt.ArrowCursor)
                 self.uc.show_info(
-                    "WARNING 280920.0421: No inlets/junctions defined (of type 'I' or 'J') in 'Storm Drain Inlets/Junctions' User Layer!"
+                    "WARNING 280920.0421: No inlets/junctions defined in 'Storm Drain Inlets/Junctions' User Layer!"
                 )
                 QApplication.restoreOverrideCursor()
                 return

@@ -3828,18 +3828,10 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
     def show_outfalls(self):
         """
         Shows outfalls dialog.
-
         """
-        # See if there are inlets:
-        if self.gutils.is_table_empty("user_swmm_inlets_junctions"):
-            self.uc.show_warn(
-                'User Layer "Storm Drain Inlets/Junctions" is empty!\n\n'
-                + "Please import components from .INP file or shapefile, or convert from schematized Storm Drains."
-            )
-            return
 
         #  See if there are any Outlet nodes:
-        qry = """SELECT * FROM user_swmm_inlets_junctions WHERE sd_type = 'O';"""
+        qry = """SELECT * FROM user_swmm_outlets;"""
         rows = self.gutils.execute(qry).fetchall()
         if not rows:
             self.uc.bar_warn("No outfalls defined in 'Storm Drain Outlets' User Layer!")
@@ -3852,7 +3844,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         if save:
             try:
                 dlg_outfalls.save_outfalls()
-                self.uc.bar_info("Outfalls saved to 'Storm Drain-Outfalls' User Layer.")
+                self.uc.bar_info("Outfalls saved to 'Storm Drain Outlets' User Layer.")
             except Exception:
                 self.uc.bar_warn("Could not save outfalls! Please check if they are correct.")
                 return
