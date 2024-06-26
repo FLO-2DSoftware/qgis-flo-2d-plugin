@@ -1352,6 +1352,7 @@ class ConduitAttributes(qtBaseClass, uiDialog):
     def __init__(self, con, iface, layers):
         qtBaseClass.__init__(self)
         uiDialog.__init__(self)
+
         self.iface = iface
         self.lyrs = layers
         self.setupUi(self)
@@ -1415,6 +1416,11 @@ class ConduitAttributes(qtBaseClass, uiDialog):
         self.xsections_geom3.editingFinished.connect(self.save_conduits)
         self.xsections_geom4.editingFinished.connect(self.save_conduits)
         self.xsections_barrels.editingFinished.connect(self.save_conduits)
+
+        self.zoom_in_btn.clicked.connect(self.zoom_in)
+        self.zoom_out_btn.clicked.connect(self.zoom_out)
+
+        self.eye_btn.clicked.connect(self.find_conduit)
 
     def populate_attributes(self, fid):
         """
@@ -1547,6 +1553,64 @@ class ConduitAttributes(qtBaseClass, uiDialog):
         Function to clear the rubber when closing the widget
         """
         self.lyrs.clear_rubber()
+
+    def zoom_in(self):
+        """
+        Function to zoom in
+        """
+        currentCell = next(self.user_swmm_conduits_lyr.getFeatures(QgsFeatureRequest(self.current_node)))
+        if currentCell:
+            QApplication.setOverrideCursor(Qt.WaitCursor)
+            x, y = currentCell.geometry().centroid().asPoint()
+            center_canvas(self.iface, x, y)
+            zoom(self.iface, 0.4)
+            QApplication.restoreOverrideCursor()
+
+    def zoom_out(self):
+        """
+        Function to zoom out
+        """
+        currentCell = next(self.user_swmm_conduits_lyr.getFeatures(QgsFeatureRequest(self.current_node)))
+        if currentCell:
+            QApplication.setOverrideCursor(Qt.WaitCursor)
+            x, y = currentCell.geometry().centroid().asPoint()
+            center_canvas(self.iface, x, y)
+            zoom(self.iface, -0.4)
+            QApplication.restoreOverrideCursor()
+
+    def find_conduit(self):
+        """
+        Function to find a conduit and populate the data
+        """
+        try:
+            QApplication.setOverrideCursor(Qt.WaitCursor)
+            if self.gutils.is_table_empty("grid"):
+                self.uc.bar_warn("There is no grid! Please create it before running tool.")
+                return
+
+            name = self.search_le.text()
+            fid_qry = self.gutils.execute(f"SELECT fid FROM user_swmm_conduits WHERE conduit_name = '{name}'").fetchone()
+            if fid_qry:
+                fid = fid_qry[0]
+            else:
+                self.uc.bar_error("Conduit not found!")
+                self.uc.log_info("Conduit not found!")
+                return
+
+            self.lyrs.show_feat_rubber(self.user_swmm_conduits_lyr.id(), fid, QColor(Qt.red))
+            feat = next(self.user_swmm_conduits_lyr.getFeatures(QgsFeatureRequest(fid)))
+            x, y = feat.geometry().centroid().asPoint()
+            center_canvas(self.iface, x, y)
+            zoom(self.iface, 0.4)
+            self.populate_attributes(fid)
+
+        except Exception:
+            self.uc.bar_error("Error finding the conduit.")
+            self.lyrs.clear_rubber()
+            pass
+
+        finally:
+            QApplication.restoreOverrideCursor()
 
 
 uiDialog, qtBaseClass = load_ui("storage_unit_attributes")
