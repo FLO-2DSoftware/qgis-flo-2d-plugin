@@ -318,6 +318,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
 
         self.grid_lyr = None
         self.user_swmm_inlets_junctions_lyr = None
+        self.user_swmm_outlets_lyr = None
         self.user_swmm_storage_units_lyr = None
         self.user_swmm_conduits_lyr = None
         self.user_swmm_pumps_lyr = None
@@ -994,7 +995,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         """
         Reads a Storm Water Management Model (SWMM) .INP file.
 
-        Reads an .INP file and creates the "user_swmm_inlets_junctions" and "user_swmm_conduits" layers with
+        Reads an .INP file and creates the "user_swmm_*" layers with
         attributes taken from the [COORDINATES], [SUBCATCHMENTS], [JUNCTIONS], [OUTFALLS], [CONDUITS],
         [LOSSES], [XSECTIONS] groups of the .INP file.
         Also includes additional attributes used by the FLO-2D model.
@@ -1078,13 +1079,6 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 return False
             elif ret == 0:
                 return False
-
-            # if self.select_this_INP_group(INP_groups, "coor") > 0: 
-            #     QApplication.restoreOverrideCursor()
-            #     self.uc.show_warn(
-            #         "WARNING 060319.1730: SWMM input file\n\n " + swmm_file + "\n\n has no coordinates defined!"
-            #     )
-            #     return False                
 
             # Build Nodes:
             storm_drain.add_JUNCTIONS_to_INP_nodes_dictionary()
@@ -1329,14 +1323,14 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             QApplication.restoreOverrideCursor()            
             
             
-        # JUNCTIONS/OUTFALLS: Create User Junctions and Outfalls layers:
+        # INLET/JUNCTIONS: Create User Inlets and Junctions layers:
         QApplication.setOverrideCursor(Qt.WaitCursor)
         try:
             """
             Creates Storm Drain Inlets/Junctions layer (Users layers).
 
             Creates "user_swmm_inlets_junctions" layer with attributes taken from
-            the [COORDINATES], [JUNCTIONS], and [OUTFALLS] groups.
+            the [COORDINATES] and [JUNCTIONS] groups.
 
             """
 
@@ -1348,20 +1342,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                                     max_depth = ?, 
                                     init_depth = ?,
                                     surcharge_depth = ?, 
-                                    ponded_area = ?,
-                                    outfall_type = ?, 
-                                    outfall_invert_elev = ?, 
-                                    tidal_curve = ?, 
-                                    time_series = ?,
-                                    water_depth = ?,
-                                    flapgate = ?, 
-                                    swmm_allow_discharge = ?, 
-                                    invert_elev_inp = ?, 
-                                    max_depth_inp = ?, 
-                                    rim_elev_inp = ?, 
-                                    rim_elev = ?, 
-                                    ge_elev = ?, 
-                                    difference = ?                          
+                                    ponded_area = ?,            
                              WHERE name = ?;"""
 
             new_nodes = []
@@ -1374,7 +1355,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                     if "subcatchment" in values:
                         sd_type = "I"
                     elif "out_type" in values:
-                        sd_type = "O"
+                        continue   # Skip outlets
                     elif name[0] in ["I", "i"]:
                         skipped_inlets += 1
                         continue  # Skip inlets defined by initial "I" or "i". Only consider inlets in [SUBCATCHMENTS]
@@ -1387,10 +1368,14 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                             "junction_invert_elev" in values
                         ):  # if 'junction_invert_elev' is there => it was read from [JUNCTIONS]
                             sd_type = "I"
+                        elif (
+                            "outfall_invert_elev" in values
+                        ):  # if 'outfall_invert_elev' is there => it was read from [OUTFALLS]
+                            continue
                         else:
                             continue
                     elif "out_type" in values:
-                        sd_type = "O"
+                        continue
                     else:
                         sd_type = "J"
 
@@ -1403,30 +1388,6 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 surcharge_depth = float_or_zero(values["surcharge_depth"]) if "surcharge_depth" in values else 0
                 ponded_area = float_or_zero(values["ponded_area"]) if "ponded_area" in values else 0
 
-                # Outfalls:
-                outfall_type = values["out_type"].upper() if "out_type" in values else "NORMAL"
-
-                outfall_invert_elev = (
-                    float_or_zero(values["outfall_invert_elev"]) if "outfall_invert_elev" in values else 0
-                )
-                time_series = "*"
-                tidal_curve = "*"
-                if outfall_type == "TIDAL":
-                    tidal_curve = values["series"]
-                if outfall_type == "TIMESERIES":
-                    time_series = values["series"]
-                water_depth = values["water_depth"] if "water_depth" in values else 0
-                if outfall_type == "FIXED":
-                    water_depth = values["series"]
-
-                flapgate = values["tide_gate"] if "tide_gate" in values else "False"
-                flapgate = "True" if is_true(flapgate) else "False"
-
-                allow_discharge = values["swmm_allow_discharge"] if "swmm_allow_discharge" in values else "False"
-                allow_discharge = "1" if is_true(allow_discharge) else "0"
-
-                rim_elev = junction_invert_elev + max_depth if junction_invert_elev and max_depth else 0
-
                 intype = int(values["intype"]) if "intype" in values else 1
 
                 if not "x" in values or not "y" in values:
@@ -1438,13 +1399,6 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 grid = self.gutils.grid_on_point(x, y)
                 if grid is None:
                     outside_nodes += n_spaces + name + "\toutside domain.\n"
-
-                if grid:
-                    elev = self.gutils.grid_value(grid, "elevation")
-                else:
-                    elev = 0
-                elev = elev if elev else 0
-                difference = elev - rim_elev if elev and rim_elev else 0
 
                 if complete_or_create == "Create New":
                     geom = QgsGeometry.fromPointXY(QgsPointXY(x, y))
@@ -1462,19 +1416,6 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                     feat.setAttribute("init_depth", init_depth)
                     feat.setAttribute("surcharge_depth", surcharge_depth)
                     feat.setAttribute("ponded_area", 0)
-                    feat.setAttribute("outfall_type", outfall_type)
-                    feat.setAttribute("outfall_invert_elev", outfall_invert_elev)
-                    feat.setAttribute("tidal_curve", tidal_curve)
-                    feat.setAttribute("time_series", time_series)
-                    feat.setAttribute("water_depth", water_depth)
-                    feat.setAttribute("flapgate", flapgate)
-                    feat.setAttribute("swmm_allow_discharge", allow_discharge)
-                    feat.setAttribute("invert_elev_inp", junction_invert_elev)
-                    feat.setAttribute("max_depth_inp", max_depth)
-                    feat.setAttribute("rim_elev_inp", rim_elev)
-                    feat.setAttribute("rim_elev", rim_elev)
-                    feat.setAttribute("ge_elev", elev)
-                    feat.setAttribute("difference", difference)
 
                     # The following attributes are not defined in .INP files,
                     # assign them zero as default values:
@@ -1486,8 +1427,6 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                     feat.setAttribute("curbheight", 0)
                     feat.setAttribute("swmm_clogging_factor", 0)
                     feat.setAttribute("swmm_time_for_clogging", 0)
-                    feat.setAttribute("rt_fid", 0)
-                    feat.setAttribute("outf_flo", 0)
 
                     new_nodes.append(feat)
 
@@ -1505,10 +1444,6 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                             geom = "POINT({0} {1})".format(x, y)
                             geom = self.gutils.wkt_to_gpb(geom)
 
-                            # xc, yc = [float(i) for i in wkt_geom.strip("POINT()").split()]
-                            # geom = "POINT({0} {1})".format(xc, yc)
-                            # geom = self.gutils.wkt_to_gpb(geom)
-
                             self.gutils.execute(
                                 replace_user_swmm_inlets_junctions_sql,
                                 (
@@ -1518,19 +1453,8 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                                     init_depth,
                                     surcharge_depth,
                                     ponded_area,
-                                    outfall_type,
-                                    outfall_invert_elev,
-                                    tidal_curve,
-                                    time_series,
-                                    water_depth,
-                                    flapgate,
-                                    allow_discharge,
                                     junction_invert_elev,
                                     max_depth,
-                                    rim_elev,
-                                    rim_elev,
-                                    elev,
-                                    difference,
                                     name,
                                 ),
                             )
@@ -1552,19 +1476,8 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                         feat.setAttribute("init_depth", init_depth)
                         feat.setAttribute("surcharge_depth", surcharge_depth)
                         feat.setAttribute("ponded_area", 0)
-                        feat.setAttribute("outfall_type", outfall_type)
-                        feat.setAttribute("outfall_invert_elev", outfall_invert_elev)
-                        feat.setAttribute("tidal_curve", tidal_curve)
-                        feat.setAttribute("time_series", time_series)
-                        feat.setAttribute("water_depth", water_depth)
-                        feat.setAttribute("flapgate", flapgate)
-                        feat.setAttribute("swmm_allow_discharge", allow_discharge)
                         feat.setAttribute("invert_elev_inp", junction_invert_elev)
                         feat.setAttribute("max_depth_inp", max_depth)
-                        feat.setAttribute("rim_elev_inp", rim_elev)
-                        feat.setAttribute("rim_elev", rim_elev)
-                        feat.setAttribute("ge_elev", elev)
-                        feat.setAttribute("difference", difference)
 
                         # The following attributes are not defined in .INP files,
                         # assign them zero as default values:
@@ -1645,7 +1558,187 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             QApplication.restoreOverrideCursor()
             return False
         finally:
-            QApplication.restoreOverrideCursor()        
+            QApplication.restoreOverrideCursor()
+
+        # OUTLETS: Create User Outlets layers:
+        QApplication.setOverrideCursor(Qt.WaitCursor)
+        try:
+            """
+            Creates Storm Drain Outlets layer (Users layers).
+
+            Creates "user_swmm_outlets" layer with attributes taken from
+            the [COORDINATES] and [OUTFALLS] groups.
+
+            """
+
+            # Transfer data from "storm_drain.INP_dict" to "user_swmm_outlets" layer:
+
+            replace_user_swmm_outlets_sql = """UPDATE user_swmm_outlets
+                                     SET    geom = ?,
+                                            outfall_type = ?, 
+                                            outfall_invert_elev = ?, 
+                                            tidal_curve = ?, 
+                                            time_series = ?,
+                                            fixed_stage = ?,
+                                            flapgate = ?, 
+                                            swmm_allow_discharge = ?
+                                     WHERE name = ?;"""
+
+            new_nodes = []
+            updated_nodes = 0
+            list_INP_nodes = list(storm_drain.INP_nodes.items())
+            for name, values in list_INP_nodes:
+                # "INP_nodes dictionary contains attributes names and
+                # values taken from the .INP file.
+
+                if subcatchments is not None:
+                    if "subcatchment" in values:
+                        continue
+                    elif name[0] in ["I", "i", "J", "j"]:
+                        continue
+
+                else:
+                    # if name[0] in ["I", "i", "J", "j"]:
+                    if (
+                        "junction_invert_elev" in values
+                    ):  # if 'junction_invert_elev' is there => it was read from [JUNCTIONS]
+                        continue
+                        # else:
+                        #     continue
+
+                # Outfalls:
+                outfall_type = values["out_type"].upper() if "out_type" in values else "NORMAL"
+
+                outfall_invert_elev = (
+                    float_or_zero(values["outfall_invert_elev"]) if "outfall_invert_elev" in values else 0
+                )
+                time_series = "*"
+                tidal_curve = "*"
+                if outfall_type == "TIDAL":
+                    tidal_curve = values["series"]
+                if outfall_type == "TIMESERIES":
+                    time_series = values["series"]
+                water_depth = values["water_depth"] if "water_depth" in values else 0
+                if outfall_type == "FIXED":
+                    water_depth = values["series"]
+
+                flapgate = values["tide_gate"] if "tide_gate" in values else "False"
+                flapgate = "True" if is_true(flapgate) else "False"
+
+                allow_discharge = values["swmm_allow_discharge"] if "swmm_allow_discharge" in values else "False"
+                allow_discharge = "1" if is_true(allow_discharge) else "0"
+
+                if not "x" in values or not "y" in values:
+                    outside_nodes += n_spaces + name + "\tno coordinates.\n"
+                    continue
+
+                x = float(values["x"])
+                y = float(values["y"])
+                grid = self.gutils.grid_on_point(x, y)
+                if grid is None:
+                    outside_nodes += n_spaces + name + "\toutside domain.\n"
+
+                if complete_or_create == "Create New":
+                    geom = QgsGeometry.fromPointXY(QgsPointXY(x, y))
+                    fields = self.user_swmm_outlets_lyr.fields()
+                    feat = QgsFeature()
+                    feat.setFields(fields)
+                    feat.setGeometry(geom)
+                    feat.setAttribute("grid", grid)
+                    feat.setAttribute("name", name)
+
+                    feat.setAttribute("outfall_type", outfall_type)
+                    feat.setAttribute("outfall_invert_elev", outfall_invert_elev)
+                    feat.setAttribute("tidal_curve", tidal_curve)
+                    feat.setAttribute("time_series", time_series)
+                    feat.setAttribute("fixed_stage", water_depth)
+                    feat.setAttribute("flapgate", flapgate)
+                    feat.setAttribute("swmm_allow_discharge", allow_discharge)
+
+                    new_nodes.append(feat)
+
+                else:  # Keep some existing data in user_swmm_outlets
+                    fid = self.gutils.execute("SELECT fid FROM user_swmm_outlets WHERE name = ?;",
+                                              (name,)).fetchone()
+                    if fid:  # name already in user_swmm_outlets
+                        try:
+                            fid, wkt_geom = self.gutils.execute(
+                                "SELECT fid, ST_AsText(ST_Centroid(GeomFromGPB(geom))) FROM user_swmm_outlets WHERE name = ?;",
+                                (name,),
+                            ).fetchone()
+                        except Exception:
+                            continue
+                        if fid:
+                            geom = "POINT({0} {1})".format(x, y)
+                            geom = self.gutils.wkt_to_gpb(geom)
+
+                            self.gutils.execute(
+                                replace_user_swmm_outlets_sql,
+                                (
+                                    geom,
+                                    outfall_type,
+                                    outfall_invert_elev,
+                                    tidal_curve,
+                                    time_series,
+                                    water_depth,
+                                    flapgate,
+                                    allow_discharge,
+                                    name,
+                                ),
+                            )
+                            updated_nodes += 1
+
+                    else:  # this name is not in user_swmm_outlets, include it:
+                        geom = QgsGeometry.fromPointXY(QgsPointXY(x, y))
+                        fields = self.user_swmm_outlets_lyr.fields()
+                        feat = QgsFeature()
+                        feat.setFields(fields)
+                        feat.setGeometry(geom)
+                        feat.setAttribute("grid", grid)
+                        feat.setAttribute("name", name)
+
+                        feat.setAttribute("outfall_type", outfall_type)
+                        feat.setAttribute("outfall_invert_elev", outfall_invert_elev)
+                        feat.setAttribute("tidal_curve", tidal_curve)
+                        feat.setAttribute("time_series", time_series)
+                        feat.setAttribute("fixed_stage", water_depth)
+                        feat.setAttribute("flapgate", flapgate)
+                        feat.setAttribute("swmm_allow_discharge", allow_discharge)
+
+                        new_nodes.append(feat)
+                        updated_nodes += 1
+
+            if complete_or_create == "Create New" and len(new_nodes) != 0:
+                remove_features(self.user_swmm_outlets_lyr)
+                self.user_swmm_outlets_lyr.startEditing()
+                self.user_swmm_outlets_lyr.addFeatures(new_nodes)
+                self.user_swmm_outlets_lyr.commitChanges()
+                self.user_swmm_outlets_lyr.updateExtents()
+                self.user_swmm_outlets_lyr.triggerRepaint()
+                self.user_swmm_outlets_lyr.removeSelection()
+
+            else:
+                # The option 'Keep existing and complete' already updated values taken from the .INP file.
+                # but include new ones:
+                if len(new_nodes) != 0:
+                    self.user_swmm_outlets_lyr.startEditing()
+                    self.user_swmm_outlets_lyr.addFeatures(new_nodes)
+                    self.user_swmm_outlets_lyr.commitChanges()
+                    self.user_swmm_outlets_lyr.updateExtents()
+                    self.user_swmm_outlets_lyr.triggerRepaint()
+                    self.user_swmm_outlets_lyr.removeSelection()
+
+        except Exception as e:
+            QApplication.setOverrideCursor(Qt.ArrowCursor)
+            self.uc.show_error(
+                "ERROR 060319.1610: Creating Storm Drain Outlets layer failed!\n\n"
+                + "Please check your SWMM input data.\nAre the nodes coordinates inside the computational domain?",
+                e,
+            )
+            QApplication.restoreOverrideCursor()
+            return False
+        finally:
+            QApplication.restoreOverrideCursor()
 
         # STORAGE: Create User Storage layer:
         if complete_or_create == "Create New":
