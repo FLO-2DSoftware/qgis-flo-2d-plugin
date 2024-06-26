@@ -1090,7 +1090,7 @@ class PumpAttributes(qtBaseClass, uiDialog):
             self.populate_attributes(fid)
 
         except Exception:
-            self.uc.bar_error("Error finding the conduit.")
+            self.uc.bar_error("Error finding the pump.")
             self.lyrs.clear_rubber()
             pass
 
@@ -1305,7 +1305,7 @@ class OrificeAttributes(qtBaseClass, uiDialog):
             self.populate_attributes(fid)
 
         except Exception:
-            self.uc.bar_error("Error finding the conduit.")
+            self.uc.bar_error("Error finding the orifice.")
             self.lyrs.clear_rubber()
             pass
 
@@ -1364,6 +1364,11 @@ class WeirAttributes(qtBaseClass, uiDialog):
         self.weir_height.editingFinished.connect(self.save_weirs)
         self.weir_length.editingFinished.connect(self.save_weirs)
         self.weir_side_slope.editingFinished.connect(self.save_weirs)
+
+        self.zoom_in_btn.clicked.connect(self.zoom_in)
+        self.zoom_out_btn.clicked.connect(self.zoom_out)
+
+        self.eye_btn.clicked.connect(self.find_weir)
 
     def populate_attributes(self, fid):
         """
@@ -1469,6 +1474,64 @@ class WeirAttributes(qtBaseClass, uiDialog):
         Function to clear the rubber when closing the widget
         """
         self.lyrs.clear_rubber()
+
+    def zoom_in(self):
+        """
+        Function to zoom in
+        """
+        currentCell = next(self.user_swmm_weirs_lyr.getFeatures(QgsFeatureRequest(self.current_node)))
+        if currentCell:
+            QApplication.setOverrideCursor(Qt.WaitCursor)
+            x, y = currentCell.geometry().centroid().asPoint()
+            center_canvas(self.iface, x, y)
+            zoom(self.iface, 0.4)
+            QApplication.restoreOverrideCursor()
+
+    def zoom_out(self):
+        """
+        Function to zoom out
+        """
+        currentCell = next(self.user_swmm_weirs_lyr.getFeatures(QgsFeatureRequest(self.current_node)))
+        if currentCell:
+            QApplication.setOverrideCursor(Qt.WaitCursor)
+            x, y = currentCell.geometry().centroid().asPoint()
+            center_canvas(self.iface, x, y)
+            zoom(self.iface, -0.4)
+            QApplication.restoreOverrideCursor()
+
+    def find_weir(self):
+        """
+        Function to find a weir and populate the data
+        """
+        try:
+            QApplication.setOverrideCursor(Qt.WaitCursor)
+            if self.gutils.is_table_empty("grid"):
+                self.uc.bar_warn("There is no grid! Please create it before running tool.")
+                return
+
+            name = self.search_le.text()
+            fid_qry = self.gutils.execute(f"SELECT fid FROM user_swmm_weirs WHERE weir_name = '{name}'").fetchone()
+            if fid_qry:
+                fid = fid_qry[0]
+            else:
+                self.uc.bar_error("Weir not found!")
+                self.uc.log_info("Weir not found!")
+                return
+
+            self.lyrs.show_feat_rubber(self.user_swmm_weirs_lyr.id(), fid, QColor(Qt.red))
+            feat = next(self.user_swmm_weirs_lyr.getFeatures(QgsFeatureRequest(fid)))
+            x, y = feat.geometry().centroid().asPoint()
+            center_canvas(self.iface, x, y)
+            zoom(self.iface, 0.4)
+            self.populate_attributes(fid)
+
+        except Exception:
+            self.uc.bar_error("Error finding the weir.")
+            self.lyrs.clear_rubber()
+            pass
+
+        finally:
+            QApplication.restoreOverrideCursor()
 
 
 uiDialog, qtBaseClass = load_ui("conduit_attributes")
