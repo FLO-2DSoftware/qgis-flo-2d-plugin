@@ -3024,8 +3024,8 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
 
                 # INP OUTFALLS ###################################################
                 try:
-                    SD_outfalls_sql = """SELECT name, outfall_invert_elev, outfall_type, time_series, tidal_curve, flapgate, water_depth 
-                                      FROM user_swmm_inlets_junctions  WHERE sd_type = "O"  ORDER BY fid;"""
+                    SD_outfalls_sql = """SELECT name, outfall_invert_elev, outfall_type, time_series, tidal_curve, flapgate, fixed_stage 
+                                      FROM user_swmm_outlets ORDER BY fid;"""
 
                     outfalls_rows = self.gutils.execute(SD_outfalls_sql).fetchall()
                     if not outfalls_rows:
@@ -3757,11 +3757,24 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                     swmm_inp_file.write("\n;;Node           X-Coord            Y-Coord ")
                     swmm_inp_file.write("\n;;-------------- ------------------ ------------------")
 
-                    SD_nodes_coords_sql = """SELECT name, ST_AsText(ST_Centroid(GeomFromGPB(geom)))
+                    SD_inlets_junctions_coords_sql = """SELECT name, ST_AsText(ST_Centroid(GeomFromGPB(geom)))
                                       FROM user_swmm_inlets_junctions ORDER BY fid;"""
 
                     line = "\n{0:16} {1:<18} {2:<18}"
-                    coordinates_rows = self.gutils.execute(SD_nodes_coords_sql).fetchall()
+                    coordinates_rows = self.gutils.execute(SD_inlets_junctions_coords_sql).fetchall()
+                    if not coordinates_rows:
+                        pass
+                    else:
+                        for row in coordinates_rows:
+                            x = row[:2][1].strip("POINT()").split()[0]
+                            y = row[:2][1].strip("POINT()").split()[1]
+                            swmm_inp_file.write(line.format(row[0], x, y))
+
+                    SD_outlets_coords_sql = """SELECT name, ST_AsText(ST_Centroid(GeomFromGPB(geom)))
+                                      FROM user_swmm_outlets ORDER BY fid;"""
+
+                    line = "\n{0:16} {1:<18} {2:<18}"
+                    coordinates_rows = self.gutils.execute(SD_outlets_coords_sql).fetchall()
                     if not coordinates_rows:
                         pass
                     else:
