@@ -1,11 +1,5 @@
 # -*- coding: utf-8 -*-
-from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QColor
-from PyQt5.QtWidgets import QDockWidget, QComboBox, QSpinBox, QDoubleSpinBox
-from qgis._gui import QgsDockWidget
 
-from .dlg_inlets import ExternalInflowsDialog
-from .dlg_outfalls import OutfallTimeSeriesDialog, OutfallTidalCurveDialog
 # FLO-2D Preprocessor tools for QGIS
 
 # This program is free software; you can redistribute it and/or
@@ -14,9 +8,19 @@ from .dlg_outfalls import OutfallTimeSeriesDialog, OutfallTidalCurveDialog
 # of the License, or (at your option) any later version
 
 
-from .ui_utils import load_ui
+from .ui_utils import load_ui, set_icon
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
+from ..utils import TimeSeriesDelegate, is_true, FloatDelegate
+import csv
+import io
+import os
+
+from PyQt5.QtCore import Qt, QSettings, pyqtSignal
+from PyQt5.QtGui import QColor, QKeySequence, QDoubleValidator
+from PyQt5.QtWidgets import QDockWidget, QComboBox, QSpinBox, QDoubleSpinBox, QTableWidgetItem, QApplication, \
+    QFileDialog, QUndoStack
+from qgis._gui import QgsDockWidget
 
 uiDialog, qtBaseClass = load_ui("inlet_attributes")
 
@@ -1479,6 +1483,7 @@ class ConduitAttributes(qtBaseClass, uiDialog):
 
 uiDialog, qtBaseClass = load_ui("storage_unit_attributes")
 
+
 class StorageUnitAttributes(qtBaseClass, uiDialog):
     def __init__(self, con, iface, layers):
         qtBaseClass.__init__(self)
@@ -1767,3 +1772,1424 @@ class StorageUnitAttributes(qtBaseClass, uiDialog):
     #                             WHERE
     #                                 fid = '{self.current_node}';
     #                         """)
+
+
+uiDialog, qtBaseClass = load_ui("storm_drain_external_inflows")
+
+
+class ExternalInflowsDialog(qtBaseClass, uiDialog):
+    def __init__(self, iface, node):
+        qtBaseClass.__init__(self)
+        uiDialog.__init__(self)
+        self.iface = iface
+        self.node = node
+        self.setupUi(self)
+        self.uc = UserCommunication(iface, "FLO-2D")
+        self.con = None
+        self.gutils = None
+
+        self.swmm_select_pattern_btn.clicked.connect(self.select_inflow_pattern)
+        self.swmm_select_time_series_btn.clicked.connect(self.select_time_series)
+        self.external_inflows_buttonBox.accepted.connect(self.save_external_inflow_variables)
+        self.swmm_inflow_baseline_le.setValidator(QDoubleValidator(0, 100, 2))
+
+        self.setup_connection()
+        self.populate_external_inflows()
+
+    def setup_connection(self):
+        con = self.iface.f2d["con"]
+        if con is None:
+            return
+        else:
+            self.con = con
+            self.gutils = GeoPackageUtils(self.con, self.iface)
+
+    def populate_external_inflows(self):
+        baseline_names_sql = "SELECT DISTINCT pattern_name FROM swmm_inflow_patterns GROUP BY pattern_name"
+        names = self.gutils.execute(baseline_names_sql).fetchall()
+        if names:
+            for name in names:
+                self.swmm_inflow_pattern_cbo.addItem(name[0].strip())
+        self.swmm_inflow_pattern_cbo.addItem("")
+
+        time_names_sql = "SELECT DISTINCT time_series_name FROM swmm_time_series GROUP BY time_series_name"
+        names = self.gutils.execute(time_names_sql).fetchall()
+        if names:
+            for name in names:
+                self.swmm_time_series_cbo.addItem(name[0].strip())
+        self.swmm_time_series_cbo.addItem("")
+
+        inflow_sql = "SELECT constituent, baseline, pattern_name, time_series_name, scale_factor FROM swmm_inflows WHERE node_name = ?;"
+        inflow = self.gutils.execute(inflow_sql, (self.node,)).fetchone()
+        if inflow:
+            baseline = inflow[1]
+            pattern_name = inflow[2]
+            time_series_name = inflow[3]
+            scale_factor = inflow[4]
+            self.swmm_inflow_baseline_le.setText(str(baseline))
+            if pattern_name != "" and pattern_name is not None:
+                idx = self.swmm_inflow_pattern_cbo.findText(pattern_name.strip())
+                if idx == -1:
+                    self.uc.bar_warn(
+                        '"' + pattern_name + '"' + " baseline pattern is not of HOURLY type!",
+                        5,
+                    )
+                    self.swmm_inflow_pattern_cbo.setCurrentIndex(self.swmm_inflow_pattern_cbo.count() - 1)
+                else:
+                    self.swmm_inflow_pattern_cbo.setCurrentIndex(idx)
+            else:
+                self.swmm_inflow_pattern_cbo.setCurrentIndex(self.swmm_inflow_pattern_cbo.count() - 1)
+
+            if time_series_name == '""':
+                time_series_name = ""
+
+            idx = self.swmm_time_series_cbo.findText(time_series_name)
+            if idx == -1:
+                time_series_name = ""
+                idx = self.swmm_time_series_cbo.findText(time_series_name)
+            self.swmm_time_series_cbo.setCurrentIndex(idx)
+
+            self.swmm_inflow_scale_factor_dbox.setValue(scale_factor)
+
+    def select_inflow_pattern(self):
+        pattern_name = self.swmm_inflow_pattern_cbo.currentText()
+        dlg_inflow_pattern = InflowPatternDialog(self.iface, pattern_name)
+        save = dlg_inflow_pattern.exec_()
+
+        pattern_name = dlg_inflow_pattern.get_name()
+        if pattern_name != "":
+            # Reload baseline list and select the one saved:
+
+            baseline_names_sql = "SELECT DISTINCT pattern_name FROM swmm_inflow_patterns GROUP BY pattern_name"
+            names = self.gutils.execute(baseline_names_sql).fetchall()
+            if names:
+                self.swmm_inflow_pattern_cbo.clear()
+                for name in names:
+                    self.swmm_inflow_pattern_cbo.addItem(name[0])
+                self.swmm_inflow_pattern_cbo.addItem("")
+
+                idx = self.swmm_inflow_pattern_cbo.findText(pattern_name)
+                self.swmm_inflow_pattern_cbo.setCurrentIndex(idx)
+
+    def select_time_series(self):
+        time_series_name = self.swmm_time_series_cbo.currentText()
+        dlg = InflowTimeSeriesDialog(self.iface, time_series_name)
+        while True:
+            save = dlg.exec_()
+            if save:
+                if dlg.values_ok:
+                    dlg.save_time_series()
+                    time_series_name = dlg.get_name()
+                    if time_series_name != "":
+                        # Reload time series list and select the one saved:
+                        time_series_names_sql = (
+                            "SELECT DISTINCT time_series_name FROM swmm_time_series GROUP BY time_series_name"
+                        )
+                        names = self.gutils.execute(time_series_names_sql).fetchall()
+                        if names:
+                            self.swmm_time_series_cbo.clear()
+                            for name in names:
+                                self.swmm_time_series_cbo.addItem(name[0])
+                            self.swmm_time_series_cbo.addItem("")
+
+                            idx = self.swmm_time_series_cbo.findText(time_series_name)
+                            self.swmm_time_series_cbo.setCurrentIndex(idx)
+
+                        # self.uc.bar_info("Storm Drain external time series saved for inlet " + "?????")
+                        break
+                    else:
+                        break
+            else:
+                break
+
+    def save_external_inflow_variables(self):
+        """
+        Save changes to external inflows variables.
+        """
+
+        baseline = float(self.swmm_inflow_baseline_le.text()) if self.swmm_inflow_baseline_le.text() != "" else 0.0
+        pattern = self.swmm_inflow_pattern_cbo.currentText()
+        file = self.swmm_time_series_cbo.currentText()
+        scale = self.swmm_inflow_scale_factor_dbox.value()
+
+        exists_sql = "SELECT fid FROM swmm_inflows WHERE node_name = ?;"
+        exists = self.gutils.execute(exists_sql, (self.node,)).fetchone()
+        if exists:
+            update_sql = """UPDATE swmm_inflows
+                        SET
+                            constituent = ?,
+                            baseline = ?, 
+                            pattern_name = ?, 
+                            time_series_name = ?,
+                            scale_factor = ?
+                        WHERE
+                            node_name = ?;"""
+
+            self.gutils.execute(update_sql, ("FLOW", baseline, pattern, file, scale, self.node))
+        else:
+            insert_sql = """INSERT INTO swmm_inflows 
+                            (   node_name, 
+                                constituent, 
+                                baseline, 
+                                pattern_name, 
+                                time_series_name, 
+                                scale_factor
+                            ) 
+                            VALUES (?,?,?,?,?,?); """
+            self.gutils.execute(insert_sql, (self.node, "FLOW", baseline, pattern, file, scale))
+
+
+uiDialog, qtBaseClass = load_ui("storm_drain_inflow_time_series")
+
+
+class InflowTimeSeriesDialog(qtBaseClass, uiDialog):
+    def __init__(self, iface, time_series_name):
+        qtBaseClass.__init__(self)
+
+        uiDialog.__init__(self)
+        self.iface = iface
+        self.time_series_name = time_series_name
+        self.setupUi(self)
+        self.uc = UserCommunication(iface, "FLO-2D")
+        self.con = None
+        self.gutils = None
+
+        self.values_ok = False
+        self.loading = True
+        set_icon(self.add_time_data_btn, "add.svg")
+        set_icon(self.delete_time_data_btn, "remove.svg")
+
+        self.setup_connection()
+
+        delegate = TimeSeriesDelegate(self.inflow_time_series_tblw)
+        self.inflow_time_series_tblw.setItemDelegate(delegate)
+
+        self.time_series_buttonBox.accepted.connect(self.is_ok_to_save)
+        self.select_time_series_btn.clicked.connect(self.select_time_series_file)
+        self.inflow_time_series_tblw.itemChanged.connect(self.ts_tblw_changed)
+        self.add_time_data_btn.clicked.connect(self.add_time)
+        self.delete_time_data_btn.clicked.connect(self.delete_time)
+        self.copy_btn.clicked.connect(self.copy_selection)
+        self.paste_btn.clicked.connect(self.paste)
+        self.clear_btn.clicked.connect(self.clear)
+
+        self.populate_time_series_dialog()
+
+    def setup_connection(self):
+        con = self.iface.f2d["con"]
+        if con is None:
+            return
+        else:
+            self.con = con
+            self.gutils = GeoPackageUtils(self.con, self.iface)
+
+    def populate_time_series_dialog(self):
+        self.loading = True
+        if self.time_series_name == "":
+            self.use_table_radio.setChecked(True)
+            self.add_time()
+            pass
+        else:
+            series_sql = "SELECT * FROM swmm_time_series WHERE time_series_name = ?"
+            row = self.gutils.execute(series_sql, (self.time_series_name,)).fetchone()
+            if row:
+                self.name_le.setText(row[1])
+                self.description_le.setText(row[2])
+                self.file_le.setText(row[3])
+                external = True if is_true(row[4]) else False
+
+                if external:
+                    self.use_table_radio.setChecked(True)
+                    self.external_radio.setChecked(False)
+                else:
+                    self.external_radio.setChecked(True)
+                    self.use_table_radio.setChecked(False)
+
+                data_qry = """SELECT
+                                date, 
+                                time, 
+                                value
+                        FROM swmm_time_series_data WHERE time_series_name = ?;"""
+                rows = self.gutils.execute(data_qry, (self.time_series_name,)).fetchall()
+                if rows:
+                    self.inflow_time_series_tblw.setRowCount(0)
+                    for row_number, row_data in enumerate(rows):
+                        self.inflow_time_series_tblw.insertRow(row_number)
+                        for col, data in enumerate(row_data):
+                            if col == 0:
+                                if data:
+                                    try:
+                                        a, b, c = data.split("/")
+                                        if len(a) < 2:
+                                            a = "0" * (2 - len(a)) + a
+                                        if len(b) < 2:
+                                            b = "0" * (2 - len(b)) + b
+                                        if len(c) < 4:
+                                            c = "0" * (4 - len(c)) + c
+                                        data = a + "/" + b + "/" + c
+                                    except:
+                                        data = ""
+                                else:
+                                    data = ""
+                            if col == 1:
+                                if data:
+                                    try:
+                                        a, b = data.split(":")
+                                        if len(a) == 1:
+                                            a = "0" + a
+                                        data = a + ":" + b
+                                    except:
+                                        data = "00:00"
+                                else:
+                                    data = "00:00"
+                            if col == 2:
+                                data = str(data)
+                            item = QTableWidgetItem()
+                            item.setData(Qt.DisplayRole, data)
+                            self.inflow_time_series_tblw.setItem(row_number, col, item)
+
+                    self.inflow_time_series_tblw.sortItems(0, Qt.AscendingOrder)
+            else:
+                self.name_le.setText(self.time_series_name)
+                self.external_radio.setChecked(True)
+                self.use_table_radio.setChecked(False)
+
+        QApplication.restoreOverrideCursor()
+        self.loading = False
+
+    def select_time_series_file(self):
+        self.uc.clear_bar_messages()
+
+        s = QSettings()
+        last_dir = s.value("FLO-2D/lastSWMMDir", "")
+        time_series_file, __ = QFileDialog.getOpenFileName(None, "Select time series data file", directory=last_dir)
+        if not time_series_file:
+            return
+        s.setValue("FLO-2D/lastSWMMDir", os.path.dirname(time_series_file))
+        self.file_le.setText(os.path.normpath(time_series_file))
+
+        # For future use
+        try:
+            pass
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.uc.show_error("ERROR 140220.0807: reading time series data file failed!", e)
+            return
+
+    def is_ok_to_save(self):
+        if self.name_le.text() == "":
+            self.uc.bar_warn("Time Series name required!", 2)
+            self.time_series_name = ""
+            self.values_ok = False
+
+        elif " " in self.name_le.text():
+            self.uc.bar_warn("Spaces not allowed in Time Series name!", 2)
+            self.time_series_name = ""
+            self.values_ok = False
+
+        elif self.description_le.text() == "":
+            self.uc.bar_warn("Time Series description required!", 2)
+            self.values_ok = False
+
+        elif self.use_table_radio.isChecked() and self.inflow_time_series_tblw.rowCount() == 0:
+            self.uc.bar_warn("Time Series table can't be empty!", 2)
+            self.values_ok = False
+
+        elif self.external_radio.isChecked() and self.file_le.text() == "":
+            self.uc.bar_warn("Data file name required!", 2)
+            self.values_ok = False
+        else:
+            self.values_ok = True
+
+    def save_time_series(self):
+        delete_sql = "DELETE FROM swmm_time_series WHERE time_series_name = ?"
+        self.gutils.execute(delete_sql, (self.name_le.text(),))
+        insert_sql = "INSERT INTO swmm_time_series (time_series_name, time_series_description, time_series_file, time_series_data) VALUES (?, ?, ?, ?);"
+        self.gutils.execute(
+            insert_sql,
+            (
+                self.name_le.text(),
+                self.description_le.text(),
+                self.file_le.text(),
+                "True" if self.use_table_radio.isChecked() else "False",
+            ),
+        )
+
+        delete_data_sql = "DELETE FROM swmm_time_series_data WHERE time_series_name = ?"
+        self.gutils.execute(delete_data_sql, (self.name_le.text(),))
+
+        insert_data_sql = [
+            """INSERT INTO swmm_time_series_data (time_series_name, date, time, value) VALUES""",
+            4,
+        ]
+        for row in range(0, self.inflow_time_series_tblw.rowCount()):
+            date = self.inflow_time_series_tblw.item(row, 0)
+            if date:
+                date = date.text()
+
+            time = self.inflow_time_series_tblw.item(row, 1)
+            if time:
+                time = time.text()
+
+            value = self.inflow_time_series_tblw.item(row, 2)
+            if value:
+                value = value.text()
+
+            insert_data_sql += [(self.name_le.text(), date, time, value)]
+        self.gutils.batch_execute(insert_data_sql)
+
+        self.uc.bar_info("Inflow time series " + self.name_le.text() + " saved.", 2)
+        self.time_series_name = self.name_le.text()
+        self.close()
+
+    def get_name(self):
+        return self.time_series_name
+
+    def inflow_time_series_tblw_clicked(self):
+        self.uc.show_info("Clicked")
+
+    def time_series_model_changed(self, i, j):
+        self.uc.show_info("Changed")
+
+    def ts_tblw_changed(self, Qitem):
+
+        if not self.loading:
+            column = Qitem.column()
+            text = Qitem.text()
+
+            if column == 0:  # First column (Date)
+                if "/" in text:
+                    a, b, c = text.split("/")
+                    if len(a) < 2:
+                        a = "0" * (2 - len(a)) + a
+                    if len(b) < 2:
+                        b = "0" * (2 - len(b)) + b
+                    if len(c) < 4:
+                        c = "0" * (4 - len(c)) + c
+                    text = a + "/" + b + "/" + c
+
+            elif column == 1:  # Second column (Time)
+                if text == "":
+                    text = "00:00"
+                if ":" in text:
+                    a, b = text.split(":")
+                    if len(a) == 1:
+                        a = "0" + a
+                    text = a + ":" + b
+
+            elif column == 2:  # Third column (value)
+                if text == "":
+                    text = "0.0"
+
+            Qitem.setText(text)
+
+    def add_time(self):
+        self.inflow_time_series_tblw.insertRow(self.inflow_time_series_tblw.rowCount())
+        row_number = self.inflow_time_series_tblw.rowCount() - 1
+
+        item = QTableWidgetItem()
+
+        # Code for current date
+        # d = QDate.currentDate()
+        # d = str(d.month()) + "/" + str(d.day()) + "/" + str(d.year())
+        # item.setData(Qt.DisplayRole, d)
+
+        # Code for empty item
+        item.setData(Qt.DisplayRole, "")
+
+        self.inflow_time_series_tblw.setItem(row_number, 0, item)
+
+        item = QTableWidgetItem()
+
+        # Code for current time
+        # t = QTime.currentTime()
+        # t = str(t.hour()) + ":" + str(t.minute())
+        # item.setData(Qt.DisplayRole, t)
+
+        # Code for starting time equal 00:00
+        t = "00:00"
+        item.setData(Qt.DisplayRole, t)
+        self.inflow_time_series_tblw.setItem(row_number, 1, item)
+
+        item = QTableWidgetItem()
+        item.setData(Qt.DisplayRole, "0.0")
+        self.inflow_time_series_tblw.setItem(row_number, 2, item)
+
+        self.inflow_time_series_tblw.selectRow(row_number)
+        self.inflow_time_series_tblw.setFocus()
+
+    def delete_time(self):
+        self.inflow_time_series_tblw.removeRow(self.inflow_time_series_tblw.currentRow())
+        self.inflow_time_series_tblw.selectRow(0)
+        self.inflow_time_series_tblw.setFocus()
+
+    def copy_selection(self):
+        selection = self.inflow_time_series_tblw.selectedIndexes()
+        if selection:
+            rows = sorted(index.row() for index in selection)
+            columns = sorted(index.column() for index in selection)
+            rowcount = rows[-1] - rows[0] + 1
+            colcount = columns[-1] - columns[0] + 1
+            table = [[""] * colcount for _ in range(rowcount)]
+            for index in selection:
+                row = index.row() - rows[0]
+                column = index.column() - columns[0]
+                table[row][column] = str(index.data())
+            stream = io.StringIO()
+            csv.writer(stream, delimiter="\t").writerows(table)
+            QApplication.clipboard().setText(stream.getvalue())
+
+    def paste(self):
+        QApplication.setOverrideCursor(Qt.WaitCursor)
+
+        # Get the clipboard text
+        clipboard_text = QApplication.clipboard().text()
+        if not clipboard_text:
+            QApplication.restoreOverrideCursor()
+            return
+
+        # Split clipboard data into rows and columns
+        rows = clipboard_text.split("\n")
+        if rows[-1] == '':  # Remove the extra empty line at the end if present
+            rows = rows[:-1]
+        num_rows = len(rows)
+        if num_rows == 0:
+            QApplication.restoreOverrideCursor()
+            return
+
+        # Get the top-left selected cell
+        selection = self.inflow_time_series_tblw.selectionModel().selection()
+        if not selection:
+            QApplication.restoreOverrideCursor()
+            return
+
+        top_left_idx = selection[0].topLeft()
+        sel_row = top_left_idx.row()
+        sel_col = top_left_idx.column()
+
+        # Insert rows if necessary
+        if sel_row + num_rows > self.inflow_time_series_tblw.rowCount():
+            self.inflow_time_series_tblw.setRowCount(sel_row + num_rows)
+
+        # Insert columns if necessary (adjust table columns if paste exceeds current column count)
+        num_cols = rows[0].count("\t") + 1
+        if sel_col + num_cols > self.inflow_time_series_tblw.columnCount():
+            self.inflow_time_series_tblw.setColumnCount(sel_col + num_cols)
+
+        # Paste data into the table
+        for row_idx, row in enumerate(rows):
+            columns = row.split("\t")
+            for col_idx, col in enumerate(columns):
+                item = QTableWidgetItem(col.strip())
+                self.inflow_time_series_tblw.setItem(sel_row + row_idx, sel_col + col_idx, item)
+
+        QApplication.restoreOverrideCursor()
+
+    def clear(self):
+        self.inflow_time_series_tblw.setRowCount(0)
+
+    def keyPressEvent(self, event):
+        if event.matches(QKeySequence.Copy):
+            self.copy_selection()
+        elif event.matches(QKeySequence.Paste):
+            self.paste()
+        else:
+            super().keyPressEvent(event)
+
+
+uiDialog, qtBaseClass = load_ui("storm_drain_inflow_pattern")
+
+
+class InflowPatternDialog(qtBaseClass, uiDialog):
+    def __init__(self, iface, pattern_name):
+        qtBaseClass.__init__(self)
+
+        uiDialog.__init__(self)
+        self.iface = iface
+        self.pattern_name = pattern_name
+        self.setupUi(self)
+        self.uc = UserCommunication(iface, "FLO-2D")
+        self.con = None
+        self.gutils = None
+
+        self.multipliers_tblw.undoStack = QUndoStack(self)
+
+        self.setup_connection()
+
+        self.pattern_buttonBox.accepted.connect(self.save_pattern)
+
+        self.populate_pattern_dialog()
+
+        self.copy_btn.clicked.connect(self.copy_selection)
+        self.paste_btn.clicked.connect(self.paste)
+        self.delete_btn.clicked.connect(self.delete)
+
+    def setup_connection(self):
+        con = self.iface.f2d["con"]
+        if con is None:
+            return
+        else:
+            self.con = con
+            self.gutils = GeoPackageUtils(self.con, self.iface)
+
+    def populate_pattern_dialog(self):
+        if self.pattern_name == "":
+            SIMUL = 24
+            self.multipliers_tblw.setRowCount(SIMUL)
+            for i in range(SIMUL):
+                itm = QTableWidgetItem()
+                itm.setData(Qt.EditRole, "1.0")
+                self.multipliers_tblw.setItem(i, 0, itm)
+        else:
+            select_sql = "SELECT * FROM swmm_inflow_patterns WHERE pattern_name = ?"
+            rows = self.gutils.execute(select_sql, (self.pattern_name,)).fetchall()
+            if rows:
+                for i, row in enumerate(rows):
+                    self.name_le.setText(row[1])
+                    self.description_le.setText(row[2])
+                    itm = QTableWidgetItem()
+                    itm.setData(Qt.EditRole, row[4])
+                    self.multipliers_tblw.setItem(i, 0, itm)
+            else:
+                self.name_le.setText(self.pattern_name)
+                SIMUL = 24
+                self.multipliers_tblw.setRowCount(SIMUL)
+                for i in range(SIMUL):
+                    itm = QTableWidgetItem()
+                    itm.setData(Qt.EditRole, "1.0")
+                    self.multipliers_tblw.setItem(i, 0, itm)
+
+    def save_pattern(self):
+        if self.name_le.text() == "":
+            self.uc.bar_warn("Pattern name required!", 2)
+            self.pattern_name = ""
+        elif self.description_le.text() == "":
+            self.uc.bar_warn("Pattern description required!", 2)
+            self.pattern_name = ""
+        else:
+            delete_sql = "DELETE FROM swmm_inflow_patterns WHERE pattern_name = ?"
+            self.gutils.execute(delete_sql, (self.name_le.text(),))
+            insert_sql = "INSERT INTO swmm_inflow_patterns (pattern_name, pattern_description, hour, multiplier) VALUES (?, ?, ? ,?);"
+            for i in range(1, 25):
+                if self.multipliers_tblw.item(i - 1, 0):
+                    item = self.multipliers_tblw.item(i - 1, 0).text()
+                else:
+                    item = 1
+                self.gutils.execute(
+                    insert_sql,
+                    (
+                        self.name_le.text(),
+                        self.description_le.text(),
+                        str(i),
+                        item,
+                    ),
+                )
+
+            self.uc.bar_info("Inflow Pattern " + self.name_le.text() + " saved.", 2)
+            self.pattern_name = self.name_le.text()
+            self.close()
+
+    def get_name(self):
+        return self.pattern_name
+
+    def copy_selection(self):
+        selection = self.multipliers_tblw.selectedIndexes()
+        if selection:
+            rows = sorted(index.row() for index in selection)
+            columns = sorted(index.column() for index in selection)
+            rowcount = rows[-1] - rows[0] + 1
+            colcount = columns[-1] - columns[0] + 1
+            table = [[""] * colcount for _ in range(rowcount)]
+            for index in selection:
+                row = index.row() - rows[0]
+                column = index.column() - columns[0]
+                table[row][column] = str(index.data())
+
+            stream = io.StringIO()
+            csv.writer(stream, delimiter='\t').writerows(table)
+            clipboard_text = stream.getvalue()
+            clipboard_text = clipboard_text.replace("\t", "\n")  # To fix the tabulation issue
+            QApplication.clipboard().setText(clipboard_text)
+
+    def paste(self):
+        QApplication.setOverrideCursor(Qt.WaitCursor)
+
+        # Get the clipboard text
+        clipboard_text = QApplication.clipboard().text()
+        if not clipboard_text:
+            QApplication.restoreOverrideCursor()
+            return
+
+        # Split clipboard data into rows and columns
+        rows = clipboard_text.split("\n")
+        if rows[-1] == '':  # Remove the extra empty line at the end if present
+            rows = rows[:-1]
+        num_rows = len(rows)
+        if num_rows == 0:
+            QApplication.restoreOverrideCursor()
+            return
+
+        # Get the top-left selected cell
+        selection = self.multipliers_tblw.selectionModel().selection()
+        if not selection:
+            QApplication.restoreOverrideCursor()
+            return
+
+        top_left_idx = selection[0].topLeft()
+        sel_row = top_left_idx.row()
+        sel_col = top_left_idx.column()
+
+        # Insert rows if necessary
+        if sel_row + num_rows > self.multipliers_tblw.rowCount():
+            self.multipliers_tblw.setRowCount(sel_row + num_rows)
+
+        # Insert columns if necessary (adjust table columns if paste exceeds current column count)
+        num_cols = rows[0].count("\t") + 1
+        if sel_col + num_cols > self.multipliers_tblw.columnCount():
+            self.multipliers_tblw.setColumnCount(sel_col + num_cols)
+
+        # Paste data into the table
+        for row_idx, row in enumerate(rows):
+            columns = row.split("\t")
+            for col_idx, col in enumerate(columns):
+                item = QTableWidgetItem(col.strip())
+                self.multipliers_tblw.setItem(sel_row + row_idx, sel_col + col_idx, item)
+
+        QApplication.restoreOverrideCursor()
+
+    def delete(self):
+        selected_rows = []
+        table_widget = self.multipliers_tblw
+
+        # Get selected row indices
+        for item in table_widget.selectedItems():
+            if item.row() not in selected_rows:
+                selected_rows.append(item.row())
+
+        # Sort selected row indices in descending order to avoid issues with row removal
+        selected_rows.sort(reverse=True)
+
+        # Remove selected rows
+        for row in selected_rows:
+            table_widget.removeRow(row)
+
+    def keyPressEvent(self, event):
+        if event.matches(QKeySequence.Copy):
+            self.copy_selection()
+        elif event.matches(QKeySequence.Paste):
+            self.paste()
+        else:
+            super().keyPressEvent(event)
+
+
+uiDialog, qtBaseClass = load_ui("storm_drain_outfall_time_series")
+
+
+class OutfallTimeSeriesDialog(qtBaseClass, uiDialog):
+    def __init__(self, iface, time_series_name):
+        qtBaseClass.__init__(self)
+
+        uiDialog.__init__(self)
+        self.iface = iface
+        self.time_series_name = time_series_name
+        self.setupUi(self)
+        self.uc = UserCommunication(iface, "FLO-2D")
+        self.con = None
+        self.gutils = None
+
+        self.values_ok = False
+        self.loading = True
+        set_icon(self.add_time_data_btn, "add.svg")
+        set_icon(self.delete_time_data_btn, "remove.svg")
+
+        self.setup_connection()
+
+        delegate = TimeSeriesDelegate(self.outfall_time_series_tblw)
+        self.outfall_time_series_tblw.setItemDelegate(delegate)
+
+        self.time_series_buttonBox.accepted.connect(self.is_ok_to_save)
+        self.select_time_series_btn.clicked.connect(self.select_time_series_file)
+        self.outfall_time_series_tblw.itemChanged.connect(self.ts_tblw_changed)
+        self.add_time_data_btn.clicked.connect(self.add_time)
+        self.delete_time_data_btn.clicked.connect(self.delete_time)
+        self.copy_btn.clicked.connect(self.copy_selection)
+        self.paste_btn.clicked.connect(self.paste)
+        self.clear_btn.clicked.connect(self.clear)
+
+        self.populate_time_series_dialog()
+
+    def setup_connection(self):
+        con = self.iface.f2d["con"]
+        if con is None:
+            return
+        else:
+            self.con = con
+            self.gutils = GeoPackageUtils(self.con, self.iface)
+
+    def populate_time_series_dialog(self):
+        QApplication.setOverrideCursor(Qt.WaitCursor)
+        self.loading = True
+        if self.time_series_name == "":
+            self.use_table_radio.setChecked(True)
+            self.add_time()
+            pass
+        else:
+            series_sql = "SELECT * FROM swmm_time_series WHERE time_series_name = ?;"
+            row = self.gutils.execute(series_sql, (self.time_series_name,)).fetchone()
+            if row:
+                self.name_le.setText(row[1])
+                self.description_le.setText(row[2])
+                self.file_le.setText(row[3])
+                external = True if is_true(row[4]) else False
+
+                if external:
+                    self.use_table_radio.setChecked(True)
+                    self.external_radio.setChecked(False)
+                else:
+                    self.external_radio.setChecked(True)
+                    self.use_table_radio.setChecked(False)
+
+                data_qry = """SELECT
+                                date, 
+                                time, 
+                                value
+                        FROM swmm_time_series_data WHERE time_series_name = ?"""
+                rows = self.gutils.execute(data_qry, (self.time_series_name,)).fetchall()
+                if rows:
+                    self.outfall_time_series_tblw.setRowCount(0)
+                    for row_number, row_data in enumerate(rows):
+                        self.outfall_time_series_tblw.insertRow(row_number)
+                        for col, data in enumerate(row_data):
+                            if col == 0: # Date
+                                if data:
+                                    try:
+                                        a, b, c = data.split("/")
+                                        if len(a) < 2:
+                                            a = "0" * (2 - len(a)) + a
+                                        if len(b) < 2:
+                                            b = "0" * (2 - len(b)) + b
+                                        if len(c) < 4:
+                                            c = "0" * (4 - len(c)) + c
+                                        data = a + "/" + b + "/" + c
+                                    except:
+                                        data = ""
+                                else:
+                                    data = ""
+                            if col == 1: # Time
+                                if data:
+                                    try:
+                                        a, b = data.split(":")
+                                        if len(a) == 1:
+                                            a = "0" + a
+                                        data = a + ":" + b
+                                    except:
+                                        data = "00:00"
+                                else:
+                                    data = "00:00"
+                            if col == 2: # Value
+                                data = str(data)
+                            item = QTableWidgetItem()
+                            item.setData(Qt.DisplayRole, data)
+                            self.outfall_time_series_tblw.setItem(row_number, col, item)
+
+                    # self.outfall_time_series_tblw.sortItems(0, Qt.AscendingOrder)
+            else:
+                self.name_le.setText(self.time_series_name)
+                self.external_radio.setChecked(True)
+                self.use_table_radio.setChecked(False)
+
+        QApplication.restoreOverrideCursor()
+        self.loading = False
+
+    def select_time_series_file(self):
+        self.uc.clear_bar_messages()
+
+        s = QSettings()
+        last_dir = s.value("FLO-2D/lastSWMMDir", "")
+        time_series_file, __ = QFileDialog.getOpenFileName(None, "Select time series data file", directory=last_dir)
+        if not time_series_file:
+            return
+        s.setValue("FLO-2D/lastSWMMDir", os.path.dirname(time_series_file))
+        self.file_le.setText(os.path.normpath(time_series_file))
+        # For future use
+        try:
+            pass
+        except Exception as e:
+            QApplication.setOverrideCursor(Qt.WaitCursor)
+            self.uc.show_error("ERROR 140220.0807: reading time series data file failed!", e)
+            QApplication.restoreOverrideCursor()
+            return
+
+    def is_ok_to_save(self):
+        if self.name_le.text() == "":
+            self.uc.bar_warn("Time Series name required!", 2)
+            self.time_series_name = ""
+            self.values_ok = False
+
+        elif " " in self.name_le.text():
+            self.uc.bar_warn("Time Series name with spaces not allowed!", 2)
+            self.time_series_name = ""
+            self.values_ok = False
+
+        elif self.description_le.text() == "":
+            self.uc.bar_warn("Time Series description required!", 2)
+            self.values_ok = False
+
+        elif self.use_table_radio.isChecked() and self.outfall_time_series_tblw.rowCount() == 0:
+            self.uc.bar_warn("Time Series table can't be empty!", 2)
+            self.values_ok = False
+
+        elif self.external_radio.isChecked() and self.file_le.text() == "":
+            self.uc.bar_warn("Data file name required!", 2)
+            self.values_ok = False
+        else:
+            self.values_ok = True
+
+    def save_time_series(self):
+        delete_sql = "DELETE FROM swmm_time_series WHERE time_series_name = ?"
+        self.gutils.execute(delete_sql, (self.name_le.text(),))
+        insert_sql = "INSERT INTO swmm_time_series (time_series_name, time_series_description, time_series_file, time_series_data) VALUES (?, ?, ?, ?);"
+        self.gutils.execute(
+            insert_sql,
+            (
+                self.name_le.text(),
+                self.description_le.text(),
+                self.file_le.text(),
+                "True" if self.use_table_radio.isChecked() else "False",
+            ),
+        )
+
+        delete_data_sql = "DELETE FROM swmm_time_series_data WHERE time_series_name = ?"
+        self.gutils.execute(delete_data_sql, (self.name_le.text(),))
+
+        insert_data_sql = [
+            """INSERT INTO swmm_time_series_data (time_series_name, date, time, value) VALUES""",
+            4,
+        ]
+        for row in range(0, self.outfall_time_series_tblw.rowCount()):
+            date = self.outfall_time_series_tblw.item(row, 0)
+            if date:
+                date = date.text()
+
+            time = self.outfall_time_series_tblw.item(row, 1)
+            if time:
+                time = time.text()
+
+            value = self.outfall_time_series_tblw.item(row, 2)
+            if value:
+                value = value.text()
+
+            insert_data_sql += [(self.name_le.text(), date, time, value)]
+        self.gutils.batch_execute(insert_data_sql)
+
+        self.uc.bar_info("Inflow time series " + self.name_le.text() + " saved.", 2)
+        self.time_series_name = self.name_le.text()
+        self.close()
+
+    def get_name(self):
+        return self.time_series_name
+
+    def ts_tblw_changed(self, Qitem):
+        if not self.loading:
+            column = Qitem.column()
+            text = Qitem.text()
+
+            if column == 0:  # First column (Date)
+                if "/" in text:
+                    a, b, c = text.split("/")
+                    if len(a) < 2:
+                        a = "0" * (2 - len(a)) + a
+                    if len(b) < 2:
+                        b = "0" * (2 - len(b)) + b
+                    if len(c) < 4:
+                        c = "0" * (4 - len(c)) + c
+                    text = a + "/" + b + "/" + c
+
+            elif column == 1:  # Second column (Time)
+                if text == "":
+                    text = "00:00"
+                if ":" in text:
+                    a, b = text.split(":")
+                    if len(a) == 1:
+                        a = "0" + a
+                    text = a + ":" + b
+
+            elif column == 2:  # Third column (value)
+                if text == "":
+                    text = "0.0"
+
+            Qitem.setText(text)
+
+    def add_time(self):
+        self.outfall_time_series_tblw.insertRow(self.outfall_time_series_tblw.rowCount())
+        row_number = self.outfall_time_series_tblw.rowCount() - 1
+
+        item = QTableWidgetItem()
+
+        # Code for current date
+        # d = QDate.currentDate()
+        # d = str(d.month()) + "/" + str(d.day()) + "/" + str(d.year())
+        # item.setData(Qt.DisplayRole, d)
+
+        # Code for empty item
+        item.setData(Qt.DisplayRole, "")
+
+        self.outfall_time_series_tblw.setItem(row_number, 0, item)
+
+        item = QTableWidgetItem()
+
+        # Code for current time
+        # t = QTime.currentTime()
+        # t = str(t.hour()) + ":" + str(t.minute())
+        # item.setData(Qt.DisplayRole, t)
+
+        # Code for starting time equal 00:00
+        t = "00:00"
+        item.setData(Qt.DisplayRole, t)
+        self.outfall_time_series_tblw.setItem(row_number, 1, item)
+
+        item = QTableWidgetItem()
+        item.setData(Qt.DisplayRole, "0.0")
+        self.outfall_time_series_tblw.setItem(row_number, 2, item)
+
+        self.outfall_time_series_tblw.selectRow(row_number)
+        self.outfall_time_series_tblw.setFocus()
+
+    def delete_time(self):
+        self.outfall_time_series_tblw.removeRow(self.outfall_time_series_tblw.currentRow())
+        self.outfall_time_series_tblw.selectRow(0)
+        self.outfall_time_series_tblw.setFocus()
+
+    def copy_selection(self):
+        selection = self.outfall_time_series_tblw.selectedIndexes()
+        if selection:
+            rows = sorted(index.row() for index in selection)
+            columns = sorted(index.column() for index in selection)
+            rowcount = rows[-1] - rows[0] + 1
+            colcount = columns[-1] - columns[0] + 1
+            table = [[""] * colcount for _ in range(rowcount)]
+            for index in selection:
+                row = index.row() - rows[0]
+                column = index.column() - columns[0]
+                table[row][column] = str(index.data())
+            stream = io.StringIO()
+            csv.writer(stream, delimiter="\t").writerows(table)
+            QApplication.clipboard().setText(stream.getvalue())
+
+    def paste(self):
+        QApplication.setOverrideCursor(Qt.WaitCursor)
+
+        # Get the clipboard text
+        clipboard_text = QApplication.clipboard().text()
+        if not clipboard_text:
+            QApplication.restoreOverrideCursor()
+            return
+
+        # Split clipboard data into rows and columns
+        rows = clipboard_text.split("\n")
+        if rows[-1] == '':  # Remove the extra empty line at the end if present
+            rows = rows[:-1]
+        num_rows = len(rows)
+        if num_rows == 0:
+            QApplication.restoreOverrideCursor()
+            return
+
+        # Get the top-left selected cell
+        selection = self.outfall_time_series_tblw.selectionModel().selection()
+        if not selection:
+            QApplication.restoreOverrideCursor()
+            return
+
+        top_left_idx = selection[0].topLeft()
+        sel_row = top_left_idx.row()
+        sel_col = top_left_idx.column()
+
+        # Insert rows if necessary
+        if sel_row + num_rows > self.outfall_time_series_tblw.rowCount():
+            self.outfall_time_series_tblw.setRowCount(sel_row + num_rows)
+
+        # Insert columns if necessary (adjust table columns if paste exceeds current column count)
+        num_cols = rows[0].count("\t") + 1
+        if sel_col + num_cols > self.outfall_time_series_tblw.columnCount():
+            self.outfall_time_series_tblw.setColumnCount(sel_col + num_cols)
+
+        # Paste data into the table
+        for row_idx, row in enumerate(rows):
+            columns = row.split("\t")
+            for col_idx, col in enumerate(columns):
+                item = QTableWidgetItem(col.strip())
+                self.outfall_time_series_tblw.setItem(sel_row + row_idx, sel_col + col_idx, item)
+
+        QApplication.restoreOverrideCursor()
+
+    def clear(self):
+        self.outfall_time_series_tblw.setRowCount(0)
+
+    def keyPressEvent(self, event):
+        if event.matches(QKeySequence.Copy):
+            self.copy_selection()
+        elif event.matches(QKeySequence.Paste):
+            self.paste()
+        else:
+            super().keyPressEvent(event)
+
+
+uiDialog, qtBaseClass = load_ui("xy_curve_editor")
+
+
+class CurveEditorDialog(qtBaseClass, uiDialog):
+    before_paste = pyqtSignal()
+    after_paste = pyqtSignal()
+    after_delete = pyqtSignal()
+
+    def __init__(self, iface, curve_name):
+        qtBaseClass.__init__(self)
+
+        uiDialog.__init__(self)
+        self.iface = iface
+        self.curve_name = curve_name
+        self.setupUi(self)
+        self.uc = UserCommunication(iface, "FLO-2D")
+        self.con = None
+        self.gutils = None
+
+        self.values_ok = False
+        self.loading = True
+        set_icon(self.add_data_btn, "add.svg")
+        set_icon(self.delete_data_btn, "remove.svg")
+
+        self.setup_connection()
+
+        self.curve_tblw.setItemDelegate(FloatDelegate(3, self.curve_tblw))
+
+        self.curve_buttonBox.accepted.connect(self.is_ok_to_save_curve)
+        self.curve_tblw.itemChanged.connect(self.otc_tblw_changed)
+        self.add_data_btn.clicked.connect(self.add_curve)
+        self.delete_data_btn.clicked.connect(self.delete_data)
+        self.load_curve_btn.clicked.connect(self.load_curve_file)
+        self.save_curve_btn.clicked.connect(self.save_curve_file)
+        self.copy_btn.clicked.connect(self.copy_selection)
+        self.paste_btn.clicked.connect(self.paste)
+        self.clear_btn.clicked.connect(self.clear)
+
+        self.populate_curve_dialog()
+
+    def setup_connection(self):
+        con = self.iface.f2d["con"]
+        if con is None:
+            return
+        else:
+            self.con = con
+            self.gutils = GeoPackageUtils(self.con, self.iface)
+
+    def populate_curve_dialog(self):
+        self.add_curve()
+        pass
+
+    def is_ok_to_save_curve(self):
+        if self.name_le.text() == "" or self.name_le.text() == "...":
+            self.uc.bar_warn("Curve name required!", 2)
+            self.curve_name = ""
+            self.values_ok = False
+
+        elif " " in self.name_le.text():
+            self.uc.bar_warn("Curve Name with spaces not allowed!", 2)
+            self.curve_name = ""
+            self.values_ok = False
+
+        elif self.description_le.text() == "":
+            self.uc.bar_warn("Curve description required!", 2)
+            self.values_ok = False
+
+        elif self.curve_tblw.rowCount() == 0:
+            self.uc.bar_warn("Curve table can't be empty!", 2)
+            self.values_ok = False
+
+        else:
+            self.values_ok = True
+
+    def save_curve(self):
+        # Empty polymorphic method to be overwritten by a child derived class.
+        pass
+
+    def get_curve_name(self):
+        return self.curve_name
+
+    def otc_tblw_changed(self, Qitem):
+        try:
+            text = float(Qitem.text())
+            Qitem.setText(str(text))
+        except ValueError:
+            Qitem.setText("0.0")
+
+    def add_curve(self):
+        self.curve_tblw.insertRow(self.curve_tblw.rowCount())
+        row_number = self.curve_tblw.rowCount() - 1
+
+        item = QTableWidgetItem()
+        item.setData(Qt.DisplayRole, "0.0")
+        self.curve_tblw.setItem(row_number, 0, item)
+
+        item = QTableWidgetItem()
+        item.setData(Qt.DisplayRole, "0.0")
+        self.curve_tblw.setItem(row_number, 1, item)
+
+        self.curve_tblw.selectRow(row_number)
+        self.curve_tblw.setFocus()
+
+    def delete_data(self):
+        self.curve_tblw.removeRow(self.curve_tblw.currentRow())
+        self.curve_tblw.selectRow(0)
+        self.curve_tblw.setFocus()
+
+    def load_curve_file(self):
+        self.uc.clear_bar_messages()
+
+        s = QSettings()
+        last_dir = s.value("FLO-2D/lastSWMMDir", "")
+        curve_file, __ = QFileDialog.getOpenFileName(
+            None,
+            "Select file with curve data to load",
+            directory=last_dir,
+            filter="Text files (*.txt *.TXT*);;All files(*.*)",
+        )
+        if not curve_file:
+            return
+        s.setValue("FLO-2D/lastSWMMDir", os.path.dirname(curve_file))
+
+        # Load file into table:
+        try:
+            QApplication.setOverrideCursor(Qt.WaitCursor)
+            with open(curve_file, "r") as f1:
+                lines = f1.readlines()
+            if len(lines) > 0:
+                self.curve_tblw.setRowCount(0)
+                j = -1
+                for i in range(1, len(lines)):
+                    if i == 1:
+                        desc = lines[i]
+                    else:
+                        if lines[i].strip() != "":
+                            nxt = lines[i].split()
+                            if len(nxt) == 2:
+                                j += 1
+                                self.curve_tblw.insertRow(j)
+                                x, y = nxt[0], nxt[1]
+                                self.curve_tblw.setItem(j, 0, QTableWidgetItem(x))
+                                self.curve_tblw.setItem(j, 1, QTableWidgetItem(y))
+                            else:
+                                self.uc.bar_warn("Wrong data in line " + str(j + 4) + " of curve file!")
+                        else:
+                            self.uc.bar_warn("Wrong data in line " + str(j + 4) + " of curve file!")
+                self.description_le.setText(desc)
+
+            QApplication.restoreOverrideCursor()
+
+        except Exception as e:
+            QApplication.setOverrideCursor(Qt.ArrowCursor)
+            self.uc.show_error("ERROR 090422.0435: importing curve file failed!.\n", e)
+            QApplication.restoreOverrideCursor()
+
+    def save_curve_file(self):
+        self.uc.clear_bar_messages()
+
+        if self.curve_tblw.rowCount() == 0:
+            self.uc.bar_warn("Curve table is empty. There is nothing to save!", 2)
+            return
+        elif self.description_le.text() == "":
+            self.uc.bar_warn("Curve description required!", 2)
+            return
+
+        s = QSettings()
+        last_dir = s.value("FLO-2D/lastSWMMDir", "")
+
+        curve_file, __ = QFileDialog.getSaveFileName(
+            None,
+            "Save curve table as file...",
+            directory=last_dir,
+            filter="Text files (*.txt *.TXT*);;All files(*.*)",
+        )
+
+        if not curve_file:
+            return
+
+        s.setValue("FLO-2D/lastSWMMDir", os.path.dirname(curve_file))
+
+        QApplication.setOverrideCursor(Qt.WaitCursor)
+        with open(curve_file, "w") as tfile:
+            tfile.write("EPASWMM Curve Data")
+            tfile.write("\n" + self.description_le.text())
+
+            for row in range(0, self.curve_tblw.rowCount()):
+                hour = self.curve_tblw.item(row, 0)
+                if hour:
+                    hour = hour.text()
+                else:
+                    hour = "0.0"
+                stage = self.curve_tblw.item(row, 1)
+                if stage:
+                    stage = stage.text()
+                else:
+                    stage = "0.0"
+                tfile.write("\n" + hour + "    " + stage)
+
+        QApplication.restoreOverrideCursor()
+        self.uc.bar_info("Curve data saved as " + curve_file, 4)
+
+    def copy_selection(self):
+        selection = self.curve_tblw.selectedIndexes()
+        if selection:
+            rows = sorted(index.row() for index in selection)
+            columns = sorted(index.column() for index in selection)
+            rowcount = rows[-1] - rows[0] + 1
+            colcount = columns[-1] - columns[0] + 1
+            table = [[""] * colcount for _ in range(rowcount)]
+            for index in selection:
+                row = index.row() - rows[0]
+                column = index.column() - columns[0]
+                table[row][column] = str(index.data())
+            stream = io.StringIO()
+            csv.writer(stream, delimiter="\t").writerows(table)
+            QApplication.clipboard().setText(stream.getvalue())
+
+    def paste(self):
+        QApplication.setOverrideCursor(Qt.WaitCursor)
+
+        # Get the clipboard text
+        clipboard_text = QApplication.clipboard().text()
+        if not clipboard_text:
+            QApplication.restoreOverrideCursor()
+            return
+
+        # Split clipboard data into rows and columns
+        rows = clipboard_text.split("\n")
+        if rows[-1] == '':  # Remove the extra empty line at the end if present
+            rows = rows[:-1]
+        num_rows = len(rows)
+        if num_rows == 0:
+            QApplication.restoreOverrideCursor()
+            return
+
+        # Get the top-left selected cell
+        selection = self.curve_tblw.selectionModel().selection()
+        if not selection:
+            QApplication.restoreOverrideCursor()
+            return
+
+        top_left_idx = selection[0].topLeft()
+        sel_row = top_left_idx.row()
+        sel_col = top_left_idx.column()
+
+        # Insert rows if necessary
+        if sel_row + num_rows > self.curve_tblw.rowCount():
+            self.curve_tblw.setRowCount(sel_row + num_rows)
+
+        # Insert columns if necessary (adjust table columns if paste exceeds current column count)
+        num_cols = rows[0].count("\t") + 1
+        if sel_col + num_cols > self.curve_tblw.columnCount():
+            self.curve_tblw.setColumnCount(sel_col + num_cols)
+
+        # Paste data into the table
+        for row_idx, row in enumerate(rows):
+            columns = row.split("\t")
+            for col_idx, col in enumerate(columns):
+                item = QTableWidgetItem(col.strip())
+                self.curve_tblw.setItem(sel_row + row_idx, sel_col + col_idx, item)
+
+        QApplication.restoreOverrideCursor()
+
+    def clear(self):
+        self.curve_tblw.setRowCount(0)
+
+    def keyPressEvent(self, event):
+        if event.matches(QKeySequence.Copy):
+            self.copy_selection()
+        elif event.matches(QKeySequence.Paste):
+            self.paste()
+        else:
+            super().keyPressEvent(event)
+
+
+class OutfallTidalCurveDialog(CurveEditorDialog):
+    def populate_curve_dialog(self):
+        self.loading = True
+        if self.curve_name == "":
+            pass
+        else:
+            self.setWindowTitle("Outfall Tidal Curve Editor")
+            self.label_2.setText("Tidal Curve Name")
+            self.curve_tblw.setHorizontalHeaderLabels(["Hour", "Stage"])
+            tidal_sql = "SELECT * FROM swmm_tidal_curve WHERE tidal_curve_name = ?"
+            row = self.gutils.execute(tidal_sql, (self.curve_name,)).fetchone()
+            if row:
+                self.name_le.setText(row[1])
+                self.description_le.setText(row[2])
+
+                data_qry = """SELECT
+                                hour, 
+                                stage
+                        FROM swmm_tidal_curve_data WHERE tidal_curve_name = ? ORDER BY hour;"""
+                rows = self.gutils.execute(data_qry, (self.curve_name,)).fetchall()
+                if rows:
+                    # Convert items of first column to float to sort them in ascending order:
+                    rws = []
+                    for row in rows:
+                        rws.append([float(row[0]), row[1]])
+                    rws.sort()
+                    # Restore items of first column to string:
+                    rows = []
+                    for row in rws:
+                        rows.append([str(row[0]), row[1]])
+
+                    self.curve_tblw.setRowCount(0)
+
+                    for row_number, row_data in enumerate(rows):
+                        self.curve_tblw.insertRow(row_number)
+                        for cell, data in enumerate(row_data):
+                            # if cell == 0:
+                            #     if ":" in data:
+                            #         a, b = data.split(":")
+                            #         b = float(b)/60
+                            #         data = float(a) + b
+                            #     else:
+                            #         data = float(data)
+                            self.curve_tblw.setItem(row_number, cell, QTableWidgetItem(str(data)))
+
+            else:
+                self.name_le.setText(self.curve_name)
+
+        QApplication.restoreOverrideCursor()
+        self.loading = False
+
+    def save_curve(self):
+        delete_sql = "DELETE FROM swmm_tidal_curve WHERE tidal_curve_name = ?"
+        self.gutils.execute(delete_sql, (self.name_le.text(),))
+        insert_sql = "INSERT INTO swmm_tidal_curve (tidal_curve_name, tidal_curve_description) VALUES (?, ?);"
+        self.gutils.execute(
+            insert_sql,
+            (self.name_le.text(), self.description_le.text()),
+        )
+
+        delete_data_sql = "DELETE FROM swmm_tidal_curve_data WHERE tidal_curve_name = ?"
+        self.gutils.execute(delete_data_sql, (self.name_le.text(),))
+
+        insert_data_sql = [
+            """INSERT INTO swmm_tidal_curve_data (tidal_curve_name, hour, stage) VALUES""",
+            3,
+        ]
+        for row in range(0, self.curve_tblw.rowCount()):
+            hour = self.curve_tblw.item(row, 0)
+            if hour:
+                hour = hour.text()
+
+            stage = self.curve_tblw.item(row, 1)
+            if stage:
+                stage = stage.text()
+
+            insert_data_sql += [(self.name_le.text(), hour, stage)]
+        self.gutils.batch_execute(insert_data_sql)
+
+        self.uc.bar_info("Curve " + self.name_le.text() + " saved.", 2)
+        self.curve_name = self.name_le.text()
+        self.close()
+

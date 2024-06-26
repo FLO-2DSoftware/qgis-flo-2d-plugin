@@ -80,14 +80,7 @@ from ..flo2d_tools.grid_tools import spatial_index
 from ..flo2d_tools.schema2user_tools import remove_features
 from ..flo2dobjects import InletRatingTable, PumpCurves
 from ..geopackage_utils import GeoPackageUtils
-from ..gui.dlg_conduits import ConduitsDialog
-from ..gui.dlg_inlets import InletNodesDialog
-from ..gui.dlg_storage_units import StorageUnitsDialog
-from ..gui.dlg_orifices import OrificesDialog
-from ..gui.dlg_outfalls import OutfallNodesDialog
-from ..gui.dlg_pumps import PumpsDialog
 from ..gui.dlg_stormdrain_shapefile import StormDrainShapefile
-from ..gui.dlg_weirs import WeirsDialog
 from ..user_communication import ScrollMessageBox, ScrollMessageBox2, UserCommunication,TwoInputsDialog
 from ..utils import float_or_zero, int_or_zero, is_number, is_true, m_fdata
 from .table_editor_widget import CommandItemEdit, StandardItem, StandardItemModel
@@ -470,8 +463,6 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
 
         self.SD_type4_cbo.activated.connect(self.SD_show_type4_table_and_plot)
 
-        self.SD_nodes_components_cbo.currentIndexChanged.connect(self.nodes_component_changed)
-        self.SD_links_components_cbo.currentIndexChanged.connect(self.links_component_changed)
         self.auto_assign_link_nodes_btn.clicked.connect(self.auto_assign)
         
         self.populate_type4_combo()
@@ -3931,212 +3922,6 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         except Exception as e:
             self.uc.show_error("ERROR 160618.0634: couldn't export .INP file!", e)
 
-    def show_outfalls(self):
-        """
-        Shows outfalls dialog.
-        """
-
-        #  See if there are any Outlet nodes:
-        qry = """SELECT * FROM user_swmm_outlets;"""
-        rows = self.gutils.execute(qry).fetchall()
-        if not rows:
-            self.uc.bar_warn("No outfalls defined in 'Storm Drain Outlets' User Layer!")
-            return
-
-        dlg_outfalls = OutfallNodesDialog(self.iface, self.lyrs)
-        dlg_outfalls.setWindowFlag(Qt.WindowMinimizeButtonHint, True)
-        dlg_outfalls.setWindowFlag(Qt.WindowMaximizeButtonHint, True)
-        save = dlg_outfalls.exec_()
-        if save:
-            try:
-                dlg_outfalls.save_outfalls()
-                self.uc.bar_info("Outfalls saved to 'Storm Drain Outlets' User Layer.")
-            except Exception:
-                self.uc.bar_warn("Could not save outfalls! Please check if they are correct.")
-                return
-
-        self.lyrs.clear_rubber()
-
-    def show_inlets(self):
-        """
-        Shows inlets dialog.
-
-        """
-        # See if table is empty:
-        if self.gutils.is_table_empty("user_swmm_inlets_junctions"):
-            self.uc.show_warn(
-                'User Layer "Storm Drain Inlets/Junctions" is empty!\n\n'
-                + "Please import components from .INP file or shapefile, or convert from schematized Storm Drains."
-            )
-            return
-
-        #  See if there are any Inlet nodes:
-        qry = """SELECT * FROM user_swmm_inlets_junctions WHERE sd_type = 'I' or sd_type = 'J';"""
-        rows = self.gutils.execute(qry).fetchall()
-        if not rows:
-            self.uc.show_info(
-                "WARNING 280920.0422: No inlets/junctions defined (of type 'I' or 'J') in 'Storm Drain Inlets/Junctions' User Layer!"
-            )
-            return
-
-        dlg_inlets = InletNodesDialog(self.iface, self.plot, self.SD_table, self.lyrs)
-        dlg_inlets.setWindowFlag(Qt.WindowMinimizeButtonHint, True)
-        dlg_inlets.setWindowFlag(Qt.WindowMaximizeButtonHint, True)
-
-        save = dlg_inlets.exec_()
-        if save:
-            self.uc.bar_info("Inlets saved to 'Storm Drain-Inlets' User Layer.")
-            self.populate_type4_combo()
-
-        elif not save:
-            pass
-        else:
-            self.uc.bar_warn("Could not save Inlets! Please check if they are correct.")
-
-        self.lyrs.clear_rubber()
-
-    def show_storage_units(self):
-        """
-        Shows storage_units_dialog dialog.
-
-        """
-        # See if table is empty:
-        if self.gutils.is_table_empty("user_swmm_storage_units"):
-            self.uc.show_warn(
-                'User Layer "Storm Drain Storage Units" is empty!\n\n'
-                + "Please import components from .INP file or shapefile, or convert from schematized Storm Drains."
-            )
-            return
-
-        dlg_storage = StorageUnitsDialog(self.iface, self.plot, self.SD_table, self.lyrs)
-        dlg_storage.setWindowFlag(Qt.WindowMinimizeButtonHint, True)
-        dlg_storage.setWindowFlag(Qt.WindowMaximizeButtonHint, True)
-        dlg_storage.select_curve_type()
-        
-        save = dlg_storage.exec_()
-        if save:
-            self.uc.bar_info("Storage Units saved to 'Storm Drain Storage Units' User Layer.")
-        elif not save:
-            pass
-        else:
-            self.uc.bar_warn("Could not save Inlets! Please check if they are correct.")
-        
-        self.lyrs.clear_rubber()
-
-    def show_conduits(self):
-        """
-        Shows conduits dialog.
-
-        """
-        # See if there are conduits:
-        if self.gutils.is_table_empty("user_swmm_conduits"):
-            self.uc.show_warn(
-                'User Layer "Storm Drain Conduits" is empty!\n\n'
-                + "Please import components from .INP file or shapefile, or convert from schematized Storm Drains."
-            )
-            return
-
-        dlg_conduits = ConduitsDialog(self.iface, self.lyrs)
-        dlg_conduits.setWindowFlag(Qt.WindowMinimizeButtonHint, True)
-        dlg_conduits.setWindowFlag(Qt.WindowMaximizeButtonHint, True)
-        save = dlg_conduits.exec_()
-        if save:
-            try:
-                dlg_conduits.save_conduits()
-                self.uc.bar_info("Conduits saved to 'Storm Drain-Conduits' User Layer.")
-            except Exception:
-                self.uc.bar_warn("Could not save conduits! Please check if they are correct.")
-                return
-
-        self.lyrs.clear_rubber()
-
-    def show_pumps(self):
-        """
-        Shows pumps dialog.
-
-        """
-        # See if there are pumps:
-        if self.gutils.is_table_empty("user_swmm_pumps"):
-            self.uc.show_warn(
-                'User Layer "Storm Drain Pumps" is empty!\n\n'
-                + "Please import components from .INP file or shapefile, or convert from schematized Storm Drains."
-            )
-            return
-
-        dlg_pumps = PumpsDialog(self.iface, self.plot, self.SD_table, self.lyrs)
-        dlg_pumps.setWindowFlag(Qt.WindowMinimizeButtonHint, True)
-        dlg_pumps.setWindowFlag(Qt.WindowMaximizeButtonHint, True)
-        save = dlg_pumps.exec_()
-        if save:
-            try:
-                dlg_pumps.save_pumps()
-                self.uc.bar_info("Pumps saved to 'Storm Drain-Pumps' User Layer.")
-            except Exception:
-                self.uc.bar_warn("Could not save pumps! Please check if they are correct.")
-                return
-
-        self.lyrs.clear_rubber()
-
-    def show_orifices(self):
-        """
-        Shows orifices dialog.
-
-        """
-        # See if there are orifices:
-        if self.gutils.is_table_empty("user_swmm_orifices"):
-            self.uc.show_warn(
-                'User Layer "Storm Drain Orifices" is empty!\n\n'
-                + "Please import components from .INP file or shapefile, or convert from schematized Storm Drains."
-            )
-            return
-
-        dlg_orifices = OrificesDialog(self.iface, self.lyrs)
-        dlg_orifices.setWindowFlag(Qt.WindowMinimizeButtonHint, True)
-        dlg_orifices.setWindowFlag(Qt.WindowMaximizeButtonHint, True)
-        save = dlg_orifices.exec_()
-        if save:
-            try:
-                dlg_orifices.save_orifices()
-                self.uc.bar_info("Orifices saved to 'Storm Drain Orifices' User Layer.")
-            except Exception:
-                self.uc.bar_warn("Could not save orifices! Please check if they are correct.")
-                return
-
-        self.lyrs.clear_rubber()
-
-    def show_weirs(self):
-        """
-        Shows weirs dialog.
-
-        """
-        # See if there are weirs:
-        if self.gutils.is_table_empty("user_swmm_weirs"):
-            self.uc.show_warn(
-                'User Layer "Storm Drain Weirs" is empty!\n\n'
-                + "Please import components from .INP file or shapefile, or convert from schematized Storm Drains."
-            )
-            return
-
-        dlg_weirs = WeirsDialog(self.iface, self.lyrs)
-        dlg_weirs.setWindowFlag(Qt.WindowMinimizeButtonHint, True)
-        dlg_weirs.setWindowFlag(Qt.WindowMaximizeButtonHint, True)
-        save = dlg_weirs.exec_()
-        if save:
-            try:
-                dlg_weirs.save_weirs()
-                self.uc.bar_info("Weirs saved to 'Storm Drain Weirs' User Layer.")
-            except Exception:
-                self.uc.bar_warn("Could not save weirs! Please check if they are correct.")
-                return
-
-        self.lyrs.clear_rubber()
-
-    # def auto_assign_conduit_nodes(self):
-    #     self.auto_assign_link_nodes("Conduits", "conduit_inlet", "conduit_outlet")
-    #
-    # def auto_assign_pump_nodes(self):
-    #     self.auto_assign_link_nodes("Pumps", "pump_inlet", "pump_outlet")
-
     def auto_assign_link_nodes(self, link_name, link_inlet, link_outlet, SD_all_nodes_layer):
         """Auto assign Conduits, Pumps, orifices, or Weirs  (user layer) Inlet and Outlet names
            based on closest (5ft) nodes to their endpoints."""
@@ -5510,30 +5295,6 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 no_4Type = file_name
 
         return error0, error1, noInlet, no_4Type
-
-    def nodes_component_changed(self):
-        idx = self.SD_nodes_components_cbo.currentIndex()
-        if idx == 1:
-            self.show_inlets()
-        elif idx == 2:
-            self.show_outfalls()
-        elif idx == 3:
-            self.show_storage_units()                
-
-        self.SD_nodes_components_cbo.setCurrentIndex(0)
-
-    def links_component_changed(self):
-        idx = self.SD_links_components_cbo.currentIndex()
-        if idx == 1:
-            self.show_conduits()
-        elif idx == 2:
-            self.show_pumps()
-        elif idx == 3:
-            self.show_orifices()
-        elif idx == 4:
-            self.show_weirs()
-
-        self.SD_links_components_cbo.setCurrentIndex(0)
 
     def auto_assign(self):
 
