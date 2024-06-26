@@ -490,7 +490,7 @@ class OutletAttributes(qtBaseClass, uiDialog):
 
         self.user_swmm_outlets_lyr = self.lyrs.data["user_swmm_outlets"]["qlyr"]
 
-        self.dock_widget.visibilityChanged.connect(self.clear_rubber)
+        # self.dock_widget.visibilityChanged.connect(self.clear_rubber)
 
         self.next_btn.clicked.connect(self.populate_next_node)
         self.previous_btn.clicked.connect(self.populate_previous_node)
@@ -539,6 +539,11 @@ class OutletAttributes(qtBaseClass, uiDialog):
 
         self.tidal_btn.clicked.connect(self.open_tidal_curve)
         self.ts_btn.clicked.connect(self.open_time_series)
+
+        self.zoom_in_btn.clicked.connect(self.zoom_in)
+        self.zoom_out_btn.clicked.connect(self.zoom_out)
+
+        self.eye_btn.clicked.connect(self.find_outlet)
 
     def populate_attributes(self, fid):
         """
@@ -899,6 +904,68 @@ class OutletAttributes(qtBaseClass, uiDialog):
                         break
             else:
                 break
+
+    def zoom_in(self):
+        """
+        Function to zoom in
+        """
+        currentCell = next(self.user_swmm_outlets_lyr.getFeatures(QgsFeatureRequest(self.current_node)))
+        if currentCell:
+            QApplication.setOverrideCursor(Qt.WaitCursor)
+            x, y = currentCell.geometry().centroid().asPoint()
+            center_canvas(self.iface, x, y)
+            zoom(self.iface, 0.4)
+            QApplication.restoreOverrideCursor()
+
+    def zoom_out(self):
+        """
+        Function to zoom out
+        """
+        currentCell = next(self.user_swmm_outlets_lyr.getFeatures(QgsFeatureRequest(self.current_node)))
+        if currentCell:
+            QApplication.setOverrideCursor(Qt.WaitCursor)
+            x, y = currentCell.geometry().centroid().asPoint()
+            center_canvas(self.iface, x, y)
+            zoom(self.iface, -0.4)
+            QApplication.restoreOverrideCursor()
+
+    def find_outlet(self):
+        """
+        Function to find a junction and populate the data
+        """
+        try:
+            QApplication.setOverrideCursor(Qt.WaitCursor)
+            if self.gutils.is_table_empty("grid"):
+                self.uc.bar_warn("There is no grid! Please create it before running tool.")
+                return
+
+            name = self.search_le.text()
+            grid_qry = self.gutils.execute(f"SELECT fid, grid FROM user_swmm_outlets WHERE name = '{name}'").fetchone()
+            if grid_qry:
+                self.current_node = grid_qry[0]
+                cell = grid_qry[1]
+            else:
+                self.uc.bar_error("Outlet not found!")
+                self.uc.log_info("Outlet not found!")
+                return
+
+            grid = self.lyrs.data["grid"]["qlyr"]
+            if grid is not None:
+                if grid:
+                    self.lyrs.show_feat_rubber(self.user_swmm_outlets_lyr.id(), self.current_node, QColor(Qt.red))
+                    feat = next(grid.getFeatures(QgsFeatureRequest(cell)))
+                    x, y = feat.geometry().centroid().asPoint()
+                    center_canvas(self.iface, x, y)
+                    zoom(self.iface, 0.4)
+                    self.populate_attributes(self.current_node)
+
+        except Exception:
+            self.uc.bar_warn("Cell is not valid.")
+            self.lyrs.clear_rubber()
+            pass
+
+        finally:
+            QApplication.restoreOverrideCursor()
 
 
 uiDialog, qtBaseClass = load_ui("pump_attributes")
