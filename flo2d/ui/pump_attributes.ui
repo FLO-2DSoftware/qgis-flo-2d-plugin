@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>391</width>
-    <height>273</height>
+    <width>403</width>
+    <height>302</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -24,24 +24,11 @@
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>371</width>
-        <height>253</height>
+        <width>383</width>
+        <height>282</height>
        </rect>
       </property>
       <layout class="QGridLayout" name="gridLayout_2">
-       <item row="1" column="0">
-        <spacer name="verticalSpacer">
-         <property name="orientation">
-          <enum>Qt::Vertical</enum>
-         </property>
-         <property name="sizeHint" stdset="0">
-          <size>
-           <width>20</width>
-           <height>40</height>
-          </size>
-         </property>
-        </spacer>
-       </item>
        <item row="0" column="0">
         <widget class="QGroupBox" name="groupBox">
          <property name="title">
@@ -50,13 +37,6 @@
          <layout class="QGridLayout" name="gridLayout_4">
           <item row="0" column="0">
            <layout class="QGridLayout" name="gridLayout_3">
-            <item row="3" column="0">
-             <widget class="QLabel" name="label_4">
-              <property name="text">
-               <string>Curve</string>
-              </property>
-             </widget>
-            </item>
             <item row="1" column="0">
              <widget class="QLabel" name="label_2">
               <property name="text">
@@ -64,24 +44,10 @@
               </property>
              </widget>
             </item>
-            <item row="6" column="1">
-             <widget class="QDoubleSpinBox" name="pump_shutoff_depth">
-              <property name="maximum">
-               <double>100000.000000000000000</double>
-              </property>
-             </widget>
-            </item>
-            <item row="5" column="0">
-             <widget class="QLabel" name="label_6">
+            <item row="3" column="0">
+             <widget class="QLabel" name="label_4">
               <property name="text">
-               <string>Startup Depth</string>
-              </property>
-             </widget>
-            </item>
-            <item row="4" column="0">
-             <widget class="QLabel" name="label_5">
-              <property name="text">
-               <string>Initial Status</string>
+               <string>Curve</string>
               </property>
              </widget>
             </item>
@@ -104,6 +70,16 @@
               </property>
              </widget>
             </item>
+            <item row="0" column="1">
+             <widget class="QLineEdit" name="pump_name"/>
+            </item>
+            <item row="5" column="0">
+             <widget class="QLabel" name="label_6">
+              <property name="text">
+               <string>Startup Depth</string>
+              </property>
+             </widget>
+            </item>
             <item row="6" column="0">
              <widget class="QLabel" name="label_7">
               <property name="text">
@@ -111,15 +87,12 @@
               </property>
              </widget>
             </item>
-            <item row="5" column="1">
-             <widget class="QDoubleSpinBox" name="pump_startup_depth">
-              <property name="maximum">
-               <double>100000.000000000000000</double>
+            <item row="4" column="0">
+             <widget class="QLabel" name="label_5">
+              <property name="text">
+               <string>Initial Status</string>
               </property>
              </widget>
-            </item>
-            <item row="0" column="1">
-             <widget class="QLineEdit" name="pump_name"/>
             </item>
             <item row="2" column="0">
              <widget class="QLabel" name="label_3">
@@ -128,22 +101,115 @@
               </property>
              </widget>
             </item>
-            <item row="1" column="1">
+            <item row="0" column="2">
+             <widget class="QToolButton" name="zoom_in_btn">
+              <property name="text">
+               <string>...</string>
+              </property>
+              <property name="icon">
+               <iconset>
+                <normaloff>../img/zoom_in.svg</normaloff>../img/zoom_in.svg</iconset>
+              </property>
+             </widget>
+            </item>
+            <item row="0" column="3">
+             <widget class="QToolButton" name="zoom_out_btn">
+              <property name="text">
+               <string>...</string>
+              </property>
+              <property name="icon">
+               <iconset>
+                <normaloff>../img/zoom_out.svg</normaloff>../img/zoom_out.svg</iconset>
+              </property>
+             </widget>
+            </item>
+            <item row="1" column="1" colspan="3">
              <widget class="QComboBox" name="pump_inlet"/>
             </item>
-            <item row="2" column="1">
+            <item row="2" column="1" colspan="3">
              <widget class="QComboBox" name="pump_outlet"/>
             </item>
-            <item row="3" column="1">
+            <item row="3" column="1" colspan="3">
              <widget class="QComboBox" name="pump_curve"/>
             </item>
-            <item row="4" column="1">
+            <item row="4" column="1" colspan="3">
              <widget class="QComboBox" name="pump_init_status"/>
+            </item>
+            <item row="5" column="1" colspan="3">
+             <widget class="QDoubleSpinBox" name="pump_startup_depth">
+              <property name="maximum">
+               <double>100000.000000000000000</double>
+              </property>
+             </widget>
+            </item>
+            <item row="6" column="1" colspan="3">
+             <widget class="QDoubleSpinBox" name="pump_shutoff_depth">
+              <property name="maximum">
+               <double>100000.000000000000000</double>
+              </property>
+             </widget>
             </item>
            </layout>
           </item>
          </layout>
         </widget>
+       </item>
+       <item row="2" column="0">
+        <layout class="QHBoxLayout" name="horizontalLayout">
+         <item>
+          <spacer name="horizontalSpacer">
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>40</width>
+             <height>20</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+         <item>
+          <widget class="QLineEdit" name="search_le"/>
+         </item>
+         <item>
+          <widget class="QToolButton" name="eye_btn">
+           <property name="text">
+            <string>...</string>
+           </property>
+           <property name="icon">
+            <iconset>
+             <normaloff>../img/eye-svgrepo-com.svg</normaloff>../img/eye-svgrepo-com.svg</iconset>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <spacer name="horizontalSpacer_2">
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>40</width>
+             <height>20</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+        </layout>
+       </item>
+       <item row="1" column="0">
+        <spacer name="verticalSpacer">
+         <property name="orientation">
+          <enum>Qt::Vertical</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>20</width>
+           <height>40</height>
+          </size>
+         </property>
+        </spacer>
        </item>
       </layout>
      </widget>
