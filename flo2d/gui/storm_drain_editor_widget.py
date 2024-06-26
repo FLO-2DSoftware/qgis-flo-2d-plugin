@@ -489,49 +489,49 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
 
         self.user_swmm_inlets_junctions_lyr.featureAdded.connect(self.inlet_junction_added)
 
-        formConfig = self.user_swmm_inlets_junctions_lyr.editFormConfig()
-        formConfig.setInitCodeSource(Qgis.AttributeFormPythonInitCodeSource(1))
-        formConfig.setUiForm(os.path.join(os.path.dirname(os.path.realpath(__file__)), "..", "ui", "inlet_attributes.ui"))
-        self.user_swmm_inlets_junctions_lyr.setEditFormConfig(formConfig)
-        field_reuse(self.user_swmm_inlets_junctions_lyr)
+        # formConfig = self.user_swmm_inlets_junctions_lyr.editFormConfig()
+        # formConfig.setInitCodeSource(Qgis.AttributeFormPythonInitCodeSource(1))
+        # formConfig.setUiForm(os.path.join(os.path.dirname(os.path.realpath(__file__)), "..", "ui", "inlet_attributes.ui"))
+        # self.user_swmm_inlets_junctions_lyr.setEditFormConfig(formConfig)
+        # field_reuse(self.user_swmm_inlets_junctions_lyr)
 
         self.user_swmm_outlets_lyr.featureAdded.connect(self.outlet_added)
 
-        formConfig = self.user_swmm_outlets_lyr.editFormConfig()
-        formConfig.setInitCodeSource(Qgis.AttributeFormPythonInitCodeSource(1))
-        formConfig.setUiForm(os.path.join(os.path.dirname(os.path.realpath(__file__)), "..", "ui", "outlet_attributes.ui"))
-        self.user_swmm_outlets_lyr.setEditFormConfig(formConfig)
-        field_reuse(self.user_swmm_outlets_lyr)
-
-        formConfig = self.user_swmm_conduits_lyr.editFormConfig()
-        formConfig.setInitCodeSource(Qgis.AttributeFormPythonInitCodeSource(1))
-        formConfig.setUiForm(os.path.join(os.path.dirname(os.path.realpath(__file__)), "..", "ui", "conduit_attributes.ui"))
-        self.user_swmm_conduits_lyr.setEditFormConfig(formConfig)
-        field_reuse(self.user_swmm_conduits_lyr)
-
-        formConfig = self.user_swmm_pumps_lyr.editFormConfig()
-        formConfig.setInitCodeSource(Qgis.AttributeFormPythonInitCodeSource(1))
-        formConfig.setUiForm(os.path.join(os.path.dirname(os.path.realpath(__file__)), "..", "ui", "pump_attributes.ui"))
-        self.user_swmm_pumps_lyr.setEditFormConfig(formConfig)
-        field_reuse(self.user_swmm_pumps_lyr)
-
-        formConfig = self.user_swmm_orifices_lyr.editFormConfig()
-        formConfig.setInitCodeSource(Qgis.AttributeFormPythonInitCodeSource(1))
-        formConfig.setUiForm(os.path.join(os.path.dirname(os.path.realpath(__file__)), "..", "ui", "orifice_attributes.ui"))
-        self.user_swmm_orifices_lyr.setEditFormConfig(formConfig)
-        field_reuse(self.user_swmm_orifices_lyr)
-
-        formConfig = self.user_swmm_weirs_lyr.editFormConfig()
-        formConfig.setInitCodeSource(Qgis.AttributeFormPythonInitCodeSource(1))
-        formConfig.setUiForm(os.path.join(os.path.dirname(os.path.realpath(__file__)), "..", "ui", "weir_attributes.ui"))
-        self.user_swmm_weirs_lyr.setEditFormConfig(formConfig)
-        field_reuse(self.user_swmm_weirs_lyr)
-
-        formConfig = self.user_swmm_storage_units_lyr.editFormConfig()
-        formConfig.setInitCodeSource(Qgis.AttributeFormPythonInitCodeSource(1))
-        formConfig.setUiForm(os.path.join(os.path.dirname(os.path.realpath(__file__)), "..", "ui", "storage_unit_attributes.ui"))
-        self.user_swmm_storage_units_lyr.setEditFormConfig(formConfig)
-        field_reuse(self.user_swmm_storage_units_lyr)
+        # formConfig = self.user_swmm_outlets_lyr.editFormConfig()
+        # formConfig.setInitCodeSource(Qgis.AttributeFormPythonInitCodeSource(1))
+        # formConfig.setUiForm(os.path.join(os.path.dirname(os.path.realpath(__file__)), "..", "ui", "outlet_attributes.ui"))
+        # self.user_swmm_outlets_lyr.setEditFormConfig(formConfig)
+        # field_reuse(self.user_swmm_outlets_lyr)
+        #
+        # formConfig = self.user_swmm_conduits_lyr.editFormConfig()
+        # formConfig.setInitCodeSource(Qgis.AttributeFormPythonInitCodeSource(1))
+        # formConfig.setUiForm(os.path.join(os.path.dirname(os.path.realpath(__file__)), "..", "ui", "conduit_attributes.ui"))
+        # self.user_swmm_conduits_lyr.setEditFormConfig(formConfig)
+        # field_reuse(self.user_swmm_conduits_lyr)
+        #
+        # formConfig = self.user_swmm_pumps_lyr.editFormConfig()
+        # formConfig.setInitCodeSource(Qgis.AttributeFormPythonInitCodeSource(1))
+        # formConfig.setUiForm(os.path.join(os.path.dirname(os.path.realpath(__file__)), "..", "ui", "pump_attributes.ui"))
+        # self.user_swmm_pumps_lyr.setEditFormConfig(formConfig)
+        # field_reuse(self.user_swmm_pumps_lyr)
+        #
+        # formConfig = self.user_swmm_orifices_lyr.editFormConfig()
+        # formConfig.setInitCodeSource(Qgis.AttributeFormPythonInitCodeSource(1))
+        # formConfig.setUiForm(os.path.join(os.path.dirname(os.path.realpath(__file__)), "..", "ui", "orifice_attributes.ui"))
+        # self.user_swmm_orifices_lyr.setEditFormConfig(formConfig)
+        # field_reuse(self.user_swmm_orifices_lyr)
+        #
+        # formConfig = self.user_swmm_weirs_lyr.editFormConfig()
+        # formConfig.setInitCodeSource(Qgis.AttributeFormPythonInitCodeSource(1))
+        # formConfig.setUiForm(os.path.join(os.path.dirname(os.path.realpath(__file__)), "..", "ui", "weir_attributes.ui"))
+        # self.user_swmm_weirs_lyr.setEditFormConfig(formConfig)
+        # field_reuse(self.user_swmm_weirs_lyr)
+        #
+        # formConfig = self.user_swmm_storage_units_lyr.editFormConfig()
+        # formConfig.setInitCodeSource(Qgis.AttributeFormPythonInitCodeSource(1))
+        # formConfig.setUiForm(os.path.join(os.path.dirname(os.path.realpath(__file__)), "..", "ui", "storage_unit_attributes.ui"))
+        # self.user_swmm_storage_units_lyr.setEditFormConfig(formConfig)
+        # field_reuse(self.user_swmm_storage_units_lyr)
 
     def setup_connection(self):
         con = self.iface.f2d["con"]
