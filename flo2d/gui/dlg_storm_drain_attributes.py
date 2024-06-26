@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from qgis._core import QgsFeatureRequest
 
 # FLO-2D Preprocessor tools for QGIS
 
@@ -8,7 +9,7 @@
 # of the License, or (at your option) any later version
 
 
-from .ui_utils import load_ui, set_icon
+from .ui_utils import load_ui, set_icon, center_canvas, zoom
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
 from ..utils import TimeSeriesDelegate, is_true, FloatDelegate
@@ -64,14 +65,19 @@ class InletAttributes(qtBaseClass, uiDialog):
 
         self.user_swmm_inlets_junctions_lyr = self.lyrs.data["user_swmm_inlets_junctions"]["qlyr"]
 
-        self.dock_widget.visibilityChanged.connect(self.clear_rubber)
+        # self.dock_widget.visibilityChanged.connect(self.clear_rubber)
+
+        self.zoom_in_btn.clicked.connect(self.zoom_in)
+        self.zoom_out_btn.clicked.connect(self.zoom_out)
 
         self.next_btn.clicked.connect(self.populate_next_node)
         self.previous_btn.clicked.connect(self.populate_previous_node)
         self.external_btn.clicked.connect(self.show_external_inflow_dlg)
 
+        self.eye_btn.clicked.connect(self.find_junction_inlet)
+
         self.inlets_junctions = {
-            self.label_4: self.junction_invert_elev, # Inlets
+            self.label_4: self.junction_invert_elev,
             self.label_5: self.max_depth,
             self.label_10: self.init_depth,
             self.label_11: self.surcharge_depth,
@@ -390,6 +396,68 @@ class InletAttributes(qtBaseClass, uiDialog):
                                 WHERE 
                                     fid = '{self.current_node}';
                             """)
+
+    def zoom_in(self):
+        """
+        Function to zoom in
+        """
+        currentCell = next(self.user_swmm_inlets_junctions_lyr.getFeatures(QgsFeatureRequest(self.current_node)))
+        if currentCell:
+            QApplication.setOverrideCursor(Qt.WaitCursor)
+            x, y = currentCell.geometry().centroid().asPoint()
+            center_canvas(self.iface, x, y)
+            zoom(self.iface, 0.4)
+            QApplication.restoreOverrideCursor()
+
+    def zoom_out(self):
+        """
+        Function to zoom out
+        """
+        currentCell = next(self.user_swmm_inlets_junctions_lyr.getFeatures(QgsFeatureRequest(self.current_node)))
+        if currentCell:
+            QApplication.setOverrideCursor(Qt.WaitCursor)
+            x, y = currentCell.geometry().centroid().asPoint()
+            center_canvas(self.iface, x, y)
+            zoom(self.iface, -0.4)
+            QApplication.restoreOverrideCursor()
+
+    def find_junction_inlet(self):
+        """
+        Function to find a junction and populate the data
+        """
+        try:
+            QApplication.setOverrideCursor(Qt.WaitCursor)
+            if self.gutils.is_table_empty("grid"):
+                self.uc.bar_warn("There is no grid! Please create it before running tool.")
+                return
+
+            name = self.search_le.text()
+            grid_qry = self.gutils.execute(f"SELECT fid, grid FROM user_swmm_inlets_junctions WHERE name = '{name}'").fetchone()
+            if grid_qry:
+                self.current_node = grid_qry[0]
+                cell = grid_qry[1]
+            else:
+                self.uc.bar_error("Inlet/Junction not found!")
+                self.uc.log_info("Inlet/Junction not found!")
+                return
+
+            grid = self.lyrs.data["grid"]["qlyr"]
+            if grid is not None:
+                if grid:
+                    self.lyrs.show_feat_rubber(self.user_swmm_inlets_junctions_lyr.id(), self.current_node, QColor(Qt.red))
+                    feat = next(grid.getFeatures(QgsFeatureRequest(cell)))
+                    x, y = feat.geometry().centroid().asPoint()
+                    center_canvas(self.iface, x, y)
+                    zoom(self.iface, 0.4)
+                    self.populate_attributes(self.current_node)
+
+        except Exception:
+            self.uc.bar_warn("Cell is not valid.")
+            self.lyrs.clear_rubber()
+            pass
+
+        finally:
+            QApplication.restoreOverrideCursor()
 
 
 uiDialog, qtBaseClass = load_ui("outlet_attributes")
