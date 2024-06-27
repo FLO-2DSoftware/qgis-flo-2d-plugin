@@ -1527,6 +1527,15 @@ INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('user_swmm_con
 SELECT gpkgAddGeometryColumn('user_swmm_conduits', 'geom', 'LINESTRING', 0, 0, 0);
 SELECT gpkgAddGeometryTriggers('user_swmm_conduits', 'geom');
 
+INSERT INTO trigger_control (name, enabled) VALUES ('default_conduit_name', 1);
+CREATE TRIGGER "default_conduit_name"
+    AFTER INSERT ON "user_swmm_conduits"
+    BEGIN
+        UPDATE "user_swmm_conduits"
+        SET "conduit_name" = ('Conduit_' || CAST(NEW."fid" AS TEXT))
+        WHERE "fid" = NEW."fid" AND NEW."conduit_name" IS NULL;
+    END;
+
 CREATE TABLE "user_swmm_pumps" (
     "fid" INTEGER PRIMARY KEY NOT NULL,
 --VARIABLES FROM .INP [PUMPS]:
