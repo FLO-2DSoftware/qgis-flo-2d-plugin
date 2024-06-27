@@ -589,20 +589,6 @@ class Flo2D(object):
         self.f2d_dock.setWidget(self.f2d_widget)
         self.f2d_dock.dockLocationChanged.connect(self.f2d_dock_save_area)
 
-        # self.f2d_tab_widget = QTabWidget()
-        # self.f2d_tab_widget.setTabPosition(QTabWidget.South)
-        # self.f2d_dock = QgsDockWidget()
-        # self.f2d_dock.setWindowTitle("FLO-2D")
-        # self.f2d_widget = FLO2DWidget(self.iface, self.lyrs, self.f2d_plot, self.f2d_table)
-        # self.f2d_widget.setSizeHint(350, 600)
-        # self.f2d_tab_widget.addTab(self.f2d_widget, "Editors")
-        # main_widget = QWidget()
-        # main_layout = QVBoxLayout()
-        # main_layout.addWidget(self.f2d_tab_widget)
-        # main_widget.setLayout(main_layout)
-        # self.f2d_dock.setWidget(main_widget)
-        # self.iface.addDockWidget(Qt.RightDockWidgetArea, self.f2d_dock)
-
     @staticmethod
     def f2d_dock_save_area(area):
         s = QSettings("FLO2D")

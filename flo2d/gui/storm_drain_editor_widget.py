@@ -21,6 +21,7 @@ import h5py
 import numpy as np
 from PyQt5.QtWidgets import QStyledItemDelegate
 from qgis._core import QgsFeatureRequest, QgsEditFormConfig, QgsDefaultValue, QgsEditorWidgetSetup
+from qgis._gui import QgsDockWidget
 from qgis.core import (
     NULL,
     QgsArrowSymbolLayer,
@@ -72,8 +73,10 @@ from qgis.PyQt.QtWidgets import (
 
 import pyqtgraph as pg
 
+import flo2d.flo2d
 from .dlg_sd_profile_view import SDProfileView
-from .dlg_storm_drain_attributes import InletAttributes
+from .dlg_storm_drain_attributes import InletAttributes, ConduitAttributes, OrificeAttributes, OutletAttributes, \
+    PumpAttributes, StorageUnitAttributes, WeirAttributes
 from ..flo2d_ie.flo2dgeopackage import Flo2dGeoPackage
 from ..flo2d_ie.swmm_io import StormDrainProject
 from ..flo2d_tools.grid_tools import spatial_index
@@ -84,7 +87,7 @@ from ..gui.dlg_stormdrain_shapefile import StormDrainShapefile
 from ..user_communication import ScrollMessageBox, ScrollMessageBox2, UserCommunication,TwoInputsDialog
 from ..utils import float_or_zero, int_or_zero, is_number, is_true, m_fdata
 from .table_editor_widget import CommandItemEdit, StandardItem, StandardItemModel
-from .ui_utils import load_ui, set_icon, try_disconnect, center_canvas, field_reuse
+from .ui_utils import load_ui, set_icon, try_disconnect, center_canvas, field_reuse, zoom
 from ..flo2d_ie.flo2d_parser import ParseDAT
 
 SDTableRole = Qt.UserRole + 1
@@ -464,6 +467,8 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         self.SD_type4_cbo.activated.connect(self.SD_show_type4_table_and_plot)
 
         self.auto_assign_link_nodes_btn.clicked.connect(self.auto_assign)
+
+        self.find_object_btn.clicked.connect(self.find_object)
         
         self.populate_type4_combo()
         self.populate_pump_curves_and_data()
@@ -6044,6 +6049,105 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                                 WHERE 
                                     fid = '{fid}';
                             """)
+
+    def find_object(self):
+        """
+        Function to find an object in the whole storm drain system
+        """
+
+        QApplication.setOverrideCursor(Qt.WaitCursor)
+        sd_object = self.object_le.text()
+        table, column_name = self.find_object_in_sd_tables(sd_object)
+
+        dock_dialogs = {
+            'user_swmm_conduits': ConduitAttributes,
+            'user_swmm_inlets_junctions': InletAttributes,
+            'user_swmm_orifices': OrificeAttributes,
+            'user_swmm_outlets': OutletAttributes,
+            'user_swmm_pumps': PumpAttributes,
+            'user_swmm_storage_units': StorageUnitAttributes,
+            'user_swmm_weirs': WeirAttributes
+        }
+
+        dock_widgets = {
+            'user_swmm_conduits': 'Conduits',
+            'user_swmm_inlets_junctions': 'Inlets/Junctions',
+            'user_swmm_orifices': 'Orifices',
+            'user_swmm_outlets': 'Outlets',
+            'user_swmm_pumps': 'Pumps',
+            'user_swmm_storage_units': 'Storage Units',
+            'user_swmm_weirs': 'Weirs'
+        }
+
+        # Get the f2d_dock reference
+        f2d_dock = None
+        for child in self.iface.mainWindow().findChildren(QgsDockWidget):
+            if child.windowTitle() == 'FLO-2D':
+                f2d_dock = child
+
+        if table and column_name:
+            # Find the fid
+            object_fid = self.gutils.execute(f"SELECT fid FROM {table} WHERE {column_name} = '{sd_object}';").fetchone()[0]
+
+            # Center and zoom to feature
+            sd_layer = self.lyrs.data[table]["qlyr"]
+            currentCell = next(sd_layer.getFeatures(QgsFeatureRequest(object_fid)))
+            if currentCell:
+                x, y = currentCell.geometry().centroid().asPoint()
+                center_canvas(self.iface, x, y)
+                zoom(self.iface, 0.4)
+
+            # Avoid opening multiple dialogs
+            dock_widget_name = dock_widgets.get(table)
+            for child in self.iface.mainWindow().findChildren(QgsDockWidget):
+                if child.windowTitle() == dock_widget_name:
+                    self.iface.removeDockWidget(child)
+                    child.close()
+                    child.deleteLater()
+
+            # Show the dialog
+            dlg = dock_dialogs.get(table)(self.con, self.iface, self.lyrs)
+
+            self.iface.mainWindow().addDockWidget(Qt.RightDockWidgetArea, dlg.dock_widget)
+            if f2d_dock:
+                self.iface.mainWindow().tabifyDockWidget(f2d_dock, dlg.dock_widget)
+            dlg.dock_widget.setFloating(False)
+            dlg.populate_attributes(object_fid)
+            dlg.dock_widget.show()
+            dlg.dock_widget.raise_()
+
+        else:
+            self.uc.log_info("Object not found! Please, check the object's name!")
+            self.uc.bar_warn("Object not found! Please, check the object's name!")
+
+        QApplication.restoreOverrideCursor()
+
+    def find_object_in_sd_tables(self, object_name):
+        """
+        Function to find an object in the storm drain tables
+        """
+        sd_tables = [
+            'user_swmm_conduits',
+            'user_swmm_inlets_junctions',
+            'user_swmm_orifices',
+            'user_swmm_outlets',
+            'user_swmm_pumps',
+            'user_swmm_storage_units',
+            'user_swmm_weirs'
+        ]
+
+        # Loop through each table and get the columns
+        for table in sd_tables:
+            columns = self.gutils.execute(f"PRAGMA table_info({table})").fetchall()
+            # Check for columns containing "name"
+            for col in columns:
+                if 'name' in col[1]:  # col[1] is the column name
+                    # Check if the object is in this table
+                    object_finder_qry = self.gutils.execute(f"SELECT {col[1]} FROM {table} WHERE {col[1]} = '{object_name}'").fetchone()
+                    if object_finder_qry:
+                        return table, col[1]
+
+        return None, None
 
 
 class SDTablesDelegate(QStyledItemDelegate):
