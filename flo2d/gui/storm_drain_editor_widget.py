@@ -355,7 +355,6 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             "swmm_height",
             "swmm_coeff",
             "swmm_feature",
-            "flapgate",
             "curbheight",
         ]
         self.outlet_columns = ["swmm_allow_discharge"]
@@ -459,7 +458,6 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         self.pump_curve_description_le.textChanged.connect(self.update_pump_curve_data)
                
         self.pump_curve_cbo.activated.connect(self.current_cbo_pump_curve_index_changed)
-        # self.pump_curve_cbo.currentIndexChanged.connect(self.refresh_PC_PlotAndTable)
 
         self.simulate_stormdrain_chbox.clicked.connect(self.simulate_stormdrain)
         self.import_shapefile_btn.clicked.connect(self.import_hydraulics)
@@ -709,30 +707,27 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
     def schematize_swmm(self):
         self.uc.clear_bar_messages()
 
-        # if self.gutils.is_table_empty("user_model_boundary"):
-        #     self.uc.bar_warn("There is no computational domain! Please digitize it before running tool.")
-        #     return
         if self.gutils.is_table_empty("grid"):
             self.uc.bar_warn("There is no grid! Please create it before running tool.")
+            self.uc.log_info("There is no grid! Please create it before running tool.")
             return
 
         if self.schematize_inlets_and_outfalls():
-            self.uc.show_info(
+            self.uc.bar_info(
+                "Schematizing Storm Drains finished!"
+            )
+            self.uc.log_info(
                 "Schematizing Storm Drains finished!\n\n"
                 + "The storm drain Inlets, outfalls, and/or rating tables were updated.\n\n"
                 + "(Note: The ‘Export data (*.DAT) files’ tool will write the layer attributes into the SWMMFLO.DAT, "
                 + " SWMMFLORT.DAT, SWMMOUTF.DAT, SWMMFLODROPBOX.DAT, and SDCLOGGING.DAT files)"
             )
 
-    #             if self.schematize_conduits():
-    #                 self.uc.show_info("Schematizing of Storm Drains Conduits finished!\n\n" +
-    #                                   "'SD Conduits' layer was created.")
-
     def schematize_inlets_and_outfalls(self):
         insert_inlet = """
         INSERT INTO swmmflo
-        (geom, swmmchar, swmm_jt, swmm_iden, intype, swmm_length, swmm_width, swmm_height, swmm_coeff, swmm_feature, flapgate, curbheight)
-        VALUES ((SELECT AsGPB(ST_Centroid(GeomFromGPB(geom))) FROM grid WHERE fid=?),?,?,?,?,?,?,?,?,?,?,?);"""
+        (geom, swmmchar, swmm_jt, swmm_iden, name, intype, swmm_length, swmm_width, swmm_height, swmm_coeff, swmm_feature, flapgate, curbheight)
+        VALUES ((SELECT AsGPB(ST_Centroid(GeomFromGPB(geom))) FROM grid WHERE fid=?),?,?,?,?,?,?,?,?,?,?,0,?);"""
 
         insert_outlet = """
         INSERT INTO swmmoutf
@@ -742,129 +737,136 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         update_rt = "UPDATE swmmflort SET grid_fid = ? WHERE fid = ?;"
         delete_rt = "DELETE FROM swmmflort WHERE fid = ?;"
 
-        try:
-            if self.gutils.is_table_empty("user_swmm_inlets_junctions"):
-                self.uc.show_warn(
-                    'User Layer "Storm Drain Inlets/Junctions" is empty!\n\n'
-                    + "Please import components from .INP file or shapefile, or convert from schematized Storm Drains."
+        # try:
+        if self.gutils.is_table_empty("user_swmm_inlets_junctions") or self.gutils.is_table_empty("user_swmm_outlets"):
+            self.uc.log_info(
+                'User Layer "Storm Drain Inlets/Junctions" and/or "Storm Drain Outlets" is empty!\n\n'
+                + "Please import components from .INP file or shapefile, or convert from schematized Storm Drains."
+            )
+            self.uc.show_warn(
+                'User Layer "Storm Drain Inlets/Junctions" and/or "Storm Drain Outlets" is empty!'
+            )
+            return False
+
+        QApplication.setOverrideCursor(Qt.WaitCursor)
+
+        inlets = []
+        outlets = []
+        rt_inserts = []
+        rt_updates = []
+        rt_deletes = []
+
+        user_inlets_junctions = self.user_swmm_inlets_junctions_lyr.getFeatures()
+        for this_user_inlet_node in user_inlets_junctions:
+
+            geom = this_user_inlet_node.geometry()
+            if geom is None:
+                QApplication.restoreOverrideCursor()
+                self.uc.log_info(
+                    "ERROR 060319.1831: Schematizing of Storm Drains failed!\n\n"
+                    + "Inlet geometry missing.\n\n"
+                    + "Please check user Storm Drain Inlets/Junctions layer."
+                )
+                self.uc.show_critical(
+                    "ERROR 060319.1831: Schematizing of Storm Drains failed!\n\n"
+                    + "Inlet geometry missing.\n\n"
+                    + "Please check user Storm Drain Inlets/Junctions layer."
                 )
                 return False
 
-            QApplication.setOverrideCursor(Qt.WaitCursor)
+            point = geom.asPoint()
+            grid_fid = self.gutils.grid_on_point(point.x(), point.y())
+            name = this_user_inlet_node["name"]
+            # rt_fid = this_user_node["rt_fid"]
+            # rt_name = this_user_node["rt_name"]
+            # if sd_type in ["I", "i", "J"]:
 
-            inlets = []
-            outlets = []
-            rt_inserts = []
-            rt_updates = []
-            rt_deletes = []
-            user_nodes = self.user_swmm_inlets_junctions_lyr.getFeatures()
-            for this_user_node in user_nodes:
-                geom = this_user_node.geometry()
-                if geom is None:
-                    QApplication.restoreOverrideCursor()
-                    self.uc.show_critical(
-                        "ERROR 060319.1831: Schematizing of Storm Drains failed!\n\n"
-                        + "Geometry (inlet or outlet) missing.\n\n"
-                        + "Please check user Storm Drain Inlets/Junctions layer."
-                    )
-                    return False
-                point = geom.asPoint()
-                grid_fid = self.gutils.grid_on_point(point.x(), point.y())
-                sd_type = this_user_node["sd_type"]
-                name = this_user_node["name"]
-                rt_fid = this_user_node["rt_fid"]
-                rt_name = this_user_node["rt_name"]
-                if sd_type in ["I", "i", "J"]:
-                    # Insert inlet:
-                    row = [grid_fid, "D", grid_fid, name] + [this_user_node[col] for col in self.inlet_columns]
-                    row[10] = int("1" if is_true(row[9]) else "0")
-                    row = [0 if v == NULL else v for v in row]
-                    inlets.append(row)
+            # Insert inlet:
+            row = [grid_fid, "D", grid_fid, name, name] + [this_user_inlet_node[col] for col in self.inlet_columns]
+            row = [0 if v == NULL else v for v in row]
+            inlets.append(row)
 
-                    # Manage Rating Table:
-                #                     intype = this_user_node['intype']
-                #                     if intype == 4:
-                #                         if rt_name is not None and rt_name != "":
-                #                             row = self.gutils.execute("SELECT * WHERE grid_fid = ? AND name = ?;", (grid_fid, rt_name,))
-                #                             if not row or row[0] is None or row[1] is None or row[1] == "":
-                #                                 # There is no entry for this inlet in rating table. Add it.
-                #                                 # See if rating table has an item with the RT name:
-                #                                 row = self.gutils.execute("SELECT * FROM swmmflort WHERE name = ?;", (rt_name,))
-                #                                 if row:
-                #                                    rt_inserts.append([grid_fid, rt_name])
-                #
-                #
-                #
-                #
-                #
-                #                                 rt_inserts.append([grid_fid, rt_name])
-                #                     else:
-                #                         # See if it in Rating Table. If so, assign NULL to grid_fid but keep reference of RT name to RT data:
-                #                         row = self.gutils.execute("SELECT * FROM swmmflort WHERE grid_fid = ? AND name = ?;", (this_user_node['grid'], this_user_node['rt_name'],))
-                #                         if row:
-                #                             if row[1] == grid_fid:
-                #                                 self.gutils.execute("UPDATE swmmflort SET grid_fid = NULL WHERE fid = ?;", (row[0],))
+            # elif sd_type == "O":
+            #     outf_flo = this_user_node["swmm_allow_discharge"]
+            #     row = [grid_fid, grid_fid, name, outf_flo]
+            #     outlets.append(row)
+            # else:
+            #     raise ValueError
 
-                elif sd_type == "O":
-                    outf_flo = this_user_node["swmm_allow_discharge"]
-                    row = [grid_fid, grid_fid, name, outf_flo]
-                    outlets.append(row)
-                else:
-                    raise ValueError
+        user_outlets = self.user_swmm_outlets_lyr.getFeatures()
+        for this_user_outlet_node in user_outlets:
 
-            msg1, msg2, msg3 = "", "", ""
-            if inlets or outlets or rt_updates:
-                cur = self.con.cursor()
-                if inlets:
-                    self.gutils.clear_tables("swmmflo")
-                    cur.executemany(insert_inlet, inlets)
-                else:
-                    msg1 = "No inlets were schematized!\n"
-
-                if outlets:
-                    self.gutils.clear_tables("swmmoutf")
-                    cur.executemany(insert_outlet, outlets)
-                else:
-                    msg2 = "No outfalls were schematized!\n"
-
-                #                 if rt_deletes:
-                #                     cur.executemany("DELETE FROM swmmflort WHERE grid_fid = ? AND name = ?;", rt_deletes)
-                #
-                #                 if rt_updates:
-                #                     cur.executemany("UPDATE swmmflort SET grid_fid = ? WHERE fid = ?;", rt_updates)
-                #
-                #                 if rt_inserts:
-                #                    cur.executemany("INSERT INTO swmmflort (grid_fid, name);", rt_inserts)
-                #                 else:
-                #                     msg3 = "No Rating Tables were schematized!\n"
-
-                self.con.commit()
-                self.repaint_schema()
+            geom = this_user_outlet_node.geometry()
+            if geom is None:
                 QApplication.restoreOverrideCursor()
-                msg = msg1 + msg2 + msg3
-                if msg != "":
-                    self.uc.show_info(
-                        "WARNING 040121.1911: Schematizing Inlets, Outfalls or Rating Tables Storm Drains result:\n\n"
-                        + msg
-                    )
-                if msg1 == "" or msg2 == "" or msg3 == "":
-                    return True
-                else:
-                    return False
-            else:
-                QApplication.restoreOverrideCursor()
-                self.uc.show_info("ERROR 040121.1912: Schematizing Inlets and Outfalls Storm Drains failed!")
+                self.uc.log_info(
+                    "ERROR 060319.1831: Schematizing of Storm Drains failed!\n\n"
+                    + "Outlet geometry missing.\n\n"
+                    + "Please check user Storm Drain Outlets layer."
+                )
+                self.uc.show_critical(
+                    "ERROR 060319.1831: Schematizing of Storm Drains failed!\n\n"
+                    + "Outlet geometry missing.\n\n"
+                    + "Please check user Storm Drain Outlets layer."
+                )
                 return False
 
-        except Exception as e:
-            self.uc.log_info(traceback.format_exc())
-            QApplication.restoreOverrideCursor()
-            self.uc.show_error(
-                "ERROR 301118..0541: Schematizing Inlets, Outfalls or Rating Tables failed!."
-                + "\n__________________________________________________",
-                e,
+            point = geom.asPoint()
+            grid_fid = self.gutils.grid_on_point(point.x(), point.y())
+            name = this_user_outlet_node["name"]
+            # rt_fid = this_user_node["rt_fid"]
+            # rt_name = this_user_node["rt_name"]
+            # if sd_type in ["I", "i", "J"]:
+
+            outf_flo = this_user_outlet_node["swmm_allow_discharge"]
+            row = [grid_fid, grid_fid, name, outf_flo]
+            outlets.append(row)
+
+        msg1, msg2 = "", ""
+        # if inlets or outlets or rt_updates:
+        cur = self.con.cursor()
+        if inlets:
+            self.gutils.clear_tables("swmmflo")
+            cur.executemany(insert_inlet, inlets)
+        else:
+            msg1 = "No inlets were schematized!\n"
+
+        if outlets:
+            self.gutils.clear_tables("swmmoutf")
+            cur.executemany(insert_outlet, outlets)
+        else:
+            msg2 = "No outlets were schematized!\n"
+
+        self.con.commit()
+        self.repaint_schema()
+
+        QApplication.restoreOverrideCursor()
+        msg = msg1 + msg2
+        if msg != "":
+            self.uc.show_info(
+                "WARNING 040121.1911: Schematizing Inlets and Outlets Storm Drains result:\n\n"
+                + msg
             )
+
+        if msg1 == "" or msg2 == "":
+            return True
+        else:
             return False
+
+        # else:
+        #     QApplication.restoreOverrideCursor()
+        #     self.uc.show_info("ERROR 040121.1912: Schematizing Inlets and Outfalls Storm Drains failed!")
+        #     return False
+
+        # except Exception as e:
+        #     self.uc.log_info(traceback.format_exc())
+        #     QApplication.restoreOverrideCursor()
+        #     self.uc.show_error(
+        #         "ERROR 301118..0541: Schematizing Inlets, Outfalls or Rating Tables failed!."
+        #         + "\n__________________________________________________",
+        #         e,
+        #     )
+        #     return False
 
     def schematize_conduits(self):
         try:
@@ -6054,73 +6056,81 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         """
         Function to find an object in the whole storm drain system
         """
+        try:
+            QApplication.setOverrideCursor(Qt.WaitCursor)
+            sd_object = self.object_le.text()
+            table, column_name = self.find_object_in_sd_tables(sd_object)
 
-        QApplication.setOverrideCursor(Qt.WaitCursor)
-        sd_object = self.object_le.text()
-        table, column_name = self.find_object_in_sd_tables(sd_object)
+            dock_dialogs = {
+                'user_swmm_conduits': ConduitAttributes,
+                'user_swmm_inlets_junctions': InletAttributes,
+                'user_swmm_orifices': OrificeAttributes,
+                'user_swmm_outlets': OutletAttributes,
+                'user_swmm_pumps': PumpAttributes,
+                'user_swmm_storage_units': StorageUnitAttributes,
+                'user_swmm_weirs': WeirAttributes
+            }
 
-        dock_dialogs = {
-            'user_swmm_conduits': ConduitAttributes,
-            'user_swmm_inlets_junctions': InletAttributes,
-            'user_swmm_orifices': OrificeAttributes,
-            'user_swmm_outlets': OutletAttributes,
-            'user_swmm_pumps': PumpAttributes,
-            'user_swmm_storage_units': StorageUnitAttributes,
-            'user_swmm_weirs': WeirAttributes
-        }
+            dock_widgets = {
+                'user_swmm_conduits': 'Conduits',
+                'user_swmm_inlets_junctions': 'Inlets/Junctions',
+                'user_swmm_orifices': 'Orifices',
+                'user_swmm_outlets': 'Outlets',
+                'user_swmm_pumps': 'Pumps',
+                'user_swmm_storage_units': 'Storage Units',
+                'user_swmm_weirs': 'Weirs'
+            }
 
-        dock_widgets = {
-            'user_swmm_conduits': 'Conduits',
-            'user_swmm_inlets_junctions': 'Inlets/Junctions',
-            'user_swmm_orifices': 'Orifices',
-            'user_swmm_outlets': 'Outlets',
-            'user_swmm_pumps': 'Pumps',
-            'user_swmm_storage_units': 'Storage Units',
-            'user_swmm_weirs': 'Weirs'
-        }
-
-        # Get the f2d_dock reference
-        f2d_dock = None
-        for child in self.iface.mainWindow().findChildren(QgsDockWidget):
-            if child.windowTitle() == 'FLO-2D':
-                f2d_dock = child
-
-        if table and column_name:
-            # Find the fid
-            object_fid = self.gutils.execute(f"SELECT fid FROM {table} WHERE {column_name} = '{sd_object}';").fetchone()[0]
-
-            # Center and zoom to feature
-            sd_layer = self.lyrs.data[table]["qlyr"]
-            currentCell = next(sd_layer.getFeatures(QgsFeatureRequest(object_fid)))
-            if currentCell:
-                x, y = currentCell.geometry().centroid().asPoint()
-                center_canvas(self.iface, x, y)
-                zoom(self.iface, 0.4)
-
-            # Avoid opening multiple dialogs
-            dock_widget_name = dock_widgets.get(table)
+            # Get the f2d_dock reference
+            f2d_dock = None
             for child in self.iface.mainWindow().findChildren(QgsDockWidget):
-                if child.windowTitle() == dock_widget_name:
-                    self.iface.removeDockWidget(child)
-                    child.close()
-                    child.deleteLater()
+                if child.windowTitle() == 'FLO-2D':
+                    f2d_dock = child
 
-            # Show the dialog
-            dlg = dock_dialogs.get(table)(self.con, self.iface, self.lyrs)
+            if table and column_name:
+                # Find the fid
+                object_fid = self.gutils.execute(f"SELECT fid FROM {table} WHERE {column_name} = '{sd_object}';").fetchone()[0]
 
-            self.iface.mainWindow().addDockWidget(Qt.RightDockWidgetArea, dlg.dock_widget)
-            if f2d_dock:
-                self.iface.mainWindow().tabifyDockWidget(f2d_dock, dlg.dock_widget)
-            dlg.dock_widget.setFloating(False)
-            dlg.populate_attributes(object_fid)
-            dlg.dock_widget.show()
-            dlg.dock_widget.raise_()
+                # Center and zoom to feature
+                sd_layer = self.lyrs.data[table]["qlyr"]
+                currentCell = next(sd_layer.getFeatures(QgsFeatureRequest(object_fid)))
+                if currentCell:
+                    x, y = currentCell.geometry().centroid().asPoint()
+                    center_canvas(self.iface, x, y)
+                    zoom(self.iface, 0.4)
 
-        else:
-            self.uc.log_info("Object not found! Please, check the object's name!")
-            self.uc.bar_warn("Object not found! Please, check the object's name!")
+                # Avoid opening multiple dialogs
+                dock_widget_name = dock_widgets.get(table)
+                for child in self.iface.mainWindow().findChildren(QgsDockWidget):
+                    if child.windowTitle() == dock_widget_name:
+                        self.iface.removeDockWidget(child)
+                        child.close()
+                        child.deleteLater()
 
-        QApplication.restoreOverrideCursor()
+                # Show the dialog
+                dlg = dock_dialogs.get(table)(self.con, self.iface, self.lyrs)
+
+                self.iface.mainWindow().addDockWidget(Qt.RightDockWidgetArea, dlg.dock_widget)
+                if f2d_dock:
+                    self.iface.mainWindow().tabifyDockWidget(f2d_dock, dlg.dock_widget)
+                dlg.dock_widget.setFloating(False)
+                dlg.populate_attributes(object_fid)
+                dlg.dock_widget.show()
+                dlg.dock_widget.raise_()
+
+            else:
+                self.uc.log_info("Object not found! Please, check the object's name!")
+                self.uc.bar_warn("Object not found! Please, check the object's name!")
+
+        except Exception:
+            self.uc.bar_error("Error finding the object!")
+            self.uc.log_info("Error finding the object!")
+            self.lyrs.clear_rubber()
+            pass
+
+        finally:
+            QApplication.restoreOverrideCursor()
+
 
     def find_object_in_sd_tables(self, object_name):
         """
