@@ -1551,6 +1551,15 @@ INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('user_swmm_pum
 SELECT gpkgAddGeometryColumn('user_swmm_pumps', 'geom', 'LINESTRING', 0, 0, 0);
 SELECT gpkgAddGeometryTriggers('user_swmm_pumps', 'geom');
 
+INSERT INTO trigger_control (name, enabled) VALUES ('default_pump_name', 1);
+CREATE TRIGGER "default_pump_name"
+    AFTER INSERT ON "user_swmm_pumps"
+    BEGIN
+        UPDATE "user_swmm_pumps"
+        SET "pump_name" = ('Pump_' || CAST(NEW."fid" AS TEXT))
+        WHERE "fid" = NEW."fid" AND NEW."pump_name" IS NULL;
+    END;
+
 CREATE TABLE "swmm_pumps_curve_data" (
     "fid" INTEGER NOT NULL PRIMARY KEY,
     "pump_curve_name" TEXT, 
@@ -1590,6 +1599,15 @@ INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('user_swmm_ori
 SELECT gpkgAddGeometryColumn('user_swmm_orifices', 'geom', 'LINESTRING', 0, 0, 0);
 SELECT gpkgAddGeometryTriggers('user_swmm_orifices', 'geom');
 
+INSERT INTO trigger_control (name, enabled) VALUES ('default_orifice_name', 1);
+CREATE TRIGGER "default_orifice_name"
+    AFTER INSERT ON "user_swmm_orifices"
+    BEGIN
+        UPDATE "user_swmm_orifices"
+        SET "orifice_name" = ('Orifice_' || CAST(NEW."fid" AS TEXT))
+        WHERE "fid" = NEW."fid" AND NEW."orifice_name" IS NULL;
+    END;
+
 CREATE TABLE "user_swmm_weirs" (
     "fid" INTEGER PRIMARY KEY NOT NULL,
 --VARIABLES FROM .INP:
@@ -1610,6 +1628,15 @@ CREATE TABLE "user_swmm_weirs" (
 INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('user_swmm_weirs', 'features', 4326);
 SELECT gpkgAddGeometryColumn('user_swmm_weirs', 'geom', 'LINESTRING', 0, 0, 0);
 SELECT gpkgAddGeometryTriggers('user_swmm_weirs', 'geom');
+
+INSERT INTO trigger_control (name, enabled) VALUES ('default_weir_name', 1);
+CREATE TRIGGER "default_weir_name"
+    AFTER INSERT ON "user_swmm_weirs"
+    BEGIN
+        UPDATE "user_swmm_weirs"
+        SET "weir_name" = ('Weir_' || CAST(NEW."fid" AS TEXT))
+        WHERE "fid" = NEW."fid" AND NEW."weir_name" IS NULL;
+    END;
 
 -- SWMM Control Data
 

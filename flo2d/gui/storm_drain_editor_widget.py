@@ -20,7 +20,7 @@ from pathlib import Path
 import h5py
 import numpy as np
 from PyQt5.QtWidgets import QStyledItemDelegate
-from qgis._core import QgsFeatureRequest, QgsEditFormConfig, QgsDefaultValue, QgsEditorWidgetSetup
+from qgis._core import QgsFeatureRequest, QgsEditFormConfig, QgsDefaultValue, QgsEditorWidgetSetup, QgsDistanceArea
 from qgis._gui import QgsDockWidget
 from qgis.core import (
     NULL,
@@ -482,50 +482,11 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         self.simulate_stormdrain_chbox.setChecked(swmm)
 
         self.user_swmm_inlets_junctions_lyr.featureAdded.connect(self.inlet_junction_added)
-
-        # formConfig = self.user_swmm_inlets_junctions_lyr.editFormConfig()
-        # formConfig.setInitCodeSource(Qgis.AttributeFormPythonInitCodeSource(1))
-        # formConfig.setUiForm(os.path.join(os.path.dirname(os.path.realpath(__file__)), "..", "ui", "inlet_attributes.ui"))
-        # self.user_swmm_inlets_junctions_lyr.setEditFormConfig(formConfig)
-        # field_reuse(self.user_swmm_inlets_junctions_lyr)
-
         self.user_swmm_outlets_lyr.featureAdded.connect(self.outlet_added)
-
-        # formConfig = self.user_swmm_outlets_lyr.editFormConfig()
-        # formConfig.setInitCodeSource(Qgis.AttributeFormPythonInitCodeSource(1))
-        # formConfig.setUiForm(os.path.join(os.path.dirname(os.path.realpath(__file__)), "..", "ui", "outlet_attributes.ui"))
-        # self.user_swmm_outlets_lyr.setEditFormConfig(formConfig)
-        # field_reuse(self.user_swmm_outlets_lyr)
-        #
-        # formConfig = self.user_swmm_conduits_lyr.editFormConfig()
-        # formConfig.setInitCodeSource(Qgis.AttributeFormPythonInitCodeSource(1))
-        # formConfig.setUiForm(os.path.join(os.path.dirname(os.path.realpath(__file__)), "..", "ui", "conduit_attributes.ui"))
-        # self.user_swmm_conduits_lyr.setEditFormConfig(formConfig)
-        # field_reuse(self.user_swmm_conduits_lyr)
-        #
-        # formConfig = self.user_swmm_pumps_lyr.editFormConfig()
-        # formConfig.setInitCodeSource(Qgis.AttributeFormPythonInitCodeSource(1))
-        # formConfig.setUiForm(os.path.join(os.path.dirname(os.path.realpath(__file__)), "..", "ui", "pump_attributes.ui"))
-        # self.user_swmm_pumps_lyr.setEditFormConfig(formConfig)
-        # field_reuse(self.user_swmm_pumps_lyr)
-        #
-        # formConfig = self.user_swmm_orifices_lyr.editFormConfig()
-        # formConfig.setInitCodeSource(Qgis.AttributeFormPythonInitCodeSource(1))
-        # formConfig.setUiForm(os.path.join(os.path.dirname(os.path.realpath(__file__)), "..", "ui", "orifice_attributes.ui"))
-        # self.user_swmm_orifices_lyr.setEditFormConfig(formConfig)
-        # field_reuse(self.user_swmm_orifices_lyr)
-        #
-        # formConfig = self.user_swmm_weirs_lyr.editFormConfig()
-        # formConfig.setInitCodeSource(Qgis.AttributeFormPythonInitCodeSource(1))
-        # formConfig.setUiForm(os.path.join(os.path.dirname(os.path.realpath(__file__)), "..", "ui", "weir_attributes.ui"))
-        # self.user_swmm_weirs_lyr.setEditFormConfig(formConfig)
-        # field_reuse(self.user_swmm_weirs_lyr)
-        #
-        # formConfig = self.user_swmm_storage_units_lyr.editFormConfig()
-        # formConfig.setInitCodeSource(Qgis.AttributeFormPythonInitCodeSource(1))
-        # formConfig.setUiForm(os.path.join(os.path.dirname(os.path.realpath(__file__)), "..", "ui", "storage_unit_attributes.ui"))
-        # self.user_swmm_storage_units_lyr.setEditFormConfig(formConfig)
-        # field_reuse(self.user_swmm_storage_units_lyr)
+        self.user_swmm_conduits_lyr.featureAdded.connect(self.conduit_added)
+        self.user_swmm_weirs_lyr.featureAdded.connect(self.weir_added)
+        self.user_swmm_pumps_lyr.featureAdded.connect(self.pump_added)
+        self.user_swmm_orifices_lyr.featureAdded.connect(self.orifice_added)
 
     def setup_connection(self):
         con = self.iface.f2d["con"]
@@ -6051,6 +6012,124 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                                 WHERE 
                                     fid = '{fid}';
                             """)
+
+    def conduit_added(self, fid):
+        """
+        Function to add default data when a conduit is added
+        """
+        feat = next(self.user_swmm_conduits_lyr.getFeatures(QgsFeatureRequest(fid)))
+        geom = feat.geometry()
+        if geom is None:
+            return
+        length = round(geom.length(), 2)
+
+        inlet_name, outlet_name = self.find_inlet_outlet(self.user_swmm_conduits_lyr, fid)
+
+        self.gutils.execute(f"""
+                                UPDATE 
+                                    user_swmm_conduits
+                                SET 
+                                    conduit_inlet = '{inlet_name}',
+                                    conduit_outlet = '{outlet_name}',
+                                    conduit_length = '{length}',
+                                    conduit_manning = '0.01'
+                                WHERE 
+                                    fid = '{fid}';
+                            """)
+
+    def weir_added(self, fid):
+        """
+        Function to add inlet/outlet node to weir
+        """
+        inlet_name, outlet_name = self.find_inlet_outlet(self.user_swmm_weirs_lyr, fid)
+
+        self.gutils.execute(f"""
+                                        UPDATE 
+                                            user_swmm_weirs
+                                        SET 
+                                            weir_inlet = '{inlet_name}',
+                                            weir_outlet = '{outlet_name}'
+                                        WHERE 
+                                            fid = '{fid}';
+                                    """)
+
+    def pump_added(self, fid):
+        """
+        Function to add inlet/outlet node to pump
+        """
+        inlet_name, outlet_name = self.find_inlet_outlet(self.user_swmm_pumps_lyr, fid)
+
+        self.gutils.execute(f"""
+                                        UPDATE 
+                                            user_swmm_pumps
+                                        SET 
+                                            pump_inlet = '{inlet_name}',
+                                            pump_outlet = '{outlet_name}'
+                                        WHERE 
+                                            fid = '{fid}';
+                                    """)
+
+    def orifice_added(self, fid):
+        """
+        Function to add inlet/outlet node to orifice
+        """
+        inlet_name, outlet_name = self.find_inlet_outlet(self.user_swmm_orifices_lyr, fid)
+
+        self.gutils.execute(f"""
+                                        UPDATE 
+                                            user_swmm_orifices
+                                        SET 
+                                            orifice_inlet = '{inlet_name}',
+                                            orifice_outlet = '{outlet_name}'
+                                        WHERE 
+                                            fid = '{fid}';
+                                    """)
+
+    def find_inlet_outlet(self, layer, fid):
+        """
+        Function to find the inlet and outlets for links
+        """
+        feat = next(layer.getFeatures(QgsFeatureRequest(fid)))
+        geom = feat.geometry()
+        if geom is None:
+            return
+
+        # Get line start and end points
+        if geom.isMultipart():
+            line = geom.asMultiPolyline()[0]
+        else:
+            line = geom.asPolyline()
+        start_point = line[0]
+        end_point = line[-1]
+
+        point_layers = [
+            self.user_swmm_inlets_junctions_lyr,
+            self.user_swmm_outlets_lyr,
+            self.user_swmm_storage_units_lyr
+        ]
+
+        d = QgsDistanceArea()
+        closest_start_feature = None
+        closest_end_feature = None
+        min_distance_start = float('inf')
+        min_distance_end = float('inf')
+
+        for layer in point_layers:
+            for feature in layer.getFeatures():
+                distance_start = d.measureLine(start_point, feature.geometry().asPoint())
+                if distance_start < min_distance_start:
+                    min_distance_start = distance_start
+                    closest_start_feature = feature
+
+                distance_end = d.measureLine(end_point, feature.geometry().asPoint())
+                if distance_end < min_distance_end:
+                    min_distance_end = distance_end
+                    closest_end_feature = feature
+
+        inlet_name = closest_start_feature['name'] if closest_start_feature else '?'
+        outlet_name = closest_end_feature['name'] if closest_end_feature else '?'
+
+        return inlet_name, outlet_name
 
     def find_object(self):
         """
