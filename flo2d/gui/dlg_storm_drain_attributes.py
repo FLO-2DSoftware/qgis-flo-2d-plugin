@@ -994,14 +994,6 @@ class PumpAttributes(qtBaseClass, uiDialog):
             init_status = ["OFF", "ON"]
             self.pump_init_status.addItems(init_status)
 
-        inlets_junctions = self.gutils.execute("SELECT name FROM user_swmm_inlets_junctions;").fetchall()
-        if inlets_junctions:
-            for inlets_junction in inlets_junctions:
-                self.pump_inlet.addItem(inlets_junction[0])
-                self.pump_outlet.addItem(inlets_junction[0])
-            self.pump_inlet.setCurrentIndex(-1)
-            self.pump_outlet.setCurrentIndex(-1)
-
         pump_curves = self.gutils.execute("SELECT DISTINCT pump_curve_name FROM swmm_pumps_curve_data;").fetchall()
         if pump_curves:
             for pump_curve in pump_curves:
@@ -1009,8 +1001,6 @@ class PumpAttributes(qtBaseClass, uiDialog):
             self.pump_curve.setCurrentIndex(-1)
 
         self.pump_name.editingFinished.connect(self.save_pumps)
-        self.pump_inlet.currentIndexChanged.connect(self.save_pumps)
-        self.pump_outlet.currentIndexChanged.connect(self.save_pumps)
         self.pump_curve.currentIndexChanged.connect(self.save_pumps)
         self.pump_init_status.currentIndexChanged.connect(self.save_pumps)
         self.pump_startup_depth.editingFinished.connect(self.save_pumps)
@@ -1050,8 +1040,8 @@ class PumpAttributes(qtBaseClass, uiDialog):
         ).fetchall()[0]
 
         self.pump_name.setText(attributes[0])
-        self.pump_inlet.setCurrentText(attributes[1])
-        self.pump_outlet.setCurrentText(attributes[2])
+        self.pump_inlet.setText(attributes[1])
+        self.pump_outlet.setText(attributes[2])
         self.pump_curve.setCurrentText(attributes[3])
         self.pump_init_status.setCurrentText(attributes[4])
         self.pump_startup_depth.setValue(attributes[5])
@@ -1063,8 +1053,8 @@ class PumpAttributes(qtBaseClass, uiDialog):
         """
 
         pump_name = self.pump_name.text()
-        pump_inlet = self.pump_inlet.currentText()
-        pump_outlet = self.pump_outlet.currentText()
+        pump_inlet = self.pump_inlet.text()
+        pump_outlet = self.pump_outlet.text()
         pump_curve = self.pump_curve.currentText()
         pump_init_status = self.pump_init_status.currentText()
         pump_startup_depth = self.pump_startup_depth.value()
@@ -1086,18 +1076,6 @@ class PumpAttributes(qtBaseClass, uiDialog):
                             """)
 
         self.populate_attributes(self.current_node)
-
-        # # Green rubber the inlet
-        # if pump_inlet != '':
-        #     inlet_fid = self.gutils.execute(f"SELECT fid FROM user_swmm_inlets_junctions WHERE name = '{pump_inlet}'").fetchone()[0]
-        #     self.lyrs.show_feat_rubber(self.user_swmm_inlets_junctions_lyr.id(), inlet_fid, QColor(Qt.green), clear=False)
-        #
-        # # Blue rubber the outlet
-        # if pump_outlet != '':
-        #     outlet_fid = self.gutils.execute(f"SELECT fid FROM user_swmm_inlets_junctions WHERE name = '{pump_outlet}'").fetchone()[0]
-        #     self.lyrs.show_feat_rubber(self.user_swmm_inlets_junctions_lyr.id(), outlet_fid, QColor(Qt.blue), clear=False)
-        #
-        # self.user_swmm_inlets_junctions_lyr.triggerRepaint()
         self.user_swmm_pumps_lyr.triggerRepaint()
 
     def clear_rubber(self):
