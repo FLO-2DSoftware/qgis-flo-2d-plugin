@@ -200,10 +200,13 @@
           <Option type="Map">
             <Option type="List" name="map">
               <Option type="Map">
-                <Option type="QString" value="True" name="True"/>
+                <Option type="QString" value="0" name="0. Discharge off the grid"/>
               </Option>
               <Option type="Map">
-                <Option type="QString" value="False" name="False"/>
+                <Option type="QString" value="1" name="1. Allow discharge to the grid"/>
+              </Option>
+              <Option type="Map">
+                <Option type="QString" value="2" name="2. Allow discharge to the grid but ignore the underground depth"/>
               </Option>
             </Option>
           </Option>

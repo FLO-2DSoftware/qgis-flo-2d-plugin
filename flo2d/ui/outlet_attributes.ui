@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>389</width>
+    <width>402</width>
     <height>418</height>
    </rect>
   </property>
@@ -24,7 +24,7 @@
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>369</width>
+        <width>382</width>
         <height>398</height>
        </rect>
       </property>
@@ -38,10 +38,29 @@
           <item row="0" column="0">
            <layout class="QGridLayout" name="gridLayout_3">
             <item row="1" column="1">
-             <widget class="QComboBox" name="swmm_allow_discharge"/>
+             <widget class="QComboBox" name="swmm_allow_discharge">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="minimumSize">
+               <size>
+                <width>130</width>
+                <height>0</height>
+               </size>
+              </property>
+              <property name="maximumSize">
+               <size>
+                <width>16777215</width>
+                <height>16777215</height>
+               </size>
+              </property>
+             </widget>
             </item>
-            <item row="0" column="0">
-             <widget class="QLabel" name="label_25">
+            <item row="1" column="0">
+             <widget class="QLabel" name="label_6">
               <property name="minimumSize">
                <size>
                 <width>200</width>
@@ -54,16 +73,6 @@
                 <height>16777215</height>
                </size>
               </property>
-              <property name="text">
-               <string>Outfall Type</string>
-              </property>
-             </widget>
-            </item>
-            <item row="0" column="1">
-             <widget class="QComboBox" name="outfall_type"/>
-            </item>
-            <item row="1" column="0">
-             <widget class="QLabel" name="label_6">
               <property name="text">
                <string>Allow Discharge</string>
               </property>
@@ -229,22 +238,19 @@
        <item row="0" column="0">
         <widget class="QGroupBox" name="inlet_junction_grpbox">
          <property name="title">
-          <string>Inlet/Junction Properties</string>
+          <string>Outlet Properties</string>
          </property>
          <layout class="QGridLayout" name="gridLayout_6">
           <item row="0" column="0">
            <layout class="QGridLayout" name="gridLayout_2">
-            <item row="1" column="0">
-             <widget class="QLabel" name="label">
+            <item row="7" column="4">
+             <widget class="QToolButton" name="ts_btn">
               <property name="text">
-               <string>Name</string>
+               <string>...</string>
               </property>
-             </widget>
-            </item>
-            <item row="4" column="0">
-             <widget class="QLabel" name="label_23">
-              <property name="text">
-               <string>Fixed Stage</string>
+              <property name="icon">
+               <iconset>
+                <normaloff>../img/call_dialog.svg</normaloff>../img/call_dialog.svg</iconset>
               </property>
              </widget>
             </item>
@@ -270,27 +276,6 @@
               </property>
              </widget>
             </item>
-            <item row="6" column="0">
-             <widget class="QLabel" name="label_24">
-              <property name="text">
-               <string>Time Series</string>
-              </property>
-             </widget>
-            </item>
-            <item row="5" column="0">
-             <widget class="QLabel" name="label_22">
-              <property name="text">
-               <string>Tidal Curve</string>
-              </property>
-             </widget>
-            </item>
-            <item row="2" column="0">
-             <widget class="QLabel" name="label_21">
-              <property name="text">
-               <string>Outfall Invert Elevation</string>
-              </property>
-             </widget>
-            </item>
             <item row="1" column="3">
              <widget class="QToolButton" name="zoom_in_btn">
               <property name="text">
@@ -302,12 +287,103 @@
               </property>
              </widget>
             </item>
+            <item row="2" column="1" colspan="4">
+             <widget class="QDoubleSpinBox" name="outfall_invert_elev">
+              <property name="maximum">
+               <double>1000000.000000000000000</double>
+              </property>
+             </widget>
+            </item>
+            <item row="5" column="0">
+             <widget class="QLabel" name="fixed_stage_lbl">
+              <property name="text">
+               <string>Fixed Stage</string>
+              </property>
+             </widget>
+            </item>
+            <item row="3" column="1" colspan="4">
+             <widget class="QComboBox" name="flapgate"/>
+            </item>
+            <item row="6" column="4">
+             <widget class="QToolButton" name="tidal_btn">
+              <property name="text">
+               <string>...</string>
+              </property>
+              <property name="icon">
+               <iconset>
+                <normaloff>../img/call_dialog.svg</normaloff>../img/call_dialog.svg</iconset>
+              </property>
+             </widget>
+            </item>
+            <item row="2" column="0">
+             <widget class="QLabel" name="label_21">
+              <property name="text">
+               <string>Outfall Invert Elevation</string>
+              </property>
+             </widget>
+            </item>
+            <item row="7" column="0">
+             <widget class="QLabel" name="time_series_lbl">
+              <property name="text">
+               <string>Time Series</string>
+              </property>
+             </widget>
+            </item>
             <item row="3" column="0">
              <widget class="QLabel" name="label_20">
               <property name="text">
                <string>Flapgate</string>
               </property>
              </widget>
+            </item>
+            <item row="1" column="0">
+             <widget class="QLabel" name="label">
+              <property name="text">
+               <string>Name</string>
+              </property>
+             </widget>
+            </item>
+            <item row="5" column="1" colspan="4">
+             <widget class="QDoubleSpinBox" name="fixed_stage">
+              <property name="maximum">
+               <double>1000000.000000000000000</double>
+              </property>
+             </widget>
+            </item>
+            <item row="0" column="1" colspan="4">
+             <widget class="QLabel" name="grid">
+              <property name="enabled">
+               <bool>false</bool>
+              </property>
+              <property name="minimumSize">
+               <size>
+                <width>130</width>
+                <height>20</height>
+               </size>
+              </property>
+              <property name="maximumSize">
+               <size>
+                <width>130</width>
+                <height>16777215</height>
+               </size>
+              </property>
+              <property name="text">
+               <string>GRID-ID</string>
+              </property>
+             </widget>
+            </item>
+            <item row="6" column="1" colspan="3">
+             <widget class="QComboBox" name="tidal_curve"/>
+            </item>
+            <item row="6" column="0">
+             <widget class="QLabel" name="tidal_curve_lbl">
+              <property name="text">
+               <string>Tidal Curve</string>
+              </property>
+             </widget>
+            </item>
+            <item row="7" column="1" colspan="3">
+             <widget class="QComboBox" name="time_series"/>
             </item>
             <item row="1" column="4">
              <widget class="QToolButton" name="zoom_out_btn">
@@ -320,66 +396,27 @@
               </property>
              </widget>
             </item>
-            <item row="0" column="1" colspan="4">
-             <widget class="QLabel" name="grid">
-              <property name="enabled">
-               <bool>false</bool>
-              </property>
+            <item row="4" column="0">
+             <widget class="QLabel" name="label_25">
               <property name="minimumSize">
                <size>
-                <width>0</width>
-                <height>20</height>
+                <width>200</width>
+                <height>0</height>
+               </size>
+              </property>
+              <property name="maximumSize">
+               <size>
+                <width>200</width>
+                <height>16777215</height>
                </size>
               </property>
               <property name="text">
-               <string>GRID-ID</string>
+               <string>Outfall Type</string>
               </property>
              </widget>
-            </item>
-            <item row="2" column="1" colspan="4">
-             <widget class="QDoubleSpinBox" name="outfall_invert_elev">
-              <property name="maximum">
-               <double>1000000.000000000000000</double>
-              </property>
-             </widget>
-            </item>
-            <item row="3" column="1" colspan="4">
-             <widget class="QComboBox" name="flapgate"/>
             </item>
             <item row="4" column="1" colspan="4">
-             <widget class="QDoubleSpinBox" name="fixed_stage">
-              <property name="maximum">
-               <double>1000000.000000000000000</double>
-              </property>
-             </widget>
-            </item>
-            <item row="5" column="4">
-             <widget class="QToolButton" name="tidal_btn">
-              <property name="text">
-               <string>...</string>
-              </property>
-              <property name="icon">
-               <iconset>
-                <normaloff>../img/call_dialog.svg</normaloff>../img/call_dialog.svg</iconset>
-              </property>
-             </widget>
-            </item>
-            <item row="6" column="4">
-             <widget class="QToolButton" name="ts_btn">
-              <property name="text">
-               <string>...</string>
-              </property>
-              <property name="icon">
-               <iconset>
-                <normaloff>../img/call_dialog.svg</normaloff>../img/call_dialog.svg</iconset>
-              </property>
-             </widget>
-            </item>
-            <item row="5" column="1" colspan="3">
-             <widget class="QComboBox" name="tidal_curve"/>
-            </item>
-            <item row="6" column="1" colspan="3">
-             <widget class="QComboBox" name="time_series"/>
+             <widget class="QComboBox" name="outfall_type"/>
             </item>
            </layout>
           </item>

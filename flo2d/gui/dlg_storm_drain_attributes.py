@@ -490,28 +490,17 @@ class OutletAttributes(qtBaseClass, uiDialog):
 
         self.user_swmm_outlets_lyr = self.lyrs.data["user_swmm_outlets"]["qlyr"]
 
-        # self.dock_widget.visibilityChanged.connect(self.clear_rubber)
-
         self.next_btn.clicked.connect(self.populate_next_node)
         self.previous_btn.clicked.connect(self.populate_previous_node)
-
-        self.outlets = {
-            self.label_21: self.outfall_invert_elev,
-            self.label_20: self.flapgate,
-            self.label_23: self.fixed_stage,
-            self.label_22: self.tidal_curve,
-            self.label_24: self.time_series,
-            self.label_25: self.outfall_type,
-            self.label_6: self.swmm_allow_discharge,
-        }
 
         if self.flapgate.count() == 0:
             self.flapgate.addItem("NO")
             self.flapgate.addItem("YES")
 
         if self.swmm_allow_discharge.count() == 0:
-            self.swmm_allow_discharge.addItem("True")
-            self.swmm_allow_discharge.addItem("False")
+            self.swmm_allow_discharge.addItem("0. Discharge off the grid")
+            self.swmm_allow_discharge.addItem("1. Allow discharge to the grid")
+            self.swmm_allow_discharge.addItem("2. Allow discharge to the grid but ignore the underground depth")
 
         if self.outfall_type.count() == 0:
             outfalls = ["FIXED", "FREE", "NORMAL", "TIDAL", "TIMESERIES"]
@@ -578,21 +567,71 @@ class OutletAttributes(qtBaseClass, uiDialog):
         # Assign attributes to the dialog
         self.grid.setText(str(attributes[0]))
         self.name.setText(str(attributes[1]))
-        idx = 2
-        for key, value in self.outlets.items():
-            if attributes[idx] is not None:
-                if isinstance(value, QSpinBox) or isinstance(value, QDoubleSpinBox):
-                    value.setValue(attributes[idx])
-                elif isinstance(value, QComboBox):
-                    # Flapgate
-                    if idx == 3:
-                        if attributes[idx] == 'False':
-                            value.setCurrentIndex(0)
-                        else:
-                            value.setCurrentIndex(1)
-                    else:
-                        value.setCurrentText(attributes[idx])
-            idx += 1
+        self.outfall_invert_elev.setValue(float(attributes[2]))
+        if attributes[3] == 'False':
+            self.flapgate.setCurrentIndex(0)
+        else:
+            self.flapgate.setCurrentIndex(1)
+        self.fixed_stage.setValue(float(attributes[4]))
+        self.tidal_curve.setCurrentText(attributes[5])
+        self.time_series.setCurrentText(attributes[6])
+        self.outfall_type.setCurrentText(str(attributes[7]))
+        self.swmm_allow_discharge.setCurrentText(str(attributes[8]))
+
+        if str(attributes[7]) == 'FIXED':
+            self.fixed_stage_lbl.setHidden(False)
+            self.fixed_stage.setHidden(False)
+            self.tidal_curve_lbl.setHidden(True)
+            self.tidal_curve.setHidden(True)
+            self.tidal_btn.setHidden(True)
+            self.time_series_lbl.setHidden(True)
+            self.time_series.setHidden(True)
+            self.ts_btn.setHidden(True)
+            self.sd_features_grpbox.setHidden(True)
+
+        if str(attributes[7]) == 'FREE':
+            self.fixed_stage_lbl.setHidden(True)
+            self.fixed_stage.setHidden(True)
+            self.tidal_curve_lbl.setHidden(True)
+            self.tidal_curve.setHidden(True)
+            self.tidal_btn.setHidden(True)
+            self.time_series_lbl.setHidden(True)
+            self.time_series.setHidden(True)
+            self.ts_btn.setHidden(True)
+            self.sd_features_grpbox.setHidden(False)
+
+        if str(attributes[7]) == 'NORMAL':
+            self.fixed_stage_lbl.setHidden(True)
+            self.fixed_stage.setHidden(True)
+            self.tidal_curve_lbl.setHidden(True)
+            self.tidal_curve.setHidden(True)
+            self.tidal_btn.setHidden(True)
+            self.time_series_lbl.setHidden(True)
+            self.time_series.setHidden(True)
+            self.ts_btn.setHidden(True)
+            self.sd_features_grpbox.setHidden(True)
+
+        if str(attributes[7]) == 'TIDAL':
+            self.fixed_stage_lbl.setHidden(True)
+            self.fixed_stage.setHidden(True)
+            self.tidal_curve_lbl.setHidden(False)
+            self.tidal_curve.setHidden(False)
+            self.tidal_btn.setHidden(False)
+            self.time_series_lbl.setHidden(True)
+            self.time_series.setHidden(True)
+            self.ts_btn.setHidden(True)
+            self.sd_features_grpbox.setHidden(True)
+
+        if str(attributes[7]) == 'TIMESERIES':
+            self.fixed_stage_lbl.setHidden(True)
+            self.fixed_stage.setHidden(True)
+            self.tidal_curve_lbl.setHidden(True)
+            self.tidal_curve.setHidden(True)
+            self.tidal_btn.setHidden(True)
+            self.time_series_lbl.setHidden(False)
+            self.time_series.setHidden(False)
+            self.ts_btn.setHidden(False)
+            self.sd_features_grpbox.setHidden(True)
 
         self.previous_btn.setEnabled(False)
         self.next_btn.setEnabled(False)
@@ -644,7 +683,7 @@ class OutletAttributes(qtBaseClass, uiDialog):
             flapgate = 'False'
         else:
             flapgate = 'True'
-        swmm_allow_discharge = self.swmm_allow_discharge.currentText()
+        swmm_allow_discharge = self.swmm_allow_discharge.currentIndex()
         outfall_type = self.outfall_type.currentText()
         if self.tidal_curve.count() == 0:
             tidal_curve = '*'
@@ -780,7 +819,7 @@ class OutletAttributes(qtBaseClass, uiDialog):
         """
         Function to save only time_series to avoid signal errors
         """
-        allow_discharge = self.swmm_allow_discharge.currentText()
+        allow_discharge = self.swmm_allow_discharge.currentIndex()
 
         self.gutils.execute(f"""
                                 UPDATE
