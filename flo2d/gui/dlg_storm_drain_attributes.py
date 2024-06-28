@@ -1165,13 +1165,6 @@ class OrificeAttributes(qtBaseClass, uiDialog):
         self.user_swmm_orifices_lyr = self.lyrs.data["user_swmm_orifices"]["qlyr"]
         self.user_swmm_inlets_junctions_lyr = self.lyrs.data["user_swmm_inlets_junctions"]["qlyr"]
 
-        # Add junctions to the comboboxes
-        inlets_junctions = self.gutils.execute("SELECT name FROM user_swmm_inlets_junctions;").fetchall()
-        if inlets_junctions:
-            for inlets_junction in inlets_junctions:
-                self.orifice_inlet.addItem(inlets_junction[0])
-                self.orifice_outlet.addItem(inlets_junction[0])
-
         if self.orifice_type.count() == 0:
             init_status = ["SIDE", "BOTTOM"]
             self.orifice_type.addItems(init_status)
@@ -1231,8 +1224,8 @@ class OrificeAttributes(qtBaseClass, uiDialog):
         ).fetchall()[0]
 
         self.orifice_name.setText(attributes[0])
-        self.orifice_inlet.setCurrentText(attributes[1])
-        self.orifice_outlet.setCurrentText(attributes[2])
+        self.orifice_inlet.setText(attributes[1])
+        self.orifice_outlet.setText(attributes[2])
         self.orifice_type.setCurrentText(attributes[3])
         self.orifice_crest_height.setValue(attributes[4])
         self.orifice_disch_coeff.setValue(attributes[5])
@@ -1248,8 +1241,8 @@ class OrificeAttributes(qtBaseClass, uiDialog):
         """
 
         orifice_name = self.orifice_name.text()
-        orifice_inlet = self.orifice_inlet.currentText()
-        orifice_outlet = self.orifice_outlet.currentText()
+        orifice_inlet = self.orifice_inlet.text()
+        orifice_outlet = self.orifice_outlet.text()
         orifice_type = self.orifice_type.currentText()
         orifice_crest_height = self.orifice_crest_height.value()
         orifice_disch_coeff = self.orifice_disch_coeff.value()
@@ -1279,18 +1272,6 @@ class OrificeAttributes(qtBaseClass, uiDialog):
                             """)
 
         self.populate_attributes(self.current_node)
-
-        # # Green rubber the inlet
-        # if pump_inlet != '':
-        #     inlet_fid = self.gutils.execute(f"SELECT fid FROM user_swmm_inlets_junctions WHERE name = '{pump_inlet}'").fetchone()[0]
-        #     self.lyrs.show_feat_rubber(self.user_swmm_inlets_junctions_lyr.id(), inlet_fid, QColor(Qt.green), clear=False)
-        #
-        # # Blue rubber the outlet
-        # if pump_outlet != '':
-        #     outlet_fid = self.gutils.execute(f"SELECT fid FROM user_swmm_inlets_junctions WHERE name = '{pump_outlet}'").fetchone()[0]
-        #     self.lyrs.show_feat_rubber(self.user_swmm_inlets_junctions_lyr.id(), outlet_fid, QColor(Qt.blue), clear=False)
-        #
-        # self.user_swmm_inlets_junctions_lyr.triggerRepaint()
         self.user_swmm_orifices_lyr.triggerRepaint()
 
     def clear_rubber(self):
