@@ -1634,7 +1634,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             for row in data:
                 name = row[0]
                 area = row[2]
-                self.gutils.execute("UPDATE user_swmm_nodes SET drboxarea = ? WHERE name = ?", (area, name))
+                self.gutils.execute("UPDATE user_swmm_inlets_junctions SET drboxarea = ? WHERE name = ?", (area, name))
             return True
         except:
             return False
@@ -1646,7 +1646,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 name = row[2]
                 clog_fact = row[3]
                 clog_time = row[4]
-                self.gutils.execute("""UPDATE user_swmm_nodes
+                self.gutils.execute("""UPDATE user_swmm_inlets_junctions
                                        SET swmm_clogging_factor = ?, swmm_time_for_clogging = ?
                                        WHERE name = ?""", (clog_fact, clog_time, name))
             return True
@@ -5866,14 +5866,14 @@ class Flo2dGeoPackage(GeoPackageUtils):
         Function to export the SWMMFLODROPBOX to hdf5 file
         """
 
-        if self.is_table_empty("user_swmm_nodes"):
+        if self.is_table_empty("user_swmm_inlets_junctions"):
             return False
 
         qry = """
-        SELECT swmmflo.fid as FID, user_swmm_nodes.drboxarea FROM swmmflo JOIN user_swmm_nodes ON swmmflo.swmm_jt 
-        = user_swmm_nodes.grid WHERE (sd_type = 'I' OR sd_type = 'J') AND 
+        SELECT swmmflo.fid as FID, user_swmm_inlets_junctions.drboxarea FROM swmmflo JOIN user_swmm_inlets_junctions ON swmmflo.swmm_jt 
+        = user_swmm_inlets_junctions.grid WHERE (sd_type = 'I' OR sd_type = 'J') AND 
         drboxarea > 0.0 GROUP BY 
-        user_swmm_nodes.grid;
+        user_swmm_inlets_junctions.grid;
         """
 
         rows = self.gutils.execute(qry).fetchall()
@@ -5893,10 +5893,10 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
     def export_swmmflodropbox_dat(self, outdir):
         try:
-            if self.is_table_empty("user_swmm_nodes"):
+            if self.is_table_empty("user_swmm_inlets_junctions"):
                 return False
 
-            qry = """SELECT name, grid, drboxarea  FROM user_swmm_nodes WHERE SUBSTR(name, 1,1) NOT LIKE 'J%'  AND drboxarea > 0.0;"""
+            qry = """SELECT name, grid, drboxarea  FROM user_swmm_inlets_junctions WHERE SUBSTR(name, 1,1) NOT LIKE 'J%'  AND drboxarea > 0.0;"""
             rows = self.gutils.execute(qry).fetchall()
             if rows:
                 line1 = "{0:16} {1:<10} {2:<10.2f}\n"
@@ -5921,14 +5921,14 @@ class Flo2dGeoPackage(GeoPackageUtils):
         """
         Function to export the sdclogging to a hdf5 file
         """
-        if self.is_table_empty("user_swmm_nodes"):
+        if self.is_table_empty("user_swmm_inlets_junctions"):
             return False
 
-        qry = """SELECT swmmflo.fid as FID, user_swmm_nodes.swmm_clogging_factor, 
-        user_swmm_nodes.swmm_time_for_clogging FROM swmmflo JOIN user_swmm_nodes ON swmmflo.swmm_jt 
-        = user_swmm_nodes.grid WHERE (user_swmm_nodes.sd_type = 'I' OR user_swmm_nodes.sd_type = 'J') AND 
-        user_swmm_nodes.swmm_clogging_factor > 0.0 AND user_swmm_nodes.swmm_time_for_clogging > 0.0 GROUP BY 
-        user_swmm_nodes.grid;"""
+        qry = """SELECT swmmflo.fid as FID, user_swmm_inlets_junctions.swmm_clogging_factor, 
+        user_swmm_inlets_junctions.swmm_time_for_clogging FROM swmmflo JOIN user_swmm_inlets_junctions ON swmmflo.swmm_jt 
+        = user_swmm_inlets_junctions.grid WHERE (user_swmm_inlets_junctions.sd_type = 'I' OR user_swmm_inlets_junctions.sd_type = 'J') AND 
+        user_swmm_inlets_junctions.swmm_clogging_factor > 0.0 AND user_swmm_inlets_junctions.swmm_time_for_clogging > 0.0 GROUP BY 
+        user_swmm_inlets_junctions.grid;"""
 
         rows = self.gutils.execute(qry).fetchall()
         if rows:
@@ -5946,11 +5946,11 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
     def export_sdclogging_dat(self, outdir):
         try:
-            if self.is_table_empty("user_swmm_nodes"):
+            if self.is_table_empty("user_swmm_inlets_junctions"):
                 return False
 
             qry = """SELECT grid, name, swmm_clogging_factor, swmm_time_for_clogging
-                     FROM user_swmm_nodes 
+                     FROM user_swmm_inlets_junctions 
                      WHERE (sd_type = 'I' OR sd_type = 'J') AND swmm_clogging_factor > 0.0 AND swmm_time_for_clogging > 0.0;"""
             rows = self.gutils.execute(qry).fetchall()
             if rows:
@@ -6071,7 +6071,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                                         rows = self.execute(data_sql, (fid,)).fetchone()
                                         if not rows:
                                             inlet_name = self.execute(
-                                                "SELECT name FROM user_swmm_nodes WHERE grid = ?;",
+                                                "SELECT name FROM user_swmm_inlets_junctions WHERE grid = ?;",
                                                 (gid,),
                                             ).fetchone()
                                             if inlet_name != None:
@@ -6094,9 +6094,9 @@ class Flo2dGeoPackage(GeoPackageUtils):
                                                             + ".\n"
                                                     )
                                         else:
-                                            if not self.gutils.is_table_empty("user_swmm_nodes"):
+                                            if not self.gutils.is_table_empty("user_swmm_inlets_junctions"):
                                                 inlet_name = self.execute(
-                                                    "SELECT name FROM user_swmm_nodes WHERE grid = ?;",
+                                                    "SELECT name FROM user_swmm_inlets_junctions WHERE grid = ?;",
                                                     (gid,),
                                                 ).fetchone()
                                                 if inlet_name != None:
@@ -6118,7 +6118,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                                                             )
                                             else:
                                                 if not error_mentioned:
-                                                    errors += "Storm Drain Nodes layer in User Layers is empty.\nSWMMFLORT.DAT may be incomplete!\n"
+                                                    errors += "Storm Drain Inlets/Junctions layer in User Layers is empty.\nSWMMFLORT.DAT may be incomplete!\n"
                                                     error_mentioned = True
                                 else:
                                     errors += (

@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>442</width>
-    <height>527</height>
+    <height>387</height>
    </rect>
   </property>
   <property name="minimumSize">
@@ -20,208 +20,52 @@
    <string>FLO-2D Widget</string>
   </property>
   <layout class="QGridLayout" name="gridLayout_5">
-   <item row="0" column="0">
-    <layout class="QHBoxLayout" name="horizontalLayout_5">
-     <item>
-      <layout class="QHBoxLayout" name="horizontalLayout_4">
-       <item>
-        <widget class="QToolButton" name="schema_storm_drain_btn">
-         <property name="enabled">
-          <bool>true</bool>
-         </property>
-         <property name="minimumSize">
-          <size>
-           <width>0</width>
-           <height>0</height>
-          </size>
-         </property>
-         <property name="maximumSize">
-          <size>
-           <width>16777215</width>
-           <height>16777215</height>
-          </size>
-         </property>
-         <property name="toolTip">
-          <string>Convert User 'Storm Drain Nodes' to Schematic 'Storm Drains'</string>
-         </property>
-         <property name="text">
-          <string>...</string>
-         </property>
-         <property name="icon">
-          <iconset>
-           <normaloff>../img/schematize_res.svg</normaloff>../img/schematize_res.svg</iconset>
-         </property>
-         <property name="iconSize">
-          <size>
-           <width>24</width>
-           <height>24</height>
-          </size>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QPushButton" name="import_shapefile_btn">
-         <property name="enabled">
-          <bool>true</bool>
-         </property>
-         <property name="minimumSize">
-          <size>
-           <width>0</width>
-           <height>0</height>
-          </size>
-         </property>
-         <property name="maximumSize">
-          <size>
-           <width>16777215</width>
-           <height>16777215</height>
-          </size>
-         </property>
-         <property name="toolTip">
-          <string>Select components from shapefile layer</string>
-         </property>
-         <property name="text">
-          <string/>
-         </property>
-         <property name="icon">
-          <iconset>
-           <normaloff>../img/import_sd_shapefiles.svg</normaloff>../img/import_sd_shapefiles.svg</iconset>
-         </property>
-         <property name="iconSize">
-          <size>
-           <width>24</width>
-           <height>24</height>
-          </size>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QPushButton" name="auto_assign_link_nodes_btn">
-         <property name="sizePolicy">
-          <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
-           <horstretch>0</horstretch>
-           <verstretch>0</verstretch>
-          </sizepolicy>
-         </property>
-         <property name="toolTip">
-          <string>Auto-assign links and nodes</string>
-         </property>
-         <property name="text">
-          <string/>
-         </property>
-         <property name="icon">
-          <iconset>
-           <normaloff>../img/auto_assign_sd.svg</normaloff>../img/auto_assign_sd.svg</iconset>
-         </property>
-         <property name="iconSize">
-          <size>
-           <width>24</width>
-           <height>24</height>
-          </size>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QToolButton" name="sd_control_btn">
-         <property name="toolTip">
-          <string>Set storm drain control variables</string>
-         </property>
-         <property name="text">
-          <string/>
-         </property>
-         <property name="icon">
-          <iconset>
-           <normaloff>../img/sd_control.svg</normaloff>../img/sd_control.svg</iconset>
-         </property>
-         <property name="iconSize">
-          <size>
-           <width>24</width>
-           <height>24</height>
-          </size>
-         </property>
-        </widget>
-       </item>
-      </layout>
-     </item>
-     <item>
-      <spacer name="horizontalSpacer_3">
-       <property name="orientation">
-        <enum>Qt::Horizontal</enum>
-       </property>
-       <property name="sizeHint" stdset="0">
-        <size>
-         <width>13</width>
-         <height>21</height>
-        </size>
-       </property>
-      </spacer>
-     </item>
-     <item>
-      <widget class="QCheckBox" name="simulate_stormdrain_chbox">
-       <property name="text">
-        <string>Simulate Storm Drain</string>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QToolButton" name="sd_help_btn">
-       <property name="enabled">
-        <bool>true</bool>
-       </property>
-       <property name="minimumSize">
-        <size>
-         <width>0</width>
-         <height>0</height>
-        </size>
-       </property>
-       <property name="maximumSize">
-        <size>
-         <width>16777215</width>
-         <height>16777215</height>
-        </size>
-       </property>
-       <property name="toolTip">
-        <string>Storm Drain Help</string>
-       </property>
-       <property name="text">
-        <string>...</string>
-       </property>
-       <property name="icon">
-        <iconset>
-         <normaloff>../img/help.svg</normaloff>../img/help.svg</iconset>
-       </property>
-       <property name="iconSize">
-        <size>
-         <width>24</width>
-         <height>24</height>
-        </size>
-       </property>
-      </widget>
-     </item>
-    </layout>
-   </item>
-   <item row="5" column="0">
-    <spacer name="verticalSpacer">
-     <property name="orientation">
-      <enum>Qt::Vertical</enum>
+   <item row="4" column="0">
+    <widget class="QGroupBox" name="groupBox_2">
+     <property name="enabled">
+      <bool>true</bool>
      </property>
-     <property name="sizeHint" stdset="0">
-      <size>
-       <width>20</width>
-       <height>40</height>
-      </size>
-     </property>
-    </spacer>
-   </item>
-   <item row="1" column="0">
-    <widget class="QGroupBox" name="components_group">
      <property name="title">
-      <string>Components</string>
+      <string>Profile Plot</string>
      </property>
-     <layout class="QGridLayout" name="gridLayout_7">
-      <item row="0" column="0">
-       <layout class="QGridLayout" name="gridLayout_3">
-        <item row="0" column="1" rowspan="2">
-         <spacer name="horizontalSpacer_4">
+     <layout class="QGridLayout" name="gridLayout_8">
+      <item row="0" column="0" colspan="3">
+       <layout class="QGridLayout" name="gridLayout_9">
+        <item row="0" column="1" rowspan="3">
+         <widget class="QLabel" name="label_4">
+          <property name="text">
+           <string>Start Node</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+          </property>
+         </widget>
+        </item>
+        <item row="0" column="2" rowspan="3">
+         <widget class="QComboBox" name="start_node_cbo"/>
+        </item>
+        <item row="0" column="3" rowspan="3">
+         <widget class="QLabel" name="label_5">
+          <property name="text">
+           <string>End Node</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+          </property>
+         </widget>
+        </item>
+        <item row="0" column="4" rowspan="3">
+         <widget class="QComboBox" name="end_node_cbo"/>
+        </item>
+        <item row="3" column="4" colspan="2">
+         <widget class="QPushButton" name="find_profile_btn">
+          <property name="text">
+           <string>Find Profile</string>
+          </property>
+         </widget>
+        </item>
+        <item row="3" column="1" colspan="3">
+         <spacer name="horizontalSpacer">
           <property name="orientation">
            <enum>Qt::Horizontal</enum>
           </property>
@@ -233,156 +77,59 @@
           </property>
          </spacer>
         </item>
-        <item row="0" column="2">
-         <widget class="QLabel" name="label">
-          <property name="sizePolicy">
-           <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-            <horstretch>0</horstretch>
-            <verstretch>0</verstretch>
-           </sizepolicy>
-          </property>
-          <property name="minimumSize">
-           <size>
-            <width>164</width>
-            <height>22</height>
-           </size>
-          </property>
-          <property name="maximumSize">
-           <size>
-            <width>164</width>
-            <height>22</height>
-           </size>
-          </property>
+        <item row="0" column="5" rowspan="3">
+         <widget class="QToolButton" name="center_chbox">
           <property name="text">
-           <string>Links</string>
+           <string>...</string>
+          </property>
+          <property name="icon">
+           <iconset>
+            <normaloff>../img/eye-svgrepo-com.svg</normaloff>../img/eye-svgrepo-com.svg</iconset>
+          </property>
+          <property name="checkable">
+           <bool>true</bool>
           </property>
          </widget>
         </item>
-        <item row="1" column="2">
-         <widget class="QComboBox" name="SD_links_components_cbo">
-          <property name="sizePolicy">
-           <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-            <horstretch>0</horstretch>
-            <verstretch>0</verstretch>
-           </sizepolicy>
+       </layout>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item row="1" column="0">
+    <widget class="QGroupBox" name="find_object_group">
+     <property name="title">
+      <string>Find Object</string>
+     </property>
+     <layout class="QGridLayout" name="gridLayout_2">
+      <item row="0" column="0">
+       <layout class="QGridLayout" name="gridLayout">
+        <item row="0" column="2">
+         <spacer name="horizontalSpacer_2">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
           </property>
-          <property name="minimumSize">
+          <property name="sizeHint" stdset="0">
            <size>
-            <width>0</width>
-            <height>0</height>
+            <width>40</width>
+            <height>20</height>
            </size>
           </property>
-          <property name="maximumSize">
-           <size>
-            <width>16777215</width>
-            <height>16777215</height>
-           </size>
+         </spacer>
+        </item>
+        <item row="0" column="1">
+         <widget class="QToolButton" name="find_object_btn">
+          <property name="text">
+           <string>...</string>
           </property>
-          <property name="currentText">
-           <string>Select Links Type</string>
+          <property name="icon">
+           <iconset>
+            <normaloff>../img/eye-svgrepo-com.svg</normaloff>../img/eye-svgrepo-com.svg</iconset>
           </property>
-          <item>
-           <property name="text">
-            <string>Select Links Type</string>
-           </property>
-          </item>
-          <item>
-           <property name="text">
-            <string>Conduits</string>
-           </property>
-          </item>
-          <item>
-           <property name="text">
-            <string>Pumps</string>
-           </property>
-          </item>
-          <item>
-           <property name="text">
-            <string>Orifices</string>
-           </property>
-          </item>
-          <item>
-           <property name="text">
-            <string>Weirs</string>
-           </property>
-          </item>
          </widget>
         </item>
         <item row="0" column="0">
-         <widget class="QLabel" name="label_2">
-          <property name="sizePolicy">
-           <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-            <horstretch>0</horstretch>
-            <verstretch>0</verstretch>
-           </sizepolicy>
-          </property>
-          <property name="minimumSize">
-           <size>
-            <width>164</width>
-            <height>22</height>
-           </size>
-          </property>
-          <property name="maximumSize">
-           <size>
-            <width>164</width>
-            <height>22</height>
-           </size>
-          </property>
-          <property name="text">
-           <string>Nodes</string>
-          </property>
-         </widget>
-        </item>
-        <item row="1" column="0">
-         <widget class="QComboBox" name="SD_nodes_components_cbo">
-          <property name="sizePolicy">
-           <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-            <horstretch>0</horstretch>
-            <verstretch>0</verstretch>
-           </sizepolicy>
-          </property>
-          <property name="minimumSize">
-           <size>
-            <width>0</width>
-            <height>0</height>
-           </size>
-          </property>
-          <property name="maximumSize">
-           <size>
-            <width>16777215</width>
-            <height>16777215</height>
-           </size>
-          </property>
-          <property name="sizeIncrement">
-           <size>
-            <width>0</width>
-            <height>0</height>
-           </size>
-          </property>
-          <property name="currentText">
-           <string>Select Nodes Type</string>
-          </property>
-          <item>
-           <property name="text">
-            <string>Select Nodes Type</string>
-           </property>
-          </item>
-          <item>
-           <property name="text">
-            <string>Inlets/Junctions</string>
-           </property>
-          </item>
-          <item>
-           <property name="text">
-            <string>Outfalls</string>
-           </property>
-          </item>
-          <item>
-           <property name="text">
-            <string>Storage Units</string>
-           </property>
-          </item>
-         </widget>
+         <widget class="QLineEdit" name="object_le"/>
         </item>
        </layout>
       </item>
@@ -880,89 +627,203 @@
      </layout>
     </widget>
    </item>
-   <item row="4" column="0">
-    <widget class="QGroupBox" name="groupBox_2">
-     <property name="enabled">
-      <bool>true</bool>
+   <item row="0" column="0">
+    <layout class="QHBoxLayout" name="horizontalLayout_5">
+     <item>
+      <layout class="QHBoxLayout" name="horizontalLayout_4">
+       <item>
+        <widget class="QToolButton" name="schema_storm_drain_btn">
+         <property name="enabled">
+          <bool>true</bool>
+         </property>
+         <property name="minimumSize">
+          <size>
+           <width>0</width>
+           <height>0</height>
+          </size>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>16777215</width>
+           <height>16777215</height>
+          </size>
+         </property>
+         <property name="toolTip">
+          <string>Convert User 'Storm Drain Nodes' to Schematic 'Storm Drains'</string>
+         </property>
+         <property name="text">
+          <string>...</string>
+         </property>
+         <property name="icon">
+          <iconset>
+           <normaloff>../img/schematize_res.svg</normaloff>../img/schematize_res.svg</iconset>
+         </property>
+         <property name="iconSize">
+          <size>
+           <width>24</width>
+           <height>24</height>
+          </size>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="import_shapefile_btn">
+         <property name="enabled">
+          <bool>true</bool>
+         </property>
+         <property name="minimumSize">
+          <size>
+           <width>0</width>
+           <height>0</height>
+          </size>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>16777215</width>
+           <height>16777215</height>
+          </size>
+         </property>
+         <property name="toolTip">
+          <string>Select components from shapefile layer</string>
+         </property>
+         <property name="text">
+          <string/>
+         </property>
+         <property name="icon">
+          <iconset>
+           <normaloff>../img/import_sd_shapefiles.svg</normaloff>../img/import_sd_shapefiles.svg</iconset>
+         </property>
+         <property name="iconSize">
+          <size>
+           <width>24</width>
+           <height>24</height>
+          </size>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="auto_assign_link_nodes_btn">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="toolTip">
+          <string>Auto-assign links and nodes</string>
+         </property>
+         <property name="text">
+          <string/>
+         </property>
+         <property name="icon">
+          <iconset>
+           <normaloff>../img/auto_assign_sd.svg</normaloff>../img/auto_assign_sd.svg</iconset>
+         </property>
+         <property name="iconSize">
+          <size>
+           <width>24</width>
+           <height>24</height>
+          </size>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QToolButton" name="sd_control_btn">
+         <property name="toolTip">
+          <string>Set storm drain control variables</string>
+         </property>
+         <property name="text">
+          <string/>
+         </property>
+         <property name="icon">
+          <iconset>
+           <normaloff>../img/sd_control.svg</normaloff>../img/sd_control.svg</iconset>
+         </property>
+         <property name="iconSize">
+          <size>
+           <width>24</width>
+           <height>24</height>
+          </size>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </item>
+     <item>
+      <spacer name="horizontalSpacer_3">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>13</width>
+         <height>21</height>
+        </size>
+       </property>
+      </spacer>
+     </item>
+     <item>
+      <widget class="QCheckBox" name="simulate_stormdrain_chbox">
+       <property name="text">
+        <string>Simulate Storm Drain</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QToolButton" name="sd_help_btn">
+       <property name="enabled">
+        <bool>true</bool>
+       </property>
+       <property name="minimumSize">
+        <size>
+         <width>0</width>
+         <height>0</height>
+        </size>
+       </property>
+       <property name="maximumSize">
+        <size>
+         <width>16777215</width>
+         <height>16777215</height>
+        </size>
+       </property>
+       <property name="toolTip">
+        <string>Storm Drain Help</string>
+       </property>
+       <property name="text">
+        <string>...</string>
+       </property>
+       <property name="icon">
+        <iconset>
+         <normaloff>../img/help.svg</normaloff>../img/help.svg</iconset>
+       </property>
+       <property name="iconSize">
+        <size>
+         <width>24</width>
+         <height>24</height>
+        </size>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <item row="5" column="0">
+    <spacer name="verticalSpacer">
+     <property name="orientation">
+      <enum>Qt::Vertical</enum>
      </property>
-     <property name="title">
-      <string>Profile Plot</string>
+     <property name="sizeHint" stdset="0">
+      <size>
+       <width>20</width>
+       <height>40</height>
+      </size>
      </property>
-     <layout class="QGridLayout" name="gridLayout_8">
-      <item row="0" column="0" colspan="3">
-       <layout class="QGridLayout" name="gridLayout_9">
-        <item row="0" column="1" rowspan="3">
-         <widget class="QLabel" name="label_4">
-          <property name="text">
-           <string>Start Node</string>
-          </property>
-          <property name="alignment">
-           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-          </property>
-         </widget>
-        </item>
-        <item row="0" column="2" rowspan="3">
-         <widget class="QComboBox" name="start_node_cbo"/>
-        </item>
-        <item row="0" column="3" rowspan="3">
-         <widget class="QLabel" name="label_5">
-          <property name="text">
-           <string>End Node</string>
-          </property>
-          <property name="alignment">
-           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-          </property>
-         </widget>
-        </item>
-        <item row="0" column="4" rowspan="3">
-         <widget class="QComboBox" name="end_node_cbo"/>
-        </item>
-        <item row="3" column="4" colspan="2">
-         <widget class="QPushButton" name="find_profile_btn">
-          <property name="text">
-           <string>Find Profile</string>
-          </property>
-         </widget>
-        </item>
-        <item row="3" column="1" colspan="3">
-         <spacer name="horizontalSpacer">
-          <property name="orientation">
-           <enum>Qt::Horizontal</enum>
-          </property>
-          <property name="sizeHint" stdset="0">
-           <size>
-            <width>40</width>
-            <height>20</height>
-           </size>
-          </property>
-         </spacer>
-        </item>
-        <item row="0" column="5" rowspan="3">
-         <widget class="QToolButton" name="center_chbox">
-          <property name="text">
-           <string>...</string>
-          </property>
-          <property name="icon">
-           <iconset>
-            <normaloff>../PycharmProjects/qgis-flo-2d-plugin/flo2d/img/eye-svgrepo-com.svg</normaloff>../PycharmProjects/qgis-flo-2d-plugin/flo2d/img/eye-svgrepo-com.svg</iconset>
-          </property>
-          <property name="checkable">
-           <bool>true</bool>
-          </property>
-         </widget>
-        </item>
-       </layout>
-      </item>
-     </layout>
-    </widget>
+    </spacer>
    </item>
   </layout>
  </widget>
  <tabstops>
   <tabstop>schema_storm_drain_btn</tabstop>
   <tabstop>simulate_stormdrain_chbox</tabstop>
-  <tabstop>SD_nodes_components_cbo</tabstop>
-  <tabstop>SD_links_components_cbo</tabstop>
   <tabstop>SD_type4_cbo</tabstop>
   <tabstop>SD_add_one_type4_btn</tabstop>
   <tabstop>SD_add_predefined_type4_btn</tabstop>

@@ -184,7 +184,7 @@ class Schema2UserDialog(qtBaseClass, uiDialog):
     def convert_swmm(self):
         try:
             swmm_converter = SchemaSWMMConverter(self.con, self.iface, self.lyrs)
-            swmm_converter.create_user_swmm_nodes()
+            swmm_converter.create_user_swmm_inlets_junctions()
             
             s = QSettings()
             last_dir = s.value("FLO-2D/lastGdsDir", "")
@@ -198,7 +198,7 @@ class Schema2UserDialog(qtBaseClass, uiDialog):
                         for row in par:                    
                             name  = row[0]
                             area = row[2]
-                            self.gutils.execute("UPDATE user_swmm_nodes SET drboxarea = ? WHERE name = ?", (area, name))
+                            self.gutils.execute("UPDATE user_swmm_inlets_junctions SET drboxarea = ? WHERE name = ?", (area, name))
                     except:
                         self.uc.bar_error("Error while reading SWMMFLODROPBOX.DAT !")
 
@@ -213,7 +213,7 @@ class Schema2UserDialog(qtBaseClass, uiDialog):
                             name  = row[2]
                             clog_fact = row[3]
                             clog_time = row[4]
-                            self.gutils.execute("""UPDATE user_swmm_nodes
+                            self.gutils.execute("""UPDATE user_swmm_inlets_junctions
                                                    SET swmm_clogging_factor = ?, swmm_time_for_clogging = ?
                                                    WHERE name = ?""", (clog_fact, clog_time, name))                            
                     except:
@@ -223,7 +223,7 @@ class Schema2UserDialog(qtBaseClass, uiDialog):
             self.uc.log_info(traceback.format_exc())
             QApplication.restoreOverrideCursor()
             self.uc.show_error(
-                "ERROR 040319.1915:\n\nConverting Schematic SD Inlets to User Storm Drain Nodes failed!"
+                "ERROR 040319.1915:\n\nConverting Schematic SD Inlets to User Storm Drain Inlets/Junctions failed!"
                 + "\n_______________________________________________________________",
                 e,
             )

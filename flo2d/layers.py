@@ -201,12 +201,25 @@ class Layers(object):
                     },
                 ),
                 (
-                    "user_swmm_nodes",
+                    "user_swmm_inlets_junctions",
                     {
-                        "name": "Storm Drain Nodes",
+                        "name": "Storm Drain Inlets/Junctions",
                         "sgroup": "User Layers",
                         "ssgroup": "Storm Drain",
-                        "styles": ["user_swmm_nodes.qml"],
+                        "styles": ["user_swmm_inlets_junctions.qml"],
+                        "attrs_edit_widgets": {},
+                        "module": ["all"],
+                        "readonly": False,
+                        "advanced": False
+                    },
+                ),
+                (
+                    "user_swmm_outlets",
+                    {
+                        "name": "Storm Drain Outlets",
+                        "sgroup": "User Layers",
+                        "ssgroup": "Storm Drain",
+                        "styles": ["user_swmm_outlets.qml"],
                         "attrs_edit_widgets": {},
                         "module": ["all"],
                         "readonly": False,

@@ -112,3 +112,12 @@ def switch_to_selected(vlayer, combo_box, field="name", use_fid=False):
                 text = ""
             idx = combo_box.findText(text)
             combo_box.setCurrentIndex(idx)
+
+
+def field_reuse(layer):
+    fields = layer.fields()
+    for idx, _ in enumerate(fields):
+        form_config = layer.editFormConfig()
+        form_config.setReuseLastValue(idx, True)
+        layer.setEditFormConfig(form_config)
+

@@ -8,7 +8,6 @@
   <renderer-v2 attr="sd_type" enableorderby="0" type="categorizedSymbol" symbollevels="0" forceraster="0">
     <categories>
       <category label="Inlets" render="true" value="I" symbol="0"/>
-      <category label="Outlets" render="true" value="O" symbol="1"/>
       <category label="Junctions" render="true" value="" symbol="2"/>
     </categories>
     <symbols>
@@ -181,7 +180,23 @@
                 <Option type="QString" value="I" name="Inlet"/>
               </Option>
               <Option type="Map">
-                <Option type="QString" value="O" name="Outlet"/>
+                <Option type="QString" value="J" name="Junction"/>
+              </Option>
+            </Option>
+          </Option>
+        </config>
+      </editWidget>
+    </field>
+    <field name="external_inflow">
+      <editWidget type="ValueMap">
+        <config>
+          <Option type="Map">
+            <Option type="List" name="map">
+              <Option type="Map">
+                <Option type="QString" value="0" name="NO"/>
+              </Option>
+              <Option type="Map">
+                <Option type="QString" value="1" name="YES"/>
               </Option>
             </Option>
           </Option>
@@ -247,7 +262,25 @@
     <field name="outfall_type">
       <editWidget type="TextEdit">
         <config>
-          <Option/>
+          <Option type="Map">
+            <Option type="List" name="map">
+              <Option type="Map">
+                <Option type="QString" value="FIXED" name="FIXED"/>
+              </Option>
+              <Option type="Map">
+                <Option type="QString" value="FREE" name="FREE"/>
+              </Option>
+              <Option type="Map">
+                <Option type="QString" value="NORMAL" name="NORMAL"/>
+              </Option>
+              <Option type="Map">
+                <Option type="QString" value="TIDAL" name="TIDAL"/>
+              </Option>
+              <Option type="Map">
+                <Option type="QString" value="TIMESERIES" name="TIMESERIES"/>
+              </Option>
+            </Option>
+          </Option>
         </config>
       </editWidget>
     </field>
@@ -266,9 +299,18 @@
       </editWidget>
     </field>
     <field name="flapgate">
-      <editWidget type="TextEdit">
+      <editWidget type="ValueMap">
         <config>
-          <Option/>
+            <Option type="Map">
+                <Option type="List" name="map">
+                    <Option type="Map">
+                        <Option type="QString" value="False" name="False"/>
+                 </Option>
+                <Option type="Map">
+                    <Option type="QString" value="True" name="True"/>
+              </Option>
+            </Option>
+          </Option>
         </config>
       </editWidget>
     </field>
@@ -331,7 +373,16 @@
     <field name="swmm_allow_discharge">
       <editWidget type="TextEdit">
         <config>
-          <Option/>
+          <Option type="Map">
+            <Option type="List" name="map">
+              <Option type="Map">
+                <Option type="QString" value="0" name="False"/>
+              </Option>
+              <Option type="Map">
+                <Option type="QString" value="1" name="True"/>
+              </Option>
+            </Option>
+          </Option>
         </config>
       </editWidget>
     </field>
@@ -615,7 +666,7 @@ def my_form_open(dialog, layer, feature):
 	geom = feature.geometry()
 	control = dialog.findChild(QWidget, "MyLineEdit")
 ]]></editforminitcode>
-  <featformsuppress>0</featformsuppress>
+  <featformsuppress>1</featformsuppress>
   <editorlayout>generatedlayout</editorlayout>
   <editable>
     <field editable="1" name="curbheight"/>

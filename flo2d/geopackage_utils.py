@@ -246,7 +246,7 @@ class GeoPackageUtils(object):
         'blocked_cells', 'mult', 'mult_cells', 'mult_areas', 'mult_lines',
         'simple_mult_lines', 'simple_mult_cells', 'levee_general', 'levee_data',
         'levee_failure', 'levee_fragility', 'fpxsec', 'fpxsec_cells', 'fpfroude',
-        'fpfroude_cells', 'user_swmm_nodes', 'swmm_inflows', 'swmm_inflow_patterns',
+        'fpfroude_cells', 'swmm_inflows', 'swmm_inflow_patterns',
         'swmm_time_series', 'swmm_time_series_data', 'swmm_tidal_curve',
         'swmm_tidal_curve_data', 'user_swmm_storage_units', 'user_swmm_conduits', 'user_swmm_pumps',
         'swmm_pumps_curve_data', 'user_swmm_orifices', 'user_swmm_weirs', 'swmmflo',
@@ -267,7 +267,8 @@ class GeoPackageUtils(object):
         'user_bc_lines', 'user_bc_polygons', 'all_schem_bc', 'user_reservoirs',
         'user_infiltration', 'user_effective_impervious_area', 'raincell',
         'raincell_data', 'buildings_areas', 'buildings_stats', 'sd_fields', 'outrc', 'swmm_control',
-        'user_tailings', 'user_tailing_reservoirs', 'tailing_reservoirs', 'tailing_cells', 'external_layers'
+        'user_tailings', 'user_tailing_reservoirs', 'tailing_reservoirs', 'tailing_cells', 'external_layers',
+        'user_swmm_inlets_junctions', 'user_swmm_outlets'
     ]
 
     def __init__(self, con, iface):
@@ -336,7 +337,134 @@ class GeoPackageUtils(object):
                       """
                 update_tables_sql.append(sql)
 
-            if table == 'sqlite_sequence' or table == 'qgis_projects' or table == 'rain_arf_areas':
+            if table == 'user_swmm_nodes':
+
+                # add data to the user_swmm_inlets_junctions
+                columns = self.execute(f"PRAGMA table_info('user_swmm_nodes');").fetchall()
+                column_exists = any(column[1] == 'drboxarea' for column in columns)
+                if column_exists:
+                    sql = """
+                            INSERT INTO user_swmm_inlets_junctions (
+                                fid,
+                                grid,
+                                name,
+                                sd_type,
+                                external_inflow,
+                                junction_invert_elev,
+                                max_depth,
+                                init_depth,
+                                surcharge_depth,
+                                intype,
+                                swmm_length,
+                                swmm_width,
+                                swmm_height,
+                                swmm_coeff,
+                                swmm_feature,
+                                curbheight,
+                                swmm_clogging_factor,
+                                swmm_time_for_clogging,
+                                drboxarea,
+                                geom
+                            )
+                            SELECT
+                                user_swmm_nodes.fid,
+                                user_swmm_nodes.grid,
+                                user_swmm_nodes.name,
+                                user_swmm_nodes.sd_type,
+                                user_swmm_nodes.external_inflow,
+                                user_swmm_nodes.junction_invert_elev,
+                                user_swmm_nodes.max_depth,
+                                user_swmm_nodes.init_depth,
+                                user_swmm_nodes.surcharge_depth,
+                                user_swmm_nodes.intype,
+                                user_swmm_nodes.swmm_length,
+                                user_swmm_nodes.swmm_width,
+                                user_swmm_nodes.swmm_height,
+                                user_swmm_nodes.swmm_coeff,
+                                user_swmm_nodes.swmm_feature,
+                                user_swmm_nodes.curbheight,
+                                user_swmm_nodes.swmm_clogging_factor,
+                                user_swmm_nodes.swmm_time_for_clogging,
+                                user_swmm_nodes.drboxarea,
+                                user_swmm_nodes.geom
+                            FROM user_swmm_nodes WHERE user_swmm_nodes.sd_type <> 'O'
+                          """
+                    update_tables_sql.append(sql)
+                else:
+                    sql = """
+                            INSERT INTO user_swmm_inlets_junctions (
+                                fid,
+                                grid,
+                                name,
+                                sd_type,
+                                external_inflow,
+                                junction_invert_elev,
+                                max_depth,
+                                init_depth,
+                                surcharge_depth,
+                                intype,
+                                swmm_length,
+                                swmm_width,
+                                swmm_height,
+                                swmm_coeff,
+                                swmm_feature,
+                                curbheight,
+                                swmm_clogging_factor,
+                                swmm_time_for_clogging,
+                                geom
+                            )
+                            SELECT
+                                user_swmm_nodes.fid,
+                                user_swmm_nodes.grid,
+                                user_swmm_nodes.name,
+                                user_swmm_nodes.sd_type,
+                                user_swmm_nodes.external_inflow,
+                                user_swmm_nodes.junction_invert_elev,
+                                user_swmm_nodes.max_depth,
+                                user_swmm_nodes.init_depth,
+                                user_swmm_nodes.surcharge_depth,
+                                user_swmm_nodes.intype,
+                                user_swmm_nodes.swmm_length,
+                                user_swmm_nodes.swmm_width,
+                                user_swmm_nodes.swmm_height,
+                                user_swmm_nodes.swmm_coeff,
+                                user_swmm_nodes.swmm_feature,
+                                user_swmm_nodes.curbheight,
+                                user_swmm_nodes.swmm_clogging_factor,
+                                user_swmm_nodes.swmm_time_for_clogging,
+                                user_swmm_nodes.geom
+                            FROM user_swmm_nodes WHERE user_swmm_nodes.sd_type <> 'O'
+                          """
+                    update_tables_sql.append(sql)
+
+                # add data to the user_swmm_outlets
+                sql = """
+                        INSERT INTO user_swmm_outlets (
+                            grid,
+                            name,
+                            outfall_invert_elev,
+                            flapgate, 
+                            swmm_allow_discharge,
+                            outfall_type,
+                            tidal_curve,
+                            time_series,  
+                            geom
+                        )
+                        SELECT
+                            user_swmm_nodes.grid,
+                            user_swmm_nodes.name,
+                            user_swmm_nodes.outfall_invert_elev,
+                            user_swmm_nodes.flapgate, 
+                            user_swmm_nodes.swmm_allow_discharge,
+                            user_swmm_nodes.outfall_type,
+                            user_swmm_nodes.tidal_curve,
+                            user_swmm_nodes.time_series,  
+                            user_swmm_nodes.geom
+                        FROM user_swmm_nodes WHERE user_swmm_nodes.sd_type = 'O'
+                      """
+                update_tables_sql.append(sql)
+
+            if table == 'sqlite_sequence' or table == 'qgis_projects' or table == 'rain_arf_areas' or table == 'user_swmm_nodes':
                 continue
 
             # check if it is a vector layer

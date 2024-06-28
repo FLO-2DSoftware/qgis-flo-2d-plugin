@@ -39,7 +39,7 @@ from PyQt5.QtCore import QVariant
 import pip
 from qgis.PyQt import QtCore, QtGui
 from PyQt5.QtGui import QFont
-from PyQt5.QtWidgets import QApplication, QToolButton, QProgressDialog
+from PyQt5.QtWidgets import QApplication, QToolButton, QProgressDialog, QDockWidget, QTabWidget, QWidget, QVBoxLayout
 from osgeo import gdal, ogr
 from qgis._core import QgsMessageLog, QgsCoordinateReferenceSystem, QgsMapSettings, QgsProjectMetadata, \
     QgsMapRendererParallelJob, QgsLayerTreeLayer, QgsVectorLayerExporter, QgsVectorFileWriter, QgsVectorLayer, \
@@ -110,6 +110,8 @@ from .gui.dlg_ras_import import RasImportDialog
 from .gui.dlg_schem_xs_info import SchemXsecEditorDialog
 from .gui.dlg_schema2user import Schema2UserDialog
 from .gui.dlg_settings import SettingsDialog
+from .gui.dlg_storm_drain_attributes import InletAttributes, ConduitAttributes, OutletAttributes, PumpAttributes, \
+    OrificeAttributes, WeirAttributes, StorageUnitAttributes
 from .gui.dlg_update_gpkg import UpdateGpkg
 from .gui.dlg_user2schema import User2SchemaDialog
 from .gui.f2d_main_widget import FLO2DWidget
@@ -184,6 +186,13 @@ class Flo2D(object):
         self.f2d_table_dock = None
         self.f2d_dock = None
         self.f2d_grid_info_dock = None
+        self.f2d_inlets_junctions_dock = None
+        self.f2d_outlets_dock = None
+        self.f2d_conduits_dock = None
+        self.f2d_pumps_dock = None
+        self.f2d_orifices_dock = None
+        self.f2d_weirs_dock = None
+        self.f2d_storage_units_dock = None
         self.create_map_tools()
         self.crs = None
         self.cur_info_table = None
@@ -2065,7 +2074,8 @@ class Flo2D(object):
                         "user_swmm_pumps",
                         "user_swmm_orifices",
                         "user_swmm_weirs",
-                        "user_swmm_nodes",
+                        "user_swmm_inlets_junctions",
+                        "user_swmm_outlets",
                         "user_swmm_storage_units",
                         "user_xsec_n_data",
                         "user_xsections",
@@ -2095,7 +2105,7 @@ class Flo2D(object):
                     if "Storm Drain" in dlg_components.components:
                         try:
                             swmm_converter = SchemaSWMMConverter(self.con, self.iface, self.lyrs)
-                            swmm_converter.create_user_swmm_nodes()
+                            swmm_converter.create_user_swmm_inlets_junctions()
                             
                             s = QSettings()
                             last_dir = s.value("FLO-2D/lastGdsDir", "")
@@ -2130,7 +2140,7 @@ class Flo2D(object):
                             QApplication.restoreOverrideCursor()
                             self.uc.log_info(traceback.format_exc())
                             self.uc.show_error(
-                                "ERROR 040723.1749:\n\nConverting Schematic SD Inlets to User Storm Drain Nodes failed!"
+                                "ERROR 040723.1749:\n\nConverting Schematic SD Inlets to User Storm Drain Inlets/Junctions failed!"
                                 + "\n_______________________________________________________________",
                                 e,
                             )
@@ -2385,7 +2395,8 @@ class Flo2D(object):
                     "user_streets",
                     "user_struct",
                     "user_swmm_conduits",
-                    "user_swmm_nodes",
+                    "user_swmm_inlets_junctions",
+                    "user_swmm_outlets",
                     "user_xsec_n_data",
                     "user_xsections",
                     "wstime",
@@ -2649,12 +2660,12 @@ class Flo2D(object):
                         if "Storm Drain" in dlg_components.components:
                             try:
                                 swmm_converter = SchemaSWMMConverter(self.con, self.iface, self.lyrs)
-                                swmm_converter.create_user_swmm_nodes()
+                                swmm_converter.create_user_swmm_inlets_junctions()
                             except Exception as e:
                                 self.uc.log_info(traceback.format_exc())
                                 QApplication.restoreOverrideCursor()
                                 self.uc.show_error(
-                                    "ERROR 100623.1044:\n\nConverting Schematic SD Inlets to User Storm Drain Nodes failed!"
+                                    "ERROR 100623.1044:\n\nConverting Schematic SD Inlets to User Storm Drain Inlets/Junctions failed!"
                                     + "\n_______________________________________________________________",
                                     e,
                                 )
@@ -3306,8 +3317,6 @@ class Flo2D(object):
         """
         Function to export FLO-2D to SWMM's INP file
         """
-        # sd_editor = StormDrainEditorWidget(self.iface, self.f2d_plot, self.f2d_table, self.lyrs)
-        # sd_editor.import_storm_drain_INP_file("Choose", True)
         self.f2d_widget.storm_drain_editor.import_storm_drain_INP_file("Choose", True)
 
     @connection_required
@@ -3547,14 +3556,186 @@ class Flo2D(object):
         self.f2d_widget.struct_editor.populate_structs(struct_fid=fid)
 
     @connection_required
-    def show_sd_node_info(self, fid=None, extra=""):
+    def show_sd_node_profile(self, fid=None, extra=""):
         """
         Show the selected sd node info
         """
-        name = self.gutils.execute("SELECT name FROM user_swmm_nodes WHERE fid = ?", (fid,)).fetchone()
+        name = self.gutils.execute("SELECT name FROM user_swmm_inlets_junctions WHERE fid = ?", (fid,)).fetchone()
         self.uc.bar_info("Selected Storm Drain Node: " + str(name[0]))
         self.f2d_widget.storm_drain_editor.center_chbox.setChecked(True)
         self.f2d_widget.storm_drain_editor.update_profile_cbos(extra, name[0])
+
+    @connection_required
+    def show_sd_inlets_junctions_attributes(self, fid=None):
+        """
+        Show the selected sd inlet/junctions attributes
+        """
+        if self.f2d_inlets_junctions_dock:
+            self.iface.removeDockWidget(self.f2d_inlets_junctions_dock)
+            self.f2d_inlets_junctions_dock.close()
+            self.f2d_inlets_junctions_dock.deleteLater()
+            self.f2d_inlets_junctions_dock = None
+
+        name = self.gutils.execute("SELECT name FROM user_swmm_inlets_junctions WHERE fid = ?", (fid,)).fetchone()
+        self.uc.bar_info("Selected Storm Drain Inlet/Junction: " + str(name[0]))
+
+        dlg = InletAttributes(self.con, self.iface, self.lyrs)
+        self.iface.mainWindow().addDockWidget(Qt.RightDockWidgetArea, dlg.dock_widget)
+        self.iface.mainWindow().tabifyDockWidget(self.f2d_dock, dlg.dock_widget)
+        dlg.dock_widget.setFloating(False)
+        dlg.populate_attributes(fid)
+        dlg.dock_widget.show()
+        dlg.dock_widget.raise_()
+
+        self.f2d_inlets_junctions_dock = dlg.dock_widget
+
+    @connection_required
+    def show_sd_outlets_attributes(self, fid=None):
+        """
+        Show the selected sd outlets attributes
+        """
+        if self.f2d_outlets_dock:
+            self.iface.removeDockWidget(self.f2d_outlets_dock)
+            self.f2d_outlets_dock.close()
+            self.f2d_outlets_dock.deleteLater()
+            self.f2d_outlets_dock = None
+
+        name = self.gutils.execute("SELECT name FROM user_swmm_outlets WHERE fid = ?", (fid,)).fetchone()
+        self.uc.bar_info("Selected Storm Drain Outlet: " + str(name[0]))
+
+        dlg = OutletAttributes(self.con, self.iface, self.lyrs)
+        self.iface.mainWindow().addDockWidget(Qt.RightDockWidgetArea, dlg.dock_widget)
+        self.iface.mainWindow().tabifyDockWidget(self.f2d_dock, dlg.dock_widget)
+        dlg.dock_widget.setFloating(False)
+        dlg.populate_attributes(fid)
+        dlg.dock_widget.show()
+        dlg.dock_widget.raise_()
+
+        self.f2d_outlets_dock = dlg.dock_widget
+
+    @connection_required
+    def show_sd_weir_attributes(self, fid=None):
+        """
+        Show the selected sd weir attributes
+        """
+        if self.f2d_weirs_dock:
+            self.iface.removeDockWidget(self.f2d_weirs_dock)
+            self.f2d_weirs_dock.close()
+            self.f2d_weirs_dock.deleteLater()
+            self.f2d_weirs_dock = None
+
+        weir_name = self.gutils.execute("SELECT weir_name FROM user_swmm_weirs WHERE fid = ?",
+                                           (fid,)).fetchone()
+        self.uc.bar_info("Selected Storm Drain Weir: " + str(weir_name[0]))
+
+        dlg = WeirAttributes(self.con, self.iface, self.lyrs)
+        self.iface.mainWindow().addDockWidget(Qt.RightDockWidgetArea, dlg.dock_widget)
+        self.iface.mainWindow().tabifyDockWidget(self.f2d_dock, dlg.dock_widget)
+        dlg.dock_widget.setFloating(False)
+        dlg.populate_attributes(fid)
+        dlg.dock_widget.show()
+        dlg.dock_widget.raise_()
+
+        self.f2d_weirs_dock = dlg.dock_widget
+
+    @connection_required
+    def show_sd_orifice_attributes(self, fid=None):
+        """
+        Show the selected sd orifice attributes
+        """
+        if self.f2d_orifices_dock:
+            self.iface.removeDockWidget(self.f2d_orifices_dock)
+            self.f2d_orifices_dock.close()
+            self.f2d_orifices_dock.deleteLater()
+            self.f2d_orifices_dock = None
+
+        orifice_name = self.gutils.execute("SELECT orifice_name FROM user_swmm_orifices WHERE fid = ?",
+                                           (fid,)).fetchone()
+        self.uc.bar_info("Selected Storm Drain Orifice: " + str(orifice_name[0]))
+
+        dlg = OrificeAttributes(self.con, self.iface, self.lyrs)
+        self.iface.mainWindow().addDockWidget(Qt.RightDockWidgetArea, dlg.dock_widget)
+        self.iface.mainWindow().tabifyDockWidget(self.f2d_dock, dlg.dock_widget)
+        dlg.dock_widget.setFloating(False)
+        dlg.populate_attributes(fid)
+        dlg.dock_widget.show()
+        dlg.dock_widget.raise_()
+
+        self.f2d_orifices_dock = dlg.dock_widget
+
+    @connection_required
+    def show_sd_storage_unit_attributes(self, fid=None):
+        """
+        Show the selected sd storage unit attributes
+        """
+        if self.f2d_storage_units_dock:
+            self.iface.removeDockWidget(self.f2d_storage_units_dock)
+            self.f2d_storage_units_dock.close()
+            self.f2d_storage_units_dock.deleteLater()
+            self.f2d_storage_units_dock = None
+
+        storage_unit_name = self.gutils.execute("SELECT name FROM user_swmm_storage_units WHERE fid = ?",
+                                           (fid,)).fetchone()
+        self.uc.bar_info("Selected Storm Drain Storage Unit: " + str(storage_unit_name[0]))
+
+        dlg = StorageUnitAttributes(self.con, self.iface, self.lyrs)
+        self.iface.mainWindow().addDockWidget(Qt.RightDockWidgetArea, dlg.dock_widget)
+        self.iface.mainWindow().tabifyDockWidget(self.f2d_dock, dlg.dock_widget)
+        dlg.dock_widget.setFloating(False)
+        dlg.populate_attributes(fid)
+        dlg.dock_widget.show()
+        dlg.dock_widget.raise_()
+
+        self.f2d_storage_units_dock = dlg.dock_widget
+
+    @connection_required
+    def show_sd_pump_attributes(self, fid=None):
+        """
+        Show the selected sd pump attributes
+        """
+        if self.f2d_pumps_dock:
+            self.iface.removeDockWidget(self.f2d_pumps_dock)
+            self.f2d_pumps_dock.close()
+            self.f2d_pumps_dock.deleteLater()
+            self.f2d_pumps_dock = None
+
+        pump_name = self.gutils.execute("SELECT pump_name FROM user_swmm_pumps WHERE fid = ?",
+                                           (fid,)).fetchone()
+        self.uc.bar_info("Selected Storm Drain Pump: " + str(pump_name[0]))
+
+        dlg = PumpAttributes(self.con, self.iface, self.lyrs)
+        self.iface.mainWindow().addDockWidget(Qt.RightDockWidgetArea, dlg.dock_widget)
+        self.iface.mainWindow().tabifyDockWidget(self.f2d_dock, dlg.dock_widget)
+        dlg.dock_widget.setFloating(False)
+        dlg.populate_attributes(fid)
+        dlg.dock_widget.show()
+        dlg.dock_widget.raise_()
+
+        self.f2d_pumps_dock = dlg.dock_widget
+
+    @connection_required
+    def show_sd_conduit_attributes(self, fid=None):
+        """
+        Show the selected sd conduit attributes
+        """
+        if self.f2d_conduits_dock:
+            self.iface.removeDockWidget(self.f2d_conduits_dock)
+            self.f2d_conduits_dock.close()
+            self.f2d_conduits_dock.deleteLater()
+            self.f2d_conduits_dock = None
+
+        conduit_name = self.gutils.execute("SELECT conduit_name FROM user_swmm_conduits WHERE fid = ?", (fid,)).fetchone()
+        self.uc.bar_info("Selected Storm Drain Conduit: " + str(conduit_name[0]))
+
+        dlg = ConduitAttributes(self.con, self.iface, self.lyrs)
+        self.iface.mainWindow().addDockWidget(Qt.RightDockWidgetArea, dlg.dock_widget)
+        self.iface.mainWindow().tabifyDockWidget(self.f2d_dock, dlg.dock_widget)
+        dlg.dock_widget.setFloating(False)
+        dlg.populate_attributes(fid)
+        dlg.dock_widget.show()
+        dlg.dock_widget.raise_()
+
+        self.f2d_conduits_dock = dlg.dock_widget
 
     @connection_required
     def show_struct_hydrograph(self, fid=None):
@@ -3573,7 +3754,7 @@ class Flo2D(object):
             self.uc.bar_warn("There is no grid! Please create it before running tool.")
             return
 
-        name, grid = self.gutils.execute("SELECT name, grid FROM user_swmm_nodes WHERE fid = ?", (fid,)).fetchone()
+        name, grid = self.gutils.execute("SELECT name, grid FROM user_swmm_inlets_junctions WHERE fid = ?", (fid,)).fetchone()
         self.f2d_dock.setUserVisible(True)
         # self.f2d_widget.storm_drain_editor_grp.setCollapsed(False)
         self.f2d_widget.storm_drain_editor.create_SD_discharge_table_and_plots(name)
@@ -4180,7 +4361,7 @@ class Flo2D(object):
         self.canvas = self.iface.mapCanvas()
         self.info_tool = InfoTool(self.canvas, self.lyrs, self.uc)
         self.grid_info_tool = GridInfoTool(self.uc, self.canvas, self.lyrs)
-        self.results_tool = ResultsTool(self.canvas, self.lyrs)
+        self.results_tool = ResultsTool(self.canvas, self.lyrs, self.uc)
 
     def get_feature_info(self, table, fid, extra):
         try:
@@ -4195,7 +4376,7 @@ class Flo2D(object):
             else:
                 show_editor(fid)
 
-    def get_feature_profile(self, table, fid):
+    def get_feature_profile(self, table, fid, extra):
         # try:
         if table == 'chan':
             self.cur_profile_table = table
@@ -4212,10 +4393,12 @@ class Flo2D(object):
         if table == 'struct':
             self.cur_profile_table = table
             self.show_struct_hydrograph(fid)
-        if table == 'user_swmm_nodes':
-            #show_editor = self.editors_map[table]
-            self.cur_profile_table = table
-            self.show_sd_discharge(fid)
+        if table == 'user_swmm_inlets_junctions':
+            if extra == "See Results":
+                self.cur_profile_table = table
+                self.show_sd_discharge(fid)
+            else:
+                self.show_sd_node_profile(fid, extra)
         if table == 'user_swmm_conduits':
             #show_editor = self.editors_map[table]
             self.cur_profile_table = table
@@ -4251,12 +4434,13 @@ class Flo2D(object):
             "user_bc_polygons": self.show_bc_editor,
             "user_struct": self.show_struct_editor,
             "struct": self.show_struct_editor,
-            # "chan": self.show_profile,
-            "user_swmm_nodes": self.show_sd_node_info,
-            "user_swmm_conduits": None,
-            "user_swmm_weirs": None,
-            "user_swmm_orifices": None,
-            "user_swmm_pumps": None,
+            "user_swmm_inlets_junctions": self.show_sd_inlets_junctions_attributes,
+            "user_swmm_outlets": self.show_sd_outlets_attributes,
+            "user_swmm_conduits": self.show_sd_conduit_attributes,
+            "user_swmm_weirs": self.show_sd_weir_attributes,
+            "user_swmm_orifices": self.show_sd_orifice_attributes,
+            "user_swmm_pumps": self.show_sd_pump_attributes,
+            "user_swmm_storage_units": self.show_sd_storage_unit_attributes,
         }
 
     def restore_settings(self):

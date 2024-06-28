@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from qgis._core import QgsProject, QgsVectorLayer, QgsFields, QgsField
+
 # FLO-2D Preprocessor tools for QGIS
 
 # This program is free software; you can redistribute it and/or
@@ -33,7 +33,8 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
         self.uc = UserCommunication(iface, "FLO-2D")
         self.con = con
         self.gutils = GeoPackageUtils(con, iface)
-        self.user_swmm_nodes_lyr = self.lyrs.data["user_swmm_nodes"]["qlyr"]
+        self.user_swmm_inlets_junctions_lyr = self.lyrs.data["user_swmm_inlets_junctions"]["qlyr"]
+        self.user_swmm_outlets_lyr = self.lyrs.data["user_swmm_outlets"]["qlyr"]
         self.user_swmm_strge_units_lyr = self.lyrs.data["user_swmm_storage_units"]["qlyr"]
         self.user_swmm_conduits_lyr = self.lyrs.data["user_swmm_conduits"]["qlyr"]
         self.user_swmm_pumps_lyr = self.lyrs.data["user_swmm_pumps"]["qlyr"]
@@ -1185,8 +1186,6 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
             self.load_orifices_from_shapefile()
             self.load_weirs_from_shapefile()
 
-            self.check_sd_system()
-
             self.save_storm_drain_shapefile_field_names()
 
             QApplication.restoreOverrideCursor()
@@ -1201,29 +1200,44 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                     or self.load_weirs
             ):
 
-                self.uc.bar_info("Importing Nodes and Links finished!")
+                if len(self.no_in_out) > 0:
+                    self.uc.show_warn(
+                        "WARNING 040524.0806:\nLinks with no inlet and/or outlet:\n"
+                        + str(self.no_in_out)
+                        + "\n\nThe value '?' will be assigned to the missing inlets and/or outlets.\nThey will cause errors during their processing.\n\n"
+                        + "Did you select the 'From Inlet' and 'To Oulet' fields in the shapefile?\n\n"
+                        + "You can also use the 'Auto-assign link nodes' button to automatically fill the node names required for the link connections."
+                    )
+
+                self.uc.bar_info(
+                    "Importing Nodes and Links finished!"
+                )
                 self.uc.log_info(
                     "Importing Nodes and Links finished!\n\n"
-                    + "Use the Components (Nodes and Links) buttons in the Storm Drain Editor to view/edit data.\n"
+                    + "Use the Components (Nodes and Links) buttons in the Storm Drain Editor to view/edit data.\n\n"
                     + "Complete the storm drain by clicking the Schematize Storm Drain Components button."
                 )
 
             else:
-                self.uc.show_info("No Storm Drain nodes or links selected!")
+                self.uc.show_info("No Storm Drain Inlets/Junctions or links selected!")
 
     def load_inlets_from_shapefile(self):
         if self.load_inlets:
+            mame = ""
             try:
                 QApplication.setOverrideCursor(Qt.WaitCursor)
-                fields = self.user_swmm_nodes_lyr.fields()
+                fields = self.user_swmm_inlets_junctions_lyr.fields()
                 new_feats = []
                 outside_inlets = ""
                 inlets_shapefile = self.inlets_shapefile_cbo.currentText()
+                group = self.lyrs.group
                 lyr = self.lyrs.get_layer_by_name(inlets_shapefile).layer()
 
                 inlets_shapefile_fts = lyr.getFeatures()
                 modified = 0
                 for f in inlets_shapefile_fts:
+                    grid = 0
+                    sd_type = "I"
                     name = (
                         f[self.inlets_name_FieldCbo.currentText()]
                         if self.inlets_name_FieldCbo.currentText() != ""
@@ -1322,8 +1336,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                     except:
                         cell = None
 
-                    # Inlet outside the grid
-                    if cell is None and name.startswith("I"):
+                    if cell is None:
                         outside_inlets += "\n" + name
                         continue
 
@@ -1338,11 +1351,6 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                     feat.setAttribute("max_depth", max_depth)
                     feat.setAttribute("init_depth", init_depth)
                     feat.setAttribute("surcharge_depth", surcharge_depth)
-                    feat.setAttribute("outfall_invert_elev", 0)
-                    feat.setAttribute("outfall_type", "NORMAL")
-                    feat.setAttribute("tidal_curve", "*")
-                    feat.setAttribute("time_series", "*")
-                    feat.setAttribute("flapgate", "False")
                     feat.setAttribute("swmm_length", swmm_length)
                     feat.setAttribute("swmm_width", swmm_width)
                     feat.setAttribute("swmm_height", swmm_height)
@@ -1386,29 +1394,19 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                     feat.setAttribute("swmm_clogging_factor", swmm_clogging_factor)
                     feat.setAttribute("swmm_time_for_clogging", swmm_time_for_clogging)
                     feat.setAttribute("drboxarea", drboxarea)
-                    feat.setAttribute("swmm_allow_discharge", "0")
-                    feat.setAttribute("water_depth", 0)
-                    feat.setAttribute("rt_fid", 0)
-                    feat.setAttribute("outf_flo", 0)
-                    feat.setAttribute("invert_elev_inp", 0)
-                    feat.setAttribute("max_depth_inp", 0)
-                    feat.setAttribute("rim_elev_inp", 0)
-                    feat.setAttribute("rim_elev", 0)
-                    feat.setAttribute("ge_elev", 0)
-                    feat.setAttribute("difference", 0)
 
                     new_feats.append(feat)
 
                 if new_feats:
                     if not self.inlets_append_chbox.isChecked():
-                        remove_features(self.user_swmm_nodes_lyr)
+                        remove_features(self.user_swmm_inlets_junctions_lyr)
 
-                    self.user_swmm_nodes_lyr.startEditing()
-                    self.user_swmm_nodes_lyr.addFeatures(new_feats)
-                    self.user_swmm_nodes_lyr.commitChanges()
-                    self.user_swmm_nodes_lyr.updateExtents()
-                    self.user_swmm_nodes_lyr.triggerRepaint()
-                    self.user_swmm_nodes_lyr.removeSelection()
+                    self.user_swmm_inlets_junctions_lyr.startEditing()
+                    self.user_swmm_inlets_junctions_lyr.addFeatures(new_feats)
+                    self.user_swmm_inlets_junctions_lyr.commitChanges()
+                    self.user_swmm_inlets_junctions_lyr.updateExtents()
+                    self.user_swmm_inlets_junctions_lyr.triggerRepaint()
+                    self.user_swmm_inlets_junctions_lyr.removeSelection()
                 else:
                     self.load_inlets = False
 
@@ -1440,7 +1438,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
             except Exception as e:
                 QApplication.restoreOverrideCursor()
                 self.uc.show_error(
-                    "ERROR 070618.0451: creation of Storm Drain Nodes (Inlets) layer failed after reading "
+                    "ERROR 070618.0451: creation of Storm Drain Inlets/Junctions layer failed after reading "
                     + str(len(new_feats))
                     + " inlets!"
                     + "\n__________________________________________________",
@@ -1452,7 +1450,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
         if self.load_outfalls:
             try:
                 QApplication.setOverrideCursor(Qt.WaitCursor)
-                fields = self.user_swmm_nodes_lyr.fields()
+                fields = self.user_swmm_outlets_lyr.fields()
                 new_feats = []
                 outside_outfalls = ""
 
@@ -1483,7 +1481,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                         if self.outfall_allow_discharge_FieldCbo.currentText() != ""
                         else ""
                     )
-                    swmm_allow_discharge = str(swmm_allow_discharge) if swmm_allow_discharge in ["0", "1", "2", 0, 1, 2]  else "0"
+                    swmm_allow_discharge = str(swmm_allow_discharge) if swmm_allow_discharge in ["0", "1", "2", 0, 1, 2] else "0"
                     
                     outfall_type = (
                         f[self.outfall_type_FieldCbo.currentText()]
@@ -1523,50 +1521,27 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                     feat.setGeometry(new_geom)
 
                     feat.setAttribute("grid", cell)
-                    feat.setAttribute("sd_type", "O")
                     feat.setAttribute("name", name)
-                    feat.setAttribute("intype", 1)
-                    feat.setAttribute("junction_invert_elev", 0)
-                    feat.setAttribute("max_depth", 0)
-                    feat.setAttribute("init_depth", 0)
-                    feat.setAttribute("surcharge_depth", 0)
-                    feat.setAttribute("ponded_area", 0)
                     feat.setAttribute("outfall_invert_elev", outfall_invert_elev)
                     feat.setAttribute("outfall_type", outfall_type)
                     feat.setAttribute("tidal_curve", "...")
                     feat.setAttribute("time_series", "...")
+                    feat.setAttribute("fixed_stage", water_depth)
                     feat.setAttribute("flapgate", flapgate)
-                    feat.setAttribute("swmm_length", 0)
-                    feat.setAttribute("swmm_width", 0)
-                    feat.setAttribute("swmm_height", 0)
-                    feat.setAttribute("swmm_coeff", 0)
-                    feat.setAttribute("swmm_feature", 0)
-                    feat.setAttribute("curbheight", 0)
-                    feat.setAttribute("swmm_clogging_factor", 0)
-                    feat.setAttribute("swmm_time_for_clogging", 0)
                     feat.setAttribute("swmm_allow_discharge", swmm_allow_discharge)
-                    feat.setAttribute("water_depth", 0)
-                    feat.setAttribute("rt_fid", 0)
-                    feat.setAttribute("outf_flo", 0)
-                    feat.setAttribute("invert_elev_inp", 0)
-                    feat.setAttribute("max_depth_inp", 0)
-                    feat.setAttribute("rim_elev_inp", 0)
-                    feat.setAttribute("rim_elev", 0)
-                    feat.setAttribute("ge_elev", 0)
-                    feat.setAttribute("difference", 0)
 
                     new_feats.append(feat)
 
                 if new_feats:
                     if not self.outfall_append_chbox.isChecked() and not self.load_inlets:
-                        remove_features(self.user_swmm_nodes_lyr)
+                        remove_features(self.user_swmm_outlets_lyr)
 
-                    self.user_swmm_nodes_lyr.startEditing()
-                    self.user_swmm_nodes_lyr.addFeatures(new_feats)
-                    self.user_swmm_nodes_lyr.commitChanges()
-                    self.user_swmm_nodes_lyr.updateExtents()
-                    self.user_swmm_nodes_lyr.triggerRepaint()
-                    self.user_swmm_nodes_lyr.removeSelection()
+                    self.user_swmm_outlets_lyr.startEditing()
+                    self.user_swmm_outlets_lyr.addFeatures(new_feats)
+                    self.user_swmm_outlets_lyr.commitChanges()
+                    self.user_swmm_outlets_lyr.updateExtents()
+                    self.user_swmm_outlets_lyr.triggerRepaint()
+                    self.user_swmm_outlets_lyr.removeSelection()
                 else:
                     self.load_outfalls = False
 
@@ -1584,7 +1559,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
             except Exception as e:
                 QApplication.restoreOverrideCursor()
                 self.uc.show_error(
-                    "ERROR 070618.0454: creation of Storm Drain Nodes (Outfalls) layer failed after reading "
+                    "ERROR 070618.0454: Creation of Storm Drain Outlets layer failed after reading "
                     + str(len(new_feats))
                     + " outfalls!"
                     + "\n__________________________________________________",
@@ -1715,7 +1690,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                         continue
 
                     cell = self.gutils.grid_on_point(point.x(), point.y())
-                    if cell is None and name.lower().startswith("i"):
+                    if cell is None:
                         outside_strge_units += "\n" + name
                         continue
 
@@ -1760,10 +1735,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                 QApplication.restoreOverrideCursor()
 
                 if outside_strge_units != "":
-                    self.uc.bar_warn(
-                        "WARNING 250424.2002: Storage units are outside the computational domain!"
-                    )
-                    self.uc.log_info(
+                    self.uc.show_warn(
                         "WARNING 250424.2002: The following storage units are outside the computational domain!\n"
                         + outside_strge_units
                     )
@@ -1785,8 +1757,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                 QApplication.setOverrideCursor(Qt.WaitCursor)
                 fields = self.user_swmm_conduits_lyr.fields()
                 new_feats = []
-                outside_conduits = []
-                inlets_outlets_inside = []
+                outside_conduits = ""
 
                 conduits_shapefile = self.conduits_shapefile_cbo.currentText()
                 lyr = self.lyrs.get_layer_by_name(conduits_shapefile).layer()
@@ -1910,18 +1881,16 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                         self.uc.show_warn("WARNING 060319.1702: Conduit  " + conduit_name + "  is faulty!")
                         continue
 
-                    conduit_inlet_cell = self.gutils.grid_on_point(points[0].x(), points[0].y())
-                    conduit_outlet_cell = self.gutils.grid_on_point(points[len(points) - 1].x(), points[len(points) - 1].y())
-                    # Both ends of the conduit is outside the grid
-                    if conduit_inlet_cell is None and conduit_outlet_cell is None:
+                    cell = self.gutils.grid_on_point(points[0].x(), points[0].y())
+                    if cell is None:
                         if not (conduit_name in outside_conduits):
-                            outside_conduits.append(conduit_name)
+                            outside_conduits += "\n" + conduit_name
                             continue
 
-                    # Conduit inlet is outside the grid and it is an Inlet
-                    elif conduit_inlet_cell is None and conduit_inlet.lower().startswith("i"):
+                    cell = self.gutils.grid_on_point(points[1].x(), points[1].y())
+                    if cell is None:
                         if not (conduit_name in outside_conduits):
-                            outside_conduits.append(conduit_name)
+                            outside_conduits += "\n" + conduit_name
                             continue
 
                     new_geom = QgsGeometry.fromPolylineXY(points)
@@ -1998,14 +1967,11 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                     )
 
                     new_feats.append(feat)
-                    if conduit_inlet not in inlets_outlets_inside:
-                        inlets_outlets_inside.append(conduit_inlet)
-                    if conduit_outlet not in inlets_outlets_inside:
-                        inlets_outlets_inside.append(conduit_outlet)
 
                 if new_feats:
                     if not self.conduits_append_chbox.isChecked():
                         remove_features(self.user_swmm_conduits_lyr)
+
                     self.user_swmm_conduits_lyr.startEditing()
                     self.user_swmm_conduits_lyr.addFeatures(new_feats)
                     self.user_swmm_conduits_lyr.commitChanges()
@@ -2015,29 +1981,15 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                 else:
                     self.load_conduits = False
 
-                # Remove junctions not connected to conduits
-                self.user_swmm_nodes_lyr.startEditing()
-                for feat in self.user_swmm_nodes_lyr.getFeatures():
-                    node_name = feat['name']
-                    if len(inlets_outlets_inside) > 1:
-                        if node_name not in inlets_outlets_inside:
-                            self.user_swmm_nodes_lyr.deleteFeature(feat.id())
-                self.user_swmm_nodes_lyr.commitChanges()
-                self.user_swmm_nodes_lyr.updateExtents()
-                self.user_swmm_nodes_lyr.triggerRepaint()
-
                 QApplication.restoreOverrideCursor()
 
                 if no_in_out != 0:
                     self.no_in_out += "\n" + str(no_in_out) + " conduits."
 
-                if len(outside_conduits) > 0:
-                    self.uc.bar_warn(
-                        "WARNING 231220.0954: Conduits are outside the computational domain!"
-                    )
-                    self.uc.log_info(
+                if outside_conduits != "":
+                    self.uc.show_warn(
                         "WARNING 231220.0954: The following conduits are outside the computational domain!\n"
-                        + '\n'.join(outside_conduits)
+                        + outside_conduits
                     )
 
             except Exception as e:
@@ -2057,9 +2009,8 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                 QApplication.setOverrideCursor(Qt.WaitCursor)
                 fields = self.user_swmm_pumps_lyr.fields()
                 new_feats = []
-                outside_pumps = []
+                outside_pumps = ""
                 wrong_status = 0
-                inlets_outlets_inside = []
 
                 pumps_shapefile = self.pumps_shapefile_cbo.currentText()
                 lyr = self.lyrs.get_layer_by_name(pumps_shapefile).layer()
@@ -2130,18 +2081,15 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                         self.uc.show_warn("WARNING 280222.0951: Pump  " + pump_name + " is faulty!")
                         continue
 
-                    pump_inlet_cell = self.gutils.grid_on_point(points[0].x(), points[0].y())
-                    pump_outlet_cell = self.gutils.grid_on_point(points[len(points) - 1].x(), points[len(points) - 1].y())
-                    # Both ends of the pump is outside the grid
-                    if pump_inlet_cell is None and pump_outlet_cell is None:
-                        if not (pump_name in outside_pumps):
-                            outside_pumps.append(pump_name)
-                            continue
-                    # Pump inlet is outside the grid and it is an Inlet
-                    elif pump_inlet_cell is None and pump_inlet.lower().startswith("i"):
-                        if not (pump_name in outside_pumps):
-                            outside_pumps.append(pump_name)
-                            continue
+                    cell = self.gutils.grid_on_point(points[0].x(), points[0].y())
+                    if cell is None:
+                        outside_pumps += "\n" + pump_name
+                        continue
+
+                    cell = self.gutils.grid_on_point(points[1].x(), points[1].y())
+                    if cell is None:
+                        outside_pumps += "\n" + pump_name
+                        continue
 
                     new_geom = QgsGeometry.fromPolylineXY(points)
                     feat.setGeometry(new_geom)
@@ -2164,10 +2112,6 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                     )
 
                     new_feats.append(feat)
-                    if pump_inlet not in inlets_outlets_inside:
-                        inlets_outlets_inside.append(pump_inlet)
-                    if pump_outlet not in inlets_outlets_inside:
-                        inlets_outlets_inside.append(pump_outlet)
 
                 if new_feats:
                     if not self.pumps_append_chbox.isChecked():
@@ -2182,38 +2126,20 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                 else:
                     self.load_pumps = False
 
-                # Remove junctions not connected to pumps
-                self.user_swmm_nodes_lyr.startEditing()
-                for feat in self.user_swmm_nodes_lyr.getFeatures():
-                    node_name = feat['name']
-                    if len(inlets_outlets_inside) > 1:
-                        if node_name not in inlets_outlets_inside:
-                            self.user_swmm_nodes_lyr.deleteFeature(feat.id())
-                self.user_swmm_nodes_lyr.commitChanges()
-                self.user_swmm_nodes_lyr.updateExtents()
-                self.user_swmm_nodes_lyr.triggerRepaint()
-
                 QApplication.restoreOverrideCursor()
 
                 if no_in_out != 0:
                     self.no_in_out += "\n" + str(no_in_out) + " pumps."
 
-                if len(outside_pumps) > 0:
-
-                    self.uc.bar_warn(
-                        "WARNING 220222.1031: Pumps are outside the computational domain!"
-                    )
-                    self.uc.log_info(
-                        "WARNING 220222.1031: Pumps are outside the computational domain!\n"
-                        + '\n'.join(outside_pumps)
+                if outside_pumps != "":
+                    self.uc.show_warn(
+                        "WARNING 220222.1031: The following pumps are outside the computational domain!\n"
+                        + outside_pumps
                     )
 
                 if wrong_status > 0:
-                    self.uc.bar_warn(
-                        "WARNING 010322.1054: There were pumps with wrong initial status!\n\n"
-                    )
-                    self.uc.log_info(
-                        "WARNING 010322.1054: There were "
+                    self.uc.show_info(
+                        "WARNING 010322.1054: there were "
                         + str(wrong_status)
                         + " pumps with wrong initial status!\n\n"
                         + "All wrong initial status were changed to 'OFF'.\n\n"
@@ -2237,8 +2163,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                 QApplication.setOverrideCursor(Qt.WaitCursor)
                 fields = self.user_swmm_orifices_lyr.fields()
                 new_feats = []
-                outside_orifices = []
-                inlets_outlets_inside = []
+                outside_orifices = ""
 
                 orifices_shapefile = self.orifices_shapefile_cbo.currentText()
                 lyr = self.lyrs.get_layer_by_name(orifices_shapefile).layer()
@@ -2322,20 +2247,15 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                         self.uc.show_warn("WARNING 1104220809.0951: Orifice  " + orifice_name + " is faulty!")
                         continue
 
-                    orifice_inlet_cell = self.gutils.grid_on_point(points[0].x(), points[0].y())
-                    orifice_outlet_cell = self.gutils.grid_on_point(points[len(points) - 1].x(),
-                                                                    points[len(points) - 1].y())
-                    # Both ends of the orifice is outside the grid
-                    if orifice_inlet_cell is None and orifice_outlet_cell is None:
-                        if not (orifice_name in outside_orifices):
-                            outside_orifices.append(orifice_name)
-                            continue
+                    cell = self.gutils.grid_on_point(points[0].x(), points[0].y())
+                    if cell is None:
+                        outside_orifices += "\n" + orifice_name
+                        continue
 
-                    # Orifice inlet is outside the grid and it is an Inlet
-                    elif orifice_inlet_cell is None and orifice_inlet.lower().startswith("i"):
-                        if not (orifice_name in outside_orifices):
-                            outside_orifices.append(orifice_name)
-                            continue
+                    cell = self.gutils.grid_on_point(points[1].x(), points[1].y())
+                    if cell is None:
+                        outside_orifices += "\n" + orifice_name
+                        continue
 
                     new_geom = QgsGeometry.fromPolylineXY(points)
                     feat.setGeometry(new_geom)
@@ -2351,12 +2271,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                     feat.setAttribute("orifice_shape", orifice_shape)
                     feat.setAttribute("orifice_height", orifice_height)
                     feat.setAttribute("orifice_width", orifice_width)
-
                     new_feats.append(feat)
-                    if orifice_inlet not in inlets_outlets_inside:
-                        inlets_outlets_inside.append(orifice_inlet)
-                    if orifice_outlet not in inlets_outlets_inside:
-                        inlets_outlets_inside.append(orifice_outlet)
 
                 if new_feats:
                     if not self.orifices_append_chbox.isChecked():
@@ -2371,29 +2286,15 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                 else:
                     self.load_orifices = False
 
-                # Remove junctions not connected to orifices
-                self.user_swmm_nodes_lyr.startEditing()
-                for feat in self.user_swmm_nodes_lyr.getFeatures():
-                    node_name = feat['name']
-                    if len(inlets_outlets_inside) > 1:
-                        if node_name not in inlets_outlets_inside:
-                            self.user_swmm_nodes_lyr.deleteFeature(feat.id())
-                self.user_swmm_nodes_lyr.commitChanges()
-                self.user_swmm_nodes_lyr.updateExtents()
-                self.user_swmm_nodes_lyr.triggerRepaint()
-
                 QApplication.restoreOverrideCursor()
 
                 if no_in_out != 0:
                     self.no_in_out += "\n" + str(no_in_out) + " orifices."
 
-                if len(outside_orifices) > 0:
-                    self.uc.bar_warn(
-                        "WARNING 110422.0811: Orifices are outside the computational domain!"
-                    )
-                    self.uc.log_info(
+                if outside_orifices != "":
+                    self.uc.show_warn(
                         "WARNING 110422.0811: The following orifices are outside the computational domain!\n"
-                        + '\n'.join(outside_orifices)
+                        + outside_orifices
                     )
 
             except Exception as e:
@@ -2413,8 +2314,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                 QApplication.setOverrideCursor(Qt.WaitCursor)
                 fields = self.user_swmm_weirs_lyr.fields()
                 new_feats = []
-                outside_weirs = []
-                inlets_outlets_inside = []
+                outside_weirs = ""
 
                 weirs_shapefile = self.weirs_shapefile_cbo.currentText()
                 lyr = self.lyrs.get_layer_by_name(weirs_shapefile).layer()
@@ -2521,20 +2421,15 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                         self.uc.show_warn("WARNING 120422.0837: Weir  " + weir_name + " is faulty!")
                         continue
 
-                    weir_inlet_cell = self.gutils.grid_on_point(points[0].x(), points[0].y())
-                    weir_outlet_cell = self.gutils.grid_on_point(points[len(points) - 1].x(),
-                                                                    points[len(points) - 1].y())
-                    # Both ends of the weir is outside the grid
-                    if weir_inlet_cell is None and weir_outlet_cell is None:
-                        if not (weir_name in outside_weirs):
-                            outside_weirs.append(weir_name)
-                            continue
+                    cell = self.gutils.grid_on_point(points[0].x(), points[0].y())
+                    if cell is None:
+                        outside_weirs += "\n" + weir_name
+                        continue
 
-                    # Weir inlet is outside the grid and it is an Inlet
-                    elif weir_inlet_cell is None and weir_inlet.lower().startswith("i"):
-                        if not (weir_name in outside_weirs):
-                            outside_weirs.append(weir_name)
-                            continue
+                    cell = self.gutils.grid_on_point(points[1].x(), points[1].y())
+                    if cell is None:
+                        outside_weirs += "\n" + weir_name
+                        continue
 
                     new_geom = QgsGeometry.fromPolylineXY(points)
                     feat.setGeometry(new_geom)
@@ -2554,11 +2449,6 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                     feat.setAttribute("weir_length", weir_length)
                     new_feats.append(feat)
 
-                    if weir_inlet not in inlets_outlets_inside:
-                        inlets_outlets_inside.append(weir_inlet)
-                    if weir_outlet not in inlets_outlets_inside:
-                        inlets_outlets_inside.append(weir_outlet)
-
                 if new_feats:
                     if not self.weirs_append_chbox.isChecked():
                         remove_features(self.user_swmm_weirs_lyr)
@@ -2572,29 +2462,15 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                 else:
                     self.load_weirs = False
 
-                # Remove junctions not connected to weirs
-                self.user_swmm_nodes_lyr.startEditing()
-                for feat in self.user_swmm_nodes_lyr.getFeatures():
-                    node_name = feat['name']
-                    if len(inlets_outlets_inside) > 1:
-                        if node_name not in inlets_outlets_inside:
-                            self.user_swmm_nodes_lyr.deleteFeature(feat.id())
-                self.user_swmm_nodes_lyr.commitChanges()
-                self.user_swmm_nodes_lyr.updateExtents()
-                self.user_swmm_nodes_lyr.triggerRepaint()
-
                 QApplication.restoreOverrideCursor()
 
                 if no_in_out != 0:
                     self.no_in_out += "\n" + str(no_in_out) + "  weirs."
 
-                if len(outside_weirs) > 0:
-                    self.uc.bar_warn(
-                        "WARNING 110422.0845: Weirs are outside the computational domain!"
-                    )
-                    self.uc.log_info(
+                if outside_weirs != "":
+                    self.uc.show_warn(
                         "WARNING 110422.0845: The following weirs are outside the computational domain!\n"
-                        + '\n'.join(outside_weirs)
+                        + outside_weirs
                     )
 
                 msg = ""
@@ -2615,182 +2491,6 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                     e,
                 )
                 self.load_weirs = False
-
-    def check_sd_system(self):
-        """
-        Function to check the storm drain system for links that does not have nodes connected
-        """
-
-        # Check for unknown (?) conduit inlet or conduit outlet
-        if not self.gutils.is_table_empty('user_swmm_conduits'):
-            dangling_conduits = self.gutils.execute("SELECT fid, conduit_name FROM user_swmm_conduits WHERE conduit_inlet = '?' or conduit_outlet = '?'").fetchall()
-            if dangling_conduits:
-                # try to assign the conduits inlets and outlets
-                self.auto_assign()
-                # remove the remaining conduits
-                self.gutils.execute("DELETE FROM user_swmm_conduits WHERE conduit_inlet = '?' or conduit_outlet = '?'")
-                self.user_swmm_conduits_lyr.updateExtents()
-                self.user_swmm_conduits_lyr.triggerRepaint()
-                self.user_swmm_conduits_lyr.removeSelection()
-
-        # Check for unknown (?) weir inlet or weir outlet
-        if not self.gutils.is_table_empty('user_swmm_weirs'):
-            dangling_weirs = self.gutils.execute("SELECT fid, weir_name FROM user_swmm_weirs WHERE weir_inlet = '?' or weir_outlet = '?'").fetchall()
-            if dangling_weirs:
-                # try to assign the weirs inlets and outlets
-                self.auto_assign()
-                # remove the remaining weirs
-                self.gutils.execute("DELETE FROM user_swmm_weirs WHERE weir_inlet = '?' or weir_outlet = '?'")
-                self.user_swmm_weirs_lyr.updateExtents()
-                self.user_swmm_weirs_lyr.triggerRepaint()
-                self.user_swmm_weirs_lyr.removeSelection()
-
-        # Check for unknown (?) orifices inlet or orifices outlet
-        if not self.gutils.is_table_empty('user_swmm_orifices'):
-            dangling_orifices = self.gutils.execute("SELECT fid, orifice_name FROM user_swmm_orifices WHERE orifice_inlet = '?' or orifice_outlet = '?'").fetchall()
-            if dangling_orifices:
-                # try to assign the orifices inlets and outlets
-                self.auto_assign()
-                # remove the remaining orifices
-                self.gutils.execute("DELETE FROM user_swmm_orifices WHERE orifice_inlet = '?' or orifice_outlet = '?'")
-                self.user_swmm_orifices_lyr.updateExtents()
-                self.user_swmm_orifices_lyr.triggerRepaint()
-                self.user_swmm_orifices_lyr.removeSelection()
-
-        # Check for unknown (?) pumps inlet or pumps outlet
-        if not self.gutils.is_table_empty('user_swmm_pumps'):
-            dangling_pumps = self.gutils.execute("SELECT fid, pump_name FROM user_swmm_pumps WHERE pump_inlet = '?' or pump_outlet = '?'").fetchall()
-            if dangling_pumps:
-                # try to assign the pumps inlets and outlets
-                self.auto_assign()
-                # remove the remaining pumps
-                self.gutils.execute("DELETE FROM user_swmm_pumps WHERE pump_inlet = '?' or pump_outlet = '?'")
-                self.user_swmm_pumps_lyr.updateExtents()
-                self.user_swmm_pumps_lyr.triggerRepaint()
-                self.user_swmm_pumps_lyr.removeSelection()
-
-    def auto_assign(self):
-        """
-        Function to auto assign conduits inlets and outlets
-        """
-        layer1 = QgsProject.instance().mapLayersByName('Storm Drain Nodes')[0]
-        layer2 = QgsProject.instance().mapLayersByName('Storm Drain Storage Units')[0]
-        # Create a new memory layer for point geometries
-        SD_all_nodes_layer = QgsVectorLayer("Point", 'SD All Points', 'memory')
-
-        fields = QgsFields()
-        fields.append(QgsField('name', QVariant.String))
-
-        pr = SD_all_nodes_layer.dataProvider()
-
-        pr.addAttributes(fields)
-        SD_all_nodes_layer.updateFields()
-
-        # Iterate through features and add point geometries
-        for layer in [layer1, layer2]:
-            for feature in layer.getFeatures():
-                point_geometry = feature.geometry()
-                new_feature = QgsFeature(fields)
-                new_feature.setGeometry(point_geometry)
-                new_feature['name'] = feature['name']
-                pr.addFeatures([new_feature])
-
-        # Add the new layer to the map
-        QgsProject.instance().addMapLayer(SD_all_nodes_layer, False)
-
-        self.auto_assign_link_nodes("Conduits", "conduit_inlet", "conduit_outlet", SD_all_nodes_layer)
-        self.auto_assign_link_nodes("Pumps", "pump_inlet", "pump_outlet", SD_all_nodes_layer)
-        self.auto_assign_link_nodes("Orifices", "orifice_inlet", "orifice_outlet", SD_all_nodes_layer)
-        self.auto_assign_link_nodes("Weirs", "weir_inlet", "weir_outlet", SD_all_nodes_layer)
-
-        QgsProject.instance().removeMapLayer(SD_all_nodes_layer)
-        del SD_all_nodes_layer
-
-    def auto_assign_link_nodes(self, link_name, link_inlet, link_outlet, SD_all_nodes_layer):
-        """Auto assign Conduits, Pumps, orifices, or Weirs  (user layer) Inlet and Outlet names
-           based on closest (5ft) nodes to their endpoints."""
-
-        layer = (
-            self.user_swmm_conduits_lyr
-            if link_name == "Conduits"
-            else self.user_swmm_pumps_lyr
-            if link_name == "Pumps"
-            else self.user_swmm_orifices_lyr
-            if link_name == "Orifices"
-            else self.user_swmm_weirs_lyr
-            if link_name == "Weirs"
-            else self.user_swmm_conduits_lyr
-        )
-
-        try:
-            QApplication.setOverrideCursor(Qt.WaitCursor)
-            link_fields = layer.fields()
-            link_inlet_fld_idx = link_fields.lookupField(link_inlet)
-            link_outlet_fld_idx = link_fields.lookupField(link_outlet)
-
-            nodes_features, nodes_index = spatial_index(SD_all_nodes_layer)
-            segments = 5
-            link_nodes = {}
-            inlet_assignments = 0
-            outlet_assignments = 0
-            no_in = 0
-            no_out = 0
-            for feat in layer.getFeatures():
-                fid = feat.id()
-                geom = feat.geometry()
-                geom_poly = geom.asPolyline()
-                start_pnt, end_pnt = geom_poly[0], geom_poly[-1]
-                start_geom = QgsGeometry.fromPointXY(start_pnt)
-                end_geom = QgsGeometry.fromPointXY(end_pnt)
-                start_buffer = start_geom.buffer(5, segments)
-                end_buffer = end_geom.buffer(5, segments)
-                start_nodes, end_nodes = [], []
-
-                start_nodes_ids = nodes_index.intersects(start_buffer.boundingBox())
-                for node_id in start_nodes_ids:
-                    node_feat = nodes_features[node_id]
-                    if node_feat.geometry().within(start_buffer):
-                        start_nodes.append(node_feat)
-
-                end_nodes_ids = nodes_index.intersects(end_buffer.boundingBox())
-                for node_id in end_nodes_ids:
-                    node_feat = nodes_features[node_id]
-                    if node_feat.geometry().within(end_buffer):
-                        end_nodes.append(node_feat)
-
-                start_nodes.sort(key=lambda f: f.geometry().distance(start_geom))
-                end_nodes.sort(key=lambda f: f.geometry().distance(end_geom))
-                closest_inlet_feat = start_nodes[0] if start_nodes else None
-                closest_outlet_feat = end_nodes[0] if end_nodes else None
-
-                if closest_inlet_feat is not None:
-                    inlet_name = closest_inlet_feat["name"]
-                    inlet_assignments += 1
-                else:
-                    inlet_name = "?"
-                    no_in += 1
-
-                if closest_outlet_feat is not None:
-                    outlet_name = closest_outlet_feat["name"]
-                    outlet_assignments += 1
-                else:
-                    outlet_name = "?"
-                    no_out += 1
-
-                link_nodes[fid] = inlet_name, outlet_name
-
-            layer.startEditing()
-            for fid, (in_name, out_name) in link_nodes.items():
-                layer.changeAttributeValue(fid, link_inlet_fld_idx, in_name)
-                layer.changeAttributeValue(fid, link_outlet_fld_idx, out_name)
-            layer.commitChanges()
-            layer.triggerRepaint()
-
-            QApplication.restoreOverrideCursor()
-
-        except Exception as e:
-            QApplication.restoreOverrideCursor()
-            self.uc.show_error("ERROR 210322.0429: Couldn't assign " + link_name + " nodes!", e)
 
     def cancel_message(self):
         self.uc.bar_info("No data was selected!")
@@ -2998,7 +2698,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                     self.inlets_dropbox_area_FieldCbo.setCurrentIndex(self.find_index_with_substring(self.inlets_dropbox_area_FieldCbo, "box"))   
         except Exception as e:
             QApplication.restoreOverrideCursor()
-            self.uc.show_info("ERROR 240524.1207: inlets shapefile " + self.inlets_shapefile_cbo.currentText() + " not found in the layers panel!")                                       
+            self.uc.bar_warn("ERROR 240524.1207: Inlets/Junctions shapefile " + self.inlets_shapefile_cbo.currentText() + " not found in the layers panel!")
 
     def restore_SD_shapefile_outfall_field_names(self):
         # Outfalls
@@ -3050,7 +2750,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                     self.outfall_time_series_FieldCbo.setCurrentIndex(self.find_index_with_substring(self.outfall_time_series_FieldCbo, "series")) 
         except Exception as e:
             QApplication.restoreOverrideCursor()
-            self.uc.show_info("ERROR 240524.1208: outfalls shapefile " + self.inlets_shapefile_cbo.currentText() + " not found in the layers panel!")                         
+            self.uc.bar_warn("ERROR 240524.1208: Outfalls shapefile " + self.inlets_shapefile_cbo.currentText() + " not found in the layers panel!")
         
     def restore_SD_shapefile_strge_units_field_names(self):
         # Storage Units:
@@ -3130,7 +2830,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                     self.strge_unit_curve_name_FieldCbo.setCurrentIndex(self.find_index_with_substring(self.strge_unit_curve_name_FieldCbo, "name"))
         except Exception as e:
             QApplication.restoreOverrideCursor()
-            self.uc.show_info("ERROR 240524.1216: storage units shapefile " + self.inlets_shapefile_cbo.currentText() + " not found in the layers panel!")  
+            self.uc.bar_warn("ERROR 240524.1216: Storage Units shapefile " + self.inlets_shapefile_cbo.currentText() + " not found in the layers panel!")
 
     def restore_SD_shapefile_conduit_field_names(self):
         # Conduits:
@@ -3215,7 +2915,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                     self.conduit_flap_gate_FieldCbo.setCurrentIndex(self.find_index_with_substring(self.conduit_flap_gate_FieldCbo, "flapgate"))        
         except Exception as e:
             QApplication.restoreOverrideCursor()
-            self.uc.show_info("ERROR 240524.1209: conduits shapefile " + self.inlets_shapefile_cbo.currentText() + " not found in the layers panel!")  
+            self.uc.bar_warn("ERROR 240524.1209: Conduits shapefile " + self.inlets_shapefile_cbo.currentText() + " not found in the layers panel!")
 
     def restore_SD_shapefile_pump_field_names(self):
         # Pumps:
@@ -3270,7 +2970,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                     self.pump_curve_description_FieldCbo.setCurrentIndex(self.find_index_with_substring(self.pump_curve_description_FieldCbo, "description"))        
         except Exception as e:
             QApplication.restoreOverrideCursor()
-            self.uc.show_info("ERROR 240524.1213: pumps shapefile " + self.inlets_shapefile_cbo.currentText() + " not found in the layers panel!")  
+            self.uc.bar_warn("ERROR 240524.1213: Pumps shapefile " + self.inlets_shapefile_cbo.currentText() + " not found in the layers panel!")
             
     def restore_SD_shapefile_orifice_field_names(self):
         # Orifices:
@@ -3331,7 +3031,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                     self.orifice_width_FieldCbo.setCurrentIndex(self.find_index_with_substring(self.orifice_width_FieldCbo, "width"))
         except Exception as e:
             QApplication.restoreOverrideCursor()
-            self.uc.show_info("ERROR 240524.1214: orifices shapefile " + self.inlets_shapefile_cbo.currentText() + " not found in the layers panel!")  
+            self.uc.bar_warn("ERROR 240524.1214: Orifices shapefile " + self.inlets_shapefile_cbo.currentText() + " not found in the layers panel!")
             
     def restore_SD_shapefile_weir_field_names(self):
         # Weirs:
@@ -3397,7 +3097,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                     self.weir_length_FieldCbo.setCurrentIndex(self.find_index_with_substring(self.weir_length_FieldCbo, "length"))    
         except Exception as e:
             QApplication.restoreOverrideCursor()
-            self.uc.show_info("ERROR 240524.1215: weirds shapefile " + self.inlets_shapefile_cbo.currentText() + " not found in the layers panel!")  
+            self.uc.bar_warn("ERROR 240524.1215: Weirs shapefile " + self.inlets_shapefile_cbo.currentText() + " not found in the layers panel!")
 
     def restore_field(self, field, field_names):
         field_name = self.gutils.execute(f"SELECT field FROM sd_fields WHERE name = '{field}'").fetchone()
