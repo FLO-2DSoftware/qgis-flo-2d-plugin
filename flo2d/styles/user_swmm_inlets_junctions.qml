@@ -180,7 +180,7 @@
                 <Option type="QString" value="I" name="Inlet"/>
               </Option>
               <Option type="Map">
-                <Option type="QString" value="O" name="Junction"/>
+                <Option type="QString" value="J" name="Junction"/>
               </Option>
             </Option>
           </Option>

@@ -1386,6 +1386,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                     feat.setAttribute("curbheight", 0)
                     feat.setAttribute("swmm_clogging_factor", 0)
                     feat.setAttribute("swmm_time_for_clogging", 0)
+                    feat.setAttribute("drboxarea", 0)
 
                     new_nodes.append(feat)
 
@@ -1448,6 +1449,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                         feat.setAttribute("curbheight", 0)
                         feat.setAttribute("swmm_clogging_factor", 0)
                         feat.setAttribute("swmm_time_for_clogging", 0)
+                        feat.setAttribute("drboxarea", 0)
                         feat.setAttribute("rt_fid", 0)
                         feat.setAttribute("outf_flo", 0)
 
@@ -1456,12 +1458,14 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
 
             if complete_or_create == "Create New" and len(new_nodes) != 0:
                 remove_features(self.user_swmm_inlets_junctions_lyr)
+                self.user_swmm_inlets_junctions_lyr.blockSignals(True)
                 self.user_swmm_inlets_junctions_lyr.startEditing()
                 self.user_swmm_inlets_junctions_lyr.addFeatures(new_nodes)
                 self.user_swmm_inlets_junctions_lyr.commitChanges()
                 self.user_swmm_inlets_junctions_lyr.updateExtents()
                 self.user_swmm_inlets_junctions_lyr.triggerRepaint()
                 self.user_swmm_inlets_junctions_lyr.removeSelection()
+                self.user_swmm_inlets_junctions_lyr.blockSignals(False)
                 
                 s = QSettings()
                 last_dir = s.value("FLO-2D/lastGdsDir", "")
@@ -1500,12 +1504,14 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 # The option 'Keep existing and complete' already updated values taken from the .INP file.
                 # but include new ones:
                 if len(new_nodes) != 0:
+                    self.user_swmm_inlets_junctions_lyr.blockSignals(True)
                     self.user_swmm_inlets_junctions_lyr.startEditing()
                     self.user_swmm_inlets_junctions_lyr.addFeatures(new_nodes)
                     self.user_swmm_inlets_junctions_lyr.commitChanges()
                     self.user_swmm_inlets_junctions_lyr.updateExtents()
                     self.user_swmm_inlets_junctions_lyr.triggerRepaint()
                     self.user_swmm_inlets_junctions_lyr.removeSelection()
+                    self.user_swmm_inlets_junctions_lyr.blockSignals(False)
 
         except Exception as e:
             QApplication.setOverrideCursor(Qt.ArrowCursor)
@@ -1669,23 +1675,27 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
 
             if complete_or_create == "Create New" and len(new_nodes) != 0:
                 remove_features(self.user_swmm_outlets_lyr)
+                self.user_swmm_outlets_lyr.blockSignals(True)
                 self.user_swmm_outlets_lyr.startEditing()
                 self.user_swmm_outlets_lyr.addFeatures(new_nodes)
                 self.user_swmm_outlets_lyr.commitChanges()
                 self.user_swmm_outlets_lyr.updateExtents()
                 self.user_swmm_outlets_lyr.triggerRepaint()
                 self.user_swmm_outlets_lyr.removeSelection()
+                self.user_swmm_outlets_lyr.blockSignals(False)
 
             else:
                 # The option 'Keep existing and complete' already updated values taken from the .INP file.
                 # but include new ones:
                 if len(new_nodes) != 0:
+                    self.user_swmm_outlets_lyr.blockSignals(True)
                     self.user_swmm_outlets_lyr.startEditing()
                     self.user_swmm_outlets_lyr.addFeatures(new_nodes)
                     self.user_swmm_outlets_lyr.commitChanges()
                     self.user_swmm_outlets_lyr.updateExtents()
                     self.user_swmm_outlets_lyr.triggerRepaint()
                     self.user_swmm_outlets_lyr.removeSelection()
+                    self.user_swmm_outlets_lyr.blockSignals(False)
 
         except Exception as e:
             QApplication.setOverrideCursor(Qt.ArrowCursor)
@@ -1889,22 +1899,26 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
     
             if complete_or_create == "Create New" and len(new_storages) != 0:
                 remove_features(self.user_swmm_storage_units_lyr)
+                self.user_swmm_storage_units_lyr.blockSignals(True)
                 self.user_swmm_storage_units_lyr.startEditing()
                 self.user_swmm_storage_units_lyr.addFeatures(new_storages)
                 self.user_swmm_storage_units_lyr.commitChanges()
                 self.user_swmm_storage_units_lyr.updateExtents()
                 self.user_swmm_storage_units_lyr.triggerRepaint()
                 self.user_swmm_storage_units_lyr.removeSelection()
+                self.user_swmm_storage_units_lyr.blockSignals(False)
             else:
                 # The option 'Keep existing and complete' already updated values taken from the .INP file.
                 # but include new ones:
                 if len(new_storages) != 0:
+                    self.user_swmm_storage_units_lyr.blockSignals(True)
                     self.user_swmm_storage_units_lyr.startEditing()
                     self.user_swmm_storage_units_lyr.addFeatures(new_storages)
                     self.user_swmm_storage_units_lyr.commitChanges()
                     self.user_swmm_storage_units_lyr.updateExtents()
                     self.user_swmm_storage_units_lyr.triggerRepaint()
                     self.user_swmm_storage_units_lyr.removeSelection()
+                    self.user_swmm_storage_units_lyr.blockSignals(False)
         
         except Exception as e:
             QApplication.setOverrideCursor(Qt.ArrowCursor)
@@ -2127,12 +2141,14 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                             new_conduits.append(feat)
         
                 if len(new_conduits) != 0:
+                    self.user_swmm_conduits_lyr.blockSignals(True)
                     self.user_swmm_conduits_lyr.startEditing()
                     self.user_swmm_conduits_lyr.addFeatures(new_conduits)
                     self.user_swmm_conduits_lyr.commitChanges()
                     self.user_swmm_conduits_lyr.updateExtents()
                     self.user_swmm_conduits_lyr.triggerRepaint()
                     self.user_swmm_conduits_lyr.removeSelection()
+                    self.user_swmm_conduits_lyr.blockSignals(False)
         
             except Exception as e:
                 QApplication.setOverrideCursor(Qt.ArrowCursor)
@@ -2266,12 +2282,14 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                             new_pumps.append(feat)
                         
                 if len(new_pumps) != 0:
+                    self.user_swmm_pumps_lyr.blockSignals(True)
                     self.user_swmm_pumps_lyr.startEditing()
                     self.user_swmm_pumps_lyr.addFeatures(new_pumps)
                     self.user_swmm_pumps_lyr.commitChanges()
                     self.user_swmm_pumps_lyr.updateExtents()
                     self.user_swmm_pumps_lyr.triggerRepaint()
                     self.user_swmm_pumps_lyr.removeSelection()
+                    self.user_swmm_pumps_lyr.blockSignals(False)
 
             except Exception as e:
                 QApplication.setOverrideCursor(Qt.ArrowCursor)
@@ -2421,12 +2439,14 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                             new_orifices.append(feat)
 
                 if len(new_orifices) != 0:
+                    self.user_swmm_orifices_lyr.blockSignals(True)
                     self.user_swmm_orifices_lyr.startEditing()
                     self.user_swmm_orifices_lyr.addFeatures(new_orifices)
                     self.user_swmm_orifices_lyr.commitChanges()
                     self.user_swmm_orifices_lyr.updateExtents()
                     self.user_swmm_orifices_lyr.triggerRepaint()
                     self.user_swmm_orifices_lyr.removeSelection()
+                    self.user_swmm_orifices_lyr.blockSignals(False)
 
             except Exception as e:
                 QApplication.setOverrideCursor(Qt.ArrowCursor)
@@ -2584,12 +2604,14 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                             new_weirs.append(feat)
 
                 if len(new_weirs) != 0:
+                    self.user_swmm_weirs_lyr.blockSignals(True)
                     self.user_swmm_weirs_lyr.startEditing()
                     self.user_swmm_weirs_lyr.addFeatures(new_weirs)
                     self.user_swmm_weirs_lyr.commitChanges()
                     self.user_swmm_weirs_lyr.updateExtents()
                     self.user_swmm_weirs_lyr.triggerRepaint()
                     self.user_swmm_weirs_lyr.removeSelection()
+                    self.user_swmm_weirs_lyr.blockSignals(False)
 
             except Exception as e:
                 QApplication.setOverrideCursor(Qt.ArrowCursor)
