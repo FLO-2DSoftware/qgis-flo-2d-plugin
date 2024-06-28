@@ -370,9 +370,18 @@
       </editWidget>
     </field>
     <field name="external_inflow" configurationFlags="NoFlag">
-      <editWidget type="TextEdit">
+      <editWidget type="ValueMap">
         <config>
-          <Option/>
+          <Option type="Map">
+            <Option type="List" name="map">
+              <Option type="Map">
+                <Option type="QString" value="NO" name="NO"/>
+              </Option>
+              <Option type="Map">
+                <Option type="QString" value="YES" name="YES"/>
+              </Option>
+            </Option>
+          </Option>
         </config>
       </editWidget>
     </field>

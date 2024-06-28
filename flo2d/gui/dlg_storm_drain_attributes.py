@@ -1888,11 +1888,11 @@ class StorageUnitAttributes(qtBaseClass, uiDialog):
         self.suction_head.editingFinished.connect(self.save_storage_units)
         self.conductivity.editingFinished.connect(self.save_storage_units)
         self.initial_deficit.editingFinished.connect(self.save_storage_units)
-        self.functional_grpbox.toggled.connect(self.save_storage_units)
+        self.functional_grpbox.toggled.connect(self.check_functional)
         self.coefficient.editingFinished.connect(self.save_storage_units)
         self.exponent.editingFinished.connect(self.save_storage_units)
         self.constant.editingFinished.connect(self.save_storage_units)
-        self.tabular_grpbox.toggled.connect(self.save_storage_units)
+        self.tabular_grpbox.toggled.connect(self.check_tabular)
         self.curve_name.currentIndexChanged.connect(self.save_storage_units)
 
         self.user_swmm_storage_units_lyr = self.lyrs.data["user_swmm_storage_units"]["qlyr"]
@@ -1948,10 +1948,7 @@ class StorageUnitAttributes(qtBaseClass, uiDialog):
         self.max_depth.setValue(attributes[2])
         self.init_depth.setValue(attributes[3])
         self.invert_elev.setValue(attributes[4])
-        if attributes[5] == 'True':
-            self.external_inflow.setCurrentText('YES')
-        else:
-            self.external_inflow.setCurrentText('NO')
+        self.external_inflow.setCurrentText(attributes[5])
         self.treatment.setCurrentText(attributes[6])
         self.evap_factor.setValue(attributes[7])
         self.infiltration_grpbox.setChecked(True) if attributes[8] == 'True' else self.infiltration_grpbox.setChecked(False)
@@ -1959,11 +1956,16 @@ class StorageUnitAttributes(qtBaseClass, uiDialog):
         self.suction_head.setValue(attributes[10])
         self.conductivity.setValue(attributes[11])
         self.initial_deficit.setValue(attributes[12])
-        self.functional_grpbox.setChecked(True) if attributes[13] == 'FUNCTIONAL' else self.functional_grpbox.setChecked(False)
+        if attributes[13] == 'TABULAR':
+            self.tabular_grpbox.setChecked(True)
+            self.functional_grpbox.setChecked(False)
+        else:
+            self.tabular_grpbox.setChecked(False)
+            self.functional_grpbox.setChecked(True)
         self.coefficient.setValue(attributes[14])
         self.exponent.setValue(attributes[15])
         self.constant.setValue(attributes[16])
-        self.tabular_grpbox.setChecked(True) if attributes[13] == 'TABULAR' else self.tabular_grpbox.setChecked(False)
+
         if attributes[17]:
             self.curve_name.setCurrentText(attributes[17])
 
@@ -1990,12 +1992,13 @@ class StorageUnitAttributes(qtBaseClass, uiDialog):
         suction_head = self.suction_head.value()
         conductivity = self.conductivity.value()
         initial_deficit = self.initial_deficit.value()
+
+        storage_curve = ''
         if self.functional_grpbox.isChecked():
             storage_curve = 'FUNCTIONAL'
-        elif self.tabular_grpbox.isChecked():
+        if self.tabular_grpbox.isChecked():
             storage_curve = 'TABULAR'
-        else:
-            storage_curve = ''
+
         coefficient = self.coefficient.value()
         exponent = self.exponent.value()
         constant = self.constant.value()
@@ -2087,6 +2090,24 @@ class StorageUnitAttributes(qtBaseClass, uiDialog):
         Function to clear the rubber when closing the widget
         """
         self.lyrs.clear_rubber()
+
+    def check_tabular(self, checked):
+        """
+        Function to check the tabular group box
+        """
+        if checked:
+            self.functional_grpbox.setChecked(False)
+
+        self.save_storage_units()
+
+    def check_functional(self, checked):
+        """
+        Function to check the functional group box
+        """
+        if checked:
+            self.tabular_grpbox.setChecked(False)
+
+        self.save_storage_units()
 
     # def show_external_inflow_dlg(self):
     #     """
