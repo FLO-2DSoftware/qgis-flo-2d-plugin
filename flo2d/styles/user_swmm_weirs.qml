@@ -487,9 +487,18 @@
       </editWidget>
     </field>
     <field configurationFlags="NoFlag" name="weir_shape">
-      <editWidget type="TextEdit">
+       <editWidget type="ValueMap">
         <config>
-          <Option/>
+          <Option type="Map">
+            <Option name="map" type="List">
+              <Option type="Map">
+                <Option value="CIRCULAR" name="CIRCULAR" type="QString"/>
+              </Option>
+              <Option type="Map">
+                <Option value="RECT_CLOSED" name="RECT_CLOSED" type="QString"/>
+              </Option>
+            </Option>
+          </Option>
         </config>
       </editWidget>
     </field>

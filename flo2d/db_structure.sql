@@ -1618,7 +1618,7 @@ CREATE TABLE "user_swmm_weirs" (
     "weir_crest_height" REAL DEFAULT 0.0,      -- [WEIRS] Inlet Offset in EPA SWMM
     "weir_disch_coeff" REAL DEFAULT 0.0,       -- [WEIRS] 
     "weir_flap_gate" TEXT DEFAULT 'NO',        -- [WEIRS]
-    "weir_end_contrac" TEXT DEFAULT '0',       -- [WEIRS]
+    "weir_end_contrac" REAL DEFAULT 0.0,       -- [WEIRS]
     "weir_end_coeff" REAL DEFAULT 0.0,         -- [WEIRS]
     "weir_shape" TEXT,                         -- [XSECTION] 
     "weir_height" REAL DEFAULT 0.0,            -- [XSECTIONS] Geom1
