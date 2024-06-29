@@ -1237,11 +1237,16 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                 modified = 0
                 for f in inlets_shapefile_fts:
                     grid = 0
-                    sd_type = "I"
+                    sd_type = "J"
                     name = (
                         f[self.inlets_name_FieldCbo.currentText()]
                         if self.inlets_name_FieldCbo.currentText() != ""
                         else ""
+                    )
+                    sd_type = (
+                        "I"
+                        if name[0].lower() == 'i'
+                        else "J"
                     )
                     intype = (
                         f[self.inlets_type_FieldCbo.currentText()]
@@ -1344,7 +1349,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                     feat.setGeometry(new_geom)
 
                     feat.setAttribute("grid", cell)
-                    feat.setAttribute("sd_type", "I")
+                    feat.setAttribute("sd_type", sd_type)
                     feat.setAttribute("name", name)
                     feat.setAttribute("intype", intype)
                     feat.setAttribute("junction_invert_elev", junction_invert_elev)
