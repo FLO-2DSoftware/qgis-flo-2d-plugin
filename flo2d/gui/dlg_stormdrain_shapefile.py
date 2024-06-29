@@ -1237,7 +1237,6 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                 modified = 0
                 for f in inlets_shapefile_fts:
                     grid = 0
-                    sd_type = "J"
                     name = (
                         f[self.inlets_name_FieldCbo.currentText()]
                         if self.inlets_name_FieldCbo.currentText() != ""
@@ -1538,7 +1537,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                     new_feats.append(feat)
 
                 if new_feats:
-                    if not self.outfall_append_chbox.isChecked() and not self.load_inlets:
+                    if not self.outfall_append_chbox.isChecked():
                         remove_features(self.user_swmm_outlets_lyr)
 
                     self.user_swmm_outlets_lyr.startEditing()
