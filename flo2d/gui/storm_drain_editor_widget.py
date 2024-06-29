@@ -738,12 +738,13 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             name = this_user_inlet_node["name"]
             # rt_fid = this_user_node["rt_fid"]
             # rt_name = this_user_node["rt_name"]
-            # if sd_type in ["I", "i", "J"]:
+            sd_type = this_user_inlet_node["name"]
 
-            # Insert inlet:
-            row = [grid_fid, "D", grid_fid, name, name] + [this_user_inlet_node[col] for col in self.inlet_columns]
-            row = [0 if v == NULL else v for v in row]
-            inlets.append(row)
+            if sd_type[0].lower() == "i":
+                # Insert inlet:
+                row = [grid_fid, "D", grid_fid, name, name] + [this_user_inlet_node[col] for col in self.inlet_columns]
+                row = [0 if v == NULL else v for v in row]
+                inlets.append(row)
 
             # elif sd_type == "O":
             #     outf_flo = this_user_node["swmm_allow_discharge"]
