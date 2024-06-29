@@ -1236,7 +1236,6 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                 inlets_shapefile_fts = lyr.getFeatures()
                 modified = 0
                 for f in inlets_shapefile_fts:
-                    grid = 0
                     name = (
                         f[self.inlets_name_FieldCbo.currentText()]
                         if self.inlets_name_FieldCbo.currentText() != ""
@@ -1608,13 +1607,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                         f[self.strge_unit_external_inflow_FieldCbo.currentText()]
                         if self.strge_unit_external_inflow_FieldCbo.currentText() != ""
                         else "False")
-
                     ponded_area = 0.0
-                    # ponded_area = (
-                    #     f[self.strge_unit_ponded_area_FieldCbo.currentText()]
-                    #     if self.strge_unit_ponded_area_FieldCbo.currentText() != ""
-                    #     else 0.0
-                    # )
                     evap_factor = (
                         f[self.strge_unit_evap_factor_FieldCbo.currentText()]
                         if self.strge_unit_evap_factor_FieldCbo.currentText() != ""

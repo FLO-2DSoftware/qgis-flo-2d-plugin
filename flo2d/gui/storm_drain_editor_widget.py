@@ -2935,7 +2935,10 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         try:
 
             if self.gutils.is_table_empty("user_swmm_inlets_junctions"):
-                self.uc.show_warn(
+                self.uc.bar_warn(
+                    'User Layer "Storm Drain Inlets/Junctions" is empty!'
+                )
+                self.uc.log_info(
                     'User Layer "Storm Drain Inlets/Junctions" is empty!\n\n'
                     + "Please import components from .INP file or shapefile, or convert from schematized Storm Drains."
                 )
@@ -3012,7 +3015,18 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 # INP OPTIONS ##################################################
                 # items = self.select_this_INP_group(INP_groups, "options")
                 swmm_inp_file.write("\n[OPTIONS]")
-                flow_units = self.gutils.execute("SELECT value FROM swmm_control WHERE name = 'FLOW_UNITS'").fetchone()[0]
+                flow_units = self.gutils.execute("SELECT value FROM swmm_control WHERE name = 'FLOW_UNITS'").fetchone()
+                if not flow_units:
+                    self.uc.bar_warn(
+                        'Storm Drain control variables not set!'
+                    )
+                    self.uc.log_info(
+                        'Storm Drain control variables not set!\n\n'
+                        + "Please, set the Storm Drain control variables."
+                    )
+                    return
+                else:
+                    flow_units = flow_units[0]
                 swmm_inp_file.write("\nFLOW_UNITS           " + flow_units)
                 swmm_inp_file.write("\nINFILTRATION         HORTON")
                 # flow_routing = self.gutils.execute("SELECT value FROM swmm_control WHERE name = 'FLOW_ROUTING'").fetchone()[0]
@@ -4541,8 +4555,14 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
 
             except Exception as e:
                 self.uc.bar_error("ERROR while saving storm drain components from hydraulic layers!.")
-        # else:
-        #     self.uc.bar_warn("Storm drain components not saved!")
+
+        dlg_INP_groups = INP_GroupsDialog(self.con, self.iface)
+        ok = dlg_INP_groups.exec_()
+        if ok:
+            self.uc.bar_info("Storm Drain control data saved!")
+            self.uc.log_info("Storm Drain control data saved!")
+            dlg_INP_groups.save_INP_control()
+
 
     def create_conduit_discharge_table_and_plots(self, intersection=None):
         """
