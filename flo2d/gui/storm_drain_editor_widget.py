@@ -6162,7 +6162,20 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         geom = feat.geometry()
         if geom is None:
             return
-        length = round(geom.length(), 2)
+
+        # Check for length values on the conduit added
+        length_field_value = feat['conduit_length']
+        if length_field_value is None or length_field_value == '' or length_field_value == 0:
+            length = round(geom.length(), 2)
+        else:
+            length = length_field_value
+
+        # Check for manning values on the conduit added
+        manning_field_value = feat['conduit_manning']
+        if manning_field_value is None or manning_field_value == '' or manning_field_value == 0:
+            manning = 0.01
+        else:
+            manning = manning_field_value
 
         inlet_name, outlet_name = self.find_inlet_outlet(self.user_swmm_conduits_lyr, fid)
 
@@ -6173,7 +6186,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                                     conduit_inlet = '{inlet_name}',
                                     conduit_outlet = '{outlet_name}',
                                     conduit_length = '{length}',
-                                    conduit_manning = '0.01'
+                                    conduit_manning = '{manning}'
                                 WHERE 
                                     fid = '{fid}';
                             """)
