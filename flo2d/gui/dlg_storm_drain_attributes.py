@@ -250,9 +250,10 @@ class InletAttributes(qtBaseClass, uiDialog):
 
         self.user_swmm_inlets_junctions_lyr.triggerRepaint()
 
-        # update the name on the user_swmm_conduits
+        # update the name on the user_swmm_conduits, user_swmm_weirs, user_swmm_pumps, and user_swmm_orifices
         if old_name != name:
-            update_inlets_qry = self.gutils.execute(
+            # Updating Conduits
+            update_conduits_inlets_qry = self.gutils.execute(
                 f"""
                 SELECT 
                     fid
@@ -262,18 +263,18 @@ class InletAttributes(qtBaseClass, uiDialog):
                     conduit_inlet = '{old_name}';
                 """
             ).fetchall()
-            if update_inlets_qry:
-                for inlet in update_inlets_qry:
+            if update_conduits_inlets_qry:
+                for inlet in update_conduits_inlets_qry:
                     self.gutils.execute(f"""
-                                            UPDATE 
-                                                user_swmm_conduits
-                                            SET 
-                                                conduit_inlet = '{name}'
-                                            WHERE 
-                                                fid = '{inlet[0]}';
-                                        """)
+                        UPDATE 
+                            user_swmm_conduits
+                        SET 
+                            conduit_inlet = '{name}'
+                        WHERE 
+                            fid = '{inlet[0]}';
+                    """)
 
-            update_outlets_qry = self.gutils.execute(
+            update_conduits_outlets_qry = self.gutils.execute(
                 f"""
                 SELECT 
                     fid
@@ -283,16 +284,145 @@ class InletAttributes(qtBaseClass, uiDialog):
                     conduit_outlet = '{old_name}';
                 """
             ).fetchall()
-            if update_outlets_qry:
-                for outlet in update_outlets_qry:
+            if update_conduits_outlets_qry:
+                for outlet in update_conduits_outlets_qry:
                     self.gutils.execute(f"""
-                                            UPDATE 
-                                                user_swmm_conduits
-                                            SET 
-                                                conduit_outlet = '{name}'
-                                            WHERE 
-                                                fid = '{outlet[0]}';
-                                        """)
+                        UPDATE 
+                            user_swmm_conduits
+                        SET 
+                            conduit_outlet = '{name}'
+                        WHERE 
+                            fid = '{outlet[0]}';
+                    """)
+
+            # Updating Pumps
+            update_pumps_inlets_qry = self.gutils.execute(
+                f"""
+                SELECT 
+                    fid
+                FROM 
+                    user_swmm_pumps
+                WHERE 
+                    pump_inlet = '{old_name}';
+                """
+            ).fetchall()
+            if update_pumps_inlets_qry:
+                for inlet in update_pumps_inlets_qry:
+                    self.gutils.execute(f"""
+                        UPDATE 
+                            user_swmm_pumps
+                        SET 
+                            pump_inlet = '{name}'
+                        WHERE 
+                            fid = '{inlet[0]}';
+                    """)
+
+            update_pumps_outlets_qry = self.gutils.execute(
+                f"""
+                SELECT 
+                    fid
+                FROM 
+                    user_swmm_pumps
+                WHERE 
+                    pump_outlet = '{old_name}';
+                """
+            ).fetchall()
+            if update_pumps_outlets_qry:
+                for outlet in update_pumps_outlets_qry:
+                    self.gutils.execute(f"""
+                        UPDATE 
+                            user_swmm_pumps
+                        SET 
+                            pump_outlet = '{name}'
+                        WHERE 
+                            fid = '{outlet[0]}';
+                    """)
+
+            # Updating Weirs
+            update_weirs_inlets_qry = self.gutils.execute(
+                f"""
+                SELECT 
+                    fid
+                FROM 
+                    user_swmm_weirs
+                WHERE 
+                    weir_inlet = '{old_name}';
+                """
+            ).fetchall()
+            if update_weirs_inlets_qry:
+                for inlet in update_weirs_inlets_qry:
+                    self.gutils.execute(f"""
+                        UPDATE 
+                            user_swmm_weirs
+                        SET 
+                            weir_inlet = '{name}'
+                        WHERE 
+                            fid = '{inlet[0]}';
+                    """)
+
+            update_weirs_outlets_qry = self.gutils.execute(
+                f"""
+                SELECT 
+                    fid
+                FROM 
+                    user_swmm_weirs
+                WHERE 
+                    weir_outlet = '{old_name}';
+                """
+            ).fetchall()
+            if update_weirs_outlets_qry:
+                for outlet in update_weirs_outlets_qry:
+                    self.gutils.execute(f"""
+                        UPDATE 
+                            user_swmm_weirs
+                        SET 
+                            weir_outlet = '{name}'
+                        WHERE 
+                            fid = '{outlet[0]}';
+                    """)
+
+            # Updating Orifices
+            update_orifices_inlets_qry = self.gutils.execute(
+                f"""
+                SELECT 
+                    fid
+                FROM 
+                    user_swmm_orifices
+                WHERE 
+                    orifice_inlet = '{old_name}';
+                """
+            ).fetchall()
+            if update_orifices_inlets_qry:
+                for inlet in update_orifices_inlets_qry:
+                    self.gutils.execute(f"""
+                        UPDATE 
+                            user_swmm_orifices
+                        SET 
+                            orifice_inlet = '{name}'
+                        WHERE 
+                            fid = '{inlet[0]}';
+                    """)
+
+            update_orifices_outlets_qry = self.gutils.execute(
+                f"""
+                SELECT 
+                    fid
+                FROM 
+                    user_swmm_orifices
+                WHERE 
+                    orifice_outlet = '{old_name}';
+                """
+            ).fetchall()
+            if update_orifices_outlets_qry:
+                for outlet in update_orifices_outlets_qry:
+                    self.gutils.execute(f"""
+                        UPDATE 
+                            user_swmm_orifices
+                        SET 
+                            orifice_outlet = '{name}'
+                        WHERE 
+                            fid = '{outlet[0]}';
+                    """)
 
         self.populate_attributes(self.current_node)
 
@@ -715,7 +845,8 @@ class OutletAttributes(qtBaseClass, uiDialog):
 
         # update the name on the user_swmm_conduits
         if old_name != name:
-            update_inlets_qry = self.gutils.execute(
+            # Updating Conduits
+            update_conduits_inlets_qry = self.gutils.execute(
                 f"""
                 SELECT 
                     fid
@@ -725,18 +856,18 @@ class OutletAttributes(qtBaseClass, uiDialog):
                     conduit_inlet = '{old_name}';
                 """
             ).fetchall()
-            if update_inlets_qry:
-                for inlet in update_inlets_qry:
+            if update_conduits_inlets_qry:
+                for inlet in update_conduits_inlets_qry:
                     self.gutils.execute(f"""
-                                            UPDATE 
-                                                user_swmm_conduits
-                                            SET 
-                                                conduit_inlet = '{name}'
-                                            WHERE 
-                                                fid = '{inlet[0]}';
-                                        """)
+                        UPDATE 
+                            user_swmm_conduits
+                        SET 
+                            conduit_inlet = '{name}'
+                        WHERE 
+                            fid = '{inlet[0]}';
+                    """)
 
-            update_outlets_qry = self.gutils.execute(
+            update_conduits_outlets_qry = self.gutils.execute(
                 f"""
                 SELECT 
                     fid
@@ -746,16 +877,145 @@ class OutletAttributes(qtBaseClass, uiDialog):
                     conduit_outlet = '{old_name}';
                 """
             ).fetchall()
-            if update_outlets_qry:
-                for outlet in update_outlets_qry:
+            if update_conduits_outlets_qry:
+                for outlet in update_conduits_outlets_qry:
                     self.gutils.execute(f"""
-                                            UPDATE 
-                                                user_swmm_conduits
-                                            SET 
-                                                conduit_outlet = '{name}'
-                                            WHERE 
-                                                fid = '{outlet[0]}';
-                                        """)
+                        UPDATE 
+                            user_swmm_conduits
+                        SET 
+                            conduit_outlet = '{name}'
+                        WHERE 
+                            fid = '{outlet[0]}';
+                    """)
+
+            # Updating Pumps
+            update_pumps_inlets_qry = self.gutils.execute(
+                f"""
+                SELECT 
+                    fid
+                FROM 
+                    user_swmm_pumps
+                WHERE 
+                    pump_inlet = '{old_name}';
+                """
+            ).fetchall()
+            if update_pumps_inlets_qry:
+                for inlet in update_pumps_inlets_qry:
+                    self.gutils.execute(f"""
+                        UPDATE 
+                            user_swmm_pumps
+                        SET 
+                            pump_inlet = '{name}'
+                        WHERE 
+                            fid = '{inlet[0]}';
+                    """)
+
+            update_pumps_outlets_qry = self.gutils.execute(
+                f"""
+                SELECT 
+                    fid
+                FROM 
+                    user_swmm_pumps
+                WHERE 
+                    pump_outlet = '{old_name}';
+                """
+            ).fetchall()
+            if update_pumps_outlets_qry:
+                for outlet in update_pumps_outlets_qry:
+                    self.gutils.execute(f"""
+                        UPDATE 
+                            user_swmm_pumps
+                        SET 
+                            pump_outlet = '{name}'
+                        WHERE 
+                            fid = '{outlet[0]}';
+                    """)
+
+            # Updating Weirs
+            update_weirs_inlets_qry = self.gutils.execute(
+                f"""
+                SELECT 
+                    fid
+                FROM 
+                    user_swmm_weirs
+                WHERE 
+                    weir_inlet = '{old_name}';
+                """
+            ).fetchall()
+            if update_weirs_inlets_qry:
+                for inlet in update_weirs_inlets_qry:
+                    self.gutils.execute(f"""
+                        UPDATE 
+                            user_swmm_weirs
+                        SET 
+                            weir_inlet = '{name}'
+                        WHERE 
+                            fid = '{inlet[0]}';
+                    """)
+
+            update_weirs_outlets_qry = self.gutils.execute(
+                f"""
+                SELECT 
+                    fid
+                FROM 
+                    user_swmm_weirs
+                WHERE 
+                    weir_outlet = '{old_name}';
+                """
+            ).fetchall()
+            if update_weirs_outlets_qry:
+                for outlet in update_weirs_outlets_qry:
+                    self.gutils.execute(f"""
+                        UPDATE 
+                            user_swmm_weirs
+                        SET 
+                            weir_outlet = '{name}'
+                        WHERE 
+                            fid = '{outlet[0]}';
+                    """)
+
+            # Updating Orifices
+            update_orifices_inlets_qry = self.gutils.execute(
+                f"""
+                SELECT 
+                    fid
+                FROM 
+                    user_swmm_orifices
+                WHERE 
+                    orifice_inlet = '{old_name}';
+                """
+            ).fetchall()
+            if update_orifices_inlets_qry:
+                for inlet in update_orifices_inlets_qry:
+                    self.gutils.execute(f"""
+                        UPDATE 
+                            user_swmm_orifices
+                        SET 
+                            orifice_inlet = '{name}'
+                        WHERE 
+                            fid = '{inlet[0]}';
+                    """)
+
+            update_orifices_outlets_qry = self.gutils.execute(
+                f"""
+                SELECT 
+                    fid
+                FROM 
+                    user_swmm_orifices
+                WHERE 
+                    orifice_outlet = '{old_name}';
+                """
+            ).fetchall()
+            if update_orifices_outlets_qry:
+                for outlet in update_orifices_outlets_qry:
+                    self.gutils.execute(f"""
+                        UPDATE 
+                            user_swmm_orifices
+                        SET 
+                            orifice_outlet = '{name}'
+                        WHERE 
+                            fid = '{outlet[0]}';
+                    """)
 
         self.populate_attributes(self.current_node)
 
@@ -2033,47 +2293,177 @@ class StorageUnitAttributes(qtBaseClass, uiDialog):
 
         # update the name on the user_swmm_conduits
         if old_name != name:
-            update_inlets_qry = self.gutils.execute(
+            # Updating Conduits
+            update_conduits_inlets_qry = self.gutils.execute(
                 f"""
-                SELECT
+                SELECT 
                     fid
-                FROM
+                FROM 
                     user_swmm_conduits
-                WHERE
+                WHERE 
                     conduit_inlet = '{old_name}';
                 """
             ).fetchall()
-            if update_inlets_qry:
-                for inlet in update_inlets_qry:
+            if update_conduits_inlets_qry:
+                for inlet in update_conduits_inlets_qry:
                     self.gutils.execute(f"""
-                                            UPDATE
-                                                user_swmm_conduits
-                                            SET
-                                                conduit_inlet = '{name}'
-                                            WHERE
-                                                fid = '{inlet[0]}';
-                                        """)
+                        UPDATE 
+                            user_swmm_conduits
+                        SET 
+                            conduit_inlet = '{name}'
+                        WHERE 
+                            fid = '{inlet[0]}';
+                    """)
 
-            update_outlets_qry = self.gutils.execute(
+            update_conduits_outlets_qry = self.gutils.execute(
                 f"""
-                SELECT
+                SELECT 
                     fid
-                FROM
+                FROM 
                     user_swmm_conduits
-                WHERE
+                WHERE 
                     conduit_outlet = '{old_name}';
                 """
             ).fetchall()
-            if update_outlets_qry:
-                for outlet in update_outlets_qry:
+            if update_conduits_outlets_qry:
+                for outlet in update_conduits_outlets_qry:
                     self.gutils.execute(f"""
-                                            UPDATE
-                                                user_swmm_conduits
-                                            SET
-                                                conduit_outlet = '{name}'
-                                            WHERE
-                                                fid = '{outlet[0]}';
-                                        """)
+                        UPDATE 
+                            user_swmm_conduits
+                        SET 
+                            conduit_outlet = '{name}'
+                        WHERE 
+                            fid = '{outlet[0]}';
+                    """)
+
+            # Updating Pumps
+            update_pumps_inlets_qry = self.gutils.execute(
+                f"""
+                SELECT 
+                    fid
+                FROM 
+                    user_swmm_pumps
+                WHERE 
+                    pump_inlet = '{old_name}';
+                """
+            ).fetchall()
+            if update_pumps_inlets_qry:
+                for inlet in update_pumps_inlets_qry:
+                    self.gutils.execute(f"""
+                        UPDATE 
+                            user_swmm_pumps
+                        SET 
+                            pump_inlet = '{name}'
+                        WHERE 
+                            fid = '{inlet[0]}';
+                    """)
+
+            update_pumps_outlets_qry = self.gutils.execute(
+                f"""
+                SELECT 
+                    fid
+                FROM 
+                    user_swmm_pumps
+                WHERE 
+                    pump_outlet = '{old_name}';
+                """
+            ).fetchall()
+            if update_pumps_outlets_qry:
+                for outlet in update_pumps_outlets_qry:
+                    self.gutils.execute(f"""
+                        UPDATE 
+                            user_swmm_pumps
+                        SET 
+                            pump_outlet = '{name}'
+                        WHERE 
+                            fid = '{outlet[0]}';
+                    """)
+
+            # Updating Weirs
+            update_weirs_inlets_qry = self.gutils.execute(
+                f"""
+                SELECT 
+                    fid
+                FROM 
+                    user_swmm_weirs
+                WHERE 
+                    weir_inlet = '{old_name}';
+                """
+            ).fetchall()
+            if update_weirs_inlets_qry:
+                for inlet in update_weirs_inlets_qry:
+                    self.gutils.execute(f"""
+                        UPDATE 
+                            user_swmm_weirs
+                        SET 
+                            weir_inlet = '{name}'
+                        WHERE 
+                            fid = '{inlet[0]}';
+                    """)
+
+            update_weirs_outlets_qry = self.gutils.execute(
+                f"""
+                SELECT 
+                    fid
+                FROM 
+                    user_swmm_weirs
+                WHERE 
+                    weir_outlet = '{old_name}';
+                """
+            ).fetchall()
+            if update_weirs_outlets_qry:
+                for outlet in update_weirs_outlets_qry:
+                    self.gutils.execute(f"""
+                        UPDATE 
+                            user_swmm_weirs
+                        SET 
+                            weir_outlet = '{name}'
+                        WHERE 
+                            fid = '{outlet[0]}';
+                    """)
+
+            # Updating Orifices
+            update_orifices_inlets_qry = self.gutils.execute(
+                f"""
+                SELECT 
+                    fid
+                FROM 
+                    user_swmm_orifices
+                WHERE 
+                    orifice_inlet = '{old_name}';
+                """
+            ).fetchall()
+            if update_orifices_inlets_qry:
+                for inlet in update_orifices_inlets_qry:
+                    self.gutils.execute(f"""
+                        UPDATE 
+                            user_swmm_orifices
+                        SET 
+                            orifice_inlet = '{name}'
+                        WHERE 
+                            fid = '{inlet[0]}';
+                    """)
+
+            update_orifices_outlets_qry = self.gutils.execute(
+                f"""
+                SELECT 
+                    fid
+                FROM 
+                    user_swmm_orifices
+                WHERE 
+                    orifice_outlet = '{old_name}';
+                """
+            ).fetchall()
+            if update_orifices_outlets_qry:
+                for outlet in update_orifices_outlets_qry:
+                    self.gutils.execute(f"""
+                        UPDATE 
+                            user_swmm_orifices
+                        SET 
+                            orifice_outlet = '{name}'
+                        WHERE 
+                            fid = '{outlet[0]}';
+                    """)
 
         self.populate_attributes(self.current_node)
 

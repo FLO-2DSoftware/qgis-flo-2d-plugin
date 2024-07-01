@@ -488,6 +488,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
 
         self.user_swmm_inlets_junctions_lyr.featureAdded.connect(self.inlet_junction_added)
         self.user_swmm_outlets_lyr.featureAdded.connect(self.outlet_added)
+        self.user_swmm_storage_units_lyr.featureAdded.connect(self.storage_unit_added)
         self.user_swmm_conduits_lyr.featureAdded.connect(self.conduit_added)
         self.user_swmm_weirs_lyr.featureAdded.connect(self.weir_added)
         self.user_swmm_pumps_lyr.featureAdded.connect(self.pump_added)
@@ -6174,6 +6175,26 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         self.gutils.execute(f"""
                                 UPDATE 
                                     user_swmm_outlets
+                                SET 
+                                    grid = '{grid_fid}'
+                                WHERE 
+                                    fid = '{fid}';
+                            """)
+
+    def storage_unit_added(self, fid):
+        """
+        Function to add a storage unit
+        """
+        feat = next(self.user_swmm_storage_units_lyr.getFeatures(QgsFeatureRequest(fid)))
+        geom = feat.geometry()
+        if geom is None:
+            return
+        point = geom.asPoint()
+        grid_fid = self.gutils.grid_on_point(point.x(), point.y())
+
+        self.gutils.execute(f"""
+                                UPDATE 
+                                    user_swmm_storage_units
                                 SET 
                                     grid = '{grid_fid}'
                                 WHERE 
