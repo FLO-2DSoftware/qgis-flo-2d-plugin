@@ -3102,7 +3102,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 # INP JUNCTIONS ##################################################
                 try:
                     SD_junctions_sql = """SELECT name, junction_invert_elev, max_depth, init_depth, surcharge_depth, ponded_area
-                                      FROM user_swmm_inlets_junctions WHERE sd_type = "I" or sd_type = "i" or sd_type = "J" ORDER BY fid;"""
+                                      FROM user_swmm_inlets_junctions WHERE sd_type = "I" or sd_type = "i" or sd_type = "J" ORDER BY name;"""
 
                     junctions_rows = self.gutils.execute(SD_junctions_sql).fetchall()
                     if not junctions_rows:
@@ -3136,7 +3136,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 # INP OUTFALLS ###################################################
                 try:
                     SD_outfalls_sql = """SELECT name, outfall_invert_elev, outfall_type, time_series, tidal_curve, flapgate, fixed_stage 
-                                      FROM user_swmm_outlets ORDER BY fid;"""
+                                      FROM user_swmm_outlets ORDER BY name;"""
 
                     outfalls_rows = self.gutils.execute(SD_outfalls_sql).fetchall()
                     if not outfalls_rows:
@@ -3197,7 +3197,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                     SD_storages_sql = """SELECT name, invert_elev, max_depth, init_depth, storage_curve,
                                                 coefficient, exponent, constant, ponded_area, 
                                                 evap_factor, suction_head, conductivity, initial_deficit, curve_name, infiltration
-                                         FROM user_swmm_storage_units;"""
+                                         FROM user_swmm_storage_units ORDER BY name;"""
 
                     storages_rows = self.gutils.execute(SD_storages_sql).fetchall()
                     if not storages_rows:
@@ -3261,7 +3261,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 try:
                     SD_conduits_sql = """SELECT conduit_name, conduit_inlet, conduit_outlet, conduit_length, conduit_manning, conduit_inlet_offset, 
                                             conduit_outlet_offset, conduit_init_flow, conduit_max_flow 
-                                      FROM user_swmm_conduits ORDER BY fid;"""
+                                      FROM user_swmm_conduits ORDER BY conduit_name;"""
 
                     conduits_rows = self.gutils.execute(SD_conduits_sql).fetchall()
                     if not conduits_rows:
@@ -3347,7 +3347,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 try:
                     SD_orifices_sql = """SELECT orifice_name, orifice_inlet, orifice_outlet, orifice_type, orifice_crest_height, 
                                         orifice_disch_coeff, orifice_flap_gate, orifice_open_close_time 
-                                        FROM user_swmm_orifices ORDER BY fid;"""
+                                        FROM user_swmm_orifices ORDER BY orifice_name;"""
 
                     orifices_rows = self.gutils.execute(SD_orifices_sql).fetchall()
                     if not orifices_rows:
@@ -3390,7 +3390,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 try:
                     SD_weirs_sql = """SELECT weir_name, weir_inlet, weir_outlet, weir_type, weir_crest_height, 
                                         weir_disch_coeff, weir_flap_gate, weir_end_contrac, weir_end_coeff 
-                                        FROM user_swmm_weirs ORDER BY fid;"""
+                                        FROM user_swmm_weirs ORDER BY weir_name;"""
 
                     weirs_rows = self.gutils.execute(SD_weirs_sql).fetchall()
                     if not weirs_rows:
@@ -3444,7 +3444,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                     # XSections from user conduits:
                     SD_xsections_1_sql = """SELECT conduit_name, xsections_shape, xsections_max_depth, xsections_geom2, 
                                             xsections_geom3, xsections_geom4, xsections_barrels
-                                      FROM user_swmm_conduits ORDER BY fid;"""
+                                      FROM user_swmm_conduits ORDER BY conduit_name;"""
 
                     line = "\n{0:16} {1:<13} {2:<10.2f} {3:<10.2f} {4:<10.3f} {5:<10.2f} {6:<10}"
                     xsections_rows_1 = self.gutils.execute(SD_xsections_1_sql).fetchall()
@@ -3488,7 +3488,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
 
                     # XSections from user orifices:
                     SD_xsections_2_sql = """SELECT orifice_name, orifice_shape, orifice_height, orifice_width
-                                      FROM user_swmm_orifices ORDER BY fid;"""
+                                      FROM user_swmm_orifices ORDER BY orifice_name;"""
 
                     line = "\n{0:16} {1:<13} {2:<10.2f} {3:<10.2f} {4:<10.2f} {5:<10.2f} {6:<10}"
                     xsections_rows_2 = self.gutils.execute(SD_xsections_2_sql).fetchall()
@@ -3524,7 +3524,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
 
                     # XSections from user weirs:
                     SD_xsections_3_sql = """SELECT weir_name, weir_shape, weir_height, weir_length, weir_side_slope, weir_side_slope
-                                      FROM user_swmm_weirs ORDER BY fid;"""
+                                      FROM user_swmm_weirs ORDER BY weir_name;"""
 
                     line = "\n{0:16} {1:<13} {2:<10.2f} {3:<10.2f} {4:<10.2f} {5:<10.2f} {6:<10}"
                     xsections_rows_3 = self.gutils.execute(SD_xsections_3_sql).fetchall()
@@ -3566,7 +3566,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 # INP LOSSES ###################################################
                 try:
                     SD_losses_sql = """SELECT conduit_name, losses_inlet, losses_outlet, losses_average, losses_flapgate
-                                      FROM user_swmm_conduits ORDER BY fid;"""
+                                      FROM user_swmm_conduits ORDER BY conduit_name;"""
 
                     losses_rows = self.gutils.execute(SD_losses_sql).fetchall()
                     if not losses_rows:
@@ -3601,7 +3601,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 # INP INFLOWS ###################################################
                 try:
                     SD_inflows_sql = """SELECT node_name, constituent, baseline, pattern_name, time_series_name, scale_factor
-                                      FROM swmm_inflows ORDER BY fid;"""
+                                      FROM swmm_inflows ORDER BY node_name;"""
                     inflows_rows = self.gutils.execute(SD_inflows_sql).fetchall()
                     if not inflows_rows:
                         pass
@@ -3636,17 +3636,17 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 try:
                     # Pumps:
                     SD_pump_curves_sql = """SELECT pump_curve_name, pump_curve_type, x_value, y_value, description
-                                      FROM swmm_pumps_curve_data ORDER BY fid;"""
+                                      FROM swmm_pumps_curve_data ORDER BY pump_curve_name;"""
                     pump_curves_rows = self.gutils.execute(SD_pump_curves_sql).fetchall()
 
                     # Tidal:
                     SD_tidal_curves_data_sql = """SELECT tidal_curve_name, hour, stage
-                                      FROM swmm_tidal_curve_data ORDER BY fid;"""
+                                      FROM swmm_tidal_curve_data ORDER BY tidal_curve_name;"""
                     tidal_curves_data_rows = self.gutils.execute(SD_tidal_curves_data_sql).fetchall()
 
                     # Other:
                     SD_other_curves_sql = """SELECT name, type, x_value, y_value, description
-                                      FROM swmm_other_curves ORDER BY fid;"""
+                                      FROM swmm_other_curves ORDER BY name;"""
                     other_curves_rows = self.gutils.execute(SD_other_curves_sql).fetchall()
 
                     if not other_curves_rows and not pump_curves_rows and not tidal_curves_data_rows:
@@ -3721,7 +3721,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                                                         time_series_description, 
                                                         time_series_file,
                                                         time_series_data
-                                      FROM swmm_time_series ORDER BY fid;"""
+                                      FROM swmm_time_series ORDER BY time_series_name;"""
 
                     SD_time_series_data_sql = """SELECT                                 
                                                         date, 
@@ -3790,7 +3790,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                     swmm_inp_file.write("\n;;-------------- ---------- -----------")
 
                     SD_inflow_patterns_sql = """SELECT pattern_name, pattern_description, hour, multiplier
-                                      FROM swmm_inflow_patterns ORDER BY fid;"""
+                                      FROM swmm_inflow_patterns ORDER BY pattern_name;"""
 
                     line0 = "\n;{0:16}"
                     line1 = "\n{0:16} {1:<10} {2:<10.2f} {3:<10.2f} {4:<10.2f} {5:<10.2f} {6:<10.2f} {6:<10.2f}"
@@ -3869,7 +3869,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                     swmm_inp_file.write("\n;;-------------- ------------------ ------------------")
 
                     SD_inlets_junctions_coords_sql = """SELECT name, ST_AsText(ST_Centroid(GeomFromGPB(geom)))
-                                      FROM user_swmm_inlets_junctions ORDER BY fid;"""
+                                      FROM user_swmm_inlets_junctions ORDER BY name;"""
 
                     line = "\n{0:16} {1:<18} {2:<18}"
                     coordinates_rows = self.gutils.execute(SD_inlets_junctions_coords_sql).fetchall()
@@ -3882,7 +3882,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                             swmm_inp_file.write(line.format(row[0], x, y))
 
                     SD_outlets_coords_sql = """SELECT name, ST_AsText(ST_Centroid(GeomFromGPB(geom)))
-                                      FROM user_swmm_outlets ORDER BY fid;"""
+                                      FROM user_swmm_outlets ORDER BY name;"""
 
                     line = "\n{0:16} {1:<18} {2:<18}"
                     coordinates_rows = self.gutils.execute(SD_outlets_coords_sql).fetchall()
@@ -3895,7 +3895,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                             swmm_inp_file.write(line.format(row[0], x, y))
 
                     SD_storage_coords_sql = """SELECT name, ST_AsText(ST_Centroid(GeomFromGPB(geom)))
-                                      FROM user_swmm_storage_units ORDER BY fid;"""
+                                      FROM user_swmm_storage_units ORDER BY name;"""
 
                     line = "\n{0:16} {1:<18} {2:<18}"
                     coordinates_rows = self.gutils.execute(SD_storage_coords_sql).fetchall()

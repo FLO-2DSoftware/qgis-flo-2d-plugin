@@ -142,6 +142,8 @@ class InletAttributes(qtBaseClass, uiDialog):
                     fid = {fid};"""
         ).fetchall()[0]
 
+        self.disconnect_signals()
+
         # Assign attributes to the dialog
         self.grid.setText(str(attributes[0]))
         self.name.setText(str(attributes[1]))
@@ -162,6 +164,8 @@ class InletAttributes(qtBaseClass, uiDialog):
                 elif isinstance(value, QComboBox):
                     value.setCurrentText(attributes[idx])
             idx += 1
+
+        self.connect_signals()
 
         self.previous_btn.setEnabled(False)
         self.next_btn.setEnabled(False)
@@ -589,6 +593,48 @@ class InletAttributes(qtBaseClass, uiDialog):
         finally:
             QApplication.restoreOverrideCursor()
 
+    def disconnect_signals(self):
+        """
+        Disconnect signals to avoid triggering save_conduits during attribute population.
+        """
+        self.name.editingFinished.disconnect(self.save_inlets_junctions)
+        self.junction_invert_elev.editingFinished.disconnect(self.save_inlets_junctions)
+        self.max_depth.editingFinished.disconnect(self.save_inlets_junctions)
+        self.init_depth.editingFinished.disconnect(self.save_inlets_junctions)
+        self.surcharge_depth.editingFinished.disconnect(self.save_inlets_junctions)
+        self.intype.editingFinished.disconnect(self.save_inlets_junctions)
+        self.swmm_length.editingFinished.disconnect(self.save_inlets_junctions)
+        self.swmm_width.editingFinished.disconnect(self.save_inlets_junctions)
+        self.swmm_height.editingFinished.disconnect(self.save_inlets_junctions)
+        self.swmm_coeff.editingFinished.disconnect(self.save_inlets_junctions)
+        self.swmm_feature.editingFinished.disconnect(self.save_inlets_junctions)
+        self.curbheight.editingFinished.disconnect(self.save_inlets_junctions)
+        self.swmm_clogging_factor.editingFinished.disconnect(self.save_inlets_junctions)
+        self.swmm_time_for_clogging.editingFinished.disconnect(self.save_inlets_junctions)
+        self.drboxarea.editingFinished.disconnect(self.save_inlets_junctions)
+        self.sd_type.currentIndexChanged.disconnect(self.save_inlets_junctions)
+
+    def connect_signals(self):
+        """
+        Reconnect signals after attribute population.
+        """
+        self.name.editingFinished.connect(self.save_inlets_junctions)
+        self.junction_invert_elev.editingFinished.connect(self.save_inlets_junctions)
+        self.max_depth.editingFinished.connect(self.save_inlets_junctions)
+        self.init_depth.editingFinished.connect(self.save_inlets_junctions)
+        self.surcharge_depth.editingFinished.connect(self.save_inlets_junctions)
+        self.intype.editingFinished.connect(self.save_inlets_junctions)
+        self.swmm_length.editingFinished.connect(self.save_inlets_junctions)
+        self.swmm_width.editingFinished.connect(self.save_inlets_junctions)
+        self.swmm_height.editingFinished.connect(self.save_inlets_junctions)
+        self.swmm_coeff.editingFinished.connect(self.save_inlets_junctions)
+        self.swmm_feature.editingFinished.connect(self.save_inlets_junctions)
+        self.curbheight.editingFinished.connect(self.save_inlets_junctions)
+        self.swmm_clogging_factor.editingFinished.connect(self.save_inlets_junctions)
+        self.swmm_time_for_clogging.editingFinished.connect(self.save_inlets_junctions)
+        self.drboxarea.editingFinished.connect(self.save_inlets_junctions)
+        self.sd_type.currentIndexChanged.connect(self.save_inlets_junctions)
+
 
 uiDialog, qtBaseClass = load_ui("outlet_attributes")
 
@@ -694,6 +740,8 @@ class OutletAttributes(qtBaseClass, uiDialog):
                     fid = {fid};"""
         ).fetchall()[0]
 
+        self.disconnect_signals()
+
         # Assign attributes to the dialog
         self.grid.setText(str(attributes[0]))
         self.name.setText(str(attributes[1]))
@@ -707,6 +755,8 @@ class OutletAttributes(qtBaseClass, uiDialog):
         self.time_series.setCurrentText(attributes[6])
         self.outfall_type.setCurrentText(str(attributes[7]))
         self.swmm_allow_discharge.setCurrentText(str(attributes[8]))
+
+        self.connect_signals()
 
         if str(attributes[7]) == 'FIXED':
             self.fixed_stage_lbl.setHidden(False)
@@ -1266,6 +1316,32 @@ class OutletAttributes(qtBaseClass, uiDialog):
         finally:
             QApplication.restoreOverrideCursor()
 
+    def disconnect_signals(self):
+        """
+        Disconnect signals to avoid triggering save_conduits during attribute population.
+        """
+        self.name.editingFinished.disconnect(self.save_outlets)
+        self.outfall_invert_elev.editingFinished.disconnect(self.save_outlets)
+        self.fixed_stage.editingFinished.disconnect(self.save_outlets)
+        self.flapgate.currentIndexChanged.disconnect(self.save_flapgate)
+        self.outfall_type.currentIndexChanged.disconnect(self.save_outlets)
+        self.swmm_allow_discharge.currentIndexChanged.disconnect(self.save_allow_discharge)
+        self.tidal_curve.currentIndexChanged.disconnect(self.save_tidal)
+        self.time_series.currentIndexChanged.disconnect(self.save_ts)
+
+    def connect_signals(self):
+        """
+        Reconnect signals after attribute population.
+        """
+        self.name.editingFinished.connect(self.save_outlets)
+        self.outfall_invert_elev.editingFinished.connect(self.save_outlets)
+        self.fixed_stage.editingFinished.connect(self.save_outlets)
+        self.flapgate.currentIndexChanged.connect(self.save_flapgate)
+        self.outfall_type.currentIndexChanged.connect(self.save_outlets)
+        self.swmm_allow_discharge.currentIndexChanged.connect(self.save_allow_discharge)
+        self.tidal_curve.currentIndexChanged.connect(self.save_tidal)
+        self.time_series.currentIndexChanged.connect(self.save_ts)
+
 
 uiDialog, qtBaseClass = load_ui("pump_attributes")
 
@@ -1338,6 +1414,8 @@ class PumpAttributes(qtBaseClass, uiDialog):
                     fid = {fid};"""
         ).fetchall()[0]
 
+        self.disconnect_signals()
+
         self.pump_name.setText(attributes[0])
         self.pump_inlet.setText(attributes[1])
         self.pump_outlet.setText(attributes[2])
@@ -1345,6 +1423,8 @@ class PumpAttributes(qtBaseClass, uiDialog):
         self.pump_init_status.setCurrentText(attributes[4])
         self.pump_startup_depth.setValue(attributes[5])
         self.pump_shutoff_depth.setValue(attributes[6])
+
+        self.connect_signals()
 
     def save_pumps(self):
         """
@@ -1441,6 +1521,26 @@ class PumpAttributes(qtBaseClass, uiDialog):
         finally:
             QApplication.restoreOverrideCursor()
 
+    def disconnect_signals(self):
+        """
+        Disconnect signals to avoid triggering save_conduits during attribute population.
+        """
+        self.pump_name.editingFinished.disconnect(self.save_pumps)
+        self.pump_curve.currentIndexChanged.disconnect(self.save_pumps)
+        self.pump_init_status.currentIndexChanged.disconnect(self.save_pumps)
+        self.pump_startup_depth.editingFinished.disconnect(self.save_pumps)
+        self.pump_shutoff_depth.editingFinished.disconnect(self.save_pumps)
+
+    def connect_signals(self):
+        """
+        Reconnect signals after attribute population.
+        """
+        self.pump_name.editingFinished.connect(self.save_pumps)
+        self.pump_curve.currentIndexChanged.connect(self.save_pumps)
+        self.pump_init_status.currentIndexChanged.connect(self.save_pumps)
+        self.pump_startup_depth.editingFinished.connect(self.save_pumps)
+        self.pump_shutoff_depth.editingFinished.connect(self.save_pumps)
+
 
 uiDialog, qtBaseClass = load_ui("orifice_attributes")
 
@@ -1476,6 +1576,7 @@ class OrificeAttributes(qtBaseClass, uiDialog):
             self.orifice_shape.addItem("CIRCULAR")
             self.orifice_shape.addItem("RECT_CLOSED")
 
+        self.orifice_name.editingFinished.connect(self.save_orifices)
         self.orifice_type.currentIndexChanged.connect(self.save_orifices)
         self.orifice_flap_gate.currentIndexChanged.connect(self.save_orifices)
         self.orifice_shape.currentIndexChanged.connect(self.save_orifices)
@@ -1522,6 +1623,8 @@ class OrificeAttributes(qtBaseClass, uiDialog):
                     fid = {fid};"""
         ).fetchall()[0]
 
+        self.disconnect_signals()
+
         self.orifice_name.setText(attributes[0])
         self.orifice_inlet.setText(attributes[1])
         self.orifice_outlet.setText(attributes[2])
@@ -1533,6 +1636,8 @@ class OrificeAttributes(qtBaseClass, uiDialog):
         self.orifice_shape.setCurrentText(attributes[8])
         self.orifice_height.setValue(attributes[9])
         self.orifice_width.setValue(attributes[10])
+
+        self.connect_signals()
 
     def save_orifices(self):
         """
@@ -1637,6 +1742,34 @@ class OrificeAttributes(qtBaseClass, uiDialog):
         finally:
             QApplication.restoreOverrideCursor()
 
+    def disconnect_signals(self):
+        """
+        Disconnect signals to avoid triggering save_conduits during attribute population.
+        """
+        self.orifice_name.editingFinished.disconnect(self.save_orifices)
+        self.orifice_type.currentIndexChanged.disconnect(self.save_orifices)
+        self.orifice_flap_gate.currentIndexChanged.disconnect(self.save_orifices)
+        self.orifice_shape.currentIndexChanged.disconnect(self.save_orifices)
+        self.orifice_crest_height.editingFinished.disconnect(self.save_orifices)
+        self.orifice_disch_coeff.editingFinished.disconnect(self.save_orifices)
+        self.orifice_open_close_time.editingFinished.disconnect(self.save_orifices)
+        self.orifice_height.editingFinished.disconnect(self.save_orifices)
+        self.orifice_width.editingFinished.disconnect(self.save_orifices)
+
+    def connect_signals(self):
+        """
+        Reconnect signals after attribute population.
+        """
+        self.orifice_name.editingFinished.connect(self.save_orifices)
+        self.orifice_type.currentIndexChanged.connect(self.save_orifices)
+        self.orifice_flap_gate.currentIndexChanged.connect(self.save_orifices)
+        self.orifice_shape.currentIndexChanged.connect(self.save_orifices)
+        self.orifice_crest_height.editingFinished.connect(self.save_orifices)
+        self.orifice_disch_coeff.editingFinished.connect(self.save_orifices)
+        self.orifice_open_close_time.editingFinished.connect(self.save_orifices)
+        self.orifice_height.editingFinished.connect(self.save_orifices)
+        self.orifice_width.editingFinished.connect(self.save_orifices)
+
 
 uiDialog, qtBaseClass = load_ui("weir_attributes")
 
@@ -1672,6 +1805,7 @@ class WeirAttributes(qtBaseClass, uiDialog):
             self.weir_shape.addItem("CIRCULAR")
             self.weir_shape.addItem("RECT_CLOSED")
 
+        self.weir_name.editingFinished.connect(self.save_weirs)
         self.weir_type.currentIndexChanged.connect(self.save_weirs)
         self.weir_flap_gate.currentIndexChanged.connect(self.save_weirs)
         self.weir_crest_height.editingFinished.connect(self.save_weirs)
@@ -1721,6 +1855,8 @@ class WeirAttributes(qtBaseClass, uiDialog):
                     fid = {fid};"""
         ).fetchall()[0]
 
+        self.disconnect_signals()
+
         self.weir_name.setText(attributes[0])
         self.weir_inlet.setText(attributes[1])
         self.weir_outlet.setText(attributes[2])
@@ -1733,6 +1869,8 @@ class WeirAttributes(qtBaseClass, uiDialog):
         self.weir_height.setValue(attributes[9])
         self.weir_length.setValue(attributes[10])
         self.weir_side_slope.setValue(attributes[11])
+
+        self.connect_signals()
 
     def save_weirs(self):
         """
@@ -1840,6 +1978,38 @@ class WeirAttributes(qtBaseClass, uiDialog):
 
         finally:
             QApplication.restoreOverrideCursor()
+
+    def disconnect_signals(self):
+        """
+        Disconnect signals to avoid triggering save_conduits during attribute population.
+        """
+        self.weir_name.editingFinished.disconnect(self.save_weirs)
+        self.weir_type.currentIndexChanged.disconnect(self.save_weirs)
+        self.weir_flap_gate.currentIndexChanged.disconnect(self.save_weirs)
+        self.weir_crest_height.editingFinished.disconnect(self.save_weirs)
+        self.weir_disch_coeff.editingFinished.disconnect(self.save_weirs)
+        self.weir_end_contrac.editingFinished.disconnect(self.save_weirs)
+        self.weir_end_coeff.editingFinished.disconnect(self.save_weirs)
+        self.weir_shape.currentIndexChanged.disconnect(self.save_weirs)
+        self.weir_height.editingFinished.disconnect(self.save_weirs)
+        self.weir_length.editingFinished.disconnect(self.save_weirs)
+        self.weir_side_slope.editingFinished.disconnect(self.save_weirs)
+
+    def connect_signals(self):
+        """
+        Reconnect signals after attribute population.
+        """
+        self.weir_name.editingFinished.connect(self.save_weirs)
+        self.weir_type.currentIndexChanged.connect(self.save_weirs)
+        self.weir_flap_gate.currentIndexChanged.connect(self.save_weirs)
+        self.weir_crest_height.editingFinished.connect(self.save_weirs)
+        self.weir_disch_coeff.editingFinished.connect(self.save_weirs)
+        self.weir_end_contrac.editingFinished.connect(self.save_weirs)
+        self.weir_end_coeff.editingFinished.connect(self.save_weirs)
+        self.weir_shape.currentIndexChanged.connect(self.save_weirs)
+        self.weir_height.editingFinished.connect(self.save_weirs)
+        self.weir_length.editingFinished.connect(self.save_weirs)
+        self.weir_side_slope.editingFinished.connect(self.save_weirs)
 
 
 uiDialog, qtBaseClass = load_ui("conduit_attributes")
@@ -1959,6 +2129,8 @@ class ConduitAttributes(qtBaseClass, uiDialog):
                     fid = {fid};"""
         ).fetchall()[0]
 
+        self.disconnect_signals()
+
         self.conduit_name.setText(str(attributes[0]))
         self.conduit_inlet.setText(str(attributes[1]))
         self.conduit_outlet.setText(str(attributes[2]))
@@ -1981,6 +2153,8 @@ class ConduitAttributes(qtBaseClass, uiDialog):
         self.xsections_geom3.setValue(attributes[16])
         self.xsections_geom4.setValue(attributes[17])
         self.xsections_barrels.setValue(attributes[18])
+
+        self.connect_signals()
 
     def save_conduits(self):
         """
@@ -2097,6 +2271,50 @@ class ConduitAttributes(qtBaseClass, uiDialog):
         finally:
             QApplication.restoreOverrideCursor()
 
+    def disconnect_signals(self):
+        """
+        Disconnect signals to avoid triggering save_conduits during attribute population.
+        """
+        self.conduit_name.editingFinished.disconnect(self.save_conduits)
+        self.conduit_length.editingFinished.disconnect(self.save_conduits)
+        self.conduit_manning.editingFinished.disconnect(self.save_conduits)
+        self.conduit_inlet_offset.editingFinished.disconnect(self.save_conduits)
+        self.conduit_outlet_offset.editingFinished.disconnect(self.save_conduits)
+        self.conduit_init_flow.editingFinished.disconnect(self.save_conduits)
+        self.conduit_max_flow.editingFinished.disconnect(self.save_conduits)
+        self.losses_inlet.editingFinished.disconnect(self.save_conduits)
+        self.losses_outlet.editingFinished.disconnect(self.save_conduits)
+        self.losses_average.editingFinished.disconnect(self.save_conduits)
+        self.losses_flapgate.currentIndexChanged.disconnect(self.save_conduits)
+        self.xsections_shape.currentIndexChanged.disconnect(self.save_conduits)
+        self.xsections_max_depth.editingFinished.disconnect(self.save_conduits)
+        self.xsections_geom2.editingFinished.disconnect(self.save_conduits)
+        self.xsections_geom3.editingFinished.disconnect(self.save_conduits)
+        self.xsections_geom4.editingFinished.disconnect(self.save_conduits)
+        self.xsections_barrels.editingFinished.disconnect(self.save_conduits)
+
+    def connect_signals(self):
+        """
+        Reconnect signals after attribute population.
+        """
+        self.conduit_name.editingFinished.connect(self.save_conduits)
+        self.conduit_length.editingFinished.connect(self.save_conduits)
+        self.conduit_manning.editingFinished.connect(self.save_conduits)
+        self.conduit_inlet_offset.editingFinished.connect(self.save_conduits)
+        self.conduit_outlet_offset.editingFinished.connect(self.save_conduits)
+        self.conduit_init_flow.editingFinished.connect(self.save_conduits)
+        self.conduit_max_flow.editingFinished.connect(self.save_conduits)
+        self.losses_inlet.editingFinished.connect(self.save_conduits)
+        self.losses_outlet.editingFinished.connect(self.save_conduits)
+        self.losses_average.editingFinished.connect(self.save_conduits)
+        self.losses_flapgate.currentIndexChanged.connect(self.save_conduits)
+        self.xsections_shape.currentIndexChanged.connect(self.save_conduits)
+        self.xsections_max_depth.editingFinished.connect(self.save_conduits)
+        self.xsections_geom2.editingFinished.connect(self.save_conduits)
+        self.xsections_geom3.editingFinished.connect(self.save_conduits)
+        self.xsections_geom4.editingFinished.connect(self.save_conduits)
+        self.xsections_barrels.editingFinished.connect(self.save_conduits)
+
 
 uiDialog, qtBaseClass = load_ui("storage_unit_attributes")
 
@@ -2202,6 +2420,8 @@ class StorageUnitAttributes(qtBaseClass, uiDialog):
                     fid = {fid};"""
         ).fetchall()[0]
 
+        self.disconnect_signals()
+
         # Assign attributes to the dialog
         self.grid.setText(str(attributes[0]))
         self.name.setText(str(attributes[1]))
@@ -2228,6 +2448,8 @@ class StorageUnitAttributes(qtBaseClass, uiDialog):
 
         if attributes[17]:
             self.curve_name.setCurrentText(attributes[17])
+
+        self.connect_signals()
 
     def save_storage_units(self):
         """
@@ -2606,6 +2828,52 @@ class StorageUnitAttributes(qtBaseClass, uiDialog):
 
         finally:
             QApplication.restoreOverrideCursor()
+
+    def disconnect_signals(self):
+        """
+        Disconnect signals to avoid triggering save_conduits during attribute population.
+        """
+        self.name.editingFinished.disconnect(self.save_storage_units)
+        self.max_depth.editingFinished.disconnect(self.save_storage_units)
+        self.init_depth.editingFinished.disconnect(self.save_storage_units)
+        self.invert_elev.editingFinished.disconnect(self.save_storage_units)
+        self.external_inflow.currentIndexChanged.disconnect(self.save_storage_units)
+        self.treatment.currentIndexChanged.disconnect(self.save_storage_units)
+        self.evap_factor.editingFinished.disconnect(self.save_storage_units)
+        self.infiltration_grpbox.toggled.disconnect(self.save_storage_units)
+        self.infil_method.currentIndexChanged.disconnect(self.save_storage_units)
+        self.suction_head.editingFinished.disconnect(self.save_storage_units)
+        self.conductivity.editingFinished.disconnect(self.save_storage_units)
+        self.initial_deficit.editingFinished.disconnect(self.save_storage_units)
+        self.functional_grpbox.toggled.disconnect(self.check_functional)
+        self.coefficient.editingFinished.disconnect(self.save_storage_units)
+        self.exponent.editingFinished.disconnect(self.save_storage_units)
+        self.constant.editingFinished.disconnect(self.save_storage_units)
+        self.tabular_grpbox.toggled.disconnect(self.check_tabular)
+        self.curve_name.currentIndexChanged.disconnect(self.save_storage_units)
+
+    def connect_signals(self):
+        """
+        Reconnect signals after attribute population.
+        """
+        self.name.editingFinished.connect(self.save_storage_units)
+        self.max_depth.editingFinished.connect(self.save_storage_units)
+        self.init_depth.editingFinished.connect(self.save_storage_units)
+        self.invert_elev.editingFinished.connect(self.save_storage_units)
+        self.external_inflow.currentIndexChanged.connect(self.save_storage_units)
+        self.treatment.currentIndexChanged.connect(self.save_storage_units)
+        self.evap_factor.editingFinished.connect(self.save_storage_units)
+        self.infiltration_grpbox.toggled.connect(self.save_storage_units)
+        self.infil_method.currentIndexChanged.connect(self.save_storage_units)
+        self.suction_head.editingFinished.connect(self.save_storage_units)
+        self.conductivity.editingFinished.connect(self.save_storage_units)
+        self.initial_deficit.editingFinished.connect(self.save_storage_units)
+        self.functional_grpbox.toggled.connect(self.check_functional)
+        self.coefficient.editingFinished.connect(self.save_storage_units)
+        self.exponent.editingFinished.connect(self.save_storage_units)
+        self.constant.editingFinished.connect(self.save_storage_units)
+        self.tabular_grpbox.toggled.connect(self.check_tabular)
+        self.curve_name.currentIndexChanged.connect(self.save_storage_units)
 
 
 uiDialog, qtBaseClass = load_ui("storm_drain_external_inflows")

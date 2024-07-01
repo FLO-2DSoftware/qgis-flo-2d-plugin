@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>395</width>
-    <height>674</height>
+    <width>399</width>
+    <height>683</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -24,8 +24,8 @@
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>375</width>
-        <height>654</height>
+        <width>379</width>
+        <height>663</height>
        </rect>
       </property>
       <layout class="QGridLayout" name="gridLayout_2">
@@ -228,7 +228,7 @@
        <item row="2" column="0">
         <widget class="QGroupBox" name="groupBox_3">
          <property name="title">
-          <string>Losses</string>
+          <string>Cross Sections</string>
          </property>
          <layout class="QGridLayout" name="gridLayout_8">
           <item row="0" column="0">
@@ -319,7 +319,11 @@
              </widget>
             </item>
             <item row="5" column="1">
-             <widget class="QSpinBox" name="xsections_barrels"/>
+             <widget class="QSpinBox" name="xsections_barrels">
+              <property name="value">
+               <number>1</number>
+              </property>
+             </widget>
             </item>
            </layout>
           </item>
@@ -373,7 +377,7 @@
        <item row="1" column="0">
         <widget class="QGroupBox" name="groupBox_2">
          <property name="title">
-          <string>Cross Sections</string>
+          <string>Losses</string>
          </property>
          <layout class="QGridLayout" name="gridLayout_6">
           <item row="0" column="0">
