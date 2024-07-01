@@ -2714,6 +2714,32 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         self.user_swmm_inlets_junctions_lyr.triggerRepaint()
         self.user_swmm_inlets_junctions_lyr.blockSignals(False)
 
+        # Remove outlets not connected to conduits/weirs/orifices/pumps
+        self.user_swmm_outlets_lyr.blockSignals(True)
+        self.user_swmm_outlets_lyr.startEditing()
+        for feat in self.user_swmm_outlets_lyr.getFeatures():
+            node_name = feat['name']
+            if len(inlets_outlets_inside) > 1:
+                if node_name not in inlets_outlets_inside:
+                    self.user_swmm_outlets_lyr.deleteFeature(feat.id())
+        self.user_swmm_outlets_lyr.commitChanges()
+        self.user_swmm_outlets_lyr.updateExtents()
+        self.user_swmm_outlets_lyr.triggerRepaint()
+        self.user_swmm_outlets_lyr.blockSignals(False)
+
+        # Remove storage units not connected to conduits/weirs/orifices/pumps
+        self.user_swmm_storage_units_lyr.blockSignals(True)
+        self.user_swmm_storage_units_lyr.startEditing()
+        for feat in self.user_swmm_storage_units_lyr.getFeatures():
+            node_name = feat['name']
+            if len(inlets_outlets_inside) > 1:
+                if node_name not in inlets_outlets_inside:
+                    self.user_swmm_storage_units_lyr.deleteFeature(feat.id())
+        self.user_swmm_storage_units_lyr.commitChanges()
+        self.user_swmm_storage_units_lyr.updateExtents()
+        self.user_swmm_storage_units_lyr.triggerRepaint()
+        self.user_swmm_storage_units_lyr.blockSignals(False)
+
         # CONTROL: Add control data to the swmm_control table
         self.gutils.clear_tables("swmm_control")
 
