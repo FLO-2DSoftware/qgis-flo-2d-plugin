@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>442</width>
-    <height>387</height>
+    <height>397</height>
    </rect>
   </property>
   <property name="minimumSize">
@@ -31,52 +31,6 @@
      <layout class="QGridLayout" name="gridLayout_8">
       <item row="0" column="0" colspan="3">
        <layout class="QGridLayout" name="gridLayout_9">
-        <item row="0" column="1" rowspan="3">
-         <widget class="QLabel" name="label_4">
-          <property name="text">
-           <string>Start Node</string>
-          </property>
-          <property name="alignment">
-           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-          </property>
-         </widget>
-        </item>
-        <item row="0" column="2" rowspan="3">
-         <widget class="QComboBox" name="start_node_cbo"/>
-        </item>
-        <item row="0" column="3" rowspan="3">
-         <widget class="QLabel" name="label_5">
-          <property name="text">
-           <string>End Node</string>
-          </property>
-          <property name="alignment">
-           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-          </property>
-         </widget>
-        </item>
-        <item row="0" column="4" rowspan="3">
-         <widget class="QComboBox" name="end_node_cbo"/>
-        </item>
-        <item row="3" column="4" colspan="2">
-         <widget class="QPushButton" name="find_profile_btn">
-          <property name="text">
-           <string>Find Profile</string>
-          </property>
-         </widget>
-        </item>
-        <item row="3" column="1" colspan="3">
-         <spacer name="horizontalSpacer">
-          <property name="orientation">
-           <enum>Qt::Horizontal</enum>
-          </property>
-          <property name="sizeHint" stdset="0">
-           <size>
-            <width>40</width>
-            <height>20</height>
-           </size>
-          </property>
-         </spacer>
-        </item>
         <item row="0" column="5" rowspan="3">
          <widget class="QToolButton" name="center_chbox">
           <property name="text">
@@ -91,6 +45,76 @@
           </property>
          </widget>
         </item>
+        <item row="3" column="4" colspan="2">
+         <widget class="QPushButton" name="find_profile_btn">
+          <property name="text">
+           <string>Find Profile</string>
+          </property>
+         </widget>
+        </item>
+        <item row="0" column="3" rowspan="3">
+         <widget class="QLabel" name="label_5">
+          <property name="minimumSize">
+           <size>
+            <width>75</width>
+            <height>0</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>75</width>
+            <height>16777215</height>
+           </size>
+          </property>
+          <property name="text">
+           <string>End Node</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+          </property>
+         </widget>
+        </item>
+        <item row="0" column="1" rowspan="3">
+         <widget class="QLabel" name="label_4">
+          <property name="minimumSize">
+           <size>
+            <width>75</width>
+            <height>0</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>75</width>
+            <height>16777215</height>
+           </size>
+          </property>
+          <property name="text">
+           <string>Start Node</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+          </property>
+         </widget>
+        </item>
+        <item row="0" column="2" rowspan="3">
+         <widget class="QComboBox" name="start_node_cbo"/>
+        </item>
+        <item row="3" column="1" colspan="3">
+         <spacer name="horizontalSpacer">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>40</width>
+            <height>20</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+        <item row="0" column="4" rowspan="3">
+         <widget class="QComboBox" name="end_node_cbo"/>
+        </item>
        </layout>
       </item>
      </layout>
@@ -104,20 +128,17 @@
      <layout class="QGridLayout" name="gridLayout_2">
       <item row="0" column="0">
        <layout class="QGridLayout" name="gridLayout">
-        <item row="0" column="2">
-         <spacer name="horizontalSpacer_2">
-          <property name="orientation">
-           <enum>Qt::Horizontal</enum>
+        <item row="0" column="1" colspan="2">
+         <widget class="QLineEdit" name="object_le">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
           </property>
-          <property name="sizeHint" stdset="0">
-           <size>
-            <width>40</width>
-            <height>20</height>
-           </size>
-          </property>
-         </spacer>
+         </widget>
         </item>
-        <item row="0" column="1">
+        <item row="0" column="3">
          <widget class="QToolButton" name="find_object_btn">
           <property name="text">
            <string>...</string>
@@ -129,7 +150,42 @@
          </widget>
         </item>
         <item row="0" column="0">
-         <widget class="QLineEdit" name="object_le"/>
+         <widget class="QLabel" name="label_7">
+          <property name="minimumSize">
+           <size>
+            <width>75</width>
+            <height>0</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>75</width>
+            <height>16777215</height>
+           </size>
+          </property>
+          <property name="text">
+           <string>Object Name</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+          </property>
+         </widget>
+        </item>
+        <item row="0" column="4">
+         <spacer name="horizontalSpacer_2">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+          <property name="sizeType">
+           <enum>QSizePolicy::Fixed</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>90</width>
+            <height>20</height>
+           </size>
+          </property>
+         </spacer>
         </item>
        </layout>
       </item>
@@ -153,6 +209,34 @@
         <property name="sizeConstraint">
          <enum>QLayout::SetDefaultConstraint</enum>
         </property>
+        <item>
+         <widget class="QLabel" name="label_2">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="minimumSize">
+           <size>
+            <width>75</width>
+            <height>0</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>75</width>
+            <height>16777215</height>
+           </size>
+          </property>
+          <property name="text">
+           <string>Tab/Eq. Name</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+          </property>
+         </widget>
+        </item>
         <item>
          <widget class="QComboBox" name="SD_type4_cbo">
           <property name="enabled">
@@ -324,37 +408,46 @@
      </property>
      <layout class="QGridLayout" name="gridLayout_4">
       <item row="0" column="0">
-       <layout class="QHBoxLayout" name="horizontalLayout_2">
-        <item>
-         <widget class="QComboBox" name="pump_curve_cbo">
+       <layout class="QGridLayout" name="gridLayout_3">
+        <item row="1" column="0">
+         <widget class="QLabel" name="label_3">
           <property name="sizePolicy">
-           <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+           <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
             <horstretch>0</horstretch>
             <verstretch>0</verstretch>
            </sizepolicy>
           </property>
           <property name="minimumSize">
            <size>
-            <width>0</width>
+            <width>75</width>
             <height>0</height>
            </size>
           </property>
           <property name="maximumSize">
            <size>
-            <width>16777215</width>
+            <width>75</width>
             <height>16777215</height>
            </size>
           </property>
-          <property name="insertPolicy">
-           <enum>QComboBox::InsertAtBottom</enum>
+          <property name="sizeIncrement">
+           <size>
+            <width>31</width>
+            <height>0</height>
+           </size>
           </property>
-          <property name="duplicatesEnabled">
-           <bool>true</bool>
+          <property name="text">
+           <string>Pump Type</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+          </property>
+          <property name="wordWrap">
+           <bool>false</bool>
           </property>
          </widget>
         </item>
-        <item>
-         <widget class="QToolButton" name="add_pump_curve_btn">
+        <item row="0" column="7">
+         <widget class="QToolButton" name="rename_pump_curve_btn">
           <property name="enabled">
            <bool>true</bool>
           </property>
@@ -371,18 +464,43 @@
            </size>
           </property>
           <property name="toolTip">
-           <string>Add pump curve</string>
+           <string>Rename pump curve</string>
           </property>
           <property name="text">
            <string/>
           </property>
           <property name="icon">
            <iconset>
-            <normaloff>../img/add_table_data.svg</normaloff>../img/add_table_data.svg</iconset>
+            <normaloff>../img/change_name.svg</normaloff>../img/change_name.svg</iconset>
           </property>
          </widget>
         </item>
-        <item>
+        <item row="0" column="0">
+         <widget class="QLabel" name="label">
+          <property name="minimumSize">
+           <size>
+            <width>75</width>
+            <height>0</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>75</width>
+            <height>16777215</height>
+           </size>
+          </property>
+          <property name="text">
+           <string>Curve Name</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+          </property>
+          <property name="wordWrap">
+           <bool>false</bool>
+          </property>
+         </widget>
+        </item>
+        <item row="0" column="5">
          <widget class="QToolButton" name="add_predefined_pump_curve_btn">
           <property name="sizePolicy">
            <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
@@ -420,7 +538,35 @@
           </property>
          </widget>
         </item>
-        <item>
+        <item row="0" column="1" colspan="3">
+         <widget class="QComboBox" name="pump_curve_cbo">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="minimumSize">
+           <size>
+            <width>0</width>
+            <height>0</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>16777215</width>
+            <height>16777215</height>
+           </size>
+          </property>
+          <property name="insertPolicy">
+           <enum>QComboBox::InsertAtBottom</enum>
+          </property>
+          <property name="duplicatesEnabled">
+           <bool>true</bool>
+          </property>
+         </widget>
+        </item>
+        <item row="0" column="6">
          <widget class="QToolButton" name="remove_pump_curve_btn">
           <property name="enabled">
            <bool>true</bool>
@@ -449,8 +595,8 @@
           </property>
          </widget>
         </item>
-        <item>
-         <widget class="QToolButton" name="rename_pump_curve_btn">
+        <item row="0" column="4">
+         <widget class="QToolButton" name="add_pump_curve_btn">
           <property name="enabled">
            <bool>true</bool>
           </property>
@@ -467,160 +613,132 @@
            </size>
           </property>
           <property name="toolTip">
-           <string>Rename pump curve</string>
+           <string>Add pump curve</string>
           </property>
           <property name="text">
            <string/>
           </property>
           <property name="icon">
            <iconset>
-            <normaloff>../img/change_name.svg</normaloff>../img/change_name.svg</iconset>
+            <normaloff>../img/add_table_data.svg</normaloff>../img/add_table_data.svg</iconset>
           </property>
          </widget>
         </item>
-       </layout>
-      </item>
-      <item row="1" column="0">
-       <layout class="QHBoxLayout" name="horizontalLayout_8">
-        <item>
-         <layout class="QHBoxLayout" name="horizontalLayout_7">
-          <item>
-           <widget class="QLabel" name="label_3">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
-            <property name="minimumSize">
-             <size>
-              <width>50</width>
-              <height>0</height>
-             </size>
-            </property>
-            <property name="maximumSize">
-             <size>
-              <width>16777215</width>
-              <height>16777215</height>
-             </size>
-            </property>
-            <property name="sizeIncrement">
-             <size>
-              <width>31</width>
-              <height>0</height>
-             </size>
-            </property>
-            <property name="text">
-             <string>Pump Type</string>
-            </property>
-            <property name="alignment">
-             <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-            </property>
-            <property name="wordWrap">
-             <bool>true</bool>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QComboBox" name="pump_curve_type_cbo">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
-            <property name="minimumSize">
-             <size>
-              <width>0</width>
-              <height>0</height>
-             </size>
-            </property>
-            <property name="maximumSize">
-             <size>
-              <width>16777215</width>
-              <height>16777215</height>
-             </size>
-            </property>
-            <property name="currentText">
-             <string>Pump1</string>
-            </property>
-            <item>
-             <property name="text">
-              <string>Pump1</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>Pump2</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>Pump3</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>Pump4</string>
-             </property>
-            </item>
-           </widget>
-          </item>
-         </layout>
+        <item row="2" column="0">
+         <widget class="QLabel" name="label_6">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="minimumSize">
+           <size>
+            <width>75</width>
+            <height>0</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>75</width>
+            <height>16777215</height>
+           </size>
+          </property>
+          <property name="text">
+           <string>Description</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+          </property>
+         </widget>
         </item>
-        <item>
-         <layout class="QHBoxLayout" name="horizontalLayout_6">
+        <item row="1" column="1" colspan="3">
+         <widget class="QComboBox" name="pump_curve_type_cbo">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="minimumSize">
+           <size>
+            <width>0</width>
+            <height>0</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>16777215</width>
+            <height>16777215</height>
+           </size>
+          </property>
+          <property name="toolTip">
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;1.&lt;/span&gt; Consists of a series of constant flow rates that apply over a corresponding series of volume intervals at the pump’s inlet node. &lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;2.&lt;/span&gt; Similar to a Type1 pump except that the fixed flow rate levels vary over a set of depth intervals at the pump’s inlet node. &lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;3.&lt;/span&gt; A centrifugal pump characteristic curve at some nominal impeller speed represented in a piecewise linear fashion. Flow is a function of the head difference between the inlet and outlet nodes. &lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;4.&lt;/span&gt; A variable speed in-line pump where flow varies continuously with inlet node depth.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+          </property>
+          <property name="currentText">
+           <string>1. Volume x Flow</string>
+          </property>
           <item>
-           <widget class="QLabel" name="label_6">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
-            <property name="minimumSize">
-             <size>
-              <width>80</width>
-              <height>0</height>
-             </size>
-            </property>
-            <property name="maximumSize">
-             <size>
-              <width>16777215</width>
-              <height>16777215</height>
-             </size>
-            </property>
-            <property name="text">
-             <string>Description</string>
-            </property>
-            <property name="alignment">
-             <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-            </property>
-           </widget>
+           <property name="text">
+            <string>1. Volume x Flow</string>
+           </property>
           </item>
           <item>
-           <widget class="QLineEdit" name="pump_curve_description_le">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
-            <property name="minimumSize">
-             <size>
-              <width>0</width>
-              <height>0</height>
-             </size>
-            </property>
-            <property name="maximumSize">
-             <size>
-              <width>16777215</width>
-              <height>16777215</height>
-             </size>
-            </property>
-           </widget>
+           <property name="text">
+            <string>2. Depth x Flow</string>
+           </property>
           </item>
-         </layout>
+          <item>
+           <property name="text">
+            <string>3. Flow x Head</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>4. Depth x Flow</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>Ideal</string>
+           </property>
+          </item>
+         </widget>
+        </item>
+        <item row="2" column="1" colspan="3">
+         <widget class="QLineEdit" name="pump_curve_description_le">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="minimumSize">
+           <size>
+            <width>0</width>
+            <height>0</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>16777215</width>
+            <height>16777215</height>
+           </size>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="4" rowspan="2" colspan="4">
+         <spacer name="horizontalSpacer_4">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>40</width>
+            <height>20</height>
+           </size>
+          </property>
+         </spacer>
         </item>
        </layout>
       </item>
@@ -834,8 +952,6 @@
   <tabstop>add_predefined_pump_curve_btn</tabstop>
   <tabstop>remove_pump_curve_btn</tabstop>
   <tabstop>rename_pump_curve_btn</tabstop>
-  <tabstop>pump_curve_type_cbo</tabstop>
-  <tabstop>pump_curve_description_le</tabstop>
  </tabstops>
  <resources/>
  <connections/>

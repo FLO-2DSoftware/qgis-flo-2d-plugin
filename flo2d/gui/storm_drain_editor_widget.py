@@ -303,8 +303,8 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         self.inlets_junctions_dlg = None
 
         self.system_units = {
-            "CMS": ["m", "mps", "cms"],
-            "CFS": ["ft", "fps", "cfs"]
+            "CMS": ["m", "mps", "cms", "m³"],
+            "CFS": ["ft", "fps", "cfs", "ft³"]
              }
 
         self.setupUi(self)
@@ -313,9 +313,6 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         self.inlet_data_model = StandardItemModel()
         self.tview.setModel(self.inlet_data_model)
         self.pumps_data_model = StandardItemModel()
-
-        # self.rt_tview.setModel(self.inlet_data_model)
-        # self.pump_tview.setModel(self.pumps_data_model)
 
         self.grid_lyr = None
         self.user_swmm_inlets_junctions_lyr = None
@@ -460,8 +457,9 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         self.pumps_data_model.dataChanged.connect(self.save_SD_table_data)
 
         self.pump_curve_type_cbo.currentIndexChanged.connect(self.update_pump_curve_data)
-        self.pump_curve_description_le.textChanged.connect(self.update_pump_curve_data)
+        self.pump_curve_description_le.editingFinished.connect(self.update_pump_curve_data)
                
+        self.pump_curve_cbo.currentIndexChanged.connect(self.current_cbo_pump_curve_index_changed)
         self.pump_curve_cbo.activated.connect(self.current_cbo_pump_curve_index_changed)
 
         self.simulate_stormdrain_chbox.clicked.connect(self.simulate_stormdrain)
@@ -5800,6 +5798,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
 
     def populate_pump_curves_combo(self, block=True):
         self.pump_curve_cbo.blockSignals(block)
+        self.pump_curve_type_cbo.blockSignals(block)
         self.pump_curve_cbo.clear()
         duplicates = ""
         for row in self.PumpCurv.get_pump_curves():
@@ -5810,7 +5809,41 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                         self.pump_curve_cbo.addItem(name, pc_fid)
                     else:
                         duplicates += name + "\n"
+
+        pump_curve_name = self.pump_curve_cbo.currentText()
+
+        pump_curve_type_qry = self.gutils.execute(f"""SELECT DISTINCT
+                                                        pump_curve_type 
+                                                       FROM 
+                                                        swmm_pumps_curve_data 
+                                                       WHERE 
+                                                        pump_curve_name = '{pump_curve_name}'""").fetchall()
+        if pump_curve_type_qry:
+            # Allow backward compatibility with older plugin versions
+            pump_curve_type = pump_curve_type_qry[0][0]
+            if len(pump_curve_type) == 1:
+                self.pump_curve_type_cbo.setCurrentIndex(int(pump_curve_type) - 1)
+            # Pump1, Pump2, Pump3, Pump4
+            elif len(pump_curve_type) == 5:
+                self.pump_curve_type_cbo.setCurrentIndex(int(pump_curve_type[-1]) - 1)
+            else:
+                self.pump_curve_type_cbo.setCurrentIndex(0)
+
+        pump_description_qry = self.gutils.execute(f"""SELECT DISTINCT
+                                                        description 
+                                                       FROM 
+                                                        swmm_pumps_curve_data 
+                                                       WHERE 
+                                                        pump_curve_name = '{pump_curve_name}'""").fetchall()
+
+        description = ''
+        if pump_description_qry:
+            description = pump_description_qry[0][0]
+
+        self.pump_curve_description_le.setText(description)
+
         self.pump_curve_cbo.blockSignals(not block)
+        self.pump_curve_type_cbo.blockSignals(not block)
 
     def current_cbo_pump_curve_index_changed(self, idx=0):
         if not self.pump_curve_cbo.count():
@@ -5825,11 +5858,38 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         self.SD_table.after_delete.disconnect()
         self.SD_table.after_delete.connect(self.save_SD_table_data)
 
-        idx = self.pump_curve_cbo.currentIndex()
-        curve_fid = self.pump_curve_cbo.itemData(idx)
         curve_name = self.pump_curve_cbo.currentText()
-        if curve_fid is None:
-            return
+
+        pump_curve_type_qry = self.gutils.execute(f"""SELECT DISTINCT
+                                                        pump_curve_type 
+                                                       FROM 
+                                                        swmm_pumps_curve_data 
+                                                       WHERE 
+                                                        pump_curve_name = '{curve_name}'""").fetchall()
+        if pump_curve_type_qry:
+            # Allow backward compatibility with older plugin versions
+            pump_curve_type = pump_curve_type_qry[0][0]
+            if len(pump_curve_type) == 1:
+                idx = pump_curve_type
+            # Pump1, Pump2, Pump3, Pump4
+            elif len(pump_curve_type) == 5:
+                idx = pump_curve_type[-1]
+            else:
+                idx = 0
+
+        pump_description_qry = self.gutils.execute(f"""SELECT DISTINCT
+                                                        description 
+                                                       FROM 
+                                                        swmm_pumps_curve_data 
+                                                       WHERE 
+                                                        pump_curve_name = '{curve_name}'""").fetchall()
+
+        description = ''
+        if pump_description_qry:
+            description = pump_description_qry[0][0]
+
+        self.pump_curve_description_le.setText(description)
+        self.pump_curve_type_cbo.setCurrentIndex(int(idx) - 1)
 
         self.curve_data = self.PumpCurv.get_pump_curve_data(curve_name)
         if not self.curve_data:
@@ -5838,19 +5898,20 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         self.tview.undoStack.clear()
         self.tview.setModel(self.pumps_data_model)
         self.pumps_data_model.clear()
-        currentPump = self.pump_curve_type_cbo.currentText()
-        if currentPump == "Pump1":
+
+        if idx == 1:
             x = "Volume"
             y = "Flow"
-        elif currentPump == "Pump2" or currentPump == "Pump4":
+        elif idx in [2, 4]:
             x = "Depth"
             y = "Flow"
-        elif currentPump == "Pump3":
+        elif idx == 3:
             x = "Head"
             y = "Flow"
         else:
             x = "X"
             y = "Y"
+
         self.pumps_data_model.setHorizontalHeaderLabels([x, y])
         self.d1, self.d2 = [[], []]
         for row in self.curve_data:
@@ -5881,16 +5942,44 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
     
         self.plot_item_name = "Pump Curve:   " + name
         self.plot.plot.setTitle("Pump Curve:   " + name)
-        
-        currentPump = self.pump_curve_type_cbo.currentText()
-        if currentPump == "Pump1" or currentPump == "Pump2":
+
+        if QgsProject.instance().crs().mapUnits() == QgsUnitTypes.DistanceMeters:
+            units = "CMS"
+        else:
+            units = "CFS"
+
+        idx = self.pump_curve_type_cbo.currentIndex() + 1
+
+        flow_lbl = f"Flow ({self.system_units[units][2]})"
+        depth_lbl = f"Depth ({self.system_units[units][0]})"
+        volume_lbl = f"Volume ({self.system_units[units][3]})"
+        head_lbl = f"Head ({self.system_units[units][0]})"
+
+        # Adjust the y and x labels
+        y_lbl = ''
+        x_lbl = ''
+        if idx == 1:
+            y_lbl = flow_lbl
+            x_lbl = volume_lbl
+        if idx in [2, 4]:
+            y_lbl = flow_lbl
+            x_lbl = depth_lbl
+        if idx == 3:
+            y_lbl = head_lbl
+            x_lbl = flow_lbl
+
+        self.plot.plot.setLabel("left", y_lbl)
+        self.plot.plot.setLabel("bottom", x_lbl)
+
+        if idx in [1, 2]:
+
             # Insert the (0, 0) and (0, d2[1]) points
             if self.d1 and self.d2:
                 adjusted_d1 = [0] + self.d1
                 
-                self.d2  = self.d2[1:] + [self.d2[0]]
+                self.d2 = self.d2[1:] + [self.d2[0]]
 
-                adjusted_d2= [0] + self.d2  
+                adjusted_d2 = [0] + self.d2
                  
                 # Ensure adjusted_d1 has one more point than adjusted_d2
                 adjusted_d1.append(adjusted_d1[1])
@@ -5991,16 +6080,16 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         self.PumpCurv.set_pump_curve_data(data_name, pc_data)
 
         curve = self.pump_curve_cbo.currentText()
-        ptype = "Pump" + self.pump_curve_type_cbo.currentText()[4]
-        desc = self.pump_curve_description_le.text()
+        ptype = self.pump_curve_type_cbo.currentIndex() + 1
+        # desc = self.pump_curve_description_le.text()
         self.gutils.execute(
-            "UPDATE swmm_pumps_curve_data SET pump_curve_type = ?, description = ? WHERE pump_curve_name = ?",
-            (ptype, desc, curve),
+            "UPDATE swmm_pumps_curve_data SET pump_curve_type = ? WHERE pump_curve_name = ?",
+            (ptype, curve),
         )
 
     def update_pump_curve_data(self):
         curve = self.pump_curve_cbo.currentText()
-        ptype = "Pump" + self.pump_curve_type_cbo.currentText()[4]
+        ptype = self.pump_curve_type_cbo.currentIndex() + 1
         desc = self.pump_curve_description_le.text()
         self.gutils.execute(
             "UPDATE swmm_pumps_curve_data SET pump_curve_type = ?, description = ? WHERE pump_curve_name = ?",
