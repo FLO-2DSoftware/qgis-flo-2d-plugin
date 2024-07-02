@@ -5821,13 +5821,16 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         if pump_curve_type_qry:
             # Allow backward compatibility with older plugin versions
             pump_curve_type = pump_curve_type_qry[0][0]
-            if len(pump_curve_type) == 1:
-                self.pump_curve_type_cbo.setCurrentIndex(int(pump_curve_type) - 1)
-            # Pump1, Pump2, Pump3, Pump4
-            elif len(pump_curve_type) == 5:
-                self.pump_curve_type_cbo.setCurrentIndex(int(pump_curve_type[-1]) - 1)
+            if pump_curve_type:
+                if len(pump_curve_type) == 1:
+                    self.pump_curve_type_cbo.setCurrentIndex(int(pump_curve_type) - 1)
+                # Pump1, Pump2, Pump3, Pump4
+                elif len(pump_curve_type) == 5:
+                    self.pump_curve_type_cbo.setCurrentIndex(int(pump_curve_type[-1]) - 1)
+                else:
+                    self.pump_curve_type_cbo.setCurrentIndex(0)
             else:
-                self.pump_curve_type_cbo.setCurrentIndex(0)
+                self.pump_curve_type_cbo.setCurrentText('Ideal')
 
         pump_description_qry = self.gutils.execute(f"""SELECT DISTINCT
                                                         description 
@@ -5866,16 +5869,16 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                                                         swmm_pumps_curve_data 
                                                        WHERE 
                                                         pump_curve_name = '{curve_name}'""").fetchall()
+        idx = 0
         if pump_curve_type_qry:
             # Allow backward compatibility with older plugin versions
             pump_curve_type = pump_curve_type_qry[0][0]
-            if len(pump_curve_type) == 1:
-                idx = pump_curve_type
-            # Pump1, Pump2, Pump3, Pump4
-            elif len(pump_curve_type) == 5:
-                idx = pump_curve_type[-1]
-            else:
-                idx = 0
+            if pump_curve_type:
+                if len(pump_curve_type) == 1:
+                    idx = pump_curve_type
+                # Pump1, Pump2, Pump3, Pump4
+                if len(pump_curve_type) == 5:
+                    idx = pump_curve_type[-1]
 
         pump_description_qry = self.gutils.execute(f"""SELECT DISTINCT
                                                         description 

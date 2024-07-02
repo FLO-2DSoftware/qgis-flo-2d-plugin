@@ -1373,6 +1373,7 @@ class PumpAttributes(qtBaseClass, uiDialog):
         if pump_curves:
             for pump_curve in pump_curves:
                 self.pump_curve.addItem(pump_curve[0])
+            self.pump_curve.addItem('Ideal')
             self.pump_curve.setCurrentIndex(-1)
 
         self.pump_name.editingFinished.connect(self.save_pumps)
@@ -1419,7 +1420,10 @@ class PumpAttributes(qtBaseClass, uiDialog):
         self.pump_name.setText(attributes[0])
         self.pump_inlet.setText(attributes[1])
         self.pump_outlet.setText(attributes[2])
-        self.pump_curve.setCurrentText(attributes[3])
+        if not attributes[3]:
+            self.pump_curve.setCurrentText('Ideal')
+        else:
+            self.pump_curve.setCurrentText(attributes[3])
         self.pump_init_status.setCurrentText(attributes[4])
         self.pump_startup_depth.setValue(attributes[5])
         self.pump_shutoff_depth.setValue(attributes[6])
