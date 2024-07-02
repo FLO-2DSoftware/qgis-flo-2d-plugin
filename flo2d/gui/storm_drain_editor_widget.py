@@ -3667,6 +3667,12 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                                 if lrow[4]:
                                     swmm_inp_file.write("\n;" + lrow[4])
                                 name = lrow[0]
+                                if (len(lrow[1]) == 1 and lrow[1] != '*'):
+                                    if lrow[1] == str(5):
+                                        lrow[1] = '*'
+                                    else:
+                                        lrow[1] = f"Pump{lrow[1]}"
+
                             swmm_inp_file.write(line1.format(*lrow))
 
                         # Write curves of type 'Tidal'
@@ -5829,8 +5835,6 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                     self.pump_curve_type_cbo.setCurrentIndex(int(pump_curve_type[-1]) - 1)
                 else:
                     self.pump_curve_type_cbo.setCurrentIndex(0)
-            else:
-                self.pump_curve_type_cbo.setCurrentText('Ideal')
 
         pump_description_qry = self.gutils.execute(f"""SELECT DISTINCT
                                                         description 

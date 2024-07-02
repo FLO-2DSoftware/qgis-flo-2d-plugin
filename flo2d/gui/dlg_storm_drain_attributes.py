@@ -1420,7 +1420,7 @@ class PumpAttributes(qtBaseClass, uiDialog):
         self.pump_name.setText(attributes[0])
         self.pump_inlet.setText(attributes[1])
         self.pump_outlet.setText(attributes[2])
-        if not attributes[3]:
+        if not attributes[3] or attributes[3] == '*':
             self.pump_curve.setCurrentText('Ideal')
         else:
             self.pump_curve.setCurrentText(attributes[3])
