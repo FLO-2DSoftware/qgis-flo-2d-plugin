@@ -2346,12 +2346,12 @@ class StorageUnitAttributes(qtBaseClass, uiDialog):
         if self.infil_method.count() == 0:
             self.infil_method.addItem("GREEN_AMPT")
 
-        # tabular_curves = self.gutils.execute("SELECT tidal_curve_name FROM swmm_tidal_curve;").fetchall()
-        # self.tidal_curve.addItem('*')
-        # if tidal_curves:
-        #     for tidal_curve in tidal_curves:
-        #         self.tidal_curve.addItem(tidal_curve[0])
-        #     self.tidal_curve.setCurrentIndex(0)
+        tabular_curves = self.gutils.execute("SELECT DISTINCT name FROM swmm_other_curves;").fetchall()
+        self.curve_name.addItem('*')
+        if tabular_curves:
+            for tabular_curve in tabular_curves:
+                self.curve_name.addItem(tabular_curve[0])
+            self.curve_name.setCurrentIndex(0)
 
         # Connections
         self.name.editingFinished.connect(self.save_storage_units)
@@ -2372,6 +2372,11 @@ class StorageUnitAttributes(qtBaseClass, uiDialog):
         self.constant.editingFinished.connect(self.save_storage_units)
         self.tabular_grpbox.toggled.connect(self.check_tabular)
         self.curve_name.currentIndexChanged.connect(self.save_storage_units)
+
+        self.external_btn.clicked.connect(self.show_external_inflow_dlg)
+        self.external_inflow.currentIndexChanged.connect(self.external_inflow_btn_chk)
+
+        self.tabular_curve_btn.clicked.connect(self.open_tabular_curve)
 
         self.user_swmm_storage_units_lyr = self.lyrs.data["user_swmm_storage_units"]["qlyr"]
 
@@ -2689,6 +2694,53 @@ class StorageUnitAttributes(qtBaseClass, uiDialog):
 
         self.populate_attributes(self.current_node)
 
+    def show_external_inflow_dlg(self):
+        """
+        Function to show the external inflow in the Storage Units
+        """
+        name = self.name.text()
+        if name == "":
+            return
+
+        dlg_external_inflow = ExternalInflowsDialog(self.iface, name)
+        dlg_external_inflow.setWindowTitle("Storage Units " + name)
+        save = dlg_external_inflow.exec_()
+        if save:
+            inflow_sql = "SELECT baseline, pattern_name, time_series_name FROM swmm_inflows WHERE node_name = ?;"
+            inflow = self.gutils.execute(inflow_sql, (name,)).fetchone()
+            if inflow:
+                baseline = inflow[0]
+                pattern_name = inflow[1]
+                time_series_name = inflow[2]
+                if baseline == 0.0 and time_series_name == "":
+                    self.external_inflow.setCurrentIndex(0)
+                else:
+                    self.external_inflow.setCurrentIndex(1)
+
+            self.uc.bar_info("Storm Drain external inflow saved for storage unit " + name)
+
+    def external_inflow_btn_chk(self):
+        """
+        Function to enable/disable the external inflow btn
+        """
+        external_inflow = self.external_inflow.currentText()
+
+        if external_inflow == 'YES':
+            self.external_btn.setEnabled(True)
+            external_inflow_bool = 1
+        else:
+            self.external_btn.setEnabled(False)
+            external_inflow_bool = 0
+
+        self.gutils.execute(f"""
+                                UPDATE 
+                                    user_swmm_storage_units
+                                SET 
+                                    external_inflow = '{external_inflow_bool}'
+                                WHERE 
+                                    fid = '{self.current_node}';
+                            """)
+
     def dock_widget(self):
         """ Close and delete the dock widget. """
         if self.dock_widget:
@@ -2721,52 +2773,35 @@ class StorageUnitAttributes(qtBaseClass, uiDialog):
 
         self.save_storage_units()
 
-    # def show_external_inflow_dlg(self):
-    #     """
-    #     Function to show the external inflow in the Inlets/Junctions
-    #     """
-    #     name = self.name.text()
-    #     if name == "":
-    #         return
-    #
-    #     dlg_external_inflow = ExternalInflowsDialog(self.iface, name)
-    #     dlg_external_inflow.setWindowTitle("Inlet/Junction " + name)
-    #     save = dlg_external_inflow.exec_()
-    #     if save:
-    #         inflow_sql = "SELECT baseline, pattern_name, time_series_name FROM swmm_inflows WHERE node_name = ?;"
-    #         inflow = self.gutils.execute(inflow_sql, (name,)).fetchone()
-    #         if inflow:
-    #             baseline = inflow[0]
-    #             pattern_name = inflow[1]
-    #             time_series_name = inflow[2]
-    #             if baseline == 0.0 and time_series_name == "":
-    #                 self.external_inflow.setCurrentIndex(0)
-    #             else:
-    #                 self.external_inflow.setCurrentIndex(1)
-    #
-    #         self.uc.bar_info("Storm Drain external inflow saved for inlet " + name)
+    def open_tabular_curve(self):
+        tabular_curve_name = self.curve_name.currentText()
+        dlg = StorageUnitTabularCurveDialog(self.iface, tabular_curve_name)
+        while True:
+            ok = dlg.exec_()
+            if ok:
+                if dlg.values_ok:
+                    dlg.save_curve()
+                    tabular_curve_name = dlg.get_curve_name()
+                    if tabular_curve_name != "" or tabular_curve_name != "*":
+                        # Reload tabular curve list and select the one saved:
+                        curves_sql = (
+                            "SELECT DISTINCT name FROM swmm_other_curves WHERE type = 'Storage' GROUP BY name"
+                        )
+                        names = self.gutils.execute(curves_sql).fetchall()
+                        if names:
+                            self.curve_name.clear()
+                            for name in names:
+                                self.curve_name.addItem(name[0])
+                            self.curve_name.addItem("*")
 
-    # def external_inflow_btn_chk(self):
-    #     """
-    #     Function to enable/disable the external inflow btn
-    #     """
-    #     external_inflow = self.external_inflow.currentText()
-    #
-    #     if external_inflow == 'YES':
-    #         self.external_btn.setEnabled(True)
-    #         external_inflow_bool = 1
-    #     else:
-    #         self.external_btn.setEnabled(False)
-    #         external_inflow_bool = 0
-    #
-    #     self.gutils.execute(f"""
-    #                             UPDATE
-    #                                 user_swmm_inlets_junctions
-    #                             SET
-    #                                 external_inflow = '{external_inflow_bool}'
-    #                             WHERE
-    #                                 fid = '{self.current_node}';
-    #                         """)
+                            idx = self.curve_name.findText(tabular_curve_name)
+                            self.curve_name.setCurrentIndex(idx)
+                        break
+                    else:
+                        break
+            else:
+                break
+
     def zoom_in(self):
         """
         Function to zoom in
@@ -4295,3 +4330,70 @@ class OutfallTidalCurveDialog(CurveEditorDialog):
         self.curve_name = self.name_le.text()
         self.close()
 
+
+class StorageUnitTabularCurveDialog(CurveEditorDialog):
+    def populate_curve_dialog(self):
+        self.loading = True
+        if self.curve_name == "":
+            pass
+        else:
+            self.setWindowTitle("Storage Unit Tabular Curve Editor")
+            self.label_2.setText("Tabular Curve Name")
+            self.curve_tblw.setHorizontalHeaderLabels(["Depth", "Area"])
+            curve_sql = "SELECT * FROM swmm_other_curves WHERE name = ? AND type = 'Storage'"
+            row = self.gutils.execute(curve_sql, (self.curve_name,)).fetchone()
+            if row:
+                self.name_le.setText(row[1])
+                self.description_le.setText(row[3])
+
+                data_qry = """SELECT
+                                x_value, 
+                                y_value
+                        FROM swmm_other_curves WHERE name = ? and type = 'Storage' ORDER BY x_value;"""
+                rows = self.gutils.execute(data_qry, (self.curve_name,)).fetchall()
+                if rows:
+                    # Convert items of first column to float to sort them in ascending order:
+                    rws = []
+                    for row in rows:
+                        rws.append([float(row[0]), row[1]])
+                    rws.sort()
+                    # Restore items of first column to string:
+                    rows = []
+                    for row in rws:
+                        rows.append([str(row[0]), row[1]])
+
+                    self.curve_tblw.setRowCount(0)
+
+                    for row_number, row_data in enumerate(rows):
+                        self.curve_tblw.insertRow(row_number)
+                        for cell, data in enumerate(row_data):
+                            self.curve_tblw.setItem(row_number, cell, QTableWidgetItem(str(data)))
+            else:
+                self.name_le.setText(self.curve_name)
+
+        QApplication.restoreOverrideCursor()
+        self.loading = False
+
+    def save_curve(self):
+        delete_data_sql = "DELETE FROM swmm_other_curves WHERE name = ? and type = 'Storage'"
+        self.gutils.execute(delete_data_sql, (self.name_le.text(),))
+
+        insert_data_sql = [
+            """INSERT INTO swmm_other_curves (name, type,  description, x_value, y_value) VALUES""",
+            5,
+        ]
+        for row in range(0, self.curve_tblw.rowCount()):
+            x = self.curve_tblw.item(row, 0)
+            if x:
+                x = x.text()
+
+            y = self.curve_tblw.item(row, 1)
+            if y:
+                y = y.text()
+
+            insert_data_sql += [(self.name_le.text(), 'Storage', self.description_le.text(), x, y)]
+        self.gutils.batch_execute(insert_data_sql)
+
+        self.uc.bar_info("Curve " + self.name_le.text() + " saved.", 2)
+        self.curve_name = self.name_le.text()
+        self.close()
