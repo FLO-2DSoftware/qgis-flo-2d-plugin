@@ -5476,11 +5476,26 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
 
                     current_max_depth = feature['max_depth']
                     if current_max_depth == 0 or current_max_depth == NULL:
-                        invert_elev = feature['junction_invert_elev']
-                        max_depth = round(float(grid_elev) - float(invert_elev), 2)
+                        intype = feature['intype']
+                        swmm_feature = feature['swmm_feature']
+                        if intype == 4 and swmm_feature == 1:
+                            name = feature['name']
+                            as_outlet_qry = self.gutils.execute(f"SELECT MAX(xsections_max_depth) FROM user_swmm_conduits WHERE conduit_outlet = '{name}'").fetchall()
+                            conduit_outlet_depth = 0
+                            if as_outlet_qry:
+                                conduit_outlet_depth = as_outlet_qry[0][0]
+                            as_inlet_qry = self.gutils.execute(f"SELECT MAX(xsections_max_depth) FROM user_swmm_conduits WHERE conduit_inlet = '{name}'").fetchall()
+                            conduit_inlet_depth = 0
+                            if as_inlet_qry:
+                                conduit_inlet_depth = as_inlet_qry[0][0]
+                            max_depth = max(conduit_outlet_depth, conduit_inlet_depth)
+                            feature.setAttribute(feature.fieldNameIndex('max_depth'), max_depth)
+                        else:
+                            invert_elev = feature['junction_invert_elev']
+                            max_depth = round(float(grid_elev) - float(invert_elev), 2)
+                            # Update the field with the new value
+                            feature.setAttribute(feature.fieldNameIndex('max_depth'), max_depth)
 
-                        # Update the field with the new value
-                        feature.setAttribute(feature.fieldNameIndex('max_depth'), max_depth)
                         self.user_swmm_inlets_junctions_lyr.updateFeature(feature)
 
                 # Commit changes
@@ -5554,11 +5569,28 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
 
                         current_max_depth = feature['max_depth']
                         if current_max_depth == 0 or current_max_depth == NULL:
-                            invert_elev = feature['junction_invert_elev']
-                            max_depth = round(float(grid_elev) - float(invert_elev), 2)
+                            intype = feature['intype']
+                            swmm_feature = feature['swmm_feature']
+                            if intype == 4 and swmm_feature == 1:
+                                name = feature['name']
+                                as_outlet_qry = self.gutils.execute(
+                                    f"SELECT MAX(xsections_max_depth) FROM user_swmm_conduits WHERE conduit_outlet = '{name}'").fetchall()
+                                conduit_outlet_depth = 0
+                                if as_outlet_qry:
+                                    conduit_outlet_depth = as_outlet_qry[0][0]
+                                as_inlet_qry = self.gutils.execute(
+                                    f"SELECT MAX(xsections_max_depth) FROM user_swmm_conduits WHERE conduit_inlet = '{name}'").fetchall()
+                                conduit_inlet_depth = 0
+                                if as_inlet_qry:
+                                    conduit_inlet_depth = as_inlet_qry[0][0]
+                                max_depth = max(conduit_outlet_depth, conduit_inlet_depth)
+                                feature.setAttribute(feature.fieldNameIndex('max_depth'), max_depth)
+                            else:
+                                invert_elev = feature['junction_invert_elev']
+                                max_depth = round(float(grid_elev) - float(invert_elev), 2)
+                                # Update the field with the new value
+                                feature.setAttribute(feature.fieldNameIndex('max_depth'), max_depth)
 
-                            # Update the field with the new value
-                            feature.setAttribute(feature.fieldNameIndex('max_depth'), max_depth)
                             self.user_swmm_inlets_junctions_lyr.updateFeature(feature)
 
                     # Commit changes
