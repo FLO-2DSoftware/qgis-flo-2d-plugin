@@ -430,6 +430,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
 
         self.schema_storm_drain_btn.clicked.connect(self.schematize_swmm)
         self.sd_control_btn.clicked.connect(self.open_sd_control)
+        self.max_depth_btn.clicked.connect(self.estimate_max_depth)
         self.sd_help_btn.clicked.connect(self.sd_help)
 
         self.SD_type4_cbo.currentIndexChanged.connect(self.SD_show_type4_table_and_plot)
@@ -5435,6 +5436,178 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 no_4Type = file_name
 
         return error0, error1, noInlet, no_4Type
+
+    def estimate_max_depth(self):
+        """
+        Function to estimate the Junction Maximum Depth based on Max. Depth = Interpolated Grid Elev. - Invert Elev.
+        """
+        if self.gutils.is_table_empty("user_swmm_inlets_junctions") and \
+                self.gutils.is_table_empty("user_swmm_storage_units"):
+            return
+
+        txt = "Do you want to assign Max. Depth to all nodes that \ndo not have Max. Depth assigned or select the nodes?\n\n" \
+              "Max. Depth = Grid Elevation - Invert Elevation\n"
+        dialog = self.uc.dialog_with_2_customized_buttons(
+            "Assign Max. Depth", txt, "All Nodes", "Selected Nodes"
+        )
+
+        if dialog == QMessageBox.Yes:
+            try:
+                QApplication.setOverrideCursor(Qt.WaitCursor)
+
+                # Inlet/Junctions
+                self.user_swmm_inlets_junctions_lyr.startEditing()
+                for feature in self.user_swmm_inlets_junctions_lyr.getFeatures():
+                    geom = feature.geometry()
+                    point = geom.asPoint()
+                    grid_fid = self.gutils.grid_on_point(point.x(), point.y())
+                    grid_elev_qry = self.gutils.execute(f"""SELECT elevation FROM grid WHERE fid = '{grid_fid}'""").fetchall()
+                    if not grid_elev_qry:
+                        self.uc.log_info(f"Grid not found!")
+                        self.uc.bar_error(f"Grid not found!")
+                        self.user_swmm_inlets_junctions_lyr.commitChanges()
+                        return
+                    grid_elev = grid_elev_qry[0][0]
+                    if grid_elev == -9999:
+                        self.uc.log_info(f"Elevation data not assigned to the grid element {grid_fid}!")
+                        self.uc.bar_error(f"Elevation data not assigned to the grid element {grid_fid}!")
+                        self.user_swmm_inlets_junctions_lyr.commitChanges()
+                        return
+
+                    current_max_depth = feature['max_depth']
+                    if current_max_depth == 0 or current_max_depth == NULL:
+                        invert_elev = feature['junction_invert_elev']
+                        max_depth = round(float(grid_elev) - float(invert_elev), 2)
+
+                        # Update the field with the new value
+                        feature.setAttribute(feature.fieldNameIndex('max_depth'), max_depth)
+                        self.user_swmm_inlets_junctions_lyr.updateFeature(feature)
+
+                # Commit changes
+                self.user_swmm_inlets_junctions_lyr.commitChanges()
+
+                # Storage Units
+                self.user_swmm_storage_units_lyr.startEditing()
+                for feature in self.user_swmm_storage_units_lyr.getFeatures():
+                    geom = feature.geometry()
+                    point = geom.asPoint()
+                    grid_fid = self.gutils.grid_on_point(point.x(), point.y())
+                    grid_elev_qry = self.gutils.execute(
+                        f"""SELECT elevation FROM grid WHERE fid = '{grid_fid}'""").fetchall()
+                    if not grid_elev_qry:
+                        self.uc.log_info(f"Grid not found!")
+                        self.uc.bar_error(f"Grid not found!")
+                        self.user_swmm_storage_units_lyr.commitChanges()
+                        return
+                    grid_elev = grid_elev_qry[0][0]
+                    if grid_elev == -9999:
+                        self.uc.log_info(f"Elevation data not assigned to the grid element {grid_fid}!")
+                        self.uc.bar_error(f"Elevation data not assigned to the grid element {grid_fid}!")
+                        self.user_swmm_storage_units_lyr.commitChanges()
+                        return
+
+                    current_max_depth = feature['max_depth']
+                    if current_max_depth == 0 or current_max_depth == NULL:
+                        invert_elev = feature['invert_elev']
+                        max_depth = round(float(grid_elev) - float(invert_elev), 2)
+
+                        # Update the field with the new value
+                        feature.setAttribute(feature.fieldNameIndex('max_depth'), max_depth)
+                        self.user_swmm_storage_units_lyr.updateFeature(feature)
+
+                # Commit changes
+                self.user_swmm_storage_units_lyr.commitChanges()
+
+                self.uc.log_info("Assign Max. Depth completed!")
+                self.uc.bar_info("Assign Max. Depth completed!")
+
+            except Exception as e:
+                self.uc.log_info("Assign Max. Depth failed!")
+                self.uc.bar_error("Assign Max. Depth failed!")
+            finally:
+                QApplication.restoreOverrideCursor()
+
+        elif dialog == QMessageBox.No:
+            try:
+                QApplication.setOverrideCursor(Qt.WaitCursor)
+
+                if self.user_swmm_inlets_junctions_lyr.selectedFeatureCount() > 0 or self.user_swmm_storage_units_lyr.selectedFeatureCount():
+
+                    # Inlet/Junctions
+                    self.user_swmm_inlets_junctions_lyr.startEditing()
+                    for feature in self.user_swmm_inlets_junctions_lyr.getSelectedFeatures():
+                        geom = feature.geometry()
+                        point = geom.asPoint()
+                        grid_fid = self.gutils.grid_on_point(point.x(), point.y())
+                        grid_elev_qry = self.gutils.execute(f"""SELECT elevation FROM grid WHERE fid = '{grid_fid}'""").fetchall()
+                        if not grid_elev_qry:
+                            self.uc.log_info(f"Grid not found!")
+                            self.uc.bar_error(f"Grid not found!")
+                            self.user_swmm_inlets_junctions_lyr.commitChanges()
+                            return
+                        grid_elev = grid_elev_qry[0][0]
+                        if grid_elev == -9999:
+                            self.uc.log_info(f"Elevation data not assigned to the grid element {grid_fid}!")
+                            self.uc.bar_error(f"Elevation data not assigned to the grid element {grid_fid}!")
+                            self.user_swmm_inlets_junctions_lyr.commitChanges()
+                            return
+
+                        current_max_depth = feature['max_depth']
+                        if current_max_depth == 0 or current_max_depth == NULL:
+                            invert_elev = feature['junction_invert_elev']
+                            max_depth = round(float(grid_elev) - float(invert_elev), 2)
+
+                            # Update the field with the new value
+                            feature.setAttribute(feature.fieldNameIndex('max_depth'), max_depth)
+                            self.user_swmm_inlets_junctions_lyr.updateFeature(feature)
+
+                    # Commit changes
+                    self.user_swmm_inlets_junctions_lyr.commitChanges()
+
+                    # Storage Units
+                    self.user_swmm_storage_units_lyr.startEditing()
+                    for feature in self.user_swmm_storage_units_lyr.getSelectedFeatures():
+                        geom = feature.geometry()
+                        point = geom.asPoint()
+                        grid_fid = self.gutils.grid_on_point(point.x(), point.y())
+                        grid_elev_qry = self.gutils.execute(
+                            f"""SELECT elevation FROM grid WHERE fid = '{grid_fid}'""").fetchall()
+                        if not grid_elev_qry:
+                            self.uc.log_info(f"Grid not found!")
+                            self.uc.bar_error(f"Grid not found!")
+                            self.user_swmm_storage_units_lyr.commitChanges()
+                            return
+                        grid_elev = grid_elev_qry[0][0]
+                        if grid_elev == -9999:
+                            self.uc.log_info(f"Elevation data not assigned to the grid element {grid_fid}!")
+                            self.uc.bar_error(f"Elevation data not assigned to the grid element {grid_fid}!")
+                            self.user_swmm_storage_units_lyr.commitChanges()
+                            return
+
+                        current_max_depth = feature['max_depth']
+                        if current_max_depth == 0 or current_max_depth == NULL:
+                            invert_elev = feature['invert_elev']
+                            max_depth = round(float(grid_elev) - float(invert_elev), 2)
+
+                            # Update the field with the new value
+                            feature.setAttribute(feature.fieldNameIndex('max_depth'), max_depth)
+                            self.user_swmm_storage_units_lyr.updateFeature(feature)
+
+                    # Commit changes
+                    self.user_swmm_storage_units_lyr.commitChanges()
+
+                    self.uc.log_info("Assign Max. Depth completed!")
+                    self.uc.bar_info("Assign Max. Depth completed!")
+
+                else:
+                    self.uc.log_info("No features were selected!")
+                    self.uc.bar_warn("No features were selected!")
+
+            except Exception as e:
+                self.uc.log_info("Assign Max. Depth failed!")
+                self.uc.bar_error("Assign Max. Depth failed!")
+            finally:
+                QApplication.restoreOverrideCursor()
 
     def auto_assign(self):
 
