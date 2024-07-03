@@ -3263,25 +3263,16 @@ class Flo2D(object):
                 if "Manning's n and Topo" not in dlg_components.components:
                     export_calls.remove("export_mannings_n_topo")
 
-                if "export_swmmflort" in export_calls:
-                    QApplication.restoreOverrideCursor()
-                    if not self.uc.question(
-                            "Did you schematize Storm Drains? Do you want to export Storm Drain files?"
-                    ):
-                        export_calls.remove("export_swmmflo")
-                        export_calls.remove("export_swmmflort")
-                        export_calls.remove("export_swmmoutf")
-                        export_calls.remove("export_swmmflodropbox")
-                        export_calls.remove("export_sdclogging")
-                        export_calls.remove("export_swmminp")
-                    else:
-                        self.f2d_widget.storm_drain_editor.export_storm_drain_INP_file(outdir, output_hdf5)
                 try:
                     s = QSettings()
                     s.setValue("FLO-2D/lastGdsDir", outdir)
 
                     QApplication.setOverrideCursor(Qt.WaitCursor)
                     self.call_IO_methods(export_calls, True)
+
+                    if "export_swmmflo" in export_calls:
+                        self.f2d_widget.storm_drain_editor.export_storm_drain_INP_file(outdir, output_hdf5)
+
                     self.uc.bar_info("Flo2D model exported to " + output_hdf5, dur=3)
 
                 finally:
