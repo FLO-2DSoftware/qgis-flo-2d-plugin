@@ -2913,6 +2913,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
 
         QApplication.restoreOverrideCursor()
 
+        QApplication.setOverrideCursor(Qt.ArrowCursor)
         dlg_INP_groups = INP_GroupsDialog(self.con, self.iface)
         ok = dlg_INP_groups.exec_()
         if ok:
@@ -2920,6 +2921,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             self.uc.log_info("Storm Drain control data saved!")
             dlg_INP_groups.save_INP_control()
 
+        QApplication.restoreOverrideCursor()
         return True
 
     def import_INP_action(self):

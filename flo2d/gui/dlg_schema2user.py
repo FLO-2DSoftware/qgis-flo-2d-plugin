@@ -185,6 +185,7 @@ class Schema2UserDialog(qtBaseClass, uiDialog):
         try:
             swmm_converter = SchemaSWMMConverter(self.con, self.iface, self.lyrs)
             swmm_converter.create_user_swmm_inlets_junctions()
+            swmm_converter.create_user_swmm_outlets()
             
             s = QSettings()
             last_dir = s.value("FLO-2D/lastGdsDir", "")

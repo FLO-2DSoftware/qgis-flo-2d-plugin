@@ -167,6 +167,9 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         self.user_xs_lyr.geometryChanged.connect(self.xs_feature_changed)
         self.user_xs_lyr.attributeValueChanged.connect(self.xs_feature_changed)
 
+        self.user_xs_lyr.editingStopped.connect(lambda: self.populate_xsec_cbo(show_last_edited=True))
+        self.user_xs_lyr.selectionChanged.connect(self.switch2selected)
+
     def setup_connection(self):
         con = self.iface.f2d["con"]
         if con is None:
@@ -175,8 +178,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
             self.con = con
             self.gutils = GeoPackageUtils(self.con, self.iface)
             self.user_xs_lyr = self.lyrs.data["user_xsections"]["qlyr"]
-            self.user_xs_lyr.editingStopped.connect(lambda: self.populate_xsec_cbo(show_last_edited=True))
-            self.user_xs_lyr.selectionChanged.connect(self.switch2selected)
+
 
     def update_sample_elevation_btn(self, is_checked):
         if self.xs is not None:

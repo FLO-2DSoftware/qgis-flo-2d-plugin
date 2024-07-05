@@ -2106,7 +2106,8 @@ class Flo2D(object):
                         try:
                             swmm_converter = SchemaSWMMConverter(self.con, self.iface, self.lyrs)
                             swmm_converter.create_user_swmm_inlets_junctions()
-                            
+                            swmm_converter.create_user_swmm_outlets()
+
                             s = QSettings()
                             last_dir = s.value("FLO-2D/lastGdsDir", "")
                             # Import SWMMFLODROPBOX.DAT:
@@ -2116,12 +2117,12 @@ class Flo2D(object):
                                     if self.f2g.import_swmmflodropbox():
                                         self.files_used += "SWMMFLODROPBOX.DAT\n"
                                     else:
-                                        self.files_not_used +="SWMMFLODROPBOX.DAT (errors found)\n"  
+                                        self.files_not_used +="SWMMFLODROPBOX.DAT (errors found)\n"
                                 else:
-                                    self.files_not_used +="SWMMFLODROPBOX.DAT\n" 
+                                    self.files_not_used +="SWMMFLODROPBOX.DAT\n"
                             else:
-                                self.files_not_used +="SWMMFLODROPBOX.DAT\n" 
-                                
+                                self.files_not_used +="SWMMFLODROPBOX.DAT\n"
+
                             # Import SDCLOGGING..DAT:
                             file = last_dir + r"\SDCLOGGING.DAT"
                             if os.path.isfile(file):
@@ -2129,13 +2130,13 @@ class Flo2D(object):
                                     if self.f2g.import_sdclogging():
                                         self.files_used += "SDCLOGGING.DAT\n"
                                     else:
-                                        self.files_not_used +="SDCLOGGING.DAT (errors found)\n"  
+                                        self.files_not_used +="SDCLOGGING.DAT (errors found)\n"
                                 else:
-                                    self.files_not_used +="SDCLOGGING.DAT\n" 
+                                    self.files_not_used +="SDCLOGGING.DAT\n"
                             else:
-                                self.files_not_used +="SDCLOGGING.DAT\n" 
-                                                                                                 
-                            
+                                self.files_not_used +="SDCLOGGING.DAT\n"
+
+
                         except Exception as e:
                             QApplication.restoreOverrideCursor()
                             self.uc.log_info(traceback.format_exc())
@@ -2661,6 +2662,7 @@ class Flo2D(object):
                             try:
                                 swmm_converter = SchemaSWMMConverter(self.con, self.iface, self.lyrs)
                                 swmm_converter.create_user_swmm_inlets_junctions()
+                                swmm_converter.create_user_swmm_outlets()
                             except Exception as e:
                                 self.uc.log_info(traceback.format_exc())
                                 QApplication.restoreOverrideCursor()
