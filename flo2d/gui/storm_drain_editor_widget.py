@@ -1303,10 +1303,11 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                                     max_depth = ?, 
                                     init_depth = ?,
                                     surcharge_depth = ?, 
-                                    ponded_area = ?,            
+                                    ponded_area = ?
                              WHERE name = ?;"""
 
             new_nodes = []
+            existing_nodes = [item[0] for item in self.gutils.execute(f'SELECT name FROM user_swmm_inlets_junctions').fetchall()]
             updated_nodes = 0
             list_INP_nodes = list(storm_drain.INP_nodes.items())
             for name, values in list_INP_nodes:
@@ -1416,9 +1417,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                                     init_depth,
                                     surcharge_depth,
                                     ponded_area,
-                                    junction_invert_elev,
-                                    max_depth,
-                                    name,
+                                    name
                                 ),
                             )
                             updated_nodes += 1
@@ -1439,8 +1438,6 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                         feat.setAttribute("init_depth", init_depth)
                         feat.setAttribute("surcharge_depth", surcharge_depth)
                         feat.setAttribute("ponded_area", 0)
-                        feat.setAttribute("invert_elev_inp", junction_invert_elev)
-                        feat.setAttribute("max_depth_inp", max_depth)
 
                         # The following attributes are not defined in .INP files,
                         # assign them zero as default values:
@@ -1453,8 +1450,6 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                         feat.setAttribute("swmm_clogging_factor", 0)
                         feat.setAttribute("swmm_time_for_clogging", 0)
                         feat.setAttribute("drboxarea", 0)
-                        feat.setAttribute("rt_fid", 0)
-                        feat.setAttribute("outf_flo", 0)
 
                         new_nodes.append(feat)
                         updated_nodes += 1
@@ -2707,6 +2702,8 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         for feat in self.user_swmm_inlets_junctions_lyr.getFeatures():
             node_name = feat['name']
             if len(inlets_outlets_inside) > 1:
+                if node_name in existing_nodes:
+                    continue
                 if node_name not in inlets_outlets_inside:
                     self.user_swmm_inlets_junctions_lyr.deleteFeature(feat.id())
         self.user_swmm_inlets_junctions_lyr.commitChanges()
