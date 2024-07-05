@@ -442,6 +442,10 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         self.SD_rename_type4_btn.clicked.connect(self.SD_rename_type4)
 
         self.pump_curve_cbo.currentIndexChanged.connect(self.show_pump_curve_table_and_plot)
+        self.pump_curve_cbo.activated.connect(self.show_pump_curve_table_and_plot)
+        self.pump_curve_type_cbo.currentIndexChanged.connect(self.update_pump_curve_data)
+        self.pump_curve_description_le.editingFinished.connect(self.update_pump_curve_data)
+
         self.add_pump_curve_btn.clicked.connect(self.add_one_pump_curve)
         self.add_predefined_pump_curve_btn.clicked.connect(self.SD_import_pump_curves)
         self.remove_pump_curve_btn.clicked.connect(self.delete_pump_curve)
@@ -456,12 +460,6 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
 
         self.pumps_data_model.itemDataChanged.connect(self.itemDataChangedSlot)
         self.pumps_data_model.dataChanged.connect(self.save_SD_table_data)
-
-        self.pump_curve_type_cbo.currentIndexChanged.connect(self.update_pump_curve_data)
-        self.pump_curve_description_le.editingFinished.connect(self.update_pump_curve_data)
-               
-        self.pump_curve_cbo.currentIndexChanged.connect(self.current_cbo_pump_curve_index_changed)
-        self.pump_curve_cbo.activated.connect(self.current_cbo_pump_curve_index_changed)
 
         self.simulate_stormdrain_chbox.clicked.connect(self.simulate_stormdrain)
         self.import_shapefile_btn.clicked.connect(self.import_hydraulics)
@@ -6181,15 +6179,12 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         self.plot.plot.setLabel("bottom", x_lbl)
 
         if idx in [1, 2]:
-
             # Insert the (0, 0) and (0, d2[1]) points
             if self.d1 and self.d2:
                 adjusted_d1 = [0] + self.d1
-                
-                self.d2 = self.d2[1:] + [self.d2[0]]
 
-                adjusted_d2 = [0] + self.d2
-                 
+                adjusted_d2 = [0] + self.d2[1:] + [self.d2[0]]
+
                 # Ensure adjusted_d1 has one more point than adjusted_d2
                 adjusted_d1.append(adjusted_d1[1])
                 stepped_curve = pg.PlotDataItem(adjusted_d1, adjusted_d2, pen=QColor("#0018d4"), stepMode="center")
@@ -6204,7 +6199,12 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         for i in range(self.pumps_data_model.rowCount()):
             self.d1.append(m_fdata(self.pumps_data_model, i, 0))
             self.d2.append(m_fdata(self.pumps_data_model, i, 1))
-        self.plot.update_item(self.plot_item_name, [self.d1, self.d2])
+        # if self.pump_curve_type_cbo.currentIndex() + 1 in [1, 2]:
+        #     # Recreate the plot for idx 1 or 2
+        #     self.create_pump_plot(self.plot_item_name.split(":   ")[1])
+        # else:
+        #     self.plot.update_item(self.plot_item_name, [self.d1, self.d2])
+        self.create_pump_plot(self.plot_item_name.split(":   ")[1])
         self.plot.auto_range()
 
     def add_one_pump_curve(self):
@@ -6275,7 +6275,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
 
     def save_pump_curve_data(self):
         idx = self.pump_curve_cbo.currentIndex()
-        pc_fid = self.pump_curve_cbo.itemData(idx)
+        # pc_fid = self.pump_curve_cbo.itemData(idx)
         data_name = self.pump_curve_cbo.currentText()
         self.update_pump_plot()
         pc_data = []
@@ -6304,7 +6304,8 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             "UPDATE swmm_pumps_curve_data SET pump_curve_type = ?, description = ? WHERE pump_curve_name = ?",
             (ptype, desc, curve),
         )
-        self.show_pump_curve_table_and_plot()
+
+        self.update_pump_plot()
 
     def show_pump_curve_type_and_description(self):
         if self.pump_curve_cbo.count():
