@@ -1316,9 +1316,17 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                         sd_type = "I"
                     elif "out_type" in values:
                         continue   # Skip outlets
-                    elif name[0] in ["I", "i"]:
-                        skipped_inlets += 1
-                        continue  # Skip inlets defined by initial "I" or "i". Only consider inlets in [SUBCATCHMENTS]
+                    elif name[0].lower() in ["i"]:
+                        if (
+                            "junction_invert_elev" in values
+                        ):  # if 'junction_invert_elev' is there => it was read from [JUNCTIONS]
+                            sd_type = "I"
+                        elif (
+                            "outfall_invert_elev" in values
+                        ):  # if 'outfall_invert_elev' is there => it was read from [OUTFALLS]
+                            continue
+                        else:
+                            continue
                     else:
                         sd_type = "J"
 

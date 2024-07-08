@@ -48,7 +48,7 @@ class Schema2UserDialog(qtBaseClass, uiDialog):
         self.ckbox_1d.stateChanged.connect(self.convert_1d_checked)
         self.ckbox_levees.stateChanged.connect(self.convert_levees_checked)
         self.ckbox_fpxsec.stateChanged.connect(self.convert_fpxsec_checked)
-        self.ckbox_swmm.stateChanged.connect(self.convert_swmm_checked)
+        # self.ckbox_swmm.stateChanged.connect(self.convert_swmm_checked)
         self.ckbox_hydr_struct.stateChanged.connect(self.convert_hydr_checked)
         self.ckbox_select_all.clicked.connect(self.check_components)
 
@@ -88,10 +88,10 @@ class Schema2UserDialog(qtBaseClass, uiDialog):
         else:
             self.ckbox_fpxsec.setEnabled(True)
 
-        if any(self.gutils.is_table_empty(t) for t in schema_swwmm_tables):
-            self.ckbox_swmm.setDisabled(True)
-        else:
-            self.ckbox_swmm.setEnabled(True)
+        # if any(self.gutils.is_table_empty(t) for t in schema_swwmm_tables):
+        #     self.ckbox_swmm.setDisabled(True)
+        # else:
+        #     self.ckbox_swmm.setEnabled(True)
             
         if any(self.gutils.is_table_empty(t) for t in schema_hydr_tables):
             self.ckbox_hydr_struct.setDisabled(True)
@@ -128,11 +128,11 @@ class Schema2UserDialog(qtBaseClass, uiDialog):
         else:
             self.methods.pop(5)
 
-    def convert_swmm_checked(self):
-        if self.ckbox_swmm.isChecked():
-            self.methods[6] = self.convert_swmm
-        else:
-            self.methods.pop(6)
+    # def convert_swmm_checked(self):
+    #     if self.ckbox_swmm.isChecked():
+    #         self.methods[6] = self.convert_swmm
+    #     else:
+    #         self.methods.pop(6)
 
     def convert_hydr_checked(self):
         if self.ckbox_hydr_struct.isChecked():
@@ -253,8 +253,8 @@ class Schema2UserDialog(qtBaseClass, uiDialog):
             self.ckbox_levees.setChecked(select)
         if self.ckbox_fpxsec.isEnabled():
             self.ckbox_fpxsec.setChecked(select)
-        if self.ckbox_swmm.isEnabled():
-            self.ckbox_swmm.setChecked(select)
+        # if self.ckbox_swmm.isEnabled():
+        #     self.ckbox_swmm.setChecked(select)
         if self.ckbox_hydr_struct.isEnabled():
             self.ckbox_hydr_struct.setChecked(select)
 
