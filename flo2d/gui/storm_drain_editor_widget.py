@@ -1549,8 +1549,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                                             tidal_curve = ?, 
                                             time_series = ?,
                                             fixed_stage = ?,
-                                            flapgate = ?, 
-                                            swmm_allow_discharge = ?
+                                            flapgate = ?
                                      WHERE name = ?;"""
 
             updated_nodes = 0
@@ -1575,6 +1574,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                         #     continue
 
                 # Outfalls:
+                self.uc.log_info(str(values))
                 outfall_type = values["out_type"].upper() if "out_type" in values else "NORMAL"
 
                 outfall_invert_elev = (
@@ -1593,9 +1593,9 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 flapgate = values["tide_gate"] if "tide_gate" in values else "False"
                 flapgate = "True" if is_true(flapgate) else "False"
 
-                allow_discharge = values["swmm_allow_discharge"] if "swmm_allow_discharge" in values else "False"
-                allow_discharge = "1" if is_true(allow_discharge) else "0"
-
+                # allow_discharge = values["swmm_allow_discharge"] if "swmm_allow_discharge" in values else "0"
+                # allow_discharge = "1" if is_true(allow_discharge) else "0"
+                #
                 if not "x" in values or not "y" in values:
                     outside_nodes += n_spaces + name + "\tno coordinates.\n"
                     continue
@@ -1621,7 +1621,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                     feat.setAttribute("time_series", time_series)
                     feat.setAttribute("fixed_stage", water_depth)
                     feat.setAttribute("flapgate", flapgate)
-                    feat.setAttribute("swmm_allow_discharge", allow_discharge)
+                    # feat.setAttribute("swmm_allow_discharge", allow_discharge)
 
                     new_nodes.append(feat)
 
@@ -1650,7 +1650,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                                     time_series,
                                     water_depth,
                                     flapgate,
-                                    allow_discharge,
+                                    # allow_discharge,
                                     name,
                                 ),
                             )
@@ -1671,7 +1671,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                         feat.setAttribute("time_series", time_series)
                         feat.setAttribute("fixed_stage", water_depth)
                         feat.setAttribute("flapgate", flapgate)
-                        feat.setAttribute("swmm_allow_discharge", allow_discharge)
+                        # feat.setAttribute("swmm_allow_discharge", allow_discharge)
 
                         new_nodes.append(feat)
                         updated_nodes += 1
