@@ -107,9 +107,6 @@ class FPXsecEditorWidget(qtBaseClass, uiDialog):
             max_fid = self.gutils.get_max("user_fpxsec")
             cur_idx = 0
             for i, row in enumerate(rows):
-                self.uc.log_info(str(i))
-                self.uc.log_info(str(row))
-                self.uc.log_info(str(fid))
                 self.fpxs_cbo.addItem(row[1], row)
                 if fid and row[0] == fid:
                     cur_idx = i + 1

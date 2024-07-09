@@ -437,6 +437,8 @@ class GeoPackageUtils(object):
                           """
                     update_tables_sql.append(sql)
 
+
+
                 # add data to the user_swmm_outlets
                 sql = """
                         INSERT INTO user_swmm_outlets (
@@ -455,7 +457,11 @@ class GeoPackageUtils(object):
                             user_swmm_nodes.name,
                             user_swmm_nodes.outfall_invert_elev,
                             user_swmm_nodes.flapgate, 
-                            user_swmm_nodes.swmm_allow_discharge,
+                            CASE 
+                                WHEN LOWER(user_swmm_nodes.swmm_allow_discharge) = 'false' THEN '0'
+                                WHEN LOWER(user_swmm_nodes.swmm_allow_discharge) = 'true' THEN '1'
+                                ELSE user_swmm_nodes.swmm_allow_discharge
+                            END as swmm_allow_discharge,
                             user_swmm_nodes.outfall_type,
                             user_swmm_nodes.tidal_curve,
                             user_swmm_nodes.time_series,  
