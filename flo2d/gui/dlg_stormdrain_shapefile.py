@@ -1562,7 +1562,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
             except Exception as e:
                 QApplication.restoreOverrideCursor()
                 self.uc.show_error(
-                    "ERROR 070618.0454: Creation of Storm Drain Outlets layer failed after reading "
+                    "ERROR 070618.0454: Creation of Storm Drain Outfalls layer failed after reading "
                     + str(len(new_feats))
                     + " outfalls!"
                     + "\n__________________________________________________",

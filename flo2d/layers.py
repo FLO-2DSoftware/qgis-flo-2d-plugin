@@ -216,7 +216,7 @@ class Layers(object):
                 (
                     "user_swmm_outlets",
                     {
-                        "name": "Storm Drain Outlets",
+                        "name": "Storm Drain Outfalls",
                         "sgroup": "User Layers",
                         "ssgroup": "Storm Drain",
                         "styles": ["user_swmm_outlets.qml"],

@@ -1836,7 +1836,7 @@ class CurrentConflictsDialog(qtBaseClass, uiDialog):
             "Storm Drain Outfalls",
             "swmmoutf",
             "grid_fid",
-            "Hyd. Struct out-cell and Storm Drain Outlet in same cell (not recomended)",
+            "Hyd. Struct out-cell and Storm Drain Outfall in same cell (not recomended)",
         )
 
         self.conflict4(

@@ -651,8 +651,8 @@ class OutletAttributes(qtBaseClass, uiDialog):
         self.gutils = GeoPackageUtils(con, iface)
 
         # Create a dock widget
-        self.dock_widget = QgsDockWidget("Outlets", self.iface.mainWindow())
-        self.dock_widget.setObjectName("Outlets")
+        self.dock_widget = QgsDockWidget("Outfalls", self.iface.mainWindow())
+        self.dock_widget.setObjectName("Outfalls")
         self.dock_widget.setWidget(self)
 
         self.current_node = None
@@ -1294,8 +1294,8 @@ class OutletAttributes(qtBaseClass, uiDialog):
                 self.current_node = grid_qry[0]
                 cell = grid_qry[1]
             else:
-                self.uc.bar_error("Outlet not found!")
-                self.uc.log_info("Outlet not found!")
+                self.uc.bar_error("Outfall not found!")
+                self.uc.log_info("Outfall not found!")
                 return
 
             grid = self.lyrs.data["grid"]["qlyr"]

@@ -697,11 +697,11 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         # try:
         if self.gutils.is_table_empty("user_swmm_inlets_junctions") or self.gutils.is_table_empty("user_swmm_outlets"):
             self.uc.log_info(
-                'User Layer "Storm Drain Inlets/Junctions" and/or "Storm Drain Outlets" is empty!\n\n'
+                'User Layer "Storm Drain Inlets/Junctions" and/or "Storm Drain Outfalls" is empty!\n\n'
                 + "Please import components from .INP file or shapefile, or convert from schematized Storm Drains."
             )
             self.uc.show_warn(
-                'User Layer "Storm Drain Inlets/Junctions" and/or "Storm Drain Outlets" is empty!'
+                'User Layer "Storm Drain Inlets/Junctions" and/or "Storm Drain Outfalls" is empty!'
             )
             return False
 
@@ -759,13 +759,13 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 QApplication.restoreOverrideCursor()
                 self.uc.log_info(
                     "ERROR 060319.1831: Schematizing of Storm Drains failed!\n\n"
-                    + "Outlet geometry missing.\n\n"
-                    + "Please check user Storm Drain Outlets layer."
+                    + "Outfall geometry missing.\n\n"
+                    + "Please check user Storm Drain Outfalls layer."
                 )
                 self.uc.show_critical(
                     "ERROR 060319.1831: Schematizing of Storm Drains failed!\n\n"
-                    + "Outlet geometry missing.\n\n"
-                    + "Please check user Storm Drain Outlets layer."
+                    + "Outfall geometry missing.\n\n"
+                    + "Please check user Storm Drain Outfalls layer."
                 )
                 return False
 
@@ -802,7 +802,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         msg = msg1 + msg2
         if msg != "":
             self.uc.show_info(
-                "WARNING 040121.1911: Schematizing Inlets and Outlets Storm Drains result:\n\n"
+                "WARNING 040121.1911: Schematizing Inlets and Outfalls Storm Drains result:\n\n"
                 + msg
             )
 
@@ -1533,7 +1533,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         QApplication.setOverrideCursor(Qt.WaitCursor)
         try:
             """
-            Creates Storm Drain Outlets layer (Users layers).
+            Creates Storm Drain Outfalls layer (Users layers).
 
             Creates "user_swmm_outlets" layer with attributes taken from
             the [COORDINATES] and [OUTFALLS] groups.
@@ -1703,7 +1703,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         except Exception as e:
             QApplication.setOverrideCursor(Qt.ArrowCursor)
             self.uc.show_error(
-                "ERROR 060319.1610: Creating Storm Drain Outlets layer failed!\n\n"
+                "ERROR 060319.1610: Creating Storm Drain Outfalls layer failed!\n\n"
                 + "Please check your SWMM input data.\nAre the nodes coordinates inside the computational domain?",
                 e,
             )
@@ -5657,7 +5657,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
 
             layer1 = QgsProject.instance().mapLayersByName('Storm Drain Inlets/Junctions')[0]
             layer2 = QgsProject.instance().mapLayersByName('Storm Drain Storage Units')[0]
-            layer3 = QgsProject.instance().mapLayersByName('Storm Drain Outlets')[0]
+            layer3 = QgsProject.instance().mapLayersByName('Storm Drain Outfalls')[0]
             # Create a new memory layer for point geometries
             SD_all_nodes_layer = QgsVectorLayer("Point", 'SD All Points', 'memory')
 
@@ -5669,7 +5669,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             else:
                 distance_units = "feet"
 
-            dialog = TwoInputsDialog("Do you want to overwrite Inlet and Outlet nodes\n" +
+            dialog = TwoInputsDialog("Do you want to overwrite Inlet and Outfall nodes\n" +
                                      "for all links (conduits, pumps, orifices, and weirs)?",
                                      "Find a node located at a distance\nless than this from the link (in " + distance_units + " )",
                                      self.buffer_distance, "", 5)
@@ -5714,7 +5714,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             else:
                 success = " Success! all inlets and outlets nodes where assigned.\n\n"
 
-            self.uc.show_info("Assignments to Inlet and Outlet nodes:\n\n" + success + self.auto_assign_msg)
+            self.uc.show_info("Assignments to Inlet and Outfall nodes:\n\n" + success + self.auto_assign_msg)
 
         except Exception as e:
             QApplication.restoreOverrideCursor()
@@ -6664,7 +6664,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 'user_swmm_conduits': 'Conduits',
                 'user_swmm_inlets_junctions': 'Inlets/Junctions',
                 'user_swmm_orifices': 'Orifices',
-                'user_swmm_outlets': 'Outlets',
+                'user_swmm_outlets': 'Outfalls',
                 'user_swmm_pumps': 'Pumps',
                 'user_swmm_storage_units': 'Storage Units',
                 'user_swmm_weirs': 'Weirs'

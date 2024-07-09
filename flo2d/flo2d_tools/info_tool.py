@@ -97,8 +97,8 @@ class InfoTool(QgsMapToolIdentify):
                     name = feat["name"]
                     grid = feat["grid"]
                     actions[i][j] = QAction(name + " (" + str(grid) + ")", None)
-                elif ln == "Storm Drain Outlets":
-                    sd_layer = self.lyrs.get_layer_by_name("Storm Drain Outlets", group=self.lyrs.group).layer()
+                elif ln == "Storm Drain Outfalls":
+                    sd_layer = self.lyrs.get_layer_by_name("Storm Drain Outfalls", group=self.lyrs.group).layer()
                     feat = next(sd_layer.getFeatures(QgsFeatureRequest(fid)))
                     name = feat["name"]
                     grid = feat["grid"]

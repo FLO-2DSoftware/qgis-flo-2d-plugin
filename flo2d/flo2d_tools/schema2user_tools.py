@@ -511,7 +511,7 @@ class SchemaSWMMConverter(SchemaConverter):
         except Exception as e:
             QApplication.restoreOverrideCursor()
             self.uc.show_error(
-                "ERROR 040319.1921:\n\nAdding features to Storm Drain Outlets failed!"
+                "ERROR 040319.1921:\n\nAdding features to Storm Drain Outfalls failed!"
                 + "\n_______________________________________________________________",
                 e,
             )

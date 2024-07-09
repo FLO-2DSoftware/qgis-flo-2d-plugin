@@ -3594,7 +3594,7 @@ class Flo2D(object):
             self.f2d_outlets_dock = None
 
         name = self.gutils.execute("SELECT name FROM user_swmm_outlets WHERE fid = ?", (fid,)).fetchone()
-        self.uc.bar_info("Selected Storm Drain Outlet: " + str(name[0]))
+        self.uc.bar_info("Selected Storm Drain Outfall: " + str(name[0]))
 
         dlg = OutletAttributes(self.con, self.iface, self.lyrs)
         self.iface.mainWindow().addDockWidget(Qt.RightDockWidgetArea, dlg.dock_widget)
