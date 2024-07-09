@@ -1994,7 +1994,8 @@ class PumpCurves(GeoPackageUtils):
         curve_data = self.execute(qry, (name,)).fetchall()
         if not curve_data:
             # add a new curve:
-            curve_data = self.add_pump_curve_data(name, fetch=True)
+            # curve_data = self.add_pump_curve_data(name, fetch=True)
+            return None
         return curve_data
 
     def add_pump_curve_data(self, name, rows=5, fetch=False):
