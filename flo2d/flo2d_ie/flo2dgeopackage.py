@@ -6229,8 +6229,15 @@ class Flo2dGeoPackage(GeoPackageUtils):
             with open(swmmoutf, "w") as s:
                 for row in swmmoutf_rows:
                     name, grid_fid, outf_flo = row
+                    if not grid_fid:
+                        grid_fid = -9999
                     if isinstance(outf_flo, str):
-                        outf_flo = 1 if outf_flo.lower() == 'true' else 0
+                        if outf_flo.lower() == 'true':
+                            outf_flo = 1
+                        elif outf_flo.lower() == 'false':
+                            outf_flo = 0
+                        else:
+                            outf_flo = int(outf_flo)
                     else:
                         outf_flo = int(outf_flo)
                     s.write(line1.format(name, grid_fid, outf_flo))
