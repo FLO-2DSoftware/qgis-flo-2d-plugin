@@ -301,6 +301,7 @@ class GeoPackageUtils(object):
         update_tables_sql = []
         is_not_vector = []
         is_not_raster = []
+        skip_ga = False
         for table in tables_only_in_other_gpkg:
             if table == "infil_areas_green":
                 sql = """
@@ -311,6 +312,7 @@ class GeoPackageUtils(object):
                         JOIN other.infil_areas_green ON other.infil_cells_green.infil_area_fid = other.infil_areas_green.fid;
                       """
                 update_tables_sql.append(sql)
+                skip_ga = True
             if table == "infil_areas_scs":
                 sql = """
                         INSERT INTO infil_cells_scs (fid, grid_fid, scsn)
@@ -537,8 +539,9 @@ class GeoPackageUtils(object):
         i = 0
 
         for tab in tabs:
-            if tab in tables_manually_updated:
-                continue
+            if skip_ga:
+                if tab in tables_manually_updated:
+                    continue
             pd.setLabelText(f"Updating {tab}...")
             names_new = self.table_info(tab, only_columns=True)
             names_old = set(self.table_info(tab, only_columns=True, attached_db="other"))

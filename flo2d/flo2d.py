@@ -374,6 +374,11 @@ class Flo2D(object):
             parent=self.iface.mainWindow(),
             menu=(
                 (
+                    os.path.join(self.plugin_dir, "img/import_gpkg.svg"),
+                    "Import from GeoPackage",
+                    lambda: self.import_from_gpkg(),
+                ),
+                (
                     os.path.join(self.plugin_dir, "img/import_gds.svg"),
                     "Import data (*.DAT) files",
                     lambda: self.import_gds(),
