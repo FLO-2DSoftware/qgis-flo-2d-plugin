@@ -1887,7 +1887,7 @@ class InletRatingTable(GeoPackageUtils):
             return name
 
     def del_rating_table(self, rt_fid):
-        qry = "UPDATE user_swmm_nodes SET rt_fid = ? WHERE rt_fid = ?;"
+        qry = "UPDATE user_swmm_inlets_junctions SET rt_fid = ? WHERE rt_fid = ?;"
         self.execute(qry, (None, rt_fid))
         qry = "DELETE FROM swmmflort WHERE fid = ?;"
         self.execute(qry, (rt_fid,))
@@ -1994,7 +1994,8 @@ class PumpCurves(GeoPackageUtils):
         curve_data = self.execute(qry, (name,)).fetchall()
         if not curve_data:
             # add a new curve:
-            curve_data = self.add_pump_curve_data(name, fetch=True)
+            # curve_data = self.add_pump_curve_data(name, fetch=True)
+            return None
         return curve_data
 
     def add_pump_curve_data(self, name, rows=5, fetch=False):

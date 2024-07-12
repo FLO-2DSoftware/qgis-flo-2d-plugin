@@ -146,6 +146,7 @@ class Schema1DConverter(SchemaConverter):
         self.schema2user(self.schema_lbank_lyr, self.user_lbank_lyr, "polyline")
 
     def create_user_xs(self):
+        self.user_xs_lyr.blockSignals(True)
         self.copy_xs_tables()
         remove_features(self.user_xs_lyr)
         fields = self.user_xs_lyr.fields()
@@ -166,6 +167,7 @@ class Schema1DConverter(SchemaConverter):
         self.user_xs_lyr.updateExtents()
         self.user_xs_lyr.triggerRepaint()
         self.user_xs_lyr.removeSelection()
+        self.user_xs_lyr.blockSignals(False)
 
 
 class SchemaLeveesConverter(SchemaConverter):
@@ -386,11 +388,14 @@ class SchemaSWMMConverter(SchemaConverter):
     def __init__(self, con, iface, lyrs):
         super(SchemaSWMMConverter, self).__init__(con, iface, lyrs)
 
-        self.user_swmm_nodes_tab = "user_swmm_nodes"
+        self.user_swmm_inlets_junctions_tab = "user_swmm_inlets_junctions"
+        self.user_swmm_outlets_tab = "user_swmm_outlets"
         self.schema_inlet_tab = "swmmflo"
         self.schema_outlet_tab = "swmmoutf"
 
-        self.user_swmm_nodes_lyr = lyrs.data[self.user_swmm_nodes_tab]["qlyr"]
+        self.user_swmm_inlets_junctions_lyr = lyrs.data[self.user_swmm_inlets_junctions_tab]["qlyr"]
+        self.user_swmm_outlets_lyr = lyrs.data[self.user_swmm_outlets_tab]["qlyr"]
+
         self.schema_inlet_lyr = lyrs.data[self.schema_inlet_tab]["qlyr"]
         self.schema_outlet_lyr = lyrs.data[self.schema_outlet_tab]["qlyr"]
 
@@ -402,7 +407,6 @@ class SchemaSWMMConverter(SchemaConverter):
             ("swmm_width", "swmm_width"),
             ("swmm_height", "swmm_height"),
             ("swmm_coeff", "swmm_coeff"),
-            ("flapgate", "flapgate"),
             ("curbheight", "curbheight"),
             ("swmm_feature", "swmm_feature"),
         ]
@@ -418,7 +422,8 @@ class SchemaSWMMConverter(SchemaConverter):
             (self.schema_outlet_lyr, self.outlet_columns),
         ]
 
-        self.ui_fields = self.user_swmm_nodes_lyr.fields()
+        self.ui_fields = self.user_swmm_inlets_junctions_lyr.fields()
+        self.uo_fields = self.user_swmm_outlets_lyr.fields()
         self.rt_grids, self.rt_names = self.check_rating_tables()
 
     def check_rating_tables(self):
@@ -433,14 +438,8 @@ class SchemaSWMMConverter(SchemaConverter):
                 rt_names[grid_fid] = name
         return rt_grids, rt_names
 
-    def user_swmm_nodes_features(self, schema_lyr, columns):
-        col_no = len(columns)
-        if col_no == 10:
-            sd_type = "I"
-        elif col_no == 3:
-            sd_type = "O"
-        else:
-            sd_type = ""
+    def user_swmm_inlets_junctions_features(self, schema_lyr, columns):
+        sd_type = "I"
         new_features = []
         fields = self.ui_fields
         for feat in schema_lyr.getFeatures():
@@ -451,34 +450,68 @@ class SchemaSWMMConverter(SchemaConverter):
             new_feat.setFields(fields)
             new_feat.setGeometry(new_geom)
             new_feat.setAttribute("sd_type", sd_type)
-            new_feat.setAttribute("outfall_type", "NORMAL")
             for schema_col, user_col in columns:
                 new_feat.setAttribute(user_col, feat[schema_col])
-            if sd_type == "I":
-                grid_fid = feat["swmm_jt"]
-                if grid_fid in self.rt_grids:
-                    new_feat.setAttribute("rt_fid", self.rt_grids[grid_fid])
-                    new_feat.setAttribute("rt_name", self.rt_names[grid_fid])
+            # if sd_type == "I":
+            #     grid_fid = feat["swmm_jt"]
+            #     if grid_fid in self.rt_grids:
+            #         new_feat.setAttribute("rt_fid", self.rt_grids[grid_fid])
+            #         new_feat.setAttribute("rt_name", self.rt_names[grid_fid])
 
             new_features.append(new_feat)
         return new_features
 
-    def create_user_swmm_nodes(self):
+    def create_user_swmm_inlets_junctions(self):
         try:
-            remove_features(self.user_swmm_nodes_lyr)
-            sd_feats = self.user_swmm_nodes_features(self.schema_inlet_lyr, self.inlet_columns)
-            sd_feats += self.user_swmm_nodes_features(self.schema_outlet_lyr, self.outlet_columns)
-            self.user_swmm_nodes_lyr.startEditing()
-            self.user_swmm_nodes_lyr.addFeatures(sd_feats)
-            self.user_swmm_nodes_lyr.commitChanges()
-            self.user_swmm_nodes_lyr.updateExtents()
-            self.user_swmm_nodes_lyr.triggerRepaint()
-            self.user_swmm_nodes_lyr.removeSelection()      
+            remove_features(self.user_swmm_inlets_junctions_lyr)
+            sd_feats = self.user_swmm_inlets_junctions_features(self.schema_inlet_lyr, self.inlet_columns)
+            self.user_swmm_inlets_junctions_lyr.startEditing()
+            self.user_swmm_inlets_junctions_lyr.addFeatures(sd_feats)
+            self.user_swmm_inlets_junctions_lyr.commitChanges()
+            self.user_swmm_inlets_junctions_lyr.updateExtents()
+            self.user_swmm_inlets_junctions_lyr.triggerRepaint()
+            self.user_swmm_inlets_junctions_lyr.removeSelection()      
             
         except Exception as e:
             QApplication.restoreOverrideCursor()
             self.uc.show_error(
-                "ERROR 040319.1921:\n\nAdding features to Storm Drain Nodes failed!"
+                "ERROR 040319.1921:\n\nAdding features to Storm Drain Inlets/Junctions failed!"
+                + "\n_______________________________________________________________",
+                e,
+            )
+
+    def user_swmm_outlets_features(self, schema_lyr, columns):
+        new_features = []
+        fields = self.uo_fields
+        for feat in schema_lyr.getFeatures():
+            geom = feat.geometry()
+            point = geom.asPoint()
+            new_geom = QgsGeometry.fromPointXY(point)
+            new_feat = QgsFeature()
+            new_feat.setFields(fields)
+            new_feat.setGeometry(new_geom)
+            new_feat.setAttribute("outfall_type", "NORMAL")
+            for schema_col, user_col in columns:
+                new_feat.setAttribute(user_col, feat[schema_col])
+
+            new_features.append(new_feat)
+        return new_features
+
+    def create_user_swmm_outlets(self):
+        try:
+            remove_features(self.user_swmm_outlets_lyr)
+            sd_feats = self.user_swmm_outlets_features(self.schema_outlet_lyr, self.outlet_columns)
+            self.user_swmm_outlets_lyr.startEditing()
+            self.user_swmm_outlets_lyr.addFeatures(sd_feats)
+            self.user_swmm_outlets_lyr.commitChanges()
+            self.user_swmm_outlets_lyr.updateExtents()
+            self.user_swmm_outlets_lyr.triggerRepaint()
+            self.user_swmm_outlets_lyr.removeSelection()
+
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.uc.show_error(
+                "ERROR 040319.1921:\n\nAdding features to Storm Drain Outfalls failed!"
                 + "\n_______________________________________________________________",
                 e,
             )

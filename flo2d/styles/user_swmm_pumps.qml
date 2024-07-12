@@ -430,10 +430,19 @@
         </config>
       </editWidget>
     </field>
-    <field name="pump_init_status" configurationFlags="NoFlag">
-      <editWidget type="TextEdit">
+    <field name="pump_init_status">
+      <editWidget type="ValueMap">
         <config>
-          <Option/>
+          <Option type="Map">
+            <Option name="map" type="List">
+              <Option type="Map">
+                <Option value="OFF" name="OFF" type="QString"/>
+              </Option>
+              <Option type="Map">
+                <Option value="ON" name="ON" type="QString"/>
+              </Option>
+            </Option>
+          </Option>
         </config>
       </editWidget>
     </field>
@@ -545,7 +554,7 @@ def my_form_open(dialog, layer, feature):
 	geom = feature.geometry()
 	control = dialog.findChild(QWidget, "MyLineEdit")
 ]]></editforminitcode>
-  <featformsuppress>0</featformsuppress>
+  <featformsuppress>1</featformsuppress>
   <editorlayout>generatedlayout</editorlayout>
   <editable>
     <field name="fid" editable="1"/>

@@ -420,10 +420,25 @@
         </config>
       </editWidget>
     </field>
-    <field configurationFlags="NoFlag" name="weir_type">
-      <editWidget type="TextEdit">
+    <field name="weir_type">
+      <editWidget type="ValueMap">
         <config>
-          <Option/>
+          <Option type="Map">
+            <Option name="map" type="List">
+              <Option type="Map">
+                <Option value="TRANSVERSE" name="TRANSVERSE" type="QString"/>
+              </Option>
+              <Option type="Map">
+                <Option value="SIDEFLOW" name="SIDEFLOW" type="QString"/>
+              </Option>
+              <Option type="Map">
+                <Option value="V-NOTCH" name="V-NOTCH" type="QString"/>
+              </Option>
+              <Option type="Map">
+                <Option value="TRAPEZOIDAL" name="TRAPEZOIDAL" type="QString"/>
+              </Option>
+            </Option>
+          </Option>
         </config>
       </editWidget>
     </field>
@@ -441,10 +456,19 @@
         </config>
       </editWidget>
     </field>
-    <field configurationFlags="NoFlag" name="weir_flap_gate">
-      <editWidget type="TextEdit">
+    <field name="weir_flap_gate">
+      <editWidget type="ValueMap">
         <config>
-          <Option/>
+          <Option type="Map">
+            <Option name="map" type="List">
+              <Option type="Map">
+                <Option value="NO" name="NO" type="QString"/>
+              </Option>
+              <Option type="Map">
+                <Option value="YES" name="YES" type="QString"/>
+              </Option>
+            </Option>
+          </Option>
         </config>
       </editWidget>
     </field>
@@ -463,9 +487,18 @@
       </editWidget>
     </field>
     <field configurationFlags="NoFlag" name="weir_shape">
-      <editWidget type="TextEdit">
+       <editWidget type="ValueMap">
         <config>
-          <Option/>
+          <Option type="Map">
+            <Option name="map" type="List">
+              <Option type="Map">
+                <Option value="CIRCULAR" name="CIRCULAR" type="QString"/>
+              </Option>
+              <Option type="Map">
+                <Option value="RECT_CLOSED" name="RECT_CLOSED" type="QString"/>
+              </Option>
+            </Option>
+          </Option>
         </config>
       </editWidget>
     </field>
@@ -620,7 +653,7 @@ def my_form_open(dialog, layer, feature):
 	geom = feature.geometry()
 	control = dialog.findChild(QWidget, "MyLineEdit")
 ]]></editforminitcode>
-  <featformsuppress>0</featformsuppress>
+  <featformsuppress>1</featformsuppress>
   <editorlayout>generatedlayout</editorlayout>
   <editable>
     <field editable="1" name="fid"/>

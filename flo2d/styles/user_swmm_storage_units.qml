@@ -370,9 +370,18 @@
       </editWidget>
     </field>
     <field name="external_inflow" configurationFlags="NoFlag">
-      <editWidget type="TextEdit">
+      <editWidget type="ValueMap">
         <config>
-          <Option/>
+          <Option type="Map">
+            <Option type="List" name="map">
+              <Option type="Map">
+                <Option type="QString" value="NO" name="NO"/>
+              </Option>
+              <Option type="Map">
+                <Option type="QString" value="YES" name="YES"/>
+              </Option>
+            </Option>
+          </Option>
         </config>
       </editWidget>
     </field>
@@ -633,7 +642,7 @@ def my_form_open(dialog, layer, feature):
 	geom = feature.geometry()
 	control = dialog.findChild(QWidget, "MyLineEdit")
 ]]></editforminitcode>
-  <featformsuppress>0</featformsuppress>
+  <featformsuppress>1</featformsuppress>
   <editorlayout>generatedlayout</editorlayout>
   <editable>
     <field name="coefficient" editable="1"/>

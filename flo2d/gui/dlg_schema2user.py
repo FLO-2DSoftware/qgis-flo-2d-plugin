@@ -48,7 +48,7 @@ class Schema2UserDialog(qtBaseClass, uiDialog):
         self.ckbox_1d.stateChanged.connect(self.convert_1d_checked)
         self.ckbox_levees.stateChanged.connect(self.convert_levees_checked)
         self.ckbox_fpxsec.stateChanged.connect(self.convert_fpxsec_checked)
-        self.ckbox_swmm.stateChanged.connect(self.convert_swmm_checked)
+        # self.ckbox_swmm.stateChanged.connect(self.convert_swmm_checked)
         self.ckbox_hydr_struct.stateChanged.connect(self.convert_hydr_checked)
         self.ckbox_select_all.clicked.connect(self.check_components)
 
@@ -88,10 +88,10 @@ class Schema2UserDialog(qtBaseClass, uiDialog):
         else:
             self.ckbox_fpxsec.setEnabled(True)
 
-        if any(self.gutils.is_table_empty(t) for t in schema_swwmm_tables):
-            self.ckbox_swmm.setDisabled(True)
-        else:
-            self.ckbox_swmm.setEnabled(True)
+        # if any(self.gutils.is_table_empty(t) for t in schema_swwmm_tables):
+        #     self.ckbox_swmm.setDisabled(True)
+        # else:
+        #     self.ckbox_swmm.setEnabled(True)
             
         if any(self.gutils.is_table_empty(t) for t in schema_hydr_tables):
             self.ckbox_hydr_struct.setDisabled(True)
@@ -128,11 +128,11 @@ class Schema2UserDialog(qtBaseClass, uiDialog):
         else:
             self.methods.pop(5)
 
-    def convert_swmm_checked(self):
-        if self.ckbox_swmm.isChecked():
-            self.methods[6] = self.convert_swmm
-        else:
-            self.methods.pop(6)
+    # def convert_swmm_checked(self):
+    #     if self.ckbox_swmm.isChecked():
+    #         self.methods[6] = self.convert_swmm
+    #     else:
+    #         self.methods.pop(6)
 
     def convert_hydr_checked(self):
         if self.ckbox_hydr_struct.isChecked():
@@ -184,7 +184,8 @@ class Schema2UserDialog(qtBaseClass, uiDialog):
     def convert_swmm(self):
         try:
             swmm_converter = SchemaSWMMConverter(self.con, self.iface, self.lyrs)
-            swmm_converter.create_user_swmm_nodes()
+            swmm_converter.create_user_swmm_inlets_junctions()
+            swmm_converter.create_user_swmm_outlets()
             
             s = QSettings()
             last_dir = s.value("FLO-2D/lastGdsDir", "")
@@ -198,7 +199,7 @@ class Schema2UserDialog(qtBaseClass, uiDialog):
                         for row in par:                    
                             name  = row[0]
                             area = row[2]
-                            self.gutils.execute("UPDATE user_swmm_nodes SET drboxarea = ? WHERE name = ?", (area, name))
+                            self.gutils.execute("UPDATE user_swmm_inlets_junctions SET drboxarea = ? WHERE name = ?", (area, name))
                     except:
                         self.uc.bar_error("Error while reading SWMMFLODROPBOX.DAT !")
 
@@ -213,7 +214,7 @@ class Schema2UserDialog(qtBaseClass, uiDialog):
                             name  = row[2]
                             clog_fact = row[3]
                             clog_time = row[4]
-                            self.gutils.execute("""UPDATE user_swmm_nodes
+                            self.gutils.execute("""UPDATE user_swmm_inlets_junctions
                                                    SET swmm_clogging_factor = ?, swmm_time_for_clogging = ?
                                                    WHERE name = ?""", (clog_fact, clog_time, name))                            
                     except:
@@ -223,7 +224,7 @@ class Schema2UserDialog(qtBaseClass, uiDialog):
             self.uc.log_info(traceback.format_exc())
             QApplication.restoreOverrideCursor()
             self.uc.show_error(
-                "ERROR 040319.1915:\n\nConverting Schematic SD Inlets to User Storm Drain Nodes failed!"
+                "ERROR 040319.1915:\n\nConverting Schematic SD Inlets to User Storm Drain Inlets/Junctions failed!"
                 + "\n_______________________________________________________________",
                 e,
             )
@@ -252,8 +253,8 @@ class Schema2UserDialog(qtBaseClass, uiDialog):
             self.ckbox_levees.setChecked(select)
         if self.ckbox_fpxsec.isEnabled():
             self.ckbox_fpxsec.setChecked(select)
-        if self.ckbox_swmm.isEnabled():
-            self.ckbox_swmm.setChecked(select)
+        # if self.ckbox_swmm.isEnabled():
+        #     self.ckbox_swmm.setChecked(select)
         if self.ckbox_hydr_struct.isEnabled():
             self.ckbox_hydr_struct.setChecked(select)
 
