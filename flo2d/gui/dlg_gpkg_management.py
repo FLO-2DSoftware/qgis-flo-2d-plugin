@@ -111,118 +111,132 @@ class GpkgManagementDialog(qtBaseClass, uiDialog):
         """
         Function to save the layers adjustments done to the geopackage
         """
-        QApplication.setOverrideCursor(Qt.WaitCursor)
+        try:
+            QApplication.setOverrideCursor(Qt.WaitCursor)
 
-        gpkg_path = self.gutils.get_gpkg_path()
+            gpkg_path = self.gutils.get_gpkg_path()
 
-        # Save the information of the user layer on the 'external_layers' table
-        if self.user_list.count() != 0:
-            for x in range(self.user_list.count()):
-                layer_name = self.user_list.item(x).text()
-                self.gutils.execute(f"INSERT INTO external_layers (name, type) VALUES ('{layer_name}', 'user');")
+            # Save the information of the user layer on the 'external_layers' table
+            if self.user_list.count() != 0:
+                for x in range(self.user_list.count()):
+                    layer_name = self.user_list.item(x).text()
+                    self.gutils.execute(f"INSERT INTO external_layers (name, type) VALUES ('{layer_name}', 'user');")
 
-        if self.external_list.count() != 0:
-            not_added = []
-            for x in range(self.external_list.count()):
-                layer_name = self.external_list.item(x).text()
-                qry = f"SELECT type FROM external_layers WHERE name = '{layer_name}';"
-                type = self.gutils.execute(qry).fetchone()
-                # Add the ones added by the user and don't run this code for already external layers
-                if not type or type[0] == 'user':
-                    layer = self.project.mapLayersByName(layer_name)[0]
-                    if layer.type() == QgsMapLayer.VectorLayer and layer.isSpatial():
-                        # Save to gpkg
-                        options = QgsVectorFileWriter.SaveVectorOptions()
-                        options.driverName = "GPKG"
-                        options.includeZ = True
-                        options.overrideGeometryType = layer.wkbType()
-                        options.layerName = layer.name()
-                        options.actionOnExistingFile = QgsVectorFileWriter.CreateOrOverwriteLayer
-                        QgsVectorFileWriter.writeAsVectorFormatV3(
-                            layer,
-                            gpkg_path,
-                            self.project.transformContext(),
-                            options)
-                        # Add back to the project
-                        gpkg_uri = f"{gpkg_path}|layername={layer.name()}"
-                        gpkg_layer = QgsVectorLayer(gpkg_uri, layer.name(), "ogr")
-                        self.project.addMapLayer(gpkg_layer, False)
-                        gpkg_layer.setRenderer(layer.renderer().clone())
-                        gpkg_layer.triggerRepaint()
-                        root = self.project.layerTreeRoot()
-                        group_name = "External Layers"
-                        tree_layer = root.findLayer(layer.id())
-                        if tree_layer:
-                            layer_parent = tree_layer.parent()
-                            if layer_parent and layer_parent.name() == "Storm Drain":
-                                group_name = layer_parent.name()
-                        flo2d_name = f"FLO-2D_{self.gutils.get_metadata_par('PROJ_NAME')}"
-                        flo2d_grp = root.findGroup(flo2d_name)
-                        if flo2d_grp.findGroup(group_name):
-                            group = flo2d_grp.findGroup(group_name)
+            if self.external_list.count() != 0:
+                not_added = []
+                for x in range(self.external_list.count()):
+                    layer_name = self.external_list.item(x).text()
+                    qry = f"SELECT type FROM external_layers WHERE name = '{layer_name}';"
+                    type = self.gutils.execute(qry).fetchone()
+                    # Add the ones added by the user and don't run this code for already external layers
+                    if not type or type[0] == 'user':
+                        layer = self.project.mapLayersByName(layer_name)
+                        if layer:
+                            layer = layer[0]
                         else:
-                            group = flo2d_grp.insertGroup(-1, group_name)
-                        group.insertLayer(0, gpkg_layer)
-
-                        layer_gpkg = self.project.mapLayersByName(gpkg_layer.name())[0]
-                        myLayerNode = root.findLayer(layer_gpkg.id())
-                        myLayerNode.setExpanded(False)
-
-                        # Delete layer that is not in the gpkg
-                        self.project.removeMapLayer(layer.id())
-
-                    elif layer.type() == QgsMapLayer.RasterLayer:
-                        if layer.dataProvider().bandCount() > 1:
-                            not_added.append(layer.name())
                             continue
-                        # Save to gpkg
-                        layer_name = layer.name().replace(" ", "_")
-                        params = {'INPUT': f'{layer.dataProvider().dataSourceUri()}',
-                                  'TARGET_CRS': None,
-                                  'NODATA': None,
-                                  'COPY_SUBDATASETS': False,
-                                  'OPTIONS': '',
-                                  'EXTRA': f'-co APPEND_SUBDATASET=YES -co RASTER_TABLE={layer_name} -ot Float32',
-                                  'DATA_TYPE': 0,
-                                  'OUTPUT': f'{gpkg_path}'}
+                        if layer.type() == QgsMapLayer.VectorLayer and layer.isSpatial():
+                            # Save to gpkg
+                            options = QgsVectorFileWriter.SaveVectorOptions()
+                            options.driverName = "GPKG"
+                            options.includeZ = True
+                            options.overrideGeometryType = layer.wkbType()
+                            options.layerName = layer.name()
+                            options.actionOnExistingFile = QgsVectorFileWriter.CreateOrOverwriteLayer
+                            QgsVectorFileWriter.writeAsVectorFormatV3(
+                                layer,
+                                gpkg_path,
+                                self.project.transformContext(),
+                                options)
+                            # Add back to the project
+                            gpkg_uri = f"{gpkg_path}|layername={layer.name()}"
+                            gpkg_layer = QgsVectorLayer(gpkg_uri, layer.name(), "ogr")
+                            self.project.addMapLayer(gpkg_layer, False)
+                            gpkg_layer.setRenderer(layer.renderer().clone())
+                            gpkg_layer.triggerRepaint()
+                            root = self.project.layerTreeRoot()
+                            group_name = "External Layers"
+                            tree_layer = root.findLayer(layer.id())
+                            if tree_layer:
+                                layer_parent = tree_layer.parent()
+                                if layer_parent and layer_parent.name() == "Storm Drain":
+                                    group_name = layer_parent.name()
+                            flo2d_name = f"FLO-2D_{self.gutils.get_metadata_par('PROJ_NAME')}"
+                            flo2d_grp = root.findGroup(flo2d_name)
+                            if flo2d_grp.findGroup(group_name):
+                                group = flo2d_grp.findGroup(group_name)
+                            else:
+                                group = flo2d_grp.insertGroup(-1, group_name)
+                            group.insertLayer(0, gpkg_layer)
 
-                        processing.run("gdal:translate", params)
+                            layer_gpkg = self.project.mapLayersByName(gpkg_layer.name())[0]
+                            myLayerNode = root.findLayer(layer_gpkg.id())
+                            myLayerNode.setExpanded(False)
 
-                        gpkg_uri = f"GPKG:{gpkg_path}:{layer_name}"
-                        gpkg_layer = QgsRasterLayer(gpkg_uri, layer_name, "gdal")
-                        self.project.addMapLayer(gpkg_layer, False)
-                        gpkg_layer.setRenderer(layer.renderer().clone())
-                        gpkg_layer.triggerRepaint()
-                        root = self.project.layerTreeRoot()
-                        flo2d_name = f"FLO-2D_{self.gutils.get_metadata_par('PROJ_NAME')}"
-                        group_name = "External Layers"
-                        flo2d_grp = root.findGroup(flo2d_name)
-                        if flo2d_grp.findGroup(group_name):
-                            group = flo2d_grp.findGroup(group_name)
+                            # Delete layer that is not in the gpkg
+                            self.project.removeMapLayer(layer.id())
+
+                        elif layer.type() == QgsMapLayer.RasterLayer:
+                            if layer.dataProvider().bandCount() > 1:
+                                not_added.append(layer.name())
+                                continue
+                            # Save to gpkg
+                            layer_name = layer.name().replace(" ", "_")
+                            params = {'INPUT': f'{layer.dataProvider().dataSourceUri()}',
+                                      'TARGET_CRS': None,
+                                      'NODATA': None,
+                                      'COPY_SUBDATASETS': False,
+                                      'OPTIONS': '',
+                                      'EXTRA': f'-co APPEND_SUBDATASET=YES -co RASTER_TABLE={layer_name} -ot Float32',
+                                      'DATA_TYPE': 0,
+                                      'OUTPUT': f'{gpkg_path}'}
+
+                            processing.run("gdal:translate", params)
+
+                            gpkg_uri = f"GPKG:{gpkg_path}:{layer_name}"
+                            gpkg_layer = QgsRasterLayer(gpkg_uri, layer_name, "gdal")
+                            self.project.addMapLayer(gpkg_layer, False)
+                            gpkg_layer.setRenderer(layer.renderer().clone())
+                            gpkg_layer.triggerRepaint()
+                            root = self.project.layerTreeRoot()
+                            flo2d_name = f"FLO-2D_{self.gutils.get_metadata_par('PROJ_NAME')}"
+                            group_name = "External Layers"
+                            flo2d_grp = root.findGroup(flo2d_name)
+                            if flo2d_grp.findGroup(group_name):
+                                group = flo2d_grp.findGroup(group_name)
+                            else:
+                                group = flo2d_grp.insertGroup(-1, group_name)
+                            group.insertLayer(0, gpkg_layer)
+                            # Delete layer that is not in the gpkg
+                            self.project.removeMapLayer(layer.id())
+
+                            layer_gpkg = self.project.mapLayersByName(gpkg_layer.name())[0]
+                            myLayerNode = root.findLayer(layer_gpkg.id())
+                            myLayerNode.setExpanded(False)
                         else:
-                            group = flo2d_grp.insertGroup(-1, group_name)
-                        group.insertLayer(0, gpkg_layer)
-                        # Delete layer that is not in the gpkg
-                        self.project.removeMapLayer(layer.id())
+                            not_added.append(layer.name())
 
-                        layer_gpkg = self.project.mapLayersByName(gpkg_layer.name())[0]
-                        myLayerNode = root.findLayer(layer_gpkg.id())
-                        myLayerNode.setExpanded(False)
-                    else:
-                        not_added.append(layer.name())
+                    self.gutils.execute(f"INSERT INTO external_layers (name, type) VALUES ('{layer_name}', 'external');")
+                QApplication.restoreOverrideCursor()
 
-                self.gutils.execute(f"INSERT INTO external_layers (name, type) VALUES ('{layer_name}', 'external');")
+                if len(not_added) > 0:
+                    layers_not_added = ', '.join(map(str, not_added))
+                    self.uc.show_info(f"The following layers were not added to the GeoPackage: \n\n {layers_not_added}")
+
+            self.uc.bar_info(f"FLO-2D Geopackage Management saved!")
+            self.uc.log_info(f"FLO-2D Geopackage Management saved!")
+
             QApplication.restoreOverrideCursor()
+            self.close()
 
-            if len(not_added) > 0:
-                layers_not_added = ', '.join(map(str, not_added))
-                self.uc.show_info(f"The following layers were not added to the GeoPackage: \n\n {layers_not_added}")
-
-        self.uc.bar_info(f"FLO-2D Geopackage Management saved!")
-        self.uc.log_info(f"FLO-2D Geopackage Management saved!")
-
-        QApplication.restoreOverrideCursor()
-        self.close()
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.uc.log_info("Error saving the geopackage.")
+            self.uc.show_error(
+                "Error saving the geopackage."
+                + "\n__________________________________________________",
+                e,
+            )
 
     def delete_external_lyrs(self):
         """
