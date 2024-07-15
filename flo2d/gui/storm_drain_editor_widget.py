@@ -17,7 +17,6 @@ from datetime import date, datetime, time, timedelta
 from math import floor, isnan, modf
 from pathlib import Path
 
-import h5py
 import numpy as np
 from PyQt5.QtWidgets import QStyledItemDelegate
 from qgis._core import QgsFeatureRequest, QgsEditFormConfig, QgsDefaultValue, QgsEditorWidgetSetup, QgsDistanceArea
