@@ -842,6 +842,9 @@
        </item>
        <item>
         <widget class="QToolButton" name="max_depth_btn">
+         <property name="toolTip">
+          <string>Assign maximum depth</string>
+         </property>
          <property name="text">
           <string>...</string>
          </property>
