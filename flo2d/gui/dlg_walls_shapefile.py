@@ -87,6 +87,7 @@ class WallsShapefile(qtBaseClass, uiDialog):
             lyrs = self.lyrs.list_group_vlayers()
             for l in lyrs:
                 if l.geometryType() == QgsWkbTypes.LineGeometry:
+                    l.reload()
                     if l.featureCount() > 0:
                         self.walls_shapefile_cbo.addItem(l.name(), l.dataProvider().dataSourceUri())
                 else:
