@@ -243,12 +243,14 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
             lyrs = self.lyrs.list_group_vlayers()
             for l in lyrs:
                 if l.geometryType() == QgsWkbTypes.PointGeometry:
+                    l.reload()
                     if l.featureCount() > 0:
                         self.inlets_shapefile_cbo.addItem(l.name(), l.dataProvider().dataSourceUri())
                         self.outfalls_shapefile_cbo.addItem(l.name(), l.dataProvider().dataSourceUri())
                         self.strge_units_shapefile_cbo.addItem(l.name(), l.dataProvider().dataSourceUri())
 
                 if l.geometryType() == QgsWkbTypes.LineGeometry:
+                    l.reload()
                     if l.featureCount() > 0:
                         self.conduits_shapefile_cbo.addItem(l.name(), l.dataProvider().dataSourceUri())
                         self.pumps_shapefile_cbo.addItem(l.name(), l.dataProvider().dataSourceUri())

@@ -4572,6 +4572,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         layers = self.lyrs.list_group_vlayers()
         for l in layers:
             if l.geometryType() in [QgsWkbTypes.PointGeometry, QgsWkbTypes.LineGeometry]:
+                l.reload()
                 if l.featureCount() > 0:
                     point_or_line_layers = True
                     break

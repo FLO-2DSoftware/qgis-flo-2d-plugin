@@ -42,6 +42,7 @@ class SamplingTailingsDialog(qtBaseClass, uiDialog):
         poly_lyrs = self.lyrs.list_group_vlayers()
         for l in poly_lyrs:
             if l.geometryType() == QgsWkbTypes.PolygonGeometry:
+                l.reload()
                 if l.featureCount() > 0:                 
                     self.srcLayerCbo.addItem(l.name(), l.dataProvider().dataSourceUri())
             else:
