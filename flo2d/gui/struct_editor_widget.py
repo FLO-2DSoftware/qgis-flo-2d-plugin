@@ -89,10 +89,15 @@ class StructEditorWidget(qtBaseClass, uiDialog):
         set_icon(self.schem_struct_btn, "schematize_struct.svg")
         set_icon(self.change_struct_name_btn, "change_name.svg")
 
+        # layers
+        self.user_struct_lyr = self.lyrs.data["user_struct"]["qlyr"]
+        self.struct_lyr = self.lyrs.data["struct"]["qlyr"]
+
         # connections
         self.data_model.dataChanged.connect(self.save_data)
         self.create_struct_btn.clicked.connect(self.create_struct)
         self.save_changes_btn.clicked.connect(self.save_struct_lyrs_edits)
+        self.user_struct_lyr.afterCommitChanges.connect(self.save_struct_lyrs_edits)
         self.revert_changes_btn.clicked.connect(self.cancel_struct_lyrs_edits)
         self.delete_struct_btn.clicked.connect(self.delete_struct)
         self.schem_struct_btn.clicked.connect(self.schematize_struct)
@@ -119,8 +124,6 @@ class StructEditorWidget(qtBaseClass, uiDialog):
             return
         self.struct_cbo.clear()
         self.lyrs.clear_rubber()
-        self.struct_lyr = self.lyrs.data["struct"]["qlyr"]
-        self.user_struct_lyr = self.lyrs.data["user_struct"]["qlyr"]
         self.gutils = GeoPackageUtils(self.iface.f2d["con"], self.iface)
         all_structs = self.gutils.get_structs_list()
         cur_name_idx = 0
@@ -315,10 +318,14 @@ class StructEditorWidget(qtBaseClass, uiDialog):
         self.lyrs.lyrs_to_repaint = [self.lyrs.data["struct"]["qlyr"]]
         self.lyrs.repaint_layers()
 
-        if structs:  
-            self.uc.show_info(
+        if structs:
+            self.gutils.set_cont_par("IHYDRSTRUCT", 1)
+            self.uc.log_info(
                 "Schematizing Hydraulic Structures finished!\n\n"
                 + str(len(structs)) + " structures were updated in the Hydraulic Structures table."
+            )
+            self.uc.show_info(
+                "Schematizing Hydraulic Structures finished!"
             ) 
         else: 
             self.uc.show_warn("WARNING 151203.0646: Error during Hydraulic Structures schematization!")              
@@ -682,21 +689,18 @@ class StructEditorWidget(qtBaseClass, uiDialog):
         """
         Save changes of user layer.
         """
-        if not self.gutils or not self.lyrs.any_lyr_in_edit("user_struct"):
+        if not self.gutils:
             return
         # ask user if overwrite imported structures, if any
         if not self.gutils.delete_all_imported_structs():
             self.cancel_struct_lyrs_edits()
             return
         # try to save user layer (geometry additions/changes)
-        user_lyr_edited = self.lyrs.save_lyrs_edits("user_struct")
-        # if user layer was edited
-        if user_lyr_edited:
-            # self.struct_frame.setEnabled(True)
-            # populate widgets and show last edited struct
-            self.gutils.copy_new_struct_from_user_lyr()
-            self.gutils.fill_empty_struct_names()
-            self.populate_structs(show_last_edited=True)
+        self.lyrs.save_lyrs_edits("user_struct")
+        # populate widgets and show last edited struct
+        self.gutils.copy_new_struct_from_user_lyr()
+        self.gutils.fill_empty_struct_names()
+        self.populate_structs(show_last_edited=True)
         self.repaint_structs()
 
     def repaint_structs(self):
