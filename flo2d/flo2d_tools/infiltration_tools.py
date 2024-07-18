@@ -658,7 +658,7 @@ class GreenAmpt(object):
 
     @staticmethod
     def calculate_dtheta(avg_xksat, saturation):
-        if saturation == "dry":
+        if saturation.lower() == "dry":
             if 0.01 <= avg_xksat <= 0.15:
                 dtheta = exp(-0.2394 + 0.3616 * log(avg_xksat))
             elif 0.15 < avg_xksat <= 0.25:
@@ -667,7 +667,7 @@ class GreenAmpt(object):
                 dtheta = 0.35
             else:
                 raise ValueError(avg_xksat)
-        elif saturation == "normal":
+        elif saturation.lower() == "normal":
             if 0.01 <= avg_xksat <= 0.02:
                 dtheta = exp(1.6094 + log(avg_xksat))
             elif 0.02 < avg_xksat <= 0.04:
@@ -682,10 +682,10 @@ class GreenAmpt(object):
                 dtheta = exp(-1.2342 + 0.1660 * log(avg_xksat))
             else:
                 raise ValueError(avg_xksat)
-        elif saturation == "wet" or saturation == "saturated":
+        elif saturation.lower() == "wet" or saturation.lower() == "saturated":
             dtheta = 0.0
         else:
-            raise ValueError(saturation)
+            raise ValueError(saturation.lower())
         return dtheta
 
     @staticmethod
