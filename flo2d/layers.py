@@ -57,6 +57,18 @@ class Layers(object):
         self.data = OrderedDict(
             [
                 (
+                    "user_model_boundary",
+                    {
+                        "name": "Computational Domain",
+                        "sgroup": "User Layers",
+                        "styles": ["model_boundary.qml"],
+                        "attrs_edit_widgets": {},
+                        "module": ["all"],
+                        "readonly": False,
+                        "advanced": False
+                    },
+                ),
+                (
                     "user_bc_points",
                     {
                         "name": "Boundary Condition Points",
@@ -538,19 +550,18 @@ class Layers(object):
                         "advanced": True
                     },
                 ),
+                # Schematic layers:
                 (
-                    "user_model_boundary",
+                    "grid",
                     {
-                        "name": "Computational Domain",
-                        "sgroup": "User Layers",
-                        "styles": ["model_boundary.qml"],
+                        "name": "Grid",
+                        "sgroup": "Schematic Layers",
+                        "styles": ["grid.qml", "grid_nodata.qml"],
                         "attrs_edit_widgets": {},
-                        "module": ["all"],
-                        "readonly": False,
+                        "readonly": True,
                         "advanced": False
                     },
                 ),
-                # Schematic layers:
                 (
                     "chan",
                     {
@@ -764,17 +775,6 @@ class Layers(object):
                         "attrs_edit_widgets": {},
                         "visible": True,
                         "readonly": False,
-                        "advanced": False
-                    },
-                ),
-                (
-                    "grid",
-                    {
-                        "name": "Grid",
-                        "sgroup": "Schematic Layers",
-                        "styles": ["grid.qml", "grid_nodata.qml"],
-                        "attrs_edit_widgets": {},
-                        "readonly": True,
                         "advanced": False
                     },
                 ),
