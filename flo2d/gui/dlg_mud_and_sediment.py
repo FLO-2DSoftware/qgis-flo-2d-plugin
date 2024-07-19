@@ -471,27 +471,88 @@ class MudAndSedimentDialog(qtBaseClass, uiDialog):
         try:
             if self.mud_debris_transport_radio.isChecked():
                 self.set_mud_debris()
+                self.check_sim_type(1)
                 self.gutils.set_cont_par("MUD", 1)
                 self.gutils.set_cont_par("ISED", 0)
 
             elif self.sediment_transport_radio.isChecked():
                 self.set_sediment_transport()
+                self.check_sim_type(0)
                 self.gutils.set_cont_par("MUD", 0)
                 self.gutils.set_cont_par("ISED", 1)
 
             elif self.two_phase_radio.isChecked():
                 self.set_mud_debris()
                 self.set_sediment_transport()
+                self.check_sim_type(2)
                 self.gutils.set_cont_par("MUD", 2)
                 self.gutils.set_cont_par("ISED", 0)
 
             else:
+                self.check_sim_type(0)
                 self.gutils.set_cont_par("MUD", 0)
                 self.gutils.set_cont_par("ISED", 0)
 
         except Exception as e:
             QApplication.restoreOverrideCursor()
             self.uc.show_error("ERROR 251021.0916: unable to save mud/sediment data!.\n", e)
+
+    def check_sim_type(self, sim_type):
+        """
+        Smart code to remove tailing when clear water simulation is set in vice versa
+        0 - > clear water
+        1 - > Mud/Sediment
+        2 - > Two-phase
+        """
+
+        if sim_type == 0:
+
+            # check for tailings and warn the user that the schematized data will be deleted
+            has_tal_res = False
+            tal_res = self.gutils.execute("SELECT * FROM tailing_reservoirs;").fetchone()
+            if tal_res:
+                has_tal_res = True
+            has_tal_cells = False
+            tal_cells = self.gutils.execute("SELECT * FROM tailing_cells;").fetchone()
+            if tal_cells:
+                has_tal_cells = True
+
+            if has_tal_res or has_tal_cells:
+                QApplication.setOverrideCursor(Qt.ArrowCursor)
+                self.uc.show_warn("Schematized tailings data has been detected! "
+                                  "The schematized tailings data will be deleted.")
+                QApplication.restoreOverrideCursor()
+                self.gutils.execute('DELETE FROM tailing_reservoirs;')
+                self.gutils.execute('DELETE FROM tailing_cells;')
+                self.lyrs.lyrs_to_repaint = [
+                                             self.lyrs.data["tailing_reservoirs"]["qlyr"],
+                                             self.lyrs.data["tailing_cells"]["qlyr"]
+                                            ]
+                self.lyrs.repaint_layers()
+                return
+
+        if sim_type == 1:
+            # check for water reservoir and warn the user that the schematized data will be deleted
+            has_water_res = False
+            water_res = self.gutils.execute("SELECT * FROM reservoirs;").fetchone()
+            if water_res:
+                has_water_res = True
+
+            if has_water_res:
+                QApplication.setOverrideCursor(Qt.ArrowCursor)
+                self.uc.show_warn("Schematized reservoir data has been detected! "
+                                  "The schematized reservoirs data will be deleted.")
+                QApplication.restoreOverrideCursor()
+                self.gutils.execute('DELETE FROM reservoirs;')
+                self.lyrs.lyrs_to_repaint = [
+                    self.lyrs.data["reservoirs"]["qlyr"]
+                ]
+                self.lyrs.repaint_layers()
+
+                return
+
+        if sim_type == 2:
+            pass
 
     def set_sediment_transport(self):
         try:

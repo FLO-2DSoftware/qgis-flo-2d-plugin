@@ -1042,7 +1042,7 @@ class Layers(object):
                     "tailing_cells",
                     {
                         "name": "Tailing Cells",
-                        "sgroup": "Boundary Conditions Tables",
+                        "sgroup": "Boundary Conditions",
                         "styles": ["tailing_cells.qml"],
                         "attrs_edit_widgets": {},
                         "readonly": True,

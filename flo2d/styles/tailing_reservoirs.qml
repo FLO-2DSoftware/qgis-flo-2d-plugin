@@ -2,7 +2,7 @@
 <qgis styleCategories="Symbology" version="3.36.1-Maidenhead">
   <renderer-v2 enableorderby="0" symbollevels="0" referencescale="-1" type="singleSymbol" forceraster="0">
     <symbols>
-      <symbol alpha="1" clip_to_extent="1" type="fill" is_animated="0" force_rhr="0" frame_rate="10" name="0">
+      <symbol alpha="0.494118" clip_to_extent="1" type="fill" is_animated="0" force_rhr="0" frame_rate="10" name="0">
         <data_defined_properties>
           <Option type="Map">
             <Option value="" type="QString" name="name"/>
