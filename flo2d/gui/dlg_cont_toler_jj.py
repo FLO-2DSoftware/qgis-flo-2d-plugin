@@ -535,7 +535,7 @@ class ContToler_JJ(qtBaseClass, uiDialog):
                 control_lyr = self.lyrs.data["cont"]["qlyr"]
                 control_lyr.startEditing()
                 control_lyr.commitChanges()
-                QCoreApplication.processEvents()
+                # QCoreApplication.processEvents()
 
             if _mud == 1:
                 self.gutils.execute(
