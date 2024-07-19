@@ -97,7 +97,7 @@ class GridToolsWidget(qtBaseClass, uiDialog):
         set_icon(self.gutter_btn, "sample_gutter.svg")
         set_icon(self.noexchange_btn, "sample_noexchange.svg")
         set_icon(self.other_variable_btn, "sample_grid_variable.svg")
-        set_icon(self.tailings_btn, "sample_tailings.svg")
+        # set_icon(self.tailings_btn, "sample_tailings.svg")
 
         self.create_grid_btn.clicked.connect(self.create_grid)
         self.raster_elevation_btn.clicked.connect(self.raster_elevation)
@@ -114,7 +114,7 @@ class GridToolsWidget(qtBaseClass, uiDialog):
         self.gutter_btn.clicked.connect(self.eval_gutter)
         self.noexchange_btn.clicked.connect(self.eval_noexchange)
         self.other_variable_btn.clicked.connect(self.other_variable)
-        self.tailings_btn.clicked.connect(self.get_tailings)
+        # self.tailings_btn.clicked.connect(self.get_tailings)
         self.help_btn.clicked.connect(self.show_grid_widget_help)
 
     def setup_connection(self):
