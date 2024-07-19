@@ -303,26 +303,6 @@
       </widget>
      </item>
      <item row="2" column="2">
-      <widget class="QToolButton" name="tailings_btn">
-       <property name="toolTip">
-        <string>Sampling tailings</string>
-       </property>
-       <property name="text">
-        <string>...</string>
-       </property>
-       <property name="icon">
-        <iconset>
-         <normaloff>../img/sample_tailings.svg</normaloff>../img/sample_tailings.svg</iconset>
-       </property>
-       <property name="iconSize">
-        <size>
-         <width>25</width>
-         <height>25</height>
-        </size>
-       </property>
-      </widget>
-     </item>
-     <item row="2" column="3">
       <widget class="QToolButton" name="help_btn">
        <property name="sizePolicy">
         <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
