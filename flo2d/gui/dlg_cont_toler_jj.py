@@ -484,6 +484,7 @@ class ContToler_JJ(qtBaseClass, uiDialog):
     def save_parameters_JJ(self):
         try:
             QApplication.setOverrideCursor(Qt.WaitCursor)
+
             if self.use_time_interval_grp.isChecked():
                 if not self.ENDTIMTEP.value() > self.STARTIMTEP.value():
                     self.uc.show_warn("WARNING 220522.0526: time lapse end time must be greater than start time.")
@@ -506,6 +507,9 @@ class ContToler_JJ(qtBaseClass, uiDialog):
             elif val == 3:
                 _mud = 2
                 _sed = 0
+
+            control_lyr = self.lyrs.data["cont"]["qlyr"]
+            control_lyr.startEditing()
 
             for key in list(self.PARAMS.keys()):
                 if key == "COURCHAR_C":
@@ -532,10 +536,8 @@ class ContToler_JJ(qtBaseClass, uiDialog):
                         val = widget.currentIndex()
 
                 self.gutils.set_cont_par(key, val)
-                control_lyr = self.lyrs.data["cont"]["qlyr"]
-                control_lyr.startEditing()
-                control_lyr.commitChanges()
-                # QCoreApplication.processEvents()
+
+            control_lyr.commitChanges()
 
             if _mud == 1:
                 self.gutils.execute(
@@ -548,10 +550,12 @@ class ContToler_JJ(qtBaseClass, uiDialog):
 
             old_IDEBRV = self.IDEBRV.isChecked()
 
-            QApplication.restoreOverrideCursor()
             return True
 
         except Exception as e:
-            QApplication.restoreOverrideCursor()
-            self.uc.show_error("ERROR 110618.1806: Could not save FLO-2D parameters!!", e)
+            self.uc.log_info("ERROR 110618.1806: Could not save FLO-2D parameters!")
+            self.uc.bar_error("ERROR 110618.1806: Could not save FLO-2D parameters!", e)
             return False
+
+        finally:
+            QApplication.restoreOverrideCursor()
