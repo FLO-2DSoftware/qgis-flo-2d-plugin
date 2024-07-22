@@ -17,6 +17,7 @@ from PyQt5.QtCore import QUrl
 from PyQt5.QtGui import QDesktopServices, QColor
 from PyQt5.QtWidgets import QProgressDialog
 from qgis.PyQt import QtCore, QtGui
+from qgis._core import QgsFeatureRequest
 from qgis.core import NULL, Qgis, QgsFeature, QgsGeometry, QgsMessageLog, QgsWkbTypes
 from qgis.PyQt import QtWidgets
 from qgis.PyQt.QtCore import QSettings, Qt, QThread
@@ -68,7 +69,7 @@ from ..gui.dlg_sampling_variable_into_grid import SamplingOtherVariableDialog
 from ..gui.dlg_sampling_xyz import SamplingXYZDialog
 from ..user_communication import UserCommunication
 from ..utils import second_smallest, set_min_max_elevs, time_taken
-from .ui_utils import load_ui, set_icon
+from .ui_utils import load_ui, set_icon, center_canvas, zoom
 
 uiDialog, qtBaseClass = load_ui("grid_tools_widget")
 
@@ -1429,30 +1430,39 @@ class GridToolsWidget(qtBaseClass, uiDialog):
         """
         QDesktopServices.openUrl(QUrl("https://flo-2dsoftware.github.io/FLO-2D-Documentation/Plugin1000/widgets/grid-tools/index.html"))
 
-    def plot_2d_grid_data(self, grid_element, data_type=None):
+    def plot_2d_grid_data(self, grid_element):
         """
         Function to create the 2d time series plot for a specific grid element.
         """
+
         QApplication.setOverrideCursor(Qt.WaitCursor)
+
         data = []
         current_time = None
 
         units = "CMS" if self.gutils.get_cont_par("METRIC") == "1" else "CFS"
 
+        # Check if there is an TIMDEP.OUT file on the export folder and has data
         s = QSettings()
         project_dir = s.value("FLO-2D/lastGdsDir")
         TIMDEP_file = project_dir + r"/TIMDEP.OUT"
-        # Check if there is an TIMDEP.OUT file on the export folder
         if not os.path.isfile(TIMDEP_file):
+            QApplication.restoreOverrideCursor()
             self.uc.bar_warn(
-                "No TIMDEP_file.OUT file found. Please ensure the simulation has completed and verify the project export folder.")
+                "No TIMDEP_file.OUT file found. "
+                "Please ensure the simulation has completed and verify the project export folder.")
+            self.uc.log_info(
+                "No TIMDEP_file.OUT file found. "
+                "Please ensure the simulation has completed and verify the project export folder.")
             return
 
         # Check if the TIMDEP_file.OUT has data on it
         if os.path.getsize(TIMDEP_file) == 0:
             QApplication.restoreOverrideCursor()
             self.uc.bar_warn("File  '" + os.path.basename(TIMDEP_file) + "'  is empty!")
+            self.uc.log_info("File  '" + os.path.basename(TIMDEP_file) + "'  is empty!")
             return
+
         try:  # Create the dataframe
             with open(TIMDEP_file, 'r') as file:
                 for line in file:
@@ -1504,8 +1514,8 @@ class GridToolsWidget(qtBaseClass, uiDialog):
 
         except:
             QApplication.restoreOverrideCursor()
-            self.uc.bar_warn("Error while retrieving data from TIMDEP.OUT!")
-            self.uc.log_info("Error while retrieving data from TIMDEP.OUT!")
+            self.uc.bar_warn("Error while creating the plots from TIMDEP.OUT!")
+            self.uc.log_info("Error while creating the plots from TIMDEP.OUT!")
             return
 
         try:  # Build table.
@@ -1550,7 +1560,8 @@ class GridToolsWidget(qtBaseClass, uiDialog):
                 self.tview.setRowHeight(i, 20)
         except:
             QApplication.restoreOverrideCursor()
-            self.uc.bar_warn("Error while building table for grid element!")
+            self.uc.bar_warn("Error while creating table for grid element!")
+            self.uc.log_info("Error while creating table for grid element!")
             return
 
         QApplication.restoreOverrideCursor()

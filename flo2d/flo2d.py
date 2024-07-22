@@ -3794,6 +3794,7 @@ class Flo2D(object):
 
         self.f2d_dock.setUserVisible(True)
         self.f2d_widget.grid_tools.plot_2d_grid_data(fid)
+        self.f2d_grid_info.find_cell(fid)
 
     @connection_required
     def show_orifice_discharge(self, fid=None):

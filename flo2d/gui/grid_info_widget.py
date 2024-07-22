@@ -221,7 +221,7 @@ class GridInfoWidget(qtBaseClass, uiDialog):
             self.d2.append(m_fdata(self.data_model, i, 1))
         self.plot.update_item(self.plot_item_name, [self.d1, self.d2])
 
-    def find_cell(self):
+    def find_cell(self, cell=None):
         try:
             QApplication.setOverrideCursor(Qt.WaitCursor)
             self.uc.clear_bar_messages()
@@ -231,7 +231,11 @@ class GridInfoWidget(qtBaseClass, uiDialog):
             grid = self.lyrs.data["grid"]["qlyr"]
             if grid is not None:
                 if grid:
-                    cell = self.idEdit.text()
+                    if not cell:
+                        cell = self.idEdit.text()
+                    else:
+                        cell = cell
+                        self.idEdit.setText(str(cell))
                     if cell != "":
                         cell = int(cell)
                         n_cells = number_of_elements(self.gutils, grid)
