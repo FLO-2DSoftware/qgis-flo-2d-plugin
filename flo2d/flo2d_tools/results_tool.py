@@ -50,7 +50,8 @@ class ResultsTool(QgsMapToolIdentify):
             self.lyrs.data["user_swmm_conduits"]["qlyr"],
             self.lyrs.data["user_swmm_weirs"]["qlyr"],
             self.lyrs.data["user_swmm_orifices"]["qlyr"],
-            self.lyrs.data["user_swmm_pumps"]["qlyr"]
+            self.lyrs.data["user_swmm_pumps"]["qlyr"],
+            self.lyrs.data["grid"]["qlyr"],
         ]
 
     def canvasPressEvent(self, dummy):
@@ -70,7 +71,8 @@ class ResultsTool(QgsMapToolIdentify):
             "user_swmm_weirs",
             "user_swmm_orifices",
             "user_swmm_pumps",
-            "struct"
+            "struct",
+            "grid"
         ]
         # Overrides inherited method from QgsMapToolIdentify.
         # Creates a submenu and shows it where the user clicks the canvas.

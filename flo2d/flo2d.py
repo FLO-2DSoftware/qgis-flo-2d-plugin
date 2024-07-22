@@ -3784,6 +3784,18 @@ class Flo2D(object):
         self.f2d_widget.storm_drain_editor.create_conduit_discharge_table_and_plots(name)
 
     @connection_required
+    def show_2d_plot(self, fid=None):
+        """
+        Show 2d results for a given grid.
+        """
+        if self.gutils.is_table_empty("grid"):
+            self.uc.bar_warn("There is no grid! Please create it before running tool.")
+            return
+
+        self.f2d_dock.setUserVisible(True)
+        self.f2d_widget.grid_tools.plot_2d_grid_data(fid)
+
+    @connection_required
     def show_orifice_discharge(self, fid=None):
         """
         Show storm drain discharge for a given orifice link.
@@ -4398,21 +4410,20 @@ class Flo2D(object):
             else:
                 self.show_sd_node_profile(fid, extra)
         if table == 'user_swmm_conduits':
-            #show_editor = self.editors_map[table]
             self.cur_profile_table = table
             self.show_conduit_discharge(fid)
         if table == 'user_swmm_weirs':
-            #show_editor = self.editors_map[table]
             self.cur_profile_table = table
             self.show_weir_discharge(fid)
         if table == 'user_swmm_orifices':
-            #show_editor = self.editors_map[table]
             self.cur_profile_table = table
             self.show_orifice_discharge(fid)
         if table == 'user_swmm_pumps':
-            #show_editor = self.editors_map[table]
             self.cur_profile_table = table
             self.show_pump_discharge(fid)
+        if table == 'grid':
+            self.cur_profile_table = table
+            self.show_2d_plot(fid)
 
         # except KeyError:
         #     self.uc.bar_info("Channel Profile tool not implemented for selected features.")
