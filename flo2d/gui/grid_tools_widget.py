@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-
+import numbers
 # FLO-2D Preprocessor tools for QGIS
 # Copyright © 2021 Lutra Consulting for FLO-2D
 
@@ -19,7 +19,7 @@ from PyQt5.QtCore import QUrl
 from PyQt5.QtGui import QDesktopServices, QColor
 from PyQt5.QtWidgets import QProgressDialog
 from qgis.PyQt import QtCore, QtGui
-from qgis._core import QgsFeatureRequest
+from qgis._core import QgsFeatureRequest, QgsProject, QgsMeshLayer, QgsMeshDatasetIndex
 from qgis.core import NULL, Qgis, QgsFeature, QgsGeometry, QgsMessageLog, QgsWkbTypes
 from qgis.PyQt import QtWidgets
 from qgis.PyQt.QtCore import QSettings, Qt, QThread
@@ -1442,56 +1442,119 @@ class GridToolsWidget(qtBaseClass, uiDialog):
 
         units = "CMS" if self.gutils.get_cont_par("METRIC") == "1" else "CFS"
 
-        # Check if there is an TIMDEP.OUT file on the export folder and has data
-        s = QSettings()
-        project_dir = s.value("FLO-2D/lastGdsDir")
-        TIMDEPOUT_file = project_dir + r"/TIMDEP.OUT"
-        TIMDEPHDF5_file = project_dir + r"/TIMDEP.HDF5"
+        # check if there is a FLO-2D mesh file.
+        has_mesh = False
+        temporal_mesh = False
+        flo2d_mesh = False
+        mesh_layer = None
 
-        # Check if the TIMDEP_file.HDF5 exists
-        if os.path.isfile(TIMDEPHDF5_file):
-            # Check if the TIMDEP_file.HDF5 has data on it
-            if os.path.getsize(TIMDEPHDF5_file) == 0:
-                QApplication.restoreOverrideCursor()
-                self.uc.bar_warn("File  '" + os.path.basename(TIMDEPHDF5_file) + "'  is empty!")
-                self.uc.log_info("File  '" + os.path.basename(TIMDEPHDF5_file) + "'  is empty!")
-                return
-            else:
-                self.uc.bar_info("Reading data from TIMDEP.HDF5!")
-                try:
-                    df = self.dataframe_from_hdf5(TIMDEPHDF5_file, grid_element)
-                except:
-                    QApplication.restoreOverrideCursor()
-                    self.uc.bar_warn("Error while retrieving data from TIMDEP.HDF5!")
-                    self.uc.log_info("Error while retrieving data from TIMDEP.HDF5!")
-                    return
+        # Check for mesh layer
+        layers = QgsProject.instance().mapLayers().values()
+        for layer in layers:
+            if isinstance(layer, QgsMeshLayer):
+                mesh_layer = layer
+                has_mesh = True
+
+        if has_mesh:
+            # Check temporal layer
+            temporal_properties = mesh_layer.temporalProperties()
+            if temporal_properties.isActive():
+                temporal_mesh = True
+
+        if has_mesh and temporal_mesh:
+
+            grid = self.lyrs.data["grid"]["qlyr"]
+            feature = next(grid.getFeatures(QgsFeatureRequest(grid_element)))
+            geom = feature.geometry()
+            point = geom.centroid().asPoint()
+
+            time_series = []
+            flow_depth = []
+            velocity = []
+            wse = []
+
+            for i in range(mesh_layer.dataProvider().datasetCount(1)):
+
+                # TIME SERIES
+                meta = mesh_layer.dataProvider().datasetMetadata(QgsMeshDatasetIndex(1, i))
+                t = meta.time()
+                time_series.append(t)
+
+                # FLOW DEPTH
+                dataset = QgsMeshDatasetIndex(1, i)
+                value = mesh_layer.datasetValue(dataset, point, 0)
+                flow_depth.append(value)
+
+                # VELOCITY
+                dataset = QgsMeshDatasetIndex(4, i)
+                value = mesh_layer.datasetValue(dataset, point, 0).scalar()
+                velocity.append(value)
+
+                # WSE
+                dataset = QgsMeshDatasetIndex(2, i)
+                value = mesh_layer.datasetValue(dataset, point, 0).scalar()
+                wse.append(value)
+
+            df = pd.DataFrame({
+                'Time': time_series,
+                'Depth': flow_depth,
+                'Velocity': velocity,
+                'Water Surface Elevation': wse
+            })
+
+            self.uc.log_info(str(df))
+
         else:
-            # Check if the TIMDEP_file.OUT exists
-            if not os.path.isfile(TIMDEPOUT_file):
-                QApplication.restoreOverrideCursor()
-                self.uc.bar_warn(
-                    "No TIMDEP.HDF5 or TIMDEP.OUT file found. "
-                    "Please ensure the simulation has completed and verify the project export folder.")
-                self.uc.log_info(
-                    "No TIMDEP.HDF5 or TIMDEP.OUT file found. "
-                    "Please ensure the simulation has completed and verify the project export folder.")
-                return
-            else:
-                # Check if the TIMDEP_file.OUT has data on it
-                if os.path.getsize(TIMDEPOUT_file) == 0:
+            # Check if there is an TIMDEP.OUT file on the export folder and has data
+            s = QSettings()
+            project_dir = s.value("FLO-2D/lastGdsDir")
+            TIMDEPOUT_file = project_dir + r"/TIMDEP.OUT"
+            TIMDEPHDF5_file = project_dir + r"/TIMDEP.HDF5"
+
+            # Check if the TIMDEP_file.HDF5 exists
+            if os.path.isfile(TIMDEPHDF5_file):
+                # Check if the TIMDEP_file.HDF5 has data on it
+                if os.path.getsize(TIMDEPHDF5_file) == 0:
                     QApplication.restoreOverrideCursor()
                     self.uc.bar_warn("File  '" + os.path.basename(TIMDEPHDF5_file) + "'  is empty!")
                     self.uc.log_info("File  '" + os.path.basename(TIMDEPHDF5_file) + "'  is empty!")
                     return
                 else:
-                    self.uc.bar_info("Reading data from TIMDEP.OUT!")
+                    self.uc.bar_info("Reading data from TIMDEP.HDF5!")
                     try:
-                        df = self.dataframe_from_out(TIMDEPOUT_file, grid_element)
+                        df = self.dataframe_from_hdf5(TIMDEPHDF5_file, grid_element)
                     except:
                         QApplication.restoreOverrideCursor()
-                        self.uc.bar_warn("Error while retrieving data from TIMDEP.OUT!")
-                        self.uc.log_info("Error while retrieving data from TIMDEP.OUT!")
+                        self.uc.bar_warn("Error while retrieving data from TIMDEP.HDF5!")
+                        self.uc.log_info("Error while retrieving data from TIMDEP.HDF5!")
                         return
+            else:
+                # Check if the TIMDEP_file.OUT exists
+                if not os.path.isfile(TIMDEPOUT_file):
+                    QApplication.restoreOverrideCursor()
+                    self.uc.bar_warn(
+                        "No TIMDEP.HDF5 or TIMDEP.OUT file found. "
+                        "Please ensure the simulation has completed and verify the project export folder.")
+                    self.uc.log_info(
+                        "No TIMDEP.HDF5 or TIMDEP.OUT file found. "
+                        "Please ensure the simulation has completed and verify the project export folder.")
+                    return
+                else:
+                    # Check if the TIMDEP_file.OUT has data on it
+                    if os.path.getsize(TIMDEPOUT_file) == 0:
+                        QApplication.restoreOverrideCursor()
+                        self.uc.bar_warn("File  '" + os.path.basename(TIMDEPHDF5_file) + "'  is empty!")
+                        self.uc.log_info("File  '" + os.path.basename(TIMDEPHDF5_file) + "'  is empty!")
+                        return
+                    else:
+                        self.uc.bar_info("Reading data from TIMDEP.OUT!")
+                        try:
+                            df = self.dataframe_from_out(TIMDEPOUT_file, grid_element)
+                        except:
+                            QApplication.restoreOverrideCursor()
+                            self.uc.bar_warn("Error while retrieving data from TIMDEP.OUT!")
+                            self.uc.log_info("Error while retrieving data from TIMDEP.OUT!")
+                            return
 
         try:  # Create the plots
             self.plot.clear()
