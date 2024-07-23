@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import math
 import numbers
 # FLO-2D Preprocessor tools for QGIS
 # Copyright © 2021 Lutra Consulting for FLO-2D
@@ -1462,47 +1463,15 @@ class GridToolsWidget(qtBaseClass, uiDialog):
                 temporal_mesh = True
 
         if has_mesh and temporal_mesh:
-
-            grid = self.lyrs.data["grid"]["qlyr"]
-            feature = next(grid.getFeatures(QgsFeatureRequest(grid_element)))
-            geom = feature.geometry()
-            point = geom.centroid().asPoint()
-
-            time_series = []
-            flow_depth = []
-            velocity = []
-            wse = []
-
-            for i in range(mesh_layer.dataProvider().datasetCount(1)):
-
-                # TIME SERIES
-                meta = mesh_layer.dataProvider().datasetMetadata(QgsMeshDatasetIndex(1, i))
-                t = meta.time()
-                time_series.append(t)
-
-                # FLOW DEPTH
-                dataset = QgsMeshDatasetIndex(1, i)
-                value = mesh_layer.datasetValue(dataset, point, 0)
-                flow_depth.append(value)
-
-                # VELOCITY
-                dataset = QgsMeshDatasetIndex(4, i)
-                value = mesh_layer.datasetValue(dataset, point, 0).scalar()
-                velocity.append(value)
-
-                # WSE
-                dataset = QgsMeshDatasetIndex(2, i)
-                value = mesh_layer.datasetValue(dataset, point, 0).scalar()
-                wse.append(value)
-
-            df = pd.DataFrame({
-                'Time': time_series,
-                'Depth': flow_depth,
-                'Velocity': velocity,
-                'Water Surface Elevation': wse
-            })
-
-            self.uc.log_info(str(df))
+            self.uc.bar_info("Reading data from mesh layer!")
+            self.uc.log_info("Reading data from mesh layer!")
+            try:
+                df = self.dataframe_from_mesh(mesh_layer, grid_element)
+            except:
+                QApplication.restoreOverrideCursor()
+                self.uc.bar_warn("Error while retrieving data from mesh layer!")
+                self.uc.log_info("Error while retrieving data from mesh layer!")
+                return
 
         else:
             # Check if there is an TIMDEP.OUT file on the export folder and has data
@@ -1521,6 +1490,7 @@ class GridToolsWidget(qtBaseClass, uiDialog):
                     return
                 else:
                     self.uc.bar_info("Reading data from TIMDEP.HDF5!")
+                    self.uc.log_info("Reading data from TIMDEP.HDF5!")
                     try:
                         df = self.dataframe_from_hdf5(TIMDEPHDF5_file, grid_element)
                     except:
@@ -1548,6 +1518,7 @@ class GridToolsWidget(qtBaseClass, uiDialog):
                         return
                     else:
                         self.uc.bar_info("Reading data from TIMDEP.OUT!")
+                        self.uc.log_info("Reading data from TIMDEP.OUT!")
                         try:
                             df = self.dataframe_from_out(TIMDEPOUT_file, grid_element)
                         except:
@@ -1673,5 +1644,53 @@ class GridToolsWidget(qtBaseClass, uiDialog):
 
         df = pd.DataFrame(data,
                           columns=['Time', 'Depth', 'Velocity', 'Water Surface Elevation'])
+
+        return df
+
+    def dataframe_from_mesh(self, mesh_layer, grid_element):
+        """
+        Function to get the data frame from mesh layer
+        """
+        grid = self.lyrs.data["grid"]["qlyr"]
+        feature = next(grid.getFeatures(QgsFeatureRequest(grid_element)))
+        geom = feature.geometry()
+        point = geom.centroid().asPoint()
+
+        time_series = []
+        flow_depth = []
+        velocity = []
+        wse = []
+
+        for i in range(mesh_layer.dataProvider().datasetCount(1)):
+
+            # TIME SERIES
+            meta = mesh_layer.dataProvider().datasetMetadata(QgsMeshDatasetIndex(1, i))
+            t = meta.time()
+            time_series.append(t)
+
+            # FLOW DEPTH
+            dataset = QgsMeshDatasetIndex(1, i)
+            value = mesh_layer.datasetValue(dataset, point, 0).scalar()
+            value = 0 if math.isnan(value) else value
+            flow_depth.append(value)
+
+            # VELOCITY
+            dataset = QgsMeshDatasetIndex(4, i)
+            value = mesh_layer.datasetValue(dataset, point, 0).scalar()
+            value = 0 if math.isnan(value) else value
+            velocity.append(value)
+
+            # WSE
+            dataset = QgsMeshDatasetIndex(2, i)
+            value = mesh_layer.datasetValue(dataset, point, 0).scalar()
+            value = 0 if math.isnan(value) else value
+            wse.append(value)
+
+        df = pd.DataFrame({
+            'Time': time_series,
+            'Depth': flow_depth,
+            'Velocity': velocity,
+            'Water Surface Elevation': wse
+        })
 
         return df
