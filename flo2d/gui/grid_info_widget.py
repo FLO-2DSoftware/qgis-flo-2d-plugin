@@ -224,7 +224,6 @@ class GridInfoWidget(qtBaseClass, uiDialog):
     def find_cell(self, cell=None):
         try:
             QApplication.setOverrideCursor(Qt.WaitCursor)
-            self.uc.clear_bar_messages()
             if self.gutils.is_table_empty("grid"):
                 self.uc.bar_warn("There is no grid! Please create it before running tool.")
                 return

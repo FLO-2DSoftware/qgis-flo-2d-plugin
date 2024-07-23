@@ -12,6 +12,8 @@ import os
 import time
 import traceback
 
+import h5py
+import numpy as np
 import pandas as pd
 from PyQt5.QtCore import QUrl
 from PyQt5.QtGui import QDesktopServices, QColor
@@ -35,6 +37,7 @@ from qgis.PyQt.QtWidgets import (
 from .dlg_sampling_rc import SamplingRCDialog
 from .grid_info_widget import GridInfoWidget
 from .table_editor_widget import StandardItemModel, StandardItem
+from ..flo2d_ie.flo2d_parser import HDF5Group
 from ..flo2d_tools.grid_tools import (
     ZonalStatistics,
     ZonalStatisticsOther,
@@ -1437,62 +1440,58 @@ class GridToolsWidget(qtBaseClass, uiDialog):
 
         QApplication.setOverrideCursor(Qt.WaitCursor)
 
-        data = []
-        current_time = None
-
         units = "CMS" if self.gutils.get_cont_par("METRIC") == "1" else "CFS"
 
         # Check if there is an TIMDEP.OUT file on the export folder and has data
         s = QSettings()
         project_dir = s.value("FLO-2D/lastGdsDir")
-        TIMDEP_file = project_dir + r"/TIMDEP.OUT"
-        if not os.path.isfile(TIMDEP_file):
-            QApplication.restoreOverrideCursor()
-            self.uc.bar_warn(
-                "No TIMDEP_file.OUT file found. "
-                "Please ensure the simulation has completed and verify the project export folder.")
-            self.uc.log_info(
-                "No TIMDEP_file.OUT file found. "
-                "Please ensure the simulation has completed and verify the project export folder.")
-            return
+        TIMDEPOUT_file = project_dir + r"/TIMDEP.OUT"
+        TIMDEPHDF5_file = project_dir + r"/TIMDEP.HDF5"
 
-        # Check if the TIMDEP_file.OUT has data on it
-        if os.path.getsize(TIMDEP_file) == 0:
-            QApplication.restoreOverrideCursor()
-            self.uc.bar_warn("File  '" + os.path.basename(TIMDEP_file) + "'  is empty!")
-            self.uc.log_info("File  '" + os.path.basename(TIMDEP_file) + "'  is empty!")
-            return
-
-        try:  # Create the dataframe
-            with open(TIMDEP_file, 'r') as file:
-                for line in file:
-                    line = line.strip()
-                    if line:
-                        parts = line.split()
-                        if len(parts) == 1:
-                            # This line contains the time
-                            current_time = float(parts[0])
-                        else:
-                            # This line contains the data for a grid element
-                            current_grid_element = int(parts[0])
-                            if current_grid_element == grid_element:
-                                depth = float(parts[1])
-                                velocity = float(parts[2])
-                                velocity_x = float(parts[3])
-                                velocity_y = float(parts[4])
-                                water_surface_elevation = float(parts[5])
-
-                                data.append(
-                                    [current_time, depth, velocity, velocity_x, velocity_y, water_surface_elevation])
-
-            df = pd.DataFrame(data,
-                              columns=['Time', 'Depth', 'Velocity', 'Velocity X', 'Velocity Y', 'Water Surface Elevation'])
-
-        except:
-            QApplication.restoreOverrideCursor()
-            self.uc.bar_warn("Error while retrieving data from TIMDEP.OUT!")
-            self.uc.log_info("Error while retrieving data from TIMDEP.OUT!")
-            return
+        # Check if the TIMDEP_file.HDF5 exists
+        if os.path.isfile(TIMDEPHDF5_file):
+            # Check if the TIMDEP_file.HDF5 has data on it
+            if os.path.getsize(TIMDEPHDF5_file) == 0:
+                QApplication.restoreOverrideCursor()
+                self.uc.bar_warn("File  '" + os.path.basename(TIMDEPHDF5_file) + "'  is empty!")
+                self.uc.log_info("File  '" + os.path.basename(TIMDEPHDF5_file) + "'  is empty!")
+                return
+            else:
+                self.uc.bar_info("Reading data from TIMDEP.HDF5!")
+                try:
+                    df = self.dataframe_from_hdf5(TIMDEPHDF5_file, grid_element)
+                except:
+                    QApplication.restoreOverrideCursor()
+                    self.uc.bar_warn("Error while retrieving data from TIMDEP.HDF5!")
+                    self.uc.log_info("Error while retrieving data from TIMDEP.HDF5!")
+                    return
+        else:
+            # Check if the TIMDEP_file.OUT exists
+            if not os.path.isfile(TIMDEPOUT_file):
+                QApplication.restoreOverrideCursor()
+                self.uc.bar_warn(
+                    "No TIMDEP.HDF5 or TIMDEP.OUT file found. "
+                    "Please ensure the simulation has completed and verify the project export folder.")
+                self.uc.log_info(
+                    "No TIMDEP.HDF5 or TIMDEP.OUT file found. "
+                    "Please ensure the simulation has completed and verify the project export folder.")
+                return
+            else:
+                # Check if the TIMDEP_file.OUT has data on it
+                if os.path.getsize(TIMDEPOUT_file) == 0:
+                    QApplication.restoreOverrideCursor()
+                    self.uc.bar_warn("File  '" + os.path.basename(TIMDEPHDF5_file) + "'  is empty!")
+                    self.uc.log_info("File  '" + os.path.basename(TIMDEPHDF5_file) + "'  is empty!")
+                    return
+                else:
+                    self.uc.bar_info("Reading data from TIMDEP.OUT!")
+                    try:
+                        df = self.dataframe_from_out(TIMDEPOUT_file, grid_element)
+                    except:
+                        QApplication.restoreOverrideCursor()
+                        self.uc.bar_warn("Error while retrieving data from TIMDEP.OUT!")
+                        self.uc.log_info("Error while retrieving data from TIMDEP.OUT!")
+                        return
 
         try:  # Create the plots
             self.plot.clear()
@@ -1508,8 +1507,6 @@ class GridToolsWidget(qtBaseClass, uiDialog):
             self.plot.plot.setLabel("left", text="")
             self.plot.add_item(f"Depth ({self.system_units[units][0]})", [df['Time'], df['Depth']], col=QColor(Qt.darkBlue), sty=Qt.SolidLine)
             self.plot.add_item(f"Velocity ({self.system_units[units][1]})", [df['Time'], df['Velocity']], col=QColor(Qt.yellow), sty=Qt.SolidLine, hide=True)
-            self.plot.add_item(f"Velocity X ({self.system_units[units][1]})", [df['Time'], df['Velocity X']], col=QColor(Qt.cyan), sty=Qt.SolidLine, hide=True)
-            self.plot.add_item(f"Velocity Y ({self.system_units[units][1]})", [df['Time'], df['Velocity Y']], col=QColor(Qt.magenta), sty=Qt.SolidLine, hide=True)
             self.plot.add_item(f"Water Surface Elevation ({self.system_units[units][0]})", [df['Time'], df['Water Surface Elevation']], col=QColor(Qt.darkGreen), sty=Qt.SolidLine, hide=True)
 
         except:
@@ -1527,30 +1524,22 @@ class GridToolsWidget(qtBaseClass, uiDialog):
                 "Time (hours)",
                 f"Depth ({self.system_units[units][0]})",
                 f"Velocity ({self.system_units[units][1]})",
-                f"Velocity X ({self.system_units[units][1]})",
-                f"Velocity Y ({self.system_units[units][1]})",
                 f"Water Surface Elevation ({self.system_units[units][0]})"
             ])
 
             data = zip(df['Time'],
                        df['Depth'],
                        df['Velocity'],
-                       df['Velocity X'],
-                       df['Velocity Y'],
                        df['Water Surface Elevation']
                        )
-            for time, depth, velocity, velocity_x, velocity_y, wse in data:
+            for time, depth, velocity, wse in data:
                 time_item = StandardItem("{:.2f}".format(time)) if time is not None else StandardItem("")
                 depth_item = StandardItem("{:.2f}".format(depth)) if depth is not None else StandardItem("")
                 velocity_item = StandardItem("{:.2f}".format(velocity)) if velocity is not None else StandardItem("")
-                velocity_x_item = StandardItem("{:.2f}".format(velocity_x)) if velocity_x is not None else StandardItem("")
-                velocity_y_item = StandardItem("{:.2f}".format(velocity_y)) if velocity_y is not None else StandardItem("")
                 wse_item = StandardItem("{:.2f}".format(wse)) if wse is not None else StandardItem("")
                 data_model.appendRow([time_item,
                                       depth_item,
                                       velocity_item,
-                                      velocity_x_item,
-                                      velocity_y_item,
                                       wse_item])
 
             self.tview.horizontalHeader().setStretchLastSection(True)
@@ -1565,3 +1554,61 @@ class GridToolsWidget(qtBaseClass, uiDialog):
             return
 
         QApplication.restoreOverrideCursor()
+
+    def dataframe_from_hdf5(self, hdf5_file, grid_element):
+        """
+        Function to get the data frame from hdf5
+        """
+        file = h5py.File(hdf5_file)
+
+        time_series = np.array(file['/TIMDEP NETCDF OUTPUT RESULTS/FLOW DEPTH/Times'])
+        time_series = time_series.flatten()
+
+        flow_depth = np.array(file['/TIMDEP NETCDF OUTPUT RESULTS/FLOW DEPTH/Values'])
+        flow_depth = flow_depth[:, grid_element - 1].flatten()
+
+        wse = np.array(file['/TIMDEP NETCDF OUTPUT RESULTS/Floodplain Water Surface Elevation/Values'])
+        wse = wse[:, grid_element - 1].flatten()
+
+        velocity = np.array(file['/TIMDEP NETCDF OUTPUT RESULTS/Velocity MAG/Values'])
+        velocity = velocity[:, grid_element - 1].flatten()
+
+        df = pd.DataFrame({
+            'Time': time_series,
+            'Depth': flow_depth,
+            'Velocity': velocity,
+            'Water Surface Elevation': wse
+        })
+
+        return df
+
+    def dataframe_from_out(self, out_file, grid_element):
+        """
+        Function to get the data frame from out
+        """
+        data = []
+        with open(out_file, 'r') as file:
+            for line in file:
+                line = line.strip()
+                if line:
+                    parts = line.split()
+                    if len(parts) == 1:
+                        # This line contains the time
+                        current_time = float(parts[0])
+                    else:
+                        # This line contains the data for a grid element
+                        current_grid_element = int(parts[0])
+                        if current_grid_element == grid_element:
+                            depth = float(parts[1])
+                            velocity = float(parts[2])
+                            # velocity_x = float(parts[3])
+                            # velocity_y = float(parts[4])
+                            water_surface_elevation = float(parts[5])
+
+                            data.append(
+                                [current_time, depth, velocity, water_surface_elevation])
+
+        df = pd.DataFrame(data,
+                          columns=['Time', 'Depth', 'Velocity', 'Water Surface Elevation'])
+
+        return df
