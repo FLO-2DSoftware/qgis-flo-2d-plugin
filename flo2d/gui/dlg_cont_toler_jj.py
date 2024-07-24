@@ -14,6 +14,7 @@ from qgis.PyQt import QtCore
 from qgis.PyQt.QtWidgets import QApplication, QCheckBox, QDoubleSpinBox, qApp
 from qgis._core import QgsMessageLog
 
+from .dlg_mud_and_sediment import MudAndSedimentDialog
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
 from ..utils import float_or_zero, old_IDEBRV
@@ -491,20 +492,29 @@ class ContToler_JJ(qtBaseClass, uiDialog):
                     return False
 
             # See value of combobox 'ISED' for later set parameters MUD and ISED in 'for key...' loop.
+            dlg_ms = MudAndSedimentDialog(self.con, self.iface, self.lyrs)
             _mud = 0
             _sed = 0
             widget = getattr(self, "ISED")
             val = widget.currentIndex()
+            # Mud/Debris
             if val == 0:
+                dlg_ms.check_sim_type(1)
                 _mud = 1
                 _sed = 0
+            # Sediment Transport
             elif val == 1:
+                dlg_ms.check_sim_type(0)
                 _mud = 0
                 _sed = 1
+            # None
             elif val == 2:
+                dlg_ms.check_sim_type(0)
                 _mud = 0
                 _sed = 0
+            # Two Phase
             elif val == 3:
+                dlg_ms.check_sim_type(2)
                 _mud = 2
                 _sed = 0
 

@@ -475,7 +475,7 @@
                 </size>
                </property>
                <property name="text">
-                <string>Initial water level</string>
+                <string>Water Elev.</string>
                </property>
               </widget>
              </item>
