@@ -1861,7 +1861,6 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
                         fid = {bc_fid}"""
 
             typ = self.gutils.execute(qry).fetchone()[0]
-            self.uc.log_info(str(typ))
             self.populate_bcs(bc_fid)
             if typ == "inflow":
                 self.populate_inflow_data_cbo()

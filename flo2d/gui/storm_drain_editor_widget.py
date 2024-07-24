@@ -1573,7 +1573,6 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                         #     continue
 
                 # Outfalls:
-                self.uc.log_info(str(values))
                 outfall_type = values["out_type"].upper() if "out_type" in values else "NORMAL"
 
                 outfall_invert_elev = (
