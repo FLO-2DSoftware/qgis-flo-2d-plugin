@@ -1887,8 +1887,6 @@ class InletRatingTable(GeoPackageUtils):
             return name
 
     def del_rating_table(self, rt_fid):
-        qry = "UPDATE user_swmm_inlets_junctions SET rt_fid = ? WHERE rt_fid = ?;"
-        self.execute(qry, (None, rt_fid))
         qry = "DELETE FROM swmmflort WHERE fid = ?;"
         self.execute(qry, (rt_fid,))
         qry = "DELETE FROM swmmflort_data WHERE swmm_rt_fid = ?;"
@@ -1924,17 +1922,6 @@ class InletRatingTable(GeoPackageUtils):
         self.execute(qry, (rt_fid,))
         qry = "INSERT INTO swmmflort_data (swmm_rt_fid, depth, q) VALUES (?, ?, ?);"
         self.execute_many(qry, data)
-
-    def set_rating_table_data_name(self, rt_fid, name):
-        qry = "UPDATE swmmflort SET name=? WHERE fid=?;"
-        self.execute(
-            qry,
-            (
-                name,
-                rt_fid,
-            ),
-        )
-
 
 class PumpCurves(GeoPackageUtils):
     """
