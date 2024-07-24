@@ -1887,8 +1887,6 @@ class InletRatingTable(GeoPackageUtils):
             return name
 
     def del_rating_table(self, rt_fid):
-        qry = "UPDATE user_swmm_inlets_junctions SET rt_fid = ? WHERE rt_fid = ?;"
-        self.execute(qry, (None, rt_fid))
         qry = "DELETE FROM swmmflort WHERE fid = ?;"
         self.execute(qry, (rt_fid,))
         qry = "DELETE FROM swmmflort_data WHERE swmm_rt_fid = ?;"

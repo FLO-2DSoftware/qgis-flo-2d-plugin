@@ -5779,16 +5779,22 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             self.uc.show_warn("ERROR 041203.1542: wrong menu item!") 
 
     def SD_delete_type4(self):
+        """
+        Function to delete Rating Tables and Culvert Equations
+        """
+
         if not self.inletRT:
             return
+
         type4_name = self.SD_type4_cbo.currentText()
 
-        # Delete Rating Table:
-        qry = """SELECT grid_fid, name FROM swmmflort WHERE name = ?"""
-        rts = self.gutils.execute(qry, (type4_name,))
-        for rt in rts:
-            grid_fid = rt[0]
-            if grid_fid is None or grid_fid == "":
+        is_rt = self.gutils.execute(f"SELECT name FROM swmmflort WHERE name = '{type4_name}'").fetchone()
+
+        if is_rt:
+            qry = """SELECT grid_fid, name FROM swmmflort WHERE name = ?"""
+            rt = self.gutils.execute(qry, (type4_name,)).fetchone()
+            grid, name = rt
+            if grid is None or grid == "":
                 q = (
                     'WARNING 100319.1024:\n\nRating table "'
                     + type4_name
@@ -5804,21 +5810,19 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                     "WARNING 040319.0444:\n\nRating table '"
                     + type4_name
                     + "' is assigned to grid element "
-                    + str(grid_fid)
+                    + str(grid)
                     + ".\nDo you want to delete it?.\n"
                 ):
                     idx = self.SD_type4_cbo.currentIndex()
                     rt_fid = self.SD_type4_cbo.itemData(idx)
                     self.inletRT.del_rating_table(rt_fid)
-                    self.uc.log_info(f"Rating table {type4_name} assigned to grid element {grid_fid} deleted.")
-                    self.uc.bar_info(f"Rating table {type4_name} assigned to grid element {grid_fid} deleted.")
-
-        # Delete Culvert Equation:
-        qry = """SELECT grid_fid, name FROM swmmflo_culvert WHERE name = ?"""
-        culvs = self.gutils.execute(qry, (type4_name,))
-        for cul in culvs:
-            grid_fid = cul[0]
-            if grid_fid is None or grid_fid == "":
+                    self.uc.log_info(f"Rating table {type4_name} assigned to grid element {grid} deleted.")
+                    self.uc.bar_info(f"Rating table {type4_name} assigned to grid element {grid} deleted.")
+        else:
+            qry = """SELECT grid_fid, name FROM swmmflo_culvert WHERE name = ?"""
+            rt = self.gutils.execute(qry, (type4_name,)).fetchone()
+            grid, name = rt
+            if grid is None or grid == "":
                 q = (
                     'WARNING 250622.0517:\nCulvert equation "'
                     + type4_name
@@ -5830,8 +5834,6 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 name = self.SD_type4_cbo.currentText()
                 fid = self.SD_type4_cbo.itemData(idx)
 
-                qry = "UPDATE user_swmm_inlets_junctions SET rt_fid = ?, rt_name = ? WHERE name = ?;"
-                self.gutils.execute(qry, (None, None, name))
                 qry = "DELETE FROM swmmflo_culvert WHERE name = ?;"
                 self.gutils.execute(qry, (name,))            
                 
@@ -5840,18 +5842,16 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                     "WARNING 250622.9519:\n\nCulvert Equation '"
                     + type4_name
                     + "' is assigned to grid element "
-                    + str(grid_fid)
+                    + str(grid)
                     + ".\nDo you want to delete it?.\n"
                 ):
                     idx = self.SD_type4_cbo.currentIndex()
                     name = self.SD_type4_cbo.currentText()
                     fid = self.SD_type4_cbo.itemData(idx)
-                    qry = "UPDATE user_swmm_inlets_junctions SET rt_fid = ?, rt_name = ? WHERE name = ?;"
-                    self.gutils.execute(qry, (None, None, name))
                     qry = "DELETE FROM swmmflo_culvert WHERE name = ?;"
                     self.gutils.execute(qry, (name,))
-                    self.uc.log_info(f"Culvert Equation {type4_name} assigned to grid element {grid_fid} deleted.")
-                    self.uc.bar_info(f"Culvert Equation {type4_name} assigned to grid element {grid_fid} deleted.")
+                    self.uc.log_info(f"Culvert Equation {type4_name} assigned to grid element {grid} deleted.")
+                    self.uc.bar_info(f"Culvert Equation {type4_name} assigned to grid element {grid} deleted.")
 
         self.populate_type4_and_data()
 
@@ -5880,21 +5880,6 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
 
         if name in ['Rating Tables', 'Culvert Equations']:
             return
-            
-        # # Check that the RT or Culvert eq. is not already assigned to an inlet:
-        # already_a_RT_or_Culvert = self.gutils.execute(
-        #     "SELECT rt_name FROM user_swmm_inlets_junctions WHERE name = ?;", (name,)
-        #     ).fetchone()
-        #
-        # if already_a_RT_or_Culvert:
-        #     # Old name already assigned to inlet as Culvert eq.
-        #     if already_a_RT_or_Culvert[0]:
-        #         if not self.uc.question(
-        #             "WARNING 201223.0426:\n\nA rating table or Culvert eq. already assigned to inlet "
-        #             + name
-        #             + ".\n\nDo you want to rename it?.\n"
-        #         ):
-        #             return
     
         new_name, ok = QInputDialog.getText(None, "Change table name", "New name:")
         if not ok or not new_name:
