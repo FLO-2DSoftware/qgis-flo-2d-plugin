@@ -952,7 +952,6 @@ class Flo2D(object):
                                     ds = ogr.Open(gpkg_path)
                                     layer = ds.GetLayerByName(table)
                                     # Vector
-                                    self.uc.log_info(table)
                                     if layer.GetGeomType() != ogr.wkbNone:
                                         gpkg_uri = f"{gpkg_path}|layername={table}"
                                         gpkg_layer = QgsVectorLayer(gpkg_uri, table, "ogr")
@@ -966,6 +965,11 @@ class Flo2D(object):
                                         else:
                                             group = flo2d_grp.insertGroup(-1, group_name)
                                         group.insertLayer(0, gpkg_layer)
+
+                                        # Add information to the external_layers tab
+                                        self.gutils.execute(
+                                            f"INSERT INTO external_layers (name, type) VALUES ('{table}', 'external');")
+
                                         continue
                                 except Exception as e:
                                     pass
@@ -986,6 +990,10 @@ class Flo2D(object):
                                             group = flo2d_grp.insertGroup(-1, group_name)
                                         group.insertLayer(0, gpkg_layer)
                                         self.lyrs.collapse_flo2d_subgroup(flo2d_name, group_name)
+
+                                        # Add information to the external_layers tab
+                                        self.gutils.execute(
+                                            f"INSERT INTO external_layers (name, type) VALUES ('{table}', 'external');")
 
                                 except Exception as e:
                                     pass

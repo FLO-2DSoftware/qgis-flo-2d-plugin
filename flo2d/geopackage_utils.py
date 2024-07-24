@@ -439,8 +439,6 @@ class GeoPackageUtils(object):
                           """
                     update_tables_sql.append(sql)
 
-
-
                 # add data to the user_swmm_outlets
                 sql = """
                         INSERT INTO user_swmm_outlets (
