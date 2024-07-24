@@ -998,9 +998,9 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
                         f"SELECT MIN(yi) FROM xsec_n_data WHERE chan_n_nxsecnum = '{upstream_xc}'").fetchone()[0]
 
                     if self.gutils.get_cont_par("METRIC") == "1":
-                        outflow_elev_threshold = 0.03
+                        outflow_elev_threshold = 0.003
                     elif self.gutils.get_cont_par("METRIC") == "0":
-                        outflow_elev_threshold = 0.1
+                        outflow_elev_threshold = 0.01
 
                     if float(upstream_xc_min_elev) - float(xc_min_elev) < outflow_elev_threshold:
                         error_outflow_bc_grid.append(bc_grid)
@@ -1052,7 +1052,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
                        f"GRID ELEMENTS(S): \n{'-'.join(map(str, depth_elements))}\n\n"
 
             if len(error_outflow_bc_grid) > 0:
-                msg += "ERROR: CHANNEL OUTFLOW CROSS SECTION MUST BE LOWER THAN ADJACENT UPSTREAM NEIGHBOR BY 0.1. " \
+                msg += "ERROR: CHANNEL OUTFLOW CROSS SECTION MUST BE LOWER THAN ADJACENT UPSTREAM NEIGHBOR BY 0.01 ft. " \
                        f"GRID ELEMENTS(S): \n{'-'.join(map(str, error_outflow_bc_grid))}\n\n"
 
             if len(error_inflow_bc_grid) > 0:
