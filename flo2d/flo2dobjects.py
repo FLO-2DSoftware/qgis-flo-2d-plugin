@@ -1925,17 +1925,6 @@ class InletRatingTable(GeoPackageUtils):
         qry = "INSERT INTO swmmflort_data (swmm_rt_fid, depth, q) VALUES (?, ?, ?);"
         self.execute_many(qry, data)
 
-    def set_rating_table_data_name(self, rt_fid, name):
-        qry = "UPDATE swmmflort SET name=? WHERE fid=?;"
-        self.execute(
-            qry,
-            (
-                name,
-                rt_fid,
-            ),
-        )
-
-
 class PumpCurves(GeoPackageUtils):
     """
     Pumps data representation.

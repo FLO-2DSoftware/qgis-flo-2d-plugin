@@ -5868,36 +5868,44 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             self.inlet_data_model.clear()
 
     def SD_rename_type4(self):
+        """
+        Function to rename Rating Tables and Culvert Equations
+        """
         if not self.inletRT:
             return
         
         idx = self.SD_type4_cbo.currentIndex()
         rt_fid = self.SD_type4_cbo.itemData(idx)
-        name = self.SD_type4_cbo.currentText()   
+        name = self.SD_type4_cbo.currentText()
+
+        if name in ['Rating Tables', 'Culvert Equations']:
+            return
             
-        # Check that the RT or Culvert eq. is not already assigned to an inlet:
-        already_a_RT_or_Culvert = self.gutils.execute(
-            "SELECT rt_name FROM user_swmm_inlets_junctions WHERE name = ?;", (name,)
-            ).fetchone()  
-        
-        if already_a_RT_or_Culvert: 
-            # Old name already assigned to inlet as Culvert eq.
-            if already_a_RT_or_Culvert[0]:
-                if not self.uc.question(
-                    "WARNING 201223.0426:\n\nA rating table or Culvert eq. already assigned to inlet "
-                    + name
-                    + ".\n\nDo you want to rename it?.\n"
-                ):
-                    return            
+        # # Check that the RT or Culvert eq. is not already assigned to an inlet:
+        # already_a_RT_or_Culvert = self.gutils.execute(
+        #     "SELECT rt_name FROM user_swmm_inlets_junctions WHERE name = ?;", (name,)
+        #     ).fetchone()
+        #
+        # if already_a_RT_or_Culvert:
+        #     # Old name already assigned to inlet as Culvert eq.
+        #     if already_a_RT_or_Culvert[0]:
+        #         if not self.uc.question(
+        #             "WARNING 201223.0426:\n\nA rating table or Culvert eq. already assigned to inlet "
+        #             + name
+        #             + ".\n\nDo you want to rename it?.\n"
+        #         ):
+        #             return
     
         new_name, ok = QInputDialog.getText(None, "Change table name", "New name:")
         if not ok or not new_name:
             return
+
         if not self.SD_type4_cbo.findText(new_name) == -1:
             msg = "WARNING 060319.1735: Type 4 condition with name {} already exists. Please, choose another name or delete it.".format(
                 new_name
             )
             self.uc.show_warn(msg)
+            self.uc.log_info(msg)
             return
         
         inlet = self.gutils.execute(
@@ -5905,23 +5913,29 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             ).fetchone()        
         
         if not inlet:
-            self.uc.show_warn("There is no inlet with name " + new_name)    
-            return  
-                    
-            
+            self.uc.show_warn("There is no inlet with name " + new_name)
+            self.uc.log_info("There is no inlet with name " + new_name)
+            return
+
+        grid = self.gutils.execute(
+            "SELECT grid FROM user_swmm_inlets_junctions WHERE name = ?;", (new_name,)
+            ).fetchone()[0]
+
         in_culvert = self.gutils.execute(
             "SELECT fid FROM swmmflo_culvert WHERE name = ?;", (name,)
-            ).fetchone()  
-        
-        if in_culvert:         
-            qry = "UPDATE swmmflo_culvert SET name=? WHERE name=?;"
-            self.gutils.execute(qry,(new_name, name,),)
+            ).fetchone()
+
+        # Culvert Equation
+        if in_culvert:
+            qry = f"UPDATE swmmflo_culvert SET name='{new_name}', grid_fid='{grid}' WHERE name='{name}';"
+            self.gutils.execute(qry)
+        # Rating Table
         else:
-            self.inletRT.set_rating_table_data_name(rt_fid, new_name)
+            qry = f"UPDATE swmmflort SET name='{new_name}', grid_fid='{grid}' WHERE name='{name}';"
+            self.gutils.execute(qry)
 
-        self.gutils.execute("UPDATE user_swmm_inlets_junctions SET rt_name=? WHERE name=?;",(new_name, new_name,),)
-
-        self.uc.show_warn("Type 4 condition assigned to inlet " + new_name)
+        self.uc.bar_info("Type 4 condition assigned to inlet " + new_name)
+        self.uc.log_info("Type 4 condition assigned to inlet " + new_name)
           
         self.populate_type4_combo()
         idx = self.SD_type4_cbo.findText(new_name)
@@ -5951,10 +5965,10 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             
             sql = "UPDATE swmmflo_culvert SET cdiameter=?, typec=?, typeen=?, cubase=?, multbarrels=? WHERE name = ?;"
             
-            cdiameter = self.inlet_data_model.data(self.inlet_data_model.index(0.0, 0), Qt.DisplayRole)
+            cdiameter = self.inlet_data_model.data(self.inlet_data_model.index(0, 0), Qt.DisplayRole)
             typec = self.inlet_data_model.data(self.inlet_data_model.index(0, 1), Qt.DisplayRole)
             typeen = self.inlet_data_model.data(self.inlet_data_model.index(0, 2), Qt.DisplayRole)
-            cubase = self.inlet_data_model.data(self.inlet_data_model.index(0.0, 3), Qt.DisplayRole)
+            cubase = self.inlet_data_model.data(self.inlet_data_model.index(0, 3), Qt.DisplayRole)
             multbarrels = self.inlet_data_model.data(self.inlet_data_model.index(0, 4), Qt.DisplayRole)
             
             self.gutils.execute(sql , (cdiameter ,typec ,typeen ,cubase ,multbarrels, name))
