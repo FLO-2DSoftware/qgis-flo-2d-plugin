@@ -745,7 +745,7 @@ class ParseDAT(object):
             try:
                 segments[i].append(baseflow[i])
             except:
-                segments[i].append(['B', '0.0'])    
+                pass
               
         return segments, wsel, confluence, noexchange
 
