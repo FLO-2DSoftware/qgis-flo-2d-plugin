@@ -1503,10 +1503,10 @@ class GridToolsWidget(qtBaseClass, uiDialog):
                 if not os.path.isfile(TIMDEPOUT_file):
                     QApplication.restoreOverrideCursor()
                     self.uc.bar_warn(
-                        "No TIMDEP.HDF5 or TIMDEP.OUT file found. "
+                        "No mesh layer, TIMDEP.HDF5 or TIMDEP.OUT file found. "
                         "Please ensure the simulation has completed and verify the project export folder.")
                     self.uc.log_info(
-                        "No TIMDEP.HDF5 or TIMDEP.OUT file found. "
+                        "No mesh layer, TIMDEP.HDF5 or TIMDEP.OUT file found. "
                         "Please ensure the simulation has completed and verify the project export folder.")
                     return
                 else:
