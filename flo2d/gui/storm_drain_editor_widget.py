@@ -4592,14 +4592,6 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             except Exception as e:
                 self.uc.bar_error("ERROR while saving storm drain components from hydraulic layers!.")
 
-        dlg_INP_groups = INP_GroupsDialog(self.con, self.iface)
-        ok = dlg_INP_groups.exec_()
-        if ok:
-            self.uc.bar_info("Storm Drain control data saved!")
-            self.uc.log_info("Storm Drain control data saved!")
-            dlg_INP_groups.save_INP_control()
-
-
     def create_conduit_discharge_table_and_plots(self, intersection=None):
         """
         Create Storm Drain conduit plots.

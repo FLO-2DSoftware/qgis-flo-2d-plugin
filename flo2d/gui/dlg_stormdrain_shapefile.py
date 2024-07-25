@@ -1486,6 +1486,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                         if self.outfall_allow_discharge_FieldCbo.currentText() != ""
                         else ""
                     )
+                    swmm_allow_discharge = 1 if swmm_allow_discharge == 'True' else 0
                     swmm_allow_discharge = str(swmm_allow_discharge) if swmm_allow_discharge in ["0", "1", "2", 0, 1, 2] else "0"
                     
                     outfall_type = (
@@ -1494,7 +1495,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                         else ""
                     )
                     water_depth = self.outfall_water_depth_FieldCbo.currentText()
-                    water_depth = f[water_depth] if water_depth != "" and water_depth is not None else ""
+                    water_depth = f[water_depth] if water_depth != '' and water_depth is not None else 0
 
                     feat = QgsFeature()
                     feat.setFields(fields)
