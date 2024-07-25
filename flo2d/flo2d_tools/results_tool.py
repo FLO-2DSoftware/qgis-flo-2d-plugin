@@ -66,6 +66,7 @@ class ResultsTool(QgsMapToolIdentify):
             "fpxsec",
             "fpxsec_cells",
             "user_swmm_inlets_junctions",
+            "user_swmm_outlets",
             "user_swmm_conduits",
             "user_swmm_weirs",
             "user_swmm_orifices",
@@ -99,6 +100,32 @@ class ResultsTool(QgsMapToolIdentify):
 
             if ln == "Storm Drain Inlets/Junctions":
                 sd_layer = self.lyrs.get_layer_by_name("Storm Drain Inlets/Junctions", group=self.lyrs.group).layer()
+                for j, fid in enumerate(lyrs_found[ln]["fids"]):
+                    feat = next(sd_layer.getFeatures(QgsFeatureRequest(fid)))
+                    name = feat["name"]
+                    grid = feat["grid"]
+                    ssm = QMenu(name + " (" + str(grid) + ")")
+                    sm[i].addMenu(ssm)
+
+                    # Results
+                    results_action = QAction("See Results", None)
+                    results_action.hovered.connect(functools.partial(self.show_rubber, lid, fid))
+                    results_action.triggered.connect(functools.partial(self.pass_res, tab, fid, "See Results"))
+                    ssm.addAction(results_action)
+
+                    # Add "Start Node" action
+                    start_action = QAction("Start Node", None)
+                    start_action.hovered.connect(functools.partial(self.show_rubber, lid, fid))
+                    start_action.triggered.connect(functools.partial(self.pass_res, tab, fid, "Start"))
+                    ssm.addAction(start_action)
+
+                    # Add "End Node" action
+                    end_action = QAction("End Node", None)
+                    end_action.hovered.connect(functools.partial(self.show_rubber, lid, fid))
+                    end_action.triggered.connect(functools.partial(self.pass_res, tab, fid, "End"))
+                    ssm.addAction(end_action)
+            elif ln == "Storm Drain Outfalls":
+                sd_layer = self.lyrs.get_layer_by_name("Storm Drain Outfalls", group=self.lyrs.group).layer()
                 for j, fid in enumerate(lyrs_found[ln]["fids"]):
                     feat = next(sd_layer.getFeatures(QgsFeatureRequest(fid)))
                     name = feat["name"]
