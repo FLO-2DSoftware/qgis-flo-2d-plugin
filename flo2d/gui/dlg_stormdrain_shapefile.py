@@ -418,7 +418,6 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
             string_combos = [self.outfalls_fields_groupBox.findChild(QgsFieldComboBox, 'outfall_name_FieldCbo'),
                              self.outfalls_fields_groupBox.findChild(QgsFieldComboBox, 'outfall_flap_gate_FieldCbo'),
                              self.outfalls_fields_groupBox.findChild(QgsFieldComboBox, 'outfall_type_FieldCbo'),
-                             self.outfalls_fields_groupBox.findChild(QgsFieldComboBox, 'outfall_allow_discharge_FieldCbo'),
                              self.outfalls_fields_groupBox.findChild(QgsFieldComboBox, 'outfall_tidal_curve_FieldCbo'),
                              self.outfalls_fields_groupBox.findChild(QgsFieldComboBox, 'outfall_time_series_FieldCbo')                             
                              ]
@@ -427,6 +426,13 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
             numeric_combos = [self.outfalls_fields_groupBox.findChild(QgsFieldComboBox, 'outfall_invert_elevation_FieldCbo'),    
                               self.outfalls_fields_groupBox.findChild(QgsFieldComboBox, 'outfall_water_depth_FieldCbo'),
                               ]
+
+            all_combos = [self.outfalls_fields_groupBox.findChild(QgsFieldComboBox, 'outfall_allow_discharge_FieldCbo')]
+
+            for combo in all_combos:
+                combo.clear()
+                combo.setLayer(self.current_lyr)
+                combo.setFilters(QgsFieldProxyModel.AllTypes)  # Show all types
             
             for combo in string_combos:
                 combo.clear()
