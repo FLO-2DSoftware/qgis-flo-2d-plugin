@@ -1495,7 +1495,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                         else ""
                     )
                     water_depth = self.outfall_water_depth_FieldCbo.currentText()
-                    water_depth = f[water_depth] if water_depth != "" and water_depth is not None else ""
+                    water_depth = f[water_depth] if water_depth != '' and water_depth is not None else 0
 
                     feat = QgsFeature()
                     feat.setFields(fields)
