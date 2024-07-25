@@ -566,15 +566,15 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
                 )
 
         except Exception as e:
-            self.gutils.enable_geom_triggers()
             self.uc.log_info(traceback.format_exc())
             self.uc.show_error(
                 "ERROR 051218.1839: Green-Ampt infiltration failed!. Please check data in your input layers."
                 + "\n__________________________________________________",
                 e,
             )
-
-        QApplication.restoreOverrideCursor()
+        finally:
+            self.gutils.enable_geom_triggers()
+            QApplication.restoreOverrideCursor()
 
     def calculate_scs(self):
         dlg = SCSDialog(self.iface, self.lyrs)
@@ -610,12 +610,14 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
             QApplication.restoreOverrideCursor()
             self.uc.show_info("Calculating SCS Curve Number parameters finished!")
         except Exception as e:
-            self.gutils.enable_geom_triggers()
             self.uc.log_info(traceback.format_exc())
             QApplication.restoreOverrideCursor()
             self.uc.show_warn(
                 "WARNING 060319.1724: Calculating SCS Curve Number parameters failed! Please check data in your input layers."
             )
+
+        finally:
+            self.gutils.enable_geom_triggers()
 
 
 uiDialog_glob, qtBaseClass_glob = load_ui("infil_global")

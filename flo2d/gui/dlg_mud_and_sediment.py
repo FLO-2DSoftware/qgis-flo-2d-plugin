@@ -671,11 +671,12 @@ class MudAndSedimentDialog(qtBaseClass, uiDialog):
             self.gutils.clear_tables("sed_rigid_cells")
             self.gutils.batch_execute(rigid_insert_sql)
 
-            self.gutils.enable_geom_triggers()
-
         except Exception as e:
             QApplication.restoreOverrideCursor()
             self.uc.show_error("ERROR 190523.0502: unable to load mud/sediment data!.\n", e)
+
+        finally:
+            self.gutils.enable_geom_triggers()
 
     def set_mud_debris(self):
         self.gutils.set_cont_par("IDEBRV", self.mud_basin_grp.isChecked())

@@ -1857,6 +1857,7 @@ class Flo2D(object):
             None, "Select FLO-2D file to import", directory=last_dir, filter="CONT.DAT"
         )
         if not fname:
+            self.gutils.enable_geom_triggers()
             return
         dir_name = os.path.dirname(fname)
         s.setValue("FLO-2D/lastGdsDir", dir_name)
@@ -1865,8 +1866,10 @@ class Flo2D(object):
             topo = self.f2g.parser.dat_files["TOPO.DAT"]
             if topo is None:
                 self.uc.bar_warn("Could not find TOPO.DAT file! Importing GDS files aborted!", dur=3)
+                self.gutils.enable_geom_triggers()
                 return
             if bname not in self.f2g.parser.dat_files:
+                self.gutils.enable_geom_triggers()
                 return
             empty = self.f2g.is_table_empty("grid")
             # check if a grid exists in the grid table
@@ -1876,16 +1879,19 @@ class Flo2D(object):
                     pass
                 else:
                     self.uc.bar_info("Import cancelled", dur=3)
+                    self.gutils.enable_geom_triggers()
                     return
 
             # Check if MANNINGS_N.DAT exist:
             if not os.path.isfile(dir_name + r"\MANNINGS_N.DAT") or os.path.getsize(dir_name + r"\MANNINGS_N.DAT") == 0:
                 self.uc.show_info("ERROR 241019.1821: file MANNINGS_N.DAT is missing or empty!")
+                self.gutils.enable_geom_triggers()
                 return
 
             # Check if TOLER.DAT exist:
             if not os.path.isfile(dir_name + r"\TOLER.DAT") or os.path.getsize(dir_name + r"\TOLER.DAT") == 0:
                 self.uc.show_info("ERROR 200322.0911: file TOLER.DAT is missing or empty!")
+                self.gutils.enable_geom_triggers()
                 return
 
             dlg_components = ComponentsDialog(self.con, self.iface, self.lyrs, "in")
@@ -2247,6 +2253,9 @@ class Flo2D(object):
 
             # Update the lastGdsDir to the original
             s.setValue("FLO-2D/lastGdsDir", last_dir)
+            self.gutils.enable_geom_triggers()
+        else:
+            self.gutils.enable_geom_triggers()
 
     @connection_required
     def import_hdf5(self):
@@ -2270,6 +2279,7 @@ class Flo2D(object):
         )
 
         if not input_hdf5:
+            self.gutils.enable_geom_triggers()
             return
         indir = os.path.dirname(input_hdf5)
         self.f2g = Flo2dGeoPackage(self.con, self.iface, parsed_format=Flo2dGeoPackage.FORMAT_HDF5)
@@ -2291,6 +2301,7 @@ class Flo2D(object):
                     pass
                 else:
                     self.uc.bar_info("Import cancelled", dur=3)
+                    self.gutils.enable_geom_triggers()
                     return
             try:
                 QApplication.setOverrideCursor(Qt.WaitCursor)
@@ -2480,6 +2491,7 @@ class Flo2D(object):
                 self.uc.show_error("ERROR 050521.0349: importing from .HDF5 file!.\n", e)
             finally:
                 QApplication.restoreOverrideCursor()
+                self.gutils.enable_geom_triggers()
                 msg = ""
                 if "import_swmmflo" in import_calls:
                     msg += "* To complete the Storm Drain functionality, the 'Computational Domain' and 'Storm Drains' conversion "
@@ -2547,21 +2559,6 @@ class Flo2D(object):
             "import_swmmoutf",
         ]
 
-        # s = QSettings()
-        # last_dir = s.value("FLO-2D/lastGdsDir", "")
-        # fname, __ = QFileDialog.getOpenFileName(
-        #     None, "Select FLO-2D file to import", directory=last_dir, filter="CONT.DAT"
-        # )
-        # if not fname:
-        #     return
-        # dir_name = os.path.dirname(fname)
-        # s.setValue("FLO-2D/lastGdsDir", dir_name)
-        # bname = os.path.basename(fname)
-        #
-        # if self.f2g.set_parser(fname):
-        #     if bname not in self.f2g.parser.dat_files:
-        #         return
-
         s = QSettings()
         last_dir = s.value("FLO-2D/lastGdsDir", "")
         # project_dir = QgsProject.instance().absolutePath()
@@ -2572,12 +2569,14 @@ class Flo2D(object):
             fname = outdir + "/CONT.DAT"
             if self.f2g.set_parser(fname):
                 if bname not in self.f2g.parser.dat_files:
+                    self.gutils.enable_geom_triggers()
                     return
 
             empty = self.f2g.is_table_empty("grid")
             # check if a grid exists in the grid table
             if empty:
                 self.uc.show_info("There is no grid defined!")
+                self.gutils.enable_geom_triggers()
                 return
             QApplication.setOverrideCursor(Qt.WaitCursor)
             dlg_components = ComponentsDialog(self.con, self.iface, self.lyrs, "in")
@@ -2751,6 +2750,10 @@ class Flo2D(object):
 
                     if msg:
                         self.uc.show_info(msg)
+            else:
+                self.gutils.enable_geom_triggers()
+        else:
+            self.gutils.enable_geom_triggers()
 
     @connection_required
     def import_selected_components2(self):
@@ -2801,6 +2804,7 @@ class Flo2D(object):
             None, "Select FLO-2D file to import", directory=last_dir, filter="(*.DAT)"
         )
         if not fname:
+            self.gutils.enable_geom_triggers()
             return
         dir_name = os.path.dirname(fname)
         s.setValue("FLO-2D/lastGdsDir", dir_name)
@@ -2812,6 +2816,7 @@ class Flo2D(object):
                 "Import selected GDS file",
                 "Import from {0} file is not supported.".format(bname),
             )
+            self.gutils.enable_geom_triggers()
             return
 
         if self.f2g.set_parser(fname):
@@ -2870,6 +2875,8 @@ class Flo2D(object):
 
                 if msg:
                     self.uc.show_info(msg)
+        else:
+            self.gutils.enable_geom_triggers()
 
     def clean_rating_tables(self):
         remove_grid = []
