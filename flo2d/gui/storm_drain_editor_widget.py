@@ -4769,7 +4769,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             self.uc.bar_error("Reading .RPT file failed!")
             return False
 
-    def create_SD_discharge_table_and_plots(self, intersection=None):
+    def create_SD_discharge_table_and_plots(self, sd_type, intersection=None):
         """
         Export Storm Drain Discharge plots.
         """
@@ -4878,37 +4878,15 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                     hour = day + currentHour + minutes + seconds
                     RPTtimeSeries.append([hour, inflow, flooding, depth, head])
 
-                # See if there are aditional .DAT files with SD data:
-                SWMMQIN_file = GDS_dir + r"\SWMMQIN.OUT"
-                if not os.path.isfile(SWMMQIN_file):
-                    self.uc.bar_info("There is no SWMMQIN.OUT file")
-                else:
-                    inflow_discharge_to_SD = self.get_SWMMQIN(SWMMQIN_file)
-                    if intersection in inflow_discharge_to_SD:
-                        node_series = inflow_discharge_to_SD[intersection]
-                        I = 1
-                        day = 0
-                        previousHour = -1
-
-                        for nextTime in node_series:
-                            hour = float(nextTime[0])
-                            discharge = float(nextTime[1])
-                            return_flow = float(nextTime[2])
-                            SWMMQINtimeSeries.append([hour, discharge, return_flow])
+                if sd_type == 'node':
+                    # See if there are aditional .DAT files with SD data:
+                    SWMMQIN_file = GDS_dir + r"\SWMMQIN.OUT"
+                    if not os.path.isfile(SWMMQIN_file):
+                        self.uc.bar_info("There is no SWMMQIN.OUT file")
                     else:
-                        self.uc.bar_info("Node " + intersection + " is not in file SWMMQIN.OUT")
-
-                SWMMOUTFIN_file = GDS_dir + r"\SWMMOUTFIN.OUT"
-                if not os.path.isfile(SWMMOUTFIN_file):
-                    self.uc.bar_info("There is no SWMMOUTFIN.OUT file")
-                else:
-                    outfall_discharge_to_FLO_2D = self.get_SWMMOUTFIN(SWMMOUTFIN_file)
-                    grid_sql = "SELECT grid FROM user_swmm_inlets_junctions WHERE name = ?;"
-                    grid = self.gutils.execute(grid_sql,(intersection,)).fetchone()
-                    if grid:
-                        grid = str(grid[0])
-                        if grid in outfall_discharge_to_FLO_2D:
-                            node_series = outfall_discharge_to_FLO_2D[grid]
+                        inflow_discharge_to_SD = self.get_SWMMQIN(SWMMQIN_file)
+                        if intersection in inflow_discharge_to_SD:
+                            node_series = inflow_discharge_to_SD[intersection]
                             I = 1
                             day = 0
                             previousHour = -1
@@ -4916,17 +4894,37 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                             for nextTime in node_series:
                                 hour = float(nextTime[0])
                                 discharge = float(nextTime[1])
-                                SWMMOUTFINtimeSeries.append([hour, discharge])
-                        else:
-                            self.uc.bar_info("Node " + intersection + " is not in file SWMMOUTFIN.OUT")
+                                return_flow = float(nextTime[2])
+                                SWMMQINtimeSeries.append([hour, discharge, return_flow])
+                else:
+                    SWMMOUTFIN_file = GDS_dir + r"\SWMMOUTFIN.OUT"
+                    if not os.path.isfile(SWMMOUTFIN_file):
+                        self.uc.bar_info("There is no SWMMOUTFIN.OUT file")
                     else:
-                        self.uc.bar_info("Grid " + grid + " not found in Storm Drain Inlets/Junctions!")
+                        outfall_discharge_to_FLO_2D = self.get_SWMMOUTFIN(SWMMOUTFIN_file)
+                        grid_sql = "SELECT grid FROM user_swmm_outlets WHERE name = ?;"
+                        grid = self.gutils.execute(grid_sql, (intersection,)).fetchone()
+                        if grid:
+                            grid = str(grid[0])
+                            if grid in outfall_discharge_to_FLO_2D:
+                                node_series = outfall_discharge_to_FLO_2D[grid]
+                                I = 1
+                                day = 0
+                                previousHour = -1
+
+                                for nextTime in node_series:
+                                    hour = float(nextTime[0])
+                                    discharge = float(nextTime[1])
+                                    SWMMOUTFINtimeSeries.append([hour, discharge])
+
+                        else:
+                            self.uc.bar_info("Grid " + grid + " not found in Storm Drain Outfalls!")
 
                 # Plot discharge graph:
-                self.uc.bar_info("Discharge for node " + intersection + " from file  '" + RPT_file + "'")
+                self.uc.bar_info("Discharge for " + intersection + " from file  '" + RPT_file + "'")
                 self.show_discharge_table_and_plot(intersection, units, RPTtimeSeries,
                                                    SWMMQINtimeSeries,
-                                                   SWMMOUTFINtimeSeries)
+                                                   SWMMOUTFINtimeSeries, sd_type)
             else:
                 QApplication.restoreOverrideCursor()
                 self.uc.bar_error("No time series found in file " + RPT_file + " for node " + intersection)
@@ -5038,10 +5036,15 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         self.end_node_cbo.clear()
 
         nodes_names = self.gutils.execute("SELECT name FROM user_swmm_inlets_junctions").fetchall()
-        if not nodes_names:
+        outfall_names = self.gutils.execute("SELECT name FROM user_swmm_outlets").fetchall()
+        if not nodes_names and not outfall_names :
             return
 
         for name in nodes_names:
+            self.start_node_cbo.addItem(name[0])
+            self.end_node_cbo.addItem(name[0])
+
+        for name in outfall_names:
             self.start_node_cbo.addItem(name[0])
             self.end_node_cbo.addItem(name[0])
 
@@ -5235,12 +5238,14 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
     def show_discharge_table_and_plot(self, node, units,
                                       RPTseries, 
                                       SWMMQINtimeSeries, 
-                                      SWMMOUTFINtimeseries):
+                                      SWMMOUTFINtimeseries, sd_type):
         try:
             self.SD_table.after_delete.disconnect()
             self.SD_table.after_delete.connect(self.save_SD_table_data)
-            
-            grid_sql = "SELECT grid FROM user_swmm_inlets_junctions WHERE name = ?;"
+            if sd_type == 'node':
+                grid_sql = "SELECT grid FROM user_swmm_inlets_junctions WHERE name = ?;"
+            else:
+                grid_sql = "SELECT grid FROM user_swmm_outlets WHERE name = ?;"
             grid = self.gutils.execute(grid_sql,(node,)).fetchone()
             if grid:
                 grid = str(grid[0])

@@ -3572,6 +3572,16 @@ class Flo2D(object):
         self.f2d_widget.storm_drain_editor.update_profile_cbos(extra, name[0])
 
     @connection_required
+    def show_sd_outfall_profile(self, fid=None, extra=""):
+        """
+        Show the selected sd outfall info
+        """
+        name = self.gutils.execute("SELECT name FROM user_swmm_outlets WHERE fid = ?", (fid,)).fetchone()
+        self.uc.bar_info("Selected Storm Drain Outfall: " + str(name[0]))
+        self.f2d_widget.storm_drain_editor.center_chbox.setChecked(True)
+        self.f2d_widget.storm_drain_editor.update_profile_cbos(extra, name[0])
+
+    @connection_required
     def show_sd_inlets_junctions_attributes(self, fid=None):
         """
         Show the selected sd inlet/junctions attributes
@@ -3752,9 +3762,9 @@ class Flo2D(object):
         self.cur_profile_table = None
 
     @connection_required
-    def show_sd_discharge(self, fid=None):
+    def show_sd_node_discharge(self, fid=None):
         """
-        Show storm drain discharge for a given inlet node.
+        Show storm drain discharge for a given node.
         """
         if self.gutils.is_table_empty("grid"):
             self.uc.bar_warn("There is no grid! Please create it before running tool.")
@@ -3762,8 +3772,20 @@ class Flo2D(object):
 
         name, grid = self.gutils.execute("SELECT name, grid FROM user_swmm_inlets_junctions WHERE fid = ?", (fid,)).fetchone()
         self.f2d_dock.setUserVisible(True)
-        # self.f2d_widget.storm_drain_editor_grp.setCollapsed(False)
-        self.f2d_widget.storm_drain_editor.create_SD_discharge_table_and_plots(name)
+        self.f2d_widget.storm_drain_editor.create_SD_discharge_table_and_plots('node', name)
+
+    @connection_required
+    def show_sd_outfall_discharge(self, fid=None):
+        """
+        Show storm drain discharge for a given outfall node.
+        """
+        if self.gutils.is_table_empty("grid"):
+            self.uc.bar_warn("There is no grid! Please create it before running tool.")
+            return
+
+        name, grid = self.gutils.execute("SELECT name, grid FROM user_swmm_outlets WHERE fid = ?", (fid,)).fetchone()
+        self.f2d_dock.setUserVisible(True)
+        self.f2d_widget.storm_drain_editor.create_SD_discharge_table_and_plots('outfall', name)
 
     @connection_required
     def show_conduit_discharge(self, fid=None):
@@ -4402,9 +4424,15 @@ class Flo2D(object):
         if table == 'user_swmm_inlets_junctions':
             if extra == "See Results":
                 self.cur_profile_table = table
-                self.show_sd_discharge(fid)
+                self.show_sd_node_discharge(fid)
             else:
                 self.show_sd_node_profile(fid, extra)
+        if table == 'user_swmm_outlets':
+            if extra == "See Results":
+                self.cur_profile_table = table
+                self.show_sd_outfall_discharge(fid)  # FIX THIS
+            else:
+                self.show_sd_outfall_profile(fid, extra)
         if table == 'user_swmm_conduits':
             #show_editor = self.editors_map[table]
             self.cur_profile_table = table
