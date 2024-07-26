@@ -4216,6 +4216,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         Reads one or more rating table files.
         Name of file is the same as a type 4 inlet. Uses file names to associate file with inlet names.
         """
+
         self.uc.clear_bar_messages()
 
         if self.gutils.is_table_empty("user_model_boundary"):
@@ -4278,6 +4279,8 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                                 if len(culvert) == 6:
                                     name, cdiameter, typec, typeen, cubase, multbarrels = culvert
                                 if name:
+                                    if name.startswith(";") or name.startswith("name"):
+                                        continue
                                     grid_sql = "SELECT grid FROM user_swmm_inlets_junctions WHERE name = ?;"
                                     grid = self.gutils.execute(grid_sql, (name,)).fetchone()
                                     if grid:
@@ -4298,11 +4301,6 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
 
                                         # Include Culvert eq. in dropdown list of type 4s:
                                         self.add_type4("CulvertEquation", file_name)
-                                        # Assign Culvert name to user_swmm_inlets_junctions:
-                                        assign_rt_name_sql = (
-                                            "UPDATE user_swmm_inlets_junctions SET rt_name = ? WHERE name =?;"
-                                        )
-                                        self.gutils.execute(assign_rt_name_sql, (name, name))
 
                                         # See if there is a rating table with the same name:
                                         in_rt = self.gutils.execute(
@@ -4359,10 +4357,6 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                             self.gutils.execute(set_grid_sql, (grid, file_name))
 
                         assignments[file_name] = "R"
-
-                        # Assign rating table name to user_swmm_inlets_junctions:
-                        assign_rt_name_sql = "UPDATE user_swmm_inlets_junctions SET rt_name = ? WHERE name =?;"
-                        self.gutils.execute(assign_rt_name_sql, (file_name, file_name))
 
                         in_culvert = self.gutils.execute(
                             "SELECT * FROM swmmflo_culvert WHERE name = ?;", (file_name,)
@@ -5784,6 +5778,9 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             return
 
         type4_name = self.SD_type4_cbo.currentText()
+
+        if type4_name in ['Rating Tables', 'Culvert Equations']:
+            return
 
         is_rt = self.gutils.execute(f"SELECT name FROM swmmflort WHERE name = '{type4_name}'").fetchone()
 
