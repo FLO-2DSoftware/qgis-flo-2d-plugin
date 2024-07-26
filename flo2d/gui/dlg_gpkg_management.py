@@ -221,6 +221,13 @@ class GpkgManagementDialog(qtBaseClass, uiDialog):
 
                 if len(not_added) > 0:
                     layers_not_added = ', '.join(map(str, not_added))
+                    for layer_name in not_added:
+                        external_layers = self.gutils.execute(
+                            f"SELECT fid FROM external_layers WHERE name = '{layer_name}';").fetchall()
+                        if external_layers:
+                            fid = external_layers[0][0]
+                            self.gutils.execute(f"DELETE FROM external_layers WHERE fid = '{fid}';")
+
                     self.uc.show_info(f"The following layers were not added to the GeoPackage: \n\n {layers_not_added}")
 
             self.uc.bar_info(f"FLO-2D Geopackage Management saved!")
