@@ -3861,6 +3861,7 @@ class Flo2D(object):
         """
         Show boundary editor.
         """
+        self.gutils.enable_geom_triggers()
         self.f2d_dock.setUserVisible(True)
         self.f2d_widget.bc_editor_new_grp.setCollapsed(False)
         self.f2d_widget.bc_editor_new.show_editor(self.cur_info_table, fid)
