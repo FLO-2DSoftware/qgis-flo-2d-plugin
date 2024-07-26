@@ -203,6 +203,7 @@ class Flo2D(object):
         self.project.readProject.connect(self.load_gpkg_from_proj)
         self.project.writeProject.connect(self.flo_save_project)
         self.project.layersAdded.connect(self.changeLayerAdditionMode)
+        self.project.layersWillBeRemoved.connect(self.change_external_layer_type)
 
         self.uc.clear_bar_messages()
         QApplication.restoreOverrideCursor()
@@ -4587,6 +4588,23 @@ class Flo2D(object):
         """
         Function to force all layers added to the user on the top of the layer tree
         """
-        # self.project.layerTreeRegistryBridge().setLayerInsertionPoint(self.project.layerTreeRoot(), 0)
         self.iface.layerTreeView().setCurrentIndex(self.iface.layerTreeView().layerTreeModel().node2index(self.project.layerTreeRoot()))
+
+    def change_external_layer_type(self, layer_ids):
+        """
+        Function to update the layer type on the external_layers table
+        """
+        for layer_id in layer_ids:
+            layer = QgsProject.instance().mapLayer(layer_id)
+            if layer:
+                layer_name = layer.name()
+                external_layers = self.gutils.execute(f"SELECT fid FROM external_layers WHERE name = '{layer_name}' AND type = 'user';").fetchall()
+                if external_layers:
+                    fid = external_layers[0][0]
+                    self.gutils.execute(f"DELETE FROM external_layers WHERE fid = '{fid}';")
+
+
+
+
+
 
