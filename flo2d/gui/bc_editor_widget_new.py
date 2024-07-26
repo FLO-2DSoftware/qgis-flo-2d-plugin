@@ -219,6 +219,7 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
         Function to add the BC shapes
         """
         if self.inflow_grpbox.isChecked() or self.outflow_grpbox.isChecked():
+            self.gutils.enable_geom_triggers()
             self.populate_inflows()
             self.populate_outflows()
 
@@ -278,6 +279,8 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
         """
         Function to create the bcs
         """
+        self.gutils.enable_geom_triggers()
+
         self.inflow_bc_center_btn.setChecked(False)
         self.outflow_bc_center_btn.setChecked(False)
 
@@ -2338,6 +2341,8 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
         """
         Function to create outflow bc into the whole outside grid cells
         """
+        self.gutils.enable_geom_triggers()
+
         msg = "This boundary method applies a normal depth boundary to every grid element on the outer edge " \
               "of the computational domain. Please review the grid element elevation modification that happens " \
               "when this method applied. \n\n" \
