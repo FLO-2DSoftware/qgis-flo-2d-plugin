@@ -1492,9 +1492,19 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                         if self.outfall_allow_discharge_FieldCbo.currentText() != ""
                         else ""
                     )
-                    swmm_allow_discharge = 1 if swmm_allow_discharge == 'True' else 0
-                    swmm_allow_discharge = str(swmm_allow_discharge) if swmm_allow_discharge in ["0", "1", "2", 0, 1, 2] else "0"
-                    
+                    # Fix for older shapefiles
+                    if swmm_allow_discharge.lower() in ['true', 'false']:
+                        if swmm_allow_discharge.lower() == 'true':
+                            swmm_allow_discharge = "1"
+                        else:
+                            swmm_allow_discharge = "0"
+                    # Fix for non-string values
+                    else:
+                        if swmm_allow_discharge in ["0", "1", "2", 0, 1, 2]:
+                            swmm_allow_discharge = str(swmm_allow_discharge)
+                        else:
+                            swmm_allow_discharge = "0"
+
                     outfall_type = (
                         f[self.outfall_type_FieldCbo.currentText()]
                         if self.outfall_type_FieldCbo.currentText() != ""
