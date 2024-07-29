@@ -101,7 +101,7 @@ class FLO2DWidget(qtBaseClass, uiDialog):
         return super(FLO2DWidget, self).sizeHint()
 
     def setup_grid_tools(self):
-        self.grid_tools = GridToolsWidget(self.iface, self.lyrs)
+        self.grid_tools = GridToolsWidget(self.iface, self.lyrs, self.plot, self.table)
         self.grid_tools_lout.addWidget(self.grid_tools)
 
     def setup_xsec_editor(self):

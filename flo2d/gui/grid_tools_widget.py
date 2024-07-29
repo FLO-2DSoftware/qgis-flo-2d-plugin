@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
-
+import math
+import numbers
 # FLO-2D Preprocessor tools for QGIS
 # Copyright © 2021 Lutra Consulting for FLO-2D
 
@@ -12,10 +13,14 @@ import os
 import time
 import traceback
 
+import h5py
+import numpy as np
+import pandas as pd
 from PyQt5.QtCore import QUrl
-from PyQt5.QtGui import QDesktopServices
+from PyQt5.QtGui import QDesktopServices, QColor
 from PyQt5.QtWidgets import QProgressDialog
 from qgis.PyQt import QtCore, QtGui
+from qgis._core import QgsFeatureRequest, QgsProject, QgsMeshLayer, QgsMeshDatasetIndex
 from qgis.core import NULL, Qgis, QgsFeature, QgsGeometry, QgsMessageLog, QgsWkbTypes
 from qgis.PyQt import QtWidgets
 from qgis.PyQt.QtCore import QSettings, Qt, QThread
@@ -32,6 +37,8 @@ from qgis.PyQt.QtWidgets import (
 
 from .dlg_sampling_rc import SamplingRCDialog
 from .grid_info_widget import GridInfoWidget
+from .table_editor_widget import StandardItemModel, StandardItem
+from ..flo2d_ie.flo2d_parser import HDF5Group
 from ..flo2d_tools.grid_tools import (
     ZonalStatistics,
     ZonalStatisticsOther,
@@ -66,13 +73,13 @@ from ..gui.dlg_sampling_variable_into_grid import SamplingOtherVariableDialog
 from ..gui.dlg_sampling_xyz import SamplingXYZDialog
 from ..user_communication import UserCommunication
 from ..utils import second_smallest, set_min_max_elevs, time_taken
-from .ui_utils import load_ui, set_icon
+from .ui_utils import load_ui, set_icon, center_canvas, zoom
 
 uiDialog, qtBaseClass = load_ui("grid_tools_widget")
 
 
 class GridToolsWidget(qtBaseClass, uiDialog):
-    def __init__(self, iface, lyrs):
+    def __init__(self, iface, lyrs, plot, table):
         qtBaseClass.__init__(self)
         uiDialog.__init__(self)
         self.iface = iface
@@ -82,6 +89,18 @@ class GridToolsWidget(qtBaseClass, uiDialog):
         self.con = None
         self.gutils = None
         self.globlyr = None
+
+        self.system_units = {
+            "CMS": ["m", "mps", "cms"],
+            "CFS": ["ft", "fps", "cfs"]
+             }
+
+        self.plot = plot
+        self.plot_item_name = None
+        self.table = table
+        self.tview = table.tview
+        self.data_model = StandardItemModel()
+        self.tview.setModel(self.data_model)
 
         set_icon(self.create_grid_btn, "create_grid.svg")
         set_icon(self.raster_elevation_btn, "sample_elev.svg")
@@ -1414,3 +1433,264 @@ class GridToolsWidget(qtBaseClass, uiDialog):
         Function to show the grid widget help
         """
         QDesktopServices.openUrl(QUrl("https://flo-2dsoftware.github.io/FLO-2D-Documentation/Plugin1000/widgets/grid-tools/index.html"))
+
+    def plot_2d_grid_data(self, grid_element):
+        """
+        Function to create the 2d time series plot for a specific grid element.
+        """
+
+        QApplication.setOverrideCursor(Qt.WaitCursor)
+
+        units = "CMS" if self.gutils.get_cont_par("METRIC") == "1" else "CFS"
+
+        # check if there is a FLO-2D mesh file.
+        has_mesh = False
+        temporal_mesh = False
+        flo2d_mesh = False
+        mesh_layer = None
+
+        # Check for mesh layer
+        layers = QgsProject.instance().mapLayers().values()
+        for layer in layers:
+            if isinstance(layer, QgsMeshLayer):
+                mesh_layer = layer
+                has_mesh = True
+
+        if has_mesh:
+            # Check temporal layer
+            temporal_properties = mesh_layer.temporalProperties()
+            if temporal_properties.isActive():
+                temporal_mesh = True
+
+        if has_mesh and temporal_mesh:
+            self.uc.bar_info("Reading data from mesh layer!")
+            self.uc.log_info("Reading data from mesh layer!")
+            try:
+                df = self.dataframe_from_mesh(mesh_layer, grid_element)
+            except:
+                QApplication.restoreOverrideCursor()
+                self.uc.bar_warn("Error while retrieving data from mesh layer!")
+                self.uc.log_info("Error while retrieving data from mesh layer!")
+                return
+
+        else:
+            # Check if there is an TIMDEP.OUT file on the export folder and has data
+            s = QSettings()
+            project_dir = s.value("FLO-2D/lastGdsDir")
+            TIMDEPOUT_file = project_dir + r"/TIMDEP.OUT"
+            TIMDEPHDF5_file = project_dir + r"/TIMDEP.HDF5"
+
+            # Check if the TIMDEP_file.HDF5 exists
+            if os.path.isfile(TIMDEPHDF5_file):
+                # Check if the TIMDEP_file.HDF5 has data on it
+                if os.path.getsize(TIMDEPHDF5_file) == 0:
+                    QApplication.restoreOverrideCursor()
+                    self.uc.bar_warn("File  '" + os.path.basename(TIMDEPHDF5_file) + "'  is empty!")
+                    self.uc.log_info("File  '" + os.path.basename(TIMDEPHDF5_file) + "'  is empty!")
+                    return
+                else:
+                    self.uc.bar_info("Reading data from TIMDEP.HDF5!")
+                    self.uc.log_info("Reading data from TIMDEP.HDF5!")
+                    try:
+                        df = self.dataframe_from_hdf5(TIMDEPHDF5_file, grid_element)
+                    except:
+                        QApplication.restoreOverrideCursor()
+                        self.uc.bar_warn("Error while retrieving data from TIMDEP.HDF5!")
+                        self.uc.log_info("Error while retrieving data from TIMDEP.HDF5!")
+                        return
+            else:
+                # Check if the TIMDEP_file.OUT exists
+                if not os.path.isfile(TIMDEPOUT_file):
+                    QApplication.restoreOverrideCursor()
+                    self.uc.bar_warn(
+                        "No mesh layer, TIMDEP.HDF5 or TIMDEP.OUT file found. "
+                        "Please ensure the simulation has completed and verify the project export folder.")
+                    self.uc.log_info(
+                        "No mesh layer, TIMDEP.HDF5 or TIMDEP.OUT file found. "
+                        "Please ensure the simulation has completed and verify the project export folder.")
+                    return
+                else:
+                    # Check if the TIMDEP_file.OUT has data on it
+                    if os.path.getsize(TIMDEPOUT_file) == 0:
+                        QApplication.restoreOverrideCursor()
+                        self.uc.bar_warn("File  '" + os.path.basename(TIMDEPHDF5_file) + "'  is empty!")
+                        self.uc.log_info("File  '" + os.path.basename(TIMDEPHDF5_file) + "'  is empty!")
+                        return
+                    else:
+                        self.uc.bar_info("Reading data from TIMDEP.OUT!")
+                        self.uc.log_info("Reading data from TIMDEP.OUT!")
+                        try:
+                            df = self.dataframe_from_out(TIMDEPOUT_file, grid_element)
+                        except:
+                            QApplication.restoreOverrideCursor()
+                            self.uc.bar_warn("Error while retrieving data from TIMDEP.OUT!")
+                            self.uc.log_info("Error while retrieving data from TIMDEP.OUT!")
+                            return
+
+        try:  # Create the plots
+            self.plot.clear()
+            if self.plot.plot.legend is not None:
+                plot_scene = self.plot.plot.legend.scene()
+                if plot_scene is not None:
+                    plot_scene.removeItem(self.plot.plot.legend)
+
+            self.plot.plot.legend = None
+            self.plot.plot.addLegend(offset=(0, 30))
+            self.plot.plot.setTitle(title=f"Grid Element - {grid_element}")
+            self.plot.plot.setLabel("bottom", text="Time (hrs)")
+            self.plot.plot.setLabel("left", text="")
+            self.plot.add_item(f"Depth ({self.system_units[units][0]})", [df['Time'], df['Depth']], col=QColor(Qt.darkBlue), sty=Qt.SolidLine)
+            self.plot.add_item(f"Velocity ({self.system_units[units][1]})", [df['Time'], df['Velocity']], col=QColor(Qt.yellow), sty=Qt.SolidLine, hide=True)
+            self.plot.add_item(f"Water Surface Elevation ({self.system_units[units][0]})", [df['Time'], df['Water Surface Elevation']], col=QColor(Qt.darkGreen), sty=Qt.SolidLine, hide=True)
+
+        except:
+            QApplication.restoreOverrideCursor()
+            self.uc.bar_warn("Error while creating the plots from TIMDEP.OUT!")
+            self.uc.log_info("Error while creating the plots from TIMDEP.OUT!")
+            return
+
+        try:  # Build table.
+            data_model = StandardItemModel()
+            self.tview.undoStack.clear()
+            self.tview.setModel(data_model)
+            data_model.clear()
+            data_model.setHorizontalHeaderLabels([
+                "Time (hours)",
+                f"Depth ({self.system_units[units][0]})",
+                f"Velocity ({self.system_units[units][1]})",
+                f"Water Surface Elevation ({self.system_units[units][0]})"
+            ])
+
+            data = zip(df['Time'],
+                       df['Depth'],
+                       df['Velocity'],
+                       df['Water Surface Elevation']
+                       )
+            for time, depth, velocity, wse in data:
+                time_item = StandardItem("{:.2f}".format(time)) if time is not None else StandardItem("")
+                depth_item = StandardItem("{:.2f}".format(depth)) if depth is not None else StandardItem("")
+                velocity_item = StandardItem("{:.2f}".format(velocity)) if velocity is not None else StandardItem("")
+                wse_item = StandardItem("{:.2f}".format(wse)) if wse is not None else StandardItem("")
+                data_model.appendRow([time_item,
+                                      depth_item,
+                                      velocity_item,
+                                      wse_item])
+
+            self.tview.horizontalHeader().setStretchLastSection(True)
+            for col in range(3):
+                self.tview.setColumnWidth(col, 100)
+            for i in range(data_model.rowCount()):
+                self.tview.setRowHeight(i, 20)
+        except:
+            QApplication.restoreOverrideCursor()
+            self.uc.bar_warn("Error while creating table for grid element!")
+            self.uc.log_info("Error while creating table for grid element!")
+            return
+
+        QApplication.restoreOverrideCursor()
+
+    def dataframe_from_hdf5(self, hdf5_file, grid_element):
+        """
+        Function to get the data frame from hdf5
+        """
+        file = h5py.File(hdf5_file)
+
+        time_series = np.array(file['/TIMDEP NETCDF OUTPUT RESULTS/FLOW DEPTH/Times'])
+        time_series = time_series.flatten()
+
+        flow_depth = np.array(file['/TIMDEP NETCDF OUTPUT RESULTS/FLOW DEPTH/Values'])
+        flow_depth = flow_depth[:, grid_element - 1].flatten()
+
+        wse = np.array(file['/TIMDEP NETCDF OUTPUT RESULTS/Floodplain Water Surface Elevation/Values'])
+        wse = wse[:, grid_element - 1].flatten()
+
+        velocity = np.array(file['/TIMDEP NETCDF OUTPUT RESULTS/Velocity MAG/Values'])
+        velocity = velocity[:, grid_element - 1].flatten()
+
+        df = pd.DataFrame({
+            'Time': time_series,
+            'Depth': flow_depth,
+            'Velocity': velocity,
+            'Water Surface Elevation': wse
+        })
+
+        return df
+
+    def dataframe_from_out(self, out_file, grid_element):
+        """
+        Function to get the data frame from out
+        """
+        data = []
+        with open(out_file, 'r') as file:
+            for line in file:
+                line = line.strip()
+                if line:
+                    parts = line.split()
+                    if len(parts) == 1:
+                        # This line contains the time
+                        current_time = float(parts[0])
+                    else:
+                        # This line contains the data for a grid element
+                        current_grid_element = int(parts[0])
+                        if current_grid_element == grid_element:
+                            depth = float(parts[1])
+                            velocity = float(parts[2])
+                            # velocity_x = float(parts[3])
+                            # velocity_y = float(parts[4])
+                            water_surface_elevation = float(parts[5])
+
+                            data.append(
+                                [current_time, depth, velocity, water_surface_elevation])
+
+        df = pd.DataFrame(data,
+                          columns=['Time', 'Depth', 'Velocity', 'Water Surface Elevation'])
+
+        return df
+
+    def dataframe_from_mesh(self, mesh_layer, grid_element):
+        """
+        Function to get the data frame from mesh layer
+        """
+        grid = self.lyrs.data["grid"]["qlyr"]
+        feature = next(grid.getFeatures(QgsFeatureRequest(grid_element)))
+        geom = feature.geometry()
+        point = geom.centroid().asPoint()
+
+        time_series = []
+        flow_depth = []
+        velocity = []
+        wse = []
+
+        for i in range(mesh_layer.dataProvider().datasetCount(1)):
+
+            # TIME SERIES
+            meta = mesh_layer.dataProvider().datasetMetadata(QgsMeshDatasetIndex(1, i))
+            t = meta.time()
+            time_series.append(t)
+
+            # FLOW DEPTH
+            dataset = QgsMeshDatasetIndex(1, i)
+            value = mesh_layer.datasetValue(dataset, point, 0).scalar()
+            value = 0 if math.isnan(value) else value
+            flow_depth.append(value)
+
+            # VELOCITY
+            dataset = QgsMeshDatasetIndex(4, i)
+            value = mesh_layer.datasetValue(dataset, point, 0).scalar()
+            value = 0 if math.isnan(value) else value
+            velocity.append(value)
+
+            # WSE
+            dataset = QgsMeshDatasetIndex(2, i)
+            value = mesh_layer.datasetValue(dataset, point, 0).scalar()
+            value = 0 if math.isnan(value) else value
+            wse.append(value)
+
+        df = pd.DataFrame({
+            'Time': time_series,
+            'Depth': flow_depth,
+            'Velocity': velocity,
+            'Water Surface Elevation': wse
+        })
+
+        return df
