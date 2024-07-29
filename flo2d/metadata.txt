@@ -10,6 +10,8 @@ about=The FLO-2D Plugin for QGIS is a tool to develop, format, analyze, and disp
 
 changelog=
  <p>1.0.0
+changelog=
+ <p>1.0.0
  - General
         Modified the FLO-2D toolbar
         Improve import/export logic
@@ -28,6 +30,10 @@ changelog=
         Added the whole grid boundary condition
         Improved the performance of setting outflow bcs using polygons
         Improved layout
+  - Channel Editor
+        Updated channel schmatize and interpolate system
+        Simplified the processing tools
+        Updated the training packages
   - Storm Drain:
         Improve editor layout and algorithm logic
         Improved Rating/Culvert EQ editor for type 4
@@ -38,8 +44,8 @@ changelog=
         Created memory layer with all nodes and storage unit’s names and geometry
         Change color style of line arrows of pumps, orifices, and weirs layers
   - Hydraulic Structures:
-		Shows message at end of schematization.
-		Checks several potential errors and warns user
+	Shows message at end of schematization.
+	Checks several potential errors and warns user
   - Results and Info tools
         Review results with plots and tables
         Improved FLO-2D Info tool
