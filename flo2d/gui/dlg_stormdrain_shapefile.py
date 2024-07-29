@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-
+from qgis._core import QgsFeatureRequest, QgsDistanceArea
 # FLO-2D Preprocessor tools for QGIS
 
 # This program is free software; you can redistribute it and/or
@@ -214,6 +214,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
         self.SDSF_buttonBox.accepted.connect(self.assign_components_from_shapefile)
         self.SDSF_buttonBox.rejected.connect(self.cancel_message)
 
+        self.inlets_outlets_inside = None
         self.load_inlets = False
         self.load_outfalls = False
         self.load_strge_units = False
@@ -1186,6 +1187,8 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
             self.save_storm_drain_shapefile_field_names()
 
         else:
+            self.inlets_outlets_inside = []
+            self.auto_assign_from_shapefile()
             self.load_inlets_from_shapefile()
             self.load_outfalls_from_shapefile()
             self.load_strge_units_from_shapefile()
@@ -1193,6 +1196,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
             self.load_pumps_from_shapefile()
             self.load_orifices_from_shapefile()
             self.load_weirs_from_shapefile()
+            self.remove_outside_elements()
 
             self.save_storm_drain_shapefile_field_names()
 
@@ -1228,6 +1232,126 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
 
             else:
                 self.uc.show_info("No Storm Drain Inlets/Junctions or links selected!")
+
+    def auto_assign_from_shapefile(self):
+        """
+        Function to auto assign the inlets and outlets from the selected shapefiles
+        """
+
+        try:
+
+            QApplication.setOverrideCursor(Qt.WaitCursor)
+
+            line_layers = []
+            point_layers = []
+
+            conduits_shapefile = self.conduits_shapefile_cbo.currentText()
+            if conduits_shapefile != "":
+                conduits_lyr = self.lyrs.get_layer_by_name(conduits_shapefile).layer()
+                conduit_name_field = self.conduit_name_FieldCbo.currentText()
+                conduit_inlet_field = self.conduit_from_inlet_FieldCbo.currentText()
+                conduit_outlet_field = self.conduit_to_outlet_FieldCbo.currentText()
+                line_layers.append([conduits_lyr, conduit_name_field, conduit_inlet_field, conduit_outlet_field])
+
+            weirs_shapefile = self.weirs_shapefile_cbo.currentText()
+            if weirs_shapefile != "":
+                weirs_lyr = self.lyrs.get_layer_by_name(weirs_shapefile).layer()
+                weir_name_field = self.weir_name_FieldCbo.currentText()
+                weir_inlet_field = self.weir_from_inlet_FieldCbo.currentText()
+                weir_outlet_field = self.weir_to_outlet_FieldCbo.currentText()
+                line_layers.append([weirs_lyr, weir_name_field, weir_inlet_field, weir_outlet_field])
+
+            pumps_shapefile = self.pumps_shapefile_cbo.currentText()
+            if pumps_shapefile != "":
+                pumps_lyr = self.lyrs.get_layer_by_name(pumps_shapefile).layer()
+                pump_name_field = self.pump_name_FieldCbo.currentText()
+                pump_inlet_field = self.pump_from_inlet_FieldCbo.currentText()
+                pump_outlet_field = self.pump_to_outlet_FieldCbo.currentText()
+                line_layers.append([pumps_lyr, pump_name_field, pump_inlet_field, pump_outlet_field])
+
+            orifices_shapefile = self.orifices_shapefile_cbo.currentText()
+            if orifices_shapefile != "":
+                orifices_lyr = self.lyrs.get_layer_by_name(orifices_shapefile).layer()
+                orifice_name_field = self.orifice_name_FieldCbo.currentText()
+                orifice_inlet_field = self.orifice_from_inlet_FieldCbo.currentText()
+                orifice_outlet_field = self.orifice_to_outlet_FieldCbo.currentText()
+                line_layers.append([orifices_lyr, orifice_name_field, orifice_inlet_field, orifice_outlet_field])
+
+            inlets_shapefile = self.inlets_shapefile_cbo.currentText()
+            if inlets_shapefile != "":
+                inlets_lyr = self.lyrs.get_layer_by_name(inlets_shapefile).layer()
+                inlet_name_field = self.inlets_name_FieldCbo.currentText()
+                point_layers.append([inlets_lyr, inlet_name_field])
+
+            outfalls_shapefile = self.outfalls_shapefile_cbo.currentText()
+            if outfalls_shapefile != "":
+                outfalls_lyr = self.lyrs.get_layer_by_name(outfalls_shapefile).layer()
+                outfall_name_field = self.outfall_name_FieldCbo.currentText()
+                point_layers.append([outfalls_lyr, outfall_name_field])
+
+            strge_units_shapefile = self.strge_units_shapefile_cbo.currentText()
+            if strge_units_shapefile != "":
+                strge_units_lyr = self.lyrs.get_layer_by_name(strge_units_shapefile).layer()
+                strge_unit_name_field = self.strge_unit_name_FieldCbo.currentText()
+                point_layers.append([strge_units_lyr, strge_unit_name_field])
+
+            for line_shapefile in line_layers:
+                line_lyr = line_shapefile[0]
+                line_name = line_shapefile[1]
+                line_inlet = line_shapefile[2]
+                line_outlet = line_shapefile[3]
+
+                if line_inlet == '' or line_outlet == '':
+                    continue
+
+                for feat in line_lyr.getFeatures():
+                    geom = feat.geometry()
+                    if geom is None:
+                        return
+
+                    # Get line start and end points
+                    if geom.isMultipart():
+                        line = geom.asMultiPolyline()[0]
+                    else:
+                        line = geom.asPolyline()
+                    start_point = line[0]
+                    end_point = line[-1]
+
+                    d = QgsDistanceArea()
+                    closest_start_feature = None
+                    closest_end_feature = None
+                    min_distance_start = float('inf')
+                    min_distance_end = float('inf')
+
+                    for point_shapefile in point_layers:
+                        point_lyr = point_shapefile[0]
+                        point_name = point_shapefile[1]
+                        for feature in point_lyr.getFeatures():
+                            distance_start = d.measureLine(start_point, feature.geometry().asPoint())
+                            if distance_start < min_distance_start:
+                                min_distance_start = distance_start
+                                closest_start_feature = feature
+
+                            distance_end = d.measureLine(end_point, feature.geometry().asPoint())
+                            if distance_end < min_distance_end:
+                                min_distance_end = distance_end
+                                closest_end_feature = feature
+
+                    inlet_name = closest_start_feature[point_name] if closest_start_feature else '?'
+                    outlet_name = closest_end_feature[point_name] if closest_end_feature else '?'
+
+                    line_lyr.startEditing()
+                    feat[line_inlet] = inlet_name
+                    feat[line_outlet] = outlet_name
+                    line_lyr.updateFeature(feat)
+                    line_lyr.commitChanges()
+
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.uc.log_info("Error assigning inlets and outlets!")
+            self.uc.bar_error("Error assigning inlets and outlets!")
+        finally:
+            QApplication.restoreOverrideCursor()
 
     def load_inlets_from_shapefile(self):
         if self.load_inlets:
@@ -1329,17 +1453,20 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                     feat.setFields(fields)
 
                     if f.geometry() is None:
-                        self.uc.show_warn("WARNING 280920.1816: Error processing geometry of inlet/junction  " + name)
+                        self.uc.bar_warn("WARNING 280920.1816: Error processing geometry of inlet/junction  " + name)
+                        self.uc.log_info("WARNING 280920.1816: Error processing geometry of inlet/junction  " + name)
                         continue
 
                     geom = f.geometry()
                     if geom is None or geom.type() != 0:
-                        self.uc.show_warn("WARNING 060319.1822: Error processing geometry of inlet/junction  " + name)
+                        self.uc.bar_warn("WARNING 060319.1822: Error processing geometry of inlet/junction  " + name)
+                        self.uc.log_info("WARNING 060319.1822: Error processing geometry of inlet/junction  " + name)
                         continue
 
                     point = geom.asPoint()
                     if point is None:
-                        self.uc.show_warn("WARNING 060319.1656: Inlet/junction  " + name + "  is faulty!")
+                        self.uc.bar_warn("WARNING 060319.1656: Inlet/junction  " + name + "  is faulty!")
+                        self.uc.log_info("WARNING 060319.1656: Inlet/junction  " + name + "  is faulty!")
                         continue
 
                     try:
@@ -1348,8 +1475,11 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                         cell = None
 
                     if cell is None:
-                        outside_inlets += "\n" + name
-                        continue
+                        if name.lower().startswith('i'):
+                            outside_inlets += "\n" + name
+                            continue
+                        else:
+                            outside_inlets += "\n" + name
 
                     new_geom = QgsGeometry.fromPointXY(point)
                     feat.setGeometry(new_geom)
@@ -1517,17 +1647,20 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                     feat.setFields(fields)
 
                     if f.geometry() is None:
-                        self.uc.show_warn("WARNING 261220.1013: Error processing geometry of outfall  " + name)
+                        self.uc.bar_warn("WARNING 261220.1013: Error processing geometry of outfall  " + name)
+                        self.uc.log_info("WARNING 261220.1013: Error processing geometry of outfall  " + name)
                         continue
 
                     geom = f.geometry()
                     if geom is None or geom.type() != 0:
-                        self.uc.show_warn("WARNING 060319.1658: Error processing geometry of outfall  " + name)
+                        self.uc.bar_warn("WARNING 060319.1658: Error processing geometry of outfall  " + name)
+                        self.uc.log_info("WARNING 060319.1658: Error processing geometry of outfall  " + name)
                         continue
 
                     point = geom.asPoint()
                     if point is None:
-                        self.uc.show_warn("WARNING 060319.1659: Outfall  " + name + "  is faulty!")
+                        self.uc.bar_warn("WARNING 060319.1659: Outfall  " + name + "  is faulty!")
+                        self.uc.log_info("WARNING 060319.1659: Outfall  " + name + "  is faulty!")
                         continue
 
                     try:
@@ -1535,9 +1668,8 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                     except:
                         cell = None
 
-                    if cell is None and swmm_allow_discharge == '1':
+                    if cell is None:
                         outside_outfalls += "\n" + name
-                        continue
 
                     new_geom = QgsGeometry.fromPointXY(point)
                     feat.setGeometry(new_geom)
@@ -1692,23 +1824,25 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                     feat.setFields(fields)
 
                     if f.geometry() is None:
-                        self.uc.show_warn("WARNING 250424.1943: Error processing geometry of storage unit  " + name)
+                        self.uc.bar_warn("WARNING 250424.1943: Error processing geometry of storage unit  " + name)
+                        self.uc.log_info("WARNING 250424.1943: Error processing geometry of storage unit  " + name)
                         continue
 
                     geom = f.geometry()
                     if geom is None or geom.type() != 0:
-                        self.uc.show_warn("WARNING 250424.1944: Error processing geometry of storage unit  " + name)
+                        self.uc.bar_warn("WARNING 250424.1944: Error processing geometry of storage unit  " + name)
+                        self.uc.log_info("WARNING 250424.1944: Error processing geometry of storage unit  " + name)
                         continue
 
                     point = geom.asPoint()
                     if point is None:
-                        self.uc.show_warn("WARNING 250424.1945: Storage unit  " + name + "  is faulty!")
+                        self.uc.bar_warn("WARNING 250424.1945: Storage unit  " + name + "  is faulty!")
+                        self.uc.log_info("WARNING 250424.1945: Storage unit  " + name + "  is faulty!")
                         continue
 
                     cell = self.gutils.grid_on_point(point.x(), point.y())
                     if cell is None:
                         outside_strge_units += "\n" + name
-                        continue
 
                     new_geom = QgsGeometry.fromPointXY(point)
                     feat.setGeometry(new_geom)
@@ -1751,7 +1885,10 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                 QApplication.restoreOverrideCursor()
 
                 if outside_strge_units != "":
-                    self.uc.show_warn(
+                    self.uc.bar_warn(
+                        "WARNING 250424.2002: Storage units are outside the computational domain!"
+                    )
+                    self.uc.log_info(
                         "WARNING 250424.2002: The following storage units are outside the computational domain!\n"
                         + outside_strge_units
                     )
@@ -1889,25 +2026,33 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
 
                     geom = f.geometry()
                     if geom is None or geom.type() != 1:
-                        self.uc.show_warn("WARNING 060319.1701: Error processing geometry of conduit  " + conduit_name)
+                        self.uc.bar_warn("WARNING 060319.1701: Error processing geometry of conduit  " + conduit_name)
+                        self.uc.log_info("WARNING 060319.1701: Error processing geometry of conduit  " + conduit_name)
                         continue
 
                     points = extractPoints(geom)
                     if points is None:
-                        self.uc.show_warn("WARNING 060319.1702: Conduit  " + conduit_name + "  is faulty!")
+                        self.uc.bar_warn("WARNING 060319.1702: Conduit  " + conduit_name + "  is faulty!")
+                        self.uc.log_info("WARNING 060319.1702: Conduit  " + conduit_name + "  is faulty!")
                         continue
 
-                    cell = self.gutils.grid_on_point(points[0].x(), points[0].y())
-                    if cell is None:
-                        if not (conduit_name in outside_conduits):
-                            outside_conduits += "\n" + conduit_name
-                            continue
+                    # Both ends of the conduit is outside the grid
+                    if self.gutils.grid_on_point(points[0].x(), points[0].y()) is None and self.gutils.grid_on_point(points[-1].x(), points[-1].y()) is None:
+                        outside_conduits += "\n" + conduit_name
+                        continue
 
-                    cell = self.gutils.grid_on_point(points[1].x(), points[1].y())
-                    if cell is None:
-                        if not (conduit_name in outside_conduits):
-                            outside_conduits += "\n" + conduit_name
-                            continue
+                    # Conduit inlet is outside the grid, and it is an Inlet
+                    if self.gutils.grid_on_point(points[0].x(), points[0].y()) is None and conduit_inlet.lower().startswith("i"):
+                        outside_conduits += "\n" + conduit_name
+                        continue
+
+                    # Conduit outlet is outside the grid, and it shares water with the grid
+                    if self.gutils.grid_on_point(points[-1].x(), points[-1].y()) is None:
+                        allow_q = self.gutils.execute(f"SELECT swmm_allow_discharge FROM user_swmm_outlets WHERE name = '{conduit_outlet}';").fetchone()
+                        if allow_q:
+                            if str(allow_q[0]) != "0":
+                                outside_conduits += "\n" + conduit_name
+                                continue
 
                     new_geom = QgsGeometry.fromPolylineXY(points)
                     feat.setGeometry(new_geom)
@@ -1984,6 +2129,11 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
 
                     new_feats.append(feat)
 
+                    if conduit_inlet not in self.inlets_outlets_inside:
+                        self.inlets_outlets_inside.append(conduit_inlet)
+                    if conduit_outlet not in self.inlets_outlets_inside:
+                        self.inlets_outlets_inside.append(conduit_outlet)
+
                 if new_feats:
                     if not self.conduits_append_chbox.isChecked():
                         remove_features(self.user_swmm_conduits_lyr)
@@ -2003,7 +2153,10 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                     self.no_in_out += "\n" + str(no_in_out) + " conduits."
 
                 if outside_conduits != "":
-                    self.uc.show_warn(
+                    self.uc.bar_warn(
+                        "WARNING 231220.0954: Conduits are outside the computational domain!"
+                    )
+                    self.uc.log_info(
                         "WARNING 231220.0954: The following conduits are outside the computational domain!\n"
                         + outside_conduits
                     )
@@ -2089,23 +2242,33 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
 
                     geom = f.geometry()
                     if geom is None or geom.type() != 1:
-                        self.uc.show_warn("WARNING 280222.0951: Error processing geometry of pump  " + pump_name)
+                        self.uc.bar_warn("WARNING 280222.0951: Error processing geometry of pump  " + pump_name)
+                        self.uc.log_info("WARNING 280222.0951: Error processing geometry of pump  " + pump_name)
                         continue
 
                     points = extractPoints(geom)
                     if points is None:
-                        self.uc.show_warn("WARNING 280222.0951: Pump  " + pump_name + " is faulty!")
+                        self.uc.bar_warn("WARNING 280222.0951: Pump  " + pump_name + " is faulty!")
+                        self.uc.log_info("WARNING 280222.0951: Pump  " + pump_name + " is faulty!")
                         continue
 
-                    cell = self.gutils.grid_on_point(points[0].x(), points[0].y())
-                    if cell is None:
+                    # Both ends of the pump is outside the grid
+                    if self.gutils.grid_on_point(points[0].x(), points[0].y()) is None and self.gutils.grid_on_point(points[-1].x(), points[-1].y()) is None:
                         outside_pumps += "\n" + pump_name
                         continue
 
-                    cell = self.gutils.grid_on_point(points[1].x(), points[1].y())
-                    if cell is None:
+                    # Pump inlet is outside the grid, and it is an Inlet
+                    if self.gutils.grid_on_point(points[0].x(), points[0].y()) is None and pump_inlet.lower().startswith("i"):
                         outside_pumps += "\n" + pump_name
                         continue
+
+                    # Pump outlet is outside the grid, and it shares water with the grid
+                    if self.gutils.grid_on_point(points[-1].x(), points[-1].y()) is None:
+                        allow_q = self.gutils.execute(f"SELECT swmm_allow_discharge FROM user_swmm_outlets WHERE name = '{pump_outlet}';").fetchone()
+                        if allow_q:
+                            if str(allow_q[0]) != "0":
+                                outside_pumps += "\n" + pump_name
+                                continue
 
                     new_geom = QgsGeometry.fromPolylineXY(points)
                     feat.setGeometry(new_geom)
@@ -2129,6 +2292,11 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
 
                     new_feats.append(feat)
 
+                    if pump_inlet not in self.inlets_outlets_inside:
+                        self.inlets_outlets_inside.append(pump_inlet)
+                    if pump_outlet not in self.inlets_outlets_inside:
+                        self.inlets_outlets_inside.append(pump_outlet)
+
                 if new_feats:
                     if not self.pumps_append_chbox.isChecked():
                         remove_features(self.user_swmm_pumps_lyr)
@@ -2148,7 +2316,10 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                     self.no_in_out += "\n" + str(no_in_out) + " pumps."
 
                 if outside_pumps != "":
-                    self.uc.show_warn(
+                    self.uc.bar_warn(
+                        "WARNING 220222.1031: Pumps are outside the computational domain!"
+                    )
+                    self.uc.log_info(
                         "WARNING 220222.1031: The following pumps are outside the computational domain!\n"
                         + outside_pumps
                     )
@@ -2255,23 +2426,33 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
 
                     geom = f.geometry()
                     if geom is None or geom.type() != 1:
-                        self.uc.show_warn("WARNING 110422.0808: Error processing geometry of orifice  " + orifice_name)
+                        self.uc.bar_warn("WARNING 110422.0808: Error processing geometry of orifice  " + orifice_name)
+                        self.uc.log_info("WARNING 110422.0808: Error processing geometry of orifice  " + orifice_name)
                         continue
 
                     points = extractPoints(geom)
                     if points is None:
-                        self.uc.show_warn("WARNING 1104220809.0951: Orifice  " + orifice_name + " is faulty!")
+                        self.uc.bar_warn("WARNING 1104220809.0951: Orifice  " + orifice_name + " is faulty!")
+                        self.uc.log_info("WARNING 1104220809.0951: Orifice  " + orifice_name + " is faulty!")
                         continue
 
-                    cell = self.gutils.grid_on_point(points[0].x(), points[0].y())
-                    if cell is None:
+                    # Both ends of the orifice is outside the grid
+                    if self.gutils.grid_on_point(points[0].x(), points[0].y()) is None and self.gutils.grid_on_point(points[-1].x(), points[1].y()) is None:
                         outside_orifices += "\n" + orifice_name
                         continue
 
-                    cell = self.gutils.grid_on_point(points[1].x(), points[1].y())
-                    if cell is None:
+                    # Orifice inlet is outside the grid, and it is an Inlet
+                    if self.gutils.grid_on_point(points[0].x(), points[0].y()) is None and orifice_inlet.lower().startswith("i"):
                         outside_orifices += "\n" + orifice_name
                         continue
+
+                    # Orifice outlet is outside the grid, and it shares water with the grid
+                    if self.gutils.grid_on_point(points[-1].x(), points[-1].y()) is None:
+                        allow_q = self.gutils.execute(f"SELECT swmm_allow_discharge FROM user_swmm_outlets WHERE name = '{orifice_outlet}';").fetchone()
+                        if allow_q:
+                            if str(allow_q[0]) != "0":
+                                outside_orifices += "\n" + orifice_name
+                                continue
 
                     new_geom = QgsGeometry.fromPolylineXY(points)
                     feat.setGeometry(new_geom)
@@ -2288,6 +2469,11 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                     feat.setAttribute("orifice_height", orifice_height)
                     feat.setAttribute("orifice_width", orifice_width)
                     new_feats.append(feat)
+
+                    if orifice_inlet not in self.inlets_outlets_inside:
+                        self.inlets_outlets_inside.append(orifice_inlet)
+                    if orifice_outlet not in self.inlets_outlets_inside:
+                        self.inlets_outlets_inside.append(orifice_outlet)
 
                 if new_feats:
                     if not self.orifices_append_chbox.isChecked():
@@ -2308,7 +2494,10 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                     self.no_in_out += "\n" + str(no_in_out) + " orifices."
 
                 if outside_orifices != "":
-                    self.uc.show_warn(
+                    self.uc.bar_warn(
+                        "WARNING 110422.0811: Orifices are outside the computational domain!"
+                    )
+                    self.uc.log_info(
                         "WARNING 110422.0811: The following orifices are outside the computational domain!\n"
                         + outside_orifices
                     )
@@ -2429,23 +2618,33 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
 
                     geom = f.geometry()
                     if geom is None or geom.type() != 1:
-                        self.uc.show_warn("WARNING 120422.0838: Error processing geometry of weir  " + weir_name)
+                        self.uc.bar_warn("WARNING 120422.0838: Error processing geometry of weir  " + weir_name)
+                        self.uc.log_info("WARNING 120422.0838: Error processing geometry of weir  " + weir_name)
                         continue
 
                     points = extractPoints(geom)
                     if points is None:
-                        self.uc.show_warn("WARNING 120422.0837: Weir  " + weir_name + " is faulty!")
+                        self.uc.bar_warn("WARNING 120422.0837: Weir  " + weir_name + " is faulty!")
+                        self.uc.log_info("WARNING 120422.0837: Weir  " + weir_name + " is faulty!")
                         continue
 
-                    cell = self.gutils.grid_on_point(points[0].x(), points[0].y())
-                    if cell is None:
+                    # Both ends of the weir is outside the grid
+                    if self.gutils.grid_on_point(points[0].x(), points[0].y()) is None and self.gutils.grid_on_point(points[1].x(), points[1].y()) is None:
                         outside_weirs += "\n" + weir_name
                         continue
 
-                    cell = self.gutils.grid_on_point(points[1].x(), points[1].y())
-                    if cell is None:
+                    # Weir inlet is outside the grid, and it is an Inlet
+                    if self.gutils.grid_on_point(points[0].x(), points[0].y()) is None and weir_inlet.lower().startswith("i"):
                         outside_weirs += "\n" + weir_name
                         continue
+
+                    # Weir outlet is outside the grid, and it shares water with the grid
+                    if self.gutils.grid_on_point(points[-1].x(), points[-1].y()) is None:
+                        allow_q = self.gutils.execute(f"SELECT swmm_allow_discharge FROM user_swmm_outlets WHERE name = '{weir_outlet}';").fetchone()
+                        if allow_q:
+                            if str(allow_q[0]) != "0":
+                                outside_weirs += "\n" + weir_name
+                                continue
 
                     new_geom = QgsGeometry.fromPolylineXY(points)
                     feat.setGeometry(new_geom)
@@ -2464,6 +2663,11 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                     feat.setAttribute("weir_height", weir_height)
                     feat.setAttribute("weir_length", weir_length)
                     new_feats.append(feat)
+
+                    if weir_inlet not in self.inlets_outlets_inside:
+                        self.inlets_outlets_inside.append(weir_inlet)
+                    if weir_outlet not in self.inlets_outlets_inside:
+                        self.inlets_outlets_inside.append(weir_outlet)
 
                 if new_feats:
                     if not self.weirs_append_chbox.isChecked():
@@ -2484,7 +2688,10 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                     self.no_in_out += "\n" + str(no_in_out) + "  weirs."
 
                 if outside_weirs != "":
-                    self.uc.show_warn(
+                    self.uc.bar_warn(
+                        "WARNING 110422.0845: Weirs are outside the computational domain!"
+                    )
+                    self.uc.log_info(
                         "WARNING 110422.0845: The following weirs are outside the computational domain!\n"
                         + outside_weirs
                     )
@@ -2507,6 +2714,50 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                     e,
                 )
                 self.load_weirs = False
+
+    def remove_outside_elements(self):
+        """
+        Function to remove outside elements on the select from components
+        """
+
+        # Remove junctions not connected to conduits/weirs/orifices/pumps
+        self.user_swmm_inlets_junctions_lyr.blockSignals(True)
+        self.user_swmm_inlets_junctions_lyr.startEditing()
+        for feat in self.user_swmm_inlets_junctions_lyr.getFeatures():
+            node_name = feat['name']
+            if len(self.inlets_outlets_inside) > 1:
+                if node_name not in self.inlets_outlets_inside:
+                    self.user_swmm_inlets_junctions_lyr.deleteFeature(feat.id())
+        self.user_swmm_inlets_junctions_lyr.commitChanges()
+        self.user_swmm_inlets_junctions_lyr.updateExtents()
+        self.user_swmm_inlets_junctions_lyr.triggerRepaint()
+        self.user_swmm_inlets_junctions_lyr.blockSignals(False)
+
+        # Remove outlets not connected to conduits/weirs/orifices/pumps
+        self.user_swmm_outlets_lyr.blockSignals(True)
+        self.user_swmm_outlets_lyr.startEditing()
+        for feat in self.user_swmm_outlets_lyr.getFeatures():
+            node_name = feat['name']
+            if len(self.inlets_outlets_inside) > 1:
+                if node_name not in self.inlets_outlets_inside:
+                    self.user_swmm_outlets_lyr.deleteFeature(feat.id())
+        self.user_swmm_outlets_lyr.commitChanges()
+        self.user_swmm_outlets_lyr.updateExtents()
+        self.user_swmm_outlets_lyr.triggerRepaint()
+        self.user_swmm_outlets_lyr.blockSignals(False)
+
+        # Remove storage units not connected to conduits/weirs/orifices/pumps
+        self.user_swmm_strge_units_lyr.blockSignals(True)
+        self.user_swmm_strge_units_lyr.startEditing()
+        for feat in self.user_swmm_strge_units_lyr.getFeatures():
+            node_name = feat['name']
+            if len(self.inlets_outlets_inside) > 1:
+                if node_name not in self.inlets_outlets_inside:
+                    self.user_swmm_strge_units_lyr.deleteFeature(feat.id())
+        self.user_swmm_strge_units_lyr.commitChanges()
+        self.user_swmm_strge_units_lyr.updateExtents()
+        self.user_swmm_strge_units_lyr.triggerRepaint()
+        self.user_swmm_strge_units_lyr.blockSignals(False)
 
     def cancel_message(self):
         self.uc.bar_info("No data was selected!")
