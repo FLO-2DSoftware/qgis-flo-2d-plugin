@@ -1498,36 +1498,36 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
 
                     # Check valid ranges and maybe assign defaults inlet type:
 
-                    if intype in {1, 3, 5}:
-                        if self.unit == 1:  # Metric
-                            if 1.3 <= swmm_coeff <= 1.9:
-                                # OK
-                                pass
-                            else:
-                                swmm_coeff = 1.60
-                                modified += 1
-                        else:  # English
-                            if 2.85 <= swmm_coeff <= 3.30:
-                                # OK
-                                pass
-                            else:
-                                swmm_coeff = 3.00
-                                modified += 1
-                    elif intype == 2:
-                        if self.unit == 1:  # Metric
-                            if 1.0 <= swmm_coeff <= 1.6:
-                                # OK
-                                pass
-                            else:
-                                swmm_coeff = 1.25
-                                modified += 1
-                        else:  # English
-                            if 2.0 <= swmm_coeff <= 2.6:
-                                # OK
-                                pass
-                            else:
-                                swmm_coeff = 2.30
-                                modified += 1
+                    # if intype in {1, 3, 5}:
+                    #     if self.unit == 1:  # Metric
+                    #         if 1.3 <= swmm_coeff <= 1.9:
+                    #             # OK
+                    #             pass
+                    #         else:
+                    #             swmm_coeff = 1.60
+                    #             modified += 1
+                    #     else:  # English
+                    #         if 2.85 <= swmm_coeff <= 3.30:
+                    #             # OK
+                    #             pass
+                    #         else:
+                    #             swmm_coeff = 3.00
+                    #             modified += 1
+                    # elif intype == 2:
+                    #     if self.unit == 1:  # Metric
+                    #         if 1.0 <= swmm_coeff <= 1.6:
+                    #             # OK
+                    #             pass
+                    #         else:
+                    #             swmm_coeff = 1.25
+                    #             modified += 1
+                    #     else:  # English
+                    #         if 2.0 <= swmm_coeff <= 2.6:
+                    #             # OK
+                    #             pass
+                    #         else:
+                    #             swmm_coeff = 2.30
+                    #             modified += 1
 
                     feat.setAttribute("swmm_coeff", swmm_coeff)
                     feat.setAttribute("swmm_feature", swmm_feature)
@@ -1562,19 +1562,19 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                         + outside_inlets
                     )
 
-                if modified > 0:
-                    self.uc.bar_warn(
-                        "WARNING 050820.1901: Weir Coefficients in shapefile are outside valid ranges! "
-                        + "Default values were assigned."
-                    )
-                    self.uc.log_info(
-                        "WARNING 050820.1901: "
-                        + str(modified)
-                        + " Weir Coefficients in shapefile are outside valid ranges. "
-                        + "Default values were assigned to "
-                        + str(modified)
-                        + " inlets!"
-                    )
+                # if modified > 0:
+                #     self.uc.bar_warn(
+                #         "WARNING 050820.1901: Weir Coefficients in shapefile are outside valid ranges! "
+                #         + "Default values were assigned."
+                #     )
+                #     self.uc.log_info(
+                #         "WARNING 050820.1901: "
+                #         + str(modified)
+                #         + " Weir Coefficients in shapefile are outside valid ranges. "
+                #         + "Default values were assigned to "
+                #         + str(modified)
+                #         + " inlets!"
+                #     )
 
             except Exception as e:
                 QApplication.restoreOverrideCursor()
