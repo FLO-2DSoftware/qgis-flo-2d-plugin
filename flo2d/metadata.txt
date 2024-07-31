@@ -10,8 +10,6 @@ about=The FLO-2D Plugin for QGIS is a tool to develop, format, analyze, and disp
 
 changelog=
  <p>1.0.0
-changelog=
- <p>1.0.0
  - General
         Modified the FLO-2D toolbar
         Improve import/export logic
