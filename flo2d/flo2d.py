@@ -202,7 +202,7 @@ class Flo2D(object):
         # connections
         self.project.readProject.connect(self.load_gpkg_from_proj)
         self.project.writeProject.connect(self.flo_save_project)
-        self.project.layersAdded.connect(self.changeLayerAdditionMode)
+        self.project.layersAdded.connect(self.layerAdded)
         self.project.layersWillBeRemoved.connect(self.change_external_layer_type)
 
         self.uc.clear_bar_messages()
@@ -4596,11 +4596,30 @@ class Flo2D(object):
         # Save the result
         picture.save(thumbnail)
 
-    def changeLayerAdditionMode(self):
+    def layerAdded(self, layers):
         """
-        Function to force all layers added to the user on the top of the layer tree
+        This function does two things:
+            1. Check the layer name and rename it if necessary to avoid duplicated layers
+            2. Force all layers added to the user on the top of the layer tree
         """
-        self.iface.layerTreeView().setCurrentIndex(self.iface.layerTreeView().layerTreeModel().node2index(self.project.layerTreeRoot()))
+
+        for layer in layers:
+            layer_name = layer.name()
+            layer_source = layer.source()
+            try:
+                gpkg_path = self.gutils.get_gpkg_path()
+                if layer_name in self.lyrs.layer_names and gpkg_path not in layer_source:
+                    renamed_layer = layer_name + '_ext'
+                    layer.setName(renamed_layer)
+                    self.uc.bar_warn('FLO-2D Plugin does not allow layers with the name equal to the FLO-2D layers! The '
+                                     f'{layer_name} layer was renamed to {renamed_layer}.')
+                    self.uc.log_info(f'FLO-2D Plugin does not allow layers with the name equal to the FLO-2D layers! The '
+                                     f'{layer_name} layer was renamed to {renamed_layer}.')
+            except:
+                pass
+
+        self.iface.layerTreeView().setCurrentIndex(
+            self.iface.layerTreeView().layerTreeModel().node2index(self.project.layerTreeRoot()))
 
     def change_external_layer_type(self, layer_ids):
         """
@@ -4614,9 +4633,3 @@ class Flo2D(object):
                 if external_layers:
                     fid = external_layers[0][0]
                     self.gutils.execute(f"DELETE FROM external_layers WHERE fid = '{fid}';")
-
-
-
-
-
-
