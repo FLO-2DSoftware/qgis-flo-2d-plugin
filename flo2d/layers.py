@@ -1837,8 +1837,6 @@ class Layers(object):
         for lyr in self.data:
             self.data[lyr]["qlyr"] = None
 
-        self.layer_names = [layer_info["name"] for layer_info in self.data.values()]
-
     def load_layer(
         self,
         table,
