@@ -13,7 +13,10 @@ import os
 import time
 import traceback
 
-import h5py
+try:
+    import h5py
+except ImportError:
+    pass
 import numpy as np
 import pandas as pd
 from PyQt5.QtCore import QUrl
