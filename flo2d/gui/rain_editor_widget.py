@@ -10,6 +10,7 @@
 
 import os
 import traceback
+from datetime import datetime
 from math import isnan
 
 from PyQt5.QtWidgets import QProgressDialog
@@ -25,7 +26,7 @@ from ..flo2dobjects import Rain
 from ..geopackage_utils import GeoPackageUtils
 from ..gui.dlg_sampling_rain import SamplingRainDialog
 from ..user_communication import UserCommunication
-from ..utils import is_number, m_fdata
+from ..utils import is_number, m_fdata, get_flo2dpro_release_date
 from .table_editor_widget import CommandItemEdit, StandardItem, StandardItemModel
 from .ui_utils import load_ui, set_icon, try_disconnect
 
@@ -209,11 +210,34 @@ class RainEditorWidget(qtBaseClass, uiDialog):
         """
         Function to export RAINCELL.DAT
         """
+        s = QSettings()
+        flopro_dir = s.value("FLO-2D/last_flopro")
+        flo2d_release_date = False
+        if flopro_dir is not None:
+            if os.path.isfile(flopro_dir + "/FLOPRO.exe"):
+                flo2d_release_date = get_flo2dpro_release_date(flopro_dir + "/FLOPRO.exe")
+            elif os.path.isfile(flopro_dir + "/FLOPRO_Demo.exe"):
+                flo2d_release_date = get_flo2dpro_release_date(flopro_dir + "/FLOPRO_Demo.exe")
+        else:
+            return False
+
+        new_raincell_format = False
+        new_raincell_format_release_date = "2024-08-01"
+        target_date = datetime.strptime(new_raincell_format_release_date, "%Y-%m-%d")
+        flo2d_release_date = datetime.strptime(flo2d_release_date, "%Y-%m-%d")
+        if flo2d_release_date >= target_date:
+            new_raincell_format = True
+
         title = "Select RAINCELL format to export"
+
         msg = "Select the desired RAINCELL.DAT format. \n\n" \
               "RAINCELL.HDF5: Recommended for reduced file size and faster read/write speeds. \n" \
               "New RAINCELL.DAT: Suggested for a smaller file size. \n" \
-              "Old RAINCELL.DAT: Use this format if your FLOPRO.exe build is earlier than 23.10.25.\n" \
+              "Old RAINCELL.DAT: Use this format if your FLOPRO.exe build is earlier than 23.10.25.\n"
+
+        if not new_raincell_format:
+            msg += "\nYour current version of FLOPRO.exe does not support the new RAINCELL.DAT format. Please " \
+                           "contact the FLO-2D team to update your FLOPRO.exe build."
 
         msg_box = QMessageBox()
 
@@ -227,6 +251,8 @@ class RainEditorWidget(qtBaseClass, uiDialog):
         button1 = msg_box.addButton("RAINCELL.HDF5", QMessageBox.ActionRole)
         button2 = msg_box.addButton("New RAINCELL.DAT", QMessageBox.ActionRole)
         button3 = msg_box.addButton("Old RAINCELL.DAT", QMessageBox.ActionRole)
+        if not new_raincell_format:
+            button2.setEnabled(False)
         button4 = msg_box.addButton("Cancel", QMessageBox.ActionRole)
 
         # Set the icon for the message box
