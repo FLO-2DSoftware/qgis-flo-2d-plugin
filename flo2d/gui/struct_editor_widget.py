@@ -260,8 +260,12 @@ class StructEditorWidget(qtBaseClass, uiDialog):
             self.storm_drain_cap_sbox.setEnabled(True)
 
     def schematize_struct(self):
+        """
+        Function to schematize the Hydraulic Structures
+        """
         if not self.gutils.execute("SELECT * FROM user_struct;").fetchone():
-            self.uc.show_warn("WARNING 040220.0728: there are no user structures to schematize!")
+            self.uc.bar_info("WARNING 040220.0728: there are no user structures to schematize!")
+            self.uc.log_info("WARNING 040220.0728: there are no user structures to schematize!")
             return
 
         qry = "SELECT * FROM struct WHERE geom IS NOT NULL;"
@@ -270,65 +274,71 @@ class StructEditorWidget(qtBaseClass, uiDialog):
             if not self.uc.question("There are some schematized structures created already. Overwrite them?"):
                 return
 
-        del_qry = "DELETE FROM struct WHERE fid NOT IN (SELECT fid FROM user_struct);"
-        self.gutils.execute(del_qry)
-        upd_cells_qry = """UPDATE struct SET
-            inflonod = (
-                SELECT g.fid FROM
-                    grid AS g,
-                    user_struct AS us
-                WHERE
-                    ST_Intersects(ST_StartPoint(GeomFromGPB(us.geom)), GeomFromGPB(g.geom)) AND
-                    us.fid = struct.fid
-                LIMIT 1
-            ),
-            outflonod = (
-                SELECT g.fid FROM
-                    grid AS g,
-                    user_struct AS us
-                WHERE
-                    ST_Intersects(ST_EndPoint(GeomFromGPB(us.geom)), GeomFromGPB(g.geom)) AND
-                    us.fid = struct.fid
-                LIMIT 1);"""
-        self.gutils.execute(upd_cells_qry)
+        try:
+            QApplication.setOverrideCursor(Qt.WaitCursor)
 
-        upd_stormdrains_qry = """UPDATE storm_drains SET
-                    istormdout = (
-                        SELECT outflonod FROM
-                            struct
-                        WHERE
-                            storm_drains.struct_fid = struct.fid
-                        LIMIT 1
-                    );"""
-        self.gutils.execute(upd_stormdrains_qry)
+            del_qry = "DELETE FROM struct WHERE fid NOT IN (SELECT fid FROM user_struct);"
+            self.gutils.execute(del_qry)
 
-        qry = "SELECT fid, inflonod, outflonod FROM struct;"
-        structs = self.gutils.execute(qry).fetchall()
-        for struct in structs:
-            fid, inflo, outflo = struct
-            geom = self.gutils.build_linestring([inflo, outflo])
-            upd_geom_qry = """UPDATE struct SET geom = ? WHERE fid = ?;"""
-            self.gutils.execute(
-                upd_geom_qry,
-                (
-                    geom,
-                    fid,
-                ),
-            )
-        self.lyrs.lyrs_to_repaint = [self.lyrs.data["struct"]["qlyr"]]
-        self.lyrs.repaint_layers()
+            batch_updates = []
+            for feat in self.user_struct_lyr.getFeatures():
+                line_geom = feat.geometry().asPolyline()
+                fid = feat["fid"]
+                start = line_geom[0]
+                end = line_geom[-1]
+                inflonod = self.gutils.grid_on_point(start.x(), start.y())
+                outflonod = self.gutils.grid_on_point(end.x(), end.y())
+                batch_updates.append((inflonod, outflonod, fid))
 
-        if structs:
-            self.gutils.set_cont_par("IHYDRSTRUCT", 1)
-            self.uc.log_info(
-                "Schematizing Hydraulic Structures finished!\n\n"
-                + str(len(structs)) + " structures were updated in the Hydraulic Structures table."
-            )
-            self.uc.show_info(
-                "Schematizing Hydraulic Structures finished!"
-            ) 
-        else: 
-            self.uc.show_warn("WARNING 151203.0646: Error during Hydraulic Structures schematization!")              
+            self.gutils.execute_many("UPDATE struct SET inflonod = ?, outflonod = ? WHERE fid = ?;", batch_updates)
+
+            upd_stormdrains_qry = """UPDATE storm_drains SET
+                        istormdout = (
+                            SELECT outflonod FROM
+                                struct
+                            WHERE
+                                storm_drains.struct_fid = struct.fid
+                            LIMIT 1
+                        );"""
+            self.gutils.execute(upd_stormdrains_qry)
+
+            qry = "SELECT fid, inflonod, outflonod FROM struct;"
+            structs = self.gutils.execute(qry).fetchall()
+
+            for struct in structs:
+                fid, inflo, outflo = struct
+                geom = self.gutils.build_linestring([inflo, outflo])
+                upd_geom_qry = """UPDATE struct SET geom = ? WHERE fid = ?;"""
+                self.gutils.execute(
+                    upd_geom_qry,
+                    (
+                        geom,
+                        fid,
+                    ),
+                )
+
+            self.lyrs.lyrs_to_repaint = [self.lyrs.data["struct"]["qlyr"]]
+            self.lyrs.repaint_layers()
+
+            if structs:
+                self.gutils.set_cont_par("IHYDRSTRUCT", 1)
+                self.uc.log_info(
+                    "Schematizing Hydraulic Structures finished!\n\n"
+                    + str(len(structs)) + " structures were updated in the Hydraulic Structures table."
+                )
+                self.uc.bar_info(
+                    "Schematizing Hydraulic Structures finished!"
+                )
+            else:
+                self.uc.bar_error("WARNING 151203.0646: Error during Hydraulic Structures schematization!")
+                self.uc.log_info("WARNING 151203.0646: Error during Hydraulic Structures schematization!")
+
+        except Exception as e:
+            self.uc.bar_error("WARNING 151203.0646: Error during Hydraulic Structures schematization!")
+            self.uc.log_info("WARNING 151203.0646: Error during Hydraulic Structures schematization!.")
+        finally:
+            QApplication.restoreOverrideCursor()
+
 
     def structures_help(self):
         QDesktopServices.openUrl(QUrl("https://flo-2dsoftware.github.io/FLO-2D-Documentation/Plugin1000/widgets/hydraulic-structure-editor/Hydraulic%20Structure%20Editor.html"))        

@@ -110,12 +110,9 @@ class FPXsecEditorWidget(qtBaseClass, uiDialog):
                 self.fpxs_cbo.addItem(row[1], row)
                 if fid and row[0] == fid:
                     cur_idx = i + 1
-                    self.uc.log_info("-> 1")
                 # elif show_last_edited and row[0] == max_fid:
                 #     cur_idx = i
                 #     self.uc.log_info("-> 2")
-            self.uc.log_info(str(cur_idx))
-            self.uc.log_info("-----")
             self.fpxs_cbo.setCurrentIndex(cur_idx)
             self.cur_fpxs_changed()
         else:
