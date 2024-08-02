@@ -1354,9 +1354,10 @@ class Flo2D(object):
                 if "Manning's n and Topo" not in dlg_components.components:
                     export_calls.remove("export_mannings_n_topo")
 
-                QApplication.setOverrideCursor(Qt.WaitCursor)
-
                 try:
+
+                    QApplication.setOverrideCursor(Qt.WaitCursor)
+
                     s = QSettings()
                     s.setValue("FLO-2D/lastGdsDir", outdir)
 
@@ -1425,7 +1426,8 @@ class Flo2D(object):
                         info = "WARNINGS:\n\n" + self.f2g.export_messages
                         self.uc.show_info(info)
 
-            QApplication.restoreOverrideCursor()
+                    QApplication.restoreOverrideCursor()
+
             flopro_dir = s.value("FLO-2D/last_flopro")
             flo2d_v = "FLOPRO not found"
             program = None
@@ -1450,6 +1452,8 @@ class Flo2D(object):
             else:
                 self.uc.bar_warn("No FLOPRO.exe found, check your FLO-2D installation folder!")
                 self.uc.log_info("No FLOPRO.exe found, check your FLO-2D installation folder!")
+
+            QApplication.restoreOverrideCursor()
 
     def run_flopro(self):
         self.uncheck_all_info_tools()

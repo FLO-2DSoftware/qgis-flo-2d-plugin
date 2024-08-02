@@ -189,7 +189,8 @@ class RainEditorWidget(qtBaseClass, uiDialog):
                     i += 1
 
                 QApplication.restoreOverrideCursor()
-                self.uc.show_info("Importing Rainfall Data finished!")
+                self.uc.bar_info("Importing Rainfall Data finished!")
+                self.uc.log_info("Importing Rainfall Data finished!")
             except Exception as e:
                 self.uc.log_info(traceback.format_exc())
                 QApplication.restoreOverrideCursor()
@@ -205,74 +206,144 @@ class RainEditorWidget(qtBaseClass, uiDialog):
             )
 
     def export_rainfall_to_binary_hdf5(self):
-        export = self.uc.dialog_with_2_customized_buttons(
-            "Select RAINCELL file to export", "", " RAINCELL.DAT ", " RAINCELL.HDF5 "
-        )
-        if export == QMessageBox.Yes:
-            # self.uc.show_info("Export RAINCELL.DAT")
+        """
+        Function to export RAINCELL.DAT
+        """
+        title = "Select RAINCELL format to export"
+        msg = "Select the desired RAINCELL.DAT format. \n\n" \
+              "RAINCELL.HDF5: Recommended for reduced file size and faster read/write speeds. \n" \
+              "New RAINCELL.DAT: Suggested for a smaller file size. \n" \
+              "Old RAINCELL.DAT: Use this format if your FLOPRO.exe build is earlier than 23.10.25.\n" \
+
+        msg_box = QMessageBox()
+
+        # Set the title for the message box
+        msg_box.setWindowTitle(title)
+
+        # Set the text for the message box
+        msg_box.setText(msg)
+
+        # Add buttons to the message box
+        button1 = msg_box.addButton("RAINCELL.HDF5", QMessageBox.ActionRole)
+        button2 = msg_box.addButton("New RAINCELL.DAT", QMessageBox.ActionRole)
+        button3 = msg_box.addButton("Old RAINCELL.DAT", QMessageBox.ActionRole)
+        button4 = msg_box.addButton("Cancel", QMessageBox.ActionRole)
+
+        # Set the icon for the message box
+        msg_box.setIcon(QMessageBox.Information)
+
+        # Display the message box and wait for the user to click a button
+        msg_box.exec_()
+
+        # RAINCELL.HDF5
+        if msg_box.clickedButton() == button1:
+
+            try:
+                import h5py
+            except ImportError:
+                self.uc.bar_warn("There is no h5py module installed! Please install it to run export tool.")
+                self.uc.log_info("There is no h5py module installed! Please install it to run export tool.")
+                return
+
+            s = QSettings()
+            last_dir = s.value("FLO-2D/lastHDF", "")
+            hdf_dir = QFileDialog.getExistingDirectory(
+                None, "Select directory to export RAINCELL.HDF5 binary file", last_dir
+            )
+            if not hdf_dir:
+                return
+
+            hdf_file = hdf_dir + "/RAINCELL.HDF5"
+            s.setValue("FLO-2D/lastHDF", os.path.dirname(hdf_file))
+            s.setValue("FLO-2D/lastHDF", hdf_file)
+            try:
+                QApplication.setOverrideCursor(Qt.WaitCursor)
+                qry_header = "SELECT rainintime, irinters, timestamp FROM raincell LIMIT 1;"
+                header = self.gutils.execute(qry_header).fetchone()
+                if header:
+                    rainintime, irinters, timestamp = header
+                    header_data = [rainintime, irinters, timestamp]
+                    qry_data = "SELECT iraindum FROM raincell_data"
+                    qry_size = "SELECT COUNT(iraindum) FROM raincell_data"
+                    qry_timeinterval = "SELECT DISTINCT time_interval FROM raincell_data"
+                    hdf_processor = HDFProcessor(hdf_file, self.iface)
+                    hdf_processor.export_rainfall_to_binary_hdf5(header_data, qry_data, qry_size, qry_timeinterval)
+                    self.uc.bar_info("RAINCELL.HDF5 was exported!")
+                    self.uc.log_info(f"RAINCELL.HDF5 was exported to {hdf_dir}!")
+                else:
+                    self.uc.bar_warn(
+                        "There is no data in layer 'Realtime Rainfall'"
+                    )
+                    self.uc.log_info(
+                        "There is no data in layer 'Realtime Rainfall'\n\nImport Realtime Rainfall ASCII files."
+                    )
+
+            except Exception as e:
+                self.uc.log_info(f"Exporting Rainfall Data failed! Please check your input data.\n\n{traceback.format_exc()}")
+                self.uc.bar_error("Exporting Rainfall Data failed! Please check your input data.")
+
+            finally:
+                QApplication.restoreOverrideCursor()
+
+        # New RAINCELL.DAT
+        elif msg_box.clickedButton() == button2:
+
             if self.gutils.is_table_empty("grid"):
                 self.uc.bar_warn("There is no grid! Please create it before running tool.")
+                self.uc.log_info("There is no grid! Please create it before running tool.")
                 return
+
             project_dir = QgsProject.instance().absolutePath()
             outdir = QFileDialog.getExistingDirectory(
                 None,
                 "Select directory where RAINCELL.DAT will be exported",
                 directory=project_dir,
             )
+
+            if outdir:
+                flo2dgeo = Flo2dGeoPackage(self.con, self.iface)
+                QApplication.setOverrideCursor(Qt.WaitCursor)
+                out = flo2dgeo.export_raincell_new(outdir)
+                QApplication.restoreOverrideCursor()
+                if out:
+                    self.uc.bar_info("RAINCELL.DAT was exported!")
+                    self.uc.log_info(f"RAINCELL.DAT was exported to {outdir}!")
+                else:
+                    self.uc.bar_error("RAINCELL.DAT could not be exported!")
+                    self.uc.log_info(f"RAINCELL.DAT could not be exported to {outdir}!")
+
+        # Old RAINCELL.DAT
+        elif msg_box.clickedButton() == button3:
+
+            if self.gutils.is_table_empty("grid"):
+                self.uc.bar_warn("There is no grid! Please create it before running tool.")
+                self.uc.log_info("There is no grid! Please create it before running tool.")
+                return
+
+            project_dir = QgsProject.instance().absolutePath()
+            outdir = QFileDialog.getExistingDirectory(
+                None,
+                "Select directory where RAINCELL.DAT will be exported",
+                directory=project_dir,
+            )
+
             if outdir:
                 flo2dgeo = Flo2dGeoPackage(self.con, self.iface)
                 QApplication.setOverrideCursor(Qt.WaitCursor)
                 out = flo2dgeo.export_raincell(outdir)
                 QApplication.restoreOverrideCursor()
                 if out:
-                    self.uc.show_info("RAINCELL.DAT was exported.")
+                    self.uc.bar_info("RAINCELL.DAT was exported!")
+                    self.uc.log_info(f"RAINCELL.DAT was exported to {outdir}!")
                 else:
-                    self.uc.show_info("RAINCELL.DAT could not be exported!")
+                    self.uc.bar_error("RAINCELL.DAT could not be exported!")
+                    self.uc.log_info(f"RAINCELL.DAT could not be exported to {outdir}!")
 
-        elif export == QMessageBox.No: # This exit is for export RAINCELL.HDF5
-            # self.uc.show_info("Export RAINCELL.HDF5")
-
-            try:
-                import h5py
-            except ImportError:
-                self.uc.bar_warn("There is no h5py module installed! Please install it to run export tool.")
-                return
-            s = QSettings()
-            last_dir = s.value("FLO-2D/lastHDF", "")
-            # hdf_file, __ = QFileDialog.getSaveFileName(
-            #     None, "Export Rainfall to HDF file", directory=last_dir, filter="*.hdf5"
-            # )
-            hdf_dir = QFileDialog.getExistingDirectory(
-                None, "Select directory to export RAINCELL.HDF5 binary file", last_dir
-            )
-            if not hdf_dir:
-                return
-            hdf_file = hdf_dir + "/RAINCELL.HDF5"
-            s.setValue("FLO-2D/lastHDF", os.path.dirname(hdf_file))
-            # s.setValue("FLO-2D/lastHDF", hdf_file)
-            # try:
-            QApplication.setOverrideCursor(Qt.WaitCursor)
-            qry_header = "SELECT rainintime, irinters, timestamp FROM raincell LIMIT 1;"
-            header = self.gutils.execute(qry_header).fetchone()
-            if header:
-                rainintime, irinters, timestamp = header
-                header_data = [rainintime, irinters, timestamp]
-                qry_data = "SELECT iraindum FROM raincell_data"
-                qry_size = "SELECT COUNT(iraindum) FROM raincell_data"
-                qry_timeinterval = "SELECT DISTINCT time_interval FROM raincell_data"
-                hdf_processor = HDFProcessor(hdf_file, self.iface)
-                hdf_processor.export_rainfall_to_binary_hdf5(header_data, qry_data, qry_size, qry_timeinterval)
-                QApplication.restoreOverrideCursor()
-                self.uc.show_info("Exporting Rainfall Data finished!")
-            else:
-                QApplication.restoreOverrideCursor()
-                self.uc.show_info(
-                    "There is no data in layer 'Realtime Rainfall'\n\nImport Realtime Rainfall ASCII files."
-                )
-            # except Exception as e:
-            #     self.uc.log_info(traceback.format_exc())
-            #     QApplication.restoreOverrideCursor()
-            #     self.uc.bar_warn("Exporting Rainfall Data failed! Please check your input data.")
+        # Close button
+        elif msg_box.clickedButton() == button4:
+            self.uc.bar_info("Export RealTime Rainfall canceled!")
+            self.uc.log_info("Export RealTime Rainfall canceled!")
+            return
 
     def create_plot(self):
         """
