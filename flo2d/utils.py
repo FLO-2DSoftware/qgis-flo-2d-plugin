@@ -424,3 +424,29 @@ def get_flo2dpro_version(file_path):
 
         return found_version
 
+def get_flo2dpro_release_date(file_path):
+    """
+    Function to get the FLOPRO release date
+    This can be used to filter out or add a specific feature
+    """
+    if not os.path.exists(file_path):
+        return False
+
+    # Check for the license
+    system32_path = os.path.join(os.environ['SystemRoot'], 'System32')
+    license_path = os.path.join(system32_path, "systemflP.dll")
+
+    is_demo = True
+    if os.path.exists(license_path) and os.path.basename(file_path) != "FLOPRO_Demo.exe":
+        is_demo = False
+
+    creation_time = os.path.getmtime(file_path)
+
+    # Convert the timestamp to a datetime object
+    creation_date = datetime.fromtimestamp(creation_time)
+
+    # Extract the date part
+    date = creation_date.date()
+    date_str_dict = date.strftime("%Y-%m-%d")
+
+    return date_str_dict

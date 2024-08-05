@@ -22,7 +22,7 @@ from qgis.core import NULL, QgsApplication
 from qgis.PyQt.QtCore import Qt
 from qgis.PyQt.QtWidgets import QApplication, QProgressDialog
 
-from ..flo2d_tools.grid_tools import grid_compas_neighbors
+from ..flo2d_tools.grid_tools import grid_compas_neighbors, number_of_elements
 from ..geopackage_utils import GeoPackageUtils
 # from ..gui.bc_editor_widget import BCEditorWidget
 from ..layers import Layers
@@ -3102,6 +3102,61 @@ class Flo2dGeoPackage(GeoPackageUtils):
             QApplication.restoreOverrideCursor()
             self.uc.show_error("ERROR 101218.1558: exporting RAINCELL.DAT failed!.\n", e)
             return False
+        finally:
+            QApplication.restoreOverrideCursor()
+
+    def export_raincell_new(self, outdir):
+        """
+        Function to export the RAINCELL.DAT to tthe new format read by FLOPRO (08/2024)
+        The new RAINCELL.DAT format has a smaller file size
+        """
+        try:
+            QApplication.setOverrideCursor(Qt.WaitCursor)
+            if self.is_table_empty("raincell"):
+                return False
+
+            head_sql = """SELECT rainintime, irinters, timestamp FROM raincell LIMIT 1;"""
+            data_sql = """SELECT rrgrid, iraindum FROM raincell_data ORDER BY time_interval, rrgrid;"""
+            size_sql = """SELECT COUNT(iraindum) FROM raincell_data"""
+            line1 = "{0} {1} {2}\n"
+            line2 = "{0} {1}\n"
+
+            grid_lyr = self.lyrs.data["grid"]["qlyr"]
+            n_cells = number_of_elements(self.gutils, grid_lyr)
+
+            raincell_head = self.execute(head_sql).fetchone()
+            raincell_rows = self.execute(data_sql)
+            raincell_size = self.execute(size_sql).fetchone()[0]
+            raincell = os.path.join(outdir, "RAINCELL.DAT")
+
+            with open(raincell, "w") as r:
+                r.write(line1.format(*raincell_head))
+                progDialog = QProgressDialog("Exporting RealTime Rainfall (.DAT)...", None, 0, int(raincell_size))
+                progDialog.setModal(True)
+                progDialog.setValue(0)
+                progDialog.show()
+                i = 0
+
+                for row in raincell_rows:
+                    # Check if it is the last grid element -> Needs to be printed every single interval
+                    if row[0] == n_cells:
+                        if row[1] is None:
+                            r.write(line2.format(row[0], "0"))
+                        else:
+                            r.write(line2.format(row[0], "{0:.4f}".format(float(row[1]))))
+                    elif row[1] is None or row[1] == 0:
+                        pass
+                    else:
+                        r.write(line2.format(row[0], "{0:.4f}".format(float(row[1]))))
+                    progDialog.setValue(i)
+                    i += 1
+            return True
+
+        except Exception as e:
+            self.uc.bar_error("ERROR 101218.1558: exporting RAINCELL.DAT failed!.")
+            self.uc.log_info(f"ERROR 101218.1558: exporting RAINCELL.DAT failed!.\n{e}")
+            return False
+
         finally:
             QApplication.restoreOverrideCursor()
 
