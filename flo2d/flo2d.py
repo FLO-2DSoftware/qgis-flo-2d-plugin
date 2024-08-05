@@ -129,6 +129,7 @@ from PIL import Image, ImageDraw
 
 import processing
 
+
 @contextmanager
 def cd(newdir):
     prevdir = os.getcwd()
@@ -446,7 +447,7 @@ class Flo2D(object):
                 (
                     os.path.join(self.plugin_dir, "img/swmm5.png"),
                     "Run SWMM 5 GUI ",
-                    self.run_swmm5gui,
+                    self.run_swmm5_gui,
                 ),
                 (
                     os.path.join(self.plugin_dir, "img/tailings dam breach.svg"),
@@ -1261,9 +1262,9 @@ class Flo2D(object):
 
             # Check the presence of fplain cadpts neighbors dat files
             files = [
-                    "FPLAIN.DAT",
-                    "CADPTS.DAT",
-                    "NEIGHBORS.DAT"
+                "FPLAIN.DAT",
+                "CADPTS.DAT",
+                "NEIGHBORS.DAT"
             ]
             for file in files:
                 file_path = os.path.join(outdir, file)
@@ -1535,6 +1536,45 @@ class Flo2D(object):
         self.uncheck_all_info_tools()
         self.run_program("MAXPLOT.exe")
 
+    def run_swmm5_gui(self):
+        """
+        Function to run the SWMM 5 GUI
+        """
+        self.uncheck_all_info_tools()
+        s = QSettings()
+        # check if run was configured
+        if not s.contains("FLO-2D/run_settings"):
+            self.run_settings()
+        if s.value("FLO-2D/last_flopro") == "" or s.value("FLO-2D/lastGdsDir") == "":
+            self.run_settings()
+        flo2d_dir = s.value("FLO-2D/last_flopro")
+        project_dir = s.value("FLO-2D/lastGdsDir")
+
+        if sys.platform != "win32":
+            self.uc.bar_warn("Could not run Epaswmm5.exe under current operation system!")
+            return
+        try:
+            # Try to run from FLO-2D folder
+            if os.path.isfile(flo2d_dir + '\\Epaswmm5.exe'):
+                program = ProgramExecutor(flo2d_dir, project_dir, 'Epaswmm5.exe')
+                program.perform()
+                self.uc.bar_info("Epaswmm5.exe started!", dur=3)
+            # Try to run from EPA SWMM 5 folder
+            elif os.path.isfile(rf'C:\Program Files (x86)\EPA SWMM 5.0\Epaswmm5.exe'):
+                program = ProgramExecutor(r'C:\Program Files (x86)\EPA SWMM 5.0', project_dir, 'Epaswmm5.exe')
+                program.perform()
+                self.uc.bar_info("Epaswmm5.exe started!", dur=3)
+            # Executable not available
+            else:
+                self.uc.bar_warn("WARNING 241020.0424: Program Epaswmm5.exe is not in directory")
+                self.uc.log_info("WARNING 241020.0424: Program Epaswmm5.exe is not in directory\n"
+                                 + flo2d_dir
+                                 + '\nor\n'
+                                 + rf'C:\Program Files (x86)\EPA SWMM 5.0\Epaswmm5.exe')
+        except Exception as e:
+            self.uc.log_info(repr(e))
+            self.uc.bar_warn("Running Epaswmm5.exe failed!")
+
     def run_program(self, exe_name):
         """
         Function to run programs
@@ -1555,10 +1595,6 @@ class Flo2D(object):
         try:
             if os.path.isfile(flo2d_dir + "\\" + exe_name):
                 if exe_name == "Tailings Dam Breach.exe":
-                    program = ProgramExecutor(flo2d_dir, project_dir, exe_name)
-                    program.perform()
-                    self.uc.bar_info(exe_name + " started!", dur=3)
-                elif exe_name == "Epaswmm5.exe":
                     program = ProgramExecutor(flo2d_dir, project_dir, exe_name)
                     program.perform()
                     self.uc.bar_info(exe_name + " started!", dur=3)
@@ -2153,11 +2189,11 @@ class Flo2D(object):
                                     if self.f2g.import_swmmflodropbox():
                                         self.files_used += "SWMMFLODROPBOX.DAT\n"
                                     else:
-                                        self.files_not_used +="SWMMFLODROPBOX.DAT (errors found)\n"
+                                        self.files_not_used += "SWMMFLODROPBOX.DAT (errors found)\n"
                                 else:
-                                    self.files_not_used +="SWMMFLODROPBOX.DAT\n"
+                                    self.files_not_used += "SWMMFLODROPBOX.DAT\n"
                             else:
-                                self.files_not_used +="SWMMFLODROPBOX.DAT\n"
+                                self.files_not_used += "SWMMFLODROPBOX.DAT\n"
 
                             # Import SDCLOGGING..DAT:
                             file = last_dir + r"\SDCLOGGING.DAT"
@@ -2166,11 +2202,11 @@ class Flo2D(object):
                                     if self.f2g.import_sdclogging():
                                         self.files_used += "SDCLOGGING.DAT\n"
                                     else:
-                                        self.files_not_used +="SDCLOGGING.DAT (errors found)\n"
+                                        self.files_not_used += "SDCLOGGING.DAT (errors found)\n"
                                 else:
-                                    self.files_not_used +="SDCLOGGING.DAT\n"
+                                    self.files_not_used += "SDCLOGGING.DAT\n"
                             else:
-                                self.files_not_used +="SDCLOGGING.DAT\n"
+                                self.files_not_used += "SDCLOGGING.DAT\n"
 
 
                         except Exception as e:
@@ -2978,9 +3014,9 @@ class Flo2D(object):
 
             # Check the presence of fplain cadpts neighbors dat files
             files = [
-                    "FPLAIN.DAT",
-                    "CADPTS.DAT",
-                    "NEIGHBORS.DAT"
+                "FPLAIN.DAT",
+                "CADPTS.DAT",
+                "NEIGHBORS.DAT"
             ]
             for file in files:
                 file_path = os.path.join(outdir, file)
@@ -3068,7 +3104,7 @@ class Flo2D(object):
                     export_calls.remove("export_swmmoutf")
                     export_calls.remove("export_swmmflodropbox")
                     export_calls.remove("export_sdclogging")
-                    
+
                 if "Spatial Shallow-n" not in dlg_components.components:
                     export_calls.remove("export_shallowNSpatial")
 
@@ -3148,7 +3184,6 @@ class Flo2D(object):
                                     os.remove(outdir + r"\MULT.DAT")
                                 QApplication.restoreOverrideCursor()
                     if self.files_used != "":
-                        
                         QApplication.setOverrideCursor(Qt.ArrowCursor)
                         info = "Files exported to\n" + outdir + "\n\n" + self.files_used
                         self.uc.show_info(info)
@@ -3665,7 +3700,7 @@ class Flo2D(object):
             self.f2d_weirs_dock = None
 
         weir_name = self.gutils.execute("SELECT weir_name FROM user_swmm_weirs WHERE fid = ?",
-                                           (fid,)).fetchone()
+                                        (fid,)).fetchone()
         self.uc.bar_info("Selected Storm Drain Weir: " + str(weir_name[0]))
 
         dlg = WeirAttributes(self.con, self.iface, self.lyrs)
@@ -3715,7 +3750,7 @@ class Flo2D(object):
             self.f2d_storage_units_dock = None
 
         storage_unit_name = self.gutils.execute("SELECT name FROM user_swmm_storage_units WHERE fid = ?",
-                                           (fid,)).fetchone()
+                                                (fid,)).fetchone()
         self.uc.bar_info("Selected Storm Drain Storage Unit: " + str(storage_unit_name[0]))
 
         dlg = StorageUnitAttributes(self.con, self.iface, self.lyrs)
@@ -3740,7 +3775,7 @@ class Flo2D(object):
             self.f2d_pumps_dock = None
 
         pump_name = self.gutils.execute("SELECT pump_name FROM user_swmm_pumps WHERE fid = ?",
-                                           (fid,)).fetchone()
+                                        (fid,)).fetchone()
         self.uc.bar_info("Selected Storm Drain Pump: " + str(pump_name[0]))
 
         dlg = PumpAttributes(self.con, self.iface, self.lyrs)
@@ -3764,7 +3799,8 @@ class Flo2D(object):
             self.f2d_conduits_dock.deleteLater()
             self.f2d_conduits_dock = None
 
-        conduit_name = self.gutils.execute("SELECT conduit_name FROM user_swmm_conduits WHERE fid = ?", (fid,)).fetchone()
+        conduit_name = self.gutils.execute("SELECT conduit_name FROM user_swmm_conduits WHERE fid = ?",
+                                           (fid,)).fetchone()
         self.uc.bar_info("Selected Storm Drain Conduit: " + str(conduit_name[0]))
 
         dlg = ConduitAttributes(self.con, self.iface, self.lyrs)
@@ -3794,7 +3830,8 @@ class Flo2D(object):
             self.uc.bar_warn("There is no grid! Please create it before running tool.")
             return
 
-        name, grid = self.gutils.execute("SELECT name, grid FROM user_swmm_inlets_junctions WHERE fid = ?", (fid,)).fetchone()
+        name, grid = self.gutils.execute("SELECT name, grid FROM user_swmm_inlets_junctions WHERE fid = ?",
+                                         (fid,)).fetchone()
         self.f2d_dock.setUserVisible(True)
         self.f2d_widget.storm_drain_editor.create_SD_discharge_table_and_plots('node', name)
 
@@ -4345,7 +4382,8 @@ class Flo2D(object):
 
     @staticmethod
     def show_help():
-        QDesktopServices.openUrl(QUrl("https://flo-2dsoftware.github.io/FLO-2D-Documentation/Plugin1000/toolbar/index.html"))
+        QDesktopServices.openUrl(
+            QUrl("https://flo-2dsoftware.github.io/FLO-2D-Documentation/Plugin1000/toolbar/index.html"))
 
     def schematize_levees(self):
         """
@@ -4376,7 +4414,7 @@ class Flo2D(object):
             5: "Floodplain Cross-Sections",
             6: "Storm Drains",
             7: "Hydraulic structures",
-            }
+        }
         self.uncheck_all_info_tools()
         converter_dlg = Schema2UserDialog(self.con, self.iface, self.lyrs, self.uc)
         ok = converter_dlg.exec_()
@@ -4396,8 +4434,8 @@ class Flo2D(object):
             msg += components[no] + "\n"
         self.setup_dock_widgets()
         QApplication.restoreOverrideCursor()
-        self.uc.show_info("Converting Schematic Layers to User Layers finished for:\n\n" +  msg)
-                        
+        self.uc.show_info("Converting Schematic Layers to User Layers finished for:\n\n" + msg)
+
         if 6 in methods_numbers:  # Storm Drains:
             self.uc.show_info(
                 "To complete the Storm Drain functionality, select 'Import from .INP' from the 'FLO-2D' toolbar."
@@ -4617,7 +4655,8 @@ class Flo2D(object):
         """
         Function to force all layers added to the user on the top of the layer tree
         """
-        self.iface.layerTreeView().setCurrentIndex(self.iface.layerTreeView().layerTreeModel().node2index(self.project.layerTreeRoot()))
+        self.iface.layerTreeView().setCurrentIndex(
+            self.iface.layerTreeView().layerTreeModel().node2index(self.project.layerTreeRoot()))
 
     def change_external_layer_type(self, layer_ids):
         """
@@ -4627,13 +4666,8 @@ class Flo2D(object):
             layer = QgsProject.instance().mapLayer(layer_id)
             if layer:
                 layer_name = layer.name()
-                external_layers = self.gutils.execute(f"SELECT fid FROM external_layers WHERE name = '{layer_name}' AND type = 'user';").fetchall()
+                external_layers = self.gutils.execute(
+                    f"SELECT fid FROM external_layers WHERE name = '{layer_name}' AND type = 'user';").fetchall()
                 if external_layers:
                     fid = external_layers[0][0]
                     self.gutils.execute(f"DELETE FROM external_layers WHERE fid = '{fid}';")
-
-
-
-
-
-
