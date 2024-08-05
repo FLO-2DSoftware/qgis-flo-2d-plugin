@@ -1446,17 +1446,21 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
         QApplication.setOverrideCursor(Qt.WaitCursor)
         try:
             self.gutils.execute("DELETE FROM outflow_cells;")
-            ins_qry = """INSERT INTO outflow_cells (outflow_fid, grid_fid, geom_type)
-                        SELECT outflow.fid as outflow_fid, g.fid as grid_fid, abc.geom_type
-                        FROM
-                            grid AS g
-                        JOIN
-                            all_user_bc AS abc ON ST_Intersects(CastAutomagic(g.geom), CastAutomagic(abc.geom))
-                        JOIN
-                            outflow ON abc.bc_fid = outflow.bc_fid
-                        WHERE
-                            abc.type = 'outflow';"""
-            inserted = self.gutils.execute(ins_qry)
+
+            for geom_type in ['point', 'line', 'polygon']:
+                ins_qry = f"""INSERT INTO outflow_cells (outflow_fid, grid_fid, geom_type)
+                            SELECT outflow.fid as outflow_fid, g.fid as grid_fid, abc.geom_type
+                            FROM
+                                grid AS g
+                            JOIN
+                                all_user_bc AS abc ON ST_Intersects(CastAutomagic(g.geom), CastAutomagic(abc.geom))
+                            JOIN
+                                outflow ON abc.bc_fid = outflow.bc_fid
+                            WHERE
+                                abc.type = 'outflow' AND
+                                abc.geom_type = '{geom_type}' AND
+                                outflow.geom_type = '{geom_type}';"""
+                inserted = self.gutils.execute(ins_qry)
 
             # outflow_cells = self.gutils.execute("SELECT * FROM outflow_cells ORDER BY fid;").fetchall()
             # # Fix outflow_cells:
