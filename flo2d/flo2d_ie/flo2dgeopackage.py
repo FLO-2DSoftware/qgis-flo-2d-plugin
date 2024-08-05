@@ -5822,7 +5822,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
             swmmflo_sql = """SELECT fid, swmmchar, swmm_jt, swmm_iden, intype, swmm_length, swmm_width, 
                                     swmm_height, swmm_coeff, swmm_feature, curbheight
-                             FROM swmmflo ORDER BY fid;"""
+                             FROM swmmflo ORDER BY swmm_iden;"""
 
             swmmflo_rows = self.execute(swmmflo_sql).fetchall()
             if not swmmflo_rows:
@@ -5884,7 +5884,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
             swmmflo_sql = """SELECT swmmchar, swmm_jt, swmm_iden, intype, swmm_length, swmm_width, 
                                     swmm_height, swmm_coeff, swmm_feature, curbheight
-                             FROM swmmflo ORDER BY fid;"""
+                             FROM swmmflo ORDER BY swmm_iden;"""
             line1 = "{0}  {1} {2} {3} {4} {5} {6} {7} {8} {9}\n"
 
             swmmflo_rows = self.execute(swmmflo_sql).fetchall()
@@ -6232,7 +6232,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
         try:
             if self.is_table_empty("swmmoutf"):
                 return False
-            swmmoutf_sql = """SELECT fid, name, grid_fid, outf_flo FROM swmmoutf ORDER BY fid;"""
+            swmmoutf_sql = """SELECT fid, name, grid_fid, outf_flo FROM swmmoutf ORDER BY name;"""
 
             swmmoutf_rows = self.execute(swmmoutf_sql).fetchall()
             if not swmmoutf_rows:
@@ -6271,7 +6271,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
         try:
             if self.is_table_empty("swmmoutf"):
                 return False
-            swmmoutf_sql = """SELECT name, grid_fid, outf_flo FROM swmmoutf ORDER BY fid;"""
+            swmmoutf_sql = """SELECT name, grid_fid, outf_flo FROM swmmoutf ORDER BY name;"""
 
             line1 = "{0}  {1}  {2}\n"
 
