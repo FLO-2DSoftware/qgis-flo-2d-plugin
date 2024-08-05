@@ -5884,7 +5884,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
             swmmflo_sql = """SELECT swmmchar, swmm_jt, swmm_iden, intype, swmm_length, swmm_width, 
                                     swmm_height, swmm_coeff, swmm_feature, curbheight
-                             FROM swmmflo ORDER BY fid;"""
+                             FROM swmmflo ORDER BY swmm_iden;"""
             line1 = "{0}  {1} {2} {3} {4} {5} {6} {7} {8} {9}\n"
 
             swmmflo_rows = self.execute(swmmflo_sql).fetchall()
