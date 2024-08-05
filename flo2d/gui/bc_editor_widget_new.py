@@ -160,6 +160,11 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
         self.schem_inflow_bc_btn.clicked.connect(self.schematize_inflow_bc)
         self.schem_outflow_bc_btn.clicked.connect(self.schematize_outflow_bc)
 
+        # SIGNALS
+        self.bc_points_lyr.featureAdded.connect(self.feature_added)
+        self.bc_lines_lyr.featureAdded.connect(self.feature_added)
+        self.bc_polygons_lyr.featureAdded.connect(self.feature_added)
+
         self.bc_table.before_paste.connect(self.block_saving)
         self.bc_table.after_paste.connect(self.unblock_saving)
         self.bc_table.after_delete.connect(self.save_bc_data)
@@ -225,6 +230,17 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
 
     def bc_help(self):
         QDesktopServices.openUrl(QUrl("https://flo-2dsoftware.github.io/FLO-2D-Documentation/Plugin1000/widgets/boundary-condition-editor/index.html"))        
+
+    def feature_added(self):
+        """
+        Function to only populate the bcs when editing is finished
+        """
+        self.gutils.fill_empty_inflow_names()
+        self.gutils.fill_empty_outflow_names()
+
+        self.populate_bcs(show_last_edited=True)
+
+        self.repaint_bcs()
 
     def save_changes(self):
         """
