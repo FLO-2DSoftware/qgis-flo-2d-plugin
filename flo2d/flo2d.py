@@ -444,6 +444,11 @@ class Flo2D(object):
                     self.run_flopro,
                 ),
                 (
+                    os.path.join(self.plugin_dir, "img/swmm5.png"),
+                    "Run SWMM 5 GUI ",
+                    self.run_swmm5gui,
+                ),
+                (
                     os.path.join(self.plugin_dir, "img/tailings dam breach.svg"),
                     "Run Tailings Dam Tool ",
                     self.run_tailingsdambreach,
@@ -1482,6 +1487,10 @@ class Flo2D(object):
             self.uc.bar_warn("No FLOPRO.exe found, check your FLO-2D installation folder!")
             self.uc.log_info("No FLOPRO.exe found, check your FLO-2D installation folder!")
 
+    def run_swmm5gui(self):
+        self.uncheck_all_info_tools()
+        self.run_program("Epaswmm5.exe")
+
     def run_tailingsdambreach(self):
         self.uncheck_all_info_tools()
         self.run_program("Tailings Dam Breach.exe")
@@ -1542,6 +1551,10 @@ class Flo2D(object):
         try:
             if os.path.isfile(flo2d_dir + "\\" + exe_name):
                 if exe_name == "Tailings Dam Breach.exe":
+                    program = ProgramExecutor(flo2d_dir, project_dir, exe_name)
+                    program.perform()
+                    self.uc.bar_info(exe_name + " started!", dur=3)
+                elif exe_name == "Epaswmm5.exe":
                     program = ProgramExecutor(flo2d_dir, project_dir, exe_name)
                     program.perform()
                     self.uc.bar_info(exe_name + " started!", dur=3)
