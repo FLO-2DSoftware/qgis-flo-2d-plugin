@@ -18,7 +18,6 @@ try:
 except ImportError:
     pass
 import numpy as np
-import pandas as pd
 from PyQt5.QtCore import QUrl
 from PyQt5.QtGui import QDesktopServices, QColor
 from PyQt5.QtWidgets import QProgressDialog
@@ -1544,12 +1543,12 @@ class GridToolsWidget(qtBaseClass, uiDialog):
             self.plot.plot.setLabel("left", text="")
             self.plot.add_item(f"Depth ({self.system_units[units][0]})", [df['Time'], df['Depth']], col=QColor(Qt.darkBlue), sty=Qt.SolidLine)
             self.plot.add_item(f"Velocity ({self.system_units[units][1]})", [df['Time'], df['Velocity']], col=QColor(Qt.yellow), sty=Qt.SolidLine, hide=True)
-            self.plot.add_item(f"Water Surface Elevation ({self.system_units[units][0]})", [df['Time'], df['Water Surface Elevation']], col=QColor(Qt.darkGreen), sty=Qt.SolidLine, hide=True)
+            self.plot.add_item(f"Water Surface Elevation ({self.system_units[units][0]})", [df['Time'], df['Water_Surface_Elevation']], col=QColor(Qt.darkGreen), sty=Qt.SolidLine, hide=True)
 
         except:
             QApplication.restoreOverrideCursor()
-            self.uc.bar_warn("Error while creating the plots from TIMDEP.OUT!")
-            self.uc.log_info("Error while creating the plots from TIMDEP.OUT!")
+            self.uc.bar_warn("Error while creating the plots!")
+            self.uc.log_info("Error while creating the plots!")
             return
 
         try:  # Build table.
@@ -1567,7 +1566,7 @@ class GridToolsWidget(qtBaseClass, uiDialog):
             data = zip(df['Time'],
                        df['Depth'],
                        df['Velocity'],
-                       df['Water Surface Elevation']
+                       df['Water_Surface_Elevation']
                        )
             for time, depth, velocity, wse in data:
                 time_item = StandardItem("{:.2f}".format(time)) if time is not None else StandardItem("")
@@ -1594,7 +1593,7 @@ class GridToolsWidget(qtBaseClass, uiDialog):
 
     def dataframe_from_hdf5(self, hdf5_file, grid_element):
         """
-        Function to get the data frame from hdf5
+        Function to get the data from hdf5 using numpy arrays.
         """
         file = h5py.File(hdf5_file)
 
@@ -1610,14 +1609,11 @@ class GridToolsWidget(qtBaseClass, uiDialog):
         velocity = np.array(file['/TIMDEP NETCDF OUTPUT RESULTS/Velocity MAG/Values'])
         velocity = velocity[:, grid_element - 1].flatten()
 
-        df = pd.DataFrame({
-            'Time': time_series,
-            'Depth': flow_depth,
-            'Velocity': velocity,
-            'Water Surface Elevation': wse
-        })
+        # Combine arrays into a structured numpy array
+        data = np.core.records.fromarrays([time_series, flow_depth, velocity, wse],
+                                          names='Time, Depth, Velocity, Water_Surface_Elevation')
 
-        return df
+        return data
 
     def dataframe_from_out(self, out_file, grid_element):
         """
@@ -1645,14 +1641,17 @@ class GridToolsWidget(qtBaseClass, uiDialog):
                             data.append(
                                 [current_time, depth, velocity, water_surface_elevation])
 
-        df = pd.DataFrame(data,
-                          columns=['Time', 'Depth', 'Velocity', 'Water Surface Elevation'])
+        data = np.array(data)
 
-        return df
+        # Combine arrays into a structured numpy array
+        data = np.core.records.fromarrays([data[:, 0], data[:, 1], data[:, 2], data[:, 3]],
+                                                     names='Time, Depth, Velocity, Water_Surface_Elevation')
+
+        return data
 
     def dataframe_from_mesh(self, mesh_layer, grid_element):
         """
-        Function to get the data frame from mesh layer
+        Function to get the data from mesh layer using numpy arrays.
         """
         grid = self.lyrs.data["grid"]["qlyr"]
         feature = next(grid.getFeatures(QgsFeatureRequest(grid_element)))
@@ -1664,36 +1663,65 @@ class GridToolsWidget(qtBaseClass, uiDialog):
         velocity = []
         wse = []
 
-        for i in range(mesh_layer.dataProvider().datasetCount(1)):
+        # HDF5 Present
+        if mesh_layer.dataProvider().datasetGroupCount() == 5:
+            for i in range(mesh_layer.dataProvider().datasetCount(1)):
+                # TIME SERIES
+                meta = mesh_layer.dataProvider().datasetMetadata(QgsMeshDatasetIndex(1, i))
+                t = meta.time()
+                time_series.append(t)
 
-            # TIME SERIES
-            meta = mesh_layer.dataProvider().datasetMetadata(QgsMeshDatasetIndex(1, i))
-            t = meta.time()
-            time_series.append(t)
+                # FLOW DEPTH
+                dataset = QgsMeshDatasetIndex(1, i)
+                value = mesh_layer.datasetValue(dataset, point, 0).scalar()
+                value = 0 if math.isnan(value) else value
+                flow_depth.append(value)
 
-            # FLOW DEPTH
-            dataset = QgsMeshDatasetIndex(1, i)
-            value = mesh_layer.datasetValue(dataset, point, 0).scalar()
-            value = 0 if math.isnan(value) else value
-            flow_depth.append(value)
+                # VELOCITY
+                dataset = QgsMeshDatasetIndex(4, i)
+                value = mesh_layer.datasetValue(dataset, point, 0).scalar()
+                value = 0 if math.isnan(value) else value
+                velocity.append(value)
 
-            # VELOCITY
-            dataset = QgsMeshDatasetIndex(4, i)
-            value = mesh_layer.datasetValue(dataset, point, 0).scalar()
-            value = 0 if math.isnan(value) else value
-            velocity.append(value)
+                # WSE
+                dataset = QgsMeshDatasetIndex(2, i)
+                value = mesh_layer.datasetValue(dataset, point, 0).scalar()
+                value = 0 if math.isnan(value) else value
+                wse.append(value)
 
-            # WSE
-            dataset = QgsMeshDatasetIndex(2, i)
-            value = mesh_layer.datasetValue(dataset, point, 0).scalar()
-            value = 0 if math.isnan(value) else value
-            wse.append(value)
+        # Only OUT
+        if mesh_layer.dataProvider().datasetGroupCount() == 6:
+            for i in range(mesh_layer.dataProvider().datasetCount(1)):
+                # TIME SERIES
+                meta = mesh_layer.dataProvider().datasetMetadata(QgsMeshDatasetIndex(1, i))
+                t = meta.time()
+                time_series.append(t)
 
-        df = pd.DataFrame({
-            'Time': time_series,
-            'Depth': flow_depth,
-            'Velocity': velocity,
-            'Water Surface Elevation': wse
-        })
+                # FLOW DEPTH
+                dataset = QgsMeshDatasetIndex(1, i)
+                value = mesh_layer.datasetValue(dataset, point, 0).scalar()
+                value = 0 if math.isnan(value) else value
+                flow_depth.append(value)
 
-        return df
+                # VELOCITY
+                dataset = QgsMeshDatasetIndex(2, i)
+                value = mesh_layer.datasetValue(dataset, point, 0).scalar()
+                value = 0 if math.isnan(value) else value
+                velocity.append(value)
+
+                # WSE
+                dataset = QgsMeshDatasetIndex(3, i)
+                value = mesh_layer.datasetValue(dataset, point, 0).scalar()
+                value = 0 if math.isnan(value) else value
+                wse.append(value)
+
+        # Convert lists to numpy arrays
+        time_series = np.array(time_series)
+        flow_depth = np.array(flow_depth)
+        velocity = np.array(velocity)
+        wse = np.array(wse)
+
+        data = np.core.records.fromarrays([time_series, flow_depth, velocity, wse],
+                                          names='Time, Depth, Velocity, Water_Surface_Elevation')
+
+        return data
