@@ -1631,6 +1631,8 @@ class Flo2D(object):
         If QGIS project has a gpkg path saved ask user if it should be loaded.
         """
         old_gpkg = self.read_proj_entry("gpkg")
+        if not old_gpkg:
+            return
         if '%20' in old_gpkg:
             old_gpkg = old_gpkg.replace('%20', ' ')
         new_gpkg = self.new_gpkg
@@ -4665,6 +4667,9 @@ class Flo2D(object):
         """
         Function to update the layer type on the external_layers table
         """
+        gpkg = self.read_proj_entry("gpkg")
+        if not gpkg:
+            return
         for layer_id in layer_ids:
             layer = QgsProject.instance().mapLayer(layer_id)
             if layer:
