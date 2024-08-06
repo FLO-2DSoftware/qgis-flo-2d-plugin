@@ -1003,7 +1003,9 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
                         outflow_elev_threshold = 0.01
 
                     if float(upstream_xc_min_elev) - float(xc_min_elev) < outflow_elev_threshold:
-                        error_outflow_bc_grid.append(bc_grid)
+                        schem_grid = self.gutils.execute(
+                            f"SELECT elem_fid FROM chan_n WHERE fid = '{xc}'").fetchone()
+                        error_outflow_bc_grid.append(schem_grid[0])
 
                 i += 1
                 pd.setValue(i)
