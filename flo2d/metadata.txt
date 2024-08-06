@@ -12,6 +12,7 @@ changelog=
  <p>1.0.1
  - General
 	Added SWMM 5 GUI to the toolbar
+	Quick run cancel fix
  - Boundary Condition Editor
 	Bug fixes
  - Channel Editor
