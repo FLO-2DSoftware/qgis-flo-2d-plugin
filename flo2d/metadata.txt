@@ -9,6 +9,23 @@ email=contact@flo-2d.com
 about=The FLO-2D Plugin for QGIS is a tool to develop, format, analyze, and display data used by the FLO-2D Flood Model. The Plugin can import project data, generate data and ex-port appropriately formatted FLO-2D data input files for a FLO-2D Project. The FLO-2D-Plugin reference manual, installed on your computer with the software, describes the assumptions, functions, and processes applied in the QGIS Plugin. A companion manual, the FLO-2D QGIS Plugin User’s Manual, describes the workflow, outlines the data structure and presents tutorials for the Plugin. It does not address the functionality and use of the FLO-2D model which has a separate set of reference manuals.
 
 changelog=
+ <p>1.0.1
+ - General
+	Added SWMM 5 GUI to the toolbar
+ - Boundary Condition Editor
+	Bug fixes
+ - Channel Editor
+	Improvements on results plots
+	Added the adverse slope check
+	Bug fixes
+ - Structures Editor
+	Optimized the schematization of Structures
+ - Rain Editor
+	Created the new RAINCELL.DAT format
+ - Storm Drain Editor
+	SWMM.INP and FLO-2D Storm Drain DAT files in alphabetical order
+ - Results Tool
+	Changed pandas library to numpy
  <p>1.0.0
  - General
         Modified the FLO-2D toolbar
