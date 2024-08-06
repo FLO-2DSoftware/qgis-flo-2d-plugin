@@ -1434,6 +1434,9 @@ class Flo2D(object):
 
                     QApplication.restoreOverrideCursor()
 
+            else:
+                return
+
             flopro_dir = s.value("FLO-2D/last_flopro")
             flo2d_v = "FLOPRO not found"
             program = None
