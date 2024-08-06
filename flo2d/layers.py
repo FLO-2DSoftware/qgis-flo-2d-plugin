@@ -2552,7 +2552,7 @@ class Layers(object):
         If the layer is in edit mode, ask users for saving changes and proceeding.
         """
         try:
-            l = self.get_layer_by_name(layer_name, group=self.group).layer()
+            l = self.get_layer_by_name(layer_name, group=None).layer()
             if l.isEditable():
                 # ask user for saving changes
                 q = "{} layer is in edit mode. Save changes and proceed?".format(layer_name)
