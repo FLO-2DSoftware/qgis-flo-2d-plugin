@@ -4663,6 +4663,7 @@ class Flo2D(object):
             layer_source = layer.source()
             try:
                 gpkg_path = self.gutils.get_gpkg_path()
+                layer_source = layer_source.replace('/', '\\')
                 if layer_name in self.lyrs.layer_names and gpkg_path not in layer_source:
                     renamed_layer = layer_name + '_ext'
                     layer.setName(renamed_layer)
