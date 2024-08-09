@@ -3421,7 +3421,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                                 0 if row[4] is None else row[4],
                                 0 if row[5] is None else row[5],
                                 "NO" if row[6] is None else row[6],
-                                "0" if row[7] is None else row[7],
+                                "0" if row[7] is None else int(round(row[7], 0)),
                                 0 if row[8] is None else row[8],
                             )
                             if row[1] == "?" or row[2] == "?":
