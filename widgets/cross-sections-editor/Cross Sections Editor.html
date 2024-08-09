@@ -1,0 +1,911 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Cross Sections Editor &#8212; FLO-2D-User-Manual  documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../_static/styles/theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="../../_static/styles/bootstrap.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="../../_static/styles/pydata-sphinx-theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+
+  
+  <link href="../../_static/vendor/fontawesome/6.5.2/css/all.min.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.5.2/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.5.2/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.5.2/webfonts/fa-regular-400.woff2" />
+
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=a746c00c" />
+    <link rel="stylesheet" type="text/css" href="../../_static/styles/sphinx-book-theme.css?v=a3416100" />
+    <link rel="stylesheet" type="text/css" href="../../_static/static/style.css?v=e5e3935e" />
+  
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b" />
+<link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
+  <script src="../../_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
+
+    <script src="../../_static/documentation_options.js?v=9eb32ce0"></script>
+    <script src="../../_static/doctools.js?v=9a2dae69"></script>
+    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'widgets/cross-sections-editor/Cross Sections Editor';</script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Boundary Condition Editor" href="../boundary-condition-editor/Boundary%20Condition%20Editor.html" />
+    <link rel="prev" title="Profile Tool" href="../profile-tool/Profile%20Tool.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-primary-sidebar-checkbox"/>
+  <label class="overlay overlay-primary" for="pst-primary-sidebar-checkbox"></label>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-secondary-sidebar-checkbox"/>
+  <label class="overlay overlay-secondary" for="pst-secondary-sidebar-checkbox"></label>
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
+<form class="bd-search d-flex align-items-center"
+      action="../../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         id="search-input"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form></div>
+  </div>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <div class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../../index.html">
+  
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="../../_static/Flo2D_logo.jpg" class="logo__image only-light" alt="FLO-2D-User-Manual  documentation - Home"/>
+    <script>document.write(`<img src="../../_static/Flo2D_logo.jpg" class="logo__image only-dark" alt="FLO-2D-User-Manual  documentation - Home"/>`);</script>
+  
+  
+</a></div>
+        <div class="sidebar-primary-item">
+
+ <script>
+ document.write(`
+   <button class="btn search-button-field search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+    <span class="search-button__default-text">Search</span>
+    <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+   </button>
+ `);
+ </script></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        <p aria-level="2" class="caption" role="heading"><span class="caption-text">Setup</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../installation-instructions/Installation.html">Installation Instructions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../installation-instructions/QGIS%20General%20Tools.html">QGIS Tools</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Plugin Features</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../plugin-features/Data%20Storage.html">Data Storage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../plugin-features/Plugin%20Features.html">Plugin Features</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../plugin-features/View%20Options.html">View Options</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Toolbar QGIS and FLO-2D</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../toolbar/FLO-2D%20Toolbar.html">FLO-2D Toolbar</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../toolbar/FLO-2D%20Settings.html">FLO-2D Plugin Settings</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../toolbar/Run%20FLO-2D.html">Run FLO-2D</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../toolbar/Import%20Geo%20Package.html">Import a Geo Package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../toolbar/Import%20Data%20Files.html">Import FLO-2D Data Files</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../toolbar/Import%20Selected%20Component%20Files.html">Import Selected Component Files</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../toolbar/Export%20Project.html">Export Project</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../toolbar/Import%20RAS%20Channel.html">Import HEC-RAS Channel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../toolbar/Control%20Variables.html">Control Variables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../toolbar/Schematic%20to%20User%20Converter.html">Schematic to User Converter</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../toolbar/User%20to%20Schematic%20Converter.html">User to Schematic Converter</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../toolbar/Channel%20Profile.html">Channel Profile Tool</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../toolbar/FLO-2D%20Info%20Tool.html">FLO-2D Info Tool</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../toolbar/Grid%20Info%20Tool.html">Grid Info Tool</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../toolbar/Levee%20Tool.html">Levee Elevation Tool</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../toolbar/Levee%20Tool%20Walls.html">Levee Tool Walls</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../toolbar/Hazus%20Tool.html">Hazus Tool</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../toolbar/Tailings%20Dam%20Tool.html">Tailings Dam Tool</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../toolbar/Mud%20and%20Sediment%20Transport%20Tool.html">Mud and Sediment Transport Tool</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../toolbar/Debug%20Tool.html">Debug Tool</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../toolbar/Help.html">Help</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Widgets</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../pre-processing-tools/Pre-Processing%20Tools.html">Pre-Processing Tools</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Widgets (Grid Tools)</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../grid-tools/Create%20a%20Grid.html">Create a Grid</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../grid-tools/Sample%20Elevation%20from%20Raster.html">Sample Elevation from Raster</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../grid-tools/Sample%20Elevation%20GDAL%20Grid%20Method.html">Sample Elevation GDAL Grid Method</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../grid-tools/Sample%20Elevation%20from%20Points%20and%20LiDAR.html">Sample Elevation from Points and LiDAR</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../grid-tools/Elevation%20Correction%20Tool.html">Elevation Correction Tool</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../grid-tools/Sample%20Roughness.html">Sample Roughness</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../grid-tools/Area%20and%20Width%20Reduction.html">Area and Width Reduction – Buildings</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../grid-tools/Spatial%20TOL.html">Spatial TOL</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../grid-tools/Spatial%20Limiting%20Froude.html">Spatial Limiting Froude</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../grid-tools/Spatial%20Shallow%20n.html">Spatial Shallow n</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../grid-tools/Gutters.html">Gutters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../grid-tools/No%20Exchange%20Channel.html">No Exchange Channel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../grid-tools/Hazus%20Layers.html">Assign Results from Points Layer</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Widgets</span></p>
+<ul class="current nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../profile-tool/Profile%20Tool.html">Profile Tool</a></li>
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">Cross Sections Editor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../boundary-condition-editor/Boundary%20Condition%20Editor.html">Boundary Condition Editor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../initial-condition-editor/Initial%20Condition%20Editor.html">Initial Condition Editor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../rain-editor/Rain%20Editor.html">Rain Editor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../schematized-channel-editor/Schematized%20Channel%20Editor.html">Schematized Channel Editor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../hydraulic-structure-editor/Hydraulic%20Structure%20Editor.html">Hydraulic Structure Editor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../street-editor/Street%20Editor.html">Street Editor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../floodplain-cross-section-editor/Floodplain%20Cross%20Section%20Editor.html">Floodplain Cross Section Editor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../infiltration-editor/Infiltration%20Editor.html">Infiltration Editor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../storm-drain-editor/Storm%20Drain.html">Storm Drain Editor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../levees-breach-editor/Levees%20Breach%20Editor.html">Levees Breach Editor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../multiple-channels-editor/Multiple%20Channel%20Editor.html">Multiple Channels Editor</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Post Development Grid Modification</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../post-development-grid-modification/Post%20Development%20Grid%20Modification.html">Post Development Grid Modification</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">References</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../References.html">References</a></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+  </div>
+  
+  <div id="rtd-footer-container"></div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><button class="sidebar-toggle primary-toggle btn btn-sm" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</button></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+
+
+
+<div class="dropdown dropdown-download-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Download this page">
+    <i class="fas fa-download"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="../../_sources/widgets/cross-sections-editor/Cross Sections Editor.rst" target="_blank"
+   class="btn btn-sm btn-download-source-button dropdown-item"
+   title="Download source file"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file"></i>
+  </span>
+<span class="btn__text-container">.rst</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li>
+<button onclick="window.print()"
+  class="btn btn-sm btn-download-pdf-button dropdown-item"
+  title="Print to PDF"
+  data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file-pdf"></i>
+  </span>
+<span class="btn__text-container">.pdf</span>
+</button>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="theme-switch fa-solid fa-sun fa-lg" data-mode="light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg" data-mode="dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"></i>
+  </button>
+`);
+</script>
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm pst-navbar-icon search-button search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+  </button>
+`);
+</script>
+<button class="sidebar-toggle secondary-toggle btn btn-sm" title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="fa-solid fa-list"></span>
+</button>
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1>Cross Sections Editor</h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+            <div>
+                <h2> Contents </h2>
+            </div>
+            <nav aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#channels">Channels</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#identify-the-channel">Identify the Channel</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#left-bank">Left Bank</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#right-bank">Right Bank</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#natural-cross-sections">Natural Cross Sections</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#cross-section-bank-and-station-elevation-tool">Cross Section Bank and Station Elevation Tool</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#schematize-channel">Schematize Channel</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#interpolate-natural-channel">Interpolate Natural Channel</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#prismatic-cross-sections">Prismatic Cross Sections</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#rectangular-cross-sections">Rectangular Cross Sections</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#trapezoidal-cross-sections">Trapezoidal Cross Sections</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#schematize-rectangular-and-trapezoidal-channel-segment">Schematize Rectangular and Trapezoidal Channel Segment</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#sample-bank-data">Sample Bank Data</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#method-1-elevation-from-grid">Method 1: Elevation from Grid</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#method-2-elevation-from-raster">Method 2: Elevation from Raster</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#interpolate-prismatic-channel-data">Interpolate Prismatic Channel Data</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#channel-n-value-interpolator">Channel N-value Interpolator</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#alternate-bank-and-channel-profile-tool">Alternate Bank and Channel Profile Tool</a></li>
+</ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section id="cross-sections-editor">
+<h1>Cross Sections Editor<a class="headerlink" href="#cross-sections-editor" title="Link to this heading">#</a></h1>
+<p>This section will cover many of the tools available to develop channels for FLO-2D.
+This is not a step-by-step procedure.
+It is a compilation and detailed outline of the tools available and how to use them.
+For step-by-step instructions, see the workshop lessons.</p>
+<section id="channels">
+<h2>Channels<a class="headerlink" href="#channels" title="Link to this heading">#</a></h2>
+</section>
+<section id="identify-the-channel">
+<h2>Identify the Channel<a class="headerlink" href="#identify-the-channel" title="Link to this heading">#</a></h2>
+<p>The elevation raster style can be edited so that the channel is well defined.
+Adjust the min / max view setting to enhance the channel depth.</p>
+<img alt="../../_images/User002.png" src="../../_images/User002.png" />
+</section>
+<section id="left-bank">
+<h2>Left Bank<a class="headerlink" href="#left-bank" title="Link to this heading">#</a></h2>
+<ol class="arabic simple">
+<li><p>Select the
+Left Bank Line layer.</p></li>
+<li><p>Click on both the start
+editing button and the add feature button.</p></li>
+<li><p>Create a polyline to
+represent the left bank looking downstream and click to save the layer.</p></li>
+<li><p>It is important to
+create the segments from order upstream to downstream.</p></li>
+<li><p>Tributaries or
+split channels should be created once the main channels are complete.</p></li>
+</ol>
+<img alt="../../_images/User003.png" src="../../_images/User003.png" />
+<img alt="../../_images/User004.png" src="../../_images/User004.png" />
+<ol class="arabic simple" start="6">
+<li><p>Repeat the process
+for the all the various channel segments and save.</p></li>
+</ol>
+<img alt="../../_images/User005.png" src="../../_images/User005.png" />
+</section>
+<section id="right-bank">
+<h2>Right Bank<a class="headerlink" href="#right-bank" title="Link to this heading">#</a></h2>
+<ol class="arabic simple">
+<li><p>Select the
+Right Bank Line layer.</p></li>
+<li><p>Click on both the start
+editing button and the add feature button.</p></li>
+<li><p>Create a polyline to
+represent the right bank looking downstream and click to save the layer.</p></li>
+<li><p>It is important to
+create the segments from order upstream to downstream.</p></li>
+<li><p>Tributaries or split
+channels should be created once the main channels are complete.</p></li>
+</ol>
+<img alt="../../_images/User003.png" src="../../_images/User003.png" />
+<img alt="../../_images/User006.png" src="../../_images/User006.png" />
+<ol class="arabic simple" start="6">
+<li><p>Repeat the process for
+the all the various channel segments and save.</p></li>
+</ol>
+<img alt="../../_images/User007.png" src="../../_images/User007.png" />
+</section>
+<section id="natural-cross-sections">
+<h2>Natural Cross Sections<a class="headerlink" href="#natural-cross-sections" title="Link to this heading">#</a></h2>
+<p>To create natural cross sections, the cross sections should be numbered consecutively from upstream to downstream for each channel segment.</p>
+<ol class="arabic simple">
+<li><p>Click the Add Cross
+sections lines button.</p></li>
+<li><p>Digitize the cross
+section on the map.</p></li>
+<li><p>Name the cross section and
+click OK to finish the feature.</p></li>
+<li><p>Click save to complete
+the process and load the data into the widget.</p></li>
+</ol>
+<img alt="../../_images/User008.png" src="../../_images/User008.png" />
+<img alt="../../_images/User009.png" src="../../_images/User009.png" />
+<p>The cross sections shown in the following image have been digitized.</p>
+<p><strong>Important Notes:</strong></p>
+<ul class="simple">
+<li><p><strong>Draw polylines from left bank to right bank looking downstream.</strong></p></li>
+<li><p><strong>The first cross section must cross the left and right bank and be inside the same grid elements.</strong></p></li>
+<li><p><strong>The subsequent cross sections can cross the left and right bank and be wider than the channel.</strong></p></li>
+<li><p><strong>Place-holder data is added to the cross section station elevation data.
+It is replaced after all cross sections are ready.</strong></p></li>
+</ul>
+<p>The finished product will look something like the following image.</p>
+<img alt="../../_images/User010.png" src="../../_images/User010.png" />
+</section>
+<section id="cross-section-bank-and-station-elevation-tool">
+<h2>Cross Section Bank and Station Elevation Tool<a class="headerlink" href="#cross-section-bank-and-station-elevation-tool" title="Link to this heading">#</a></h2>
+<p>The preferred and easiest way to sample elevation data for a cross section is by using the FLO-2D Sample Elevation tool.
+Once the cross sections are digitized onto the map, the Sample Elevation tools are used to sample elevation data from a raster into Stations/Elevation
+data sets for all or individual cross sections.</p>
+<p>This section will focus on N type or natural channel geometry.</p>
+<ol class="arabic simple">
+<li><p>Set the elevation raster as
+the Source Raster Layer and use either button to sample one or all cross sections.</p></li>
+</ol>
+<img alt="../../_images/User011.png" src="../../_images/User011.png" />
+<ol class="arabic simple" start="2">
+<li><p>The station elevation data is
+limited to the point where the left and right bank intersect the cross section.</p></li>
+<li><p>If too much or too little data
+has been sampled, adjust the left or right bank alignment and sample the elevation again.</p></li>
+</ol>
+<img alt="../../_images/User012.png" src="../../_images/User012.png" />
+</section>
+<section id="schematize-channel">
+<h2>Schematize Channel<a class="headerlink" href="#schematize-channel" title="Link to this heading">#</a></h2>
+<ol class="arabic simple">
+<li><p>Once the banks and cross sections are complete, the next step is to Schematize the channels.
+Click the Schematize left banks and cross sections.</p></li>
+</ol>
+<img alt="../../_images/User013.png" src="../../_images/User013.png" />
+<ol class="arabic simple" start="2">
+<li><p>Errors and warning will appear if
+something is not configured correctly.</p></li>
+</ol>
+<img alt="../../_images/User014.png" src="../../_images/User014.png" />
+<ol class="arabic simple" start="3">
+<li><p>At the beginning of each segment,
+the left bank node, right bank node must be in the same cell as the end nodes on the cross sections.</p></li>
+</ol>
+<img alt="../../_images/User015.png" src="../../_images/User015.png" />
+<ol class="arabic simple" start="4">
+<li><p>If the cross section does
+not touch the left or right bank, the following message will appear.</p></li>
+</ol>
+<img alt="../../_images/User016.png" src="../../_images/User016.png" />
+<ol class="arabic simple" start="5">
+<li><p>Correct this condition by
+making sure each cross section crosses both banks.</p></li>
+</ol>
+<img alt="../../_images/User017.png" src="../../_images/User017.png" />
+<ol class="arabic simple" start="6">
+<li><p>If the channel
+schematize process was successful, the following message will appear.</p></li>
+<li><p>Click close to load
+the channel info for the schematized layer.</p></li>
+</ol>
+<img alt="../../_images/User018.png" src="../../_images/User018.png" />
+<p>The schematized layers now have complete left bank, right bank, and cross section data.
+Adjust cross section and left bank alignment now.
+It is easier apply changes before interpolating the cross section data.</p>
+<img alt="../../_images/User019.png" src="../../_images/User019.png" />
+</section>
+<section id="interpolate-natural-channel">
+<h2>Interpolate Natural Channel<a class="headerlink" href="#interpolate-natural-channel" title="Link to this heading">#</a></h2>
+<ol class="arabic simple">
+<li><p>Inspect the cross section n-value field to ensure all n-values are present.
+If missing, fill the required n-value to the field.</p></li>
+</ol>
+<img alt="../../_images/User020.png" src="../../_images/User020.png" />
+<ol class="arabic simple" start="2">
+<li><p>To interpolate the
+channel segments, export the channel data and run the interpolator.</p></li>
+</ol>
+<img alt="../../_images/User021.png" src="../../_images/User021.png" />
+<ol class="arabic simple" start="3">
+<li><p>Select the folder
+where the *.DAT files will be saved.</p></li>
+</ol>
+<img alt="../../_images/User022.png" src="../../_images/User022.png" />
+<ol class="arabic simple" start="4">
+<li><p>Once the data files
+are written, click ok to close the following dialog box.</p></li>
+</ol>
+<img alt="../../_images/User023.png" src="../../_images/User023.png" />
+<ol class="arabic simple" start="5">
+<li><p>Select the FLO-2D
+Pro Folder and click Interpolate.</p></li>
+</ol>
+<img alt="../../_images/User024.png" src="../../_images/User024.png" />
+<ol class="arabic simple" start="6">
+<li><p>If the interpolation is performed correctly, the following message will appear.
+Get the new data into the GeoPackage by clicking Import CHAN.DAT, AND XSEC.DAT.</p></li>
+</ol>
+<img alt="../../_images/User025.png" src="../../_images/User025.png" />
+<ol class="arabic simple" start="7">
+<li><p>Click OK to
+close the message.</p></li>
+</ol>
+<img alt="../../_images/User026.png" src="../../_images/User026.png" />
+</section>
+<section id="prismatic-cross-sections">
+<h2>Prismatic Cross Sections<a class="headerlink" href="#prismatic-cross-sections" title="Link to this heading">#</a></h2>
+<p>Prismatic channel data can be entered and interpolated using the cross section editor.
+Use this option for creating Rectangular and Trapezoidal channel segments.
+This example will use two segments of channel data.
+One for a rectangular channel and one for a trapezoidal channel.</p>
+</section>
+<section id="rectangular-cross-sections">
+<h2>Rectangular Cross Sections<a class="headerlink" href="#rectangular-cross-sections" title="Link to this heading">#</a></h2>
+<ol class="arabic simple">
+<li><p>Set up the Editor Widget.
+Type = Rectangular base n = 0.020</p></li>
+</ol>
+<img alt="../../_images/User027.png" src="../../_images/User027.png" />
+<ol class="arabic simple" start="2">
+<li><p>Click the create
+cross section button.</p></li>
+</ol>
+<img alt="../../_images/User028.png" src="../../_images/User028.png" />
+<ol class="arabic simple" start="3">
+<li><p>Draw the first cross section and enter the Feature Attributes.
+See Sample bank data to</p></li>
+</ol>
+<img alt="../../_images/User029.png" src="../../_images/User029.png" />
+<ol class="arabic simple" start="4">
+<li><p>Click Save to load
+the cross section into the Table Editor.</p></li>
+</ol>
+<img alt="../../_images/User030.png" src="../../_images/User030.png" />
+<ol class="arabic simple" start="5">
+<li><p>Edit the cross section left and right bank elevation and geometry in the table.
+Repeat the process for each cross section.
+See <a class="reference external" href="#sample-bank-data">Sample bank data</a> to learn how to fill this data automatically.</p></li>
+</ol>
+<img alt="../../_images/User031.png" src="../../_images/User031.png" />
+</section>
+<section id="trapezoidal-cross-sections">
+<h2>Trapezoidal Cross Sections<a class="headerlink" href="#trapezoidal-cross-sections" title="Link to this heading">#</a></h2>
+<ol class="arabic simple">
+<li><p>Set up the Editor Widget.
+Type = Trapezoidal base n = 0.020</p></li>
+</ol>
+<img alt="../../_images/User032.png" src="../../_images/User032.png" />
+<ol class="arabic simple" start="2">
+<li><p>Click the create
+cross section button.</p></li>
+</ol>
+<img alt="../../_images/User028.png" src="../../_images/User028.png" />
+<ol class="arabic simple" start="3">
+<li><p>Draw the first cross section
+and enter the Feature Attributes.</p></li>
+</ol>
+<img alt="../../_images/User029.png" src="../../_images/User029.png" />
+<ol class="arabic simple" start="4">
+<li><p>Click Save to load the
+cross section into the Table Editor.</p></li>
+</ol>
+<img alt="../../_images/User030.png" src="../../_images/User030.png" />
+<ol class="arabic simple" start="6">
+<li><p>Edit the cross section left and right bank elevation and geometry in the table.
+Repeat the process for each cross section.
+See <a class="reference external" href="#sample-bank-data">Sample bank data</a> to learn how to fill this data automatically.</p></li>
+</ol>
+<img alt="../../_images/User033.png" src="../../_images/User033.png" />
+<img alt="../../_images/User034.png" src="../../_images/User034.png" />
+</section>
+<section id="schematize-rectangular-and-trapezoidal-channel-segment">
+<h2>Schematize Rectangular and Trapezoidal Channel Segment<a class="headerlink" href="#schematize-rectangular-and-trapezoidal-channel-segment" title="Link to this heading">#</a></h2>
+<ol class="arabic simple">
+<li><p>In this example, ten Rectangular,
+ten Trapezoidal and 10 natural cross sections are digitized.</p></li>
+</ol>
+<img alt="../../_images/User055.png" src="../../_images/User055.png" />
+<img alt="../../_images/User056.png" src="../../_images/User056.png" />
+<ol class="arabic simple" start="2">
+<li><p>Click the Schematize button.</p></li>
+</ol>
+<img alt="../../_images/User035.png" src="../../_images/User035.png" />
+<ol class="arabic simple" start="3">
+<li><p>If the following message
+appears, the schematization worked properly.</p></li>
+<li><p>This dialog box
+shows the number of original cross sections and the number of schematized cross sections.</p></li>
+</ol>
+<img alt="../../_images/User036.png" src="../../_images/User036.png" />
+</section>
+<section id="sample-bank-data">
+<h2>Sample Bank Data<a class="headerlink" href="#sample-bank-data" title="Link to this heading">#</a></h2>
+<p>There are many ways to edit the bank data for R and T type channels.
+This section will show two different ways to create and correct bank elevation data.</p>
+<img alt="../../_images/User037.png" src="../../_images/User037.png" />
+<p>The bank elevation data can be sampled in two methods.</p>
+</section>
+<section id="method-1-elevation-from-grid">
+<h2>Method 1: Elevation from Grid<a class="headerlink" href="#method-1-elevation-from-grid" title="Link to this heading">#</a></h2>
+<p>The first method is from the Grid layer and the second is from the elevation Raster.</p>
+<ol class="arabic simple">
+<li><p>Click the From Grid
+radio button and select Individual or all cross sections to sample.</p></li>
+</ol>
+<img alt="../../_images/User038.png" src="../../_images/User038.png" />
+<p>The bank data is the reference point to determine the bed elevation of the channel so it can influence the profile.
+For example, if one uses the grid element elevation to set the bank elevation, the channel profile is wrong.
+The Grid method should only be used if a good raster is not available.</p>
+<ol class="arabic simple" start="2">
+<li><p>Click the channel profile tool
+and the left bank to check the profile of the channel.</p></li>
+</ol>
+<img alt="../../_images/User039.png" src="../../_images/User039.png" />
+<img alt="../../_images/User040.png" src="../../_images/User040.png" />
+<p>This is not the preferred method since a grid elevation for a grid is always somewhere in between the bank of the channel and the internal channel
+data.</p>
+<img alt="../../_images/User041.png" src="../../_images/User041.png" />
+</section>
+<section id="method-2-elevation-from-raster">
+<h2>Method 2: Elevation from Raster<a class="headerlink" href="#method-2-elevation-from-raster" title="Link to this heading">#</a></h2>
+<p>This method is used if an elevation raster can be used to define the bank elevation.</p>
+<ol class="arabic simple">
+<li><p>Click the From Raster radio
+button and select Individual or all cross sections to sample.</p></li>
+</ol>
+<img alt="../../_images/User042.png" src="../../_images/User042.png" />
+<img alt="../../_images/User043.png" src="../../_images/User043.png" />
+</section>
+<section id="interpolate-prismatic-channel-data">
+<h2>Interpolate Prismatic Channel Data<a class="headerlink" href="#interpolate-prismatic-channel-data" title="Link to this heading">#</a></h2>
+<ol class="arabic simple">
+<li><p>Finish the cross sections and
+layer organization of the trapezoidal and or rectangular channels.</p></li>
+<li><p>Click the Interpolate button
+to interpolate the left and right bank of the rectangular channel.</p></li>
+</ol>
+<img alt="../../_images/User044.png" src="../../_images/User044.png" />
+<ol class="arabic simple" start="3">
+<li><p>If the process finished correctly, the following box will appear.
+Click OK to close the box.</p></li>
+</ol>
+<img alt="../../_images/User045.png" src="../../_images/User045.png" />
+<ol class="arabic simple" start="4">
+<li><p>Click the channel profile tool
+and the left bank to check the profile of the channel.</p></li>
+</ol>
+<img alt="../../_images/User039.png" src="../../_images/User039.png" />
+<img alt="../../_images/User046.png" src="../../_images/User046.png" />
+</section>
+<section id="channel-n-value-interpolator">
+<h2>Channel N-value Interpolator<a class="headerlink" href="#channel-n-value-interpolator" title="Link to this heading">#</a></h2>
+<ol class="arabic simple">
+<li><p>The channel n-Value interpolator
+tool is used to define the n-value of a channel cross section based on the cross section geometry.</p></li>
+</ol>
+<img alt="../../_images/User047.png" src="../../_images/User047.png" />
+<ol class="arabic simple" start="2">
+<li><p>The button calls the tool externally.</p></li>
+</ol>
+<img alt="../../_images/User048.png" src="../../_images/User048.png" />
+<p>The tool assigns an n-value for the chan.dat file based on the picture below.
+The user can choose the n-values for a minimum or maximum cross section area.</p>
+<img alt="../../_images/User049.png" src="../../_images/User049.png" />
+<img alt="../../_images/User050.png" src="../../_images/User050.png" />
+<img alt="../../_images/User051.png" src="../../_images/User051.png" />
+</section>
+<section id="alternate-bank-and-channel-profile-tool">
+<h2>Alternate Bank and Channel Profile Tool<a class="headerlink" href="#alternate-bank-and-channel-profile-tool" title="Link to this heading">#</a></h2>
+<p>A secondary method can be used to create the cross section data.
+This example will sample the map for station-elevation data using a Plugin called Profile Tool.
+This tool is not the preferred method but it has some handy features that make it useful.</p>
+<ol class="arabic simple">
+<li><p>Find and install
+the Plugin Profile Tool.</p></li>
+<li><p>Select the first cross section in the Cross Section Editor widget.
+This activates the cross section table and plot.</p></li>
+<li><p>Click the Profile
+button to open the Profile Tool Plugin,</p></li>
+<li><p>Click the add
+layer button and select the Elevation Raster layer.</p></li>
+<li><p>Draw a simple
+line over cross section 1.</p></li>
+</ol>
+<img alt="../../_images/User052.png" src="../../_images/User052.png" />
+<ol class="arabic simple" start="6">
+<li><p>The cross section station elevation data is listed in the Table tab shown below.
+Copy it to the clipboard.</p></li>
+</ol>
+<img alt="../../_images/User053.png" src="../../_images/User053.png" />
+<ol class="arabic simple" start="7">
+<li><p>Place the cursor
+in the first cell of the FLO-2D Table Editor and click Paste.</p></li>
+<li><p>The cross section
+data is pasted to the table.</p></li>
+<li><p>Repeat the process
+for the remaining cross sections.</p></li>
+<li><p>The cross section
+is then loaded in the layer as shown below.</p></li>
+</ol>
+<img alt="../../_images/User054.png" src="../../_images/User054.png" />
+</section>
+</section>
+
+
+                </article>
+              
+
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="../profile-tool/Profile%20Tool.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">Profile Tool</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="../boundary-condition-editor/Boundary%20Condition%20Editor.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">Boundary Condition Editor</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <div class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item">
+  <div class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> Contents
+  </div>
+  <nav class="bd-toc-nav page-toc">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#channels">Channels</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#identify-the-channel">Identify the Channel</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#left-bank">Left Bank</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#right-bank">Right Bank</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#natural-cross-sections">Natural Cross Sections</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#cross-section-bank-and-station-elevation-tool">Cross Section Bank and Station Elevation Tool</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#schematize-channel">Schematize Channel</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#interpolate-natural-channel">Interpolate Natural Channel</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#prismatic-cross-sections">Prismatic Cross Sections</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#rectangular-cross-sections">Rectangular Cross Sections</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#trapezoidal-cross-sections">Trapezoidal Cross Sections</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#schematize-rectangular-and-trapezoidal-channel-segment">Schematize Rectangular and Trapezoidal Channel Segment</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#sample-bank-data">Sample Bank Data</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#method-1-elevation-from-grid">Method 1: Elevation from Grid</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#method-2-elevation-from-raster">Method 2: Elevation from Raster</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#interpolate-prismatic-channel-data">Interpolate Prismatic Channel Data</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#channel-n-value-interpolator">Channel N-value Interpolator</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#alternate-bank-and-channel-profile-tool">Alternate Bank and Channel Profile Tool</a></li>
+</ul>
+  </nav></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+By Karen O'Brien
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+
+  <p class="copyright">
+    
+      © Copyright 2021, Karen O&#39;Brien.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="../../_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b"></script>
+<script src="../../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>

@@ -1,0 +1,1016 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Infiltration Editor &#8212; FLO-2D-User-Manual  documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../_static/styles/theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="../../_static/styles/bootstrap.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="../../_static/styles/pydata-sphinx-theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+
+  
+  <link href="../../_static/vendor/fontawesome/6.5.2/css/all.min.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.5.2/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.5.2/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.5.2/webfonts/fa-regular-400.woff2" />
+
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=a746c00c" />
+    <link rel="stylesheet" type="text/css" href="../../_static/styles/sphinx-book-theme.css?v=a3416100" />
+    <link rel="stylesheet" type="text/css" href="../../_static/static/style.css?v=e5e3935e" />
+  
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b" />
+<link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
+  <script src="../../_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
+
+    <script src="../../_static/documentation_options.js?v=9eb32ce0"></script>
+    <script src="../../_static/doctools.js?v=9a2dae69"></script>
+    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'widgets/infiltration-editor/Infiltration Editor';</script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Storm Drain Editor" href="../storm-drain-editor/Storm%20Drain.html" />
+    <link rel="prev" title="Floodplain Cross Section Editor" href="../floodplain-cross-section-editor/Floodplain%20Cross%20Section%20Editor.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-primary-sidebar-checkbox"/>
+  <label class="overlay overlay-primary" for="pst-primary-sidebar-checkbox"></label>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-secondary-sidebar-checkbox"/>
+  <label class="overlay overlay-secondary" for="pst-secondary-sidebar-checkbox"></label>
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
+<form class="bd-search d-flex align-items-center"
+      action="../../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         id="search-input"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form></div>
+  </div>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <div class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../../index.html">
+  
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="../../_static/Flo2D_logo.jpg" class="logo__image only-light" alt="FLO-2D-User-Manual  documentation - Home"/>
+    <script>document.write(`<img src="../../_static/Flo2D_logo.jpg" class="logo__image only-dark" alt="FLO-2D-User-Manual  documentation - Home"/>`);</script>
+  
+  
+</a></div>
+        <div class="sidebar-primary-item">
+
+ <script>
+ document.write(`
+   <button class="btn search-button-field search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+    <span class="search-button__default-text">Search</span>
+    <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+   </button>
+ `);
+ </script></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        <p aria-level="2" class="caption" role="heading"><span class="caption-text">Setup</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../installation-instructions/Installation.html">Installation Instructions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../installation-instructions/QGIS%20General%20Tools.html">QGIS Tools</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Plugin Features</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../plugin-features/Data%20Storage.html">Data Storage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../plugin-features/Plugin%20Features.html">Plugin Features</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../plugin-features/View%20Options.html">View Options</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Toolbar QGIS and FLO-2D</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../toolbar/FLO-2D%20Toolbar.html">FLO-2D Toolbar</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../toolbar/FLO-2D%20Settings.html">FLO-2D Plugin Settings</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../toolbar/Run%20FLO-2D.html">Run FLO-2D</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../toolbar/Import%20Geo%20Package.html">Import a Geo Package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../toolbar/Import%20Data%20Files.html">Import FLO-2D Data Files</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../toolbar/Import%20Selected%20Component%20Files.html">Import Selected Component Files</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../toolbar/Export%20Project.html">Export Project</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../toolbar/Import%20RAS%20Channel.html">Import HEC-RAS Channel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../toolbar/Control%20Variables.html">Control Variables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../toolbar/Schematic%20to%20User%20Converter.html">Schematic to User Converter</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../toolbar/User%20to%20Schematic%20Converter.html">User to Schematic Converter</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../toolbar/Channel%20Profile.html">Channel Profile Tool</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../toolbar/FLO-2D%20Info%20Tool.html">FLO-2D Info Tool</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../toolbar/Grid%20Info%20Tool.html">Grid Info Tool</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../toolbar/Levee%20Tool.html">Levee Elevation Tool</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../toolbar/Levee%20Tool%20Walls.html">Levee Tool Walls</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../toolbar/Hazus%20Tool.html">Hazus Tool</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../toolbar/Tailings%20Dam%20Tool.html">Tailings Dam Tool</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../toolbar/Mud%20and%20Sediment%20Transport%20Tool.html">Mud and Sediment Transport Tool</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../toolbar/Debug%20Tool.html">Debug Tool</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../toolbar/Help.html">Help</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Widgets</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../pre-processing-tools/Pre-Processing%20Tools.html">Pre-Processing Tools</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Widgets (Grid Tools)</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../grid-tools/Create%20a%20Grid.html">Create a Grid</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../grid-tools/Sample%20Elevation%20from%20Raster.html">Sample Elevation from Raster</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../grid-tools/Sample%20Elevation%20GDAL%20Grid%20Method.html">Sample Elevation GDAL Grid Method</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../grid-tools/Sample%20Elevation%20from%20Points%20and%20LiDAR.html">Sample Elevation from Points and LiDAR</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../grid-tools/Elevation%20Correction%20Tool.html">Elevation Correction Tool</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../grid-tools/Sample%20Roughness.html">Sample Roughness</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../grid-tools/Area%20and%20Width%20Reduction.html">Area and Width Reduction – Buildings</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../grid-tools/Spatial%20TOL.html">Spatial TOL</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../grid-tools/Spatial%20Limiting%20Froude.html">Spatial Limiting Froude</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../grid-tools/Spatial%20Shallow%20n.html">Spatial Shallow n</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../grid-tools/Gutters.html">Gutters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../grid-tools/No%20Exchange%20Channel.html">No Exchange Channel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../grid-tools/Hazus%20Layers.html">Assign Results from Points Layer</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Widgets</span></p>
+<ul class="current nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../profile-tool/Profile%20Tool.html">Profile Tool</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cross-sections-editor/Cross%20Sections%20Editor.html">Cross Sections Editor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../boundary-condition-editor/Boundary%20Condition%20Editor.html">Boundary Condition Editor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../initial-condition-editor/Initial%20Condition%20Editor.html">Initial Condition Editor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../rain-editor/Rain%20Editor.html">Rain Editor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../schematized-channel-editor/Schematized%20Channel%20Editor.html">Schematized Channel Editor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../hydraulic-structure-editor/Hydraulic%20Structure%20Editor.html">Hydraulic Structure Editor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../street-editor/Street%20Editor.html">Street Editor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../floodplain-cross-section-editor/Floodplain%20Cross%20Section%20Editor.html">Floodplain Cross Section Editor</a></li>
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">Infiltration Editor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../storm-drain-editor/Storm%20Drain.html">Storm Drain Editor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../levees-breach-editor/Levees%20Breach%20Editor.html">Levees Breach Editor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../multiple-channels-editor/Multiple%20Channel%20Editor.html">Multiple Channels Editor</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Post Development Grid Modification</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../post-development-grid-modification/Post%20Development%20Grid%20Modification.html">Post Development Grid Modification</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">References</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../References.html">References</a></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+  </div>
+  
+  <div id="rtd-footer-container"></div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><button class="sidebar-toggle primary-toggle btn btn-sm" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</button></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+
+
+
+<div class="dropdown dropdown-download-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Download this page">
+    <i class="fas fa-download"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="../../_sources/widgets/infiltration-editor/Infiltration Editor.rst" target="_blank"
+   class="btn btn-sm btn-download-source-button dropdown-item"
+   title="Download source file"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file"></i>
+  </span>
+<span class="btn__text-container">.rst</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li>
+<button onclick="window.print()"
+  class="btn btn-sm btn-download-pdf-button dropdown-item"
+  title="Print to PDF"
+  data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file-pdf"></i>
+  </span>
+<span class="btn__text-container">.pdf</span>
+</button>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="theme-switch fa-solid fa-sun fa-lg" data-mode="light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg" data-mode="dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"></i>
+  </button>
+`);
+</script>
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm pst-navbar-icon search-button search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+  </button>
+`);
+</script>
+<button class="sidebar-toggle secondary-toggle btn btn-sm" title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="fa-solid fa-list"></span>
+</button>
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1>Infiltration Editor</h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+            <div>
+                <h2> Contents </h2>
+            </div>
+            <nav aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#green-ampt">Green-Ampt</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#global-uniform-infiltration">Global Uniform Infiltration</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#spatial-infiltration-areas-user-layer">Spatial Infiltration Areas User Layer</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#simple-polygon-method">Simple polygon method</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#channel-infiltration">Channel Infiltration</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#green-ampt-infiltration-calculator-fcdmc-method-2023">Green-Ampt Infiltration Calculator FCDMC Method 2023</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#green-ampt-ssurgo-and-osm-databases">Green-Ampt SSURGO and OSM databases</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#scs">SCS</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id1">Global Uniform Infiltration</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#spatial-scs-infiltration-from-infiltration-areas-user-layer">Spatial SCS Infiltration from Infiltration Areas User Layer</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#curve-number-generator">Curve Number Generator</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#scs-calculator-from-single-shapefile">SCS Calculator From Single Shapefile</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#scs-calculator-from-single-shapefile-multiple-fields-pima-county-method">SCS Calculator From Single Shapefile Multiple Fields Pima County Method</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#scs-calculator-from-raster-layer">SCS Calculator From Raster Layer</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#horton">Horton</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id2">Global Uniform Infiltration</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#horton-spatially-variable-method">Horton Spatially Variable Method</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#troubleshooting">Troubleshooting</a></li>
+</ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section id="infiltration-editor">
+<h1>Infiltration Editor<a class="headerlink" href="#infiltration-editor" title="Link to this heading">#</a></h1>
+<p>FLO-2D uses three infiltration method.  Green_Ampt, SCS, and Horton infiltration data development is outlined in this
+section.  The INFIL.DAT file contains the infiltration data.  The data can be global (uniform) or spatially variable
+at the grid element resolution.  Global data is applied uniformly to all grid elements and spatially variable data allows
+different parameters to be applied to individual cells or groups of cells.  The different methods for setting up the data
+are defined below.</p>
+<section id="green-ampt">
+<h2>Green-Ampt<a class="headerlink" href="#green-ampt" title="Link to this heading">#</a></h2>
+<p>The Green-Ampt infiltration editor can add global or spatially variable infiltration data to the INFIL.DAT file.  The
+FLO-2D plugin uses 4 tools for processing Green-Ampt data.</p>
+<ul class="simple">
+<li><p>Global Infiltration Editor</p></li>
+<li><p>Green-Ampt Polygon Schematize</p></li>
+<li><p>Green-Ampt Infiltration Calculator (FCDMC Method 1)</p></li>
+<li><p>Green-Ampt Log Average Infiltration Calculator (Full Green-Ampt Calculator)</p></li>
+<li><p>Green-Ampt SSURGO and OSM databases</p></li>
+</ul>
+</section>
+<section id="global-uniform-infiltration">
+<h2>Global Uniform Infiltration<a class="headerlink" href="#global-uniform-infiltration" title="Link to this heading">#</a></h2>
+<p>Global infiltration parameters set a uniform infiltration for the grid system.</p>
+<ol class="arabic simple">
+<li><p>Global data is set
+up using the Global Infiltration button.</p></li>
+<li><p>Click the button
+to open the editor dialog box.</p></li>
+</ol>
+<img alt="../../_images/Infilt002.png" src="../../_images/Infilt002.png" />
+<ol class="arabic simple" start="3">
+<li><p>Check the Green-Ampt checkbox.</p></li>
+<li><p>Fill the Green-Ampt with uniform infiltration parameters and click OK.</p></li>
+<li><p>Tool tips have information related to the parameters.  Hover the mouse pointer over the variable name to show the
+tooltip.</p></li>
+</ol>
+<img alt="../../_images/Infilt003.png" src="../../_images/Infilt003.png" />
+<ol class="arabic simple" start="6">
+<li><p>This option will set up uniform infiltration data for every grid element.</p></li>
+</ol>
+<img alt="../../_images/Infilt004.png" src="../../_images/Infilt004.png" />
+</section>
+<section id="spatial-infiltration-areas-user-layer">
+<h2>Spatial Infiltration Areas User Layer<a class="headerlink" href="#spatial-infiltration-areas-user-layer" title="Link to this heading">#</a></h2>
+<section id="simple-polygon-method">
+<h3>Simple polygon method<a class="headerlink" href="#simple-polygon-method" title="Link to this heading">#</a></h3>
+<img alt="../../_images/Infilt004a.png" src="../../_images/Infilt004a.png" />
+<p>Spatially variable floodplain infiltration is set by digitizing infiltration polygons into the Infiltration Areas user
+layer. Use the polygon editor to digitize spatially variable infiltration.</p>
+<p>Create a polygon to represent an area of infiltration.</p>
+<ol class="arabic simple">
+<li><p>Click the create
+a polygon tool and digitize a polygon.</p></li>
+<li><p>Name the
+infiltration polygon.</p></li>
+<li><p>Fill the
+table for the infiltration data.</p></li>
+<li><p>Click
+Save.</p></li>
+<li><p>Fill the
+data in the widget for each new polygon.</p></li>
+</ol>
+<img alt="../../_images/Infilt005.png" src="../../_images/Infilt005.png" />
+<p>An alternate method to fill data to use the Attribute Table for the Infiltration User Layer.</p>
+<ol class="arabic simple">
+<li><p>Right click
+the layer and open the attribute table.</p></li>
+</ol>
+<img alt="../../_images/Infilt006.png" src="../../_images/Infilt006.png" />
+<ol class="arabic simple" start="2">
+<li><p>Click the Edit Pencil and start editing the data.
+Save and close the window.</p></li>
+</ol>
+<img alt="../../_images/Infilt007.png" src="../../_images/Infilt007.png" />
+<ol class="arabic simple" start="3">
+<li><p>The data will
+automatically update in the widget.</p></li>
+<li><p>Click the Schematize
+button to commit the changes to the grid.</p></li>
+</ol>
+<img alt="../../_images/Infilt008.png" src="../../_images/Infilt008.png" />
+<p>The infiltration polygons outline areas of cells that have similar infiltration characteristics.
+In the following image, the infiltration areas are different for urban, desert and desert drainage.</p>
+<img alt="../../_images/Infilt009.png" src="../../_images/Infilt009.png" />
+</section>
+</section>
+<section id="channel-infiltration">
+<h2>Channel Infiltration<a class="headerlink" href="#channel-infiltration" title="Link to this heading">#</a></h2>
+<ol class="arabic simple">
+<li><p>To assign channel
+infiltration, use the channel infiltration editor.</p></li>
+<li><p>Set a global
+hydraulic conductivity for all channel elements.</p></li>
+<li><p>Click the Channel
+Infiltration button.</p></li>
+</ol>
+<img alt="../../_images/Infilt010.png" src="../../_images/Infilt010.png" />
+<ol class="arabic simple" start="4">
+<li><p>Local channel
+infiltration is set by segment in the dialog box.</p></li>
+</ol>
+<img alt="../../_images/Infilt011.png" src="../../_images/Infilt011.png" />
+</section>
+<section id="green-ampt-infiltration-calculator-fcdmc-method-2023">
+<h2>Green-Ampt Infiltration Calculator FCDMC Method 2023<a class="headerlink" href="#green-ampt-infiltration-calculator-fcdmc-method-2023" title="Link to this heading">#</a></h2>
+<p>To use the Flood Control District of Maricopa County (FCDMC) Green-Ampt calculator, the user must prepare or download soil,
+landuse, and eff shapefiles.  The data maybe provided by the District.  See the FCDMC hydrology manual for a more detailed
+discussion on modeling with the Green-Ampt method.  Review the FLO-2D Plugin Technical Reference Manual for information
+pertaining to the Green-Ampt calculators.  Review the FLO-2D Pro Reference Manual for information pertaining to the use
+of the Green-Ampt method by the FLO-2D engine.</p>
+<ol class="arabic simple">
+<li><p>Prepare the soil data shapefile as seen in the following figure.</p></li>
+</ol>
+<ul class="simple">
+<li><p>ROCKOUT is the percentage of rock outcrop coverage.  0 to 100</p></li>
+<li><p>XKSAT is the hydraulic conductivity for the soil group. in/hr or mm/hr</p></li>
+<li><p>Soil Depth is the limiting infiltration depth. Once the infiltration reaches this depth, it will turn off.  ft or m</p></li>
+<li><p>DTHETAdry is the soil moisture deficit for dry soil condition.  It ranges in value from zero to the effective porosity.</p></li>
+<li><p>DTHETAnormal is the soil moisture deficit for normal soil condition.</p></li>
+<li><p>PSIF is the wetting front capillary suction. in or mm</p></li>
+</ul>
+<img alt="../../_images/infil001.png" src="../../_images/infil001.png" />
+<ol class="arabic simple" start="2">
+<li><p>Prepare the Landuse data shapefile as seen in the following figure.</p></li>
+</ol>
+<blockquote>
+<div><ul class="simple">
+<li><p>Saturation is the initial saturation condition.  wet or saturated, dry, or normal</p></li>
+<li><p>Initial Abstraction storage depth that must be reached before infiltration begins.  in or mm</p></li>
+<li><p>Impervious area is the percentage of impermeability for a given polygon.  0 to 100</p></li>
+<li><p>Vegetative cover is not used by FCDMC. Leave it unchecked.</p></li>
+</ul>
+</div></blockquote>
+<img alt="../../_images/infil002.png" src="../../_images/infil002.png" />
+<ol class="arabic simple" start="3">
+<li><p>Prepare the EFF data shapefile as seen in the following figure.</p></li>
+</ol>
+<ul class="simple">
+<li><p>Eff is the percent effectiveness of the impervious space.  It pertains more to HEC-1 calculations but can also be
+applied as an additional control or adjustment for a 2D grid.  If an EFF polygon is present, the calculator will
+multiply the RTIMPgrid * the EFF to determine a final RTIMP.  0 to 100</p></li>
+</ul>
+<img alt="../../_images/infil003.png" src="../../_images/infil003.png" />
+<ol class="arabic simple" start="4">
+<li><p>To run the calculator,
+click the Calculate Green-Ampt button.</p></li>
+</ol>
+<img alt="../../_images/Infilt014.png" src="../../_images/Infilt014.png" />
+<ol class="arabic simple" start="5">
+<li><p>Check if the User soil and landuse layer are selected, fill the form and
+click OK.</p></li>
+</ol>
+<img alt="../../_images/Infilt041.png" src="../../_images/Infilt041.png" />
+<ol class="arabic simple" start="6">
+<li><p>The calculator uses the calculation methods outlined in the FLO-2D Plugin Technical Reference manual.</p></li>
+<li><p>When the infiltration
+calculator is finished, the following message will appear.</p></li>
+</ol>
+<img alt="../../_images/Infilt016.png" src="../../_images/Infilt016.png" />
+<ol class="arabic simple" start="8">
+<li><p>The INFIL.DAT file
+looks like this.  For a detailed explanation of these variables, see the FLO-2D Data Input Manual INFIL.DAT section.</p></li>
+</ol>
+<img alt="../../_images/Infilt017.png" src="../../_images/Infilt017.png" />
+</section>
+<section id="green-ampt-ssurgo-and-osm-databases">
+<h2>Green-Ampt SSURGO and OSM databases<a class="headerlink" href="#green-ampt-ssurgo-and-osm-databases" title="Link to this heading">#</a></h2>
+<p>The user can estimate Green-Ampt parameters by leveraging data from two
+databases: the Soil Survey Geographic Database (SSURGO) and OpenStreetMap (OSM).
+The SSURGO database contains comprehensive information on soil, gathered through the collaborative efforts
+of the National Cooperative Soil Survey. Utilizing the NDOT Green and Ampt Rainfall Loss Parameters,
+the Green-Ampt parameters for different soil types can be estimated. This document outlines the methods
+and equations for developing Green and Ampt loss parameters for soils developed by Saxton and Rawls in 2006.</p>
+<p>The OpenStreetMap (OSM) database, a freely accessible and continually updated geographic resource,
+relies on contributions from volunteers worldwide. This database provides data on land use,
+which serves as a component for estimating Green-Ampt parameters. In combination with the information
+available on the Drainage Design Manual for Maricopa County, estimations for Vegetation Cover,
+Initial Abstraction, and RTIMP can be determined for different land uses using the OSM dataset.</p>
+<p>FLO-2D collects, organizes, and calculates the information from SSURGO and OSM databases.
+By preparing this data in shapefiles, it becomes readily available for use within the Green-Ampt calculator.</p>
+<ol class="arabic simple">
+<li><p>Select the SSURGO data and press calculate. This process downloads the data from
+NRCS and fills the missing data. Care should be taken because data could be scarce in some areas.
+Engineering judgment is essencial in such situations.</p></li>
+</ol>
+<img alt="../../_images/Infilt042.png" src="../../_images/Infilt042.png" />
+<ol class="arabic simple" start="2">
+<li><p>The soil layer and fields will be automatically updated once the process is finished.</p></li>
+</ol>
+<img alt="../../_images/Infilt043.png" src="../../_images/Infilt043.png" />
+<ol class="arabic simple" start="3">
+<li><p>Select the OSM data and press calculate. This process downloads the data from
+OSM and generates the land use map. This process could take a long time for larger areas.
+This information is more precise in urban areas and less precise in rural areas.
+Engineering judgment is essencial for evaluating the data quality.</p></li>
+</ol>
+<img alt="../../_images/Infilt044.png" src="../../_images/Infilt044.png" />
+<ol class="arabic simple" start="4">
+<li><p>The landuse layer and fields will be automatically updated.</p></li>
+</ol>
+<img alt="../../_images/Infilt045.png" src="../../_images/Infilt045.png" />
+<ol class="arabic simple" start="5">
+<li><p>Check the form if the fields are correctly selected and click OK.</p></li>
+<li><p>When the infiltration
+calculator is finished, the following message will appear.</p></li>
+</ol>
+<img alt="../../_images/Infilt016.png" src="../../_images/Infilt016.png" />
+<ol class="arabic simple" start="7">
+<li><p>The INFIL.DAT file
+looks like this.  For a detailed explanation of these variables, see the FLO-2D Data Input Manual INFIL.DAT section.</p></li>
+</ol>
+<img alt="../../_images/Infilt017.png" src="../../_images/Infilt017.png" />
+</section>
+<section id="scs">
+<h2>SCS<a class="headerlink" href="#scs" title="Link to this heading">#</a></h2>
+</section>
+<section id="id1">
+<h2>Global Uniform Infiltration<a class="headerlink" href="#id1" title="Link to this heading">#</a></h2>
+<p>The SCS infiltration editor can add global or spatially variable infiltration data to the INFIL.DAT file for
+infiltration curve numbers.</p>
+<ol class="arabic simple">
+<li><p>Set up the Global Infiltration first.
+Click Global Infiltration.</p></li>
+</ol>
+<img alt="../../_images/Infilt018.png" src="../../_images/Infilt018.png" />
+<ol class="arabic simple" start="2">
+<li><p>Fill the Global
+Infiltration dialog box.</p></li>
+</ol>
+<img alt="../../_images/Infilt019.png" src="../../_images/Infilt019.png" />
+<ol class="arabic simple" start="3">
+<li><p>The INFIL.DAT file
+looks like this:</p></li>
+<li><p>Where the infiltration
+type is 2 = SCS infiltration.</p></li>
+<li><p>The 85 is the uniform curve
+number for each grid.</p></li>
+<li><p>The 0.01 is the initial
+abstraction.</p></li>
+</ol>
+<img alt="../../_images/Infilt020.png" src="../../_images/Infilt020.png" />
+</section>
+<section id="spatial-scs-infiltration-from-infiltration-areas-user-layer">
+<h2>Spatial SCS Infiltration from Infiltration Areas User Layer<a class="headerlink" href="#spatial-scs-infiltration-from-infiltration-areas-user-layer" title="Link to this heading">#</a></h2>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>This method is the most effective way to sample SCS data.  If using the other calculators, review SCS column
+for errors.</p>
+</div>
+<p>Spatially variable floodplain infiltration is set by digitizing infiltration polygons or importing infiltration polygons.
+Use the polygon editor to digitize spatially variable infiltration.
+Create a polygon to represent an area of infiltration.</p>
+<ol class="arabic simple">
+<li><p>Select the Infiltration
+Areas user layer.</p></li>
+<li><p>Click the editor pencil and
+snapping magnet button.</p></li>
+</ol>
+<img alt="../../_images/Infilt021.png" src="../../_images/Infilt021.png" />
+<ol class="arabic simple" start="3">
+<li><p>Create the polygons the
+represent areas with the same curve number.</p></li>
+<li><p>Fill the table for the
+infiltration data.</p></li>
+</ol>
+<img alt="../../_images/Infilt022.png" src="../../_images/Infilt022.png" />
+<ol class="arabic simple" start="5">
+<li><p>The finished table has a
+CN for every polygon.</p></li>
+<li><p>Click the Save button to
+save the attributes.</p></li>
+<li><p>Click the pencil button
+to close the editor.</p></li>
+</ol>
+<img alt="../../_images/Infilt023.png" src="../../_images/Infilt023.png" />
+<ol class="arabic simple" start="8">
+<li><p>Check the data in the Infiltration Editor Widget.
+Click the Schematize button to complete the process.</p></li>
+</ol>
+<img alt="../../_images/Infilt024.png" src="../../_images/Infilt024.png" />
+<ol class="arabic simple" start="9">
+<li><p>The spatially variable
+INFIL.DAT looks like this:</p></li>
+</ol>
+<img alt="../../_images/Infilt025.png" src="../../_images/Infilt025.png" />
+</section>
+<section id="curve-number-generator">
+<h2>Curve Number Generator<a class="headerlink" href="#curve-number-generator" title="Link to this heading">#</a></h2>
+<ol class="arabic simple">
+<li><p>If necessary,
+add the Plugin Curve Number Generator.</p></li>
+</ol>
+<img alt="../../_images/Module311.png" src="../../_images/Module311.png" />
+<ol class="arabic simple" start="2">
+<li><p>Open the Curve
+Number Generator.</p></li>
+</ol>
+<img alt="../../_images/Module312.png" src="../../_images/Module312.png" />
+<ol class="arabic simple" start="3">
+<li><p>Set the Area Boundary
+to the Grid.  Check the boxes and click OK.</p></li>
+</ol>
+<img alt="../../_images/Module313.png" src="../../_images/Module313.png" />
+<ol class="arabic simple" start="4">
+<li><p>Click Close when
+process is finished.  The Curve Number Polygon Layer can be used in the next section.</p></li>
+</ol>
+</section>
+<section id="scs-calculator-from-single-shapefile">
+<h2>SCS Calculator From Single Shapefile<a class="headerlink" href="#scs-calculator-from-single-shapefile" title="Link to this heading">#</a></h2>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>If applying this method, review min and max of the SCS field.  This method only works on polygon shapefiles
+that have no geometric deficiencies.  If this method results in errors, copy the polygons to the User layer
+field and use the User Layer Method.</p>
+</div>
+<p>This option will add spatially variable infiltration data to the grid from a shapefile with one CN attribute field.</p>
+<ol class="arabic simple">
+<li><p>Click the Calculate
+SCS CN button.</p></li>
+</ol>
+<img alt="../../_images/Infilt026.png" src="../../_images/Infilt026.png" />
+<ol class="arabic simple" start="2">
+<li><p>Check the ‘Assign SCS Curve Number from Polygon Layer - single field’.</p></li>
+<li><p>Select the layer and field
+with the infiltration data.</p></li>
+<li><p>This method works for
+shapefiles that have a CN already calculated.</p></li>
+<li><p>Click OK to calculate a
+spatially variable CN value for every grid element.</p></li>
+</ol>
+<img alt="../../_images/Infilt046.png" src="../../_images/Infilt046.png" />
+<ol class="arabic simple" start="6">
+<li><p>When the calculation is complete, the following box will appear.
+Click OK to close the box.</p></li>
+</ol>
+<img alt="../../_images/Infilt028.png" src="../../_images/Infilt028.png" />
+<ol class="arabic simple" start="7">
+<li><p>The INFIL.DAT file
+looks like this.</p></li>
+</ol>
+<img alt="../../_images/Infilt029.png" src="../../_images/Infilt029.png" />
+</section>
+<section id="scs-calculator-from-single-shapefile-multiple-fields-pima-county-method">
+<h2>SCS Calculator From Single Shapefile Multiple Fields Pima County Method<a class="headerlink" href="#scs-calculator-from-single-shapefile-multiple-fields-pima-county-method" title="Link to this heading">#</a></h2>
+<p>Use this option for Pima County to calculate SCS curve number data from a single layer with multiple fields.
+This is a vector layer with polygon features and field to define the landuse/soil group, vegetation coverage
+and impervious space. This option was developed specifically for Pima County.</p>
+<p>The data should be arranged as shown in the attribute table.</p>
+<img alt="../../_images/Infilt030.png" src="../../_images/Infilt030.png" />
+<ol class="arabic simple">
+<li><p>Click the
+Calculate SCS CN button.</p></li>
+</ol>
+<img alt="../../_images/Infilt031.png" src="../../_images/Infilt031.png" />
+<ol class="arabic simple" start="2">
+<li><p>Check the ‘Assign SCS Curve Number from Polygon Layer - multiple fields’.</p></li>
+<li><p>Select the layer
+and fields with the infiltration data and click OK to run the calculator.</p></li>
+</ol>
+<img alt="../../_images/Infilt047.png" src="../../_images/Infilt047.png" />
+<ol class="arabic simple" start="4">
+<li><p>When the calculation is complete, the following box will appear.
+Click OK to close the box.</p></li>
+</ol>
+<img alt="../../_images/Infilt033.png" src="../../_images/Infilt033.png" />
+<ol class="arabic simple" start="5">
+<li><p>The INFIL.DAT file
+looks like this.</p></li>
+</ol>
+<img alt="../../_images/Infilt029.png" src="../../_images/Infilt029.png" />
+</section>
+<section id="scs-calculator-from-raster-layer">
+<h2>SCS Calculator From Raster Layer<a class="headerlink" href="#scs-calculator-from-raster-layer" title="Link to this heading">#</a></h2>
+<p>This option will add spatially variable infiltration data to the grid from a raster with cells containing CN
+values. Important properties:</p>
+<ul class="simple">
+<li><p>The raster must have the same coordinate reference system (CRS) as the project.
+If the CRS is missing or is set by the user, save the raster with the correct CRS.</p></li>
+<li><p>The best resolution of the grid element CN is achieved when the CN
+raster pixel size is smaller than the grid element size.</p></li>
+<li><p>The raster warp method uses a weighted average to warp the original
+raster pixels to the cell size pixels.</p></li>
+</ul>
+<ol class="arabic simple">
+<li><p>Click the Calculate
+SCS CN button.</p></li>
+</ol>
+<img alt="../../_images/Infilt026.png" src="../../_images/Infilt026.png" />
+<ol class="arabic simple" start="2">
+<li><p>Check the ‘Assign SCS Curve Number from Raster Layer’.</p></li>
+<li><p>Select the raster containing CN values from the dropdown
+or choose a raster from the file dialog.</p></li>
+<li><p>Set the NODATA value.</p></li>
+<li><p>Select the resampling algorithm.</p></li>
+<li><p>Select the Fill NODATA option to set the CN of empty grid elements from neighbors.
+This is only necessary if there are empty raster pixels.</p></li>
+<li><p>Select the multithread option to use all CPU’s for running the algorithm.</p></li>
+<li><p>Click OK to calculate a
+spatially variable CN value for every grid element.</p></li>
+</ol>
+<img alt="../../_images/Infilt048.png" src="../../_images/Infilt048.png" />
+<ol class="arabic simple" start="8">
+<li><p>When the calculation is complete, the following box will appear.
+Click OK to close the box.</p></li>
+</ol>
+<img alt="../../_images/Infilt028.png" src="../../_images/Infilt028.png" />
+<ol class="arabic simple" start="9">
+<li><p>The INFIL.DAT file
+looks like this.</p></li>
+</ol>
+<img alt="../../_images/Infilt029.png" src="../../_images/Infilt029.png" />
+</section>
+<section id="horton">
+<h2>Horton<a class="headerlink" href="#horton" title="Link to this heading">#</a></h2>
+</section>
+<section id="id2">
+<h2>Global Uniform Infiltration<a class="headerlink" href="#id2" title="Link to this heading">#</a></h2>
+<p>The Horton infiltration editor can add global or spatially variable infiltration data to the INFIL.DAT file for.</p>
+<ol class="arabic simple">
+<li><p>Set up the Global Infiltration first.
+Click Global Infiltration.</p></li>
+</ol>
+<img alt="../../_images/Infilt018.png" src="../../_images/Infilt018.png" />
+<ol class="arabic simple" start="2">
+<li><p>Fill the Global
+Infiltration dialog box.</p></li>
+</ol>
+<img alt="../../_images/Infilt034.png" src="../../_images/Infilt034.png" />
+<p>Uniform Horton infiltration is assigned as follows in the INFIL.DAT file:</p>
+<img alt="../../_images/Infilt035.png" src="../../_images/Infilt035.png" />
+</section>
+<section id="horton-spatially-variable-method">
+<h2>Horton Spatially Variable Method<a class="headerlink" href="#horton-spatially-variable-method" title="Link to this heading">#</a></h2>
+<p>Spatially variable Horton infiltration is created by digitizing infiltration polygons.
+Use the polygon editor to digitize spatially variable infiltration.
+Create a polygon to represent an area of infiltration.</p>
+<ol class="arabic simple">
+<li><p>Click the create a
+polygon tool and digitize a polygon.</p></li>
+</ol>
+<img alt="../../_images/Infilt036.png" src="../../_images/Infilt036.png" />
+<ol class="arabic simple" start="2">
+<li><p>Click
+Save.</p></li>
+</ol>
+<img alt="../../_images/Infilt037.png" src="../../_images/Infilt037.png" />
+<ol class="arabic simple" start="3">
+<li><p>Right Click the Infiltration Areas layer (User Layers) and open the Attributes Table.
+Click the Editor Pencil button.</p></li>
+<li><p>Name the infiltration
+polygons and fill out the data for fhorti, fhori, and deca.</p></li>
+<li><p>Click the Save button
+and Editor Pencil button.</p></li>
+<li><p>Click
+Schematize.</p></li>
+</ol>
+<img alt="../../_images/Infilt038.png" src="../../_images/Infilt038.png" />
+<img alt="../../_images/Infilt039.png" src="../../_images/Infilt039.png" />
+<ol class="arabic simple" start="7">
+<li><p>The spatially
+variable Horton looks like this in the INFIL.DAT file.</p></li>
+</ol>
+<img alt="../../_images/Infilt040.png" src="../../_images/Infilt040.png" />
+</section>
+<section id="troubleshooting">
+<h2>Troubleshooting<a class="headerlink" href="#troubleshooting" title="Link to this heading">#</a></h2>
+<ol class="arabic simple">
+<li><p>Infiltration calculators all use intersection tools.
+This can cause problems if the shapefiles are not set up correctly.
+Specifically, land use and soils shapefiles that may have been converted from raster data.
+If errors persist, try “fix geometry”, “simplify”, and “dissolve” on the source shapefiles.
+These tools are part of the QGIS Processing Toolbox.
+They can also be corrected in ArcGIS if the datasets are very large.</p></li>
+<li><p>Make sure the shapefiles completely cover the grid.
+If a grid element is outside the coverage of the infiltration, QGIS will show an error.</p></li>
+<li><p>Make sure the shapefile fields have a correctly defined number type.
+The shapefiles that are supplied with the QGIS Lessons will help define the Field Variable Format such as string,
+whole number or decimal number.</p></li>
+</ol>
+</section>
+</section>
+
+
+                </article>
+              
+
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="../floodplain-cross-section-editor/Floodplain%20Cross%20Section%20Editor.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">Floodplain Cross Section Editor</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="../storm-drain-editor/Storm%20Drain.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">Storm Drain Editor</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <div class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item">
+  <div class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> Contents
+  </div>
+  <nav class="bd-toc-nav page-toc">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#green-ampt">Green-Ampt</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#global-uniform-infiltration">Global Uniform Infiltration</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#spatial-infiltration-areas-user-layer">Spatial Infiltration Areas User Layer</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#simple-polygon-method">Simple polygon method</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#channel-infiltration">Channel Infiltration</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#green-ampt-infiltration-calculator-fcdmc-method-2023">Green-Ampt Infiltration Calculator FCDMC Method 2023</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#green-ampt-ssurgo-and-osm-databases">Green-Ampt SSURGO and OSM databases</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#scs">SCS</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id1">Global Uniform Infiltration</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#spatial-scs-infiltration-from-infiltration-areas-user-layer">Spatial SCS Infiltration from Infiltration Areas User Layer</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#curve-number-generator">Curve Number Generator</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#scs-calculator-from-single-shapefile">SCS Calculator From Single Shapefile</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#scs-calculator-from-single-shapefile-multiple-fields-pima-county-method">SCS Calculator From Single Shapefile Multiple Fields Pima County Method</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#scs-calculator-from-raster-layer">SCS Calculator From Raster Layer</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#horton">Horton</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#id2">Global Uniform Infiltration</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#horton-spatially-variable-method">Horton Spatially Variable Method</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#troubleshooting">Troubleshooting</a></li>
+</ul>
+  </nav></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+By Karen O'Brien
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+
+  <p class="copyright">
+    
+      © Copyright 2021, Karen O&#39;Brien.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="../../_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b"></script>
+<script src="../../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>

@@ -1,0 +1,708 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Data Storage &#8212; FLO-2D-User-Manual  documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../_static/styles/theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="../_static/styles/bootstrap.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+
+  
+  <link href="../_static/vendor/fontawesome/6.5.2/css/all.min.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.2/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.2/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.2/webfonts/fa-regular-400.woff2" />
+
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=a746c00c" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/sphinx-book-theme.css?v=a3416100" />
+    <link rel="stylesheet" type="text/css" href="../_static/static/style.css?v=e5e3935e" />
+  
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b" />
+<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
+  <script src="../_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
+
+    <script src="../_static/documentation_options.js?v=9eb32ce0"></script>
+    <script src="../_static/doctools.js?v=9a2dae69"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'plugin-features/Data Storage';</script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Plugin Features" href="Plugin%20Features.html" />
+    <link rel="prev" title="QGIS Tools" href="../installation-instructions/QGIS%20General%20Tools.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-primary-sidebar-checkbox"/>
+  <label class="overlay overlay-primary" for="pst-primary-sidebar-checkbox"></label>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-secondary-sidebar-checkbox"/>
+  <label class="overlay overlay-secondary" for="pst-secondary-sidebar-checkbox"></label>
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
+<form class="bd-search d-flex align-items-center"
+      action="../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         id="search-input"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form></div>
+  </div>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <div class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../index.html">
+  
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="../_static/Flo2D_logo.jpg" class="logo__image only-light" alt="FLO-2D-User-Manual  documentation - Home"/>
+    <script>document.write(`<img src="../_static/Flo2D_logo.jpg" class="logo__image only-dark" alt="FLO-2D-User-Manual  documentation - Home"/>`);</script>
+  
+  
+</a></div>
+        <div class="sidebar-primary-item">
+
+ <script>
+ document.write(`
+   <button class="btn search-button-field search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+    <span class="search-button__default-text">Search</span>
+    <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+   </button>
+ `);
+ </script></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        <p aria-level="2" class="caption" role="heading"><span class="caption-text">Setup</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../installation-instructions/Installation.html">Installation Instructions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../installation-instructions/QGIS%20General%20Tools.html">QGIS Tools</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Plugin Features</span></p>
+<ul class="current nav bd-sidenav">
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">Data Storage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Plugin%20Features.html">Plugin Features</a></li>
+<li class="toctree-l1"><a class="reference internal" href="View%20Options.html">View Options</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Toolbar QGIS and FLO-2D</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../toolbar/FLO-2D%20Toolbar.html">FLO-2D Toolbar</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../toolbar/FLO-2D%20Settings.html">FLO-2D Plugin Settings</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../toolbar/Run%20FLO-2D.html">Run FLO-2D</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../toolbar/Import%20Geo%20Package.html">Import a Geo Package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../toolbar/Import%20Data%20Files.html">Import FLO-2D Data Files</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../toolbar/Import%20Selected%20Component%20Files.html">Import Selected Component Files</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../toolbar/Export%20Project.html">Export Project</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../toolbar/Import%20RAS%20Channel.html">Import HEC-RAS Channel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../toolbar/Control%20Variables.html">Control Variables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../toolbar/Schematic%20to%20User%20Converter.html">Schematic to User Converter</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../toolbar/User%20to%20Schematic%20Converter.html">User to Schematic Converter</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../toolbar/Channel%20Profile.html">Channel Profile Tool</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../toolbar/FLO-2D%20Info%20Tool.html">FLO-2D Info Tool</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../toolbar/Grid%20Info%20Tool.html">Grid Info Tool</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../toolbar/Levee%20Tool.html">Levee Elevation Tool</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../toolbar/Levee%20Tool%20Walls.html">Levee Tool Walls</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../toolbar/Hazus%20Tool.html">Hazus Tool</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../toolbar/Tailings%20Dam%20Tool.html">Tailings Dam Tool</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../toolbar/Mud%20and%20Sediment%20Transport%20Tool.html">Mud and Sediment Transport Tool</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../toolbar/Debug%20Tool.html">Debug Tool</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../toolbar/Help.html">Help</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Widgets</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../widgets/pre-processing-tools/Pre-Processing%20Tools.html">Pre-Processing Tools</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Widgets (Grid Tools)</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../widgets/grid-tools/Create%20a%20Grid.html">Create a Grid</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../widgets/grid-tools/Sample%20Elevation%20from%20Raster.html">Sample Elevation from Raster</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../widgets/grid-tools/Sample%20Elevation%20GDAL%20Grid%20Method.html">Sample Elevation GDAL Grid Method</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../widgets/grid-tools/Sample%20Elevation%20from%20Points%20and%20LiDAR.html">Sample Elevation from Points and LiDAR</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../widgets/grid-tools/Elevation%20Correction%20Tool.html">Elevation Correction Tool</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../widgets/grid-tools/Sample%20Roughness.html">Sample Roughness</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../widgets/grid-tools/Area%20and%20Width%20Reduction.html">Area and Width Reduction – Buildings</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../widgets/grid-tools/Spatial%20TOL.html">Spatial TOL</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../widgets/grid-tools/Spatial%20Limiting%20Froude.html">Spatial Limiting Froude</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../widgets/grid-tools/Spatial%20Shallow%20n.html">Spatial Shallow n</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../widgets/grid-tools/Gutters.html">Gutters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../widgets/grid-tools/No%20Exchange%20Channel.html">No Exchange Channel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../widgets/grid-tools/Hazus%20Layers.html">Assign Results from Points Layer</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Widgets</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../widgets/profile-tool/Profile%20Tool.html">Profile Tool</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../widgets/cross-sections-editor/Cross%20Sections%20Editor.html">Cross Sections Editor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../widgets/boundary-condition-editor/Boundary%20Condition%20Editor.html">Boundary Condition Editor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../widgets/initial-condition-editor/Initial%20Condition%20Editor.html">Initial Condition Editor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../widgets/rain-editor/Rain%20Editor.html">Rain Editor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../widgets/schematized-channel-editor/Schematized%20Channel%20Editor.html">Schematized Channel Editor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../widgets/hydraulic-structure-editor/Hydraulic%20Structure%20Editor.html">Hydraulic Structure Editor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../widgets/street-editor/Street%20Editor.html">Street Editor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../widgets/floodplain-cross-section-editor/Floodplain%20Cross%20Section%20Editor.html">Floodplain Cross Section Editor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../widgets/infiltration-editor/Infiltration%20Editor.html">Infiltration Editor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../widgets/storm-drain-editor/Storm%20Drain.html">Storm Drain Editor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../widgets/levees-breach-editor/Levees%20Breach%20Editor.html">Levees Breach Editor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../widgets/multiple-channels-editor/Multiple%20Channel%20Editor.html">Multiple Channels Editor</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Post Development Grid Modification</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../post-development-grid-modification/Post%20Development%20Grid%20Modification.html">Post Development Grid Modification</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">References</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../References.html">References</a></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+  </div>
+  
+  <div id="rtd-footer-container"></div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><button class="sidebar-toggle primary-toggle btn btn-sm" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</button></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+
+
+
+<div class="dropdown dropdown-download-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Download this page">
+    <i class="fas fa-download"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="../_sources/plugin-features/Data Storage.rst" target="_blank"
+   class="btn btn-sm btn-download-source-button dropdown-item"
+   title="Download source file"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file"></i>
+  </span>
+<span class="btn__text-container">.rst</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li>
+<button onclick="window.print()"
+  class="btn btn-sm btn-download-pdf-button dropdown-item"
+  title="Print to PDF"
+  data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file-pdf"></i>
+  </span>
+<span class="btn__text-container">.pdf</span>
+</button>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="theme-switch fa-solid fa-sun fa-lg" data-mode="light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg" data-mode="dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"></i>
+  </button>
+`);
+</script>
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm pst-navbar-icon search-button search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+  </button>
+`);
+</script>
+<button class="sidebar-toggle secondary-toggle btn btn-sm" title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="fa-solid fa-list"></span>
+</button>
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1>Data Storage</h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+            <div>
+                <h2> Contents </h2>
+            </div>
+            <nav aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#database-format">Database Format</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#user-layers">User Layers</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#schematic-layers">Schematic Layers</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#hydraulic-structure-layers">Hydraulic Structure Layers</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#storm-drain-layers">Storm Drain Layers</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#infiltration-layers">Infiltration Layers</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#infiltration-tables">Infiltration Tables</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#tables">Tables</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#rain-tables">Rain Tables</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#calibration-data">Calibration Data</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#evaporation-tables">Evaporation Tables</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#levee-and-breach-tables">Levee and Breach Tables</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#sediment-transport-layers-and-tables">Sediment Transport Layers and Tables</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#channel-tables">Channel Tables</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#multiple-channel-tables">Multiple Channel Tables</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#external-layers">External Layers</a></li>
+</ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section id="data-storage">
+<h1>Data Storage<a class="headerlink" href="#data-storage" title="Link to this heading">#</a></h1>
+<section id="database-format">
+<h2>Database Format<a class="headerlink" href="#database-format" title="Link to this heading">#</a></h2>
+<p>The Plugin uses a [<a class="reference external" href="http://www.GeoPackage.org/spec/">GeoPackage</a>] for data storage.
+It is a <a class="reference external" href="http://www.sqlite.org/">SQLite</a> database with spatial extensions for storing vector and raster data.
+The GeoPackage or *.gpkg file is a binary file that stores data tables in SQLite format.
+SQLite is a public domain data base engine that is used and supported worldwide.
+More information about SQLite can be found at <a class="reference external" href="https://www.sqlite.org/about.html">the website</a>.
+The GeoPackage encoding system is approved by an Open Geospatial Consortium, a standard that is deemed sustainable by the U.S.
+Library of Congress (Library of Congress, 2017).</p>
+<p>The FLO-2D Plugin uses the GeoPackage to store the data in a series of layers and tables.
+The Plugin requires a single GeoPackage file for each project.
+The project units and coordinate reference system are defined in the GeoPackage at the start of the project.
+The QGIS program has an extensive geodetic registry.
+It also supports “on the fly” mapping so layers of various coordinate systems can be viewed.
+The Plugin requires that all data used in the processing routines must be in the baseline coordinate system defined in the GeoPackage.</p>
+<p>See the Technical Reference Manual for an outline of the GeoPackage data.</p>
+</section>
+<section id="user-layers">
+<h2>User Layers<a class="headerlink" href="#user-layers" title="Link to this heading">#</a></h2>
+<p>Data is arranged as vector layers and tables in the Plugin.
+The vector layers are organized as follows:</p>
+<ul class="simple">
+<li><p>Points</p></li>
+<li><p>Polylines</p></li>
+<li><p>Polygons</p></li>
+</ul>
+<p>There is a layer for each FLO-2D model component that is digitized by the user and schematized into the “schematic” layers and tables.
+These layers are used to define the schematized layers that are FLO-2D format.
+The layers can be directly edited using the general QGIS editor tools and the FLO-2D Editor Widgets.
+They can also be edited using the Attribute Table Editor and the Field Calculator.</p>
+<img alt="../_images/Data002.png" src="../_images/Data002.png" />
+</section>
+<section id="schematic-layers">
+<h2>Schematic Layers<a class="headerlink" href="#schematic-layers" title="Link to this heading">#</a></h2>
+<p>The Schematic Layers are organized such that the Plugin can generate the FLO-2D *.DAT files from them.
+These layers, created by the schematizing tools, should not be manipulated by the user.
+The layers are vector layers with attribute fields that fill the FLO-2D data files.</p>
+<img alt="../_images/Data003.png" src="../_images/Data003.png" />
+</section>
+<section id="hydraulic-structure-layers">
+<h2>Hydraulic Structure Layers<a class="headerlink" href="#hydraulic-structure-layers" title="Link to this heading">#</a></h2>
+<p>The Hydraulic Structure Layers are used to create and store data for the hydraulic structure system.
+This is the schematic data that is converted to the HYSTRUC.DAT file when the program is exported to FLO-2D Data.
+Data can also be imported into these layers and tables when a project is imported from *.DAT files.</p>
+<img alt="../_images/Data004.png" src="../_images/Data004.png" />
+<p>Data is written to these tables in the following methods:</p>
+<ul class="simple">
+<li><p>Importing from FLO-2D Project;</p></li>
+<li><p>Importing from a shapefile;</p></li>
+<li><p>Digitizing directly.</p></li>
+</ul>
+<img alt="../_images/Data005.png" src="../_images/Data005.png" />
+</section>
+<section id="storm-drain-layers">
+<h2>Storm Drain Layers<a class="headerlink" href="#storm-drain-layers" title="Link to this heading">#</a></h2>
+<p>The Storm Drain Layers are used to create and store data for the storm drain system.</p>
+<p>Data is written to these tables in the following methods:</p>
+<ul class="simple">
+<li><p>Importing from FLO-2D Project;</p></li>
+<li><p>Importing from an INP file;</p></li>
+<li><p>Importing from a shapefile;</p></li>
+<li><p>Digitizing directly.</p></li>
+</ul>
+<img alt="../_images/Data006.png" src="../_images/Data006.png" />
+</section>
+<section id="infiltration-layers">
+<h2>Infiltration Layers<a class="headerlink" href="#infiltration-layers" title="Link to this heading">#</a></h2>
+<p>The schematic Infiltration Layers are polygons that store infiltration data computed from the infiltration tables.</p>
+<img alt="../_images/Data007.png" src="../_images/Data007.png" />
+<img alt="../_images/Data008.png" src="../_images/Data008.png" />
+</section>
+<section id="infiltration-tables">
+<h2>Infiltration Tables<a class="headerlink" href="#infiltration-tables" title="Link to this heading">#</a></h2>
+<p>The Infiltration Tables join grid elements to the Infiltration Layers and are produced by the Infiltration Editor Widget.</p>
+<img alt="../_images/Data009.png" src="../_images/Data009.png" />
+<img alt="../_images/Data010.png" src="../_images/Data010.png" />
+</section>
+<section id="tables">
+<h2>Tables<a class="headerlink" href="#tables" title="Link to this heading">#</a></h2>
+<p>The Tables layer stores the data that is converted into the *.DAT files.</p>
+<p>Data is written to these tables in the following methods:</p>
+<ul class="simple">
+<li><p>Importing from FLO-2D Project;</p></li>
+<li><p>Schematizing data.</p></li>
+</ul>
+<img alt="../_images/Data011.png" src="../_images/Data011.png" />
+</section>
+<section id="rain-tables">
+<h2>Rain Tables<a class="headerlink" href="#rain-tables" title="Link to this heading">#</a></h2>
+<p>The Rain Tables layer stores the data for uniform rainfall, spatially variable rainfall, and spatially and temporally variable rainfall.</p>
+<p>Data is written to these tables in the following methods:</p>
+<ul class="simple">
+<li><p>Importing from project;</p></li>
+<li><p>Schematizing uniform rainfall;</p></li>
+<li><p>Calculating spatially variable RainARF from NOAA Atlas data;</p></li>
+<li><p>Calculating spatially and temporally variable data from NEXRAD radar and realtime storm data.</p></li>
+</ul>
+<img alt="../_images/Data012.png" src="../_images/Data012.png" />
+</section>
+<section id="calibration-data">
+<h2>Calibration Data<a class="headerlink" href="#calibration-data" title="Link to this heading">#</a></h2>
+<p>The Calibration Data layers are point vector layers that store the water surface elevation at a known point and the time to peak water surface
+elevation at a known point.</p>
+<p>Data is written to these tables in the following methods:</p>
+<ul class="simple">
+<li><p>Importing from project;</p></li>
+<li><p>Directly digitizing layer.</p></li>
+</ul>
+<p>The data is written to the WSURF.DAT file and WSURFTIME.DAT file.</p>
+<img alt="../_images/Data013.png" src="../_images/Data013.png" />
+</section>
+<section id="evaporation-tables">
+<h2>Evaporation Tables<a class="headerlink" href="#evaporation-tables" title="Link to this heading">#</a></h2>
+<p>The Evaporation Tables layer store spatially variable data for estimating evaporation at runtime.</p>
+<p>Data is written to these tables in the following methods:</p>
+<ul class="simple">
+<li><p>Importing from project;</p></li>
+<li><p>Evaporation tool.</p></li>
+</ul>
+<img alt="../_images/Data014.png" src="../_images/Data014.png" />
+</section>
+<section id="levee-and-breach-tables">
+<h2>Levee and Breach Tables<a class="headerlink" href="#levee-and-breach-tables" title="Link to this heading">#</a></h2>
+<p>The Levee and Breach Tables layer is used to store the prescribed breach, erosion breach, and levee fragility data tables.
+These labels are filled by the Breach Widget.</p>
+<p>Data is written to these tables in the following methods:</p>
+<ul class="simple">
+<li><p>Importing from project;</p></li>
+<li><p>Schematic edits;</p></li>
+<li><p>Levee Breach Editor widget.</p></li>
+</ul>
+<img alt="../_images/Data015.png" src="../_images/Data015.png" />
+</section>
+<section id="sediment-transport-layers-and-tables">
+<h2>Sediment Transport Layers and Tables<a class="headerlink" href="#sediment-transport-layers-and-tables" title="Link to this heading">#</a></h2>
+<p>The Sediment Transport layers, and Tables layer store the spatial and global data for sediment transport and mudflow.</p>
+<p>The data is written to these tables in the following methods:</p>
+<ul class="simple">
+<li><p>Importing from project;</p></li>
+<li><p>Directly digitizing the data into the sediment transport areas;</p></li>
+<li><p>Calculating the data from the Areas and assigning it to the grids.</p></li>
+</ul>
+<img alt="../_images/Data016.png" src="../_images/Data016.png" />
+</section>
+<section id="channel-tables">
+<h2>Channel Tables<a class="headerlink" href="#channel-tables" title="Link to this heading">#</a></h2>
+<p>The Channel Tables layer stores data for user layers and schematic layers.</p>
+<p>The data is written to these tables in the following methods:</p>
+<ul class="simple">
+<li><p>Importing from project;</p></li>
+<li><p>Running import RAS tool;</p></li>
+<li><p>Digitizing channels;</p></li>
+<li><p>Calculating right banks;</p></li>
+<li><p>Interpolating cross sections;</p></li>
+<li><p>Schematizing channel data.</p></li>
+</ul>
+<img alt="../_images/Data017.png" src="../_images/Data017.png" />
+</section>
+<section id="multiple-channel-tables">
+<h2>Multiple Channel Tables<a class="headerlink" href="#multiple-channel-tables" title="Link to this heading">#</a></h2>
+<p>The Multiple Channel Tables layer stores data for user layers and schematic layers.</p>
+<p>The data is written to these tables in the following methods:</p>
+<ul class="simple">
+<li><p>Importing from project;</p></li>
+<li><p>Multiple Channel Layers;</p></li>
+<li><p>Multiple Channel Widget.</p></li>
+</ul>
+<img alt="../_images/Data018.png" src="../_images/Data018.png" />
+</section>
+<section id="external-layers">
+<h2>External Layers<a class="headerlink" href="#external-layers" title="Link to this heading">#</a></h2>
+<p>This group of layers is data that was imported into the project by the User.
+External data can be grouped and saved on the map just like the standard data that is stored in the GeoPackage.
+External Layers are not part of the GeoPackage.
+They are separate shapefiles, tables and rasters that the User imports into the map.</p>
+<p><strong>Note: External layers are not part of the GeoPackage so they must be kept with the Project Folder if the data is transferred to a different computer</strong></p>
+<img alt="../_images/Data019.png" src="../_images/Data019.png" />
+</section>
+</section>
+
+
+                </article>
+              
+
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="../installation-instructions/QGIS%20General%20Tools.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">QGIS Tools</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="Plugin%20Features.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">Plugin Features</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <div class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item">
+  <div class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> Contents
+  </div>
+  <nav class="bd-toc-nav page-toc">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#database-format">Database Format</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#user-layers">User Layers</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#schematic-layers">Schematic Layers</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#hydraulic-structure-layers">Hydraulic Structure Layers</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#storm-drain-layers">Storm Drain Layers</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#infiltration-layers">Infiltration Layers</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#infiltration-tables">Infiltration Tables</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#tables">Tables</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#rain-tables">Rain Tables</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#calibration-data">Calibration Data</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#evaporation-tables">Evaporation Tables</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#levee-and-breach-tables">Levee and Breach Tables</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#sediment-transport-layers-and-tables">Sediment Transport Layers and Tables</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#channel-tables">Channel Tables</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#multiple-channel-tables">Multiple Channel Tables</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#external-layers">External Layers</a></li>
+</ul>
+  </nav></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+By Karen O'Brien
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+
+  <p class="copyright">
+    
+      © Copyright 2021, Karen O&#39;Brien.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="../_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b"></script>
+<script src="../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>

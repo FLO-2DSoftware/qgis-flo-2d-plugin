@@ -1,0 +1,671 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Rain Editor &#8212; FLO-2D-User-Manual  documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../_static/styles/theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="../../_static/styles/bootstrap.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="../../_static/styles/pydata-sphinx-theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+
+  
+  <link href="../../_static/vendor/fontawesome/6.5.2/css/all.min.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.5.2/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.5.2/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.5.2/webfonts/fa-regular-400.woff2" />
+
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=a746c00c" />
+    <link rel="stylesheet" type="text/css" href="../../_static/styles/sphinx-book-theme.css?v=a3416100" />
+    <link rel="stylesheet" type="text/css" href="../../_static/static/style.css?v=e5e3935e" />
+  
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b" />
+<link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
+  <script src="../../_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
+
+    <script src="../../_static/documentation_options.js?v=9eb32ce0"></script>
+    <script src="../../_static/doctools.js?v=9a2dae69"></script>
+    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'widgets/rain-editor/Rain Editor';</script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Schematized Channel Editor" href="../schematized-channel-editor/Schematized%20Channel%20Editor.html" />
+    <link rel="prev" title="Initial Condition Editor" href="../initial-condition-editor/Initial%20Condition%20Editor.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-primary-sidebar-checkbox"/>
+  <label class="overlay overlay-primary" for="pst-primary-sidebar-checkbox"></label>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-secondary-sidebar-checkbox"/>
+  <label class="overlay overlay-secondary" for="pst-secondary-sidebar-checkbox"></label>
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
+<form class="bd-search d-flex align-items-center"
+      action="../../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         id="search-input"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form></div>
+  </div>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <div class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../../index.html">
+  
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="../../_static/Flo2D_logo.jpg" class="logo__image only-light" alt="FLO-2D-User-Manual  documentation - Home"/>
+    <script>document.write(`<img src="../../_static/Flo2D_logo.jpg" class="logo__image only-dark" alt="FLO-2D-User-Manual  documentation - Home"/>`);</script>
+  
+  
+</a></div>
+        <div class="sidebar-primary-item">
+
+ <script>
+ document.write(`
+   <button class="btn search-button-field search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+    <span class="search-button__default-text">Search</span>
+    <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+   </button>
+ `);
+ </script></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        <p aria-level="2" class="caption" role="heading"><span class="caption-text">Setup</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../installation-instructions/Installation.html">Installation Instructions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../installation-instructions/QGIS%20General%20Tools.html">QGIS Tools</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Plugin Features</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../plugin-features/Data%20Storage.html">Data Storage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../plugin-features/Plugin%20Features.html">Plugin Features</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../plugin-features/View%20Options.html">View Options</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Toolbar QGIS and FLO-2D</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../toolbar/FLO-2D%20Toolbar.html">FLO-2D Toolbar</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../toolbar/FLO-2D%20Settings.html">FLO-2D Plugin Settings</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../toolbar/Run%20FLO-2D.html">Run FLO-2D</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../toolbar/Import%20Geo%20Package.html">Import a Geo Package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../toolbar/Import%20Data%20Files.html">Import FLO-2D Data Files</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../toolbar/Import%20Selected%20Component%20Files.html">Import Selected Component Files</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../toolbar/Export%20Project.html">Export Project</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../toolbar/Import%20RAS%20Channel.html">Import HEC-RAS Channel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../toolbar/Control%20Variables.html">Control Variables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../toolbar/Schematic%20to%20User%20Converter.html">Schematic to User Converter</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../toolbar/User%20to%20Schematic%20Converter.html">User to Schematic Converter</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../toolbar/Channel%20Profile.html">Channel Profile Tool</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../toolbar/FLO-2D%20Info%20Tool.html">FLO-2D Info Tool</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../toolbar/Grid%20Info%20Tool.html">Grid Info Tool</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../toolbar/Levee%20Tool.html">Levee Elevation Tool</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../toolbar/Levee%20Tool%20Walls.html">Levee Tool Walls</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../toolbar/Hazus%20Tool.html">Hazus Tool</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../toolbar/Tailings%20Dam%20Tool.html">Tailings Dam Tool</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../toolbar/Mud%20and%20Sediment%20Transport%20Tool.html">Mud and Sediment Transport Tool</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../toolbar/Debug%20Tool.html">Debug Tool</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../toolbar/Help.html">Help</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Widgets</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../pre-processing-tools/Pre-Processing%20Tools.html">Pre-Processing Tools</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Widgets (Grid Tools)</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../grid-tools/Create%20a%20Grid.html">Create a Grid</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../grid-tools/Sample%20Elevation%20from%20Raster.html">Sample Elevation from Raster</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../grid-tools/Sample%20Elevation%20GDAL%20Grid%20Method.html">Sample Elevation GDAL Grid Method</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../grid-tools/Sample%20Elevation%20from%20Points%20and%20LiDAR.html">Sample Elevation from Points and LiDAR</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../grid-tools/Elevation%20Correction%20Tool.html">Elevation Correction Tool</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../grid-tools/Sample%20Roughness.html">Sample Roughness</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../grid-tools/Area%20and%20Width%20Reduction.html">Area and Width Reduction – Buildings</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../grid-tools/Spatial%20TOL.html">Spatial TOL</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../grid-tools/Spatial%20Limiting%20Froude.html">Spatial Limiting Froude</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../grid-tools/Spatial%20Shallow%20n.html">Spatial Shallow n</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../grid-tools/Gutters.html">Gutters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../grid-tools/No%20Exchange%20Channel.html">No Exchange Channel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../grid-tools/Hazus%20Layers.html">Assign Results from Points Layer</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Widgets</span></p>
+<ul class="current nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../profile-tool/Profile%20Tool.html">Profile Tool</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cross-sections-editor/Cross%20Sections%20Editor.html">Cross Sections Editor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../boundary-condition-editor/Boundary%20Condition%20Editor.html">Boundary Condition Editor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../initial-condition-editor/Initial%20Condition%20Editor.html">Initial Condition Editor</a></li>
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">Rain Editor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../schematized-channel-editor/Schematized%20Channel%20Editor.html">Schematized Channel Editor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../hydraulic-structure-editor/Hydraulic%20Structure%20Editor.html">Hydraulic Structure Editor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../street-editor/Street%20Editor.html">Street Editor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../floodplain-cross-section-editor/Floodplain%20Cross%20Section%20Editor.html">Floodplain Cross Section Editor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../infiltration-editor/Infiltration%20Editor.html">Infiltration Editor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../storm-drain-editor/Storm%20Drain.html">Storm Drain Editor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../levees-breach-editor/Levees%20Breach%20Editor.html">Levees Breach Editor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../multiple-channels-editor/Multiple%20Channel%20Editor.html">Multiple Channels Editor</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Post Development Grid Modification</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../post-development-grid-modification/Post%20Development%20Grid%20Modification.html">Post Development Grid Modification</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">References</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../References.html">References</a></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+  </div>
+  
+  <div id="rtd-footer-container"></div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><button class="sidebar-toggle primary-toggle btn btn-sm" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</button></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+
+
+
+<div class="dropdown dropdown-download-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Download this page">
+    <i class="fas fa-download"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="../../_sources/widgets/rain-editor/Rain Editor.rst" target="_blank"
+   class="btn btn-sm btn-download-source-button dropdown-item"
+   title="Download source file"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file"></i>
+  </span>
+<span class="btn__text-container">.rst</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li>
+<button onclick="window.print()"
+  class="btn btn-sm btn-download-pdf-button dropdown-item"
+  title="Print to PDF"
+  data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file-pdf"></i>
+  </span>
+<span class="btn__text-container">.pdf</span>
+</button>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="theme-switch fa-solid fa-sun fa-lg" data-mode="light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg" data-mode="dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"></i>
+  </button>
+`);
+</script>
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm pst-navbar-icon search-button search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+  </button>
+`);
+</script>
+<button class="sidebar-toggle secondary-toggle btn btn-sm" title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="fa-solid fa-list"></span>
+</button>
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1>Rain Editor</h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+            <div>
+                <h2> Contents </h2>
+            </div>
+            <nav aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#rainfall">Rainfall</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#uniform-rainfall">Uniform Rainfall</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#moving-storm">Moving Storm</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#spatially-variable-rainfall-noaa-atlas-14">Spatially Variable Rainfall NOAA Atlas 14</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#realtime-rainfall-nexrad">Realtime Rainfall NEXRAD</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#rainfall-catalog">Rainfall Catalog</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#setup-import-options">Setup Import Options</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#import-realtime-rainfall">Import Realtime Rainfall</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#export-the-rainfall-data">Export the rainfall data.</a></li>
+</ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section id="rain-editor">
+<h1>Rain Editor<a class="headerlink" href="#rain-editor" title="Link to this heading">#</a></h1>
+<section id="rainfall">
+<h2>Rainfall<a class="headerlink" href="#rainfall" title="Link to this heading">#</a></h2>
+<p>The rainfall editor is used to set up the RAINFALL.DAT file and the RAINCELL.DAT file.
+This section will describe how to set up uniform rainfall, spatially variable depth area reduction factors, and spatially and time variable rainfall.</p>
+</section>
+<section id="uniform-rainfall">
+<h2>Uniform Rainfall<a class="headerlink" href="#uniform-rainfall" title="Link to this heading">#</a></h2>
+<p>Uniform rainfall requires the total rain in inches or millimeters and a rainfall distribution.
+In this example, the total rainfall is 3 inches.
+To find Total Storm Rainfall, zoom to Rainfall raster with Computational Domain layer, check Identify Features button, clicks within the Computational
+Domain to find highest derived value.
+The Building Rain switch is selected so that rain on totally blocked ARF cells will allow rain to run from the blocked areas.
+The initial abstraction is default of zero inches.
+The rainfall distribution is imported from a data file.</p>
+<img alt="../../_images/rained002.png" src="../../_images/rained002.png" />
+<ol class="arabic simple">
+<li><p>Select the rainfall
+distribution using the Folder menu.</p></li>
+</ol>
+<img alt="../../_images/rained019.png" src="../../_images/rained019.png" />
+<ol class="arabic simple" start="2">
+<li><p>Import the rainfall distribution file from a set of predefined files. The files
+are installed in the FLO-2D Documentation folder.</p></li>
+</ol>
+<p>C:\Users\Public\Documents\FLO-2D PRO Documentation\Rainfall Distributions</p>
+<img alt="../../_images/rained003.png" src="../../_images/rained003.png" />
+<p>The rainfall data is imported into the FLO-2D Table Editor.</p>
+<img alt="../../_images/rained004.png" src="../../_images/rained004.png" />
+<ol class="arabic simple">
+<li><p>Load the currently selected time series into the editor
+table.</p></li>
+<li><p>Add a new
+rainfall time series to the project.</p></li>
+<li><p>Open a time
+series data file.</p></li>
+<li><p>Delete a time
+series table.</p></li>
+<li><p>Rename a time
+series data set.</p></li>
+</ol>
+</section>
+<section id="moving-storm">
+<h2>Moving Storm<a class="headerlink" href="#moving-storm" title="Link to this heading">#</a></h2>
+<p>To simulate a moving storm cell, select a storm direction and speed.
+This data must be assigned along with isohyetal contours that represent storm intensity as depth are reductions contours.</p>
+<img alt="../../_images/rained006.png" src="../../_images/rained006.png" />
+</section>
+<section id="spatially-variable-rainfall-noaa-atlas-14">
+<h2>Spatially Variable Rainfall NOAA Atlas 14<a class="headerlink" href="#spatially-variable-rainfall-noaa-atlas-14" title="Link to this heading">#</a></h2>
+<p>Spatially variable rainfall data can be set up using depth area reduction factors in the RAINFALL.DAT file.
+The data format is inches (millimeters) at a point over total rainfall in inches (millimeters).
+The point is the centroid of each cell.
+The total rainfall area is the computational domain.</p>
+<p>The rainfall data is obtained from precipitation rasters.
+In the United States the rasters are calculated from isohyetal contours located the NOAA precipitation prediction website (NOAA, 2017).
+One map is required for each precipitation frequency.
+The following example is a map of the 100yr 6hr storm prediction for Arizona.
+The legend represents total rainfall in inches.</p>
+<img alt="../../_images/rained007.png" src="../../_images/rained007.png" />
+<p>To perform the calculation, use the Area Reduction calculator.</p>
+<p><img alt="rained024" src="../../_images/rained024.png" /><img alt="rained025" src="../../_images/rained025.png" /></p>
+<ol class="arabic simple">
+<li><p>Click the
+Area Reduction button.</p></li>
+<li><p>Fill the
+form and click OK.</p></li>
+</ol>
+<p>The raster pixels are typically 1000 by 1000 ft or larger.
+It is not necessary to average the data.</p>
+<ol class="arabic simple" start="3">
+<li><p>Select the maximum value to set the cell value.</p></li>
+</ol>
+<img alt="../../_images/rained008.png" src="../../_images/rained008.png" />
+</section>
+<section id="realtime-rainfall-nexrad">
+<h2>Realtime Rainfall NEXRAD<a class="headerlink" href="#realtime-rainfall-nexrad" title="Link to this heading">#</a></h2>
+<p>Realtime rainfall data is computed from NEXRAD *.ASC grid files.
+In the United States, the files are derived from calibrated radar reflectivity maps from National Oceanic and
+Atmospheric Administration (NOAA) and rainfall gages in local areas.
+The data calibration is typically conducted by local agencies or consultants.
+Datasets can be downloaded directly from NOAA’s NEXRAD Archive (NOAA, 2017).
+NEXRAD rainfall data and rainfall gage data are available from NOAA.</p>
+<p>The realtime rainfall calculator imports the *.ASC files, interpolates them to the grid and creates the rainfall data in two formats.
+The formats are RAINCELL.DAT and RAINCELL.HD5.</p>
+<div class="admonition important">
+<p class="admonition-title">Important</p>
+<p>The RAINCELL.DAT file is a mega data file. It is not recommended to import this file into a QGIS – FLO-2D
+project when importing FLO-2D Data files. It is recommended to use a Skeleton Project with only grid data
+and no other components loaded to perform the RAINCELL.DAT or RAINCELL.HDF5 data files.</p>
+</div>
+</section>
+<section id="rainfall-catalog">
+<h2>Rainfall Catalog<a class="headerlink" href="#rainfall-catalog" title="Link to this heading">#</a></h2>
+<p>The project directory must contain all the rainfall *.asc files and a catalog file *.rtc.
+Both filetypes are text files.
+The *.asc files are rainfall coverage for the project area at a specified time interval.
+In this case the time interval is 5 minutes.</p>
+<img alt="../../_images/rained009.png" src="../../_images/rained009.png" />
+<p>The rainfall catalog is a text file that contains specific information about the layout and timing of the data.
+The first line of data is a control line that sets up the timing of the storm and the interval.</p>
+<p>Line 1: 9/9/2013 04:05 9/9/2013 23:55 5 239</p>
+<p>Line 1: Start Time, End Time, Time Interval, *.asc File Count</p>
+<div class="admonition important">
+<p class="admonition-title">Important</p>
+<p>Line 2 of the *.rfc isn’t necessary.</p>
+<p>The Rainfall calculator will use all *.ASC files in the project directory.
+Make sure they are named in ascending order by time.</p>
+<p>Time = 0 is not necessary.
+The engine will start the simulation at time and rainfall = zero.
+The rainfall data will interpolate from time = 0 rainfall = 0 to the first interval.</p>
+</div>
+<img alt="../../_images/rained010.png" src="../../_images/rained010.png" />
+<img alt="../../_images/rained011.png" src="../../_images/rained011.png" />
+</section>
+<section id="setup-import-options">
+<h2>Setup Import Options<a class="headerlink" href="#setup-import-options" title="Link to this heading">#</a></h2>
+<p>The rainfall data does not have a specific coordinate reference system (CRS).</p>
+<ol class="arabic simple">
+<li><p>Set the import options for QGIS to automatically assign all imported data with no knows CRS to the Project CRS.</p></li>
+<li><p>Click Settings Options</p></li>
+</ol>
+<img alt="../../_images/rained012.png" src="../../_images/rained012.png" />
+<ol class="arabic simple" start="3">
+<li><p>Select the following options and click OK.</p></li>
+</ol>
+<img alt="../../_images/rained013.png" src="../../_images/rained013.png" />
+</section>
+<section id="import-realtime-rainfall">
+<h2>Import Realtime Rainfall<a class="headerlink" href="#import-realtime-rainfall" title="Link to this heading">#</a></h2>
+<ol class="arabic simple">
+<li><p>To interpolate realtime rainfall data, activate the Realtime Rainfall Editor.</p></li>
+<li><p>Click the Import Real Time Rainfall ASCII files.</p></li>
+</ol>
+<img alt="../../_images/rained014.png" src="../../_images/rained014.png" />
+<p>The Plugin requests the directory where the NEXRAD data is stored.</p>
+<ol class="arabic simple" start="3">
+<li><p>Navigate to the correct directory and click Select Folder.</p></li>
+</ol>
+<img alt="../../_images/rained015.png" src="../../_images/rained015.png" />
+<ol class="arabic simple" start="4">
+<li><p>Click OK once the process is complete.</p></li>
+</ol>
+<img alt="../../_images/rained016.png" src="../../_images/rained016.png" />
+</section>
+<section id="export-the-rainfall-data">
+<h2>Export the rainfall data.<a class="headerlink" href="#export-the-rainfall-data" title="Link to this heading">#</a></h2>
+<ol class="arabic simple">
+<li><p>Click Export the Rainfall Data</p></li>
+</ol>
+<img alt="../../_images/rained017.png" src="../../_images/rained017.png" />
+<ol class="arabic simple" start="2">
+<li><p>Name the storm and click Save.</p></li>
+</ol>
+<img alt="../../_images/rained018.png" src="../../_images/rained018.png" />
+</section>
+</section>
+
+
+                </article>
+              
+
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="../initial-condition-editor/Initial%20Condition%20Editor.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">Initial Condition Editor</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="../schematized-channel-editor/Schematized%20Channel%20Editor.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">Schematized Channel Editor</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <div class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item">
+  <div class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> Contents
+  </div>
+  <nav class="bd-toc-nav page-toc">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#rainfall">Rainfall</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#uniform-rainfall">Uniform Rainfall</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#moving-storm">Moving Storm</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#spatially-variable-rainfall-noaa-atlas-14">Spatially Variable Rainfall NOAA Atlas 14</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#realtime-rainfall-nexrad">Realtime Rainfall NEXRAD</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#rainfall-catalog">Rainfall Catalog</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#setup-import-options">Setup Import Options</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#import-realtime-rainfall">Import Realtime Rainfall</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#export-the-rainfall-data">Export the rainfall data.</a></li>
+</ul>
+  </nav></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+By Karen O'Brien
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+
+  <p class="copyright">
+    
+      © Copyright 2021, Karen O&#39;Brien.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="../../_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b"></script>
+<script src="../../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>

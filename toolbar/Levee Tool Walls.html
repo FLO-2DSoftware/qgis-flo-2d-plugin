@@ -1,0 +1,658 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Levee Tool Walls &#8212; FLO-2D-User-Manual  documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../_static/styles/theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="../_static/styles/bootstrap.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+
+  
+  <link href="../_static/vendor/fontawesome/6.5.2/css/all.min.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.2/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.2/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.2/webfonts/fa-regular-400.woff2" />
+
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=a746c00c" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/sphinx-book-theme.css?v=a3416100" />
+    <link rel="stylesheet" type="text/css" href="../_static/static/style.css?v=e5e3935e" />
+  
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b" />
+<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
+  <script src="../_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
+
+    <script src="../_static/documentation_options.js?v=9eb32ce0"></script>
+    <script src="../_static/doctools.js?v=9a2dae69"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'toolbar/Levee Tool Walls';</script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Hazus Tool" href="Hazus%20Tool.html" />
+    <link rel="prev" title="Levee Elevation Tool" href="Levee%20Tool.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-primary-sidebar-checkbox"/>
+  <label class="overlay overlay-primary" for="pst-primary-sidebar-checkbox"></label>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-secondary-sidebar-checkbox"/>
+  <label class="overlay overlay-secondary" for="pst-secondary-sidebar-checkbox"></label>
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
+<form class="bd-search d-flex align-items-center"
+      action="../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         id="search-input"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form></div>
+  </div>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <div class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../index.html">
+  
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="../_static/Flo2D_logo.jpg" class="logo__image only-light" alt="FLO-2D-User-Manual  documentation - Home"/>
+    <script>document.write(`<img src="../_static/Flo2D_logo.jpg" class="logo__image only-dark" alt="FLO-2D-User-Manual  documentation - Home"/>`);</script>
+  
+  
+</a></div>
+        <div class="sidebar-primary-item">
+
+ <script>
+ document.write(`
+   <button class="btn search-button-field search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+    <span class="search-button__default-text">Search</span>
+    <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+   </button>
+ `);
+ </script></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        <p aria-level="2" class="caption" role="heading"><span class="caption-text">Setup</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../installation-instructions/Installation.html">Installation Instructions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../installation-instructions/QGIS%20General%20Tools.html">QGIS Tools</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Plugin Features</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../plugin-features/Data%20Storage.html">Data Storage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../plugin-features/Plugin%20Features.html">Plugin Features</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../plugin-features/View%20Options.html">View Options</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Toolbar QGIS and FLO-2D</span></p>
+<ul class="current nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="FLO-2D%20Toolbar.html">FLO-2D Toolbar</a></li>
+<li class="toctree-l1"><a class="reference internal" href="FLO-2D%20Settings.html">FLO-2D Plugin Settings</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Run%20FLO-2D.html">Run FLO-2D</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Import%20Geo%20Package.html">Import a Geo Package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Import%20Data%20Files.html">Import FLO-2D Data Files</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Import%20Selected%20Component%20Files.html">Import Selected Component Files</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Export%20Project.html">Export Project</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Import%20RAS%20Channel.html">Import HEC-RAS Channel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Control%20Variables.html">Control Variables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Schematic%20to%20User%20Converter.html">Schematic to User Converter</a></li>
+<li class="toctree-l1"><a class="reference internal" href="User%20to%20Schematic%20Converter.html">User to Schematic Converter</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Channel%20Profile.html">Channel Profile Tool</a></li>
+<li class="toctree-l1"><a class="reference internal" href="FLO-2D%20Info%20Tool.html">FLO-2D Info Tool</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Grid%20Info%20Tool.html">Grid Info Tool</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Levee%20Tool.html">Levee Elevation Tool</a></li>
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">Levee Tool Walls</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Hazus%20Tool.html">Hazus Tool</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Tailings%20Dam%20Tool.html">Tailings Dam Tool</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Mud%20and%20Sediment%20Transport%20Tool.html">Mud and Sediment Transport Tool</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Debug%20Tool.html">Debug Tool</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Help.html">Help</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Widgets</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../widgets/pre-processing-tools/Pre-Processing%20Tools.html">Pre-Processing Tools</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Widgets (Grid Tools)</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../widgets/grid-tools/Create%20a%20Grid.html">Create a Grid</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../widgets/grid-tools/Sample%20Elevation%20from%20Raster.html">Sample Elevation from Raster</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../widgets/grid-tools/Sample%20Elevation%20GDAL%20Grid%20Method.html">Sample Elevation GDAL Grid Method</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../widgets/grid-tools/Sample%20Elevation%20from%20Points%20and%20LiDAR.html">Sample Elevation from Points and LiDAR</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../widgets/grid-tools/Elevation%20Correction%20Tool.html">Elevation Correction Tool</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../widgets/grid-tools/Sample%20Roughness.html">Sample Roughness</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../widgets/grid-tools/Area%20and%20Width%20Reduction.html">Area and Width Reduction – Buildings</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../widgets/grid-tools/Spatial%20TOL.html">Spatial TOL</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../widgets/grid-tools/Spatial%20Limiting%20Froude.html">Spatial Limiting Froude</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../widgets/grid-tools/Spatial%20Shallow%20n.html">Spatial Shallow n</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../widgets/grid-tools/Gutters.html">Gutters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../widgets/grid-tools/No%20Exchange%20Channel.html">No Exchange Channel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../widgets/grid-tools/Hazus%20Layers.html">Assign Results from Points Layer</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Widgets</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../widgets/profile-tool/Profile%20Tool.html">Profile Tool</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../widgets/cross-sections-editor/Cross%20Sections%20Editor.html">Cross Sections Editor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../widgets/boundary-condition-editor/Boundary%20Condition%20Editor.html">Boundary Condition Editor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../widgets/initial-condition-editor/Initial%20Condition%20Editor.html">Initial Condition Editor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../widgets/rain-editor/Rain%20Editor.html">Rain Editor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../widgets/schematized-channel-editor/Schematized%20Channel%20Editor.html">Schematized Channel Editor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../widgets/hydraulic-structure-editor/Hydraulic%20Structure%20Editor.html">Hydraulic Structure Editor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../widgets/street-editor/Street%20Editor.html">Street Editor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../widgets/floodplain-cross-section-editor/Floodplain%20Cross%20Section%20Editor.html">Floodplain Cross Section Editor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../widgets/infiltration-editor/Infiltration%20Editor.html">Infiltration Editor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../widgets/storm-drain-editor/Storm%20Drain.html">Storm Drain Editor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../widgets/levees-breach-editor/Levees%20Breach%20Editor.html">Levees Breach Editor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../widgets/multiple-channels-editor/Multiple%20Channel%20Editor.html">Multiple Channels Editor</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Post Development Grid Modification</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../post-development-grid-modification/Post%20Development%20Grid%20Modification.html">Post Development Grid Modification</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">References</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../References.html">References</a></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+  </div>
+  
+  <div id="rtd-footer-container"></div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><button class="sidebar-toggle primary-toggle btn btn-sm" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</button></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+
+
+
+<div class="dropdown dropdown-download-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Download this page">
+    <i class="fas fa-download"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="../_sources/toolbar/Levee Tool Walls.rst" target="_blank"
+   class="btn btn-sm btn-download-source-button dropdown-item"
+   title="Download source file"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file"></i>
+  </span>
+<span class="btn__text-container">.rst</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li>
+<button onclick="window.print()"
+  class="btn btn-sm btn-download-pdf-button dropdown-item"
+  title="Print to PDF"
+  data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file-pdf"></i>
+  </span>
+<span class="btn__text-container">.pdf</span>
+</button>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="theme-switch fa-solid fa-sun fa-lg" data-mode="light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg" data-mode="dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"></i>
+  </button>
+`);
+</script>
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm pst-navbar-icon search-button search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+  </button>
+`);
+</script>
+<button class="sidebar-toggle secondary-toggle btn btn-sm" title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="fa-solid fa-list"></span>
+</button>
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1>Levee Tool Walls</h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+            <div>
+                <h2> Contents </h2>
+            </div>
+            <nav aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#create-walls-shapefile">Create Walls Shapefile</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#shapefile-properties">Shapefile Properties</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#add-walls-to-levee-lines">Add Walls to Levee Lines</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#troubleshooting">Troubleshooting</a></li>
+</ul>
+</li>
+</ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section id="levee-tool-walls">
+<h1>Levee Tool Walls<a class="headerlink" href="#levee-tool-walls" title="Link to this heading">#</a></h1>
+<section id="create-walls-shapefile">
+<h2>Create Walls Shapefile<a class="headerlink" href="#create-walls-shapefile" title="Link to this heading">#</a></h2>
+<p>Digitize a wall shapefile to represent the walls that will make a
+significant impact to the flooding in an urban development. This means
+representing wall that may prevent flooding in a neighborhood or walls
+that may cause flooding by trapping water. The depth and velocity vector
+maps can help identify walls that are hydraulically significant.</p>
+<section id="shapefile-properties">
+<h3>Shapefile Properties<a class="headerlink" href="#shapefile-properties" title="Link to this heading">#</a></h3>
+<p>Walls that have the potential for failure due to collapse should also be
+identified. The shapefile must have polyline geometry and should have
+the following attributes:</p>
+<ul class="simple">
+<li><p><strong>Name</strong> – Feature name (string).  The Name field is required by the dialog box but the values
+can be null.</p></li>
+<li><p><strong>Elevation</strong> – Crest elevation (ft or m) (real).  For walls, this is the top elevation of the wall.  This field is
+required but can be NULL.  If NULL, the wall elevation is calculated from the correction field and described in correction
+as an elevation.</p></li>
+<li><p><strong>Correction</strong> – Elevation correction (ft or m) (real)
+Null correction is OK.</p>
+<ul>
+<li><p>The correction field is ignored if it is NULL.  If Elevation is not NULL and Correction is
+positive, it will be added to the elevation of the wall.</p></li>
+<li><p>If Elevation is not NULL and Correction is negative, it will be subtracted from the elevation of the wall.</p></li>
+<li><p>If Elevation is NULL and Correction is filled, the Correction  is used as a wall height and is applied to a wall
+elevation calculation using the grid max grid element + the wall height.</p></li>
+</ul>
+</li>
+</ul>
+<img alt="../_images/walls1a.png" src="../_images/walls1a.png" />
+<ul class="simple">
+<li><p><strong>Fail elevation or fail depth</strong> (ft or m) (real) (NULL ok)
+If a fail elevation is used, it will be applied uniformly to each levee cell along the wall.
+If a depth is used instead of an elevation, the plugin will calculate the fail elevation by adding the fail depth to
+the highest grid elevation across the wall.</p></li>
+<li><p><strong>Duration</strong> (hrs) (real) (NULL ok)
+If Duration is not NULL or 0, the duration (hr) that the levee will fail after the FAILEVEL is exceeded
+by the calculated water surface elevation.</p></li>
+<li><p><strong>Maximum fail width</strong> (ft or m) (real) (NULL ok)
+The maximum width to which the levee will fail.  This variable is not used for walls and should be 0.</p></li>
+<li><p><strong>Vertical fail rate</strong> (ft/hr or m/hr) (real) (NULL ok)
+The rate of vertical levee or dam failure. Set 0 for wall collapse.</p></li>
+<li><p><strong>Horizontal fail rate</strong> (ft/hr or m/hr) (real) (NULL ok)
+The rate at which the levee breach widens. Set 0 for wall collapse.</p></li>
+</ul>
+<img alt="../_images/walls1.png" src="../_images/walls1.png" />
+<p>In the case of walls, the failure data is usually set to default = 0 because they collapse when
+the fail depth or fail elevation is achieved.  For walls, the only required failure data is the
+failure elevation or failure depth.  All other failure values can be zero.  It is not necessary
+to use failure data for every wall feature.  If the failure elevation or failure depth is NULL,
+the failure for that wall will be ignored.</p>
+</section>
+<section id="add-walls-to-levee-lines">
+<h3>Add Walls to Levee Lines<a class="headerlink" href="#add-walls-to-levee-lines" title="Link to this heading">#</a></h3>
+<ol class="arabic simple">
+<li><p>Move the
+Walls shapefile to the top of the User Layers group.</p></li>
+</ol>
+<img alt="../_images/walls2.png" src="../_images/walls2.png" />
+<ol class="arabic simple" start="2">
+<li><p>Click the Levee
+Tool and click the Add walls to User Levee Lines.</p></li>
+</ol>
+<img alt="../_images/Leveetool.png" src="../_images/Leveetool.png" />
+<img alt="../_images/walls4.png" src="../_images/walls4.png" />
+<ol class="arabic simple" start="3">
+<li><p>Fill the Walls dialog
+box and click with the appropriate layers and
+click Add Walls to User Levee Lines.</p></li>
+<li><p>If other levees already exist, check the Add these walls to current
+User Levee Lines layer.</p></li>
+</ol>
+<img alt="../_images/walls5.png" src="../_images/walls5.png" />
+<ol class="arabic simple" start="5">
+<li><p>If the walls are added to the layer successfully, the following image
+will appear.</p></li>
+</ol>
+<img alt="../_images/walls6.png" src="../_images/walls6.png" />
+<ol class="arabic simple" start="6">
+<li><p>Go to <a class="reference external" href="Levee%20Tool.html">Levee</a> from Levee User Lines above to
+complete the walls by schematizing them.</p></li>
+</ol>
+</section>
+<section id="troubleshooting">
+<h3>Troubleshooting<a class="headerlink" href="#troubleshooting" title="Link to this heading">#</a></h3>
+<ol class="arabic simple">
+<li><p>Duplicate levees are features that can cause errors in FLO-2D. The
+Levee Tool will analyze duplicate levees and remove the levee with
+the lowest crest elevation. This process is automatic. The duplicate
+levee data is saved to the Layers List so it can be analyzed for
+potential modifications.  The Plugin should remove duplicate levees
+automatically.</p></li>
+</ol>
+<img alt="../_images/walls7.png" src="../_images/walls7.png" />
+<ol class="arabic simple" start="2">
+<li><p>Crest elevation is another potential source for a fatal error for
+FLO-2D. If a levee or wall crest is lower than an adjacent grid
+elevation, the FLO-2D engine will stop with a fatal error message and
+the erroneous elevations are reported to the error.chk file. The Plugin
+can validate elevations using the debug options. See Debug section
+for instructions.</p></li>
+<li><p>If the Walls layer is not in the User Layers, the following error
+will appear. Move the Walls Layer into User Layers and try again.</p></li>
+</ol>
+<img alt="../_images/walls8.png" src="../_images/walls8.png" />
+<ol class="arabic simple" start="4">
+<li><p>If the project is old, it will be necessary to import the old gpkg
+into a new gpkg. This error will appear.</p></li>
+</ol>
+<img alt="../_images/walls9.png" src="../_images/walls9.png" />
+<ol class="arabic simple" start="5">
+<li><p>If a levee line is exactly aligned with a grid element side or
+corner, the following error will appear. Bear in mind that the On
+line 1675 may change with new versions of the Plugin.</p></li>
+</ol>
+<img alt="../_images/walls10.png" src="../_images/walls10.png" />
+<ol class="arabic simple" start="6">
+<li><p>For large projects, it can be difficult to find all these locations.
+It is easier to move all the levee lines 1ft or less to any
+orthogonal direction. In this example the shift is made 0.5 ft to the
+southeast.</p></li>
+<li><p>Click the Levee Lines and
+click the Editor Pencil.</p></li>
+</ol>
+<img alt="../_images/walls11.png" src="../_images/walls11.png" />
+<img alt="../_images/walls12.png" src="../_images/walls12.png" />
+<ol class="arabic simple" start="8">
+<li><p>Use the Select Features
+Tool to select all User Levee Line features.</p></li>
+</ol>
+<img alt="../_images/selectfeature.png" src="../_images/selectfeature.png" />
+<ol class="arabic simple" start="9">
+<li><p>Use the Advanced Digitizing Toolbar to Move all features. Click the
+Move Features tool.</p></li>
+</ol>
+<img alt="../_images/walls14.png" src="../_images/walls14.png" />
+<ol class="arabic simple" start="10">
+<li><p>Zoom in on one vertex of any Levee Line feature. Click the vertex.
+Click Yes to acknowledge that all features will be moved.</p></li>
+</ol>
+<img alt="../_images/walls15.png" src="../_images/walls15.png" />
+<ol class="arabic simple" start="11">
+<li><p>Move the mouse slightly to the southeast and click again. Save the
+edits and run the Schematize Levees again.</p></li>
+</ol>
+<img alt="../_images/walls16.png" src="../_images/walls16.png" />
+</section>
+</section>
+</section>
+
+
+                </article>
+              
+
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="Levee%20Tool.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">Levee Elevation Tool</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="Hazus%20Tool.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">Hazus Tool</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <div class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item">
+  <div class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> Contents
+  </div>
+  <nav class="bd-toc-nav page-toc">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#create-walls-shapefile">Create Walls Shapefile</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#shapefile-properties">Shapefile Properties</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#add-walls-to-levee-lines">Add Walls to Levee Lines</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#troubleshooting">Troubleshooting</a></li>
+</ul>
+</li>
+</ul>
+  </nav></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+By Karen O'Brien
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+
+  <p class="copyright">
+    
+      © Copyright 2021, Karen O&#39;Brien.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="../_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b"></script>
+<script src="../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>
