@@ -1868,7 +1868,7 @@ class WeirAttributes(qtBaseClass, uiDialog):
         self.weir_crest_height.setValue(attributes[4])
         self.weir_disch_coeff.setValue(attributes[5])
         self.weir_flap_gate.setCurrentText(attributes[6])
-        self.weir_end_contrac.setValue(float(attributes[7]))
+        self.weir_end_contrac.setValue(int(attributes[7]))
         self.weir_end_coeff.setValue(attributes[8])
         self.weir_height.setValue(attributes[9])
         self.weir_length.setValue(attributes[10])

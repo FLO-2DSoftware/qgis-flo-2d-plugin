@@ -2578,7 +2578,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                     weir_end_contrac = (
                         f[self.weir_end_contrac_FieldCbo.currentText()]
                         if self.weir_end_contrac_FieldCbo.currentText() != ""
-                        else 0.0
+                        else 0
                     )
                     weir_end_coeff = (
                         f[self.weir_end_coeff_FieldCbo.currentText()]
