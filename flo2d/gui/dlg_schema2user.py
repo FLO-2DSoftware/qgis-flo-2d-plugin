@@ -258,3 +258,6 @@ class Schema2UserDialog(qtBaseClass, uiDialog):
         if self.ckbox_hydr_struct.isEnabled():
             self.ckbox_hydr_struct.setChecked(select)
 
+
+
+

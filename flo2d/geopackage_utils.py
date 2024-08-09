@@ -12,6 +12,7 @@ import traceback
 from collections import defaultdict
 from functools import wraps
 
+from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QProgressDialog, QApplication
 from osgeo import ogr, gdal
 from qgis._core import QgsMessageLog, QgsVectorLayer, QgsProject, QgsRasterLayer, QgsMapLayer
@@ -1003,12 +1004,15 @@ class GeoPackageUtils(object):
         qry = """SELECT fid FROM struct WHERE notes = 'imported';"""
         imported = self.execute(qry).fetchall()
         if imported:
+            QApplication.setOverrideCursor(Qt.ArrowCursor)
             if self.uc.question(
                 "There are imported structures in the database. If you proceed they will be deleted.\nProceed anyway?"
             ):
+                QApplication.restoreOverrideCursor()
                 qry = """DELETE FROM struct WHERE notes = 'imported';"""
                 self.execute(qry)
             else:
+                QApplication.restoreOverrideCursor()
                 return False
         return True
 
