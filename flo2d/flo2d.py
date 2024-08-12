@@ -3363,6 +3363,17 @@ class Flo2D(object):
     @connection_required
     def import_from_gpkg(self):
         self.uncheck_all_info_tools()
+
+        # get metadata parameters
+        contact = self.gutils.get_metadata_par("CONTACT")
+        email = self.gutils.get_metadata_par("EMAIL")
+        company = self.gutils.get_metadata_par("COMPANY")
+        phone = self.gutils.get_metadata_par("PHONE")
+        pn = self.gutils.get_metadata_par("PROJ_NAME")
+        plugin_v = self.gutils.get_metadata_par("PLUGIN_V")
+        qgis_v = self.gutils.get_metadata_par("QGIS_V")
+        flo2d_v = self.gutils.get_metadata_par("FLO-2D_V")
+
         s = QSettings()
         last_dir = s.value("FLO-2D/lastGpkgDir", "")
         attached_gpkg, __ = QFileDialog.getOpenFileName(
@@ -3377,6 +3388,18 @@ class Flo2D(object):
             QApplication.setOverrideCursor(Qt.WaitCursor)
             s.setValue("FLO-2D/lastGpkgDir", os.path.dirname(attached_gpkg))
             self.gutils.copy_from_other(attached_gpkg)
+
+            # save original metadata parameters because it was overwritten by the import from gpkg.
+            self.gutils.set_metadata_par("PROJ_NAME", pn)
+            self.gutils.set_metadata_par("CONTACT", contact)
+            self.gutils.set_metadata_par("EMAIL", email)
+            self.gutils.set_metadata_par("PHONE", phone)
+            self.gutils.set_metadata_par("COMPANY", company)
+            self.gutils.set_metadata_par("PLUGIN_V", plugin_v)
+            self.gutils.set_metadata_par("QGIS_V", qgis_v)
+            self.gutils.set_metadata_par("FLO-2D_V", flo2d_v)
+            self.gutils.set_metadata_par("CRS", self.crs.authid())
+
             self.load_layers()
             self.setup_dock_widgets()
         finally:
