@@ -702,9 +702,9 @@ class StructEditorWidget(qtBaseClass, uiDialog):
         if not self.gutils:
             return
         # ask user if overwrite imported structures, if any
-        if not self.gutils.delete_all_imported_structs():
-            self.cancel_struct_lyrs_edits()
-            return
+        # if not self.gutils.delete_all_imported_structs():
+        #     self.cancel_struct_lyrs_edits()
+        #     return
         # try to save user layer (geometry additions/changes)
         self.lyrs.save_lyrs_edits("user_struct")
         # populate widgets and show last edited struct
