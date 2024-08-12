@@ -229,6 +229,7 @@ class MudAndSedimentDialog(qtBaseClass, uiDialog):
 
         else:
             self.uc.show_warn("WARNING 280822.1005: error while loading mud/sediment transport dialog!")
+            self.uc.log_info("WARNING 280822.1005: error while loading mud/sediment transport dialog!")
 
         self.functions_cbo.clear()
         for e in self.functions:
@@ -387,6 +388,7 @@ class MudAndSedimentDialog(qtBaseClass, uiDialog):
         if self.mud_basin_grp.isChecked():
             if self.mud_basin_grid_sbox.value() <= 0:
                 self.uc.show_warn("WARNING 040622.0404: debris basin cell is invalid!")
+                self.uc.log_info("WARNING 040622.0404: debris basin cell is invalid!")
                 return False
             else:
                 return True
@@ -401,10 +403,18 @@ class MudAndSedimentDialog(qtBaseClass, uiDialog):
                 "WARNING 060522.0957: checkbox of Size Fractions is selected but\n"
                 + "no size fraction parameters (Equation, Bed Thick, and Concentration) are given !"
             )
+            self.uc.log_info(
+                "WARNING 060522.0957: checkbox of Size Fractions is selected but\n"
+                + "no size fraction parameters (Equation, Bed Thick, and Concentration) are given !"
+            )
             return False
 
         if self.sed_rating_curve_grp.isChecked() and self.sed_rating_curve_tblw.rowCount() == 0:
             self.uc.show_warn(
+                "WARNING 170522.0805: checkbox of Supply Rating Curves is selected but\n"
+                + "no Rating Curve parameters (Node, Chan/FP, Coeff., and Exp.) are given !"
+            )
+            self.uc.log_info(
                 "WARNING 170522.0805: checkbox of Supply Rating Curves is selected but\n"
                 + "no Rating Curve parameters (Node, Chan/FP, Coeff., and Exp.) are given !"
             )
@@ -465,6 +475,7 @@ class MudAndSedimentDialog(qtBaseClass, uiDialog):
                 return True
             else:
                 self.uc.show_warn(wrng)
+                self.uc.log_info(wrng)
                 return False
 
     def save_mud_sediment(self):
@@ -521,6 +532,8 @@ class MudAndSedimentDialog(qtBaseClass, uiDialog):
                 QApplication.setOverrideCursor(Qt.ArrowCursor)
                 self.uc.show_warn("Schematized tailings data has been detected! "
                                   "The schematized tailings data will be deleted.")
+                self.uc.log_info("Schematized tailings data has been detected! "
+                                  "The schematized tailings data will be deleted.")
                 QApplication.restoreOverrideCursor()
                 self.gutils.execute('DELETE FROM tailing_reservoirs;')
                 self.gutils.execute('DELETE FROM tailing_cells;')
@@ -541,6 +554,8 @@ class MudAndSedimentDialog(qtBaseClass, uiDialog):
             if has_water_res:
                 QApplication.setOverrideCursor(Qt.ArrowCursor)
                 self.uc.show_warn("Schematized reservoir data has been detected! "
+                                  "The schematized reservoirs data will be deleted.")
+                self.uc.log_info("Schematized reservoir data has been detected! "
                                   "The schematized reservoirs data will be deleted.")
                 QApplication.restoreOverrideCursor()
                 self.gutils.execute('DELETE FROM reservoirs;')
@@ -746,9 +761,11 @@ class MudAndSedimentDialog(qtBaseClass, uiDialog):
             chan_or_fp = self.sed_rating_curve_tblw.item(current_row, 1).text()
             cell = int(self.sed_rating_curve_tblw.item(current_row, 0).text())
             if chan_or_fp not in ["0", "1"]:
-                self.uc.bar_warn("ERROR: column 'Chan/FP' should be 0 for floodplain or 1 for channel!")
+                self.uc.bar_error("Column 'Chan/FP' should be 0 for floodplain or 1 for channel!")
+                self.uc.log_info("Column 'Chan/FP' should be 0 for floodplain or 1 for channel!")
             elif cell <= 0 or cell > self.n_cells:
-                self.uc.bar_warn("ERROR: column 'Node' is outside the domain!")
+                self.uc.bar_error("Column 'Node' is outside the domain!")
+                self.uc.log_info("Column 'Node' is outside the domain!")
 
     def sed_rating_curve_dp_tblw_cellchanged(self, row, col):
         # Save Supply rating curve ratings table:
@@ -1082,6 +1099,7 @@ class MudAndSedimentDialog(qtBaseClass, uiDialog):
                     self.sed_size_grid_tblw.setFocus()
                 else:
                     self.uc.bar_warn("Grid element number is outside the domain!")
+                    self.uc.log_info("Grid element number is outside the domain!")
 
     def sed_add_rigid_bed_cell_btn_clicked(self):
         while True:
@@ -1099,6 +1117,7 @@ class MudAndSedimentDialog(qtBaseClass, uiDialog):
                     self.sed_rigid_nodes_tblw.setFocus()
                 else:
                     self.uc.bar_warn("Grid element number is outside the domain!")
+                    self.uc.log_info("Grid element number is outside the domain!")
 
     def sed_add_size_fraction_dp_btn_clicked(self):
         if self.sed_size_fraction_tblw.rowCount() > 0:
@@ -1122,6 +1141,7 @@ class MudAndSedimentDialog(qtBaseClass, uiDialog):
             self.sed_size_fraction_dp_tblw.setFocus()
         else:
             self.uc.bar_warn("Add and select a Size Fraction first!")
+            self.uc.log_info("Add and select a Size Fraction first!")
 
     def sed_add_rating_curve_dp_btn_clicked(self):
         if self.sed_rating_curve_tblw.rowCount() > 0:
@@ -1148,10 +1168,13 @@ class MudAndSedimentDialog(qtBaseClass, uiDialog):
                     self.sed_rating_curve_dp_tblw.setFocus()
                 else:
                     self.uc.bar_warn("Current Sediment Supply Rating Curve has no node defined!")
+                    self.uc.log_info("Current Sediment Supply Rating Curve has no node defined!")
             else:
                 self.uc.bar_warn("Current Sediment Supply Rating Curve has no node defined!")
+                self.uc.log_info("Current Sediment Supply Rating Curve has no node defined!")
         else:
             self.uc.bar_warn("Add and select a Sediment Supply Rating Curve first!")
+            self.uc.log_info("Add and select a Sediment Supply Rating Curve first!")
 
     def sed_delete_size_fraction_btn_clicked(self):
         if self.sed_size_fraction_tblw.rowCount() > 0:
@@ -1359,5 +1382,7 @@ class MudAndSedimentDialog(qtBaseClass, uiDialog):
 
             else:
                 self.uc.show_warn("WARNING 040922.0627: not such a function!")
+                self.uc.log_info("WARNING 040922.0627: not such a function!")
         except ValueError:
             self.uc.show_warn("ERROR 030922.0644: not such an item in functions list!")
+            self.uc.log_info("ERROR 030922.0644: not such an item in functions list!")

@@ -230,8 +230,8 @@ class GpkgManagementDialog(qtBaseClass, uiDialog):
 
                 self.uc.show_info(f"The following layers were not added to the GeoPackage: \n\n {layers_not_added}")
 
-        self.uc.bar_info(f"FLO-2D Geopackage Management saved!")
-        self.uc.log_info(f"FLO-2D Geopackage Management saved!")
+        self.uc.bar_info(f"Geopackage Management saved!")
+        self.uc.log_info(f"Geopackage Management saved!")
 
         QApplication.restoreOverrideCursor()
         self.close()
@@ -275,15 +275,15 @@ class GpkgManagementDialog(qtBaseClass, uiDialog):
 
             self.iface.mapCanvas().refreshAllLayers()
             self.gutils.execute('VACUUM')
-            self.uc.bar_info("External layer(s) deleted from the GeoPackage.")
-            self.uc.log_info("External layer(s) deleted from the GeoPackage.")
+            self.uc.bar_info("External layer(s) deleted from the GeoPackage!")
+            self.uc.log_info("External layer(s) deleted from the GeoPackage!")
             self.external_list.clear()
             self.user_list.clear()
             self.populate_user_lyrs()
 
         else:
-            self.uc.bar_info("No external layers found in the GeoPackage.")
-            self.uc.log_info("No external layers found in the GeoPackage.")
+            self.uc.bar_info("No external layers found in the GeoPackage!")
+            self.uc.log_info("No external layers found in the GeoPackage!")
 
         QApplication.restoreOverrideCursor()
 

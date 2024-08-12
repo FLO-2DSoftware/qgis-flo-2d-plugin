@@ -871,7 +871,10 @@ class Flo2dGeoPackage(GeoPackageUtils):
             self.uc.log_info(traceback.format_exc())
             self.uc.show_warn(
                 "WARNING 010219.0742: Import channels failed!. Check CHAN.DAT and CHANBANK.DAT files."
-            )  # self.uc.show_warn('Import channels failed!.\nMaybe the number of left bank and right bank cells are different.')
+            )
+            self.uc.log_info(
+                "WARNING 010219.0742: Import channels failed!. Check CHAN.DAT and CHANBANK.DAT files."
+            )
 
     def import_xsec(self):
         xsec_sql = ["""INSERT INTO xsec_n_data (chan_n_nxsecnum, xi, yi) VALUES""", 3]
@@ -1025,10 +1028,17 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     "WARNING 120121.1913: Hydraulic structures cells in HYSTRUC.DAT outside the computational domain:\n\n"
                     + cells_outside
                 )
+                self.uc.log_info(
+                    "WARNING 120121.1913: Hydraulic structures cells in HYSTRUC.DAT outside the computational domain:\n\n"
+                    + cells_outside
+                )
 
         except Exception:
             QApplication.restoreOverrideCursor()
             self.uc.show_warn(
+                "ERROR 040220.0742: Importing hydraulic structures failed!\nPlease check HYSTRUC.DAT data format and values."
+            )
+            self.uc.log_info(
                 "ERROR 040220.0742: Importing hydraulic structures failed!\nPlease check HYSTRUC.DAT data format and values."
             )
 
@@ -1072,6 +1082,9 @@ class Flo2dGeoPackage(GeoPackageUtils):
         except Exception:
             QApplication.restoreOverrideCursor()
             self.uc.show_warn(
+                "ERROR 101122.1107: Importing hydraulic structures bridge xsecs from BRIDGE_XSEC.DAT failed!"
+            )
+            self.uc.log_info(
                 "ERROR 101122.1107: Importing hydraulic structures bridge xsecs from BRIDGE_XSEC.DAT failed!"
             )
             QApplication.setOverrideCursor(Qt.WaitCursor)
@@ -2020,6 +2033,13 @@ class Flo2dGeoPackage(GeoPackageUtils):
             if nulls > 0:
                 QApplication.restoreOverrideCursor()
                 self.uc.show_warn(
+                    "WARNING 281122.0541: there are "
+                    + str(nulls)
+                    + " NULL values in the Grid layer's elevation or n_value fields.\n\n"
+                    + "Default values where written to the exported files.\n\n"
+                    + "Please check the source layer coverage or use Fill Nodata."
+                )
+                self.uc.log_info(
                     "WARNING 281122.0541: there are "
                     + str(nulls)
                     + " NULL values in the Grid layer's elevation or n_value fields.\n\n"
@@ -3779,6 +3799,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
         except Exception as e:
             self.uc.bar_error("ERROR 090624.0624: exporting CHAN.DAT failed!")
+            self.uc.log_info("ERROR 090624.0624: exporting CHAN.DAT failed!")
             return False
 
     def export_xsec(self, output=None):

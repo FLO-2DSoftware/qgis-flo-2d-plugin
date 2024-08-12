@@ -337,6 +337,7 @@ class BCEditorWidget(qtBaseClass, uiDialog):
                 new_name
             )
             self.uc.show_warn(msg)
+            self.uc.log_info(msg)
             return
         # inflow
         if self.bc_type_inflow_radio.isChecked():
@@ -366,6 +367,7 @@ class BCEditorWidget(qtBaseClass, uiDialog):
                     new_name
                 )
                 self.uc.show_warn(msg)
+                self.uc.log_info(msg)
                 return
             self.inflow.set_time_series_data_name(new_name)
             self.populate_inflows(inflow_fid=self.inflow.fid)
@@ -376,6 +378,7 @@ class BCEditorWidget(qtBaseClass, uiDialog):
                     new_name
                 )
                 self.uc.show_warn(msg)
+                self.uc.log_info(msg)
                 return
             self.outflow.set_data_name(new_name)
             self.populate_outflows(outflow_fid=self.outflow.fid)
@@ -396,6 +399,7 @@ class BCEditorWidget(qtBaseClass, uiDialog):
         all_inflows = self.gutils.get_inflows_list()
         if not all_inflows and not widget_setup:
             self.uc.bar_info("There is no inflow defined in the database...")
+            self.uc.log_info("There is no inflow defined in the database...")
             self.change_bc_name_btn.setDisabled(True)
             self.clear_rubberband_btn.setDisabled(True)
             return
@@ -419,6 +423,7 @@ class BCEditorWidget(qtBaseClass, uiDialog):
         if not self.bc_name_cbo.count():
             if not widget_setup:
                 self.uc.bar_info("There is no inflow defined in the database...")
+                self.uc.log_info("There is no inflow defined in the database...")
             return
         if show_last_edited:
             cur_name_idx = i - inflows_skipped
@@ -473,7 +478,8 @@ class BCEditorWidget(qtBaseClass, uiDialog):
         """
         self.time_series = self.inflow.get_time_series()
         if not self.time_series:
-            self.uc.bar_warn("No data series for this inflow.")
+            self.uc.bar_warn("No data series for this inflow!")
+            self.uc.log_info("No data series for this inflow!")
             return
         self.inflow_tseries_cbo.clear()
         cur_idx = 0
@@ -521,7 +527,8 @@ class BCEditorWidget(qtBaseClass, uiDialog):
         self.bc_data_model.setHorizontalHeaderLabels(["Time", "Discharge", "Mud"])
         self.ot, self.od, self.om = [[], [], []]
         if not self.infow_tseries_data:
-            self.uc.bar_warn("No time series data defined for that inflow.")
+            self.uc.bar_warn("No time series data defined for that inflow!")
+            self.uc.log_info("No time series data defined for that inflow!")
             return
         for row in self.infow_tseries_data:
             items = [StandardItem(str(x)) if x is not None else StandardItem("") for x in row]
@@ -561,6 +568,7 @@ class BCEditorWidget(qtBaseClass, uiDialog):
                     self.inflow.name
                 )
                 self.uc.show_warn(msg)
+                self.uc.log_info(msg)
                 return False
             else:
                 self.inflow.name = new_name
@@ -700,6 +708,7 @@ class BCEditorWidget(qtBaseClass, uiDialog):
         all_outflows = self.gutils.get_outflows_list()
         if not all_outflows and not widget_setup:
             self.uc.bar_info("There is no outflow defined in the database...")
+            self.uc.log_info("There is no outflow defined in the database...")
             self.change_bc_name_btn.setDisabled(True)
             self.clear_rubberband_btn.setDisabled(True)
             return
@@ -723,6 +732,7 @@ class BCEditorWidget(qtBaseClass, uiDialog):
         if not self.bc_name_cbo.count():
             if not widget_setup:
                 self.uc.bar_info("There is no outflow defined in the database...")
+                self.uc.log_info("There is no outflow defined in the database...")
             return
         if show_last_edited:
             cur_out_idx = i - outflows_skipped
@@ -806,7 +816,8 @@ class BCEditorWidget(qtBaseClass, uiDialog):
         else:
             return
         if not self.series:
-            self.uc.bar_warn("No data series for this type of outflow.")
+            self.uc.bar_warn("No data series for this type of outflow!")
+            self.uc.log_info("No data series for this type of outflow!")
             return
         self.outflow_data_cbo.clear()
         self.outflow_data_cbo.setEnabled(True)
@@ -929,6 +940,7 @@ class BCEditorWidget(qtBaseClass, uiDialog):
                     new_name
                 )
                 self.uc.show_warn(msg)
+                self.uc.log_info(msg)
             return
         self.outflow.name = new_name
         self.outflow.set_row()
@@ -1004,6 +1016,7 @@ class BCEditorWidget(qtBaseClass, uiDialog):
 
             if msg:
                 self.uc.show_warn(msg)
+                self.uc.log_info(msg)
 
             QApplication.restoreOverrideCursor()
             return inserted.rowcount
@@ -1363,6 +1376,7 @@ class BCEditorWidget(qtBaseClass, uiDialog):
             self.bc_name_cbo.setCurrentIndex(idx)
         else:
             self.uc.bar_warn("Couldn't find outflow fid={} and type={}".format(fid, typ))
+            self.uc.log_info("Couldn't find outflow fid={} and type={}".format(fid, typ))
 
     def get_user_bc_lyr_for_geomtype(self, geom_type):
         table_name = "user_bc_{}s".format(geom_type)

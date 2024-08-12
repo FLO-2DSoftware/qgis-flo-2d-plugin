@@ -91,7 +91,8 @@ class ChannelsEditorWidget(qtBaseClass, uiDialog):
         
     def show_channel_segment_dependencies(self):
         if self.gutils.is_table_empty("chan"):
-            self.uc.bar_warn("Schematized Channel Segments (left bank) Layer is empty!.")
+            self.uc.bar_warn("Schematized Channel Segments (left bank) Layer is empty!")
+            self.uc.log_info("Schematized Channel Segments (left bank) Layer is empty!")
             return
 
         idx = self.channel_segment_cbo.currentIndex() + 1
@@ -122,6 +123,7 @@ class ChannelsEditorWidget(qtBaseClass, uiDialog):
             self.channel_segment_cbo.blockSignals(True)
             self.load_channel_segments_data()
             self.uc.bar_error("Channel missing!")
+            self.uc.log_info("Channel missing!")
             self.channel_segment_cbo.blockSignals(False)
   
         if not self.first_time:
@@ -139,7 +141,8 @@ class ChannelsEditorWidget(qtBaseClass, uiDialog):
         """
         # See if there are channels:
         if self.gutils.is_table_empty("chan"):
-            self.uc.bar_warn("Schematized Channel Segments (left bank) Layer is empty!.")
+            self.uc.bar_warn("Schematized Channel Segments (left bank) Layer is empty!")
+            self.uc.log_info("Schematized Channel Segments (left bank) Layer is empty!")
             return
 
         dlg_channels = ChannelGeometryDialog(self.iface, self.lyrs)

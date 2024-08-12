@@ -570,6 +570,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
                 new_name
             )
             self.uc.show_warn(msg)
+            self.uc.log_info(msg)
             return
         self.xs.name = new_name
         self.xs.set_name()
@@ -634,6 +635,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         """
         if self.gutils.is_table_empty("grid"):
             self.uc.bar_warn("There is no grid! Please create it before running tool.")
+            self.uc.log_info("There is no grid! Please create it before running tool.")
             return
         else:
             if self.uc.question("Are you sure you want to delete all user channel data?"):
@@ -646,6 +648,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
                     "user_noexchange_chan_areas",
                 )
                 self.uc.bar_info("User Channel Data deleted!")
+                self.uc.log_info("User Channel Data deleted!")
                 current_fid = self.xs_cbo.currentData()
                 self.current_xsec_changed(current_fid)
                 self.populate_xsec_cbo()
@@ -657,9 +660,11 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         """
         if self.gutils.is_table_empty("grid"):
             self.uc.bar_warn("There is no grid! Please create it before running tool.")
+            self.uc.log_info("There is no grid! Please create it before running tool.")
             return
         if self.gutils.is_table_empty("chan"):
-            self.uc.bar_info("There are no schematized channel data. ")
+            self.uc.bar_info("There are no schematized channel data!")
+            self.uc.log_info("There are no schematized channel data!")
             return
         else:
             if self.uc.question("Are you sure you want to delete all schematized channel data?"):
@@ -678,6 +683,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
                     "chan_elems_interp"
                 )
                 self.uc.bar_info("Schematized Cross Sections deleted!")
+                self.uc.log_info("Schematized Cross Sections deleted!")
                 chan_schem = self.lyrs.data["chan"]["qlyr"]
                 chan_elems = self.lyrs.data["chan_elems"]["qlyr"]
                 rbank = self.lyrs.data["rbank"]["qlyr"]
@@ -695,6 +701,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         """
         if self.gutils.is_table_empty("grid"):
             self.uc.bar_warn("There is no grid! Please create it before running tool.")
+            self.uc.log_info("There is no grid! Please create it before running tool.")
             return
         if self.gutils.is_table_empty("user_left_bank"):
             if not self.gutils.is_table_empty("chan"):
@@ -1179,6 +1186,9 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
             self.uc.show_warn(
                 "WARNING 060319.1756: Interpolation of cross-sections values failed! " "Please check your User Layers."
             )
+            self.uc.log_info(
+                "WARNING 060319.1756: Interpolation of cross-sections values failed! " "Please check your User Layers."
+            )
             return
         else:
             current_fid = self.xs_cbo.currentData()
@@ -1223,8 +1233,10 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
                                 shutil.rmtree(last_dir)
                                 if m != "Elevation Cross Section Interpolated!":
                                     self.uc.bar_warn(m)
+                                    self.uc.log_info(m)
                                 else:
                                     self.uc.bar_info(m)
+                                    self.uc.log_info(m)
                                 self.uc.log_info(m)
             QApplication.restoreOverrideCursor()
         except Exception as e:
@@ -1235,15 +1247,19 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
     def save_channel_DAT_and_XSEC_files(self):
         if self.gutils.is_table_empty("grid"):
             self.uc.bar_warn("There is no grid! Please create it before running tool.")
+            self.uc.log_info("There is no grid! Please create it before running tool.")
             return
         if self.gutils.is_table_empty("chan"):
             self.uc.bar_warn("There are no Schematized Channel Segments (Left Banks) to export.")
+            self.uc.log_info("There are no Schematized Channel Segments (Left Banks) to export.")
             return
         if self.gutils.is_table_empty("chan_elems"):
             self.uc.bar_warn("There are no Schematized Channel Cross Sections to export.")
+            self.uc.log_info("There are no Schematized Channel Cross Sections to export.")
             return
         if self.gutils.is_table_empty("user_xsections"):
             self.uc.show_warn("WARNING 060319.1746: There are no user cross sections defined.")
+            self.uc.log_info("WARNING 060319.1746: There are no user cross sections defined.")
             return
 
         xs_survey = self.save_chan_dot_dat_with_zero_natural_cross_sections()
@@ -1304,10 +1320,13 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
                                     m += "\n\nIncrement the number of stations in the problematic cross sections."
                                 if m != "Interpolation completed! Check log for more information.":
                                     self.uc.bar_warn(m)
+                                    self.uc.log_info(m)
                                 else:
                                     self.uc.bar_info(m)
+                                    self.uc.log_info(m)
                             if ret == 1:
                                 self.uc.show_warn("WARNING 060319.1747: CHANRIGHTBANK.EXE execution is disabled!")
+                                self.uc.log_info("WARNING 060319.1747: CHANRIGHTBANK.EXE execution is disabled!")
                             #                         self.run_CHANRIGHTBANK()
                             if ret == 2:
                                 pass
@@ -1320,11 +1339,13 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
             last_dir = s.value("FLO-2D/lastGdsDir", "") + "/temp/"
             if not os.path.isfile(last_dir + "\\CHAN.DAT"):
                 self.uc.show_warn("WARNING 060319.1748: Can't import channels!.\nCHAN.DAT doesn't exist.")
+                self.uc.log_info("WARNING 060319.1748: Can't import channels!.\nCHAN.DAT doesn't exist.")
                 return
         else:
             last_dir = s.value("FLO-2D/lastGdsDir", "")
             if not os.path.isfile(last_dir + "\\CHAN.DAT"):
                 self.uc.show_warn("WARNING 060319.1748: Can't import channels!.\nCHAN.DAT doesn't exist.")
+                self.uc.log_info("WARNING 060319.1748: Can't import channels!.\nCHAN.DAT doesn't exist.")
                 return
 
         cont_file = last_dir + "\\CHAN.DAT"
@@ -1809,6 +1830,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
             self.current_xsec_changed(current_fid)
             QApplication.restoreOverrideCursor()
             self.uc.bar_info("Interpolation of cross-sections values finished!")
+            self.uc.log_info("Interpolation of cross-sections values finished!")
 
     def interpolate_xs_values_externally(self):
         os.chdir("C:/Users/Juan Jose Rodriguez/Desktop/XSEC Interpolated")
@@ -2541,6 +2563,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
                 shutil.rmtree(outdir)
 
                 self.uc.bar_info("Channel n-values interpolated into CHAN.DAT file!\n\n")
+                self.uc.log_info("Channel n-values interpolated into CHAN.DAT file!\n\n")
 
             elif return_code == -999:
                 QApplication.restoreOverrideCursor()
@@ -2716,6 +2739,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
             self.gutils.clear_tables("chan_confluences")
             self.lyrs.data["chan_confluences"]["qlyr"].triggerRepaint()
             self.uc.bar_info("Confluences deleted!")
+            self.uc.log_info("Confluences deleted!")
         except Exception as e:
             QApplication.restoreOverrideCursor()
             self.uc.log_info(repr(e))

@@ -95,9 +95,11 @@ class LeveesToolDialog(qtBaseClass, uiDialog):
             self.import_z_data()
             self.enable_sources()
             self.uc.bar_info("3D levee lines data imported!")
+            self.uc.log_info("3D levee lines data imported!")
         except Exception as e:
             self.uc.log_info(traceback.format_exc())
-            self.uc.bar_warn("Could not import 3D levee lines data!")
+            self.uc.bar_error("Could not import 3D levee lines data!")
+            self.uc.log_info("Could not import 3D levee lines data!")
 
     def create_walls(self):
         dlg_walls_shapefile = WallsShapefile(self.con, self.iface, self.lyrs)
@@ -107,6 +109,7 @@ class LeveesToolDialog(qtBaseClass, uiDialog):
     def check_sources(self):
         if not self.methods:
             self.uc.show_warn("WARNING 060319.1612: Please choose at least one crest elevation source!")
+            self.uc.log_info("WARNING 060319.1612: Please choose at least one crest elevation source!")
             return False
 
     def import_z_data(self):

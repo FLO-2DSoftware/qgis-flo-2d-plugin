@@ -114,7 +114,8 @@ class MultipleChannelsEditorWidget(qtBaseClass, uiDialog):
 
         """
         if self.gutils.is_table_empty("mult_cells"):
-            self.uc.bar_warn("There are no Multiple Channel Cells defined!.")
+            self.uc.bar_warn("There are no Multiple Channel Cells defined!")
+            self.uc.log_info("There are no Multiple Channel Cells defined!")
             return
 
         dlg_individual_multiple_channels = IndividualMultipleChannelsDialog(self.iface, self.lyrs)
@@ -123,8 +124,10 @@ class MultipleChannelsEditorWidget(qtBaseClass, uiDialog):
             try:
                 if dlg_individual_multiple_channels.save_individual_multiple_chennels_data():
                     self.uc.bar_info("Individual Multiple Channels Data saved.")
+                    self.uc.log_info("Individual Multiple Channels Data saved.")
                 else:
-                    self.uc.bar_info("Saving of Individual Multiple Channels Data failed!.")
+                    self.uc.bar_error("Saving of Individual Multiple Channels Data failed!")
+                    self.uc.log_info("Saving of Individual Multiple Channels Data failed!")
             except Exception as e:
                 QApplication.restoreOverrideCursor()
                 self.uc.show_error(
@@ -139,7 +142,8 @@ class MultipleChannelsEditorWidget(qtBaseClass, uiDialog):
 
         """
         if self.gutils.is_table_empty("simple_mult_cells"):
-            self.uc.bar_warn("There are no Simplified Multiple Channel Cells defined!.")
+            self.uc.bar_warn("There are no Simplified Multiple Channel Cells defined!")
+            self.uc.log_info("There are no Simplified Multiple Channel Cells defined!")
             return
 
         dlg_individual_simplified_multiple_channels = IndividualSimplifiedMultipleChannelsDialog(self.iface, self.lyrs)

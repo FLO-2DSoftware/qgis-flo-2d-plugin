@@ -185,6 +185,7 @@ class ChannelGeometryDialog(qtBaseClass, uiDialog):
 
         if chan_elems is None:
             self.uc.bar_warn("There are no Schematized Channel Cross Sections!")
+            self.uc.log_info("There are no Schematized Channel Cross Sections!")
             return
 
         chan_r = self.gutils.execute(qry_chan_r).fetchall()
@@ -292,7 +293,8 @@ class ChannelGeometryDialog(qtBaseClass, uiDialog):
 
     def fill_channel_segment_global_data(self):
         if self.gutils.is_table_empty("chan"):
-            self.uc.bar_warn("Schematized Channel Segments (left bank) Layer is empty!.")
+            self.uc.bar_warn("Schematized Channel Segments (left bank) Layer is empty!")
+            self.uc.log_info("Schematized Channel Segments (left bank) Layer is empty!")
             return
 
         idx = self.channel_segment_cbo.currentIndex() + 1
@@ -321,6 +323,7 @@ class ChannelGeometryDialog(qtBaseClass, uiDialog):
             self.channel_baseflow_dbox.setValue(data_chan[5])
         else:    
             self.uc.bar_error("Channel missing!")
+            self.uc.log_info("Channel missing!")
             
     def fill_starting_and_ending_water_elevations(self):
         sql_in = """INSERT INTO chan_wsel (seg_fid, istart, wselstart, iend, wselend) VALUES (?,?,?,?,?);"""
@@ -376,6 +379,7 @@ class ChannelGeometryDialog(qtBaseClass, uiDialog):
 
         if chan_elems is None:
             self.uc.bar_warn("There are no Schematized Channel Cross Sections!")
+            self.uc.log_info("There are no Schematized Channel Cross Sections!")
             return
 
         # Common fields for all types:
@@ -396,6 +400,9 @@ class ChannelGeometryDialog(qtBaseClass, uiDialog):
                 self.thalweg_channel_depth_dbox.setValue(chan_r[3])
             else:
                 self.uc.show_warn(
+                    "WARNING 060319.1641: Element " + elem + " has a cross section of type 'R' without data!"
+                )
+                self.uc.log_info(
                     "WARNING 060319.1641: Element " + elem + " has a cross section of type 'R' without data!"
                 )
 
@@ -420,6 +427,9 @@ class ChannelGeometryDialog(qtBaseClass, uiDialog):
                 self.second_top_width_exp_dbox.setValue(chan_v[15])
             else:
                 self.uc.show_warn(
+                    "WARNING 060319.1624: Element " + elem + " has a cross section of type 'V' without data!"
+                )
+                self.uc.log_info(
                     "WARNING 060319.1624: Element " + elem + " has a cross section of type 'V' without data!"
                 )
 

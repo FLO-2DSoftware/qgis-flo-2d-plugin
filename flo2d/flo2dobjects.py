@@ -75,6 +75,7 @@ class CrossSection(GeoPackageUtils):
                         par, self.row["user_xs_fid"]
                     )
                     self.uc.show_warn(msg)
+                    self.uc.log_info(msg)
                     raise Flo2dError
             self.profile_data["lbank_elev"] = self.chan_tab["bankell"]
             self.profile_data["rbank_elev"] = self.chan_tab["bankelr"]
@@ -1171,7 +1172,8 @@ class Outflow(GeoPackageUtils):
         qry = "SELECT time, value FROM outflow_time_series_data WHERE series_fid = ? ORDER BY time;"
         data_fid = self.get_cur_data_fid()
         if not data_fid:
-            self.uc.bar_warn("No time series fid for current outflow is defined.")
+            self.uc.bar_warn("No time series fid for current outflow is defined!")
+            self.uc.log_info("No time series fid for current outflow is defined!")
             return
         self.time_series_data = self.execute(qry, (data_fid,)).fetchall()
         if not self.time_series_data:

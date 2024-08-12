@@ -106,6 +106,7 @@ class TableEditorWidget(qtBaseClass, uiDialog):
             if sel_col + num_cols > self.tview.model().columnCount():
                 QApplication.restoreOverrideCursor()
                 self.uc.bar_warn("Too many columns to paste.")
+                self.uc.log_info("Too many columns to paste.")
                 return
             if sel_row + num_rows > self.tview.model().rowCount():
                 self.tview.model().insertRows(

@@ -479,7 +479,8 @@ class ContToler_JJ(qtBaseClass, uiDialog):
 
     def IDEBRV_clicked(self):
         if self.IDEBRV.isChecked() and self.ISED.currentIndex() != 0:
-            self.uc.bar_warn("WARNING: Debris Basin is only used with Mud/Debris (in Physical Processes)")
+            self.uc.bar_warn("Debris Basin is only used with Mud/Debris (in Physical Processes)!")
+            self.uc.log_info("Debris Basin is only used with Mud/Debris (in Physical Processes)!")
             self.IDEBRV.setChecked(False)
 
     def save_parameters_JJ(self):
@@ -489,6 +490,7 @@ class ContToler_JJ(qtBaseClass, uiDialog):
             if self.use_time_interval_grp.isChecked():
                 if not self.ENDTIMTEP.value() > self.STARTIMTEP.value():
                     self.uc.show_warn("WARNING 220522.0526: time lapse end time must be greater than start time.")
+                    self.uc.log_info("WARNING 220522.0526: time lapse end time must be greater than start time.")
                     return False
 
             # See value of combobox 'ISED' for later set parameters MUD and ISED in 'for key...' loop.

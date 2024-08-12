@@ -1100,10 +1100,12 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
         self.uc.clear_bar_messages()
 
         if self.gutils.is_table_empty("user_model_boundary"):
-            self.uc.bar_warn("There is no computational domain! Please digitize it before running tool.")
+            self.uc.bar_warn("There is no computational domain! Please digitize it before running tool!")
+            self.uc.log_info("There is no computational domain! Please digitize it before running tool!")
             return
         if self.gutils.is_table_empty("grid"):
-            self.uc.bar_warn("There is no grid! Please create it before running tool.")
+            self.uc.bar_warn("There is no grid! Please create it before running tool!")
+            self.uc.log_info("There is no grid! Please create it before running tool!")
             return
 
         for combo_inlet in self.inlets_fields_groupBox.findChildren(QComboBox):
@@ -1184,6 +1186,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
                 and not self.load_weirs
         ):
             self.uc.bar_warn("No data was selected!")
+            self.uc.log_info("No data was selected!")
             self.save_storm_drain_shapefile_field_names()
 
         else:
@@ -2761,6 +2764,7 @@ class StormDrainShapefile(qtBaseClass, uiDialog):
 
     def cancel_message(self):
         self.uc.bar_info("No data was selected!")
+        self.uc.log_info("No data was selected!")
 
     def save_storm_drain_shapefile_field_names(self):
         """

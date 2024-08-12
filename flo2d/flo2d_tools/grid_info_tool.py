@@ -42,6 +42,7 @@ class GridInfoTool(QgsMapToolIdentify):
                 self.grid_elem_picked.emit(-1)
         except Exception:
             self.uc.bar_error("ERROR 100721.1942: is the grid defined?")
+            self.uc.log_info("ERROR 100721.1942: is the grid defined?")
 
     def activate(self):
         self.canvas.setCursor(Qt.CrossCursor)

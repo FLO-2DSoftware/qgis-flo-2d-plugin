@@ -160,9 +160,11 @@ class LeveeAndBreachEditorWidget(qtBaseClass, uiDialog):
         if save:
             try:
                 if dlg_global_breach.save_breach_global_data():
-                    self.uc.bar_info("Breach Global Data saved.")
+                    self.uc.bar_info("Breach Global Data saved!")
+                    self.uc.log_info("Breach Global Data saved!")
                 else:
-                    self.uc.bar_info("Saving of Breach Global Data failed!.")
+                    self.uc.bar_error("Saving of Breach Global Data failed!")
+                    self.uc.log_info("Saving of Breach Global Data failed!")
             except Exception as e:
                 QApplication.restoreOverrideCursor()
                 self.uc.show_error(
@@ -177,7 +179,8 @@ class LeveeAndBreachEditorWidget(qtBaseClass, uiDialog):
 
         """
         if self.gutils.is_table_empty("breach_cells"):
-            self.uc.bar_info("There aren't individual breach cells!")
+            self.uc.bar_warn("There aren't individual breach cells!")
+            self.uc.log_info("There aren't individual breach cells!")
             return
 
         dlg_individual_breach = IndividualBreachDialog(self.iface, self.lyrs)
@@ -187,9 +190,11 @@ class LeveeAndBreachEditorWidget(qtBaseClass, uiDialog):
                 if dlg_individual_breach.save_individual_breach_data():
                     levees = self.lyrs.data["levee_data"]["qlyr"]
                     repaint_levee(self.gutils, levees)
-                    self.uc.bar_info("Individual Breach Data saved.")
+                    self.uc.bar_info("Individual Breach Data saved!")
+                    self.uc.log_info("Individual Breach Data saved!")
                 else:
-                    self.uc.bar_info("Saving of Individual Breach Data failed!.")
+                    self.uc.bar_error("Saving of Individual Breach Data failed!")
+                    self.uc.log_info("Saving of Individual Breach Data failed!")
             except Exception as e:
                 QApplication.restoreOverrideCursor()
                 self.uc.show_error(
@@ -208,9 +213,11 @@ class LeveeAndBreachEditorWidget(qtBaseClass, uiDialog):
         if save:
             try:
                 if dlg_levee_fragility.save_current_probability_table():
-                    self.uc.bar_info("Fragility curve data saved.")
+                    self.uc.bar_info("Fragility curve data saved!")
+                    self.uc.log_info("Fragility curve data saved!")
                 else:
-                    self.uc.bar_info("Saving of Fragility Curve Data failed!.")
+                    self.uc.bar_error("Saving of Fragility Curve Data failed!")
+                    self.uc.log_info("Saving of Fragility Curve Data failed!")
             except Exception as e:
                 QApplication.restoreOverrideCursor()
                 self.uc.show_error(

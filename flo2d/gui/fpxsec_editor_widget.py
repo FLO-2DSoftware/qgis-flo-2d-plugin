@@ -156,6 +156,7 @@ class FPXsecEditorWidget(qtBaseClass, uiDialog):
         self.lyrs.save_lyrs_edits("user_fpxsec")
         self.populate_cbos(fid=self.gutils.get_max("user_fpxsec")-1)
         self.uc.bar_info("Floodplain cross-sections created!")
+        self.uc.log_info("Floodplain cross-sections created!")
 
     def rename_fpxs(self):
         if not self.fpxs_cbo.count():
@@ -167,6 +168,7 @@ class FPXsecEditorWidget(qtBaseClass, uiDialog):
             msg = "WARNING 060319.1704: Floodplain cross-sections with name {} already exists in the database. Please, choose another name."
             msg = msg.format(new_name)
             self.uc.show_warn(msg)
+            self.uc.log_info(msg)
             return
         self.fpxs_cbo.setItemText(self.fpxs_cbo.currentIndex(), new_name)
         self.save_fpxs()
@@ -207,10 +209,14 @@ class FPXsecEditorWidget(qtBaseClass, uiDialog):
 
     def schematize_fpxs(self):
         if self.gutils.is_table_empty("grid"):
-            self.uc.bar_warn("There is no grid! Please create it before running tool.")
+            self.uc.bar_warn("There is no grid! Please create it before running tool!")
+            self.uc.log_info("There is no grid! Please create it before running tool!")
             return
         if self.gutils.is_table_empty("user_fpxsec"):
             self.uc.bar_warn(
+                "There is no any user floodplain cross sections! " "Please digitize them before running the tool."
+            )
+            self.uc.log_info(
                 "There is no any user floodplain cross sections! " "Please digitize them before running the tool."
             )
             self.lyrs.clear_rubber()
@@ -240,6 +246,7 @@ class FPXsecEditorWidget(qtBaseClass, uiDialog):
         self.uc.clear_bar_messages()
         if self.gutils.is_table_empty("grid"):
             self.uc.bar_warn("There is no grid! Please create it before running tool.")
+            self.uc.log_info("There is no grid! Please create it before running tool.")
             return False
 
         units = "CMS" if self.gutils.get_cont_par("METRIC") == "1" else "CFS"
@@ -255,11 +262,14 @@ class FPXsecEditorWidget(qtBaseClass, uiDialog):
             if not os.path.isfile(HYCROSS_file):
                 self.uc.bar_warn(
                     "No HYCROSS.OUT file found. Please ensure the simulation has completed and verify the project export folder.")
+                self.uc.log_info(
+                    "No HYCROSS.OUT file found. Please ensure the simulation has completed and verify the project export folder.")
                 return
         # Check if the HYCROSS.OUT has data on it
         if os.path.getsize(HYCROSS_file) == 0:
             QApplication.restoreOverrideCursor()
             self.uc.bar_warn("File  '" + os.path.basename(HYCROSS_file) + "'  is empty!")
+            self.uc.log_info("File  '" + os.path.basename(HYCROSS_file) + "'  is empty!")
             return
 
         with open(HYCROSS_file, "r") as myfile:
@@ -328,7 +338,8 @@ class FPXsecEditorWidget(qtBaseClass, uiDialog):
             return
         except:
             QApplication.restoreOverrideCursor()
-            self.uc.bar_warn("Error while building table for floodplain cross section!")
+            self.uc.bar_error("Error while building table for floodplain cross section!")
+            self.uc.log_info("Error while building table for floodplain cross section!")
             return
 
     def show_cells_hydrograph(self, table, fid):
@@ -338,6 +349,7 @@ class FPXsecEditorWidget(qtBaseClass, uiDialog):
         self.uc.clear_bar_messages()
         if self.gutils.is_table_empty("grid"):
             self.uc.bar_warn("There is no grid! Please create it before running tool.")
+            self.uc.log_info("There is no grid! Please create it before running tool.")
             return False
 
         units = "CMS" if self.gutils.get_cont_par("METRIC") == "1" else "CFS"
@@ -353,11 +365,14 @@ class FPXsecEditorWidget(qtBaseClass, uiDialog):
             if not os.path.isfile(CROSSQ_file):
                 self.uc.bar_warn(
                     "No CROSSQ.OUT file found. Please ensure the simulation has completed and verify the project export folder.")
+                self.uc.log_info(
+                    "No CROSSQ.OUT file found. Please ensure the simulation has completed and verify the project export folder.")
                 return
         # Check if the CROSSQ.OUT has data on it
         if os.path.getsize(CROSSQ_file) == 0:
             QApplication.restoreOverrideCursor()
             self.uc.bar_warn("File  '" + os.path.basename(CROSSQ_file) + "'  is empty!")
+            self.uc.log_info("File  '" + os.path.basename(CROSSQ_file) + "'  is empty!")
             return
 
         grid_fid = self.gutils.execute(f"SELECT grid_fid FROM fpxsec_cells WHERE fid = '{fid}'").fetchone()[0]
@@ -416,7 +431,8 @@ class FPXsecEditorWidget(qtBaseClass, uiDialog):
             return
         except:
             QApplication.restoreOverrideCursor()
-            self.uc.bar_warn("Error while building table for floodplain cells!")
+            self.uc.bar_error("Error while building table for floodplain cells!")
+            self.uc.log_info("Error while building table for floodplain cells!")
             return
 
     def fpxs_feature_changed(self, fid):

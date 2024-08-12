@@ -195,8 +195,10 @@ class RainEditorWidget(qtBaseClass, uiDialog):
             except Exception as e:
                 self.uc.log_info(traceback.format_exc())
                 QApplication.restoreOverrideCursor()
-                self.uc.bar_warn(
-                    "Importing Rainfall Data from ASCII files failed! Please check your input data.\nIs the .RFC file missing?"
+                self.uc.bar_error("Importing Rainfall Data from ASCII files failed!")
+                self.uc.log_info(
+                    "Importing Rainfall Data from ASCII files failed! Please check your input data.\nIs the .RFC file "
+                    "missing?"
                 )
 
         except Exception as e:
@@ -295,7 +297,7 @@ class RainEditorWidget(qtBaseClass, uiDialog):
                     hdf_processor = HDFProcessor(hdf_file, self.iface)
                     hdf_processor.export_rainfall_to_binary_hdf5(header_data, qry_data, qry_size, qry_timeinterval)
                     self.uc.bar_info("RAINCELL.HDF5 was exported!")
-                    self.uc.log_info(f"RAINCELL.HDF5 was exported to {hdf_dir}!")
+                    self.uc.log_info(f"RAINCELL.HDF5 was exported to {hdf_dir}")
                 else:
                     self.uc.bar_warn(
                         "There is no data in layer 'Realtime Rainfall'"
@@ -333,10 +335,10 @@ class RainEditorWidget(qtBaseClass, uiDialog):
                 QApplication.restoreOverrideCursor()
                 if out:
                     self.uc.bar_info("RAINCELL.DAT was exported!")
-                    self.uc.log_info(f"RAINCELL.DAT was exported to {outdir}!")
+                    self.uc.log_info(f"RAINCELL.DAT was exported to {outdir}")
                 else:
                     self.uc.bar_error("RAINCELL.DAT could not be exported!")
-                    self.uc.log_info(f"RAINCELL.DAT could not be exported to {outdir}!")
+                    self.uc.log_info(f"RAINCELL.DAT could not be exported to {outdir}")
 
         # Old RAINCELL.DAT
         elif msg_box.clickedButton() == button3:
@@ -360,10 +362,10 @@ class RainEditorWidget(qtBaseClass, uiDialog):
                 QApplication.restoreOverrideCursor()
                 if out:
                     self.uc.bar_info("RAINCELL.DAT was exported!")
-                    self.uc.log_info(f"RAINCELL.DAT was exported to {outdir}!")
+                    self.uc.log_info(f"RAINCELL.DAT was exported to {outdir}")
                 else:
                     self.uc.bar_error("RAINCELL.DAT could not be exported!")
-                    self.uc.log_info(f"RAINCELL.DAT could not be exported to {outdir}!")
+                    self.uc.log_info(f"RAINCELL.DAT could not be exported to {outdir}")
 
         # Close button
         elif msg_box.clickedButton() == button4:
@@ -531,6 +533,7 @@ class RainEditorWidget(qtBaseClass, uiDialog):
                 new_name
             )
             self.uc.show_warn(msg)
+            self.uc.log_info(msg)
             return
         self.rain.set_time_series_data_name(new_name)
         self.populate_tseries()
