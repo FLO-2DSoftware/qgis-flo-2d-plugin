@@ -697,7 +697,7 @@ class GeoPackageUtils(object):
             return False
 
     def is_table_empty(self, table):
-        r = self.execute("""SELECT rowid FROM {0};""".format(table))
+        r = self.execute("""SELECT rowid FROM "{0}";""".format(table))
         if r.fetchone():
             return False
         else:
