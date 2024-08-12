@@ -705,11 +705,12 @@ class GeoPackageUtils(object):
 
     def clear_tables(self, *tables):
         for tab in tables:
-            if not self.is_table_empty(tab):
-                sql = """DELETE FROM "{0}";""".format(tab)
-                self.execute(sql)
-            else:
-                pass
+            if tab in self.current_gpkg_tables:
+                if not self.is_table_empty(tab):
+                    sql = """DELETE FROM "{0}";""".format(tab)
+                    self.execute(sql)
+                else:
+                    pass
 
     def get_cont_par(self, name):
         """
