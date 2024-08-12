@@ -1895,7 +1895,7 @@ class Flo2D(object):
             "import_mannings_n_topo",
             "import_inflow",
             "import_tailings",
-            "import_outrc",
+            # "import_outrc",
             "import_outflow",
             "import_rain",
             "import_raincell",
@@ -1988,8 +1988,8 @@ class Flo2D(object):
                         import_calls.remove("import_inflow")
                         import_calls.remove("import_tailings")
 
-                    if "Surface Water Rating Tables" not in dlg_components.components:
-                        import_calls.remove("import_outrc")
+                    # if "Surface Water Rating Tables" not in dlg_components.components:
+                    #     import_calls.remove("import_outrc")
 
                     if "Levees" not in dlg_components.components:
                         import_calls.remove("import_levee")
@@ -2302,27 +2302,33 @@ class Flo2D(object):
                             )
                         )
 
-                    msg = ""
-                    if "import_swmmflo" in import_calls:
-                        msg += "* To complete the Storm Drain functionality, the 'Computational Domain' and 'Storm Drains' conversion "
-                        msg += "must be done using the "
-                        msg += "<FONT COLOR=green>Convert Schematic Layers to User Layers</FONT>"
-                        msg += " tool in the <FONT COLOR=blue>FLO-2D panel</FONT>...<br>"
-                        if "SWMM.INP" not in self.files_used:
-                            msg += "...and <FONT COLOR=green>Import SWMM.INP</FONT> from the <FONT COLOR=blue>Storm Drain Editor widget</FONT>."
+                    # Check the imported components on the schema2user
+                    specific_components = []
 
-                    if "import_inflow" in import_calls or "import_outflow" in import_calls:
-                        if msg:
-                            msg += "<br><br>"
-                        msg += (
-                            "* To complete the Boundary Conditions functionality, the 'Boundary Conditions' conversion "
-                        )
-                        msg += "must be done using the "
-                        msg += "<FONT COLOR=green>Conversion from Schematic Layers to User Layers</FONT>"
-                        msg += " tool in the <FONT COLOR=blue>FLO-2D panel</FONT>."
+                    # Boundary Conditions
+                    if "import_inflow" in import_calls or "import_outflow" in import_calls or "import_tailings" in import_calls:
+                        specific_components.append(2)
 
-                    if msg:
+                    if "import_chan" in import_calls or "import_xsec" in import_calls:
+                        specific_components.append(3)
+
+                    if "import_hystruc" in import_calls or "import_hystruc_bridge_xs" in import_calls:
+                        specific_components.append(7)
+
+                    if "import_levee" in import_calls:
+                        specific_components.append(4)
+
+                    if "import_fpxsec" in import_calls:
+                        specific_components.append(5)
+
+                    if "import_mannings_n_topo" in import_calls:
+                        specific_components.append(1)
+
+                    if len(specific_components) > 0:
+                        msg = "To complete the user layer functionality, use the <FONT COLOR=black>Convert Schematic " \
+                              "Layers to User Layers</FONT> tool in the FLO-2D panel."
                         self.uc.show_info(msg)
+                        self.schematic2user(True)
 
             # Update the lastGdsDir to the original
             s.setValue("FLO-2D/lastGdsDir", last_dir)
@@ -2568,24 +2574,34 @@ class Flo2D(object):
             finally:
                 QApplication.restoreOverrideCursor()
                 self.gutils.enable_geom_triggers()
-                msg = ""
-                if "import_swmmflo" in import_calls:
-                    msg += "* To complete the Storm Drain functionality, the 'Computational Domain' and 'Storm Drains' conversion "
-                    msg += "must be done using the "
-                    msg += "<FONT COLOR=green>Convert Schematic Layers to User Layers</FONT>"
-                    msg += " tool in the <FONT COLOR=blue>FLO-2D panel</FONT>...<br>"
-                    # msg += "...and <FONT COLOR=green>Import SWMM.INP</FONT> from the <FONT COLOR=blue>Storm Drain Editor widget</FONT>."
 
-                if "import_inflow" in import_calls or "import_outflow" in import_calls:
-                    if msg:
-                        msg += "<br><br>"
-                    msg += "* To complete the Boundary Conditions functionality, the 'Boundary Conditions' conversion "
-                    msg += "must be done using the "
-                    msg += "<FONT COLOR=green>Conversion from Schematic Layers to User Layers</FONT>"
-                    msg += " tool in the <FONT COLOR=blue>FLO-2D panel</FONT>."
+                # Check the imported components on the schema2user
+                specific_components = []
 
-                if msg:
+                # Boundary Conditions
+                if "import_inflow" in import_calls or "import_outflow" in import_calls or "import_tailings" in import_calls:
+                    specific_components.append(2)
+
+                if "import_chan" in import_calls or "import_xsec" in import_calls:
+                    specific_components.append(3)
+
+                if "import_hystruc" in import_calls or "import_hystruc_bridge_xs" in import_calls:
+                    specific_components.append(7)
+
+                if "import_levee" in import_calls:
+                    specific_components.append(4)
+
+                if "import_fpxsec" in import_calls:
+                    specific_components.append(5)
+
+                if "import_mannings_n_topo" in import_calls:
+                    specific_components.append(1)
+
+                if len(specific_components) > 0:
+                    msg = "To complete the user layer functionality, use the <FONT COLOR=black>Convert Schematic " \
+                          "Layers to User Layers</FONT> tool in the FLO-2D panel."
                     self.uc.show_info(msg)
+                    self.schematic2user(True)
 
     @connection_required
     def import_components(self):
@@ -2611,7 +2627,7 @@ class Flo2D(object):
             "import_tolspatial",
             "import_inflow",
             "import_tailings",
-            "import_outrc",
+            # "import_outrc",
             "import_outflow",
             "import_rain",
             "import_raincell",
@@ -2679,8 +2695,8 @@ class Flo2D(object):
                         import_calls.remove("import_inflow")
                         import_calls.remove("import_tailings")
 
-                    if "Surface Water Rating Tables" not in dlg_components.components:
-                        import_calls.remove("import_outrc")
+                    # if "Surface Water Rating Tables" not in dlg_components.components:
+                    #     import_calls.remove("import_outrc")
 
                     if "Levees" not in dlg_components.components:
                         import_calls.remove("import_levee")
@@ -2706,8 +2722,8 @@ class Flo2D(object):
                     if "Evaporation" not in dlg_components.components:
                         import_calls.remove("import_evapor")
 
-                    if "Surface Water Rating Tables" not in dlg_components.components:
-                        import_calls.remove("import_outrc")
+                    # if "Surface Water Rating Tables" not in dlg_components.components:
+                    #     import_calls.remove("import_outrc")
 
                     if "Hydraulic  Structures" not in dlg_components.components:
                         import_calls.remove("import_hystruc")
@@ -2797,37 +2813,65 @@ class Flo2D(object):
                             )
                         )
 
-                    msg = ""
-                    if "import_swmmflo" in import_calls:
-                        self.clean_rating_tables()
+                    # Check the imported components on the schema2user
+                    specific_components = []
 
-                        if self.gutils.is_table_empty("user_model_boundary"):
-                            msg += "* To complete the Storm Drain functionality, the 'Computational Domain' and 'Storm Drains' conversion "
-                            msg += "must be done using the "
-                            msg += "<FONT COLOR=green>Convert Schematic Layers to User Layers</FONT>"
-                            msg += " tool in the <FONT COLOR=blue>FLO-2D panel</FONT>...<br>"
-                            if "SWMM.INP" not in self.files_used:
-                                msg += "...and <FONT COLOR=green>Import SWMM.INP</FONT> from the <FONT COLOR=blue>Storm Drain Editor widget</FONT>."
-                        else:
-                            msg += "* To complete the Storm Drain functionality, the 'Storm Drains' conversion "
-                            msg += "must be done using the "
-                            msg += "<FONT COLOR=green>Convert Schematic Layers to User Layers</FONT>"
-                            msg += " tool in the <FONT COLOR=blue>FLO-2D panel</FONT>...<br>"
-                            if "SWMM.INP" not in self.files_used:
-                                msg += "...and <FONT COLOR=green>Import SWMM.INP</FONT> from the <FONT COLOR=blue>Storm Drain Editor widget</FONT>."
+                    # Boundary Conditions
+                    if "import_inflow" in import_calls or "import_outflow" in import_calls or "import_tailings" in import_calls:
+                        specific_components.append(2)
 
-                    if "import_inflow" in import_calls or "import_outflow" in import_calls:
-                        if msg:
-                            msg += "<br><br>"
-                        msg += (
-                            "* To complete the Boundary Conditions functionality, the 'Boundary Conditions' conversion "
-                        )
-                        msg += "must be done using the "
-                        msg += "<FONT COLOR=green>Conversion from Schematic Layers to User Layers</FONT>"
-                        msg += " tool in the <FONT COLOR=blue>FLO-2D panel</FONT>."
+                    if "import_chan" in import_calls or "import_xsec" in import_calls:
+                        specific_components.append(3)
 
-                    if msg:
+                    if "import_hystruc" in import_calls or "import_hystruc_bridge_xs" in import_calls:
+                        specific_components.append(7)
+
+                    if "import_levee" in import_calls:
+                        specific_components.append(4)
+
+                    if "import_fpxsec" in import_calls:
+                        specific_components.append(5)
+
+                    if "import_mannings_n_topo" in import_calls:
+                        specific_components.append(1)
+
+                    if len(specific_components) > 0:
+                        msg = "To complete the user layer functionality, use the <FONT COLOR=black>Convert Schematic " \
+                              "Layers to User Layers</FONT> tool in the FLO-2D panel."
                         self.uc.show_info(msg)
+                        self.schematic2user(True)
+
+                    # msg = ""
+                    # if "import_swmmflo" in import_calls:
+                    #     self.clean_rating_tables()
+                    #
+                    #     if self.gutils.is_table_empty("user_model_boundary"):
+                    #         msg += "* To complete the Storm Drain functionality, the 'Computational Domain' and 'Storm Drains' conversion "
+                    #         msg += "must be done using the "
+                    #         msg += "<FONT COLOR=green>Convert Schematic Layers to User Layers</FONT>"
+                    #         msg += " tool in the <FONT COLOR=blue>FLO-2D panel</FONT>...<br>"
+                    #         if "SWMM.INP" not in self.files_used:
+                    #             msg += "...and <FONT COLOR=green>Import SWMM.INP</FONT> from the <FONT COLOR=blue>Storm Drain Editor widget</FONT>."
+                    #     else:
+                    #         msg += "* To complete the Storm Drain functionality, the 'Storm Drains' conversion "
+                    #         msg += "must be done using the "
+                    #         msg += "<FONT COLOR=green>Convert Schematic Layers to User Layers</FONT>"
+                    #         msg += " tool in the <FONT COLOR=blue>FLO-2D panel</FONT>...<br>"
+                    #         if "SWMM.INP" not in self.files_used:
+                    #             msg += "...and <FONT COLOR=green>Import SWMM.INP</FONT> from the <FONT COLOR=blue>Storm Drain Editor widget</FONT>."
+                    #
+                    # if "import_inflow" in import_calls or "import_outflow" in import_calls:
+                    #     if msg:
+                    #         msg += "<br><br>"
+                    #     msg += (
+                    #         "* To complete the Boundary Conditions functionality, the 'Boundary Conditions' conversion "
+                    #     )
+                    #     msg += "must be done using the "
+                    #     msg += "<FONT COLOR=green>Conversion from Schematic Layers to User Layers</FONT>"
+                    #     msg += " tool in the <FONT COLOR=blue>FLO-2D panel</FONT>."
+                    #
+                    # if msg:
+                    #     self.uc.show_info(msg)
             else:
                 self.gutils.enable_geom_triggers()
         else:
@@ -2848,7 +2892,7 @@ class Flo2D(object):
             "TAILINGS.DAT": "import_tailings",
             "TAILINGS_CV.DAT": "import_tailings",
             "TAILINGS_STACK_DEPTH.DAT": "import_tailings",
-            "OUTRC.DAT": "import_outrc",
+            # "OUTRC.DAT": "import_outrc",
             "OUTFLOW.DAT": "import_outflow",
             "RAIN.DAT": "import_rain",
             "RAINCELL.DAT": "import_raincell",
@@ -2925,34 +2969,62 @@ class Flo2D(object):
 
             finally:
                 self.gutils.enable_geom_triggers()
-                msg = ""
-                if call_string == "import_swmmflo":
-                    self.clean_rating_tables()
+                # Check the imported components on the schema2user
+                specific_components = []
 
-                    if self.gutils.is_table_empty("user_model_boundary"):
-                        msg += "* To complete the Storm Drain functionality, the 'Computational Domain' and 'Storm Drains' conversion "
-                        msg += "must be done using the "
-                        msg += "<FONT COLOR=green>Convert Schematic Layers to User Layers</FONT>"
-                        msg += " tool in the <FONT COLOR=blue>FLO-2D panel</FONT>...<br>"
-                        msg += "...and <FONT COLOR=green>Import SWMM.INP</FONT> from the <FONT COLOR=blue>Storm Drain Editor widget</FONT>."
+                # Boundary Conditions
+                if "import_inflow" in call_string or "import_outflow" in call_string or "import_tailings" in call_string:
+                    specific_components.append(2)
 
-                    else:
-                        msg += "* To complete the Storm Drain functionality, the 'Storm Drains' conversion "
-                        msg += "must be done using the "
-                        msg += "<FONT COLOR=green>Convert Schematic Layers to User Layers</FONT>"
-                        msg += " tool in the <FONT COLOR=blue>FLO-2D panel</FONT>...<br>"
-                        msg += "...and <FONT COLOR=green>Import SWMM.INP</FONT> from the <FONT COLOR=blue>Storm Drain Editor widget</FONT>."
+                if "import_chan" in call_string or "import_xsec" in call_string:
+                    specific_components.append(3)
 
-                if call_string == "import_inflow" or call_string == "import_outflow":
-                    if msg:
-                        msg += "<br><br>"
-                    msg += "* To complete the Boundary Conditions functionality, the 'Boundary Conditions' conversion "
-                    msg += "must be done using the "
-                    msg += "<FONT COLOR=green>Conversion from Schematic Layers to User Layers</FONT>"
-                    msg += " tool in the <FONT COLOR=blue>FLO-2D panel</FONT>."
+                if "import_hystruc" in call_string or "import_hystruc_bridge_xs" in call_string:
+                    specific_components.append(7)
 
-                if msg:
+                if "import_levee" in call_string:
+                    specific_components.append(4)
+
+                if "import_fpxsec" in call_string:
+                    specific_components.append(5)
+
+                if "import_mannings_n_topo" in call_string:
+                    specific_components.append(1)
+
+                if len(specific_components) > 0:
+                    msg = "To complete the user layer functionality, use the <FONT COLOR=black>Convert Schematic " \
+                          "Layers to User Layers</FONT> tool in the FLO-2D panel."
                     self.uc.show_info(msg)
+                    self.schematic2user(True)
+
+                # msg = ""
+                # if call_string == "import_swmmflo":
+                #     self.clean_rating_tables()
+                #
+                #     if self.gutils.is_table_empty("user_model_boundary"):
+                #         msg += "* To complete the Storm Drain functionality, the 'Computational Domain' and 'Storm Drains' conversion "
+                #         msg += "must be done using the "
+                #         msg += "<FONT COLOR=green>Convert Schematic Layers to User Layers</FONT>"
+                #         msg += " tool in the <FONT COLOR=blue>FLO-2D panel</FONT>...<br>"
+                #         msg += "...and <FONT COLOR=green>Import SWMM.INP</FONT> from the <FONT COLOR=blue>Storm Drain Editor widget</FONT>."
+                #
+                #     else:
+                #         msg += "* To complete the Storm Drain functionality, the 'Storm Drains' conversion "
+                #         msg += "must be done using the "
+                #         msg += "<FONT COLOR=green>Convert Schematic Layers to User Layers</FONT>"
+                #         msg += " tool in the <FONT COLOR=blue>FLO-2D panel</FONT>...<br>"
+                #         msg += "...and <FONT COLOR=green>Import SWMM.INP</FONT> from the <FONT COLOR=blue>Storm Drain Editor widget</FONT>."
+                #
+                # if call_string == "import_inflow" or call_string == "import_outflow":
+                #     if msg:
+                #         msg += "<br><br>"
+                #     msg += "* To complete the Boundary Conditions functionality, the 'Boundary Conditions' conversion "
+                #     msg += "must be done using the "
+                #     msg += "<FONT COLOR=green>Conversion from Schematic Layers to User Layers</FONT>"
+                #     msg += " tool in the <FONT COLOR=blue>FLO-2D panel</FONT>."
+                #
+                # if msg:
+                #     self.uc.show_info(msg)
         else:
             self.gutils.enable_geom_triggers()
 
@@ -3383,6 +3455,17 @@ class Flo2D(object):
     @connection_required
     def import_from_gpkg(self):
         self.uncheck_all_info_tools()
+
+        # get metadata parameters
+        contact = self.gutils.get_metadata_par("CONTACT")
+        email = self.gutils.get_metadata_par("EMAIL")
+        company = self.gutils.get_metadata_par("COMPANY")
+        phone = self.gutils.get_metadata_par("PHONE")
+        pn = self.gutils.get_metadata_par("PROJ_NAME")
+        plugin_v = self.gutils.get_metadata_par("PLUGIN_V")
+        qgis_v = self.gutils.get_metadata_par("QGIS_V")
+        flo2d_v = self.gutils.get_metadata_par("FLO-2D_V")
+
         s = QSettings()
         last_dir = s.value("FLO-2D/lastGpkgDir", "")
         attached_gpkg, __ = QFileDialog.getOpenFileName(
@@ -3397,6 +3480,18 @@ class Flo2D(object):
             QApplication.setOverrideCursor(Qt.WaitCursor)
             s.setValue("FLO-2D/lastGpkgDir", os.path.dirname(attached_gpkg))
             self.gutils.copy_from_other(attached_gpkg)
+
+            # save original metadata parameters because it was overwritten by the import from gpkg.
+            self.gutils.set_metadata_par("PROJ_NAME", pn)
+            self.gutils.set_metadata_par("CONTACT", contact)
+            self.gutils.set_metadata_par("EMAIL", email)
+            self.gutils.set_metadata_par("PHONE", phone)
+            self.gutils.set_metadata_par("COMPANY", company)
+            self.gutils.set_metadata_par("PLUGIN_V", plugin_v)
+            self.gutils.set_metadata_par("QGIS_V", qgis_v)
+            self.gutils.set_metadata_par("FLO-2D_V", flo2d_v)
+            self.gutils.set_metadata_par("CRS", self.crs.authid())
+
             self.load_layers()
             self.setup_dock_widgets()
         finally:
@@ -4431,7 +4526,7 @@ class Flo2D(object):
             self.uc.show_error("ERROR 030120.0723: unable to process user levees!\n", e)
 
     @connection_required
-    def schematic2user(self):
+    def schematic2user(self, check_components=False):
         components = {
             1: "Computational Domain",
             2: "Boundary Conditions",
@@ -4443,12 +4538,15 @@ class Flo2D(object):
         }
         self.uncheck_all_info_tools()
         converter_dlg = Schema2UserDialog(self.con, self.iface, self.lyrs, self.uc)
+        if check_components:
+            converter_dlg.check_components(True)
         ok = converter_dlg.exec_()
         if ok:
             if converter_dlg.methods:
                 pass
             else:
-                self.uc.show_warn("WARNING 060319.1810: Please choose at least one conversion source!")
+                self.uc.bar_warn("WARNING 060319.1810: Please choose at least one conversion source!")
+                self.uc.log_info("WARNING 060319.1810: Please choose at least one conversion source!")
                 return
         else:
             return
@@ -4460,12 +4558,13 @@ class Flo2D(object):
             msg += components[no] + "\n"
         self.setup_dock_widgets()
         QApplication.restoreOverrideCursor()
-        self.uc.show_info("Converting Schematic Layers to User Layers finished for:\n\n" + msg)
+        self.uc.bar_info("Converting Schematic Layers to User Layers finished!")
+        self.uc.log_info("Converting Schematic Layers to User Layers finished for:\n\n" + msg)
 
-        if 6 in methods_numbers:  # Storm Drains:
-            self.uc.show_info(
-                "To complete the Storm Drain functionality, select 'Import from .INP' from the 'FLO-2D' toolbar."
-            )
+        # if 6 in methods_numbers:  # Storm Drains:
+        #     self.uc.show_info(
+        #         "To complete the Storm Drain functionality, select 'Import from .INP' from the 'FLO-2D' toolbar."
+        #     )
 
     @connection_required
     def user2schematic(self):

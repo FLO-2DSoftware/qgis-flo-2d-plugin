@@ -698,7 +698,7 @@ class GeoPackageUtils(object):
             return False
 
     def is_table_empty(self, table):
-        r = self.execute("""SELECT rowid FROM {0};""".format(table))
+        r = self.execute("""SELECT rowid FROM "{0}";""".format(table))
         if r.fetchone():
             return False
         else:
@@ -706,11 +706,12 @@ class GeoPackageUtils(object):
 
     def clear_tables(self, *tables):
         for tab in tables:
-            if not self.is_table_empty(tab):
-                sql = """DELETE FROM "{0}";""".format(tab)
-                self.execute(sql)
-            else:
-                pass
+            if tab in self.current_gpkg_tables:
+                if not self.is_table_empty(tab):
+                    sql = """DELETE FROM "{0}";""".format(tab)
+                    self.execute(sql)
+                else:
+                    pass
 
     def get_cont_par(self, name):
         """
