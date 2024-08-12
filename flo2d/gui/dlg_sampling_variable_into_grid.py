@@ -62,7 +62,8 @@ class SamplingOtherVariableDialog(qtBaseClass, uiDialog):
                 self.populate_fields_cbo(self.points_cbo.currentIndex())
             else:
                 QApplication.restoreOverrideCursor()
-                self.uc.bar_warn("There are not any point layers selected (or visible)")
+                self.uc.bar_warn("There are not any point layers selected (or visible)!")
+                self.uc.log_info("There are not any point layers selected (or visible)!")
 
         except Exception as e:
             pass

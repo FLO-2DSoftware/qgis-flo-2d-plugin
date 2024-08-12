@@ -1610,7 +1610,8 @@ class IndividualLeveesDialog(qtBaseClass, uiDialog_individual_levees):
             repaint_levee(self.gutils, levees)
 
             QApplication.restoreOverrideCursor()
-            self.uc.bar_info("Individual Levee Data for cell " + levee_grid + " saved.")
+            self.uc.bar_info("Individual Levee Data for cell " + levee_grid + " saved!")
+            self.uc.log_info("Individual Levee Data for cell " + levee_grid + " saved!")
 
         except Exception as e:
             QApplication.restoreOverrideCursor()

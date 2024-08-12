@@ -1868,6 +1868,9 @@ class Layers(object):
                 self.uc.show_warn(
                     msg + "\n\nAre you loading an old project?\nTry using the 'Import from GeoPackage' tool."
                 )
+                self.uc.log_info(
+                    msg + "\n\nAre you loading an old project?\nTry using the 'Import from GeoPackage' tool."
+                )
                 raise Flo2dLayerInvalid(msg)
 
             start_time = time.time()
@@ -2562,7 +2565,8 @@ class Layers(object):
                     l.commitChanges()
                     return True
                 else:
-                    self.uc.bar_info("Action cancelled", dur=3)
+                    self.uc.bar_info("Action cancelled!", dur=3)
+                    self.uc.log_info("Action cancelled!")
                     return False
             else:
                 return True

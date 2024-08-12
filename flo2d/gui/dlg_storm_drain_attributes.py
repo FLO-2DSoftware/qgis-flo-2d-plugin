@@ -508,6 +508,7 @@ class InletAttributes(qtBaseClass, uiDialog):
                     self.external_inflow.setCurrentIndex(1)
 
             self.uc.bar_info("Storm Drain external inflow saved for inlet " + name)
+            self.uc.log_info("Storm Drain external inflow saved for inlet " + name)
 
     def external_inflow_btn_chk(self):
         """
@@ -1519,6 +1520,7 @@ class PumpAttributes(qtBaseClass, uiDialog):
 
         except Exception:
             self.uc.bar_error("Error finding the pump.")
+            self.uc.log_info("Error finding the pump.")
             self.lyrs.clear_rubber()
             pass
 
@@ -1740,6 +1742,7 @@ class OrificeAttributes(qtBaseClass, uiDialog):
 
         except Exception:
             self.uc.bar_error("Error finding the orifice.")
+            self.uc.log_info("Error finding the orifice.")
             self.lyrs.clear_rubber()
             pass
 
@@ -1977,6 +1980,7 @@ class WeirAttributes(qtBaseClass, uiDialog):
 
         except Exception:
             self.uc.bar_error("Error finding the weir.")
+            self.uc.log_info("Error finding the weir.")
             self.lyrs.clear_rubber()
             pass
 
@@ -2269,6 +2273,7 @@ class ConduitAttributes(qtBaseClass, uiDialog):
 
         except Exception:
             self.uc.bar_error("Error finding the conduit.")
+            self.uc.log_info("Error finding the conduit.")
             self.lyrs.clear_rubber()
             pass
 
@@ -2722,6 +2727,7 @@ class StorageUnitAttributes(qtBaseClass, uiDialog):
                     self.external_inflow.setCurrentIndex(1)
 
             self.uc.bar_info("Storm Drain external inflow saved for storage unit " + name)
+            self.uc.log_info("Storm Drain external inflow saved for storage unit " + name)
 
     def external_inflow_btn_chk(self):
         """
@@ -3280,6 +3286,7 @@ class InflowTimeSeriesDialog(qtBaseClass, uiDialog):
         self.gutils.batch_execute(insert_data_sql)
 
         self.uc.bar_info("Inflow time series " + self.name_le.text() + " saved.", 2)
+        self.uc.log_info("Inflow time series " + self.name_le.text() + " saved.")
         self.time_series_name = self.name_le.text()
         self.close()
 
@@ -3527,6 +3534,7 @@ class InflowPatternDialog(qtBaseClass, uiDialog):
                 )
 
             self.uc.bar_info("Inflow Pattern " + self.name_le.text() + " saved.", 2)
+            self.uc.log_info("Inflow Pattern " + self.name_le.text() + " saved.")
             self.pattern_name = self.name_le.text()
             self.close()
 
@@ -3824,6 +3832,7 @@ class OutfallTimeSeriesDialog(qtBaseClass, uiDialog):
         self.gutils.batch_execute(insert_data_sql)
 
         self.uc.bar_info("Inflow time series " + self.name_le.text() + " saved.", 2)
+        self.uc.log_info("Inflow time series " + self.name_le.text() + " saved.")
         self.time_series_name = self.name_le.text()
         self.close()
 

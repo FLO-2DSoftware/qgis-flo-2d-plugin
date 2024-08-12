@@ -150,6 +150,11 @@ class ErrorsDialog(qtBaseClass, uiDialog):
                         + str(dlg_issues.cells_out)
                         + " cells references that are outside the grid !"
                     )
+                    self.uc.log_info(
+                        "The complementary files you selected have "
+                        + str(dlg_issues.cells_out)
+                        + " cells references that are outside the grid !"
+                    )
                 dlg_issues.dock_widget.setFloating(False)
                 self.iface.addDockWidget(Qt.BottomDockWidgetArea, dlg_issues.dock_widget)
                 dlg_issues.dock_widget.show()
@@ -309,7 +314,8 @@ class IssuesFromDEBUGDialog(qtBaseClass, uiDialog):
         self.uc.clear_bar_messages()
 
         if self.gutils.is_table_empty("grid"):
-            self.uc.bar_warn("There is no grid! Please create it before running tool.")
+            self.uc.bar_warn("There is no grid! Please create it before running tool!")
+            self.uc.log_info("There is no grid! Please create it before running tool!")
             return False
         s = QSettings()
 
@@ -327,9 +333,11 @@ class IssuesFromDEBUGDialog(qtBaseClass, uiDialog):
         try:
             if not os.path.isfile(debug_file):
                 self.uc.show_warn(os.path.basename(debug_file) + " is being used by another process!")
+                self.uc.log_info(os.path.basename(debug_file) + " is being used by another process!")
                 return False
             elif os.path.getsize(debug_file) == 0:
                 self.uc.show_warn(os.path.basename(debug_file) + " is empty!")
+                self.uc.log_info(os.path.basename(debug_file) + " is empty!")
                 return False
             else:
                 QApplication.setOverrideCursor(Qt.WaitCursor)
@@ -399,11 +407,17 @@ class IssuesFromDEBUGDialog(qtBaseClass, uiDialog):
                         + os.path.basename(debug_file)
                         + ".\nIs its format correct?"
                     )
+                    self.uc.log_info(
+                        "There are no debug errors reported in file "
+                        + os.path.basename(debug_file)
+                        + ".\nIs its format correct?"
+                    )
                     return False
 
         except UnicodeDecodeError:
             # non-text dat:
             self.uc.show_warn(os.path.basename(debug_file) + " is not a text file!")
+            self.uc.log_info(os.path.basename(debug_file) + " is not a text file!")
             return False
 
     def populate_errors_cbo(self):
@@ -472,10 +486,13 @@ class IssuesFromDEBUGDialog(qtBaseClass, uiDialog):
         file = self.debug_directory + "/DEPRESSED_ELEMENTS.OUT"
         if not os.path.isfile(file):
             QApplication.restoreOverrideCursor()
-            self.uc.show_warn("WARNING 090420.0807: " + os.path.basename(file) + " does not exist!!")
+            self.uc.show_warn("WARNING 090420.0807: " + os.path.basename(file) + " does not exist!")
+            self.uc.log_info("WARNING 090420.0807: " + os.path.basename(file) + " does not exist!")
+
         elif os.path.getsize(file) == 0:
             QApplication.restoreOverrideCursor()
             self.uc.show_warn(os.path.basename(file) + " is empty!")
+            self.uc.log_info(os.path.basename(file) + " is empty!")
         else:
             lyr = self.lyrs.get_layer_by_name("Depressed Elements", self.lyrs.group)
             if lyr:
@@ -528,10 +545,12 @@ class IssuesFromDEBUGDialog(qtBaseClass, uiDialog):
         file = self.debug_directory + "/CHANBANKEL.CHK"
         if not os.path.isfile(file):
             QApplication.restoreOverrideCursor()
-            self.uc.show_warn("WARNING 090420.0808: " + os.path.basename(file) + " does not exist!!")
+            self.uc.show_warn("WARNING 090420.0808: " + os.path.basename(file) + " does not exist!")
+            self.uc.log_info("WARNING 090420.0808: " + os.path.basename(file) + " does not exist!")
         elif os.path.getsize(file) == 0:
             QApplication.restoreOverrideCursor()
             self.uc.show_warn(os.path.basename(file) + " is empty!")
+            self.uc.log_info(os.path.basename(file) + " is empty!")
         else:
             lyr = self.lyrs.get_layer_by_name("Channel Bank Elev Differences", self.lyrs.group)
             if lyr:
@@ -600,10 +619,12 @@ class IssuesFromDEBUGDialog(qtBaseClass, uiDialog):
         file = self.debug_directory + "/FPRIMELEV.OUT"
         if not os.path.isfile(file):
             QApplication.restoreOverrideCursor()
-            self.uc.show_warn("WARNING 090420.0806: " + os.path.basename(file) + " does not exist!!")
+            self.uc.show_warn("WARNING 090420.0806: " + os.path.basename(file) + " does not exist!")
+            self.uc.log_info("WARNING 090420.0806: " + os.path.basename(file) + " does not exist!")
         elif os.path.getsize(file) == 0:
             QApplication.restoreOverrideCursor()
             self.uc.show_warn(os.path.basename(file) + " is empty!")
+            self.uc.log_info(os.path.basename(file) + " is empty!")
         else:
             lyr = self.lyrs.get_layer_by_name("Floodplain Rim Differences", self.lyrs.group)
             if lyr:
@@ -675,9 +696,11 @@ class IssuesFromDEBUGDialog(qtBaseClass, uiDialog):
         if not os.path.isfile(file):
             QApplication.restoreOverrideCursor()
             self.uc.show_warn("WARNING 301122.0408: " + os.path.basename(file) + " does not exist!")
+            self.uc.log_info("WARNING 301122.0408: " + os.path.basename(file) + " does not exist!")
         elif os.path.getsize(file) == 0:
             QApplication.restoreOverrideCursor()
             self.uc.show_warn(os.path.basename(file) + " is empty!")
+            self.uc.log_info(os.path.basename(file) + " is empty!")
         else:
             lyr = self.lyrs.get_layer_by_name("ARF_ADJUSTMENT", self.lyrs.group)
             if lyr:
@@ -733,9 +756,11 @@ class IssuesFromDEBUGDialog(qtBaseClass, uiDialog):
         if not os.path.isfile(file):
             QApplication.restoreOverrideCursor()
             self.uc.show_warn("WARNING 301122.0410: " + os.path.basename(file) + " does not exist!!")
+            self.uc.log_info("WARNING 301122.0410: " + os.path.basename(file) + " does not exist!!")
         elif os.path.getsize(file) == 0:
             QApplication.restoreOverrideCursor()
             self.uc.show_warn(os.path.basename(file) + " is empty!")
+            self.uc.log_info(os.path.basename(file) + " is empty!")
         else:
             lyr = self.lyrs.get_layer_by_name("UndergOUTFALLS", self.lyrs.group)
             if lyr:
@@ -813,9 +838,11 @@ class IssuesFromDEBUGDialog(qtBaseClass, uiDialog):
         if not os.path.isfile(file):
             QApplication.restoreOverrideCursor()
             self.uc.show_warn("WARNING 301122.0412: " + os.path.basename(file) + " does not exist!!")
+            self.uc.log_info("WARNING 301122.0412: " + os.path.basename(file) + " does not exist!!")
         elif os.path.getsize(file) == 0:
             QApplication.restoreOverrideCursor()
             self.uc.show_warn(os.path.basename(file) + " is empty!")
+            self.uc.log_info(os.path.basename(file) + " is empty!")
         else:
             lyr = self.lyrs.get_layer_by_name("CHAN_INTERIOR_NODES", self.lyrs.group)
             if lyr:
@@ -868,9 +895,11 @@ class IssuesFromDEBUGDialog(qtBaseClass, uiDialog):
         if not os.path.isfile(file):
             QApplication.restoreOverrideCursor()
             self.uc.show_warn("WARNING 301122.0414: " + os.path.basename(file) + " does not exist!!")
+            self.uc.log_info("WARNING 301122.0414: " + os.path.basename(file) + " does not exist!!")
         elif os.path.getsize(file) == 0:
             QApplication.restoreOverrideCursor()
             self.uc.show_warn(os.path.basename(file) + " is empty!")
+            self.uc.log_info(os.path.basename(file) + " is empty!")
         else:
             lyr = self.lyrs.get_layer_by_name("ManholePop", self.lyrs.group)
             if lyr:
@@ -961,24 +990,31 @@ class IssuesFromDEBUGDialog(qtBaseClass, uiDialog):
         codes = self.issues_codes_cbo.currentText()
         if codes == "Depressed Elements (DEPRESSED_ELEMENTS.OUT)":
             self.uc.bar_info("Depressed Elements (DEPRESSED_ELEMENTS.OUT)", 2)
+            self.uc.log_info("Depressed Elements (DEPRESSED_ELEMENTS.OUT)")
             codes = "9001"
         elif codes == "Channel <> Floodplain (CHANBANKEL.CHK)":
             self.uc.bar_info("Channel <> Floodplain (CHANBANKEL.CHK)", 2)
+            self.uc.log_info("Channel <> Floodplain (CHANBANKEL.CHK)")
             codes = "9002"
         elif codes == "Floodplain <> Storm Drain Rim (FPRIMELEV.OUT)":
             self.uc.bar_info("Floodplain <> Storm Drain Rim (FPRIMELEV.OUT)", 2)
+            self.uc.log_info("Floodplain <> Storm Drain Rim (FPRIMELEV.OUT)")
             codes = "9003"
         elif codes == "ARF Adjustments (ARF_ADJUSTMENT.CHK)":
             self.uc.bar_info("High Velocities (ARF_ADJUSTMENT.CHK)", 2)
+            self.uc.log_info("High Velocities (ARF_ADJUSTMENT.CHK)")
             codes = "9004"
         elif codes == "Underground Outfalls (UndergOUTFALLS.OUT)":
             self.uc.bar_info("Underground Outfalls (UndergOUTFALLS.OUT)", 2)
+            self.uc.log_info("Underground Outfalls (UndergOUTFALLS.OUT)")
             codes = "9005"
         elif codes == "Channel interior nodes (CHAN_INTERIOR_NODES.OUT)":
             self.uc.bar_info("Channel interior nodes (CHAN_INTERIOR_NODES.OUT)", 2)
+            self.uc.log_info("Channel interior nodes (CHAN_INTERIOR_NODES.OUT)")
             codes = "9006"
         elif codes == "Manhole cover pop off (ManholePop.OUT)":
             self.uc.bar_info("Manhole cover pop off (ManholePop.OUT)", 2)
+            self.uc.log_info("Manhole cover pop off (ManholePop.OUT)")
             codes = "9007"
 
         QApplication.setOverrideCursor(Qt.WaitCursor)
@@ -1146,18 +1182,21 @@ class IssuesFromDEBUGDialog(qtBaseClass, uiDialog):
                                 self.update_extent()
                         else:
                             if cell != -999:
-                                self.uc.bar_warn("Cell " + str(cell) + " not found.", 2)
+                                self.uc.bar_warn("Cell " + str(cell) + " not found!", 2)
+                                self.uc.log_info("Cell " + str(cell) + " not found!")
                                 self.lyrs.clear_rubber()
                             else:
                                 self.lyrs.clear_rubber()
                     else:
                         if cell.strip() != "-999" and cell.strip() != "":
-                            self.uc.bar_warn("Cell " + str(cell) + " not found.", 2)
+                            self.uc.bar_warn("Cell " + str(cell) + " not found!", 2)
+                            self.uc.log_info("Cell " + str(cell) + " not found!")
                             self.lyrs.clear_rubber()
                         else:
                             self.lyrs.clear_rubber()
         except ValueError:
-            self.uc.bar_warn("Cell " + str(cell) + " is not valid.")
+            self.uc.bar_error("Cell " + str(cell) + " is not valid!")
+            self.uc.log_info("Cell " + str(cell) + " is not valid!")
             self.lyrs.clear_rubber()
             pass
         finally:

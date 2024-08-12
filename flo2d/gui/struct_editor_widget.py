@@ -727,6 +727,7 @@ class StructEditorWidget(qtBaseClass, uiDialog):
         """
         if not self.struct_cbo.count():
             self.uc.bar_warn("There are no structures defined!")
+            self.uc.log_info("There are no structures defined!")
             return
         dlg_bridge = BridgesDialog(self.iface, self.lyrs, self.struct_cbo.currentText())
         dlg_bridge.setWindowTitle("Bridge Variables for structure '" + self.struct_cbo.currentText() + "'")
@@ -736,6 +737,7 @@ class StructEditorWidget(qtBaseClass, uiDialog):
                 self.uc.show_info("Bridge variables saved for '" + self.struct_cbo.currentText() + "'")
             else:
                 self.uc.bar_warn("Could not save bridge variables!")
+                self.uc.log_info("Could not save bridge variables!")
 
     def show_hydrograph(self, table, fid):
         """
@@ -744,6 +746,7 @@ class StructEditorWidget(qtBaseClass, uiDialog):
         self.uc.clear_bar_messages()
         if self.gutils.is_table_empty("grid"):
             self.uc.bar_warn("There is no grid! Please create it before running tool.")
+            self.uc.log_info("There is no grid! Please create it before running tool.")
             return False
 
         units = "CMS" if self.gutils.get_cont_par("METRIC") == "1" else "CFS"
@@ -758,11 +761,14 @@ class StructEditorWidget(qtBaseClass, uiDialog):
             if not os.path.isfile(HYDROSTRUCT_file):
                 self.uc.bar_warn(
                     "No HYDROSTRUCT.OUT file found. Please ensure the simulation has completed and verify the project export folder.")
+                self.uc.log_info(
+                    "No HYDROSTRUCT.OUT file found. Please ensure the simulation has completed and verify the project export folder.")
                 return
         # Check if the HYDROSTRUCT.OUT has data on it
         if os.path.getsize(HYDROSTRUCT_file) == 0:
             QApplication.restoreOverrideCursor()
             self.uc.bar_warn("File  '" + os.path.basename(HYDROSTRUCT_file) + "'  is empty!")
+            self.uc.log_info("File  '" + os.path.basename(HYDROSTRUCT_file) + "'  is empty!")
             return
 
         with open(HYDROSTRUCT_file, "r") as myfile:
@@ -824,4 +830,5 @@ class StructEditorWidget(qtBaseClass, uiDialog):
         except:
             QApplication.restoreOverrideCursor()
             self.uc.bar_warn("Error while building table for hydraulic structure discharge!")
+            self.uc.log_info("Error while building table for hydraulic structure discharge!")
             return

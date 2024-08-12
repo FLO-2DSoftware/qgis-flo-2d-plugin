@@ -857,7 +857,8 @@ class Flo2D(object):
             uri = f'geopackage:{gpkg_path}?projectName={pn}'
             self.project.write(uri)
 
-            self.uc.bar_info("FLO-2D-Project sucessfully created.")
+            self.uc.bar_info("Project sucessfully created!")
+            self.uc.log_info("Project sucessfully created!")
 
     def flo_open_project(self):
         """
@@ -1034,11 +1035,13 @@ class Flo2D(object):
                 # # self.project.write(uri)
                 self.iface.mainWindow().findChild(QAction, 'mActionSaveProject').trigger()
                 QApplication.restoreOverrideCursor()
-                self.uc.bar_info("FLO-2D-Project created into the Geopackage.")
+                self.uc.bar_info("Project created into the Geopackage!")
+                self.uc.log_info("Project created into the Geopackage!")
 
             else:
                 QApplication.restoreOverrideCursor()
-                self.uc.bar_info("FLO-2D-Project successfully loaded.")
+                self.uc.bar_info("Project successfully loaded!")
+                self.uc.log_info("Project successfully loaded!")
 
         finally:
             QApplication.restoreOverrideCursor()
@@ -1097,8 +1100,8 @@ class Flo2D(object):
 
         QApplication.restoreOverrideCursor()
 
-        self.uc.bar_info("FLO-2D-Project saved!")
-        self.uc.log_info("FLO-2D-Project saved!")
+        self.uc.bar_info("Project saved!")
+        self.uc.log_info("Project saved!")
 
     @connection_required
     def gpkg_management(self):
@@ -1207,6 +1210,7 @@ class Flo2D(object):
         """
         if self.gutils.is_table_empty("grid"):
             self.uc.bar_warn("There is no grid! Please create it before running tool.")
+            self.uc.log_info("There is no grid! Please create it before running tool.")
             return
 
         s = QSettings()
@@ -1373,7 +1377,8 @@ class Flo2D(object):
                     # the methods in the class Flo2dGeoPackage to export (write) the
                     # FLO-2D .DAT files
 
-                    self.uc.bar_info("Flo2D model exported to " + outdir, dur=3)
+                    self.uc.bar_info("Project exported to " + outdir, dur=3)
+                    self.uc.log_info("Project exported to " + outdir)
 
                 finally:
 
@@ -1562,11 +1567,13 @@ class Flo2D(object):
                 program = ProgramExecutor(flo2d_dir, project_dir, 'Epaswmm5.exe')
                 program.perform()
                 self.uc.bar_info("Epaswmm5.exe started!", dur=3)
+                self.uc.log_info("Epaswmm5.exe started!")
             # Try to run from EPA SWMM 5 folder
             elif os.path.isfile(rf'C:\Program Files (x86)\EPA SWMM 5.0\Epaswmm5.exe'):
                 program = ProgramExecutor(r'C:\Program Files (x86)\EPA SWMM 5.0', project_dir, 'Epaswmm5.exe')
                 program.perform()
                 self.uc.bar_info("Epaswmm5.exe started!", dur=3)
+                self.uc.log_info("Epaswmm5.exe started!")
             # Executable not available
             else:
                 self.uc.bar_warn("WARNING 241020.0424: Program Epaswmm5.exe is not in directory")
@@ -1601,17 +1608,22 @@ class Flo2D(object):
                     program = ProgramExecutor(flo2d_dir, project_dir, exe_name)
                     program.perform()
                     self.uc.bar_info(exe_name + " started!", dur=3)
+                    self.uc.log_info(exe_name + " started!")
                 else:
                     if os.path.isfile(project_dir + "\\" + "CONT.DAT"):
                         program = ProgramExecutor(flo2d_dir, project_dir, exe_name)
                         program.perform()
                         self.uc.bar_info(exe_name + " started!", dur=3)
+                        self.uc.log_info(exe_name + " started!")
                     else:
                         self.uc.show_warn(
+                            "CONT.DAT is not in directory:\n\n" + f"{project_dir}\n\n" + f"Select the correct directory.")
+                        self.uc.log_info(
                             "CONT.DAT is not in directory:\n\n" + f"{project_dir}\n\n" + f"Select the correct directory.")
                         self.run_settings()
             else:
                 self.uc.show_warn("WARNING 241020.0424: Program " + exe_name + " is not in directory\n\n" + flo2d_dir)
+                self.uc.log_info("WARNING 241020.0424: Program " + exe_name + " is not in directory\n\n" + flo2d_dir)
         except Exception as e:
             self.uc.log_info(repr(e))
             self.uc.bar_warn("Running " + exe_name + " failed!")
@@ -1936,7 +1948,8 @@ class Flo2D(object):
                 if self.uc.question(q):
                     pass
                 else:
-                    self.uc.bar_info("Import cancelled", dur=3)
+                    self.uc.bar_info("Import cancelled!", dur=3)
+                    self.uc.log_info("Import cancelled!", dur=3)
                     self.gutils.enable_geom_triggers()
                     return
 
@@ -2173,7 +2186,8 @@ class Flo2D(object):
 
                     # load layers and tables
                     self.load_layers()
-                    self.uc.bar_info("Flo2D model imported", dur=3)
+                    self.uc.bar_info("Project successfully imported!", dur=3)
+                    self.uc.log_info("Project successfully imported!")
                     self.gutils.enable_geom_triggers()
 
                     if "import_chan" in import_calls:
@@ -2231,6 +2245,7 @@ class Flo2D(object):
                                 self.files_used += "SWMM.INP" + "\n"
                         else:
                             self.uc.bar_error("ERROR 100623.0944: SWMM.INP file not found!")
+                            self.uc.log_info("ERROR 100623.0944: SWMM.INP file not found!")
 
                     self.setup_dock_widgets()
                     self.lyrs.refresh_layers()
@@ -2347,7 +2362,8 @@ class Flo2D(object):
             s.setValue("FLO-2D/lastGdsDir", indir)
             QApplication.setOverrideCursor(Qt.WaitCursor)
             self.call_IO_methods(import_calls, True)
-            self.uc.bar_info("Flo2D model imported from " + input_hdf5, dur=3)
+            self.uc.bar_info("Project imported from " + input_hdf5, dur=3)
+            self.uc.log_info("Project imported from " + input_hdf5, dur=3)
             QApplication.restoreOverrideCursor()
         finally:
             QApplication.restoreOverrideCursor()
@@ -2358,7 +2374,8 @@ class Flo2D(object):
                 if self.uc.question(q):
                     pass
                 else:
-                    self.uc.bar_info("Import cancelled", dur=3)
+                    self.uc.bar_info("Import cancelled!", dur=3)
+                    self.uc.log_info("Import cancelled!")
                     self.gutils.enable_geom_triggers()
                     return
             try:
@@ -2497,7 +2514,8 @@ class Flo2D(object):
 
                 # load layers and tables
                 self.load_layers()
-                self.uc.bar_info("Flo2D model imported", dur=3)
+                self.uc.bar_info("Project imported!", dur=3)
+                self.uc.log_info("Project imported!")
                 self.gutils.enable_geom_triggers()
 
                 if "import_chan" in import_calls:
@@ -2725,7 +2743,8 @@ class Flo2D(object):
 
                         # load layers and tables
                         self.load_layers()
-                        self.uc.bar_info("Flo2D model imported", dur=3)
+                        self.uc.bar_info("Project model imported!", dur=3)
+                        self.uc.log_info("Project model imported!")
                         self.gutils.enable_geom_triggers()
 
                         if "Storm Drain" in dlg_components.components:
@@ -2750,6 +2769,7 @@ class Flo2D(object):
                                     self.files_used += "SWMM.INP" + "\n"
                             else:
                                 self.uc.bar_error("ERROR 100623.0944: SWMM.INP file not found!")
+                                self.uc.log_info("ERROR 100623.0944: SWMM.INP file not found!")
                         # if "Storm Drain" in dlg_components.components:
                         #     if self.f2d_widget.storm_drain_editor.import_storm_drain_INP_file("Force import of SWMM.INP", True):
                         #         self.files_used += "SWMM.INP" + "\n"
@@ -3969,6 +3989,7 @@ class Flo2D(object):
                 "Levee elevation tool requires that all grid elements have elevation defined."
             )
             self.uc.show_warn(msg.format(null_elev_nr))
+            self.uc.log_info(msg.format(null_elev_nr))
             return
         else:
             pass

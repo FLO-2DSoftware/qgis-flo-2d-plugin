@@ -259,6 +259,7 @@ class ProfileTool(qtBaseClass, uiDialog):
                 return
             except:
                 self.uc.bar_warn("Error while building table for channel!")
+                self.uc.log_info("Error while building table for channel!")
                 return
 
         else:

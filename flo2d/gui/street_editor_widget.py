@@ -175,9 +175,11 @@ class StreetEditorWidget(qtBaseClass, uiDialog):
             return
         if self.gutils.is_table_empty("grid"):
             self.uc.bar_warn("There is no grid! Please create it before running tool.")
+            self.uc.log_info("There is no grid! Please create it before running tool.")
             return
         if self.gutils.is_table_empty("user_streets"):
             self.uc.bar_warn("There are not any user streets to schematize! Please digitize them before running tool.")
+            self.uc.log_info("There are not any user streets to schematize! Please digitize them before running tool.")
             return
         cell_size = float(self.gutils.get_cont_par("CELLSIZE"))
         try:

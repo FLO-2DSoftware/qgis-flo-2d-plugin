@@ -1799,6 +1799,7 @@ def evaluate_spatial_tolerance(gutils, grid, areas):
 
 def evaluate_spatial_buildings_adjustment_factor(gutils, grid, areas):
     gutils.uc.show_warn("WARNING 060319.1615: Assignment of building areas to building polygons. Not implemented yet!")
+    gutils.uc.log_info("WARNING 060319.1615: Assignment of building areas to building polygons. Not implemented yet!")
 
 
 def evaluate_spatial_froude(gutils, grid, areas):

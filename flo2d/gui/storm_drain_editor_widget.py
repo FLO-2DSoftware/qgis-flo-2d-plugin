@@ -572,9 +572,11 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
 
         if self.gutils.is_table_empty("user_model_boundary"):
             self.uc.bar_warn("There is no computational domain! Please digitize it before running tool.")
+            self.uc.log_info("There is no computational domain! Please digitize it before running tool.")
             return
         if self.gutils.is_table_empty("grid"):
             self.uc.bar_warn("There is no grid! Please create it before running tool.")
+            self.uc.log_info("There is no grid! Please create it before running tool.")
             return
 
         if not self.lyrs.enter_edit_mode("user_swmm_inlets_junctions"):
@@ -585,9 +587,11 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
 
         if self.gutils.is_table_empty("user_model_boundary"):
             self.uc.bar_warn("There is no computational domain! Please digitize it before running tool.")
+            self.uc.log_info("There is no computational domain! Please digitize it before running tool.")
             return
         if self.gutils.is_table_empty("grid"):
             self.uc.bar_warn("There is no grid! Please create it before running tool.")
+            self.uc.log_info("There is no grid! Please create it before running tool.")
             return
 
         before = self.gutils.count("user_swmm_inlets_junctions")
@@ -647,6 +651,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             if swmm_dict["flapgate"] == 1:
                 inlet_type = self.cbo_intype.currentText()
                 self.uc.bar_warn("Vertical inlet opening is not allowed for {}!".format(inlet_type))
+                self.uc.log_info("Vertical inlet opening is not allowed for {}!".format(inlet_type))
                 return
             swmm_dict["rt_fid"] = None
         elif sd_type in ["I", "i"] and intype == 4:
@@ -832,6 +837,10 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                     'User Layer "Storm Drain Conduits" is empty!\n\n'
                     + "Please import components from .INP file or shapefile, or convert from schematized Storm Drains."
                 )
+                self.uc.log_info(
+                    'User Layer "Storm Drain Conduits" is empty!\n\n'
+                    + "Please import components from .INP file or shapefile, or convert from schematized Storm Drains."
+                )
                 return False
 
             QApplication.setOverrideCursor(Qt.WaitCursor)
@@ -879,6 +888,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             if writer.hasError() != QgsVectorFileWriter.NoError:
                 QApplication.restoreOverrideCursor()
                 self.uc.bar_error("ERROR 220620.1719: error when creating shapefile: " + shapefile)
+                self.uc.log_info("ERROR 220620.1719: error when creating shapefile: " + shapefile)
                 return False
 
             # Add features:
@@ -965,6 +975,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
 
         if self.gutils.is_table_empty("grid"):
             self.uc.bar_warn("There is no grid! Please create it before running tool.")
+            self.uc.log_info("There is no grid! Please create it before running tool.")
             return False
 
         s = QSettings()
@@ -1030,6 +1041,9 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 self.uc.show_warn(
                     "WARNING 060319.1729: SWMM input file\n\n " + swmm_file + "\n\n has no coordinates defined!"
                 )
+                self.uc.log_info(
+                    "WARNING 060319.1729: SWMM input file\n\n " + swmm_file + "\n\n has no coordinates defined!"
+                )
                 QApplication.restoreOverrideCursor()
                 return False
             elif ret == 0:
@@ -1043,6 +1057,9 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             if storm_drain.add_coordinates_INP_nodes_dictionary() == 0:
                 QApplication.setOverrideCursor(Qt.ArrowCursor)
                 self.uc.show_warn(
+                    "WARNING 060319.1730: SWMM input file\n\n " + swmm_file + "\n\n has no coordinates defined!"
+                )
+                self.uc.log_info(
                     "WARNING 060319.1730: SWMM input file\n\n " + swmm_file + "\n\n has no coordinates defined!"
                 )
                 QApplication.restoreOverrideCursor()
@@ -1484,9 +1501,10 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                                 area = row[2]
                                 self.gutils.execute("UPDATE user_swmm_inlets_junctions SET drboxarea = ? WHERE name = ?", (area, name))
                         except:
-                            self.uc.bar_error("Error while reading SWMMFLODROPBOX.DAT !")                  
+                            self.uc.bar_error("Error while reading SWMMFLODROPBOX.DAT!")
+                            self.uc.log_info("Error while reading SWMMFLODROPBOX.DAT!")
 
-                # Update swmm_clogging_factor and  swmm_time_for_clogging fields by reading SDCLOGGING.DAT:
+                            # Update swmm_clogging_factor and  swmm_time_for_clogging fields by reading SDCLOGGING.DAT:
                 file = last_dir + r"\SDCLOGGING.DAT"
                 if os.path.isfile(file):
                     if os.path.getsize(file) > 0:
@@ -1501,8 +1519,9 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                                                        SET swmm_clogging_factor = ?, swmm_time_for_clogging = ?
                                                        WHERE name = ?""", (clog_fact, clog_time, name))                            
                         except:
-                            self.uc.bar_error("Error while reading SDCLOGGING.DAT !")                  
-                
+                            self.uc.bar_error("Error while reading SDCLOGGING.DAT!")
+                            self.uc.log_info("Error while reading SDCLOGGING.DAT!")
+
             else:
                 # The option 'Keep existing and complete' already updated values taken from the .INP file.
                 # but include new ones:
@@ -3998,7 +4017,8 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
 
             QApplication.setOverrideCursor(Qt.ArrowCursor)
             if set_dat_dir:
-                self.uc.bar_info(f"SWMM.INP exported to {swmm_dir}!")
+                self.uc.bar_info(f"SWMM.INP exported to {swmm_dir}")
+                self.uc.log_info(f"SWMM.INP exported to {swmm_dir}")
 
             self.uc.log_info(
                 swmm_file
@@ -4584,7 +4604,8 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                     )
 
             except Exception as e:
-                self.uc.bar_error("ERROR while saving storm drain components from hydraulic layers!.")
+                self.uc.bar_error("ERROR while saving storm drain components from hydraulic layers!")
+                self.uc.log_info("ERROR while saving storm drain components from hydraulic layers!")
 
     def create_conduit_discharge_table_and_plots(self, intersection=None):
         """
@@ -4616,7 +4637,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             with open(RPT_file) as f:
                 if not intersection in f.read():
                     self.uc.bar_error("Link " + intersection + " not found in file " + RPT_file)
-                    self.uc.bar_warn("WARNING 111123.1742: Link " + intersection + " not found in file\n\n" + RPT_file +
+                    self.uc.log_info("WARNING 111123.1742: Link " + intersection + " not found in file\n\n" + RPT_file +
                                      "\n\nSelect a valid .RPT file.")
                     return
 
@@ -4664,7 +4685,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                     self.uc.bar_error("Link " + intersection + " not found in file  '" + RPT_file + "'")
 
                     QApplication.restoreOverrideCursor()
-                    self.uc.bar_warn("WARNING 111123.1743: Link " + intersection + " not found in file\n\n" + RPT_file +
+                    self.uc.log_info("WARNING 111123.1743: Link " + intersection + " not found in file\n\n" + RPT_file +
                                      "\n\nSelect a valid .RPT file.")
                     return
 
@@ -4754,6 +4775,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             else:
                 QApplication.restoreOverrideCursor()
                 self.uc.bar_error("No time series found in file " + RPT_file + " for node " + intersection)
+                self.uc.log_info("No time series found in file " + RPT_file + " for node " + intersection)
 
             QApplication.restoreOverrideCursor()
             return True
@@ -4761,6 +4783,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         except Exception as e:
             QApplication.restoreOverrideCursor()
             self.uc.bar_error("Reading .RPT file failed!")
+            self.uc.log_info("Reading .RPT file failed!")
             return False
 
     def create_SD_discharge_table_and_plots(self, sd_type, intersection=None):
@@ -4794,7 +4817,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 if not intersection in f.read():
                     self.uc.bar_error("Node " + intersection + " not found in file " + RPT_file)
                     # QApplication.restoreOverrideCursor()
-                    self.uc.bar_warn("WARNING 111123.1742: Node " + intersection + " not found in file\n\n" + RPT_file +
+                    self.uc.log_info("WARNING 111123.1742: Node " + intersection + " not found in file\n\n" + RPT_file +
                                         "\n\nSelect a valid .RPT file.")
                     return
 
@@ -4842,7 +4865,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                     self.uc.bar_error("Node " + intersection + " not found in file  '" + RPT_file + "'")
 
                     QApplication.restoreOverrideCursor()
-                    self.uc.bar_warn("WARNING 111123.1743: Node " + intersection + " not found in file\n\n" + RPT_file +
+                    self.uc.log_info("WARNING 111123.1743: Node " + intersection + " not found in file\n\n" + RPT_file +
                                         "\n\nSelect a valid .RPT file.")
                     return
 
@@ -4922,6 +4945,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             else:
                 QApplication.restoreOverrideCursor()
                 self.uc.bar_error("No time series found in file " + RPT_file + " for node " + intersection)
+                self.uc.log_info("No time series found in file " + RPT_file + " for node " + intersection)
 
             QApplication.restoreOverrideCursor()
             return True
@@ -4929,6 +4953,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         except Exception as e:
             QApplication.restoreOverrideCursor()
             self.uc.bar_error("Reading .RPT file failed!")
+            self.uc.log_info("Reading .RPT file failed!")
             return False
 
     def block_saving(self):
@@ -5707,6 +5732,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         except Exception as e:
             QApplication.restoreOverrideCursor()
             self.uc.bar_error("ERROR 040524.0706: Auto-assign link nodes failed!")
+            self.uc.log_info("ERROR 040524.0706: Auto-assign link nodes failed!")
             return False
         finally:
             # Remove temporary layer:

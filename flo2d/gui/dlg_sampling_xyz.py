@@ -265,6 +265,7 @@ class SamplingXYZDialog(qtBaseClass, uiDialog):
             statBar.removeWidget(advanceBar)
             qApp.processEvents()
             self.uc.bar_info("Updating grid elevations...")
+            self.uc.log_info("Updating grid elevations...")
 
             # Assign -9999 to all cell elevations prior to the assignment from LIDAR points:
             self.gutils.execute("UPDATE grid SET elevation = -9999;")

@@ -201,7 +201,8 @@ class Schema2UserDialog(qtBaseClass, uiDialog):
                             area = row[2]
                             self.gutils.execute("UPDATE user_swmm_inlets_junctions SET drboxarea = ? WHERE name = ?", (area, name))
                     except:
-                        self.uc.bar_error("Error while reading SWMMFLODROPBOX.DAT !")
+                        self.uc.bar_error("Error while reading SWMMFLODROPBOX.DAT!")
+                        self.uc.log_info("Error while reading SWMMFLODROPBOX.DAT!")
 
             # Update swmm_clogging_factor and  swmm_time_for_clogging fields by reading SDCLOGGING.DAT:
             file = last_dir + r"\SDCLOGGING.DAT"
@@ -218,7 +219,8 @@ class Schema2UserDialog(qtBaseClass, uiDialog):
                                                    SET swmm_clogging_factor = ?, swmm_time_for_clogging = ?
                                                    WHERE name = ?""", (clog_fact, clog_time, name))                            
                     except:
-                        self.uc.bar_error("Error while reading SDCLOGGING.DAT !")                  
+                        self.uc.bar_error("Error while reading SDCLOGGING.DAT!")
+                        self.uc.log_info("Error while reading SDCLOGGING.DAT!")
 
         except Exception as e:
             self.uc.log_info(traceback.format_exc())

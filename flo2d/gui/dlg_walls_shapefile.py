@@ -204,7 +204,8 @@ class WallsShapefile(qtBaseClass, uiDialog):
         #            self.uc.bar_warn("There is no computational domain! Please digitize it before running tool.")
         #            return
         if self.gutils.is_table_empty("grid"):
-            self.uc.bar_warn("There is no grid! Please create it before running tool.")
+            self.uc.bar_warn("There is no grid! Please create it before running tool!")
+            self.uc.log_info("There is no grid! Please create it before running tool!")
             return
 
         load_walls = False
@@ -218,6 +219,7 @@ class WallsShapefile(qtBaseClass, uiDialog):
 
         if not load_walls:
             self.uc.bar_warn("No data was selected!")
+            self.uc.log_info("No data was selected!")
         else:
             # Load walls from shapefile:
             try:
@@ -279,6 +281,10 @@ class WallsShapefile(qtBaseClass, uiDialog):
                 if levee_lines_fields.indexFromName("failDuration") == -1:
                     QApplication.restoreOverrideCursor()
                     self.uc.show_warn(
+                        "ERROR 060120.0629.: fields missing!\nThe User Levee Lines layer do not have all the required fields.\n\n"
+                        + "Your project is old. Please create a new project and import your old data."
+                    )
+                    self.uc.log_info(
                         "ERROR 060120.0629.: fields missing!\nThe User Levee Lines layer do not have all the required fields.\n\n"
                         + "Your project is old. Please create a new project and import your old data."
                     )
@@ -371,11 +377,13 @@ class WallsShapefile(qtBaseClass, uiDialog):
                     geom = wall_feat.geometry()
                     if geom is None:
                         self.uc.show_warn("WARNING 071219.0428: Error processing geometry of walls '" + name + "' !")
+                        self.uc.log_info("WARNING 071219.0428: Error processing geometry of walls '" + name + "' !")
                         continue
 
                     points = extractPoints(geom)
                     if points is None:
                         self.uc.show_warn("WARNING 071219.0429: Wall line " + name + " is faulty!")
+                        self.uc.log_info("WARNING 071219.0429: Wall line " + name + " is faulty!")
                         continue
 
                     new_geom = QgsGeometry.fromPolylineXY(points)
@@ -434,6 +442,7 @@ class WallsShapefile(qtBaseClass, uiDialog):
 
     def cancel_message(self):
         self.uc.bar_info("No data was selected!")
+        self.uc.log_info("No data was selected!")
 
     def save_wall_shapefile_fields(self):
         s = QSettings()

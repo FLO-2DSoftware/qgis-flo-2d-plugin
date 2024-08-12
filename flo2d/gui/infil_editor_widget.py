@@ -263,6 +263,7 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
     def create_infil_polygon(self):
         if self.iglobal.global_imethod == 0:
             self.uc.bar_warn("Please define global infiltration method first!")
+            self.uc.log_info("Please define global infiltration method first!")
             return
         if not self.lyrs.enter_edit_mode("user_infiltration"):
             return
@@ -270,6 +271,7 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
     def rename_infil(self):
         if self.iglobal.global_imethod == 0:
             self.uc.bar_warn("Please define global infiltration method first!")
+            self.uc.log_info("Please define global infiltration method first!")
             return
         if not self.infil_name_cbo.count():
             return
@@ -280,6 +282,7 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
             msg = "WARNING 060319.1723: Infiltration with name {} already exists in the database. Please, choose another name."
             msg = msg.format(new_name)
             self.uc.show_warn(msg)
+            self.uc.log_info(msg)
             return
         self.infil_name_cbo.setItemText(self.infil_name_cbo.currentIndex(), new_name)
         self.save_infil_edits()
@@ -287,6 +290,7 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
     def revert_infil_lyr_edits(self):
         if self.iglobal.global_imethod == 0:
             self.uc.bar_warn("Please define global infiltration parameters first!")
+            self.uc.log_info("Please define global infiltration parameters first!")
             return
         user_infil_edited = self.lyrs.rollback_lyrs_edits("user_infiltration")
         if user_infil_edited:
@@ -295,6 +299,7 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
     def delete_cur_infil(self):
         if self.iglobal.global_imethod == 0:
             self.uc.bar_warn("Please define global infiltration method first!")
+            self.uc.log_info("Please define global infiltration method first!")
             return
         if not self.infil_name_cbo.count():
             return
@@ -320,6 +325,7 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
     def save_attrs(self):
         if self.iglobal.global_imethod == 0:
             self.uc.bar_warn("Please define global infiltration method first!")
+            self.uc.log_info("Please define global infiltration method first!")
             return
         infil_dict = self.infil_name_cbo.itemData(self.infil_idx)
         fid = infil_dict["fid"]
@@ -411,6 +417,7 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
     def schematize_infiltration(self):
         if self.iglobal.global_imethod == 0:
             self.uc.bar_warn("Please define global infiltration method first!")
+            self.uc.log_info("Please define global infiltration method first!")
             return
         qry_green = """INSERT INTO infil_cells_green (grid_fid, hydc, soils, dtheta, abstrinf, rtimpf, soil_depth) VALUES (?,?,?,?,?,?,?);"""
         qry_chan = """INSERT INTO infil_chan_elems (grid_fid, hydconch) VALUES (?,?);"""
@@ -474,11 +481,13 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
             self.gutils.enable_geom_triggers()
             QApplication.restoreOverrideCursor()
             self.uc.bar_info("Schematizing of infiltration finished!")
+            self.uc.log_info("Schematizing of infiltration finished!")
         except Exception as e:
             self.gutils.enable_geom_triggers()
             self.uc.log_info(traceback.format_exc())
             QApplication.restoreOverrideCursor()
-            self.uc.bar_warn("Schematizing of infiltration failed! Please check user infiltration layers.")
+            self.uc.bar_error("Schematizing of infiltration failed! Please check user infiltration layers.")
+            self.uc.log_info("Schematizing of infiltration failed! Please check user infiltration layers.")
             self.uc.show_error(
                 "ERROR 271118.1638: error schematizing infiltration!."
                 + "\n__________________________________________________",
@@ -690,6 +699,7 @@ class InfilGlobal(uiDialog_glob, qtBaseClass_glob):
         except Exception as e:
             QApplication.restoreOverrideCursor()
             self.uc.show_warn("ERROR 280320.1625: load of infiltration globals failed!")
+            self.uc.log_info("ERROR 280320.1625: load of infiltration globals failed!")
 
     def show_channel_dialog(self):
         hydcxx = self.spin_hydcxx.value()

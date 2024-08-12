@@ -29,7 +29,8 @@ def connection_required(fn):
     @wraps(fn)
     def wrapper(self, *args, **kwargs):
         if not self.con:
-            self.uc.bar_warn("Define a database connection first!")             
+            self.uc.bar_warn("Define a database connection first!")
+            self.uc.log_info("Define a database connection first!")
             return
         else:
             return fn(self, *args, **kwargs)

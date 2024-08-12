@@ -88,7 +88,8 @@ class HazusDialog(qtBaseClass, uiDialog):
                 self.populate_lists_with_buildigns_attributes(self.buildings_cbo.currentIndex())
             else:
                 QApplication.restoreOverrideCursor()
-                self.uc.bar_warn("There are not any polygon layers selected (or visible)")
+                self.uc.bar_warn("There are not any polygon layers selected (or visible)!")
+                self.uc.log_info("There are not any polygon layers selected (or visible)!")
         except Exception as e:
             QApplication.restoreOverrideCursor()
             self.uc.show_error("ERROR 130618.1650: Hazus layers loading failed!.\n", e)
@@ -106,7 +107,8 @@ class HazusDialog(qtBaseClass, uiDialog):
                 self.populate_statistics_fields(self.buildings_layer_cbo.currentIndex())
             else:
                 QApplication.restoreOverrideCursor()
-                self.uc.bar_warn("There are not any polygon layers selected (or visible)")
+                self.uc.bar_warn("There are not any polygon layers selected (or visible)!")
+                self.uc.log_info("There are not any polygon layers selected (or visible)!")
         except Exception as e:
             QApplication.restoreOverrideCursor()
             self.uc.show_error("ERROR 130618.1715: Hazus layers loading failed!.\n", e)
@@ -148,14 +150,17 @@ class HazusDialog(qtBaseClass, uiDialog):
 
     def raster_elevation(self):
         if self.gutils.is_table_empty("user_model_boundary"):
-            self.uc.bar_warn("There is no computational domain! Please digitize it before running tool.")
+            self.uc.bar_warn("There is no computational domain! Please digitize it before running tool!")
+            self.uc.log_info("There is no computational domain! Please digitize it before running tool!")
             return
         if self.gutils.is_table_empty("grid"):
-            self.uc.bar_warn("There is no grid! Please create it before running tool.")
+            self.uc.bar_warn("There is no grid! Please create it before running tool!")
+            self.uc.log_info("There is no grid! Please create it before running tool!")
             return
         rasters = self.lyrs.list_group_rlayers()
         if not rasters:
             self.uc.bar_warn("There are no raster layers in the project!")
+            self.uc.log_info("There are no raster layers in the project!")
 
         cell_size = self.get_cell_size()
         dlg = SamplingElevDialog(self.con, self.iface, self.lyrs, cell_size)
@@ -202,6 +207,9 @@ class HazusDialog(qtBaseClass, uiDialog):
                 self.uc.show_warn(
                     "WARNING 060319.1629: Cell size must be positive. Change the feature attribute value in Computational Domain layer."
                 )
+                self.uc.log_info(
+                    "WARNING 060319.1629: Cell size must be positive. Change the feature attribute value in Computational Domain layer."
+                )
                 return None
             self.gutils.set_cont_par("CELLSIZE", cs)
         else:
@@ -210,6 +218,9 @@ class HazusDialog(qtBaseClass, uiDialog):
         if cs:
             if cs <= 0:
                 self.uc.show_warn(
+                    "WARNING 060319.1630: Cell size must be positive. Change the feature attribute value in Computational Domain layer or default cell size in the project settings."
+                )
+                self.uc.log_info(
                     "WARNING 060319.1630: Cell size must be positive. Change the feature attribute value in Computational Domain layer or default cell size in the project settings."
                 )
                 return None
@@ -233,7 +244,10 @@ class HazusDialog(qtBaseClass, uiDialog):
         grid_empty = self.gutils.is_table_empty("grid")
         if grid_empty:
             self.uc.bar_warn(
-                "WARNING 060319.1631: There is no grid. Please, create it before evaluating the tolerance values."
+                "WARNING 060319.1631: There is no grid. Please, create it before evaluating the tolerance values!"
+            )
+            self.uc.log_info(
+                "WARNING 060319.1631: There is no grid. Please, create it before evaluating the tolerance values!"
             )
             return
         else:
@@ -248,6 +262,9 @@ class HazusDialog(qtBaseClass, uiDialog):
             self.uc.show_warn(
                 "WARNING 060319.1632: Assignment of building areas to building polygons. Not implemented yet!"
             )
+            self.uc.log_info(
+                "WARNING 060319.1632: Assignment of building areas to building polygons. Not implemented yet!"
+            )
             # QApplication.setOverrideCursor(Qt.WaitCursor)
             # grid_lyr = self.lyrs.data['grid']['qlyr']
             # user_building_areas_lyr = self.lyrs.data['buildings_areas']['qlyr']
@@ -260,6 +277,9 @@ class HazusDialog(qtBaseClass, uiDialog):
         except Exception as e:
             self.uc.log_info(traceback.format_exc())
             self.uc.show_warn(
+                "WARNING 060319.1650: Evaluation of buildings adjustment factor failed! Please check your Building Areas (Schematic layer)."
+            )
+            self.uc.log_info(
                 "WARNING 060319.1650: Evaluation of buildings adjustment factor failed! Please check your Building Areas (Schematic layer)."
             )
             QApplication.restoreOverrideCursor()

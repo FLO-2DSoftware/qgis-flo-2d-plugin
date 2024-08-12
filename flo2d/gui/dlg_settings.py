@@ -247,6 +247,7 @@ class SettingsDialog(qtBaseClass, uiDialog):
         if not con:
             QApplication.restoreOverrideCursor()
             self.uc.show_warn("WARNING 060319.1653: Couldn't create new database {}".format(gpkg_path))
+            self.uc.log_info("WARNING 060319.1653: Couldn't create new database {}".format(gpkg_path))
             return
         else:
             self.uc.log_info("Connected to {}".format(gpkg_path))
@@ -257,10 +258,12 @@ class SettingsDialog(qtBaseClass, uiDialog):
         gutils = GeoPackageUtils(con, self.iface)
         if gutils.check_gpkg():
             self.uc.bar_info("GeoPackage {} is OK".format(gpkg_path))
+            self.uc.log_info("GeoPackage {} is OK".format(gpkg_path))
             gutils.path = gpkg_path
             self.gpkgPathEdit.setText(gutils.path)
         else:
             self.uc.bar_error("{} is NOT a GeoPackage!".format(gpkg_path))
+            self.uc.log_info("{} is NOT a GeoPackage!".format(gpkg_path))
         QApplication.restoreOverrideCursor()
         self.uc.log_info("{0:.3f} seconds => create gutils ".format(time.time() - start_time))
         # CRS
@@ -272,6 +275,7 @@ class SettingsDialog(qtBaseClass, uiDialog):
             else:
                 msg = "WARNING 060319.1655: Choose a valid CRS!"
                 self.uc.show_warn(msg)
+                self.uc.log_info(msg)
                 return
         else:
             if crs.isValid():
@@ -279,6 +283,7 @@ class SettingsDialog(qtBaseClass, uiDialog):
             else:
                 msg = "The geopackage does not contain a valid CRS!"
                 self.uc.show_warn(msg)
+                self.uc.log_info(msg)
                 return
         auth, crsid = self.crs.authid().split(":")
         self.proj_lab.setText(self.crs.description())
@@ -291,6 +296,7 @@ class SettingsDialog(qtBaseClass, uiDialog):
         else:
             msg = "WARNING 060319.1654: Unknown map units. Choose a different projection!"
             self.uc.show_warn(msg)
+            self.uc.log_info(msg)
             return
         self.unit_lab.setText(mu)
         proj = self.crs.toProj()
@@ -452,6 +458,7 @@ class SettingsDialog(qtBaseClass, uiDialog):
         if self.gutils.check_gpkg():
             self.gutils.path = self.gpkg_path
             self.uc.bar_info("GeoPackage {} is OK".format(self.gutils.path))
+            self.uc.log_info("GeoPackage {} is OK".format(self.gutils.path))
             sql = """SELECT srs_id FROM gpkg_contents WHERE table_name='grid';"""
             rc = self.gutils.execute(sql)
             rt = rc.fetchone()[0]
@@ -462,6 +469,7 @@ class SettingsDialog(qtBaseClass, uiDialog):
             self.lyrs.zoom_to_all()
         else:
             self.uc.bar_error("{} is NOT a GeoPackage!".format(self.gutils.path))
+            self.uc.log_info("{} is NOT a GeoPackage!".format(self.gutils.path))
         self.gpkgPathEdit.setText(self.gutils.path)
         self.read()
         QApplication.restoreOverrideCursor()

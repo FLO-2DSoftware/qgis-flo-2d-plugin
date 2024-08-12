@@ -161,6 +161,9 @@ class GridToolsWidget(qtBaseClass, uiDialog):
                 self.uc.show_warn(
                     "WARNING 060319.1706: Cell size must be positive. Change the feature attribute value in Computational Domain layer."
                 )
+                self.uc.log_info(
+                    "WARNING 060319.1706: Cell size must be positive. Change the feature attribute value in Computational Domain layer."
+                )
                 return None
             self.gutils.set_cont_par("CELLSIZE", cs)
         else:
@@ -169,6 +172,9 @@ class GridToolsWidget(qtBaseClass, uiDialog):
         if cs:
             if cs <= 0:
                 self.uc.show_warn(
+                    "WARNING 060319.1707: Cell size must be positive. Change the feature attribute value in Computational Domain layer or default cell size in the project settings."
+                )
+                self.uc.log_info(
                     "WARNING 060319.1707: Cell size must be positive. Change the feature attribute value in Computational Domain layer or default cell size in the project settings."
                 )
                 return None
@@ -209,11 +215,13 @@ class GridToolsWidget(qtBaseClass, uiDialog):
                 warn = "WARNING 060319.1708: There are multiple features in Computational Domain layer.\n"
             if self.gutils.is_table_empty("user_model_boundary"):
                 self.uc.bar_warn("There is no Computational Domain! Please digitize it before running tool.")
+                self.uc.log_info("There is no Computational Domain! Please digitize it before running tool.")
                 return
             if self.gutils.count("user_model_boundary") > 1:
                 warn = "WARNING 060319.1708: There are multiple features created on Computational Domain layer.\n"
                 warn += "Only ONE will be used with the lowest fid (first created)."
                 self.uc.show_warn(warn)
+                self.uc.log_info(warn)
             if not self.gutils.is_table_empty("grid"):
                 if not self.uc.question("There is a grid already saved in the database. Overwrite it?"):
                     return
@@ -365,9 +373,11 @@ class GridToolsWidget(qtBaseClass, uiDialog):
     def raster_elevation(self):
         if self.gutils.is_table_empty("user_model_boundary"):
             self.uc.bar_warn("There is no computational domain! Please digitize it before running tool.")
+            self.uc.log_info("There is no computational domain! Please digitize it before running tool.")
             return
         if self.gutils.is_table_empty("grid"):
             self.uc.bar_warn("There is no grid! Please create it before running tool.")
+            self.uc.log_info("There is no grid! Please create it before running tool.")
             return
         cell_size = self.get_cell_size()
         dlg = SamplingElevDialog(self.con, self.iface, self.lyrs, cell_size)
@@ -393,9 +403,11 @@ class GridToolsWidget(qtBaseClass, uiDialog):
         """
         if self.gutils.is_table_empty("user_model_boundary"):
             self.uc.bar_warn("There is no computational domain! Please digitize it before running tool.")
+            self.uc.log_info("There is no computational domain! Please digitize it before running tool.")
             return
         if self.gutils.is_table_empty("grid"):
             self.uc.bar_warn("There is no grid! Please create it before running tool.")
+            self.uc.log_info("There is no grid! Please create it before running tool.")
             return
         cell_size = self.get_cell_size()
         dlg = SamplingRCDialog(self.con, self.iface, self.lyrs, cell_size)
@@ -419,9 +431,11 @@ class GridToolsWidget(qtBaseClass, uiDialog):
     def raster_roughness(self):
         if self.gutils.is_table_empty("user_model_boundary"):
             self.uc.bar_warn("There is no computational domain! Please digitize it before running tool.")
+            self.uc.log_info("There is no computational domain! Please digitize it before running tool.")
             return
         if self.gutils.is_table_empty("grid"):
             self.uc.bar_warn("There is no grid! Please create it before running tool.")
+            self.uc.log_info("There is no grid! Please create it before running tool.")
             return
         cell_size = self.get_cell_size()
         dlg = SamplingRoughnessDialog(self.con, self.iface, self.lyrs, cell_size)
@@ -444,9 +458,11 @@ class GridToolsWidget(qtBaseClass, uiDialog):
     def point_elevation(self):
         if self.gutils.is_table_empty("user_model_boundary"):
             self.uc.bar_warn("There is no computational domain! Please digitize it before running tool.")
+            self.uc.log_info("There is no computational domain! Please digitize it before running tool.")
             return
         if self.gutils.is_table_empty("grid"):
             self.uc.bar_warn("There is no grid! Please create it before running tool.")
+            self.uc.log_info("There is no grid! Please create it before running tool.")
             return
         cell_size = self.get_cell_size()
         dlg = SamplingPointElevDialog(self.con, self.iface, self.lyrs, cell_size)
@@ -456,6 +472,9 @@ class GridToolsWidget(qtBaseClass, uiDialog):
         try:
             if self.gutils.is_table_empty("grid"):
                 self.uc.bar_warn(
+                    "WARNING 060319.1711: Schematic grid layer 'grid' is empty! Please create it before running tool."
+                )
+                self.uc.log_info(
                     "WARNING 060319.1711: Schematic grid layer 'grid' is empty! Please create it before running tool."
                 )
                 return
@@ -539,6 +558,10 @@ class GridToolsWidget(qtBaseClass, uiDialog):
                                 "WARNING 310521.0524: Old GeoPackage.\n\nGrid table doesn't have 'col' and 'row' fields!\n\n"
                                 + "and there is no Computational Domain to create them!"
                             )
+                            self.uc.log_info(
+                                "WARNING 310521.0524: Old GeoPackage.\n\nGrid table doesn't have 'col' and 'row' fields!\n\n"
+                                + "and there is no Computational Domain to create them!"
+                            )
                         else:
                             proceed = self.uc.question(
                                 "WARNING 290521.0602: Old GeoPackage.\n\nGrid table doesn't have 'col' and 'row' fields!\n\n"
@@ -574,6 +597,7 @@ class GridToolsWidget(qtBaseClass, uiDialog):
         except Exception:
             QApplication.restoreOverrideCursor()
             self.uc.bar_error("ERROR 100721.1952: is the grid defined?")
+            self.uc.log_info("ERROR 100721.1952: is the grid defined?")
 
     def interpolate_from_lidar_THREAD_original(self, layer):
         # create a new interpolate_from_LIDAR_thread instance
@@ -672,6 +696,7 @@ class GridToolsWidget(qtBaseClass, uiDialog):
     def other_variable(self):
         if self.gutils.is_table_empty("grid"):
             self.uc.bar_warn("There is no grid! Please create it before running tool.")
+            self.uc.log_info("There is no grid! Please create it before running tool.")
             return
 
         n_point_layers = False
@@ -685,6 +710,7 @@ class GridToolsWidget(qtBaseClass, uiDialog):
         if not n_point_layers:
             QApplication.restoreOverrideCursor()
             self.uc.bar_warn("There are not any point layers selected (or visible)")
+            self.uc.log_info("There are not any point layers selected (or visible)")
             return
         else:
             dlg = SamplingOtherVariableDialog(self.con, self.iface, self.lyrs)
@@ -738,6 +764,7 @@ class GridToolsWidget(qtBaseClass, uiDialog):
         try:
             if self.gutils.is_table_empty("grid"):
                 self.uc.bar_warn("There is no grid! Please create it before running tool.")
+                self.uc.log_info("There is no grid! Please create it before running tool.")
                 return
             lyrs = ["Elevation Points", "Elevation Polygons", "Blocked Areas"]
             for lyr in lyrs:
@@ -754,12 +781,14 @@ class GridToolsWidget(qtBaseClass, uiDialog):
             if tab == 0:
                 if not correct_dlg.internal_methods:
                     self.uc.show_warn("Please choose at least one elevation source!")
+                    self.uc.log_info("Please choose at least one elevation source!")
                     return
                 method = correct_dlg.run_internal
             else:
                 correct_dlg.setup_external_method()
                 if correct_dlg.external_method is None:
                     self.uc.show_warn("WARNING 060319.1714: Please choose at least one elevation source!")
+                    self.uc.log_info("WARNING 060319.1714: Please choose at least one elevation source!")
                     return
                 method = correct_dlg.run_external
 
@@ -781,6 +810,7 @@ class GridToolsWidget(qtBaseClass, uiDialog):
             return
         if self.gutils.is_table_empty("grid"):
             self.uc.bar_warn("There is no grid! Please create it before running tool.")
+            self.uc.log_info("There is no grid! Please create it before running tool.")
             return
         mann_dlg = SamplingManningDialog(self.con, self.iface, self.lyrs)
         ok = mann_dlg.exec_()
@@ -791,12 +821,14 @@ class GridToolsWidget(qtBaseClass, uiDialog):
 
         if mann_dlg.allGridElemsRadio.isChecked():
             if mann_dlg.current_lyr is None:
-                self.uc.show_warn("A polygons layer must be selected !")
+                self.uc.show_warn("A polygons layer must be selected!")
+                self.uc.log_info("A polygons layer must be selected!")
                 return
             rough_lyr = mann_dlg.current_lyr
             nfield = mann_dlg.srcFieldCbo.currentText()
             if nfield == "":
-                self.uc.show_warn("A roughness coefficient field must be selected !")
+                self.uc.show_warn("A roughness coefficient field must be selected!")
+                self.uc.log_info("A roughness coefficient field must be selected!")
                 return
             else:
                 flag = True
@@ -807,6 +839,9 @@ class GridToolsWidget(qtBaseClass, uiDialog):
             flag = False
             if self.gutils.is_table_empty("user_roughness"):
                 self.uc.show_warn(
+                    "WARNING 060319.1715: There are no roughness polygons! Please digitize them before running tool."
+                )
+                self.uc.log_info(
                     "WARNING 060319.1715: There are no roughness polygons! Please digitize them before running tool."
                 )
                 return
@@ -851,6 +886,7 @@ class GridToolsWidget(qtBaseClass, uiDialog):
         try:
             if self.gutils.is_table_empty("grid"):
                 self.uc.bar_warn("There is no grid. Please, create it before sampling tailings.")
+                self.uc.log_info("There is no grid. Please, create it before sampling tailings.")
                 return
 
             QApplication.setOverrideCursor(Qt.WaitCursor)
@@ -928,6 +964,7 @@ class GridToolsWidget(qtBaseClass, uiDialog):
             grid_empty = self.gutils.is_table_empty("grid")
             if grid_empty:
                 self.uc.bar_warn("There is no grid. Please, create it before evaluating the reduction factors.")
+                self.uc.log_info("There is no grid. Please, create it before evaluating the reduction factors.")
                 return
             else:
                 pass
@@ -950,6 +987,9 @@ class GridToolsWidget(qtBaseClass, uiDialog):
             else:
                 if self.gutils.is_table_empty("user_blocked_areas"):
                     self.uc.bar_warn(
+                        'There are no any blocking polygons in "Blocked Areas" layer!'
+                    )
+                    self.uc.log_info(
                         'There are no any blocking polygons in "Blocked Areas" layer! '
                         "Please digitize (or import) them before running tool."
                     )
@@ -1193,6 +1233,7 @@ class GridToolsWidget(qtBaseClass, uiDialog):
         grid_empty = self.gutils.is_table_empty("grid")
         if grid_empty:
             self.uc.bar_warn("There is no grid. Please, create it before evaluating the tolerance values.")
+            self.uc.log_info("There is no grid. Please, create it before evaluating the tolerance values.")
             return
         else:
             pass
@@ -1207,6 +1248,7 @@ class GridToolsWidget(qtBaseClass, uiDialog):
             w = "There are no tolerance polygons in Tolerance Areas (User Layers)!.\n\n"
             w += "Please digitize them before running tool."
             self.uc.bar_warn(w)
+            self.uc.log_info(w)
             return
         try:
             QApplication.setOverrideCursor(Qt.WaitCursor)
@@ -1229,6 +1271,7 @@ class GridToolsWidget(qtBaseClass, uiDialog):
         grid_empty = self.gutils.is_table_empty("grid")
         if grid_empty:
             self.uc.bar_warn("There is no grid. Please, create it before evaluating the Froude values.")
+            self.uc.log_info("There is no grid. Please, create it before evaluating the Froude values.")
             return
         else:
             pass
@@ -1243,6 +1286,7 @@ class GridToolsWidget(qtBaseClass, uiDialog):
             w = "There are no Froude polygons in Froude Areas (User Layers)!.\n\n"
             w += "Please digitize them before running tool."
             self.uc.bar_warn(w)
+            self.uc.log_info(w)
             return
         try:
             QApplication.setOverrideCursor(Qt.WaitCursor)
@@ -1270,6 +1314,9 @@ class GridToolsWidget(qtBaseClass, uiDialog):
             self.uc.bar_warn(
                 "WARNING 060319.1718: There is no grid. Please, create it before evaluating the shallow-n values."
             )
+            self.uc.log_info(
+                "WARNING 060319.1718: There is no grid. Please, create it before evaluating the shallow-n values."
+            )
             return
         else:
             pass
@@ -1284,6 +1331,7 @@ class GridToolsWidget(qtBaseClass, uiDialog):
             w = "There are no shallow polygons in Shallow-n Areas (User Layers)!.\n\n"
             w += "Please digitize them before running tool."
             self.uc.bar_warn(w)
+            self.uc.log_info(w)
             return
         try:
             QApplication.setOverrideCursor(Qt.WaitCursor)
@@ -1309,6 +1357,7 @@ class GridToolsWidget(qtBaseClass, uiDialog):
         grid_empty = self.gutils.is_table_empty("grid")
         if grid_empty:
             self.uc.bar_warn("There is no grid. Please, create it before evaluating the gutter values.")
+            self.uc.log_info("There is no grid. Please, create it before evaluating the gutter values.")
             return
         if not self.lyrs.save_edits_and_proceed(
             "Gutter Areas"
@@ -1330,6 +1379,10 @@ class GridToolsWidget(qtBaseClass, uiDialog):
 
         if self.gutils.is_table_empty("gutter_areas") and self.gutils.is_table_empty("gutter_lines"):
             self.uc.show_warn(
+                "There are no gutter polygons or lines in Gutter Areas  and Gutter Lines (User Layers)!.\n\n"
+                + "Please digitize them to create Gutter Cells."
+            )
+            self.uc.log_info(
                 "There are no gutter polygons or lines in Gutter Areas  and Gutter Lines (User Layers)!.\n\n"
                 + "Please digitize them to create Gutter Cells."
             )
@@ -1398,6 +1451,7 @@ class GridToolsWidget(qtBaseClass, uiDialog):
         grid_empty = self.gutils.is_table_empty("grid")
         if grid_empty:
             self.uc.bar_warn("There is no grid. Please, create it before evaluating the no-exchange cells.")
+            self.uc.log_info("There is no grid. Please, create it before evaluating the no-exchange cells.")
             return
         else:
             pass
@@ -1412,6 +1466,7 @@ class GridToolsWidget(qtBaseClass, uiDialog):
             w = 'There are no "no-exchange" polygons in No-Exchange Channel Areas (User Layers)!.\n\n'
             w += "Please digitize them before running tool."
             self.uc.bar_warn(w)
+            self.uc.log_info(w)
             return
         try:
             QApplication.setOverrideCursor(Qt.WaitCursor)

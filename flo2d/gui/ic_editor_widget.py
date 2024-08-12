@@ -313,6 +313,7 @@ class ICEditorWidget(qtBaseClass, uiDialog):
                 new_name
             )
             self.uc.show_warn(msg)
+            self.uc.log_info(msg)
             return
         self.reservoir.name = new_name
         self.save_res()
@@ -328,6 +329,7 @@ class ICEditorWidget(qtBaseClass, uiDialog):
                 new_name
             )
             self.uc.show_warn(msg)
+            self.uc.log_info(msg)
             return
         self.chan_seg.name = new_name
         self.save_chan_seg()
@@ -343,6 +345,7 @@ class ICEditorWidget(qtBaseClass, uiDialog):
                 new_name
             )
             self.uc.show_warn(msg)
+            self.uc.log_info(msg)
             return
         self.tailings.name = new_name
         self.save_tal()
@@ -361,6 +364,7 @@ class ICEditorWidget(qtBaseClass, uiDialog):
                 new_name
             )
             self.uc.show_warn(msg)
+            self.uc.log_info(msg)
             return
         self.tailings_reservoir.name = new_name
         self.save_tal_res()
@@ -482,6 +486,7 @@ class ICEditorWidget(qtBaseClass, uiDialog):
                     self.repaint_reservoirs()
             else:
                 self.uc.bar_warn("There aren't any user reservoirs!")
+                self.uc.log_info("There aren't any user reservoirs!")
 
     def schematize_tal(self):
         """

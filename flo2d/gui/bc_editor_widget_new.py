@@ -438,6 +438,7 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
         if not self.inflow_bc_name_cbo.count():
             if not widget_setup:
                 self.uc.bar_info("There is no inflow defined in the database...")
+                self.uc.log_info("There is no inflow defined in the database...")
             return
         if show_last_edited:
             cur_name_idx = i - inflows_skipped
@@ -956,6 +957,7 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
                 self.populate_inflows()
 
                 self.uc.bar_info("Importing INFLOW.DAT completed!")
+                self.uc.log_info("Importing INFLOW.DAT completed!")
 
         if type == "outflow":
             s = QSettings()
@@ -1324,6 +1326,7 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
                 self.populate_outflows()
 
                 self.uc.bar_info("Importing OUTFLOW.DAT completed!")
+                self.uc.log_info("Importing OUTFLOW.DAT completed!")
 
         else:
             pass
@@ -1816,6 +1819,7 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
         if not self.outflow_bc_name_cbo.count():
             if not widget_setup:
                 self.uc.bar_info("There is no outflow defined in the database...")
+                self.uc.log_info("There is no outflow defined in the database...")
             return
         if show_last_edited:
             cur_out_idx = i - outflows_skipped
@@ -2318,7 +2322,8 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
             except AttributeError:
                 self.populate_bcs()
 
-        self.uc.bar_info("Boundary Conditions edits rolled back.")
+        self.uc.bar_info("Boundary Conditions edits rolled back!")
+        self.uc.log_info("Boundary Conditions edits rolled back!")
 
     def delete_schematized_data(self, type):
         """
@@ -2327,6 +2332,7 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
         exist_user_bc = self.gutils.execute(f"SELECT * FROM all_schem_bc WHERE type = '{type}';").fetchone()
         if not exist_user_bc:
             self.uc.bar_info(f"There are no schematized {type} Boundary Conditions.")
+            self.uc.log_info(f"There are no schematized {type} Boundary Conditions.")
             return
 
         msg = f"Are you sure? This will delete all {type} schematized data."
@@ -2356,6 +2362,7 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
             schem_bc.triggerRepaint()
             QApplication.restoreOverrideCursor()
             self.uc.bar_info(f"Schematized {type} deleted.")
+            self.uc.log_info(f"Schematized {type} deleted.")
 
     def create_all_border_outflow_bc(self):
         """

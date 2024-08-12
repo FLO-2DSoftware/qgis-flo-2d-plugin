@@ -79,10 +79,13 @@ class ExternalProgramFLO2D(qtBaseClass, uiDialog):
                 program = "FLOPRO_Demo.exe"
             else:
                 self.uc.show_warn("WARNING 221022.0911: Program FLOPRO.exe or FLOPRO_Demo.exe is not in directory\n\n" + flo2d_dir)
+                self.uc.log_info(
+                    "WARNING 221022.0911: Program FLOPRO.exe or FLOPRO_Demo.exe is not in directory\n\n" + flo2d_dir)
             project_dir = self.project_le.text()
             contDAT = os.path.join(project_dir, "CONT.DAT")
             if not os.path.exists(contDAT):
                 self.uc.show_warn("CONT.DAT is not in project directory.\n\n" + project_dir)
+                self.uc.log_info("CONT.DAT is not in project directory.\n\n" + project_dir)
                 return
             debugDAT = os.path.join(project_dir, "QGISDEBUG.DAT")
             with open(debugDAT, "w") as f:
