@@ -20,6 +20,7 @@ from math import isnan
 from PyQt5 import QtGui
 from PyQt5.QtGui import QClipboard, QDesktopServices
 from PyQt5.QtWidgets import QApplication
+from qgis._gui import QgsDockWidget
 from qgis.core import QgsApplication, QgsFeatureRequest
 from qgis.PyQt import QtGui
 from qgis.PyQt.QtCore import (
@@ -35,6 +36,8 @@ from qgis.PyQt.QtCore import (
 from qgis.PyQt.QtGui import QColor
 from qgis.PyQt.QtWidgets import QApplication, QFileDialog, QInputDialog, QTableView
 from PyQt5.QtCore import QUrl
+
+from .dlg_check_report import GenericCheckReportDialog
 from ..flo2dobjects import Structure
 from ..geopackage_utils import GeoPackageUtils
 from ..gui.dlg_bridges import BridgesDialog
@@ -320,15 +323,26 @@ class StructEditorWidget(qtBaseClass, uiDialog):
             self.lyrs.lyrs_to_repaint = [self.lyrs.data["struct"]["qlyr"]]
             self.lyrs.repaint_layers()
 
+            QApplication.restoreOverrideCursor()
             if structs:
+
+                # Set Structures on the Control Parameters
                 self.gutils.set_cont_par("IHYDRSTRUCT", 1)
-                self.uc.log_info(
-                    "Schematizing Hydraulic Structures finished!\n\n"
-                    + str(len(structs)) + " structures were updated in the Hydraulic Structures table."
-                )
-                self.uc.bar_info(
-                    "Schematizing Hydraulic Structures finished!"
-                )
+
+                # Return False there are some errors
+                if not self.check_structures():
+                    self.uc.bar_info("Schematizing Hydraulic Structures finished with errors. Check the report!")
+                    self.uc.log_info("Schematizing Hydraulic Structures finished with errors. Check the report!")
+
+                # Return True there are no errors
+                else:
+                    self.uc.log_info(
+                        "Schematizing Hydraulic Structures finished!\n\n"
+                        + str(len(structs)) + " structures were updated in the Hydraulic Structures table."
+                    )
+                    self.uc.bar_info(
+                        "Schematizing Hydraulic Structures finished!"
+                    )
             else:
                 self.uc.bar_error("WARNING 151203.0646: Error during Hydraulic Structures schematization!")
                 self.uc.log_info("WARNING 151203.0646: Error during Hydraulic Structures schematization!")
@@ -336,8 +350,65 @@ class StructEditorWidget(qtBaseClass, uiDialog):
         except Exception as e:
             self.uc.bar_error("WARNING 151203.0646: Error during Hydraulic Structures schematization!")
             self.uc.log_info("WARNING 151203.0646: Error during Hydraulic Structures schematization!.")
-        finally:
-            QApplication.restoreOverrideCursor()
+
+    def check_structures(self):
+        """
+        Function to check the structures and create a report
+        """
+        same_inlet_outlet = []
+
+        for feat in self.struct_lyr.getFeatures():
+            inlet_grid = feat["inflonod"]
+            outlet_grid = feat["outflonod"]
+
+            # Error 1 - Inlet and outlet on the same cell
+            if inlet_grid == outlet_grid:
+                same_inlet_outlet.append(inlet_grid)
+
+
+        # Error 2 - One or more inlets in the same cell
+
+        # Error 3 - One or more outlets in the same cell
+
+        # Error 4 - Inlets and outlets in the same cell
+
+        msg = ""
+
+        if len(same_inlet_outlet) > 0:
+            msg += "ERROR: STRUCTURE INLET AND OUTLET ON THE SAME GRID CELL.  " \
+                   f"GRID ELEMENTS(S): \n{'-'.join(map(str, same_inlet_outlet))}\n\n"
+
+        for widget in QApplication.instance().allWidgets():
+            if isinstance(widget, QgsDockWidget):
+                if widget.windowTitle() == "FLO-2D Hydraulic Structures Check Report":
+                    widget.close()
+
+        if msg != "":
+            self.uc.log_info(msg)
+            dlg_structures_report = GenericCheckReportDialog(self.iface, self.lyrs, self.gutils)
+            plot_dock = QgsDockWidget()
+            plot_dock.setWindowTitle("FLO-2D Hydraulic Structures Check Report")
+            plot_dock.setWidget(dlg_structures_report)
+            self.iface.addDockWidget(Qt.BottomDockWidgetArea, plot_dock)
+            dlg_structures_report.report_te.insertPlainText(msg)
+
+            grid_errors = list(set(
+                str(item) for sublist in
+                [same_inlet_outlet]
+                for item in sublist))
+
+            dlg_structures_report.error_grids_cbo.addItems(grid_errors)
+            dlg_structures_report.show()
+            while True:
+                ok = dlg_structures_report.exec_()
+                if ok:
+                    break
+                else:
+                    return
+
+        else:
+            return False
+
 
 
     def structures_help(self):
