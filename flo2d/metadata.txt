@@ -1,6 +1,6 @@
 [general]
 name=FLO-2D
-version=1.0.0
+version=1.0.1
 qgisMinimumVersion=3.22
 qgisMaximumVersion=3.99
 description=FLO-2D tools for QGIS
@@ -13,6 +13,11 @@ changelog=
  - General
 	Added SWMM 5 GUI to the toolbar
 	Quick run cancel fix
+	Improved the log messages
+	Bug fixes
+ - Import/Export
+	Fix bugs related to 'Import from GeoPackage'
+	Improved the process of converting schema to user layers
  - Boundary Condition Editor
 	Bug fixes
  - Channel Editor
@@ -21,10 +26,12 @@ changelog=
 	Bug fixes
  - Structures Editor
 	Optimized the schematization of Structures
+	Bug fixes
  - Rain Editor
 	Created the new RAINCELL.DAT format
  - Storm Drain Editor
 	SWMM.INP and FLO-2D Storm Drain DAT files in alphabetical order
+	Set the weir end contraction to integer 
  - Results Tool
 	Changed pandas library to numpy
  <p>1.0.0
