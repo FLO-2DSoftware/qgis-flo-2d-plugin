@@ -200,9 +200,6 @@ class WallsShapefile(qtBaseClass, uiDialog):
     def create_user_levees_from_walls_shapefile(self):
         self.uc.clear_bar_messages()
 
-        #        if self.gutils.is_table_empty("user_model_boundary"):
-        #            self.uc.bar_warn("There is no computational domain! Please digitize it before running tool.")
-        #            return
         if self.gutils.is_table_empty("grid"):
             self.uc.bar_warn("There is no grid! Please create it before running tool!")
             self.uc.log_info("There is no grid! Please create it before running tool!")
@@ -222,18 +219,8 @@ class WallsShapefile(qtBaseClass, uiDialog):
             self.uc.log_info("No data was selected!")
         else:
             # Load walls from shapefile:
-            try:
-                walls_sf = self.walls_shapefile_cbo.currentText()
-                lyr = self.lyrs.get_layer_by_name(walls_sf, self.lyrs.group).layer()
-
-            except Exception as e:
-                QApplication.restoreOverrideCursor()
-                self.uc.show_error(
-                    "ERROR 010120.1958: creation of levees from walls shapefile failed!\nPlease move the Walls layer into the User Layer Group. "
-                    + "\n__________________________________________________",
-                    e,
-                )
-                return
+            walls_sf = self.walls_shapefile_cbo.currentText()
+            lyr = self.lyrs.get_layer_by_name(walls_sf).layer()
 
             # Create user levee lines from walls shapefile:
             try:
