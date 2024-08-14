@@ -10,6 +10,7 @@
 
 import csv
 import io
+import math
 import os
 import re
 import sys
@@ -358,6 +359,10 @@ class StructEditorWidget(qtBaseClass, uiDialog):
         same_inlet_outlet = []
         same_inlets = []
         same_outlets = []
+        short_struct = []
+
+        cellsize = float(self.gutils.get_cont_par("CELLSIZE"))
+        min_dist = math.sqrt(cellsize ** 2 + cellsize ** 2)
 
         for feat in self.struct_lyr.getFeatures():
             inlet_grid = feat["inflonod"]
@@ -380,6 +385,13 @@ class StructEditorWidget(qtBaseClass, uiDialog):
                 if outlet_grid not in same_outlets:
                     same_outlets.append(outlet_grid)
 
+            # Error 4 - Inlet and outlet too close
+            # Distance between the inlet and outlet must be greater than sqrt(cellsize^2 + cellsize^2)
+            struct_geom = feat.geometry()
+            struct_len = struct_geom.length()
+            if struct_len != 0 and struct_len <= min_dist:
+                short_struct.append(inlet_grid)
+
         msg = ""
 
         if len(same_inlet_outlet) > 0:
@@ -393,6 +405,10 @@ class StructEditorWidget(qtBaseClass, uiDialog):
         if len(same_outlets) > 0:
             msg += "ERROR: TWO OR MORE STRUCTURES SHARING THE SAME OUTLET CELL.  " \
                    f"GRID ELEMENTS(S): \n{'-'.join(map(str, same_outlets))}\n\n"
+
+        if len(short_struct) > 0:
+            msg += "ERROR: STRUCTURE INLET AND OUTLET SEPARATED BY LESS THAN ONE CELL.  " \
+                   f"GRID ELEMENTS(S): \n{'-'.join(map(str, short_struct))}\n\n"
 
         for widget in QApplication.instance().allWidgets():
             if isinstance(widget, QgsDockWidget):
@@ -410,7 +426,7 @@ class StructEditorWidget(qtBaseClass, uiDialog):
 
             grid_errors = list(set(
                 str(item) for sublist in
-                [same_inlet_outlet, same_inlets, same_outlets]
+                [same_inlet_outlet, same_inlets, same_outlets, short_struct]
                 for item in sublist))
 
             dlg_structures_report.error_grids_cbo.addItems(grid_errors)
