@@ -356,6 +356,8 @@ class StructEditorWidget(qtBaseClass, uiDialog):
         Function to check the structures and create a report
         """
         same_inlet_outlet = []
+        same_inlets = []
+        same_outlets = []
 
         for feat in self.struct_lyr.getFeatures():
             inlet_grid = feat["inflonod"]
@@ -363,20 +365,34 @@ class StructEditorWidget(qtBaseClass, uiDialog):
 
             # Error 1 - Inlet and outlet on the same cell
             if inlet_grid == outlet_grid:
-                same_inlet_outlet.append(inlet_grid)
+                if inlet_grid not in same_inlet_outlet:
+                    same_inlet_outlet.append(inlet_grid)
 
+            # Error 2 - One or more inlets in the same cell
+            n_inlets = self.gutils.execute(f"SELECT COUNT(inflonod) FROM struct WHERE inflonod = '{inlet_grid}'").fetchone()[0]
+            if n_inlets > 1:
+                if inlet_grid not in same_inlets:
+                    same_inlets.append(inlet_grid)
 
-        # Error 2 - One or more inlets in the same cell
-
-        # Error 3 - One or more outlets in the same cell
-
-        # Error 4 - Inlets and outlets in the same cell
+            # Error 3 - One or more outlets in the same cell
+            n_outlets = self.gutils.execute(f"SELECT COUNT(outflonod) FROM struct WHERE outflonod = '{outlet_grid}'").fetchone()[0]
+            if n_outlets > 1:
+                if outlet_grid not in same_outlets:
+                    same_outlets.append(outlet_grid)
 
         msg = ""
 
         if len(same_inlet_outlet) > 0:
             msg += "ERROR: STRUCTURE INLET AND OUTLET ON THE SAME GRID CELL.  " \
                    f"GRID ELEMENTS(S): \n{'-'.join(map(str, same_inlet_outlet))}\n\n"
+
+        if len(same_inlets) > 0:
+            msg += "ERROR: TWO OR MORE STRUCTURES SHARING THE SAME INLET CELL.  " \
+                   f"GRID ELEMENTS(S): \n{'-'.join(map(str, same_inlets))}\n\n"
+
+        if len(same_outlets) > 0:
+            msg += "ERROR: TWO OR MORE STRUCTURES SHARING THE SAME OUTLET CELL.  " \
+                   f"GRID ELEMENTS(S): \n{'-'.join(map(str, same_outlets))}\n\n"
 
         for widget in QApplication.instance().allWidgets():
             if isinstance(widget, QgsDockWidget):
@@ -394,7 +410,7 @@ class StructEditorWidget(qtBaseClass, uiDialog):
 
             grid_errors = list(set(
                 str(item) for sublist in
-                [same_inlet_outlet]
+                [same_inlet_outlet, same_inlets, same_outlets]
                 for item in sublist))
 
             dlg_structures_report.error_grids_cbo.addItems(grid_errors)
@@ -405,11 +421,8 @@ class StructEditorWidget(qtBaseClass, uiDialog):
                     break
                 else:
                     return
-
         else:
             return False
-
-
 
     def structures_help(self):
         QDesktopServices.openUrl(QUrl("https://flo-2dsoftware.github.io/FLO-2D-Documentation/Plugin1000/widgets/hydraulic-structure-editor/Hydraulic%20Structure%20Editor.html"))        

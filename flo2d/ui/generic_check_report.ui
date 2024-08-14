@@ -21,12 +21,20 @@
        <property name="text">
         <string>...</string>
        </property>
+       <property name="icon">
+        <iconset>
+         <normaloff>../img/arrow_1.svg</normaloff>../img/arrow_1.svg</iconset>
+       </property>
       </widget>
      </item>
      <item row="1" column="2">
       <widget class="QToolButton" name="next_btn">
        <property name="text">
         <string>...</string>
+       </property>
+       <property name="icon">
+        <iconset>
+         <normaloff>../img/arrow_3.svg</normaloff>../img/arrow_3.svg</iconset>
        </property>
       </widget>
      </item>
