@@ -1882,6 +1882,8 @@ class Flo2D(object):
                 else:
                     raise
 
+        QApplication.restoreOverrideCursor()
+
     @connection_required
     def import_gds(self):
         """
@@ -1895,7 +1897,7 @@ class Flo2D(object):
             "import_mannings_n_topo",
             "import_inflow",
             "import_tailings",
-            # "import_outrc",
+            # "import_outrc",  Add back when the OUTRC process is completed
             "import_outflow",
             "import_rain",
             "import_raincell",
@@ -1917,6 +1919,8 @@ class Flo2D(object):
             "import_swmmflo",
             "import_swmmflort",
             "import_swmmoutf",
+            "import_swmmflodropbox",
+            "import_sdclogging",
             "import_tolspatial",
             "import_wsurf",
             "import_wstime",
@@ -1927,6 +1931,8 @@ class Flo2D(object):
             None, "Select FLO-2D file to import", directory=last_dir, filter="CONT.DAT"
         )
         if not fname:
+            self.uc.bar_info("Import cancelled!")
+            self.uc.log_info("Import cancelled!")
             self.gutils.enable_geom_triggers()
             return
         dir_name = os.path.dirname(fname)
@@ -1935,10 +1941,13 @@ class Flo2D(object):
         if self.f2g.set_parser(fname):
             topo = self.f2g.parser.dat_files["TOPO.DAT"]
             if topo is None:
-                self.uc.bar_warn("Could not find TOPO.DAT file! Importing GDS files aborted!", dur=3)
+                self.uc.bar_error("Could not find TOPO.DAT file! Importing GDS files aborted!", dur=3)
+                self.uc.log_info("Could not find TOPO.DAT file! Importing GDS files aborted!")
                 self.gutils.enable_geom_triggers()
                 return
             if bname not in self.f2g.parser.dat_files:
+                self.uc.bar_info("Import cancelled!")
+                self.uc.log_info("Import cancelled!")
                 self.gutils.enable_geom_triggers()
                 return
             empty = self.f2g.is_table_empty("grid")
@@ -1949,19 +1958,21 @@ class Flo2D(object):
                     pass
                 else:
                     self.uc.bar_info("Import cancelled!", dur=3)
-                    self.uc.log_info("Import cancelled!", dur=3)
+                    self.uc.log_info("Import cancelled!")
                     self.gutils.enable_geom_triggers()
                     return
 
             # Check if MANNINGS_N.DAT exist:
             if not os.path.isfile(dir_name + r"\MANNINGS_N.DAT") or os.path.getsize(dir_name + r"\MANNINGS_N.DAT") == 0:
-                self.uc.show_info("ERROR 241019.1821: file MANNINGS_N.DAT is missing or empty!")
+                self.uc.bar_error("ERROR 241019.1821: file MANNINGS_N.DAT is missing or empty!")
+                self.uc.log_info("ERROR 241019.1821: file MANNINGS_N.DAT is missing or empty!")
                 self.gutils.enable_geom_triggers()
                 return
 
             # Check if TOLER.DAT exist:
             if not os.path.isfile(dir_name + r"\TOLER.DAT") or os.path.getsize(dir_name + r"\TOLER.DAT") == 0:
-                self.uc.show_info("ERROR 200322.0911: file TOLER.DAT is missing or empty!")
+                self.uc.bar_error("ERROR 200322.0911: file TOLER.DAT is missing or empty!")
+                self.uc.log_info("ERROR 200322.0911: file TOLER.DAT is missing or empty!")
                 self.gutils.enable_geom_triggers()
                 return
 
@@ -1988,7 +1999,7 @@ class Flo2D(object):
                         import_calls.remove("import_inflow")
                         import_calls.remove("import_tailings")
 
-                    # if "Surface Water Rating Tables" not in dlg_components.components:
+                    # if "Surface Water Rating Tables" not in dlg_components.components: Add back when OUTRC is completed
                     #     import_calls.remove("import_outrc")
 
                     if "Levees" not in dlg_components.components:
@@ -2019,9 +2030,6 @@ class Flo2D(object):
                         import_calls.remove("import_hystruc")
                         import_calls.remove("import_hystruc_bridge_xs")
 
-                    # if 'MODFLO-2D' not in dlg_components.components:
-                    #     import_calls.remove('')
-
                     if "Rain" not in dlg_components.components:
                         import_calls.remove("import_rain")
                         import_calls.remove("import_raincell")
@@ -2030,6 +2038,8 @@ class Flo2D(object):
                         import_calls.remove("import_swmmflo")
                         import_calls.remove("import_swmmflort")
                         import_calls.remove("import_swmmoutf")
+                        import_calls.remove("import_swmmflodropbox")
+                        import_calls.remove("import_sdclogging")
 
                     if "Spatial Tolerance" not in dlg_components.components:
                         import_calls.remove("import_tolspatial")
@@ -2188,52 +2198,11 @@ class Flo2D(object):
 
                     # Import the SWMM.INP
                     if "Storm Drain" in dlg_components.components:
-                        try:
-                            swmm_converter = SchemaSWMMConverter(self.con, self.iface, self.lyrs)
-                            swmm_converter.create_user_swmm_inlets_junctions()
-                            swmm_converter.create_user_swmm_outlets()
-
-                            s = QSettings()
-                            last_dir = s.value("FLO-2D/lastGdsDir", "")
-                            # Import SWMMFLODROPBOX.DAT:
-                            file = last_dir + r"\SWMMFLODROPBOX.DAT"
-                            if os.path.isfile(file):
-                                if os.path.getsize(file) > 0:
-                                    if self.f2g.import_swmmflodropbox():
-                                        self.files_used += "SWMMFLODROPBOX.DAT\n"
-                                    else:
-                                        self.files_not_used += "SWMMFLODROPBOX.DAT (errors found)\n"
-                                else:
-                                    self.files_not_used += "SWMMFLODROPBOX.DAT\n"
-                            else:
-                                self.files_not_used += "SWMMFLODROPBOX.DAT\n"
-
-                            # Import SDCLOGGING..DAT:
-                            file = last_dir + r"\SDCLOGGING.DAT"
-                            if os.path.isfile(file):
-                                if os.path.getsize(file) > 0:
-                                    if self.f2g.import_sdclogging():
-                                        self.files_used += "SDCLOGGING.DAT\n"
-                                    else:
-                                        self.files_not_used += "SDCLOGGING.DAT (errors found)\n"
-                                else:
-                                    self.files_not_used += "SDCLOGGING.DAT\n"
-                            else:
-                                self.files_not_used += "SDCLOGGING.DAT\n"
-
-                        except Exception as e:
-                            QApplication.restoreOverrideCursor()
-                            self.uc.log_info(traceback.format_exc())
-                            self.uc.show_error(
-                                "ERROR 040723.1749:\n\nConverting Schematic SD Inlets to User Storm Drain Inlets/Junctions failed!"
-                                + "\n_______________________________________________________________",
-                                e,
-                            )
-                        finally:
-                            QApplication.restoreOverrideCursor()
+                        swmm_converter = SchemaSWMMConverter(self.con, self.iface, self.lyrs)
+                        swmm_converter.create_user_swmm_inlets_junctions()
+                        swmm_converter.create_user_swmm_outlets()
 
                         if os.path.isfile(dir_name + r"\SWMM.INP"):
-                            # if self.f2d_widget.storm_drain_editor.import_storm_drain_INP_file("Choose"):
                             if self.f2d_widget.storm_drain_editor.import_storm_drain_INP_file(
                                     "Force import of SWMM.INP", False
                             ):
@@ -2241,8 +2210,6 @@ class Flo2D(object):
                         else:
                             self.uc.bar_error("ERROR 100623.0944: SWMM.INP file not found!")
                             self.uc.log_info("ERROR 100623.0944: SWMM.INP file not found!")
-
-                    QApplication.restoreOverrideCursor()
 
                     self.call_IO_methods(import_calls, True)  # The strings list 'export_calls', contains the names of
                     # the methods in the class Flo2dGeoPackage to import (read) the
@@ -2290,21 +2257,19 @@ class Flo2D(object):
                     else:
                         cell = self.gutils.execute("SELECT col FROM grid WHERE fid = 1").fetchone()
                         if cell[0] == NULL:
-                            QApplication.setOverrideCursor(Qt.ArrowCursor)
                             proceed = self.uc.question(
                                 "Grid layer's fields 'col' and 'row' have NULL values!\n\nWould you like to assign them?"
                             )
                             if proceed:
                                 assign_col_row_indexes_to_grid(self.lyrs.data["grid"]["qlyr"], self.gutils)
-                            QApplication.restoreOverrideCursor()
 
                 except Exception as e:
                     QApplication.restoreOverrideCursor()
                     self.uc.show_error("ERROR 050521.0349: importing .DAT files!.\n", e)
+                    self.uc.log_info(f"ERROR 050521.0349: importing .DAT files!.\n{e}")
                 finally:
-                    QApplication.restoreOverrideCursor()
                     if self.files_used != "" or self.files_not_used != "":
-                        self.uc.show_info(
+                        msg = (
                             "Files read by this project:\n\n"
                             + self.files_used
                             + (
@@ -2313,6 +2278,8 @@ class Flo2D(object):
                                 else "\n\nFiles not found or empty:\n\n" + self.files_not_used
                             )
                         )
+                        self.uc.show_info(msg)
+                        self.uc.log_info(msg)
 
                     # Check the imported components on the schema2user
                     specific_components = []
@@ -2899,6 +2866,7 @@ class Flo2D(object):
             "SWMMFLORT.DAT": "import_swmmflort",
             "SWMMOUTF.DAT": "import_swmmoutf",
             "SWMMFLODROPBOX.DAT": "import_swmmflodropbox",
+            "SDCLOGGING.DAT": "import_sdclogging",
             "WSURF.DAT": "import_wsurf",
             "WSTIME.DAT": "import_wstime",
             "MANNINGS_N.DAT": "import_mannings_n",

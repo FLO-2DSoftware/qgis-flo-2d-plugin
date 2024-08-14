@@ -1641,30 +1641,34 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
         self.batch_execute(swmmflo_sql)
 
-    def import_swmmflodropbox(self):
-        try:
-            data = self.parser.parse_swmmflodropbox()
-            for row in data:
-                name = row[0]
-                area = row[2]
-                self.gutils.execute("UPDATE user_swmm_inlets_junctions SET drboxarea = ? WHERE name = ?", (area, name))
-            return True
-        except:
-            return False
+    def import_swmmflodrboxarea(self):
+        """
+        Function to import the SWMMFLODROPBOX.DAT
+        """
+        drboxarea_sql = []
+        data = self.parser.parse_swmmflodropbox()
+        for row in data:
+            name = row[0]
+            area = row[2]
+            drboxarea_sql.append(f"UPDATE user_swmm_inlets_junctions SET drboxarea = '{area}' WHERE name = '{name}'")
+
+        self.batch_execute(drboxarea_sql)
 
     def import_sdclogging(self):
-        try:
-            data = self.parser.parse_sdclogging()
-            for row in data:
-                name = row[2]
-                clog_fact = row[3]
-                clog_time = row[4]
-                self.gutils.execute("""UPDATE user_swmm_inlets_junctions
-                                       SET swmm_clogging_factor = ?, swmm_time_for_clogging = ?
-                                       WHERE name = ?""", (clog_fact, clog_time, name))
-            return True
-        except:
-            return False
+        """
+        Function to import the SDCLOGGING.DAT
+        """
+        sdclogging_sql = []
+        data = self.parser.parse_sdclogging()
+        for row in data:
+            name = row[2]
+            clog_fact = row[3]
+            clog_time = row[4]
+            sdclogging_sql.append(f"""UPDATE user_swmm_inlets_junctions
+                                   SET swmm_clogging_factor = '{clog_fact}', swmm_time_for_clogging = '{clog_time}'
+                                   WHERE name = '{name}'""")
+
+        self.batch_execute(sdclogging_sql)
 
     def import_swmmflort(self):
         """
