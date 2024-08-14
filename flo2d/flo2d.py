@@ -4539,7 +4539,7 @@ class Flo2D(object):
         self.uncheck_all_info_tools()
         converter_dlg = Schema2UserDialog(self.con, self.iface, self.lyrs, self.uc)
         if check_components:
-            converter_dlg.check_components(True)
+            converter_dlg.check_imported_components(True)
         ok = converter_dlg.exec_()
         if ok:
             if converter_dlg.methods:

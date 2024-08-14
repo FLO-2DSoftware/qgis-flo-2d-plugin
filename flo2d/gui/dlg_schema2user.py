@@ -260,3 +260,13 @@ class Schema2UserDialog(qtBaseClass, uiDialog):
         if self.ckbox_hydr_struct.isEnabled():
             self.ckbox_hydr_struct.setChecked(select)
 
+    def check_imported_components(self, select=True):
+        if self.ckbox_domain.isEnabled():
+            self.ckbox_domain.setChecked(select)
+        if self.ckbox_bc.isEnabled():
+            self.ckbox_bc.setChecked(select)
+        if self.ckbox_fpxsec.isEnabled():
+            self.ckbox_fpxsec.setChecked(select)
+        if self.ckbox_hydr_struct.isEnabled():
+            self.ckbox_hydr_struct.setChecked(select)
+
