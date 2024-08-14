@@ -1638,7 +1638,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                     feat.setAttribute("time_series", time_series)
                     feat.setAttribute("fixed_stage", water_depth)
                     feat.setAttribute("flapgate", flapgate)
-                    # feat.setAttribute("swmm_allow_discharge", allow_discharge)
+                    feat.setAttribute("swmm_allow_discharge", "0")
 
                     new_outfalls.append(feat)
 
@@ -1688,7 +1688,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                         feat.setAttribute("time_series", time_series)
                         feat.setAttribute("fixed_stage", water_depth)
                         feat.setAttribute("flapgate", flapgate)
-                        # feat.setAttribute("swmm_allow_discharge", allow_discharge)
+                        feat.setAttribute("swmm_allow_discharge", "0")
 
                         new_outfalls.append(feat)
                         updated_outfalls += 1

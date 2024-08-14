@@ -755,7 +755,10 @@ class OutletAttributes(qtBaseClass, uiDialog):
         self.tidal_curve.setCurrentText(attributes[5])
         self.time_series.setCurrentText(attributes[6])
         self.outfall_type.setCurrentText(str(attributes[7]))
-        self.swmm_allow_discharge.setCurrentIndex(int(attributes[8]))
+        swmm_allow_discharge = attributes[8]
+        if swmm_allow_discharge not in ["0", "1", "2"]:
+            swmm_allow_discharge = "0"
+        self.swmm_allow_discharge.setCurrentIndex(int(swmm_allow_discharge))
 
         self.connect_signals()
 
