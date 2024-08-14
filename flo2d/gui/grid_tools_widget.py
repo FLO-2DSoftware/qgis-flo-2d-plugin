@@ -342,12 +342,12 @@ class GridToolsWidget(qtBaseClass, uiDialog):
             self.uc.clear_bar_messages()
             QApplication.restoreOverrideCursor()
 
-            fin_time = time.time()
-            duration = time_taken(ini_time, fin_time)
-
             n_cells = number_of_elements(self.gutils, grid_lyr)
             cell_size = self.gutils.get_cont_par("CELLSIZE")
             units = " mts" if self.gutils.get_cont_par("METRIC") == "1" else " ft"
+
+            fin_time = time.time()
+            duration = time_taken(ini_time, fin_time)
 
             QApplication.restoreOverrideCursor()
             self.uc.show_info(
