@@ -1642,29 +1642,27 @@ class Flo2dGeoPackage(GeoPackageUtils):
         self.batch_execute(swmmflo_sql)
 
     def import_swmmflodropbox(self):
-        try:
-            data = self.parser.parse_swmmflodropbox()
-            for row in data:
-                name = row[0]
-                area = row[2]
-                self.gutils.execute("UPDATE user_swmm_inlets_junctions SET drboxarea = ? WHERE name = ?", (area, name))
-            return True
-        except:
-            return False
+        """
+        Function to import the SWMMFLODROPBOX.DAT
+        """
+        data = self.parser.parse_swmmflodropbox()
+        for row in data:
+            name = row[0]
+            area = row[2]
+            self.execute(f"UPDATE user_swmm_inlets_junctions SET drboxarea = '{area}' WHERE name = '{name}'")
 
     def import_sdclogging(self):
-        try:
-            data = self.parser.parse_sdclogging()
-            for row in data:
-                name = row[2]
-                clog_fact = row[3]
-                clog_time = row[4]
-                self.gutils.execute("""UPDATE user_swmm_inlets_junctions
-                                       SET swmm_clogging_factor = ?, swmm_time_for_clogging = ?
-                                       WHERE name = ?""", (clog_fact, clog_time, name))
-            return True
-        except:
-            return False
+        """
+        Function to import the SDCLOGGING.DAT
+        """
+        data = self.parser.parse_sdclogging()
+        for row in data:
+            name = row[2]
+            clog_fact = row[3]
+            clog_time = row[4]
+            self.execute(f"""UPDATE user_swmm_inlets_junctions
+                                   SET swmm_clogging_factor = '{clog_fact}', swmm_time_for_clogging = '{clog_time}'
+                                   WHERE name = '{name}'""")
 
     def import_swmmflort(self):
         """
@@ -1753,11 +1751,26 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
         self.clear_tables("swmmoutf")
         data = self.parser.parse_swmmoutf()
-        gids = (x[1] for x in data)
+        gids = []
+        # Outfall outside the grid -> Don't look for the grid centroid
+        for x in data:
+            if x[1] != '-9999':
+                gids.append(x[1])
         cells = self.grid_centroids(gids, buffers=True)
         for row in data:
             gid = row[1]
-            geom = cells[gid]
+            # Outfall outside the grid -> Add exactly over the Storm Drain Outfalls
+            if gid == '-9999':
+                outfall_name = row[0]
+                geom_qry = self.execute(f"SELECT geom FROM user_swmm_outlets WHERE name = '{outfall_name}'").fetchone()
+                if geom_qry:
+                    geom = geom_qry[0]
+                else:  # When there is no SWMM.INP
+                    self.uc.bar_warn(f"{outfall_name} coordinates not found!")
+                    self.uc.log_info(f"{outfall_name} coordinates not found!")
+                    continue
+            else:
+                geom = cells[gid]
             swmmoutf_sql += [(geom,) + tuple(row)]
 
         self.batch_execute(swmmoutf_sql)

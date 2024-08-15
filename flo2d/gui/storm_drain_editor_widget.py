@@ -1569,8 +1569,8 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                                             fixed_stage = ?,
                                             flapgate = ?
                                      WHERE name = ?;"""
-
-            updated_nodes = 0
+            new_outfalls = []
+            updated_outfalls = 0
             list_INP_nodes = list(storm_drain.INP_nodes.items())
             for name, values in list_INP_nodes:
                 # "INP_nodes dictionary contains attributes names and
@@ -1638,9 +1638,9 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                     feat.setAttribute("time_series", time_series)
                     feat.setAttribute("fixed_stage", water_depth)
                     feat.setAttribute("flapgate", flapgate)
-                    # feat.setAttribute("swmm_allow_discharge", allow_discharge)
+                    feat.setAttribute("swmm_allow_discharge", "0")
 
-                    new_nodes.append(feat)
+                    new_outfalls.append(feat)
 
                 else:  # Keep some existing data in user_swmm_outlets
                     fid = self.gutils.execute("SELECT fid FROM user_swmm_outlets WHERE name = ?;",
@@ -1671,7 +1671,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                                     name,
                                 ),
                             )
-                            updated_nodes += 1
+                            updated_outfalls += 1
 
                     else:  # this name is not in user_swmm_outlets, include it:
                         geom = QgsGeometry.fromPointXY(QgsPointXY(x, y))
@@ -1688,16 +1688,16 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                         feat.setAttribute("time_series", time_series)
                         feat.setAttribute("fixed_stage", water_depth)
                         feat.setAttribute("flapgate", flapgate)
-                        # feat.setAttribute("swmm_allow_discharge", allow_discharge)
+                        feat.setAttribute("swmm_allow_discharge", "0")
 
-                        new_nodes.append(feat)
-                        updated_nodes += 1
+                        new_outfalls.append(feat)
+                        updated_outfalls += 1
 
-            if complete_or_create == "Create New" and len(new_nodes) != 0:
+            if complete_or_create == "Create New" and len(new_outfalls) != 0:
                 remove_features(self.user_swmm_outlets_lyr)
                 self.user_swmm_outlets_lyr.blockSignals(True)
                 self.user_swmm_outlets_lyr.startEditing()
-                self.user_swmm_outlets_lyr.addFeatures(new_nodes)
+                self.user_swmm_outlets_lyr.addFeatures(new_outfalls)
                 self.user_swmm_outlets_lyr.commitChanges()
                 self.user_swmm_outlets_lyr.updateExtents()
                 self.user_swmm_outlets_lyr.triggerRepaint()
@@ -1707,10 +1707,10 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             else:
                 # The option 'Keep existing and complete' already updated values taken from the .INP file.
                 # but include new ones:
-                if len(new_nodes) != 0:
+                if len(new_outfalls) != 0:
                     self.user_swmm_outlets_lyr.blockSignals(True)
                     self.user_swmm_outlets_lyr.startEditing()
-                    self.user_swmm_outlets_lyr.addFeatures(new_nodes)
+                    self.user_swmm_outlets_lyr.addFeatures(new_outfalls)
                     self.user_swmm_outlets_lyr.commitChanges()
                     self.user_swmm_outlets_lyr.updateExtents()
                     self.user_swmm_outlets_lyr.triggerRepaint()
@@ -2807,6 +2807,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         if (
             complete_or_create == "Create New"
             and len(new_nodes) == 0
+            and len(new_outfalls) == 0
             and len(new_storages) == 0
             and len(new_conduits) == 0
             and len(new_pumps) == 0
@@ -2853,6 +2854,9 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 + str(len(new_nodes))
                 + " Inlets & junctions were created in the 'Storm Drain Inlets/Junctions' layer ('User Layers' group), and\n\n"
                 + "* "
+                + str(len(new_outfalls))
+                + " Outfalls were created in the 'Storm Drain Outfalls' layer ('User Layers' group), and\n\n"
+                + "* "
                 + str(len(new_storages))
                 + " Storage Units in the 'Storm Drain Storage Units' layer ('User Layers' group), and\n\n"
                 + "* "
@@ -2885,6 +2889,9 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 + str(updated_nodes)
                 + " Inlets & junctions in the 'Storm Drain Inlets/Junctions' layer ('User Layers' group) were updated, and\n\n"
                 + "* "
+                + str(updated_outfalls)
+                + " Outfalls in the 'Storm Drain Outfalls' layer ('User Layers' group) were updated, and\n\n"
+                + "* "
                 + str(updated_storages)
                 + " Storage Units in the 'Storm Drain Storage Units' layer ('User Layers' group) were updated, and\n\n"
                 + "* "                
@@ -2903,8 +2910,8 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 + str(updated_weirs)
                 + " Weirs in the 'Storm Drain Weirs' layer ('User Layers' group) were updated, and\n"
                 + "  " + str(len(new_weirs)) + " new weirs created.\n\n"                
-                "Click the 'Inlets/Junctions', 'Outfalls', 'Conduits', 'Pumps', 'Orifices', and 'Weirs' buttons in the Storm Drain Editor widget to see or edit their attributes.\n\n"
-                "NOTE: the 'Schematize Storm Drain Components' button  in the Storm Drain Editor widget will update the 'Storm Drain' layer group, required to "
+                "Use the FLO-2D Info Tool to see or edit Storm Drain attributes.\n\n"
+                "NOTE: the 'Schematize Storm Drain Components' button in the Storm Drain Editor widget will update the 'Storm Drain' layer group, required to "
                 "later export the .DAT files used by the FLO-2D model."
             )
             self.uc.show_info(msg)

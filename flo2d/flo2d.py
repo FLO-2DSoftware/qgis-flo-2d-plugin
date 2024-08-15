@@ -1882,6 +1882,8 @@ class Flo2D(object):
                 else:
                     raise
 
+        QApplication.restoreOverrideCursor()
+
     @connection_required
     def import_gds(self):
         """
@@ -1895,7 +1897,7 @@ class Flo2D(object):
             "import_mannings_n_topo",
             "import_inflow",
             "import_tailings",
-            # "import_outrc",
+            # "import_outrc",  Add back when the OUTRC process is completed
             "import_outflow",
             "import_rain",
             "import_raincell",
@@ -1917,6 +1919,8 @@ class Flo2D(object):
             "import_swmmflo",
             "import_swmmflort",
             "import_swmmoutf",
+            "import_swmmflodropbox",
+            "import_sdclogging",
             "import_tolspatial",
             "import_wsurf",
             "import_wstime",
@@ -1927,6 +1931,8 @@ class Flo2D(object):
             None, "Select FLO-2D file to import", directory=last_dir, filter="CONT.DAT"
         )
         if not fname:
+            self.uc.bar_info("Import cancelled!")
+            self.uc.log_info("Import cancelled!")
             self.gutils.enable_geom_triggers()
             return
         dir_name = os.path.dirname(fname)
@@ -1935,10 +1941,13 @@ class Flo2D(object):
         if self.f2g.set_parser(fname):
             topo = self.f2g.parser.dat_files["TOPO.DAT"]
             if topo is None:
-                self.uc.bar_warn("Could not find TOPO.DAT file! Importing GDS files aborted!", dur=3)
+                self.uc.bar_error("Could not find TOPO.DAT file! Importing GDS files aborted!", dur=3)
+                self.uc.log_info("Could not find TOPO.DAT file! Importing GDS files aborted!")
                 self.gutils.enable_geom_triggers()
                 return
             if bname not in self.f2g.parser.dat_files:
+                self.uc.bar_info("Import cancelled!")
+                self.uc.log_info("Import cancelled!")
                 self.gutils.enable_geom_triggers()
                 return
             empty = self.f2g.is_table_empty("grid")
@@ -1949,19 +1958,21 @@ class Flo2D(object):
                     pass
                 else:
                     self.uc.bar_info("Import cancelled!", dur=3)
-                    self.uc.log_info("Import cancelled!", dur=3)
+                    self.uc.log_info("Import cancelled!")
                     self.gutils.enable_geom_triggers()
                     return
 
             # Check if MANNINGS_N.DAT exist:
             if not os.path.isfile(dir_name + r"\MANNINGS_N.DAT") or os.path.getsize(dir_name + r"\MANNINGS_N.DAT") == 0:
-                self.uc.show_info("ERROR 241019.1821: file MANNINGS_N.DAT is missing or empty!")
+                self.uc.bar_error("ERROR 241019.1821: file MANNINGS_N.DAT is missing or empty!")
+                self.uc.log_info("ERROR 241019.1821: file MANNINGS_N.DAT is missing or empty!")
                 self.gutils.enable_geom_triggers()
                 return
 
             # Check if TOLER.DAT exist:
             if not os.path.isfile(dir_name + r"\TOLER.DAT") or os.path.getsize(dir_name + r"\TOLER.DAT") == 0:
-                self.uc.show_info("ERROR 200322.0911: file TOLER.DAT is missing or empty!")
+                self.uc.bar_error("ERROR 200322.0911: file TOLER.DAT is missing or empty!")
+                self.uc.log_info("ERROR 200322.0911: file TOLER.DAT is missing or empty!")
                 self.gutils.enable_geom_triggers()
                 return
 
@@ -1988,7 +1999,7 @@ class Flo2D(object):
                         import_calls.remove("import_inflow")
                         import_calls.remove("import_tailings")
 
-                    # if "Surface Water Rating Tables" not in dlg_components.components:
+                    # if "Surface Water Rating Tables" not in dlg_components.components: Add back when OUTRC is completed
                     #     import_calls.remove("import_outrc")
 
                     if "Levees" not in dlg_components.components:
@@ -2019,9 +2030,6 @@ class Flo2D(object):
                         import_calls.remove("import_hystruc")
                         import_calls.remove("import_hystruc_bridge_xs")
 
-                    # if 'MODFLO-2D' not in dlg_components.components:
-                    #     import_calls.remove('')
-
                     if "Rain" not in dlg_components.components:
                         import_calls.remove("import_rain")
                         import_calls.remove("import_raincell")
@@ -2030,6 +2038,8 @@ class Flo2D(object):
                         import_calls.remove("import_swmmflo")
                         import_calls.remove("import_swmmflort")
                         import_calls.remove("import_swmmoutf")
+                        import_calls.remove("import_swmmflodropbox")
+                        import_calls.remove("import_sdclogging")
 
                     if "Spatial Tolerance" not in dlg_components.components:
                         import_calls.remove("import_tolspatial")
@@ -2177,6 +2187,30 @@ class Flo2D(object):
                     for table in tables:
                         self.gutils.clear_tables(table)
 
+                    # Import first the grid
+                    if "import_cont_toler" in import_calls:
+                        self.call_IO_methods(["import_cont_toler"], True)
+                        import_calls.remove("import_cont_toler")
+
+                    if "import_mannings_n_topo" in import_calls:
+                        self.call_IO_methods(["import_mannings_n_topo"], True)
+                        import_calls.remove("import_mannings_n_topo")
+
+                    # Import the SWMM.INP
+                    if "Storm Drain" in dlg_components.components:
+                        swmm_converter = SchemaSWMMConverter(self.con, self.iface, self.lyrs)
+                        swmm_converter.create_user_swmm_inlets_junctions()
+                        swmm_converter.create_user_swmm_outlets()
+
+                        if os.path.isfile(dir_name + r"\SWMM.INP"):
+                            if self.f2d_widget.storm_drain_editor.import_storm_drain_INP_file(
+                                    "Force import of SWMM.INP", False
+                            ):
+                                self.files_used += "SWMM.INP" + "\n"
+                        else:
+                            self.uc.bar_error("ERROR 100623.0944: SWMM.INP file not found!")
+                            self.uc.log_info("ERROR 100623.0944: SWMM.INP file not found!")
+
                     self.call_IO_methods(import_calls, True)  # The strings list 'export_calls', contains the names of
                     # the methods in the class Flo2dGeoPackage to import (read) the
                     # FLO-2D .DAT files
@@ -2193,69 +2227,16 @@ class Flo2D(object):
                     if "import_chan" in import_calls:
                         self.gutils.create_schematized_rbank_lines_from_xs_tips()
 
-                    if "Storm Drain" in dlg_components.components:
-                        try:
-                            swmm_converter = SchemaSWMMConverter(self.con, self.iface, self.lyrs)
-                            swmm_converter.create_user_swmm_inlets_junctions()
-                            swmm_converter.create_user_swmm_outlets()
-
-                            s = QSettings()
-                            last_dir = s.value("FLO-2D/lastGdsDir", "")
-                            # Import SWMMFLODROPBOX.DAT:
-                            file = last_dir + r"\SWMMFLODROPBOX.DAT"
-                            if os.path.isfile(file):
-                                if os.path.getsize(file) > 0:
-                                    if self.f2g.import_swmmflodropbox():
-                                        self.files_used += "SWMMFLODROPBOX.DAT\n"
-                                    else:
-                                        self.files_not_used += "SWMMFLODROPBOX.DAT (errors found)\n"
-                                else:
-                                    self.files_not_used += "SWMMFLODROPBOX.DAT\n"
-                            else:
-                                self.files_not_used += "SWMMFLODROPBOX.DAT\n"
-
-                            # Import SDCLOGGING..DAT:
-                            file = last_dir + r"\SDCLOGGING.DAT"
-                            if os.path.isfile(file):
-                                if os.path.getsize(file) > 0:
-                                    if self.f2g.import_sdclogging():
-                                        self.files_used += "SDCLOGGING.DAT\n"
-                                    else:
-                                        self.files_not_used += "SDCLOGGING.DAT (errors found)\n"
-                                else:
-                                    self.files_not_used += "SDCLOGGING.DAT\n"
-                            else:
-                                self.files_not_used += "SDCLOGGING.DAT\n"
-
-
-                        except Exception as e:
-                            QApplication.restoreOverrideCursor()
-                            self.uc.log_info(traceback.format_exc())
-                            self.uc.show_error(
-                                "ERROR 040723.1749:\n\nConverting Schematic SD Inlets to User Storm Drain Inlets/Junctions failed!"
-                                + "\n_______________________________________________________________",
-                                e,
-                            )
-
-                        if os.path.isfile(dir_name + r"\SWMM.INP"):
-                            # if self.f2d_widget.storm_drain_editor.import_storm_drain_INP_file("Choose"):
-                            if self.f2d_widget.storm_drain_editor.import_storm_drain_INP_file(
-                                    "Force import of SWMM.INP", False
-                            ):
-                                self.files_used += "SWMM.INP" + "\n"
-                        else:
-                            self.uc.bar_error("ERROR 100623.0944: SWMM.INP file not found!")
-                            self.uc.log_info("ERROR 100623.0944: SWMM.INP file not found!")
-
                     self.setup_dock_widgets()
                     self.lyrs.refresh_layers()
                     self.lyrs.zoom_to_all()
+
+                    QApplication.restoreOverrideCursor()
 
                     # See if geopackage has grid with 'col' and 'row' fields:
                     grid_lyr = self.lyrs.data["grid"]["qlyr"]
                     field_index = grid_lyr.fields().indexFromName("col")
                     if field_index == -1:
-                        QApplication.restoreOverrideCursor()
 
                         add_new_colums = self.uc.customized_question(
                             "FLO-2D",
@@ -2276,23 +2257,19 @@ class Flo2D(object):
                     else:
                         cell = self.gutils.execute("SELECT col FROM grid WHERE fid = 1").fetchone()
                         if cell[0] == NULL:
-                            QApplication.setOverrideCursor(Qt.ArrowCursor)
                             proceed = self.uc.question(
                                 "Grid layer's fields 'col' and 'row' have NULL values!\n\nWould you like to assign them?"
                             )
-                            QApplication.restoreOverrideCursor()
                             if proceed:
                                 assign_col_row_indexes_to_grid(self.lyrs.data["grid"]["qlyr"], self.gutils)
-
-                    QApplication.restoreOverrideCursor()
 
                 except Exception as e:
                     QApplication.restoreOverrideCursor()
                     self.uc.show_error("ERROR 050521.0349: importing .DAT files!.\n", e)
+                    self.uc.log_info(f"ERROR 050521.0349: importing .DAT files!.\n{e}")
                 finally:
-                    QApplication.restoreOverrideCursor()
                     if self.files_used != "" or self.files_not_used != "":
-                        self.uc.show_info(
+                        msg = (
                             "Files read by this project:\n\n"
                             + self.files_used
                             + (
@@ -2301,6 +2278,8 @@ class Flo2D(object):
                                 else "\n\nFiles not found or empty:\n\n" + self.files_not_used
                             )
                         )
+                        self.uc.show_info(msg)
+                        self.uc.log_info(msg)
 
                     # Check the imported components on the schema2user
                     specific_components = []
@@ -2609,8 +2588,11 @@ class Flo2D(object):
         Import selected traditional GDS files into FLO-2D database (GeoPackage).
         """
         self.uncheck_all_info_tools()
+        msg = "This import method imports .DAT files without importing grid related files.\n\n" \
+              "* Select 'Several Components' to import multiple *.DAT files.\n" \
+              "* Select 'One Single Component' to import one single *.DAT file.\n"
         imprt = self.uc.dialog_with_2_customized_buttons(
-            "Select import method", "", " Several Components", " One Single Component"
+            "Select import method", msg, " Several Components", " One Single Component"
         )
 
         if imprt == QMessageBox.Yes:
@@ -2649,6 +2631,8 @@ class Flo2D(object):
             "import_swmmflo",
             "import_swmmflort",
             "import_swmmoutf",
+            "import_swmmflodropbox",
+            "import_sdclogging",
         ]
 
         s = QSettings()
@@ -2748,20 +2732,6 @@ class Flo2D(object):
                         import_calls.remove("import_fpfroude")
 
                     if import_calls:
-                        self.call_IO_methods(
-                            import_calls, True
-                        )  # The strings list 'import_calls', contains the names of
-                        # the methods in the class Flo2dGeoPackage to import (read) the
-                        # FLO-2D .DAT files
-
-                        # save CRS to table cont
-                        self.gutils.set_cont_par("PROJ", self.crs.toProj())
-
-                        # load layers and tables
-                        self.load_layers()
-                        self.uc.bar_info("Project model imported!", dur=3)
-                        self.uc.log_info("Project model imported!")
-                        self.gutils.enable_geom_triggers()
 
                         if "Storm Drain" in dlg_components.components:
                             try:
@@ -2778,7 +2748,6 @@ class Flo2D(object):
                                 )
 
                             if os.path.isfile(outdir + r"\SWMM.INP"):
-                                # if self.f2d_widget.storm_drain_editor.import_storm_drain_INP_file("Choose"):
                                 if self.f2d_widget.storm_drain_editor.import_storm_drain_INP_file(
                                         "Force import of SWMM.INP", True
                                 ):
@@ -2786,9 +2755,21 @@ class Flo2D(object):
                             else:
                                 self.uc.bar_error("ERROR 100623.0944: SWMM.INP file not found!")
                                 self.uc.log_info("ERROR 100623.0944: SWMM.INP file not found!")
-                        # if "Storm Drain" in dlg_components.components:
-                        #     if self.f2d_widget.storm_drain_editor.import_storm_drain_INP_file("Force import of SWMM.INP", True):
-                        #         self.files_used += "SWMM.INP" + "\n"
+
+                        self.call_IO_methods(
+                            import_calls, True
+                        )  # The strings list 'import_calls', contains the names of
+                        # the methods in the class Flo2dGeoPackage to import (read) the
+                        # FLO-2D .DAT files
+
+                        # save CRS to table cont
+                        self.gutils.set_cont_par("PROJ", self.crs.toProj())
+
+                        # load layers and tables
+                        self.load_layers()
+                        self.uc.bar_info("Project model imported!", dur=3)
+                        self.uc.log_info("Project model imported!")
+                        self.gutils.enable_geom_triggers()
 
                         if "import_chan" in import_calls:
                             self.gutils.create_schematized_rbank_lines_from_xs_tips()
@@ -2796,12 +2777,15 @@ class Flo2D(object):
                         self.setup_dock_widgets()
                         self.lyrs.refresh_layers()
                         self.lyrs.zoom_to_all()
+
+                        QApplication.restoreOverrideCursor()
+
                     else:
                         QApplication.restoreOverrideCursor()
                         self.uc.show_info("No component was selected!")
 
                 finally:
-                    QApplication.setOverrideCursor(QtGui.QCursor(QtCore.Qt.ArrowCursor))
+                    QApplication.restoreOverrideCursor()
                     if self.files_used != "" or self.files_not_used != "":
                         self.uc.show_info(
                             "Files read by this project:\n\n"
@@ -2841,37 +2825,6 @@ class Flo2D(object):
                         self.uc.show_info(msg)
                         self.schematic2user(True)
 
-                    # msg = ""
-                    # if "import_swmmflo" in import_calls:
-                    #     self.clean_rating_tables()
-                    #
-                    #     if self.gutils.is_table_empty("user_model_boundary"):
-                    #         msg += "* To complete the Storm Drain functionality, the 'Computational Domain' and 'Storm Drains' conversion "
-                    #         msg += "must be done using the "
-                    #         msg += "<FONT COLOR=green>Convert Schematic Layers to User Layers</FONT>"
-                    #         msg += " tool in the <FONT COLOR=blue>FLO-2D panel</FONT>...<br>"
-                    #         if "SWMM.INP" not in self.files_used:
-                    #             msg += "...and <FONT COLOR=green>Import SWMM.INP</FONT> from the <FONT COLOR=blue>Storm Drain Editor widget</FONT>."
-                    #     else:
-                    #         msg += "* To complete the Storm Drain functionality, the 'Storm Drains' conversion "
-                    #         msg += "must be done using the "
-                    #         msg += "<FONT COLOR=green>Convert Schematic Layers to User Layers</FONT>"
-                    #         msg += " tool in the <FONT COLOR=blue>FLO-2D panel</FONT>...<br>"
-                    #         if "SWMM.INP" not in self.files_used:
-                    #             msg += "...and <FONT COLOR=green>Import SWMM.INP</FONT> from the <FONT COLOR=blue>Storm Drain Editor widget</FONT>."
-                    #
-                    # if "import_inflow" in import_calls or "import_outflow" in import_calls:
-                    #     if msg:
-                    #         msg += "<br><br>"
-                    #     msg += (
-                    #         "* To complete the Boundary Conditions functionality, the 'Boundary Conditions' conversion "
-                    #     )
-                    #     msg += "must be done using the "
-                    #     msg += "<FONT COLOR=green>Conversion from Schematic Layers to User Layers</FONT>"
-                    #     msg += " tool in the <FONT COLOR=blue>FLO-2D panel</FONT>."
-                    #
-                    # if msg:
-                    #     self.uc.show_info(msg)
             else:
                 self.gutils.enable_geom_triggers()
         else:
@@ -2913,8 +2866,9 @@ class Flo2D(object):
             "FPFROUDE.DAT": "import_fpfroude",
             "SWMMFLO.DAT": "import_swmmflo",
             "SWMMFLORT.DAT": "import_swmmflort",
-            "SWMMOUTETF.DAT": "import_swmmoutf",
+            "SWMMOUTF.DAT": "import_swmmoutf",
             "SWMMFLODROPBOX.DAT": "import_swmmflodropbox",
+            "SDCLOGGING.DAT": "import_sdclogging",
             "WSURF.DAT": "import_wsurf",
             "WSTIME.DAT": "import_wstime",
             "MANNINGS_N.DAT": "import_mannings_n",
@@ -2938,6 +2892,7 @@ class Flo2D(object):
                 "Import selected GDS file",
                 "Import from {0} file is not supported.".format(bname),
             )
+            self.uc.log_info(f"Import from {bname} file is not supported.")
             self.gutils.enable_geom_triggers()
             return
 
@@ -2951,8 +2906,9 @@ class Flo2D(object):
                 QMessageBox.information(
                     self.iface.mainWindow(),
                     "Import selected GDS file",
-                    "Import from {0} was successful".format(bname),
+                    "Import from {0} was successful.".format(bname),
                 )
+                self.uc.log_info(f"Import from {bname} was successful.")
                 if call_string == "import_chan":
                     self.gutils.create_schematized_rbank_lines_from_xs_tips()
 
@@ -2966,6 +2922,7 @@ class Flo2D(object):
                     "Import selected GDS file",
                     "Import from {0} fails".format(bname),
                 )
+                self.uc.log_info(f"Import from {bname} fails.")
 
             finally:
                 self.gutils.enable_geom_triggers()
@@ -2992,39 +2949,11 @@ class Flo2D(object):
                     specific_components.append(1)
 
                 if len(specific_components) > 0:
-                    msg = "To complete the user layer functionality, use the <FONT COLOR=black>Convert Schematic " \
-                          "Layers to User Layers</FONT> tool in the FLO-2D panel."
+                    msg = "To complete the user layer functionality, use the Convert Schematic " \
+                          "Layers to User Layers tool in the FLO-2D panel."
                     self.uc.show_info(msg)
+                    self.uc.log_info(msg)
                     self.schematic2user(True)
-
-                # msg = ""
-                # if call_string == "import_swmmflo":
-                #     self.clean_rating_tables()
-                #
-                #     if self.gutils.is_table_empty("user_model_boundary"):
-                #         msg += "* To complete the Storm Drain functionality, the 'Computational Domain' and 'Storm Drains' conversion "
-                #         msg += "must be done using the "
-                #         msg += "<FONT COLOR=green>Convert Schematic Layers to User Layers</FONT>"
-                #         msg += " tool in the <FONT COLOR=blue>FLO-2D panel</FONT>...<br>"
-                #         msg += "...and <FONT COLOR=green>Import SWMM.INP</FONT> from the <FONT COLOR=blue>Storm Drain Editor widget</FONT>."
-                #
-                #     else:
-                #         msg += "* To complete the Storm Drain functionality, the 'Storm Drains' conversion "
-                #         msg += "must be done using the "
-                #         msg += "<FONT COLOR=green>Convert Schematic Layers to User Layers</FONT>"
-                #         msg += " tool in the <FONT COLOR=blue>FLO-2D panel</FONT>...<br>"
-                #         msg += "...and <FONT COLOR=green>Import SWMM.INP</FONT> from the <FONT COLOR=blue>Storm Drain Editor widget</FONT>."
-                #
-                # if call_string == "import_inflow" or call_string == "import_outflow":
-                #     if msg:
-                #         msg += "<br><br>"
-                #     msg += "* To complete the Boundary Conditions functionality, the 'Boundary Conditions' conversion "
-                #     msg += "must be done using the "
-                #     msg += "<FONT COLOR=green>Conversion from Schematic Layers to User Layers</FONT>"
-                #     msg += " tool in the <FONT COLOR=blue>FLO-2D panel</FONT>."
-                #
-                # if msg:
-                #     self.uc.show_info(msg)
         else:
             self.gutils.enable_geom_triggers()
 
