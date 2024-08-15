@@ -375,10 +375,14 @@ class ProfileTool(qtBaseClass, uiDialog):
         if self.vprofile_radio.isChecked():
             return
         if idx == -1 or self.fid is None or self.feats_stations is None:
+            self.uc.bar_info("No raster found! Please, add an elevation raster to your project.")
+            self.uc.log_info("No raster found! Please, add an elevation raster to your project.")
             self.plot.clear()
             return
         probe_raster = self.raster_combo.itemData(idx)
         if not probe_raster.isValid():
+            self.uc.bar_error("Raster not valid! Please, add a valid elevation raster to your project.")
+            self.uc.log_info("Raster not valid! Please, add a valid elevation raster to your project.")
             return
         user_geom = self.user_feat.geometry()
         axis_x, axis_y = [], []
