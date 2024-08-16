@@ -61,13 +61,13 @@ class TestSelfHelpKit(unittest.TestCase):
     @classmethod
     def tearDownClass(cls):
         cls.con.close()
-        # for f in os.listdir(cls.export_folder):
-        #     fpath = os.path.join(cls.export_folder, f)
-        #     if os.path.isfile(fpath):
-        #         os.remove(fpath)
-        #     else:
-        #         pass
-        # os.rmdir(cls.export_folder)
+        for f in os.listdir(cls.export_folder):
+            fpath = os.path.join(cls.export_folder, f)
+            if os.path.isfile(fpath):
+                os.remove(fpath)
+            else:
+                pass
+        os.rmdir(cls.export_folder)
 
     def test_arf(self):
 
