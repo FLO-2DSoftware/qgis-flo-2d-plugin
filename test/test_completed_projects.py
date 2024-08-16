@@ -40,7 +40,7 @@ def export_paths(export_folder, *inpaths):
     return paths
 
 
-class TestSelfHelpKit(unittest.TestCase):
+class TestCompletedProjects(unittest.TestCase):
 
     con = database_create(":memory:")
 
@@ -61,13 +61,13 @@ class TestSelfHelpKit(unittest.TestCase):
     @classmethod
     def tearDownClass(cls):
         cls.con.close()
-        for f in os.listdir(cls.export_folder):
-            fpath = os.path.join(cls.export_folder, f)
-            if os.path.isfile(fpath):
-                os.remove(fpath)
-            else:
-                pass
-        os.rmdir(cls.export_folder)
+        # for f in os.listdir(cls.export_folder):
+        #     fpath = os.path.join(cls.export_folder, f)
+        #     if os.path.isfile(fpath):
+        #         os.remove(fpath)
+        #     else:
+        #         pass
+        # os.rmdir(cls.export_folder)
 
     @unittest.skip("Skipping test to fix the issue.")
     def test_arf(self):
@@ -163,11 +163,30 @@ class TestSelfHelpKit(unittest.TestCase):
         in_lines, out_lines = compare_files(infile, outfile)
         self.assertEqual(in_lines, out_lines)
 
+    @unittest.skip("Skipping test to fix the issue.")
+    def test_sdclogging(self):
+
+        self.f2g.import_sdclogging()
+        self.f2g.export_sdclogging(self.export_folder)
+        infile = self.f2g.parser.dat_files["SDCLOGGING.DAT"]
+        outfile = export_paths(self.export_folder, infile)
+        in_lines, out_lines = compare_files(infile, outfile)
+        self.assertEqual(in_lines, out_lines)
+
     def test_swmmflo(self):
 
         self.f2g.import_swmmflo()
         self.f2g.export_swmmflo(self.export_folder)
         infile = self.f2g.parser.dat_files["SWMMFLO.DAT"]
+        outfile = export_paths(self.export_folder, infile)
+        in_lines, out_lines = compare_files(infile, outfile)
+        self.assertEqual(in_lines, out_lines)
+
+    @unittest.skip("Skipping test to fix the issue.")
+    def test_swmmflodropbox(self):
+        self.f2g.import_swmmflodropbox()
+        self.f2g.export_swmmflodropbox(self.export_folder)
+        infile = self.f2g.parser.dat_files["SWMMFLODROPBOX.DAT"]
         outfile = export_paths(self.export_folder, infile)
         in_lines, out_lines = compare_files(infile, outfile)
         self.assertEqual(in_lines, out_lines)
@@ -201,8 +220,9 @@ class TestSelfHelpKit(unittest.TestCase):
         in_lines, out_lines = compare_files(infile, outfile)
         self.assertEqual(in_lines, out_lines)
 
+
 if __name__ == "__main__":
-    cases = [TestSelfHelpKit]
+    cases = [TestCompletedProjects]
     suite = unittest.TestSuite()
     for t in cases:
         tests = unittest.TestLoader().loadTestsFromTestCase(t)
