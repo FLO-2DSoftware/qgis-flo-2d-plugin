@@ -1623,6 +1623,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
         self.batch_execute(gutter_globals_sql, gutter_areas_sql, cells_sql)
 
     def import_swmmflo(self):
+
         swmmflo_sql = [
             """INSERT INTO swmmflo (geom, swmmchar, swmm_jt, swmm_iden, intype, swmm_length,
                                                swmm_width, swmm_height, swmm_coeff, flapgate, curbheight, swmm_feature) VALUES""",
@@ -1637,6 +1638,20 @@ class Flo2dGeoPackage(GeoPackageUtils):
             gid = row[1]
             geom = cells[gid]
             row.append(row[8])
+            # Update the user_swmm_inlets_junctions if existing
+            if not self.is_table_empty('user_swmm_inlets_junctions'):
+                update_qry = (f"""UPDATE user_swmm_inlets_junctions
+                                SET
+                                intype = '{row[3]}',
+                                swmm_length = '{row[4]}',
+                                swmm_width = '{row[5]}',
+                                swmm_height = '{row[6]}',
+                                swmm_coeff = '{row[7]}',
+                                curbheight = '{row[9]}',
+                                swmm_feature = '{row[10]}'
+                                WHERE name = '{row[2]}' AND grid = '{row[1]}';""")
+                self.execute(update_qry)
+
             swmmflo_sql += [(geom,) + tuple(row)]
 
         self.batch_execute(swmmflo_sql)

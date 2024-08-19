@@ -16,3 +16,4 @@ pylint.log
 .pydevproject
 *.swp
 /flo2d/help/html/
+/flo2d-1.0.1.zip
