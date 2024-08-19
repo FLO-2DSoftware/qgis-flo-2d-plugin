@@ -3221,7 +3221,7 @@ class Flo2D(object):
                         self.uc.show_info(info)
                         QApplication.restoreOverrideCursor()
 
-                    self.uc.bar_info("Flo2D model exported to " + outdir, dur=3)
+                    self.uc.bar_info("FLO-2D model exported to " + outdir, dur=3)
 
         QApplication.restoreOverrideCursor()
 
@@ -3373,7 +3373,7 @@ class Flo2D(object):
                     if "export_swmmflo" in export_calls:
                         self.f2d_widget.storm_drain_editor.export_storm_drain_INP_file(outdir, output_hdf5)
 
-                    self.uc.bar_info("Flo2D model exported to " + output_hdf5, dur=3)
+                    self.uc.bar_info("FLO-2D model exported to " + output_hdf5, dur=3)
 
                 finally:
                     QApplication.restoreOverrideCursor()
