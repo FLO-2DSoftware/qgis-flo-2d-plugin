@@ -23,22 +23,23 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-python-
 
-      - name: Cache QGIS installation
+      - name: Cache QGIS
         uses: actions/cache@v3
         with:
           path: |
-            /usr/local/qgis
-          key: ${{ runner.os }}-qgis-3.x-${{ hashFiles('**/requirements.txt') }}
+            /usr/share/qgis           # QGIS installation directory
+            /usr/lib/qgis             # QGIS libraries
+            /usr/lib/python3/dist-packages/qgis # Python bindings for QGIS
+          key: ${{ runner.os }}-qgis-${{ hashFiles('**/QGIS_version_identifier_file') }}
           restore-keys: |
-            ${{ runner.os }}-qgis-3.x-
+            ${{ runner.os }}-qgis
 
       - name: Download and Install QGIS
         run: |
           if [ ! -d "/usr/local/qgis" ]; then
-            wget https://qgis.org/downloads/qgis_3.x.x_amd64.deb
-            sudo dpkg -i qgis_3.x.x_amd64.deb
-            sudo apt-get -f install -y
-            sudo mv /usr/bin/qgis /usr/local/qgis/
+            sudo add-apt-repository ppa:ubuntugis/ubuntugis-unstable -y
+            sudo apt-get install -y qgis
+            sudo apt-get install -y python3-pip
           fi
 
       - name: Run tests
