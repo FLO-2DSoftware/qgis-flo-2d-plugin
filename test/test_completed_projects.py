@@ -79,8 +79,10 @@ class TestCompletedProjects(unittest.TestCase):
                 infile = self.f2g.parser.dat_files["ARF.DAT"]
                 outfile = export_paths(self.export_folder, infile)
                 in_lines, out_lines = compare_files(infile, outfile)
+                self.clear_outputs()
                 self.assertEqual(in_lines, out_lines)
-            self.clear_outputs()
+            else:
+                self.clear_outputs()
 
     def test_chan(self):
 
@@ -134,8 +136,10 @@ class TestCompletedProjects(unittest.TestCase):
                 infile = self.f2g.parser.dat_files["HYSTRUC.DAT"]
                 outfile = export_paths(self.export_folder, infile)
                 in_lines, out_lines = compare_files(infile, outfile)
+                self.clear_outputs()
                 self.assertEqual(in_lines, out_lines)
-            self.clear_outputs()
+            else:
+                self.clear_outputs()
 
     def test_infil(self):
         projects = next(os.walk(PROJECTS_DIR))[1]
@@ -148,8 +152,10 @@ class TestCompletedProjects(unittest.TestCase):
                 infile = self.f2g.parser.dat_files["INFIL.DAT"]
                 outfile = export_paths(self.export_folder, infile)
                 in_lines, out_lines = compare_files(infile, outfile)
+                self.clear_outputs()
                 self.assertEqual(in_lines, out_lines)
-            self.clear_outputs()
+            else:
+                self.clear_outputs()
 
     def test_inflow(self):
         projects = next(os.walk(PROJECTS_DIR))[1]
@@ -162,8 +168,10 @@ class TestCompletedProjects(unittest.TestCase):
                 infile = self.f2g.parser.dat_files["INFLOW.DAT"]
                 outfile = export_paths(self.export_folder, infile)
                 in_lines, out_lines = compare_files(infile, outfile)
+                self.clear_outputs()
                 self.assertEqual(in_lines, out_lines)
-            self.clear_outputs()
+            else:
+                self.clear_outputs()
 
     def test_levee(self):
         projects = next(os.walk(PROJECTS_DIR))[1]
@@ -177,8 +185,10 @@ class TestCompletedProjects(unittest.TestCase):
                 infile = self.f2g.parser.dat_files["LEVEE.DAT"]
                 outfile = export_paths(self.export_folder, infile)
                 in_lines, out_lines = compare_files(infile, outfile)
+                self.clear_outputs()
                 self.assertEqual(in_lines, out_lines)
-            self.clear_outputs()
+            else:
+                self.clear_outputs()
 
     def test_manning_n_topo(self):
         projects = next(os.walk(PROJECTS_DIR))[1]
@@ -198,6 +208,7 @@ class TestCompletedProjects(unittest.TestCase):
                 self.assertEqual(in_lines2, out_lines2)
             self.clear_outputs()
 
+
     def test_outflow(self):
         projects = next(os.walk(PROJECTS_DIR))[1]
         for project in projects:
@@ -209,82 +220,129 @@ class TestCompletedProjects(unittest.TestCase):
                 infile = self.f2g.parser.dat_files["OUTFLOW.DAT"]
                 outfile = export_paths(self.export_folder, infile)
                 in_lines, out_lines = compare_files(infile, outfile)
+                self.clear_outputs()
                 self.assertEqual(in_lines, out_lines)
-            self.clear_outputs()
-    #
-    # def test_rain(self):
-    #     file = self.import_folder + r"\RAIN.DAT"
-    #     if os.path.isfile(file):
-    #         self.f2g.import_rain()
-    #         self.f2g.export_rain(self.export_folder)
-    #         infile = self.f2g.parser.dat_files["RAIN.DAT"]
-    #         outfile = export_paths(self.export_folder, infile)
-    #         in_lines, out_lines = compare_files(infile, outfile)
-    #         self.assertEqual(in_lines, out_lines)
-    #
-    # @unittest.skip("Skipping test to fix the issue.")
-    # def test_sdclogging(self):
-    #     file = self.import_folder + r"\SDCLOGGING.DAT"
-    #     if os.path.isfile(file):
-    #         self.f2g.import_sdclogging()
-    #         self.f2g.export_sdclogging(self.export_folder)
-    #         infile = self.f2g.parser.dat_files["SDCLOGGING.DAT"]
-    #         outfile = export_paths(self.export_folder, infile)
-    #         in_lines, out_lines = compare_files(infile, outfile)
-    #         self.assertEqual(in_lines, out_lines)
-    #
-    # def test_swmmflo(self):
-    #     file = self.import_folder + r"\SWMMFLO.DAT"
-    #     if os.path.isfile(file):
-    #         self.f2g.import_swmmflo()
-    #         self.f2g.export_swmmflo(self.export_folder)
-    #         infile = self.f2g.parser.dat_files["SWMMFLO.DAT"]
-    #         outfile = export_paths(self.export_folder, infile)
-    #         in_lines, out_lines = compare_files(infile, outfile)
-    #         self.assertEqual(in_lines, out_lines)
-    #
-    # @unittest.skip("Skipping test to fix the issue.")
-    # def test_swmmflodropbox(self):
-    #     file = self.import_folder + r"\SWMMFLODROPBOX.DAT"
-    #     if os.path.isfile(file):
-    #         self.f2g.import_swmmflodropbox()
-    #         self.f2g.export_swmmflodropbox(self.export_folder)
-    #         infile = self.f2g.parser.dat_files["SWMMFLODROPBOX.DAT"]
-    #         outfile = export_paths(self.export_folder, infile)
-    #         in_lines, out_lines = compare_files(infile, outfile)
-    #         self.assertEqual(in_lines, out_lines)
-    #
-    # @unittest.skip("Skipping test to fix the issue.")
-    # def test_swmmflort(self):
-    #     file = self.import_folder + r"\SWMMFLORT.DAT"
-    #     if os.path.isfile(file):
-    #         self.f2g.import_swmmflort()
-    #         self.f2g.export_swmmflort(self.export_folder)
-    #         infile = self.f2g.parser.dat_files["SWMMFLORT.DAT"]
-    #         outfile = export_paths(self.export_folder, infile)
-    #         in_lines, out_lines = compare_files(infile, outfile)
-    #         self.assertEqual(in_lines, out_lines)
-    #
-    # @unittest.skip("Skipping test to fix the issue.")
-    # def test_swmmoutf(self):  # TODO IMPROVE THIS CODE FOR WHEN WE HAVE -9999
-    #     file = self.import_folder + r"\SWMMOUTF.DAT"
-    #     if os.path.isfile(file):
-    #         self.f2g.import_swmmoutf()
-    #         self.f2g.export_swmmoutf(self.export_folder)
-    #         infile = self.f2g.parser.dat_files["SWMMOUTF.DAT"]
-    #         outfile = export_paths(self.export_folder, infile)
-    #         in_lines, out_lines = compare_files(infile, outfile)
-    #         self.assertEqual(in_lines, out_lines)
-    #
-    # def test_xsec(self):
-    #     file = self.import_folder + r"\XSEC.DAT"
-    #     if os.path.isfile(file):
-    #         self.f2g.import_xsec()
-    #         self.f2g.export_xsec(self.export_folder)
-    #         infile = self.f2g.parser.dat_files["XSEC.DAT"]
-    #         outfile = export_paths(self.export_folder, infile)
-    #         in_lines, out_lines = compare_files(infile, outfile)
-    #         self.assertEqual(in_lines, out_lines)
+            else:
+                self.clear_outputs()
+
+    def test_rain(self):
+        projects = next(os.walk(PROJECTS_DIR))[1]
+        for project in projects:
+            self.setup_project(project)
+            file = self.import_folder + r"\RAIN.DAT"
+            if os.path.isfile(file):
+                self.f2g.import_mannings_n_topo()
+                self.f2g.import_rain()
+                self.f2g.export_rain(self.export_folder)
+                infile = self.f2g.parser.dat_files["RAIN.DAT"]
+                outfile = export_paths(self.export_folder, infile)
+                in_lines, out_lines = compare_files(infile, outfile)
+                self.clear_outputs()
+                self.assertEqual(in_lines, out_lines)
+            else:
+                self.clear_outputs()
+
+    @unittest.skip("Skipping test to fix the issue.")
+    def test_sdclogging(self):
+        projects = next(os.walk(PROJECTS_DIR))[1]
+        for project in projects:
+            self.setup_project(project)
+            file = self.import_folder + r"\SDCLOGGING.DAT"
+            if os.path.isfile(file):
+                self.f2g.import_sdclogging()
+                self.f2g.export_sdclogging(self.export_folder)
+                infile = self.f2g.parser.dat_files["SDCLOGGING.DAT"]
+                outfile = export_paths(self.export_folder, infile)
+                in_lines, out_lines = compare_files(infile, outfile)
+                self.clear_outputs()
+                self.assertEqual(in_lines, out_lines)
+            else:
+                self.clear_outputs()
+
+    def test_swmmflo(self):
+        projects = next(os.walk(PROJECTS_DIR))[1]
+        for project in projects:
+            self.setup_project(project)
+            file = self.import_folder + r"\SWMMFLO.DAT"
+            if os.path.isfile(file):
+                self.f2g.import_mannings_n_topo()
+                self.f2g.import_swmmflo()
+                self.f2g.export_swmmflo(self.export_folder)
+                infile = self.f2g.parser.dat_files["SWMMFLO.DAT"]
+                outfile = export_paths(self.export_folder, infile)
+                in_lines, out_lines = compare_files(infile, outfile)
+                self.clear_outputs()
+                self.assertEqual(in_lines, out_lines)
+            else:
+                self.clear_outputs()
+
+    @unittest.skip("Skipping test to fix the issue.")
+    def test_swmmflodropbox(self):
+        projects = next(os.walk(PROJECTS_DIR))[1]
+        for project in projects:
+            self.setup_project(project)
+            file = self.import_folder + r"\SWMMFLODROPBOX.DAT"
+            if os.path.isfile(file):
+                self.f2g.import_swmmflodropbox()
+                self.f2g.export_swmmflodropbox(self.export_folder)
+                infile = self.f2g.parser.dat_files["SWMMFLODROPBOX.DAT"]
+                outfile = export_paths(self.export_folder, infile)
+                in_lines, out_lines = compare_files(infile, outfile)
+                self.clear_outputs()
+                self.assertEqual(in_lines, out_lines)
+            else:
+                self.clear_outputs()
+
+    @unittest.skip("Skipping test to fix the issue.")
+    def test_swmmflort(self):
+        projects = next(os.walk(PROJECTS_DIR))[1]
+        for project in projects:
+            self.setup_project(project)
+            file = self.import_folder + r"\SWMMFLORT.DAT"
+            if os.path.isfile(file):
+                self.f2g.import_swmmflort()
+                self.f2g.export_swmmflort(self.export_folder)
+                infile = self.f2g.parser.dat_files["SWMMFLORT.DAT"]
+                outfile = export_paths(self.export_folder, infile)
+                in_lines, out_lines = compare_files(infile, outfile)
+                self.clear_outputs()
+                self.assertEqual(in_lines, out_lines)
+            else:
+                self.clear_outputs()
+
+    @unittest.skip("Skipping test to fix the issue.")
+    def test_swmmoutf(self):  # TODO IMPROVE THIS CODE FOR WHEN WE HAVE -9999
+        projects = next(os.walk(PROJECTS_DIR))[1]
+        for project in projects:
+            self.setup_project(project)
+            file = self.import_folder + r"\SWMMOUTF.DAT"
+            if os.path.isfile(file):
+                self.f2g.import_swmmoutf()
+                self.f2g.export_swmmoutf(self.export_folder)
+                infile = self.f2g.parser.dat_files["SWMMOUTF.DAT"]
+                outfile = export_paths(self.export_folder, infile)
+                in_lines, out_lines = compare_files(infile, outfile)
+                self.clear_outputs()
+                self.assertEqual(in_lines, out_lines)
+            else:
+                self.clear_outputs()
+
+    @unittest.skip("Skipping test to fix the issue.")
+    def test_xsec(self):
+        projects = next(os.walk(PROJECTS_DIR))[1]
+        for project in projects:
+            self.setup_project(project)
+            file = self.import_folder + r"\XSEC.DAT"
+            if os.path.isfile(file):
+                self.f2g.import_xsec()
+                self.f2g.export_xsec(self.export_folder)
+                infile = self.f2g.parser.dat_files["XSEC.DAT"]
+                outfile = export_paths(self.export_folder, infile)
+                in_lines, out_lines = compare_files(infile, outfile)
+                self.clear_outputs()
+                self.assertEqual(in_lines, out_lines)
+            else:
+                self.clear_outputs()
 
 
 if __name__ == "__main__":
