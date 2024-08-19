@@ -9,19 +9,19 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Set up Python
-        uses: actions/setup-python@v3
+        uses: actions/setup-python@v5
+        id: setup_python
         with:
           python-version: '3.12'
 
-      - name: Cache Python packages
-        uses: actions/cache@v3
+      - name: Cache virtualenv
+        uses: actions/cache@v4
+        id: cache-venv
         with:
-          path: |
-            ~/.cache/pip
-            .tox
-          key: ${{ runner.os }}-python-${{ hashFiles('**/requirements.txt') }}
+          path: ${{ env.pythonLocation }}
+          key: ${{ runner.os }}-${{ steps.setup_python.outputs.python-version }}-${{ env.pythonLocation }}-${{ hashFiles('requirements.txt') }}
           restore-keys: |
-            ${{ runner.os }}-python-
+            ${{ runner.os }}-${{ steps.setup_python.outputs.python-version }}-${{ env.pythonLocation }}-
 
       - name: Cache QGIS
         uses: actions/cache@v3
