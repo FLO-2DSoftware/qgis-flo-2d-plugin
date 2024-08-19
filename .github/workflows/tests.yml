@@ -4,63 +4,46 @@ jobs:
   linux_tests:
     runs-on: ubuntu-22.04
     steps:
-      # 1. Checkout Code from the Repository
-      - name: Checkout repository
-        uses: actions/checkout@v2
-
-      # 2. Cache QGIS Installation (if applicable)
-      - name: Cache QGIS Installation
+      # 1. Cache QGIS Installation and Dependencies
+      - name: Cache QGIS
         uses: actions/cache@v3
         with:
           path: |
-            /usr/share/qgis
-            /usr/lib/qgis
-            /usr/lib/python3/dist-packages/qgis
-          key: ${{ runner.os }}-qgis-installation
+            /usr/share/qgis           # QGIS installation directory
+            /usr/lib/qgis             # QGIS libraries
+            /usr/lib/python3/dist-packages/qgis # Python bindings for QGIS
+          key: ${{ runner.os }}-qgis-${{ hashFiles('**/QGIS_version_identifier_file') }}
           restore-keys: |
             ${{ runner.os }}-qgis
 
-      # 3. Cache Python Pip Cache and Virtual Environment
-      - name: Cache Python Pip and Virtual Environment
+      # 2. Cache Python Dependencies
+      - name: Cache Python Dependencies
         uses: actions/cache@v3
         with:
           path: |
-            ~/.cache/pip
-            /path/to/venv
-          key: ${{ runner.os }}-python-python-venv
+            ~/.cache/pip               # Pip cache directory
+            /path/to/venv              # Virtual environment (if used)
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
           restore-keys: |
-            ${{ runner.os }}-python
+            ${{ runner.os }}-pip-
 
-      ## 4. Debug and Install Dependencies
-      #- name: Debug and Install Dependencies
-      #  run: |
-      #    # Verify if QGIS and Python dependencies exist
-      #    if [ ! -d /usr/share/qgis ]; then
-      #      echo "QGIS not found. Installing QGIS."
-      #      sudo add-apt-repository ppa:ubuntugis/ubuntugis-unstable -y
-      #      sudo apt-get update
-      #      sudo apt-get install -y qgis python3-pip
-      #    else
-      #      echo "QGIS found in cache."
-      #    fi
-#
-      #    if [ ! -d /path/to/venv ]; then
-      #      echo "Virtual environment not found. Creating and installing Python dependencies."
-      #      python3 -m venv /path/to/venv
-      #      source /path/to/venv/bin/activate
-      #      pip install -r requirements.txt
-      #    else
-      #      echo "Virtual environment found in cache."
-      #      source /path/to/venv/bin/activate
-      #    fi
-#
-      ## 5. Run the Tests
-      #- name: Run tests
-      #  env:
-      #    QT_QPA_PLATFORM: offscreen
-      #    QGIS_AUTH_DB_DIR_PATH: ./auth
-      #  run: |
-      #    mkdir ./auth
-      #    source test/run-env-linux.sh /usr
-      #    python3 -m unittest discover --verbose
-#
+      # 3. Checkout Code from the Repository
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      # 4. Install QGIS and Python Dependencies (This step may be skipped if cache is restored)
+      - name: Install QGIS and Python dependencies
+        run: |
+          sudo add-apt-repository ppa:ubuntugis/ubuntugis-unstable -y
+          sudo apt-get install -y qgis
+          sudo apt-get install -y python3-pip
+
+      # 5. Run the Tests
+      - name: Run tests
+        env:
+          QT_QPA_PLATFORM: offscreen
+          QGIS_AUTH_DB_DIR_PATH: ./auth
+        run: |
+          mkdir ./auth
+          source test/run-env-linux.sh /usr
+          python3 -m unittest discover --verbose
