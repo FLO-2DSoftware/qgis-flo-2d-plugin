@@ -4,35 +4,40 @@ jobs:
   linux_tests:
     runs-on: ubuntu-22.04
     steps:
-      # 1. Cache QGIS Installation
+      # 1. Cache QGIS Installation and Dependencies
       - name: Cache QGIS
         uses: actions/cache@v3
         with:
-          path: /usr/share/qgis           # The path where QGIS is installed
-          key: ${{ runner.os }}-qgis       # Cache key based on OS type
+          path: |
+            /usr/share/qgis           # QGIS installation directory
+            /usr/lib/qgis             # QGIS libraries
+            /usr/lib/python3/dist-packages/qgis # Python bindings for QGIS
+          key: ${{ runner.os }}-qgis-${{ hashFiles('**/QGIS_version_identifier_file') }}
           restore-keys: |
-            ${{ runner.os }}-qgis          # Restore from a similar key if an exact match is not found
+            ${{ runner.os }}-qgis
 
-      # 2. Cache Python Packages
-      - name: Cache Python Packages
+      # 2. Cache Python Dependencies
+      - name: Cache Python Dependencies
         uses: actions/cache@v3
         with:
-          path: ~/.cache/pip               # Cache the pip package cache directory
+          path: |
+            ~/.cache/pip               # Pip cache directory
+            /path/to/venv              # Virtual environment (if used)
           key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
-          # The key is generated based on the OS type and the hash of your requirements.txt file.
           restore-keys: |
-            ${{ runner.os }}-pip-          # Fallback to any pip cache if exact match is not found
+            ${{ runner.os }}-pip-
 
       # 3. Checkout Code from the Repository
       - name: Checkout repository
         uses: actions/checkout@v2
 
-      # 4. Install QGIS and Python (This step may be skipped if cache is restored)
+      # 4. Install QGIS and Python Dependencies (This step may be skipped if cache is restored)
       - name: Install QGIS and Python dependencies
         run: |
           sudo add-apt-repository ppa:ubuntugis/ubuntugis-unstable -y
           sudo apt-get install -y qgis
-          sudo apt-get install -y python3
+          sudo apt-get install -y python3-pip
+          pip install -r requirements.txt
 
       # 5. Run the Tests
       - name: Run tests
