@@ -42,27 +42,6 @@ def export_paths(export_folder, *inpaths):
 
 class TestCompletedProjects(unittest.TestCase):
 
-    # con = database_create(":memory:")
-    #
-    # # import_folder = os.path.join(PROJECTS_DIR, 'SelfHelpKit')
-    # # export_folder = os.path.join(PROJECTS_DIR, 'SelfHelpKit', 'export')
-    # # os.mkdir(export_folder)
-    # #
-    # # CONT = os.path.join(import_folder, "CONT.DAT")
-    #
-    # # @classmethod
-    # # def setUpClass(cls):
-    #
-    #     cls.f2g = Flo2dGeoPackage(cls.con, None)
-    #     # cls.f2g.disable_geom_triggers()
-    #     # cls.f2g.set_parser(cls.CONT)
-    #     # cls.f2g.import_mannings_n_topo()
-
-    # @classmethod
-    # def tearDownClass(cls):
-    #     cls.con.close()
-
-
     def setup_project(self, project):
 
         self.con = database_create(":memory:")
@@ -86,7 +65,6 @@ class TestCompletedProjects(unittest.TestCase):
                 pass
         os.rmdir(self.export_folder)
 
-    @unittest.skip("Skipping test to fix the issue.")
     def test_arf(self):
 
         projects = next(os.walk(PROJECTS_DIR))[1]
@@ -102,41 +80,47 @@ class TestCompletedProjects(unittest.TestCase):
                 outfile = export_paths(self.export_folder, infile)
                 in_lines, out_lines = compare_files(infile, outfile)
                 self.assertEqual(in_lines, out_lines)
-                self.clear_outputs()
+            self.clear_outputs()
 
-    # def test_chan(self):
-    #
-    #     projects = next(os.walk(PROJECTS_DIR))[1]
-    #     for project in projects:
-    #         self.setup_project(project)
-    #
-    #         file1 = self.import_folder + r"\CHAN.DAT"
-    #         file2 = self.import_folder + r"\CHANBANK.DAT"
-    #         if os.path.isfile(file1) and os.path.isfile(file2):
-    #             self.f2g.import_chan()
-    #             self.f2g.export_chan(self.export_folder)
-    #             infile1 = self.f2g.parser.dat_files["CHAN.DAT"]
-    #             infile2 = self.f2g.parser.dat_files["CHANBANK.DAT"]
-    #             outfile1, outfile2 = export_paths(self.export_folder, infile1, infile2)
-    #             in_lines1, out_lines1 = compare_files(infile1, outfile1)
-    #             self.assertEqual(in_lines1, out_lines1)
-    #             in_lines2, out_lines2 = compare_files(infile2, outfile2)
-    #             self.assertEqual(in_lines2, out_lines2)
-    #
-    # def test_cont_toler(self):
-    #     file1 = self.import_folder + r"\CONT.DAT"
-    #     file2 = self.import_folder + r"\TOLER.DAT"
-    #     if os.path.isfile(file1) and os.path.isfile(file2):
-    #         self.f2g.import_cont_toler()
-    #         self.f2g.export_cont_toler(self.export_folder)
-    #         infile1 = self.f2g.parser.dat_files["CONT.DAT"]
-    #         infile2 = self.f2g.parser.dat_files["TOLER.DAT"]
-    #         outfile1, outfile2 = export_paths(self.export_folder, infile1, infile2)
-    #         in_lines1, out_lines1 = compare_files(infile1, outfile1)
-    #         self.assertEqual(in_lines1, out_lines1)
-    #         in_lines2, out_lines2 = compare_files(infile2, outfile2)
-    #         self.assertEqual(in_lines2, out_lines2)
-    #
+    def test_chan(self):
+
+        projects = next(os.walk(PROJECTS_DIR))[1]
+        for project in projects:
+            self.setup_project(project)
+
+            file1 = self.import_folder + r"\CHAN.DAT"
+            file2 = self.import_folder + r"\CHANBANK.DAT"
+            if os.path.isfile(file1) and os.path.isfile(file2):
+                self.f2g.import_mannings_n_topo()
+                self.f2g.import_chan()
+                self.f2g.export_chan(self.export_folder)
+                infile1 = self.f2g.parser.dat_files["CHAN.DAT"]
+                infile2 = self.f2g.parser.dat_files["CHANBANK.DAT"]
+                outfile1, outfile2 = export_paths(self.export_folder, infile1, infile2)
+                in_lines1, out_lines1 = compare_files(infile1, outfile1)
+                self.assertEqual(in_lines1, out_lines1)
+                in_lines2, out_lines2 = compare_files(infile2, outfile2)
+                self.assertEqual(in_lines2, out_lines2)
+            self.clear_outputs()
+
+    def test_cont_toler(self):
+        projects = next(os.walk(PROJECTS_DIR))[1]
+        for project in projects:
+            self.setup_project(project)
+            file1 = self.import_folder + r"\CONT.DAT"
+            file2 = self.import_folder + r"\TOLER.DAT"
+            if os.path.isfile(file1) and os.path.isfile(file2):
+                self.f2g.import_cont_toler()
+                self.f2g.export_cont_toler(self.export_folder)
+                infile1 = self.f2g.parser.dat_files["CONT.DAT"]
+                infile2 = self.f2g.parser.dat_files["TOLER.DAT"]
+                outfile1, outfile2 = export_paths(self.export_folder, infile1, infile2)
+                in_lines1, out_lines1 = compare_files(infile1, outfile1)
+                self.assertEqual(in_lines1, out_lines1)
+                in_lines2, out_lines2 = compare_files(infile2, outfile2)
+                self.assertEqual(in_lines2, out_lines2)
+            self.clear_outputs()
+
     def test_hystruct(self):
         projects = next(os.walk(PROJECTS_DIR))[1]
         for project in projects:
@@ -151,7 +135,7 @@ class TestCompletedProjects(unittest.TestCase):
                 outfile = export_paths(self.export_folder, infile)
                 in_lines, out_lines = compare_files(infile, outfile)
                 self.assertEqual(in_lines, out_lines)
-                self.clear_outputs()
+            self.clear_outputs()
 
     def test_infil(self):
         projects = next(os.walk(PROJECTS_DIR))[1]
@@ -165,51 +149,68 @@ class TestCompletedProjects(unittest.TestCase):
                 outfile = export_paths(self.export_folder, infile)
                 in_lines, out_lines = compare_files(infile, outfile)
                 self.assertEqual(in_lines, out_lines)
-                self.clear_outputs()
+            self.clear_outputs()
 
-    # def test_inflow(self):
-    #     file = self.import_folder + r"\INFLOW.DAT"
-    #     if os.path.isfile(file):
-    #         self.f2g.import_inflow()
-    #         self.f2g.export_inflow(self.export_folder)
-    #         infile = self.f2g.parser.dat_files["INFLOW.DAT"]
-    #         outfile = export_paths(self.export_folder, infile)
-    #         in_lines, out_lines = compare_files(infile, outfile)
-    #         self.assertEqual(in_lines, out_lines)
-    #
-    # def test_levee(self):
-    #     file = self.import_folder + r"\LEVEE.DAT"
-    #     if os.path.isfile(file):
-    #         self.f2g.import_levee()
-    #         self.f2g.export_levee(self.export_folder)
-    #         infile = self.f2g.parser.dat_files["LEVEE.DAT"]
-    #         outfile = export_paths(self.export_folder, infile)
-    #         in_lines, out_lines = compare_files(infile, outfile)
-    #         self.assertEqual(in_lines, out_lines)
-    #
-    # def test_manning_n_topo(self):
-    #     file1 = self.import_folder + r"\MANNINGS_N.DAT"
-    #     file2 = self.import_folder + r"\TOPO.DAT"
-    #     if os.path.isfile(file1) and os.path.isfile(file2):
-    #         self.f2g.import_mannings_n_topo()
-    #         self.f2g.export_mannings_n_topo(self.export_folder)
-    #         infile1 = self.f2g.parser.dat_files["MANNINGS_N.DAT"]
-    #         infile2 = self.f2g.parser.dat_files["TOPO.DAT"]
-    #         outfile1, outfile2 = export_paths(self.export_folder, infile1, infile2)
-    #         in_lines1, out_lines1 = compare_files(infile1, outfile1)
-    #         self.assertEqual(in_lines1, out_lines1)
-    #         in_lines2, out_lines2 = compare_files(infile2, outfile2)
-    #         self.assertEqual(in_lines2, out_lines2)
-    #
-    # def test_outflow(self):
-    #     file = self.import_folder + r"\OUTFLOW.DAT"
-    #     if os.path.isfile(file):
-    #         self.f2g.import_outflow()
-    #         self.f2g.export_outflow(self.export_folder)
-    #         infile = self.f2g.parser.dat_files["OUTFLOW.DAT"]
-    #         outfile = export_paths(self.export_folder, infile)
-    #         in_lines, out_lines = compare_files(infile, outfile)
-    #         self.assertEqual(in_lines, out_lines)
+    def test_inflow(self):
+        projects = next(os.walk(PROJECTS_DIR))[1]
+        for project in projects:
+            self.setup_project(project)
+            file = self.import_folder + r"\INFLOW.DAT"
+            if os.path.isfile(file):
+                self.f2g.import_inflow()
+                self.f2g.export_inflow(self.export_folder)
+                infile = self.f2g.parser.dat_files["INFLOW.DAT"]
+                outfile = export_paths(self.export_folder, infile)
+                in_lines, out_lines = compare_files(infile, outfile)
+                self.assertEqual(in_lines, out_lines)
+            self.clear_outputs()
+
+    def test_levee(self):
+        projects = next(os.walk(PROJECTS_DIR))[1]
+        for project in projects:
+            self.setup_project(project)
+            file = self.import_folder + r"\LEVEE.DAT"
+            if os.path.isfile(file):
+                self.f2g.import_mannings_n_topo()
+                self.f2g.import_levee()
+                self.f2g.export_levee(self.export_folder)
+                infile = self.f2g.parser.dat_files["LEVEE.DAT"]
+                outfile = export_paths(self.export_folder, infile)
+                in_lines, out_lines = compare_files(infile, outfile)
+                self.assertEqual(in_lines, out_lines)
+            self.clear_outputs()
+
+    def test_manning_n_topo(self):
+        projects = next(os.walk(PROJECTS_DIR))[1]
+        for project in projects:
+            self.setup_project(project)
+            file1 = self.import_folder + r"\MANNINGS_N.DAT"
+            file2 = self.import_folder + r"\TOPO.DAT"
+            if os.path.isfile(file1) and os.path.isfile(file2):
+                self.f2g.import_mannings_n_topo()
+                self.f2g.export_mannings_n_topo(self.export_folder)
+                infile1 = self.f2g.parser.dat_files["MANNINGS_N.DAT"]
+                infile2 = self.f2g.parser.dat_files["TOPO.DAT"]
+                outfile1, outfile2 = export_paths(self.export_folder, infile1, infile2)
+                in_lines1, out_lines1 = compare_files(infile1, outfile1)
+                self.assertEqual(in_lines1, out_lines1)
+                in_lines2, out_lines2 = compare_files(infile2, outfile2)
+                self.assertEqual(in_lines2, out_lines2)
+            self.clear_outputs()
+
+    def test_outflow(self):
+        projects = next(os.walk(PROJECTS_DIR))[1]
+        for project in projects:
+            self.setup_project(project)
+            file = self.import_folder + r"\OUTFLOW.DAT"
+            if os.path.isfile(file):
+                self.f2g.import_outflow()
+                self.f2g.export_outflow(self.export_folder)
+                infile = self.f2g.parser.dat_files["OUTFLOW.DAT"]
+                outfile = export_paths(self.export_folder, infile)
+                in_lines, out_lines = compare_files(infile, outfile)
+                self.assertEqual(in_lines, out_lines)
+            self.clear_outputs()
     #
     # def test_rain(self):
     #     file = self.import_folder + r"\RAIN.DAT"
