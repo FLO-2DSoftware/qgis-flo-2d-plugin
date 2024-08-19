@@ -1,0 +1,781 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Storm Drain Editor &#8212; FLO-2D-User-Manual  documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../_static/styles/theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="../../_static/styles/bootstrap.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="../../_static/styles/pydata-sphinx-theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+
+  
+  <link href="../../_static/vendor/fontawesome/6.5.2/css/all.min.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.5.2/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.5.2/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.5.2/webfonts/fa-regular-400.woff2" />
+
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=a746c00c" />
+    <link rel="stylesheet" type="text/css" href="../../_static/styles/sphinx-book-theme.css?v=a3416100" />
+    <link rel="stylesheet" type="text/css" href="../../_static/static/style.css?v=e5e3935e" />
+  
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b" />
+<link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
+  <script src="../../_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
+
+    <script src="../../_static/documentation_options.js?v=9eb32ce0"></script>
+    <script src="../../_static/doctools.js?v=9a2dae69"></script>
+    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'widgets/storm-drain-editor/Storm Drain';</script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Levees Breach Editor" href="../levees-breach-editor/Levees%20Breach%20Editor.html" />
+    <link rel="prev" title="Infiltration Editor" href="../infiltration-editor/Infiltration%20Editor.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-primary-sidebar-checkbox"/>
+  <label class="overlay overlay-primary" for="pst-primary-sidebar-checkbox"></label>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-secondary-sidebar-checkbox"/>
+  <label class="overlay overlay-secondary" for="pst-secondary-sidebar-checkbox"></label>
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
+<form class="bd-search d-flex align-items-center"
+      action="../../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         id="search-input"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form></div>
+  </div>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <div class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../../index.html">
+  
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="../../_static/Flo2D_logo.jpg" class="logo__image only-light" alt="FLO-2D-User-Manual  documentation - Home"/>
+    <script>document.write(`<img src="../../_static/Flo2D_logo.jpg" class="logo__image only-dark" alt="FLO-2D-User-Manual  documentation - Home"/>`);</script>
+  
+  
+</a></div>
+        <div class="sidebar-primary-item">
+
+ <script>
+ document.write(`
+   <button class="btn search-button-field search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+    <span class="search-button__default-text">Search</span>
+    <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+   </button>
+ `);
+ </script></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        <p aria-level="2" class="caption" role="heading"><span class="caption-text">Setup</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../installation-instructions/Installation.html">Installation Instructions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../installation-instructions/QGIS%20General%20Tools.html">QGIS Tools</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Plugin Features</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../plugin-features/Data%20Storage.html">Data Storage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../plugin-features/Plugin%20Features.html">Plugin Features</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../plugin-features/View%20Options.html">View Options</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Toolbar QGIS and FLO-2D</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../toolbar/FLO-2D%20Toolbar.html">FLO-2D Toolbar</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../toolbar/FLO-2D%20Settings.html">FLO-2D Plugin Settings</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../toolbar/Run%20FLO-2D.html">Run FLO-2D</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../toolbar/Import%20Geo%20Package.html">Import a Geo Package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../toolbar/Import%20Data%20Files.html">Import FLO-2D Data Files</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../toolbar/Import%20Selected%20Component%20Files.html">Import Selected Component Files</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../toolbar/Export%20Project.html">Export Project</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../toolbar/Import%20RAS%20Channel.html">Import HEC-RAS Channel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../toolbar/Control%20Variables.html">Control Variables</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../toolbar/Schematic%20to%20User%20Converter.html">Schematic to User Converter</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../toolbar/User%20to%20Schematic%20Converter.html">User to Schematic Converter</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../toolbar/Channel%20Profile.html">Channel Profile Tool</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../toolbar/FLO-2D%20Info%20Tool.html">FLO-2D Info Tool</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../toolbar/Grid%20Info%20Tool.html">Grid Info Tool</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../toolbar/Levee%20Tool.html">Levee Elevation Tool</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../toolbar/Levee%20Tool%20Walls.html">Levee Tool Walls</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../toolbar/Hazus%20Tool.html">Hazus Tool</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../toolbar/Tailings%20Dam%20Tool.html">Tailings Dam Tool</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../toolbar/Mud%20and%20Sediment%20Transport%20Tool.html">Mud and Sediment Transport Tool</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../toolbar/Debug%20Tool.html">Debug Tool</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../toolbar/Help.html">Help</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Widgets</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../pre-processing-tools/Pre-Processing%20Tools.html">Pre-Processing Tools</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Widgets (Grid Tools)</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../grid-tools/Create%20a%20Grid.html">Create a Grid</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../grid-tools/Sample%20Elevation%20from%20Raster.html">Sample Elevation from Raster</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../grid-tools/Sample%20Elevation%20GDAL%20Grid%20Method.html">Sample Elevation GDAL Grid Method</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../grid-tools/Sample%20Elevation%20from%20Points%20and%20LiDAR.html">Sample Elevation from Points and LiDAR</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../grid-tools/Elevation%20Correction%20Tool.html">Elevation Correction Tool</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../grid-tools/Sample%20Roughness.html">Sample Roughness</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../grid-tools/Area%20and%20Width%20Reduction.html">Area and Width Reduction – Buildings</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../grid-tools/Spatial%20TOL.html">Spatial TOL</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../grid-tools/Spatial%20Limiting%20Froude.html">Spatial Limiting Froude</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../grid-tools/Spatial%20Shallow%20n.html">Spatial Shallow n</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../grid-tools/Gutters.html">Gutters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../grid-tools/No%20Exchange%20Channel.html">No Exchange Channel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../grid-tools/Hazus%20Layers.html">Assign Results from Points Layer</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Widgets</span></p>
+<ul class="current nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../profile-tool/Profile%20Tool.html">Profile Tool</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cross-sections-editor/Cross%20Sections%20Editor.html">Cross Sections Editor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../boundary-condition-editor/Boundary%20Condition%20Editor.html">Boundary Condition Editor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../initial-condition-editor/Initial%20Condition%20Editor.html">Initial Condition Editor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../rain-editor/Rain%20Editor.html">Rain Editor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../schematized-channel-editor/Schematized%20Channel%20Editor.html">Schematized Channel Editor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../hydraulic-structure-editor/Hydraulic%20Structure%20Editor.html">Hydraulic Structure Editor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../street-editor/Street%20Editor.html">Street Editor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../floodplain-cross-section-editor/Floodplain%20Cross%20Section%20Editor.html">Floodplain Cross Section Editor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../infiltration-editor/Infiltration%20Editor.html">Infiltration Editor</a></li>
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">Storm Drain Editor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../levees-breach-editor/Levees%20Breach%20Editor.html">Levees Breach Editor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../multiple-channels-editor/Multiple%20Channel%20Editor.html">Multiple Channels Editor</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">Post Development Grid Modification</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../post-development-grid-modification/Post%20Development%20Grid%20Modification.html">Post Development Grid Modification</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">References</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../References.html">References</a></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+  </div>
+  
+  <div id="rtd-footer-container"></div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><button class="sidebar-toggle primary-toggle btn btn-sm" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</button></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+
+
+
+<div class="dropdown dropdown-download-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Download this page">
+    <i class="fas fa-download"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="../../_sources/widgets/storm-drain-editor/Storm Drain.rst" target="_blank"
+   class="btn btn-sm btn-download-source-button dropdown-item"
+   title="Download source file"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file"></i>
+  </span>
+<span class="btn__text-container">.rst</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li>
+<button onclick="window.print()"
+  class="btn btn-sm btn-download-pdf-button dropdown-item"
+  title="Print to PDF"
+  data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file-pdf"></i>
+  </span>
+<span class="btn__text-container">.pdf</span>
+</button>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="theme-switch fa-solid fa-sun fa-lg" data-mode="light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg" data-mode="dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"></i>
+  </button>
+`);
+</script>
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm pst-navbar-icon search-button search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+  </button>
+`);
+</script>
+<button class="sidebar-toggle secondary-toggle btn btn-sm" title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="fa-solid fa-list"></span>
+</button>
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1>Storm Drain Editor</h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+            <div>
+                <h2> Contents </h2>
+            </div>
+            <nav aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#storm-drain-network">Storm Drain Network</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#inlets-junctions-shapefile">Inlets/Junctions Shapefile</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#outfall-shapefiles">Outfall Shapefiles</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#conduits-shapefiles">Conduits Shapefiles</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#pumps-shapefiles">Pumps Shapefiles</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#orifices-shapefiles">Orifices Shapefiles</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#weirs-shapefiles">Weirs Shapefiles</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#import-swmm-inp">Import SWMM.inp</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#export-swmm-inp">Export SWMM.inp</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#components-inlets-junctions">Components: Inlets/Junctions</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#components-outfalls">Components: Outfalls</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#components-conduits">Components: Conduits</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#components-pumps">Components: Pumps</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#components-orifices">Components: Orifices</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#components-weirs">Components: Weirs</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#auto-assign-conduit-nodes">Auto-assign conduit nodes</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#rating-tables">Rating Tables</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#method-1-create-with-the-flo-2d-plugin">Method 1. Create with the FLO-2D Plugin</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#method-2-import-multiple-tables">Method 2. Import multiple tables</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#external-inflow-data">External Inflow Data</a></li>
+</ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section id="storm-drain-editor">
+<h1>Storm Drain Editor<a class="headerlink" href="#storm-drain-editor" title="Link to this heading">#</a></h1>
+<p>The Storm Drain Editor tool has several functions to prepare the data that integrates the FLO-2D surface water model
+with the storm drain model.  This document will explain the functionality of each button.</p>
+<p>For a step-by-step tutorial, use the QGIS Workshop Lessons or the Self-Help training package.</p>
+<p><a class="reference external" href="https://documentation.flo-2d.com/Workshops/Lesson%203.html">Storm Drain Tutorial</a></p>
+<img alt="../../_images/Storm002.png" src="../../_images/Storm002.png" />
+<ol class="arabic simple">
+<li><p>The digitize storm drain buttons are inactive.
+It is recommended to create a storm drain network in separate storm drain shapefiles as discussed below.</p></li>
+<li><p>The blue schematize button
+is used when the storm drain system is complete and ready to convert to the FLO-2D schema layers.</p></li>
+<li><p>The simulate storm drain
+check box will turn on the storm drain switch in the Control Variables.</p></li>
+</ol>
+<img alt="../../_images/Storm003.png" src="../../_images/Storm003.png" />
+<section id="storm-drain-network">
+<h2>Storm Drain Network<a class="headerlink" href="#storm-drain-network" title="Link to this heading">#</a></h2>
+<p>The select component from shapefile feature is used to build a storm drain network from a set of shapefiles.
+Some projects have a storm drain system already developed.
+Some projects have no network and start from scratch.
+Either way, this information will serve as a template for the data needed to create a storm drain system.</p>
+<ol class="arabic simple">
+<li><p>Load the shapefiles
+onto the map or digitize new shapefiles with QGIS.</p></li>
+</ol>
+<img alt="../../_images/Storm004.png" src="../../_images/Storm004.png" />
+<p>The shapefiles can be described as follow:</p>
+<ul class="simple">
+<li><p>Lesson3InletsJunctions.shp is a point shapefile that contains the inlets nodes, manholes, and junctions.</p></li>
+<li><p>Lesson3Outfalls.shp is a point shapefile that contains the outfalls.</p></li>
+<li><p>Lesson3Conduits.shp is a line shapefile that contains the conduits system.</p></li>
+<li><p>Lesson3Pumps.shp is a line shapefile that contains the pump system. (Not required)</p></li>
+<li><p>Lesson3Orifices.shp is a line shapefile that contains the orifices system. (Not required)</p></li>
+<li><p>Lesson3Weirs.shp is a line shapefile that contains the weirs system. (Not Required)</p></li>
+</ul>
+<p>The following data must be available in the shapefile to create the storm drain data
+files: SWMM.INP, SWMMFLO.DAT, SWMMOUTF.DAT and SWMMFLORT.DAT.</p>
+<img alt="../../_images/Storm005a.png" src="../../_images/Storm005a.png" />
+<img alt="../../_images/Storm005b.png" src="../../_images/Storm005b.png" />
+<img alt="../../_images/Storm005c.png" src="../../_images/Storm005c.png" />
+<img alt="../../_images/Storm005d.png" src="../../_images/Storm005d.png" />
+<img alt="../../_images/Storm005e.png" src="../../_images/Storm005e.png" />
+<img alt="../../_images/Storm005f.png" src="../../_images/Storm005f.png" />
+</section>
+<section id="inlets-junctions-shapefile">
+<h2>Inlets/Junctions Shapefile<a class="headerlink" href="#inlets-junctions-shapefile" title="Link to this heading">#</a></h2>
+<p>This is a sample of the attributes table for the Inlet/Junctions shapefile.</p>
+<img alt="../../_images/Storm007.png" src="../../_images/Storm007.png" />
+<p>The fields from the attribute table are selected using the Select Components from Shapefile dialog box.</p>
+<img alt="../../_images/Storm008.png" src="../../_images/Storm008.png" />
+<img alt="../../_images/Storm009.png" src="../../_images/Storm009.png" />
+</section>
+<section id="outfall-shapefiles">
+<h2>Outfall Shapefiles<a class="headerlink" href="#outfall-shapefiles" title="Link to this heading">#</a></h2>
+<p>This is a sample of the attributes table for the outfall shapefile.</p>
+<img alt="../../_images/Storm012.png" src="../../_images/Storm012.png" />
+<p>The fields from the attribute table are selected using the Select Components from Shapefile dialog box.</p>
+<img alt="../../_images/Storm008.png" src="../../_images/Storm008.png" />
+<img alt="../../_images/Storm009a.png" src="../../_images/Storm009a.png" />
+</section>
+<section id="conduits-shapefiles">
+<h2>Conduits Shapefiles<a class="headerlink" href="#conduits-shapefiles" title="Link to this heading">#</a></h2>
+<p>This is a sample of the attributes table for the conduit shapefile.</p>
+<img alt="../../_images/Storm010.png" src="../../_images/Storm010.png" />
+<p>The fields from the attribute table are selected using the Select Components from Shapefile dialog box.</p>
+<img alt="../../_images/Storm008.png" src="../../_images/Storm008.png" />
+<img alt="../../_images/Storm009b.png" src="../../_images/Storm009b.png" />
+</section>
+<section id="pumps-shapefiles">
+<h2>Pumps Shapefiles<a class="headerlink" href="#pumps-shapefiles" title="Link to this heading">#</a></h2>
+<p>This is a sample of the attributes table for the conduit shapefile.</p>
+<img alt="../../_images/Storm010a.png" src="../../_images/Storm010a.png" />
+<p>The fields from the attribute table are selected using the Select Components from Shapefile dialog box.</p>
+<img alt="../../_images/Storm008.png" src="../../_images/Storm008.png" />
+<img alt="../../_images/Storm009c.png" src="../../_images/Storm009c.png" />
+</section>
+<section id="orifices-shapefiles">
+<h2>Orifices Shapefiles<a class="headerlink" href="#orifices-shapefiles" title="Link to this heading">#</a></h2>
+<p>This is a sample of the attributes table for the conduit shapefile.</p>
+<img alt="../../_images/Storm010b.png" src="../../_images/Storm010b.png" />
+<p>The fields from the attribute table are selected using the Select Components from Shapefile dialog box.</p>
+<img alt="../../_images/Storm008.png" src="../../_images/Storm008.png" />
+<img alt="../../_images/Storm009d.png" src="../../_images/Storm009d.png" />
+</section>
+<section id="weirs-shapefiles">
+<h2>Weirs Shapefiles<a class="headerlink" href="#weirs-shapefiles" title="Link to this heading">#</a></h2>
+<p>This is a sample of the attributes table for the conduit shapefile.</p>
+<img alt="../../_images/Storm010c.png" src="../../_images/Storm010c.png" />
+<p>The fields from the attribute table are selected using the Select Components from Shapefile dialog box.</p>
+<img alt="../../_images/Storm008.png" src="../../_images/Storm008.png" />
+<img alt="../../_images/Storm009e.png" src="../../_images/Storm009e.png" />
+</section>
+<section id="import-swmm-inp">
+<h2>Import SWMM.inp<a class="headerlink" href="#import-swmm-inp" title="Link to this heading">#</a></h2>
+<ol class="arabic simple">
+<li><p>An existing SWMM.inp project can be imported in a FLO-2D Surface System.</p></li>
+<li><p>Click on Import SWMM.inp and browse the project folder that contains the file.</p></li>
+</ol>
+<img alt="../../_images/Storm014.png" src="../../_images/Storm014.png" />
+<p>This button loads inlets/junctions, outfalls and conduits from an *.INP file.
+The Storm Drain data needs to be schematized; the table components that can be opened from the Storm Drain Editor will
+contain the variables from the SWMM.inp file.</p>
+<p>Additional data is needed for the SWMMFLO.DAT, SWMMOUTF.DAT and SWMMFLORT.DAT files.</p>
+<p>QGIS FLO-2D layers will be filled up with the data from the following *.INP groups:</p>
+<ul class="simple">
+<li><p>Inlets/Junctions</p></li>
+<li><p>Outfalls</p></li>
+<li><p>Conduits</p></li>
+<li><p>Cross sections</p></li>
+<li><p>Losses</p></li>
+<li><p>Coordinates (required coordinates only)</p></li>
+</ul>
+</section>
+<section id="export-swmm-inp">
+<h2>Export SWMM.inp<a class="headerlink" href="#export-swmm-inp" title="Link to this heading">#</a></h2>
+<p>Export SWMM.inp file in a FLO-2D format prior to running.
+The SWMM.INP can be created from shapefiles and then exported or it might be modified from an existing SWMM.INP.</p>
+<img alt="../../_images/Storm015.png" src="../../_images/Storm015.png" />
+<p>Data save in the Components tables is written to the .INP file using this function.</p>
+</section>
+<section id="components-inlets-junctions">
+<h2>Components: Inlets/Junctions<a class="headerlink" href="#components-inlets-junctions" title="Link to this heading">#</a></h2>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Important!!!  While it is possible to edit and correct attributes in the following dialog boxes, it is
+recommended to make editorial changes in the original shapefiles so that those files carry forward as the
+project evolves.  The process to recalculate the storm drain from the shapefiles is very fast and effective.</p>
+</div>
+<p>Edit components that already exist using the Components editors for Inlets/Junctions, Outfalls and Conduits.</p>
+<img alt="../../_images/Storm016.png" src="../../_images/Storm016.png" />
+<p>A dialog is shown with data for the selected component, in this case the Inlets/Junctions were selected, the user can edit the tables.</p>
+<img alt="../../_images/Storm017.png" src="../../_images/Storm017.png" />
+</section>
+<section id="components-outfalls">
+<h2>Components: Outfalls<a class="headerlink" href="#components-outfalls" title="Link to this heading">#</a></h2>
+<p>Edit components that already exist using the Components editors for Inlets/Junctions, Outfalls and Conduits.</p>
+<img alt="../../_images/Storm018.png" src="../../_images/Storm018.png" />
+<p>A dialog is shown with data for the selected component, in this case the Outfalls were selected, the user can edit the tables.</p>
+<img alt="../../_images/Storm019.png" src="../../_images/Storm019.png" />
+</section>
+<section id="components-conduits">
+<h2>Components: Conduits<a class="headerlink" href="#components-conduits" title="Link to this heading">#</a></h2>
+<p>Edit components that already exist using the Components editors for Inlets/Junctions, Outfalls and Conduits.</p>
+<img alt="../../_images/Storm020.png" src="../../_images/Storm020.png" />
+<p>A dialog is shown with data for the selected component, in this case the Outfalls were selected, the user can edit the tables.</p>
+<img alt="../../_images/Storm021.png" src="../../_images/Storm021.png" />
+</section>
+<section id="components-pumps">
+<h2>Components: Pumps<a class="headerlink" href="#components-pumps" title="Link to this heading">#</a></h2>
+<p>Edit components that already exist using the Components editors for Inlets/Junctions, Outfalls and Conduits.</p>
+<img alt="../../_images/Storm020a.png" src="../../_images/Storm020a.png" />
+<p>A dialog is shown with data for the selected component, in this case the Outfalls were selected, the user can edit the tables.</p>
+<img alt="../../_images/Storm021a.png" src="../../_images/Storm021a.png" />
+</section>
+<section id="components-orifices">
+<h2>Components: Orifices<a class="headerlink" href="#components-orifices" title="Link to this heading">#</a></h2>
+<p>Edit components that already exist using the Components editors for Inlets/Junctions, Outfalls and Conduits.</p>
+<img alt="../../_images/Storm020b.png" src="../../_images/Storm020b.png" />
+<p>A dialog is shown with data for the selected component, in this case the Outfalls were selected, the user can edit the tables.</p>
+<img alt="../../_images/Storm021b.png" src="../../_images/Storm021b.png" />
+</section>
+<section id="components-weirs">
+<h2>Components: Weirs<a class="headerlink" href="#components-weirs" title="Link to this heading">#</a></h2>
+<p>Edit components that already exist using the Components editors for Inlets/Junctions, Outfalls and Conduits.</p>
+<img alt="../../_images/Storm020c.png" src="../../_images/Storm020c.png" />
+<p>A dialog is shown with data for the selected component, in this case the Outfalls were selected, the user can edit the tables.</p>
+<img alt="../../_images/Storm021c.png" src="../../_images/Storm021c.png" />
+</section>
+<section id="auto-assign-conduit-nodes">
+<h2>Auto-assign conduit nodes<a class="headerlink" href="#auto-assign-conduit-nodes" title="Link to this heading">#</a></h2>
+<p>This tool will automatically fill the node names required for the conduit connections.  Use this calculator individually
+by clicking each option once.  If the option isn’t used, i.e. weirs are not used, it is not necessary to click that option.</p>
+<img alt="../../_images/Storm022.png" src="../../_images/Storm022.png" />
+<p>Links are connected to the node they touch on the upstream and downstream end of each polyline by the name of the node.</p>
+<img alt="../../_images/Storm023.png" src="../../_images/Storm023.png" />
+<p>In a storm drain network there is a separate link feature between each node.
+The auto-assign button finds the node in proximity of the end of each feature and assigns it to the table.
+It is important to orient the conduit features so that the first vertex is near the inlet node and the last vertex is near the outlet node.
+See the flow direction arrows in the following image.</p>
+<img alt="../../_images/Storm024.png" src="../../_images/Storm024.png" />
+</section>
+<section id="rating-tables">
+<h2>Rating Tables<a class="headerlink" href="#rating-tables" title="Link to this heading">#</a></h2>
+<p>Rating tables define the flow at a given depth.
+They are used for headwalls.
+There are two methods for building rating tables.
+<a class="reference external" href="#method-1.-create-with-the-flo-2d-plugin">Method 1</a> uses the Plugin to build the tables.
+This method is good if only a few tables are required.
+<a class="reference external" href="#method-2.-import-multiple-tables">Method 2</a> imports tables from a text file.
+This method is better if many tables are required.</p>
+</section>
+<section id="method-1-create-with-the-flo-2d-plugin">
+<h2>Method 1. Create with the FLO-2D Plugin<a class="headerlink" href="#method-1-create-with-the-flo-2d-plugin" title="Link to this heading">#</a></h2>
+<ol class="arabic simple">
+<li><p>Set up the rating
+tables with the Plugin by adding a rating table to the table editor and assigning the table to the correct inlet.</p></li>
+</ol>
+<img alt="../../_images/Storm025.png" src="../../_images/Storm025.png" />
+<ol class="arabic simple" start="2">
+<li><p>Use the Inlet Editor to
+assign the table to the Type 4 inlet.</p></li>
+</ol>
+<img alt="../../_images/Storm026.png" src="../../_images/Storm026.png" />
+</section>
+<section id="method-2-import-multiple-tables">
+<h2>Method 2. Import multiple tables<a class="headerlink" href="#method-2-import-multiple-tables" title="Link to this heading">#</a></h2>
+<ol class="arabic simple">
+<li><p>Click the
+Import Rating Table… button.</p></li>
+</ol>
+<img alt="../../_images/Storm027.png" src="../../_images/Storm027.png" />
+<ol class="arabic simple" start="2">
+<li><p>Select all of the rating
+tables that match the type 4 inlets.</p></li>
+<li><p>The Plugin will load the tables
+based on the node name and automatically assign each table.</p></li>
+</ol>
+<img alt="../../_images/Storm028.png" src="../../_images/Storm028.png" />
+<ol class="arabic simple" start="4">
+<li><p>Tables are space or tab delimited
+and are created using culvert equations or HY-8.</p></li>
+</ol>
+<img alt="../../_images/Storm029.png" src="../../_images/Storm029.png" />
+</section>
+<section id="external-inflow-data">
+<h2>External Inflow Data<a class="headerlink" href="#external-inflow-data" title="Link to this heading">#</a></h2>
+<ol class="arabic simple">
+<li><p>Set up the external inflow data for a storm drain node.</p></li>
+<li><p>Use the Inlet/Junction editor to set up external inflow parameters and data.</p></li>
+</ol>
+<img alt="../../_images/Storm030.png" src="../../_images/Storm030.png" />
+<ol class="arabic simple" start="3">
+<li><p>Use the Internal Inflow tools to define parameters and select time series data.</p></li>
+</ol>
+<p>Simple parameters are used in this case.</p>
+<ul class="simple">
+<li><p>Inflow constituent: water only (no pollutants)</p></li>
+<li><p>Baseline flow: 0 cfs(cms)</p></li>
+<li><p>Baseline pattern: hourly with no multiplier</p></li>
+<li><p>Scale factor: none</p></li>
+<li><p>Time series file: Example Project/QGIS Lesson 3/SDInflow.dat</p></li>
+</ul>
+<img alt="../../_images/Storm031.png" src="../../_images/Storm031.png" />
+</section>
+</section>
+
+
+                </article>
+              
+
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="../infiltration-editor/Infiltration%20Editor.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">Infiltration Editor</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="../levees-breach-editor/Levees%20Breach%20Editor.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">Levees Breach Editor</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <div class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item">
+  <div class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> Contents
+  </div>
+  <nav class="bd-toc-nav page-toc">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#storm-drain-network">Storm Drain Network</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#inlets-junctions-shapefile">Inlets/Junctions Shapefile</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#outfall-shapefiles">Outfall Shapefiles</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#conduits-shapefiles">Conduits Shapefiles</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#pumps-shapefiles">Pumps Shapefiles</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#orifices-shapefiles">Orifices Shapefiles</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#weirs-shapefiles">Weirs Shapefiles</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#import-swmm-inp">Import SWMM.inp</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#export-swmm-inp">Export SWMM.inp</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#components-inlets-junctions">Components: Inlets/Junctions</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#components-outfalls">Components: Outfalls</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#components-conduits">Components: Conduits</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#components-pumps">Components: Pumps</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#components-orifices">Components: Orifices</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#components-weirs">Components: Weirs</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#auto-assign-conduit-nodes">Auto-assign conduit nodes</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#rating-tables">Rating Tables</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#method-1-create-with-the-flo-2d-plugin">Method 1. Create with the FLO-2D Plugin</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#method-2-import-multiple-tables">Method 2. Import multiple tables</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#external-inflow-data">External Inflow Data</a></li>
+</ul>
+  </nav></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+By Karen O'Brien
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+
+  <p class="copyright">
+    
+      © Copyright 2021, Karen O&#39;Brien.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="../../_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b"></script>
+<script src="../../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>
