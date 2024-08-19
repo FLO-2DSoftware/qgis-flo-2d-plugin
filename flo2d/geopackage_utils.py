@@ -286,7 +286,7 @@ class GeoPackageUtils(object):
         other_gpkg_conn = sqlite3.connect(other_gpkg)
         other_gpkg_cur = other_gpkg_conn.cursor()
 
-        tab_sql = """SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'gpkg_%' AND name NOT LIKE 'rtree_%';"""
+        tab_sql = """SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'gpkg_%' AND name NOT LIKE 'rtree_%' AND name NOT LIKE 'qgis_projects';"""
         tabs = [row[0] for row in self.execute(tab_sql)]
         self.execute("ATTACH ? AS other;", (other_gpkg,))
         other_tab_sql = """SELECT name FROM other.sqlite_master WHERE type='table' AND name NOT LIKE 'gpkg_%' AND name NOT LIKE 'rtree_%';"""
