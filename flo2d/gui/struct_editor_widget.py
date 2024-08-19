@@ -331,7 +331,7 @@ class StructEditorWidget(qtBaseClass, uiDialog):
                 self.gutils.set_cont_par("IHYDRSTRUCT", 1)
 
                 # Return False there are some errors
-                if not self.check_structures():
+                if self.check_structures():
                     self.uc.bar_info("Schematizing Hydraulic Structures finished with errors. Check the report!")
                     self.uc.log_info("Schematizing Hydraulic Structures finished with errors. Check the report!")
 
@@ -386,11 +386,14 @@ class StructEditorWidget(qtBaseClass, uiDialog):
                     same_outlets.append(outlet_grid)
 
             # Error 4 - Inlet and outlet too close
-            # Distance between the inlet and outlet must be greater than sqrt(cellsize^2 + cellsize^2)
-            struct_geom = feat.geometry()
-            struct_len = struct_geom.length()
-            if struct_len != 0 and struct_len <= min_dist:
-                short_struct.append(inlet_grid)
+            ifporchan = feat["ifporchan"]
+            # It's ok to have an inlet and outline in adjacent cells if they are channel to channel.
+            if ifporchan != 1:
+                # Distance between the inlet and outlet must be greater than sqrt(cellsize^2 + cellsize^2)
+                struct_geom = feat.geometry()
+                struct_len = struct_geom.length()
+                if struct_len != 0 and struct_len <= min_dist:
+                    short_struct.append(inlet_grid)
 
         msg = ""
 
