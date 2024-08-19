@@ -1,44 +1,46 @@
 name: Auto Tests
 on: [push]
 jobs:
-  linux_tests:
-    runs-on: ubuntu-22.04
+  test:
+    runs-on: ubuntu-latest
+
     steps:
-      # 1. Cache QGIS Installation and Dependencies
-      - name: Cache QGIS
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v3
+        with:
+          python-version: '3.x'
+
+      - name: Cache Python packages
         uses: actions/cache@v3
         with:
           path: |
-            /usr/share/qgis           # QGIS installation directory
-            /usr/lib/qgis             # QGIS libraries
-            /usr/lib/python3/dist-packages/qgis # Python bindings for QGIS
-          key: ${{ runner.os }}-qgis-${{ hashFiles('**/QGIS_version_identifier_file') }}
+            ~/.cache/pip
+            .tox
+          key: ${{ runner.os }}-python-${{ hashFiles('**/requirements.txt') }}
           restore-keys: |
-            ${{ runner.os }}-qgis
+            ${{ runner.os }}-python-
 
-      # 2. Cache Python Dependencies
-      - name: Cache Python Dependencies
+      - name: Cache QGIS installation
         uses: actions/cache@v3
         with:
           path: |
-            ~/.cache/pip               # Pip cache directory
-            /path/to/venv              # Virtual environment (if used)
-          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+            /usr/local/qgis
+          key: ${{ runner.os }}-qgis-3.x-${{ hashFiles('**/requirements.txt') }}
           restore-keys: |
-            ${{ runner.os }}-pip-
+            ${{ runner.os }}-qgis-3.x-
 
-      # 3. Checkout Code from the Repository
-      - name: Checkout repository
-        uses: actions/checkout@v2
-
-      # 4. Install QGIS and Python Dependencies (This step may be skipped if cache is restored)
-      - name: Install QGIS and Python dependencies
+      - name: Download and Install QGIS
         run: |
-          sudo add-apt-repository ppa:ubuntugis/ubuntugis-unstable -y
-          sudo apt-get install -y qgis
-          sudo apt-get install -y python3-pip
+          if [ ! -d "/usr/local/qgis" ]; then
+            wget https://qgis.org/downloads/qgis_3.x.x_amd64.deb
+            sudo dpkg -i qgis_3.x.x_amd64.deb
+            sudo apt-get -f install -y
+            sudo mv /usr/bin/qgis /usr/local/qgis/
+          fi
 
-      # 5. Run the Tests
       - name: Run tests
         env:
           QT_QPA_PLATFORM: offscreen
