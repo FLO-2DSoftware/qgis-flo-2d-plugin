@@ -984,13 +984,15 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             swmm_file = last_dir + r"\SWMM.INP"
             if not os.path.isfile(swmm_file):
                 return False
-        else:
+        elif mode == "Choose":
             # Show dialog to import SWMM.INP or cancel its import:
             swmm_file, __ = QFileDialog.getOpenFileName(
                 None, "Select SWMM input file to import data", directory=last_dir, filter="(*.inp *.INP*)"
             )
             if not swmm_file:
                 return False
+        else:
+            swmm_file = mode
 
         s.setValue("FLO-2D/lastSWMMDir", os.path.dirname(swmm_file))
 
@@ -2977,7 +2979,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         else:
             return "Cancel"
 
-    def export_storm_drain_INP_file(self, hdf5_dir=None, hdf5_file=None, set_dat_dir=False):
+    def export_storm_drain_INP_file(self, hdf5_dir=None, hdf5_file=None, set_dat_dir=False, specific_path=""):
         """
         Writes <name>.INP file
         (<name> exists or is given by user in initial file dialog).
@@ -3014,7 +3016,10 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                     if not swmm_dir:
                         return                    
                 else:
-                    swmm_dir = last_dir
+                    if specific_path != "":
+                        swmm_dir = specific_path
+                    else:
+                        swmm_dir = last_dir
 
                 swmm_file = swmm_dir + r"\SWMM.INP"
                 if os.path.isfile(swmm_file):
