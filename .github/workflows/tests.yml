@@ -7,17 +7,15 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v2
 
-      - name: install deps
-        run: |
-          sudo add-apt-repository ppa:ubuntugis/ubuntugis-unstable -y
-          sudo apt-get install -y qgis
-          sudo apt-get install -y python3
+      - name: Log in to GitHub Container Registry
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u flo-2dsoftware --password-stdin
 
-      - name: Run tests
-        env:
-          QT_QPA_PLATFORM: offscreen
-          QGIS_AUTH_DB_DIR_PATH: ./auth
+      - name: Pull Docker image from GitHub Container Registry
+        run: docker pull ghcr.io/flo-2dsoftware/qgis-flo-2d-plugin
+
+      - name: Run tests in Docker
         run: |
-          mkdir ./auth
-          source test/run-env-linux.sh /usr
-          python3 -m unittest discover --verbose
+          docker run --rm \
+            -e QT_QPA_PLATFORM=offscreen \
+            -e QGIS_AUTH_DB_DIR_PATH=./auth \
+            ghcr.io/flo-2dsoftware/qgis-flo-2d-plugin
