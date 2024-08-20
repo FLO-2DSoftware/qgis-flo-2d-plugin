@@ -1,14 +1,25 @@
 # Use an official Ubuntu as a parent image
 FROM ubuntu:22.04
 
-ENV DEBIAN_FRONTEND noninteractive
+ENV DEBIAN_FRONTEND=noninteractive
 
-# Install dependencies
+# Install QGIS, QGIS Python, and necessary libraries
 RUN apt-get update && apt-get install -y \
-    software-properties-common \
-    python3-pip \
     qgis \
-    && rm -rf /var/lib/apt/lists/*
+    qgis-plugin-grass \
+    python3-qgis \
+    python3-pyqt5 \
+    python3-pip
+
+# Install Python dependencies if necessary
+RUN pip3 install --upgrade pip
+
+ENV QGIS_PREFIX_PATH=/usr
+ENV GDAL_FILENAME_IS_UTF8=YES
+ENV VSI_CACHE=TRUE
+ENV VSI_CACHE_SIZE=1000000
+ENV QT_PLUGIN_PATH=/usr/lib/qgis/plugins:/usr/lib/qt5/plugins
+ENV PYTHONPATH=/usr/share/qgis/python:/usr/share/qgis/python/plugins
 
 # Set the working directory
 WORKDIR /app
