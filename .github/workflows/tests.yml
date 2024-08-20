@@ -8,14 +8,14 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Log in to GitHub Container Registry
-        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u your-github-username --password-stdin
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u flo-2dsoftware --password-stdin
 
       - name: Pull Docker image from GitHub Container Registry
-        run: docker pull ghcr.io/your-github-username/qgis-plugin-test
+        run: docker pull ghcr.io/flo-2dsoftware/qgis-flo-2d-plugin
 
       - name: Run tests in Docker
         run: |
           docker run --rm \
             -e QT_QPA_PLATFORM=offscreen \
             -e QGIS_AUTH_DB_DIR_PATH=./auth \
-            ghcr.io/your-github-username/qgis-plugin-test
+            ghcr.io/flo-2dsoftware/qgis-flo-2d-plugin
