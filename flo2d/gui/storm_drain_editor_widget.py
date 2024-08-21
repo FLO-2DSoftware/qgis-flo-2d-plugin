@@ -1375,7 +1375,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 surcharge_depth = float_or_zero(values["surcharge_depth"]) if "surcharge_depth" in values else 0
                 ponded_area = float_or_zero(values["ponded_area"]) if "ponded_area" in values else 0
 
-                intype = int(values["intype"]) if "intype" in values else 1
+                intype = int(values["intype"]) if "intype" in values else 0
 
                 if not "x" in values or not "y" in values:
                     outside_nodes += n_spaces + name + "\tno coordinates.\n"
