@@ -38,7 +38,6 @@ class TestSchematicTools(unittest.TestCase):
             else:
                 pass
 
-    @unittest.skip("QGIS needs to be upgraded to version 2.18 on Jenkins machine")
     def test_get_intervals(self):
         user_lines = os.path.join(VECTOR_PATH, "user_levee_lines.geojson")
         user_points = os.path.join(VECTOR_PATH, "user_levee_points.geojson")
@@ -49,7 +48,6 @@ class TestSchematicTools(unittest.TestCase):
             intervals = get_intervals(feat, point_layer.getFeatures(), "elev", 500)
             self.assertIn(len(intervals), inter_lens)
 
-    @unittest.skip("QGIS needs to be upgraded to version 2.18 on Jenkins machine")
     def test_interpolate_along_line(self):
         user_lines = os.path.join(VECTOR_PATH, "user_levee_lines.geojson")
         user_points = os.path.join(VECTOR_PATH, "user_levee_points.geojson")

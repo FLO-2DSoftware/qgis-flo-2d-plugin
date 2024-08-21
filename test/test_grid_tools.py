@@ -75,7 +75,7 @@ class TestGridTools(unittest.TestCase):
         expected = {0.5, 0.3, 0.1}
         self.assertSetEqual(set(n_values), expected)
 
-    @unittest.skip("Skipping test due to long run.")
+    @unittest.skip("Need to fix the CALCULATE_ARFWRF")
     def test_calculate_arfwrf(self):
         grid = os.path.join(VECTOR_PATH, "grid.geojson")
         blockers = os.path.join(VECTOR_PATH, "blockers.geojson")
