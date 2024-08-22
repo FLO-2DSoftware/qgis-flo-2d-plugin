@@ -80,13 +80,21 @@ class TestFlo2dMultChan(unittest.TestCase):
         in_lines2, out_lines2 = compare_files(infile2, outfile2)
         self.assertEqual(in_lines2, out_lines2)
 
-    @unittest.skip("Need to build this test")
     def test_fpfroude(self):
-        pass
+        self.f2g.import_fpfroude()
+        self.f2g.export_fpfroude(EXPORT_DATA_DIR)
+        infile = self.f2g.parser.dat_files["FPFROUDE.DAT"]
+        outfile = os.path.join(EXPORT_DATA_DIR, "FPFROUDE.DAT")
+        in_lines, out_lines = compare_files(infile, outfile)
+        self.assertEqual(in_lines, out_lines)
 
-    @unittest.skip("Need to build this test")
     def test_fpxsec(self):
-        pass
+        self.f2g.import_fpxsec()
+        self.f2g.export_fpxsec(EXPORT_DATA_DIR)
+        infile = self.f2g.parser.dat_files["FPXSEC.DAT"]
+        outfile = os.path.join(EXPORT_DATA_DIR, "FPXSEC.DAT")
+        in_lines, out_lines = compare_files(infile, outfile)
+        self.assertEqual(in_lines, out_lines)
 
     def test_manning_n_topo(self):
         self.f2g.import_mannings_n_topo()
@@ -100,9 +108,17 @@ class TestFlo2dMultChan(unittest.TestCase):
         in_lines2, out_lines2 = compare_files(infile2, outfile2)
         self.assertEqual(in_lines2, out_lines2)
 
-    @unittest.skip("Need to build this test")
     def test_mult(self):
-        pass
+        self.f2g.import_mult()
+        self.f2g.export_mult(EXPORT_DATA_DIR)
+        infile1 = self.f2g.parser.dat_files["MULT.DAT"]
+        infile2 = self.f2g.parser.dat_files["SIMPLE_MULT.DAT"]
+        outfile1 = os.path.join(EXPORT_DATA_DIR, "MULT.DAT")
+        outfile2 = os.path.join(EXPORT_DATA_DIR, "SIMPLE_MULT.DAT")
+        in_lines1, out_lines1 = compare_files(infile1, outfile1)
+        self.assertEqual(in_lines1, out_lines1)
+        in_lines2, out_lines2 = compare_files(infile2, outfile2)
+        self.assertEqual(in_lines2, out_lines2)
 
     def test_outflow(self):
         self.f2g.import_outflow()
@@ -121,17 +137,13 @@ class TestFlo2dMultChan(unittest.TestCase):
         self.assertEqual(in_lines, out_lines)
 
     @unittest.skip("Need to build this test")
-    def test_shallown_spatial(self):
-        pass
-
-    @unittest.skip("Need to build this test")
-    def test_simple_mult(self):
-        pass
-
-    @unittest.skip("Need to build this test")
     def test_tolspatial(self):
-        pass
-
+        self.f2g.import_tolspatial()
+        self.f2g.export_tolspatial(EXPORT_DATA_DIR)
+        infile = self.f2g.parser.dat_files["TOLSPATIAL.DAT"]
+        outfile = os.path.join(EXPORT_DATA_DIR, "TOLSPATIAL.DAT")
+        in_lines, out_lines = compare_files(infile, outfile)
+        self.assertEqual(in_lines, out_lines)
 
 
 if __name__ == "__main__":
