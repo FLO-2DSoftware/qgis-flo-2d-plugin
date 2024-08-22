@@ -61,7 +61,6 @@ class TestFlo2dCoastal(unittest.TestCase):
         os.rmdir(EXPORT_DATA_DIR)
 
     def test_arf(self):
-        """Testing the ARF Import/Export"""
         file = IMPORT_DATA_DIR + r"\ARF.DAT"
         if os.path.isfile(file):
             self.f2g.import_arf()
@@ -74,7 +73,6 @@ class TestFlo2dCoastal(unittest.TestCase):
             self.skipTest("Project does not have ARF.DAT")
 
     def test_chan(self):
-        """Testing the CHAN & CHANBANK Import/Export"""
         file1 = IMPORT_DATA_DIR + r"\CHAN.DAT"
         file2 = IMPORT_DATA_DIR + r"\CHANBANK.DAT"
         if os.path.isfile(file1) and os.path.isfile(file2):
@@ -92,7 +90,6 @@ class TestFlo2dCoastal(unittest.TestCase):
             self.skipTest("Project does not have CHAN.DAT and CHANBANK.DAT")
 
     def test_cont_toler(self):
-        """Testing the CONT & TOLER Import/Export"""
         file1 = IMPORT_DATA_DIR + r"\CONT.DAT"
         file2 = IMPORT_DATA_DIR + r"\TOLER.DAT"
         if os.path.isfile(file1) and os.path.isfile(file2):
@@ -110,7 +107,6 @@ class TestFlo2dCoastal(unittest.TestCase):
             self.skipTest("Project does not have CONT.DAT and TOLER.DAT")
 
     def test_hystruct(self):
-        """Testing the HYSTRUC Import/Export"""
         file = IMPORT_DATA_DIR + r"\HYSTRUC.DAT"
         if os.path.isfile(file):
             self.f2g.import_hystruc()
@@ -123,7 +119,6 @@ class TestFlo2dCoastal(unittest.TestCase):
             self.skipTest("Project does not have HYSTRUC.DAT")
 
     def test_infil(self):
-        """Testing the INFIL Import/Export"""
         file = IMPORT_DATA_DIR + r"\INFIL.DAT"
         if os.path.isfile(file):
             self.f2g.import_infil()
@@ -136,7 +131,6 @@ class TestFlo2dCoastal(unittest.TestCase):
             self.skipTest("Project does not have INFIL.DAT")
 
     def test_inflow(self):
-        """Testing the INFLOW Import/Export"""
         file = IMPORT_DATA_DIR + r"\INFLOW.DAT"
         if os.path.isfile(file):
             self.f2g.import_inflow()
@@ -149,7 +143,6 @@ class TestFlo2dCoastal(unittest.TestCase):
             self.skipTest("Project does not have INFLOW.DAT")
 
     def test_manning_n_topo(self):
-        """Testing the MANNINGS_N & TOPO Import/Export"""
         file1 = IMPORT_DATA_DIR + r"\MANNINGS_N.DAT"
         file2 = IMPORT_DATA_DIR + r"\TOPO.DAT"
         if os.path.isfile(file1) and os.path.isfile(file2):
@@ -167,7 +160,6 @@ class TestFlo2dCoastal(unittest.TestCase):
             self.skipTest("Project does not have MANNINGS_N.DAT and TOPO.DAT")
 
     def test_outflow(self):
-        """Testing the OUTFLOW Import/Export"""
         file = IMPORT_DATA_DIR + r"\OUTFLOW.DAT"
         if os.path.isfile(file):
             self.f2g.import_outflow()
@@ -180,7 +172,6 @@ class TestFlo2dCoastal(unittest.TestCase):
             self.skipTest("Project does not have OUTFLOW.DAT")
 
     def test_rain(self):
-        """Testing the RAIN Import/Export"""
         file = IMPORT_DATA_DIR + r"\RAIN.DAT"
         if os.path.isfile(file):
             self.f2g.import_rain()
@@ -209,7 +200,6 @@ class TestFlo2dCoastal(unittest.TestCase):
 
     @unittest.skip("Storm Drain tests needs to be updated")
     def test_swmmflo(self):
-        """Testing the SWMMFLO Import/Export"""
         file = IMPORT_DATA_DIR + r"\SWMMFLO.DAT"
         if os.path.isfile(file):
             self.f2g.import_swmmflo()
@@ -223,7 +213,6 @@ class TestFlo2dCoastal(unittest.TestCase):
 
     @unittest.skip("Storm Drain tests needs to be updated")
     def test_swmmflort(self):
-        """Testing the SWMMFLORT Import/Export"""
         file = IMPORT_DATA_DIR + r"\SWMMFLORT.DAT"
         if os.path.isfile(file):
             self.f2g.import_swmmflort()
@@ -237,7 +226,6 @@ class TestFlo2dCoastal(unittest.TestCase):
 
     @unittest.skip("Storm Drain tests needs to be updated")
     def test_swmmoutf(self):
-        """Testing the SWMMOUTF Import/Export"""
         file = IMPORT_DATA_DIR + r"\SWMMOUTF.DAT"
         if os.path.isfile(file):
             self.f2g.import_swmmoutf()
@@ -250,7 +238,6 @@ class TestFlo2dCoastal(unittest.TestCase):
             self.skipTest("Project does not have SWMMOUTF.DAT")
 
     def test_xsec(self):
-        """Testing the XSEC Import/Export"""
         file = IMPORT_DATA_DIR + r"\XSEC.DAT"
         if os.path.isfile(file):
             self.f2g.import_xsec()
