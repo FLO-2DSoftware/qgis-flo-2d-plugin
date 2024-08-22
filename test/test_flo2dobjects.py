@@ -43,27 +43,27 @@ class TestCrossSection(unittest.TestCase):
     def setUp(self):
         self.cross_section = CrossSection(374, self.con, None)
 
-    # def test_get_row(self):
-    #     row = self.cross_section.get_row()
-    #     self.assertEqual(row['fcn'], 0.04)
-    #     self.assertEqual(row['xlen'], 110)
-    #     self.assertEqual(row['type'], 'N')
-    #
-    # def test_get_chan_segment(self):
-    #     self.cross_section.get_row()
-    #     chan = self.cross_section.get_chan_segment()
-    #     self.assertEqual(chan['froudc'], 0.5)
-    #
-    # def test_get_chan_table(self):
-    #     self.cross_section.get_row()
-    #     chan_tab = self.cross_section.get_chan_table()
-    #     self.assertEqual(chan_tab['xsecname'], 'AW735.2X')
-    #
-    # def test_get_xsec_data(self):
-    #     self.cross_section.get_row()
-    #     self.cross_section.get_chan_table()
-    #     xsec = self.cross_section.get_xsec_data()
-    #     self.assertEqual(len(xsec), 27)
+    def test_get_row(self):
+        row = self.cross_section.get_row()
+        self.assertEqual(row['fcn'], 0.04)
+        self.assertEqual(row['xlen'], 110)
+        self.assertEqual(row['type'], 'N')
+
+    def test_get_chan_segment(self):
+        self.cross_section.get_row()
+        chan = self.cross_section.get_chan_segment()
+        self.assertEqual(chan['froudc'], 0.5)
+
+    def test_get_chan_table(self):
+        self.cross_section.get_row()
+        chan_tab = self.cross_section.get_chan_table()
+        self.assertEqual(chan_tab['xsecname'], 'AW735.2X')
+
+    def test_get_xsec_data(self):
+        self.cross_section.get_row()
+        self.cross_section.get_chan_table()
+        xsec = self.cross_section.get_xsec_data()
+        self.assertEqual(len(xsec), 27)
 
 
 class TestInflow(unittest.TestCase):

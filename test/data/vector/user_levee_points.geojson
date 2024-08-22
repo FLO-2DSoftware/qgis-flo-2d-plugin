@@ -1,6 +1,5 @@
 {
 "type": "FeatureCollection",
-"crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:EPSG::102649" } },
 "features": [
 { "type": "Feature", "properties": { "elev": 200.0, "correction": null }, "geometry": { "type": "Point", "coordinates": [ 2297451.9516129065, 14856009.191820266 ] } },
 { "type": "Feature", "properties": { "elev": 220.0, "correction": null }, "geometry": { "type": "Point", "coordinates": [ 2298391.0717165931, 14856161.04953916 ] } },

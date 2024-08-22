@@ -1,6 +1,5 @@
 {
 "type": "FeatureCollection",
-"crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:EPSG::102649" } },
 "features": [
 { "type": "Feature", "properties": { "cell_north": null, "cell_east": null, "cell_south": null, "cell_west": null, "n_value": null, "elevation": null }, "geometry": { "type": "Polygon", "coordinates": [ [ [ 2261554.28028, 14852642.3201 ], [ 2262554.28028, 14852642.3201 ], [ 2262554.28028, 14851642.3201 ], [ 2261554.28028, 14851642.3201 ], [ 2261554.28028, 14852642.3201 ] ] ] } },
 { "type": "Feature", "properties": { "cell_north": null, "cell_east": null, "cell_south": null, "cell_west": null, "n_value": null, "elevation": null }, "geometry": { "type": "Polygon", "coordinates": [ [ [ 2262554.28028, 14852642.3201 ], [ 2263554.28028, 14852642.3201 ], [ 2263554.28028, 14851642.3201 ], [ 2262554.28028, 14851642.3201 ], [ 2262554.28028, 14852642.3201 ] ] ] } },

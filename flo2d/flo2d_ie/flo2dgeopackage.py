@@ -5203,8 +5203,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
                         for aid, group_fid in areas_g:
                             gids = self.execute(cells_g_sql, (aid,)).fetchall()
                             if gids:
-                                for g in gids:
-                                    s.write(line10.format(g[0], group_fid))
+                                for g in gids[0]:
+                                    s.write(line10.format(g, group_fid))
 
             return True
 
