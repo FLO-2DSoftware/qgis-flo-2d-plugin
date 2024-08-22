@@ -136,7 +136,6 @@ class TestFlo2dMultChan(unittest.TestCase):
         in_lines, out_lines = compare_files(infile, outfile)
         self.assertEqual(in_lines, out_lines)
 
-    @unittest.skip("Need to build this test")
     def test_tolspatial(self):
         self.f2g.import_tolspatial()
         self.f2g.export_tolspatial(EXPORT_DATA_DIR)
