@@ -1657,6 +1657,19 @@ class Flo2D(object):
             uri = self.project.fileName()
             if uri.startswith("geopackage:"):
                 new_gpkg = uri[len("geopackage:"):].split('?')[0]
+            else:
+                QApplication.restoreOverrideCursor()
+                self.uc.show_warn(
+                    "It looks like you're trying to load an old FLO-2D *.qgz project into FLO-2D Gila...\n\n"
+                    "In FLO-2D Gila, projects are stored within a geopackage. "
+                    "Please use the 'Open FLO-2D Project' option on the toolbar to automatically "
+                    "port your geopackage into the new FLO-2D Gila. "
+                    "Alternatively, you can downgrade to FLO-2D Plugin 0.10.115."
+                    "Please note that while you may see the project's layers, "
+                    "the FLO-2D Plugin will not initialize.\n\n"
+                    "If you encounter any issues, feel free to contact us at https://flo-2d.com/."
+                )
+                return
 
         if '%20' in new_gpkg:
             new_gpkg = new_gpkg.replace('%20', ' ')
@@ -4736,8 +4749,12 @@ class Flo2D(object):
         Function to update the layer type on the external_layers table
         """
         gpkg = self.read_proj_entry("gpkg")
+        uri = self.project.fileName()
         if not gpkg:
             return
+        if not uri.startswith("geopackage:"):
+            return
+
         for layer_id in layer_ids:
             layer = QgsProject.instance().mapLayer(layer_id)
             if layer:
