@@ -75,7 +75,6 @@ class TestGridTools(unittest.TestCase):
         expected = {0.5, 0.3, 0.1}
         self.assertSetEqual(set(n_values), expected)
 
-    @unittest.skip("Need to fix the CALCULATE_ARFWRF")
     def test_calculate_arfwrf(self):
         grid = os.path.join(VECTOR_PATH, "grid.geojson")
         blockers = os.path.join(VECTOR_PATH, "blockers.geojson")
@@ -83,9 +82,9 @@ class TestGridTools(unittest.TestCase):
         blayer = QgsVectorLayer(blockers, "blockers", "ogr")
         row = tuple()
         for row in calculate_arfwrf(glayer, blayer):
-            awrf = [True if i <= 1 else False for i in row[-9:]]
+            awrf = [True if i <= 1 else False for i in row[0][-9:]]
             self.assertTrue(all(awrf))
-        self.assertTupleEqual(row[1:], (153, 4, 0.68, 1.0, 0.0, 0.27, 1.0, 0.56, 0.0, 1.0, 1.0))
+        self.assertTupleEqual(row[0][1:], (153, 4, 0.68, 1.0, 0.0, 0.27, 1.0, 0.56, 0.0, 1.0, 1.0))
 
 
 # Running tests:
