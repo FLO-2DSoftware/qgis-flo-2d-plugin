@@ -86,7 +86,6 @@ class TestFlo2dGeoPackage(unittest.TestCase):
         controls = self.f2g_2.execute("""SELECT name, value FROM cont;""").fetchall()
         self.assertEqual(len(controls), 47)
 
-    # @unittest.skip("Skipping to test it later")
     def test_import_mannings_n_topo(self):
         cellsize = self.f2g.execute("""SELECT value FROM cont WHERE name = 'CELLSIZE';""").fetchone()[0]
         self.assertEqual(float(cellsize), 100)
@@ -216,7 +215,6 @@ class TestFlo2dGeoPackage(unittest.TestCase):
         c = self.f2g.execute("""SELECT COUNT(fid) FROM blocked_cells;""").fetchone()[0]
         self.assertEqual(c, 15)
 
-    # @unittest.skip("Skipping test to fix later")
     def test_import_mult(self):
         self.f2g.import_mult()
         areas = self.f2g.execute("""SELECT COUNT(fid) FROM mult_areas;""").fetchone()[0]
