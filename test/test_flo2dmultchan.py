@@ -18,8 +18,8 @@ from test.utilities import get_qgis_app
 
 QGIS_APP = get_qgis_app()
 THIS_DIR = os.path.dirname(os.path.abspath(__file__))
-IMPORT_DATA_DIR = os.path.join(THIS_DIR, "CompletedProjects/MultChan")
-EXPORT_DATA_DIR = os.path.join(THIS_DIR, "CompletedProjects/MultChan", "export")
+IMPORT_DATA_DIR = os.path.join(THIS_DIR, "CompletedProjects", "MultChan")
+EXPORT_DATA_DIR = os.path.join(THIS_DIR, "CompletedProjects", "MultChan", "export")
 CONT = os.path.join(IMPORT_DATA_DIR, "CONT.DAT")
 
 
