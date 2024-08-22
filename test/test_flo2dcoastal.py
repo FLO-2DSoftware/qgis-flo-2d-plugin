@@ -16,12 +16,12 @@ from flo2d.flo2d import Flo2D
 from flo2d.flo2d_ie.flo2dgeopackage import Flo2dGeoPackage
 from flo2d.geopackage_utils import database_create
 
-from ..utilities import get_qgis_app
+from test.utilities import get_qgis_app
 
 QGIS_APP = get_qgis_app()
 THIS_DIR = os.path.dirname(os.path.abspath(__file__))
-IMPORT_DATA_DIR = os.path.join(THIS_DIR, "Coastal")
-EXPORT_DATA_DIR = os.path.join(THIS_DIR, "Coastal", "export")
+IMPORT_DATA_DIR = os.path.join(THIS_DIR, "CompletedProjects/Coastal")
+EXPORT_DATA_DIR = os.path.join(THIS_DIR, "CompletedProjects/Coastal", "export")
 CONT = os.path.join(IMPORT_DATA_DIR, "CONT.DAT")
 
 
