@@ -16,6 +16,9 @@ jobs:
       - name: Run tests in Docker
         run: |
           docker run --rm \
+            -v ${{ github.workspace }}:/app \
+            -w /app \
             -e QT_QPA_PLATFORM=offscreen \
             -e QGIS_AUTH_DB_DIR_PATH=./auth \
-            ghcr.io/flo-2dsoftware/qgis-flo-2d-plugin
+            ghcr.io/flo-2dsoftware/qgis-flo-2d-plugin \
+            python3 -m unittest discover --verbose
