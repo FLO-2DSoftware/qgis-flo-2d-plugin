@@ -10,9 +10,7 @@
 
 import os
 import unittest
-import sys
 
-from flo2d.flo2d import Flo2D
 from flo2d.flo2d_ie.flo2dgeopackage import Flo2dGeoPackage
 from flo2d.geopackage_utils import database_create
 
