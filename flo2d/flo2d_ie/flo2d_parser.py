@@ -837,42 +837,28 @@ class ParseDAT(object):
         return head, data
 
     def parse_mult(self):
-        s = QSettings()
-        last_dir = s.value("FLO-2D/lastGdsDir", "")
-        if len(last_dir) == 0 or os.path.isfile(last_dir + r"\MULT.DAT"):
-            if len(last_dir) == 0 or os.path.getsize(last_dir + r"\MULT.DAT") > 0:
-                mult = self.dat_files["MULT.DAT"]
-                par = self.single_parser(mult)
-                head = next(par)
-                self.fix_row_size(head, 8)
-                data = []
-                for row in par:
-                    self.fix_row_size(row, 5)
-                    data.append(row)
-                return head, data
-            else:
-                return NULL, NULL
-        else:
-            return NULL, NULL
+        mult = self.dat_files["MULT.DAT"]
+        par = self.single_parser(mult)
+        head = next(par)
+        self.fix_row_size(head, 8)
+        data = []
+        for row in par:
+            self.fix_row_size(row, 5)
+            data.append(row)
+        return head, data
 
     def parse_simple_mult(self):
-        s = QSettings()
-        last_dir = s.value("FLO-2D/lastGdsDir", "")
-        if len(last_dir) == 0 or os.path.isfile(last_dir + r"\SIMPLE_MULT.DAT"):
-            if len(last_dir) == 0 or os.path.getsize(last_dir + r"\SIMPLE_MULT.DAT") > 0:
-                simple_mult = self.dat_files["SIMPLE_MULT.DAT"]
-                par = self.single_parser(simple_mult)
-                head = next(par)
-                self.fix_row_size(head, 1)
-                data = []
-                for row in par:
-                    self.fix_row_size(row, 1)
-                    data.append(row)
-                return head, data
-            else:
-                return NULL, NULL
-        else:
-            return NULL, NULL
+        simple_mult = self.dat_files["SIMPLE_MULT.DAT"]
+        if not simple_mult:
+            return None, None
+        par = self.single_parser(simple_mult)
+        head = next(par)
+        self.fix_row_size(head, 1)
+        data = []
+        for row in par:
+            self.fix_row_size(row, 1)
+            data.append(row)
+        return head, data
 
     def parse_sed(self):
         sed = self.dat_files["SED.DAT"]
