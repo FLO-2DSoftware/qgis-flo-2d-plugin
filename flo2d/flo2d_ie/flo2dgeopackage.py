@@ -1622,6 +1622,72 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
         self.batch_execute(gutter_globals_sql, gutter_areas_sql, cells_sql)
 
+    def import_swmminp(self):
+        """
+        Function to import the SWMM.INP -> refactored from the old method on the storm drain editor widget
+        """
+        swmminp_dict = self.parser.parse_swmminp()
+
+        coordinates_data = swmminp_dict.get('COORDINATES', [])
+        if len(coordinates_data) == 0:
+            self.uc.show_warn(
+                "WARNING 060319.1729: SWMM input file has no coordinates defined!"
+            )
+            self.uc.log_info(
+                "WARNING 060319.1729: SWMM input file has no coordinates defined!"
+            )
+            return
+
+        try:
+            insert_inflows_sql = """INSERT INTO swmm_inflows 
+                                    (   node_name, 
+                                        constituent, 
+                                        baseline, 
+                                        pattern_name, 
+                                        time_series_name, 
+                                        scale_factor
+                                    ) 
+                                    VALUES (?, ?, ?, ?, ?, ?);"""
+
+            inflows_data = swmminp_dict.get('INFLOWS', [])
+
+            for inflow in inflows_data:
+                """
+                ;;                                                 Param    Units    Scale    Baseline Baseline
+                ;;Node           Parameter        Time Series      Type     Factor   Factor   Value    Pattern
+                ;;-------------- ---------------- ---------------- -------- -------- -------- -------- --------
+                J3-38-32-2       FLOW             ts_test          FLOW     1.0      3.5      12       pattern_test
+                """
+
+                name = inflow[0]
+                constituent = inflow[1]
+                baseline = inflow[6]
+                pattern_name = inflow[7]
+                time_series_name = inflow[2]
+                scale_factor = inflow[5]
+
+                self.gutils.execute(
+                    insert_inflows_sql,
+                    (name, constituent, baseline, pattern_name, time_series_name, scale_factor),
+                )
+
+                print(self.gutils.execute("SELECT * FROM swmm_inflows").fetchall())
+
+        except Exception as e:
+            QApplication.setOverrideCursor(Qt.ArrowCursor)
+            msg = "ERROR 020219.0812: Reading storm drain inflows from SWMM input data failed!\n" \
+                  "__________________________________________________\n" \
+                  f"{e}"
+            self.uc.show_error(msg)
+            self.uc.log_info(msg)
+            QApplication.restoreOverrideCursor()
+
+
+        # print(inflows_data)
+        #
+        # junctions_data = swmminp_dict.get('JUNCTIONS', [])
+
+
     def import_swmmflo(self):
 
         swmmflo_sql = [

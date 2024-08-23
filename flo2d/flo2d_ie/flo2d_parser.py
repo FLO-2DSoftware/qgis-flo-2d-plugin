@@ -8,6 +8,7 @@
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 import os
+import re
 from collections import OrderedDict, defaultdict
 from itertools import chain, repeat, zip_longest
 from operator import attrgetter
@@ -312,6 +313,7 @@ class ParseDAT(object):
             "FPXSEC.DAT": None,
             "BREACH.DAT": None,
             "FPFROUDE.DAT": None,
+            "SWMM.INP": None,
             "SWMMFLO.DAT": None,
             "SWMMFLORT.DAT": None,
             "SWMMOUTF.DAT": None,
@@ -415,6 +417,41 @@ class ParseDAT(object):
                 row = line1.split() + line2.split()
                 if row:
                     yield row
+
+    @staticmethod
+    def swmminp_parser(swmminp_file):
+        """
+        This is the new swmm parser. Usage example:
+
+        To get data from a specific section
+            junctions_data = sections.get('JUNCTIONS', [])
+
+        To print all sections
+            for section, lines in sections.items():
+                print(f"[{section}]")
+                for line in lines:
+                    print(line)
+                print("\n")
+        """
+        sections = defaultdict(list)
+        current_section = None
+
+        with open(swmminp_file, 'r') as inp_file:
+            for line in inp_file:
+                line = line.strip()
+
+                # Ignore empty lines and comments
+                if not line or line.startswith(';'):
+                    continue
+
+                # Check for section headers (e.g., [JUNCTIONS])
+                if line.startswith('[') and line.endswith(']'):
+                    current_section = line[1:-1].strip().upper()  # Strip brackets and set as current section
+                elif current_section:
+                    # Split the line by any whitespace (e.g., space, tab)
+                    sections[current_section].append(re.split(r'\s+', line))
+
+        return sections
 
     @staticmethod
     def fix_row_size(row, fix_size, default=None, index=None):
@@ -962,6 +999,11 @@ class ParseDAT(object):
         for row in par:
             data.append(row)
         return head, data
+
+    def parse_swmminp(self):
+        swmminp = self.dat_files["SWMM.INP"]
+        swmminp_dict = self.swmminp_parser(swmminp)
+        return swmminp_dict
 
     def parse_swmmflo(self):
         swmmflo = self.dat_files["SWMMFLO.DAT"]
