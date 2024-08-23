@@ -1642,8 +1642,69 @@ class Flo2dGeoPackage(GeoPackageUtils):
         # print(self.gutils.execute("SELECT * FROM swmm_inflows;").fetchall())
         self.import_swmminp_patterns(swmminp_dict)
         # print(self.gutils.execute("SELECT * FROM swmm_inflow_patterns;").fetchall())
+        self.import_swmminp_ts(swmminp_dict)
+        # print(self.gutils.execute("SELECT * FROM swmm_time_series;").fetchall())
+        # print(self.gutils.execute("SELECT * FROM swmm_time_series_data;").fetchall())
 
 
+    def import_swmminp_ts(self, swmminp_dict):
+        """
+        Function to import swmm inp time series
+        """
+        try:
+            self.gutils.clear_tables('swmm_time_series')
+            insert_times_from_file_sql = """INSERT INTO swmm_time_series 
+                                    (   time_series_name, 
+                                        time_series_description, 
+                                        time_series_file,
+                                        time_series_data
+                                    ) 
+                                    VALUES (?, ?, ?, ?);"""
+
+            self.gutils.clear_tables('swmm_time_series_data')
+            insert_times_from_data_sql = """INSERT INTO swmm_time_series_data
+                                    (   time_series_name, 
+                                        date, 
+                                        time,
+                                        value
+                                    ) 
+                                    VALUES (?, ?, ?, ?);"""
+
+            time_series_data_data = swmminp_dict.get('TIMESERIES', [])
+
+            for time_series in time_series_data_data:
+                if time_series[1] == "FILE":
+                    name = time_series[0]
+                    description = ""
+                    file = time_series[2]
+                    file2 = file.replace('"', "")
+                    self.gutils.execute(insert_times_from_file_sql, (name, description, file2.strip(), "False"))
+                else:
+                    # See if time series data reference is already in table:
+                    row = self.gutils.execute(
+                        "SELECT * FROM swmm_time_series WHERE time_series_name = ?;", (time_series[0],)
+                    ).fetchone()
+                    if not row:
+                        name = time_series[0]
+                        description = ""
+                        file = ""
+                        file2 = file.replace('"', "")
+                        self.gutils.execute(insert_times_from_file_sql, (name, description, file2.strip(), "True"))
+
+                    name = time_series[0]
+                    date = time_series[1]
+                    tme = time_series[2]
+                    value = float_or_zero(time_series[3])
+                    self.gutils.execute(insert_times_from_data_sql, (name, date, tme, value))
+
+        except Exception as e:
+            QApplication.setOverrideCursor(Qt.ArrowCursor)
+            msg = "ERROR 020219.0812:  Reading storm drain time series from SWMM input data failed!\n" \
+                  "__________________________________________________\n" \
+                  f"{e}"
+            self.uc.show_error(msg)
+            self.uc.log_info(msg)
+            QApplication.restoreOverrideCursor()
 
     def import_swmminp_inflows(self, swmminp_dict):
         """
@@ -1674,10 +1735,14 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
                     name = inflow[0]
                     constituent = inflow[1]
-                    baseline = inflow[6]
-                    pattern_name = inflow[7]
                     time_series_name = inflow[2]
                     scale_factor = inflow[5]
+                    if len(inflow) == 6:
+                        baseline = "?"
+                        pattern_name = "?"
+                    else:
+                        baseline = inflow[6]
+                        pattern_name = inflow[7]
 
                     self.gutils.execute(
                         insert_inflows_sql,
