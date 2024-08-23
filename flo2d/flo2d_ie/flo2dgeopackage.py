@@ -1638,24 +1638,33 @@ class Flo2dGeoPackage(GeoPackageUtils):
             )
             return
 
-        # [INFLOWS]
+        self.import_swmminp_inflows(swmminp_dict)
+        # print(self.gutils.execute("SELECT * FROM swmm_inflows;").fetchall())
+        self.import_swmminp_patterns(swmminp_dict)
+        # print(self.gutils.execute("SELECT * FROM swmm_inflow_patterns;").fetchall())
+
+
+
+    def import_swmminp_inflows(self, swmminp_dict):
+        """
+        Function to import swmm inp inflows
+        """
         try:
             self.gutils.clear_tables('swmm_inflows')
             insert_inflows_sql = """INSERT INTO swmm_inflows 
-                                    (   node_name, 
-                                        constituent, 
-                                        baseline, 
-                                        pattern_name, 
-                                        time_series_name, 
-                                        scale_factor
-                                    ) 
-                                    VALUES (?, ?, ?, ?, ?, ?);"""
+                                            (   node_name, 
+                                                constituent, 
+                                                baseline, 
+                                                pattern_name, 
+                                                time_series_name, 
+                                                scale_factor
+                                            ) 
+                                            VALUES (?, ?, ?, ?, ?, ?);"""
 
             inflows_data = swmminp_dict.get('INFLOWS', [])
 
             if len(inflows_data) > 0:
                 for inflow in inflows_data:
-
                     """
                     ;;                                                 Param    Units    Scale    Baseline Baseline
                     ;;Node           Parameter        Time Series      Type     Factor   Factor   Value    Pattern
@@ -1684,7 +1693,10 @@ class Flo2dGeoPackage(GeoPackageUtils):
             self.uc.log_info(msg)
             QApplication.restoreOverrideCursor()
 
-        # [PATTERNS]
+    def import_swmminp_patterns(self, swmminp_dict):
+        """
+        Function to import swmm inp patterns
+        """
         try:
             """
             [PATTERNS]
@@ -1697,12 +1709,12 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
             self.gutils.clear_tables('swmm_inflow_patterns')
             insert_patterns_sql = """INSERT INTO swmm_inflow_patterns
-                                                        (   pattern_name, 
-                                                            pattern_description, 
-                                                            hour, 
-                                                            multiplier
-                                                        ) 
-                                                        VALUES (?, ?, ?, ?);"""
+                                                                (   pattern_name, 
+                                                                    pattern_description, 
+                                                                    hour, 
+                                                                    multiplier
+                                                                ) 
+                                                                VALUES (?, ?, ?, ?);"""
 
             patterns_data = swmminp_dict.get('PATTERNS', [])
 
