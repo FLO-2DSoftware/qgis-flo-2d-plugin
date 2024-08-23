@@ -1638,7 +1638,9 @@ class Flo2dGeoPackage(GeoPackageUtils):
             )
             return
 
+        # [INFLOWS]
         try:
+            self.gutils.clear_tables('swmm_inflows')
             insert_inflows_sql = """INSERT INTO swmm_inflows 
                                     (   node_name, 
                                         constituent, 
@@ -1651,27 +1653,27 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
             inflows_data = swmminp_dict.get('INFLOWS', [])
 
-            for inflow in inflows_data:
-                """
-                ;;                                                 Param    Units    Scale    Baseline Baseline
-                ;;Node           Parameter        Time Series      Type     Factor   Factor   Value    Pattern
-                ;;-------------- ---------------- ---------------- -------- -------- -------- -------- --------
-                J3-38-32-2       FLOW             ts_test          FLOW     1.0      3.5      12       pattern_test
-                """
+            if len(inflows_data) > 0:
+                for inflow in inflows_data:
 
-                name = inflow[0]
-                constituent = inflow[1]
-                baseline = inflow[6]
-                pattern_name = inflow[7]
-                time_series_name = inflow[2]
-                scale_factor = inflow[5]
+                    """
+                    ;;                                                 Param    Units    Scale    Baseline Baseline
+                    ;;Node           Parameter        Time Series      Type     Factor   Factor   Value    Pattern
+                    ;;-------------- ---------------- ---------------- -------- -------- -------- -------- --------
+                    J3-38-32-2       FLOW             ts_test          FLOW     1.0      3.5      12       pattern_test
+                    """
 
-                self.gutils.execute(
-                    insert_inflows_sql,
-                    (name, constituent, baseline, pattern_name, time_series_name, scale_factor),
-                )
+                    name = inflow[0]
+                    constituent = inflow[1]
+                    baseline = inflow[6]
+                    pattern_name = inflow[7]
+                    time_series_name = inflow[2]
+                    scale_factor = inflow[5]
 
-                print(self.gutils.execute("SELECT * FROM swmm_inflows").fetchall())
+                    self.gutils.execute(
+                        insert_inflows_sql,
+                        (name, constituent, baseline, pattern_name, time_series_name, scale_factor),
+                    )
 
         except Exception as e:
             QApplication.setOverrideCursor(Qt.ArrowCursor)
@@ -1682,11 +1684,65 @@ class Flo2dGeoPackage(GeoPackageUtils):
             self.uc.log_info(msg)
             QApplication.restoreOverrideCursor()
 
+        # [PATTERNS]
+        try:
+            """
+            [PATTERNS]
+            ;;Name           Type       Multipliers
+            ;;-------------- ---------- -----------
+            ;description
+            pattern_test     MONTHLY    1.0   2     3     4     5     6    
+            pattern_test                7     8     9     10    11    12   
+            """
 
-        # print(inflows_data)
-        #
-        # junctions_data = swmminp_dict.get('JUNCTIONS', [])
+            self.gutils.clear_tables('swmm_inflow_patterns')
+            insert_patterns_sql = """INSERT INTO swmm_inflow_patterns
+                                                        (   pattern_name, 
+                                                            pattern_description, 
+                                                            hour, 
+                                                            multiplier
+                                                        ) 
+                                                        VALUES (?, ?, ?, ?);"""
 
+            patterns_data = swmminp_dict.get('PATTERNS', [])
+
+            if len(patterns_data) > 0:
+                # Adjust the patterns by adding them into their own list
+                merged_patterns = {}
+
+                # Step 1: Merge the patterns while skipping the element at index 1 only in the first occurrence
+                for pattern in patterns_data:
+                    name = pattern[0]
+
+                    if name not in merged_patterns:
+                        # For the first occurrence, skip the element at index 1
+                        merged_patterns[name] = pattern[2:]
+                    else:
+                        # For subsequent occurrences, don't skip
+                        merged_patterns[name].extend(pattern[1:])
+
+                # Step 2: Convert to individual lists with a counter, resetting after 24
+                results = []
+
+                for name, data in merged_patterns.items():
+                    counter = 0  # Start the counter at 0
+                    for value in data:
+                        results.append([name, counter, value])
+                        counter += 1
+                        if counter > 24:  # Reset counter if greater than 24
+                            counter = 0
+
+                for r in results:
+                    self.gutils.execute(insert_patterns_sql, (r[0], "", r[1], r[2]))
+
+        except Exception as e:
+            QApplication.setOverrideCursor(Qt.ArrowCursor)
+            msg = "ERROR 020219.0812: Reading storm drain patterns from SWMM input data failed!\n" \
+                  "__________________________________________________\n" \
+                  f"{e}"
+            self.uc.show_error(msg)
+            self.uc.log_info(msg)
+            QApplication.restoreOverrideCursor()
 
     def import_swmmflo(self):
 
