@@ -1652,6 +1652,98 @@ class Flo2dGeoPackage(GeoPackageUtils):
         # print(self.gutils.execute("SELECT * FROM swmm_other_curves;").fetchall())
         self.import_swmminp_inlets_junctions(swmminp_dict)
         # print(self.gutils.execute("SELECT * FROM user_swmm_inlets_junctions;").fetchall())
+        self.import_swmminp_outfalls(swmminp_dict)
+        print(self.gutils.execute("SELECT * FROM user_swmm_outlets;").fetchall())
+        #dropbox
+        #sdclogging
+
+    def import_swmminp_outfalls(self, swmminp_dict):
+        """
+        Function to import swmm inp outfalls
+        """
+        try:
+            self.gutils.clear_tables('user_swmm_outlets')
+            insert_outfalls_sql = """
+                        INSERT INTO user_swmm_outlets (
+                            grid,
+                            name,
+                            outfall_invert_elev,
+                            flapgate, 
+                            swmm_allow_discharge,
+                            outfall_type,
+                            tidal_curve,
+                            time_series,  
+                            fixed_stage,
+                            geom
+                        )
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);"""
+
+            outfalls_data = swmminp_dict.get('OUTFALLS', [])
+            coordinates_data = swmminp_dict.get('COORDINATES', [])
+
+            for outfall in outfalls_data:
+                """
+                [OUTFALLS]
+                ;;               Invert     Outfall    Stage/Table      Tide
+                ;;Name           Elev.      Type       Time Series      Gate
+                ;;-------------- ---------- ---------- ---------------- ----
+                O-35-31-23       1397.16    FREE                        NO
+                """
+
+                # SWMM VARIABLES
+                name = outfall[0]
+                outfall_invert_elev = outfall[1]
+                outfall_type = outfall[2]
+                if len(outfall) == 5:
+                    flapgate = "True" if outfall[4] == "YES" else "False"
+                    tidal_curve = outfall[3] if outfall_type == "TIDAL" else '*'
+                    time_series = outfall[3] if outfall_type == "TIMESERIES" else '*'
+                    fixed_stage = outfall[3] if outfall_type == "FIXED" else '*'
+                else:
+                    flapgate = "True" if outfall[3] == "YES" else "False"
+                    tidal_curve = '*'
+                    time_series = '*'
+                    fixed_stage = '*'
+
+                # QGIS VARIABLES
+                grid = None
+                geom = None
+                for coordinate in coordinates_data:
+                    if coordinate[0] == name:
+                        x = float(coordinate[1])
+                        y = float(coordinate[2])
+                        grid_n = self.gutils.grid_on_point(x, y)
+                        grid = -9999 if grid_n is None else grid_n
+                        geom = "POINT({0} {1})".format(x, y)
+                        geom = self.gutils.wkt_to_gpb(geom)
+                        break
+
+                # FLO-2D VARIABLES
+                swmm_allow_discharge = 0
+
+                self.gutils.execute(insert_outfalls_sql, (
+                    grid,
+                    name,
+                    outfall_invert_elev,
+                    flapgate,
+                    swmm_allow_discharge,
+                    outfall_type,
+                    tidal_curve,
+                    time_series,
+                    fixed_stage,
+                    geom
+                )
+                )
+
+        except Exception as e:
+            QApplication.setOverrideCursor(Qt.ArrowCursor)
+            msg = "ERROR 060319.1610: Creating Storm Drain Outfalls layer failed!\n\n" \
+                  "Please check your SWMM input data.\nAre the nodes coordinates inside the computational domain?\n" \
+                  f"{e}"
+            self.uc.show_error(msg, e)
+            self.uc.log_info(msg)
+            QApplication.restoreOverrideCursor()
+
 
     def import_swmminp_inlets_junctions(self, swmminp_dict):
         """
@@ -1706,8 +1798,6 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 external_inflow = 1 if name in external_inflows_inlet_junctions else 0
 
                 # QGIS VARIABLES
-                x = None
-                y = None
                 grid = None
                 geom = None
                 for coordinate in coordinates_data:
