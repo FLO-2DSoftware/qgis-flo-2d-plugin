@@ -1645,7 +1645,120 @@ class Flo2dGeoPackage(GeoPackageUtils):
         self.import_swmminp_ts(swmminp_dict)
         # print(self.gutils.execute("SELECT * FROM swmm_time_series;").fetchall())
         # print(self.gutils.execute("SELECT * FROM swmm_time_series_data;").fetchall())
+        self.import_swmminp_curves(swmminp_dict)
+        # print(self.gutils.execute("SELECT * FROM swmm_pumps_curve_data;").fetchall())
+        # print(self.gutils.execute("SELECT * FROM swmm_tidal_curve;").fetchall())
+        # print(self.gutils.execute("SELECT * FROM swmm_tidal_curve_data;").fetchall())
+        # print(self.gutils.execute("SELECT * FROM swmm_other_curves;").fetchall())
 
+    def import_swmminp_curves(self, swmminp_dict):
+        """
+        Function to import swmm inp curves (pump, tidal, and other)
+        """
+        try:
+            self.gutils.clear_tables('swmm_pumps_curve_data')
+            insert_pump_curves_sql = """INSERT INTO swmm_pumps_curve_data
+                                                        (   pump_curve_name, 
+                                                            pump_curve_type, 
+                                                            x_value,
+                                                            y_value,
+                                                            description
+                                                        ) 
+                                                        VALUES (?, ?, ?, ?, ?);"""
+
+            self.gutils.clear_tables('swmm_tidal_curve')
+            insert_tidal_curves_sql = """INSERT OR REPLACE INTO swmm_tidal_curve
+                                                        (   tidal_curve_name, 
+                                                            tidal_curve_description
+                                                        ) 
+                                                        VALUES (?, ?);"""
+
+            self.gutils.clear_tables('swmm_tidal_curve_data')
+            insert_tidal_curves_data_sql = """INSERT INTO swmm_tidal_curve_data
+                                                        (   tidal_curve_name, 
+                                                            hour, 
+                                                            stage
+                                                        ) 
+                                                        VALUES (?, ?, ?);"""
+
+            self.gutils.clear_tables('swmm_other_curves')
+            insert_other_curves_sql = """INSERT INTO swmm_other_curves
+                                                        (   name, 
+                                                            type, 
+                                                            description,
+                                                            x_value,
+                                                            y_value
+                                                        ) 
+                                                        VALUES (?, ?, ?, ?, ?);"""
+
+            curves_data = swmminp_dict.get('CURVES', [])
+
+            # Initialize the dictionaries for each group
+            groups = {
+                'Pump': {},
+                'Tidal': {},
+                'Other': {}
+            }
+
+            current_key = None
+            current_group_type = None
+            extra_column = None
+            data_added = False  # Flag to track if data was added to the current group
+            current_group_data = []  # Initialize before entering the loop
+
+            for curve in curves_data:
+                if len(curve) == 4:  # New set (defining the type and the key)
+                    # Only store the current group if data was added
+                    if current_key is not None and data_added:
+                        groups[current_group_type][current_key] = current_group_data
+
+                    # Now, handle the new group definition
+                    current_key = curve[0]
+                    if 'Pump' in curve[1]:  # Pump group
+                        current_group_type = 'Pump'
+                        extra_column = curve[1]  # Use the entire Pump name (e.g., 'Pump4')
+                    elif 'Tidal' in curve[1]:  # Tidal group
+                        current_group_type = 'Tidal'
+                        extra_column = curve[1]  # Use the entire Tidal name (e.g., 'Tidal')
+                    else:  # Other group
+                        current_group_type = 'Other'
+                        extra_column = curve[1]  # Use the entire name (e.g., 'Storage')
+
+                    # Start a new group
+                    current_group_data = []  # Reset the list for the new group
+                    data_added = False  # Reset the flag for the new group
+                else:
+                    # Add subsequent rows to the current group data
+                    if extra_column is not None:
+                        # Append the suffix (Pump name, Tidal name, or Storage name) as a new column
+                        curve.append(extra_column)
+
+                    current_group_data.append(curve)
+                    data_added = True  # Mark that data has been added
+
+            # After the loop, ensure the last group is stored if it has data
+            if current_key is not None and data_added:
+                groups[current_group_type][current_key] = current_group_data
+
+            for key, values in groups['Pump'].items():
+                for value in values:
+                    self.gutils.execute(insert_pump_curves_sql, (value[0], value[3][-1], value[1], value[2], ''))
+            for key, values in groups['Tidal'].items():
+                for value in values:
+                    self.gutils.execute(insert_tidal_curves_sql, (value[0], ''))
+                    self.gutils.execute(insert_tidal_curves_data_sql, (value[0], value[1], value[2]))
+            for key, values in groups['Other'].items():
+                for value in values:
+                    self.gutils.execute(insert_other_curves_sql, (value[0], value[3], '', value[1], value[2]))
+
+        except Exception as e:
+            QApplication.setOverrideCursor(Qt.ArrowCursor)
+            msg = "ERROR 241121.0547: Reading storm drain curve data from SWMM input data failed!\n" \
+                  "__________________________________________________\n" \
+                  f"{e}"
+            self.uc.show_error(msg)
+            self.uc.log_info(msg)
+            QApplication.restoreOverrideCursor()
 
     def import_swmminp_ts(self, swmminp_dict):
         """
