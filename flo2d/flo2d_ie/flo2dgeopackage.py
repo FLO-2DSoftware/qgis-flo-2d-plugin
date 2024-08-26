@@ -16,7 +16,7 @@ from operator import itemgetter
 
 import numpy as np
 from PyQt5.QtCore import QSettings
-from qgis._core import QgsMessageLog
+from qgis._core import QgsMessageLog, QgsGeometry, QgsPointXY, QgsVectorLayer, QgsFeature
 from qgis.PyQt import QtCore, QtGui
 from qgis.core import NULL, QgsApplication
 from qgis.PyQt.QtCore import Qt
@@ -1650,6 +1650,124 @@ class Flo2dGeoPackage(GeoPackageUtils):
         # print(self.gutils.execute("SELECT * FROM swmm_tidal_curve;").fetchall())
         # print(self.gutils.execute("SELECT * FROM swmm_tidal_curve_data;").fetchall())
         # print(self.gutils.execute("SELECT * FROM swmm_other_curves;").fetchall())
+        self.import_swmminp_inlets_junctions(swmminp_dict)
+        # print(self.gutils.execute("SELECT * FROM user_swmm_inlets_junctions;").fetchall())
+
+    def import_swmminp_inlets_junctions(self, swmminp_dict):
+        """
+        Function to import swmm inp inlets junctions
+        """
+        try:
+            self.gutils.clear_tables('user_swmm_inlets_junctions')
+            insert_inlets_junctions_sql = """
+                                        INSERT INTO user_swmm_inlets_junctions (
+                                            grid,
+                                            name,
+                                            sd_type,
+                                            external_inflow,
+                                            junction_invert_elev,
+                                            max_depth,
+                                            init_depth,
+                                            surcharge_depth,
+                                            intype,
+                                            swmm_length,
+                                            swmm_width,
+                                            swmm_height,
+                                            swmm_coeff,
+                                            swmm_feature,
+                                            curbheight,
+                                            swmm_clogging_factor,
+                                            swmm_time_for_clogging,
+                                            drboxarea,
+                                            geom
+                                        )
+                                            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);"""
+
+            inlets_junctions_data = swmminp_dict.get('JUNCTIONS', [])
+            coordinates_data = swmminp_dict.get('COORDINATES', [])
+            inflows_data = swmminp_dict.get('INFLOWS', [])
+            external_inflows_inlet_junctions = [external_inflow_name[0] for external_inflow_name in inflows_data]
+
+            for inlet_junction in inlets_junctions_data:
+                """
+                ;;               Invert     Max.       Init.      Surcharge  Ponded
+                ;;Name           Elev.      Depth      Depth      Depth      Area
+                ;;-------------- ---------- ---------- ---------- ---------- ----------
+                I1-35-31-18      1399.43    15.00      0.00       0.00       0.00
+                I1-35-32-54      1399.43    15.00      0.00       0.00       0.00
+                """
+
+                # SWMM VARIABLES
+                name = inlet_junction[0]
+                junction_invert_elev = float(inlet_junction[1])
+                max_depth = float(inlet_junction[2])
+                init_depth = float(inlet_junction[3])
+                surcharge_depth = float(inlet_junction[4])
+                external_inflow = 1 if name in external_inflows_inlet_junctions else 0
+
+                # QGIS VARIABLES
+                x = None
+                y = None
+                grid = None
+                geom = None
+                for coordinate in coordinates_data:
+                    if coordinate[0] == name:
+                        x = float(coordinate[1])
+                        y = float(coordinate[2])
+                        grid_n = self.gutils.grid_on_point(x, y)
+                        grid = -9999 if grid_n is None else grid_n
+                        geom = "POINT({0} {1})".format(x, y)
+                        geom = self.gutils.wkt_to_gpb(geom)
+                        break
+
+                # if not x or not y or not grid or not geom:
+                #     raise Exception
+
+                # FLO-2D VARIABLES -> Updated later when other files are imported
+                sd_type = 'I' if name.lower().startswith("i") else 'J'
+                intype = 0
+                swmm_length = 0
+                swmm_width = 0
+                swmm_height = 0
+                swmm_coeff = 0
+                swmm_feature = 0
+                curbheight = 0
+                swmm_clogging_factor = 0
+                swmm_time_for_clogging = 0
+                drboxarea = 0
+
+                self.gutils.execute(insert_inlets_junctions_sql, (
+                    grid,
+                    name,
+                    sd_type,
+                    external_inflow,
+                    junction_invert_elev,
+                    max_depth,
+                    init_depth,
+                    surcharge_depth,
+                    intype,
+                    swmm_length,
+                    swmm_width,
+                    swmm_height,
+                    swmm_coeff,
+                    swmm_feature,
+                    curbheight,
+                    swmm_clogging_factor,
+                    swmm_time_for_clogging,
+                    drboxarea,
+                    geom
+                )
+                )
+
+        except Exception as e:
+            QApplication.setOverrideCursor(Qt.ArrowCursor)
+            msg = "ERROR 060319.1610: Creating Storm Drain Inlets/Junctions layer failed!\n\n" \
+                  "Please check your SWMM input data.\nAre the nodes coordinates inside the computational domain?\n" \
+                  f"{e}"
+            self.uc.show_error(msg, e)
+            self.uc.log_info(msg)
+            QApplication.restoreOverrideCursor()
+
 
     def import_swmminp_curves(self, swmminp_dict):
         """
@@ -1756,7 +1874,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             msg = "ERROR 241121.0547: Reading storm drain curve data from SWMM input data failed!\n" \
                   "__________________________________________________\n" \
                   f"{e}"
-            self.uc.show_error(msg)
+            self.uc.show_error(msg, e)
             self.uc.log_info(msg)
             QApplication.restoreOverrideCursor()
 
@@ -1815,7 +1933,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             msg = "ERROR 020219.0812:  Reading storm drain time series from SWMM input data failed!\n" \
                   "__________________________________________________\n" \
                   f"{e}"
-            self.uc.show_error(msg)
+            self.uc.show_error(msg, e)
             self.uc.log_info(msg)
             QApplication.restoreOverrideCursor()
 
@@ -1867,7 +1985,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             msg = "ERROR 020219.0812: Reading storm drain inflows from SWMM input data failed!\n" \
                   "__________________________________________________\n" \
                   f"{e}"
-            self.uc.show_error(msg)
+            self.uc.show_error(msg, e)
             self.uc.log_info(msg)
             QApplication.restoreOverrideCursor()
 
@@ -1930,7 +2048,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             msg = "ERROR 020219.0812: Reading storm drain patterns from SWMM input data failed!\n" \
                   "__________________________________________________\n" \
                   f"{e}"
-            self.uc.show_error(msg)
+            self.uc.show_error(msg, e)
             self.uc.log_info(msg)
             QApplication.restoreOverrideCursor()
 

@@ -3431,7 +3431,23 @@ class Flo2D(object):
         """
         Function to export FLO-2D to SWMM's INP file
         """
-        self.f2d_widget.storm_drain_editor.import_storm_drain_INP_file("Choose", True)
+        # self.f2d_widget.storm_drain_editor.import_storm_drain_INP_file("Choose", True)
+        self.f2g = Flo2dGeoPackage(self.con, self.iface, parsed_format="DAT")
+        s = QSettings()
+        last_dir = s.value("FLO-2D/lastGdsDir", "")
+        fname, __ = QFileDialog.getOpenFileName(
+            None, "Select SWMM INP file to import", directory=last_dir, filter="(*.INP)"
+        )
+        if not fname:
+            return
+
+        dir_name = os.path.dirname(fname)
+        s.setValue("FLO-2D/lastGdsDir", dir_name)
+
+        if self.f2g.set_parser(fname):
+            self.f2g.import_swmminp()
+
+        self.lyrs.refresh_layers()
 
     @connection_required
     def export_inp(self):
