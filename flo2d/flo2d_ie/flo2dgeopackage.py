@@ -1653,9 +1653,140 @@ class Flo2dGeoPackage(GeoPackageUtils):
         self.import_swmminp_inlets_junctions(swmminp_dict)
         # print(self.gutils.execute("SELECT * FROM user_swmm_inlets_junctions;").fetchall())
         self.import_swmminp_outfalls(swmminp_dict)
-        print(self.gutils.execute("SELECT * FROM user_swmm_outlets;").fetchall())
+        # print(self.gutils.execute("SELECT * FROM user_swmm_outlets;").fetchall())
+        self.import_swmminp_storage_units(swmminp_dict)
+        print(self.gutils.execute("SELECT * FROM user_swmm_storage_units;").fetchall())
         #dropbox
         #sdclogging
+
+    def import_swmminp_storage_units(self, swmminp_dict):
+        """
+        Function to import swmm inp storage units
+        """
+        try:
+            self.gutils.clear_tables('user_swmm_storage_units')
+            insert_storage_units_sql = """
+                                    INSERT INTO user_swmm_storage_units (
+                                        name, 
+                                        grid,
+                                        invert_elev,
+                                        max_depth,
+                                        init_depth,
+                                        external_inflow,
+                                        treatment,
+                                        ponded_area,
+                                        evap_factor,
+                                        infiltration,
+                                        infil_method,
+                                        suction_head,
+                                        conductivity,
+                                        initial_deficit,
+                                        storage_curve,
+                                        coefficient,
+                                        exponent,
+                                        constant,
+                                        curve_name,
+                                        geom
+                                    )
+                                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);"""
+
+            storage_units_data = swmminp_dict.get('STORAGE', [])
+            coordinates_data = swmminp_dict.get('COORDINATES', [])
+            inflows_data = swmminp_dict.get('INFLOWS', [])
+            external_inflows = [external_inflow_name[0] for external_inflow_name in inflows_data]
+
+            for storage_unit in storage_units_data:
+                """
+                [STORAGE]
+                ;;               Invert   Max.     Init.    Storage    Curve                      Ponded   Evap.   
+                ;;Name           Elev.    Depth    Depth    Curve      Params                     Area     Frac.    Infiltration Parameters
+                ;;-------------- -------- -------- -------- ---------- -------- -------- -------- -------- -------- -----------------------
+                Cistern1         1385     9        0        TABULAR    Storage1                   0        0       
+                Cistern2         1385     9        0        TABULAR    Storage1                   0        0        50       60       70      
+                Cistern3         1385     9        0        FUNCTIONAL 1000     100      10       0        0       
+                """
+
+                # SWMM VARIABLES
+                name = storage_unit[0]
+                invert_elev = storage_unit[1]
+                max_depth = storage_unit[2]
+                init_depth = storage_unit[3]
+                storage_curve = storage_unit[4]
+                if storage_curve == 'FUNCTIONAL':
+                    coefficient = storage_unit[5]
+                    exponent = storage_unit[6]
+                    constant = storage_unit[7]
+                    evap_factor = storage_unit[9]
+                    curve_name = '*'
+                else:
+                    coefficient = 1000
+                    exponent = 0
+                    constant = 0
+                    curve_name = storage_unit[5]
+                    evap_factor = storage_unit[7]
+                infiltration = 'YES' if len(storage_unit) == 13 or len(storage_unit) == 11 else 'NO'
+                infil_method = 'GREEN_AMPT'
+                if len(storage_unit) == 13:
+                    suction_head = storage_unit[10]
+                    conductivity = storage_unit[11]
+                    initial_deficit =  storage_unit[12]
+                elif len(storage_unit) == 11:
+                    suction_head = storage_unit[8]
+                    conductivity = storage_unit[9]
+                    initial_deficit =  storage_unit[10]
+                else:
+                    suction_head = 0
+                    conductivity = 0
+                    initial_deficit = 0
+                external_inflow = 'YES' if name in external_inflows else 'NO'
+                treatment = 'NO'
+                ponded_area = 0
+
+                # QGIS VARIABLES
+                grid = None
+                geom = None
+                for coordinate in coordinates_data:
+                    if coordinate[0] == name:
+                        x = float(coordinate[1])
+                        y = float(coordinate[2])
+                        grid_n = self.gutils.grid_on_point(x, y)
+                        grid = -9999 if grid_n is None else grid_n
+                        geom = "POINT({0} {1})".format(x, y)
+                        geom = self.gutils.wkt_to_gpb(geom)
+                        break
+
+                self.gutils.execute(insert_storage_units_sql, (
+                    name,
+                    grid,
+                    invert_elev,
+                    max_depth,
+                    init_depth,
+                    external_inflow,
+                    treatment,
+                    ponded_area,
+                    evap_factor,
+                    infiltration,
+                    infil_method,
+                    suction_head,
+                    conductivity,
+                    initial_deficit,
+                    storage_curve,
+                    coefficient,
+                    exponent,
+                    constant,
+                    curve_name,
+                    geom
+                )
+                )
+
+        except Exception as e:
+            QApplication.setOverrideCursor(Qt.ArrowCursor)
+            msg = "ERROR 300124.1109: Creating Storm Drain Storage Units layer failed!\n\n" \
+                  "Please check your SWMM input data.\nAre the nodes coordinates inside the computational domain?\n" \
+                  f"{e}"
+            self.uc.show_error(msg, e)
+            self.uc.log_info(msg)
+            QApplication.restoreOverrideCursor()
 
     def import_swmminp_outfalls(self, swmminp_dict):
         """
@@ -1743,7 +1874,6 @@ class Flo2dGeoPackage(GeoPackageUtils):
             self.uc.show_error(msg, e)
             self.uc.log_info(msg)
             QApplication.restoreOverrideCursor()
-
 
     def import_swmminp_inlets_junctions(self, swmminp_dict):
         """
