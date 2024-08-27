@@ -1622,7 +1622,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
         self.batch_execute(gutter_globals_sql, gutter_areas_sql, cells_sql)
 
-    def import_swmminp(self):
+    def import_swmminp(self, delete_existing=True):
         """
         Function to import the SWMM.INP -> refactored from the old method on the storm drain editor widget
         """

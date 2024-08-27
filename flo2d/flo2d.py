@@ -39,7 +39,8 @@ from PyQt5.QtCore import QVariant
 import pip
 from qgis.PyQt import QtCore, QtGui
 from PyQt5.QtGui import QFont
-from PyQt5.QtWidgets import QApplication, QToolButton, QProgressDialog, QDockWidget, QTabWidget, QWidget, QVBoxLayout
+from PyQt5.QtWidgets import QApplication, QToolButton, QProgressDialog, QDockWidget, QTabWidget, QWidget, QVBoxLayout, \
+    QPushButton
 from osgeo import gdal, ogr
 from qgis._core import QgsMessageLog, QgsCoordinateReferenceSystem, QgsMapSettings, QgsProjectMetadata, \
     QgsMapRendererParallelJob, QgsLayerTreeLayer, QgsVectorLayerExporter, QgsVectorFileWriter, QgsVectorLayer, \
@@ -3431,6 +3432,7 @@ class Flo2D(object):
         """
         Function to export FLO-2D to SWMM's INP file
         """
+        # self.f2d_widget.storm_drain_editor.import_storm_drain_INP_file("Choose", True)
         try:
 
             if self.gutils.is_table_empty("grid"):
@@ -3453,8 +3455,44 @@ class Flo2D(object):
             dir_name = os.path.dirname(fname)
             s.setValue("FLO-2D/lastGdsDir", dir_name)
 
+            sd_user_tables = [
+                'user_swmm_inlets_junctions',
+                'user_swmm_conduits',
+                'user_swmm_pumps',
+                'user_swmm_orifices',
+                'user_swmm_weirs',
+                'user_swmm_outlets',
+                'user_swmm_storage_units'
+            ]
+            empty_sd = all((self.gutils.is_table_empty(sd_user_table) for sd_user_table in sd_user_tables))
+
             if self.f2g.set_parser(fname):
-                self.f2g.import_swmminp()
+                if not empty_sd:
+                    QApplication.restoreOverrideCursor()
+                    msg = QMessageBox()
+                    msg.setWindowTitle("Replace or complete Storm Drain User Data")
+                    msg.setText(
+                        "There is already Storm Drain data in the Users Layers.\n\nWould you like to keep it and "
+                        "complete it with data taken from the .INP file?\n\n"
+                        + "or you prefer to erase it and create new storm drains from the .INP file?\n"
+                    )
+
+                    msg.addButton(QPushButton("Keep existing and complete"), QMessageBox.YesRole)
+                    msg.addButton(QPushButton("Create new Storm Drains"), QMessageBox.NoRole)
+                    msg.addButton(QPushButton("Cancel"), QMessageBox.RejectRole)
+                    msg.setDefaultButton(QMessageBox().Cancel)
+                    msg.setIcon(QMessageBox.Question)
+                    ret = msg.exec_()
+                    QApplication.setOverrideCursor(Qt.WaitCursor)
+                    if ret == 0:
+                        self.f2g.import_swmminp(delete_existing=False)
+                    elif ret == 1:
+                        self.f2g.import_swmminp()
+                    else:
+                        QApplication.restoreOverrideCursor()
+                        return
+                else:
+                    self.f2g.import_swmminp()
 
             self.lyrs.refresh_layers()
 
