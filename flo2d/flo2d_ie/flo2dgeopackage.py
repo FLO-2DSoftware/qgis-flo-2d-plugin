@@ -1638,22 +1638,22 @@ class Flo2dGeoPackage(GeoPackageUtils):
             )
             return
 
-        QApplication.setOverrideCursor(Qt.WaitCursor)
+        # QApplication.setOverrideCursor(Qt.WaitCursor)
 
         self.import_swmminp_control(swmminp_dict)
-        self.import_swmminp_inflows(swmminp_dict)
-        self.import_swmminp_patterns(swmminp_dict)
-        self.import_swmminp_ts(swmminp_dict)
-        self.import_swmminp_curves(swmminp_dict)
-        self.import_swmminp_inlets_junctions(swmminp_dict)
-        self.import_swmminp_outfalls(swmminp_dict)
-        self.import_swmminp_storage_units(swmminp_dict)
-        self.import_swmminp_conduits(swmminp_dict)
-        self.import_swmminp_pumps(swmminp_dict)
-        self.import_swmminp_orifices(swmminp_dict)
-        self.import_swmminp_weirs(swmminp_dict)
+        self.import_swmminp_inflows(swmminp_dict, delete_existing)
+        self.import_swmminp_patterns(swmminp_dict, delete_existing)
+        self.import_swmminp_ts(swmminp_dict, delete_existing)
+        self.import_swmminp_curves(swmminp_dict, delete_existing)
+        self.import_swmminp_inlets_junctions(swmminp_dict, delete_existing)
+        self.import_swmminp_outfalls(swmminp_dict, delete_existing)
+        self.import_swmminp_storage_units(swmminp_dict, delete_existing)
+        self.import_swmminp_conduits(swmminp_dict, delete_existing)
+        self.import_swmminp_pumps(swmminp_dict, delete_existing)
+        self.import_swmminp_orifices(swmminp_dict, delete_existing)
+        self.import_swmminp_weirs(swmminp_dict, delete_existing)
 
-        QApplication.restoreOverrideCursor()
+        # QApplication.restoreOverrideCursor()
 
     def import_swmminp_control(self, swmminp_dict):
         """
@@ -1704,12 +1704,18 @@ class Flo2dGeoPackage(GeoPackageUtils):
             self.uc.log_info(msg)
             QApplication.restoreOverrideCursor()
 
-    def import_swmminp_weirs(self, swmminp_dict):
+    def import_swmminp_weirs(self, swmminp_dict, delete_existing):
         """
         Function to import swmm inp weirs
         """
         try:
-            self.gutils.clear_tables('user_swmm_weirs')
+            if delete_existing:
+                self.gutils.clear_tables('user_swmm_weirs')
+            else:
+                existing_weirs_qry = self.gutils.execute("SELECT weir_name FROM user_swmm_weirs;").fetchall()
+                if existing_weirs_qry:
+                    existing_weirs = existing_weirs_qry[0]
+                    print(existing_weirs)
             insert_weirs_sql = """INSERT INTO user_swmm_weirs (
                                     weir_name,
                                     weir_inlet,
@@ -1727,6 +1733,21 @@ class Flo2dGeoPackage(GeoPackageUtils):
                                     geom
                                     )
                                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);"""
+
+            # replace_user_swmm_weirs_sql = """UPDATE user_swmm_weirs
+            #                  SET   weir_inlet  = ?,
+            #                        weir_outlet  = ?,
+            #                        weir_type = ?,
+            #                        weir_crest_height = ?,
+            #                        weir_disch_coeff = ?,
+            #                        weir_flap_gate = ?,
+            #                        weir_end_contrac = ?,
+            #                        weir_end_coeff = ?,
+            #                        weir_shape = ?,
+            #                        weir_height = ?,
+            #                        weir_length = ?,
+            #                        weir_side_slope = ?
+            #                  WHERE weir_name = ?;"""
 
             weirs_data = swmminp_dict.get('WEIRS', [])
             coordinates_data = swmminp_dict.get('COORDINATES', [])
@@ -1808,12 +1829,18 @@ class Flo2dGeoPackage(GeoPackageUtils):
             self.uc.log_info(msg)
             QApplication.restoreOverrideCursor()
 
-    def import_swmminp_orifices(self, swmminp_dict):
+    def import_swmminp_orifices(self, swmminp_dict, delete_existing):
         """
         Function to import swmm inp orifices
         """
         try:
-            self.gutils.clear_tables('user_swmm_orifices')
+            existing_orifices = []
+            if delete_existing:
+                self.gutils.clear_tables('user_swmm_orifices')
+            else:
+                existing_orifices_qry = self.gutils.execute("SELECT orifice_name FROM user_swmm_orifices;").fetchall()
+                existing_orifices = [orifice[0] for orifice in existing_orifices_qry]
+
             insert_orifices_sql = """INSERT INTO user_swmm_orifices (
                                     orifice_name,
                                     orifice_inlet,
@@ -1829,6 +1856,19 @@ class Flo2dGeoPackage(GeoPackageUtils):
                                     geom
                                     )
                                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);"""
+
+            replace_user_swmm_orificies_sql = """UPDATE user_swmm_orifices
+                             SET   orifice_inlet  = ?,
+                                   orifice_outlet  = ?,
+                                   orifice_type  = ?,
+                                   orifice_crest_height  = ?,
+                                   orifice_disch_coeff  = ?,
+                                   orifice_flap_gate  = ?,
+                                   orifice_open_close_time  = ?,
+                                   orifice_shape  = ?,
+                                   orifice_height  = ?,
+                                   orifice_width  = ?
+                             WHERE orifice_name = ?;"""
 
             orifices_data = swmminp_dict.get('ORIFICES', [])
             coordinates_data = swmminp_dict.get('COORDINATES', [])
@@ -1880,21 +1920,39 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     geom = "LINESTRING({})".format(", ".join("{0} {1}".format(x, y) for x, y in linestring_list))
                     geom = self.gutils.wkt_to_gpb(geom)
 
-                    self.gutils.execute(insert_orifices_sql, (
-                        orifice_name,
-                        orifice_inlet,
-                        orifice_outlet,
-                        orifice_type,
-                        orifice_crest_height,
-                        orifice_disch_coeff,
-                        orifice_flap_gate,
-                        orifice_open_close_time,
-                        orifice_shape,
-                        orifice_height,
-                        orifice_width,
-                        geom
-                    )
-                    )
+                    if orifice_name in existing_orifices:
+                        self.gutils.execute(
+                            replace_user_swmm_orificies_sql,
+                            (
+                                orifice_inlet,
+                                orifice_outlet,
+                                orifice_type,
+                                orifice_crest_height,
+                                orifice_disch_coeff,
+                                orifice_flap_gate,
+                                orifice_open_close_time,
+                                orifice_shape,
+                                orifice_height,
+                                orifice_width,
+                                orifice_name,
+                            )
+                        )
+                    else:
+                        self.gutils.execute(insert_orifices_sql, (
+                            orifice_name,
+                            orifice_inlet,
+                            orifice_outlet,
+                            orifice_type,
+                            orifice_crest_height,
+                            orifice_disch_coeff,
+                            orifice_flap_gate,
+                            orifice_open_close_time,
+                            orifice_shape,
+                            orifice_height,
+                            orifice_width,
+                            geom
+                            )
+                        )
                 self.uc.log_info(f"{len(orifices_data)} ORIFICES from SWMM INP added")
 
         except Exception as e:
@@ -1906,7 +1964,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             self.uc.log_info(msg)
             QApplication.restoreOverrideCursor()
 
-    def import_swmminp_pumps(self, swmminp_dict):
+    def import_swmminp_pumps(self, swmminp_dict, delete_existing):
         """
         Function to import swmm inp pumps
         """
@@ -1989,7 +2047,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             self.uc.log_info(msg)
             QApplication.restoreOverrideCursor()
 
-    def import_swmminp_conduits(self, swmminp_dict):
+    def import_swmminp_conduits(self, swmminp_dict, delete_existing):
         """
         Function to import swmm inp conduits
         """
@@ -2123,7 +2181,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             self.uc.log_info(msg)
             QApplication.restoreOverrideCursor()
 
-    def import_swmminp_storage_units(self, swmminp_dict):
+    def import_swmminp_storage_units(self, swmminp_dict, delete_existing):
         """
         Function to import swmm inp storage units
         """
@@ -2255,7 +2313,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             self.uc.log_info(msg)
             QApplication.restoreOverrideCursor()
 
-    def import_swmminp_outfalls(self, swmminp_dict):
+    def import_swmminp_outfalls(self, swmminp_dict, delete_existing):
         """
         Function to import swmm inp outfalls
         """
@@ -2345,7 +2403,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             self.uc.log_info(msg)
             QApplication.restoreOverrideCursor()
 
-    def import_swmminp_inlets_junctions(self, swmminp_dict):
+    def import_swmminp_inlets_junctions(self, swmminp_dict, delete_existing):
         """
         Function to import swmm inp inlets junctions
         """
@@ -2461,7 +2519,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             self.uc.log_info(msg)
             QApplication.restoreOverrideCursor()
 
-    def import_swmminp_curves(self, swmminp_dict):
+    def import_swmminp_curves(self, swmminp_dict, delete_existing):
         """
         Function to import swmm inp curves (pump, tidal, and other)
         """
@@ -2577,7 +2635,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             self.uc.log_info(msg)
             QApplication.restoreOverrideCursor()
 
-    def import_swmminp_ts(self, swmminp_dict):
+    def import_swmminp_ts(self, swmminp_dict, delete_existing):
         """
         Function to import swmm inp time series
         """
@@ -2639,7 +2697,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             self.uc.log_info(msg)
             QApplication.restoreOverrideCursor()
 
-    def import_swmminp_inflows(self, swmminp_dict):
+    def import_swmminp_inflows(self, swmminp_dict, delete_existing):
         """
         Function to import swmm inp inflows
         """
@@ -2693,7 +2751,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             self.uc.log_info(msg)
             QApplication.restoreOverrideCursor()
 
-    def import_swmminp_patterns(self, swmminp_dict):
+    def import_swmminp_patterns(self, swmminp_dict, delete_existing):
         """
         Function to import swmm inp patterns
         """
