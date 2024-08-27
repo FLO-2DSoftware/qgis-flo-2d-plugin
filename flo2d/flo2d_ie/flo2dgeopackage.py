@@ -1650,7 +1650,6 @@ class Flo2dGeoPackage(GeoPackageUtils):
         self.import_swmminp_pumps(swmminp_dict)
         self.import_swmminp_orifices(swmminp_dict)
         self.import_swmminp_weirs(swmminp_dict)
-        print(self.gutils.execute("SELECT * FROM user_swmm_weirs").fetchall())
 
     def import_swmminp_control(self, swmminp_dict):
         """
@@ -1816,9 +1815,12 @@ class Flo2dGeoPackage(GeoPackageUtils):
                                     orifice_disch_coeff,
                                     orifice_flap_gate,
                                     orifice_open_close_time,
+                                    orifice_shape,
+                                    orifice_height,
+                                    orifice_width,
                                     geom
                                     )
-                                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);"""
+                                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);"""
 
             orifices_data = swmminp_dict.get('ORIFICES', [])
             coordinates_data = swmminp_dict.get('COORDINATES', [])
@@ -1845,6 +1847,10 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 orifice_disch_coeff = orifice[5]
                 orifice_flap_gate = orifice[6]
                 orifice_open_close_time = orifice[7]
+
+                orifice_shape = xsections_dict[orifice_name][0]
+                orifice_height = xsections_dict[orifice_name][1]
+                orifice_width = xsections_dict[orifice_name][2]
 
                 # QGIS Variables
                 linestring_list = []
@@ -1874,6 +1880,9 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     orifice_disch_coeff,
                     orifice_flap_gate,
                     orifice_open_close_time,
+                    orifice_shape,
+                    orifice_height,
+                    orifice_width,
                     geom
                 )
                 )
