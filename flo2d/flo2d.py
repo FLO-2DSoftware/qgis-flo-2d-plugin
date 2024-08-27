@@ -3432,6 +3432,12 @@ class Flo2D(object):
         Function to export FLO-2D to SWMM's INP file
         """
         try:
+
+            if self.gutils.is_table_empty("grid"):
+                self.uc.bar_warn("There is no grid! Please create it before running tool.")
+                self.uc.log_info("There is no grid! Please create it before running tool.")
+                return False
+
             QApplication.setOverrideCursor(Qt.WaitCursor)
 
             self.f2g = Flo2dGeoPackage(self.con, self.iface, parsed_format="DAT")
@@ -3451,6 +3457,9 @@ class Flo2D(object):
                 self.f2g.import_swmminp()
 
             self.lyrs.refresh_layers()
+
+            self.uc.bar_info("Import from INP completed! Check log messages for more information. ")
+            self.uc.log_info("Import from INP completed!")
 
             QApplication.restoreOverrideCursor()
 

@@ -1638,6 +1638,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
             )
             return
 
+        QApplication.setOverrideCursor(Qt.WaitCursor)
+
         self.import_swmminp_control(swmminp_dict)
         self.import_swmminp_inflows(swmminp_dict)
         self.import_swmminp_patterns(swmminp_dict)
@@ -1650,6 +1652,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
         self.import_swmminp_pumps(swmminp_dict)
         self.import_swmminp_orifices(swmminp_dict)
         self.import_swmminp_weirs(swmminp_dict)
+
+        QApplication.restoreOverrideCursor()
 
     def import_swmminp_control(self, swmminp_dict):
         """
@@ -1688,6 +1692,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
                                        VALUES 
                                        ('TITLE', 'INP file created by FLO-2D')
                                     """)
+
+            self.uc.log_info("Storm Drain control variables set")
 
         except Exception as e:
             QApplication.setOverrideCursor(Qt.ArrowCursor)
@@ -1729,67 +1735,69 @@ class Flo2dGeoPackage(GeoPackageUtils):
             xsections_dict = {item[0]: item[1:] for item in xsections_data}
             vertices_data = swmminp_dict.get('VERTICES', [])
 
-            for weir in weirs_data:
-                """
-                [WEIRS]
-                ;;               Inlet            Outlet           Weir         Crest      Disch.     Flap End      End       
-                ;;Name           Node             Node             Type         Height     Coeff.     Gate Con.     Coeff.    
-                ;;-------------- ---------------- ---------------- ------------ ---------- ---------- ---- -------- ----------
-                weir1            Cistern3         Ocistern         V-NOTCH      4.50       3.30       NO   0        0.00      
-                """
+            if len(weirs_data):
+                for weir in weirs_data:
+                    """
+                    [WEIRS]
+                    ;;               Inlet            Outlet           Weir         Crest      Disch.     Flap End      End       
+                    ;;Name           Node             Node             Type         Height     Coeff.     Gate Con.     Coeff.    
+                    ;;-------------- ---------------- ---------------- ------------ ---------- ---------- ---- -------- ----------
+                    weir1            Cistern3         Ocistern         V-NOTCH      4.50       3.30       NO   0        0.00      
+                    """
 
-                # SWMM Variables
-                weir_name = weir[0]
-                weir_inlet = weir[1]
-                weir_outlet = weir[2]
-                weir_type = weir[3]
-                weir_crest_height = weir[4]
-                weir_disch_coeff = weir[5]
-                weir_flap_gate = weir[6]
-                weir_end_contrac = weir[7]
-                weir_end_coeff = weir[8]
+                    # SWMM Variables
+                    weir_name = weir[0]
+                    weir_inlet = weir[1]
+                    weir_outlet = weir[2]
+                    weir_type = weir[3]
+                    weir_crest_height = weir[4]
+                    weir_disch_coeff = weir[5]
+                    weir_flap_gate = weir[6]
+                    weir_end_contrac = weir[7]
+                    weir_end_coeff = weir[8]
 
-                weir_shape = xsections_dict[weir_name][0]
-                weir_height = xsections_dict[weir_name][1]
-                weir_length= xsections_dict[weir_name][2]
-                weir_side_slope = xsections_dict[weir_name][3]
+                    weir_shape = xsections_dict[weir_name][0]
+                    weir_height = xsections_dict[weir_name][1]
+                    weir_length= xsections_dict[weir_name][2]
+                    weir_side_slope = xsections_dict[weir_name][3]
 
-                # QGIS Variables
-                linestring_list = []
-                inlet_x = coordinates_dict[weir_inlet][0]
-                inlet_y = coordinates_dict[weir_inlet][1]
+                    # QGIS Variables
+                    linestring_list = []
+                    inlet_x = coordinates_dict[weir_inlet][0]
+                    inlet_y = coordinates_dict[weir_inlet][1]
 
-                linestring_list.append((inlet_x, inlet_y))
+                    linestring_list.append((inlet_x, inlet_y))
 
-                for vertice in vertices_data:
-                    if vertice[0] == weir_name:
-                        linestring_list.append((vertice[1], vertice[2]))
+                    for vertice in vertices_data:
+                        if vertice[0] == weir_name:
+                            linestring_list.append((vertice[1], vertice[2]))
 
-                outlet_x = coordinates_dict[weir_outlet][0]
-                outlet_y = coordinates_dict[weir_outlet][1]
+                    outlet_x = coordinates_dict[weir_outlet][0]
+                    outlet_y = coordinates_dict[weir_outlet][1]
 
-                linestring_list.append((outlet_x, outlet_y))
+                    linestring_list.append((outlet_x, outlet_y))
 
-                geom = "LINESTRING({})".format(", ".join("{0} {1}".format(x, y) for x, y in linestring_list))
-                geom = self.gutils.wkt_to_gpb(geom)
+                    geom = "LINESTRING({})".format(", ".join("{0} {1}".format(x, y) for x, y in linestring_list))
+                    geom = self.gutils.wkt_to_gpb(geom)
 
-                self.gutils.execute(insert_weirs_sql, (
-                                    weir_name,
-                                    weir_inlet,
-                                    weir_outlet,
-                                    weir_type,
-                                    weir_crest_height,
-                                    weir_disch_coeff,
-                                    weir_flap_gate,
-                                    weir_end_contrac,
-                                    weir_end_coeff,
-                                    weir_shape,
-                                    weir_height,
-                                    weir_length,
-                                    weir_side_slope,
-                                    geom
-                                    )
-                                    )
+                    self.gutils.execute(insert_weirs_sql, (
+                                        weir_name,
+                                        weir_inlet,
+                                        weir_outlet,
+                                        weir_type,
+                                        weir_crest_height,
+                                        weir_disch_coeff,
+                                        weir_flap_gate,
+                                        weir_end_contrac,
+                                        weir_end_coeff,
+                                        weir_shape,
+                                        weir_height,
+                                        weir_length,
+                                        weir_side_slope,
+                                        geom
+                                        )
+                                        )
+                self.uc.log_info(f"{len(weirs_data)} WEIRS from SWMM INP added")
 
         except Exception as e:
             QApplication.setOverrideCursor(Qt.ArrowCursor)
@@ -1829,63 +1837,65 @@ class Flo2dGeoPackage(GeoPackageUtils):
             xsections_dict = {item[0]: item[1:] for item in xsections_data}
             vertices_data = swmminp_dict.get('VERTICES', [])
 
-            for orifice in orifices_data:
-                """
-                [ORIFICES]
-                ;;               Inlet            Outlet           Orifice      Crest      Disch.     Flap Open/Close
-                ;;Name           Node             Node             Type         Height     Coeff.     Gate Time      
-                ;;-------------- ---------------- ---------------- ------------ ---------- ---------- ---- ----------
-                orifice1         Cistern1         Cistern2         SIDE         0.50       0.65       NO   0.00      
-                """
+            if len(orifices_data) > 0:
+                for orifice in orifices_data:
+                    """
+                    [ORIFICES]
+                    ;;               Inlet            Outlet           Orifice      Crest      Disch.     Flap Open/Close
+                    ;;Name           Node             Node             Type         Height     Coeff.     Gate Time      
+                    ;;-------------- ---------------- ---------------- ------------ ---------- ---------- ---- ----------
+                    orifice1         Cistern1         Cistern2         SIDE         0.50       0.65       NO   0.00      
+                    """
 
-                # SWMM Variables
-                orifice_name = orifice[0]
-                orifice_inlet = orifice[1]
-                orifice_outlet = orifice[2]
-                orifice_type = orifice[3]
-                orifice_crest_height = orifice[4]
-                orifice_disch_coeff = orifice[5]
-                orifice_flap_gate = orifice[6]
-                orifice_open_close_time = orifice[7]
+                    # SWMM Variables
+                    orifice_name = orifice[0]
+                    orifice_inlet = orifice[1]
+                    orifice_outlet = orifice[2]
+                    orifice_type = orifice[3]
+                    orifice_crest_height = orifice[4]
+                    orifice_disch_coeff = orifice[5]
+                    orifice_flap_gate = orifice[6]
+                    orifice_open_close_time = orifice[7]
 
-                orifice_shape = xsections_dict[orifice_name][0]
-                orifice_height = xsections_dict[orifice_name][1]
-                orifice_width = xsections_dict[orifice_name][2]
+                    orifice_shape = xsections_dict[orifice_name][0]
+                    orifice_height = xsections_dict[orifice_name][1]
+                    orifice_width = xsections_dict[orifice_name][2]
 
-                # QGIS Variables
-                linestring_list = []
-                inlet_x = coordinates_dict[orifice_inlet][0]
-                inlet_y = coordinates_dict[orifice_inlet][1]
+                    # QGIS Variables
+                    linestring_list = []
+                    inlet_x = coordinates_dict[orifice_inlet][0]
+                    inlet_y = coordinates_dict[orifice_inlet][1]
 
-                linestring_list.append((inlet_x, inlet_y))
+                    linestring_list.append((inlet_x, inlet_y))
 
-                for vertice in vertices_data:
-                    if vertice[0] == orifice_name:
-                        linestring_list.append((vertice[1], vertice[2]))
+                    for vertice in vertices_data:
+                        if vertice[0] == orifice_name:
+                            linestring_list.append((vertice[1], vertice[2]))
 
-                outlet_x = coordinates_dict[orifice_outlet][0]
-                outlet_y = coordinates_dict[orifice_outlet][1]
+                    outlet_x = coordinates_dict[orifice_outlet][0]
+                    outlet_y = coordinates_dict[orifice_outlet][1]
 
-                linestring_list.append((outlet_x, outlet_y))
+                    linestring_list.append((outlet_x, outlet_y))
 
-                geom = "LINESTRING({})".format(", ".join("{0} {1}".format(x, y) for x, y in linestring_list))
-                geom = self.gutils.wkt_to_gpb(geom)
+                    geom = "LINESTRING({})".format(", ".join("{0} {1}".format(x, y) for x, y in linestring_list))
+                    geom = self.gutils.wkt_to_gpb(geom)
 
-                self.gutils.execute(insert_orifices_sql, (
-                    orifice_name,
-                    orifice_inlet,
-                    orifice_outlet,
-                    orifice_type,
-                    orifice_crest_height,
-                    orifice_disch_coeff,
-                    orifice_flap_gate,
-                    orifice_open_close_time,
-                    orifice_shape,
-                    orifice_height,
-                    orifice_width,
-                    geom
-                )
-                )
+                    self.gutils.execute(insert_orifices_sql, (
+                        orifice_name,
+                        orifice_inlet,
+                        orifice_outlet,
+                        orifice_type,
+                        orifice_crest_height,
+                        orifice_disch_coeff,
+                        orifice_flap_gate,
+                        orifice_open_close_time,
+                        orifice_shape,
+                        orifice_height,
+                        orifice_width,
+                        geom
+                    )
+                    )
+                self.uc.log_info(f"{len(orifices_data)} ORIFICES from SWMM INP added")
 
         except Exception as e:
             QApplication.setOverrideCursor(Qt.ArrowCursor)
@@ -1919,54 +1929,56 @@ class Flo2dGeoPackage(GeoPackageUtils):
             coordinates_dict = {item[0]: item[1:] for item in coordinates_data}
             vertices_data = swmminp_dict.get('VERTICES', [])
 
-            for pump in pumps_data:
-                """
-                [PUMPS]
-                ;;               Inlet            Outlet           Pump             Init.  Startup  Shutoff 
-                ;;Name           Node             Node             Curve            Status Depth    Depth   
-                ;;-------------- ---------------- ---------------- ---------------- ------ -------- --------
-                CPump            Ids1             Cistern1         P1               OFF    3.00     40.00   
-                """
+            if len(pumps_data) > 0:
+                for pump in pumps_data:
+                    """
+                    [PUMPS]
+                    ;;               Inlet            Outlet           Pump             Init.  Startup  Shutoff 
+                    ;;Name           Node             Node             Curve            Status Depth    Depth   
+                    ;;-------------- ---------------- ---------------- ---------------- ------ -------- --------
+                    CPump            Ids1             Cistern1         P1               OFF    3.00     40.00   
+                    """
 
-                # SWMM Variables
-                pump_name = pump[0]
-                pump_inlet = pump[1]
-                pump_outlet = pump[2]
-                pump_curve = pump[3]
-                pump_init_status = pump[4]
-                pump_startup_depth = pump[5]
-                pump_shutoff_depth = pump[6]
+                    # SWMM Variables
+                    pump_name = pump[0]
+                    pump_inlet = pump[1]
+                    pump_outlet = pump[2]
+                    pump_curve = pump[3]
+                    pump_init_status = pump[4]
+                    pump_startup_depth = pump[5]
+                    pump_shutoff_depth = pump[6]
 
-                # QGIS Variables
-                linestring_list = []
-                inlet_x = coordinates_dict[pump_inlet][0]
-                inlet_y = coordinates_dict[pump_inlet][1]
+                    # QGIS Variables
+                    linestring_list = []
+                    inlet_x = coordinates_dict[pump_inlet][0]
+                    inlet_y = coordinates_dict[pump_inlet][1]
 
-                linestring_list.append((inlet_x, inlet_y))
+                    linestring_list.append((inlet_x, inlet_y))
 
-                for vertice in vertices_data:
-                    if vertice[0] == pump_name:
-                        linestring_list.append((vertice[1], vertice[2]))
+                    for vertice in vertices_data:
+                        if vertice[0] == pump_name:
+                            linestring_list.append((vertice[1], vertice[2]))
 
-                outlet_x = coordinates_dict[pump_outlet][0]
-                outlet_y = coordinates_dict[pump_outlet][1]
+                    outlet_x = coordinates_dict[pump_outlet][0]
+                    outlet_y = coordinates_dict[pump_outlet][1]
 
-                linestring_list.append((outlet_x, outlet_y))
+                    linestring_list.append((outlet_x, outlet_y))
 
-                geom = "LINESTRING({})".format(", ".join("{0} {1}".format(x, y) for x, y in linestring_list))
-                geom = self.gutils.wkt_to_gpb(geom)
+                    geom = "LINESTRING({})".format(", ".join("{0} {1}".format(x, y) for x, y in linestring_list))
+                    geom = self.gutils.wkt_to_gpb(geom)
 
-                self.gutils.execute(insert_pumps_sql, (
-                    pump_name,
-                    pump_inlet,
-                    pump_outlet,
-                    pump_curve,
-                    pump_init_status,
-                    pump_startup_depth,
-                    pump_shutoff_depth,
-                    geom
-                )
-                )
+                    self.gutils.execute(insert_pumps_sql, (
+                        pump_name,
+                        pump_inlet,
+                        pump_outlet,
+                        pump_curve,
+                        pump_init_status,
+                        pump_startup_depth,
+                        pump_shutoff_depth,
+                        geom
+                    )
+                    )
+                self.uc.log_info(f"{len(pumps_data)} PUMPS from SWMM INP added")
 
         except Exception as e:
             QApplication.setOverrideCursor(Qt.ArrowCursor)
@@ -2016,89 +2028,91 @@ class Flo2dGeoPackage(GeoPackageUtils):
             coordinates_dict = {item[0]: item[1:] for item in coordinates_data}
             vertices_data = swmminp_dict.get('VERTICES', [])
 
-            for conduit in conduits_data:
-                """
-                ;;               Inlet            Outlet                      Manning    Inlet      Outlet     Init.      Max.      
-                ;;Name           Node             Node             Length     N          Offset     Offset     Flow       Flow      
-                ;;-------------- ---------------- ---------------- ---------- ---------- ---------- ---------- ---------- ----------
-                """
-                # SWMM Variables
-                conduit_name = conduit[0]
-                conduit_inlet = conduit[1]
-                conduit_outlet = conduit[2]
-                conduit_length = conduit[3]
-                conduit_manning = conduit[4]
-                conduit_inlet_offset = conduit[5]
-                conduit_outlet_offset = conduit[6]
-                conduit_init_flow = conduit[7]
-                conduit_max_flow = conduit[8]
+            if len(conduits_data) > 0:
+                for conduit in conduits_data:
+                    """
+                    ;;               Inlet            Outlet                      Manning    Inlet      Outlet     Init.      Max.      
+                    ;;Name           Node             Node             Length     N          Offset     Offset     Flow       Flow      
+                    ;;-------------- ---------------- ---------------- ---------- ---------- ---------- ---------- ---------- ----------
+                    """
+                    # SWMM Variables
+                    conduit_name = conduit[0]
+                    conduit_inlet = conduit[1]
+                    conduit_outlet = conduit[2]
+                    conduit_length = conduit[3]
+                    conduit_manning = conduit[4]
+                    conduit_inlet_offset = conduit[5]
+                    conduit_outlet_offset = conduit[6]
+                    conduit_init_flow = conduit[7]
+                    conduit_max_flow = conduit[8]
 
-                """
-                [LOSSES]
-                ;;Link           Inlet      Outlet     Average    Flap Gate 
-                ;;-------------- ---------- ---------- ---------- ----------
-                DS2-1            0.0        0.0        0.00       NO
-                """
-                losses_inlet = losses_dict[conduit_name][0]
-                losses_outlet = losses_dict[conduit_name][1]
-                losses_average = losses_dict[conduit_name][2]
-                losses_flapgate = 'True' if losses_dict[conduit_name][3] == 'YES' else 'False'
+                    """
+                    [LOSSES]
+                    ;;Link           Inlet      Outlet     Average    Flap Gate 
+                    ;;-------------- ---------- ---------- ---------- ----------
+                    DS2-1            0.0        0.0        0.00       NO
+                    """
+                    losses_inlet = losses_dict[conduit_name][0]
+                    losses_outlet = losses_dict[conduit_name][1]
+                    losses_average = losses_dict[conduit_name][2]
+                    losses_flapgate = 'True' if losses_dict[conduit_name][3] == 'YES' else 'False'
 
-                """
-                [XSECTIONS]
-                ;;Link           Shape        Geom1            Geom2      Geom3      Geom4      Barrels   
-                ;;-------------- ------------ ---------------- ---------- ---------- ---------- ----------
-                DS2-1            CIRCULAR     1.00             0.00       0.000      0.00       1             
-                """
-                xsections_shape = xsections_dict[conduit_name][0]
-                xsections_barrels = xsections_dict[conduit_name][5]
-                xsections_max_depth = xsections_dict[conduit_name][1]
-                xsections_geom2 = xsections_dict[conduit_name][2]
-                xsections_geom3 = xsections_dict[conduit_name][3]
-                xsections_geom4 = xsections_dict[conduit_name][4]
+                    """
+                    [XSECTIONS]
+                    ;;Link           Shape        Geom1            Geom2      Geom3      Geom4      Barrels   
+                    ;;-------------- ------------ ---------------- ---------- ---------- ---------- ----------
+                    DS2-1            CIRCULAR     1.00             0.00       0.000      0.00       1             
+                    """
+                    xsections_shape = xsections_dict[conduit_name][0]
+                    xsections_barrels = xsections_dict[conduit_name][5]
+                    xsections_max_depth = xsections_dict[conduit_name][1]
+                    xsections_geom2 = xsections_dict[conduit_name][2]
+                    xsections_geom3 = xsections_dict[conduit_name][3]
+                    xsections_geom4 = xsections_dict[conduit_name][4]
 
-                # QGIS Variables
-                linestring_list = []
-                inlet_x = coordinates_dict[conduit_inlet][0]
-                inlet_y = coordinates_dict[conduit_inlet][1]
+                    # QGIS Variables
+                    linestring_list = []
+                    inlet_x = coordinates_dict[conduit_inlet][0]
+                    inlet_y = coordinates_dict[conduit_inlet][1]
 
-                linestring_list.append((inlet_x, inlet_y))
+                    linestring_list.append((inlet_x, inlet_y))
 
-                for vertice in vertices_data:
-                    if vertice[0] == conduit_name:
-                        linestring_list.append((vertice[1], vertice[2]))
+                    for vertice in vertices_data:
+                        if vertice[0] == conduit_name:
+                            linestring_list.append((vertice[1], vertice[2]))
 
-                outlet_x = coordinates_dict[conduit_outlet][0]
-                outlet_y = coordinates_dict[conduit_outlet][1]
+                    outlet_x = coordinates_dict[conduit_outlet][0]
+                    outlet_y = coordinates_dict[conduit_outlet][1]
 
-                linestring_list.append((outlet_x, outlet_y))
+                    linestring_list.append((outlet_x, outlet_y))
 
-                geom = "LINESTRING({})".format(", ".join("{0} {1}".format(x, y) for x, y in linestring_list))
-                geom = self.gutils.wkt_to_gpb(geom)
+                    geom = "LINESTRING({})".format(", ".join("{0} {1}".format(x, y) for x, y in linestring_list))
+                    geom = self.gutils.wkt_to_gpb(geom)
 
-                self.gutils.execute(insert_conduits_sql, (
-                    conduit_name,
-                    conduit_inlet,
-                    conduit_outlet,
-                    conduit_length,
-                    conduit_manning,
-                    conduit_inlet_offset,
-                    conduit_outlet_offset,
-                    conduit_init_flow,
-                    conduit_max_flow,
-                    losses_inlet,
-                    losses_outlet,
-                    losses_average,
-                    losses_flapgate,
-                    xsections_shape,
-                    xsections_barrels,
-                    xsections_max_depth,
-                    xsections_geom2,
-                    xsections_geom3,
-                    xsections_geom4,
-                    geom
-                )
-                )
+                    self.gutils.execute(insert_conduits_sql, (
+                        conduit_name,
+                        conduit_inlet,
+                        conduit_outlet,
+                        conduit_length,
+                        conduit_manning,
+                        conduit_inlet_offset,
+                        conduit_outlet_offset,
+                        conduit_init_flow,
+                        conduit_max_flow,
+                        losses_inlet,
+                        losses_outlet,
+                        losses_average,
+                        losses_flapgate,
+                        xsections_shape,
+                        xsections_barrels,
+                        xsections_max_depth,
+                        xsections_geom2,
+                        xsections_geom3,
+                        xsections_geom4,
+                        geom
+                    )
+                    )
+                self.uc.log_info(f"{len(conduits_data)} CONDUITS from SWMM INP added")
 
         except Exception as e:
             QApplication.setOverrideCursor(Qt.ArrowCursor)
@@ -2145,89 +2159,92 @@ class Flo2dGeoPackage(GeoPackageUtils):
             inflows_data = swmminp_dict.get('INFLOWS', [])
             external_inflows = [external_inflow_name[0] for external_inflow_name in inflows_data]
 
-            for storage_unit in storage_units_data:
-                """
-                [STORAGE]
-                ;;               Invert   Max.     Init.    Storage    Curve                      Ponded   Evap.   
-                ;;Name           Elev.    Depth    Depth    Curve      Params                     Area     Frac.    Infiltration Parameters
-                ;;-------------- -------- -------- -------- ---------- -------- -------- -------- -------- -------- -----------------------
-                Cistern1         1385     9        0        TABULAR    Storage1                   0        0       
-                Cistern2         1385     9        0        TABULAR    Storage1                   0        0        50       60       70      
-                Cistern3         1385     9        0        FUNCTIONAL 1000     100      10       0        0       
-                """
+            if len(storage_units_data) > 0:
+                for storage_unit in storage_units_data:
+                    """
+                    [STORAGE]
+                    ;;               Invert   Max.     Init.    Storage    Curve                      Ponded   Evap.   
+                    ;;Name           Elev.    Depth    Depth    Curve      Params                     Area     Frac.    Infiltration Parameters
+                    ;;-------------- -------- -------- -------- ---------- -------- -------- -------- -------- -------- -----------------------
+                    Cistern1         1385     9        0        TABULAR    Storage1                   0        0       
+                    Cistern2         1385     9        0        TABULAR    Storage1                   0        0        50       60       70      
+                    Cistern3         1385     9        0        FUNCTIONAL 1000     100      10       0        0       
+                    """
 
-                # SWMM VARIABLES
-                name = storage_unit[0]
-                invert_elev = storage_unit[1]
-                max_depth = storage_unit[2]
-                init_depth = storage_unit[3]
-                storage_curve = storage_unit[4]
-                if storage_curve == 'FUNCTIONAL':
-                    coefficient = storage_unit[5]
-                    exponent = storage_unit[6]
-                    constant = storage_unit[7]
-                    evap_factor = storage_unit[9]
-                    curve_name = '*'
-                else:
-                    coefficient = 1000
-                    exponent = 0
-                    constant = 0
-                    curve_name = storage_unit[5]
-                    evap_factor = storage_unit[7]
-                infiltration = 'YES' if len(storage_unit) == 13 or len(storage_unit) == 11 else 'NO'
-                infil_method = 'GREEN_AMPT'
-                if len(storage_unit) == 13:
-                    suction_head = storage_unit[10]
-                    conductivity = storage_unit[11]
-                    initial_deficit = storage_unit[12]
-                elif len(storage_unit) == 11:
-                    suction_head = storage_unit[8]
-                    conductivity = storage_unit[9]
-                    initial_deficit = storage_unit[10]
-                else:
-                    suction_head = 0
-                    conductivity = 0
-                    initial_deficit = 0
-                external_inflow = 'YES' if name in external_inflows else 'NO'
-                treatment = 'NO'
-                ponded_area = 0
+                    # SWMM VARIABLES
+                    name = storage_unit[0]
+                    invert_elev = storage_unit[1]
+                    max_depth = storage_unit[2]
+                    init_depth = storage_unit[3]
+                    storage_curve = storage_unit[4]
+                    if storage_curve == 'FUNCTIONAL':
+                        coefficient = storage_unit[5]
+                        exponent = storage_unit[6]
+                        constant = storage_unit[7]
+                        evap_factor = storage_unit[9]
+                        curve_name = '*'
+                    else:
+                        coefficient = 1000
+                        exponent = 0
+                        constant = 0
+                        curve_name = storage_unit[5]
+                        evap_factor = storage_unit[7]
+                    infiltration = 'YES' if len(storage_unit) == 13 or len(storage_unit) == 11 else 'NO'
+                    infil_method = 'GREEN_AMPT'
+                    if len(storage_unit) == 13:
+                        suction_head = storage_unit[10]
+                        conductivity = storage_unit[11]
+                        initial_deficit = storage_unit[12]
+                    elif len(storage_unit) == 11:
+                        suction_head = storage_unit[8]
+                        conductivity = storage_unit[9]
+                        initial_deficit = storage_unit[10]
+                    else:
+                        suction_head = 0
+                        conductivity = 0
+                        initial_deficit = 0
+                    external_inflow = 'YES' if name in external_inflows else 'NO'
+                    treatment = 'NO'
+                    ponded_area = 0
 
-                # QGIS VARIABLES
-                grid = None
-                geom = None
-                for coordinate in coordinates_data:
-                    if coordinate[0] == name:
-                        x = float(coordinate[1])
-                        y = float(coordinate[2])
-                        grid_n = self.gutils.grid_on_point(x, y)
-                        grid = -9999 if grid_n is None else grid_n
-                        geom = "POINT({0} {1})".format(x, y)
-                        geom = self.gutils.wkt_to_gpb(geom)
-                        break
+                    # QGIS VARIABLES
+                    grid = None
+                    geom = None
+                    for coordinate in coordinates_data:
+                        if coordinate[0] == name:
+                            x = float(coordinate[1])
+                            y = float(coordinate[2])
+                            grid_n = self.gutils.grid_on_point(x, y)
+                            grid = -9999 if grid_n is None else grid_n
+                            geom = "POINT({0} {1})".format(x, y)
+                            geom = self.gutils.wkt_to_gpb(geom)
+                            break
 
-                self.gutils.execute(insert_storage_units_sql, (
-                    name,
-                    grid,
-                    invert_elev,
-                    max_depth,
-                    init_depth,
-                    external_inflow,
-                    treatment,
-                    ponded_area,
-                    evap_factor,
-                    infiltration,
-                    infil_method,
-                    suction_head,
-                    conductivity,
-                    initial_deficit,
-                    storage_curve,
-                    coefficient,
-                    exponent,
-                    constant,
-                    curve_name,
-                    geom
-                )
-                )
+                    self.gutils.execute(insert_storage_units_sql, (
+                        name,
+                        grid,
+                        invert_elev,
+                        max_depth,
+                        init_depth,
+                        external_inflow,
+                        treatment,
+                        ponded_area,
+                        evap_factor,
+                        infiltration,
+                        infil_method,
+                        suction_head,
+                        conductivity,
+                        initial_deficit,
+                        storage_curve,
+                        coefficient,
+                        exponent,
+                        constant,
+                        curve_name,
+                        geom
+                    )
+                    )
+
+                self.uc.log_info(f"{len(storage_units_data)} STORAGE from SWMM INP added")
 
         except Exception as e:
             QApplication.setOverrideCursor(Qt.ArrowCursor)
@@ -2262,59 +2279,62 @@ class Flo2dGeoPackage(GeoPackageUtils):
             outfalls_data = swmminp_dict.get('OUTFALLS', [])
             coordinates_data = swmminp_dict.get('COORDINATES', [])
 
-            for outfall in outfalls_data:
-                """
-                [OUTFALLS]
-                ;;               Invert     Outfall    Stage/Table      Tide
-                ;;Name           Elev.      Type       Time Series      Gate
-                ;;-------------- ---------- ---------- ---------------- ----
-                O-35-31-23       1397.16    FREE                        NO
-                """
+            if len(outfalls_data) > 0:
+                for outfall in outfalls_data:
+                    """
+                    [OUTFALLS]
+                    ;;               Invert     Outfall    Stage/Table      Tide
+                    ;;Name           Elev.      Type       Time Series      Gate
+                    ;;-------------- ---------- ---------- ---------------- ----
+                    O-35-31-23       1397.16    FREE                        NO
+                    """
 
-                # SWMM VARIABLES
-                name = outfall[0]
-                outfall_invert_elev = outfall[1]
-                outfall_type = outfall[2]
-                if len(outfall) == 5:
-                    flapgate = "True" if outfall[4] == "YES" else "False"
-                    tidal_curve = outfall[3] if outfall_type == "TIDAL" else '*'
-                    time_series = outfall[3] if outfall_type == "TIMESERIES" else '*'
-                    fixed_stage = outfall[3] if outfall_type == "FIXED" else '*'
-                else:
-                    flapgate = "True" if outfall[3] == "YES" else "False"
-                    tidal_curve = '*'
-                    time_series = '*'
-                    fixed_stage = '*'
+                    # SWMM VARIABLES
+                    name = outfall[0]
+                    outfall_invert_elev = outfall[1]
+                    outfall_type = outfall[2]
+                    if len(outfall) == 5:
+                        flapgate = "True" if outfall[4] == "YES" else "False"
+                        tidal_curve = outfall[3] if outfall_type == "TIDAL" else '*'
+                        time_series = outfall[3] if outfall_type == "TIMESERIES" else '*'
+                        fixed_stage = outfall[3] if outfall_type == "FIXED" else '*'
+                    else:
+                        flapgate = "True" if outfall[3] == "YES" else "False"
+                        tidal_curve = '*'
+                        time_series = '*'
+                        fixed_stage = '*'
 
-                # QGIS VARIABLES
-                grid = None
-                geom = None
-                for coordinate in coordinates_data:
-                    if coordinate[0] == name:
-                        x = float(coordinate[1])
-                        y = float(coordinate[2])
-                        grid_n = self.gutils.grid_on_point(x, y)
-                        grid = -9999 if grid_n is None else grid_n
-                        geom = "POINT({0} {1})".format(x, y)
-                        geom = self.gutils.wkt_to_gpb(geom)
-                        break
+                    # QGIS VARIABLES
+                    grid = None
+                    geom = None
+                    for coordinate in coordinates_data:
+                        if coordinate[0] == name:
+                            x = float(coordinate[1])
+                            y = float(coordinate[2])
+                            grid_n = self.gutils.grid_on_point(x, y)
+                            grid = -9999 if grid_n is None else grid_n
+                            geom = "POINT({0} {1})".format(x, y)
+                            geom = self.gutils.wkt_to_gpb(geom)
+                            break
 
-                # FLO-2D VARIABLES
-                swmm_allow_discharge = 0
+                    # FLO-2D VARIABLES
+                    swmm_allow_discharge = 0
 
-                self.gutils.execute(insert_outfalls_sql, (
-                    grid,
-                    name,
-                    outfall_invert_elev,
-                    flapgate,
-                    swmm_allow_discharge,
-                    outfall_type,
-                    tidal_curve,
-                    time_series,
-                    fixed_stage,
-                    geom
-                )
-                )
+                    self.gutils.execute(insert_outfalls_sql, (
+                        grid,
+                        name,
+                        outfall_invert_elev,
+                        flapgate,
+                        swmm_allow_discharge,
+                        outfall_type,
+                        tidal_curve,
+                        time_series,
+                        fixed_stage,
+                        geom
+                    )
+                    )
+
+                self.uc.log_info(f"{len(outfalls_data)} OUTFALLS from SWMM INP added")
 
         except Exception as e:
             QApplication.setOverrideCursor(Qt.ArrowCursor)
@@ -2360,74 +2380,77 @@ class Flo2dGeoPackage(GeoPackageUtils):
             inflows_data = swmminp_dict.get('INFLOWS', [])
             external_inflows_inlet_junctions = [external_inflow_name[0] for external_inflow_name in inflows_data]
 
-            for inlet_junction in inlets_junctions_data:
-                """
-                ;;               Invert     Max.       Init.      Surcharge  Ponded
-                ;;Name           Elev.      Depth      Depth      Depth      Area
-                ;;-------------- ---------- ---------- ---------- ---------- ----------
-                I1-35-31-18      1399.43    15.00      0.00       0.00       0.00
-                I1-35-32-54      1399.43    15.00      0.00       0.00       0.00
-                """
+            if len(inlets_junctions_data) > 0:
+                for inlet_junction in inlets_junctions_data:
+                    """
+                    ;;               Invert     Max.       Init.      Surcharge  Ponded
+                    ;;Name           Elev.      Depth      Depth      Depth      Area
+                    ;;-------------- ---------- ---------- ---------- ---------- ----------
+                    I1-35-31-18      1399.43    15.00      0.00       0.00       0.00
+                    I1-35-32-54      1399.43    15.00      0.00       0.00       0.00
+                    """
 
-                # SWMM VARIABLES
-                name = inlet_junction[0]
-                junction_invert_elev = float(inlet_junction[1])
-                max_depth = float(inlet_junction[2])
-                init_depth = float(inlet_junction[3])
-                surcharge_depth = float(inlet_junction[4])
-                external_inflow = 1 if name in external_inflows_inlet_junctions else 0
+                    # SWMM VARIABLES
+                    name = inlet_junction[0]
+                    junction_invert_elev = float(inlet_junction[1])
+                    max_depth = float(inlet_junction[2])
+                    init_depth = float(inlet_junction[3])
+                    surcharge_depth = float(inlet_junction[4])
+                    external_inflow = 1 if name in external_inflows_inlet_junctions else 0
 
-                # QGIS VARIABLES
-                grid = None
-                geom = None
-                for coordinate in coordinates_data:
-                    if coordinate[0] == name:
-                        x = float(coordinate[1])
-                        y = float(coordinate[2])
-                        grid_n = self.gutils.grid_on_point(x, y)
-                        grid = -9999 if grid_n is None else grid_n
-                        geom = "POINT({0} {1})".format(x, y)
-                        geom = self.gutils.wkt_to_gpb(geom)
-                        break
+                    # QGIS VARIABLES
+                    grid = None
+                    geom = None
+                    for coordinate in coordinates_data:
+                        if coordinate[0] == name:
+                            x = float(coordinate[1])
+                            y = float(coordinate[2])
+                            grid_n = self.gutils.grid_on_point(x, y)
+                            grid = -9999 if grid_n is None else grid_n
+                            geom = "POINT({0} {1})".format(x, y)
+                            geom = self.gutils.wkt_to_gpb(geom)
+                            break
 
-                # if not x or not y or not grid or not geom:
-                #     raise Exception
+                    # if not x or not y or not grid or not geom:
+                    #     raise Exception
 
-                # FLO-2D VARIABLES -> Updated later when other files are imported
-                sd_type = 'I' if name.lower().startswith("i") else 'J'
-                intype = 0
-                swmm_length = 0
-                swmm_width = 0
-                swmm_height = 0
-                swmm_coeff = 0
-                swmm_feature = 0
-                curbheight = 0
-                swmm_clogging_factor = 0
-                swmm_time_for_clogging = 0
-                drboxarea = 0
+                    # FLO-2D VARIABLES -> Updated later when other files are imported
+                    sd_type = 'I' if name.lower().startswith("i") else 'J'
+                    intype = 0
+                    swmm_length = 0
+                    swmm_width = 0
+                    swmm_height = 0
+                    swmm_coeff = 0
+                    swmm_feature = 0
+                    curbheight = 0
+                    swmm_clogging_factor = 0
+                    swmm_time_for_clogging = 0
+                    drboxarea = 0
 
-                self.gutils.execute(insert_inlets_junctions_sql, (
-                    grid,
-                    name,
-                    sd_type,
-                    external_inflow,
-                    junction_invert_elev,
-                    max_depth,
-                    init_depth,
-                    surcharge_depth,
-                    intype,
-                    swmm_length,
-                    swmm_width,
-                    swmm_height,
-                    swmm_coeff,
-                    swmm_feature,
-                    curbheight,
-                    swmm_clogging_factor,
-                    swmm_time_for_clogging,
-                    drboxarea,
-                    geom
-                )
-                )
+                    self.gutils.execute(insert_inlets_junctions_sql, (
+                        grid,
+                        name,
+                        sd_type,
+                        external_inflow,
+                        junction_invert_elev,
+                        max_depth,
+                        init_depth,
+                        surcharge_depth,
+                        intype,
+                        swmm_length,
+                        swmm_width,
+                        swmm_height,
+                        swmm_coeff,
+                        swmm_feature,
+                        curbheight,
+                        swmm_clogging_factor,
+                        swmm_time_for_clogging,
+                        drboxarea,
+                        geom
+                    )
+                    )
+
+                self.uc.log_info(f"{len(inlets_junctions_data)} JUNCTIONS from SWMM INP added")
 
         except Exception as e:
             QApplication.setOverrideCursor(Qt.ArrowCursor)
@@ -2437,7 +2460,6 @@ class Flo2dGeoPackage(GeoPackageUtils):
             self.uc.show_error(msg, e)
             self.uc.log_info(msg)
             QApplication.restoreOverrideCursor()
-
 
     def import_swmminp_curves(self, swmminp_dict):
         """
@@ -2494,50 +2516,57 @@ class Flo2dGeoPackage(GeoPackageUtils):
             data_added = False  # Flag to track if data was added to the current group
             current_group_data = []  # Initialize before entering the loop
 
-            for curve in curves_data:
-                if len(curve) == 4:  # New set (defining the type and the key)
-                    # Only store the current group if data was added
-                    if current_key is not None and data_added:
-                        groups[current_group_type][current_key] = current_group_data
+            if len(curves_data) > 0:
+                for curve in curves_data:
+                    if len(curve) == 4:  # New set (defining the type and the key)
+                        # Only store the current group if data was added
+                        if current_key is not None and data_added:
+                            groups[current_group_type][current_key] = current_group_data
 
-                    # Now, handle the new group definition
-                    current_key = curve[0]
-                    if 'Pump' in curve[1]:  # Pump group
-                        current_group_type = 'Pump'
-                        extra_column = curve[1]  # Use the entire Pump name (e.g., 'Pump4')
-                    elif 'Tidal' in curve[1]:  # Tidal group
-                        current_group_type = 'Tidal'
-                        extra_column = curve[1]  # Use the entire Tidal name (e.g., 'Tidal')
-                    else:  # Other group
-                        current_group_type = 'Other'
-                        extra_column = curve[1]  # Use the entire name (e.g., 'Storage')
+                        # Now, handle the new group definition
+                        current_key = curve[0]
+                        if 'Pump' in curve[1]:  # Pump group
+                            current_group_type = 'Pump'
+                            extra_column = curve[1]  # Use the entire Pump name (e.g., 'Pump4')
+                        elif 'Tidal' in curve[1]:  # Tidal group
+                            current_group_type = 'Tidal'
+                            extra_column = curve[1]  # Use the entire Tidal name (e.g., 'Tidal')
+                        else:  # Other group
+                            current_group_type = 'Other'
+                            extra_column = curve[1]  # Use the entire name (e.g., 'Storage')
 
-                    # Start a new group
-                    current_group_data = [[curve[0], curve[2], curve[3], extra_column]]  # Reset the list for the new group
-                    data_added = False  # Reset the flag for the new group
-                else:
-                    # Add subsequent rows to the current group data
-                    if extra_column is not None:
-                        # Append the suffix (Pump name, Tidal name, or Storage name) as a new column
-                        curve.append(extra_column)
+                        # Start a new group
+                        current_group_data = [[curve[0], curve[2], curve[3], extra_column]]  # Reset the list for the new group
+                        data_added = False  # Reset the flag for the new group
+                    else:
+                        # Add subsequent rows to the current group data
+                        if extra_column is not None:
+                            # Append the suffix (Pump name, Tidal name, or Storage name) as a new column
+                            curve.append(extra_column)
 
-                    current_group_data.append(curve)
-                    data_added = True  # Mark that data has been added
+                        current_group_data.append(curve)
+                        data_added = True  # Mark that data has been added
 
-            # After the loop, ensure the last group is stored if it has data
-            if current_key is not None and data_added:
-                groups[current_group_type][current_key] = current_group_data
+                # After the loop, ensure the last group is stored if it has data
+                if current_key is not None and data_added:
+                    groups[current_group_type][current_key] = current_group_data
 
-            for key, values in groups['Pump'].items():
-                for value in values:
-                    self.gutils.execute(insert_pump_curves_sql, (value[0], value[3][-1], value[1], value[2], ''))
-            for key, values in groups['Tidal'].items():
-                for value in values:
-                    self.gutils.execute(insert_tidal_curves_sql, (value[0], ''))
-                    self.gutils.execute(insert_tidal_curves_data_sql, (value[0], value[1], value[2]))
-            for key, values in groups['Other'].items():
-                for value in values:
-                    self.gutils.execute(insert_other_curves_sql, (value[0], value[3], '', value[1], value[2]))
+                i = 0
+                for key, values in groups['Pump'].items():
+                    i += 1
+                    for value in values:
+                        self.gutils.execute(insert_pump_curves_sql, (value[0], value[3][-1], value[1], value[2], ''))
+                for key, values in groups['Tidal'].items():
+                    i += 1
+                    for value in values:
+                        self.gutils.execute(insert_tidal_curves_sql, (value[0], ''))
+                        self.gutils.execute(insert_tidal_curves_data_sql, (value[0], value[1], value[2]))
+                for key, values in groups['Other'].items():
+                    i += 1
+                    for value in values:
+                        self.gutils.execute(insert_other_curves_sql, (value[0], value[3], '', value[1], value[2]))
+
+                self.uc.log_info(f"{i} CURVES from SWMM INP added")
 
         except Exception as e:
             QApplication.setOverrideCursor(Qt.ArrowCursor)
@@ -2572,31 +2601,34 @@ class Flo2dGeoPackage(GeoPackageUtils):
                                     VALUES (?, ?, ?, ?);"""
 
             time_series_data_data = swmminp_dict.get('TIMESERIES', [])
-
-            for time_series in time_series_data_data:
-                if time_series[1] == "FILE":
-                    name = time_series[0]
-                    description = ""
-                    file = time_series[2]
-                    file2 = file.replace('"', "")
-                    self.gutils.execute(insert_times_from_file_sql, (name, description, file2.strip(), "False"))
-                else:
-                    # See if time series data reference is already in table:
-                    row = self.gutils.execute(
-                        "SELECT * FROM swmm_time_series WHERE time_series_name = ?;", (time_series[0],)
-                    ).fetchone()
-                    if not row:
+            if len(time_series_data_data) > 0:
+                for time_series in time_series_data_data:
+                    if time_series[1] == "FILE":
                         name = time_series[0]
                         description = ""
-                        file = ""
+                        file = time_series[2]
                         file2 = file.replace('"', "")
-                        self.gutils.execute(insert_times_from_file_sql, (name, description, file2.strip(), "True"))
+                        self.gutils.execute(insert_times_from_file_sql, (name, description, file2.strip(), "False"))
+                    else:
+                        # See if time series data reference is already in table:
+                        row = self.gutils.execute(
+                            "SELECT * FROM swmm_time_series WHERE time_series_name = ?;", (time_series[0],)
+                        ).fetchone()
+                        if not row:
+                            name = time_series[0]
+                            description = ""
+                            file = ""
+                            file2 = file.replace('"', "")
+                            self.gutils.execute(insert_times_from_file_sql, (name, description, file2.strip(), "True"))
 
-                    name = time_series[0]
-                    date = time_series[1]
-                    tme = time_series[2]
-                    value = float_or_zero(time_series[3])
-                    self.gutils.execute(insert_times_from_data_sql, (name, date, tme, value))
+                        name = time_series[0]
+                        date = time_series[1]
+                        tme = time_series[2]
+                        value = float_or_zero(time_series[3])
+                        self.gutils.execute(insert_times_from_data_sql, (name, date, tme, value))
+
+                n_ts = self.gutils.execute("SELECT COUNT(time_series_name) FROM swmm_time_series;").fetchone()[0]
+                self.uc.log_info(f"{n_ts} TIMESERIES from SWMM INP added")
 
         except Exception as e:
             QApplication.setOverrideCursor(Qt.ArrowCursor)
@@ -2649,6 +2681,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
                         insert_inflows_sql,
                         (name, constituent, baseline, pattern_name, time_series_name, scale_factor),
                     )
+
+                self.uc.log_info(f"{len(inflows_data)} INFLOWS from SWMM INP added")
 
         except Exception as e:
             QApplication.setOverrideCursor(Qt.ArrowCursor)
@@ -2710,10 +2744,11 @@ class Flo2dGeoPackage(GeoPackageUtils):
                         if counter > 24:  # Reset counter if greater than 24
                             counter = 0
 
-                print(results)
-
                 for r in results:
                     self.gutils.execute(insert_patterns_sql, (r[0], "", r[1], r[2]))
+
+                n_patterns = self.gutils.execute("SELECT COUNT(DISTINCT pattern_name) FROM swmm_inflow_patterns;").fetchone()[0]
+                self.uc.log_info(f"{n_patterns} PATTERNS from SWMM INP added")
 
         except Exception as e:
             QApplication.setOverrideCursor(Qt.ArrowCursor)
