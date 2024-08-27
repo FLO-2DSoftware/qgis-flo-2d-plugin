@@ -1657,8 +1657,267 @@ class Flo2dGeoPackage(GeoPackageUtils):
         self.import_swmminp_storage_units(swmminp_dict)
         # print(self.gutils.execute("SELECT * FROM user_swmm_storage_units;").fetchall())
         self.import_swmminp_conduits(swmminp_dict)
+        # print(self.gutils.execute("SELECT * FROM user_swmm_conduits;").fetchall())
+        self.import_swmminp_pumps(swmminp_dict)
+        # print(self.gutils.execute("SELECT * FROM user_swmm_pumps;").fetchall())
+        self.import_swmminp_orifices(swmminp_dict)
+        # print(self.gutils.execute("SELECT * FROM user_swmm_orifices;").fetchall())
+        self.import_swmminp_weirs(swmminp_dict)
+        print(self.gutils.execute("SELECT * FROM user_swmm_weirs;").fetchall())
         #dropbox
         #sdclogging
+
+    def import_swmminp_weirs(self, swmminp_dict):
+        """
+        Function to import swmm inp weirs
+        """
+        try:
+            self.gutils.clear_tables('user_swmm_weirs')
+            insert_weirs_sql = """INSERT INTO user_swmm_weirs (
+                                    weir_name,
+                                    weir_inlet,
+                                    weir_outlet,
+                                    weir_type,
+                                    weir_crest_height,
+                                    weir_disch_coeff,
+                                    weir_flap_gate,
+                                    weir_end_contrac,
+                                    weir_end_coeff,
+                                    geom
+                                    )
+                                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);"""
+
+            weirs_data = swmminp_dict.get('WEIRS', [])
+            coordinates_data = swmminp_dict.get('COORDINATES', [])
+            coordinates_dict = {item[0]: item[1:] for item in coordinates_data}
+            vertices_data = swmminp_dict.get('VERTICES', [])
+
+            for weir in weirs_data:
+                """
+                [WEIRS]
+                ;;               Inlet            Outlet           Weir         Crest      Disch.     Flap End      End       
+                ;;Name           Node             Node             Type         Height     Coeff.     Gate Con.     Coeff.    
+                ;;-------------- ---------------- ---------------- ------------ ---------- ---------- ---- -------- ----------
+                weir1            Cistern3         Ocistern         V-NOTCH      4.50       3.30       NO   0        0.00      
+                """
+
+                # SWMM Variables
+                weir_name = weir[0]
+                weir_inlet = weir[1]
+                weir_outlet = weir[2]
+                weir_type = weir[3]
+                weir_crest_height = weir[4]
+                weir_disch_coeff = weir[5]
+                weir_flap_gate = weir[6]
+                weir_end_contrac = weir[7]
+                weir_end_coeff = weir[8]
+
+                # QGIS Variables
+                linestring_list = []
+                inlet_x = coordinates_dict[weir_inlet][0]
+                inlet_y = coordinates_dict[weir_inlet][1]
+
+                linestring_list.append((inlet_x, inlet_y))
+
+                for vertice in vertices_data:
+                    if vertice[0] == weir_name:
+                        linestring_list.append((vertice[1], vertice[2]))
+
+                outlet_x = coordinates_dict[weir_outlet][0]
+                outlet_y = coordinates_dict[weir_outlet][1]
+
+                linestring_list.append((outlet_x, outlet_y))
+
+                geom = "LINESTRING({})".format(", ".join("{0} {1}".format(x, y) for x, y in linestring_list))
+                geom = self.gutils.wkt_to_gpb(geom)
+
+                self.gutils.execute(insert_weirs_sql, (
+                                    weir_name,
+                                    weir_inlet,
+                                    weir_outlet,
+                                    weir_type,
+                                    weir_crest_height,
+                                    weir_disch_coeff,
+                                    weir_flap_gate,
+                                    weir_end_contrac,
+                                    weir_end_coeff,
+                                    geom
+                                    )
+                                    )
+
+        except Exception as e:
+            QApplication.setOverrideCursor(Qt.ArrowCursor)
+            msg = "ERROR 080422.1115: creation of Storm Drain Weirs layer failed!\n\n" \
+                  "Please check your SWMM input data.\n" \
+                  f"{e}"
+            self.uc.show_error(msg, e)
+            self.uc.log_info(msg)
+            QApplication.restoreOverrideCursor()
+
+    def import_swmminp_orifices(self, swmminp_dict):
+        """
+        Function to import swmm inp orifices
+        """
+        try:
+            self.gutils.clear_tables('user_swmm_orifices')
+            insert_orifices_sql = """INSERT INTO user_swmm_orifices (
+                                    orifice_name,
+                                    orifice_inlet,
+                                    orifice_outlet,
+                                    orifice_type,
+                                    orifice_crest_height,
+                                    orifice_disch_coeff,
+                                    orifice_flap_gate,
+                                    orifice_open_close_time,
+                                    geom
+                                    )
+                                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);"""
+
+            orifices_data = swmminp_dict.get('ORIFICES', [])
+            coordinates_data = swmminp_dict.get('COORDINATES', [])
+            coordinates_dict = {item[0]: item[1:] for item in coordinates_data}
+            vertices_data = swmminp_dict.get('VERTICES', [])
+
+            for orifice in orifices_data:
+                """
+                [ORIFICES]
+                ;;               Inlet            Outlet           Orifice      Crest      Disch.     Flap Open/Close
+                ;;Name           Node             Node             Type         Height     Coeff.     Gate Time      
+                ;;-------------- ---------------- ---------------- ------------ ---------- ---------- ---- ----------
+                orifice1         Cistern1         Cistern2         SIDE         0.50       0.65       NO   0.00      
+                """
+
+                # SWMM Variables
+                orifice_name = orifice[0]
+                orifice_inlet = orifice[1]
+                orifice_outlet = orifice[2]
+                orifice_type = orifice[3]
+                orifice_crest_height = orifice[4]
+                orifice_disch_coeff = orifice[5]
+                orifice_flap_gate = orifice[6]
+                orifice_open_close_time = orifice[7]
+
+                # QGIS Variables
+                linestring_list = []
+                inlet_x = coordinates_dict[orifice_inlet][0]
+                inlet_y = coordinates_dict[orifice_inlet][1]
+
+                linestring_list.append((inlet_x, inlet_y))
+
+                for vertice in vertices_data:
+                    if vertice[0] == orifice_name:
+                        linestring_list.append((vertice[1], vertice[2]))
+
+                outlet_x = coordinates_dict[orifice_outlet][0]
+                outlet_y = coordinates_dict[orifice_outlet][1]
+
+                linestring_list.append((outlet_x, outlet_y))
+
+                geom = "LINESTRING({})".format(", ".join("{0} {1}".format(x, y) for x, y in linestring_list))
+                geom = self.gutils.wkt_to_gpb(geom)
+
+                self.gutils.execute(insert_orifices_sql, (
+                    orifice_name,
+                    orifice_inlet,
+                    orifice_outlet,
+                    orifice_type,
+                    orifice_crest_height,
+                    orifice_disch_coeff,
+                    orifice_flap_gate,
+                    orifice_open_close_time,
+                    geom
+                )
+                )
+
+        except Exception as e:
+            QApplication.setOverrideCursor(Qt.ArrowCursor)
+            msg = "ERROR 310322.0853: creation of Storm Drain Orifices layer failed!\n\n" \
+                  "Please check your SWMM input data.\n" \
+                  f"{e}"
+            self.uc.show_error(msg, e)
+            self.uc.log_info(msg)
+            QApplication.restoreOverrideCursor()
+
+    def import_swmminp_pumps(self, swmminp_dict):
+        """
+        Function to import swmm inp pumps
+        """
+        try:
+            self.gutils.clear_tables('user_swmm_pumps')
+            insert_pumps_sql = """INSERT INTO user_swmm_pumps (
+                                    pump_name,
+                                    pump_inlet, 
+                                    pump_outlet, 
+                                    pump_curve, 
+                                    pump_init_status, 
+                                    pump_startup_depth, 
+                                    pump_shutoff_depth,
+                                    geom
+                                    )
+                                    VALUES (?, ?, ?, ?, ?, ?, ?, ?);"""
+
+            pumps_data = swmminp_dict.get('PUMPS', [])
+            coordinates_data = swmminp_dict.get('COORDINATES', [])
+            coordinates_dict = {item[0]: item[1:] for item in coordinates_data}
+            vertices_data = swmminp_dict.get('VERTICES', [])
+
+            for pump in pumps_data:
+                """
+                [PUMPS]
+                ;;               Inlet            Outlet           Pump             Init.  Startup  Shutoff 
+                ;;Name           Node             Node             Curve            Status Depth    Depth   
+                ;;-------------- ---------------- ---------------- ---------------- ------ -------- --------
+                CPump            Ids1             Cistern1         P1               OFF    3.00     40.00   
+                """
+
+                # SWMM Variables
+                pump_name = pump[0]
+                pump_inlet = pump[1]
+                pump_outlet = pump[2]
+                pump_curve = pump[3]
+                pump_init_status = pump[4]
+                pump_startup_depth = pump[5]
+                pump_shutoff_depth = pump[6]
+
+                # QGIS Variables
+                linestring_list = []
+                inlet_x = coordinates_dict[pump_inlet][0]
+                inlet_y = coordinates_dict[pump_inlet][1]
+
+                linestring_list.append((inlet_x, inlet_y))
+
+                for vertice in vertices_data:
+                    if vertice[0] == pump_name:
+                        linestring_list.append((vertice[1], vertice[2]))
+
+                outlet_x = coordinates_dict[pump_outlet][0]
+                outlet_y = coordinates_dict[pump_outlet][1]
+
+                linestring_list.append((outlet_x, outlet_y))
+
+                geom = "LINESTRING({})".format(", ".join("{0} {1}".format(x, y) for x, y in linestring_list))
+                geom = self.gutils.wkt_to_gpb(geom)
+
+                self.gutils.execute(insert_pumps_sql, (
+                    pump_name,
+                    pump_inlet,
+                    pump_outlet,
+                    pump_curve,
+                    pump_init_status,
+                    pump_startup_depth,
+                    pump_shutoff_depth,
+                    geom
+                )
+                )
+
+        except Exception as e:
+            QApplication.setOverrideCursor(Qt.ArrowCursor)
+            msg = "ERROR 050618.1805: creation of Storm Drain Pumps layer failed!\n\n" \
+                  "Please check your SWMM input data.\n" \
+                  f"{e}"
+            self.uc.show_error(msg, e)
+            self.uc.log_info(msg)
+            QApplication.restoreOverrideCursor()
 
     def import_swmminp_conduits(self, swmminp_dict):
         """
@@ -1862,11 +2121,11 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 if len(storage_unit) == 13:
                     suction_head = storage_unit[10]
                     conductivity = storage_unit[11]
-                    initial_deficit =  storage_unit[12]
+                    initial_deficit = storage_unit[12]
                 elif len(storage_unit) == 11:
                     suction_head = storage_unit[8]
                     conductivity = storage_unit[9]
-                    initial_deficit =  storage_unit[10]
+                    initial_deficit = storage_unit[10]
                 else:
                     suction_head = 0
                     conductivity = 0
