@@ -3431,7 +3431,6 @@ class Flo2D(object):
         """
         Function to export FLO-2D to SWMM's INP file
         """
-        # self.f2d_widget.storm_drain_editor.import_storm_drain_INP_file("Choose", True)
         try:
             QApplication.setOverrideCursor(Qt.WaitCursor)
 
@@ -3442,6 +3441,7 @@ class Flo2D(object):
                 None, "Select SWMM INP file to import", directory=last_dir, filter="(*.INP)"
             )
             if not fname:
+                QApplication.restoreOverrideCursor()
                 return
 
             dir_name = os.path.dirname(fname)

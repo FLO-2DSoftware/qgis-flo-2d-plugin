@@ -2669,7 +2669,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             ;;Name           Type       Multipliers
             ;;-------------- ---------- -----------
             ;description
-            pattern_test     MONTHLY    1.0   2     3     4     5     6    
+            pattern_test     HOURLY     1.0   2     3     4     5     6    
             pattern_test                7     8     9     10    11    12   
             """
 
@@ -2709,6 +2709,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
                         counter += 1
                         if counter > 24:  # Reset counter if greater than 24
                             counter = 0
+
+                print(results)
 
                 for r in results:
                     self.gutils.execute(insert_patterns_sql, (r[0], "", r[1], r[2]))
