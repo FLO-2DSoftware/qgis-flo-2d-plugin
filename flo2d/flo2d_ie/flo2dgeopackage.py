@@ -1638,34 +1638,66 @@ class Flo2dGeoPackage(GeoPackageUtils):
             )
             return
 
+        self.import_swmminp_control(swmminp_dict)
         self.import_swmminp_inflows(swmminp_dict)
-        # print(self.gutils.execute("SELECT * FROM swmm_inflows;").fetchall())
         self.import_swmminp_patterns(swmminp_dict)
-        # print(self.gutils.execute("SELECT * FROM swmm_inflow_patterns;").fetchall())
         self.import_swmminp_ts(swmminp_dict)
-        # print(self.gutils.execute("SELECT * FROM swmm_time_series;").fetchall())
-        # print(self.gutils.execute("SELECT * FROM swmm_time_series_data;").fetchall())
         self.import_swmminp_curves(swmminp_dict)
-        # print(self.gutils.execute("SELECT * FROM swmm_pumps_curve_data;").fetchall())
-        # print(self.gutils.execute("SELECT * FROM swmm_tidal_curve;").fetchall())
-        # print(self.gutils.execute("SELECT * FROM swmm_tidal_curve_data;").fetchall())
-        # print(self.gutils.execute("SELECT * FROM swmm_other_curves;").fetchall())
         self.import_swmminp_inlets_junctions(swmminp_dict)
-        # print(self.gutils.execute("SELECT * FROM user_swmm_inlets_junctions;").fetchall())
         self.import_swmminp_outfalls(swmminp_dict)
-        # print(self.gutils.execute("SELECT * FROM user_swmm_outlets;").fetchall())
         self.import_swmminp_storage_units(swmminp_dict)
-        # print(self.gutils.execute("SELECT * FROM user_swmm_storage_units;").fetchall())
         self.import_swmminp_conduits(swmminp_dict)
-        # print(self.gutils.execute("SELECT * FROM user_swmm_conduits;").fetchall())
         self.import_swmminp_pumps(swmminp_dict)
-        # print(self.gutils.execute("SELECT * FROM user_swmm_pumps;").fetchall())
         self.import_swmminp_orifices(swmminp_dict)
-        # print(self.gutils.execute("SELECT * FROM user_swmm_orifices;").fetchall())
         self.import_swmminp_weirs(swmminp_dict)
-        print(self.gutils.execute("SELECT * FROM user_swmm_weirs;").fetchall())
-        #dropbox
-        #sdclogging
+        print(self.gutils.execute("SELECT * FROM user_swmm_weirs").fetchall())
+
+    def import_swmminp_control(self, swmminp_dict):
+        """
+        Function to import swmm inp control data
+        """
+        try:
+            self.gutils.clear_tables('swmm_control')
+            insert_controls_sql = """INSERT INTO swmm_control (
+                                           name,
+                                           value
+                                           )
+                                           VALUES (?, ?);"""
+
+            controls_data = swmminp_dict.get('OPTIONS', [])
+
+            for control in controls_data:
+                self.gutils.execute(insert_controls_sql, (
+                    control[0],
+                    control[1]
+                    )
+                )
+
+            report_data = swmminp_dict.get('REPORT', [])
+
+            for report in report_data:
+                self.gutils.execute(insert_controls_sql, (
+                    report[0],
+                    report[1]
+                    )
+                )
+
+            # Adjust the TITLE
+            title_sql = self.gutils.execute("SELECT name, value FROM swmm_control WHERE name = 'TITLE';").fetchone()
+            if not title_sql:
+                self.gutils.execute("""INSERT INTO swmm_control (name, value)
+                                       VALUES 
+                                       ('TITLE', 'INP file created by FLO-2D')
+                                    """)
+
+        except Exception as e:
+            QApplication.setOverrideCursor(Qt.ArrowCursor)
+            msg = "ERROR 08272024.0849: creation of Storm Drain control variables failed!\n\n" \
+                  "Please check your SWMM input data.\n" \
+                  f"{e}"
+            self.uc.show_error(msg, e)
+            self.uc.log_info(msg)
+            QApplication.restoreOverrideCursor()
 
     def import_swmminp_weirs(self, swmminp_dict):
         """
@@ -1683,13 +1715,19 @@ class Flo2dGeoPackage(GeoPackageUtils):
                                     weir_flap_gate,
                                     weir_end_contrac,
                                     weir_end_coeff,
+                                    weir_shape, 
+                                    weir_height, 
+                                    weir_length,
+                                    weir_side_slope,
                                     geom
                                     )
-                                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);"""
+                                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);"""
 
             weirs_data = swmminp_dict.get('WEIRS', [])
             coordinates_data = swmminp_dict.get('COORDINATES', [])
             coordinates_dict = {item[0]: item[1:] for item in coordinates_data}
+            xsections_data = swmminp_dict.get('XSECTIONS', [])
+            xsections_dict = {item[0]: item[1:] for item in xsections_data}
             vertices_data = swmminp_dict.get('VERTICES', [])
 
             for weir in weirs_data:
@@ -1711,6 +1749,11 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 weir_flap_gate = weir[6]
                 weir_end_contrac = weir[7]
                 weir_end_coeff = weir[8]
+
+                weir_shape = xsections_dict[weir_name][0]
+                weir_height = xsections_dict[weir_name][1]
+                weir_length= xsections_dict[weir_name][2]
+                weir_side_slope = xsections_dict[weir_name][3]
 
                 # QGIS Variables
                 linestring_list = []
@@ -1741,6 +1784,10 @@ class Flo2dGeoPackage(GeoPackageUtils):
                                     weir_flap_gate,
                                     weir_end_contrac,
                                     weir_end_coeff,
+                                    weir_shape,
+                                    weir_height,
+                                    weir_length,
+                                    weir_side_slope,
                                     geom
                                     )
                                     )
@@ -1776,6 +1823,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
             orifices_data = swmminp_dict.get('ORIFICES', [])
             coordinates_data = swmminp_dict.get('COORDINATES', [])
             coordinates_dict = {item[0]: item[1:] for item in coordinates_data}
+            xsections_data = swmminp_dict.get('XSECTIONS', [])
+            xsections_dict = {item[0]: item[1:] for item in xsections_data}
             vertices_data = swmminp_dict.get('VERTICES', [])
 
             for orifice in orifices_data:
@@ -2455,7 +2504,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                         extra_column = curve[1]  # Use the entire name (e.g., 'Storage')
 
                     # Start a new group
-                    current_group_data = []  # Reset the list for the new group
+                    current_group_data = [[curve[0], curve[2], curve[3], extra_column]]  # Reset the list for the new group
                     data_added = False  # Reset the flag for the new group
                 else:
                     # Add subsequent rows to the current group data

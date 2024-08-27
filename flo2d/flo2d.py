@@ -3432,22 +3432,32 @@ class Flo2D(object):
         Function to export FLO-2D to SWMM's INP file
         """
         # self.f2d_widget.storm_drain_editor.import_storm_drain_INP_file("Choose", True)
-        self.f2g = Flo2dGeoPackage(self.con, self.iface, parsed_format="DAT")
-        s = QSettings()
-        last_dir = s.value("FLO-2D/lastGdsDir", "")
-        fname, __ = QFileDialog.getOpenFileName(
-            None, "Select SWMM INP file to import", directory=last_dir, filter="(*.INP)"
-        )
-        if not fname:
-            return
+        try:
+            QApplication.setOverrideCursor(Qt.WaitCursor)
 
-        dir_name = os.path.dirname(fname)
-        s.setValue("FLO-2D/lastGdsDir", dir_name)
+            self.f2g = Flo2dGeoPackage(self.con, self.iface, parsed_format="DAT")
+            s = QSettings()
+            last_dir = s.value("FLO-2D/lastGdsDir", "")
+            fname, __ = QFileDialog.getOpenFileName(
+                None, "Select SWMM INP file to import", directory=last_dir, filter="(*.INP)"
+            )
+            if not fname:
+                return
 
-        if self.f2g.set_parser(fname):
-            self.f2g.import_swmminp()
+            dir_name = os.path.dirname(fname)
+            s.setValue("FLO-2D/lastGdsDir", dir_name)
 
-        self.lyrs.refresh_layers()
+            if self.f2g.set_parser(fname):
+                self.f2g.import_swmminp()
+
+            self.lyrs.refresh_layers()
+
+            QApplication.restoreOverrideCursor()
+
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.uc.log_info(f"ERROR 08272024.0932: Could not import SWMM INP file!\n{e}")
+            self.uc.bar_error("ERROR 08272024.0932: Could not import SWMM INP file!")
 
     @connection_required
     def export_inp(self):
