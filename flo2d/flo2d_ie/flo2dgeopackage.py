@@ -1655,9 +1655,142 @@ class Flo2dGeoPackage(GeoPackageUtils):
         self.import_swmminp_outfalls(swmminp_dict)
         # print(self.gutils.execute("SELECT * FROM user_swmm_outlets;").fetchall())
         self.import_swmminp_storage_units(swmminp_dict)
-        print(self.gutils.execute("SELECT * FROM user_swmm_storage_units;").fetchall())
+        # print(self.gutils.execute("SELECT * FROM user_swmm_storage_units;").fetchall())
+        self.import_swmminp_conduits(swmminp_dict)
         #dropbox
         #sdclogging
+
+    def import_swmminp_conduits(self, swmminp_dict):
+        """
+        Function to import swmm inp conduits
+        """
+        try:
+            self.gutils.clear_tables('user_swmm_conduits')
+            insert_conduits_sql = """INSERT INTO user_swmm_conduits (
+                                       conduit_name,
+                                       conduit_inlet,
+                                       conduit_outlet,
+                                       conduit_length,
+                                       conduit_manning,
+                                       conduit_inlet_offset,
+                                       conduit_outlet_offset,
+                                       conduit_init_flow,
+                                       conduit_max_flow,
+                                       losses_inlet,
+                                       losses_outlet,
+                                       losses_average,
+                                       losses_flapgate,
+                                       xsections_shape,
+                                       xsections_barrels,
+                                       xsections_max_depth,
+                                       xsections_geom2,
+                                       xsections_geom3,
+                                       xsections_geom4,
+                                       geom
+                                       )
+                                       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);"""
+
+            conduits_data = swmminp_dict.get('CONDUITS', [])
+            losses_data = swmminp_dict.get('LOSSES', [])
+            losses_dict = {item[0]: item[1:] for item in losses_data}
+            xsections_data = swmminp_dict.get('XSECTIONS', [])
+            xsections_dict = {item[0]: item[1:] for item in xsections_data}
+            coordinates_data = swmminp_dict.get('COORDINATES', [])
+            coordinates_dict = {item[0]: item[1:] for item in coordinates_data}
+            vertices_data = swmminp_dict.get('VERTICES', [])
+
+            for conduit in conduits_data:
+                """
+                ;;               Inlet            Outlet                      Manning    Inlet      Outlet     Init.      Max.      
+                ;;Name           Node             Node             Length     N          Offset     Offset     Flow       Flow      
+                ;;-------------- ---------------- ---------------- ---------- ---------- ---------- ---------- ---------- ----------
+                """
+                # SWMM Variables
+                conduit_name = conduit[0]
+                conduit_inlet = conduit[1]
+                conduit_outlet = conduit[2]
+                conduit_length = conduit[3]
+                conduit_manning = conduit[4]
+                conduit_inlet_offset = conduit[5]
+                conduit_outlet_offset = conduit[6]
+                conduit_init_flow = conduit[7]
+                conduit_max_flow = conduit[8]
+
+                """
+                [LOSSES]
+                ;;Link           Inlet      Outlet     Average    Flap Gate 
+                ;;-------------- ---------- ---------- ---------- ----------
+                DS2-1            0.0        0.0        0.00       NO
+                """
+                losses_inlet = losses_dict[conduit_name][0]
+                losses_outlet = losses_dict[conduit_name][1]
+                losses_average = losses_dict[conduit_name][2]
+                losses_flapgate = 'True' if losses_dict[conduit_name][3] == 'YES' else 'False'
+
+                """
+                [XSECTIONS]
+                ;;Link           Shape        Geom1            Geom2      Geom3      Geom4      Barrels   
+                ;;-------------- ------------ ---------------- ---------- ---------- ---------- ----------
+                DS2-1            CIRCULAR     1.00             0.00       0.000      0.00       1             
+                """
+                xsections_shape = xsections_dict[conduit_name][0]
+                xsections_barrels = xsections_dict[conduit_name][5]
+                xsections_max_depth = xsections_dict[conduit_name][1]
+                xsections_geom2 = xsections_dict[conduit_name][2]
+                xsections_geom3 = xsections_dict[conduit_name][3]
+                xsections_geom4 = xsections_dict[conduit_name][4]
+
+                # QGIS Variables
+                linestring_list = []
+                inlet_x = coordinates_dict[conduit_inlet][0]
+                inlet_y = coordinates_dict[conduit_inlet][1]
+
+                linestring_list.append((inlet_x, inlet_y))
+
+                for vertice in vertices_data:
+                    if vertice[0] == conduit_name:
+                        linestring_list.append((vertice[1], vertice[2]))
+
+                outlet_x = coordinates_dict[conduit_outlet][0]
+                outlet_y = coordinates_dict[conduit_outlet][1]
+
+                linestring_list.append((outlet_x, outlet_y))
+
+                geom = "LINESTRING({})".format(", ".join("{0} {1}".format(x, y) for x, y in linestring_list))
+                geom = self.gutils.wkt_to_gpb(geom)
+
+                self.gutils.execute(insert_conduits_sql, (
+                    conduit_name,
+                    conduit_inlet,
+                    conduit_outlet,
+                    conduit_length,
+                    conduit_manning,
+                    conduit_inlet_offset,
+                    conduit_outlet_offset,
+                    conduit_init_flow,
+                    conduit_max_flow,
+                    losses_inlet,
+                    losses_outlet,
+                    losses_average,
+                    losses_flapgate,
+                    xsections_shape,
+                    xsections_barrels,
+                    xsections_max_depth,
+                    xsections_geom2,
+                    xsections_geom3,
+                    xsections_geom4,
+                    geom
+                )
+                )
+
+        except Exception as e:
+            QApplication.setOverrideCursor(Qt.ArrowCursor)
+            msg = "ERROR 050618.1804: creation of Storm Drain Conduits layer failed!\n\n" \
+                  "Please check your SWMM input data.\n" \
+                  f"{e}"
+            self.uc.show_error(msg, e)
+            self.uc.log_info(msg)
+            QApplication.restoreOverrideCursor()
 
     def import_swmminp_storage_units(self, swmminp_dict):
         """
