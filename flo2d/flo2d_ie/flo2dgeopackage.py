@@ -2491,7 +2491,13 @@ class Flo2dGeoPackage(GeoPackageUtils):
         Function to import swmm inp outfalls
         """
         try:
-            self.gutils.clear_tables('user_swmm_outlets')
+            existing_outfalls = []
+            if delete_existing:
+                self.gutils.clear_tables('user_swmm_outlets')
+            else:
+                existing_outfalls_qry = self.gutils.execute("SELECT name FROM user_swmm_outlets;").fetchall()
+                existing_outfalls = [outfall[0] for outfall in existing_outfalls_qry]
+
             insert_outfalls_sql = """
                         INSERT INTO user_swmm_outlets (
                             grid,
@@ -2507,10 +2513,24 @@ class Flo2dGeoPackage(GeoPackageUtils):
                         )
                         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);"""
 
+            replace_user_swmm_outlets_sql = """UPDATE user_swmm_outlets
+                                     SET    geom = ?,
+                                            outfall_type = ?, 
+                                            outfall_invert_elev = ?, 
+                                            swmm_allow_discharge = ?,
+                                            tidal_curve = ?, 
+                                            time_series = ?,
+                                            fixed_stage = ?,
+                                            flapgate = ?
+                                     WHERE name = ?;"""
+
             outfalls_data = swmminp_dict.get('OUTFALLS', [])
             coordinates_data = swmminp_dict.get('COORDINATES', [])
+            coordinates_dict = {item[0]: item[1:] for item in coordinates_data}
 
             if len(outfalls_data) > 0:
+                added_outfalls = 0
+                updated_outfalls = 0
                 for outfall in outfalls_data:
                     """
                     [OUTFALLS]
@@ -2536,36 +2556,49 @@ class Flo2dGeoPackage(GeoPackageUtils):
                         fixed_stage = '*'
 
                     # QGIS VARIABLES
-                    grid = None
-                    geom = None
-                    for coordinate in coordinates_data:
-                        if coordinate[0] == name:
-                            x = float(coordinate[1])
-                            y = float(coordinate[2])
-                            grid_n = self.gutils.grid_on_point(x, y)
-                            grid = -9999 if grid_n is None else grid_n
-                            geom = "POINT({0} {1})".format(x, y)
-                            geom = self.gutils.wkt_to_gpb(geom)
-                            break
+                    x = coordinates_dict[name][0]
+                    y = coordinates_dict[name][1]
+                    grid_n = self.gutils.grid_on_point(x, y)
+                    grid = -9999 if grid_n is None else grid_n
+                    geom = "POINT({0} {1})".format(x, y)
+                    geom = self.gutils.wkt_to_gpb(geom)
 
                     # FLO-2D VARIABLES
                     swmm_allow_discharge = 0
 
-                    self.gutils.execute(insert_outfalls_sql, (
-                        grid,
-                        name,
-                        outfall_invert_elev,
-                        flapgate,
-                        swmm_allow_discharge,
-                        outfall_type,
-                        tidal_curve,
-                        time_series,
-                        fixed_stage,
-                        geom
-                    )
-                    )
+                    if name in existing_outfalls:
+                        updated_outfalls += 1
+                        self.gutils.execute(
+                            replace_user_swmm_outlets_sql,
+                            (
+                                geom,
+                                outfall_type,
+                                outfall_invert_elev,
+                                swmm_allow_discharge,
+                                tidal_curve,
+                                time_series,
+                                fixed_stage,
+                                flapgate,
+                                name,
+                            ),
+                        )
+                    else:
+                        added_outfalls += 1
+                        self.gutils.execute(insert_outfalls_sql, (
+                            grid,
+                            name,
+                            outfall_invert_elev,
+                            flapgate,
+                            swmm_allow_discharge,
+                            outfall_type,
+                            tidal_curve,
+                            time_series,
+                            fixed_stage,
+                            geom
+                        )
+                        )
 
-                self.uc.log_info(f"{len(outfalls_data)} OUTFALLS from SWMM INP added")
+                self.uc.log_info(f"OUTFALLS: {added_outfalls} added and {updated_outfalls} updated from imported SWMM INP file")
 
         except Exception as e:
             QApplication.setOverrideCursor(Qt.ArrowCursor)
