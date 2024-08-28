@@ -1710,7 +1710,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
         """
         try:
             existing_weirs = []
-
+            not_added = []
             if delete_existing:
                 self.gutils.clear_tables('user_swmm_weirs')
             else:
@@ -1789,6 +1789,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     linestring_list = []
                     inlet_x = coordinates_dict[weir_inlet][0]
                     inlet_y = coordinates_dict[weir_inlet][1]
+                    inlet_grid = self.grid_on_point(inlet_x, inlet_y)
 
                     linestring_list.append((inlet_x, inlet_y))
 
@@ -1798,8 +1799,19 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
                     outlet_x = coordinates_dict[weir_outlet][0]
                     outlet_y = coordinates_dict[weir_outlet][1]
+                    outlet_grid = self.grid_on_point(outlet_x, outlet_y)
 
                     linestring_list.append((outlet_x, outlet_y))
+
+                    # Both ends of the orifice is outside the grid
+                    if not inlet_grid and not outlet_grid:
+                        not_added.append(weir_name)
+                        continue
+
+                    # Orifice inlet is outside the grid, and it is an Inlet
+                    if not inlet_grid and weir_inlet.lower().startswith("i"):
+                        not_added.append(weir_name)
+                        continue
 
                     geom = "LINESTRING({})".format(", ".join("{0} {1}".format(x, y) for x, y in linestring_list))
                     geom = self.gutils.wkt_to_gpb(geom)
@@ -1844,6 +1856,10 @@ class Flo2dGeoPackage(GeoPackageUtils):
                                             )
                                             )
                 self.uc.log_info(f"WEIRS: {added_weirs} added and {updated_weirs} updated from imported SWMM INP file")
+
+                if len(not_added) > 0:
+                    self.uc.log_info(
+                        f"WEIRS: {len(not_added)} are outside the domain and not added to the project")
 
         except Exception as e:
             QApplication.setOverrideCursor(Qt.ArrowCursor)
@@ -1947,12 +1963,12 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
                     linestring_list.append((outlet_x, outlet_y))
 
-                    # Both ends of the pump is outside the grid
+                    # Both ends of the orifice is outside the grid
                     if not inlet_grid and not outlet_grid:
                         not_added.append(orifice_name)
                         continue
 
-                    # Pump inlet is outside the grid, and it is an Inlet
+                    # Orifice inlet is outside the grid, and it is an Inlet
                     if not inlet_grid and orifice_inlet.lower().startswith("i"):
                         not_added.append(orifice_name)
                         continue
