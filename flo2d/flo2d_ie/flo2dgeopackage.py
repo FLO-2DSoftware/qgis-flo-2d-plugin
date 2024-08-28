@@ -2777,7 +2777,21 @@ class Flo2dGeoPackage(GeoPackageUtils):
         Function to import swmm inp curves (pump, tidal, and other)
         """
         try:
-            self.gutils.clear_tables('swmm_pumps_curve_data')
+            existing_curves = []
+            if delete_existing:
+                self.gutils.clear_tables('swmm_pumps_curve_data')
+                self.gutils.clear_tables('swmm_tidal_curve')
+                self.gutils.clear_tables('swmm_tidal_curve_data')
+                self.gutils.clear_tables('swmm_other_curves')
+            else:
+                existing_pump_curves_qry = self.gutils.execute("SELECT DISTINCT pump_curve_name FROM swmm_pumps_curve_data;").fetchall()
+                existing_pump_curves = [pump_curve[0] for pump_curve in existing_pump_curves_qry]
+                existing_tidal_curves_qry = self.gutils.execute("SELECT DISTINCT tidal_curve_name FROM swmm_tidal_curve;").fetchall()
+                existing_tidal_curves = [tidal_curve[0] for tidal_curve in existing_tidal_curves_qry]
+                existing_other_curves_qry = self.gutils.execute("SELECT DISTINCT name FROM swmm_other_curves;").fetchall()
+                existing_other_curves = [other_curve[0] for other_curve in existing_other_curves_qry]
+                existing_curves = existing_pump_curves + existing_tidal_curves + existing_other_curves
+
             insert_pump_curves_sql = """INSERT INTO swmm_pumps_curve_data
                                                         (   pump_curve_name, 
                                                             pump_curve_type, 
@@ -2787,14 +2801,19 @@ class Flo2dGeoPackage(GeoPackageUtils):
                                                         ) 
                                                         VALUES (?, ?, ?, ?, ?);"""
 
-            self.gutils.clear_tables('swmm_tidal_curve')
+            replace_pump_curves_sql = """UPDATE swmm_pumps_curve_data
+                                                        SET pump_curve_type = ?,
+                                                            x_value = ?,
+                                                            y_value = ?
+                                                        WHERE
+                                                            pump_curve_name = ?;"""
+
             insert_tidal_curves_sql = """INSERT OR REPLACE INTO swmm_tidal_curve
                                                         (   tidal_curve_name, 
                                                             tidal_curve_description
                                                         ) 
                                                         VALUES (?, ?);"""
 
-            self.gutils.clear_tables('swmm_tidal_curve_data')
             insert_tidal_curves_data_sql = """INSERT INTO swmm_tidal_curve_data
                                                         (   tidal_curve_name, 
                                                             hour, 
@@ -2802,7 +2821,12 @@ class Flo2dGeoPackage(GeoPackageUtils):
                                                         ) 
                                                         VALUES (?, ?, ?);"""
 
-            self.gutils.clear_tables('swmm_other_curves')
+            replace_tidal_curves_data_sql = """UPDATE swmm_tidal_curve_data
+                                                        SET hour = ?, 
+                                                            stage = ?
+                                                        WHERE
+                                                            tidal_curve_name = ?;"""
+
             insert_other_curves_sql = """INSERT INTO swmm_other_curves
                                                         (   name, 
                                                             type, 
@@ -2811,6 +2835,13 @@ class Flo2dGeoPackage(GeoPackageUtils):
                                                             y_value
                                                         ) 
                                                         VALUES (?, ?, ?, ?, ?);"""
+
+            replace_other_curves_sql = """UPDATE swmm_other_curves
+                                                        SET type = ?,
+                                                            x_value = ?,
+                                                            y_value = ?
+                                                        WHERE
+                                                            name = ?;"""
 
             curves_data = swmminp_dict.get('CURVES', [])
 
@@ -2862,22 +2893,46 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 if current_key is not None and data_added:
                     groups[current_group_type][current_key] = current_group_data
 
-                i = 0
+                added_pumps_curves = 0
+                updated_pumps_curves = 0
                 for key, values in groups['Pump'].items():
-                    i += 1
-                    for value in values:
-                        self.gutils.execute(insert_pump_curves_sql, (value[0], value[3][-1], value[1], value[2], ''))
-                for key, values in groups['Tidal'].items():
-                    i += 1
-                    for value in values:
-                        self.gutils.execute(insert_tidal_curves_sql, (value[0], ''))
-                        self.gutils.execute(insert_tidal_curves_data_sql, (value[0], value[1], value[2]))
-                for key, values in groups['Other'].items():
-                    i += 1
-                    for value in values:
-                        self.gutils.execute(insert_other_curves_sql, (value[0], value[3], '', value[1], value[2]))
+                    if key in existing_curves:
+                        updated_pumps_curves += 1
+                        for value in values:
+                            self.gutils.execute(replace_pump_curves_sql,
+                                                (value[3][-1], value[1], value[2], value[0]))
+                    else:
+                        added_pumps_curves += 1
+                        for value in values:
+                            self.gutils.execute(insert_pump_curves_sql, (value[0], value[3][-1], value[1], value[2], ''))
+                self.uc.log_info(f"CURVES (pumps): {added_pumps_curves} added and {updated_pumps_curves} updated from imported SWMM INP file")
 
-                self.uc.log_info(f"{i} CURVES from SWMM INP added")
+                added_tidal_curves = 0
+                updated_tidal_curves = 0
+                for key, values in groups['Tidal'].items():
+                    if key in existing_curves:
+                        updated_tidal_curves += 1
+                        for value in values:
+                            self.gutils.execute(replace_tidal_curves_data_sql, (value[1], value[2], value[0]))
+                    else:
+                        added_tidal_curves += 1
+                        for value in values:
+                            self.gutils.execute(insert_tidal_curves_sql, (value[0], ''))
+                            self.gutils.execute(insert_tidal_curves_data_sql, (value[0], value[1], value[2]))
+                self.uc.log_info(f"CURVES (tidal): {added_tidal_curves} added and {updated_tidal_curves} updated from imported SWMM INP file")
+
+                added_other_curves = 0
+                updated_other_curves = 0
+                for key, values in groups['Other'].items():
+                    if key in existing_curves:
+                        updated_other_curves += 1
+                        for value in values:
+                            self.gutils.execute(replace_other_curves_sql, (value[3], value[1], value[2], value[0]))
+                    else:
+                        added_other_curves += 1
+                        for value in values:
+                            self.gutils.execute(insert_other_curves_sql, (value[0], value[3], '', value[1], value[2]))
+                self.uc.log_info(f"CURVES (other): {added_other_curves} added and {updated_other_curves} updated from imported SWMM INP file")
 
         except Exception as e:
             QApplication.setOverrideCursor(Qt.ArrowCursor)
