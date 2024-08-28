@@ -2948,7 +2948,13 @@ class Flo2dGeoPackage(GeoPackageUtils):
         Function to import swmm inp time series
         """
         try:
-            self.gutils.clear_tables('swmm_time_series')
+            existing_time_series = []
+            if delete_existing:
+                self.gutils.clear_tables('swmm_time_series')
+                self.gutils.clear_tables('swmm_time_series_data')
+            else:
+                existing_time_series_qry = self.gutils.execute("SELECT DISTINCT time_series_name FROM swmm_time_series;").fetchall()
+                existing_time_series = [time_series[0] for time_series in existing_time_series_qry]
             insert_times_from_file_sql = """INSERT INTO swmm_time_series 
                                     (   time_series_name, 
                                         time_series_description, 
@@ -2957,7 +2963,13 @@ class Flo2dGeoPackage(GeoPackageUtils):
                                     ) 
                                     VALUES (?, ?, ?, ?);"""
 
-            self.gutils.clear_tables('swmm_time_series_data')
+            replace_times_from_file_sql = """UPDATE swmm_time_series 
+                                                SET                                        
+                                                    time_series_file = ?,
+                                                    time_series_data = ?
+                                                WHERE 
+                                                    time_series_name = ?;"""
+
             insert_times_from_data_sql = """INSERT INTO swmm_time_series_data
                                     (   time_series_name, 
                                         date, 
@@ -2966,15 +2978,35 @@ class Flo2dGeoPackage(GeoPackageUtils):
                                     ) 
                                     VALUES (?, ?, ?, ?);"""
 
+            replace_times_from_data_sql = """UPDATE swmm_time_series_data 
+                                                SET                                        
+                                                    date = ?,
+                                                    time = ?,
+                                                    value = ?
+                                                WHERE 
+                                                    time_series_name = ?;"""
+
             time_series_data_data = swmminp_dict.get('TIMESERIES', [])
             if len(time_series_data_data) > 0:
+                updated_time_series = 0
+                added_time_series = 0
+
+                time_series_names = self.gutils.execute("SELECT DISTINCT time_series_name FROM swmm_time_series;").fetchall()
+                for time_series_name in time_series_names:
+                    if time_series_name[0] in existing_time_series:
+                        updated_time_series += 1
+
                 for time_series in time_series_data_data:
                     if time_series[1] == "FILE":
                         name = time_series[0]
                         description = ""
                         file = time_series[2]
                         file2 = file.replace('"', "")
-                        self.gutils.execute(insert_times_from_file_sql, (name, description, file2.strip(), "False"))
+                        if name in existing_time_series:
+                            self.gutils.execute(replace_times_from_file_sql, (file2.strip(), "False", name))
+                        else:
+                            added_time_series += 1
+                            self.gutils.execute(insert_times_from_file_sql, (name, description, file2.strip(), "False"))
                     else:
                         # See if time series data reference is already in table:
                         row = self.gutils.execute(
@@ -2985,16 +3017,24 @@ class Flo2dGeoPackage(GeoPackageUtils):
                             description = ""
                             file = ""
                             file2 = file.replace('"', "")
-                            self.gutils.execute(insert_times_from_file_sql, (name, description, file2.strip(), "True"))
+                            if name in existing_time_series:
+                                self.gutils.execute(replace_times_from_file_sql, (file2.strip(), "True", name))
+                            else:
+                                added_time_series += 1
+                                self.gutils.execute(insert_times_from_file_sql, (name, description, file2.strip(), "True"))
 
                         name = time_series[0]
                         date = time_series[1]
                         tme = time_series[2]
                         value = float_or_zero(time_series[3])
-                        self.gutils.execute(insert_times_from_data_sql, (name, date, tme, value))
 
-                n_ts = self.gutils.execute("SELECT COUNT(time_series_name) FROM swmm_time_series;").fetchone()[0]
-                self.uc.log_info(f"{n_ts} TIMESERIES from SWMM INP added")
+                        if name in existing_time_series:
+                            self.gutils.execute(replace_times_from_data_sql, (date, tme, value, name))
+                        else:
+                            self.gutils.execute(insert_times_from_data_sql, (name, date, tme, value))
+
+                self.uc.log_info(
+                    f"TIMESERIES: {added_time_series} added and {updated_time_series} updated from imported SWMM INP file")
 
         except Exception as e:
             QApplication.setOverrideCursor(Qt.ArrowCursor)
