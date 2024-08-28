@@ -1709,13 +1709,14 @@ class Flo2dGeoPackage(GeoPackageUtils):
         Function to import swmm inp weirs
         """
         try:
+            existing_weirs = []
+
             if delete_existing:
                 self.gutils.clear_tables('user_swmm_weirs')
             else:
                 existing_weirs_qry = self.gutils.execute("SELECT weir_name FROM user_swmm_weirs;").fetchall()
-                if existing_weirs_qry:
-                    existing_weirs = existing_weirs_qry[0]
-                    print(existing_weirs)
+                existing_weirs = [weir[0] for weir in existing_weirs_qry]
+
             insert_weirs_sql = """INSERT INTO user_swmm_weirs (
                                     weir_name,
                                     weir_inlet,
@@ -1734,20 +1735,20 @@ class Flo2dGeoPackage(GeoPackageUtils):
                                     )
                                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);"""
 
-            # replace_user_swmm_weirs_sql = """UPDATE user_swmm_weirs
-            #                  SET   weir_inlet  = ?,
-            #                        weir_outlet  = ?,
-            #                        weir_type = ?,
-            #                        weir_crest_height = ?,
-            #                        weir_disch_coeff = ?,
-            #                        weir_flap_gate = ?,
-            #                        weir_end_contrac = ?,
-            #                        weir_end_coeff = ?,
-            #                        weir_shape = ?,
-            #                        weir_height = ?,
-            #                        weir_length = ?,
-            #                        weir_side_slope = ?
-            #                  WHERE weir_name = ?;"""
+            replace_user_swmm_weirs_sql = """UPDATE user_swmm_weirs
+                             SET   weir_inlet  = ?,
+                                   weir_outlet  = ?,
+                                   weir_type = ?,
+                                   weir_crest_height = ?,
+                                   weir_disch_coeff = ?,
+                                   weir_flap_gate = ?,
+                                   weir_end_contrac = ?,
+                                   weir_end_coeff = ?,
+                                   weir_shape = ?,
+                                   weir_height = ?,
+                                   weir_length = ?,
+                                   weir_side_slope = ?
+                             WHERE weir_name = ?;"""
 
             weirs_data = swmminp_dict.get('WEIRS', [])
             coordinates_data = swmminp_dict.get('COORDINATES', [])
@@ -1756,7 +1757,9 @@ class Flo2dGeoPackage(GeoPackageUtils):
             xsections_dict = {item[0]: item[1:] for item in xsections_data}
             vertices_data = swmminp_dict.get('VERTICES', [])
 
-            if len(weirs_data):
+            if len(weirs_data) > 0:
+                added_weirs = 0
+                updated_weirs = 0
                 for weir in weirs_data:
                     """
                     [WEIRS]
@@ -1779,7 +1782,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
                     weir_shape = xsections_dict[weir_name][0]
                     weir_height = xsections_dict[weir_name][1]
-                    weir_length= xsections_dict[weir_name][2]
+                    weir_length = xsections_dict[weir_name][2]
                     weir_side_slope = xsections_dict[weir_name][3]
 
                     # QGIS Variables
@@ -1801,24 +1804,46 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     geom = "LINESTRING({})".format(", ".join("{0} {1}".format(x, y) for x, y in linestring_list))
                     geom = self.gutils.wkt_to_gpb(geom)
 
-                    self.gutils.execute(insert_weirs_sql, (
-                                        weir_name,
-                                        weir_inlet,
-                                        weir_outlet,
-                                        weir_type,
-                                        weir_crest_height,
-                                        weir_disch_coeff,
-                                        weir_flap_gate,
-                                        weir_end_contrac,
-                                        weir_end_coeff,
-                                        weir_shape,
-                                        weir_height,
-                                        weir_length,
-                                        weir_side_slope,
-                                        geom
-                                        )
-                                        )
-                self.uc.log_info(f"{len(weirs_data)} WEIRS from SWMM INP added")
+                    if weir_name in existing_weirs:
+                        updated_weirs += 1
+                        self.gutils.execute(
+                            replace_user_swmm_weirs_sql,
+                            (
+                                weir_inlet,
+                                weir_outlet,
+                                weir_type,
+                                weir_crest_height,
+                                weir_disch_coeff,
+                                weir_flap_gate,
+                                weir_end_contrac,
+                                weir_end_coeff,
+                                weir_shape,
+                                weir_height,
+                                weir_length,
+                                weir_side_slope,
+                                weir_name,
+                            ),
+                        )
+                    else:
+                        added_weirs += 1
+                        self.gutils.execute(insert_weirs_sql, (
+                                            weir_name,
+                                            weir_inlet,
+                                            weir_outlet,
+                                            weir_type,
+                                            weir_crest_height,
+                                            weir_disch_coeff,
+                                            weir_flap_gate,
+                                            weir_end_contrac,
+                                            weir_end_coeff,
+                                            weir_shape,
+                                            weir_height,
+                                            weir_length,
+                                            weir_side_slope,
+                                            geom
+                                            )
+                                            )
+                self.uc.log_info(f"WEIRS: {added_weirs} added and {updated_weirs} updated from imported SWMM INP file")
 
         except Exception as e:
             QApplication.setOverrideCursor(Qt.ArrowCursor)
@@ -1878,6 +1903,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
             vertices_data = swmminp_dict.get('VERTICES', [])
 
             if len(orifices_data) > 0:
+                added_orifices = 0
+                updated_orifices = 0
                 for orifice in orifices_data:
                     """
                     [ORIFICES]
@@ -1921,6 +1948,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     geom = self.gutils.wkt_to_gpb(geom)
 
                     if orifice_name in existing_orifices:
+                        updated_orifices += 1
                         self.gutils.execute(
                             replace_user_swmm_orificies_sql,
                             (
@@ -1938,6 +1966,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                             )
                         )
                     else:
+                        added_orifices += 1
                         self.gutils.execute(insert_orifices_sql, (
                             orifice_name,
                             orifice_inlet,
@@ -1953,7 +1982,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                             geom
                             )
                         )
-                self.uc.log_info(f"{len(orifices_data)} ORIFICES from SWMM INP added")
+                self.uc.log_info(f"ORIFICES: {added_orifices} added and {updated_orifices} updated from imported SWMM INP file")
 
         except Exception as e:
             QApplication.setOverrideCursor(Qt.ArrowCursor)
