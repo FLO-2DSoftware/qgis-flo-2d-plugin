@@ -2305,7 +2305,13 @@ class Flo2dGeoPackage(GeoPackageUtils):
         Function to import swmm inp storage units
         """
         try:
-            self.gutils.clear_tables('user_swmm_storage_units')
+            existing_storages = []
+            if delete_existing:
+                self.gutils.clear_tables('user_swmm_storage_units')
+            else:
+                existing_storages_qry = self.gutils.execute("SELECT name FROM user_swmm_storage_units;").fetchall()
+                existing_storages = [storage[0] for storage in existing_storages_qry]
+
             insert_storage_units_sql = """
                                     INSERT INTO user_swmm_storage_units (
                                         name, 
@@ -2331,12 +2337,36 @@ class Flo2dGeoPackage(GeoPackageUtils):
                                     )
                                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);"""
 
+            replace_user_swmm_storage_sql = """UPDATE user_swmm_storage_units
+                                         SET    geom = ?,
+                                                "invert_elev" = ?,
+                                                "max_depth" = ?,
+                                                "init_depth" = ?,
+                                                "external_inflow" = ?,
+                                                "treatment" = ?,
+                                                "ponded_area" = ?,
+                                                "evap_factor" = ?,
+                                                "infiltration" = ?,
+                                                "infil_method" = ?,
+                                                "suction_head" = ?,
+                                                "conductivity" = ?,
+                                                "initial_deficit" = ?,
+                                                "storage_curve" = ?,
+                                                "coefficient" = ?,
+                                                "exponent" = ?,
+                                                "constant" = ?,
+                                                "curve_name" = ?                             
+                                         WHERE name = ?;"""
+
             storage_units_data = swmminp_dict.get('STORAGE', [])
             coordinates_data = swmminp_dict.get('COORDINATES', [])
+            coordinates_dict = {item[0]: item[1:] for item in coordinates_data}
             inflows_data = swmminp_dict.get('INFLOWS', [])
             external_inflows = [external_inflow_name[0] for external_inflow_name in inflows_data]
 
             if len(storage_units_data) > 0:
+                added_storages = 0
+                updated_storages = 0
                 for storage_unit in storage_units_data:
                     """
                     [STORAGE]
@@ -2385,43 +2415,67 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     ponded_area = 0
 
                     # QGIS VARIABLES
-                    grid = None
-                    geom = None
-                    for coordinate in coordinates_data:
-                        if coordinate[0] == name:
-                            x = float(coordinate[1])
-                            y = float(coordinate[2])
-                            grid_n = self.gutils.grid_on_point(x, y)
-                            grid = -9999 if grid_n is None else grid_n
-                            geom = "POINT({0} {1})".format(x, y)
-                            geom = self.gutils.wkt_to_gpb(geom)
-                            break
+                    x = float(coordinates_dict[name][0])
+                    y = float(coordinates_dict[name][1])
 
-                    self.gutils.execute(insert_storage_units_sql, (
-                        name,
-                        grid,
-                        invert_elev,
-                        max_depth,
-                        init_depth,
-                        external_inflow,
-                        treatment,
-                        ponded_area,
-                        evap_factor,
-                        infiltration,
-                        infil_method,
-                        suction_head,
-                        conductivity,
-                        initial_deficit,
-                        storage_curve,
-                        coefficient,
-                        exponent,
-                        constant,
-                        curve_name,
-                        geom
-                    )
-                    )
+                    grid_n = self.gutils.grid_on_point(x, y)
+                    grid = -9999 if grid_n is None else grid_n
+                    geom = "POINT({0} {1})".format(x, y)
+                    geom = self.gutils.wkt_to_gpb(geom)
 
-                self.uc.log_info(f"{len(storage_units_data)} STORAGE from SWMM INP added")
+                    if name in existing_storages:
+                        updated_storages += 1
+                        self.gutils.execute(
+                            replace_user_swmm_storage_sql,
+                            (
+                                geom,
+                                invert_elev,
+                                max_depth,
+                                init_depth,
+                                external_inflow,
+                                treatment,
+                                ponded_area,
+                                evap_factor,
+                                infiltration,
+                                infil_method,
+                                suction_head,
+                                conductivity,
+                                initial_deficit,
+                                storage_curve,
+                                coefficient,
+                                exponent,
+                                constant,
+                                curve_name,
+                                name,
+                            ),
+                        )
+                    else:
+                        added_storages += 1
+                        self.gutils.execute(insert_storage_units_sql, (
+                            name,
+                            grid,
+                            invert_elev,
+                            max_depth,
+                            init_depth,
+                            external_inflow,
+                            treatment,
+                            ponded_area,
+                            evap_factor,
+                            infiltration,
+                            infil_method,
+                            suction_head,
+                            conductivity,
+                            initial_deficit,
+                            storage_curve,
+                            coefficient,
+                            exponent,
+                            constant,
+                            curve_name,
+                            geom
+                        )
+                        )
+
+                self.uc.log_info(f"STORAGES: {added_storages} added and {updated_storages} updated from imported SWMM INP file")
 
         except Exception as e:
             QApplication.setOverrideCursor(Qt.ArrowCursor)
