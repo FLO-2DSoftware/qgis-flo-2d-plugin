@@ -2113,7 +2113,13 @@ class Flo2dGeoPackage(GeoPackageUtils):
         Function to import swmm inp conduits
         """
         try:
-            self.gutils.clear_tables('user_swmm_conduits')
+            existing_conduits = []
+            if delete_existing:
+                self.gutils.clear_tables('user_swmm_conduits')
+            else:
+                existing_conduits_qry = self.gutils.execute("SELECT conduit_name FROM user_swmm_conduits;").fetchall()
+                existing_conduits = [conduit[0] for conduit in existing_conduits_qry]
+
             insert_conduits_sql = """INSERT INTO user_swmm_conduits (
                                        conduit_name,
                                        conduit_inlet,
@@ -2138,6 +2144,27 @@ class Flo2dGeoPackage(GeoPackageUtils):
                                        )
                                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);"""
 
+            replace_user_swmm_conduits_sql = """UPDATE user_swmm_conduits
+                             SET   conduit_inlet  = ?,
+                                   conduit_outlet  = ?,
+                                   conduit_length  = ?,
+                                   conduit_manning  = ?,
+                                   conduit_inlet_offset  = ?,
+                                   conduit_outlet_offset  = ?,
+                                   conduit_init_flow  = ?,
+                                   conduit_max_flow  = ?,
+                                   losses_inlet  = ?,
+                                   losses_outlet  = ?,
+                                   losses_average  = ?,
+                                   losses_flapgate  = ?,
+                                   xsections_shape  = ?,
+                                   xsections_barrels  = ?,
+                                   xsections_max_depth  = ?,
+                                   xsections_geom2  = ?,
+                                   xsections_geom3  = ?,
+                                   xsections_geom4  = ?
+                             WHERE conduit_name = ?;"""
+
             conduits_data = swmminp_dict.get('CONDUITS', [])
             losses_data = swmminp_dict.get('LOSSES', [])
             losses_dict = {item[0]: item[1:] for item in losses_data}
@@ -2148,6 +2175,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
             vertices_data = swmminp_dict.get('VERTICES', [])
 
             if len(conduits_data) > 0:
+                updated_conduits = 0
+                added_conduits = 0
                 for conduit in conduits_data:
                     """
                     ;;               Inlet            Outlet                      Manning    Inlet      Outlet     Init.      Max.      
@@ -2208,30 +2237,59 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     geom = "LINESTRING({})".format(", ".join("{0} {1}".format(x, y) for x, y in linestring_list))
                     geom = self.gutils.wkt_to_gpb(geom)
 
-                    self.gutils.execute(insert_conduits_sql, (
-                        conduit_name,
-                        conduit_inlet,
-                        conduit_outlet,
-                        conduit_length,
-                        conduit_manning,
-                        conduit_inlet_offset,
-                        conduit_outlet_offset,
-                        conduit_init_flow,
-                        conduit_max_flow,
-                        losses_inlet,
-                        losses_outlet,
-                        losses_average,
-                        losses_flapgate,
-                        xsections_shape,
-                        xsections_barrels,
-                        xsections_max_depth,
-                        xsections_geom2,
-                        xsections_geom3,
-                        xsections_geom4,
-                        geom
-                    )
-                    )
-                self.uc.log_info(f"{len(conduits_data)} CONDUITS from SWMM INP added")
+                    if conduit_name in existing_conduits:
+                        updated_conduits += 1
+                        self.gutils.execute(
+                            replace_user_swmm_conduits_sql,
+                            (
+                                conduit_inlet,
+                                conduit_outlet,
+                                conduit_length,
+                                conduit_manning,
+                                conduit_inlet_offset,
+                                conduit_outlet_offset,
+                                conduit_init_flow,
+                                conduit_max_flow,
+                                losses_inlet,
+                                losses_outlet,
+                                losses_average,
+                                losses_flapgate,
+                                xsections_shape,
+                                xsections_barrels,
+                                xsections_max_depth,
+                                xsections_geom2,
+                                xsections_geom3,
+                                xsections_geom4,
+                                conduit_name,
+                            ),
+                        )
+
+                    else:
+                        added_conduits += 1
+                        self.gutils.execute(insert_conduits_sql, (
+                            conduit_name,
+                            conduit_inlet,
+                            conduit_outlet,
+                            conduit_length,
+                            conduit_manning,
+                            conduit_inlet_offset,
+                            conduit_outlet_offset,
+                            conduit_init_flow,
+                            conduit_max_flow,
+                            losses_inlet,
+                            losses_outlet,
+                            losses_average,
+                            losses_flapgate,
+                            xsections_shape,
+                            xsections_barrels,
+                            xsections_max_depth,
+                            xsections_geom2,
+                            xsections_geom3,
+                            xsections_geom4,
+                            geom
+                        )
+                        )
+                self.uc.log_info(f"CONDUITS: {added_conduits} added and {updated_conduits} updated from imported SWMM INP file")
 
         except Exception as e:
             QApplication.setOverrideCursor(Qt.ArrowCursor)
