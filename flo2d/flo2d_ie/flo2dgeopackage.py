@@ -2114,6 +2114,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
         """
         try:
             existing_conduits = []
+            not_added = []
             if delete_existing:
                 self.gutils.clear_tables('user_swmm_conduits')
             else:
@@ -2222,6 +2223,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     linestring_list = []
                     inlet_x = coordinates_dict[conduit_inlet][0]
                     inlet_y = coordinates_dict[conduit_inlet][1]
+                    inlet_grid = self.gutils.grid_on_point(inlet_x, inlet_y)
+                    self.uc.log_info(str(inlet_grid))
 
                     linestring_list.append((inlet_x, inlet_y))
 
@@ -2231,8 +2234,20 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
                     outlet_x = coordinates_dict[conduit_outlet][0]
                     outlet_y = coordinates_dict[conduit_outlet][1]
+                    outlet_grid = self.gutils.grid_on_point(outlet_x, outlet_y)
+                    self.uc.log_info(str(outlet_grid))
 
                     linestring_list.append((outlet_x, outlet_y))
+
+                    # Both ends of the conduit is outside the grid
+                    if not inlet_grid and not outlet_grid:
+                        not_added.append(conduit_name)
+                        continue
+
+                    # Conduit inlet is outside the grid, and it is an Inlet
+                    if not inlet_grid and conduit_inlet.lower().startswith("i"):
+                        not_added.append(conduit_name)
+                        continue
 
                     geom = "LINESTRING({})".format(", ".join("{0} {1}".format(x, y) for x, y in linestring_list))
                     geom = self.gutils.wkt_to_gpb(geom)
@@ -2290,6 +2305,10 @@ class Flo2dGeoPackage(GeoPackageUtils):
                         )
                         )
                 self.uc.log_info(f"CONDUITS: {added_conduits} added and {updated_conduits} updated from imported SWMM INP file")
+
+                if len(not_added) > 0:
+                    self.uc.log_info(
+                        f"CONDUITS: {len(not_added)} are outside the domain and not added to the project")
 
         except Exception as e:
             QApplication.setOverrideCursor(Qt.ArrowCursor)
