@@ -3050,7 +3050,13 @@ class Flo2dGeoPackage(GeoPackageUtils):
         Function to import swmm inp inflows
         """
         try:
-            self.gutils.clear_tables('swmm_inflows')
+            existing_inflows = []
+            if delete_existing:
+                self.gutils.clear_tables('swmm_inflows')
+            else:
+                existing_inflows_qry = self.gutils.execute("SELECT DISTINCT node_name FROM swmm_inflows;").fetchall()
+                existing_inflows = [inflow[0] for inflow in existing_inflows_qry]
+
             insert_inflows_sql = """INSERT INTO swmm_inflows 
                                             (   node_name, 
                                                 constituent, 
@@ -3061,9 +3067,20 @@ class Flo2dGeoPackage(GeoPackageUtils):
                                             ) 
                                             VALUES (?, ?, ?, ?, ?, ?);"""
 
+            replace_inflows_sql = """UPDATE swmm_inflows 
+                                            SET 
+                                                constituent = ?,
+                                                baseline = ?,
+                                                pattern_name = ?,
+                                                time_series_name = ?,
+                                                scale_factor = ?
+                                            WHERE node_name = ?;"""
+
             inflows_data = swmminp_dict.get('INFLOWS', [])
 
             if len(inflows_data) > 0:
+                added_inflows = 0
+                update_inflows = 0
                 for inflow in inflows_data:
                     """
                     ;;                                                 Param    Units    Scale    Baseline Baseline
@@ -3083,12 +3100,21 @@ class Flo2dGeoPackage(GeoPackageUtils):
                         baseline = inflow[6]
                         pattern_name = inflow[7]
 
-                    self.gutils.execute(
-                        insert_inflows_sql,
-                        (name, constituent, baseline, pattern_name, time_series_name, scale_factor),
-                    )
+                    if name in existing_inflows:
+                        update_inflows += 1
+                        self.gutils.execute(
+                            replace_inflows_sql,
+                            (constituent, baseline, pattern_name, time_series_name, scale_factor, name),
+                        )
+                    else:
+                        added_inflows += 1
+                        self.gutils.execute(
+                            insert_inflows_sql,
+                            (name, constituent, baseline, pattern_name, time_series_name, scale_factor),
+                        )
 
-                self.uc.log_info(f"{len(inflows_data)} INFLOWS from SWMM INP added")
+                self.uc.log_info(
+                    f"INFLOWS: {added_inflows} added and {update_inflows} updated from imported SWMM INP file")
 
         except Exception as e:
             QApplication.setOverrideCursor(Qt.ArrowCursor)
