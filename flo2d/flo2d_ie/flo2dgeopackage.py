@@ -1998,6 +1998,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
         Function to import swmm inp pumps
         """
         try:
+            not_added = []
             existing_pumps = []
             if delete_existing:
                 self.gutils.clear_tables('user_swmm_pumps')
@@ -2055,6 +2056,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     linestring_list = []
                     inlet_x = coordinates_dict[pump_inlet][0]
                     inlet_y = coordinates_dict[pump_inlet][1]
+                    inlet_grid = self.grid_on_point(inlet_x, inlet_y)
 
                     linestring_list.append((inlet_x, inlet_y))
 
@@ -2064,8 +2066,19 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
                     outlet_x = coordinates_dict[pump_outlet][0]
                     outlet_y = coordinates_dict[pump_outlet][1]
+                    outlet_grid = self.grid_on_point(outlet_x, outlet_y)
 
                     linestring_list.append((outlet_x, outlet_y))
+
+                    # Both ends of the pump is outside the grid
+                    if not inlet_grid and not outlet_grid:
+                        not_added.append(pump_name)
+                        continue
+
+                    # Pump inlet is outside the grid, and it is an Inlet
+                    if not inlet_grid and pump_inlet.lower().startswith("i"):
+                        not_added.append(pump_name)
+                        continue
 
                     geom = "LINESTRING({})".format(", ".join("{0} {1}".format(x, y) for x, y in linestring_list))
                     geom = self.gutils.wkt_to_gpb(geom)
@@ -2098,6 +2111,10 @@ class Flo2dGeoPackage(GeoPackageUtils):
                         )
                         )
                 self.uc.log_info(f"PUMPS: {added_pumps} added and {updated_pumps} updated from imported SWMM INP file")
+
+                if len(not_added) > 0:
+                    self.uc.log_info(
+                        f"PUMPS: {len(not_added)} are outside the domain and not added to the project")
 
         except Exception as e:
             QApplication.setOverrideCursor(Qt.ArrowCursor)
@@ -2224,7 +2241,6 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     inlet_x = coordinates_dict[conduit_inlet][0]
                     inlet_y = coordinates_dict[conduit_inlet][1]
                     inlet_grid = self.gutils.grid_on_point(inlet_x, inlet_y)
-                    self.uc.log_info(str(inlet_grid))
 
                     linestring_list.append((inlet_x, inlet_y))
 
@@ -2235,7 +2251,6 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     outlet_x = coordinates_dict[conduit_outlet][0]
                     outlet_y = coordinates_dict[conduit_outlet][1]
                     outlet_grid = self.gutils.grid_on_point(outlet_x, outlet_y)
-                    self.uc.log_info(str(outlet_grid))
 
                     linestring_list.append((outlet_x, outlet_y))
 
