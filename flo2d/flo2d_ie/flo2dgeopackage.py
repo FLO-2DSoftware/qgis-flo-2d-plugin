@@ -2614,7 +2614,13 @@ class Flo2dGeoPackage(GeoPackageUtils):
         Function to import swmm inp inlets junctions
         """
         try:
-            self.gutils.clear_tables('user_swmm_inlets_junctions')
+            existing_inlets_junctions = []
+            if delete_existing:
+                self.gutils.clear_tables('user_swmm_inlets_junctions')
+            else:
+                existing_inlets_junctions_qry = self.gutils.execute("SELECT name FROM user_swmm_inlets_junctions;").fetchall()
+                existing_inlets_junctions = [inlet_junction[0] for inlet_junction in existing_inlets_junctions_qry]
+
             insert_inlets_junctions_sql = """
                                         INSERT INTO user_swmm_inlets_junctions (
                                             grid,
@@ -2639,12 +2645,35 @@ class Flo2dGeoPackage(GeoPackageUtils):
                                         )
                                             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);"""
 
+            replace_user_swmm_inlets_junctions_sql = """UPDATE user_swmm_inlets_junctions
+                                     SET    geom = ?,
+                                            sd_type = ?,
+                                            external_inflow = ?,
+                                            junction_invert_elev = ?,
+                                            max_depth = ?,
+                                            init_depth = ?,
+                                            surcharge_depth = ?,
+                                            intype = ?,
+                                            swmm_length = ?,
+                                            swmm_width = ?,
+                                            swmm_height = ?,
+                                            swmm_coeff = ?,
+                                            swmm_feature = ?,
+                                            curbheight = ?,
+                                            swmm_clogging_factor = ?,
+                                            swmm_time_for_clogging = ?,
+                                            drboxarea = ?
+                                     WHERE name = ?;"""
+
             inlets_junctions_data = swmminp_dict.get('JUNCTIONS', [])
             coordinates_data = swmminp_dict.get('COORDINATES', [])
+            coordinates_dict = {item[0]: item[1:] for item in coordinates_data}
             inflows_data = swmminp_dict.get('INFLOWS', [])
             external_inflows_inlet_junctions = [external_inflow_name[0] for external_inflow_name in inflows_data]
 
             if len(inlets_junctions_data) > 0:
+                added_inlets_junctions = 0
+                updated_inlets_junctions = 0
                 for inlet_junction in inlets_junctions_data:
                     """
                     ;;               Invert     Max.       Init.      Surcharge  Ponded
@@ -2663,20 +2692,12 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     external_inflow = 1 if name in external_inflows_inlet_junctions else 0
 
                     # QGIS VARIABLES
-                    grid = None
-                    geom = None
-                    for coordinate in coordinates_data:
-                        if coordinate[0] == name:
-                            x = float(coordinate[1])
-                            y = float(coordinate[2])
-                            grid_n = self.gutils.grid_on_point(x, y)
-                            grid = -9999 if grid_n is None else grid_n
-                            geom = "POINT({0} {1})".format(x, y)
-                            geom = self.gutils.wkt_to_gpb(geom)
-                            break
-
-                    # if not x or not y or not grid or not geom:
-                    #     raise Exception
+                    x = coordinates_dict[name][0]
+                    y = coordinates_dict[name][1]
+                    grid_n = self.gutils.grid_on_point(x, y)
+                    grid = -9999 if grid_n is None else grid_n
+                    geom = "POINT({0} {1})".format(x, y)
+                    geom = self.gutils.wkt_to_gpb(geom)
 
                     # FLO-2D VARIABLES -> Updated later when other files are imported
                     sd_type = 'I' if name.lower().startswith("i") else 'J'
@@ -2691,30 +2712,56 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     swmm_time_for_clogging = 0
                     drboxarea = 0
 
-                    self.gutils.execute(insert_inlets_junctions_sql, (
-                        grid,
-                        name,
-                        sd_type,
-                        external_inflow,
-                        junction_invert_elev,
-                        max_depth,
-                        init_depth,
-                        surcharge_depth,
-                        intype,
-                        swmm_length,
-                        swmm_width,
-                        swmm_height,
-                        swmm_coeff,
-                        swmm_feature,
-                        curbheight,
-                        swmm_clogging_factor,
-                        swmm_time_for_clogging,
-                        drboxarea,
-                        geom
-                    )
-                    )
+                    if name in existing_inlets_junctions:
+                        updated_inlets_junctions += 1
+                        self.gutils.execute(replace_user_swmm_inlets_junctions_sql, (
+                            geom,
+                            sd_type,
+                            external_inflow,
+                            junction_invert_elev,
+                            max_depth,
+                            init_depth,
+                            surcharge_depth,
+                            intype,
+                            swmm_length,
+                            swmm_width,
+                            swmm_height,
+                            swmm_coeff,
+                            swmm_feature,
+                            curbheight,
+                            swmm_clogging_factor,
+                            swmm_time_for_clogging,
+                            drboxarea,
+                            name
+                        )
+                        )
 
-                self.uc.log_info(f"{len(inlets_junctions_data)} JUNCTIONS from SWMM INP added")
+                    else:
+                        added_inlets_junctions += 1
+                        self.gutils.execute(insert_inlets_junctions_sql, (
+                            grid,
+                            name,
+                            sd_type,
+                            external_inflow,
+                            junction_invert_elev,
+                            max_depth,
+                            init_depth,
+                            surcharge_depth,
+                            intype,
+                            swmm_length,
+                            swmm_width,
+                            swmm_height,
+                            swmm_coeff,
+                            swmm_feature,
+                            curbheight,
+                            swmm_clogging_factor,
+                            swmm_time_for_clogging,
+                            drboxarea,
+                            geom
+                        )
+                        )
+
+                self.uc.log_info(f"JUNCTIONS: {added_inlets_junctions} added and {updated_inlets_junctions} updated from imported SWMM INP file")
 
         except Exception as e:
             QApplication.setOverrideCursor(Qt.ArrowCursor)
