@@ -3138,8 +3138,13 @@ class Flo2dGeoPackage(GeoPackageUtils):
             pattern_test     HOURLY     1.0   2     3     4     5     6    
             pattern_test                7     8     9     10    11    12   
             """
+            existing_patterns = []
+            if delete_existing:
+                self.gutils.clear_tables('swmm_inflow_patterns')
+            else:
+                existing_patterns_qry = self.gutils.execute("SELECT DISTINCT pattern_name FROM swmm_inflow_patterns;").fetchall()
+                existing_patterns = [pattern[0] for pattern in existing_patterns_qry]
 
-            self.gutils.clear_tables('swmm_inflow_patterns')
             insert_patterns_sql = """INSERT INTO swmm_inflow_patterns
                                                                 (   pattern_name, 
                                                                     pattern_description, 
@@ -3148,12 +3153,20 @@ class Flo2dGeoPackage(GeoPackageUtils):
                                                                 ) 
                                                                 VALUES (?, ?, ?, ?);"""
 
+            replace_patterns_sql = """UPDATE swmm_inflow_patterns 
+                                        SET
+                                            hour = ?,
+                                            multiplier = ?
+                                        WHERE 
+                                            pattern_name = ?;"""
+
             patterns_data = swmminp_dict.get('PATTERNS', [])
 
             if len(patterns_data) > 0:
                 # Adjust the patterns by adding them into their own list
                 merged_patterns = {}
-
+                updated_patterns = 0
+                added_patterns = 0
                 # Step 1: Merge the patterns while skipping the element at index 1 only in the first occurrence
                 for pattern in patterns_data:
                     name = pattern[0]
@@ -3166,21 +3179,37 @@ class Flo2dGeoPackage(GeoPackageUtils):
                         merged_patterns[name].extend(pattern[1:])
 
                 # Step 2: Convert to individual lists with a counter, resetting after 24
-                results = []
+                add_results = []
+                added_patterns = 0
+                update_results = []
+                updated_patterns = 0
 
                 for name, data in merged_patterns.items():
-                    counter = 0  # Start the counter at 0
-                    for value in data:
-                        results.append([name, counter, value])
-                        counter += 1
-                        if counter > 24:  # Reset counter if greater than 24
-                            counter = 0
+                    if name in existing_patterns:
+                        updated_patterns += 1
+                        counter = 0  # Start the counter at 0
+                        for value in data:
+                            update_results.append([name, counter, value])
+                            counter += 1
+                            if counter > 24:  # Reset counter if greater than 24
+                                counter = 0
+                    else:
+                        added_patterns += 1
+                        counter = 0  # Start the counter at 0
+                        for value in data:
+                            add_results.append([name, counter, value])
+                            counter += 1
+                            if counter > 24:  # Reset counter if greater than 24
+                                counter = 0
 
-                for r in results:
+                for r in add_results:
                     self.gutils.execute(insert_patterns_sql, (r[0], "", r[1], r[2]))
 
-                n_patterns = self.gutils.execute("SELECT COUNT(DISTINCT pattern_name) FROM swmm_inflow_patterns;").fetchone()[0]
-                self.uc.log_info(f"{n_patterns} PATTERNS from SWMM INP added")
+                for r in update_results:
+                    self.gutils.execute(replace_patterns_sql, (r[1], r[2], r[0]))
+
+                self.uc.log_info(
+                    f"PATTERNS: {added_patterns} added and {updated_patterns} updated from imported SWMM INP file")
 
         except Exception as e:
             QApplication.setOverrideCursor(Qt.ArrowCursor)
