@@ -1998,7 +1998,12 @@ class Flo2dGeoPackage(GeoPackageUtils):
         Function to import swmm inp pumps
         """
         try:
-            self.gutils.clear_tables('user_swmm_pumps')
+            existing_pumps = []
+            if delete_existing:
+                self.gutils.clear_tables('user_swmm_pumps')
+            else:
+                existing_pumps_qry = self.gutils.execute("SELECT pump_name FROM user_swmm_pumps;").fetchall()
+                existing_pumps = [pump[0] for pump in existing_pumps_qry]
             insert_pumps_sql = """INSERT INTO user_swmm_pumps (
                                     pump_name,
                                     pump_inlet, 
@@ -2011,12 +2016,23 @@ class Flo2dGeoPackage(GeoPackageUtils):
                                     )
                                     VALUES (?, ?, ?, ?, ?, ?, ?, ?);"""
 
+            replace_user_swmm_pumps_sql = """UPDATE user_swmm_pumps
+                             SET   pump_inlet  = ?,
+                                   pump_outlet  = ?,
+                                   pump_curve  = ?,
+                                   pump_init_status  = ?,
+                                   pump_startup_depth  = ?,
+                                   pump_shutoff_depth  = ?
+                             WHERE pump_name = ?;"""
+
             pumps_data = swmminp_dict.get('PUMPS', [])
             coordinates_data = swmminp_dict.get('COORDINATES', [])
             coordinates_dict = {item[0]: item[1:] for item in coordinates_data}
             vertices_data = swmminp_dict.get('VERTICES', [])
 
             if len(pumps_data) > 0:
+                added_pumps = 0
+                updated_pumps = 0
                 for pump in pumps_data:
                     """
                     [PUMPS]
@@ -2054,18 +2070,34 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     geom = "LINESTRING({})".format(", ".join("{0} {1}".format(x, y) for x, y in linestring_list))
                     geom = self.gutils.wkt_to_gpb(geom)
 
-                    self.gutils.execute(insert_pumps_sql, (
-                        pump_name,
-                        pump_inlet,
-                        pump_outlet,
-                        pump_curve,
-                        pump_init_status,
-                        pump_startup_depth,
-                        pump_shutoff_depth,
-                        geom
-                    )
-                    )
-                self.uc.log_info(f"{len(pumps_data)} PUMPS from SWMM INP added")
+                    if pump_name in existing_pumps:
+                        updated_pumps += 1
+                        self.gutils.execute(
+                            replace_user_swmm_pumps_sql,
+                            (
+                                pump_inlet,
+                                pump_outlet,
+                                pump_curve,
+                                pump_init_status,
+                                pump_startup_depth,
+                                pump_shutoff_depth,
+                                pump_name,
+                            ),
+                        )
+                    else:
+                        added_pumps += 1
+                        self.gutils.execute(insert_pumps_sql, (
+                            pump_name,
+                            pump_inlet,
+                            pump_outlet,
+                            pump_curve,
+                            pump_init_status,
+                            pump_startup_depth,
+                            pump_shutoff_depth,
+                            geom
+                        )
+                        )
+                self.uc.log_info(f"PUMPS: {added_pumps} added and {updated_pumps} updated from imported SWMM INP file")
 
         except Exception as e:
             QApplication.setOverrideCursor(Qt.ArrowCursor)
