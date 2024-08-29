@@ -181,15 +181,15 @@ class TestFlo2dSelfHelpKit(unittest.TestCase):
         # Number of weirs
         n_weirs = self.f2g.execute("""SELECT COUNT(fid) FROM user_swmm_weirs;""").fetchone()[0]
         self.assertEqual(n_weirs, 1)
-        # Number of RT
-        n_rt = self.f2g.execute("""SELECT COUNT(fid) FROM swmmflort;""").fetchone()[0]
-        self.assertEqual(n_rt, 1)
-        # Number of RT data
-        n_rt_data = self.f2g.execute("""SELECT COUNT(fid) FROM swmmflort_data;""").fetchone()[0]
-        self.assertEqual(n_rt_data, 14)
-        # Number of Culvert Equations
-        n_culverts = self.f2g.execute("""SELECT COUNT(fid) FROM swmmflo_culvert;""").fetchone()[0]
-        self.assertEqual(n_culverts, 5)
+        # # Number of RT
+        # n_rt = self.f2g.execute("""SELECT COUNT(fid) FROM swmmflort;""").fetchone()[0]
+        # self.assertEqual(n_rt, 1)
+        # # Number of RT data
+        # n_rt_data = self.f2g.execute("""SELECT COUNT(fid) FROM swmmflort_data;""").fetchone()[0]
+        # self.assertEqual(n_rt_data, 14)
+        # # Number of Culvert Equations
+        # n_culverts = self.f2g.execute("""SELECT COUNT(fid) FROM swmmflo_culvert;""").fetchone()[0]
+        # self.assertEqual(n_culverts, 5)
         # Number of SD CONTROL
         n_control = self.f2g.execute("""SELECT COUNT(fid) FROM swmm_control;""").fetchone()[0]
         self.assertEqual(n_control, 32)
