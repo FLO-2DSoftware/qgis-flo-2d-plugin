@@ -2609,6 +2609,7 @@ class Flo2D(object):
             "import_breach",
             "import_gutter",
             "import_fpfroude",
+            "import_swmminp",
             "import_swmmflo",
             "import_swmmflort",
             "import_swmmoutf",
@@ -2702,6 +2703,7 @@ class Flo2D(object):
                         import_calls.remove("import_raincell")
 
                     if "Storm Drain" not in dlg_components.components:
+                        import_calls.remove("import_swmminp")
                         import_calls.remove("import_swmmflo")
                         import_calls.remove("import_swmmflort")
                         import_calls.remove("import_swmmoutf")
@@ -2714,28 +2716,28 @@ class Flo2D(object):
 
                     if import_calls:
 
-                        if "Storm Drain" in dlg_components.components:
-                            try:
-                                swmm_converter = SchemaSWMMConverter(self.con, self.iface, self.lyrs)
-                                swmm_converter.create_user_swmm_inlets_junctions()
-                                swmm_converter.create_user_swmm_outlets()
-                            except Exception as e:
-                                self.uc.log_info(traceback.format_exc())
-                                QApplication.restoreOverrideCursor()
-                                self.uc.show_error(
-                                    "ERROR 100623.1044:\n\nConverting Schematic SD Inlets to User Storm Drain Inlets/Junctions failed!"
-                                    + "\n_______________________________________________________________",
-                                    e,
-                                )
-
-                            if os.path.isfile(outdir + r"\SWMM.INP"):
-                                if self.f2d_widget.storm_drain_editor.import_storm_drain_INP_file(
-                                        "Force import of SWMM.INP", True
-                                ):
-                                    self.files_used += "SWMM.INP" + "\n"
-                            else:
-                                self.uc.bar_error("ERROR 100623.0944: SWMM.INP file not found!")
-                                self.uc.log_info("ERROR 100623.0944: SWMM.INP file not found!")
+                        # if "Storm Drain" in dlg_components.components:
+                        #     try:
+                        #         swmm_converter = SchemaSWMMConverter(self.con, self.iface, self.lyrs)
+                        #         swmm_converter.create_user_swmm_inlets_junctions()
+                        #         swmm_converter.create_user_swmm_outlets()
+                        #     except Exception as e:
+                        #         self.uc.log_info(traceback.format_exc())
+                        #         QApplication.restoreOverrideCursor()
+                        #         self.uc.show_error(
+                        #             "ERROR 100623.1044:\n\nConverting Schematic SD Inlets to User Storm Drain Inlets/Junctions failed!"
+                        #             + "\n_______________________________________________________________",
+                        #             e,
+                        #         )
+                        #
+                        #     if os.path.isfile(outdir + r"\SWMM.INP"):
+                        #         if self.f2d_widget.storm_drain_editor.import_storm_drain_INP_file(
+                        #                 "Force import of SWMM.INP", True
+                        #         ):
+                        #             self.files_used += "SWMM.INP" + "\n"
+                        #     else:
+                        #         self.uc.bar_error("ERROR 100623.0944: SWMM.INP file not found!")
+                        #         self.uc.log_info("ERROR 100623.0944: SWMM.INP file not found!")
 
                         self.call_IO_methods(
                             import_calls, True
