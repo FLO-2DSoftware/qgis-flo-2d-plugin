@@ -201,7 +201,6 @@ class TestFlo2dSelfHelpKit(unittest.TestCase):
         n_other_curve = self.f2g.execute("""SELECT COUNT(fid) FROM swmm_other_curves;""").fetchone()[0]
         self.assertEqual(n_other_curve, 8)
 
-    @unittest.skip("Storm Drain tests needs to be updated")
     def test_sdclogging(self):
         self.f2g.import_sdclogging()
         self.f2g.export_sdclogging(EXPORT_DATA_DIR)
@@ -210,7 +209,6 @@ class TestFlo2dSelfHelpKit(unittest.TestCase):
         in_lines, out_lines = compare_files(infile, outfile)
         self.assertEqual(in_lines, out_lines)
 
-    # @unittest.skip("Storm Drain tests needs to be updated")
     def test_swmmflo(self):
         self.f2g.import_swmmflo()
         self.f2g.export_swmmflo(EXPORT_DATA_DIR)
@@ -219,7 +217,6 @@ class TestFlo2dSelfHelpKit(unittest.TestCase):
         in_lines, out_lines = compare_files(infile, outfile)
         self.assertEqual(in_lines, out_lines)
 
-    # @unittest.skip("Storm Drain tests needs to be updated")
     def test_swmmflodropbox(self):
         self.f2g.import_swmmflodropbox()
         self.f2g.export_swmmflodropbox(EXPORT_DATA_DIR)
@@ -228,7 +225,6 @@ class TestFlo2dSelfHelpKit(unittest.TestCase):
         in_lines, out_lines = compare_files(infile, outfile)
         self.assertEqual(in_lines, out_lines)
 
-    # @unittest.skip("Storm Drain tests needs to be updated")
     def test_swmmflort(self):
         self.f2g.import_swmmflort()
         self.f2g.export_swmmflort(EXPORT_DATA_DIR)
@@ -237,7 +233,6 @@ class TestFlo2dSelfHelpKit(unittest.TestCase):
         in_lines, out_lines = compare_files(infile, outfile)
         self.assertEqual(in_lines, out_lines)
 
-    # @unittest.skip("Storm Drain tests needs to be updated")
     def test_swmmoutf(self):
         self.f2g.import_swmmoutf()
         self.f2g.export_swmmoutf(EXPORT_DATA_DIR)
