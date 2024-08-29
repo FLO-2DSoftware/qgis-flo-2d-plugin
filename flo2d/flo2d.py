@@ -2707,6 +2707,8 @@ class Flo2D(object):
                         import_calls.remove("import_swmmflo")
                         import_calls.remove("import_swmmflort")
                         import_calls.remove("import_swmmoutf")
+                        import_calls.remove("import_swmmflodropbox")
+                        import_calls.remove("import_sdclogging")
 
                     if "Spatial Tolerance" not in dlg_components.components:
                         import_calls.remove("import_tolspatial")
