@@ -1653,7 +1653,74 @@ class Flo2dGeoPackage(GeoPackageUtils):
         self.import_swmminp_orifices(swmminp_dict, delete_existing)
         self.import_swmminp_weirs(swmminp_dict, delete_existing)
 
+        self.remove_outside_junctions()
+
         # QApplication.restoreOverrideCursor()
+
+    def remove_outside_junctions(self):
+        """
+        Function to remove outside junctions
+        """
+        try:
+            # SELECT all the nodes connected to a conduit
+            inside_inlets_qry = self.execute("""
+                SELECT DISTINCT conduit_inlet FROM user_swmm_conduits
+                UNION
+                SELECT DISTINCT pump_inlet FROM user_swmm_pumps
+                UNION
+                SELECT DISTINCT orifice_inlet FROM user_swmm_orifices
+                UNION
+                SELECT DISTINCT weir_inlet FROM user_swmm_weirs
+            ;""").fetchall()
+            inside_inlets = [inside_inlet[0] for inside_inlet in inside_inlets_qry]
+            inside_outlets_qry = self.execute("""            
+                SELECT DISTINCT conduit_outlet FROM user_swmm_conduits
+                UNION
+                SELECT DISTINCT pump_outlet FROM user_swmm_pumps
+                UNION
+                SELECT DISTINCT orifice_outlet FROM user_swmm_orifices
+                UNION
+                SELECT DISTINCT weir_outlet FROM user_swmm_weirs
+            ;""").fetchall()
+            inside_outlets = [inside_outlet[0] for inside_outlet in inside_outlets_qry]
+            inside_nodes = list(set(inside_inlets) | set(inside_outlets))
+
+            # Convert list to a SQL list
+            placeholders = ', '.join(['?'] * len(inside_nodes))
+
+            # Remove all the nodes that are not inside nodes.
+            inlet_junctions_delete_query = f"""
+                DELETE FROM user_swmm_inlets_junctions
+                WHERE name NOT IN ({placeholders});
+            """
+            inlet_junctions_delete = self.execute(inlet_junctions_delete_query, inside_nodes)
+            inlet_junctions_deleted_count = inlet_junctions_delete.rowcount
+            if inlet_junctions_deleted_count > 0:
+                self.uc.log_info(f"JUNCTIONS: {inlet_junctions_deleted_count} are outside the domain and not added to the project")
+            outfalls_delete_query = f"""
+                DELETE FROM user_swmm_outlets
+                WHERE name NOT IN ({placeholders});
+            """
+            outfalls_delete = self.execute(outfalls_delete_query, inside_nodes)
+            outfalls_deleted_count = outfalls_delete.rowcount
+            if outfalls_deleted_count > 0:
+                self.uc.log_info(f"OUTFALLS: {outfalls_deleted_count} are outside the domain and not added to the project")
+            storage_delete_query = f"""
+                DELETE FROM user_swmm_storage_units
+                WHERE name NOT IN ({placeholders});
+            """
+            storage_delete = self.execute(storage_delete_query, inside_nodes)
+            storage_deleted_count = storage_delete.rowcount
+            if storage_deleted_count > 0:
+                self.uc.log_info(f"STORAGES: {storage_deleted_count} are outside the domain and not added to the project")
+
+        except Exception as e:
+            QApplication.setOverrideCursor(Qt.ArrowCursor)
+            msg = "ERROR 08282024.0505: Removing outside nodes failed!\n\n" \
+                  f"{e}"
+            self.uc.show_error(msg, e)
+            self.uc.log_info(msg)
+            QApplication.restoreOverrideCursor()
 
     def import_swmminp_control(self, swmminp_dict):
         """
