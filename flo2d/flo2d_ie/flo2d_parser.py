@@ -1000,8 +1000,11 @@ class ParseDAT(object):
             data.append(row)
         return head, data
 
-    def parse_swmminp(self):
-        swmminp = self.dat_files["SWMM.INP"]
+    def parse_swmminp(self, swmm_file):
+        if swmm_file == "SWMM.INP":
+            swmminp = self.dat_files[swmm_file]
+        else:
+            swmminp = swmm_file
         swmminp_dict = self.swmminp_parser(swmminp)
         return swmminp_dict
 

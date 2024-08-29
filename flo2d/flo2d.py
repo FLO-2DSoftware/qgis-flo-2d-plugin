@@ -3485,14 +3485,14 @@ class Flo2D(object):
                     ret = msg.exec_()
                     QApplication.setOverrideCursor(Qt.WaitCursor)
                     if ret == 0:
-                        self.f2g.import_swmminp(delete_existing=False)
+                        self.f2g.import_swmminp(swmm_file=fname, delete_existing=False)
                     elif ret == 1:
-                        self.f2g.import_swmminp()
+                        self.f2g.import_swmminp(swmm_file=fname)
                     else:
                         QApplication.restoreOverrideCursor()
                         return
                 else:
-                    self.f2g.import_swmminp()
+                    self.f2g.import_swmminp(swmm_file=fname)
 
             self.lyrs.refresh_layers()
 
