@@ -3466,7 +3466,7 @@ class Flo2D(object):
             ]
             empty_sd = all((self.gutils.is_table_empty(sd_user_table) for sd_user_table in sd_user_tables))
 
-            if self.f2g.set_parser(fname):
+            if self.f2g.set_parser(fname, get_cell_size=False):
                 if not empty_sd:
                     QApplication.restoreOverrideCursor()
                     msg = QMessageBox()
