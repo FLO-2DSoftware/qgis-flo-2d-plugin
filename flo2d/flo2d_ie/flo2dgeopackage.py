@@ -3504,23 +3504,27 @@ class Flo2dGeoPackage(GeoPackageUtils):
             if x[1] != '-9999':
                 gids.append(x[1])
         cells = self.grid_centroids(gids, buffers=True)
+        have_outside = False
         for row in data:
             gid = row[1]
             # Outfall outside the grid -> Add exactly over the Storm Drain Outfalls
             if gid == '-9999':
+                have_outside = True
                 outfall_name = row[0]
                 geom_qry = self.execute(f"SELECT geom FROM user_swmm_outlets WHERE name = '{outfall_name}'").fetchone()
                 if geom_qry:
                     geom = geom_qry[0]
                 else:  # When there is no SWMM.INP
-                    self.uc.bar_warn(f"{outfall_name} coordinates not found!")
-                    self.uc.log_info(f"{outfall_name} coordinates not found!")
+                    self.uc.log_info(f"{outfall_name} outside the grid!")
                     continue
             else:
                 geom = cells[gid]
             swmmoutf_sql += [(geom,) + tuple(row)]
 
         self.batch_execute(swmmoutf_sql)
+
+        if have_outside:
+            self.uc.bar_warn(f"Some Outfalls are outside the grid! Check log messages for more information.")
 
     def import_tolspatial(self):
         tolspatial_sql = ["""INSERT INTO tolspatial (geom, tol) VALUES""", 2]

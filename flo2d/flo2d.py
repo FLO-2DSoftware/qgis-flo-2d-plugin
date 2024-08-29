@@ -1827,6 +1827,8 @@ class Flo2D(object):
                 dat = "BRIDGE_COEFF_DATA.DAT"
             elif call == "import_hystruc_bridge_xs":
                 dat = "BRIDGE_XSEC.DAT"
+            elif call == "import_swmminp":
+                dat = "SWMM.INP"
             else:
                 dat = call.split("_")[-1].upper() + ".DAT"
             if call.startswith("import"):
@@ -1917,6 +1919,7 @@ class Flo2D(object):
             "import_breach",
             "import_gutter",
             "import_fpfroude",
+            "import_swmminp",
             "import_swmmflo",
             "import_swmmflort",
             "import_swmmoutf",
@@ -2036,6 +2039,7 @@ class Flo2D(object):
                         import_calls.remove("import_raincell")
 
                     if "Storm Drain" not in dlg_components.components:
+                        import_calls.remove("import_swmminp")
                         import_calls.remove("import_swmmflo")
                         import_calls.remove("import_swmmflort")
                         import_calls.remove("import_swmmoutf")
@@ -2187,30 +2191,6 @@ class Flo2D(object):
 
                     for table in tables:
                         self.gutils.clear_tables(table)
-
-                    # Import first the grid
-                    if "import_cont_toler" in import_calls:
-                        self.call_IO_methods(["import_cont_toler"], True)
-                        import_calls.remove("import_cont_toler")
-
-                    if "import_mannings_n_topo" in import_calls:
-                        self.call_IO_methods(["import_mannings_n_topo"], True)
-                        import_calls.remove("import_mannings_n_topo")
-
-                    # Import the SWMM.INP
-                    if "Storm Drain" in dlg_components.components:
-                        swmm_converter = SchemaSWMMConverter(self.con, self.iface, self.lyrs)
-                        swmm_converter.create_user_swmm_inlets_junctions()
-                        swmm_converter.create_user_swmm_outlets()
-
-                        if os.path.isfile(dir_name + r"\SWMM.INP"):
-                            if self.f2d_widget.storm_drain_editor.import_storm_drain_INP_file(
-                                    "Force import of SWMM.INP", False
-                            ):
-                                self.files_used += "SWMM.INP" + "\n"
-                        else:
-                            self.uc.bar_error("ERROR 100623.0944: SWMM.INP file not found!")
-                            self.uc.log_info("ERROR 100623.0944: SWMM.INP file not found!")
 
                     self.call_IO_methods(import_calls, True)  # The strings list 'export_calls', contains the names of
                     # the methods in the class Flo2dGeoPackage to import (read) the
@@ -3432,7 +3412,6 @@ class Flo2D(object):
         """
         Function to export FLO-2D to SWMM's INP file
         """
-        # self.f2d_widget.storm_drain_editor.import_storm_drain_INP_file("Choose", True)
         try:
 
             if self.gutils.is_table_empty("grid"):
