@@ -155,50 +155,50 @@ class TestFlo2dSelfHelpKit(unittest.TestCase):
     def test_swmminp(self):
         self.f2g.import_swmminp()
         # Number of inlets
-        n_inlets = self.f2g.execute("""SELECT COUNT(fid) FROM user_swmm_inlets_junctions;""").fetchone()[0]
-        self.assertEqual(n_inlets, 270)
-        # # Number of junctions
-        # n_inlets = self.f2g.execute("""SELECT COUNT(fid) FROM levee_data;""").fetchone()[0]
-        # self.assertEqual(in_lines, out_lines)
-        # # Number of junctions & inlets
-        # n_inlets = self.f2g.execute("""SELECT COUNT(fid) FROM levee_data;""").fetchone()[0]
-        # self.assertEqual(in_lines, out_lines)
-        # # Number of outfalls
-        # n_inlets = self.f2g.execute("""SELECT COUNT(fid) FROM levee_data;""").fetchone()[0]
-        # self.assertEqual(in_lines, out_lines)
-        # # Number of conduits
-        # n_inlets = self.f2g.execute("""SELECT COUNT(fid) FROM levee_data;""").fetchone()[0]
-        # self.assertEqual(in_lines, out_lines)
-        # # Number of storage
-        # n_inlets = self.f2g.execute("""SELECT COUNT(fid) FROM levee_data;""").fetchone()[0]
-        # self.assertEqual(in_lines, out_lines)
-        # # Number of pumps
-        # n_inlets = self.f2g.execute("""SELECT COUNT(fid) FROM levee_data;""").fetchone()[0]
-        # self.assertEqual(in_lines, out_lines)
-        # # Number of orifices
-        # n_inlets = self.f2g.execute("""SELECT COUNT(fid) FROM levee_data;""").fetchone()[0]
-        # self.assertEqual(in_lines, out_lines)
-        # # Number of weirs
-        # n_inlets = self.f2g.execute("""SELECT COUNT(fid) FROM levee_data;""").fetchone()[0]
-        # self.assertEqual(in_lines, out_lines)
-        # # Number of RT
-        # n_inlets = self.f2g.execute("""SELECT COUNT(fid) FROM levee_data;""").fetchone()[0]
-        # self.assertEqual(in_lines, out_lines)
-        # # Number of RT data
-        # n_inlets = self.f2g.execute("""SELECT COUNT(fid) FROM levee_data;""").fetchone()[0]
-        # self.assertEqual(in_lines, out_lines)
-        # # Number of Culvert Equations
-        # n_inlets = self.f2g.execute("""SELECT COUNT(fid) FROM levee_data;""").fetchone()[0]
-        # self.assertEqual(in_lines, out_lines)
-        # # Number of SD CONTROL
-        # n_inlets = self.f2g.execute("""SELECT COUNT(fid) FROM levee_data;""").fetchone()[0]
-        # self.assertEqual(in_lines, out_lines)
+        n_inlets = self.f2g.execute("""SELECT COUNT(fid) FROM user_swmm_inlets_junctions WHERE sd_type = 'I';""").fetchone()[0]
+        self.assertEqual(n_inlets, 182)
+        # Number of junctions
+        n_junctions = self.f2g.execute("""SELECT COUNT(fid) FROM user_swmm_inlets_junctions WHERE sd_type = 'J';""").fetchone()[0]
+        self.assertEqual(n_junctions, 88)
+        # Number of junctions & inlets
+        n_inlets_junctions = self.f2g.execute("""SELECT COUNT(fid) FROM user_swmm_inlets_junctions;""").fetchone()[0]
+        self.assertEqual(n_inlets_junctions, 270)
+        # Number of outfalls: TODO allow discharge
+        n_outfalls = self.f2g.execute("""SELECT COUNT(fid) FROM user_swmm_outlets;""").fetchone()[0]
+        self.assertEqual(n_outfalls, 19)
+        # Number of conduits
+        n_conduits = self.f2g.execute("""SELECT COUNT(fid) FROM user_swmm_conduits;""").fetchone()[0]
+        self.assertEqual(n_conduits, 274)
+        # Number of storage
+        n_storage_units = self.f2g.execute("""SELECT COUNT(fid) FROM user_swmm_storage_units;""").fetchone()[0]
+        self.assertEqual(n_storage_units, 3)
+        # Number of pumps
+        n_pumps = self.f2g.execute("""SELECT COUNT(fid) FROM user_swmm_pumps;""").fetchone()[0]
+        self.assertEqual(n_pumps, 1)
+        # Number of orifices
+        n_orifices = self.f2g.execute("""SELECT COUNT(fid) FROM user_swmm_orifices;""").fetchone()[0]
+        self.assertEqual(n_orifices, 2)
+        # Number of weirs
+        n_weirs = self.f2g.execute("""SELECT COUNT(fid) FROM user_swmm_weirs;""").fetchone()[0]
+        self.assertEqual(n_weirs, 1)
+        # Number of RT
+        n_rt = self.f2g.execute("""SELECT COUNT(fid) FROM swmmflort;""").fetchone()[0]
+        self.assertEqual(n_rt, 1)
+        # Number of RT data
+        n_rt_data = self.f2g.execute("""SELECT COUNT(fid) FROM swmmflort_data;""").fetchone()[0]
+        self.assertEqual(n_rt_data, 14)
+        # Number of Culvert Equations
+        n_culverts = self.f2g.execute("""SELECT COUNT(fid) FROM swmmflo_culvert;""").fetchone()[0]
+        self.assertEqual(n_culverts, 5)
+        # Number of SD CONTROL
+        n_control = self.f2g.execute("""SELECT COUNT(fid) FROM swmm_control;""").fetchone()[0]
+        self.assertEqual(n_control, 32)
         # # Number of Pump Curve
-        # n_inlets = self.f2g.execute("""SELECT COUNT(fid) FROM levee_data;""").fetchone()[0]
-        # self.assertEqual(in_lines, out_lines)
-        # # Number of Other Curve
-        # n_inlets = self.f2g.execute("""SELECT COUNT(fid) FROM levee_data;""").fetchone()[0]
-        # self.assertEqual(in_lines, out_lines)
+        n_pump_curve = self.f2g.execute("""SELECT COUNT(fid) FROM swmm_pumps_curve_data;""").fetchone()[0]
+        self.assertEqual(n_pump_curve, 3)
+        # Number of Other Curve
+        n_other_curve = self.f2g.execute("""SELECT COUNT(fid) FROM swmm_other_curves;""").fetchone()[0]
+        self.assertEqual(n_other_curve, 8)
 
     @unittest.skip("Storm Drain tests needs to be updated")
     def test_sdclogging(self):
