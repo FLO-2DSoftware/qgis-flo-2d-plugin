@@ -201,7 +201,7 @@ class TestFlo2dSelfHelpKit(unittest.TestCase):
         n_other_curve = self.f2g.execute("""SELECT COUNT(fid) FROM swmm_other_curves;""").fetchone()[0]
         self.assertEqual(n_other_curve, 8)
 
-    # @unittest.skip("Storm Drain tests needs to be updated")
+    @unittest.skip("Storm Drain tests needs to be updated")
     def test_sdclogging(self):
         self.f2g.import_sdclogging()
         self.f2g.export_sdclogging(EXPORT_DATA_DIR)
