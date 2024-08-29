@@ -2818,6 +2818,25 @@ class Flo2D(object):
         """
         self.gutils.disable_geom_triggers()
         self.f2g = Flo2dGeoPackage(self.con, self.iface)
+        s = QSettings()
+        last_dir = s.value("FLO-2D/lastGdsDir", "")
+        fname, __ = QFileDialog.getOpenFileName(
+            None, "Select FLO-2D file to import", directory=last_dir, filter="DAT or INP (*.DAT *.dat *.INP *.inp)"
+        )
+        if not fname:
+            self.gutils.enable_geom_triggers()
+            return
+        dir_name = os.path.dirname(fname)
+        s.setValue("FLO-2D/lastGdsDir", dir_name)
+        bname = os.path.basename(fname)
+
+        if bname.lower().endswith("inp"):
+            swmm_file_name = bname
+            swmm_file_path = fname
+        else:
+            swmm_file_name = "SWMM.INP"
+            swmm_file_path = os.path.join(dir_name, swmm_file_name)
+
         file_to_import_calls = {
             "CONT.DAT": "import_cont_toler",
             "TOLER.DAT": "import_cont_toler",
@@ -2845,6 +2864,7 @@ class Flo2D(object):
             "BREACH.DAT": "import_breach",
             "GUTTER.DAT": "import_gutter",
             "FPFROUDE.DAT": "import_fpfroude",
+            f"{swmm_file_name}": "import_swmminp",
             "SWMMFLO.DAT": "import_swmmflo",
             "SWMMFLORT.DAT": "import_swmmflort",
             "SWMMOUTF.DAT": "import_swmmoutf",
@@ -2855,22 +2875,11 @@ class Flo2D(object):
             "MANNINGS_N.DAT": "import_mannings_n",
             "TOPO.DAT": "import_topo"
         }
-        s = QSettings()
-        last_dir = s.value("FLO-2D/lastGdsDir", "")
-        fname, __ = QFileDialog.getOpenFileName(
-            None, "Select FLO-2D file to import", directory=last_dir, filter="(*.DAT)"
-        )
-        if not fname:
-            self.gutils.enable_geom_triggers()
-            return
-        dir_name = os.path.dirname(fname)
-        s.setValue("FLO-2D/lastGdsDir", dir_name)
-        bname = os.path.basename(fname)
 
         if bname not in file_to_import_calls:
             QMessageBox.critical(
                 self.iface.mainWindow(),
-                "Import selected GDS file",
+                "Import selected DAT file",
                 "Import from {0} file is not supported.".format(bname),
             )
             self.uc.log_info(f"Import from {bname} file is not supported.")
@@ -2882,11 +2891,14 @@ class Flo2D(object):
             QApplication.setOverrideCursor(Qt.WaitCursor)
             try:
                 method = getattr(self.f2g, call_string)
-                method()
+                if call_string == "import_swmminp":
+                    method(swmm_file=swmm_file_path)
+                else:
+                    method()
                 QApplication.restoreOverrideCursor()
                 QMessageBox.information(
                     self.iface.mainWindow(),
-                    "Import selected GDS file",
+                    "Import selected DAT file",
                     "Import from {0} was successful.".format(bname),
                 )
                 self.uc.log_info(f"Import from {bname} was successful.")
