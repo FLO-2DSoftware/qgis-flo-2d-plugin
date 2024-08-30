@@ -877,10 +877,8 @@ class ParseDAT(object):
         mult = self.dat_files["MULT.DAT"]
         par = self.single_parser(mult)
         head = next(par)
-        self.fix_row_size(head, 8)
         data = []
         for row in par:
-            self.fix_row_size(row, 5)
             data.append(row)
         return head, data
 
