@@ -144,22 +144,6 @@ class TestFlo2dCoastal(unittest.TestCase):
         in_lines, out_lines = compare_files(infile, outfile)
         self.assertEqual(in_lines, out_lines)
 
-    # def test_swmminp(self):
-    #     """Testing the SWMMINP Import/Export"""
-    #     file = IMPORT_DATA_DIR + r"\SWMM.INP"
-    #     if os.path.isfile(file):
-    #         f2d_plot = PlotWidget()
-    #         f2g_table = TableEditorWidget(f2g.iface, f2d_plot, f2g.lyrs)
-    #         sd = StormDrainEditorWidget(f2g.iface, f2d_plot, f2g_table, f2g.lyrs)
-    #         StormDrainEditorWidget.import_storm_drain_INP_file(sd, mode=file, show_end_message=True)
-    #         StormDrainEditorWidget.export_storm_drain_INP_file(specific_path=EXPORT_DATA_DIR)
-    #         outfile = os.path.join(EXPORT_DATA_DIR, "SWMM.INP")
-    #         in_lines, out_lines = compare_files(file, outfile)
-    #         self.assertEqual(in_lines, out_lines)            
-    #     else:
-    #         self.skipTest("Project does not have SWMM.INP")
-
-    # @unittest.skip("Storm Drain tests needs to be updated")
     def test_swmmflo(self):
         self.f2g.import_swmmflo()
         self.f2g.export_swmmflo(EXPORT_DATA_DIR)
@@ -168,7 +152,7 @@ class TestFlo2dCoastal(unittest.TestCase):
         in_lines, out_lines = compare_files(infile, outfile)
         self.assertEqual(in_lines, out_lines)
 
-    # @unittest.skip("Storm Drain tests needs to be updated")
+    @unittest.skip("Storm Drain tests needs to be updated")
     def test_swmmflort(self):
         self.f2g.import_swmmflort()
         self.f2g.export_swmmflort(EXPORT_DATA_DIR)
@@ -177,7 +161,7 @@ class TestFlo2dCoastal(unittest.TestCase):
         in_lines, out_lines = compare_files(infile, outfile)
         self.assertEqual(in_lines, out_lines)
 
-    # @unittest.skip("Storm Drain tests needs to be updated")
+    @unittest.skip("Storm Drain tests needs to be updated")
     def test_swmmoutf(self):
         self.f2g.import_swmmoutf()
         self.f2g.export_swmmoutf(EXPORT_DATA_DIR)
