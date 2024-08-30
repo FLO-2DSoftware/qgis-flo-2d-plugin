@@ -11,6 +11,7 @@ about=The FLO-2D Plugin for QGIS is a tool to develop, format, analyze, and disp
 changelog=
  <p>1.0.2
  - Storm Drain
+    Improved the code for importing the SWMM.INP and other minor bug fixes
     Inlet type minimum value on dialog allow 0
     Weir coefficient min/max limits removed on the dialog
     Inlet type set to 0 when importing from INP
