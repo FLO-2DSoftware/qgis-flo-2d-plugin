@@ -1176,7 +1176,6 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     """INSERT INTO mult_cells (area_fid, grid_fid, wdr, dm, nodchns, xnmult) VALUES""",
                     6,
                 ]
-                head.append("0.04")
                 mult_sql += [tuple(head)]
                 gids = (x[0] for x in data)
                 cells = self.grid_centroids(gids)
