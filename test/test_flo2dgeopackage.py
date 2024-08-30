@@ -475,14 +475,14 @@ class TestFlo2dGeoPackage(unittest.TestCase):
         in_len, out_len = file_len(infile), file_len(outfile)
         self.assertEqual(in_len, out_len)
 
-    @unittest.skip("Storm Drain tests needs to be updated")
-    def test_export_swmmflort(self):
-        self.f2g.import_swmmflort()
-        self.f2g.export_swmmflort(EXPORT_DATA_DIR)
-        infile = self.f2g.parser.dat_files["SWMMFLORT.DAT"]
-        outfile = export_paths(infile)
-        in_len, out_len = file_len(infile), file_len(outfile)
-        self.assertEqual(in_len, out_len)
+    # @unittest.skip("This dataset does not have a .INP file.")
+    # def test_export_swmmflort(self):
+    #     self.f2g.import_swmmflort()
+    #     self.f2g.export_swmmflort(EXPORT_DATA_DIR)
+    #     infile = self.f2g.parser.dat_files["SWMMFLORT.DAT"]
+    #     outfile = export_paths(infile)
+    #     in_len, out_len = file_len(infile), file_len(outfile)
+    #     self.assertEqual(in_len, out_len)
 
     def test_export_swmmoutf(self):
         self.f2g.import_swmmoutf()
