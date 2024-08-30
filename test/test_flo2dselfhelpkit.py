@@ -164,7 +164,7 @@ class TestFlo2dSelfHelpKit(unittest.TestCase):
         # Number of junctions & inlets
         n_inlets_junctions = self.f2g.execute("""SELECT COUNT(fid) FROM user_swmm_inlets_junctions;""").fetchone()[0]
         self.assertEqual(n_inlets_junctions, 270)
-        # Number of outfalls: TODO allow discharge
+        # Number of outfalls:
         n_outfalls = self.f2g.execute("""SELECT COUNT(fid) FROM user_swmm_outlets;""").fetchone()[0]
         self.assertEqual(n_outfalls, 19)
         # Number of conduits
