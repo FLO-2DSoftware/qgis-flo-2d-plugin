@@ -58,6 +58,7 @@ class ICEditorWidget(qtBaseClass, uiDialog):
         self.res_cbo.activated.connect(self.cur_res_changed)
         self.res_ini_sbox.editingFinished.connect(self.save_res)
         self.res_n_sbox.editingFinished.connect(self.save_res)
+        self.res_lyr.afterCommitChanges.connect(self.populate_res_signal)
 
         # connections Channels
         self.chan_seg_cbo.activated.connect(self.cur_seg_changed)
@@ -74,6 +75,8 @@ class ICEditorWidget(qtBaseClass, uiDialog):
         self.delete_schem_tal_btn.clicked.connect(self.delete_schematize_tal)
         self.schem_tal_btn.clicked.connect(self.schematize_tal)
         self.help_tal_btn.clicked.connect(self.help_res)
+        self.tal_res_lyr.afterCommitChanges.connect(self.populate_tal_res_signal)
+        self.tal_lyr.afterCommitChanges.connect(self.populate_tal_signal)
         # tailing res
         self.tailing_res_cbo.activated.connect(self.cur_tal_res_changed)
         self.rename_tal_res_btn.clicked.connect(self.rename_tal_res)
@@ -277,8 +280,12 @@ class ICEditorWidget(qtBaseClass, uiDialog):
             return
         self.lyrs.show_feat_rubber(self.chan_lyr.id(), self.seg_fid)
 
-    def create_user_res(self):
+    def populate_res_signal(self):
+        self.add_user_res_btn.setChecked(False)
+        self.gutils.fill_empty_reservoir_names()
+        self.populate_cbos()
 
+    def create_user_res(self):
         if self.lyrs.any_lyr_in_edit('user_reservoirs'):
             self.uc.bar_info(f"Reservoir saved!")
             self.uc.log_info(f"Reservoir saved!")
@@ -632,6 +639,11 @@ class ICEditorWidget(qtBaseClass, uiDialog):
     def save_seg_init_depth(self):
         pass
 
+    def populate_tal_res_signal(self):
+        self.add_point_tailings_btn.setChecked(False)
+        self.gutils.fill_empty_point_tailings_names()
+        self.populate_cbos()
+
     def create_point_tailings(self):
         """
         Function to create tailing reservoirs
@@ -646,6 +658,11 @@ class ICEditorWidget(qtBaseClass, uiDialog):
             return
         else:
             self.lyrs.enter_edit_mode("user_tailing_reservoirs")
+
+    def populate_tal_signal(self):
+        self.add_tailings_btn.setChecked(False)
+        self.gutils.fill_empty_tailings_names()
+        self.populate_cbos()
 
     def create_tailings(self):
         """
