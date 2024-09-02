@@ -1025,15 +1025,19 @@ class GeoPackageUtils(object):
         self.execute(qry)
 
     def fill_empty_tailings_names(self):
-        qry = """UPDATE user_tailings SET name = 'Tailings ' ||  cast(fid as text) WHERE name IS NULL;"""
+        qry = """UPDATE user_tailings SET name = 'Tailings Stack ' ||  cast(fid as text) WHERE name IS NULL;"""
         self.execute(qry)
         qry = """UPDATE user_tailings SET tailings_surf_elev = 0.0 WHERE tailings_surf_elev IS NULL;"""
         self.execute(qry)
 
     def fill_empty_point_tailings_names(self):
-        qry = """UPDATE user_tailing_reservoirs SET name = 'Tailings ' ||  cast(fid as text) WHERE name IS NULL;"""
+        qry = """UPDATE user_tailing_reservoirs SET name = 'Tailings Reservoir ' ||  cast(fid as text) WHERE name IS NULL;"""
         self.execute(qry)
         qry = """UPDATE user_tailing_reservoirs SET tailings = 0.0 WHERE tailings IS NULL;"""
+        self.execute(qry)
+
+    def fill_empty_fpxs_names(self):
+        qry = """UPDATE user_fpxsec SET name = 'Floodplain XS-' ||  cast(fid as text) WHERE name IS NULL;"""
         self.execute(qry)
 
     def fill_empty_inflow_names(self):

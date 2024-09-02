@@ -73,7 +73,7 @@ class FPXsecEditorWidget(qtBaseClass, uiDialog):
 
         self.fpxsec_lyr = self.lyrs.data["user_fpxsec"]["qlyr"]
         self.fpxsec_lyr.geometryChanged.connect(self.fpxs_feature_changed)
-        # self.fpxsec_lyr.attributeValueChanged.connect(self.fpxs_feature_changed)
+        self.fpxsec_lyr.afterCommitChanges.connect(self.populate_fpxs_signal)
 
     def setup_connection(self):
         con = self.iface.f2d["con"]
@@ -137,6 +137,11 @@ class FPXsecEditorWidget(qtBaseClass, uiDialog):
         if not self.fpxs_fid:
             return
         self.lyrs.show_feat_rubber(self.fpxsec_lyr.id(), self.fpxs_fid)
+
+    def populate_fpxs_signal(self):
+        self.add_user_fpxs_btn.setChecked(False)
+        self.gutils.fill_empty_fpxs_names()
+        self.populate_cbos(fid=self.gutils.get_max("user_fpxsec") - 1)
 
     def create_user_fpxs(self):
 
