@@ -1036,6 +1036,10 @@ class GeoPackageUtils(object):
         qry = """UPDATE user_tailing_reservoirs SET tailings = 0.0 WHERE tailings IS NULL;"""
         self.execute(qry)
 
+    def fill_empty_fpxs_names(self):
+        qry = """UPDATE user_fpxsec SET name = 'Floodplain XS-' ||  cast(fid as text) WHERE name IS NULL;"""
+        self.execute(qry)
+
     def fill_empty_inflow_names(self):
         qry = """UPDATE inflow SET name = 'Inflow ' ||  cast(fid as text) WHERE name IS NULL;"""
         self.execute(qry)
