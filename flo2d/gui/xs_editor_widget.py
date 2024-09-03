@@ -167,7 +167,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         self.user_xs_lyr.geometryChanged.connect(self.xs_feature_changed)
         self.user_xs_lyr.attributeValueChanged.connect(self.xs_feature_changed)
 
-        self.user_xs_lyr.editingStopped.connect(lambda: self.populate_xsec_cbo(show_last_edited=True))
+        self.user_xs_lyr.afterCommitChanges.connect(lambda: self.populate_xsec_cbo(show_last_edited=True))
         self.user_xs_lyr.selectionChanged.connect(self.switch2selected)
 
     def setup_connection(self):
