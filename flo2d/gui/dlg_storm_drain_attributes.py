@@ -751,7 +751,8 @@ class OutletAttributes(qtBaseClass, uiDialog):
             self.flapgate.setCurrentIndex(0)
         else:
             self.flapgate.setCurrentIndex(1)
-        self.fixed_stage.setValue(float(attributes[4]))
+        fixed_stage = 0 if attributes[4] == "*" else float(attributes[4])
+        self.fixed_stage.setValue(fixed_stage)
         self.tidal_curve.setCurrentText(attributes[5])
         self.time_series.setCurrentText(attributes[6])
         self.outfall_type.setCurrentText(str(attributes[7]))
