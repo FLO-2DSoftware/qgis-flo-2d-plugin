@@ -1659,15 +1659,10 @@ class Flo2D(object):
                 new_gpkg = uri[len("geopackage:"):].split('?')[0]
             else:
                 QApplication.restoreOverrideCursor()
-                self.uc.show_warn(
-                    "It looks like you're trying to load an old FLO-2D *.qgz project into FLO-2D Gila...\n\n"
-                    "In FLO-2D Gila, projects are stored within a geopackage. "
-                    "Please use the 'Open FLO-2D Project' option on the toolbar to automatically "
-                    "port your geopackage into the new FLO-2D Gila. "
-                    "Alternatively, you can downgrade to FLO-2D Plugin 0.10.115."
-                    "Please note that while you may see the project's layers, "
-                    "the FLO-2D Plugin will not initialize.\n\n"
-                    "If you encounter any issues, feel free to contact us at https://flo-2d.com/."
+                self.uc.show_warn("<b>It looks like you're trying to open an old FLO-2D *.qgz project.</b><br><br>"
+                                  "Please use the 'Open FLO-2D Project' option on the toolbar to port your project to the new format. This process will not damage your old project.<br><br>"
+                                  "<a href='https://documentation.flo-2d.com/Plugin1000/toolbar/flo-2d-project/Open%20FLO-2D%20Project.html'>Open Project Instructions</a><br>"
+                                  "<a href='https://flo-2d.com/contact'>Tech Support</a>"
                 )
                 return
 
