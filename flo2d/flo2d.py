@@ -1657,6 +1657,14 @@ class Flo2D(object):
             uri = self.project.fileName()
             if uri.startswith("geopackage:"):
                 new_gpkg = uri[len("geopackage:"):].split('?')[0]
+            else:
+                QApplication.restoreOverrideCursor()
+                self.uc.show_warn("<b>It looks like you're trying to open an old FLO-2D *.qgz project.</b><br><br>"
+                                  "Please use the 'Open FLO-2D Project' option on the toolbar to port your project to the new format. This process will not damage your old project.<br><br>"
+                                  "<a href='https://documentation.flo-2d.com/Plugin1000/toolbar/flo-2d-project/Open%20FLO-2D%20Project.html'>Open Project Instructions</a><br>"
+                                  "<a href='https://flo-2d.com/contact'>Tech Support</a>"
+                )
+                return
 
         if '%20' in new_gpkg:
             new_gpkg = new_gpkg.replace('%20', ' ')
@@ -4736,8 +4744,12 @@ class Flo2D(object):
         Function to update the layer type on the external_layers table
         """
         gpkg = self.read_proj_entry("gpkg")
+        uri = self.project.fileName()
         if not gpkg:
             return
+        if not uri.startswith("geopackage:"):
+            return
+
         for layer_id in layer_ids:
             layer = QgsProject.instance().mapLayer(layer_id)
             if layer:
