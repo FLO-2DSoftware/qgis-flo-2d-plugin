@@ -760,7 +760,9 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
                 "   * Each User Left Bank line has at least 2 cross sections\n"
                 "     crossing it.\n\n"
                 "   * All cross sections associated to a User Left Bank line\n"
-                "     intersects (crossover) it."
+                "     intersects (crossover) it.\n\n"
+                "   * Two or more cross sections cannot start/end \n"
+                "     on the same cell."
                 "\n_________________________________________________",
                 e,
             )
