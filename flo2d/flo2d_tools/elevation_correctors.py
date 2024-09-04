@@ -8,7 +8,7 @@ import time
 from collections import defaultdict
 
 from PyQt5.QtWidgets import QMessageBox
-from qgis._core import QgsMessageLog
+from qgis._core import QgsMessageLog, QgsSpatialIndex
 from qgis.analysis import QgsZonalStatistics
 from qgis.core import (
     NULL,
@@ -204,8 +204,7 @@ class LeveesElevation(ElevationCorrector):
 
         grid = self.lyrs.data["grid"]["qlyr"]
         levee_data = self.lyrs.data["levee_data"]["qlyr"]
-        # qry = "UPDATE levee_data SET levcrest = ? WHERE user_line_fid = ?;"
-        # qryElevNullPlusCorrect = "UPDATE levee_data SET levcrest = levcrest + ? WHERE user_line_fid = ?;"
+        levee_spatial_index = QgsSpatialIndex(levee_data.getFeatures())
 
         levee_data.startEditing()
 
@@ -215,40 +214,42 @@ class LeveesElevation(ElevationCorrector):
             else [regionReq]
         ):
 
-            for feat in levee_data.getFeatures(regionReqSwatch):
-                levee_data_fid = feat["fid"]
+            # Added an intermediate loop that iterates over each grid to get all features inside the grid element
+            for grid_feature in grid.getFeatures(regionReqSwatch):
+                grid_geometry = grid_feature.geometry()
+                bbox = grid_geometry.boundingBox()
+                levees_intersected = levee_spatial_index.intersects(bbox)
+                request = QgsFeatureRequest().setFilterFids(levees_intersected)
 
-                # self.gutils.uc.log_info(str(processed_time))
-                user_levee_lines_fid = feat["user_line_fid"]
-                user_levee_lines_data = self.gutils.execute(f"SELECT elev, correction FROM user_levee_lines WHERE fid "
-                                                            f"= '{user_levee_lines_fid}'").fetchall()[0]
-                elev = user_levee_lines_data[0]
-                cor = user_levee_lines_data[1]
+                for feat in levee_data.getFeatures(request):
+                    levee_data_fid = feat["fid"]
 
-                if feat["processed_data"] == 1:
-                    feat["processed_data"] = 2
-                else:
-                    feat["processed_data"] = 1
+                    user_levee_lines_fid = feat["user_line_fid"]
+                    user_levee_lines_data = self.gutils.execute(f"SELECT elev, correction FROM user_levee_lines WHERE fid "
+                                                                f"= '{user_levee_lines_fid}'").fetchall()[0]
+                    elev = user_levee_lines_data[0]
+                    cor = user_levee_lines_data[1]
 
-                levee_data.updateFeature(feat)
+                    if elev == -9999:
+                        QgsMessageLog.logMessage("Entrou")
 
-                if elev == NULL and cor == NULL:
-                    continue
-                elif elev != NULL and cor != NULL:
-                    val = elev + cor
-                    self.gutils.execute(f"UPDATE levee_data SET levcrest = {val} WHERE fid = {levee_data_fid};")
-                elif elev != NULL and cor == NULL:
-                    val = elev
-                    self.gutils.execute(f"UPDATE levee_data SET levcrest = {val} WHERE fid = {levee_data_fid};")
-                elif elev == NULL and cor != NULL:
-                    if feat["processed_data"] == 2:
+
+                    levee_data.updateFeature(feat)
+
+                    if elev == NULL and cor == NULL:
                         continue
-                    else:
+                    elif elev != NULL and cor != NULL:
+                        val = elev + cor
+                        self.gutils.execute(f"UPDATE levee_data SET levcrest = {val} WHERE fid = {levee_data_fid};")
+                    elif elev != NULL and cor == NULL:
+                        val = elev
+                        self.gutils.execute(f"UPDATE levee_data SET levcrest = {val} WHERE fid = {levee_data_fid};")
+                    elif elev == NULL and cor != NULL:
                         val = cor
                         self.gutils.execute(f"UPDATE levee_data SET levcrest = levcrest + {val} WHERE fid = {levee_data_fid};")
-                else:
-                    continue
-            levee_data.commitChanges()
+                    else:
+                        continue
+                levee_data.commitChanges()
 
     @timer
     def elevation_from_polygons(self):

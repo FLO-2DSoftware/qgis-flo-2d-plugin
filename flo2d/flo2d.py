@@ -4053,22 +4053,7 @@ class Flo2D(object):
         n_fail_features_total = 0
 
         starttime = time.time()
-        # Create a virtual field to add the process data
-        # This is used to avoid duplicate of processed data when running the moving window
         levees = self.lyrs.data["levee_data"]["qlyr"]
-        field_name = 'processed_data'
-
-        # Check if the virtual field was already created, if so, delete it
-        existing_field_index = levees.fields().indexFromName(field_name)
-
-        if existing_field_index != -1:  # Field exists, delete it
-            levees.dataProvider().deleteAttributes([existing_field_index])
-            levees.updateFields()
-
-        # Add a virtual field
-        field = QgsField(field_name, QVariant.Int)
-        levees.dataProvider().addAttributes([field])
-        levees.updateFields()
 
         # This for loop creates the attributes in the levee_dat
         for (
@@ -4098,25 +4083,6 @@ class Flo2D(object):
         if n_elements_total > 0:
             print("in clear loop")
             dletes = "Cell - Direction\n---------------\n"
-
-            # fix the ones that the correction was not correctly applied
-            badCorrectionQry = """
-                                UPDATE levee_data
-                                SET levcrest = levcrest + (
-                                    SELECT correction
-                                    FROM user_levee_lines
-                                    WHERE user_levee_lines.fid = levee_data.user_line_fid
-                                )
-                                WHERE processed_data IS NULL;
-                                """
-            self.gutils.con.execute(badCorrectionQry)
-            self.gutils.con.commit()
-
-            # Delete the processed field on the user_levee_lines
-            existing_field_index = levees.fields().indexFromName(field_name)
-            if existing_field_index != -1:  # Field exists, delete it
-                levees.dataProvider().deleteAttributes([existing_field_index])
-                levees.updateFields()
 
             # delete duplicate elements with the same direction and elevation too
             qryIndex = "CREATE INDEX if not exists levee_dataFIDGRIDFIDLDIRLEVCEST  ON levee_data (fid, grid_fid, ldir, levcrest);"
