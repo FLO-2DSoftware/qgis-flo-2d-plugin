@@ -230,10 +230,6 @@ class LeveesElevation(ElevationCorrector):
                     elev = user_levee_lines_data[0]
                     cor = user_levee_lines_data[1]
 
-                    if elev == -9999:
-                        QgsMessageLog.logMessage("Entrou")
-
-
                     levee_data.updateFeature(feat)
 
                     if elev == NULL and cor == NULL:
