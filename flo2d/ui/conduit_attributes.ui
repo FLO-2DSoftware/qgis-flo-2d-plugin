@@ -24,8 +24,8 @@
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>379</width>
-        <height>663</height>
+        <width>365</width>
+        <height>740</height>
        </rect>
       </property>
       <layout class="QGridLayout" name="gridLayout_2">
@@ -37,17 +37,10 @@
          <layout class="QGridLayout" name="gridLayout_4">
           <item row="0" column="0">
            <layout class="QGridLayout" name="gridLayout_3">
-            <item row="4" column="0">
-             <widget class="QLabel" name="label_5">
-              <property name="text">
-               <string>Manning</string>
-              </property>
-             </widget>
-            </item>
-            <item row="7" column="0">
-             <widget class="QLabel" name="label_8">
-              <property name="text">
-               <string>Initial Flow</string>
+            <item row="8" column="1" colspan="3">
+             <widget class="QDoubleSpinBox" name="conduit_max_flow">
+              <property name="maximum">
+               <double>100000.000000000000000</double>
               </property>
              </widget>
             </item>
@@ -58,6 +51,22 @@
               </property>
              </widget>
             </item>
+            <item row="2" column="1" colspan="3">
+             <widget class="QLabel" name="conduit_outlet">
+              <property name="enabled">
+               <bool>false</bool>
+              </property>
+              <property name="minimumSize">
+               <size>
+                <width>0</width>
+                <height>20</height>
+               </size>
+              </property>
+              <property name="text">
+               <string>-</string>
+              </property>
+             </widget>
+            </item>
             <item row="8" column="0">
              <widget class="QLabel" name="label_9">
               <property name="text">
@@ -65,10 +74,77 @@
               </property>
              </widget>
             </item>
-            <item row="2" column="0">
-             <widget class="QLabel" name="label_3">
+            <item row="5" column="1" colspan="3">
+             <widget class="QDoubleSpinBox" name="conduit_inlet_offset">
+              <property name="maximum">
+               <double>100000.000000000000000</double>
+              </property>
+             </widget>
+            </item>
+            <item row="4" column="1" colspan="3">
+             <widget class="QDoubleSpinBox" name="conduit_manning">
+              <property name="decimals">
+               <number>3</number>
+              </property>
+              <property name="maximum">
+               <double>1.000000000000000</double>
+              </property>
+              <property name="singleStep">
+               <double>0.010000000000000</double>
+              </property>
+              <property name="value">
+               <double>0.010000000000000</double>
+              </property>
+             </widget>
+            </item>
+            <item row="1" column="1" colspan="3">
+             <widget class="QLabel" name="conduit_inlet">
+              <property name="enabled">
+               <bool>false</bool>
+              </property>
+              <property name="minimumSize">
+               <size>
+                <width>0</width>
+                <height>20</height>
+               </size>
+              </property>
               <property name="text">
-               <string>Outfall</string>
+               <string>-</string>
+              </property>
+             </widget>
+            </item>
+            <item row="6" column="1" colspan="3">
+             <widget class="QDoubleSpinBox" name="conduit_outlet_offset">
+              <property name="maximum">
+               <double>100000.000000000000000</double>
+              </property>
+             </widget>
+            </item>
+            <item row="0" column="1">
+             <widget class="QLineEdit" name="conduit_name"/>
+            </item>
+            <item row="0" column="2">
+             <widget class="QToolButton" name="zoom_in_btn">
+              <property name="text">
+               <string>...</string>
+              </property>
+              <property name="icon">
+               <iconset>
+                <normaloff>../img/zoom_in.svg</normaloff>../img/zoom_in.svg</iconset>
+              </property>
+             </widget>
+            </item>
+            <item row="7" column="1" colspan="3">
+             <widget class="QDoubleSpinBox" name="conduit_init_flow">
+              <property name="maximum">
+               <double>100000.000000000000000</double>
+              </property>
+             </widget>
+            </item>
+            <item row="4" column="0">
+             <widget class="QLabel" name="label_5">
+              <property name="text">
+               <string>Manning</string>
               </property>
              </widget>
             </item>
@@ -79,13 +155,10 @@
               </property>
              </widget>
             </item>
-            <item row="0" column="1">
-             <widget class="QLineEdit" name="conduit_name"/>
-            </item>
-            <item row="5" column="0">
-             <widget class="QLabel" name="label_6">
+            <item row="1" column="0">
+             <widget class="QLabel" name="label_2">
               <property name="text">
-               <string>Inlet Offset</string>
+               <string>Inlet</string>
               </property>
              </widget>
             </item>
@@ -108,24 +181,6 @@
               </property>
              </widget>
             </item>
-            <item row="1" column="0">
-             <widget class="QLabel" name="label_2">
-              <property name="text">
-               <string>Inlet</string>
-              </property>
-             </widget>
-            </item>
-            <item row="0" column="2">
-             <widget class="QToolButton" name="zoom_in_btn">
-              <property name="text">
-               <string>...</string>
-              </property>
-              <property name="icon">
-               <iconset>
-                <normaloff>../img/zoom_in.svg</normaloff>../img/zoom_in.svg</iconset>
-              </property>
-             </widget>
-            </item>
             <item row="0" column="3">
              <widget class="QToolButton" name="zoom_out_btn">
               <property name="text">
@@ -137,35 +192,10 @@
               </property>
              </widget>
             </item>
-            <item row="1" column="1" colspan="3">
-             <widget class="QLabel" name="conduit_inlet">
-              <property name="enabled">
-               <bool>false</bool>
-              </property>
-              <property name="minimumSize">
-               <size>
-                <width>0</width>
-                <height>20</height>
-               </size>
-              </property>
+            <item row="2" column="0">
+             <widget class="QLabel" name="label_3">
               <property name="text">
-               <string>-</string>
-              </property>
-             </widget>
-            </item>
-            <item row="2" column="1" colspan="3">
-             <widget class="QLabel" name="conduit_outlet">
-              <property name="enabled">
-               <bool>false</bool>
-              </property>
-              <property name="minimumSize">
-               <size>
-                <width>0</width>
-                <height>20</height>
-               </size>
-              </property>
-              <property name="text">
-               <string>-</string>
+               <string>Outfall</string>
               </property>
              </widget>
             </item>
@@ -176,49 +206,29 @@
               </property>
              </widget>
             </item>
-            <item row="4" column="1" colspan="3">
-             <widget class="QDoubleSpinBox" name="conduit_manning">
-              <property name="decimals">
-               <number>3</number>
-              </property>
-              <property name="maximum">
-               <double>1.000000000000000</double>
-              </property>
-              <property name="singleStep">
-               <double>0.010000000000000</double>
-              </property>
-              <property name="value">
-               <double>0.010000000000000</double>
+            <item row="7" column="0">
+             <widget class="QLabel" name="label_8">
+              <property name="text">
+               <string>Initial Flow</string>
               </property>
              </widget>
             </item>
-            <item row="5" column="1" colspan="3">
-             <widget class="QDoubleSpinBox" name="conduit_inlet_offset">
-              <property name="maximum">
-               <double>100000.000000000000000</double>
+            <item row="5" column="0">
+             <widget class="QLabel" name="label_6">
+              <property name="text">
+               <string>Inlet Offset</string>
               </property>
              </widget>
             </item>
-            <item row="6" column="1" colspan="3">
-             <widget class="QDoubleSpinBox" name="conduit_outlet_offset">
-              <property name="maximum">
-               <double>100000.000000000000000</double>
+            <item row="9" column="0">
+             <widget class="QLabel" name="label_20">
+              <property name="text">
+               <string>Flap Gate</string>
               </property>
              </widget>
             </item>
-            <item row="7" column="1" colspan="3">
-             <widget class="QDoubleSpinBox" name="conduit_init_flow">
-              <property name="maximum">
-               <double>100000.000000000000000</double>
-              </property>
-             </widget>
-            </item>
-            <item row="8" column="1" colspan="3">
-             <widget class="QDoubleSpinBox" name="conduit_max_flow">
-              <property name="maximum">
-               <double>100000.000000000000000</double>
-              </property>
-             </widget>
+            <item row="9" column="1" colspan="3">
+             <widget class="QComboBox" name="losses_flapgate"/>
             </item>
            </layout>
           </item>
@@ -382,17 +392,10 @@
          <layout class="QGridLayout" name="gridLayout_6">
           <item row="0" column="0">
            <layout class="QGridLayout" name="gridLayout_5">
-            <item row="3" column="0">
-             <widget class="QLabel" name="label_20">
-              <property name="text">
-               <string>Flapgate Losses</string>
-              </property>
-             </widget>
-            </item>
             <item row="1" column="0">
              <widget class="QLabel" name="label_18">
               <property name="text">
-               <string>Outlet Losses</string>
+               <string>Exit Loss Coeff.</string>
               </property>
              </widget>
             </item>
@@ -411,14 +414,7 @@
                </size>
               </property>
               <property name="text">
-               <string>Inlet Losses</string>
-              </property>
-             </widget>
-            </item>
-            <item row="2" column="0">
-             <widget class="QLabel" name="label_19">
-              <property name="text">
-               <string>Average Losses</string>
+               <string>Entry Loss Coeff.</string>
               </property>
              </widget>
             </item>
@@ -442,7 +438,14 @@
               </property>
              </widget>
             </item>
-            <item row="2" column="1">
+            <item row="2" column="0" rowspan="2">
+             <widget class="QLabel" name="label_19">
+              <property name="text">
+               <string>Avg. Loss Coeff.</string>
+              </property>
+             </widget>
+            </item>
+            <item row="2" column="1" rowspan="2">
              <widget class="QDoubleSpinBox" name="losses_average">
               <property name="maximum">
                <double>1.000000000000000</double>
@@ -451,9 +454,6 @@
                <double>0.100000000000000</double>
               </property>
              </widget>
-            </item>
-            <item row="3" column="1">
-             <widget class="QComboBox" name="losses_flapgate"/>
             </item>
            </layout>
           </item>
