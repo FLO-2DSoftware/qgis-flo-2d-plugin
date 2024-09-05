@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
-
+from PyQt5.QtCore import Qt
+from PyQt5.QtWidgets import QApplication
 # FLO-2D Preprocessor tools for QGIS
 # Copyright © 2021 Lutra Consulting for FLO-2D
 
@@ -9,8 +10,10 @@
 # of the License, or (at your option) any later version
 
 from qgis.PyQt.QtCore import QSize
+from qgis._gui import QgsDockWidget
 
 from .bc_editor_widget_new import BCEditorWidgetNew
+from .table_editor_widget import TableEditorWidget
 from ..user_communication import UserCommunication
 # from .bc_editor_widget import BCEditorWidget
 from .channels_editor_widget import ChannelsEditorWidget
@@ -81,12 +84,41 @@ class FLO2DWidget(qtBaseClass, uiDialog):
 
         # connections
         self.collapse_groups_btn.clicked.connect(self.collapse_all_groups)
+        self.show_flo2d_table_btn.clicked.connect(self.show_f2d_table)
+        self.show_flo2d_plot_btn.clicked.connect(self.show_f2d_plot)
+        self.clear_rubberband_btn.clicked.connect(self.lyrs.clear_rubber)
 
         # clear rubberband when collapsing the BC editor
         self.bc_editor_new_grp.collapsedStateChanged.connect(self.lyrs.clear_rubber)
 
         # set icons
         set_icon(self.collapse_groups_btn, "collapse_groups.svg")
+
+    def show_f2d_table(self):
+        """
+        Function to show the flo-2d table dock widget
+        """
+        for widget in QApplication.instance().allWidgets():
+            if isinstance(widget, QgsDockWidget):
+                if widget.windowTitle() == "FLO-2D Table Editor":
+                    if not widget.isHidden():
+                        self.uc.bar_info("FLO-2D Table Editor is currently open...")
+                        self.uc.log_info("FLO-2D Table Editor is currently open...")
+                    else:
+                        widget.setHidden(False)
+
+    def show_f2d_plot(self):
+        """
+        Function to show the flo-2d plot dock widget
+        """
+        for widget in QApplication.instance().allWidgets():
+            if isinstance(widget, QgsDockWidget):
+                if widget.windowTitle() == "FLO-2D Plot":
+                    if not widget.isHidden():
+                        self.uc.bar_info("FLO-2D Plot is currently open...")
+                        self.uc.log_info("FLO-2D Plot is currently open...")
+                    else:
+                        widget.setHidden(False)
 
     def collapse_all_groups(self):
         for grp in self.cgroups:

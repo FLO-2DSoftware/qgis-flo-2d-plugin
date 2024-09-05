@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>408</width>
-    <height>614</height>
+    <height>707</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -31,7 +31,7 @@
         <x>0</x>
         <y>0</y>
         <width>388</width>
-        <height>594</height>
+        <height>687</height>
        </rect>
       </property>
       <layout class="QGridLayout" name="gridLayout_2">
@@ -47,15 +47,12 @@
        <property name="bottomMargin">
         <number>0</number>
        </property>
-       <item row="2" column="0">
-        <widget class="QgsCollapsibleGroupBox" name="grid_tools_grp">
+       <item row="11" column="0">
+        <widget class="QgsCollapsibleGroupBox" name="street_editor_grp">
          <property name="title">
-          <string>Grid Tools</string>
+          <string>Street Editor</string>
          </property>
-         <property name="collapsed">
-          <bool>false</bool>
-         </property>
-         <layout class="QGridLayout" name="gridLayout_6">
+         <layout class="QGridLayout" name="gridLayout_4">
           <property name="leftMargin">
            <number>6</number>
           </property>
@@ -69,20 +66,25 @@
            <number>6</number>
           </property>
           <item row="0" column="0">
-           <layout class="QVBoxLayout" name="grid_tools_lout"/>
+           <layout class="QHBoxLayout" name="street_editor_lout"/>
           </item>
          </layout>
         </widget>
        </item>
-       <item row="17" column="0">
-        <widget class="QgsCollapsibleGroupBox" name="multiple_channels_editor_grp">
+       <item row="3" column="0">
+        <widget class="QgsCollapsibleGroupBox" name="pre_processing_grp">
+         <property name="font">
+          <font>
+           <kerning>true</kerning>
+          </font>
+         </property>
          <property name="title">
-          <string>Multiple Channels Editor</string>
+          <string>Pre-processing Tools</string>
          </property>
          <property name="collapsed">
           <bool>false</bool>
          </property>
-         <layout class="QGridLayout" name="gridLayout_15">
+         <layout class="QGridLayout" name="gridLayout_17">
           <property name="leftMargin">
            <number>6</number>
           </property>
@@ -96,38 +98,7 @@
            <number>6</number>
           </property>
           <item row="0" column="0">
-           <layout class="QHBoxLayout" name="multiple_channels_lout"/>
-          </item>
-         </layout>
-        </widget>
-       </item>
-       <item row="7" column="0">
-        <widget class="QgsCollapsibleGroupBox" name="ic_editor_grp">
-         <property name="title">
-          <string>Initial Condition Editor</string>
-         </property>
-         <property name="collapsed">
-          <bool>false</bool>
-         </property>
-         <layout class="QGridLayout" name="gridLayout_3">
-          <property name="leftMargin">
-           <number>6</number>
-          </property>
-          <property name="topMargin">
-           <number>6</number>
-          </property>
-          <property name="rightMargin">
-           <number>6</number>
-          </property>
-          <property name="bottomMargin">
-           <number>6</number>
-          </property>
-          <item row="0" column="0">
-           <layout class="QVBoxLayout" name="ic_editor_lout">
-            <property name="bottomMargin">
-             <number>0</number>
-            </property>
-           </layout>
+           <layout class="QHBoxLayout" name="pre_processing_lout"/>
           </item>
          </layout>
         </widget>
@@ -159,49 +130,15 @@
          </layout>
         </widget>
        </item>
-       <item row="0" column="0">
-        <layout class="QHBoxLayout" name="toolbar_lout">
-         <property name="bottomMargin">
-          <number>0</number>
-         </property>
-         <item>
-          <widget class="QToolButton" name="collapse_groups_btn">
-           <property name="toolTip">
-            <string>Collapse All Groups</string>
-           </property>
-           <property name="text">
-            <string>...</string>
-           </property>
-           <property name="icon">
-            <iconset>
-             <normaloff>../img/collapse_groups.svg</normaloff>../img/collapse_groups.svg</iconset>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <spacer name="horizontalSpacer">
-           <property name="orientation">
-            <enum>Qt::Horizontal</enum>
-           </property>
-           <property name="sizeHint" stdset="0">
-            <size>
-             <width>40</width>
-             <height>20</height>
-            </size>
-           </property>
-          </spacer>
-         </item>
-        </layout>
-       </item>
-       <item row="4" column="0">
-        <widget class="QgsCollapsibleGroupBox" name="profile_tool_grp">
+       <item row="17" column="0">
+        <widget class="QgsCollapsibleGroupBox" name="multiple_channels_editor_grp">
          <property name="title">
-          <string>Profile Tool</string>
+          <string>Multiple Channels Editor</string>
          </property>
          <property name="collapsed">
           <bool>false</bool>
          </property>
-         <layout class="QGridLayout" name="gridLayout_7">
+         <layout class="QGridLayout" name="gridLayout_15">
           <property name="leftMargin">
            <number>6</number>
           </property>
@@ -215,44 +152,20 @@
            <number>6</number>
           </property>
           <item row="0" column="0">
-           <layout class="QVBoxLayout" name="profile_tool_lout"/>
+           <layout class="QHBoxLayout" name="multiple_channels_lout"/>
           </item>
          </layout>
         </widget>
        </item>
-       <item row="11" column="0">
-        <widget class="QgsCollapsibleGroupBox" name="street_editor_grp">
+       <item row="2" column="0">
+        <widget class="QgsCollapsibleGroupBox" name="grid_tools_grp">
          <property name="title">
-          <string>Street Editor</string>
-         </property>
-         <layout class="QGridLayout" name="gridLayout_4">
-          <property name="leftMargin">
-           <number>6</number>
-          </property>
-          <property name="topMargin">
-           <number>6</number>
-          </property>
-          <property name="rightMargin">
-           <number>6</number>
-          </property>
-          <property name="bottomMargin">
-           <number>6</number>
-          </property>
-          <item row="0" column="0">
-           <layout class="QHBoxLayout" name="street_editor_lout"/>
-          </item>
-         </layout>
-        </widget>
-       </item>
-       <item row="9" column="0">
-        <widget class="QgsCollapsibleGroupBox" name="channels_editor_grp">
-         <property name="title">
-          <string>Schematized Channels Editor</string>
+          <string>Grid Tools</string>
          </property>
          <property name="collapsed">
           <bool>false</bool>
          </property>
-         <layout class="QGridLayout" name="gridLayout_11">
+         <layout class="QGridLayout" name="gridLayout_6">
           <property name="leftMargin">
            <number>6</number>
           </property>
@@ -266,71 +179,7 @@
            <number>6</number>
           </property>
           <item row="0" column="0">
-           <layout class="QHBoxLayout" name="channels_editor_lout"/>
-          </item>
-         </layout>
-        </widget>
-       </item>
-       <item row="18" column="0">
-        <spacer name="verticalSpacer">
-         <property name="orientation">
-          <enum>Qt::Vertical</enum>
-         </property>
-         <property name="sizeHint" stdset="0">
-          <size>
-           <width>20</width>
-           <height>40</height>
-          </size>
-         </property>
-        </spacer>
-       </item>
-       <item row="8" column="0">
-        <widget class="QgsCollapsibleGroupBox" name="rain_editor_grp">
-         <property name="title">
-          <string>Rain Editor</string>
-         </property>
-         <property name="collapsed">
-          <bool>false</bool>
-         </property>
-         <layout class="QGridLayout" name="gridLayout_5">
-          <property name="leftMargin">
-           <number>6</number>
-          </property>
-          <property name="topMargin">
-           <number>6</number>
-          </property>
-          <property name="rightMargin">
-           <number>6</number>
-          </property>
-          <property name="bottomMargin">
-           <number>6</number>
-          </property>
-          <item row="0" column="0">
-           <layout class="QHBoxLayout" name="rain_editor_lout"/>
-          </item>
-         </layout>
-        </widget>
-       </item>
-       <item row="6" column="0">
-        <widget class="QgsCollapsibleGroupBox" name="bc_editor_new_grp">
-         <property name="title">
-          <string>Boundary Condition Editor</string>
-         </property>
-         <layout class="QGridLayout" name="gridLayout_18">
-          <property name="leftMargin">
-           <number>6</number>
-          </property>
-          <property name="topMargin">
-           <number>6</number>
-          </property>
-          <property name="rightMargin">
-           <number>6</number>
-          </property>
-          <property name="bottomMargin">
-           <number>6</number>
-          </property>
-          <item row="0" column="0">
-           <layout class="QVBoxLayout" name="bc_editor_new_lout"/>
+           <layout class="QVBoxLayout" name="grid_tools_lout"/>
           </item>
          </layout>
         </widget>
@@ -358,6 +207,60 @@
           </property>
           <item row="0" column="0">
            <layout class="QVBoxLayout" name="storm_drain_editor_lout"/>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item row="10" column="0">
+        <widget class="QgsCollapsibleGroupBox" name="struct_editor_grp">
+         <property name="title">
+          <string>Structures Editor</string>
+         </property>
+         <property name="collapsed">
+          <bool>false</bool>
+         </property>
+         <layout class="QGridLayout" name="gridLayout_8">
+          <property name="leftMargin">
+           <number>6</number>
+          </property>
+          <property name="topMargin">
+           <number>6</number>
+          </property>
+          <property name="rightMargin">
+           <number>6</number>
+          </property>
+          <property name="bottomMargin">
+           <number>6</number>
+          </property>
+          <item row="0" column="0">
+           <layout class="QVBoxLayout" name="struct_editor_lout"/>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item row="4" column="0">
+        <widget class="QgsCollapsibleGroupBox" name="profile_tool_grp">
+         <property name="title">
+          <string>Profile Tool</string>
+         </property>
+         <property name="collapsed">
+          <bool>false</bool>
+         </property>
+         <layout class="QGridLayout" name="gridLayout_7">
+          <property name="leftMargin">
+           <number>6</number>
+          </property>
+          <property name="topMargin">
+           <number>6</number>
+          </property>
+          <property name="rightMargin">
+           <number>6</number>
+          </property>
+          <property name="bottomMargin">
+           <number>6</number>
+          </property>
+          <item row="0" column="0">
+           <layout class="QVBoxLayout" name="profile_tool_lout"/>
           </item>
          </layout>
         </widget>
@@ -420,15 +323,15 @@
          </layout>
         </widget>
        </item>
-       <item row="10" column="0">
-        <widget class="QgsCollapsibleGroupBox" name="struct_editor_grp">
+       <item row="8" column="0">
+        <widget class="QgsCollapsibleGroupBox" name="rain_editor_grp">
          <property name="title">
-          <string>Structures Editor</string>
+          <string>Rain Editor</string>
          </property>
          <property name="collapsed">
           <bool>false</bool>
          </property>
-         <layout class="QGridLayout" name="gridLayout_8">
+         <layout class="QGridLayout" name="gridLayout_5">
           <property name="leftMargin">
            <number>6</number>
           </property>
@@ -442,7 +345,76 @@
            <number>6</number>
           </property>
           <item row="0" column="0">
-           <layout class="QVBoxLayout" name="struct_editor_lout"/>
+           <layout class="QHBoxLayout" name="rain_editor_lout"/>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item row="19" column="0">
+        <layout class="QHBoxLayout" name="horizontalLayout">
+         <property name="leftMargin">
+          <number>5</number>
+         </property>
+         <property name="topMargin">
+          <number>5</number>
+         </property>
+         <property name="rightMargin">
+          <number>5</number>
+         </property>
+         <property name="bottomMargin">
+          <number>5</number>
+         </property>
+         <item>
+          <widget class="QLabel" name="project_folder_lbl">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="text">
+            <string>Project Folder:</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLabel" name="project_folder_path_lbl">
+           <property name="enabled">
+            <bool>false</bool>
+           </property>
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="text">
+            <string>-</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item row="6" column="0">
+        <widget class="QgsCollapsibleGroupBox" name="bc_editor_new_grp">
+         <property name="title">
+          <string>Boundary Condition Editor</string>
+         </property>
+         <layout class="QGridLayout" name="gridLayout_18">
+          <property name="leftMargin">
+           <number>6</number>
+          </property>
+          <property name="topMargin">
+           <number>6</number>
+          </property>
+          <property name="rightMargin">
+           <number>6</number>
+          </property>
+          <property name="bottomMargin">
+           <number>6</number>
+          </property>
+          <item row="0" column="0">
+           <layout class="QVBoxLayout" name="bc_editor_new_lout"/>
           </item>
          </layout>
         </widget>
@@ -474,20 +446,15 @@
          </layout>
         </widget>
        </item>
-       <item row="3" column="0">
-        <widget class="QgsCollapsibleGroupBox" name="pre_processing_grp">
-         <property name="font">
-          <font>
-           <kerning>true</kerning>
-          </font>
-         </property>
+       <item row="7" column="0">
+        <widget class="QgsCollapsibleGroupBox" name="ic_editor_grp">
          <property name="title">
-          <string>Pre-processing Tools</string>
+          <string>Initial Condition Editor</string>
          </property>
          <property name="collapsed">
           <bool>false</bool>
          </property>
-         <layout class="QGridLayout" name="gridLayout_17">
+         <layout class="QGridLayout" name="gridLayout_3">
           <property name="leftMargin">
            <number>6</number>
           </property>
@@ -501,10 +468,130 @@
            <number>6</number>
           </property>
           <item row="0" column="0">
-           <layout class="QHBoxLayout" name="pre_processing_lout"/>
+           <layout class="QVBoxLayout" name="ic_editor_lout">
+            <property name="bottomMargin">
+             <number>0</number>
+            </property>
+           </layout>
           </item>
          </layout>
         </widget>
+       </item>
+       <item row="9" column="0">
+        <widget class="QgsCollapsibleGroupBox" name="channels_editor_grp">
+         <property name="title">
+          <string>Schematized Channels Editor</string>
+         </property>
+         <property name="collapsed">
+          <bool>false</bool>
+         </property>
+         <layout class="QGridLayout" name="gridLayout_11">
+          <property name="leftMargin">
+           <number>6</number>
+          </property>
+          <property name="topMargin">
+           <number>6</number>
+          </property>
+          <property name="rightMargin">
+           <number>6</number>
+          </property>
+          <property name="bottomMargin">
+           <number>6</number>
+          </property>
+          <item row="0" column="0">
+           <layout class="QHBoxLayout" name="channels_editor_lout"/>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item row="0" column="0">
+        <layout class="QHBoxLayout" name="toolbar_lout" stretch="0,0,0,0,0">
+         <property name="leftMargin">
+          <number>2</number>
+         </property>
+         <property name="topMargin">
+          <number>2</number>
+         </property>
+         <property name="rightMargin">
+          <number>2</number>
+         </property>
+         <property name="bottomMargin">
+          <number>0</number>
+         </property>
+         <item>
+          <widget class="QToolButton" name="collapse_groups_btn">
+           <property name="toolTip">
+            <string>Collapse All Groups</string>
+           </property>
+           <property name="text">
+            <string>...</string>
+           </property>
+           <property name="icon">
+            <iconset>
+             <normaloff>../img/collapse_groups.svg</normaloff>../img/collapse_groups.svg</iconset>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QToolButton" name="show_flo2d_table_btn">
+           <property name="text">
+            <string>...</string>
+           </property>
+           <property name="icon">
+            <iconset>
+             <normaloff>../img/show_table_2.svg</normaloff>../img/show_table_2.svg</iconset>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QToolButton" name="show_flo2d_plot_btn">
+           <property name="text">
+            <string>...</string>
+           </property>
+           <property name="icon">
+            <iconset>
+             <normaloff>../img/show_plot_2.svg</normaloff>../img/show_plot_2.svg</iconset>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QToolButton" name="clear_rubberband_btn">
+           <property name="text">
+            <string>...</string>
+           </property>
+           <property name="icon">
+            <iconset>
+             <normaloff>../img/broom.png</normaloff>../img/broom.png</iconset>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <spacer name="horizontalSpacer">
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>40</width>
+             <height>20</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+        </layout>
+       </item>
+       <item row="18" column="0">
+        <spacer name="verticalSpacer">
+         <property name="orientation">
+          <enum>Qt::Vertical</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>20</width>
+           <height>40</height>
+          </size>
+         </property>
+        </spacer>
        </item>
       </layout>
      </widget>
