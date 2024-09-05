@@ -54,7 +54,6 @@ class ICEditorWidget(qtBaseClass, uiDialog):
         self.delete_schem_res_btn.clicked.connect(self.delete_schematize_res)
         self.rename_res_btn.clicked.connect(self.rename_res)
         self.delete_res_btn.clicked.connect(self.delete_cur_res)
-        self.clear_res_rb_btn.clicked.connect(self.lyrs.clear_rubber)
         self.res_cbo.activated.connect(self.cur_res_changed)
         self.res_ini_sbox.editingFinished.connect(self.save_res)
         self.res_n_sbox.editingFinished.connect(self.save_res)
@@ -65,7 +64,6 @@ class ICEditorWidget(qtBaseClass, uiDialog):
         self.seg_ini_sbox.editingFinished.connect(self.save_chan_seg)
         self.rename_seg_btn.clicked.connect(self.rename_chan)
         self.delete_seg_btn.clicked.connect(self.delete_chan)
-        self.clear_chan_rb_btn.clicked.connect(self.lyrs.clear_rubber)
 
         # connections Tailings
         self.add_point_tailings_btn.clicked.connect(self.create_point_tailings)
@@ -81,7 +79,6 @@ class ICEditorWidget(qtBaseClass, uiDialog):
         self.tailing_res_cbo.activated.connect(self.cur_tal_res_changed)
         self.rename_tal_res_btn.clicked.connect(self.rename_tal_res)
         self.delete_tal_res_btn.clicked.connect(self.delete_tailings_res)
-        self.clear_tal_res_rb_btn.clicked.connect(self.lyrs.clear_rubber)
         self.tal_res_elev_sb.editingFinished.connect(self.save_tal_res)
         self.wse_tal_res_sb.editingFinished.connect(self.save_tal_res)
         self.tal_n_sbox.editingFinished.connect(self.save_tal_res)
@@ -89,7 +86,6 @@ class ICEditorWidget(qtBaseClass, uiDialog):
         # tailing stack
         self.tailings_cbo.activated.connect(self.cur_tal_changed)
         self.rename_tal_btn.clicked.connect(self.rename_tal)
-        self.clear_tal_rb_btn.clicked.connect(self.lyrs.clear_rubber)
         self.tailings_elev_sb.editingFinished.connect(self.save_tal)
         self.wse_sb.editingFinished.connect(self.save_tal)
         self.concentration_sb.editingFinished.connect(self.save_tal)
