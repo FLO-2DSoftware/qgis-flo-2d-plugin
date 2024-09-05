@@ -102,8 +102,6 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
             lambda: self.change_bc_name(self.inflow_bc_name_cbo, "inflow"))
         self.delete_inflow_bc_btn.clicked.connect(
             lambda: self.delete_bc(self.inflow_bc_name_cbo, "inflow"))
-        self.clear_inflow_rubberband_btn.clicked.connect(
-            self.clear_rubberband)
         self.inflow_bc_center_btn.clicked.connect(
             self.inflow_bc_center)
         self.ifc_fplain_radio.clicked.connect(
@@ -146,8 +144,6 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
             lambda: self.delete_ts_data(self.outflow_data_cbo, "outflow"))
         self.delete_outflow_bc_btn.clicked.connect(
             lambda: self.delete_bc(self.outflow_bc_name_cbo, "outflow"))
-        self.clear_outflow_rubberband_btn.clicked.connect(
-            self.clear_rubberband)
         self.outflow_bc_center_btn.clicked.connect(
             self.outflow_bc_center)
         self.outflow_type_cbo.activated.connect(
@@ -812,12 +808,6 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
             # else:
             #     self.outflow.get_cur_data_fid()
             #     QgsMessageLog.logMessage(str(self.outflow.get_cur_data_fid()))
-
-    def clear_rubberband(self):
-        """
-        Function to clear the rubberbands
-        """
-        self.lyrs.clear_rubber()
 
     def open_data(self, type):
         """
