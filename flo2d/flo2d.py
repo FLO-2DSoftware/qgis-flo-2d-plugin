@@ -39,7 +39,8 @@ from PyQt5.QtCore import QVariant
 import pip
 from qgis.PyQt import QtCore, QtGui
 from PyQt5.QtGui import QFont
-from PyQt5.QtWidgets import QApplication, QToolButton, QProgressDialog, QDockWidget, QTabWidget, QWidget, QVBoxLayout
+from PyQt5.QtWidgets import QApplication, QToolButton, QProgressDialog, QDockWidget, QTabWidget, QWidget, QVBoxLayout, \
+    QPushButton
 from osgeo import gdal, ogr
 from qgis._core import QgsMessageLog, QgsCoordinateReferenceSystem, QgsMapSettings, QgsProjectMetadata, \
     QgsMapRendererParallelJob, QgsLayerTreeLayer, QgsVectorLayerExporter, QgsVectorFileWriter, QgsVectorLayer, \
@@ -1834,6 +1835,8 @@ class Flo2D(object):
                 dat = "BRIDGE_COEFF_DATA.DAT"
             elif call == "import_hystruc_bridge_xs":
                 dat = "BRIDGE_XSEC.DAT"
+            elif call == "import_swmminp":
+                dat = "SWMM.INP"
             else:
                 dat = call.split("_")[-1].upper() + ".DAT"
             if call.startswith("import"):
@@ -1924,6 +1927,7 @@ class Flo2D(object):
             "import_breach",
             "import_gutter",
             "import_fpfroude",
+            "import_swmminp",
             "import_swmmflo",
             "import_swmmflort",
             "import_swmmoutf",
@@ -2043,6 +2047,7 @@ class Flo2D(object):
                         import_calls.remove("import_raincell")
 
                     if "Storm Drain" not in dlg_components.components:
+                        import_calls.remove("import_swmminp")
                         import_calls.remove("import_swmmflo")
                         import_calls.remove("import_swmmflort")
                         import_calls.remove("import_swmmoutf")
@@ -2194,30 +2199,6 @@ class Flo2D(object):
 
                     for table in tables:
                         self.gutils.clear_tables(table)
-
-                    # Import first the grid
-                    if "import_cont_toler" in import_calls:
-                        self.call_IO_methods(["import_cont_toler"], True)
-                        import_calls.remove("import_cont_toler")
-
-                    if "import_mannings_n_topo" in import_calls:
-                        self.call_IO_methods(["import_mannings_n_topo"], True)
-                        import_calls.remove("import_mannings_n_topo")
-
-                    # Import the SWMM.INP
-                    if "Storm Drain" in dlg_components.components:
-                        swmm_converter = SchemaSWMMConverter(self.con, self.iface, self.lyrs)
-                        swmm_converter.create_user_swmm_inlets_junctions()
-                        swmm_converter.create_user_swmm_outlets()
-
-                        if os.path.isfile(dir_name + r"\SWMM.INP"):
-                            if self.f2d_widget.storm_drain_editor.import_storm_drain_INP_file(
-                                    "Force import of SWMM.INP", False
-                            ):
-                                self.files_used += "SWMM.INP" + "\n"
-                        else:
-                            self.uc.bar_error("ERROR 100623.0944: SWMM.INP file not found!")
-                            self.uc.log_info("ERROR 100623.0944: SWMM.INP file not found!")
 
                     self.call_IO_methods(import_calls, True)  # The strings list 'export_calls', contains the names of
                     # the methods in the class Flo2dGeoPackage to import (read) the
@@ -2636,6 +2617,7 @@ class Flo2D(object):
             "import_breach",
             "import_gutter",
             "import_fpfroude",
+            "import_swmminp",
             "import_swmmflo",
             "import_swmmflort",
             "import_swmmoutf",
@@ -2729,9 +2711,12 @@ class Flo2D(object):
                         import_calls.remove("import_raincell")
 
                     if "Storm Drain" not in dlg_components.components:
+                        import_calls.remove("import_swmminp")
                         import_calls.remove("import_swmmflo")
                         import_calls.remove("import_swmmflort")
                         import_calls.remove("import_swmmoutf")
+                        import_calls.remove("import_swmmflodropbox")
+                        import_calls.remove("import_sdclogging")
 
                     if "Spatial Tolerance" not in dlg_components.components:
                         import_calls.remove("import_tolspatial")
@@ -2740,29 +2725,6 @@ class Flo2D(object):
                         import_calls.remove("import_fpfroude")
 
                     if import_calls:
-
-                        if "Storm Drain" in dlg_components.components:
-                            try:
-                                swmm_converter = SchemaSWMMConverter(self.con, self.iface, self.lyrs)
-                                swmm_converter.create_user_swmm_inlets_junctions()
-                                swmm_converter.create_user_swmm_outlets()
-                            except Exception as e:
-                                self.uc.log_info(traceback.format_exc())
-                                QApplication.restoreOverrideCursor()
-                                self.uc.show_error(
-                                    "ERROR 100623.1044:\n\nConverting Schematic SD Inlets to User Storm Drain Inlets/Junctions failed!"
-                                    + "\n_______________________________________________________________",
-                                    e,
-                                )
-
-                            if os.path.isfile(outdir + r"\SWMM.INP"):
-                                if self.f2d_widget.storm_drain_editor.import_storm_drain_INP_file(
-                                        "Force import of SWMM.INP", True
-                                ):
-                                    self.files_used += "SWMM.INP" + "\n"
-                            else:
-                                self.uc.bar_error("ERROR 100623.0944: SWMM.INP file not found!")
-                                self.uc.log_info("ERROR 100623.0944: SWMM.INP file not found!")
 
                         self.call_IO_methods(
                             import_calls, True
@@ -2845,6 +2807,25 @@ class Flo2D(object):
         """
         self.gutils.disable_geom_triggers()
         self.f2g = Flo2dGeoPackage(self.con, self.iface)
+        s = QSettings()
+        last_dir = s.value("FLO-2D/lastGdsDir", "")
+        fname, __ = QFileDialog.getOpenFileName(
+            None, "Select FLO-2D file to import", directory=last_dir, filter="DAT or INP (*.DAT *.dat *.INP *.inp)"
+        )
+        if not fname:
+            self.gutils.enable_geom_triggers()
+            return
+        dir_name = os.path.dirname(fname)
+        s.setValue("FLO-2D/lastGdsDir", dir_name)
+        bname = os.path.basename(fname)
+
+        if bname.lower().endswith("inp"):
+            swmm_file_name = bname
+            swmm_file_path = fname
+        else:
+            swmm_file_name = "SWMM.INP"
+            swmm_file_path = os.path.join(dir_name, swmm_file_name)
+
         file_to_import_calls = {
             "CONT.DAT": "import_cont_toler",
             "TOLER.DAT": "import_cont_toler",
@@ -2872,6 +2853,7 @@ class Flo2D(object):
             "BREACH.DAT": "import_breach",
             "GUTTER.DAT": "import_gutter",
             "FPFROUDE.DAT": "import_fpfroude",
+            f"{swmm_file_name}": "import_swmminp",
             "SWMMFLO.DAT": "import_swmmflo",
             "SWMMFLORT.DAT": "import_swmmflort",
             "SWMMOUTF.DAT": "import_swmmoutf",
@@ -2882,22 +2864,11 @@ class Flo2D(object):
             "MANNINGS_N.DAT": "import_mannings_n",
             "TOPO.DAT": "import_topo"
         }
-        s = QSettings()
-        last_dir = s.value("FLO-2D/lastGdsDir", "")
-        fname, __ = QFileDialog.getOpenFileName(
-            None, "Select FLO-2D file to import", directory=last_dir, filter="(*.DAT)"
-        )
-        if not fname:
-            self.gutils.enable_geom_triggers()
-            return
-        dir_name = os.path.dirname(fname)
-        s.setValue("FLO-2D/lastGdsDir", dir_name)
-        bname = os.path.basename(fname)
 
         if bname not in file_to_import_calls:
             QMessageBox.critical(
                 self.iface.mainWindow(),
-                "Import selected GDS file",
+                "Import selected DAT file",
                 "Import from {0} file is not supported.".format(bname),
             )
             self.uc.log_info(f"Import from {bname} file is not supported.")
@@ -2909,11 +2880,14 @@ class Flo2D(object):
             QApplication.setOverrideCursor(Qt.WaitCursor)
             try:
                 method = getattr(self.f2g, call_string)
-                method()
+                if call_string == "import_swmminp":
+                    method(swmm_file=swmm_file_path)
+                else:
+                    method()
                 QApplication.restoreOverrideCursor()
                 QMessageBox.information(
                     self.iface.mainWindow(),
-                    "Import selected GDS file",
+                    "Import selected DAT file",
                     "Import from {0} was successful.".format(bname),
                 )
                 self.uc.log_info(f"Import from {bname} was successful.")
@@ -3439,7 +3413,78 @@ class Flo2D(object):
         """
         Function to export FLO-2D to SWMM's INP file
         """
-        self.f2d_widget.storm_drain_editor.import_storm_drain_INP_file("Choose", True)
+        try:
+
+            if self.gutils.is_table_empty("grid"):
+                self.uc.bar_warn("There is no grid! Please create it before running tool.")
+                self.uc.log_info("There is no grid! Please create it before running tool.")
+                return False
+
+            QApplication.setOverrideCursor(Qt.WaitCursor)
+
+            self.f2g = Flo2dGeoPackage(self.con, self.iface, parsed_format="DAT")
+            s = QSettings()
+            last_dir = s.value("FLO-2D/lastGdsDir", "")
+            fname, __ = QFileDialog.getOpenFileName(
+                None, "Select SWMM INP file to import", directory=last_dir, filter="(*.INP)"
+            )
+            if not fname:
+                QApplication.restoreOverrideCursor()
+                return
+
+            dir_name = os.path.dirname(fname)
+            s.setValue("FLO-2D/lastGdsDir", dir_name)
+
+            sd_user_tables = [
+                'user_swmm_inlets_junctions',
+                'user_swmm_conduits',
+                'user_swmm_pumps',
+                'user_swmm_orifices',
+                'user_swmm_weirs',
+                'user_swmm_outlets',
+                'user_swmm_storage_units'
+            ]
+            empty_sd = all((self.gutils.is_table_empty(sd_user_table) for sd_user_table in sd_user_tables))
+
+            if self.f2g.set_parser(fname, get_cell_size=False):
+                if not empty_sd:
+                    QApplication.restoreOverrideCursor()
+                    msg = QMessageBox()
+                    msg.setWindowTitle("Replace or complete Storm Drain User Data")
+                    msg.setText(
+                        "There is already Storm Drain data in the Users Layers.\n\nWould you like to keep it and "
+                        "complete it with data taken from the .INP file?\n\n"
+                        + "or you prefer to erase it and create new storm drains from the .INP file?\n"
+                    )
+
+                    msg.addButton(QPushButton("Keep existing and complete"), QMessageBox.YesRole)
+                    msg.addButton(QPushButton("Create new Storm Drains"), QMessageBox.NoRole)
+                    msg.addButton(QPushButton("Cancel"), QMessageBox.RejectRole)
+                    msg.setDefaultButton(QMessageBox().Cancel)
+                    msg.setIcon(QMessageBox.Question)
+                    ret = msg.exec_()
+                    QApplication.setOverrideCursor(Qt.WaitCursor)
+                    if ret == 0:
+                        self.f2g.import_swmminp(swmm_file=fname, delete_existing=False)
+                    elif ret == 1:
+                        self.f2g.import_swmminp(swmm_file=fname)
+                    else:
+                        QApplication.restoreOverrideCursor()
+                        return
+                else:
+                    self.f2g.import_swmminp(swmm_file=fname)
+
+            self.lyrs.refresh_layers()
+
+            self.uc.bar_info("Import from INP completed! Check log messages for more information. ")
+            self.uc.log_info("Import from INP completed!")
+
+            QApplication.restoreOverrideCursor()
+
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.uc.log_info(f"ERROR 08272024.0932: Could not import SWMM INP file!\n{e}")
+            self.uc.bar_error("ERROR 08272024.0932: Could not import SWMM INP file!")
 
     @connection_required
     def export_inp(self):

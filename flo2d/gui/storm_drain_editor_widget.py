@@ -3647,7 +3647,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                         swmm_inp_file.write(
                             "\n;;-------------- ---------------- ---------------- -------- -------- -------- -------- --------"
                         )
-                        line = "\n{0:16} {1:<16} {2:<16} {3:<7}  {4:<8} {5:<8.2f} {6:<8.2f} {7:<10}"
+                        line = "\n{0:16} {1:<16} {2:<16} {3:<7}  {4:<8} {5:<8.2f} {6:<10} {7:<10}"
                         for row in inflows_rows:
                             lrow = [
                                 row[0],
@@ -3656,13 +3656,14 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                                 row[1],
                                 "1.0",
                                 row[5],
-                                row[2],
-                                row[3] if row[3] is not None else "",
+                                row[2] if row[2] != "?" else "",
+                                row[3] if row[3] != "?" else "",
                             ]
                             swmm_inp_file.write(line.format(*lrow))
                 except Exception as e:
                     QApplication.restoreOverrideCursor()
                     self.uc.show_error("ERROR 230220.0751.1622: error while exporting [INFLOWS] to .INP file!", e)
+                    self.uc.log_info(f"ERROR 230220.0751.1622: error while exporting [INFLOWS] to .INP file!\n{e}")
                     return
 
                 # INP CURVES ###################################################
@@ -3831,60 +3832,50 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                     SD_inflow_patterns_sql = """SELECT pattern_name, pattern_description, hour, multiplier
                                       FROM swmm_inflow_patterns ORDER BY pattern_name;"""
 
+                    # Description
                     line0 = "\n;{0:16}"
-                    line1 = "\n{0:16} {1:<10} {2:<10.2f} {3:<10.2f} {4:<10.2f} {5:<10.2f} {6:<10.2f} {6:<10.2f}"
+                    # Actual values
+                    line1 = "\n{0:16} {1:<10} {2:<10.2f} {3:<10.2f} {4:<10.2f} {5:<10.2f} {6:<10.2f} {7:<10.2f}"
                     pattern_rows = self.gutils.execute(SD_inflow_patterns_sql).fetchall()
                     if not pattern_rows:
                         pass
                     else:
-                        i = 1
+                        current_pattern = None
+                        row_buffer = []
+
                         for row in pattern_rows:
-                            # First line:
-                            if i == 1:  # Beginning of first line:
-                                lrow0 = [row[1]]
-                                swmm_inp_file.write(line0.format(*lrow0))
-                                lrow1 = [row[0], "HOURLY", row[3]]
-                                i += 1
-                            elif i < 7:  # Rest of first line:
-                                lrow1.append(row[3])
-                                i += 1
-                            elif i == 7:
-                                swmm_inp_file.write(line1.format(*lrow1))
-                                lrow1 = [row[0], "   ", row[3]]
-                                i += 1
+                            pattern_name = row[0]
+                            multiplier = row[3]
 
-                            # Second line
-                            elif i > 7 and i < 13:
-                                lrow1.append(row[3])
-                                i += 1
-                            elif i == 13:
-                                swmm_inp_file.write(line1.format(*lrow1))
-                                lrow1 = [row[0], "   ", row[3]]
-                                i += 1
+                            # Start a new pattern block
+                            if pattern_name != current_pattern:
+                                # if row_buffer:  # Write the previous pattern's buffered rows
+                                #     row_buffer = []
+                                #     swmm_inp_file.write(line1.format(*row_buffer))
+                                #     swmm_inp_file.write("\n")
 
-                            # Third line:
-                            elif i > 13 and i < 19:
-                                lrow1.append(row[3])
-                                i += 1
-                            elif i == 19:
-                                swmm_inp_file.write(line1.format(*lrow1))
-                                lrow1 = [row[0], "   ", row[3]]
-                                i += 1
+                                # Start the new pattern with a description
+                                swmm_inp_file.write(line0.format(row[1]))  # Write description
+                                current_pattern = pattern_name
+                                row_buffer = [pattern_name, "HOURLY"]  # Reset buffer with pattern name and "HOURLY"
 
-                            # Fourth line:
-                            elif i > 19 and i < 24:
-                                lrow1.append(row[3])
-                                i += 1
-                            elif i == 24:
-                                swmm_inp_file.write(line1.format(*lrow1))
-                                lrow1 = [row[0], "   ", row[3]]
-                                i = 1
+                            # Add the multiplier to the current row buffer
+                            row_buffer.append(multiplier)
 
-                                swmm_inp_file.write("\n")
+                            # Once buffer has 8 elements (1 pattern name, 1 HOURLY, 6 multipliers), write them
+                            if len(row_buffer) == 8:
+                                swmm_inp_file.write(line1.format(*row_buffer))
+                                row_buffer = [pattern_name, ""]  # Reset buffer for continuation line
+
+                        # Write any remaining data for the last pattern
+                        if len(row_buffer) > 2:  # Ensure there are still multipliers left to write
+                            swmm_inp_file.write(line1.format(*row_buffer))
+                            swmm_inp_file.write("\n")
 
                 except Exception as e:
                     QApplication.restoreOverrideCursor()
                     self.uc.show_error("ERROR 240220.0737: error while exporting [PATTERNS] to .INP file!", e)
+                    self.uc.log_info(f"ERROR 240220.0737: error while exporting [PATTERNS] to .INP file!\n{e}")
                     return
 
                 # INP REPORT ##################################################

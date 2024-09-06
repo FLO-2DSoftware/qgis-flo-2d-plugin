@@ -19,6 +19,7 @@ changelog=
  - Boundary Condition Editor
     Improved the Delete Schema Data button
  - Storm Drain
+    Improved the code for importing the SWMM.INP and other minor bug fixes
     Inlet type minimum value on dialog allow 0
     Weir coefficient min/max limits removed on the dialog
     Inlet type set to 0 when importing from INP

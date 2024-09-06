@@ -136,14 +136,11 @@ class ComponentsDialog(qtBaseClass, uiDialog):
                     self.rain_chbox.setChecked(True)
                     self.rain_chbox.setEnabled(True)
 
-            if os.path.isfile(last_dir + r"\SWMMFLO.DAT"):
-                if os.path.getsize(last_dir + r"\SWMMFLO.DAT") > 0:
-                    if os.path.isfile(last_dir + r"\SWMMOUTF.DAT"):
-                        if os.path.getsize(last_dir + r"\SWMMOUTF.DAT") > 0:
-                            if os.path.isfile(last_dir + r"\SWMM.INP"):
-                                if os.path.getsize(last_dir + r"\SWMM.INP") > 0:
-                                    self.storm_drain_chbox.setChecked(True)
-                                    self.storm_drain_chbox.setEnabled(True)
+            if os.path.isfile(last_dir + r"\SWMMFLO.DAT") or os.path.isfile(last_dir + r"\SWMMOUTF.DAT") or os.path.isfile(last_dir + r"\SWMM.INP"):
+                if os.path.getsize(last_dir + r"\SWMMFLO.DAT") > 0 or os.path.getsize(
+                        last_dir + r"\SWMMOUTF.DAT") > 0 or os.path.getsize(last_dir + r"\SWMM.INP") > 0:
+                    self.storm_drain_chbox.setEnabled(True)
+                    self.storm_drain_chbox.setChecked(True)
 
             if os.path.isfile(last_dir + r"\TOLSPATIAL.DAT"):
                 if os.path.getsize(last_dir + r"\TOLSPATIAL.DAT") > 0:

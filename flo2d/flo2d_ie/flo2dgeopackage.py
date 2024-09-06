@@ -16,7 +16,7 @@ from operator import itemgetter
 
 import numpy as np
 from PyQt5.QtCore import QSettings
-from qgis._core import QgsMessageLog
+from qgis._core import QgsMessageLog, QgsGeometry, QgsPointXY, QgsVectorLayer, QgsFeature
 from qgis.PyQt import QtCore, QtGui
 from qgis.core import NULL, QgsApplication
 from qgis.PyQt.QtCore import Qt
@@ -1622,6 +1622,1738 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
         self.batch_execute(gutter_globals_sql, gutter_areas_sql, cells_sql)
 
+    def import_swmminp(self, swmm_file="SWMM.INP", delete_existing=True):
+        """
+        Function to import the SWMM.INP -> refactored from the old method on the storm drain editor widget
+        """
+        swmminp_dict = self.parser.parse_swmminp(swmm_file)
+
+        coordinates_data = swmminp_dict.get('COORDINATES', [])
+        if len(coordinates_data) == 0:
+            self.uc.show_warn(
+                "WARNING 060319.1729: SWMM input file has no coordinates defined!"
+            )
+            self.uc.log_info(
+                "WARNING 060319.1729: SWMM input file has no coordinates defined!"
+            )
+            return
+
+        # QApplication.setOverrideCursor(Qt.WaitCursor)
+
+        self.import_swmminp_control(swmminp_dict)
+        self.import_swmminp_inflows(swmminp_dict, delete_existing)
+        self.import_swmminp_patterns(swmminp_dict, delete_existing)
+        self.import_swmminp_ts(swmminp_dict, delete_existing)
+        self.import_swmminp_curves(swmminp_dict, delete_existing)
+        self.import_swmminp_inlets_junctions(swmminp_dict, delete_existing)
+        self.import_swmminp_outfalls(swmminp_dict, delete_existing)
+        self.import_swmminp_storage_units(swmminp_dict, delete_existing)
+        self.import_swmminp_conduits(swmminp_dict, delete_existing)
+        self.import_swmminp_pumps(swmminp_dict, delete_existing)
+        self.import_swmminp_orifices(swmminp_dict, delete_existing)
+        self.import_swmminp_weirs(swmminp_dict, delete_existing)
+
+        self.remove_outside_junctions()
+
+        # QApplication.restoreOverrideCursor()
+
+    def remove_outside_junctions(self):
+        """
+        Function to remove outside junctions
+        """
+        try:
+            # SELECT all the nodes connected to a conduit
+            inside_inlets_qry = self.execute("""
+                SELECT DISTINCT conduit_inlet FROM user_swmm_conduits
+                UNION
+                SELECT DISTINCT pump_inlet FROM user_swmm_pumps
+                UNION
+                SELECT DISTINCT orifice_inlet FROM user_swmm_orifices
+                UNION
+                SELECT DISTINCT weir_inlet FROM user_swmm_weirs
+            ;""").fetchall()
+            inside_inlets = [inside_inlet[0] for inside_inlet in inside_inlets_qry]
+            inside_outlets_qry = self.execute("""            
+                SELECT DISTINCT conduit_outlet FROM user_swmm_conduits
+                UNION
+                SELECT DISTINCT pump_outlet FROM user_swmm_pumps
+                UNION
+                SELECT DISTINCT orifice_outlet FROM user_swmm_orifices
+                UNION
+                SELECT DISTINCT weir_outlet FROM user_swmm_weirs
+            ;""").fetchall()
+            inside_outlets = [inside_outlet[0] for inside_outlet in inside_outlets_qry]
+            inside_nodes = list(set(inside_inlets) | set(inside_outlets))
+
+            # Convert list to a SQL list
+            placeholders = ', '.join(['?'] * len(inside_nodes))
+
+            # Remove all the nodes that are not inside nodes.
+            inlet_junctions_delete_query = f"""
+                DELETE FROM user_swmm_inlets_junctions
+                WHERE name NOT IN ({placeholders});
+            """
+            inlet_junctions_delete = self.execute(inlet_junctions_delete_query, inside_nodes)
+            inlet_junctions_deleted_count = inlet_junctions_delete.rowcount
+            if inlet_junctions_deleted_count > 0:
+                self.uc.log_info(f"JUNCTIONS: {inlet_junctions_deleted_count} are outside the domain and not added to the project")
+            outfalls_delete_query = f"""
+                DELETE FROM user_swmm_outlets
+                WHERE name NOT IN ({placeholders});
+            """
+            outfalls_delete = self.execute(outfalls_delete_query, inside_nodes)
+            outfalls_deleted_count = outfalls_delete.rowcount
+            if outfalls_deleted_count > 0:
+                self.uc.log_info(f"OUTFALLS: {outfalls_deleted_count} are outside the domain and not added to the project")
+            storage_delete_query = f"""
+                DELETE FROM user_swmm_storage_units
+                WHERE name NOT IN ({placeholders});
+            """
+            storage_delete = self.execute(storage_delete_query, inside_nodes)
+            storage_deleted_count = storage_delete.rowcount
+            if storage_deleted_count > 0:
+                self.uc.log_info(f"STORAGES: {storage_deleted_count} are outside the domain and not added to the project")
+
+        except Exception as e:
+            QApplication.setOverrideCursor(Qt.ArrowCursor)
+            msg = "ERROR 08282024.0505: Removing outside nodes failed!\n\n" \
+                  f"{e}"
+            self.uc.show_error(msg, e)
+            self.uc.log_info(msg)
+            QApplication.restoreOverrideCursor()
+
+    def import_swmminp_control(self, swmminp_dict):
+        """
+        Function to import swmm inp control data
+        """
+        try:
+            self.gutils.clear_tables('swmm_control')
+            insert_controls_sql = """INSERT INTO swmm_control (
+                                           name,
+                                           value
+                                           )
+                                           VALUES (?, ?);"""
+
+            controls_data = swmminp_dict.get('OPTIONS', [])
+
+            for control in controls_data:
+                self.gutils.execute(insert_controls_sql, (
+                    control[0],
+                    control[1]
+                    )
+                )
+
+            report_data = swmminp_dict.get('REPORT', [])
+
+            for report in report_data:
+                self.gutils.execute(insert_controls_sql, (
+                    report[0],
+                    report[1]
+                    )
+                )
+
+            # Adjust the TITLE
+            title_sql = self.gutils.execute("SELECT name, value FROM swmm_control WHERE name = 'TITLE';").fetchone()
+            if not title_sql:
+                self.gutils.execute("""INSERT INTO swmm_control (name, value)
+                                       VALUES 
+                                       ('TITLE', 'INP file created by FLO-2D')
+                                    """)
+
+            self.uc.log_info("Storm Drain control variables set")
+
+        except Exception as e:
+            QApplication.setOverrideCursor(Qt.ArrowCursor)
+            msg = "ERROR 08272024.0849: creation of Storm Drain control variables failed!\n\n" \
+                  "Please check your SWMM input data.\n" \
+                  f"{e}"
+            self.uc.show_error(msg, e)
+            self.uc.log_info(msg)
+            QApplication.restoreOverrideCursor()
+
+    def import_swmminp_weirs(self, swmminp_dict, delete_existing):
+        """
+        Function to import swmm inp weirs
+        """
+        try:
+            existing_weirs = []
+            not_added = []
+            if delete_existing:
+                self.gutils.clear_tables('user_swmm_weirs')
+            else:
+                existing_weirs_qry = self.gutils.execute("SELECT weir_name FROM user_swmm_weirs;").fetchall()
+                existing_weirs = [weir[0] for weir in existing_weirs_qry]
+
+            insert_weirs_sql = """INSERT INTO user_swmm_weirs (
+                                    weir_name,
+                                    weir_inlet,
+                                    weir_outlet,
+                                    weir_type,
+                                    weir_crest_height,
+                                    weir_disch_coeff,
+                                    weir_flap_gate,
+                                    weir_end_contrac,
+                                    weir_end_coeff,
+                                    weir_shape, 
+                                    weir_height, 
+                                    weir_length,
+                                    weir_side_slope,
+                                    geom
+                                    )
+                                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);"""
+
+            replace_user_swmm_weirs_sql = """UPDATE user_swmm_weirs
+                             SET   weir_inlet  = ?,
+                                   weir_outlet  = ?,
+                                   weir_type = ?,
+                                   weir_crest_height = ?,
+                                   weir_disch_coeff = ?,
+                                   weir_flap_gate = ?,
+                                   weir_end_contrac = ?,
+                                   weir_end_coeff = ?,
+                                   weir_shape = ?,
+                                   weir_height = ?,
+                                   weir_length = ?,
+                                   weir_side_slope = ?
+                             WHERE weir_name = ?;"""
+
+            weirs_data = swmminp_dict.get('WEIRS', [])
+            coordinates_data = swmminp_dict.get('COORDINATES', [])
+            coordinates_dict = {item[0]: item[1:] for item in coordinates_data}
+            xsections_data = swmminp_dict.get('XSECTIONS', [])
+            xsections_dict = {item[0]: item[1:] for item in xsections_data}
+            vertices_data = swmminp_dict.get('VERTICES', [])
+
+            if len(weirs_data) > 0:
+                added_weirs = 0
+                updated_weirs = 0
+                for weir in weirs_data:
+                    """
+                    [WEIRS]
+                    ;;               Inlet            Outlet           Weir         Crest      Disch.     Flap End      End       
+                    ;;Name           Node             Node             Type         Height     Coeff.     Gate Con.     Coeff.    
+                    ;;-------------- ---------------- ---------------- ------------ ---------- ---------- ---- -------- ----------
+                    weir1            Cistern3         Ocistern         V-NOTCH      4.50       3.30       NO   0        0.00      
+                    """
+
+                    # SWMM Variables
+                    weir_name = weir[0]
+                    weir_inlet = weir[1]
+                    weir_outlet = weir[2]
+                    weir_type = weir[3]
+                    weir_crest_height = weir[4]
+                    weir_disch_coeff = weir[5]
+                    weir_flap_gate = weir[6]
+                    weir_end_contrac = weir[7]
+                    weir_end_coeff = weir[8]
+
+                    weir_shape = xsections_dict[weir_name][0]
+                    weir_height = xsections_dict[weir_name][1]
+                    weir_length = xsections_dict[weir_name][2]
+                    weir_side_slope = xsections_dict[weir_name][3]
+
+                    # QGIS Variables
+                    linestring_list = []
+                    inlet_x = coordinates_dict[weir_inlet][0]
+                    inlet_y = coordinates_dict[weir_inlet][1]
+                    inlet_grid = self.grid_on_point(inlet_x, inlet_y)
+
+                    linestring_list.append((inlet_x, inlet_y))
+
+                    for vertice in vertices_data:
+                        if vertice[0] == weir_name:
+                            linestring_list.append((vertice[1], vertice[2]))
+
+                    outlet_x = coordinates_dict[weir_outlet][0]
+                    outlet_y = coordinates_dict[weir_outlet][1]
+                    outlet_grid = self.grid_on_point(outlet_x, outlet_y)
+
+                    linestring_list.append((outlet_x, outlet_y))
+
+                    # Both ends of the orifice is outside the grid
+                    if not inlet_grid and not outlet_grid:
+                        not_added.append(weir_name)
+                        continue
+
+                    # Orifice inlet is outside the grid, and it is an Inlet
+                    if not inlet_grid and weir_inlet.lower().startswith("i"):
+                        not_added.append(weir_name)
+                        continue
+
+                    geom = "LINESTRING({})".format(", ".join("{0} {1}".format(x, y) for x, y in linestring_list))
+                    geom = self.gutils.wkt_to_gpb(geom)
+
+                    if weir_name in existing_weirs:
+                        updated_weirs += 1
+                        self.gutils.execute(
+                            replace_user_swmm_weirs_sql,
+                            (
+                                weir_inlet,
+                                weir_outlet,
+                                weir_type,
+                                weir_crest_height,
+                                weir_disch_coeff,
+                                weir_flap_gate,
+                                weir_end_contrac,
+                                weir_end_coeff,
+                                weir_shape,
+                                weir_height,
+                                weir_length,
+                                weir_side_slope,
+                                weir_name,
+                            ),
+                        )
+                    else:
+                        added_weirs += 1
+                        self.gutils.execute(insert_weirs_sql, (
+                                            weir_name,
+                                            weir_inlet,
+                                            weir_outlet,
+                                            weir_type,
+                                            weir_crest_height,
+                                            weir_disch_coeff,
+                                            weir_flap_gate,
+                                            weir_end_contrac,
+                                            weir_end_coeff,
+                                            weir_shape,
+                                            weir_height,
+                                            weir_length,
+                                            weir_side_slope,
+                                            geom
+                                            )
+                                            )
+                self.uc.log_info(f"WEIRS: {added_weirs} added and {updated_weirs} updated from imported SWMM INP file")
+
+                if len(not_added) > 0:
+                    self.uc.log_info(
+                        f"WEIRS: {len(not_added)} are outside the domain and not added to the project")
+
+        except Exception as e:
+            QApplication.setOverrideCursor(Qt.ArrowCursor)
+            msg = "ERROR 080422.1115: creation of Storm Drain Weirs layer failed!\n\n" \
+                  "Please check your SWMM input data.\n" \
+                  f"{e}"
+            self.uc.show_error(msg, e)
+            self.uc.log_info(msg)
+            QApplication.restoreOverrideCursor()
+
+    def import_swmminp_orifices(self, swmminp_dict, delete_existing):
+        """
+        Function to import swmm inp orifices
+        """
+        try:
+            not_added = []
+            existing_orifices = []
+            if delete_existing:
+                self.gutils.clear_tables('user_swmm_orifices')
+            else:
+                existing_orifices_qry = self.gutils.execute("SELECT orifice_name FROM user_swmm_orifices;").fetchall()
+                existing_orifices = [orifice[0] for orifice in existing_orifices_qry]
+
+            insert_orifices_sql = """INSERT INTO user_swmm_orifices (
+                                    orifice_name,
+                                    orifice_inlet,
+                                    orifice_outlet,
+                                    orifice_type,
+                                    orifice_crest_height,
+                                    orifice_disch_coeff,
+                                    orifice_flap_gate,
+                                    orifice_open_close_time,
+                                    orifice_shape,
+                                    orifice_height,
+                                    orifice_width,
+                                    geom
+                                    )
+                                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);"""
+
+            replace_user_swmm_orificies_sql = """UPDATE user_swmm_orifices
+                             SET   orifice_inlet  = ?,
+                                   orifice_outlet  = ?,
+                                   orifice_type  = ?,
+                                   orifice_crest_height  = ?,
+                                   orifice_disch_coeff  = ?,
+                                   orifice_flap_gate  = ?,
+                                   orifice_open_close_time  = ?,
+                                   orifice_shape  = ?,
+                                   orifice_height  = ?,
+                                   orifice_width  = ?
+                             WHERE orifice_name = ?;"""
+
+            orifices_data = swmminp_dict.get('ORIFICES', [])
+            coordinates_data = swmminp_dict.get('COORDINATES', [])
+            coordinates_dict = {item[0]: item[1:] for item in coordinates_data}
+            xsections_data = swmminp_dict.get('XSECTIONS', [])
+            xsections_dict = {item[0]: item[1:] for item in xsections_data}
+            vertices_data = swmminp_dict.get('VERTICES', [])
+
+            if len(orifices_data) > 0:
+                added_orifices = 0
+                updated_orifices = 0
+                for orifice in orifices_data:
+                    """
+                    [ORIFICES]
+                    ;;               Inlet            Outlet           Orifice      Crest      Disch.     Flap Open/Close
+                    ;;Name           Node             Node             Type         Height     Coeff.     Gate Time      
+                    ;;-------------- ---------------- ---------------- ------------ ---------- ---------- ---- ----------
+                    orifice1         Cistern1         Cistern2         SIDE         0.50       0.65       NO   0.00      
+                    """
+
+                    # SWMM Variables
+                    orifice_name = orifice[0]
+                    orifice_inlet = orifice[1]
+                    orifice_outlet = orifice[2]
+                    orifice_type = orifice[3]
+                    orifice_crest_height = orifice[4]
+                    orifice_disch_coeff = orifice[5]
+                    orifice_flap_gate = orifice[6]
+                    orifice_open_close_time = orifice[7]
+
+                    orifice_shape = xsections_dict[orifice_name][0]
+                    orifice_height = xsections_dict[orifice_name][1]
+                    orifice_width = xsections_dict[orifice_name][2]
+
+                    # QGIS Variables
+                    linestring_list = []
+                    inlet_x = coordinates_dict[orifice_inlet][0]
+                    inlet_y = coordinates_dict[orifice_inlet][1]
+                    inlet_grid = self.gutils.grid_on_point(inlet_x, inlet_y)
+
+                    linestring_list.append((inlet_x, inlet_y))
+
+                    for vertice in vertices_data:
+                        if vertice[0] == orifice_name:
+                            linestring_list.append((vertice[1], vertice[2]))
+
+                    outlet_x = coordinates_dict[orifice_outlet][0]
+                    outlet_y = coordinates_dict[orifice_outlet][1]
+                    outlet_grid = self.gutils.grid_on_point(outlet_x, outlet_y)
+
+                    linestring_list.append((outlet_x, outlet_y))
+
+                    # Both ends of the orifice is outside the grid
+                    if not inlet_grid and not outlet_grid:
+                        not_added.append(orifice_name)
+                        continue
+
+                    # Orifice inlet is outside the grid, and it is an Inlet
+                    if not inlet_grid and orifice_inlet.lower().startswith("i"):
+                        not_added.append(orifice_name)
+                        continue
+
+                    geom = "LINESTRING({})".format(", ".join("{0} {1}".format(x, y) for x, y in linestring_list))
+                    geom = self.gutils.wkt_to_gpb(geom)
+
+                    if orifice_name in existing_orifices:
+                        updated_orifices += 1
+                        self.gutils.execute(
+                            replace_user_swmm_orificies_sql,
+                            (
+                                orifice_inlet,
+                                orifice_outlet,
+                                orifice_type,
+                                orifice_crest_height,
+                                orifice_disch_coeff,
+                                orifice_flap_gate,
+                                orifice_open_close_time,
+                                orifice_shape,
+                                orifice_height,
+                                orifice_width,
+                                orifice_name,
+                            )
+                        )
+                    else:
+                        added_orifices += 1
+                        self.gutils.execute(insert_orifices_sql, (
+                            orifice_name,
+                            orifice_inlet,
+                            orifice_outlet,
+                            orifice_type,
+                            orifice_crest_height,
+                            orifice_disch_coeff,
+                            orifice_flap_gate,
+                            orifice_open_close_time,
+                            orifice_shape,
+                            orifice_height,
+                            orifice_width,
+                            geom
+                            )
+                        )
+                self.uc.log_info(f"ORIFICES: {added_orifices} added and {updated_orifices} updated from imported SWMM INP file")
+
+                if len(not_added) > 0:
+                    self.uc.log_info(
+                        f"ORIFICES: {len(not_added)} are outside the domain and not added to the project")
+
+        except Exception as e:
+            QApplication.setOverrideCursor(Qt.ArrowCursor)
+            msg = "ERROR 310322.0853: creation of Storm Drain Orifices layer failed!\n\n" \
+                  "Please check your SWMM input data.\n" \
+                  f"{e}"
+            self.uc.show_error(msg, e)
+            self.uc.log_info(msg)
+            QApplication.restoreOverrideCursor()
+
+    def import_swmminp_pumps(self, swmminp_dict, delete_existing):
+        """
+        Function to import swmm inp pumps
+        """
+        try:
+            not_added = []
+            existing_pumps = []
+            if delete_existing:
+                self.gutils.clear_tables('user_swmm_pumps')
+            else:
+                existing_pumps_qry = self.gutils.execute("SELECT pump_name FROM user_swmm_pumps;").fetchall()
+                existing_pumps = [pump[0] for pump in existing_pumps_qry]
+            insert_pumps_sql = """INSERT INTO user_swmm_pumps (
+                                    pump_name,
+                                    pump_inlet, 
+                                    pump_outlet, 
+                                    pump_curve, 
+                                    pump_init_status, 
+                                    pump_startup_depth, 
+                                    pump_shutoff_depth,
+                                    geom
+                                    )
+                                    VALUES (?, ?, ?, ?, ?, ?, ?, ?);"""
+
+            replace_user_swmm_pumps_sql = """UPDATE user_swmm_pumps
+                             SET   pump_inlet  = ?,
+                                   pump_outlet  = ?,
+                                   pump_curve  = ?,
+                                   pump_init_status  = ?,
+                                   pump_startup_depth  = ?,
+                                   pump_shutoff_depth  = ?
+                             WHERE pump_name = ?;"""
+
+            pumps_data = swmminp_dict.get('PUMPS', [])
+            coordinates_data = swmminp_dict.get('COORDINATES', [])
+            coordinates_dict = {item[0]: item[1:] for item in coordinates_data}
+            vertices_data = swmminp_dict.get('VERTICES', [])
+
+            if len(pumps_data) > 0:
+                added_pumps = 0
+                updated_pumps = 0
+                for pump in pumps_data:
+                    """
+                    [PUMPS]
+                    ;;               Inlet            Outlet           Pump             Init.  Startup  Shutoff 
+                    ;;Name           Node             Node             Curve            Status Depth    Depth   
+                    ;;-------------- ---------------- ---------------- ---------------- ------ -------- --------
+                    CPump            Ids1             Cistern1         P1               OFF    3.00     40.00   
+                    """
+
+                    # SWMM Variables
+                    pump_name = pump[0]
+                    pump_inlet = pump[1]
+                    pump_outlet = pump[2]
+                    pump_curve = pump[3]
+                    pump_init_status = pump[4]
+                    pump_startup_depth = pump[5]
+                    pump_shutoff_depth = pump[6]
+
+                    # QGIS Variables
+                    linestring_list = []
+                    inlet_x = coordinates_dict[pump_inlet][0]
+                    inlet_y = coordinates_dict[pump_inlet][1]
+                    inlet_grid = self.grid_on_point(inlet_x, inlet_y)
+
+                    linestring_list.append((inlet_x, inlet_y))
+
+                    for vertice in vertices_data:
+                        if vertice[0] == pump_name:
+                            linestring_list.append((vertice[1], vertice[2]))
+
+                    outlet_x = coordinates_dict[pump_outlet][0]
+                    outlet_y = coordinates_dict[pump_outlet][1]
+                    outlet_grid = self.grid_on_point(outlet_x, outlet_y)
+
+                    linestring_list.append((outlet_x, outlet_y))
+
+                    # Both ends of the pump is outside the grid
+                    if not inlet_grid and not outlet_grid:
+                        not_added.append(pump_name)
+                        continue
+
+                    # Pump inlet is outside the grid, and it is an Inlet
+                    if not inlet_grid and pump_inlet.lower().startswith("i"):
+                        not_added.append(pump_name)
+                        continue
+
+                    geom = "LINESTRING({})".format(", ".join("{0} {1}".format(x, y) for x, y in linestring_list))
+                    geom = self.gutils.wkt_to_gpb(geom)
+
+                    if pump_name in existing_pumps:
+                        updated_pumps += 1
+                        self.gutils.execute(
+                            replace_user_swmm_pumps_sql,
+                            (
+                                pump_inlet,
+                                pump_outlet,
+                                pump_curve,
+                                pump_init_status,
+                                pump_startup_depth,
+                                pump_shutoff_depth,
+                                pump_name,
+                            ),
+                        )
+                    else:
+                        added_pumps += 1
+                        self.gutils.execute(insert_pumps_sql, (
+                            pump_name,
+                            pump_inlet,
+                            pump_outlet,
+                            pump_curve,
+                            pump_init_status,
+                            pump_startup_depth,
+                            pump_shutoff_depth,
+                            geom
+                        )
+                        )
+                self.uc.log_info(f"PUMPS: {added_pumps} added and {updated_pumps} updated from imported SWMM INP file")
+
+                if len(not_added) > 0:
+                    self.uc.log_info(
+                        f"PUMPS: {len(not_added)} are outside the domain and not added to the project")
+
+        except Exception as e:
+            QApplication.setOverrideCursor(Qt.ArrowCursor)
+            msg = "ERROR 050618.1805: creation of Storm Drain Pumps layer failed!\n\n" \
+                  "Please check your SWMM input data.\n" \
+                  f"{e}"
+            self.uc.show_error(msg, e)
+            self.uc.log_info(msg)
+            QApplication.restoreOverrideCursor()
+
+    def import_swmminp_conduits(self, swmminp_dict, delete_existing):
+        """
+        Function to import swmm inp conduits
+        """
+        try:
+            existing_conduits = []
+            not_added = []
+            if delete_existing:
+                self.gutils.clear_tables('user_swmm_conduits')
+            else:
+                existing_conduits_qry = self.gutils.execute("SELECT conduit_name FROM user_swmm_conduits;").fetchall()
+                existing_conduits = [conduit[0] for conduit in existing_conduits_qry]
+
+            insert_conduits_sql = """INSERT INTO user_swmm_conduits (
+                                       conduit_name,
+                                       conduit_inlet,
+                                       conduit_outlet,
+                                       conduit_length,
+                                       conduit_manning,
+                                       conduit_inlet_offset,
+                                       conduit_outlet_offset,
+                                       conduit_init_flow,
+                                       conduit_max_flow,
+                                       losses_inlet,
+                                       losses_outlet,
+                                       losses_average,
+                                       losses_flapgate,
+                                       xsections_shape,
+                                       xsections_barrels,
+                                       xsections_max_depth,
+                                       xsections_geom2,
+                                       xsections_geom3,
+                                       xsections_geom4,
+                                       geom
+                                       )
+                                       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);"""
+
+            replace_user_swmm_conduits_sql = """UPDATE user_swmm_conduits
+                             SET   conduit_inlet  = ?,
+                                   conduit_outlet  = ?,
+                                   conduit_length  = ?,
+                                   conduit_manning  = ?,
+                                   conduit_inlet_offset  = ?,
+                                   conduit_outlet_offset  = ?,
+                                   conduit_init_flow  = ?,
+                                   conduit_max_flow  = ?,
+                                   losses_inlet  = ?,
+                                   losses_outlet  = ?,
+                                   losses_average  = ?,
+                                   losses_flapgate  = ?,
+                                   xsections_shape  = ?,
+                                   xsections_barrels  = ?,
+                                   xsections_max_depth  = ?,
+                                   xsections_geom2  = ?,
+                                   xsections_geom3  = ?,
+                                   xsections_geom4  = ?
+                             WHERE conduit_name = ?;"""
+
+            conduits_data = swmminp_dict.get('CONDUITS', [])
+            losses_data = swmminp_dict.get('LOSSES', [])
+            losses_dict = {item[0]: item[1:] for item in losses_data}
+            xsections_data = swmminp_dict.get('XSECTIONS', [])
+            xsections_dict = {item[0]: item[1:] for item in xsections_data}
+            coordinates_data = swmminp_dict.get('COORDINATES', [])
+            coordinates_dict = {item[0]: item[1:] for item in coordinates_data}
+            vertices_data = swmminp_dict.get('VERTICES', [])
+
+            if len(conduits_data) > 0:
+                updated_conduits = 0
+                added_conduits = 0
+                for conduit in conduits_data:
+                    """
+                    ;;               Inlet            Outlet                      Manning    Inlet      Outlet     Init.      Max.      
+                    ;;Name           Node             Node             Length     N          Offset     Offset     Flow       Flow      
+                    ;;-------------- ---------------- ---------------- ---------- ---------- ---------- ---------- ---------- ----------
+                    """
+                    # SWMM Variables
+                    conduit_name = conduit[0]
+                    conduit_inlet = conduit[1]
+                    conduit_outlet = conduit[2]
+                    conduit_length = conduit[3]
+                    conduit_manning = conduit[4]
+                    conduit_inlet_offset = conduit[5]
+                    conduit_outlet_offset = conduit[6]
+                    conduit_init_flow = conduit[7]
+                    conduit_max_flow = conduit[8]
+
+                    """
+                    [LOSSES]
+                    ;;Link           Inlet      Outlet     Average    Flap Gate 
+                    ;;-------------- ---------- ---------- ---------- ----------
+                    DS2-1            0.0        0.0        0.00       NO
+                    """
+                    losses_inlet = losses_dict[conduit_name][0]
+                    losses_outlet = losses_dict[conduit_name][1]
+                    losses_average = losses_dict[conduit_name][2]
+                    losses_flapgate = 'True' if losses_dict[conduit_name][3] == 'YES' else 'False'
+
+                    """
+                    [XSECTIONS]
+                    ;;Link           Shape        Geom1            Geom2      Geom3      Geom4      Barrels   
+                    ;;-------------- ------------ ---------------- ---------- ---------- ---------- ----------
+                    DS2-1            CIRCULAR     1.00             0.00       0.000      0.00       1             
+                    """
+                    xsections_shape = xsections_dict[conduit_name][0]
+                    xsections_barrels = xsections_dict[conduit_name][5]
+                    xsections_max_depth = xsections_dict[conduit_name][1]
+                    xsections_geom2 = xsections_dict[conduit_name][2]
+                    xsections_geom3 = xsections_dict[conduit_name][3]
+                    xsections_geom4 = xsections_dict[conduit_name][4]
+
+                    # QGIS Variables
+                    linestring_list = []
+                    inlet_x = coordinates_dict[conduit_inlet][0]
+                    inlet_y = coordinates_dict[conduit_inlet][1]
+                    inlet_grid = self.gutils.grid_on_point(inlet_x, inlet_y)
+
+                    linestring_list.append((inlet_x, inlet_y))
+
+                    for vertice in vertices_data:
+                        if vertice[0] == conduit_name:
+                            linestring_list.append((vertice[1], vertice[2]))
+
+                    outlet_x = coordinates_dict[conduit_outlet][0]
+                    outlet_y = coordinates_dict[conduit_outlet][1]
+                    outlet_grid = self.gutils.grid_on_point(outlet_x, outlet_y)
+
+                    linestring_list.append((outlet_x, outlet_y))
+
+                    # Both ends of the conduit is outside the grid
+                    if not inlet_grid and not outlet_grid:
+                        not_added.append(conduit_name)
+                        continue
+
+                    # Conduit inlet is outside the grid, and it is an Inlet
+                    if not inlet_grid and conduit_inlet.lower().startswith("i"):
+                        not_added.append(conduit_name)
+                        continue
+
+                    geom = "LINESTRING({})".format(", ".join("{0} {1}".format(x, y) for x, y in linestring_list))
+                    geom = self.gutils.wkt_to_gpb(geom)
+
+                    if conduit_name in existing_conduits:
+                        updated_conduits += 1
+                        self.gutils.execute(
+                            replace_user_swmm_conduits_sql,
+                            (
+                                conduit_inlet,
+                                conduit_outlet,
+                                conduit_length,
+                                conduit_manning,
+                                conduit_inlet_offset,
+                                conduit_outlet_offset,
+                                conduit_init_flow,
+                                conduit_max_flow,
+                                losses_inlet,
+                                losses_outlet,
+                                losses_average,
+                                losses_flapgate,
+                                xsections_shape,
+                                xsections_barrels,
+                                xsections_max_depth,
+                                xsections_geom2,
+                                xsections_geom3,
+                                xsections_geom4,
+                                conduit_name,
+                            ),
+                        )
+
+                    else:
+                        added_conduits += 1
+                        self.gutils.execute(insert_conduits_sql, (
+                            conduit_name,
+                            conduit_inlet,
+                            conduit_outlet,
+                            conduit_length,
+                            conduit_manning,
+                            conduit_inlet_offset,
+                            conduit_outlet_offset,
+                            conduit_init_flow,
+                            conduit_max_flow,
+                            losses_inlet,
+                            losses_outlet,
+                            losses_average,
+                            losses_flapgate,
+                            xsections_shape,
+                            xsections_barrels,
+                            xsections_max_depth,
+                            xsections_geom2,
+                            xsections_geom3,
+                            xsections_geom4,
+                            geom
+                        )
+                        )
+                self.uc.log_info(f"CONDUITS: {added_conduits} added and {updated_conduits} updated from imported SWMM INP file")
+
+                if len(not_added) > 0:
+                    self.uc.log_info(
+                        f"CONDUITS: {len(not_added)} are outside the domain and not added to the project")
+
+        except Exception as e:
+            QApplication.setOverrideCursor(Qt.ArrowCursor)
+            msg = "ERROR 050618.1804: creation of Storm Drain Conduits layer failed!\n\n" \
+                  "Please check your SWMM input data.\n" \
+                  f"{e}"
+            self.uc.show_error(msg, e)
+            self.uc.log_info(msg)
+            QApplication.restoreOverrideCursor()
+
+    def import_swmminp_storage_units(self, swmminp_dict, delete_existing):
+        """
+        Function to import swmm inp storage units
+        """
+        try:
+            existing_storages = []
+            if delete_existing:
+                self.gutils.clear_tables('user_swmm_storage_units')
+            else:
+                existing_storages_qry = self.gutils.execute("SELECT name FROM user_swmm_storage_units;").fetchall()
+                existing_storages = [storage[0] for storage in existing_storages_qry]
+
+            insert_storage_units_sql = """
+                                    INSERT INTO user_swmm_storage_units (
+                                        name, 
+                                        grid,
+                                        invert_elev,
+                                        max_depth,
+                                        init_depth,
+                                        external_inflow,
+                                        treatment,
+                                        ponded_area,
+                                        evap_factor,
+                                        infiltration,
+                                        infil_method,
+                                        suction_head,
+                                        conductivity,
+                                        initial_deficit,
+                                        storage_curve,
+                                        coefficient,
+                                        exponent,
+                                        constant,
+                                        curve_name,
+                                        geom
+                                    )
+                                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);"""
+
+            replace_user_swmm_storage_sql = """UPDATE user_swmm_storage_units
+                                         SET    geom = ?,
+                                                "invert_elev" = ?,
+                                                "max_depth" = ?,
+                                                "init_depth" = ?,
+                                                "external_inflow" = ?,
+                                                "treatment" = ?,
+                                                "ponded_area" = ?,
+                                                "evap_factor" = ?,
+                                                "infiltration" = ?,
+                                                "infil_method" = ?,
+                                                "suction_head" = ?,
+                                                "conductivity" = ?,
+                                                "initial_deficit" = ?,
+                                                "storage_curve" = ?,
+                                                "coefficient" = ?,
+                                                "exponent" = ?,
+                                                "constant" = ?,
+                                                "curve_name" = ?                             
+                                         WHERE name = ?;"""
+
+            storage_units_data = swmminp_dict.get('STORAGE', [])
+            coordinates_data = swmminp_dict.get('COORDINATES', [])
+            coordinates_dict = {item[0]: item[1:] for item in coordinates_data}
+            inflows_data = swmminp_dict.get('INFLOWS', [])
+            external_inflows = [external_inflow_name[0] for external_inflow_name in inflows_data]
+
+            if len(storage_units_data) > 0:
+                added_storages = 0
+                updated_storages = 0
+                for storage_unit in storage_units_data:
+                    """
+                    [STORAGE]
+                    ;;               Invert   Max.     Init.    Storage    Curve                      Ponded   Evap.   
+                    ;;Name           Elev.    Depth    Depth    Curve      Params                     Area     Frac.    Infiltration Parameters
+                    ;;-------------- -------- -------- -------- ---------- -------- -------- -------- -------- -------- -----------------------
+                    Cistern1         1385     9        0        TABULAR    Storage1                   0        0       
+                    Cistern2         1385     9        0        TABULAR    Storage1                   0        0        50       60       70      
+                    Cistern3         1385     9        0        FUNCTIONAL 1000     100      10       0        0       
+                    """
+
+                    # SWMM VARIABLES
+                    name = storage_unit[0]
+                    invert_elev = storage_unit[1]
+                    max_depth = storage_unit[2]
+                    init_depth = storage_unit[3]
+                    storage_curve = storage_unit[4]
+                    if storage_curve == 'FUNCTIONAL':
+                        coefficient = storage_unit[5]
+                        exponent = storage_unit[6]
+                        constant = storage_unit[7]
+                        evap_factor = storage_unit[9]
+                        curve_name = '*'
+                    else:
+                        coefficient = 1000
+                        exponent = 0
+                        constant = 0
+                        curve_name = storage_unit[5]
+                        evap_factor = storage_unit[7]
+                    infiltration = 'YES' if len(storage_unit) == 13 or len(storage_unit) == 11 else 'NO'
+                    infil_method = 'GREEN_AMPT'
+                    if len(storage_unit) == 13:
+                        suction_head = storage_unit[10]
+                        conductivity = storage_unit[11]
+                        initial_deficit = storage_unit[12]
+                    elif len(storage_unit) == 11:
+                        suction_head = storage_unit[8]
+                        conductivity = storage_unit[9]
+                        initial_deficit = storage_unit[10]
+                    else:
+                        suction_head = 0
+                        conductivity = 0
+                        initial_deficit = 0
+                    external_inflow = 'YES' if name in external_inflows else 'NO'
+                    treatment = 'NO'
+                    ponded_area = 0
+
+                    # QGIS VARIABLES
+                    x = float(coordinates_dict[name][0])
+                    y = float(coordinates_dict[name][1])
+
+                    grid_n = self.gutils.grid_on_point(x, y)
+                    grid = -9999 if grid_n is None else grid_n
+                    geom = "POINT({0} {1})".format(x, y)
+                    geom = self.gutils.wkt_to_gpb(geom)
+
+                    if name in existing_storages:
+                        updated_storages += 1
+                        self.gutils.execute(
+                            replace_user_swmm_storage_sql,
+                            (
+                                geom,
+                                invert_elev,
+                                max_depth,
+                                init_depth,
+                                external_inflow,
+                                treatment,
+                                ponded_area,
+                                evap_factor,
+                                infiltration,
+                                infil_method,
+                                suction_head,
+                                conductivity,
+                                initial_deficit,
+                                storage_curve,
+                                coefficient,
+                                exponent,
+                                constant,
+                                curve_name,
+                                name,
+                            ),
+                        )
+                    else:
+                        added_storages += 1
+                        self.gutils.execute(insert_storage_units_sql, (
+                            name,
+                            grid,
+                            invert_elev,
+                            max_depth,
+                            init_depth,
+                            external_inflow,
+                            treatment,
+                            ponded_area,
+                            evap_factor,
+                            infiltration,
+                            infil_method,
+                            suction_head,
+                            conductivity,
+                            initial_deficit,
+                            storage_curve,
+                            coefficient,
+                            exponent,
+                            constant,
+                            curve_name,
+                            geom
+                        )
+                        )
+
+                self.uc.log_info(f"STORAGES: {added_storages} added and {updated_storages} updated from imported SWMM INP file")
+
+        except Exception as e:
+            QApplication.setOverrideCursor(Qt.ArrowCursor)
+            msg = "ERROR 300124.1109: Creating Storm Drain Storage Units layer failed!\n\n" \
+                  "Please check your SWMM input data.\nAre the nodes coordinates inside the computational domain?\n" \
+                  f"{e}"
+            self.uc.show_error(msg, e)
+            self.uc.log_info(msg)
+            QApplication.restoreOverrideCursor()
+
+    def import_swmminp_outfalls(self, swmminp_dict, delete_existing):
+        """
+        Function to import swmm inp outfalls
+        """
+        try:
+            existing_outfalls = []
+            if delete_existing:
+                self.gutils.clear_tables('user_swmm_outlets')
+            else:
+                existing_outfalls_qry = self.gutils.execute("SELECT name FROM user_swmm_outlets;").fetchall()
+                existing_outfalls = [outfall[0] for outfall in existing_outfalls_qry]
+
+            insert_outfalls_sql = """
+                        INSERT INTO user_swmm_outlets (
+                            grid,
+                            name,
+                            outfall_invert_elev,
+                            flapgate, 
+                            swmm_allow_discharge,
+                            outfall_type,
+                            tidal_curve,
+                            time_series,  
+                            fixed_stage,
+                            geom
+                        )
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);"""
+
+            replace_user_swmm_outlets_sql = """UPDATE user_swmm_outlets
+                                     SET    geom = ?,
+                                            outfall_type = ?, 
+                                            outfall_invert_elev = ?, 
+                                            swmm_allow_discharge = ?,
+                                            tidal_curve = ?, 
+                                            time_series = ?,
+                                            fixed_stage = ?,
+                                            flapgate = ?
+                                     WHERE name = ?;"""
+
+            outfalls_data = swmminp_dict.get('OUTFALLS', [])
+            coordinates_data = swmminp_dict.get('COORDINATES', [])
+            coordinates_dict = {item[0]: item[1:] for item in coordinates_data}
+
+            if len(outfalls_data) > 0:
+                added_outfalls = 0
+                updated_outfalls = 0
+                for outfall in outfalls_data:
+                    """
+                    [OUTFALLS]
+                    ;;               Invert     Outfall    Stage/Table      Tide
+                    ;;Name           Elev.      Type       Time Series      Gate
+                    ;;-------------- ---------- ---------- ---------------- ----
+                    O-35-31-23       1397.16    FREE                        NO
+                    """
+
+                    # SWMM VARIABLES
+                    name = outfall[0]
+                    outfall_invert_elev = outfall[1]
+                    outfall_type = outfall[2]
+                    if len(outfall) == 5:
+                        flapgate = "True" if outfall[4] == "YES" else "False"
+                        tidal_curve = outfall[3] if outfall_type == "TIDAL" else '*'
+                        time_series = outfall[3] if outfall_type == "TIMESERIES" else '*'
+                        fixed_stage = outfall[3] if outfall_type == "FIXED" else '*'
+                    else:
+                        flapgate = "True" if outfall[3] == "YES" else "False"
+                        tidal_curve = '*'
+                        time_series = '*'
+                        fixed_stage = '*'
+
+                    # QGIS VARIABLES
+                    x = coordinates_dict[name][0]
+                    y = coordinates_dict[name][1]
+                    grid_n = self.gutils.grid_on_point(x, y)
+                    grid = -9999 if grid_n is None else grid_n
+                    geom = "POINT({0} {1})".format(x, y)
+                    geom = self.gutils.wkt_to_gpb(geom)
+
+                    # FLO-2D VARIABLES
+                    swmm_allow_discharge = 0
+
+                    if name in existing_outfalls:
+                        updated_outfalls += 1
+                        self.gutils.execute(
+                            replace_user_swmm_outlets_sql,
+                            (
+                                geom,
+                                outfall_type,
+                                outfall_invert_elev,
+                                swmm_allow_discharge,
+                                tidal_curve,
+                                time_series,
+                                fixed_stage,
+                                flapgate,
+                                name,
+                            ),
+                        )
+                    else:
+                        added_outfalls += 1
+                        self.gutils.execute(insert_outfalls_sql, (
+                            grid,
+                            name,
+                            outfall_invert_elev,
+                            flapgate,
+                            swmm_allow_discharge,
+                            outfall_type,
+                            tidal_curve,
+                            time_series,
+                            fixed_stage,
+                            geom
+                        )
+                        )
+
+                self.uc.log_info(f"OUTFALLS: {added_outfalls} added and {updated_outfalls} updated from imported SWMM INP file")
+
+        except Exception as e:
+            QApplication.setOverrideCursor(Qt.ArrowCursor)
+            msg = "ERROR 060319.1610: Creating Storm Drain Outfalls layer failed!\n\n" \
+                  "Please check your SWMM input data.\nAre the nodes coordinates inside the computational domain?\n" \
+                  f"{e}"
+            self.uc.show_error(msg, e)
+            self.uc.log_info(msg)
+            QApplication.restoreOverrideCursor()
+
+    def import_swmminp_inlets_junctions(self, swmminp_dict, delete_existing):
+        """
+        Function to import swmm inp inlets junctions
+        """
+        try:
+            existing_inlets_junctions = []
+            if delete_existing:
+                self.gutils.clear_tables('user_swmm_inlets_junctions')
+            else:
+                existing_inlets_junctions_qry = self.gutils.execute("SELECT name FROM user_swmm_inlets_junctions;").fetchall()
+                existing_inlets_junctions = [inlet_junction[0] for inlet_junction in existing_inlets_junctions_qry]
+
+            insert_inlets_junctions_sql = """
+                                        INSERT INTO user_swmm_inlets_junctions (
+                                            grid,
+                                            name,
+                                            sd_type,
+                                            external_inflow,
+                                            junction_invert_elev,
+                                            max_depth,
+                                            init_depth,
+                                            surcharge_depth,
+                                            intype,
+                                            swmm_length,
+                                            swmm_width,
+                                            swmm_height,
+                                            swmm_coeff,
+                                            swmm_feature,
+                                            curbheight,
+                                            swmm_clogging_factor,
+                                            swmm_time_for_clogging,
+                                            drboxarea,
+                                            geom
+                                        )
+                                            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);"""
+
+            replace_user_swmm_inlets_junctions_sql = """UPDATE user_swmm_inlets_junctions
+                                     SET    geom = ?,
+                                            sd_type = ?,
+                                            external_inflow = ?,
+                                            junction_invert_elev = ?,
+                                            max_depth = ?,
+                                            init_depth = ?,
+                                            surcharge_depth = ?,
+                                            intype = ?,
+                                            swmm_length = ?,
+                                            swmm_width = ?,
+                                            swmm_height = ?,
+                                            swmm_coeff = ?,
+                                            swmm_feature = ?,
+                                            curbheight = ?,
+                                            swmm_clogging_factor = ?,
+                                            swmm_time_for_clogging = ?,
+                                            drboxarea = ?
+                                     WHERE name = ?;"""
+
+            inlets_junctions_data = swmminp_dict.get('JUNCTIONS', [])
+            coordinates_data = swmminp_dict.get('COORDINATES', [])
+            coordinates_dict = {item[0]: item[1:] for item in coordinates_data}
+            inflows_data = swmminp_dict.get('INFLOWS', [])
+            external_inflows_inlet_junctions = [external_inflow_name[0] for external_inflow_name in inflows_data]
+
+            if len(inlets_junctions_data) > 0:
+                added_inlets_junctions = 0
+                updated_inlets_junctions = 0
+                for inlet_junction in inlets_junctions_data:
+                    """
+                    ;;               Invert     Max.       Init.      Surcharge  Ponded
+                    ;;Name           Elev.      Depth      Depth      Depth      Area
+                    ;;-------------- ---------- ---------- ---------- ---------- ----------
+                    I1-35-31-18      1399.43    15.00      0.00       0.00       0.00
+                    I1-35-32-54      1399.43    15.00      0.00       0.00       0.00
+                    """
+
+                    # SWMM VARIABLES
+                    name = inlet_junction[0]
+                    junction_invert_elev = float(inlet_junction[1])
+                    max_depth = float(inlet_junction[2])
+                    init_depth = float(inlet_junction[3])
+                    surcharge_depth = float(inlet_junction[4])
+                    external_inflow = 1 if name in external_inflows_inlet_junctions else 0
+
+                    # QGIS VARIABLES
+                    x = coordinates_dict[name][0]
+                    y = coordinates_dict[name][1]
+                    grid_n = self.gutils.grid_on_point(x, y)
+                    grid = -9999 if grid_n is None else grid_n
+                    geom = "POINT({0} {1})".format(x, y)
+                    geom = self.gutils.wkt_to_gpb(geom)
+
+                    # FLO-2D VARIABLES -> Updated later when other files are imported
+                    sd_type = 'I' if name.lower().startswith("i") else 'J'
+                    intype = 0
+                    swmm_length = 0
+                    swmm_width = 0
+                    swmm_height = 0
+                    swmm_coeff = 0
+                    swmm_feature = 0
+                    curbheight = 0
+                    swmm_clogging_factor = 0
+                    swmm_time_for_clogging = 0
+                    drboxarea = 0
+
+                    if name in existing_inlets_junctions:
+                        updated_inlets_junctions += 1
+                        self.gutils.execute(replace_user_swmm_inlets_junctions_sql, (
+                            geom,
+                            sd_type,
+                            external_inflow,
+                            junction_invert_elev,
+                            max_depth,
+                            init_depth,
+                            surcharge_depth,
+                            intype,
+                            swmm_length,
+                            swmm_width,
+                            swmm_height,
+                            swmm_coeff,
+                            swmm_feature,
+                            curbheight,
+                            swmm_clogging_factor,
+                            swmm_time_for_clogging,
+                            drboxarea,
+                            name
+                        )
+                        )
+
+                    else:
+                        added_inlets_junctions += 1
+                        self.gutils.execute(insert_inlets_junctions_sql, (
+                            grid,
+                            name,
+                            sd_type,
+                            external_inflow,
+                            junction_invert_elev,
+                            max_depth,
+                            init_depth,
+                            surcharge_depth,
+                            intype,
+                            swmm_length,
+                            swmm_width,
+                            swmm_height,
+                            swmm_coeff,
+                            swmm_feature,
+                            curbheight,
+                            swmm_clogging_factor,
+                            swmm_time_for_clogging,
+                            drboxarea,
+                            geom
+                        )
+                        )
+
+                self.uc.log_info(f"JUNCTIONS: {added_inlets_junctions} added and {updated_inlets_junctions} updated from imported SWMM INP file")
+
+        except Exception as e:
+            QApplication.setOverrideCursor(Qt.ArrowCursor)
+            msg = "ERROR 060319.1610: Creating Storm Drain Inlets/Junctions layer failed!\n\n" \
+                  "Please check your SWMM input data.\nAre the nodes coordinates inside the computational domain?\n" \
+                  f"{e}"
+            self.uc.show_error(msg, e)
+            self.uc.log_info(msg)
+            QApplication.restoreOverrideCursor()
+
+    def import_swmminp_curves(self, swmminp_dict, delete_existing):
+        """
+        Function to import swmm inp curves (pump, tidal, and other)
+        """
+        try:
+            existing_curves = []
+            if delete_existing:
+                self.gutils.clear_tables('swmm_pumps_curve_data')
+                self.gutils.clear_tables('swmm_tidal_curve')
+                self.gutils.clear_tables('swmm_tidal_curve_data')
+                self.gutils.clear_tables('swmm_other_curves')
+            else:
+                existing_pump_curves_qry = self.gutils.execute("SELECT DISTINCT pump_curve_name FROM swmm_pumps_curve_data;").fetchall()
+                existing_pump_curves = [pump_curve[0] for pump_curve in existing_pump_curves_qry]
+                existing_tidal_curves_qry = self.gutils.execute("SELECT DISTINCT tidal_curve_name FROM swmm_tidal_curve;").fetchall()
+                existing_tidal_curves = [tidal_curve[0] for tidal_curve in existing_tidal_curves_qry]
+                existing_other_curves_qry = self.gutils.execute("SELECT DISTINCT name FROM swmm_other_curves;").fetchall()
+                existing_other_curves = [other_curve[0] for other_curve in existing_other_curves_qry]
+                existing_curves = existing_pump_curves + existing_tidal_curves + existing_other_curves
+
+            insert_pump_curves_sql = """INSERT INTO swmm_pumps_curve_data
+                                                        (   pump_curve_name, 
+                                                            pump_curve_type, 
+                                                            x_value,
+                                                            y_value,
+                                                            description
+                                                        ) 
+                                                        VALUES (?, ?, ?, ?, ?);"""
+
+            replace_pump_curves_sql = """UPDATE swmm_pumps_curve_data
+                                                        SET pump_curve_type = ?,
+                                                            x_value = ?,
+                                                            y_value = ?
+                                                        WHERE
+                                                            pump_curve_name = ?;"""
+
+            insert_tidal_curves_sql = """INSERT OR REPLACE INTO swmm_tidal_curve
+                                                        (   tidal_curve_name, 
+                                                            tidal_curve_description
+                                                        ) 
+                                                        VALUES (?, ?);"""
+
+            insert_tidal_curves_data_sql = """INSERT INTO swmm_tidal_curve_data
+                                                        (   tidal_curve_name, 
+                                                            hour, 
+                                                            stage
+                                                        ) 
+                                                        VALUES (?, ?, ?);"""
+
+            replace_tidal_curves_data_sql = """UPDATE swmm_tidal_curve_data
+                                                        SET hour = ?, 
+                                                            stage = ?
+                                                        WHERE
+                                                            tidal_curve_name = ?;"""
+
+            insert_other_curves_sql = """INSERT INTO swmm_other_curves
+                                                        (   name, 
+                                                            type, 
+                                                            description,
+                                                            x_value,
+                                                            y_value
+                                                        ) 
+                                                        VALUES (?, ?, ?, ?, ?);"""
+
+            replace_other_curves_sql = """UPDATE swmm_other_curves
+                                                        SET type = ?,
+                                                            x_value = ?,
+                                                            y_value = ?
+                                                        WHERE
+                                                            name = ?;"""
+
+            curves_data = swmminp_dict.get('CURVES', [])
+
+            # Initialize the dictionaries for each group
+            groups = {
+                'Pump': {},
+                'Tidal': {},
+                'Other': {}
+            }
+
+            current_key = None
+            current_group_type = None
+            extra_column = None
+            data_added = False  # Flag to track if data was added to the current group
+            current_group_data = []  # Initialize before entering the loop
+
+            if len(curves_data) > 0:
+                for curve in curves_data:
+                    if len(curve) == 4:  # New set (defining the type and the key)
+                        # Only store the current group if data was added
+                        if current_key is not None and data_added:
+                            groups[current_group_type][current_key] = current_group_data
+
+                        # Now, handle the new group definition
+                        current_key = curve[0]
+                        if 'Pump' in curve[1]:  # Pump group
+                            current_group_type = 'Pump'
+                            extra_column = curve[1]  # Use the entire Pump name (e.g., 'Pump4')
+                        elif 'Tidal' in curve[1]:  # Tidal group
+                            current_group_type = 'Tidal'
+                            extra_column = curve[1]  # Use the entire Tidal name (e.g., 'Tidal')
+                        else:  # Other group
+                            current_group_type = 'Other'
+                            extra_column = curve[1]  # Use the entire name (e.g., 'Storage')
+
+                        # Start a new group
+                        current_group_data = [[curve[0], curve[2], curve[3], extra_column]]  # Reset the list for the new group
+                        data_added = False  # Reset the flag for the new group
+                    else:
+                        # Add subsequent rows to the current group data
+                        if extra_column is not None:
+                            # Append the suffix (Pump name, Tidal name, or Storage name) as a new column
+                            curve.append(extra_column)
+
+                        current_group_data.append(curve)
+                        data_added = True  # Mark that data has been added
+
+                # After the loop, ensure the last group is stored if it has data
+                if current_key is not None and data_added:
+                    groups[current_group_type][current_key] = current_group_data
+
+                added_pumps_curves = 0
+                updated_pumps_curves = 0
+                for key, values in groups['Pump'].items():
+                    if key in existing_curves:
+                        updated_pumps_curves += 1
+                        for value in values:
+                            self.gutils.execute(replace_pump_curves_sql,
+                                                (value[3][-1], value[1], value[2], value[0]))
+                    else:
+                        added_pumps_curves += 1
+                        for value in values:
+                            self.gutils.execute(insert_pump_curves_sql, (value[0], value[3][-1], value[1], value[2], ''))
+                self.uc.log_info(f"CURVES (pumps): {added_pumps_curves} added and {updated_pumps_curves} updated from imported SWMM INP file")
+
+                added_tidal_curves = 0
+                updated_tidal_curves = 0
+                for key, values in groups['Tidal'].items():
+                    if key in existing_curves:
+                        updated_tidal_curves += 1
+                        for value in values:
+                            self.gutils.execute(replace_tidal_curves_data_sql, (value[1], value[2], value[0]))
+                    else:
+                        added_tidal_curves += 1
+                        for value in values:
+                            self.gutils.execute(insert_tidal_curves_sql, (value[0], ''))
+                            self.gutils.execute(insert_tidal_curves_data_sql, (value[0], value[1], value[2]))
+                self.uc.log_info(f"CURVES (tidal): {added_tidal_curves} added and {updated_tidal_curves} updated from imported SWMM INP file")
+
+                added_other_curves = 0
+                updated_other_curves = 0
+                for key, values in groups['Other'].items():
+                    if key in existing_curves:
+                        updated_other_curves += 1
+                        for value in values:
+                            self.gutils.execute(replace_other_curves_sql, (value[3], value[1], value[2], value[0]))
+                    else:
+                        added_other_curves += 1
+                        for value in values:
+                            self.gutils.execute(insert_other_curves_sql, (value[0], value[3], '', value[1], value[2]))
+                self.uc.log_info(f"CURVES (other): {added_other_curves} added and {updated_other_curves} updated from imported SWMM INP file")
+
+        except Exception as e:
+            QApplication.setOverrideCursor(Qt.ArrowCursor)
+            msg = "ERROR 241121.0547: Reading storm drain curve data from SWMM input data failed!\n" \
+                  "__________________________________________________\n" \
+                  f"{e}"
+            self.uc.show_error(msg, e)
+            self.uc.log_info(msg)
+            QApplication.restoreOverrideCursor()
+
+    def import_swmminp_ts(self, swmminp_dict, delete_existing):
+        """
+        Function to import swmm inp time series
+        """
+        try:
+            existing_time_series = []
+            if delete_existing:
+                self.gutils.clear_tables('swmm_time_series')
+                self.gutils.clear_tables('swmm_time_series_data')
+            else:
+                existing_time_series_qry = self.gutils.execute("SELECT DISTINCT time_series_name FROM swmm_time_series;").fetchall()
+                existing_time_series = [time_series[0] for time_series in existing_time_series_qry]
+            insert_times_from_file_sql = """INSERT INTO swmm_time_series 
+                                    (   time_series_name, 
+                                        time_series_description, 
+                                        time_series_file,
+                                        time_series_data
+                                    ) 
+                                    VALUES (?, ?, ?, ?);"""
+
+            replace_times_from_file_sql = """UPDATE swmm_time_series 
+                                                SET                                        
+                                                    time_series_file = ?,
+                                                    time_series_data = ?
+                                                WHERE 
+                                                    time_series_name = ?;"""
+
+            insert_times_from_data_sql = """INSERT INTO swmm_time_series_data
+                                    (   time_series_name, 
+                                        date, 
+                                        time,
+                                        value
+                                    ) 
+                                    VALUES (?, ?, ?, ?);"""
+
+            replace_times_from_data_sql = """UPDATE swmm_time_series_data 
+                                                SET                                        
+                                                    date = ?,
+                                                    time = ?,
+                                                    value = ?
+                                                WHERE 
+                                                    time_series_name = ?;"""
+
+            time_series_data_data = swmminp_dict.get('TIMESERIES', [])
+            if len(time_series_data_data) > 0:
+                updated_time_series = 0
+                added_time_series = 0
+
+                time_series_names = self.gutils.execute("SELECT DISTINCT time_series_name FROM swmm_time_series;").fetchall()
+                for time_series_name in time_series_names:
+                    if time_series_name[0] in existing_time_series:
+                        updated_time_series += 1
+
+                for time_series in time_series_data_data:
+                    if time_series[1] == "FILE":
+                        name = time_series[0]
+                        description = ""
+                        file = time_series[2]
+                        file2 = file.replace('"', "")
+                        if name in existing_time_series:
+                            self.gutils.execute(replace_times_from_file_sql, (file2.strip(), "False", name))
+                        else:
+                            added_time_series += 1
+                            self.gutils.execute(insert_times_from_file_sql, (name, description, file2.strip(), "False"))
+                    else:
+                        # See if time series data reference is already in table:
+                        row = self.gutils.execute(
+                            "SELECT * FROM swmm_time_series WHERE time_series_name = ?;", (time_series[0],)
+                        ).fetchone()
+                        if not row:
+                            name = time_series[0]
+                            description = ""
+                            file = ""
+                            file2 = file.replace('"', "")
+                            if name in existing_time_series:
+                                self.gutils.execute(replace_times_from_file_sql, (file2.strip(), "True", name))
+                            else:
+                                added_time_series += 1
+                                self.gutils.execute(insert_times_from_file_sql, (name, description, file2.strip(), "True"))
+
+                        name = time_series[0]
+                        date = time_series[1]
+                        tme = time_series[2]
+                        value = float_or_zero(time_series[3])
+
+                        if name in existing_time_series:
+                            self.gutils.execute(replace_times_from_data_sql, (date, tme, value, name))
+                        else:
+                            self.gutils.execute(insert_times_from_data_sql, (name, date, tme, value))
+
+                self.uc.log_info(
+                    f"TIMESERIES: {added_time_series} added and {updated_time_series} updated from imported SWMM INP file")
+
+        except Exception as e:
+            QApplication.setOverrideCursor(Qt.ArrowCursor)
+            msg = "ERROR 020219.0812:  Reading storm drain time series from SWMM input data failed!\n" \
+                  "__________________________________________________\n" \
+                  f"{e}"
+            self.uc.show_error(msg, e)
+            self.uc.log_info(msg)
+            QApplication.restoreOverrideCursor()
+
+    def import_swmminp_inflows(self, swmminp_dict, delete_existing):
+        """
+        Function to import swmm inp inflows
+        """
+        try:
+            existing_inflows = []
+            if delete_existing:
+                self.gutils.clear_tables('swmm_inflows')
+            else:
+                existing_inflows_qry = self.gutils.execute("SELECT DISTINCT node_name FROM swmm_inflows;").fetchall()
+                existing_inflows = [inflow[0] for inflow in existing_inflows_qry]
+
+            insert_inflows_sql = """INSERT INTO swmm_inflows 
+                                            (   node_name, 
+                                                constituent, 
+                                                baseline, 
+                                                pattern_name, 
+                                                time_series_name, 
+                                                scale_factor
+                                            ) 
+                                            VALUES (?, ?, ?, ?, ?, ?);"""
+
+            replace_inflows_sql = """UPDATE swmm_inflows 
+                                            SET 
+                                                constituent = ?,
+                                                baseline = ?,
+                                                pattern_name = ?,
+                                                time_series_name = ?,
+                                                scale_factor = ?
+                                            WHERE node_name = ?;"""
+
+            inflows_data = swmminp_dict.get('INFLOWS', [])
+
+            if len(inflows_data) > 0:
+                added_inflows = 0
+                update_inflows = 0
+                for inflow in inflows_data:
+                    """
+                    ;;                                                 Param    Units    Scale    Baseline Baseline
+                    ;;Node           Parameter        Time Series      Type     Factor   Factor   Value    Pattern
+                    ;;-------------- ---------------- ---------------- -------- -------- -------- -------- --------
+                    J3-38-32-2       FLOW             ts_test          FLOW     1.0      3.5      12       pattern_test
+                    """
+
+                    name = inflow[0]
+                    constituent = inflow[1]
+                    time_series_name = inflow[2]
+                    scale_factor = inflow[5]
+                    if len(inflow) == 6:
+                        baseline = "?"
+                        pattern_name = "?"
+                    else:
+                        baseline = inflow[6]
+                        pattern_name = inflow[7]
+
+                    if name in existing_inflows:
+                        update_inflows += 1
+                        self.gutils.execute(
+                            replace_inflows_sql,
+                            (constituent, baseline, pattern_name, time_series_name, scale_factor, name),
+                        )
+                    else:
+                        added_inflows += 1
+                        self.gutils.execute(
+                            insert_inflows_sql,
+                            (name, constituent, baseline, pattern_name, time_series_name, scale_factor),
+                        )
+
+                self.uc.log_info(
+                    f"INFLOWS: {added_inflows} added and {update_inflows} updated from imported SWMM INP file")
+
+        except Exception as e:
+            QApplication.setOverrideCursor(Qt.ArrowCursor)
+            msg = "ERROR 020219.0812: Reading storm drain inflows from SWMM input data failed!\n" \
+                  "__________________________________________________\n" \
+                  f"{e}"
+            self.uc.show_error(msg, e)
+            self.uc.log_info(msg)
+            QApplication.restoreOverrideCursor()
+
+    def import_swmminp_patterns(self, swmminp_dict, delete_existing):
+        """
+        Function to import swmm inp patterns
+        """
+        try:
+            """
+            [PATTERNS]
+            ;;Name           Type       Multipliers
+            ;;-------------- ---------- -----------
+            ;description
+            pattern_test     HOURLY     1.0   2     3     4     5     6    
+            pattern_test                7     8     9     10    11    12   
+            """
+            existing_patterns = []
+            if delete_existing:
+                self.gutils.clear_tables('swmm_inflow_patterns')
+            else:
+                existing_patterns_qry = self.gutils.execute("SELECT DISTINCT pattern_name FROM swmm_inflow_patterns;").fetchall()
+                existing_patterns = [pattern[0] for pattern in existing_patterns_qry]
+
+            insert_patterns_sql = """INSERT INTO swmm_inflow_patterns
+                                                                (   pattern_name, 
+                                                                    pattern_description, 
+                                                                    hour, 
+                                                                    multiplier
+                                                                ) 
+                                                                VALUES (?, ?, ?, ?);"""
+
+            replace_patterns_sql = """UPDATE swmm_inflow_patterns 
+                                        SET
+                                            hour = ?,
+                                            multiplier = ?
+                                        WHERE 
+                                            pattern_name = ?;"""
+
+            patterns_data = swmminp_dict.get('PATTERNS', [])
+
+            if len(patterns_data) > 0:
+                # Adjust the patterns by adding them into their own list
+                merged_patterns = {}
+                updated_patterns = 0
+                added_patterns = 0
+                # Step 1: Merge the patterns while skipping the element at index 1 only in the first occurrence
+                for pattern in patterns_data:
+                    name = pattern[0]
+
+                    if name not in merged_patterns:
+                        # For the first occurrence, skip the element at index 1
+                        merged_patterns[name] = pattern[2:]
+                    else:
+                        # For subsequent occurrences, don't skip
+                        merged_patterns[name].extend(pattern[1:])
+
+                # Step 2: Convert to individual lists with a counter, resetting after 24
+                add_results = []
+                added_patterns = 0
+                update_results = []
+                updated_patterns = 0
+
+                for name, data in merged_patterns.items():
+                    if name in existing_patterns:
+                        updated_patterns += 1
+                        counter = 0  # Start the counter at 0
+                        for value in data:
+                            update_results.append([name, counter, value])
+                            counter += 1
+                            if counter > 24:  # Reset counter if greater than 24
+                                counter = 0
+                    else:
+                        added_patterns += 1
+                        counter = 0  # Start the counter at 0
+                        for value in data:
+                            add_results.append([name, counter, value])
+                            counter += 1
+                            if counter > 24:  # Reset counter if greater than 24
+                                counter = 0
+
+                for r in add_results:
+                    self.gutils.execute(insert_patterns_sql, (r[0], "", r[1], r[2]))
+
+                for r in update_results:
+                    self.gutils.execute(replace_patterns_sql, (r[1], r[2], r[0]))
+
+                self.uc.log_info(
+                    f"PATTERNS: {added_patterns} added and {updated_patterns} updated from imported SWMM INP file")
+
+        except Exception as e:
+            QApplication.setOverrideCursor(Qt.ArrowCursor)
+            msg = "ERROR 020219.0812: Reading storm drain patterns from SWMM input data failed!\n" \
+                  "__________________________________________________\n" \
+                  f"{e}"
+            self.uc.show_error(msg, e)
+            self.uc.log_info(msg)
+            QApplication.restoreOverrideCursor()
+
     def import_swmmflo(self):
 
         swmmflo_sql = [
@@ -1772,23 +3504,27 @@ class Flo2dGeoPackage(GeoPackageUtils):
             if x[1] != '-9999':
                 gids.append(x[1])
         cells = self.grid_centroids(gids, buffers=True)
+        have_outside = False
         for row in data:
             gid = row[1]
             # Outfall outside the grid -> Add exactly over the Storm Drain Outfalls
             if gid == '-9999':
+                have_outside = True
                 outfall_name = row[0]
                 geom_qry = self.execute(f"SELECT geom FROM user_swmm_outlets WHERE name = '{outfall_name}'").fetchone()
                 if geom_qry:
                     geom = geom_qry[0]
                 else:  # When there is no SWMM.INP
-                    self.uc.bar_warn(f"{outfall_name} coordinates not found!")
-                    self.uc.log_info(f"{outfall_name} coordinates not found!")
+                    self.uc.log_info(f"{outfall_name} outside the grid!")
                     continue
             else:
                 geom = cells[gid]
             swmmoutf_sql += [(geom,) + tuple(row)]
 
         self.batch_execute(swmmoutf_sql)
+
+        if have_outside:
+            self.uc.bar_warn(f"Some Outfalls are outside the grid! Check log messages for more information.")
 
     def import_tolspatial(self):
         tolspatial_sql = ["""INSERT INTO tolspatial (geom, tol) VALUES""", 2]

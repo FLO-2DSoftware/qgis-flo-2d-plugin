@@ -48,6 +48,7 @@ class TestFlo2dSelfHelpKit(unittest.TestCase):
         cls.f2g.disable_geom_triggers()
         cls.f2g.set_parser(CONT)
         cls.f2g.import_mannings_n_topo()
+        cls.f2g.import_swmminp()
 
     @classmethod
     def tearDownClass(cls):
@@ -152,22 +153,54 @@ class TestFlo2dSelfHelpKit(unittest.TestCase):
         in_lines, out_lines = compare_files(infile, outfile)
         self.assertEqual(in_lines, out_lines)
 
-    # def test_swmminp(self):
-    #     """Testing the SWMMINP Import/Export"""
-    #     file = IMPORT_DATA_DIR + r"\SWMM.INP"
-    #     if os.path.isfile(file):
-    #         f2d_plot = PlotWidget()
-    #         f2g_table = TableEditorWidget(f2g.iface, f2d_plot, f2g.lyrs)
-    #         sd = StormDrainEditorWidget(f2g.iface, f2d_plot, f2g_table, f2g.lyrs)
-    #         StormDrainEditorWidget.import_storm_drain_INP_file(sd, mode=file, show_end_message=True)
-    #         StormDrainEditorWidget.export_storm_drain_INP_file(specific_path=EXPORT_DATA_DIR)
-    #         outfile = os.path.join(EXPORT_DATA_DIR, "SWMM.INP")
-    #         in_lines, out_lines = compare_files(file, outfile)
-    #         self.assertEqual(in_lines, out_lines)
-    #     else:
-    #         self.skipTest("Project does not have SWMM.INP")
+    def test_swmminp(self):
+        self.f2g.import_swmminp()
+        # Number of inlets
+        n_inlets = self.f2g.execute("""SELECT COUNT(fid) FROM user_swmm_inlets_junctions WHERE sd_type = 'I';""").fetchone()[0]
+        self.assertEqual(n_inlets, 182)
+        # Number of junctions
+        n_junctions = self.f2g.execute("""SELECT COUNT(fid) FROM user_swmm_inlets_junctions WHERE sd_type = 'J';""").fetchone()[0]
+        self.assertEqual(n_junctions, 88)
+        # Number of junctions & inlets
+        n_inlets_junctions = self.f2g.execute("""SELECT COUNT(fid) FROM user_swmm_inlets_junctions;""").fetchone()[0]
+        self.assertEqual(n_inlets_junctions, 270)
+        # Number of outfalls:
+        n_outfalls = self.f2g.execute("""SELECT COUNT(fid) FROM user_swmm_outlets;""").fetchone()[0]
+        self.assertEqual(n_outfalls, 19)
+        # Number of conduits
+        n_conduits = self.f2g.execute("""SELECT COUNT(fid) FROM user_swmm_conduits;""").fetchone()[0]
+        self.assertEqual(n_conduits, 274)
+        # Number of storage
+        n_storage_units = self.f2g.execute("""SELECT COUNT(fid) FROM user_swmm_storage_units;""").fetchone()[0]
+        self.assertEqual(n_storage_units, 3)
+        # Number of pumps
+        n_pumps = self.f2g.execute("""SELECT COUNT(fid) FROM user_swmm_pumps;""").fetchone()[0]
+        self.assertEqual(n_pumps, 1)
+        # Number of orifices
+        n_orifices = self.f2g.execute("""SELECT COUNT(fid) FROM user_swmm_orifices;""").fetchone()[0]
+        self.assertEqual(n_orifices, 2)
+        # Number of weirs
+        n_weirs = self.f2g.execute("""SELECT COUNT(fid) FROM user_swmm_weirs;""").fetchone()[0]
+        self.assertEqual(n_weirs, 1)
+        # Number of RT
+        n_rt = self.f2g.execute("""SELECT COUNT(fid) FROM swmmflort;""").fetchone()[0]
+        self.assertEqual(n_rt, 1)
+        # Number of RT data
+        n_rt_data = self.f2g.execute("""SELECT COUNT(fid) FROM swmmflort_data;""").fetchone()[0]
+        self.assertEqual(n_rt_data, 14)
+        # Number of Culvert Equations
+        n_culverts = self.f2g.execute("""SELECT COUNT(fid) FROM swmmflo_culvert;""").fetchone()[0]
+        self.assertEqual(n_culverts, 5)
+        # Number of SD CONTROL
+        n_control = self.f2g.execute("""SELECT COUNT(fid) FROM swmm_control;""").fetchone()[0]
+        self.assertEqual(n_control, 32)
+        # # Number of Pump Curve
+        n_pump_curve = self.f2g.execute("""SELECT COUNT(fid) FROM swmm_pumps_curve_data;""").fetchone()[0]
+        self.assertEqual(n_pump_curve, 3)
+        # Number of Other Curve
+        n_other_curve = self.f2g.execute("""SELECT COUNT(fid) FROM swmm_other_curves;""").fetchone()[0]
+        self.assertEqual(n_other_curve, 8)
 
-    @unittest.skip("Storm Drain tests needs to be updated")
     def test_sdclogging(self):
         self.f2g.import_sdclogging()
         self.f2g.export_sdclogging(EXPORT_DATA_DIR)
@@ -176,7 +209,6 @@ class TestFlo2dSelfHelpKit(unittest.TestCase):
         in_lines, out_lines = compare_files(infile, outfile)
         self.assertEqual(in_lines, out_lines)
 
-    @unittest.skip("Storm Drain tests needs to be updated")
     def test_swmmflo(self):
         self.f2g.import_swmmflo()
         self.f2g.export_swmmflo(EXPORT_DATA_DIR)
@@ -185,7 +217,6 @@ class TestFlo2dSelfHelpKit(unittest.TestCase):
         in_lines, out_lines = compare_files(infile, outfile)
         self.assertEqual(in_lines, out_lines)
 
-    @unittest.skip("Storm Drain tests needs to be updated")
     def test_swmmflodropbox(self):
         self.f2g.import_swmmflodropbox()
         self.f2g.export_swmmflodropbox(EXPORT_DATA_DIR)
@@ -194,7 +225,6 @@ class TestFlo2dSelfHelpKit(unittest.TestCase):
         in_lines, out_lines = compare_files(infile, outfile)
         self.assertEqual(in_lines, out_lines)
 
-    @unittest.skip("Storm Drain tests needs to be updated")
     def test_swmmflort(self):
         self.f2g.import_swmmflort()
         self.f2g.export_swmmflort(EXPORT_DATA_DIR)
@@ -203,7 +233,6 @@ class TestFlo2dSelfHelpKit(unittest.TestCase):
         in_lines, out_lines = compare_files(infile, outfile)
         self.assertEqual(in_lines, out_lines)
 
-    @unittest.skip("Storm Drain tests needs to be updated")
     def test_swmmoutf(self):
         self.f2g.import_swmmoutf()
         self.f2g.export_swmmoutf(EXPORT_DATA_DIR)
