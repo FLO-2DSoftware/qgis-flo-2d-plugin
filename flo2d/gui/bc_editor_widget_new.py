@@ -102,8 +102,6 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
             lambda: self.change_bc_name(self.inflow_bc_name_cbo, "inflow"))
         self.delete_inflow_bc_btn.clicked.connect(
             lambda: self.delete_bc(self.inflow_bc_name_cbo, "inflow"))
-        self.clear_inflow_rubberband_btn.clicked.connect(
-            self.clear_rubberband)
         self.inflow_bc_center_btn.clicked.connect(
             self.inflow_bc_center)
         self.ifc_fplain_radio.clicked.connect(
@@ -146,8 +144,6 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
             lambda: self.delete_ts_data(self.outflow_data_cbo, "outflow"))
         self.delete_outflow_bc_btn.clicked.connect(
             lambda: self.delete_bc(self.outflow_bc_name_cbo, "outflow"))
-        self.clear_outflow_rubberband_btn.clicked.connect(
-            self.clear_rubberband)
         self.outflow_bc_center_btn.clicked.connect(
             self.outflow_bc_center)
         self.outflow_type_cbo.activated.connect(
@@ -453,7 +449,6 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
             self.inflow_bc_name_cbo.setDisabled(False)
             self.change_inflow_bc_name_btn.setDisabled(False)
             self.delete_inflow_bc_btn.setDisabled(False)
-            self.clear_inflow_rubberband_btn.setDisabled(False)
             self.inflow_bc_center_btn.setDisabled(False)
             self.inflow_type_label.setDisabled(False)
             self.inflow_type_cbo.setDisabled(False)
@@ -812,12 +807,6 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
             # else:
             #     self.outflow.get_cur_data_fid()
             #     QgsMessageLog.logMessage(str(self.outflow.get_cur_data_fid()))
-
-    def clear_rubberband(self):
-        """
-        Function to clear the rubberbands
-        """
-        self.lyrs.clear_rubber()
 
     def open_data(self, type):
         """
@@ -1767,7 +1756,6 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
             self.inflow_bc_name_cbo.setDisabled(True)
             self.change_inflow_bc_name_btn.setDisabled(True)
             self.delete_inflow_bc_btn.setDisabled(True)
-            self.clear_inflow_rubberband_btn.setDisabled(True)
             self.inflow_bc_center_btn.setDisabled(True)
             self.inflow_type_label.setDisabled(True)
             self.inflow_type_cbo.setDisabled(True)
@@ -1841,7 +1829,6 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
             self.outflow_bc_name_cbo.setDisabled(False)
             self.change_outflow_bc_name_btn.setDisabled(False)
             self.delete_outflow_bc_btn.setDisabled(False)
-            self.clear_outflow_rubberband_btn.setDisabled(False)
             self.outflow_bc_center_btn.setDisabled(False)
             self.outflow_type_label.setDisabled(False)
             self.outflow_type_cbo.setDisabled(False)
@@ -2195,7 +2182,6 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
             self.inflow_bc_name_cbo.setDisabled(True)
             self.change_inflow_bc_name_btn.setDisabled(True)
             self.delete_inflow_bc_btn.setDisabled(True)
-            self.clear_inflow_rubberband_btn.setDisabled(True)
             self.inflow_bc_center_btn.setDisabled(True)
             self.inflow_type_label.setDisabled(True)
             self.inflow_type_cbo.setDisabled(True)
@@ -2214,7 +2200,6 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
             self.outflow_bc_name_cbo.setDisabled(True)
             self.change_outflow_bc_name_btn.setDisabled(True)
             self.delete_outflow_bc_btn.setDisabled(True)
-            self.clear_outflow_rubberband_btn.setDisabled(True)
             self.outflow_bc_center_btn.setDisabled(True)
             self.outflow_type_label.setDisabled(True)
             self.outflow_type_cbo.setDisabled(True)

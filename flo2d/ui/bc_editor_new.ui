@@ -49,13 +49,6 @@
         <property name="sizeConstraint">
          <enum>QLayout::SetDefaultConstraint</enum>
         </property>
-        <item row="1" column="1" colspan="8">
-         <widget class="QComboBox" name="inflow_bc_name_cbo">
-          <property name="toolTip">
-           <string>Inflow boundary condition name</string>
-          </property>
-         </widget>
-        </item>
         <item row="4" column="10">
          <widget class="QToolButton" name="delete_inflow_ts_btn">
           <property name="minimumSize">
@@ -205,32 +198,6 @@
           </property>
          </widget>
         </item>
-        <item row="1" column="10">
-         <widget class="QToolButton" name="delete_inflow_bc_btn">
-          <property name="minimumSize">
-           <size>
-            <width>23</width>
-            <height>0</height>
-           </size>
-          </property>
-          <property name="toolTip">
-           <string>Delete inflow boundary condition</string>
-          </property>
-          <property name="text">
-           <string>...</string>
-          </property>
-          <property name="icon">
-           <iconset>
-            <normaloff>../img/mActionDeleteSelected.svg</normaloff>../img/mActionDeleteSelected.svg</iconset>
-          </property>
-          <property name="iconSize">
-           <size>
-            <width>16</width>
-            <height>16</height>
-           </size>
-          </property>
-         </widget>
-        </item>
         <item row="1" column="12">
          <widget class="QToolButton" name="inflow_bc_center_btn">
           <property name="minimumSize">
@@ -254,55 +221,6 @@
           </property>
           <property name="checked">
            <bool>false</bool>
-          </property>
-         </widget>
-        </item>
-        <item row="1" column="9">
-         <widget class="QToolButton" name="change_inflow_bc_name_btn">
-          <property name="sizePolicy">
-           <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-            <horstretch>0</horstretch>
-            <verstretch>0</verstretch>
-           </sizepolicy>
-          </property>
-          <property name="minimumSize">
-           <size>
-            <width>23</width>
-            <height>0</height>
-           </size>
-          </property>
-          <property name="toolTip">
-           <string>Rename inflow boundary condition</string>
-          </property>
-          <property name="layoutDirection">
-           <enum>Qt::LeftToRight</enum>
-          </property>
-          <property name="text">
-           <string>...</string>
-          </property>
-          <property name="icon">
-           <iconset>
-            <normaloff>../img/change_name.svg</normaloff>../img/change_name.svg</iconset>
-          </property>
-         </widget>
-        </item>
-        <item row="1" column="11">
-         <widget class="QToolButton" name="clear_inflow_rubberband_btn">
-          <property name="minimumSize">
-           <size>
-            <width>23</width>
-            <height>0</height>
-           </size>
-          </property>
-          <property name="toolTip">
-           <string>Clear the inflow rubberband</string>
-          </property>
-          <property name="text">
-           <string>Inflow hydrograph intervals (hours/days)</string>
-          </property>
-          <property name="icon">
-           <iconset>
-            <normaloff>../img/broom.png</normaloff>../img/broom.png</iconset>
           </property>
          </widget>
         </item>
@@ -609,6 +527,68 @@
           </item>
          </layout>
         </item>
+        <item row="1" column="11">
+         <widget class="QToolButton" name="delete_inflow_bc_btn">
+          <property name="minimumSize">
+           <size>
+            <width>23</width>
+            <height>0</height>
+           </size>
+          </property>
+          <property name="toolTip">
+           <string>Delete inflow boundary condition</string>
+          </property>
+          <property name="text">
+           <string>...</string>
+          </property>
+          <property name="icon">
+           <iconset>
+            <normaloff>../img/mActionDeleteSelected.svg</normaloff>../img/mActionDeleteSelected.svg</iconset>
+          </property>
+          <property name="iconSize">
+           <size>
+            <width>16</width>
+            <height>16</height>
+           </size>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="10">
+         <widget class="QToolButton" name="change_inflow_bc_name_btn">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="minimumSize">
+           <size>
+            <width>23</width>
+            <height>0</height>
+           </size>
+          </property>
+          <property name="toolTip">
+           <string>Rename inflow boundary condition</string>
+          </property>
+          <property name="layoutDirection">
+           <enum>Qt::LeftToRight</enum>
+          </property>
+          <property name="text">
+           <string>...</string>
+          </property>
+          <property name="icon">
+           <iconset>
+            <normaloff>../img/change_name.svg</normaloff>../img/change_name.svg</iconset>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="1" colspan="9">
+         <widget class="QComboBox" name="inflow_bc_name_cbo">
+          <property name="toolTip">
+           <string>Inflow boundary condition name</string>
+          </property>
+         </widget>
+        </item>
        </layout>
       </item>
      </layout>
@@ -906,89 +886,10 @@
           </property>
          </widget>
         </item>
-        <item row="1" column="11">
-         <widget class="QToolButton" name="delete_outflow_bc_btn">
-          <property name="minimumSize">
-           <size>
-            <width>23</width>
-            <height>0</height>
-           </size>
-          </property>
-          <property name="toolTip">
-           <string>Delete outflow boundary condition</string>
-          </property>
-          <property name="text">
-           <string>...</string>
-          </property>
-          <property name="icon">
-           <iconset>
-            <normaloff>../img/mActionDeleteSelected.svg</normaloff>../img/mActionDeleteSelected.svg</iconset>
-          </property>
-          <property name="iconSize">
-           <size>
-            <width>16</width>
-            <height>16</height>
-           </size>
-          </property>
-         </widget>
-        </item>
         <item row="2" column="0">
          <widget class="QLabel" name="outflow_type_label">
           <property name="text">
            <string>Type</string>
-          </property>
-         </widget>
-        </item>
-        <item row="1" column="10">
-         <widget class="QToolButton" name="change_outflow_bc_name_btn">
-          <property name="minimumSize">
-           <size>
-            <width>23</width>
-            <height>0</height>
-           </size>
-          </property>
-          <property name="toolTip">
-           <string>Rename outflow boundary condition</string>
-          </property>
-          <property name="text">
-           <string>...</string>
-          </property>
-          <property name="icon">
-           <iconset>
-            <normaloff>../img/change_name.svg</normaloff>../img/change_name.svg</iconset>
-          </property>
-         </widget>
-        </item>
-        <item row="1" column="12">
-         <widget class="QToolButton" name="clear_outflow_rubberband_btn">
-          <property name="sizePolicy">
-           <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-            <horstretch>0</horstretch>
-            <verstretch>0</verstretch>
-           </sizepolicy>
-          </property>
-          <property name="minimumSize">
-           <size>
-            <width>23</width>
-            <height>0</height>
-           </size>
-          </property>
-          <property name="toolTip">
-           <string>Clear the outflow rubberband</string>
-          </property>
-          <property name="text">
-           <string>...</string>
-          </property>
-          <property name="icon">
-           <iconset>
-            <normaloff>../img/broom.png</normaloff>../img/broom.png</iconset>
-          </property>
-         </widget>
-        </item>
-        <item row="1" column="1" colspan="9">
-         <widget class="QComboBox" name="outflow_bc_name_cbo">
-          <property name="toolTip">
-           <string>Outflow boundary condition name</string>
           </property>
          </widget>
         </item>
@@ -1082,35 +983,18 @@
           </property>
          </spacer>
         </item>
-        <item row="3" column="1" rowspan="2" colspan="9">
-         <widget class="QComboBox" name="outflow_data_cbo">
-          <property name="toolTip">
-           <string>Outflow time series boundary condition</string>
-          </property>
-         </widget>
-        </item>
-        <item row="3" column="10" rowspan="2">
-         <widget class="QToolButton" name="change_outflow_data_name_btn">
-          <property name="minimumSize">
-           <size>
-            <width>23</width>
-            <height>0</height>
-           </size>
-          </property>
-          <property name="toolTip">
-           <string>Rename outflow time series</string>
+        <item row="3" column="0" rowspan="2">
+         <widget class="QLabel" name="outflow_data_label">
+          <property name="enabled">
+           <bool>false</bool>
           </property>
           <property name="text">
-           <string>...</string>
-          </property>
-          <property name="icon">
-           <iconset>
-            <normaloff>../img/change_name.svg</normaloff>../img/change_name.svg</iconset>
+           <string>Time series</string>
           </property>
          </widget>
         </item>
-        <item row="3" column="11" rowspan="2">
-         <widget class="QToolButton" name="delete_outflow_ts_btn">
+        <item row="1" column="12">
+         <widget class="QToolButton" name="delete_outflow_bc_btn">
           <property name="minimumSize">
            <size>
             <width>23</width>
@@ -1118,7 +1002,7 @@
            </size>
           </property>
           <property name="toolTip">
-           <string>Delete outflow time series</string>
+           <string>Delete outflow boundary condition</string>
           </property>
           <property name="text">
            <string>...</string>
@@ -1127,9 +1011,15 @@
            <iconset>
             <normaloff>../img/mActionDeleteSelected.svg</normaloff>../img/mActionDeleteSelected.svg</iconset>
           </property>
+          <property name="iconSize">
+           <size>
+            <width>16</width>
+            <height>16</height>
+           </size>
+          </property>
          </widget>
         </item>
-        <item row="3" column="12" rowspan="2">
+        <item row="3" column="13" rowspan="2">
          <widget class="QToolButton" name="add_outflow_data_btn">
           <property name="minimumSize">
            <size>
@@ -1155,13 +1045,77 @@
           </property>
          </widget>
         </item>
-        <item row="3" column="0" rowspan="2">
-         <widget class="QLabel" name="outflow_data_label">
-          <property name="enabled">
-           <bool>false</bool>
+        <item row="3" column="12" rowspan="2">
+         <widget class="QToolButton" name="delete_outflow_ts_btn">
+          <property name="minimumSize">
+           <size>
+            <width>23</width>
+            <height>0</height>
+           </size>
+          </property>
+          <property name="toolTip">
+           <string>Delete outflow time series</string>
           </property>
           <property name="text">
-           <string>Time series</string>
+           <string>...</string>
+          </property>
+          <property name="icon">
+           <iconset>
+            <normaloff>../img/mActionDeleteSelected.svg</normaloff>../img/mActionDeleteSelected.svg</iconset>
+          </property>
+         </widget>
+        </item>
+        <item row="3" column="11" rowspan="2">
+         <widget class="QToolButton" name="change_outflow_data_name_btn">
+          <property name="minimumSize">
+           <size>
+            <width>23</width>
+            <height>0</height>
+           </size>
+          </property>
+          <property name="toolTip">
+           <string>Rename outflow time series</string>
+          </property>
+          <property name="text">
+           <string>...</string>
+          </property>
+          <property name="icon">
+           <iconset>
+            <normaloff>../img/change_name.svg</normaloff>../img/change_name.svg</iconset>
+          </property>
+         </widget>
+        </item>
+        <item row="3" column="1" rowspan="2" colspan="10">
+         <widget class="QComboBox" name="outflow_data_cbo">
+          <property name="toolTip">
+           <string>Outflow time series boundary condition</string>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="11">
+         <widget class="QToolButton" name="change_outflow_bc_name_btn">
+          <property name="minimumSize">
+           <size>
+            <width>23</width>
+            <height>0</height>
+           </size>
+          </property>
+          <property name="toolTip">
+           <string>Rename outflow boundary condition</string>
+          </property>
+          <property name="text">
+           <string>...</string>
+          </property>
+          <property name="icon">
+           <iconset>
+            <normaloff>../img/change_name.svg</normaloff>../img/change_name.svg</iconset>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="1" colspan="10">
+         <widget class="QComboBox" name="outflow_bc_name_cbo">
+          <property name="toolTip">
+           <string>Outflow boundary condition name</string>
           </property>
          </widget>
         </item>
