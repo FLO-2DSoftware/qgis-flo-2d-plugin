@@ -3461,7 +3461,7 @@ class Flo2D(object):
         QApplication.setOverrideCursor(Qt.WaitCursor)
         try:
             dlg.import_geometry()
-            self.setup_dock_widgets()
+            # self.setup_dock_widgets()
             self.uc.bar_info("HEC-RAS geometry data imported!")
         except Exception as e:
             self.uc.log_info(traceback.format_exc())
