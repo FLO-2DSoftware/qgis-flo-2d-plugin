@@ -3001,6 +3001,11 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 )
                 return
 
+            # Set the default SD control variables
+            if self.gutils.is_table_empty("swmm_control"):
+                dlg_INP_groups = INP_GroupsDialog(self.con, self.iface)
+                dlg_INP_groups.save_INP_control()
+
             INP_groups = OrderedDict()
 
             s = QSettings()
