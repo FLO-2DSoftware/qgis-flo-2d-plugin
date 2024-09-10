@@ -3506,11 +3506,14 @@ class Flo2dGeoPackage(GeoPackageUtils):
         cells = self.grid_centroids(gids, buffers=True)
         have_outside = False
         for row in data:
+            outfall_name = row[0]
             gid = row[1]
+            allow_q = row[2]
+            # Update the swmm_allow_discharge on the user_swmm_outlets
+            self.execute(f"UPDATE user_swmm_outlets SET swmm_allow_discharge = {allow_q} WHERE name = '{outfall_name}';")
             # Outfall outside the grid -> Add exactly over the Storm Drain Outfalls
             if gid == '-9999':
                 have_outside = True
-                outfall_name = row[0]
                 geom_qry = self.execute(f"SELECT geom FROM user_swmm_outlets WHERE name = '{outfall_name}'").fetchone()
                 if geom_qry:
                     geom = geom_qry[0]
