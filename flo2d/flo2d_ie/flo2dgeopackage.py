@@ -4785,8 +4785,13 @@ class Flo2dGeoPackage(GeoPackageUtils):
     def export_rain_dat(self, outdir):
         # check if there is any rain defined.
         # try:
+
+        # Check if rain table is empty and return False if true
         if self.is_table_empty("rain"):
+            self.uc.log_info("Rain table is empty!")
+            self.uc.bar_info("Rain table is empty!")
             return False
+
         rain_sql = """SELECT time_series_fid, irainreal, irainbuilding, tot_rainfall,
                              rainabs, irainarf, movingstorm, rainspeed, iraindir
                       FROM rain;"""
@@ -4806,10 +4811,16 @@ class Flo2dGeoPackage(GeoPackageUtils):
         ).fetchone()  # Returns a single feature with all the singlevalues of the rain table:
         # time_series_fid, irainreal, irainbuilding, tot_rainfall, rainabs,
         # irainarf, movingstorm, rainspeed, iraindir.
+
+        # If no data was found on the rain table, return False
         if rain_row is None:
             return False
-        else:
-            pass
+
+        # If tot_rainfall is zero, return False
+        if rain_row[1] == 0 and rain_row[3] == 0:
+            self.uc.log_info("Total Storm Rainfall is not defined!")
+            self.uc.bar_warn("Total Storm Rainfall is not defined!")
+            return False
 
         rain = os.path.join(outdir, "RAIN.DAT")
         with open(rain, "w") as r:
