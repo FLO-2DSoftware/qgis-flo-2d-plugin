@@ -1390,7 +1390,7 @@ CREATE TABLE "user_swmm_outlets" (
 
     --VARIABLES FROM .INP [OUTFALLS]:
     	"outfall_invert_elev" REAL DEFAULT 0,
-		"outfall_type" TEXT DEFAULT 'NORMAL',	 
+		"outfall_type" TEXT DEFAULT 'FREE',
 		"tidal_curve" TEXT DEFAULT '*',
 		"time_series" TEXT DEFAULT '*',
 		"fixed_stage" REAL DEFAULT 0,
