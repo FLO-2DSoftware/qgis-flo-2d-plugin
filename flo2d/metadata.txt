@@ -12,6 +12,9 @@ changelog=
  <p>1.0.2
  - General
     Improved tooltips
+    Code cleanup
+    Removed the "Raster not found" message
+    Automatically turn on switches 
  - Initial Condition Editor
     Populate data on the comboboxes based on the signal of layer edited
  - Floodplain Cross-Section Editor
