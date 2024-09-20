@@ -14,7 +14,7 @@ import io
 from qgis.core import QgsMessageLog
 from qgis.PyQt import QtCore
 from qgis.PyQt.QtCore import QEvent, QObject, QSize, Qt, pyqtSignal
-from qgis.PyQt.QtGui import QKeySequence, QStandardItem, QStandardItemModel
+from qgis.PyQt.QtGui import QStandardItem, QStandardItemModel
 from qgis.PyQt.QtWidgets import QApplication, QTableView, QUndoCommand, QUndoStack
 
 from ..user_communication import UserCommunication

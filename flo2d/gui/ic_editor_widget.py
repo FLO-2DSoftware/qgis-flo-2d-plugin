@@ -1,10 +1,4 @@
 # -*- coding: utf-8 -*-
-import csv
-
-from PyQt5.QtCore import QVariant
-from PyQt5.QtWidgets import QFileDialog, QProgressDialog, QApplication
-from qgis._core import QgsVectorLayer, QgsProject, QgsField, QgsExpression, QgsExpressionContext, \
-    QgsExpressionContextUtils, QgsWkbTypes
 # FLO-2D Preprocessor tools for QGIS
 # Copyright © 2021 Lutra Consulting for FLO-2D
 
@@ -13,7 +7,6 @@ from qgis._core import QgsVectorLayer, QgsProject, QgsField, QgsExpression, QgsE
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 
-import processing
 
 from qgis.core import QgsFeatureRequest
 from qgis.PyQt.QtWidgets import QInputDialog
@@ -23,7 +16,7 @@ from ..flo2dobjects import Reservoir, Tailings, TailingsReservoir, ChannelSegmen
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
 from ..utils import is_number
-from .ui_utils import center_canvas, load_ui, set_icon
+from .ui_utils import center_canvas, load_ui
 
 uiDialog, qtBaseClass = load_ui("ic_editor")
 

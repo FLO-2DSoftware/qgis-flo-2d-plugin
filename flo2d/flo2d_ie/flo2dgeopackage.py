@@ -11,14 +11,11 @@ import os
 import shutil
 import traceback
 from itertools import chain, groupby
-from math import isclose
 from operator import itemgetter
 
 import numpy as np
 from PyQt5.QtCore import QSettings
-from qgis._core import QgsMessageLog, QgsGeometry, QgsPointXY, QgsVectorLayer, QgsFeature
-from qgis.PyQt import QtCore, QtGui
-from qgis.core import NULL, QgsApplication
+from qgis.core import NULL
 from qgis.PyQt.QtCore import Qt
 from qgis.PyQt.QtWidgets import QApplication, QProgressDialog
 
@@ -26,7 +23,7 @@ from ..flo2d_tools.grid_tools import grid_compas_neighbors, number_of_elements
 from ..geopackage_utils import GeoPackageUtils
 # from ..gui.bc_editor_widget import BCEditorWidget
 from ..layers import Layers
-from ..utils import BC_BORDER, float_or_zero, get_BC_Border
+from ..utils import float_or_zero, get_BC_Border
 from .flo2d_parser import ParseDAT, ParseHDF5
 
 

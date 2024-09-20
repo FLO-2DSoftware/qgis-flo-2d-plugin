@@ -19,7 +19,7 @@ import os
 
 from PyQt5.QtCore import Qt, QSettings, pyqtSignal
 from PyQt5.QtGui import QColor, QKeySequence, QDoubleValidator
-from PyQt5.QtWidgets import QDockWidget, QComboBox, QSpinBox, QDoubleSpinBox, QTableWidgetItem, QApplication, \
+from PyQt5.QtWidgets import QComboBox, QSpinBox, QDoubleSpinBox, QTableWidgetItem, QApplication, \
     QFileDialog, QUndoStack
 from qgis._gui import QgsDockWidget
 

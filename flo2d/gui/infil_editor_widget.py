@@ -14,8 +14,8 @@ from math import isnan
 
 from PyQt5.QtCore import QVariant, QUrl
 from PyQt5.QtWidgets import QFileDialog
-from qgis._core import QgsField, QgsVectorLayer, QgsRasterLayer, QgsProcessing, QgsLayerTreeRegistryBridge, \
-    QgsLayerTreeLayer, QgsMapLayer, QgsVectorFileWriter
+from qgis._core import QgsField, QgsVectorLayer, QgsRasterLayer, QgsLayerTreeRegistryBridge, \
+    QgsMapLayer, QgsVectorFileWriter
 from qgis.core import QgsFeatureRequest, QgsWkbTypes, QgsProject
 from qgis.PyQt.QtCore import QSettings, Qt, pyqtSignal, pyqtSlot
 from PyQt5.QtGui import QDesktopServices

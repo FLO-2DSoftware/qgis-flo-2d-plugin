@@ -6,7 +6,6 @@ from qgis.core import (QgsDistanceArea, QgsFeature, QgsField,
 from qgis.PyQt.QtCore import QVariant
 from ..user_communication import UserCommunication
 import math
-from ..gui.dlg_settings import SettingsDialog
 from ..geopackage_utils import GeoPackageUtils
 
 class SsurgoSoil(object):

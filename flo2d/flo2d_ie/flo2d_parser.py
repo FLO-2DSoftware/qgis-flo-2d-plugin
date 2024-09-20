@@ -14,11 +14,6 @@ from itertools import chain, repeat, zip_longest
 from operator import attrgetter
 from typing import Any
 
-import numpy as np
-from qgis.core import NULL
-from qgis.PyQt.QtCore import QSettings
-from qgis.PyQt.QtWidgets import QMessageBox
-
 from ..flo2d_hdf5.hdf5_descriptions import CONTROL, GRID, NEIGHBORS, STORMDRAIN, BC, CHANNEL, HYSTRUCT, INFIL, RAIN, \
     REDUCTION_FACTORS, LEVEE, EVAPOR, FLOODPLAIN, GUTTER, TAILINGS, SPATIALLY_VARIABLE, MULT, SD
 from ..utils import Msge

@@ -10,8 +10,7 @@
 
 from operator import itemgetter
 
-from PyQt5.QtCore import QSettings, QUrl
-from qgis._core import QgsMessageLog
+from PyQt5.QtCore import QUrl
 from qgis.core import QgsFeatureRequest, QgsProject, QgsRaster
 from qgis.PyQt.QtCore import Qt
 from qgis.PyQt.QtGui import QColor, QStandardItem, QStandardItemModel
@@ -20,9 +19,8 @@ from PyQt5.QtGui import QDesktopServices
 from .table_editor_widget import StandardItemModel, StandardItem
 from ..flo2dobjects import ChannelSegment
 from ..user_communication import UserCommunication
-from ..utils import Msge, is_number
+from ..utils import is_number
 from .ui_utils import load_ui
-from .xs_editor_widget import XsecEditorWidget
 
 uiDialog, qtBaseClass = load_ui("profile_tool")
 

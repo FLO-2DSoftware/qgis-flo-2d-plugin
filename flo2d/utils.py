@@ -1,8 +1,4 @@
 # -*- coding: utf-8 -*-
-import ctypes
-
-from qgis._core import QgsMessageLog
-
 from flo2d.flo2d_versions.flo2d_versions import FLO2D_VERSIONS
 
 # FLO-2D Preprocessor tools for QGIS
@@ -27,13 +23,12 @@ import os.path
 from datetime import datetime
 from heapq import nsmallest
 from itertools import filterfalse
-from math import ceil, log10
+from math import ceil
 
 from qgis.PyQt.QtCore import QRegExp, Qt
-from qgis.PyQt.QtGui import QDoubleValidator, QRegExpValidator
+from qgis.PyQt.QtGui import QRegExpValidator
 from qgis.PyQt.QtWidgets import (
     QApplication,
-    QDoubleSpinBox,
     QItemDelegate,
     QLineEdit,
     QMessageBox,

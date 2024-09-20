@@ -9,17 +9,15 @@
 # of the License, or (at your option) any later version
 
 import functools
-import os
 
 # QgsMapToolIdentify required those functions to be self
 # pylint: disable=no-self-use
 from collections import OrderedDict
 
-from qgis._core import QgsMessageLog
 from qgis.core import QgsFeatureRequest, QgsWkbTypes
 from qgis.gui import QgsMapToolIdentify, QgsRubberBand
 from qgis.PyQt.QtCore import QPoint, Qt, pyqtSignal
-from qgis.PyQt.QtGui import QColor, QCursor, QPixmap
+from qgis.PyQt.QtGui import QColor
 from qgis.PyQt.QtWidgets import QAction, QMenu
 
 class InfoTool(QgsMapToolIdentify):

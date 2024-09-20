@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 import math
-import numbers
 # FLO-2D Preprocessor tools for QGIS
 # Copyright © 2021 Lutra Consulting for FLO-2D
 
@@ -21,26 +20,20 @@ import numpy as np
 from PyQt5.QtCore import QUrl
 from PyQt5.QtGui import QDesktopServices, QColor
 from PyQt5.QtWidgets import QProgressDialog
-from qgis.PyQt import QtCore, QtGui
 from qgis._core import QgsFeatureRequest, QgsProject, QgsMeshLayer, QgsMeshDatasetIndex
 from qgis.core import NULL, Qgis, QgsFeature, QgsGeometry, QgsMessageLog, QgsWkbTypes
-from qgis.PyQt import QtWidgets
 from qgis.PyQt.QtCore import QSettings, Qt, QThread
 from qgis.PyQt.QtWidgets import (
     QApplication,
-    QFileDialog,
     QInputDialog,
     QLabel,
     QMessageBox,
     QProgressBar,
     QPushButton,
-    QWidget,
 )
 
 from .dlg_sampling_rc import SamplingRCDialog
-from .grid_info_widget import GridInfoWidget
 from .table_editor_widget import StandardItemModel, StandardItem
-from ..flo2d_ie.flo2d_parser import HDF5Group
 from ..flo2d_tools.grid_tools import (
     ZonalStatistics,
     ZonalStatisticsOther,
@@ -58,7 +51,7 @@ from ..flo2d_tools.grid_tools import (
     poly2poly_geos,
     render_grid_elevations2,
     square_grid,
-    update_roughness, grid_compas_neighbors,
+    grid_compas_neighbors,
 )
 from ..geopackage_utils import GeoPackageUtils
 from ..gui.dlg_arf_wrf import EvaluateReductionFactorsDialog
@@ -75,7 +68,7 @@ from ..gui.dlg_sampling_variable_into_grid import SamplingOtherVariableDialog
 from ..gui.dlg_sampling_xyz import SamplingXYZDialog
 from ..user_communication import UserCommunication
 from ..utils import second_smallest, set_min_max_elevs, time_taken
-from .ui_utils import load_ui, set_icon, center_canvas, zoom
+from .ui_utils import load_ui, set_icon
 
 uiDialog, qtBaseClass = load_ui("grid_tools_widget")
 

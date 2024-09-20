@@ -9,28 +9,21 @@
 # of the License, or (at your option) any later version
 
 import os
-import subprocess
 import sys
 import tempfile
-import time
 import timeit
-import traceback
 import warnings
-from subprocess import PIPE, STDOUT, Popen
 
-import numpy as np
 from PyQt5.QtWidgets import QMessageBox
 
 sys.path.append(os.path.dirname(__file__))
 from affine import Affine
-from pip_install import pip_install
 
 with warnings.catch_warnings():
     warnings.filterwarnings("ignore", category=DeprecationWarning)
 from osgeo import gdal
 
 gdal.UseExceptions()
-from osgeo import osr
 
 gdal_default_cachemax = gdal.GetCacheMax()  # bytes
 

@@ -3,9 +3,7 @@
 # FLO-2D Preprocessor tools for QGIS
 # Copyright © 2021 Lutra Consulting for FLO-2D
 
-import os
 from qgis.core import QgsFeature, QgsGeometry
-from qgis.PyQt.QtCore import QSettings
 from qgis.PyQt.QtWidgets import QApplication
 
 from ..flo2d_tools.grid_tools import clustered_features

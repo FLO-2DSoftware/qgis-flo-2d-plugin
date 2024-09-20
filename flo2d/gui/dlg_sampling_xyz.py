@@ -9,62 +9,35 @@
 # of the License, or (at your option) any later version
 
 import os
-import stat
-import sys
 import time
 import traceback
-from pickle import TRUE
 
-from plugins.processing.tools.vector import values
 from qgis.core import (
-    Qgis,
     QgsFeature,
-    QgsFeatureRequest,
     QgsField,
-    QgsFields,
     QgsGeometry,
-    QgsMarkerSymbol,
-    QgsPointXY,
     QgsProject,
-    QgsVectorFileWriter,
     QgsVectorLayer,
     QgsWkbTypes,
 )
-from qgis.PyQt import QtCore, QtGui
-from qgis.PyQt.QtCore import QObject, QSettings, Qt, QVariant, pyqtSignal
+from qgis.PyQt import QtCore
+from qgis.PyQt.QtCore import QObject, QSettings, Qt, QVariant
 from qgis.PyQt.QtWidgets import (
     QApplication,
     QFileDialog,
     QLabel,
-    QMessageBox,
     QProgressBar,
-    QPushButton,
-    QWidget,
     qApp,
 )
 
-from ..errors import Flo2dError
 from ..flo2d_tools.grid_tools import (
     ZonalStatistics,
-    adjacent_average_elevation,
-    adjacent_grid_elevations,
-    cell_centroid,
-    cell_elevation,
-    fid_from_grid,
-    number_of_elements,
     render_grid_elevations2,
 )
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
 from ..utils import (
-    clear_grid_index,
-    get_file_path,
-    get_grid_index,
-    get_min_max_elevs,
-    grid_index,
-    is_grid_index,
     second_smallest,
-    set_grid_index,
     set_min_max_elevs,
     time_taken,
 )

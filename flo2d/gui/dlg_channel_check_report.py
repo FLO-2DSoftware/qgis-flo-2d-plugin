@@ -9,7 +9,7 @@ from qgis._core import QgsFeatureRequest
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 
-from flo2d.gui.ui_utils import load_ui, center_canvas, zoom, zoom_show_n_cells
+from flo2d.gui.ui_utils import load_ui, center_canvas, zoom_show_n_cells
 
 uiDialog, qtBaseClass = load_ui("channel_check_report")
 

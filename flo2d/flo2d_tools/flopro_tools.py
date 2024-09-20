@@ -8,19 +8,12 @@
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 import os
-import time
 import warnings
 from contextlib import contextmanager
 from subprocess import (
-    CREATE_NO_WINDOW,
     PIPE,
     STDOUT,
-    CalledProcessError,
     Popen,
-    call,
-    check_call,
-    check_output,
-    run,
 )
 
 from ..user_communication import UserCommunication

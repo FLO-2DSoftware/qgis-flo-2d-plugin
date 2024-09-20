@@ -17,23 +17,21 @@ from operator import itemgetter
 from subprocess import PIPE, STDOUT, Popen
 
 import numpy as np
-from qgis._core import QgsMessageLog
+from PyQt5.QtCore import QVariant
+from qgis._core import QgsField, QgsVectorDataProvider
 from qgis.analysis import QgsInterpolator, QgsTinInterpolator, QgsZonalStatistics
 from qgis.core import (
     NULL,
-    QgsCategorizedSymbolRenderer,
     QgsFeature,
     QgsFeatureRequest,
     QgsFeedback,
     QgsGeometry,
     QgsGraduatedSymbolRenderer,
-    QgsMarkerSymbol,
     QgsPointXY,
     QgsProject,
     QgsRaster,
     QgsRasterLayer,
     QgsRectangle,
-    QgsRendererCategory,
     QgsRendererRange,
     QgsSpatialIndex,
     QgsSymbol,
@@ -45,7 +43,7 @@ from qgis.PyQt.QtWidgets import QApplication, QMessageBox, QProgressDialog
 
 from ..errors import Flo2dError, GeometryValidityErrors
 from ..gui.ui_utils import center_canvas, zoom_show_n_cells
-from ..utils import get_file_path, get_grid_index, grid_index, is_number, set_grid_index
+from ..utils import get_file_path, is_number
 
 cellIDNumpyArray = None
 xvalsNumpyArray = None

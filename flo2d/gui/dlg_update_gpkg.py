@@ -3,8 +3,7 @@ import os
 
 from PyQt5.QtCore import QSettings
 import qgis
-from PyQt5.QtWidgets import QLineEdit, QSpinBox, QDoubleSpinBox, QCheckBox
-from qgis._core import QgsProject, QgsCoordinateReferenceSystem, QgsUnitTypes, QgsMessageLog
+from qgis._core import QgsProject, QgsUnitTypes
 
 # FLO-2D Preprocessor tools for QGIS
 # Copyright © 2021 Lutra Consulting for FLO-2D

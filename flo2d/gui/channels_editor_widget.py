@@ -15,7 +15,6 @@ from PyQt5.QtGui import QDesktopServices
 from .ui_utils import load_ui
 from ..flo2d_tools.grid_tools import (
     highlight_selected_segment,
-    highlight_selected_xsection_a,
 )
 
 uiDialog, qtBaseClass = load_ui("channels_editor")

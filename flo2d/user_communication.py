@@ -16,7 +16,6 @@ import traceback
 from qgis.core import Qgis, QgsMessageLog
 from qgis.PyQt.QtCore import Qt
 from qgis.PyQt.QtWidgets import (
-    QCheckBox,
     QDialog,
     QGridLayout,
     QLabel,
@@ -24,7 +23,6 @@ from qgis.PyQt.QtWidgets import (
     QProgressBar,
     QScrollArea,
     QSizePolicy,
-    QVBoxLayout,
     QWidget,
     QSpacerItem,
     QPushButton,
@@ -33,7 +31,6 @@ from qgis.PyQt.QtWidgets import (
     QHBoxLayout,    
 )
 from PyQt5.QtGui import QFont
-from PyQt5.QtWidgets import QLineEdit
 
 class UserCommunication(object):
     """
