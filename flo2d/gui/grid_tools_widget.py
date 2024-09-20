@@ -1001,7 +1001,10 @@ class GridToolsWidget(qtBaseClass, uiDialog):
                     self.iface.mapCanvas().clearCache()
                     user_arf_lyr.triggerRepaint()
                     QApplication.restoreOverrideCursor()
-                    self.uc.show_info("ARF and WRF values calculated!")
+                    self.uc.bar_info("ARF and WRF values calculated! The ARF and WRF switch is now enabled.")
+                    self.uc.log_info("ARF and WRF values calculated! The ARF and WRF switch is now enabled.")
+                    # Set ARFs on the Control Parameters
+                    self.gutils.set_cont_par("IWRFS", 1)
         except Exception as e:
             self.uc.log_info(traceback.format_exc())
             self.uc.show_error(
