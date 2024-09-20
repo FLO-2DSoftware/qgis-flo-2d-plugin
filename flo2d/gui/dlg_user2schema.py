@@ -8,17 +8,6 @@
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 
-import traceback
-
-from ..flo2d_tools.schema2user_tools import (
-    Schema1DConverter,
-    SchemaBCConverter,
-    SchemaFPXSECConverter,
-    SchemaGridConverter,
-    SchemaInfiltrationConverter,
-    SchemaLeveesConverter,
-    SchemaSWMMConverter,
-)
 from .ui_utils import load_ui
 
 uiDialog, qtBaseClass = load_ui("user2schema")

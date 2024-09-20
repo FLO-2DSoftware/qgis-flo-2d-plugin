@@ -11,11 +11,9 @@
 from qgis.PyQt.QtCore import QSize, Qt, QPoint
 from qgis.PyQt.QtGui import QColor
 from qgis.PyQt.QtWidgets import *
-from PyQt5.QtWidgets import QMenu, QApplication, QCheckBox, QWidgetAction
-from qgis._core import QgsMessageLog
+from PyQt5.QtWidgets import QMenu, QCheckBox, QWidgetAction
 
 from ..deps import safe_pyqtgraph as pg
-from ..utils import Msge
 import numpy as np
 
 pg.setConfigOption("background", "w")

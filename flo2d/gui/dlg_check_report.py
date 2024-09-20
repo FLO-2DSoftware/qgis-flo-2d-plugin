@@ -9,7 +9,7 @@
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QColor
 from qgis._core import QgsFeatureRequest
-from flo2d.gui.ui_utils import load_ui, center_canvas, zoom, zoom_show_n_cells
+from flo2d.gui.ui_utils import load_ui, center_canvas, zoom_show_n_cells
 
 uiDialog, qtBaseClass = load_ui("generic_check_report")
 

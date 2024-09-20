@@ -5,7 +5,6 @@
 
 import os
 import tempfile
-from itertools import chain
 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -13,7 +12,7 @@ from itertools import chain
 # of the License, or (at your option) any later version
 from math import exp, log, log10, sqrt
 
-from qgis._core import QgsRasterLayer, QgsApplication, QgsMessageLog, Qgis
+from qgis._core import QgsRasterLayer, Qgis
 from qgis.core import (
     QgsFeature,
     QgsFeatureRequest,

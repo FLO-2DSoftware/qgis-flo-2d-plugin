@@ -8,47 +8,31 @@
 # of the License, or (at your option) any later version
 
 import functools
-import os
 import time
-from datetime import datetime
 from math import modf
-from pickle import FALSE
 
-import numpy as np
 from qgis.core import *
 from qgis.PyQt.QtCore import QEvent, Qt
 from qgis.PyQt.QtGui import (
     QColor,
     QIntValidator,
-    QPalette,
-    QStandardItem,
-    QStandardItemModel,
 )
 from qgis.PyQt.QtWidgets import (
     QApplication,
-    QComboBox,
-    QDialogButtonBox,
-    QDoubleSpinBox,
     QInputDialog,
-    QListView,
     QTableWidgetItem,
     QWidget,
 )
 
 from ..flo2d_tools.grid_tools import (
-    adjacent_grid_elevations,
     adjacent_grid_elevations_np,
     buildCellElevNPArray,
     buildCellIDNPArray,
-    cellElevNumpyArray,
-    cellIDNumpyArray,
     number_of_elements,
-    xvalsNumpyArray,
-    yvalsNumpyArray,
 )
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
-from ..utils import float_or_zero, int_or_zero, get_file_path
+from ..utils import float_or_zero, int_or_zero
 from .ui_utils import center_canvas, load_ui, set_icon, zoom
 
 

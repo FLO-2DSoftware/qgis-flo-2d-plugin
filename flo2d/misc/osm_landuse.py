@@ -1,8 +1,6 @@
 import processing
 from qgis.core import (QgsProject)
-from qgis.PyQt.QtCore import QVariant
 from ..user_communication import UserCommunication
-from ..geopackage_utils import GeoPackageUtils
 
 
 class OSMLanduse(object):

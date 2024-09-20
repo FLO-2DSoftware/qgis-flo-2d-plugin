@@ -7,57 +7,38 @@
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 
-import glob
 import os
-import time
-from multiprocessing.pool import ApplyResult
 
-from PyQt5.QtWidgets import QDockWidget, QAction
-from qgis._gui import QgsDockWidget
+from PyQt5.QtWidgets import QDockWidget
 from qgis.core import *
 from qgis.core import (
-    Qgis,
     QgsFeature,
     QgsFeatureRequest,
     QgsField,
     QgsFields,
     QgsGeometry,
-    QgsMarkerSymbol,
     QgsPointXY,
     QgsProject,
     QgsVectorFileWriter,
     QgsVectorLayer,
-    QgsWkbTypes,
 )
-from qgis.PyQt.QtCore import QModelIndex, QSettings, Qt, QVariant
+from qgis.PyQt.QtCore import QSettings, Qt, QVariant
 from qgis.PyQt.QtGui import QColor
 from qgis.PyQt.QtWidgets import (
     QApplication,
-    QComboBox,
-    QCompleter,
-    QDialogButtonBox,
     QFileDialog,
-    QInputDialog,
-    QListView,
     QProgressDialog,
-    QPushButton,
-    QTableView,
-    QTableWidget,
     QTableWidgetItem,
     qApp,
 )
 
 from ..flo2d_tools.grid_tools import (
     get_adjacent_cell_elevation,
-    grid_has_empty_elev,
     number_of_elements,
 )
 from ..geopackage_utils import GeoPackageUtils
-from ..gui.dlg_sampling_buildings_elevations import SamplingBuildingsElevationsDialog
-from ..gui.dlg_sampling_elev import SamplingElevDialog
 from ..user_communication import UserCommunication
 from ..utils import copy_tablewidget_selection
-from .table_editor_widget import StandardItem, StandardItemModel
 from .ui_utils import center_canvas, load_ui, set_icon, zoom, zoom_show_n_cells
 
 # from qgis.core import QgsFeature, QgsGeometry, QgsPointXY

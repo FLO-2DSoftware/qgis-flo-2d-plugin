@@ -9,19 +9,16 @@
 
 
 from qgis.PyQt.QtCore import Qt
-from qgis.PyQt.QtGui import QColor, QRegExpValidator
 from qgis.PyQt.QtWidgets import (
     QApplication,
     QComboBox,
     QInputDialog,
-    QLineEdit,
-    QStyledItemDelegate,
     QTableWidgetItem,
 )
 
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
-from ..utils import NumericDelegate, NumericDelegate2, FloatDelegate, float_or_zero, int_or_zero, is_number, is_true
+from ..utils import FloatDelegate
 from .ui_utils import load_ui, set_icon
 from ..flo2d_tools.grid_tools import number_of_elements
 

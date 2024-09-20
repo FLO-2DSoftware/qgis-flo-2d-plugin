@@ -11,19 +11,16 @@
 import os
 import shutil
 import subprocess
-import processing
 import sys
 import traceback
 from collections import OrderedDict
 from math import isnan
 
 from PyQt5.QtWidgets import QProgressDialog
-from qgis._core import QgsMessageLog, QgsProcessingFeatureSourceDefinition, QgsUnitTypes
 from PyQt5.QtGui import QDesktopServices
 from PyQt5.QtCore import QUrl  
 from qgis._gui import QgsDockWidget
 from qgis.core import (
-    NULL,
     QgsCoordinateTransform,
     QgsFeature,
     QgsFeatureRequest,
@@ -35,7 +32,7 @@ from qgis.core import (
 )
 from qgis.gui import QgsMapLayerComboBox
 from qgis.PyQt.QtCore import QSettings, Qt
-from qgis.PyQt.QtGui import QColor, QStandardItem
+from qgis.PyQt.QtGui import QColor
 from qgis.PyQt.QtWidgets import (
     QApplication,
     QFileDialog,
@@ -43,7 +40,6 @@ from qgis.PyQt.QtWidgets import (
     QMessageBox,
     QPushButton,
     QStyledItemDelegate,
-    QTableWidgetItem,
 )
 
 from .dlg_channel_check_report import ChannelCheckReportDialog
@@ -58,17 +54,14 @@ from ..flo2d_tools.grid_tools import adjacent_grids
 from ..flo2d_tools.schematic_tools import ChannelsSchematizer, Confluences
 from ..flo2dobjects import ChannelSegment, UserCrossSection
 from ..geopackage_utils import GeoPackageUtils
-from ..gui.dlg_flopro import ExternalProgramFLO2D
 from ..gui.dlg_tributaries import TributariesDialog
-from ..gui.dlg_xsec_interpolation import XSecInterpolationDialog
 from ..user_communication import UserCommunication
 from ..utils import is_number, m_fdata
 from .plot_widget import PlotWidget
-from .table_editor_widget import CommandItemEdit, StandardItem, StandardItemModel
+from .table_editor_widget import StandardItem, StandardItemModel
 from .ui_utils import (
     center_canvas,
     load_ui,
-    set_icon,
     switch_to_selected,
     try_disconnect,
 )

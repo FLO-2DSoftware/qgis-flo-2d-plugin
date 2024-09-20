@@ -8,34 +8,21 @@
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 
-import csv
-import io
 import math
 import os
 import re
-import sys
-from _ast import Or
 from collections import OrderedDict
 from math import isnan
 
-from PyQt5 import QtGui
-from PyQt5.QtGui import QClipboard, QDesktopServices
-from PyQt5.QtWidgets import QApplication
+from PyQt5.QtGui import QDesktopServices
 from qgis._gui import QgsDockWidget
-from qgis.core import QgsApplication, QgsFeatureRequest
-from qgis.PyQt import QtGui
+from qgis.core import QgsFeatureRequest
 from qgis.PyQt.QtCore import (
-    QItemSelection,
-    QItemSelectionModel,
-    QMimeData,
-    QPersistentModelIndex,
     QSettings,
     Qt,
-    QUrl,
-    pyqtSignal,
 )
 from qgis.PyQt.QtGui import QColor
-from qgis.PyQt.QtWidgets import QApplication, QFileDialog, QInputDialog, QTableView
+from qgis.PyQt.QtWidgets import QApplication, QFileDialog, QInputDialog
 from PyQt5.QtCore import QUrl
 
 from .dlg_check_report import GenericCheckReportDialog

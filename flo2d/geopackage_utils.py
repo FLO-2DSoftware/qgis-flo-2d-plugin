@@ -14,7 +14,7 @@ from functools import wraps
 
 from PyQt5.QtWidgets import QProgressDialog, QApplication
 from osgeo import ogr, gdal
-from qgis._core import QgsMessageLog, QgsVectorLayer, QgsProject, QgsRasterLayer, QgsMapLayer
+from qgis._core import QgsVectorLayer, QgsProject, QgsRasterLayer
 from qgis.core import QgsGeometry, QgsVectorFileWriter
 from .user_communication import UserCommunication
 

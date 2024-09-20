@@ -13,7 +13,6 @@ from itertools import chain, zip_longest
 from qgis.PyQt.QtWidgets import QApplication
 from qgis.PyQt.QtCore import Qt
 from ..user_communication import UserCommunication
-from ..utils import float_or_zero
 
 
 class StormDrainProject(object):

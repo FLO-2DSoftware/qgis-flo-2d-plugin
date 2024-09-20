@@ -8,26 +8,17 @@
 # of the License, or (at your option) any later version
 
 import datetime
-import sys
 
 from qgis.core import (
     QgsFeature,
     QgsFeatureRequest,
     QgsGeometry,
     QgsProject,
-    QgsRectangle,
     QgsWkbTypes,
 )
-from qgis.gui import QgsFieldComboBox
 from qgis.PyQt.QtCore import QSettings, Qt
 from qgis.PyQt.QtWidgets import QApplication, QComboBox, QDialogButtonBox
 
-from ..flo2d_tools.grid_tools import (
-    adjacent_grid_elevations,
-    fid_from_grid,
-    gridRegionGenerator,
-)
-from ..flo2d_tools.schema2user_tools import remove_features
 from ..geopackage_utils import GeoPackageUtils, extractPoints
 from ..user_communication import UserCommunication
 from ..utils import float_or_zero

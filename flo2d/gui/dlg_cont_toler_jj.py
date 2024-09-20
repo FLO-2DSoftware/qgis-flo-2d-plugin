@@ -9,15 +9,14 @@
 
 from collections import OrderedDict
 
-from PyQt5.QtCore import QCoreApplication, Qt
+from PyQt5.QtCore import Qt
 from qgis.PyQt import QtCore
-from qgis.PyQt.QtWidgets import QApplication, QCheckBox, QDoubleSpinBox, qApp
-from qgis._core import QgsMessageLog
+from qgis.PyQt.QtWidgets import QApplication, QCheckBox, QDoubleSpinBox
 
 from .dlg_mud_and_sediment import MudAndSedimentDialog
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
-from ..utils import float_or_zero, old_IDEBRV
+from ..utils import float_or_zero
 from .ui_utils import load_ui
 
 uiDialog, qtBaseClass = load_ui("cont_toler_jj")

@@ -1,13 +1,11 @@
 # -*- coding: utf-8 -*-
-import time
 from math import isnan
 
 from PyQt5.QtCore import QSettings, QUrl
 from PyQt5.QtGui import QColor, QDesktopServices
-from PyQt5.QtWidgets import QInputDialog, QApplication, QFileDialog, QProgressDialog, QMessageBox, QMainWindow
-from qgis._core import QgsMessageLog, QgsProject, QgsVectorLayer, QgsMapLayer, QgsFeatureRequest, QgsPoint, QgsFeature, \
-    QgsGeometry, QgsPointXY
-from qgis._gui import QgsRubberBand, QgsDockWidget
+from PyQt5.QtWidgets import QInputDialog, QApplication, QFileDialog
+from qgis._core import QgsProject, QgsFeatureRequest, QgsFeature, QgsGeometry, QgsPointXY
+from qgis._gui import QgsRubberBand
 
 from .table_editor_widget import StandardItem, StandardItemModel, CommandItemEdit
 # FLO-2D Preprocessor tools for QGIS
@@ -16,12 +14,11 @@ from .table_editor_widget import StandardItem, StandardItemModel, CommandItemEdi
 from .ui_utils import load_ui, center_canvas, try_disconnect
 from ..flo2dobjects import Inflow, Outflow
 from ..geopackage_utils import GeoPackageUtils
-from ..misc.invisible_lyrs_grps import InvisibleLayersAndGroups
 from ..user_communication import UserCommunication
 
 from ..utils import is_number, m_fdata, set_BC_Border
 
-from ..flo2d_tools.grid_tools import get_adjacent_cell, is_boundary_cell
+from ..flo2d_tools.grid_tools import get_adjacent_cell
 
 from qgis.PyQt.QtCore import Qt
 

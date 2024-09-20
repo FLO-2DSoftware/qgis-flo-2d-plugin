@@ -7,22 +7,14 @@
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 
-from math import isnan
-
-from qgis.PyQt.QtCore import Qt
-from qgis.PyQt.QtGui import QColor
 from qgis.PyQt.QtWidgets import (
     QApplication,
-    QDialogButtonBox,
-    QInputDialog,
-    QTableWidgetItem,
 )
 
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
-from ..utils import float_or_zero, int_or_zero, is_number, m_fdata
-from .table_editor_widget import CommandItemEdit, StandardItem, StandardItemModel
-from .ui_utils import load_ui, set_icon
+from ..utils import float_or_zero, int_or_zero
+from .ui_utils import load_ui
 
 uiDialog, qtBaseClass = load_ui("bridges")
 

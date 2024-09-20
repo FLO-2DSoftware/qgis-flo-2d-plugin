@@ -14,12 +14,10 @@ from os.path import normpath
 
 from PyQt5.QtCore import QSettings
 from PyQt5.QtWidgets import QProgressDialog
-from qgis._core import QgsMessageLog
 from qgis.core import (
     QgsDefaultValue,
     QgsEditorWidgetSetup,
     QgsFeatureRequest,
-    QgsLayerTree,
     QgsLayerTreeGroup,
     QgsProject,
     QgsRectangle,

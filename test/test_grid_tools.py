@@ -23,7 +23,7 @@ from qgis.core import QgsVectorLayer
 
 from flo2d.flo2d_tools.grid_tools import (build_grid, calculate_arfwrf,
                                           poly2grid)
-from flo2d.geopackage_utils import database_create, GeoPackageUtils
+from flo2d.geopackage_utils import database_create
 
 IMPORT_DATA_DIR_1 = os.path.join(THIS_DIR, "data", "import")
 IMPORT_DATA_DIR_2 = os.path.join(THIS_DIR, "data", "import_2")

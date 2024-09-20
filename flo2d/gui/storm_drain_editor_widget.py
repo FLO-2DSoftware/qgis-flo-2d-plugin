@@ -9,17 +9,13 @@
 # of the License, or (at your option) any later version
 
 import os
-import shutil
-import traceback
-from _ast import Pass
 from collections import OrderedDict
 from datetime import date, datetime, time, timedelta
-from math import floor, isnan, modf
+from math import isnan, modf
 from pathlib import Path
 
-import numpy as np
 from PyQt5.QtWidgets import QStyledItemDelegate
-from qgis._core import QgsFeatureRequest, QgsEditFormConfig, QgsDefaultValue, QgsEditorWidgetSetup, QgsDistanceArea
+from qgis._core import QgsFeatureRequest, QgsDistanceArea
 from qgis._gui import QgsDockWidget
 from qgis.core import (
     NULL,
@@ -27,14 +23,9 @@ from qgis.core import (
     QgsFeature,
     QgsField,
     QgsFields,
-    QgsFillSymbol,
     QgsGeometry,
-    QgsLineSymbol,
-    QgsMarkerSymbol,
     QgsPointXY,
     QgsProject,
-    QgsSingleSymbolRenderer,
-    QgsSymbolLayerRegistry,
     QgsVectorFileWriter,
     QgsVectorLayer,
     QgsWkbTypes,
@@ -42,51 +33,38 @@ from qgis.core import (
     Qgis,
     QgsUnitTypes,
 )
-from qgis.PyQt import QtCore, QtGui
-from qgis.PyQt.QtCore import QSettings, Qt, QTime, QVariant, pyqtSignal, QUrl
+from qgis.PyQt.QtCore import QSettings, Qt, QTime, QVariant, QUrl
 from qgis.PyQt.QtGui import QColor, QIcon, QDesktopServices
 from qgis.PyQt.QtWidgets import (
     QApplication,
     QCheckBox,
-    QRadioButton,
     QComboBox,
-    QDialog,
     QDoubleSpinBox,
     QFileDialog,
     QInputDialog,
-    QLabel,
     QMessageBox,
     QPushButton,
-    QScrollArea,
-    QSizePolicy,
-    QSpacerItem,
-    QVBoxLayout,
-    QHBoxLayout,
-    QWidget,
     QAction,
     QMenu,
     QToolButton,
     qApp,
-    QDialogButtonBox,
 )
 
 import pyqtgraph as pg
 
-import flo2d.flo2d
 from .dlg_sd_profile_view import SDProfileView
 from .dlg_storm_drain_attributes import InletAttributes, ConduitAttributes, OrificeAttributes, OutletAttributes, \
     PumpAttributes, StorageUnitAttributes, WeirAttributes
-from ..flo2d_ie.flo2dgeopackage import Flo2dGeoPackage
 from ..flo2d_ie.swmm_io import StormDrainProject
 from ..flo2d_tools.grid_tools import spatial_index
 from ..flo2d_tools.schema2user_tools import remove_features
 from ..flo2dobjects import InletRatingTable, PumpCurves
 from ..geopackage_utils import GeoPackageUtils
 from ..gui.dlg_stormdrain_shapefile import StormDrainShapefile
-from ..user_communication import ScrollMessageBox, ScrollMessageBox2, UserCommunication,TwoInputsDialog
+from ..user_communication import ScrollMessageBox2, UserCommunication,TwoInputsDialog
 from ..utils import float_or_zero, int_or_zero, is_number, is_true, m_fdata
 from .table_editor_widget import CommandItemEdit, StandardItem, StandardItemModel
-from .ui_utils import load_ui, set_icon, try_disconnect, center_canvas, field_reuse, zoom
+from .ui_utils import load_ui, set_icon, try_disconnect, center_canvas, zoom
 from ..flo2d_ie.flo2d_parser import ParseDAT
 
 SDTableRole = Qt.UserRole + 1

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from qgis._core import QgsFeatureRequest, QgsDistanceArea
+from qgis._core import QgsDistanceArea
 # FLO-2D Preprocessor tools for QGIS
 
 # This program is free software; you can redistribute it and/or
@@ -8,12 +8,10 @@ from qgis._core import QgsFeatureRequest, QgsDistanceArea
 # of the License, or (at your option) any later version
 
 from qgis.core import NULL, QgsFeature, QgsGeometry, QgsWkbTypes, QgsFieldProxyModel
-from PyQt5.QtCore import QVariant
 from qgis.gui import QgsFieldComboBox
-from qgis.PyQt.QtCore import QSettings, Qt
+from qgis.PyQt.QtCore import Qt
 from qgis.PyQt.QtWidgets import QApplication, QComboBox, QDialogButtonBox
 
-from ..flo2d_tools.grid_tools import spatial_index
 from ..flo2d_tools.schema2user_tools import remove_features
 from ..geopackage_utils import GeoPackageUtils, extractPoints
 from ..user_communication import UserCommunication

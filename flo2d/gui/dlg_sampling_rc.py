@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 # FLO-2D Preprocessor tools for QGIS
 # Copyright © 2021 Lutra Consulting for FLO-2D
-import concurrent
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
 # as published by the Free Software Foundation; either version 2
@@ -9,21 +8,17 @@ import concurrent
 
 import os
 import tempfile
-import time
-from subprocess import PIPE, STDOUT, Popen
 
 import processing
-from concurrent.futures import ThreadPoolExecutor
-from PyQt5.QtCore import QTime
 from PyQt5.QtWidgets import QProgressDialog, QApplication
 from osgeo import gdal, osr
-from qgis._core import QgsWkbTypes, QgsGeometry, QgsFeatureRequest, QgsCoordinateReferenceSystem, QgsProject, \
-    QgsPointXY, QgsVectorLayer, QgsProcessingFeatureSourceDefinition, QgsExpression
+from qgis._core import QgsWkbTypes, QgsFeatureRequest, QgsCoordinateReferenceSystem, QgsProject, \
+    QgsVectorLayer, QgsProcessingFeatureSourceDefinition
 from qgis.core import QgsRasterLayer
 from qgis.PyQt.QtCore import QSettings
 from qgis.PyQt.QtWidgets import QFileDialog
 
-from ..flo2d_tools.grid_tools import grid_has_empty_elev, raster2grid, spatial_index, number_of_elements
+from ..flo2d_tools.grid_tools import number_of_elements
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
 from .ui_utils import load_ui

@@ -8,75 +8,40 @@
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 
-import cProfile
-import io
-
 # Lambda may not be necessary
 # pylint: disable=W0108
 import os
-import pathlib
-import pstats
 import sys
-import threading
 import time
 import traceback
 from contextlib import contextmanager
-from datetime import datetime
-from pstats import SortKey
-from subprocess import (
-    CREATE_NO_WINDOW,
-    PIPE,
-    STDOUT,
-    CalledProcessError,
-    Popen,
-    call,
-    check_call,
-    check_output,
-    run,
-)
 
-from PyQt5.QtCore import QVariant
-import pip
-from qgis.PyQt import QtCore, QtGui
-from PyQt5.QtGui import QFont
-from PyQt5.QtWidgets import QApplication, QToolButton, QProgressDialog, QDockWidget, QTabWidget, QWidget, QVBoxLayout, \
-    QPushButton
+from PyQt5.QtWidgets import QToolButton, QProgressDialog, QPushButton
 from osgeo import gdal, ogr
-from qgis._core import QgsMessageLog, QgsCoordinateReferenceSystem, QgsMapSettings, QgsProjectMetadata, \
-    QgsMapRendererParallelJob, QgsLayerTreeLayer, QgsVectorLayerExporter, QgsVectorFileWriter, QgsVectorLayer, \
-    QgsMapLayer, QgsRasterFileWriter, QgsRasterLayer, QgsLayerTreeGroup, QgsField
+from qgis._core import  QgsCoordinateReferenceSystem, QgsVectorLayer, QgsRasterLayer
 from qgis.core import NULL, QgsProject, QgsWkbTypes
 from qgis.gui import QgsDockWidget, QgsProjectionSelectionWidget
-from qgis.PyQt import QtCore
 from qgis.PyQt.QtCore import (
     QCoreApplication,
     QSettings,
-    QSize,
     Qt,
     QTranslator,
     QUrl,
     qVersion,
 )
-from qgis.PyQt.QtGui import QCursor, QDesktopServices, QIcon, QPixmap
+from qgis.PyQt.QtGui import QDesktopServices, QIcon
 from qgis.PyQt.QtWidgets import (
     QAction,
     QApplication,
     QFileDialog,
     QMenu,
     QMessageBox,
-    QSizePolicy,
-    QSpacerItem,
     qApp,
 )
 from qgis.utils import plugins
-# from urllib3.contrib import _securetransport
 from .flo2d_ie.flo2dgeopackage import Flo2dGeoPackage
-from .flo2d_tools.channel_profile_tool import ChannelProfile
 from .flo2d_tools.flopro_tools import (
-    FLOPROExecutor,
-    MapperExecutor,
     ProgramExecutor,
-    TailingsDamBreachExecutor,
 )
 from .flo2d_tools.grid_info_tool import GridInfoTool
 from .flo2d_tools.grid_tools import (
@@ -93,11 +58,7 @@ from .flo2d_tools.schematic_tools import (
     delete_redundant_levee_directions_np,
     generate_schematic_levees,
 )
-from .flo2d_tools.schema2user_tools import SchemaSWMMConverter
-from collections import OrderedDict, defaultdict
-
 from .geopackage_utils import GeoPackageUtils, connection_required, database_disconnect, database_connect
-from .gui import dlg_settings, f2d_main_widget
 from .gui.dlg_components import ComponentsDialog
 from .gui.dlg_cont_toler_jj import ContToler_JJ
 from .gui.dlg_evap_editor import EvapEditorDialog
@@ -117,19 +78,15 @@ from .gui.dlg_update_gpkg import UpdateGpkg
 from .gui.dlg_user2schema import User2SchemaDialog
 from .gui.f2d_main_widget import FLO2DWidget
 from .gui.grid_info_widget import GridInfoWidget
-from .gui.ic_editor_widget import ICEditorWidget
 from .gui.plot_widget import PlotWidget
-from .gui.storm_drain_editor_widget import StormDrainEditorWidget, INP_GroupsDialog
+from .gui.storm_drain_editor_widget import StormDrainEditorWidget
 from .gui.table_editor_widget import TableEditorWidget
 from .layers import Layers
 from .misc.invisible_lyrs_grps import InvisibleLayersAndGroups
 from .user_communication import UserCommunication
 from .utils import get_flo2dpro_version
 
-from PIL import Image, ImageDraw
-
-import processing
-
+from PIL import Image
 
 @contextmanager
 def cd(newdir):

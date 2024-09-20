@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QApplication
 # FLO-2D Preprocessor tools for QGIS
 # Copyright © 2021 Lutra Consulting for FLO-2D
@@ -13,7 +12,6 @@ from qgis.PyQt.QtCore import QSize
 from qgis._gui import QgsDockWidget
 
 from .bc_editor_widget_new import BCEditorWidgetNew
-from .table_editor_widget import TableEditorWidget
 from ..user_communication import UserCommunication
 # from .bc_editor_widget import BCEditorWidget
 from .channels_editor_widget import ChannelsEditorWidget

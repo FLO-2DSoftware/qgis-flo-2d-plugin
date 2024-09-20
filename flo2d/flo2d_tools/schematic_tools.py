@@ -18,7 +18,6 @@ from qgis.core import (
     QgsFeature,
     QgsFeatureRequest,
     QgsGeometry,
-    QgsPoint,
     QgsPointXY,
     QgsSpatialIndex,
     QgsVector,
@@ -27,15 +26,12 @@ from qgis.core import (
 from qgis.PyQt.QtWidgets import QApplication
 
 from ..geopackage_utils import GeoPackageUtils
-from ..user_communication import UserCommunication
 from .grid_tools import (
-    adjacent_grid_elevations,
     buildCellIDNPArray,
     fid_from_grid,
     fid_from_grid_features,
     get_adjacent_cell_elevation,
     spatial_index,
-    three_adjacent_grid_elevations,
 )
 
 

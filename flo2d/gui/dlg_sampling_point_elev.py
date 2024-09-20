@@ -10,13 +10,11 @@
 
 import multiprocessing
 import os
-import sys
 import time
 import traceback
 from subprocess import PIPE, STDOUT, Popen
 
 from PyQt5.QtGui import QTextCursor
-from qgis.core import QgsRasterLayer
 from qgis.PyQt.QtCore import QSettings, pyqtSignal
 from qgis.PyQt.QtWidgets import QFileDialog
 

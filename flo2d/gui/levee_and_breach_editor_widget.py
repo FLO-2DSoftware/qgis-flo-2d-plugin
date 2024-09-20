@@ -1,7 +1,4 @@
 #  -*- coding: utf-8 -*-
-import os
-
-from PyQt5.QtGui import QColor
 # FLO-2D Preprocessor tools for QGIS
 # Copyright ? 2017 Lutra Consulting for FLO-2D
 
@@ -12,7 +9,6 @@ from PyQt5.QtGui import QColor
 
 from qgis.PyQt.QtCore import Qt
 from qgis.PyQt.QtWidgets import QApplication
-from qgis._core import QgsMessageLog, QgsSymbol, QgsRuleBasedRenderer
 from PyQt5.QtCore import QUrl
 from PyQt5.QtGui import QDesktopServices
 from ..geopackage_utils import GeoPackageUtils
@@ -23,7 +19,7 @@ from ..gui.dlg_breach import (
     LeveeFragilityCurvesDialog,
 )
 from ..user_communication import UserCommunication
-from ..utils import float_or_zero, get_file_path
+from ..utils import float_or_zero
 from .ui_utils import load_ui, set_icon
 from .dlg_breach import repaint_levee
 

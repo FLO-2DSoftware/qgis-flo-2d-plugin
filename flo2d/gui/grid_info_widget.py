@@ -8,9 +8,6 @@
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 
-
-from math import sqrt
-
 from qgis.core import QgsFeatureRequest
 from qgis.PyQt.QtCore import QSize, Qt
 from qgis.PyQt.QtGui import QColor, QIntValidator, QStandardItem, QStandardItemModel
@@ -20,7 +17,6 @@ from ..flo2d_tools.grid_tools import number_of_elements, render_grid_elevations2
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
 from ..utils import (
-    get_min_max_elevs,
     is_number,
     m_fdata,
     second_smallest,
