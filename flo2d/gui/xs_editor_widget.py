@@ -1095,7 +1095,12 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
 
                 self.uc.log_info(msg)
             else:
-                self.uc.show_info("The schematized channel has passed all required checks!")
+                self.uc.bar_info("The schematized channel has passed all required checks! The Channel switch is now "
+                                 "enabled.")
+                self.uc.log_info("The schematized channel has passed all required checks! The Channel switch is now "
+                                 "enabled.")
+                # Set Channels on the Control Parameters
+                self.gutils.set_cont_par("ICHANNEL", 1)
 
         except Exception as e:
             QApplication.restoreOverrideCursor()
