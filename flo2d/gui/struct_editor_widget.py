@@ -325,11 +325,11 @@ class StructEditorWidget(qtBaseClass, uiDialog):
                 # Return True there are no errors
                 else:
                     self.uc.log_info(
-                        "Schematizing Hydraulic Structures finished!\n\n"
+                        "Schematizing Hydraulic Structures finished! The Hydraulic Structure switch is now enabled.\n\n"
                         + str(len(structs)) + " structures were updated in the Hydraulic Structures table."
                     )
                     self.uc.bar_info(
-                        "Schematizing Hydraulic Structures finished!"
+                        "Schematizing Hydraulic Structures finished! The Hydraulic Structure switch is now enabled."
                     )
             else:
                 self.uc.bar_error("WARNING 151203.0646: Error during Hydraulic Structures schematization!")
