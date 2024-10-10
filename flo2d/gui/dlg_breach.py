@@ -28,6 +28,8 @@ from ..flo2d_tools.grid_tools import (
     adjacent_grid_elevations_np,
     buildCellElevNPArray,
     buildCellIDNPArray,
+    cellElevNumpyArray,
+    cellIDNumpyArray,
     number_of_elements,
 )
 from ..geopackage_utils import GeoPackageUtils
