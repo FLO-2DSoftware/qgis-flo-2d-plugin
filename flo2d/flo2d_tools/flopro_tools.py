@@ -119,8 +119,7 @@ class FLOPROExecutor(object):
                     10,
                 )
                 self.uc.log_info(
-                    f"Model {self.program} started " + str(result) if result is not None else "",
-                    10,
+                    f"Model {self.program} started " + str(result) if result is not None else ""
                 )
 
                 return result
