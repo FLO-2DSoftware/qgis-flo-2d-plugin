@@ -7452,26 +7452,31 @@ class Flo2dGeoPackage(GeoPackageUtils):
             return False
 
     def export_fpfroude_dat(self, outdir):
-        # check if there is any limiting Froude number defined.
         try:
+            # Check if there is any limiting Froude number defined.
             if self.is_table_empty("fpfroude"):
                 return False
-            fpfroude_sql = """SELECT fid, froudefp FROM fpfroude ORDER BY fid;"""
-            cell_sql = """SELECT grid_fid FROM fpfroude_cells WHERE area_fid = ? ORDER BY grid_fid;"""
 
-            line1 = "F {0} {1}\n"
+            # Single query to get all necessary data
+            fpfroude_sql = """
+                SELECT fc.grid_fid, f.froudefp
+                FROM fpfroude_cells AS fc
+                JOIN fpfroude AS f ON fc.area_fid = f.fid
+                ORDER BY fc.area_fid;
+            """
 
+            # Fetch all rows at once
             fpfroude_rows = self.execute(fpfroude_sql).fetchall()
             if not fpfroude_rows:
                 return False
-            else:
-                pass
+
+            # Prepare file path
             fpfroude_dat = os.path.join(outdir, "FPFROUDE.DAT")
+
+            # Batch write to the file
             with open(fpfroude_dat, "w") as f:
-                for fid, froudefp in fpfroude_rows:
-                    for row in self.execute(cell_sql, (fid,)):
-                        gid = row[0]
-                        f.write(line1.format(gid, froudefp))
+                lines = [f"F {gid} {froudefp}\n" for gid, froudefp in fpfroude_rows]
+                f.writelines(lines)
 
             return True
 
