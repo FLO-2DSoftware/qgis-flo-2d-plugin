@@ -976,12 +976,12 @@ class GreenAmptDialog(uiDialog_green, qtBaseClass_green):
     def calculate_ssurgo(self):
 
         # Verify if the user would like to save the intermediate calculation layers
-        saveLayers = False
+        saveLayers = True
         answer = QMessageBox.question(self.iface.mainWindow(), 'NRCS G&A parameters',
-                                      'Save intermediate calculation layers into the geopackage?', QMessageBox.Yes,
+                                      'Remove intermediate calculation layers?', QMessageBox.Yes,
                                       QMessageBox.No)
         if answer == QMessageBox.Yes:
-            saveLayers = True
+            saveLayers = False
 
         try:
             # Create the progress Dialog
@@ -1054,15 +1054,15 @@ class GreenAmptDialog(uiDialog_green, qtBaseClass_green):
     def calculate_osm(self):
 
         # Verify if the user would like to save the intermediate calculation layers
-        saveLayers = False
+        saveLayers = True
         layers = []
         temp_layers = []
         answer = QMessageBox.question(self.iface.mainWindow(), 'OSM land use',
-                                      'Save intermediate calculation layers into the geopackage?',
+                                      'Remove intermediate calculation layers?',
                                       QMessageBox.Yes,
                                       QMessageBox.No)
         if answer == QMessageBox.Yes:
-            saveLayers = True
+            saveLayers = False
 
         # Create the progress Dialog
         pd = QProgressDialog("Getting OSM data...", None, 0, 11)

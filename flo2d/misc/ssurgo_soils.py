@@ -650,5 +650,4 @@ class SsurgoSoil(object):
         gpkg_layer.triggerRepaint()
         group.insertLayer(0, gpkg_layer)
         layer = QgsProject.instance().mapLayersByName(gpkg_layer.name())[0]
-        myLayerNode = root_group.findLayer(layer.id())
-        myLayerNode.setExpanded(False)
+
