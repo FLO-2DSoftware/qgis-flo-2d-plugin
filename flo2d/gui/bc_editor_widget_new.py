@@ -515,10 +515,11 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
             if not ts_name:
                 ts_name = "Time Series {}".format(ts_fid)
             self.inflow_tseries_cbo.addItem(ts_name, str(ts_fid))
-            if ts_fid == self.inflow.time_series_fid:
-                cur_idx = i
-        self.inflow.time_series_fid = self.inflow_tseries_cbo.itemData(cur_idx)
-        self.inflow_tseries_cbo.setCurrentIndex(cur_idx)
+            # if ts_fid == self.inflow.time_series_fid:
+            #     cur_idx = i
+            #     self.uc.log_info(str(cur_idx))
+        # self.inflow.time_series_fid = self.inflow_tseries_cbo.itemData(cur_idx)
+        self.inflow_tseries_cbo.setCurrentIndex(int(self.inflow.time_series_fid) - 1)
         self.inflow_data_changed()
 
     def inflow_data_changed(self):
