@@ -178,6 +178,11 @@ class ResultsTool(QgsMapToolIdentify):
                         feat = next(fp_cells_layer.getFeatures(QgsFeatureRequest(fid)))
                         grid = feat["grid_fid"]
                         actions[i][j] = QAction(str(grid), None)
+                    elif ln == "Hydraulic Structures":
+                        hyd_struct_layer = self.lyrs.get_layer_by_name("Hydraulic Structures", group=self.lyrs.group).layer()
+                        feat = next(hyd_struct_layer.getFeatures(QgsFeatureRequest(fid)))
+                        name = feat["structname"]
+                        actions[i][j] = QAction(name, None)
                     else:
                         actions[i][j] = QAction(str(fid), None)
                     actions[i][j].hovered.connect(functools.partial(self.show_rubber, lid, fid))
