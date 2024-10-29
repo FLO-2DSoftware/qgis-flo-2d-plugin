@@ -864,14 +864,17 @@ class StructEditorWidget(qtBaseClass, uiDialog):
         with open(HYDROSTRUCT_file, "r") as myfile:
             time_list = []
             discharge_list = []
-            pattern = r'STRUCTURE\sNO.\s+(\d+)\s+IS:'
+            pattern = r'THE MAXIMUM DISCHARGE FOR:\s+(\w+)\s+STRUCTURE\sNO.\s+(\d+)\s+IS:'
+            structure_name = None
             while True:
                 try:
                     line = next(myfile)
                     match = re.search(pattern, line)
                     if match:
-                        matched_structure_number = int(match.group(1))
+                        matched_structure_name = match.group(1)
+                        matched_structure_number = int(match.group(2))
                         if matched_structure_number == fid:
+                            structure_name = matched_structure_name
                             line = next(myfile)
                             while True:
                                 line = next(myfile)
@@ -892,7 +895,7 @@ class StructEditorWidget(qtBaseClass, uiDialog):
 
         self.plot.plot.legend = None
         self.plot.plot.addLegend(offset=(0, 30))
-        self.plot.plot.setTitle(title=f"Hydraulic Structure - {fid}")
+        self.plot.plot.setTitle(title=f"Hydraulic Structure: {structure_name}")
         self.plot.plot.setLabel("bottom", text="Time (hrs)")
         self.plot.plot.setLabel("left", text="")
         self.plot.add_item(f"Discharge ({self.system_units[units][2]})", [time_list, discharge_list], col=QColor(Qt.darkYellow), sty=Qt.SolidLine)
