@@ -82,6 +82,21 @@ class InfoTool(QgsMapToolIdentify):
         sm = {}
         ssm = {}
         actions = {}
+
+        sd_point_layers = [
+            "Storm Drain Inlets/Junctions",
+            "Storm Drain Outfalls",
+            "Storm Drain Storage Units"
+
+        ]
+
+        sd_line_layers = [
+            "Storm Drain Conduits",
+            "Storm Drain Pumps",
+            "Storm Drain Orifices",
+            "Storm Drain Weirs",
+        ]
+
         for i, ln in enumerate(lyrs_found.keys()):
             lid = lyrs_found[ln]["lid"]
             tab = lyrs_found[ln]["table"]
@@ -89,49 +104,46 @@ class InfoTool(QgsMapToolIdentify):
             actions[i] = {}
 
             for j, fid in enumerate(lyrs_found[ln]["fids"]):
-                if ln == "Storm Drain Inlets/Junctions":
-                    sd_layer = self.lyrs.get_layer_by_name("Storm Drain Inlets/Junctions", group=self.lyrs.group).layer()
+                if ln in sd_point_layers:
+                    sd_layer = self.lyrs.get_layer_by_name(ln, group=self.lyrs.group).layer()
                     feat = next(sd_layer.getFeatures(QgsFeatureRequest(fid)))
                     name = feat["name"]
                     grid = feat["grid"]
-                    actions[i][j] = QAction(name + " (" + str(grid) + ")", None)
-                elif ln == "Storm Drain Outfalls":
-                    sd_layer = self.lyrs.get_layer_by_name("Storm Drain Outfalls", group=self.lyrs.group).layer()
+                    ssm = QMenu(name + " (" + str(grid) + ")")
+                    sm[i].addMenu(ssm)
+
+                    # Attributes
+                    results_action = QAction("See Attributes", None)
+                    results_action.hovered.connect(functools.partial(self.show_rubber, lid, fid))
+                    results_action.triggered.connect(functools.partial(self.pass_res, tab, fid, "See Attributes"))
+                    ssm.addAction(results_action)
+
+                    # Add "Start Node" action
+                    start_action = QAction("Start Node", None)
+                    start_action.hovered.connect(functools.partial(self.show_rubber, lid, fid))
+                    start_action.triggered.connect(functools.partial(self.pass_res, tab, fid, "Start"))
+                    ssm.addAction(start_action)
+
+                    # Add "End Node" action
+                    end_action = QAction("End Node", None)
+                    end_action.hovered.connect(functools.partial(self.show_rubber, lid, fid))
+                    end_action.triggered.connect(functools.partial(self.pass_res, tab, fid, "End"))
+                    ssm.addAction(end_action)
+
+                elif ln in sd_line_layers:
+                    sd_layer = self.lyrs.get_layer_by_name(ln, group=self.lyrs.group).layer()
                     feat = next(sd_layer.getFeatures(QgsFeatureRequest(fid)))
-                    name = feat["name"]
-                    grid = feat["grid"]
-                    actions[i][j] = QAction(name + " (" + str(grid) + ")", None)
-                elif ln == "Storm Drain Storage Units":
-                    sd_layer = self.lyrs.get_layer_by_name("Storm Drain Storage Units", group=self.lyrs.group).layer()
-                    feat = next(sd_layer.getFeatures(QgsFeatureRequest(fid)))
-                    name = feat["name"]
-                    grid = feat["grid"]
-                    actions[i][j] = QAction(name + " (" + str(grid) + ")", None)
-                elif ln == "Storm Drain Conduits":
-                    sd_layer = self.lyrs.get_layer_by_name("Storm Drain Conduits", group=self.lyrs.group).layer()
-                    feat = next(sd_layer.getFeatures(QgsFeatureRequest(fid)))
-                    name = feat["conduit_name"]
+                    feat_type = ln.split()[-1].lower()[:-1]
+                    name = feat[f"{feat_type}_name"]
                     actions[i][j] = QAction(name, None)
-                elif ln == "Storm Drain Pumps":
-                    sd_layer = self.lyrs.get_layer_by_name("Storm Drain Pumps", group=self.lyrs.group).layer()
-                    feat = next(sd_layer.getFeatures(QgsFeatureRequest(fid)))
-                    name = feat["pump_name"]
-                    actions[i][j] = QAction(name, None)
-                elif ln == "Storm Drain Orifices":
-                    sd_layer = self.lyrs.get_layer_by_name("Storm Drain Orifices", group=self.lyrs.group).layer()
-                    feat = next(sd_layer.getFeatures(QgsFeatureRequest(fid)))
-                    name = feat["orifice_name"]
-                    actions[i][j] = QAction(name, None)
-                elif ln == "Storm Drain Weirs":
-                    sd_layer = self.lyrs.get_layer_by_name("Storm Drain Weirs", group=self.lyrs.group).layer()
-                    feat = next(sd_layer.getFeatures(QgsFeatureRequest(fid)))
-                    name = feat["weir_name"]
-                    actions[i][j] = QAction(name, None)
+                    actions[i][j].hovered.connect(functools.partial(self.show_rubber, lid, fid))
+                    actions[i][j].triggered.connect(functools.partial(self.pass_res, tab, fid))
+                    sm[i].addAction(actions[i][j])
                 else:
                     actions[i][j] = QAction(str(fid), None)
-                actions[i][j].hovered.connect(functools.partial(self.show_rubber, lid, fid))
-                actions[i][j].triggered.connect(functools.partial(self.pass_res, tab, fid))
-                sm[i].addAction(actions[i][j])
+                    actions[i][j].hovered.connect(functools.partial(self.show_rubber, lid, fid))
+                    actions[i][j].triggered.connect(functools.partial(self.pass_res, tab, fid))
+                    sm[i].addAction(actions[i][j])
 
             popup.addMenu(sm[i])
         popup.exec_(self.canvas.mapToGlobal(QPoint(e.pos().x() + 30, e.pos().y() + 30)))

@@ -5044,7 +5044,8 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
 
         nodes_names = self.gutils.execute("SELECT name FROM user_swmm_inlets_junctions").fetchall()
         outfall_names = self.gutils.execute("SELECT name FROM user_swmm_outlets").fetchall()
-        if not nodes_names and not outfall_names :
+        storage_units_names = self.gutils.execute("SELECT name FROM user_swmm_storage_units").fetchall()
+        if not nodes_names and not outfall_names and not storage_units_names:
             return
 
         for name in nodes_names:
@@ -5052,6 +5053,10 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             self.end_node_cbo.addItem(name[0])
 
         for name in outfall_names:
+            self.start_node_cbo.addItem(name[0])
+            self.end_node_cbo.addItem(name[0])
+
+        for name in storage_units_names:
             self.start_node_cbo.addItem(name[0])
             self.end_node_cbo.addItem(name[0])
 
@@ -5068,10 +5073,10 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         # QApplication.restoreOverrideCursor()
         s = QSettings()
         GDS_dir = s.value("FLO-2D/lastGdsDir", "")
-        RPT_file = GDS_dir + r"\swmm.RPT"
-        rpt_file = GDS_dir + r"\swmm.rpt"
-        # INP_file = GDS_dir + r"\SWMM.INP"
-        # inp_file = GDS_dir + r"\SWMM.inp"
+        RPT_file = os.path.join(GDS_dir, "swmm.RPT")
+
+        if not os.path.isfile(RPT_file):
+            RPT_file = None
 
         start_node = self.start_node_cbo.currentText()
         end_node = self.end_node_cbo.currentText()
@@ -5159,17 +5164,18 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             if i == 0:
                 existing_nodes_dict[name].append(0)
             else:
+                # TODO THE LENGTH CAN BE CALCULATED ON WEIRS, ORIFICES OR PUMPS
                 length = self.gutils.execute(f"SELECT conduit_length FROM user_swmm_conduits WHERE conduit_inlet = '{previous_node}' AND conduit_outlet = '{name}';").fetchone()[0]
                 xs_max_depth = self.gutils.execute(f"SELECT xsections_max_depth FROM user_swmm_conduits WHERE conduit_inlet = '{previous_node}' AND conduit_outlet = '{name}';").fetchone()[0]
                 existing_nodes_dict[name].append(length)
                 existing_nodes_dict[name].append(xs_max_depth)
-                # The profile was set downstream to upstream TODO CHECK THIS
+                # The profile was set downstream to upstream TODO CHECK WHEN USER GOES DOWNSTREAM TO UPSTREAM
             previous_node = name
             i += 1
 
-        self.create_profile_plot(existing_nodes_dict)
+        self.create_profile_plot(existing_nodes_dict, RPT_file)
 
-    def create_profile_plot(self, existing_nodes_dict):
+    def create_profile_plot(self, existing_nodes_dict, rpt_file):
         """
         Function to create the profile plot using pyqtgraph
         """
@@ -5209,6 +5215,9 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             rect = patches.Rectangle((distance_acc - 5, invert_elev), 10, max_depth, linewidth=1, edgecolor='black',
                                      facecolor='white')
             ax.add_patch(rect)
+
+        if rpt_file:
+            self.uc.log_info("Entrou")
 
         # Set limits and labels
         ax.set_xlim(-10, distance_acc + 10)
