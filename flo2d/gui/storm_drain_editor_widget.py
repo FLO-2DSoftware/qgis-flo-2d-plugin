@@ -14,7 +14,7 @@ from datetime import date, datetime, time, timedelta
 from math import isnan, modf
 from pathlib import Path
 
-from PyQt5.QtWidgets import QStyledItemDelegate
+from PyQt5.QtWidgets import QStyledItemDelegate, QGraphicsRectItem
 from qgis._core import QgsFeatureRequest, QgsDistanceArea
 from qgis._gui import QgsDockWidget
 from qgis.core import (
@@ -32,7 +32,9 @@ from qgis.core import (
     QgsMessageLog,
     Qgis,
     QgsUnitTypes,
+    QgsSpatialIndex
 )
+import networkx as nx
 from qgis.PyQt.QtCore import QSettings, Qt, QTime, QVariant, QUrl
 from qgis.PyQt.QtGui import QColor, QIcon, QDesktopServices
 from qgis.PyQt.QtWidgets import (
@@ -5057,110 +5059,166 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         """
         Function to show the profile
         """
-        QApplication.setOverrideCursor(Qt.WaitCursor)
-        try:
-            import swmmio
-        except ImportError:
-            QApplication.restoreOverrideCursor()
-            message = "The swmmio library is not found in your python environment. This external library is required to " \
-                      "run some processes related to swmm files. More information on: https://swmmio.readthedocs.io/en/v0.6.11/.\n\n" \
-                      "Would you like to install it automatically or " \
-                      "manually?\n\nSelect automatic if you have admin rights. Otherwise, contact your admin and " \
-                      "follow the manual steps."
-            title = "External library not found!"
-            button1 = "Automatic"
-            button2 = "Manual"
-
-            install_options = self.uc.dialog_with_2_customized_buttons(title, message, button1, button2)
-
-            if install_options == QMessageBox.Yes:
-                QApplication.setOverrideCursor(Qt.WaitCursor)
-                try:
-                    import pathlib as pl
-                    import subprocess
-                    import sys
-
-                    qgis_Path = pl.Path(sys.executable)
-                    qgis_python_path = (qgis_Path.parent / "python3.exe").as_posix()
-
-                    subprocess.check_call(
-                        [qgis_python_path, "-m", "pip", "install", "--user", "swmmio==0.7.1"]
-                    )
-                    import swmmio
-                    self.uc.bar_info("swmmio successfully installed!")
-                    self.uc.log_info("swmmio successfully installed!")
-                    QApplication.restoreOverrideCursor()
-
-                except ImportError as e:
-                    QApplication.restoreOverrideCursor()
-                    self.uc.show_critical("Error while installing swmmio. Install it manually.")
-
-            # Manual Installation
-            elif install_options == QMessageBox.No:
-                QApplication.restoreOverrideCursor()
-                message = "1. Run OSGeo4W Shell as admin\n" \
-                          "2. Type this command: pip install swmmio==0.7.1\n\n" \
-                          "Wait the process to finish and rerun this process.\n\n" \
-                          "For more information, access https://flo-2d.com/contact/"
-                self.uc.show_info(message)
-                return
-            else:
-                return
+        # QApplication.setOverrideCursor(Qt.WaitCursor)
 
         if self.gutils.is_table_empty("grid"):
             self.uc.bar_warn("There is no grid! Please create it before running tool.")
             return False
 
-        QApplication.restoreOverrideCursor()
+        # QApplication.restoreOverrideCursor()
         s = QSettings()
         GDS_dir = s.value("FLO-2D/lastGdsDir", "")
         RPT_file = GDS_dir + r"\swmm.RPT"
         rpt_file = GDS_dir + r"\swmm.rpt"
-        INP_file = GDS_dir + r"\SWMM.INP"
-        inp_file = GDS_dir + r"\SWMM.inp"
-        # Check if there is an RPT and an INP file on the export folder
-        if not os.path.isfile(INP_file) or not os.path.isfile(inp_file):
-            self.uc.bar_warn(
-                "No SWMM.INP file found. Please ensure the simulation has completed and verify the project export "
-                "folder.")
-            return
-        if not os.path.isfile(RPT_file) or not os.path.isfile(rpt_file):
-            self.uc.bar_warn(
-                "No swmm.RPT file found. Please ensure the simulation has completed and verify the project export "
-                "folder.")
-            return
-
-        # SWMMIO only read small cap extensions
-        if not os.path.isfile(inp_file):
-            os.rename(INP_file, INP_file[:-4] + '.inp')
-
-        if not os.path.isfile(rpt_file):
-            os.rename(RPT_file, RPT_file[:-4] + '.rpt')
-
-        mymodel = swmmio.Model(inp_file)
-        rpt = swmmio.rpt(rpt_file)
+        # INP_file = GDS_dir + r"\SWMM.INP"
+        # inp_file = GDS_dir + r"\SWMM.inp"
 
         start_node = self.start_node_cbo.currentText()
         end_node = self.end_node_cbo.currentText()
 
+        # Find the start and end coordinates
+        table, column_name = self.find_object_in_sd_tables(start_node)
+        object_fid = self.gutils.execute(f"SELECT fid FROM {table} WHERE {column_name} = '{start_node}';").fetchone()[0]
+        sd_layer = self.lyrs.data[table]["qlyr"]
+        currentCell = next(sd_layer.getFeatures(QgsFeatureRequest(object_fid)))
+        x0, y0 = currentCell.geometry().centroid().asPoint()
+        x0 = round(x0, 6)
+        y0 = round(y0, 6)
+        table, column_name = self.find_object_in_sd_tables(end_node)
+        object_fid = self.gutils.execute(f"SELECT fid FROM {table} WHERE {column_name} = '{end_node}';").fetchone()[0]
+        sd_layer = self.lyrs.data[table]["qlyr"]
+        currentCell = next(sd_layer.getFeatures(QgsFeatureRequest(object_fid)))
+        x1, y1 = currentCell.geometry().centroid().asPoint()
+        x1 = round(x1, 6)
+        y1 = round(y1, 6)
+
+        # Initialize an empty directed graph
+        G = nx.DiGraph()
+
+        # Populate the graph with edges from the storm drain lines
+        line_layers = [
+            self.user_swmm_conduits_lyr,
+            self.user_swmm_weirs_lyr,
+            self.user_swmm_pumps_lyr,
+            self.user_swmm_orifices_lyr
+        ]
+        for line_layer in line_layers:
+            for feature in line_layer.getFeatures():
+                geom = feature.geometry()
+                if geom.isMultipart():
+                    line = geom.asMultiPolyline()[0]
+                else:
+                    line = geom.asPolyline()
+                start_point = line[0]
+                end_point = line[-1]
+                G.add_edge((round(start_point.x(), 6), round(start_point.y(), 6)), (round(end_point.x(), 6), round(end_point.y(), 6)), weight=geom.length())
+
+        # Find the shortest path
         try:
-            path_selection = swmmio.find_network_trace(mymodel, start_node, end_node)
-            max_depth = rpt.node_depth_summary.MaxNodeDepth
-            ave_depth = rpt.node_depth_summary.AvgDepth
-        except:
-            self.uc.bar_warn("No path found!")
-            return
-        QApplication.setOverrideCursor(Qt.WaitCursor)
-        dlg_sd_profile_view = SDProfileView(self.gutils)
-        dlg_sd_profile_view.plot_profile(swmmio, mymodel, path_selection, max_depth, ave_depth)
-        QApplication.restoreOverrideCursor()
-        dlg_sd_profile_view.show()
-        while True:
-            ok = dlg_sd_profile_view.exec_()
-            if ok:
-                break
+            shortest_path = nx.shortest_path(G, source=(x0,y0), target=(x1,y1), weight='weight')
+        except nx.NetworkXNoPath:
+            self.uc.show_warn(f"No path found between the start ({start_node}) and end ({end_node}) nodes!")
+            self.uc.log_info(f"No path found between the start ({start_node}) and end ({end_node}) nodes!")
+
+        spatial_index_inlets = QgsSpatialIndex(self.user_swmm_inlets_junctions_lyr.getFeatures())
+        spatial_index_su = QgsSpatialIndex(self.user_swmm_storage_units_lyr.getFeatures())
+        spatial_index_outfalls = QgsSpatialIndex(self.user_swmm_outlets_lyr.getFeatures())
+
+        # Get the invert elevation and maximum depth in a dictionary format
+        existing_nodes_dict = {}
+        for node in shortest_path:
+            point = QgsPointXY(node[0], node[1])
+
+            # Find nearby existing nodes within a tolerance (e.g., 1 meter)
+            nearest_inlet_junction_ids = spatial_index_inlets.nearestNeighbor(point, 1, 0.5)  # 1 for exact match, adjust for more results if needed
+            nearest_su_ids = spatial_index_su.nearestNeighbor(point, 1, 0.5)
+            nearest_outfall_ids = spatial_index_outfalls.nearestNeighbor(point, 1, 0.5)
+            if len(nearest_inlet_junction_ids) > 0:
+                nearest_inlet_junction = self.user_swmm_inlets_junctions_lyr.getFeature(nearest_inlet_junction_ids[0])
+                field_name_value = nearest_inlet_junction.attribute(3)
+                field_invert_value = nearest_inlet_junction.attribute(6)
+                field_maxdepth_value = nearest_inlet_junction.attribute(7)
+            if len(nearest_su_ids) > 0:
+                nearest_inlet_su = self.user_swmm_storage_units_lyr.getFeature(nearest_su_ids[0])
+                field_name_value = nearest_inlet_su.attribute(2)
+                field_invert_value = nearest_inlet_su.attribute(3)
+                field_maxdepth_value = nearest_inlet_su.attribute(4)
+            if len(nearest_outfall_ids) > 0:
+                nearest_inlet_outfall = self.user_swmm_outlets_lyr.getFeature(nearest_outfall_ids[0])
+                field_name_value = nearest_inlet_outfall.attribute(2)
+                field_invert_value = nearest_inlet_outfall.attribute(3)
+                field_maxdepth_value = 0
+
+            existing_nodes_dict[field_name_value] = [field_invert_value, field_maxdepth_value]
+
+        # Using the information from the dictionary, find the lengths
+        i = 0
+        previous_node = ''
+        for name in existing_nodes_dict:
+            # First node receives a 0 length
+            if i == 0:
+                existing_nodes_dict[name].append(0)
             else:
-                return
+                length = self.gutils.execute(f"SELECT conduit_length FROM user_swmm_conduits WHERE conduit_inlet = '{previous_node}' AND conduit_outlet = '{name}';").fetchone()[0]
+                xs_max_depth = self.gutils.execute(f"SELECT xsections_max_depth FROM user_swmm_conduits WHERE conduit_inlet = '{previous_node}' AND conduit_outlet = '{name}';").fetchone()[0]
+                existing_nodes_dict[name].append(length)
+                existing_nodes_dict[name].append(xs_max_depth)
+                # The profile was set downstream to upstream TODO CHECK THIS
+            previous_node = name
+            i += 1
+
+        self.create_profile_plot(existing_nodes_dict)
+
+    def create_profile_plot(self, existing_nodes_dict):
+        """
+        Function to create the profile plot using pyqtgraph
+        """
+        import matplotlib.pyplot as plt
+        import matplotlib.patches as patches
+
+        # Create a new figure
+        fig, ax = plt.subplots()
+
+        # Pipes [[1,1], [2,1], [2,2], [1,2]]
+        distance_acc_curr = 0
+        distance_acc_prev = 0
+        for i in range(len(existing_nodes_dict)):
+            if i != 0:
+                distance_acc_prev += list(existing_nodes_dict.values())[i - 1][2]
+                mh1_x = distance_acc_prev
+                mh1_y_min = list(existing_nodes_dict.values())[i - 1][0]
+                mh1_y_max = list(existing_nodes_dict.values())[i - 1][0] + list(existing_nodes_dict.values())[i][3]
+                distance_acc_curr += list(existing_nodes_dict.values())[i][2]
+                mh2_x = distance_acc_curr
+                mh2_y_min = list(existing_nodes_dict.values())[i][0]
+                mh2_y_max = list(existing_nodes_dict.values())[i][0] + list(existing_nodes_dict.values())[i][3]
+                coord = [[mh1_x, mh1_y_min], [mh2_x, mh2_y_min], [mh2_x, mh2_y_max], [mh1_x, mh1_y_max]]
+                ax.add_patch(patches.Polygon(coord, linewidth=1, edgecolor='black', facecolor='white'))
+
+        distance_acc = 0
+        invert_elevs = []
+        max_depths = []
+        # Manholes
+        for key, value in existing_nodes_dict.items():
+            invert_elev = value[0]
+            max_depth = value[1]
+            length = value[2]
+            invert_elevs.append(invert_elev)
+            max_depths.append(max_depth)
+            distance_acc += length
+            rect = patches.Rectangle((distance_acc - 5, invert_elev), 10, max_depth, linewidth=1, edgecolor='black',
+                                     facecolor='white')
+            ax.add_patch(rect)
+
+        # Set limits and labels
+        ax.set_xlim(-10, distance_acc + 10)
+        self.uc.log_info(str(invert_elevs))
+        ax.set_ylim(min(invert_elevs) - 5, max(invert_elevs) + max(max_depths) + 5)
+        ax.set_title('Storm Drain System')
+
+        # # Show plot
+        plt.show()
+
 
     def SD_show_type4_table_and_plot(self):
         self.SD_table.after_delete.disconnect()
