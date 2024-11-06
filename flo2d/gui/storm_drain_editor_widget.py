@@ -5064,13 +5064,10 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         """
         Function to show the profile
         """
-        # QApplication.setOverrideCursor(Qt.WaitCursor)
-
         if self.gutils.is_table_empty("grid"):
             self.uc.bar_warn("There is no grid! Please create it before running tool.")
-            return False
+            return
 
-        # QApplication.restoreOverrideCursor()
         s = QSettings()
         GDS_dir = s.value("FLO-2D/lastGdsDir", "")
         RPT_file = os.path.join(GDS_dir, "swmm.RPT")
@@ -5087,18 +5084,18 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         sd_layer = self.lyrs.data[table]["qlyr"]
         currentCell = next(sd_layer.getFeatures(QgsFeatureRequest(object_fid)))
         x0, y0 = currentCell.geometry().centroid().asPoint()
-        x0 = round(x0, 6)
-        y0 = round(y0, 6)
+        x0 = round(x0, 2)
+        y0 = round(y0, 2)
         table, column_name = self.find_object_in_sd_tables(end_node)
         object_fid = self.gutils.execute(f"SELECT fid FROM {table} WHERE {column_name} = '{end_node}';").fetchone()[0]
         sd_layer = self.lyrs.data[table]["qlyr"]
         currentCell = next(sd_layer.getFeatures(QgsFeatureRequest(object_fid)))
         x1, y1 = currentCell.geometry().centroid().asPoint()
-        x1 = round(x1, 6)
-        y1 = round(y1, 6)
+        x1 = round(x1, 2)
+        y1 = round(y1, 2)
 
         # Initialize an empty directed graph
-        G = nx.DiGraph()
+        G = nx.Graph()
 
         # Populate the graph with edges from the storm drain lines
         line_layers = [
@@ -5116,15 +5113,37 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                     line = geom.asPolyline()
                 start_point = line[0]
                 end_point = line[-1]
-                G.add_edge((round(start_point.x(), 6), round(start_point.y(), 6)), (round(end_point.x(), 6), round(end_point.y(), 6)), weight=geom.length())
+                G.add_edge((round(start_point.x(), 2), round(start_point.y(), 2)), (round(end_point.x(), 2), round(end_point.y(), 2)), weight=geom.length())
 
-        # Find the shortest path
+        # Check for connected components
+        components = list(nx.connected_components(G))
+
+        # Find the component containing the start and end points
+        relevant_component = None
+        for component in components:
+            if (x0, y0) in component and (x1, y1) in component:
+                relevant_component = component
+                break
+
+        if relevant_component is None:
+            self.uc.show_warn("Nodes are in different storm drain systems!")
+            self.uc.log_info("Nodes are in different storm drain systems!\n"
+                             "Enable Snapping to make sure that the storm drain links (conduits, weirs...) "
+                             "are connected to the storm drain nodes (junctions, outfalls...).")
+            return
+
+        # Create the subgraph
+        subgraph = G.subgraph(relevant_component)
+
+        # Find the shortest path on the sub graph
         try:
-            shortest_path = nx.shortest_path(G, source=(x0,y0), target=(x1,y1), weight='weight')
-        except nx.NetworkXNoPath:
+            shortest_path = nx.shortest_path(subgraph, source=(x0,y0), target=(x1,y1), weight='weight')
+        except (nx.NetworkXNoPath, nx.NodeNotFound) as error:
             self.uc.show_warn(f"No path found between the start ({start_node}) and end ({end_node}) nodes!")
-            self.uc.log_info(f"No path found between the start ({start_node}) and end ({end_node}) nodes!")
+            self.uc.log_info(f"No path found between the start ({start_node}) and end ({end_node}) nodes!\n{error}")
+            return
 
+        # set the spatial index to make everything faster
         spatial_index_inlets = QgsSpatialIndex(self.user_swmm_inlets_junctions_lyr.getFeatures())
         spatial_index_su = QgsSpatialIndex(self.user_swmm_storage_units_lyr.getFeatures())
         spatial_index_outfalls = QgsSpatialIndex(self.user_swmm_outlets_lyr.getFeatures())
@@ -5134,7 +5153,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         for node in shortest_path:
             point = QgsPointXY(node[0], node[1])
 
-            # Find nearby existing nodes within a tolerance (e.g., 1 meter)
+            # Find nearby existing nodes within a tolerance
             nearest_inlet_junction_ids = spatial_index_inlets.nearestNeighbor(point, 1, 0.5)  # 1 for exact match, adjust for more results if needed
             nearest_su_ids = spatial_index_su.nearestNeighbor(point, 1, 0.5)
             nearest_outfall_ids = spatial_index_outfalls.nearestNeighbor(point, 1, 0.5)
@@ -5160,13 +5179,98 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         i = 0
         previous_node = ''
         for name in existing_nodes_dict:
-            # First node receives a 0 length
+            # First node receives always a 0 length
             if i == 0:
                 existing_nodes_dict[name].append(0)
             else:
                 # TODO THE LENGTH CAN BE CALCULATED ON WEIRS, ORIFICES OR PUMPS
-                length = self.gutils.execute(f"SELECT conduit_length FROM user_swmm_conduits WHERE conduit_inlet = '{previous_node}' AND conduit_outlet = '{name}';").fetchone()[0]
-                xs_max_depth = self.gutils.execute(f"SELECT xsections_max_depth FROM user_swmm_conduits WHERE conduit_inlet = '{previous_node}' AND conduit_outlet = '{name}';").fetchone()[0]
+                # Check which type of link the nodes are connected to (Upstream -> Downstream)
+                up_down_table = self.gutils.execute(f"""
+                    SELECT 'user_swmm_conduits' AS table_name
+                    FROM user_swmm_conduits
+                    WHERE conduit_inlet = '{previous_node}' AND conduit_outlet = '{name}'
+                    
+                    UNION ALL
+                    
+                    SELECT 'user_swmm_weirs' AS table_name
+                    FROM user_swmm_weirs
+                    WHERE weir_inlet = '{previous_node}' AND weir_outlet = '{name}'
+                    
+                    UNION ALL
+                    
+                    SELECT 'user_swmm_pumps' AS table_name
+                    FROM user_swmm_pumps
+                    WHERE pump_inlet = '{previous_node}' AND pump_outlet = '{name}'
+                    
+                    UNION ALL
+                    
+                    SELECT 'user_swmm_orifices' AS table_name
+                    FROM user_swmm_orifices
+                    WHERE orifice_inlet = '{previous_node}' AND orifice_outlet = '{name}';""").fetchone()
+
+                # If this query returns a value, it means that an upstream to downstream node was found
+                if up_down_table:
+                    table = up_down_table[0]
+                    if table == "user_swmm_conduits":
+                        length = self.gutils.execute(
+                            f"SELECT conduit_length FROM user_swmm_conduits WHERE conduit_inlet = '{previous_node}' AND conduit_outlet = '{name}';").fetchone()[0]
+                        xs_max_depth = self.gutils.execute(
+                            f"SELECT xsections_max_depth FROM user_swmm_conduits WHERE conduit_inlet = '{previous_node}' AND conduit_outlet = '{name}';").fetchone()[0]
+                    if table == "user_swmm_weirs":
+                        length = 3 if self.gutils.get_cont_par("METRIC") == "1" else 10
+                        xs_max_depth = 0
+                    if table == "user_swmm_pumps":
+                        length = 3 if self.gutils.get_cont_par("METRIC") == "1" else 10
+                        xs_max_depth = 0
+                    if table == "user_swmm_orifices":
+                        length = 3 if self.gutils.get_cont_par("METRIC") == "1" else 10
+                        xs_max_depth = 0
+                else:
+                    down_up_table = self.gutils.execute(f"""
+                        SELECT 'user_swmm_conduits' AS table_name
+                        FROM user_swmm_conduits
+                        WHERE conduit_inlet = '{name}' AND conduit_outlet = '{previous_node}'
+
+                        UNION ALL
+
+                        SELECT 'user_swmm_weirs' AS table_name
+                        FROM user_swmm_weirs
+                        WHERE weir_inlet = '{name}' AND weir_outlet = '{previous_node}'
+
+                        UNION ALL
+
+                        SELECT 'user_swmm_pumps' AS table_name
+                        FROM user_swmm_pumps
+                        WHERE pump_inlet = '{name}' AND pump_outlet = '{previous_node}'
+
+                        UNION ALL
+
+                        SELECT 'user_swmm_orifices' AS table_name
+                        FROM user_swmm_orifices
+                        WHERE orifice_inlet = '{name}' AND orifice_outlet = '{previous_node}';""").fetchone()
+
+                    if down_up_table:
+                        table = down_up_table[0]
+                        if table == "user_swmm_conduits":
+                            length = self.gutils.execute(
+                                f"SELECT conduit_length FROM user_swmm_conduits WHERE conduit_inlet = '{name}' AND conduit_outlet = '{previous_node}';").fetchone()[
+                                0]
+                            xs_max_depth = self.gutils.execute(
+                                f"SELECT xsections_max_depth FROM user_swmm_conduits WHERE conduit_inlet = '{name}' AND conduit_outlet = '{previous_node}';").fetchone()[
+                                0]
+                        if table == "user_swmm_weirs":
+                            length = 3 if self.gutils.get_cont_par("METRIC") == "1" else 10
+                            xs_max_depth = 0
+                        if table == "user_swmm_pumps":
+                            length = 3 if self.gutils.get_cont_par("METRIC") == "1" else 10
+                            xs_max_depth = 0
+                        if table == "user_swmm_orifices":
+                            length = 3 if self.gutils.get_cont_par("METRIC") == "1" else 10
+                            xs_max_depth = 0
+                    else:
+                        self.uc.show_warn(f"It was not possible to define inlets and outlets!")
+                        self.uc.log_info(f"It was not possible to define inlets and outlets! Try to select an upstream to downstream path.")
+                        return
                 existing_nodes_dict[name].append(length)
                 existing_nodes_dict[name].append(xs_max_depth)
                 # The profile was set downstream to upstream TODO CHECK WHEN USER GOES DOWNSTREAM TO UPSTREAM
@@ -5182,12 +5286,35 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         import matplotlib.pyplot as plt
         import matplotlib.patches as patches
 
+        units = 'meters' if self.gutils.get_cont_par("METRIC") == "1" else 'feet'
+
+        if rpt_file:
+            NodeDepthSummary = False
+            NodeDepthDict = {}
+            with open(rpt_file, "r") as f:
+                for line in f:
+                    if 'Node Depth Summary' in line:
+                        NodeDepthSummary = True
+                        for _ in range(7):
+                            next(f)
+                        continue
+                    if NodeDepthSummary:
+                        if len(line.split()) != 7:
+                            break
+                        else:
+                            # node type average_depth max_depth max_hgl time_max_days time_max_hours
+                            NodeDepthData = line.split()
+                            NodeDepthDict[NodeDepthData[0]] = [NodeDepthData[2], NodeDepthData[3], NodeDepthData[4]]
+
         # Create a new figure
         fig, ax = plt.subplots()
+        fig.canvas.manager.set_window_title('FLO-2D Storm Drain Profile')
 
         # Pipes [[1,1], [2,1], [2,2], [1,2]]
         distance_acc_curr = 0
         distance_acc_prev = 0
+        average_depths = []
+        maximum_depths = []
         for i in range(len(existing_nodes_dict)):
             if i != 0:
                 distance_acc_prev += list(existing_nodes_dict.values())[i - 1][2]
@@ -5201,6 +5328,16 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 coord = [[mh1_x, mh1_y_min], [mh2_x, mh2_y_min], [mh2_x, mh2_y_max], [mh1_x, mh1_y_max]]
                 ax.add_patch(patches.Polygon(coord, linewidth=1, edgecolor='black', facecolor='white'))
 
+                if rpt_file:
+                    mh1_name = list(existing_nodes_dict.keys())[i - 1]
+                    mh1_avedepth = float(NodeDepthDict.get(mh1_name)[0]) + mh1_y_min
+                    mh1_maxdepth = float(NodeDepthDict.get(mh1_name)[1]) + mh1_y_min
+                    mh2_name = list(existing_nodes_dict.keys())[i]
+                    mh2_avedepth = float(NodeDepthDict.get(mh2_name)[0]) + mh2_y_min
+                    mh2_maxdepth = float(NodeDepthDict.get(mh2_name)[1]) + mh2_y_min
+                    average_depths.append([[mh1_x, mh1_y_min], [mh2_x, mh2_y_min], [mh2_x, mh2_avedepth], [mh1_x, mh1_avedepth]])
+                    maximum_depths.append([[mh1_x, mh2_x], [mh1_maxdepth, mh2_maxdepth]])
+
         distance_acc = 0
         invert_elevs = []
         max_depths = []
@@ -5212,18 +5349,44 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             invert_elevs.append(invert_elev)
             max_depths.append(max_depth)
             distance_acc += length
-            rect = patches.Rectangle((distance_acc - 5, invert_elev), 10, max_depth, linewidth=1, edgecolor='black',
+            manhole_diameter = 1.5 if self.gutils.get_cont_par("METRIC") == "1" else 5
+            rect = patches.Rectangle((distance_acc - (manhole_diameter/2), invert_elev), manhole_diameter, max_depth, linewidth=1, edgecolor='black',
                                      facecolor='white')
             ax.add_patch(rect)
 
         if rpt_file:
-            self.uc.log_info("Entrou")
+            for coord in maximum_depths:
+                ax.plot(coord[0], coord[1], color='red', linewidth=1, linestyle='dashed', label='Maximum Depth')
+
+            for coord in average_depths:
+                ax.add_patch(patches.Polygon(coord, linewidth=1, edgecolor=('xkcd:sky blue', 0),
+                                             facecolor=('xkcd:sky blue', 0.5), label='Average Depth'))
 
         # Set limits and labels
-        ax.set_xlim(-10, distance_acc + 10)
-        self.uc.log_info(str(invert_elevs))
-        ax.set_ylim(min(invert_elevs) - 5, max(invert_elevs) + max(max_depths) + 5)
-        ax.set_title('Storm Drain System')
+        ax.set_xlim(- (2 * manhole_diameter), distance_acc + (2 * manhole_diameter))
+
+        # The maximum y should be whichever is greater:
+        # The maximum of max depth plus its invert elevation or the maximum of invert elevation plus max depth
+        max_invert_elev_idx = invert_elevs.index(max(invert_elevs))
+        max_depth_idx = max_depths.index(max(max_depths))
+
+        max_y = max(max(max_depths) + invert_elevs[max_depth_idx], max(invert_elevs) + max_depths[max_invert_elev_idx])
+        ax.set_ylim(min(invert_elevs) - manhole_diameter, max_y + manhole_diameter)
+        start_node = self.start_node_cbo.currentText()
+        end_node = self.end_node_cbo.currentText()
+        ax.set_title(f'{start_node} to {end_node}')
+
+        ax.set_xlabel(f"Distance ({units})")
+        ax.set_ylabel(f"Elevation ({units})")
+
+        if rpt_file:
+            handles, labels = ax.get_legend_handles_labels()
+            handle_list, label_list = [], []
+            for handle, label in zip(handles, labels):
+                if label not in label_list:
+                    handle_list.append(handle)
+                    label_list.append(label)
+            plt.legend(handle_list, label_list, loc="upper right")
 
         # # Show plot
         plt.show()
