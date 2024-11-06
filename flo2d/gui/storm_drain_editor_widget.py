@@ -5272,7 +5272,6 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                         return
                 existing_nodes_dict[name].append(length)
                 existing_nodes_dict[name].append(xs_max_depth)
-                # The profile was set downstream to upstream TODO CHECK WHEN USER GOES DOWNSTREAM TO UPSTREAM
             previous_node = name
             i += 1
 
