@@ -5183,7 +5183,6 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             if i == 0:
                 existing_nodes_dict[name].append(0)
             else:
-                # TODO THE LENGTH CAN BE CALCULATED ON WEIRS, ORIFICES OR PUMPS
                 # Check which type of link the nodes are connected to (Upstream -> Downstream)
                 up_down_table = self.gutils.execute(f"""
                     SELECT 'user_swmm_conduits' AS table_name
