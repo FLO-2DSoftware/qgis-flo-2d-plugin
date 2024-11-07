@@ -5071,9 +5071,17 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         s = QSettings()
         GDS_dir = s.value("FLO-2D/lastGdsDir", "")
         RPT_file = os.path.join(GDS_dir, "swmm.RPT")
+        TOPO_file = os.path.join(GDS_dir, "TOPO.DAT")
+        WSE_file = os.path.join(GDS_dir, "MAXWSELEV.OUT")
 
         if not os.path.isfile(RPT_file):
             RPT_file = None
+
+        if not os.path.isfile(TOPO_file):
+            TOPO_file = None
+
+        if not os.path.isfile(WSE_file):
+            WSE_file = None
 
         start_node = self.start_node_cbo.currentText()
         end_node = self.end_node_cbo.currentText()
@@ -5159,21 +5167,24 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             nearest_outfall_ids = spatial_index_outfalls.nearestNeighbor(point, 1, 0.5)
             if len(nearest_inlet_junction_ids) > 0:
                 nearest_inlet_junction = self.user_swmm_inlets_junctions_lyr.getFeature(nearest_inlet_junction_ids[0])
+                field_grid_value = nearest_inlet_junction.attribute(1)
                 field_name_value = nearest_inlet_junction.attribute(3)
                 field_invert_value = nearest_inlet_junction.attribute(6)
                 field_maxdepth_value = nearest_inlet_junction.attribute(7)
             if len(nearest_su_ids) > 0:
                 nearest_inlet_su = self.user_swmm_storage_units_lyr.getFeature(nearest_su_ids[0])
+                field_grid_value = nearest_inlet_su.attribute(1)
                 field_name_value = nearest_inlet_su.attribute(2)
                 field_invert_value = nearest_inlet_su.attribute(3)
                 field_maxdepth_value = nearest_inlet_su.attribute(4)
             if len(nearest_outfall_ids) > 0:
                 nearest_inlet_outfall = self.user_swmm_outlets_lyr.getFeature(nearest_outfall_ids[0])
+                field_grid_value = nearest_inlet_outfall.attribute(1)
                 field_name_value = nearest_inlet_outfall.attribute(2)
                 field_invert_value = nearest_inlet_outfall.attribute(3)
                 field_maxdepth_value = 0
 
-            existing_nodes_dict[field_name_value] = [field_invert_value, field_maxdepth_value]
+            existing_nodes_dict[field_name_value] = [field_grid_value, field_invert_value, field_maxdepth_value]
 
         # Using the information from the dictionary, find the lengths
         i = 0
@@ -5328,18 +5339,28 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             previous_node = name
             i += 1
 
-        self.create_profile_plot(existing_nodes_dict, RPT_file)
+        self.create_profile_plot(existing_nodes_dict, RPT_file, TOPO_file, WSE_file)
 
-    def create_profile_plot(self, existing_nodes_dict, rpt_file):
+    def create_profile_plot(self, existing_nodes_dict, rpt_file, topo_file, wse_file):
         """
         Function to create the profile plot using pyqtgraph
+
+        existing_nodes_dict:
+            {'name': [grid, invert_elevation, max_depth, length_accumulated, xs_max_depth_connected, in_offset, out_offset]}
+            {'I1-37-30-20': [13881, 1399.38, 8.0, 0, 0, 0, 0]}
         """
         import matplotlib.pyplot as plt
         import matplotlib.patches as patches
 
         units = 'meters' if self.gutils.get_cont_par("METRIC") == "1" else 'feet'
+        manhole_diameter = 1.5 if self.gutils.get_cont_par("METRIC") == "1" else 5
+
+        grid_elements = []
+        for key, value in existing_nodes_dict.items():
+            grid_elements.append(value[0])
 
         if rpt_file:
+            max_hgl = []
             NodeDepthSummary = False
             NodeDepthDict = {}
             with open(rpt_file, "r") as f:
@@ -5352,10 +5373,29 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                     if NodeDepthSummary:
                         if len(line.split()) != 7:
                             break
-                        else:
+                        elif line.split()[0] in list(existing_nodes_dict.keys()):
                             # node type average_depth max_depth max_hgl time_max_days time_max_hours
                             NodeDepthData = line.split()
-                            NodeDepthDict[NodeDepthData[0]] = [NodeDepthData[2], NodeDepthData[3], NodeDepthData[4]]
+                            NodeDepthDict[NodeDepthData[0]] = [NodeDepthData[2], NodeDepthData[3]]
+                            max_hgl.append(float(NodeDepthData[4]))
+
+        if topo_file:
+            TopoDict = {}
+            with open(topo_file, "r") as f:
+                i = 1
+                for line in f:
+                    if i in grid_elements:
+                        TopoData = line.split()
+                        TopoDict[i] = TopoData[2]
+                    i += 1
+
+        if wse_file:
+            WseDict = {}
+            with open(wse_file, "r") as f:
+                for line in f:
+                    WseData = line.split()
+                    if int(WseData[0]) in grid_elements:
+                        WseDict[WseData[0]] = WseData[3]
 
         # Create a new figure
         fig, ax = plt.subplots()
@@ -5364,65 +5404,106 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         # Pipes [[1,1], [2,1], [2,2], [1,2]]
         distance_acc_curr = 0
         distance_acc_prev = 0
-        average_depths = []
-        maximum_depths = []
+        topo_data = []
+        wse_data = []
         for i in range(len(existing_nodes_dict)):
             if i != 0:
-                distance_acc_prev += list(existing_nodes_dict.values())[i - 1][2]
+                distance_acc_prev += list(existing_nodes_dict.values())[i - 1][3]
                 mh1_x = distance_acc_prev
-                mh1_y_min = list(existing_nodes_dict.values())[i - 1][0] + list(existing_nodes_dict.values())[i][4]
-                mh1_y_max = list(existing_nodes_dict.values())[i - 1][0] + list(existing_nodes_dict.values())[i][3] + list(existing_nodes_dict.values())[i][4]
-                distance_acc_curr += list(existing_nodes_dict.values())[i][2]
+                mh1_y_min = list(existing_nodes_dict.values())[i - 1][1] + list(existing_nodes_dict.values())[i][5]
+                mh1_y_max = list(existing_nodes_dict.values())[i - 1][1] + list(existing_nodes_dict.values())[i][4] + list(existing_nodes_dict.values())[i][5]
+                distance_acc_curr += list(existing_nodes_dict.values())[i][3]
                 mh2_x = distance_acc_curr
-                mh2_y_min = list(existing_nodes_dict.values())[i][0] + list(existing_nodes_dict.values())[i][5]
-                mh2_y_max = list(existing_nodes_dict.values())[i][0] + list(existing_nodes_dict.values())[i][3] + list(existing_nodes_dict.values())[i][5]
+                mh2_y_min = list(existing_nodes_dict.values())[i][1] + list(existing_nodes_dict.values())[i][6]
+                mh2_y_max = list(existing_nodes_dict.values())[i][1] + list(existing_nodes_dict.values())[i][4] + list(existing_nodes_dict.values())[i][6]
                 coord = [[mh1_x, mh1_y_min], [mh2_x, mh2_y_min], [mh2_x, mh2_y_max], [mh1_x, mh1_y_max]]
-                ax.add_patch(patches.Polygon(coord, linewidth=1, edgecolor='black', facecolor='white'))
+                ax.add_patch(patches.Polygon(coord, linewidth=1, edgecolor='black', facecolor='white', zorder=1))
 
                 if rpt_file:
                     mh1_name = list(existing_nodes_dict.keys())[i - 1]
                     mh1_avedepth = float(NodeDepthDict.get(mh1_name)[0]) + mh1_y_min
                     mh1_maxdepth = float(NodeDepthDict.get(mh1_name)[1]) + mh1_y_min
+                    mh1_y_max_mh = list(existing_nodes_dict.values())[i - 1][2] + mh1_y_min
+                    mh1_avedepthmh = mh1_y_max_mh if mh1_avedepth > mh1_y_max_mh else mh1_avedepth
                     mh2_name = list(existing_nodes_dict.keys())[i]
                     mh2_avedepth = float(NodeDepthDict.get(mh2_name)[0]) + mh2_y_min
                     mh2_maxdepth = float(NodeDepthDict.get(mh2_name)[1]) + mh2_y_min
-                    average_depths.append([[mh1_x, mh1_y_min], [mh2_x, mh2_y_min], [mh2_x, mh2_avedepth], [mh1_x, mh1_avedepth]])
-                    maximum_depths.append([[mh1_x, mh2_x], [mh1_maxdepth, mh2_maxdepth]])
+                    mh2_y_max_mh = list(existing_nodes_dict.values())[i][2] + mh2_y_min
+                    mh2_avedepthmh = mh2_y_max_mh if mh2_avedepth > mh2_y_max_mh else mh2_avedepth
+                    average_depth = [[mh1_x, mh1_y_min], [mh2_x, mh2_y_min], [mh2_x, mh2_avedepthmh], [mh1_x, mh1_avedepthmh]]
+                    ax.add_patch(patches.Polygon(average_depth, linewidth=1, edgecolor=('xkcd:sky blue', 0), facecolor=('xkcd:sky blue', 0.5), label='Average Depth', zorder=3))
+                    average_depth_line = [[mh1_x, mh2_x], [mh1_avedepth, mh2_avedepth]]
+                    ax.plot(average_depth_line[0], average_depth_line[1], color='xkcd:sky blue', linewidth=2, label='Hydraulic Grade Line', zorder=5)
+                    maximum_depth = [[mh1_x, mh2_x], [mh1_maxdepth, mh2_maxdepth]]
+                    ax.plot(maximum_depth[0], maximum_depth[1], color='red', linewidth=1, linestyle='dashed', label='Maximum Depth', zorder=5)
+                    # Add a white polygon to hide the blue over the pipe's crown
+                    white_polygon = [[mh1_x + manhole_diameter / 2, mh1_y_max], [mh2_x - manhole_diameter / 2, mh2_y_max], [mh2_x - manhole_diameter / 2, mh2_avedepthmh], [mh1_x + manhole_diameter / 2, mh1_avedepthmh]]
+                    ax.add_patch(patches.Polygon(white_polygon, edgecolor="none", facecolor='white', zorder=4))
+
+
+                if topo_file:
+                    # Try/except block here for the cases where there the inlet/outlet is outside the computational domain
+                    try:
+                        mh1_grid = list(existing_nodes_dict.values())[i - 1][0]
+                        mh1_topo = float(TopoDict.get(mh1_grid))
+                        mh2_grid = list(existing_nodes_dict.values())[i][0]
+                        mh2_topo = float(TopoDict.get(mh2_grid))
+                        topo_data.append([[mh1_x, mh2_x], [mh1_topo, mh2_topo]])
+                    except:
+                        continue
+
+                if wse_file:
+                    # Try/except block here for the cases where there the inlet/outlet is outside the computational domain
+                    try:
+                        mh1_grid = str(list(existing_nodes_dict.values())[i - 1][0])
+                        mh1_wse = float(WseDict.get(mh1_grid))
+                        mh2_grid = str(list(existing_nodes_dict.values())[i][0])
+                        mh2_wse = float(WseDict.get(mh2_grid))
+                        wse_data.append([[mh1_x, mh2_x], [mh1_wse, mh2_wse]])
+                    except:
+                        continue
+
 
         distance_acc = 0
         invert_elevs = []
         max_depths = []
         # Manholes
         for key, value in existing_nodes_dict.items():
-            invert_elev = value[0]
-            max_depth = value[1]
-            length = value[2]
+            invert_elev = value[1]
+            max_depth = value[2]
+            length = value[3]
             invert_elevs.append(invert_elev)
             max_depths.append(max_depth)
             distance_acc += length
-            manhole_diameter = 1.5 if self.gutils.get_cont_par("METRIC") == "1" else 5
             rect = patches.Rectangle((distance_acc - (manhole_diameter/2), invert_elev), manhole_diameter, max_depth, linewidth=1, edgecolor='black',
-                                     facecolor='white')
+                                     facecolor='white', zorder=2)
             ax.add_patch(rect)
 
-        if rpt_file:
-            for coord in maximum_depths:
-                ax.plot(coord[0], coord[1], color='red', linewidth=1, linestyle='dashed', label='Maximum Depth')
+        if topo_file:
+            for coord in topo_data:
+                ax.plot(coord[0], coord[1], color='tab:brown', linewidth=1, label='FLO-2D Terrain', zorder=5)
 
-            for coord in average_depths:
-                ax.add_patch(patches.Polygon(coord, linewidth=1, edgecolor=('xkcd:sky blue', 0),
-                                             facecolor=('xkcd:sky blue', 0.5), label='Average Depth'))
+        if wse_file:
+            for coord in wse_data:
+                ax.plot(coord[0], coord[1], color='b', linewidth=1, linestyle='dashed', label='FLO-2D Maximum Water Surface Elevation', zorder=5)
+
 
         # Set limits and labels
         ax.set_xlim(- (2 * manhole_diameter), distance_acc + (2 * manhole_diameter))
 
-        # The maximum y should be whichever is greater:
-        # The maximum of max depth plus its invert elevation or the maximum of invert elevation plus max depth
         max_invert_elev_idx = invert_elevs.index(max(invert_elevs))
         max_depth_idx = max_depths.index(max(max_depths))
 
-        max_y = max(max(max_depths) + invert_elevs[max_depth_idx], max(invert_elevs) + max_depths[max_invert_elev_idx])
-        ax.set_ylim(min(invert_elevs) - manhole_diameter, max_y + manhole_diameter)
+        if not rpt_file:
+            # The maximum y should be whichever is greater:
+            # The maximum of max depth plus its invert elevation or the maximum of invert elevation plus max depth
+            max_y = max(max(max_depths) + invert_elevs[max_depth_idx], max(invert_elevs) + max_depths[max_invert_elev_idx])
+            ax.set_ylim(min(invert_elevs) - manhole_diameter, max_y + (1.5 * manhole_diameter))
+        else:
+            # The maximum y should be whichever is greater:
+            # The maximum of max depth plus its invert elevation or the maximum of invert elevation plus max depth or the maximum hgl
+            max_y = max(max(max_depths) + invert_elevs[max_depth_idx], max(invert_elevs) + max_depths[max_invert_elev_idx], max(max_hgl))
+            ax.set_ylim(min(invert_elevs) - manhole_diameter, max_y + (1.5 * manhole_diameter))
         start_node = self.start_node_cbo.currentText()
         end_node = self.end_node_cbo.currentText()
         ax.set_title(f'{start_node} to {end_node}')
