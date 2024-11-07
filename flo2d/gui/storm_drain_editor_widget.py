@@ -5182,6 +5182,9 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             # First node receives always a 0 length
             if i == 0:
                 existing_nodes_dict[name].append(0)
+                existing_nodes_dict[name].append(0)
+                existing_nodes_dict[name].append(0)
+                existing_nodes_dict[name].append(0)
             else:
                 # Check which type of link the nodes are connected to (Upstream -> Downstream)
                 up_down_table = self.gutils.execute(f"""
@@ -5211,19 +5214,44 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 if up_down_table:
                     table = up_down_table[0]
                     if table == "user_swmm_conduits":
-                        length = self.gutils.execute(
-                            f"SELECT conduit_length FROM user_swmm_conduits WHERE conduit_inlet = '{previous_node}' AND conduit_outlet = '{name}';").fetchone()[0]
-                        xs_max_depth = self.gutils.execute(
-                            f"SELECT xsections_max_depth FROM user_swmm_conduits WHERE conduit_inlet = '{previous_node}' AND conduit_outlet = '{name}';").fetchone()[0]
+                        length, xs_max_depth, in_offset, out_offset = self.gutils.execute(
+                            f"""SELECT 
+                                    conduit_length, 
+                                    xsections_max_depth, 
+                                    conduit_inlet_offset, 
+                                    conduit_outlet_offset 
+                                FROM 
+                                    user_swmm_conduits 
+                                WHERE 
+                                    conduit_inlet = '{previous_node}' AND conduit_outlet = '{name}';"""
+                        ).fetchone()
                     if table == "user_swmm_weirs":
                         length = 3 if self.gutils.get_cont_par("METRIC") == "1" else 10
                         xs_max_depth = 0
+                        in_offset = self.gutils.execute(
+                            f"""SELECT 
+                                    weir_crest_height 
+                                FROM 
+                                    user_swmm_weirs 
+                                WHERE 
+                                    weir_inlet = '{previous_node}' AND weir_outlet = '{name}';"""
+                        ).fetchone()[0]
+                        out_offset = 0
                     if table == "user_swmm_pumps":
                         length = 3 if self.gutils.get_cont_par("METRIC") == "1" else 10
-                        xs_max_depth = 0
+                        xs_max_depth, in_offset, out_offset = 0, 0, 0
                     if table == "user_swmm_orifices":
                         length = 3 if self.gutils.get_cont_par("METRIC") == "1" else 10
                         xs_max_depth = 0
+                        in_offset = self.gutils.execute(
+                            f"""SELECT 
+                                    orifice_crest_height 
+                                FROM 
+                                    user_swmm_orifices 
+                                WHERE 
+                                    orifice_inlet = '{previous_node}' AND orifice_outlet = '{name}';"""
+                        ).fetchone()[0]
+                        out_offset = 0
                 else:
                     down_up_table = self.gutils.execute(f"""
                         SELECT 'user_swmm_conduits' AS table_name
@@ -5251,27 +5279,52 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                     if down_up_table:
                         table = down_up_table[0]
                         if table == "user_swmm_conduits":
-                            length = self.gutils.execute(
-                                f"SELECT conduit_length FROM user_swmm_conduits WHERE conduit_inlet = '{name}' AND conduit_outlet = '{previous_node}';").fetchone()[
-                                0]
-                            xs_max_depth = self.gutils.execute(
-                                f"SELECT xsections_max_depth FROM user_swmm_conduits WHERE conduit_inlet = '{name}' AND conduit_outlet = '{previous_node}';").fetchone()[
-                                0]
+                            length, xs_max_depth, out_offset, in_offset = self.gutils.execute(
+                                f"""SELECT 
+                                        conduit_length, 
+                                        xsections_max_depth, 
+                                        conduit_inlet_offset, 
+                                        conduit_outlet_offset 
+                                    FROM 
+                                        user_swmm_conduits 
+                                    WHERE 
+                                        conduit_inlet = '{name}' AND conduit_outlet = '{previous_node}';"""
+                            ).fetchone()
                         if table == "user_swmm_weirs":
                             length = 3 if self.gutils.get_cont_par("METRIC") == "1" else 10
                             xs_max_depth = 0
+                            out_offset = self.gutils.execute(
+                                f"""SELECT 
+                                        weir_crest_height 
+                                    FROM 
+                                        user_swmm_weirs 
+                                    WHERE 
+                                        weir_inlet = '{name}' AND weir_outlet = '{previous_node}';"""
+                            ).fetchone()[0]
+                            in_offset = 0
                         if table == "user_swmm_pumps":
                             length = 3 if self.gutils.get_cont_par("METRIC") == "1" else 10
-                            xs_max_depth = 0
+                            xs_max_depth, in_offset, out_offset = 0, 0, 0
                         if table == "user_swmm_orifices":
                             length = 3 if self.gutils.get_cont_par("METRIC") == "1" else 10
                             xs_max_depth = 0
+                            out_offset = self.gutils.execute(
+                                f"""SELECT 
+                                        orifice_crest_height 
+                                    FROM 
+                                        user_swmm_orifices 
+                                    WHERE 
+                                        orifice_inlet = '{name}' AND orifice_outlet = '{previous_node}';"""
+                            ).fetchone()[0]
+                            in_offset = 0
                     else:
                         self.uc.show_warn(f"It was not possible to define inlets and outlets!")
                         self.uc.log_info(f"It was not possible to define inlets and outlets! Try to select an upstream to downstream path.")
                         return
                 existing_nodes_dict[name].append(length)
                 existing_nodes_dict[name].append(xs_max_depth)
+                existing_nodes_dict[name].append(in_offset)
+                existing_nodes_dict[name].append(out_offset)
             previous_node = name
             i += 1
 
@@ -5317,12 +5370,12 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             if i != 0:
                 distance_acc_prev += list(existing_nodes_dict.values())[i - 1][2]
                 mh1_x = distance_acc_prev
-                mh1_y_min = list(existing_nodes_dict.values())[i - 1][0]
-                mh1_y_max = list(existing_nodes_dict.values())[i - 1][0] + list(existing_nodes_dict.values())[i][3]
+                mh1_y_min = list(existing_nodes_dict.values())[i - 1][0] + list(existing_nodes_dict.values())[i][4]
+                mh1_y_max = list(existing_nodes_dict.values())[i - 1][0] + list(existing_nodes_dict.values())[i][3] + list(existing_nodes_dict.values())[i][4]
                 distance_acc_curr += list(existing_nodes_dict.values())[i][2]
                 mh2_x = distance_acc_curr
-                mh2_y_min = list(existing_nodes_dict.values())[i][0]
-                mh2_y_max = list(existing_nodes_dict.values())[i][0] + list(existing_nodes_dict.values())[i][3]
+                mh2_y_min = list(existing_nodes_dict.values())[i][0] + list(existing_nodes_dict.values())[i][5]
+                mh2_y_max = list(existing_nodes_dict.values())[i][0] + list(existing_nodes_dict.values())[i][3] + list(existing_nodes_dict.values())[i][5]
                 coord = [[mh1_x, mh1_y_min], [mh2_x, mh2_y_min], [mh2_x, mh2_y_max], [mh1_x, mh1_y_max]]
                 ax.add_patch(patches.Polygon(coord, linewidth=1, edgecolor='black', facecolor='white'))
 
