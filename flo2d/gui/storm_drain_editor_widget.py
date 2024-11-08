@@ -5417,7 +5417,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 mh2_y_min = list(existing_nodes_dict.values())[i][1] + list(existing_nodes_dict.values())[i][6]
                 mh2_y_max = list(existing_nodes_dict.values())[i][1] + list(existing_nodes_dict.values())[i][4] + list(existing_nodes_dict.values())[i][6]
                 coord = [[mh1_x, mh1_y_min], [mh2_x, mh2_y_min], [mh2_x, mh2_y_max], [mh1_x, mh1_y_max]]
-                ax.add_patch(patches.Polygon(coord, linewidth=1, edgecolor='black', facecolor='white', zorder=1))
+                ax.add_patch(patches.Polygon(coord, linewidth=1.5, edgecolor='black', facecolor='white', zorder=1))
 
                 if rpt_file:
                     mh1_name = list(existing_nodes_dict.keys())[i - 1]
@@ -5475,7 +5475,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             invert_elevs.append(invert_elev)
             max_depths.append(max_depth)
             distance_acc += length
-            rect = patches.Rectangle((distance_acc - (manhole_diameter/2), invert_elev), manhole_diameter, max_depth, linewidth=1, edgecolor='black',
+            rect = patches.Rectangle((distance_acc - (manhole_diameter/2), invert_elev), manhole_diameter, max_depth, linewidth=1.5, edgecolor='black',
                                      facecolor='white', zorder=2)
             ax.add_patch(rect)
 
