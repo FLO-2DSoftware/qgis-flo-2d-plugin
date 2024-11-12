@@ -107,10 +107,10 @@ class SDAnimator(QDialog):
 
         if not self.ax.get_legend():
             self.ax.legend(loc="upper right", facecolor='white', framealpha=1)
-            self.counter_label = self.ax.legend([self.line], [f"HGL | {self.nodes_ts[frame - 1]}"], loc="upper right")
+            self.counter_label = self.ax.legend([self.line], [f"HGL | {self.nodes_ts[frame]}"], loc="upper right")
 
         self.line.set_data(np.array(self.nodes_distances_anim), self.nodes_array[:, frame])  # Update line data
-        self.counter_label.get_texts()[0].set_text(f"HGL | {self.nodes_ts[frame - 1]}")
+        self.counter_label.get_texts()[0].set_text(f"HGL | {self.nodes_ts[frame]}")
 
         return self.line, self.counter_label
 
@@ -200,6 +200,7 @@ class SDAnimator(QDialog):
                         max(invert_elevs) + max_depths[max_invert_elev_idx], max(max_hgl))
             self.ax.set_ylim(min(invert_elevs) - manhole_diameter, max_y + (1.5 * manhole_diameter))
 
+        self.ax.set_title(f'{list(self.existing_nodes_dict.keys())[0]} to {list(self.existing_nodes_dict.keys())[-1]}')
         self.ax.set_xlabel(f"Distance ({units})")
         self.ax.set_ylabel(f"Elevation ({units})")
 
