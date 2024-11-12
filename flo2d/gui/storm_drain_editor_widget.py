@@ -5410,6 +5410,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
 
         if not animated:
             # Create a new figure
+            plt.close()
             fig, ax = plt.subplots()
             fig.canvas.manager.set_window_title('FLO-2D Storm Drain Profile')
 
