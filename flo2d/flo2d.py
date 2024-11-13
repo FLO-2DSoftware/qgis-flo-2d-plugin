@@ -3700,7 +3700,17 @@ class Flo2D(object):
         self.f2d_widget.storm_drain_editor.update_profile_cbos(extra, name[0])
 
     @connection_required
-    def show_sd_inlets_junctions_attributes(self, fid=None):
+    def show_sd_su_profile(self, fid=None, extra=""):
+        """
+        Show the selected sd su info
+        """
+        name = self.gutils.execute("SELECT name FROM user_swmm_storage_units WHERE fid = ?", (fid,)).fetchone()
+        self.uc.bar_info("Selected Storm Drain Storage Unit: " + str(name[0]))
+        self.f2d_widget.storm_drain_editor.center_chbox.setChecked(True)
+        self.f2d_widget.storm_drain_editor.update_profile_cbos(extra, name[0])
+
+    @connection_required
+    def show_sd_inlets_junctions_attributes(self, fid=None, extra=""):
         """
         Show the selected sd inlet/junctions attributes
         """
@@ -3713,18 +3723,21 @@ class Flo2D(object):
         name = self.gutils.execute("SELECT name FROM user_swmm_inlets_junctions WHERE fid = ?", (fid,)).fetchone()
         self.uc.bar_info("Selected Storm Drain Inlet/Junction: " + str(name[0]))
 
-        dlg = InletAttributes(self.con, self.iface, self.lyrs)
-        self.iface.mainWindow().addDockWidget(Qt.RightDockWidgetArea, dlg.dock_widget)
-        self.iface.mainWindow().tabifyDockWidget(self.f2d_dock, dlg.dock_widget)
-        dlg.dock_widget.setFloating(False)
-        dlg.populate_attributes(fid)
-        dlg.dock_widget.show()
-        dlg.dock_widget.raise_()
+        if extra in ["Start", "End"]:
+            self.f2d_widget.storm_drain_editor.update_profile_cbos(extra, name[0])
+        else:
+            dlg = InletAttributes(self.con, self.iface, self.lyrs)
+            self.iface.mainWindow().addDockWidget(Qt.RightDockWidgetArea, dlg.dock_widget)
+            self.iface.mainWindow().tabifyDockWidget(self.f2d_dock, dlg.dock_widget)
+            dlg.dock_widget.setFloating(False)
+            dlg.populate_attributes(fid)
+            dlg.dock_widget.show()
+            dlg.dock_widget.raise_()
 
-        self.f2d_inlets_junctions_dock = dlg.dock_widget
+            self.f2d_inlets_junctions_dock = dlg.dock_widget
 
     @connection_required
-    def show_sd_outlets_attributes(self, fid=None):
+    def show_sd_outlets_attributes(self, fid=None, extra=""):
         """
         Show the selected sd outlets attributes
         """
@@ -3736,16 +3749,45 @@ class Flo2D(object):
 
         name = self.gutils.execute("SELECT name FROM user_swmm_outlets WHERE fid = ?", (fid,)).fetchone()
         self.uc.bar_info("Selected Storm Drain Outfall: " + str(name[0]))
+        if extra in ["Start", "End"]:
+            self.f2d_widget.storm_drain_editor.update_profile_cbos(extra, name[0])
+        else:
+            dlg = OutletAttributes(self.con, self.iface, self.lyrs)
+            self.iface.mainWindow().addDockWidget(Qt.RightDockWidgetArea, dlg.dock_widget)
+            self.iface.mainWindow().tabifyDockWidget(self.f2d_dock, dlg.dock_widget)
+            dlg.dock_widget.setFloating(False)
+            dlg.populate_attributes(fid)
+            dlg.dock_widget.show()
+            dlg.dock_widget.raise_()
 
-        dlg = OutletAttributes(self.con, self.iface, self.lyrs)
-        self.iface.mainWindow().addDockWidget(Qt.RightDockWidgetArea, dlg.dock_widget)
-        self.iface.mainWindow().tabifyDockWidget(self.f2d_dock, dlg.dock_widget)
-        dlg.dock_widget.setFloating(False)
-        dlg.populate_attributes(fid)
-        dlg.dock_widget.show()
-        dlg.dock_widget.raise_()
+            self.f2d_outlets_dock = dlg.dock_widget
 
-        self.f2d_outlets_dock = dlg.dock_widget
+    @connection_required
+    def show_sd_storage_unit_attributes(self, fid=None, extra=""):
+        """
+        Show the selected sd storage unit attributes
+        """
+        if self.f2d_storage_units_dock:
+            self.iface.removeDockWidget(self.f2d_storage_units_dock)
+            self.f2d_storage_units_dock.close()
+            self.f2d_storage_units_dock.deleteLater()
+            self.f2d_storage_units_dock = None
+
+        storage_unit_name = self.gutils.execute("SELECT name FROM user_swmm_storage_units WHERE fid = ?",
+                                                (fid,)).fetchone()
+        self.uc.bar_info("Selected Storm Drain Storage Unit: " + str(storage_unit_name[0]))
+        if extra in ["Start", "End"]:
+            self.f2d_widget.storm_drain_editor.update_profile_cbos(extra, storage_unit_name[0])
+        else:
+            dlg = StorageUnitAttributes(self.con, self.iface, self.lyrs)
+            self.iface.mainWindow().addDockWidget(Qt.RightDockWidgetArea, dlg.dock_widget)
+            self.iface.mainWindow().tabifyDockWidget(self.f2d_dock, dlg.dock_widget)
+            dlg.dock_widget.setFloating(False)
+            dlg.populate_attributes(fid)
+            dlg.dock_widget.show()
+            dlg.dock_widget.raise_()
+
+            self.f2d_storage_units_dock = dlg.dock_widget
 
     @connection_required
     def show_sd_weir_attributes(self, fid=None):
@@ -3796,31 +3838,6 @@ class Flo2D(object):
         dlg.dock_widget.raise_()
 
         self.f2d_orifices_dock = dlg.dock_widget
-
-    @connection_required
-    def show_sd_storage_unit_attributes(self, fid=None):
-        """
-        Show the selected sd storage unit attributes
-        """
-        if self.f2d_storage_units_dock:
-            self.iface.removeDockWidget(self.f2d_storage_units_dock)
-            self.f2d_storage_units_dock.close()
-            self.f2d_storage_units_dock.deleteLater()
-            self.f2d_storage_units_dock = None
-
-        storage_unit_name = self.gutils.execute("SELECT name FROM user_swmm_storage_units WHERE fid = ?",
-                                                (fid,)).fetchone()
-        self.uc.bar_info("Selected Storm Drain Storage Unit: " + str(storage_unit_name[0]))
-
-        dlg = StorageUnitAttributes(self.con, self.iface, self.lyrs)
-        self.iface.mainWindow().addDockWidget(Qt.RightDockWidgetArea, dlg.dock_widget)
-        self.iface.mainWindow().tabifyDockWidget(self.f2d_dock, dlg.dock_widget)
-        dlg.dock_widget.setFloating(False)
-        dlg.populate_attributes(fid)
-        dlg.dock_widget.show()
-        dlg.dock_widget.raise_()
-
-        self.f2d_storage_units_dock = dlg.dock_widget
 
     @connection_required
     def show_sd_pump_attributes(self, fid=None):
@@ -3906,6 +3923,19 @@ class Flo2D(object):
         name, grid = self.gutils.execute("SELECT name, grid FROM user_swmm_outlets WHERE fid = ?", (fid,)).fetchone()
         self.f2d_dock.setUserVisible(True)
         self.f2d_widget.storm_drain_editor.create_SD_discharge_table_and_plots('outfall', name)
+
+    @connection_required
+    def show_sd_su_discharge(self, fid=None):
+        """
+        Show storm drain discharge for a given storage unit
+        """
+        if self.gutils.is_table_empty("grid"):
+            self.uc.bar_warn("There is no grid! Please create it before running tool.")
+            return
+
+        name, grid = self.gutils.execute("SELECT name, grid FROM user_swmm_storage_units WHERE fid = ?", (fid,)).fetchone()
+        self.f2d_dock.setUserVisible(True)
+        self.f2d_widget.storm_drain_editor.create_SD_discharge_table_and_plots('storage_unit', name)
 
     @connection_required
     def show_conduit_discharge(self, fid=None):
@@ -4539,6 +4569,12 @@ class Flo2D(object):
                 self.show_sd_outfall_discharge(fid)  # FIX THIS
             else:
                 self.show_sd_outfall_profile(fid, extra)
+        if table == 'user_swmm_storage_units':
+            if extra == "See Results":
+                self.cur_profile_table = table
+                self.show_sd_su_discharge(fid)  # FIX THIS
+            else:
+                self.show_sd_su_profile(fid, extra)
         if table == 'user_swmm_conduits':
             self.cur_profile_table = table
             self.show_conduit_discharge(fid)
