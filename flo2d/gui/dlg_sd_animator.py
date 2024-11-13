@@ -145,6 +145,8 @@ class SDAnimator(QDialog):
                             NodeDepthDict[NodeDepthData[0]] = [NodeDepthData[2], NodeDepthData[3]]
                             max_hgl.append(float(NodeDepthData[4]))
 
+        x_secondary_axis_labels = []
+
         # Pipes [[1,1], [2,1], [2,2], [1,2]]
         distance_acc_curr = 0
         distance_acc_prev = 0
@@ -163,6 +165,7 @@ class SDAnimator(QDialog):
                             list(self.existing_nodes_dict.values())[i][6]
                 coord = [[mh1_x, mh1_y_min], [mh2_x, mh2_y_min], [mh2_x, mh2_y_max], [mh1_x, mh1_y_max]]
                 self.ax.add_patch(patches.Polygon(coord, linewidth=1, edgecolor='black', facecolor='white', zorder=1))
+            x_secondary_axis_labels.append([list(self.existing_nodes_dict.keys())[i], distance_acc_curr])
             self.nodes_distances_anim.append(distance_acc_curr)
 
         distance_acc = 0
@@ -180,6 +183,10 @@ class SDAnimator(QDialog):
                                      linewidth=1.5, edgecolor='black',
                                      facecolor='white', zorder=2)
             self.ax.add_patch(rect)
+
+        secax = self.ax.secondary_xaxis('top')
+        secax.set_xticks([distance for _, distance in x_secondary_axis_labels])
+        secax.set_xticklabels([name for name, _ in x_secondary_axis_labels], rotation=90, ha='center', fontsize=8)
 
         # Set limits and labels
         self.ax.set_xlim(- (2 * manhole_diameter), distance_acc + (2 * manhole_diameter))
@@ -213,7 +220,8 @@ class SDAnimator(QDialog):
                     label_list.append(label)
             plt.legend(handle_list, label_list, loc="upper right")
 
-        # # Show plot
+        # Show plot
+        self.canvas.figure.tight_layout()
         self.canvas.draw()
 
 

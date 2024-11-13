@@ -5419,6 +5419,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             distance_acc_prev = 0
             topo_data = []
             wse_data = []
+            x_secondary_axis_labels = []
             for i in range(len(existing_nodes_dict)):
                 if i != 0:
                     distance_acc_prev += list(existing_nodes_dict.values())[i - 1][3]
@@ -5476,6 +5477,8 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                         except:
                             continue
 
+                x_secondary_axis_labels.append([list(existing_nodes_dict.keys())[i], distance_acc_curr])
+
             distance_acc = 0
             invert_elevs = []
             max_depths = []
@@ -5491,6 +5494,10 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                                          linewidth=1.5, edgecolor='black',
                                          facecolor='white', zorder=2)
                 ax.add_patch(rect)
+
+            secax = ax.secondary_xaxis('top')
+            secax.set_xticks([distance for _, distance in x_secondary_axis_labels])
+            secax.set_xticklabels([name for name, _ in x_secondary_axis_labels], rotation=90, ha='center', fontsize=8)
 
             if topo_file and not animated:
                 for coord in topo_data:
@@ -5537,6 +5544,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
 
             QApplication.restoreOverrideCursor()
             # Show plot
+            plt.tight_layout()
             plt.show()
 
         else:
