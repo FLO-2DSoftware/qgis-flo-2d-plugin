@@ -15,17 +15,24 @@ changelog=
     Code cleanup
     Removed the "Raster not found" message
     Automatically turn on switches 
+    Improved the efficiency of exporting FPFROUDE
  - Initial Condition Editor
     Populate data on the comboboxes based on the signal of layer edited
  - Floodplain Cross-Section Editor
     Populate data on the comboboxes based on the signal of layer edited
+ - Hydraulic Structures
+    Changed the number to the name of the structure and clicking on the map and on the plot
  - Boundary Condition Editor
     Improved the Delete Schema Data button
+    Simplified the Inflow Time Series combobox
  - Storm Drain
+    Added a new Storm Drain Profile plot and animation
     Improved the code for importing the SWMM.INP and other minor bug fixes
     Inlet type minimum value on dialog allow 0
     Weir coefficient min/max limits removed on the dialog
     Inlet type set to 0 when importing from INP
+ - Infiltration Editor
+    Fixed the SSURGO and improved messages
  <p>1.0.1
  - General
 	Added SWMM 5 GUI to the toolbar
