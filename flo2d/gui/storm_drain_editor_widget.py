@@ -5443,14 +5443,14 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                         mh2_maxdepth = float(NodeDepthDict.get(mh2_name)[1]) + mh2_y_min
                         mh2_y_max_mh = list(existing_nodes_dict.values())[i][2] + mh2_y_min
                         mh2_avedepthmh = mh2_y_max_mh if mh2_avedepth > mh2_y_max_mh else mh2_avedepth
-                        average_depth = [[mh1_x, mh1_y_min], [mh2_x, mh2_y_min], [mh2_x, mh2_avedepthmh], [mh1_x, mh1_avedepthmh]]
+                        average_depth = [[mh1_x, mh1_y_min], [mh2_x, mh2_y_min], [mh2_x, mh2_avedepth], [mh1_x, mh1_avedepthmh]]
                         ax.add_patch(patches.Polygon(average_depth, linewidth=1, edgecolor=('xkcd:sky blue', 0), facecolor=('xkcd:sky blue', 0.5), label='Average Depth', zorder=3))
                         average_depth_line = [[mh1_x, mh2_x], [mh1_avedepth, mh2_avedepth]]
                         ax.plot(average_depth_line[0], average_depth_line[1], color='xkcd:sky blue', linewidth=2, label='Hydraulic Grade Line', zorder=5)
                         maximum_depth = [[mh1_x, mh2_x], [mh1_maxdepth, mh2_maxdepth]]
                         ax.plot(maximum_depth[0], maximum_depth[1], color='red', linewidth=1, linestyle='dashed', label='Maximum Depth', zorder=5)
                         # Add a white polygon to hide the blue over the pipe's crown
-                        white_polygon = [[mh1_x + manhole_diameter / 2, mh1_y_max], [mh2_x - manhole_diameter / 2, mh2_y_max], [mh2_x - manhole_diameter / 2, mh2_avedepthmh], [mh1_x + manhole_diameter / 2, mh1_avedepthmh]]
+                        white_polygon = [[mh1_x + manhole_diameter / 2, mh1_y_max], [mh2_x - manhole_diameter / 2, mh2_y_max], [mh2_x - manhole_diameter / 2, mh2_avedepth], [mh1_x + manhole_diameter / 2, mh1_avedepthmh]]
                         ax.add_patch(patches.Polygon(white_polygon, edgecolor="none", facecolor='white', zorder=4))
 
 
