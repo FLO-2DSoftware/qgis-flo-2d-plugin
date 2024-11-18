@@ -1395,7 +1395,7 @@ CREATE TABLE "user_swmm_outlets" (
 		"time_series" TEXT DEFAULT '*',
 		"fixed_stage" REAL DEFAULT 0,
 	    "flapgate" TEXT DEFAULT 'False',
-	    "swmm_allow_discharge" TEXT DEFAULT '0'
+	    "swmm_allow_discharge" TEXT DEFAULT '1'
     -------------------------------------
 
 );
