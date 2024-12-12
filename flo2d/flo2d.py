@@ -63,6 +63,7 @@ from .gui.dlg_components import ComponentsDialog
 from .gui.dlg_cont_toler_jj import ContToler_JJ
 from .gui.dlg_evap_editor import EvapEditorDialog
 from .gui.dlg_flopro import ExternalProgramFLO2D
+from .gui.dlg_gpkg_backup import GpkgBackupDialog
 from .gui.dlg_gpkg_management import GpkgManagementDialog
 from .gui.dlg_hazus import HazusDialog
 from .gui.dlg_issues import ErrorsDialog
@@ -318,6 +319,11 @@ class Flo2D(object):
                     os.path.join(self.plugin_dir, "img/mActionAddGeoPackageLayer.svg"),
                     "Open FLO-2D Project",
                     lambda: self.flo_open_project(),
+                ),
+                (
+                    os.path.join(self.plugin_dir, "img/gpkg_backup.svg"),
+                    "Create FLO-2D Backup",
+                    lambda: self.gpkg_backup(),
                 ),
                 (
                     os.path.join(self.plugin_dir, "img/gpkg.svg"),
@@ -1069,6 +1075,14 @@ class Flo2D(object):
         self.uncheck_all_info_tools()
         self.dlg_gpkg_management = GpkgManagementDialog(self.iface, self.lyrs, self.gutils)
         self.dlg_gpkg_management.show()
+
+    @connection_required
+    def gpkg_backup(self):
+        """
+        Function to create a geopackage backup
+        """
+        self.dlg_gpkg_backup = GpkgBackupDialog(self.iface, self.gutils)
+        self.dlg_gpkg_backup.show()
 
     def run_settings(self):
         """
