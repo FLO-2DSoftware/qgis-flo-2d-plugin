@@ -8,6 +8,8 @@
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 import os
+import shutil
+import zipfile
 import traceback
 from collections import defaultdict
 from functools import wraps
@@ -276,6 +278,125 @@ class GeoPackageUtils(object):
         self.iface = iface
         self.uc = UserCommunication(iface, "FLO-2D")
         self.con = con
+
+    def update_qgis_project(self, current_gpkg_path, new_gpkg_path):
+        """
+        Function to update the qgis project in a gpkg. This is used when creating backups and updating geopackages.
+        """
+
+        dirpath = os.path.dirname(current_gpkg_path)
+
+        current_gpkg_name = os.path.splitext(os.path.basename(current_gpkg_path))[0]
+        new_gpkg_name = os.path.splitext(os.path.basename(new_gpkg_path))[0]
+
+        current_qgz = os.path.join(dirpath, f"{current_gpkg_name}.qgz")
+        new_qgz = os.path.join(dirpath, f"{new_gpkg_name}.qgz")
+
+        # Connect to the GeoPackage
+        conn = sqlite3.connect(new_gpkg_path)
+        cursor = conn.cursor()
+
+        # Query to retrieve the content (hexadecimal QGZ data) for the selected project
+        query_content = f"SELECT content FROM qgis_projects WHERE name = '{current_gpkg_name}'"
+        cursor.execute(query_content)
+        result = cursor.fetchone()
+
+        if result:
+            # Hexadecimal QGZ data
+            qgz_data = result[0]
+
+            # Convert the hex string to bytes
+            try:
+                # Convert hex to bytes
+                qgz_data_bytes = bytes.fromhex(qgz_data)
+            except ValueError as e:
+                self.uc.log_info(f"Error converting QGZ hex to bytes: {e}")
+                self.uc.bar_warn(f"Error converting QGZ hex to bytes: {e}")
+                return
+
+            # Check to see if it is bytes
+            if isinstance(qgz_data_bytes, bytes):
+
+                # Save the QGZ file
+                with open(current_qgz, "wb") as qgz_file:
+                    qgz_file.write(qgz_data_bytes)
+
+                # Extract the current qgz file to have access to the qgs xml file
+                extract_dir = os.path.join(dirpath, "extracted_project")
+                if not os.path.exists(extract_dir):
+                    os.makedirs(extract_dir)
+                with zipfile.ZipFile(current_qgz, 'r') as zip_ref:
+                    zip_ref.extractall(extract_dir)
+
+                # List all files in the folder and filter for the .qgs file
+                new_qgs_file = None
+                for filename in os.listdir(extract_dir):
+                    if filename.endswith(".qgs"):
+                        new_qgs_file = os.path.join(extract_dir, filename)
+                        break
+
+                # Update the current gpkg data with the new gpkg data
+                with open(new_qgs_file, "r", encoding="utf-8") as file:
+                    lines = file.readlines()
+                with open(new_qgs_file, "w", encoding="utf-8") as file:
+                    for line in lines:
+                        updated_line = line.replace(f'{current_gpkg_name}',
+                                                    f'{new_gpkg_name}')
+                        file.write(updated_line)
+
+                with zipfile.ZipFile(new_qgz, 'w', zipfile.ZIP_DEFLATED) as zip_ref:
+                    for root_dir, dirs, files in os.walk(extract_dir):
+                        for file in files:
+                            file_path = os.path.join(root_dir, file)
+                            zip_ref.write(file_path, os.path.relpath(file_path, extract_dir))
+
+                with open(new_qgz, 'rb') as qgz_file:
+                    qgz_data = qgz_file.read()
+
+                    # Convert binary data to hex
+                    qgz_data_hex = qgz_data.hex()
+
+                    # Prepare the query to update both the name and content
+                    query_update = f"""
+                        UPDATE qgis_projects
+                        SET name = ?, content = ?
+                        WHERE name = '{current_gpkg_name}'
+                                    """
+
+                    # Execute the update query with the new name and updated content
+                    cursor.execute(query_update, (new_gpkg_name, qgz_data_hex))
+
+                cursor.execute(
+                    f"UPDATE metadata SET value = '{new_gpkg_name}' WHERE name = '{current_gpkg_name}'")
+
+                # Commit
+                conn.commit()
+
+                # Use VACUUM to rebuild the database file, optimizing its structure and reduce fragmentation
+                cursor.execute("VACUUM;")
+
+                # Commit
+                conn.commit()
+
+                # Remove the files
+                try:
+                    shutil.rmtree(extract_dir)
+                    os.remove(current_qgz)
+                    os.remove(new_qgz)
+                except OSError as e:
+                    pass
+
+            else:
+                self.uc.log_info(f"The data is not in a valid binary format for writing.")
+                self.uc.bar_error(f"The data is not in a valid binary format for writing.")
+
+            conn.close()
+        else:
+            conn.close()
+            self.uc.log_info(f"No QGZ file found for project {current_gpkg_name}.")
+            self.uc.bar_warn(f"No QGZ file found for project {current_gpkg_name}.")
+            return
+
 
     def copy_from_other(self, other_gpkg):
         """
