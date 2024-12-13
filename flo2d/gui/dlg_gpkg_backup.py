@@ -2,6 +2,8 @@ import os
 import shutil
 from datetime import datetime
 
+from PyQt5.QtCore import Qt
+from PyQt5.QtWidgets import QApplication
 from qgis._core import QgsProject
 
 from flo2d.gui.ui_utils import load_ui
@@ -49,8 +51,14 @@ class GpkgBackupDialog(qtBaseClass, uiDialog):
         gpkg_backup_name = self.gpkg_name_le.text()
         gpkg_backup_path = os.path.join(self.gpkg_dir, f"{gpkg_backup_name}.gpkg")
 
+        QApplication.setOverrideCursor(Qt.WaitCursor)
+
         # Make a copy of the gpkg with the new name to the same location as the current gpkg
         shutil.copy2(self.gpkg_path, gpkg_backup_path)
+
+        self.gutils.update_qgis_project(self.gpkg_path, gpkg_backup_path)
+
+        QApplication.restoreOverrideCursor()
 
         self.uc.log_info(f"Geopackage backup was successfully created on {gpkg_backup_path}")
         self.uc.bar_info(f"Geopackage backup was successfully created on {gpkg_backup_path}")
