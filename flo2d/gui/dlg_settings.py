@@ -190,11 +190,11 @@ class SettingsDialog(qtBaseClass, uiDialog):
             pd = "----"
         self.proj_lab.setText(pd)
         if self.si_units == True:
-            mu = "meters"
+            mu = "Metric (International System)"
         elif self.si_units == False:
-            mu = "feet"
+            mu = "English (Imperial System)"
         else:
-            mu = "----"
+            mu = "Unknown System"
         self.unit_lab.setText(mu)
 
         contact = self.gutils.get_metadata_par("CONTACT")
@@ -287,12 +287,25 @@ class SettingsDialog(qtBaseClass, uiDialog):
                 return
         auth, crsid = self.crs.authid().split(":")
         self.proj_lab.setText(self.crs.description())
-        if self.crs.mapUnits() == QgsUnitTypes.DistanceMeters:
+
+        si_units = [QgsUnitTypes.DistanceMeters,
+                    QgsUnitTypes.DistanceKilometers,
+                    QgsUnitTypes.DistanceCentimeters,
+                    QgsUnitTypes.DistanceMillimeters
+                    ]
+        imperial_units = [QgsUnitTypes.DistanceFeet,
+                    QgsUnitTypes.DistanceNauticalMiles,
+                    QgsUnitTypes.DistanceYards,
+                    QgsUnitTypes.DistanceMiles,
+                    QgsUnitTypes.Inches
+                    ]
+
+        if self.crs.mapUnits() in si_units:
             self.si_units = True
-            mu = "meters"
-        elif self.crs.mapUnits() == QgsUnitTypes.DistanceFeet:
+            mu = "Metric (International System)"
+        elif self.crs.mapUnits() in imperial_units:
             self.si_units = False
-            mu = "feet"
+            mu = "English (Imperial System)"
         else:
             msg = "WARNING 060319.1654: Unknown map units. Choose a different projection!"
             self.uc.show_warn(msg)
