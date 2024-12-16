@@ -71,7 +71,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             raise NotImplementedError("Unsupported extension type.")
         if not get_cell_size:
             return True
-        self.cell_size = self.parser.calculate_cellsize()
+        self.cell_size = int(round(self.parser.calculate_cellsize()))
         if self.cell_size == 0:
             self.uc.show_info(
                 "ERROR 060319.1604: Cell size is 0 - something went wrong!\nDoes TOPO.DAT file exist or is empty?"
