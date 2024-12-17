@@ -4046,6 +4046,15 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 """SELECT time, value, value2 FROM inflow_time_series_data WHERE series_fid = ? ORDER BY fid;"""
             )
 
+            # Divide inflow line hydrograph between grid elements
+            has_line_hyd = self.execute("SELECT bc_fid FROM inflow WHERE geom_type = 'line';").fetchall()
+            line_cells_dict = {}
+            if has_line_hyd:
+                for line_hyd in has_line_hyd:
+                    line_cells = self.execute(f"SELECT grid_fid FROM inflow_cells WHERE inflow_fid = '{line_hyd[0]}';").fetchall()
+                    for cell in line_cells:
+                        line_cells_dict[cell[0]] = len(line_cells)
+
             head_line = " {0: <15} {1}"
             inf_line = "{0: <15} {1: <15} {2}"
             tsd_line = "H   {0: <15} {1: <15} {2}"
@@ -4092,7 +4101,10 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     series = self.execute(ts_data_sql, (ts_fid,))
                     for tsd_row in series:
                         tsd_row = [x if x is not None else "" for x in tsd_row]
-                        inflow_lines.append(tsd_line.format(*tsd_row).rstrip())
+                        if gid in line_cells_dict.keys():
+                            inflow_lines.append(tsd_line.format(tsd_row[0], round(tsd_row[1]/line_cells_dict.get(gid), 2), tsd_row[2]).rstrip())
+                        else:
+                            inflow_lines.append(tsd_line.format(tsd_row[0], tsd_row[1], tsd_row[2]).rstrip())
 
             mud = self.gutils.get_cont_par("MUD")
             ised = self.gutils.get_cont_par("ISED")
