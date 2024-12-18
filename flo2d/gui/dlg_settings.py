@@ -297,7 +297,9 @@ class SettingsDialog(qtBaseClass, uiDialog):
                     QgsUnitTypes.DistanceNauticalMiles,
                     QgsUnitTypes.DistanceYards,
                     QgsUnitTypes.DistanceMiles,
-                    QgsUnitTypes.Inches
+                    QgsUnitTypes.Inches,
+                    QgsUnitTypes.FeetUSSurvey,
+                    QgsUnitTypes.MilesUSSurvey
                     ]
 
         if self.crs.mapUnits() in si_units:
@@ -310,6 +312,8 @@ class SettingsDialog(qtBaseClass, uiDialog):
             msg = "WARNING 060319.1654: Unknown map units. Choose a different projection!"
             self.uc.show_warn(msg)
             self.uc.log_info(msg)
+            self.proj_lab.setText("----")
+            self.gpkgPathEdit.setText("")
             return
         self.unit_lab.setText(mu)
         proj = self.crs.toProj()
