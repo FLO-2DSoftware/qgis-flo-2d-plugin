@@ -12,6 +12,7 @@ import time
 from itertools import chain
 
 import qgis
+from PyQt5.QtWidgets import QMessageBox
 from qgis._core import QgsProject
 from qgis.core import QgsCoordinateReferenceSystem, QgsUnitTypes
 from qgis.gui import QgsProjectionSelectionWidget
@@ -190,11 +191,11 @@ class SettingsDialog(qtBaseClass, uiDialog):
             pd = "----"
         self.proj_lab.setText(pd)
         if self.si_units == True:
-            mu = "meters"
+            mu = "Metric (International System)"
         elif self.si_units == False:
-            mu = "feet"
+            mu = "English (Imperial System)"
         else:
-            mu = "----"
+            mu = "Unknown System"
         self.unit_lab.setText(mu)
 
         contact = self.gutils.get_metadata_par("CONTACT")
@@ -287,17 +288,59 @@ class SettingsDialog(qtBaseClass, uiDialog):
                 return
         auth, crsid = self.crs.authid().split(":")
         self.proj_lab.setText(self.crs.description())
-        if self.crs.mapUnits() == QgsUnitTypes.DistanceMeters:
+
+        si_units = [QgsUnitTypes.DistanceMeters,
+                    QgsUnitTypes.DistanceKilometers,
+                    QgsUnitTypes.DistanceCentimeters,
+                    QgsUnitTypes.DistanceMillimeters
+                    ]
+        imperial_units = [QgsUnitTypes.DistanceFeet,
+                    QgsUnitTypes.DistanceNauticalMiles,
+                    QgsUnitTypes.DistanceYards,
+                    QgsUnitTypes.DistanceMiles,
+                    QgsUnitTypes.Inches,
+                    QgsUnitTypes.FeetUSSurvey,
+                    QgsUnitTypes.MilesUSSurvey
+                    ]
+
+        if self.crs.mapUnits() in si_units:
             self.si_units = True
-            mu = "meters"
-        elif self.crs.mapUnits() == QgsUnitTypes.DistanceFeet:
+            mu = "Metric (International System)"
+        elif self.crs.mapUnits() in imperial_units:
             self.si_units = False
-            mu = "feet"
-        else:
-            msg = "WARNING 060319.1654: Unknown map units. Choose a different projection!"
+            mu = "English (Imperial System)"
+        elif self.crs.mapUnits() == QgsUnitTypes.DistanceDegrees:
+            msg = "The selected CRS uses degrees as units of distance. Please, choose a different projection!"
             self.uc.show_warn(msg)
             self.uc.log_info(msg)
+            self.proj_lab.setText("----")
+            self.gpkgPathEdit.setText("")
             return
+        elif self.crs.mapUnits() == QgsUnitTypes.DistanceUnknownUnit:
+            msg = "Unknown map units. Choose a different projection!"
+            self.uc.show_warn(msg)
+            self.uc.log_info(msg)
+            self.proj_lab.setText("----")
+            self.gpkgPathEdit.setText("")
+            return
+        else:
+            msg = f"The System of Units for this CRS could not be identified. Please, confirm the System of Units."
+            answer = self.uc.dialog_with_2_customized_buttons(
+                "FLO-2D System of Units",
+                msg,
+                "Metric (International System)",
+                "English (Imperial System)")
+            if answer == QMessageBox.Yes:
+                self.si_units = True
+                mu = "Metric (International System)"
+            elif answer == QMessageBox.No:
+                self.si_units = False
+                mu = "English (Imperial System)"
+            else:
+                self.proj_lab.setText("----")
+                self.gpkgPathEdit.setText("")
+                return
+
         self.unit_lab.setText(mu)
         proj = self.crs.toProj()
 
