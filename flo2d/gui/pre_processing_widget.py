@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-
+import os.path
 
 # FLO-2D Preprocessor tools for QGIS
 
@@ -9,9 +9,10 @@
 # of the License, or (at your option) any later version
 
 import processing
-from PyQt5.QtCore import QVariant, QUrl
-from PyQt5.QtWidgets import QFileDialog
+from PyQt5.QtCore import QVariant, QUrl, Qt
+from PyQt5.QtWidgets import QFileDialog, QApplication
 from PyQt5.QtGui import QDesktopServices
+from qgis._analysis import QgsRasterCalculatorEntry, QgsRasterCalculator
 
 from ..user_communication import UserCommunication
 from .ui_utils import load_ui
@@ -55,6 +56,13 @@ class PreProcessingWidget(qtBaseClass, uiDialog):
 
         self.remove_dam_btn.clicked.connect(self.remove_dam)
 
+        # connections raster converter
+        self.populate_raster_converter_cbo()
+        self.populate_units()
+        self.raster_converter_cbo.activated.connect(self.populate_units)
+        self.convert_raster_btn.clicked.connect(self.convert_raster)
+        self.select_output_raster_btn.clicked.connect(self.select_output_raster)
+
     def setup_connection(self):
         """
         Initial settings after connection to GeoPackage.
@@ -62,15 +70,123 @@ class PreProcessingWidget(qtBaseClass, uiDialog):
         self.populate_raster_cbo()
         QgsProject.instance().legendLayersAdded.connect(self.populate_raster_cbo)
         QgsProject.instance().layersRemoved.connect(self.populate_raster_cbo)
+        QgsProject.instance().legendLayersAdded.connect(self.populate_raster_converter_cbo)
+        QgsProject.instance().layersRemoved.connect(self.populate_raster_converter_cbo)
+
+    def select_output_raster(self):
+        """
+        Function to select the output raster
+        """
+        output_raster, _ = QFileDialog.getSaveFileName(
+            None,
+            "Output Raster",
+            filter="Raster File (*.tif; *.tiff)",
+        )
+        if output_raster:
+            self.output_raster_le.setText(output_raster)
+
+    def convert_raster(self):
+        """
+        Function to convert a raster from feet to meters or vice versa
+        """
+        raster_layer = QgsRasterLayer(self.raster_converter_cbo.itemData(self.raster_converter_cbo.currentIndex()))
+        if not raster_layer.isValid():
+            self.uc.bar_error("Failed to load the raster layer.")
+            self.uc.log_info("Failed to load the raster layer.")
+            return
+
+        crs = raster_layer.crs()
+        unit = crs.mapUnits()
+        unit_system = QgsUnitTypes.toString(unit)
+        if unit_system == "feet":
+            conversion_factor = 0.3048
+        else:
+            conversion_factor = 3.2808
+
+        output_raster =  self.output_raster_le.text()
+        if output_raster == "":
+            self.uc.bar_warn("Select an output raster file to run the Raster Converter.")
+            self.uc.log_info("Select an output raster file to run the Raster Converter.")
+            return
+        output_raster_name = os.path.splitext(os.path.basename(output_raster))[0]
+
+        QApplication.setOverrideCursor(Qt.WaitCursor)
+
+        # Prepare the raster calculator entry
+        raster_entry = QgsRasterCalculatorEntry()
+        raster_entry.ref = 'raster@1'
+        raster_entry.raster = raster_layer
+        raster_entry.bandNumber = 1
+
+        # Define the raster calculator expression
+        expression = f"raster@1 * {conversion_factor}"
+
+        # Perform the calculation
+        calculator = QgsRasterCalculator(
+            expression,
+            output_raster,
+            "GTiff",  # Output format
+            raster_layer.extent(),
+            raster_layer.width(),
+            raster_layer.height(),
+            [raster_entry]
+        )
+
+        result = calculator.processCalculation()
+
+        QApplication.restoreOverrideCursor()
+
+        if result == 0:
+            QgsProject.instance().addMapLayer(QgsRasterLayer(output_raster, output_raster_name))
+            self.uc.bar_info(f"Raster converted successfully and saved to {output_raster}")
+            self.uc.log_info(f"Raster converted successfully and saved to {output_raster}")
+        else:
+            self.uc.bar_error(f"Raster conversion failed!")
+            self.uc.log_info(f"Raster conversion failed with error code: {result}")
+
+    def populate_units(self):
+        """
+        Function to populate the from and to units on the raster converter
+        """
+        # try:
+        raster_layer = QgsRasterLayer(self.raster_converter_cbo.itemData(self.raster_converter_cbo.currentIndex()))
+        crs = raster_layer.crs()
+        # crs is a QgsCoordinateReferenceSystem
+        unit = crs.mapUnits()
+
+        from_unit = QgsUnitTypes.toString(unit)
+
+        if from_unit == "feet":
+            self.from_units_le.setText(from_unit)
+            self.to_units_le.setText("meters")
+        else:
+            self.from_units_le.setText(from_unit)
+            self.to_units_le.setText("feet")
+        # except:
+        #     pass
 
     def populate_raster_cbo(self):
         """
-        Get loaded rasters into combobox.
+        Get loaded rasters into combobox dam removal.
         """
         self.srcRasterCbo.clear()
         rasters = self.lyrs.list_group_rlayers()
         for r in rasters:
             self.srcRasterCbo.addItem(r.name(), r.dataProvider().dataSourceUri())
+
+    def populate_raster_converter_cbo(self):
+        """
+        Get loaded rasters into combobox raster converted.
+        """
+        self.raster_converter_cbo.clear()
+        rasters = self.lyrs.list_group_rlayers()
+        for r in rasters:
+            crs = r.crs()
+            unit = QgsUnitTypes.toString(crs.mapUnits())
+            if unit in ['feet', 'meters']:
+                self.raster_converter_cbo.addItem(r.name(), r.dataProvider().dataSourceUri())
+
+        self.populate_units()
 
     def create_dam_area(self):
         """
