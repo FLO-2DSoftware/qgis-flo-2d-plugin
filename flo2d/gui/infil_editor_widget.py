@@ -840,7 +840,6 @@ class GreenAmptDialog(uiDialog_green, qtBaseClass_green):
         self.grid_lyr = self.lyrs.data["grid"]["qlyr"]
         self.setupUi(self)
         self.uc = UserCommunication(iface, "FLO-2D")
-        self.rb_NRCS = self.rb_NRCS
         self.soil_combos = [
             self.xksat_cbo,
             self.rtimps_cbo,
@@ -976,13 +975,9 @@ class GreenAmptDialog(uiDialog_green, qtBaseClass_green):
     def calculate_ssurgo(self):
 
         # Verify if the user would like to save the intermediate calculation layers
-        saveLayers = True
-        answer = QMessageBox.question(self.iface.mainWindow(), 'NRCS G&A parameters',
-                                      'Remove intermediate calculation layers?', QMessageBox.Yes,
-                                      QMessageBox.No)
-        if answer == QMessageBox.Yes:
-            saveLayers = False
-
+        saveLayers = False
+        if self.ssurgo_chbox.isChecked():
+            saveLayers = True
         try:
             # Create the progress Dialog
             pd = QProgressDialog("Setting up...", None, 0, 7)
@@ -1043,6 +1038,9 @@ class GreenAmptDialog(uiDialog_green, qtBaseClass_green):
 
             QApplication.restoreOverrideCursor()
 
+            self.uc.log_info("Green-Ampt SSURGO soil layer successfully obtained!.")
+            self.uc.bar_info("Green-Ampt SSURGO soil layer successfully obtained!.")
+
         except Exception as e:
             self.uc.log_info(traceback.format_exc())
             self.uc.show_error(
@@ -1054,15 +1052,11 @@ class GreenAmptDialog(uiDialog_green, qtBaseClass_green):
     def calculate_osm(self):
 
         # Verify if the user would like to save the intermediate calculation layers
-        saveLayers = True
         layers = []
         temp_layers = []
-        answer = QMessageBox.question(self.iface.mainWindow(), 'OSM land use',
-                                      'Remove intermediate calculation layers?',
-                                      QMessageBox.Yes,
-                                      QMessageBox.No)
-        if answer == QMessageBox.Yes:
-            saveLayers = False
+        saveLayers = False
+        if self.osm_chbox.isChecked():
+            saveLayers = True
 
         # Create the progress Dialog
         pd = QProgressDialog("Getting OSM data...", None, 0, 11)
@@ -1467,6 +1461,41 @@ class GreenAmptDialog(uiDialog_green, qtBaseClass_green):
                     for layer in layers:
                         if layer != land_cover_vector:
                             QgsProject.instance().removeMapLayer(layer)
+                        else:
+                            gpkg_path = self.gutils.get_gpkg_path()
+                            flo2d_name = f"FLO-2D_{self.gutils.get_metadata_par('PROJ_NAME')}"
+                            group_name = "OSM Generator"
+                            flo2d_grp = root_group.findGroup(flo2d_name)
+                            if flo2d_grp.findGroup(group_name):
+                                group = flo2d_grp.findGroup(group_name)
+                            else:
+                                group = flo2d_grp.insertGroup(-1, group_name)
+                            options = QgsVectorFileWriter.SaveVectorOptions()
+                            options.driverName = "GPKG"
+                            options.includeZ = True
+                            options.overrideGeometryType = layer.wkbType()
+                            options.layerName = layer.name()
+                            options.actionOnExistingFile = QgsVectorFileWriter.CreateOrOverwriteLayer
+                            QgsVectorFileWriter.writeAsVectorFormatV3(
+                                layer,
+                                gpkg_path,
+                                QgsProject.instance().transformContext(),
+                                options)
+                            # Add back to the project
+                            gpkg_uri = f"{gpkg_path}|layername={layer.name()}"
+                            gpkg_layer = QgsVectorLayer(gpkg_uri, layer.name(), "ogr")
+                            QgsProject.instance().addMapLayer(gpkg_layer, False)
+                            gpkg_layer.setRenderer(layer.renderer().clone())
+                            gpkg_layer.triggerRepaint()
+                            group.insertLayer(0, gpkg_layer)
+                            if layer.name() == "landuse_layer":
+                                land_cover_vector = gpkg_layer
+                            layer = QgsProject.instance().mapLayersByName(gpkg_layer.name())[0]
+                            myLayerNode = root_group.findLayer(layer.id())
+                            myLayerNode.setExpanded(False)
+
+                            # Delete layer that is not in the gpkg
+                            QgsProject.instance().removeMapLayer(layer)
                 else:
                     gpkg_path = self.gutils.get_gpkg_path()
 
@@ -1556,6 +1585,9 @@ class GreenAmptDialog(uiDialog_green, qtBaseClass_green):
 
                 pd.setValue(11)
                 pd.close()
+
+                self.uc.log_info("Green-Ampt OSM land use successfully obtained!.")
+                self.uc.bar_info("Green-Ampt OSM land use successfully obtained!.")
 
         except Exception as e:
             self.uc.log_info(traceback.format_exc())

@@ -525,10 +525,8 @@ class SsurgoSoil(object):
 
             self.soil_layer.setName("soil_layer")
 
-            if self.saveLayers:
-                self.saveSoilDataToGpkg(self.soil_layer)
-            else:
-                QgsProject.instance().addMapLayer(self.soil_layer)
+            self.saveSoilDataToGpkg(self.soil_layer)
+            # QgsProject.instance().addMapLayer(self.soil_layer)
 
     def soil_lyr(self):
         return self.soil_layer
