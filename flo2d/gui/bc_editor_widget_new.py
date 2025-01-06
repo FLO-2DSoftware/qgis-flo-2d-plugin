@@ -874,6 +874,7 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
                     bc_fid = int(bc_fid) + 1
 
                 new_bc_cells = []
+                batch_updates = []
 
                 for i, gid in enumerate(inf, 1):
                     row = inf[gid]["row"]
@@ -897,6 +898,7 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
                         # get the inflow fid
                         inflow_fid = self.gutils.execute(
                             f"SELECT inflow_fid FROM inflow_cells WHERE grid_fid = '{gid}'").fetchone()[0]
+
                         # UPDATE INFLOW
                         self.gutils.execute(
                             f"""UPDATE inflow SET 
@@ -904,31 +906,31 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
                              inoutfc = '{row[1]}'
                              WHERE fid = {inflow_fid}"""
                         )
+
                         if inf[gid]["time_series"]:
                             time_series_fid = self.gutils.execute(
                                 f"SELECT time_series_fid FROM inflow WHERE fid = '{inflow_fid}'").fetchone()[0]
                             n_ts_fids = self.gutils.execute(
                                 f"SELECT fid FROM inflow_time_series_data WHERE series_fid = {time_series_fid}").fetchall()
                             for n in zip(n_ts_fids, inf[gid]["time_series"]):
-                                self.uc.log_info(str(n))
                                 if n[1][3]:
-                                    self.gutils.execute(
-                                        f"""UPDATE inflow_time_series_data SET 
-                                         series_fid = '{time_series_fid}',
-                                         time = '{n[1][1]}',
-                                         value = '{n[1][2]}',
-                                         value2 = '{n[1][3]}'
-                                         WHERE fid = {n[0][0]}"""
-                                    )
+                                    batch_updates.append((time_series_fid, n[1][1], n[1][2], n[1][3], n[0][0]))
                                 else:
-                                    self.gutils.execute(
-                                        f"""UPDATE inflow_time_series_data SET 
-                                         series_fid = '{time_series_fid}',
-                                         time = '{n[1][1]}',
-                                         value = '{n[1][2]}'
-                                         WHERE fid = {n[0][0]}"""
-                                    )
+                                    batch_updates.append((time_series_fid, n[1][1], n[1][2], n[0][0]))
 
+                if len(batch_updates[0]) == 4:
+                    self.gutils.execute_many(f"""UPDATE inflow_time_series_data SET
+                                         series_fid = ?,
+                                         time = ?,
+                                         value = ?
+                                         WHERE fid = ?""", batch_updates)
+                else:
+                    self.gutils.execute_many(f"""UPDATE inflow_time_series_data SET
+                                         series_fid = ?,
+                                         time = ?,
+                                         value = ?,
+                                         value2 = ?,
+                                         WHERE fid = ?""", batch_updates)
                 self.gutils.batch_execute(insert_ts_sql, insert_inflow_sql, insert_cells_sql, insert_tsd_sql)
 
                 if len(update_all_schem_sql) > 0:
