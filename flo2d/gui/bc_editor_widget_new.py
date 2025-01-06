@@ -519,7 +519,12 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
             #     cur_idx = i
             #     self.uc.log_info(str(cur_idx))
         # self.inflow.time_series_fid = self.inflow_tseries_cbo.itemData(cur_idx)
-        self.inflow_tseries_cbo.setCurrentIndex(int(self.inflow.time_series_fid) - 1)
+        if isinstance(self.inflow.time_series_fid, int):
+            index = self.inflow.time_series_fid - 1
+            self.inflow_tseries_cbo.setCurrentIndex(index)
+        # Sometimes it is an empty string, then set it to the first time series
+        else:
+            self.inflow_tseries_cbo.setCurrentIndex(0)
         self.inflow_data_changed()
 
     def inflow_data_changed(self):
