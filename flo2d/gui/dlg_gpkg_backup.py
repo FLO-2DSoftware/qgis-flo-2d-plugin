@@ -53,10 +53,16 @@ class GpkgBackupDialog(qtBaseClass, uiDialog):
 
         QApplication.setOverrideCursor(Qt.WaitCursor)
 
+        # First update the current geopackage name to the backup name to create the backup correctly
+        self.gutils.execute(f"UPDATE metadata SET value = '{gpkg_backup_name}' WHERE name = 'PROJ_NAME';")
+
         # Make a copy of the gpkg with the new name to the same location as the current gpkg
         shutil.copy2(self.gpkg_path, gpkg_backup_path)
 
         self.gutils.update_qgis_project(self.gpkg_path, gpkg_backup_path)
+
+        # Rollback the name
+        self.gutils.execute(f"UPDATE metadata SET value = '{self.gpkg_name}' WHERE name = 'PROJ_NAME';")
 
         QApplication.restoreOverrideCursor()
 
