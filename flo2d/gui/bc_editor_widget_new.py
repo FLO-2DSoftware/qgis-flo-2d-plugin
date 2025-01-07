@@ -1476,7 +1476,12 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
                             FROM
                                 grid AS g
                             JOIN
-                                all_user_bc AS abc ON ST_Intersects(CastAutomagic(g.geom), CastAutomagic(abc.geom))
+                                all_user_bc AS abc 
+                            	 ON (
+                                     (abc.geom_type = 'point' AND ST_Intersects(CastAutomagic(g.geom), CastAutomagic(abc.geom))) OR 
+                                     (abc.geom_type = 'line' AND ST_Crosses(CastAutomagic(g.geom), CastAutomagic(abc.geom))) OR
+                                     (abc.geom_type = 'polygon' AND ST_Intersects(CastAutomagic(g.geom), CastAutomagic(abc.geom)))
+                                    )
                             JOIN
                                 outflow ON abc.bc_fid = outflow.bc_fid
                             WHERE
