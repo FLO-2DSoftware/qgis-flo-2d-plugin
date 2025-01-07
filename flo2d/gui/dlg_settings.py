@@ -298,10 +298,15 @@ class SettingsDialog(qtBaseClass, uiDialog):
                     QgsUnitTypes.DistanceNauticalMiles,
                     QgsUnitTypes.DistanceYards,
                     QgsUnitTypes.DistanceMiles,
-                    QgsUnitTypes.Inches,
-                    QgsUnitTypes.FeetUSSurvey,
-                    QgsUnitTypes.MilesUSSurvey
+                    QgsUnitTypes.Inches
                     ]
+
+        # Using this try/except block because old versions of QGIS does not have FeetUSSurvey or MilesUSSurvey
+        try:
+            imperial_units.append(QgsUnitTypes.FeetUSSurvey)
+            imperial_units.append(QgsUnitTypes.MilesUSSurvey)
+        except:
+            pass
 
         if self.crs.mapUnits() in si_units:
             self.si_units = True
