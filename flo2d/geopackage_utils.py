@@ -716,6 +716,10 @@ class GeoPackageUtils(object):
 
         self.execute("DETACH other;")
 
+        # Make sure that the CELLSIZE on the cont table is an integer
+        cell_size = int(float(self.get_cont_par("CELLSIZE")))
+        self.execute(f"""UPDATE cont SET value = '{cell_size}' WHERE name = 'CELLSIZE';""")
+
     def execute(self, statement, inputs=None, get_rowid=False):
         """
         Execute a prepared SQL statement on this geopackage database.
