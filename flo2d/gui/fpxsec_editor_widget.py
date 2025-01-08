@@ -242,6 +242,9 @@ class FPXsecEditorWidget(qtBaseClass, uiDialog):
             self.lyrs.clear_rubber()
             return
         try:
+            if self.lyrs.any_lyr_in_edit("user_fpxsec"):
+                self.save_fpxs_lyr_edits()
+                self.add_user_fpxs_btn.setChecked(False)
             fpxs = FloodplainXS(self.con, self.iface, self.lyrs)
             fpxs.schematize_floodplain_xs()
         except Exception as e:
@@ -258,7 +261,7 @@ class FPXsecEditorWidget(qtBaseClass, uiDialog):
         """
         Function to delete the floodplain cross-section schematized data
         """
-        if self.gutils.is_table_empty("fpxsec") or self.gutils.is_table_empty("fpxsec_cells"):
+        if self.gutils.is_table_empty("fpxsec") and self.gutils.is_table_empty("fpxsec_cells"):
             self.uc.bar_warn("There is no schematized floodplain cross sections!")
             self.uc.log_info("There is no schematized floodplain cross sections!")
             return
