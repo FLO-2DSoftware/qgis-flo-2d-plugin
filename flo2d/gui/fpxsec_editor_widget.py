@@ -66,6 +66,7 @@ class FPXsecEditorWidget(qtBaseClass, uiDialog):
         self.revert_changes_btn.clicked.connect(self.revert_fpxs_lyr_edits)
         self.delete_fpxs_btn.clicked.connect(self.delete_cur_fpxs)
         self.schem_fpxs_btn.clicked.connect(self.schematize_fpxs)
+        self.del_schem_fpxs_btn.clicked.connect(self.delete_schema_fpxs)
         self.rename_fpxs_btn.clicked.connect(self.rename_fpxs)
         self.fpxs_cbo.activated.connect(self.cur_fpxs_changed)
         self.flow_dir_cbo.activated.connect(self.save_fpxs)
@@ -236,7 +237,26 @@ class FPXsecEditorWidget(qtBaseClass, uiDialog):
                 "Please check your User Layers."
             )
             return
-        self.uc.show_info("Floodplain cross-sections schematized!")
+        self.uc.bar_info("Floodplain cross-sections schematized!")
+        self.uc.log_info("Floodplain cross-sections schematized!")
+
+    def delete_schema_fpxs(self):
+        """
+        Function to delete the floodplain cross-section schematized data
+        """
+        if self.gutils.is_table_empty("fpxsec") or self.gutils.is_table_empty("fpxsec_cells"):
+            self.uc.bar_warn("There is no schematized floodplain cross sections!")
+            self.uc.log_info("There is no schematized floodplain cross sections!")
+            return
+
+        self.gutils.clear_tables("fpxsec", "fpxsec_cells")
+
+        self.uc.bar_info("Schematized floodplain cross sections deleted!")
+        self.uc.log_info("Schematized floodplain cross sections deleted!")
+
+        self.lyrs.clear_rubber()
+        self.lyrs.data["fpxsec"]["qlyr"].triggerRepaint()
+        self.lyrs.data["fpxsec_cells"]["qlyr"].triggerRepaint()
 
     def set_report(self):
         if self.report_chbox.isChecked():

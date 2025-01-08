@@ -179,6 +179,26 @@
       </widget>
      </item>
      <item>
+      <widget class="QToolButton" name="del_schem_fpxs_btn">
+       <property name="toolTip">
+        <string>Delete schematized floodplain cross-sections</string>
+       </property>
+       <property name="text">
+        <string>...</string>
+       </property>
+       <property name="icon">
+        <iconset>
+         <normaloff>../img/delete_schematize_fpxs.svg</normaloff>../img/delete_schematize_fpxs.svg</iconset>
+       </property>
+       <property name="iconSize">
+        <size>
+         <width>24</width>
+         <height>24</height>
+        </size>
+       </property>
+      </widget>
+     </item>
+     <item>
       <widget class="QToolButton" name="help_btn">
        <property name="toolTip">
         <string>Floodplain Cross Sections Help</string>
@@ -358,7 +378,7 @@
            </size>
           </property>
           <property name="toolTip">
-           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Defines the general direction that the flow is expected to cross the floodplain cross section. IFLO is set to one of the following:&lt;/p&gt;&lt;p&gt;1 flow to the north &lt;/p&gt;&lt;p&gt;2 flow to the east &lt;/p&gt;&lt;p&gt;3 flow to the south &lt;/p&gt;&lt;p&gt;4 flow to the west &lt;/p&gt;&lt;p&gt;5 flow to the northeast&lt;/p&gt;&lt;p&gt;6 flow to the southeast&lt;/p&gt;&lt;p&gt;7 flow to the southwest&lt;/p&gt;&lt;p&gt;8 flow to the northwest&lt;/p&gt;&lt;p&gt;If the output is desired from only one direction (i.e. without the discharge components from the other component flow directions), set IFLO as negative. IFLO is set to the following:&lt;/p&gt;&lt;p&gt;-1 flow from south only&lt;/p&gt;&lt;p&gt;-2 flow from west only &lt;/p&gt;&lt;p&gt;-3 flow from north only&lt;/p&gt;&lt;p&gt;-4 flow from east only &lt;/p&gt;&lt;p&gt;-5 flow from southwest only&lt;/p&gt;&lt;p&gt;-6 flow from northwest only&lt;/p&gt;&lt;p&gt;-7 flow from northeast only&lt;/p&gt;&lt;p&gt;-8 flow from southeast only&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Defines the general direction expected to cross the line. &lt;/p&gt;&lt;p&gt;IFLO is set to one of the following:&lt;/p&gt;&lt;p&gt;1 flow to the north&lt;/p&gt;&lt;p&gt;2 flow to the east&lt;/p&gt;&lt;p&gt;3 flow to the south&lt;/p&gt;&lt;p&gt;4 flow to the west&lt;/p&gt;&lt;p&gt;5 flow to the northeast&lt;/p&gt;&lt;p&gt;6 flow to the southeast&lt;/p&gt;&lt;p&gt;7 flow to the southwest&lt;/p&gt;&lt;p&gt;8 flow to the northwest&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
           </property>
           <item>
            <property name="text">
