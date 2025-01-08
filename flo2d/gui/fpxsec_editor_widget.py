@@ -73,8 +73,8 @@ class FPXsecEditorWidget(qtBaseClass, uiDialog):
         self.help_btn.clicked.connect(self.show_fp_xs_widget_help)
 
         self.fpxsec_lyr = self.lyrs.data["user_fpxsec"]["qlyr"]
-        self.fpxsec_lyr.geometryChanged.connect(self.fpxs_feature_changed)
-        self.fpxsec_lyr.afterCommitChanges.connect(self.populate_fpxs_signal)
+        # self.fpxsec_lyr.geometryChanged.connect(self.fpxs_feature_changed)
+        # self.fpxsec_lyr.afterCommitChanges.connect(self.populate_fpxs_signal)
 
     def setup_connection(self):
         con = self.iface.f2d["con"]
@@ -105,21 +105,20 @@ class FPXsecEditorWidget(qtBaseClass, uiDialog):
         qry = """SELECT fid, name, iflo FROM user_fpxsec ORDER BY name COLLATE NOCASE"""
         rows = self.gutils.execute(qry).fetchall()
         if rows:
-            max_fid = self.gutils.get_max("user_fpxsec")
             cur_idx = 0
             for i, row in enumerate(rows):
                 self.fpxs_cbo.addItem(row[1], row)
                 if fid and row[0] == fid:
-                    cur_idx = i + 1
-                # elif show_last_edited and row[0] == max_fid:
-                #     cur_idx = i
-                #     self.uc.log_info("-> 2")
+                    cur_idx = i
             self.fpxs_cbo.setCurrentIndex(cur_idx)
             self.cur_fpxs_changed()
         else:
             self.lyrs.clear_rubber()
 
     def cur_fpxs_changed(self):
+        """
+        Function to change the floodplain cross-section combobox
+        """
         row = self.fpxs_cbo.itemData(self.fpxs_cbo.currentIndex())
         if row is None:
             return
@@ -127,12 +126,18 @@ class FPXsecEditorWidget(qtBaseClass, uiDialog):
         row_flo = row[-1]
         flow_idx = row_flo - 1 if row_flo is not None else 0
         self.flow_dir_cbo.setCurrentIndex(flow_idx)
-        self.lyrs.clear_rubber()
-        if self.center_fpxs_chbox.isChecked():
-            self.show_fpxs_rb()
-            feat = next(self.fpxsec_lyr.getFeatures(QgsFeatureRequest(self.fpxs_fid)))
-            x, y = feat.geometry().centroid().asPoint()
-            center_canvas(self.iface, x, y)
+
+        fpxs_name = self.fpxs_cbo.currentText()
+        if fpxs_name:
+            self.fpxs_fid, iflo = self.gutils.execute(f"SELECT fid, iflo FROM user_fpxsec WHERE name = '{fpxs_name}';").fetchone()
+            self.flow_dir_cbo.setCurrentIndex(int(iflo) - 1)
+
+            self.lyrs.clear_rubber()
+            if self.center_fpxs_chbox.isChecked():
+                self.show_fpxs_rb()
+                feat = next(self.fpxsec_lyr.getFeatures(QgsFeatureRequest(self.fpxs_fid)))
+                x, y = feat.geometry().centroid().asPoint()
+                center_canvas(self.iface, x, y)
 
     def show_fpxs_rb(self):
         if not self.fpxs_fid:
@@ -159,8 +164,13 @@ class FPXsecEditorWidget(qtBaseClass, uiDialog):
     def save_fpxs_lyr_edits(self):
         if not self.lyrs.any_lyr_in_edit("user_fpxsec"):
             return
+        has_data = self.gutils.is_table_empty("user_fpxsec")
         self.lyrs.save_lyrs_edits("user_fpxsec")
-        self.populate_cbos(fid=self.gutils.get_max("user_fpxsec")-1)
+        if has_data:
+            self.populate_cbos(fid=0)
+        else:
+            self.populate_cbos(fid=self.gutils.get_max("user_fpxsec"))
+
         self.uc.bar_info("Floodplain cross-sections created!")
         self.uc.log_info("Floodplain cross-sections created!")
 
@@ -193,6 +203,10 @@ class FPXsecEditorWidget(qtBaseClass, uiDialog):
         self.gutils.execute("DELETE FROM user_fpxsec WHERE fid = ?;", (self.fpxs_fid,))
         self.populate_cbos(fid=0)
         self.fpxsec_lyr.triggerRepaint()
+
+        fpxs_name = self.fpxs_cbo.currentText()
+        self.uc.bar_info(f"The {fpxs_name} floodplain cross-section is deleted!")
+        self.uc.log_info(f"The {fpxs_name} floodplain cross-section is deleted!")
 
     def save_fpxs(self):
         if not self.fpxs_cbo.count():
