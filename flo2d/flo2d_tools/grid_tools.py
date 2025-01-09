@@ -2675,8 +2675,12 @@ def get_adjacent_cell(gutils, grid_lyr, cell, dir, cell_size):
         show_error("ERROR 090321.1624: could not evaluate adjacent cell!")
 
 
-def adjacent_grids(gutils, currentCell, cell_size):
-    xx, yy = currentCell.geometry().centroid().asPoint()
+def adjacent_grids(gutils, currentCell, cell_size, x=None, y=None):
+    if x and y:
+        xx = x
+        yy = y
+    else:
+        xx, yy = currentCell.geometry().centroid().asPoint()
 
     # North cell:
     y = yy + cell_size

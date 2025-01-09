@@ -1250,6 +1250,15 @@ class Flo2D(object):
 
             ok = dlg_components.exec_()
             if ok:
+
+                engine_idx = dlg_components.export_engine_cbo.currentIndex()
+                sql = """INSERT OR REPLACE INTO cont (name, value, note) VALUES (?,?,?);"""
+                # idx equal 0 is the FLO-2D Pro and idx equal 1 is the FLO-2D 2009
+                if engine_idx == 0:
+                    self.gutils.execute(sql, ("ENGINE", "FLOPRO", "FLO-2D Engine"))
+                else:
+                    self.gutils.execute(sql, ("ENGINE", "FLO2009", "FLO-2D Engine"))
+
                 if dlg_components.remove_files_chbox.isChecked():
                     for file in files:
                         file_path = os.path.join(outdir, file)
@@ -1404,7 +1413,11 @@ class Flo2D(object):
                                         + "Delete MULT.DAT?"
                                 ):
                                     os.remove(outdir + r"\MULT.DAT")
-
+                    if engine_idx != 0:
+                        new_files_used = self.files_used.replace("MANNINGS_N.DAT\n", "CADPTS.DAT\n")
+                        self.files_used = new_files_used
+                        new_files_used = self.files_used.replace("TOPO.DAT\n", "FPLAIN.DAT\n")
+                        self.files_used = new_files_used
                     if self.f2g.export_messages != "":
                         info = "WARNINGS:\n\n" + self.f2g.export_messages
                         self.uc.show_info(info)
@@ -3005,6 +3018,15 @@ class Flo2D(object):
 
             ok = dlg_components.exec_()
             if ok:
+
+                engine_idx = dlg_components.export_engine_cbo.currentIndex()
+                sql = """INSERT OR REPLACE INTO cont (name, value, note) VALUES (?,?,?);"""
+                # idx equal 0 is the FLO-2D Pro and idx equal 1 is the FLO-2D 2009
+                if engine_idx == 0:
+                    self.gutils.execute(sql, ("ENGINE", "FLOPRO", "FLO-2D Engine"))
+                else:
+                    self.gutils.execute(sql, ("ENGINE", "FLO2009", "FLO-2D Engine"))
+
                 if dlg_components.remove_files_chbox.isChecked():
                     for file in files:
                         file_path = os.path.join(outdir, file)
@@ -3162,6 +3184,11 @@ class Flo2D(object):
                                 ):
                                     os.remove(outdir + r"\MULT.DAT")
                                 QApplication.restoreOverrideCursor()
+                    if engine_idx != 0:
+                        new_files_used = self.files_used.replace("MANNINGS_N.DAT\n", "CADPTS.DAT\n")
+                        self.files_used = new_files_used
+                        new_files_used = self.files_used.replace("TOPO.DAT\n", "FPLAIN.DAT\n")
+                        self.files_used = new_files_used
                     if self.files_used != "":
                         QApplication.setOverrideCursor(Qt.ArrowCursor)
                         info = "Files exported to\n" + outdir + "\n\n" + self.files_used
@@ -3238,6 +3265,15 @@ class Flo2D(object):
             dlg_components = ComponentsDialog(self.con, self.iface, self.lyrs, "out")
             ok = dlg_components.exec_()
             if ok:
+
+                engine_idx = dlg_components.export_engine_cbo.currentIndex()
+                sql = """INSERT OR REPLACE INTO cont (name, value, note) VALUES (?,?,?);"""
+                # idx equal 0 is the FLO-2D Pro and idx equal 1 is the FLO-2D 2009
+                if engine_idx == 0:
+                    self.gutils.execute(sql, ("ENGINE", "FLOPRO", "FLO-2D Engine"))
+                else:
+                    self.gutils.execute(sql, ("ENGINE", "FLO2009", "FLO-2D Engine"))
+
                 if "Channels" not in dlg_components.components:
                     export_calls.remove("export_chan")
                     export_calls.remove("export_xsec")

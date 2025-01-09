@@ -15,11 +15,12 @@ from operator import itemgetter
 
 import numpy as np
 from PyQt5.QtCore import QSettings
+from qgis._core import QgsFeatureRequest
 from qgis.core import NULL
 from qgis.PyQt.QtCore import Qt
 from qgis.PyQt.QtWidgets import QApplication, QProgressDialog
 
-from ..flo2d_tools.grid_tools import grid_compas_neighbors, number_of_elements
+from ..flo2d_tools.grid_tools import grid_compas_neighbors, number_of_elements, adjacent_grids
 from ..geopackage_utils import GeoPackageUtils
 # from ..gui.bc_editor_widget import BCEditorWidget
 from ..layers import Layers
@@ -59,6 +60,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
         self.gutils = GeoPackageUtils(con, iface)
         self.lyrs = Layers(iface)
         self.export_messages = ""
+        self.is_flopro = True
 
     def set_parser(self, fpath, get_cell_size=True):
         if self.parsed_format == self.FORMAT_DAT:
@@ -82,6 +84,17 @@ class Flo2dGeoPackage(GeoPackageUtils):
         self.buffer = self.cell_size * 0.4
         self.shrink = self.cell_size * 0.95
         return True
+
+    def get_export_engine(self):
+        """
+        Function to get the export engine
+        """
+        engine_idx_cont = self.gutils.execute("SELECT fid FROM cont WHERE name = 'ENGINE';").fetchone()
+        if engine_idx_cont:
+            sql = """SELECT value FROM cont WHERE name = 'ENGINE';"""
+            engine = self.gutils.execute(sql).fetchone()[0]
+            if engine != "FLOPRO":
+                self.is_flopro = False
 
     def import_cont_toler(self):
         if self.parsed_format == self.FORMAT_DAT:
@@ -3574,6 +3587,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
         self.batch_execute(wstime_sql)
 
     def export_cont_toler(self, output=None):
+        self.get_export_engine()
         if self.parsed_format == self.FORMAT_DAT:
             return self.export_cont_toler_dat(output)
         elif self.parsed_format == self.FORMAT_HDF5:
@@ -3679,14 +3693,6 @@ class Flo2dGeoPackage(GeoPackageUtils):
             elif first_gid > 0:
                 options["IDEPLT"] = first_gid
                 self.set_cont_par("IDEPLT", first_gid)
-            # elif options["IRAIN"] != "0":
-            #     # Levee LGPLOT and IDEPLT
-            #     pass
-            # else:
-            #     options["LGPLOT"] = 0
-            #     options["IDEPLT"] = 0
-            #     self.set_cont_par("LGPLOT", 0)
-            #     self.set_cont_par("IDEPLT", 0)
 
             cont = os.path.join(outdir, "CONT.DAT")
             toler = os.path.join(outdir, "TOLER.DAT")
@@ -3695,6 +3701,10 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 for row in parser.cont_rows:
                     lst = ""
                     for o in row:
+                        # Remove the SWMM switch for when exporting the 2009 model
+                        if not self.is_flopro:
+                            if o == "SWMM":
+                                continue
                         if o not in options:
                             continue
                         val = options[o]
@@ -3710,8 +3720,6 @@ class Flo2dGeoPackage(GeoPackageUtils):
                             starttimtep = self.get_cont_par("STARTIMTEP")
                             if not starttimtep:
                                 self.set_cont_par("STARTIMTEP", 0.0)
-
-                            # options = {o: v if v is not None else "" for o, v in self.execute(sql).fetchall()}
 
                             if options["ITIMTEP"] != "0" and float_or_zero(options["ENDTIMTEP"]) > 0.0:
                                 _itimtep = ("11", "21", "31", "41", "51")[int(options["ITIMTEP"]) - 1]
@@ -3740,6 +3748,10 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
             with open(toler, "w") as t:
                 for row in parser.toler_rows:
+                    # Remove the T line for when exporting the 2009 model
+                    if not self.is_flopro:
+                        if row[0] == "COURCHAR_T":
+                            continue
                     lst = ""
                     for o in row:
                         if o not in options:
@@ -3820,33 +3832,96 @@ class Flo2dGeoPackage(GeoPackageUtils):
             return False
 
     def export_mannings_n_topo_dat(self, outdir):
-        try:
+        # Only FLO-2D Pro exports mannings and topo
+        if self.is_flopro:
+            try:
+                sql = (
+                    """SELECT fid, n_value, elevation, ST_AsText(ST_Centroid(GeomFromGPB(geom))) FROM grid ORDER BY fid;"""
+                )
+                records = self.execute(sql)
+                mannings = os.path.join(outdir, "MANNINGS_N.DAT")
+                topo = os.path.join(outdir, "TOPO.DAT")
+
+                mline = "{0: >10} {1: >10}\n"
+                tline = "{0: >15} {1: >15} {2: >10}\n"
+                nulls = 0
+                with open(mannings, "w") as m, open(topo, "w") as t:
+                    for row in records:
+                        fid, man, elev, geom = row
+                        if man == None or elev == None:
+                            nulls += 1
+                            if man == None:
+                                man = 0.04
+                            if elev == None:
+                                elev = -9999
+                        x, y = geom.strip("POINT()").split()
+                        m.write(mline.format(fid, "{0:.3f}".format(man)))
+                        t.write(
+                            tline.format(
+                                "{0:.4f}".format(float(x)),
+                                "{0:.4f}".format(float(y)),
+                                "{0:.4f}".format(elev),
+                            )
+                        )
+
+                if nulls > 0:
+                    QApplication.restoreOverrideCursor()
+                    self.uc.show_warn(
+                        "WARNING 281122.0541: there are "
+                        + str(nulls)
+                        + " NULL values in the Grid layer's elevation or n_value fields.\n\n"
+                        + "Default values where written to the exported files.\n\n"
+                        + "Please check the source layer coverage or use Fill Nodata."
+                    )
+                    QApplication.setOverrideCursor(Qt.WaitCursor)
+                return True
+
+            except Exception as e:
+                QApplication.restoreOverrideCursor()
+                self.uc.show_error("ERROR 101218.1541: exporting MANNINGS_N.DAT or TOPO.DAT failed!.\n", e)
+                QApplication.setOverrideCursor(Qt.WaitCursor)
+                return False
+        # FLO-2D 2009 exports FPLAIN and CADPTS
+        else:
+            # try:
             sql = (
                 """SELECT fid, n_value, elevation, ST_AsText(ST_Centroid(GeomFromGPB(geom))) FROM grid ORDER BY fid;"""
             )
             records = self.execute(sql)
-            mannings = os.path.join(outdir, "MANNINGS_N.DAT")
-            topo = os.path.join(outdir, "TOPO.DAT")
+            cadpts = os.path.join(outdir, "CADPTS.DAT")
+            fplain = os.path.join(outdir, "FPLAIN.DAT")
 
-            mline = "{0: >10} {1: >10}\n"
-            tline = "{0: >15} {1: >15} {2: >10}\n"
+            cline = "{0: >9} {1: >14} {2: >14}\n"
+            fline = "{0: >9} {1: >8} {2: >8} {3: >8} {4: >8} {5: >7} {6: >9}\n"
             nulls = 0
-            with open(mannings, "w") as m, open(topo, "w") as t:
+            with open(cadpts, "w") as c, open(fplain, "w") as f:
                 for row in records:
                     fid, man, elev, geom = row
                     if man == None or elev == None:
                         nulls += 1
                         if man == None:
-                            man = 0.04
+                            man = 0.040
                         if elev == None:
-                            elev = -9999
+                            elev = -9999.00
                     x, y = geom.strip("POINT()").split()
-                    m.write(mline.format(fid, "{0:.3f}".format(man)))
-                    t.write(
-                        tline.format(
-                            "{0:.4f}".format(float(x)),
-                            "{0:.4f}".format(float(y)),
-                            "{0:.4f}".format(elev),
+                    c.write(
+                        cline.format(
+                            fid,
+                            "{0:.3f}".format(float(x)),
+                            "{0:.3f}".format(float(y))
+                        )
+                    )
+                    cell_size = float(self.gutils.get_cont_par("CELLSIZE"))
+                    n_grid, _, e_grid, _, s_grid, _, w_grid, _ = adjacent_grids(self.gutils, None, cell_size, float(x), float(y))
+                    f.write(
+                        fline.format(
+                            fid,
+                            n_grid if n_grid else 0,
+                            e_grid if e_grid else 0,
+                            s_grid if s_grid else 0,
+                            w_grid if w_grid else 0,
+                            "{0:.3f}".format(float(man)),
+                            "{0:.2f}".format(float(elev))
                         )
                     )
 
@@ -3862,11 +3937,11 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 QApplication.setOverrideCursor(Qt.WaitCursor)
             return True
 
-        except Exception as e:
-            QApplication.restoreOverrideCursor()
-            self.uc.show_error("ERROR 101218.1541: exporting MANNINGS_N.DAT or TOPO.DAT failed!.\n", e)
-            QApplication.setOverrideCursor(Qt.WaitCursor)
-            return False
+            # except Exception as e:
+            #     QApplication.restoreOverrideCursor()
+            #     self.uc.show_error("ERROR 101218.1541: exporting CADPTS.DAT or FPLAIN.DAT failed!.\n", e)
+            #     QApplication.setOverrideCursor(Qt.WaitCursor)
+            #     return False
 
     # def export_neighbours(self):
     #     if self.parsed_format == self.FORMAT_DAT:

@@ -39,6 +39,7 @@ class ComponentsDialog(qtBaseClass, uiDialog):
 
         self.components_buttonBox.accepted.connect(self.select_components)
         self.select_all_chbox.clicked.connect(self.unselect_all)
+        self.export_engine_cbo.currentIndexChanged.connect(self.adjust_engine_components)
 
         self.setFixedSize(self.size())
 
@@ -46,10 +47,34 @@ class ComponentsDialog(qtBaseClass, uiDialog):
 
         QApplication.restoreOverrideCursor()
 
+    def adjust_engine_components(self, idx):
+        """
+        Function to adjust the components dialog based on the engine
+        """
+        if idx == 0:
+            self.mannings_n_and_Topo_chbox.setText("Manning's n and Topo")
+        else:
+            self.mannings_n_and_Topo_chbox.setText("FPLAIN and CADPTS")
+
     def populate_components_dialog(self):
         s = QSettings()
         last_dir = s.value("FLO-2D/lastGdsDir", "")
         self.file_lbl.setText(last_dir)
+
+        # Add the type of engine being exported to the cont table
+        engine_idx_cont = self.gutils.execute("SELECT fid FROM cont WHERE name = 'ENGINE';").fetchone()
+        if engine_idx_cont:
+            sql = """SELECT value FROM cont WHERE name = 'ENGINE';"""
+            engine =  self.gutils.execute(sql).fetchone()[0]
+            if engine == "FLOPRO":
+                self.export_engine_cbo.setCurrentIndex(0)
+                self.mannings_n_and_Topo_chbox.setText("Manning's n and Topo")
+            else:
+                self.export_engine_cbo.setCurrentIndex(1)
+                self.mannings_n_and_Topo_chbox.setText("FPLAIN and CADPTS")
+        else:
+            self.export_engine_cbo.setCurrentIndex(0)
+            self.mannings_n_and_Topo_chbox.setText("Manning's n and Topo")
 
         if self.in_or_out == "in":
             self.setWindowTitle("FLO-2D Components to Import")
