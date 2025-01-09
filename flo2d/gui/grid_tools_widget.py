@@ -188,7 +188,7 @@ class GridToolsWidget(qtBaseClass, uiDialog):
                 return None
 
     def create_grid(self):
-        create_grid_dlg = CreateGridDialog()
+        create_grid_dlg = CreateGridDialog(self.lyrs)
         ok = create_grid_dlg.exec_()
         if not ok:
             return
