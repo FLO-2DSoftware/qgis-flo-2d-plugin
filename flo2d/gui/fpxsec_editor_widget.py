@@ -49,31 +49,25 @@ class FPXsecEditorWidget(qtBaseClass, uiDialog):
 
         # set button icons
         set_icon(self.add_user_fpxs_btn, "add_fpxs.svg")
-        # set_icon(self.save_changes_btn, "mActionSaveAllEdits.svg")
         set_icon(self.revert_changes_btn, "mActionUndo.svg")
         set_icon(self.delete_fpxs_btn, "mActionDeleteSelected.svg")
         set_icon(self.schem_fpxs_btn, "schematize_fpxs.svg")
         set_icon(self.rename_fpxs_btn, "change_name.svg")
-        parent_dir = os.path.dirname(os.path.abspath(__file__))
-        idir = os.path.join(os.path.dirname(parent_dir), "img")
-        for i in range(8):
-            icon_file = "arrow_{}.svg".format(i + 1)
-            self.flow_dir_cbo.setItemIcon(i, QIcon(os.path.join(idir, icon_file)))
+
+        self.fill_iflo_directions()
 
         # Buttons connections
         self.add_user_fpxs_btn.clicked.connect(self.create_user_fpxs)
-        # self.save_changes_btn.clicked.connect(self.save_fpxs_lyr_edits)
         self.revert_changes_btn.clicked.connect(self.revert_fpxs_lyr_edits)
         self.delete_fpxs_btn.clicked.connect(self.delete_cur_fpxs)
         self.schem_fpxs_btn.clicked.connect(self.schematize_fpxs)
+        self.del_schem_fpxs_btn.clicked.connect(self.delete_schema_fpxs)
         self.rename_fpxs_btn.clicked.connect(self.rename_fpxs)
         self.fpxs_cbo.activated.connect(self.cur_fpxs_changed)
         self.flow_dir_cbo.activated.connect(self.save_fpxs)
         self.help_btn.clicked.connect(self.show_fp_xs_widget_help)
 
         self.fpxsec_lyr = self.lyrs.data["user_fpxsec"]["qlyr"]
-        self.fpxsec_lyr.geometryChanged.connect(self.fpxs_feature_changed)
-        self.fpxsec_lyr.afterCommitChanges.connect(self.populate_fpxs_signal)
 
     def setup_connection(self):
         con = self.iface.f2d["con"]
@@ -93,7 +87,6 @@ class FPXsecEditorWidget(qtBaseClass, uiDialog):
                 self.report_chbox.setChecked(False)
                 self.set_report()
             self.report_chbox.stateChanged.connect(self.set_report)
-            # self.fpxsec_lyr.editingStopped.connect(self.populate_cbos)
 
     def switch2selected(self):
         switch_to_selected(self.fpxsec_lyr, self.fpxs_cbo)
@@ -104,34 +97,61 @@ class FPXsecEditorWidget(qtBaseClass, uiDialog):
         qry = """SELECT fid, name, iflo FROM user_fpxsec ORDER BY name COLLATE NOCASE"""
         rows = self.gutils.execute(qry).fetchall()
         if rows:
-            max_fid = self.gutils.get_max("user_fpxsec")
             cur_idx = 0
             for i, row in enumerate(rows):
                 self.fpxs_cbo.addItem(row[1], row)
                 if fid and row[0] == fid:
-                    cur_idx = i + 1
-                # elif show_last_edited and row[0] == max_fid:
-                #     cur_idx = i
-                #     self.uc.log_info("-> 2")
+                    cur_idx = i
             self.fpxs_cbo.setCurrentIndex(cur_idx)
             self.cur_fpxs_changed()
         else:
             self.lyrs.clear_rubber()
 
     def cur_fpxs_changed(self):
+        """
+        Function to change the floodplain cross-section combobox
+        """
         row = self.fpxs_cbo.itemData(self.fpxs_cbo.currentIndex())
         if row is None:
             return
         self.fpxs_fid = row[0]
-        row_flo = row[-1]
-        flow_idx = row_flo - 1 if row_flo is not None else 0
-        self.flow_dir_cbo.setCurrentIndex(flow_idx)
-        self.lyrs.clear_rubber()
-        if self.center_fpxs_chbox.isChecked():
-            self.show_fpxs_rb()
-            feat = next(self.fpxsec_lyr.getFeatures(QgsFeatureRequest(self.fpxs_fid)))
-            x, y = feat.geometry().centroid().asPoint()
-            center_canvas(self.iface, x, y)
+
+        fpxs_name = self.fpxs_cbo.currentText()
+
+        if fpxs_name:
+            # Get the feature associated with the combobox
+            request = QgsFeatureRequest().setFilterExpression(f'"fid" = {self.fpxs_fid}')
+            matching_features = self.fpxsec_lyr.getFeatures(request)
+            feature = next(matching_features, None)
+            geometry = feature.geometry()
+            geom_poly = geometry.asPolyline()
+            start, end = geom_poly[0], geom_poly[-1]
+            # Calculate azimuth
+            azimuth = start.azimuth(end)
+
+            # Figure out the allowed directions
+            iflo_allowed_directions = self.get_iflo_direction(azimuth)
+            self.fill_iflo_directions()
+            for i in range(8, 0, -1):  # Iterate in reverse (8 to 1)
+                if i not in iflo_allowed_directions:
+                    self.flow_dir_cbo.removeItem(i - 1)
+
+            self.fpxs_fid, iflo = self.gutils.execute(f"SELECT fid, iflo FROM user_fpxsec WHERE name = '{fpxs_name}';").fetchone()
+            index = self.flow_dir_cbo.findText(str(iflo))
+            # If index equal -1, the direction is wrong. Needs to be fixed
+            if index == -1:
+                iflo = iflo_allowed_directions[0]
+                qry = f"""UPDATE user_fpxsec SET iflo={iflo} WHERE fid={self.fpxs_fid};"""
+                self.gutils.execute(qry)
+            else:
+                self.flow_dir_cbo.setCurrentIndex(index)
+
+            self.lyrs.clear_rubber()
+            if self.center_fpxs_chbox.isChecked():
+                self.show_fpxs_rb()
+                feat = next(self.fpxsec_lyr.getFeatures(QgsFeatureRequest(self.fpxs_fid)))
+                x, y = feat.geometry().centroid().asPoint()
+                center_canvas(self.iface, x, y)
 
     def show_fpxs_rb(self):
         if not self.fpxs_fid:
@@ -158,8 +178,15 @@ class FPXsecEditorWidget(qtBaseClass, uiDialog):
     def save_fpxs_lyr_edits(self):
         if not self.lyrs.any_lyr_in_edit("user_fpxsec"):
             return
+        has_data = self.gutils.is_table_empty("user_fpxsec")
         self.lyrs.save_lyrs_edits("user_fpxsec")
-        self.populate_cbos(fid=self.gutils.get_max("user_fpxsec")-1)
+        if has_data:
+            self.populate_cbos(fid=0)
+        else:
+            self.populate_cbos(fid=self.gutils.get_max("user_fpxsec"))
+
+        self.cur_fpxs_changed()
+
         self.uc.bar_info("Floodplain cross-sections created!")
         self.uc.log_info("Floodplain cross-sections created!")
 
@@ -193,6 +220,11 @@ class FPXsecEditorWidget(qtBaseClass, uiDialog):
         self.populate_cbos(fid=0)
         self.fpxsec_lyr.triggerRepaint()
 
+        fpxs_name = self.fpxs_cbo.currentText()
+        self.fill_iflo_directions()
+        self.uc.bar_info(f"The {fpxs_name} floodplain cross-section is deleted!")
+        self.uc.log_info(f"The {fpxs_name} floodplain cross-section is deleted!")
+
     def save_fpxs(self):
         if not self.fpxs_cbo.count():
             return
@@ -217,16 +249,11 @@ class FPXsecEditorWidget(qtBaseClass, uiDialog):
             self.uc.bar_warn("There is no grid! Please create it before running tool!")
             self.uc.log_info("There is no grid! Please create it before running tool!")
             return
-        if self.gutils.is_table_empty("user_fpxsec"):
-            self.uc.bar_warn(
-                "There is no any user floodplain cross sections! " "Please digitize them before running the tool."
-            )
-            self.uc.log_info(
-                "There is no any user floodplain cross sections! " "Please digitize them before running the tool."
-            )
-            self.lyrs.clear_rubber()
-            return
+
         try:
+            if self.lyrs.any_lyr_in_edit("user_fpxsec"):
+                self.save_fpxs_lyr_edits()
+                self.add_user_fpxs_btn.setChecked(False)
             fpxs = FloodplainXS(self.con, self.iface, self.lyrs)
             fpxs.schematize_floodplain_xs()
         except Exception as e:
@@ -236,7 +263,28 @@ class FPXsecEditorWidget(qtBaseClass, uiDialog):
                 "Please check your User Layers."
             )
             return
-        self.uc.show_info("Floodplain cross-sections schematized!")
+        self.uc.bar_info("Floodplain cross-sections schematized!")
+        self.uc.log_info("Floodplain cross-sections schematized!")
+
+    def delete_schema_fpxs(self):
+        """
+        Function to delete the floodplain cross-section schematized data
+        """
+        if self.gutils.is_table_empty("fpxsec") and self.gutils.is_table_empty("fpxsec_cells"):
+            self.uc.bar_warn("There is no schematized floodplain cross sections!")
+            self.uc.log_info("There is no schematized floodplain cross sections!")
+            return
+
+        self.gutils.clear_tables("fpxsec", "fpxsec_cells")
+
+        self.uc.bar_info("Schematized floodplain cross sections deleted!")
+        self.uc.log_info("Schematized floodplain cross sections deleted!")
+
+        self.lyrs.clear_rubber()
+        self.lyrs.data["fpxsec"]["qlyr"].triggerRepaint()
+        self.lyrs.data["fpxsec_cells"]["qlyr"].triggerRepaint()
+
+        self.fill_iflo_directions()
 
     def set_report(self):
         if self.report_chbox.isChecked():
@@ -457,4 +505,46 @@ class FPXsecEditorWidget(qtBaseClass, uiDialog):
         """
         QDesktopServices.openUrl(QUrl("https://flo-2dsoftware.github.io/FLO-2D-Documentation/Plugin1000/widgets"
                                       "/floodplain-cross-section-editor/Floodplain%20Cross%20Section%20Editor.html"))
+
+    def fill_iflo_directions(self):
+        """
+        Function to fill the iflo directions on the directions combobox
+        """
+        self.setup_connection()
+        self.flow_dir_cbo.clear()
+        if self.gutils.is_table_empty("user_fpxsec"):
+            return
+        parent_dir = os.path.dirname(os.path.abspath(__file__))
+        idir = os.path.join(os.path.dirname(parent_dir), "img")
+        for i in range(8):
+            self.flow_dir_cbo.addItem(str(i + 1))
+            icon_file = "arrow_{}.svg".format(i + 1)
+            self.flow_dir_cbo.setItemIcon(i, QIcon(os.path.join(idir, icon_file)))
+
+    def get_iflo_direction(self, azimuth):
+        """
+        Function to get the iflo directions based on the azimuth
+        """
+
+        # Ensure azimuth is positive
+        if azimuth < 0:
+            azimuth += 360
+
+        if 337.5 <= azimuth or azimuth < 22.5:
+            return [1, 3]
+        elif 22.5 <= azimuth < 67.5:
+            return [5, 7]
+        elif 67.5 <= azimuth < 112.5:
+            return [2, 4]
+        elif 112.5 <= azimuth < 157.5:
+            return [6, 8]
+        elif 157.5 <= azimuth < 202.5:
+            return [3, 1]
+        elif 202.5 <= azimuth < 247.5:
+            return [7, 5]
+        elif 247.5 <= azimuth < 292.5:
+            return [4, 2]
+        elif 292.5 <= azimuth < 337.5:
+            return [8, 6]
+
 
