@@ -37,9 +37,11 @@ class LeveeAndBreachEditorWidget(qtBaseClass, uiDialog):
         self.uc = UserCommunication(iface, "FLO-2D")
         self.grid_lyr = None
 
-        set_icon(self.levee_elevation_tool_btn, "set_levee_elev.svg")
-        self.levee_elevation_tool_btn.clicked.connect(self.levee_elevation_tool)
+        # Buttons connections
+        self.delete_schema_levee_btn.clicked.connect(self.delete_schematized_levees)
         self.levees_and_breach_help_btn.clicked.connect(self.levees_and_breach_help)
+        self.delete_schema_breach_btn.clicked.connect(self.delete_schematized_breach)
+        self.levees_and_breach_help_btn_2.clicked.connect(self.levees_and_breach_help)
 
         set_icon(self.create_breach_location_btn, "mActionCapturePoint.svg")
         self.create_breach_location_btn.clicked.connect(self.create_point_breach)
@@ -102,8 +104,71 @@ class LeveeAndBreachEditorWidget(qtBaseClass, uiDialog):
         levees = self.lyrs.data["levee_data"]["qlyr"]
         repaint_levee(self.gutils, levees)
 
-    def levee_elevation_tool(self):
-        return
+    def delete_schematized_levees(self):
+        """
+        Function to delete the schematized levees
+        """
+        exist_schema_levees = self.gutils.execute(f"SELECT * FROM levee_data;").fetchone()
+        if not exist_schema_levees:
+            self.uc.bar_info(f"There are no schematized levees.")
+            self.uc.log_info(f"There are no schematized levees.")
+            return
+
+        msg = f"Are you sure? This will delete all levees schematized data."
+        if not self.uc.question(msg):
+            return
+        else:
+            try:
+                QApplication.setOverrideCursor(Qt.WaitCursor)
+                self.gutils.clear_tables("levee_data", "levee_general", "levee_failure", "levee_fragility")
+
+            except Exception as e:
+                QApplication.restoreOverrideCursor()
+                self.uc.show_error(
+                    "ERROR:"
+                    + "\n__________________________________________________",
+                    e,
+                )
+                self.uc.log_info(f"ERROR: {e}")
+
+            schem_levee = self.lyrs.data['levee_data']["qlyr"]
+            schem_levee.triggerRepaint()
+            QApplication.restoreOverrideCursor()
+            self.uc.bar_info(f"Schematized levees deleted.")
+            self.uc.log_info(f"Schematized levees deleted.")
+
+    def delete_schematized_breach(self):
+        """
+        Function to delete the schematized breach
+        """
+        exist_schema_breach = self.gutils.execute(f"SELECT * FROM breach;").fetchone()
+        if not exist_schema_breach:
+            self.uc.bar_info(f"There are no schematized breach.")
+            self.uc.log_info(f"There are no schematized breach.")
+            return
+
+        msg = f"Are you sure? This will delete all breach schematized data."
+        if not self.uc.question(msg):
+            return
+        else:
+            try:
+                QApplication.setOverrideCursor(Qt.WaitCursor)
+                self.gutils.clear_tables("breach", "breach_global", "breach_cells", "breach_fragility_curves")
+
+            except Exception as e:
+                QApplication.restoreOverrideCursor()
+                self.uc.show_error(
+                    "ERROR:"
+                    + "\n__________________________________________________",
+                    e,
+                )
+                self.uc.log_info(f"ERROR: {e}")
+
+            schem_breach = self.lyrs.data['breach']["qlyr"]
+            schem_breach.triggerRepaint()
+            QApplication.restoreOverrideCursor()
+            self.uc.bar_info(f"Schematized breach deleted.")
+            self.uc.log_info(f"Schematized breach deleted.")
     
     def levees_and_breach_help(self):
         QDesktopServices.openUrl(QUrl("https://flo-2dsoftware.github.io/FLO-2D-Documentation/Plugin1000/widgets/levees-breach-editor/Levees%20Breach%20Editor.html"))        
