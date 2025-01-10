@@ -2657,6 +2657,8 @@ class Flo2D(object):
                 return
             QApplication.setOverrideCursor(Qt.WaitCursor)
             dlg_components = ComponentsDialog(self.con, self.iface, self.lyrs, "in")
+            dlg_components.mannings_n_and_Topo_chbox.setVisible(False)
+            dlg_components.export_engine_cbo.setVisible(False)
             QApplication.restoreOverrideCursor()
             ok = dlg_components.exec_()
             if ok:
