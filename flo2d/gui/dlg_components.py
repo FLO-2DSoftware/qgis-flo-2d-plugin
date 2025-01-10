@@ -79,7 +79,7 @@ class ComponentsDialog(qtBaseClass, uiDialog):
         if self.in_or_out == "in":
             self.setWindowTitle("FLO-2D Components to Import")
             self.components_note_lbl.setVisible(False)
-            self.mannings_n_and_Topo_chbox.setVisible(False)
+            self.mannings_n_and_Topo_chbox.setChecked(True)
 
             if os.path.isfile(last_dir + r"\CHAN.DAT"):
                 if os.path.getsize(last_dir + r"\CHAN.DAT") > 0:

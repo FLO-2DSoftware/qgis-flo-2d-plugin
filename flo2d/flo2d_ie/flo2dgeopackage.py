@@ -76,7 +76,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
         self.cell_size = int(round(self.parser.calculate_cellsize()))
         if self.cell_size == 0:
             self.uc.show_info(
-                "ERROR 060319.1604: Cell size is 0 - something went wrong!\nDoes TOPO.DAT file exist or is empty?"
+                "ERROR 060319.1604: Cell size is 0 - something went wrong!\nDoes TOPO.DAT or CADPTS.DAT file exist or is empty?"
             )
             return False
         else:
@@ -114,7 +114,16 @@ class Flo2dGeoPackage(GeoPackageUtils):
         if len(cont["ITIMTEP"]) > 1:
             cont["ITIMTEP"] = cont["ITIMTEP"][0]
         toler = self.parser.parse_toler()
+        # Adjust some TOL values when importing from FLO-2D 2009 models
+        if toler.get("COURANTST") is None:
+            toler["COURANTST"] = 0.6
+        if toler.get("COURCHAR_T") is None:
+            toler["COURCHAR_T"] = "T"
+        if toler.get("TIME_ACCEL") is None:
+            toler["TIME_ACCEL"] = 0.1
         cont.update(toler)
+        if cont.get("SWMM") is None:
+            cont["SWMM"] = 0
         for option in cont:
             sql += [(option, cont[option], self.PARAMETER_DESCRIPTION[option])]
         sql += [("CELLSIZE", self.cell_size, self.PARAMETER_DESCRIPTION["CELLSIZE"])]
@@ -273,6 +282,46 @@ class Flo2dGeoPackage(GeoPackageUtils):
         except Exception as e:
             QApplication.restoreOverrideCursor()
             self.uc.show_error("ERROR 040521.1154: importing Grid data from HDF5 file!\n", e)
+
+    def import_cadpts_fplain(self):
+        if self.parsed_format == self.FORMAT_DAT:
+            return self.import_cadpts_fplain_dat()
+        elif self.parsed_format == self.FORMAT_HDF5:
+            return self.import_cadpts_fplain_hdf5()
+
+    def import_cadpts_fplain_dat(self):
+        try:
+            sql = ["""INSERT INTO grid (fid, n_value, elevation, geom) VALUES""", 4]
+
+            self.clear_tables("grid")
+            data = self.parser.parse_fplain_cadpts()
+
+            c = 0
+            fid = slice(0, 1)
+            man = slice(5, 6)
+            elev = slice(6, 7)
+            coords = slice(8, None)
+            for row in data:
+                if c < self.chunksize:
+                    geom = " ".join(row[coords])
+                    g = self.build_square(geom, self.cell_size)
+                    sql += [tuple(row[fid] + row[man] + row[elev] + [g])]
+                    c += 1
+                else:
+                    self.batch_execute(sql)
+                    c = 0
+            if len(sql) > 2:
+                self.batch_execute(sql)
+            else:
+                pass
+
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.uc.show_error("ERROR 040521.1154: importing CADPTS.DAT and FPLAIN.DAT!.\n", e)
+
+    def import_cadpts_fplain_hdf5(self):
+        # TODO implement this on the hdf5 project
+        pass
 
     def import_inflow(self):
         cont_sql = ["""INSERT INTO cont (name, value, note) VALUES""", 3]
@@ -3705,6 +3754,9 @@ class Flo2dGeoPackage(GeoPackageUtils):
                         if not self.is_flopro:
                             if o == "SWMM":
                                 continue
+                            # Set the super switch to 0
+                            if o == "DEPRESSDEPTH":
+                                options[o] = 0
                         if o not in options:
                             continue
                         val = options[o]
@@ -3756,6 +3808,10 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     for o in row:
                         if o not in options:
                             continue
+                        # FLO-2D Pro does not require WAVEMAX on TOLER.DAT but FLO-2D 2009 does
+                        if self.is_flopro:
+                            if o == "WAVEMAX":
+                                continue
                         val = options[o]
                         lst += rline.format(val)  # Second line 'C' (Courant values) writes 1, 2, or 3 values depending
                         # if channels and/or streets are simulated
@@ -3907,8 +3963,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     c.write(
                         cline.format(
                             fid,
-                            "{0:.3f}".format(float(x)),
-                            "{0:.3f}".format(float(y))
+                            "{0:.4f}".format(float(x)),
+                            "{0:.4f}".format(float(y))
                         )
                     )
                     cell_size = float(self.gutils.get_cont_par("CELLSIZE"))
@@ -3921,7 +3977,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                             s_grid if s_grid else 0,
                             w_grid if w_grid else 0,
                             "{0:.3f}".format(float(man)),
-                            "{0:.2f}".format(float(elev))
+                            "{0:.4f}".format(float(elev))
                         )
                     )
 

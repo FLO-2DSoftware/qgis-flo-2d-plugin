@@ -1934,13 +1934,20 @@ class Flo2D(object):
         dir_name = os.path.dirname(fname)
         s.setValue("FLO-2D/lastGdsDir", dir_name)
         bname = os.path.basename(fname)
+        cadpts = False
+        fplain = False
         if self.f2g.set_parser(fname):
             topo = self.f2g.parser.dat_files["TOPO.DAT"]
+            # If topo does not exist, it could be a FLO-2D 2009 model. Check for CADPTS.DAT
             if topo is None:
-                self.uc.bar_error("Could not find TOPO.DAT file! Importing GDS files aborted!", dur=3)
-                self.uc.log_info("Could not find TOPO.DAT file! Importing GDS files aborted!")
-                self.gutils.enable_geom_triggers()
-                return
+                cadpts = self.f2g.parser.dat_files["CADPTS.DAT"]
+                if cadpts is None:
+                    self.uc.bar_error("Could not find TOPO.DAT or CADPTS.DAT file! Importing GDS files aborted!", dur=3)
+                    self.uc.log_info("Could not find TOPO.DAT or CADPTS.DAT file! Importing GDS files aborted!")
+                    self.gutils.enable_geom_triggers()
+                    return
+                else:
+                    cadpts = True
             if bname not in self.f2g.parser.dat_files:
                 self.uc.bar_info("Import cancelled!")
                 self.uc.log_info("Import cancelled!")
@@ -1960,10 +1967,14 @@ class Flo2D(object):
 
             # Check if MANNINGS_N.DAT exist:
             if not os.path.isfile(dir_name + r"\MANNINGS_N.DAT") or os.path.getsize(dir_name + r"\MANNINGS_N.DAT") == 0:
-                self.uc.bar_error("ERROR 241019.1821: file MANNINGS_N.DAT is missing or empty!")
-                self.uc.log_info("ERROR 241019.1821: file MANNINGS_N.DAT is missing or empty!")
-                self.gutils.enable_geom_triggers()
-                return
+                # If MANNINGS_N.DAT does not exist, it could be a FLO-2D 2009 model. Check for FPLAIN.DAT
+                if not os.path.isfile(dir_name + r"\FPLAIN.DAT") or os.path.getsize(dir_name + r"\FPLAIN.DAT") == 0:
+                    self.uc.bar_error("ERROR 241019.1821: file MANNINGS_N.DAT or FPLAIN.DAT is missing or empty!")
+                    self.uc.log_info("ERROR 241019.1821: file MANNINGS_N.DAT or FPLAIN.DAT is missing or empty!")
+                    self.gutils.enable_geom_triggers()
+                    return
+                else:
+                    fplain = True
 
             # Check if TOLER.DAT exist:
             if not os.path.isfile(dir_name + r"\TOLER.DAT") or os.path.getsize(dir_name + r"\TOLER.DAT") == 0:
@@ -1972,7 +1983,16 @@ class Flo2D(object):
                 self.gutils.enable_geom_triggers()
                 return
 
+            if cadpts and fplain:
+                sql = """INSERT OR REPLACE INTO cont (name, value, note) VALUES (?,?,?);"""
+                self.gutils.execute(sql, ("ENGINE", "FLO2009", "FLO-2D Engine"))
+                import_calls[1] = "import_cadpts_fplain"
+            else:
+                sql = """INSERT OR REPLACE INTO cont (name, value, note) VALUES (?,?,?);"""
+                self.gutils.execute(sql, ("ENGINE", "FLOPRO", "FLO-2D Engine"))
+
             dlg_components = ComponentsDialog(self.con, self.iface, self.lyrs, "in")
+            dlg_components.export_engine_cbo.setEnabled(False)
             ok = dlg_components.exec_()
             if ok:
                 try:
@@ -2183,6 +2203,13 @@ class Flo2D(object):
 
                     for table in tables:
                         self.gutils.clear_tables(table)
+
+                    if "import_cadpts_fplain" in import_calls:
+                        sql = """INSERT OR REPLACE INTO cont (name, value, note) VALUES (?,?,?);"""
+                        self.gutils.execute(sql, ("ENGINE", "FLO2009", "FLO-2D Engine"))
+                    else:
+                        sql = """INSERT OR REPLACE INTO cont (name, value, note) VALUES (?,?,?);"""
+                        self.gutils.execute(sql, ("ENGINE", "FLOPRO", "FLO-2D Engine"))
 
                     self.call_IO_methods(import_calls, True)  # The strings list 'export_calls', contains the names of
                     # the methods in the class Flo2dGeoPackage to import (read) the
@@ -3019,6 +3046,8 @@ class Flo2D(object):
             ok = dlg_components.exec_()
             if ok:
 
+                QApplication.setOverrideCursor(Qt.WaitCursor)
+
                 engine_idx = dlg_components.export_engine_cbo.currentIndex()
                 sql = """INSERT OR REPLACE INTO cont (name, value, note) VALUES (?,?,?);"""
                 # idx equal 0 is the FLO-2D Pro and idx equal 1 is the FLO-2D 2009
@@ -3026,6 +3055,11 @@ class Flo2D(object):
                     self.gutils.execute(sql, ("ENGINE", "FLOPRO", "FLO-2D Engine"))
                 else:
                     self.gutils.execute(sql, ("ENGINE", "FLO2009", "FLO-2D Engine"))
+                    export_calls.remove("export_swmmflo")
+                    export_calls.remove("export_swmmflort")
+                    export_calls.remove("export_swmmoutf")
+                    export_calls.remove("export_swmmflodropbox")
+                    export_calls.remove("export_sdclogging")
 
                 if dlg_components.remove_files_chbox.isChecked():
                     for file in files:
@@ -3099,12 +3133,13 @@ class Flo2D(object):
                 if "Rain" not in dlg_components.components:
                     export_calls.remove("export_rain")
 
-                if "Storm Drain" not in dlg_components.components:
-                    export_calls.remove("export_swmmflo")
-                    export_calls.remove("export_swmmflort")
-                    export_calls.remove("export_swmmoutf")
-                    export_calls.remove("export_swmmflodropbox")
-                    export_calls.remove("export_sdclogging")
+                if engine_idx == 0:
+                    if "Storm Drain" not in dlg_components.components:
+                        export_calls.remove("export_swmmflo")
+                        export_calls.remove("export_swmmflort")
+                        export_calls.remove("export_swmmoutf")
+                        export_calls.remove("export_swmmflodropbox")
+                        export_calls.remove("export_sdclogging")
 
                 if "Spatial Shallow-n" not in dlg_components.components:
                     export_calls.remove("export_shallowNSpatial")

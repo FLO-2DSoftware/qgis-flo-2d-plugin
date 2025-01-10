@@ -333,7 +333,7 @@ class ParseDAT(object):
             ["GRAPTIM"],
         ]
         self.toler_rows = [
-            ["TOLGLOBAL", "DEPTOL", ""],
+            ["TOLGLOBAL", "DEPTOL", "WAVEMAX"],
             ["COURCHAR_C", "COURANTFP", "COURANTC", "COURANTST"],
             ["COURCHAR_T", "TIME_ACCEL"],
         ]
@@ -376,26 +376,43 @@ class ParseDAT(object):
     def calculate_cellsize(self):
         cell_size = 0
         topo = self.dat_files["TOPO.DAT"]
-        if topo is None:
-            return 0
-        if not os.path.isfile(topo):
-            return 0
-        if not os.path.getsize(topo) > 0:
-            return 0
-        with open(topo) as top:
-            first_coord = top.readline().split()[:2]
-            first_x = float(first_coord[0])
-            first_y = float(first_coord[1])
-            top.seek(0)
-            dx_coords = (abs(first_x - float(row.split()[0])) for row in top)
-            try:
-                size = min(dx for dx in dx_coords if dx > 0)
-            except ValueError:
+        # If TOPO.DAT does not exist, try to calculate the cell_size from CADPTS.DAT
+        if not topo or not os.path.isfile(topo) or os.path.getsize(topo) <= 0:
+            cadpts = self.dat_files["CADPTS.DAT"]
+            # If CADPTS.DAT also does not exist, return 0.
+            if not cadpts or not os.path.isfile(cadpts) or os.path.getsize(cadpts) <= 0:
+                return 0
+            else:
+                with open(cadpts) as cad:
+                    first_coord = cad.readline().split()[1:3]
+                    first_x = float(first_coord[0])
+                    first_y = float(first_coord[1])
+                    cad.seek(0)
+                    dx_coords = (abs(first_x - float(row.split()[1])) for row in cad)
+                    try:
+                        size = min(dx for dx in dx_coords if dx > 0)
+                    except ValueError:
+                        cad.seek(0)
+                        dy_coords = (abs(first_y - float(row.split()[2])) for row in cad)
+                        size = min(dy for dy in dy_coords if dy > 0)
+                    cell_size += size
+                return cell_size
+        # If TOPO.DAT exists, calculate cell_size from this .DAT file
+        else:
+            with open(topo) as top:
+                first_coord = top.readline().split()[:2]
+                first_x = float(first_coord[0])
+                first_y = float(first_coord[1])
                 top.seek(0)
-                dy_coords = (abs(first_y - float(row.split()[1])) for row in top)
-                size = min(dy for dy in dy_coords if dy > 0)
-            cell_size += size
-        return cell_size
+                dx_coords = (abs(first_x - float(row.split()[0])) for row in top)
+                try:
+                    size = min(dx for dx in dx_coords if dx > 0)
+                except ValueError:
+                    top.seek(0)
+                    dy_coords = (abs(first_y - float(row.split()[1])) for row in top)
+                    size = min(dy for dy in dy_coords if dy > 0)
+                cell_size += size
+            return cell_size
 
     @staticmethod
     def single_parser(file1):
