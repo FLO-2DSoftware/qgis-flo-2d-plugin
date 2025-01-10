@@ -4047,7 +4047,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             )
 
             # Divide inflow line hydrograph between grid elements
-            has_line_hyd = self.execute("SELECT bc_fid FROM inflow WHERE geom_type = 'line';").fetchall()
+            has_line_hyd = self.execute("SELECT fid FROM inflow WHERE geom_type = 'line';").fetchall()
             line_cells_dict = {}
             if has_line_hyd:
                 for line_hyd in has_line_hyd:
