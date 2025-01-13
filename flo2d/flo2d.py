@@ -4112,13 +4112,9 @@ class Flo2D(object):
             n_levee_directions_total += n_levee_directions
             n_fail_features_total += n_fail_features
 
-            # This for loop corrects the elevation
-            for no in sorted(dlg_levee_elev.methods):
-                if no == 1:
-                    # processing for a spatial selection range is enabled on this type
-                    dlg_levee_elev.methods[no](rangeReq=ranger)
-                else:
-                    dlg_levee_elev.methods[no]()
+        # This for loop corrects the elevation
+        for no in sorted(dlg_levee_elev.methods):
+            dlg_levee_elev.methods[no]()
 
         inctime = time.time()
         print("%s seconds to process levee features" % round(inctime - starttime, 2))
