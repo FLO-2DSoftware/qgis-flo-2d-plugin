@@ -949,7 +949,7 @@ class GridToolsWidget(qtBaseClass, uiDialog):
             QApplication.restoreOverrideCursor()
 
     def eval_arfwrf(self):
-        eval_dlg = EvaluateReductionFactorsDialog()
+        eval_dlg = EvaluateReductionFactorsDialog(self.lyrs)
         ok = eval_dlg.exec_()
         if not ok:
             return
