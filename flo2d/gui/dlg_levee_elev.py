@@ -190,8 +190,8 @@ class LeveesToolDialog(qtBaseClass, uiDialog):
         finally:
             self.corrector.clear_filter()
 
-    def elev_from_lines(self, rangeReq=None):
-        self.corrector.elevation_from_lines(regionReq=rangeReq)
+    def elev_from_lines(self):
+        self.corrector.elevation_from_lines()
 
     def elev_from_polys(self):
         try:

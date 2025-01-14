@@ -195,57 +195,72 @@ class LeveesElevation(ElevationCorrector):
                 continue
         self.gutils.con.commit()
 
-    def elevation_from_lines(self, regionReq=None):
-        cur = self.gutils.con.cursor()
-        # use moving window
-        qryIndex = "CREATE INDEX if not exists leveeDataUser_Line_FID  ON levee_data (user_line_fid);"
-        cur.execute(qryIndex)
-        self.gutils.con.commit()
+    def elevation_from_lines(self):
+        """
+        This function corrects the levcrest on levees with improved performance.
+        """
 
-        grid = self.lyrs.data["grid"]["qlyr"]
-        levee_data = self.lyrs.data["levee_data"]["qlyr"]
-        levee_spatial_index = QgsSpatialIndex(levee_data.getFeatures())
+        user_levee_lines = self.lyrs.data["user_levee_lines"]["qlyr"]
 
-        levee_data.startEditing()
+        # Collect features into a batch
+        user_levee_features = [
+            (feature["fid"], feature["elev"], feature["correction"])
+            for feature in user_levee_lines.getFeatures()
+        ]
 
-        for regionReqSwatch in (
-            gridRegionGenerator(self.gutils, grid, regionPadding=0, showProgress=True)
-            if regionReq is None
-            else [regionReq]
-        ):
+        # Separate cases based on conditions
+        updates = {"elev_and_cor": [], "elev_only": [], "cor_only": []}
 
-            # Added an intermediate loop that iterates over each grid to get all features inside the grid element
-            for grid_feature in grid.getFeatures(regionReqSwatch):
-                grid_geometry = grid_feature.geometry()
-                bbox = grid_geometry.boundingBox()
-                levees_intersected = levee_spatial_index.intersects(bbox)
-                request = QgsFeatureRequest().setFilterFids(levees_intersected)
+        for fid, elev, cor in user_levee_features:
+            if elev == NULL and cor == NULL:
+                continue
+            elif elev != NULL and cor != NULL:
+                updates["elev_and_cor"].append((fid, elev, cor))
+            elif elev != NULL and cor == NULL:
+                updates["elev_only"].append((fid, elev))
+            elif elev == NULL and cor != NULL:
+                updates["cor_only"].append((fid, cor))
 
-                for feat in levee_data.getFeatures(request):
-                    levee_data_fid = feat["fid"]
+        # Perform batch updates
+        if updates["elev_and_cor"]:
+            fids = ", ".join(str(fid) for fid, _, _ in updates["elev_and_cor"])
+            self.gutils.execute(f"""
+                UPDATE levee_data AS ld
+                SET levcrest = (
+                    SELECT ull.correction + ull.elev
+                    FROM user_levee_lines AS ull
+                    WHERE ull.fid = ld.user_line_fid
+                    LIMIT 1 
+                )
+                WHERE ld.user_line_fid IN ({fids});
+            """)
 
-                    user_levee_lines_fid = feat["user_line_fid"]
-                    user_levee_lines_data = self.gutils.execute(f"SELECT elev, correction FROM user_levee_lines WHERE fid "
-                                                                f"= '{user_levee_lines_fid}'").fetchall()[0]
-                    elev = user_levee_lines_data[0]
-                    cor = user_levee_lines_data[1]
+        if updates["elev_only"]:
+            fids = ", ".join(str(fid) for fid, _ in updates["elev_only"])
+            self.gutils.execute(f"""
+                UPDATE levee_data AS ld
+                SET levcrest = (
+                    SELECT ull.elev
+                    FROM user_levee_lines AS ull
+                    WHERE ull.fid = ld.user_line_fid
+                    LIMIT 1 
+                )
+                WHERE ld.user_line_fid IN ({fids});
+            """)
 
-                    levee_data.updateFeature(feat)
+        if updates["cor_only"]:
+            fids = ", ".join(str(fid) for fid, _ in updates["cor_only"])
+            self.gutils.execute(f"""
+                UPDATE levee_data AS ld
+                SET levcrest = levcrest + (
+                    SELECT ull.correction
+                    FROM user_levee_lines AS ull
+                    WHERE ull.fid = ld.user_line_fid
+                    LIMIT 1 
+                )
+                WHERE ld.user_line_fid IN ({fids});
+            """)
 
-                    if elev == NULL and cor == NULL:
-                        continue
-                    elif elev != NULL and cor != NULL:
-                        val = elev + cor
-                        self.gutils.execute(f"UPDATE levee_data SET levcrest = {val} WHERE fid = {levee_data_fid};")
-                    elif elev != NULL and cor == NULL:
-                        val = elev
-                        self.gutils.execute(f"UPDATE levee_data SET levcrest = {val} WHERE fid = {levee_data_fid};")
-                    elif elev == NULL and cor != NULL:
-                        val = cor
-                        self.gutils.execute(f"UPDATE levee_data SET levcrest = levcrest + {val} WHERE fid = {levee_data_fid};")
-                    else:
-                        continue
-                levee_data.commitChanges()
 
     @timer
     def elevation_from_polygons(self):
