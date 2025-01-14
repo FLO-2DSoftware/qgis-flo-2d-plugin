@@ -229,17 +229,10 @@ class LeveesElevation(ElevationCorrector):
                 SET levcrest = (
                     SELECT ull.correction + ull.elev
                     FROM user_levee_lines AS ull
-                    JOIN grid AS g
-                      ON ST_Intersects(CastAutomagic(g.geom), CastAutomagic(ull.geom))
-                    WHERE ull.fid IN ({fids}) AND g.fid = ld.grid_fid
+                    WHERE ull.fid = ld.user_line_fid
+                    LIMIT 1 
                 )
-                WHERE EXISTS (
-                    SELECT 1
-                    FROM user_levee_lines AS ull
-                    JOIN grid AS g
-                      ON ST_Intersects(CastAutomagic(g.geom), CastAutomagic(ull.geom))
-                    WHERE ull.fid IN ({fids}) AND g.fid = ld.grid_fid
-                );
+                WHERE ld.user_line_fid IN ({fids});
             """)
 
         if updates["elev_only"]:
@@ -249,17 +242,10 @@ class LeveesElevation(ElevationCorrector):
                 SET levcrest = (
                     SELECT ull.elev
                     FROM user_levee_lines AS ull
-                    JOIN grid AS g
-                      ON ST_Intersects(CastAutomagic(g.geom), CastAutomagic(ull.geom))
-                    WHERE ull.fid IN ({fids}) AND g.fid = ld.grid_fid
+                    WHERE ull.fid = ld.user_line_fid
+                    LIMIT 1 
                 )
-                WHERE EXISTS (
-                    SELECT 1
-                    FROM user_levee_lines AS ull
-                    JOIN grid AS g
-                      ON ST_Intersects(CastAutomagic(g.geom), CastAutomagic(ull.geom))
-                    WHERE ull.fid IN ({fids}) AND g.fid = ld.grid_fid
-                );
+                WHERE ld.user_line_fid IN ({fids});
             """)
 
         if updates["cor_only"]:
@@ -269,17 +255,10 @@ class LeveesElevation(ElevationCorrector):
                 SET levcrest = levcrest + (
                     SELECT ull.correction
                     FROM user_levee_lines AS ull
-                    JOIN grid AS g
-                      ON ST_Intersects(CastAutomagic(g.geom), CastAutomagic(ull.geom))
-                    WHERE ull.fid IN ({fids}) AND g.fid = ld.grid_fid
+                    WHERE ull.fid = ld.user_line_fid
+                    LIMIT 1 
                 )
-                WHERE EXISTS (
-                    SELECT 1
-                    FROM user_levee_lines AS ull
-                    JOIN grid AS g
-                      ON ST_Intersects(CastAutomagic(g.geom), CastAutomagic(ull.geom))
-                    WHERE ull.fid IN ({fids}) AND g.fid = ld.grid_fid
-                );
+                WHERE ld.user_line_fid IN ({fids});
             """)
 
 
