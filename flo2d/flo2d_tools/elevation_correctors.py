@@ -197,120 +197,91 @@ class LeveesElevation(ElevationCorrector):
 
     def elevation_from_lines(self):
         """
-        This function corrects the levcrest on levees.
+        This function corrects the levcrest on levees with improved performance.
         """
 
         user_levee_lines = self.lyrs.data["user_levee_lines"]["qlyr"]
 
-        for user_levee in user_levee_lines.getFeatures():
-            user_levee_fid = user_levee["fid"]
-            elev = user_levee["elev"]
-            cor = user_levee["correction"]
+        # Collect features into a batch
+        user_levee_features = [
+            (feature["fid"], feature["elev"], feature["correction"])
+            for feature in user_levee_lines.getFeatures()
+        ]
 
+        # Separate cases based on conditions
+        updates = {"elev_and_cor": [], "elev_only": [], "cor_only": []}
+
+        for fid, elev, cor in user_levee_features:
             if elev == NULL and cor == NULL:
                 continue
             elif elev != NULL and cor != NULL:
-                self.gutils.execute(f"""
-                                        UPDATE levee_data AS ld
-                                        SET levcrest = (
-                                            SELECT ull.correction + ull.elev
-                                            FROM user_levee_lines AS ull
-                                            JOIN grid AS g 
-                                              ON ST_Intersects(CastAutomagic(g.geom), CastAutomagic(ull.geom))
-                                            WHERE ull.fid = {user_levee_fid} AND g.fid = ld.grid_fid
-                                        )
-                                        WHERE EXISTS (
-                                            SELECT 1
-                                            FROM user_levee_lines AS ull
-                                            JOIN grid AS g 
-                                              ON ST_Intersects(CastAutomagic(g.geom), CastAutomagic(ull.geom))
-                                            WHERE ull.fid = {user_levee_fid} AND g.fid = ld.grid_fid
-                                        );
-                                    """)
+                updates["elev_and_cor"].append((fid, elev, cor))
             elif elev != NULL and cor == NULL:
-                self.gutils.execute(f"""
-                                        UPDATE levee_data AS ld
-                                        SET levcrest = (
-                                            SELECT ull.elev
-                                            FROM user_levee_lines AS ull
-                                            JOIN grid AS g 
-                                              ON ST_Intersects(CastAutomagic(g.geom), CastAutomagic(ull.geom))
-                                            WHERE ull.fid = {user_levee_fid} AND g.fid = ld.grid_fid
-                                        )
-                                        WHERE EXISTS (
-                                            SELECT 1
-                                            FROM user_levee_lines AS ull
-                                            JOIN grid AS g 
-                                              ON ST_Intersects(CastAutomagic(g.geom), CastAutomagic(ull.geom))
-                                            WHERE ull.fid = {user_levee_fid} AND g.fid = ld.grid_fid
-                                        );
-                                    """)
+                updates["elev_only"].append((fid, elev))
             elif elev == NULL and cor != NULL:
-                self.gutils.execute(f"""
-                                        UPDATE levee_data AS ld
-                                        SET levcrest = levcrest + (
-                                            SELECT ull.correction
-                                            FROM user_levee_lines AS ull
-                                            JOIN grid AS g 
-                                              ON ST_Intersects(CastAutomagic(g.geom), CastAutomagic(ull.geom))
-                                            WHERE ull.fid = {user_levee_fid} AND g.fid = ld.grid_fid
-                                        )
-                                        WHERE EXISTS (
-                                            SELECT 1
-                                            FROM user_levee_lines AS ull
-                                            JOIN grid AS g 
-                                              ON ST_Intersects(CastAutomagic(g.geom), CastAutomagic(ull.geom))
-                                            WHERE ull.fid = {user_levee_fid} AND g.fid = ld.grid_fid
-                                        );
-                                    """)
-            else:
-                continue
+                updates["cor_only"].append((fid, cor))
 
+        # Perform batch updates
+        if updates["elev_and_cor"]:
+            fids = ", ".join(str(fid) for fid, _, _ in updates["elev_and_cor"])
+            self.gutils.execute(f"""
+                UPDATE levee_data AS ld
+                SET levcrest = (
+                    SELECT ull.correction + ull.elev
+                    FROM user_levee_lines AS ull
+                    JOIN grid AS g
+                      ON ST_Intersects(CastAutomagic(g.geom), CastAutomagic(ull.geom))
+                    WHERE ull.fid IN ({fids}) AND g.fid = ld.grid_fid
+                )
+                WHERE EXISTS (
+                    SELECT 1
+                    FROM user_levee_lines AS ull
+                    JOIN grid AS g
+                      ON ST_Intersects(CastAutomagic(g.geom), CastAutomagic(ull.geom))
+                    WHERE ull.fid IN ({fids}) AND g.fid = ld.grid_fid
+                );
+            """)
 
-        # cur = self.gutils.con.cursor()
-        # # use moving window
-        # qryIndex = "CREATE INDEX if not exists leveeDataUser_Line_FID  ON levee_data (user_line_fid);"
-        # cur.execute(qryIndex)
-        # self.gutils.con.commit()
-        #
-        # grid = self.lyrs.data["grid"]["qlyr"]
-        # levee_data = self.lyrs.data["levee_data"]["qlyr"]
-        # levee_spatial_index = QgsSpatialIndex(levee_data.getFeatures())
-        #
-        # levee_data.startEditing()
-        #
-        # # Added an intermediate loop that iterates over each grid to get all features inside the grid element
-        # for grid_feature in grid.getFeatures():
-        #     grid_geometry = grid_feature.geometry()
-        #     bbox = grid_geometry.boundingBox()
-        #     levees_intersected = levee_spatial_index.intersects(bbox)
-        #     request = QgsFeatureRequest().setFilterFids(levees_intersected)
-        #
-        #     for feat in levee_data.getFeatures(request):
-        #         levee_data_fid = feat["fid"]
-        #
-        #         user_levee_lines_fid = feat["user_line_fid"]
-        #         user_levee_lines_data = self.gutils.execute(f"SELECT elev, correction FROM user_levee_lines WHERE fid "
-        #                                                     f"= '{user_levee_lines_fid}'").fetchall()[0]
-        #         elev = user_levee_lines_data[0]
-        #         cor = user_levee_lines_data[1]
-        #
-        #         levee_data.updateFeature(feat)
-        #
-        #         if elev == NULL and cor == NULL:
-        #             continue
-        #         elif elev != NULL and cor != NULL:
-        #             val = elev + cor
-        #             self.gutils.execute(f"UPDATE levee_data SET levcrest = {val} WHERE fid = {levee_data_fid};")
-        #         elif elev != NULL and cor == NULL:
-        #             val = elev
-        #             self.gutils.execute(f"UPDATE levee_data SET levcrest = {val} WHERE fid = {levee_data_fid};")
-        #         elif elev == NULL and cor != NULL:
-        #             val = cor
-        #             self.gutils.execute(f"UPDATE levee_data SET levcrest = levcrest + {val} WHERE fid = {levee_data_fid};")
-        #         else:
-        #             continue
-        #     levee_data.commitChanges()
+        if updates["elev_only"]:
+            fids = ", ".join(str(fid) for fid, _ in updates["elev_only"])
+            self.gutils.execute(f"""
+                UPDATE levee_data AS ld
+                SET levcrest = (
+                    SELECT ull.elev
+                    FROM user_levee_lines AS ull
+                    JOIN grid AS g
+                      ON ST_Intersects(CastAutomagic(g.geom), CastAutomagic(ull.geom))
+                    WHERE ull.fid IN ({fids}) AND g.fid = ld.grid_fid
+                )
+                WHERE EXISTS (
+                    SELECT 1
+                    FROM user_levee_lines AS ull
+                    JOIN grid AS g
+                      ON ST_Intersects(CastAutomagic(g.geom), CastAutomagic(ull.geom))
+                    WHERE ull.fid IN ({fids}) AND g.fid = ld.grid_fid
+                );
+            """)
+
+        if updates["cor_only"]:
+            fids = ", ".join(str(fid) for fid, _ in updates["cor_only"])
+            self.gutils.execute(f"""
+                UPDATE levee_data AS ld
+                SET levcrest = levcrest + (
+                    SELECT ull.correction
+                    FROM user_levee_lines AS ull
+                    JOIN grid AS g
+                      ON ST_Intersects(CastAutomagic(g.geom), CastAutomagic(ull.geom))
+                    WHERE ull.fid IN ({fids}) AND g.fid = ld.grid_fid
+                )
+                WHERE EXISTS (
+                    SELECT 1
+                    FROM user_levee_lines AS ull
+                    JOIN grid AS g
+                      ON ST_Intersects(CastAutomagic(g.geom), CastAutomagic(ull.geom))
+                    WHERE ull.fid IN ({fids}) AND g.fid = ld.grid_fid
+                );
+            """)
+
 
     @timer
     def elevation_from_polygons(self):
