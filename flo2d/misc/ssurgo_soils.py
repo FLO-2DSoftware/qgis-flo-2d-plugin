@@ -328,7 +328,7 @@ class SsurgoSoil(object):
         """Method for combining the chorizon and chfrags layer"""
         self.ssurgo_layer = self.joinLayers(self.soil_chorizon, self.soil_chfrags)
         self.ssurgo_layer = self.joinLayers(self.ssurgo_layer, self.soil_comp)
-        self.ssurgo_layer = self.deleteHoles(self.ssurgo_layer)
+        # self.ssurgo_layer = self.deleteHoles(self.ssurgo_layer)
         self.ssurgo_layer.setName("ssurgo")
         if self.saveLayers: self.saveSoilDataToGpkg(self.ssurgo_layer)
 
