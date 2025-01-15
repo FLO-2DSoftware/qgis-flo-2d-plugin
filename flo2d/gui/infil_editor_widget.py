@@ -909,10 +909,14 @@ class GreenAmptDialog(uiDialog_green, qtBaseClass_green):
             c.addItems(fields)
 
     def green_ampt_parameters(self):
-        sidx = self.soil_cbo.currentIndex()
-        soil_lyr = self.soil_cbo.itemData(sidx)
-        lidx = self.land_cbo.currentIndex()
-        land_lyr = self.land_cbo.itemData(lidx)
+
+        land_lyr = QgsProject.instance().mapLayersByName(self.land_cbo.currentText())
+        if land_lyr:
+            land_lyr = land_lyr[0]
+        soil_lyr = QgsProject.instance().mapLayersByName(self.soil_cbo.currentText())
+        if soil_lyr:
+            soil_lyr = soil_lyr[0]
+
         fields = [f.currentText() for f in chain(self.soil_combos, self.land_combos)]
         vc_check = self.veg_cover_chbox.isChecked()
         log_area_average = self.log_area_average_chbox.isChecked()
