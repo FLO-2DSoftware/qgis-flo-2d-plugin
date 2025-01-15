@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
-from PyQt5.QtWidgets import QApplication
+from PyQt5.QtCore import QSettings
+from PyQt5.QtWidgets import QApplication, QFileDialog
 # FLO-2D Preprocessor tools for QGIS
 # Copyright © 2021 Lutra Consulting for FLO-2D
 
@@ -61,6 +62,9 @@ class FLO2DWidget(qtBaseClass, uiDialog):
         self.setup_multiple_channels_editor()
         self.setup_pre_processing_tools()
 
+        # Setup the project folder
+        self.setup_project_folder()
+
         self.cgroups = [
             self.grid_tools_grp,
             self.bc_editor_new_grp,
@@ -85,6 +89,7 @@ class FLO2DWidget(qtBaseClass, uiDialog):
         self.show_flo2d_table_btn.clicked.connect(self.show_f2d_table)
         self.show_flo2d_plot_btn.clicked.connect(self.show_f2d_plot)
         self.clear_rubberband_btn.clicked.connect(self.lyrs.clear_rubber)
+        self.project_folder_selector_btn.clicked.connect(self.get_project_dir)
 
         # clear rubberband when collapsing the BC editor
         self.bc_editor_new_grp.collapsedStateChanged.connect(self.lyrs.clear_rubber)
@@ -204,3 +209,25 @@ class FLO2DWidget(qtBaseClass, uiDialog):
     def save_collapsible_groups(self):
         for grp in self.cgroups:
             grp.saveState()
+
+    def setup_project_folder(self):
+        """
+        Function to set up the project folder on the f2d_widget
+        """
+        s = QSettings()
+        project_dir = s.value("FLO-2D/lastGdsDir")
+        if project_dir:
+            self.project_folder_le.setText(project_dir)
+
+    def get_project_dir(self):
+        """
+        Function to get the project directory on the f2d_widget
+        """
+        s = QSettings()
+        project_dir = QFileDialog.getExistingDirectory(
+            None, "Select FLO-2D project folder", directory=self.project_folder_le.text()
+        )
+        if not project_dir:
+            return
+        self.project_folder_le.setText(project_dir)
+        s.setValue("FLO-2D/lastGdsDir", project_dir)
