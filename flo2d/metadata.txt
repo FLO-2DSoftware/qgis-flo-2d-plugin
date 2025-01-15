@@ -1,6 +1,6 @@
 [general]
 name=FLO-2D
-version=1.0.2
+version=1.1.0
 qgisMinimumVersion=3.22
 qgisMaximumVersion=3.99
 description=FLO-2D tools for QGIS
@@ -9,7 +9,7 @@ email=contact@flo-2d.com
 about=The FLO-2D Plugin for QGIS is a tool to develop, format, analyze, and display data used by the FLO-2D Flood Model. The Plugin can import project data, generate data and ex-port appropriately formatted FLO-2D data input files for a FLO-2D Project. The FLO-2D-Plugin reference manual, installed on your computer with the software, describes the assumptions, functions, and processes applied in the QGIS Plugin. A companion manual, the FLO-2D QGIS Plugin User’s Manual, describes the workflow, outlines the data structure and presents tutorials for the Plugin. It does not address the functionality and use of the FLO-2D model which has a separate set of reference manuals.
 
 changelog=
- <p>1.0.2
+ <p>1.1.0
  - General
     Added a backup button
     Improved tooltips
@@ -17,15 +17,24 @@ changelog=
     Removed the "Raster not found" message
     Automatically turn on switches 
     Improved the efficiency of exporting FPFROUDE
+ - Grid Tools
+    Added a filter on create grid from external layer
+    Added a filter on ARF & WRF from external layer
+ - Pre-processing Tools
+    Added a raster converter to quickly convert raster units
  - Initial Condition Editor
-    Populate data on the comboboxes based on the signal of layer edited
+    Populate data on the comboboxes based on the signal of layer edited   
  - Floodplain Cross-Section Editor
     Populate data on the comboboxes based on the signal of layer edited
+    Improved the IFLO directions combobox
  - Hydraulic Structures
     Changed the number to the name of the structure and clicking on the map and on the plot
  - Boundary Condition Editor
     Improved the Delete Schema Data button
     Simplified the Inflow Time Series combobox
+    Improved the efficiency of importing inflow data
+    Improved diagonal inflows
+    Divide the flow between schematized elements when exporting to INFLOW.DAT on line BCs
  - Storm Drain
     Added a new Storm Drain Profile plot and animation
     Improved the code for importing the SWMM.INP and other minor bug fixes
@@ -34,8 +43,12 @@ changelog=
     Inlet type set to 0 when importing from INP
  - Infiltration Editor
     Fixed the SSURGO and improved messages
+ - Levees and Breach Editor
+    Changed the elevation correction processing to a SQL processing
  - Bug Fixes
     Fixed a bug of the cell size being a float when importing DAT files
+    Fixed a bug of the Project Units for QGIS versions > 3.40
+    Fixed a bug of not updating correctly the PROJ_NAME on metadata
  <p>1.0.1
  - General
 	Added SWMM 5 GUI to the toolbar
