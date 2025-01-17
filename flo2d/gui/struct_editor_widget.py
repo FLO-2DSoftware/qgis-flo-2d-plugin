@@ -905,23 +905,87 @@ class StructEditorWidget(qtBaseClass, uiDialog):
             self.tview.undoStack.clear()
             self.tview.setModel(discharge_data_model)
             discharge_data_model.clear()
-            discharge_data_model.setHorizontalHeaderLabels(["Time (hours)",
-                                                            f"Discharge ({self.system_units[units][2]})"])
+            headers = ["Time (hours)", f"Discharge ({self.system_units[units][2]})"]
+            discharge_data_model.setHorizontalHeaderLabels(headers)
 
             data = zip(time_list, discharge_list)
-            for time, discharge in data:
+            for row, (time, discharge) in enumerate(data):
                 time_item = StandardItem("{:.2f}".format(time)) if time is not None else StandardItem("")
                 discharge_item = StandardItem("{:.2f}".format(discharge)) if discharge is not None else StandardItem("")
-                discharge_data_model.appendRow([time_item, discharge_item])
+                discharge_data_model.setItem(row, 0, time_item)
+                discharge_data_model.setItem(row, 1, discharge_item)
 
             self.tview.horizontalHeader().setStretchLastSection(True)
             for col in range(3):
                 self.tview.setColumnWidth(col, 100)
             for i in range(discharge_data_model.rowCount()):
                 self.tview.setRowHeight(i, 20)
-            return
         except:
             QApplication.restoreOverrideCursor()
             self.uc.bar_warn("Error while building table for hydraulic structure discharge!")
             self.uc.log_info("Error while building table for hydraulic structure discharge!")
             return
+
+        use_prs = s.value("FLO-2D/use_prs", "")
+        if use_prs:
+            scenario1 = s.value("FLO-2D/scenario1") + r"/HYDROSTRUCT.OUT" if s.value("FLO-2D/scenario1") != "" else None
+            scenario2 = s.value("FLO-2D/scenario2") + r"/HYDROSTRUCT.OUT" if s.value("FLO-2D/scenario2") != "" else None
+            scenario3 = s.value("FLO-2D/scenario3") + r"/HYDROSTRUCT.OUT" if s.value("FLO-2D/scenario3") != "" else None
+            scenario4 = s.value("FLO-2D/scenario4") + r"/HYDROSTRUCT.OUT" if s.value("FLO-2D/scenario4") != "" else None
+            scenario5 = s.value("FLO-2D/scenario5") + r"/HYDROSTRUCT.OUT" if s.value("FLO-2D/scenario5") != "" else None
+            scenarios = [scenario1, scenario2, scenario3, scenario4, scenario5]
+            j = 1
+            for scenario in scenarios:
+                if scenario:
+                    with open(scenario, "r") as myfile:
+                        time_list = []
+                        discharge_list = []
+                        pattern = r'THE MAXIMUM DISCHARGE FOR:\s+(\w+)\s+STRUCTURE\sNO.\s+(\d+)\s+IS:'
+                        structure_name = None
+                        while True:
+                            try:
+                                line = next(myfile)
+                                match = re.search(pattern, line)
+                                if match:
+                                    matched_structure_name = match.group(1)
+                                    matched_structure_number = int(match.group(2))
+                                    if matched_structure_number == fid:
+                                        structure_name = matched_structure_name
+                                        line = next(myfile)
+                                        while True:
+                                            line = next(myfile)
+                                            if not line.strip():  # If the line is empty, exit the loop
+                                                break
+                                            line = line.split()
+                                            time_list.append(float(line[0]))
+                                            discharge_list.append(float(line[1]))
+                                        break
+                            except StopIteration:
+                                break
+
+                    if j == 1:
+                        color = Qt.yellow
+                    if j == 2:
+                        color = Qt.darkGreen
+                    if j == 3:
+                        color = Qt.green
+                    if j == 4:
+                        color = Qt.darkBlue
+                    if j == 5:
+                        color = Qt.blue
+                    self.plot.add_item(f"Discharge ({self.system_units[units][2]}) - Scenario {j}", [time_list, discharge_list],
+                                       col=QColor(color), sty=Qt.SolidLine)
+
+                    headers.extend([f"Discharge ({self.system_units[units][2]}) - Scenario {j}"])
+                    discharge_data_model.setHorizontalHeaderLabels(headers)
+
+                    new_column_index = discharge_data_model.columnCount() - 1
+                    data = zip(time_list, discharge_list)
+                    for row, (_, discharge) in enumerate(data):
+                        discharge_item = StandardItem(
+                            "{:.2f}".format(discharge)) if discharge is not None else StandardItem("")
+                        discharge_data_model.setItem(row, new_column_index, discharge_item)
+
+
+                j += 1
+
