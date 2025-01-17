@@ -69,6 +69,7 @@ from .gui.dlg_hazus import HazusDialog
 from .gui.dlg_issues import ErrorsDialog
 from .gui.dlg_levee_elev import LeveesToolDialog
 from .gui.dlg_mud_and_sediment import MudAndSedimentDialog
+from .gui.dlg_project_review_scenarios import ProjectReviewScenariosDialog
 from .gui.dlg_ras_import import RasImportDialog
 from .gui.dlg_schem_xs_info import SchemXsecEditorDialog
 from .gui.dlg_schema2user import Schema2UserDialog
@@ -531,6 +532,11 @@ class Flo2D(object):
             callback=None,
             parent=self.iface.mainWindow(),
             menu=(
+                (
+                    os.path.join(self.plugin_dir, "img/project-review.svg"),
+                    "Project Review - Scenarios",
+                    lambda: self.show_project_review_dialog(),
+                ),
                 (
                     os.path.join(self.plugin_dir, "img/hazus.svg"),
                     "HAZUS",
@@ -4365,10 +4371,31 @@ class Flo2D(object):
         #     )
 
     @connection_required
+    def show_project_review_dialog(self):
+        """
+        Function to show the project review dialog
+        """
+        self.uncheck_all_info_tools()
+        if self.gutils.is_table_empty("grid"):
+            self.uc.bar_warn("There is no grid! Please create it before running tool.")
+            self.uc.log_info("There is no grid! Please create it before running tool.")
+            return
+
+        dlg_prs = ProjectReviewScenariosDialog(self.iface)
+        dlg_prs.show()
+        while True:
+            ok = dlg_prs.exec_()
+            if ok:
+                break
+            else:
+                return
+
+    @connection_required
     def show_hazus_dialog(self):
         self.uncheck_all_info_tools()
         if self.gutils.is_table_empty("grid"):
             self.uc.bar_warn("There is no grid! Please create it before running tool.")
+            self.uc.log_info("There is no grid! Please create it before running tool.")
             return
 
         s = QSettings()
