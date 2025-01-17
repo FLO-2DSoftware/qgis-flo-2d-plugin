@@ -370,30 +370,115 @@ class FPXsecEditorWidget(qtBaseClass, uiDialog):
             self.tview.undoStack.clear()
             self.tview.setModel(discharge_data_model)
             discharge_data_model.clear()
-            discharge_data_model.setHorizontalHeaderLabels(["Time (hours)",
-                                                            f"Discharge ({self.system_units[units][2]})",
-                                                            f"Flow Width ({self.system_units[units][0]})",
-                                                            f"Water Surface Elevation ({self.system_units[units][0]})"])
+            headers = ["Time (hours)",
+                        f"Discharge ({self.system_units[units][2]})",
+                        f"Flow Width ({self.system_units[units][0]})",
+                        f"Water Surface Elevation ({self.system_units[units][0]})"]
+            discharge_data_model.setHorizontalHeaderLabels(headers)
 
             data = zip(time_list, discharge_list, flow_width_list, wse_list)
-            for time, discharge, flow, wse in data:
+            for row, (time, discharge, flow, wse) in enumerate(data):
                 time_item = StandardItem("{:.2f}".format(time)) if time is not None else StandardItem("")
                 discharge_item = StandardItem("{:.2f}".format(discharge)) if discharge is not None else StandardItem("")
                 flow_item = StandardItem("{:.2f}".format(flow)) if flow is not None else StandardItem("")
                 wse_item = StandardItem("{:.2f}".format(wse)) if wse is not None else StandardItem("")
-                discharge_data_model.appendRow([time_item, discharge_item, flow_item, wse_item])
+                discharge_data_model.setItem(row, 0, time_item)
+                discharge_data_model.setItem(row, 1, discharge_item)
+                discharge_data_model.setItem(row, 2, flow_item)
+                discharge_data_model.setItem(row, 3, wse_item)
 
             self.tview.horizontalHeader().setStretchLastSection(True)
             for col in range(3):
                 self.tview.setColumnWidth(col, 100)
             for i in range(discharge_data_model.rowCount()):
                 self.tview.setRowHeight(i, 20)
-            return
         except:
             QApplication.restoreOverrideCursor()
             self.uc.bar_error("Error while building table for floodplain cross section!")
             self.uc.log_info("Error while building table for floodplain cross section!")
             return
+
+        use_prs = s.value("FLO-2D/use_prs", "")
+        if use_prs:
+            scenario1 = s.value("FLO-2D/scenario1") + r"/HYCROSS.OUT" if s.value("FLO-2D/scenario1") != "" else None
+            scenario2 = s.value("FLO-2D/scenario2") + r"/HYCROSS.OUT" if s.value("FLO-2D/scenario2") != "" else None
+            scenario3 = s.value("FLO-2D/scenario3") + r"/HYCROSS.OUT" if s.value("FLO-2D/scenario3") != "" else None
+            scenario4 = s.value("FLO-2D/scenario4") + r"/HYCROSS.OUT" if s.value("FLO-2D/scenario4") != "" else None
+            scenario5 = s.value("FLO-2D/scenario5") + r"/HYCROSS.OUT" if s.value("FLO-2D/scenario5") != "" else None
+            scenarios = [scenario1, scenario2, scenario3, scenario4, scenario5]
+            j = 1
+            for scenario in scenarios:
+                if scenario:
+                    with open(scenario, "r") as myfile:
+                        while True:
+                            time_list = []
+                            discharge_list = []
+                            flow_width_list = []
+                            wse_list = []
+                            line = next(myfile)
+                            if "THE MAXIMUM DISCHARGE FROM CROSS SECTION" in line:
+                                if line.split()[6] == str(fid):
+                                    for _ in range(9):
+                                        line = next(myfile)
+                                    while True:
+                                        try:
+                                            line = next(myfile)
+                                            if not line.strip():
+                                                break
+                                            line = line.split()
+                                            time_list.append(float(line[0]))
+                                            discharge_list.append(float(line[5]))
+                                            flow_width_list.append(float(line[1]))
+                                            wse_list.append(float(line[3]))
+                                        except StopIteration:
+                                            break
+                                    break
+
+                        if j == 1:
+                            color1 = Qt.blue
+                            color2 = Qt.darkBlue
+                            color3 = "#3282F6"
+                        if j == 2:
+                            color1 = Qt.red
+                            color2 = Qt.darkRed
+                            color3 = "#3A0603"
+                        if j == 3:
+                            color1 = Qt.magenta
+                            color2 = Qt.darkMagenta
+                            color3 = "#EE8AF8"
+                        if j == 4:
+                            color1 = Qt.gray
+                            color2 = Qt.darkGray
+                            color3 = Qt.lightGray
+                        if j == 5:
+                            color1 = Qt.cyan
+                            color2 = Qt.darkCyan
+                            color3 = "#B0FBFD"
+
+                    self.plot.add_item(f"Discharge ({self.system_units[units][2]}) - Scenario {j}", [time_list, discharge_list],
+                                       col=QColor(color1), sty=Qt.SolidLine)
+                    self.plot.add_item(f"Flow Width ({self.system_units[units][0]}) - Scenario {j}", [time_list, flow_width_list],
+                                       col=QColor(color2), sty=Qt.SolidLine, hide=True)
+                    self.plot.add_item(f"Water Surface Elevation ({self.system_units[units][0]}) - Scenario {j}",
+                                       [time_list, wse_list], col=QColor(color3), sty=Qt.SolidLine, hide=True)
+
+                    headers.extend([f"Discharge ({self.system_units[units][2]}) - Scenario {j}",
+                                    f"Flow Width ({self.system_units[units][0]}) - Scenario {j}",
+                                    f"Water Surface Elevation ({self.system_units[units][0]}) - Scenario {j}"])
+                    discharge_data_model.setHorizontalHeaderLabels(headers)
+
+                    new_column_index = discharge_data_model.columnCount() - 3
+
+                    data = zip(time_list, discharge_list, flow_width_list, wse_list)
+                    for row, (_, discharge, flow, wse) in enumerate(data):
+                        discharge_item = StandardItem("{:.2f}".format(discharge)) if discharge is not None else StandardItem("")
+                        flow_item = StandardItem("{:.2f}".format(flow)) if flow is not None else StandardItem("")
+                        wse_item = StandardItem("{:.2f}".format(wse)) if wse is not None else StandardItem("")
+                        discharge_data_model.setItem(row, new_column_index, discharge_item)
+                        discharge_data_model.setItem(row, new_column_index + 1, flow_item)
+                        discharge_data_model.setItem(row, new_column_index + 2, wse_item)
+
+                j += 1
 
     def show_cells_hydrograph(self, table, fid):
         """
