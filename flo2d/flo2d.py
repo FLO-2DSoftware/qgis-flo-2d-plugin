@@ -1713,7 +1713,7 @@ class Flo2D(object):
 
                     s = QSettings()
                     s.setValue("FLO-2D/last_flopro_project", qgs_file)
-                    s.setValue("FLO-2D/lastGdsDir", os.path.dirname(new_gpkg))
+                    # s.setValue("FLO-2D/lastGdsDir", os.path.dirname(new_gpkg))
                     window_title = s.value("FLO-2D/last_flopro_project", "")
                     self.iface.mainWindow().setWindowTitle(window_title)
                     QApplication.restoreOverrideCursor()
@@ -1753,7 +1753,7 @@ class Flo2D(object):
 
                 s = QSettings()
                 s.setValue("FLO-2D/last_flopro_project", qgs_file)
-                s.setValue("FLO-2D/lastGdsDir", os.path.dirname(new_gpkg))
+                # s.setValue("FLO-2D/lastGdsDir", os.path.dirname(new_gpkg))
                 window_title = s.value("FLO-2D/last_flopro_project", "")
                 self.iface.mainWindow().setWindowTitle(window_title)
                 QApplication.restoreOverrideCursor()
