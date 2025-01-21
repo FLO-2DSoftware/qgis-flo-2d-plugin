@@ -13,6 +13,7 @@ from qgis.PyQt.QtCore import QSize
 from qgis._gui import QgsDockWidget
 
 from .bc_editor_widget_new import BCEditorWidgetNew
+from .multiple_domains_editor_widget import MultipleDomainsEditorWidget
 from ..user_communication import UserCommunication
 # from .bc_editor_widget import BCEditorWidget
 from .channels_editor_widget import ChannelsEditorWidget
@@ -60,6 +61,7 @@ class FLO2DWidget(qtBaseClass, uiDialog):
         self.setup_infil_editor()
         self.setup_levee_and_breach_editor()
         self.setup_multiple_channels_editor()
+        self.setup_multiple_domains_editor()
         self.setup_pre_processing_tools()
 
         # Setup the project folder
@@ -80,6 +82,7 @@ class FLO2DWidget(qtBaseClass, uiDialog):
             self.profile_tool_grp,
             self.levee_and_breach_editor_grp,
             self.multiple_channels_editor_grp,
+            self.multiple_domains_editor_grp,
             self.pre_processing_grp
         ]
         self.set_collapsible_groups()
@@ -194,6 +197,10 @@ class FLO2DWidget(qtBaseClass, uiDialog):
     def setup_multiple_channels_editor(self):
         self.multiple_channels_editor = MultipleChannelsEditorWidget(self.iface, self.lyrs)
         self.multiple_channels_lout.addWidget(self.multiple_channels_editor)
+
+    def setup_multiple_domains_editor(self):
+        self.multiple_domains_editor = MultipleDomainsEditorWidget(self.iface, self.lyrs)
+        self.multiple_domains_lout.addWidget(self.multiple_domains_editor)
 
     def setup_pre_processing_tools(self):
         self.pre_processing_tools = PreProcessingWidget(self.iface, self.lyrs)

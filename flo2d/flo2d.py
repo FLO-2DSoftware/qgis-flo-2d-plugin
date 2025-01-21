@@ -191,6 +191,9 @@ class Flo2D(object):
         self.grid_info_tool.grid_elem_picked.connect(self.f2d_grid_info.update_fields)
 
         self.f2d_widget.grid_tools.setup_connection()
+
+        self.f2d_widget.pre_processing_tools.setup_connection()
+
         self.f2d_widget.profile_tool.setup_connection()
 
         self.f2d_widget.rain_editor.setup_connection()
@@ -223,7 +226,7 @@ class Flo2D(object):
 
         self.f2d_widget.multiple_channels_editor.setup_connection()
 
-        self.f2d_widget.pre_processing_tools.setup_connection()
+        self.f2d_widget.multiple_domains_editor.setup_connection()
 
     def add_action(
             self,
