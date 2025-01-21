@@ -548,6 +548,54 @@ class Layers(object):
                         "advanced": True
                     },
                 ),
+                (
+                    "mult_domains",
+                    {
+                        "name": "Domains",
+                        "sgroup": "User Layers",
+                        "ssgroup": "Multiple Domains",
+                        "styles": None,
+                        "attrs_edit_widgets": {},
+                        "readonly": False,
+                        "advanced": False
+                    },
+                ),
+                (
+                    "user_md_connect_points",
+                    {
+                        "name": "Connectivity Points",
+                        "sgroup": "User Layers",
+                        "ssgroup": "Multiple Domains",
+                        "styles": None,
+                        "attrs_edit_widgets": {},
+                        "readonly": False,
+                        "advanced": False
+                    },
+                ),
+                (
+                    "user_md_connect_lines",
+                    {
+                        "name": "Connectivity Lines",
+                        "sgroup": "User Layers",
+                        "ssgroup": "Multiple Domains",
+                        "styles": None,
+                        "attrs_edit_widgets": {},
+                        "readonly": False,
+                        "advanced": False
+                    },
+                ),
+                (
+                    "user_md_connect_polygons",
+                    {
+                        "name": "Connectivity Polygons",
+                        "sgroup": "User Layers",
+                        "ssgroup": "Multiple Domains",
+                        "styles": None,
+                        "attrs_edit_widgets": {},
+                        "readonly": False,
+                        "advanced": False
+                    },
+                ),
                 # Schematic layers:
                 (
                     "grid",
@@ -907,7 +955,20 @@ class Layers(object):
                         "readonly": False,
                         "advanced": True
                     },
-                ),                
+                ),
+                # Multiple Domains Layers
+                (
+                    "schema_md_connect_cells",
+                    {
+                        "name": "Multiple Domains Cells",
+                        "sgroup": "Schematic Layers",
+                        "ssgroup": "Multiple Domains",
+                        "styles": None,
+                        "attrs_edit_widgets": {},
+                        "readonly": False,
+                        "advanced": False
+                    },
+                ),
                 # Infiltration Layers
                 (
                     "infil",
