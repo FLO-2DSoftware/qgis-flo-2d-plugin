@@ -530,21 +530,23 @@ class FPXsecEditorWidget(qtBaseClass, uiDialog):
         if azimuth < 0:
             azimuth += 360
 
-        if 337.5 <= azimuth or azimuth < 22.5:
+        perp_azimuth = (azimuth + 90) % 360
+
+        if 337.5 <= perp_azimuth or perp_azimuth < 22.5:
             return [1, 3]
-        elif 22.5 <= azimuth < 67.5:
+        elif 22.5 <= perp_azimuth < 67.5:
             return [5, 7]
-        elif 67.5 <= azimuth < 112.5:
+        elif 67.5 <= perp_azimuth < 112.5:
             return [2, 4]
-        elif 112.5 <= azimuth < 157.5:
+        elif 112.5 <= perp_azimuth < 157.5:
             return [6, 8]
-        elif 157.5 <= azimuth < 202.5:
+        elif 157.5 <= perp_azimuth < 202.5:
             return [3, 1]
-        elif 202.5 <= azimuth < 247.5:
+        elif 202.5 <= perp_azimuth < 247.5:
             return [7, 5]
-        elif 247.5 <= azimuth < 292.5:
+        elif 247.5 <= perp_azimuth < 292.5:
             return [4, 2]
-        elif 292.5 <= azimuth < 337.5:
+        elif 292.5 <= perp_azimuth < 337.5:
             return [8, 6]
 
 
