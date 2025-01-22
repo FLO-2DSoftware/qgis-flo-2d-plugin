@@ -549,51 +549,27 @@ class Layers(object):
                     },
                 ),
                 (
-                    "mult_domains",
-                    {
-                        "name": "Domains",
-                        "sgroup": "User Layers",
-                        "ssgroup": "Multiple Domains",
-                        "styles": None,
-                        "attrs_edit_widgets": {},
-                        "readonly": False,
-                        "advanced": False
-                    },
-                ),
-                (
-                    "user_md_connect_points",
-                    {
-                        "name": "Connectivity Points",
-                        "sgroup": "User Layers",
-                        "ssgroup": "Multiple Domains",
-                        "styles": None,
-                        "attrs_edit_widgets": {},
-                        "readonly": False,
-                        "advanced": False
-                    },
-                ),
-                (
                     "user_md_connect_lines",
                     {
                         "name": "Connectivity Lines",
                         "sgroup": "User Layers",
                         "ssgroup": "Multiple Domains",
-                        "styles": None,
+                        "styles": ["connect_lines.qml"],
                         "attrs_edit_widgets": {},
                         "readonly": False,
                         "advanced": False
                     },
                 ),
                 (
-                    "user_md_connect_polygons",
-                    {
-                        "name": "Connectivity Polygons",
-                        "sgroup": "User Layers",
-                        "ssgroup": "Multiple Domains",
-                        "styles": None,
-                        "attrs_edit_widgets": {},
-                        "readonly": False,
-                        "advanced": False
+                "mult_domains",
+                {
+                    "name": "Domains",
+                    "sgroup": "User Layers",
+                    "ssgroup": "Multiple Domains",
+                    "styles": ["domains.qml"],
+                    "attrs_edit_widgets": {},
+                    "readonly": False,
+                    "advanced": False
                     },
                 ),
                 # Schematic layers:
@@ -958,12 +934,24 @@ class Layers(object):
                 ),
                 # Multiple Domains Layers
                 (
-                    "schema_md_connect_cells",
+                    "schema_md_cells",
                     {
-                        "name": "Multiple Domains Cells",
+                        "name": "Domains Cells",
                         "sgroup": "Schematic Layers",
                         "ssgroup": "Multiple Domains",
-                        "styles": None,
+                        "styles": ["domain_cells.qml"],
+                        "attrs_edit_widgets": {},
+                        "readonly": False,
+                        "advanced": False
+                    },
+                ),
+                (
+                    "schema_md_connect_cells",
+                    {
+                        "name": "Connectivity Cells",
+                        "sgroup": "Schematic Layers",
+                        "ssgroup": "Multiple Domains",
+                        "styles": ["connect_cells.qml"],
                         "attrs_edit_widgets": {},
                         "readonly": False,
                         "advanced": False

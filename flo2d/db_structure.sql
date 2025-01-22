@@ -1338,16 +1338,6 @@ INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('mult_domains'
 SELECT gpkgAddGeometryColumn('mult_domains', 'geom', 'POLYGON', 0, 0, 0);
 SELECT gpkgAddGeometryTriggers('mult_domains', 'geom');
 
-CREATE TABLE "user_md_connect_points" (
-    "fid" INTEGER NOT NULL PRIMARY KEY,
-    "name" TEXT, -- fid of the domain on the mult_domains
-    "domain_fid" INTEGER,
-    "notes" TEXT
-);
-INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('user_md_connect_points', 'features', 4326);
-SELECT gpkgAddGeometryColumn('user_md_connect_points', 'geom', 'POINT', 0, 0, 0);
-SELECT gpkgAddGeometryTriggers('user_md_connect_points', 'geom');
-
 CREATE TABLE "user_md_connect_lines" (
     "fid" INTEGER NOT NULL PRIMARY KEY,
     "name" TEXT, -- fid of the domain on the mult_domains
@@ -1358,20 +1348,22 @@ INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('user_md_conne
 SELECT gpkgAddGeometryColumn('user_md_connect_lines', 'geom', 'LINESTRING', 0, 0, 0);
 SELECT gpkgAddGeometryTriggers('user_md_connect_lines', 'geom');
 
-CREATE TABLE "user_md_connect_polygons" (
+CREATE TABLE "schema_md_cells" (
     "fid" INTEGER NOT NULL PRIMARY KEY,
-    "name" TEXT, -- fid of the domain on the mult_domains
     "domain_fid" INTEGER,
-    "notes" TEXT
+    "n_value" REAL,
+    "elevation" REAL
 );
-INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('user_md_connect_polygons', 'features', 4326);
-SELECT gpkgAddGeometryColumn('user_md_connect_polygons', 'geom', 'POLYGON', 0, 0, 0);
-SELECT gpkgAddGeometryTriggers('user_md_connect_polygons', 'geom');
+INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('schema_md_cells', 'features', 4326);
+SELECT gpkgAddGeometryColumn('schema_md_cells', 'geom', 'POLYGON', 0, 0, 0);
+SELECT gpkgAddGeometryTriggers('schema_md_cells', 'geom');
+SELECT gpkgAddSpatialIndex('schema_md_cells', 'geom');
 
 CREATE TABLE "schema_md_connect_cells" (
     "fid" INTEGER NOT NULL PRIMARY KEY,
     "domain_fid" INTEGER,
-    "grid_fid" INTEGER
+    "grid_fid" INTEGER,
+    "domain_cell" INTEGER
 );
 INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('schema_md_connect_cells', 'features', 4326);
 SELECT gpkgAddGeometryColumn('schema_md_connect_cells', 'geom', 'POINT', 0, 0, 0);
