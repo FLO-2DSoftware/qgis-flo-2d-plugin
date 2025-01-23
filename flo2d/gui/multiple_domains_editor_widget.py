@@ -1,13 +1,14 @@
 #  -*- coding: utf-8 -*-
-from PyQt5.QtWidgets import QApplication, QProgressDialog
-from qgis._core import QgsGeometry
+from PyQt5.QtWidgets import QApplication, QProgressDialog, QInputDialog
+from qgis.PyQt.QtCore import NULL
+from qgis._core import QgsGeometry, QgsFeatureRequest
 
 from ..flo2d_tools.grid_tools import square_grid, build_grid, number_of_elements, grid_compas_neighbors
 from ..geopackage_utils import GeoPackageUtils
 # FLO-2D Preprocessor tools for QGIS
 
 from ..user_communication import UserCommunication
-from .ui_utils import load_ui
+from .ui_utils import load_ui, center_canvas
 
 uiDialog, qtBaseClass = load_ui("multiple_domains_editor")
 
@@ -22,25 +23,38 @@ class MultipleDomainsEditorWidget(qtBaseClass, uiDialog):
         self.setupUi(self)
         self.uc = UserCommunication(iface, "FLO-2D")
         self.grid_lyr = None
+        self.gutils = None
+
+        self.setup_connection()
+        self.populate_md_cbos()
+        self.populate_connect_cbos()
 
         # Domain Creation - Connections
         self.create_md_polygon_btn.clicked.connect(self.create_md_polygon)
         self.rollback_md_btn.clicked.connect(self.cancel_mult_domains_edits)
         self.delete_md_schema_btn.clicked.connect(self.delete_schema_md)
         # self.md_help_btn.clicked.connect()
-        # self.change_md_name_btn.clicked.connect()
-        # self.delete_md_btn.clicked.connect()
-        # self.md_center_btn.clicked.connect()
+        self.change_md_name_btn.clicked.connect(self.change_md_name)
+        self.delete_md_btn.clicked.connect(self.delete_md)
+        self.md_center_btn.clicked.connect(self.md_center)
         #
         # # Connectivity Creation - Connections
         self.create_connect_line_btn.clicked.connect(self.create_connectivity_line)
         self.rollback_connect_btn.clicked.connect(self.cancel_user_md_connect_lines_edits)
-        # self.change_connect_name_btn.clicked.connect()
-        # self.delete_connect_btn.clicked.connect()
-        # self.connect_center_btn.clicked.connect()
+        self.change_connect_name_btn.clicked.connect(self.change_connect_name)
+        self.delete_connect_btn.clicked.connect(self.delete_connect)
+        self.connect_center_btn.clicked.connect(self.connect_center)
 
         self.schematize_md_btn.clicked.connect(self.schematize_md)
         # self.export_md_gpkg.clicked.connect()
+
+        self.mult_domains = self.lyrs.data["mult_domains"]["qlyr"]
+        self.mult_domains.afterCommitChanges.connect(self.populate_md_cbos)
+        self.md_name_cbo.currentIndexChanged.connect(self.md_index_changed)
+
+        self.user_md_connect_lines = self.lyrs.data["user_md_connect_lines"]["qlyr"]
+        self.user_md_connect_lines.afterCommitChanges.connect(self.populate_connect_cbos)
+        self.connect_name_cbo.currentIndexChanged.connect(self.connect_index_changed)
 
     def setup_connection(self):
         """
@@ -53,9 +67,104 @@ class MultipleDomainsEditorWidget(qtBaseClass, uiDialog):
             self.con = con
             self.gutils = GeoPackageUtils(self.con, self.iface)
 
+    def populate_md_cbos(self, fid=None):
+        """
+        Function to populate the multi domain comboboxes
+        """
+        self.md_name_cbo.clear()
+        self.cellsize_le.clear()
+
+        qry = "SELECT fid, name FROM mult_domains;"
+        rows = self.gutils.execute(qry).fetchall()
+        if rows:
+            cur_idx = 0
+            for i, row in enumerate(rows):
+                md_name = row[1]
+                self.md_name_cbo.addItem(md_name)
+                if fid and row[0] == fid:
+                    cur_idx = i
+            self.md_name_cbo.setCurrentIndex(cur_idx)
+            cellsize = self.gutils.execute(f"SELECT domain_cellsize FROM mult_domains WHERE fid = {cur_idx + 1};").fetchone()
+            if cellsize:
+                cellsize = cellsize[0]
+                self.cellsize_le.setText(str(cellsize))
+
+        self.uncheck_md_btns()
+
+    def md_index_changed(self):
+        """
+        Function to update the multi domain comboxes when the index changes
+        """
+        domain_name = self.md_name_cbo.currentText()
+        cellsize = self.gutils.execute(f"SELECT domain_cellsize FROM mult_domains WHERE name = '{domain_name}';").fetchone()
+        if cellsize:
+            self.cellsize_le.setText(str(cellsize[0]))
+
+        if self.md_center_btn.isChecked():
+            fid_qry = self.gutils.execute(
+                f"SELECT fid FROM mult_domains WHERE name = '{self.md_name_cbo.currentText()}';").fetchone()
+            if fid_qry:
+                fid = fid_qry[0]
+            else:
+                return
+            self.lyrs.show_feat_rubber(self.mult_domains.id(), fid)
+            feat = next(self.mult_domains.getFeatures(QgsFeatureRequest(fid)))
+            x, y = feat.geometry().centroid().asPoint()
+            center_canvas(self.iface, x, y)
+
+    def populate_connect_cbos(self, fid=None):
+        """
+        Function to populate the connectivity comboboxes
+        """
+        self.connect_name_cbo.clear()
+        self.connect_domain_cbo.clear()
+
+        qry = "SELECT fid FROM mult_domains;"
+        rows = self.gutils.execute(qry).fetchall()
+        if rows:
+            for fid in rows:
+                self.connect_domain_cbo.addItem(str(fid[0]))
+
+        qry = "SELECT fid, name FROM user_md_connect_lines;"
+        rows = self.gutils.execute(qry).fetchall()
+        if rows:
+            cur_idx = 0
+            for i, row in enumerate(rows):
+                connect_name = row[1]
+                self.connect_name_cbo.addItem(connect_name)
+                if fid and row[0] == fid:
+                    cur_idx = i
+            self.connect_name_cbo.setCurrentIndex(cur_idx)
+            domain_id = self.gutils.execute(f"SELECT domain_fid FROM user_md_connect_lines WHERE fid = {cur_idx + 1};").fetchone()
+            if domain_id:
+                domain_id = domain_id[0]
+                self.connect_domain_cbo.setCurrentIndex(self.connect_domain_cbo.findText(str(domain_id)))
+
+        self.uncheck_connectivity_btns()
+
+    def connect_index_changed(self):
+        """
+        Function to update the connecvitity comboxes when the index changes
+        """
+        connect_name = self.connect_name_cbo.currentText()
+        domain_id = self.gutils.execute(f"SELECT domain_fid FROM user_md_connect_lines WHERE name = '{connect_name}';").fetchone()
+        if domain_id:
+            self.connect_domain_cbo.setCurrentIndex(self.connect_domain_cbo.findText(str(domain_id[0])))
+        if self.connect_center_btn.isChecked():
+            fid_qry = self.gutils.execute(
+                f"SELECT fid FROM user_md_connect_lines WHERE name = '{self.connect_name_cbo.currentText()}';").fetchone()
+            if fid_qry:
+                fid = fid_qry[0]
+            else:
+                return
+            self.lyrs.show_feat_rubber(self.user_md_connect_lines.id(), fid)
+            feat = next(self.user_md_connect_lines.getFeatures(QgsFeatureRequest(fid)))
+            x, y = feat.geometry().centroid().asPoint()
+            center_canvas(self.iface, x, y)
+
     def create_md_polygon(self):
         """
-        Function to start editing and finish editing the multiple domain polygons
+        Function to start editing and finish editing the connectivity
         """
         if self.lyrs.any_lyr_in_edit("mult_domains"):
             self.uc.bar_info(f"Domains saved!")
@@ -300,3 +409,141 @@ class MultipleDomainsEditorWidget(qtBaseClass, uiDialog):
         self.lyrs.clear_rubber()
         self.lyrs.data["schema_md_cells"]["qlyr"].triggerRepaint()
         self.lyrs.data["schema_md_connect_cells"]["qlyr"].triggerRepaint()
+
+    def change_md_name(self):
+        """
+        Function to change the domain name
+        """
+        if not self.md_name_cbo.count():
+            return
+        fid_qry = self.gutils.execute(f"SELECT fid FROM mult_domains WHERE name = '{self.md_name_cbo.currentText()}';").fetchone()
+        if fid_qry:
+            fid = fid_qry[0]
+        else:
+            return
+        new_name, ok = QInputDialog.getText(None, "Change name", "New name:")
+        if not ok or not new_name:
+            return
+        if not self.md_name_cbo.findText(new_name) == -1:
+            msg = "Domain with name {} already exists in the database. Please, choose another name.".format(
+                new_name
+            )
+            self.uc.show_warn(msg)
+            self.uc.log_info(msg)
+            return
+
+        self.gutils.execute(f"UPDATE mult_domains SET name = '{new_name}' WHERE fid = {fid};")
+        self.populate_md_cbos()
+        self.uc.bar_info("Domain name changed!")
+        self.uc.log_info("Domain name changed!")
+
+    def delete_md(self):
+        """
+        Function to delete the domain
+        """
+        if not self.md_name_cbo.count():
+            return
+        fid_qry = self.gutils.execute(f"SELECT fid FROM mult_domains WHERE name = '{self.md_name_cbo.currentText()}';").fetchone()
+        if fid_qry:
+            fid = fid_qry[0]
+        else:
+            return
+        q = "Are you sure, you want delete the current domain?"
+        if not self.uc.question(q):
+            return
+        self.gutils.execute(f"DELETE FROM mult_domains WHERE fid = {fid};")
+        self.populate_md_cbos()
+        self.mult_domains.triggerRepaint()
+        self.uc.bar_info("Domain deleted!")
+        self.uc.log_info("Domain deleted!")
+
+    def md_center(self):
+        """
+        Function to check the md eye button
+        """
+        if self.md_center_btn.isChecked():
+            self.md_center_btn.setChecked(True)
+            fid_qry = self.gutils.execute(
+                f"SELECT fid FROM mult_domains WHERE name = '{self.md_name_cbo.currentText()}';").fetchone()
+            if fid_qry:
+                fid = fid_qry[0]
+            else:
+                return
+            self.lyrs.show_feat_rubber(self.mult_domains.id(), fid)
+            feat = next(self.mult_domains.getFeatures(QgsFeatureRequest(fid)))
+            x, y = feat.geometry().centroid().asPoint()
+            center_canvas(self.iface, x, y)
+            return
+        else:
+            self.md_center_btn.setChecked(False)
+            self.lyrs.clear_rubber()
+            return
+
+    def change_connect_name(self):
+        """
+        Function to change the connectivity name
+        """
+        if not self.connect_name_cbo.count():
+            return
+        fid_qry = self.gutils.execute(f"SELECT fid FROM user_md_connect_lines WHERE name = '{self.connect_name_cbo.currentText()}';").fetchone()
+        if fid_qry:
+            fid = fid_qry[0]
+        else:
+            return
+        new_name, ok = QInputDialog.getText(None, "Change name", "New name:")
+        if not ok or not new_name:
+            return
+        if not self.connect_name_cbo.findText(new_name) == -1:
+            msg = "Connectivity with name {} already exists in the database. Please, choose another name.".format(
+                new_name
+            )
+            self.uc.show_warn(msg)
+            self.uc.log_info(msg)
+            return
+
+        self.gutils.execute(f"UPDATE user_md_connect_lines SET name = '{new_name}' WHERE fid = {fid};")
+        self.populate_connect_cbos()
+        self.uc.bar_info("Connectivity name changed!")
+        self.uc.log_info("Connectivity name changed!")
+
+    def delete_connect(self):
+        """
+        Function to delete the connectivity
+        """
+        if not self.connect_name_cbo.count():
+            return
+        fid_qry = self.gutils.execute(f"SELECT fid FROM user_md_connect_lines WHERE name = '{self.connect_name_cbo.currentText()}';").fetchone()
+        if fid_qry:
+            fid = fid_qry[0]
+        else:
+            return
+        q = "Are you sure, you want delete the current connectivity?"
+        if not self.uc.question(q):
+            return
+        self.gutils.execute(f"DELETE FROM user_md_connect_lines WHERE fid = {fid};")
+        self.populate_connect_cbos()
+        self.user_md_connect_lines.triggerRepaint()
+        self.uc.bar_info("Connectivity deleted!")
+        self.uc.log_info("Connectivity deleted!")
+
+    def connect_center(self):
+        """
+        Function to check the connectivity eye button
+        """
+        if self.connect_center_btn.isChecked():
+            self.connect_center_btn.setChecked(True)
+            fid_qry = self.gutils.execute(
+                f"SELECT fid FROM user_md_connect_lines WHERE name = '{self.connect_name_cbo.currentText()}';").fetchone()
+            if fid_qry:
+                fid = fid_qry[0]
+            else:
+                return
+            self.lyrs.show_feat_rubber(self.user_md_connect_lines.id(), fid)
+            feat = next(self.user_md_connect_lines.getFeatures(QgsFeatureRequest(fid)))
+            x, y = feat.geometry().centroid().asPoint()
+            center_canvas(self.iface, x, y)
+            return
+        else:
+            self.connect_center_btn.setChecked(False)
+            self.lyrs.clear_rubber()
+            return

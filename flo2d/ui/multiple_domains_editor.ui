@@ -171,6 +171,9 @@
         <iconset>
          <normaloff>../img/eye-svgrepo-com.svg</normaloff>../img/eye-svgrepo-com.svg</iconset>
        </property>
+       <property name="checkable">
+        <bool>true</bool>
+       </property>
       </widget>
      </item>
      <item row="3" column="0" colspan="6">
@@ -195,7 +198,7 @@
            </widget>
           </item>
           <item row="2" column="1">
-           <widget class="QComboBox" name="comboBox_2">
+           <widget class="QComboBox" name="connect_domain_cbo">
             <property name="sizePolicy">
              <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
               <horstretch>0</horstretch>
@@ -295,6 +298,9 @@
                <iconset>
                 <normaloff>../img/eye-svgrepo-com.svg</normaloff>../img/eye-svgrepo-com.svg</iconset>
               </property>
+              <property name="checkable">
+               <bool>true</bool>
+              </property>
              </widget>
             </item>
            </layout>
@@ -329,7 +335,7 @@
            </spacer>
           </item>
           <item row="1" column="1" colspan="2">
-           <widget class="QComboBox" name="comboBox">
+           <widget class="QComboBox" name="connect_name_cbo">
             <property name="sizePolicy">
              <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
               <horstretch>0</horstretch>
