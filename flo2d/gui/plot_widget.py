@@ -33,7 +33,18 @@ class PlotWidget(QWidget):
         self.plot = self.pw.getPlotItem()
         self.plot.showGrid(True, True, 0.25)
         self.layout.addWidget(self.pw)
+
+        # Create a horizontal layout for the auto range button
+        button_layout = QHBoxLayout()
+        self.auto_range_btn = QPushButton('Auto Range', self)
+        self.auto_range_btn.clicked.connect(self.auto_range)
+        button_layout.addWidget(self.auto_range_btn)
+        button_layout.setAlignment(Qt.AlignRight)
+
+        # Add the button layout to the main layout
+        self.layout.addLayout(button_layout)
         self.setLayout(self.layout)
+
         self.plot.scene().sigMouseClicked.connect(self.mouse_clicked)
         self.plot.scene().sigPrepareForPaint.connect(self.prepareForPaint)
 
@@ -46,8 +57,8 @@ class PlotWidget(QWidget):
             data_tuple = self.items[self.plot.legend.items[i][1].text].getData()
             any_nan = any(np.isnan(data) for data in data_tuple[0])
 
-        if any_checked and not any_nan:
-            self.plot.autoRange()
+        # if any_checked and not any_nan:
+        #     self.plot.autoRange()
 
     def setSizeHint(self, width, height):
         self._sizehint = QSize(width, height)
@@ -73,6 +84,8 @@ class PlotWidget(QWidget):
             self.items[name].show()
         else:
             self.items[name].hide()
+
+        self.plot.autoRange()
 
     def mouse_clicked(self, mouseClickEvent):
 

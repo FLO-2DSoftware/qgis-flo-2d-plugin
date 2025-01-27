@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import os.path
 import re
+from collections import OrderedDict
 
 import h5py
 from PyQt5.QtCore import QSettings
@@ -14,6 +15,7 @@ from PyQt5.QtWidgets import QFileDialog
 # of the License, or (at your option) any later version
 
 from .ui_utils import load_ui
+from ..flo2d_ie.flo2d_parser import ParseDAT
 from ..user_communication import UserCommunication
 import numpy as np
 
@@ -115,6 +117,10 @@ class ProjectReviewScenariosDialog(qtBaseClass, uiDialog):
         self.s.setValue("FLO-2D/scenario4", scenario4)
         self.s.setValue("FLO-2D/scenario5", scenario5)
 
+        output_hdf5 = self.processed_results_le.text()
+
+        self.s.setValue("FLO-2D/processed_results", output_hdf5)
+
         self.uc.bar_info("Scenarios saved!")
         self.uc.log_info("Scenarios saved!")
 
@@ -124,7 +130,6 @@ class ProjectReviewScenariosDialog(qtBaseClass, uiDialog):
         """
         Function to enable/disable the processed results
         """
-
         if self.use_scenarios_grpbox.isChecked():
             self.process_results_grp.setEnabled(True)
         else:
@@ -143,7 +148,6 @@ class ProjectReviewScenariosDialog(qtBaseClass, uiDialog):
             filter="HDF5 file (*.hdf5; *.HDF5)",
         )
         if output_hdf5:
-            s.setValue("FLO-2D/processed_results", output_hdf5)
             self.processed_results_le.setText(output_hdf5)
             self.uc.bar_info("Processed results file path saved!")
             self.uc.log_info("Processed results file path saved!")
@@ -163,12 +167,57 @@ class ProjectReviewScenariosDialog(qtBaseClass, uiDialog):
         scenarios = [scenario1, scenario2, scenario3, scenario4, scenario5]
 
         self.process_swmmrpt(scenarios, processed_results_file)
+        self.process_SWMMQIN(scenarios, processed_results_file)
+        self.process_SWMMOUTFIN(scenarios, processed_results_file)
+
+    def process_SWMMQIN(self, scenarios, hdf5_file):
+        """
+        Function to process the SWMMQIN.OUT file into the hdf5 file
+        """
+        i = 1
+        for scenario in scenarios:
+            if scenario:
+                SWMMQIN = scenario + r"/SWMMQIN.OUT"
+                swmmqin_data = self.get_SWMMQIN(SWMMQIN)
+                if os.path.exists(hdf5_file):
+                    read_type = "a"
+                else:
+                    read_type = "w"
+                with h5py.File(hdf5_file, read_type) as hdf:
+                    group = hdf.create_group(f"Scenario {i}/Storm Drain/SWMMQIN")
+                    for key, values in swmmqin_data.items():
+                        group.create_dataset(key,
+                                data=values,
+                                compression="gzip",
+                                compression_opts=9)
+            i += 1
+
+    def process_SWMMOUTFIN(self, scenarios, hdf5_file):
+        """
+        Function to process the SWMMOUTFIN.OUT file into the hdf5 file
+        """
+        i = 1
+        for scenario in scenarios:
+            if scenario:
+                SWMMOUTFIN = scenario + r"/SWMMOUTFIN.OUT"
+                swmmoutfin_data = self.get_SWMMOUTFIN(SWMMOUTFIN)
+                if os.path.exists(hdf5_file):
+                    read_type = "a"
+                else:
+                    read_type = "w"
+                with h5py.File(hdf5_file, read_type) as hdf:
+                    group = hdf.create_group(f"Scenario {i}/Storm Drain/SWMMOUTFIN")
+                    for key, values in swmmoutfin_data.items():
+                        group.create_dataset(key,
+                                             data=values,
+                                             compression="gzip",
+                                             compression_opts=9)
+            i += 1
 
     def process_swmmrpt(self, scenarios, hdf5_file):
         """
         Function to process the SWMM.rpt file into the hdf5 file
         """
-
         i = 1
         for scenario in scenarios:
             if scenario:
@@ -285,3 +334,56 @@ class ProjectReviewScenariosDialog(qtBaseClass, uiDialog):
         Function to close the dialog
         """
         self.close()
+
+    def get_SWMMQIN(self, SWMMQIN_file):
+        data = OrderedDict()
+        try:  # Read SWMMQIN_file.
+            pd = ParseDAT()
+            par = pd.single_parser(SWMMQIN_file)
+            for row in par:
+                if "INLET" in row:
+                    cell = row[7]
+                    inlet = row[11]
+                    next(par)
+                    data[inlet] = []
+                    for row2 in par:
+                        if len(row2) == 3:
+                            time = row2[0]
+                            discharge = row2[1]
+                            return_flow = row2[2]
+                            data[inlet].append(row2)
+                        elif "INLET" in row2:
+                            cell = row2[7]
+                            inlet = row2[11]
+                            next(par)
+                            data[inlet] = []
+        except Exception as e:
+            self.uc.show_error("Error while reading file\n\n " + SWMMQIN_file, e)
+        finally:
+            return data
+
+    def get_SWMMOUTFIN(self, SWMMOUTFIN_file):
+        data = OrderedDict()
+        try:  # Read SWMMOUTFIN_file.
+            pd = ParseDAT()
+            par = pd.single_parser(SWMMOUTFIN_file)
+            for row in par:
+                if "GRID" in row:
+                    cell = row[2]
+                    # channel_element=  row[5]
+                    next(par)
+                    data[cell] = []
+                    for row2 in par:
+                        if len(row2) == 2:
+                            time = row2[0]
+                            discharge = row2[1]
+                            data[cell].append(row2)
+                        elif "GRID" in row2:
+                            cell = row2[2]
+                            # channel_element=  row2[5]
+                            next(par)
+                            data[cell] = []
+        except Exception as e:
+            self.uc.show_error("Error while reading file\n\n " + SWMMOUTFIN_file, e)
+        finally:
+            return data

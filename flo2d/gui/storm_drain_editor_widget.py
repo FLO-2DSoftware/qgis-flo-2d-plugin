@@ -14,6 +14,7 @@ from datetime import date, datetime, time, timedelta
 from math import isnan, modf
 from pathlib import Path
 
+import h5py
 from PyQt5.QtWidgets import QStyledItemDelegate, QGraphicsRectItem
 from qgis._core import QgsFeatureRequest, QgsDistanceArea
 from qgis._gui import QgsDockWidget
@@ -4792,164 +4793,230 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
 
         s = QSettings()
         GDS_dir = s.value("FLO-2D/lastGdsDir", "")
-        # Check if there is an RPT file on the FLO-2D QSettings
-        RPT_file = GDS_dir + r"\swmm.RPT"
-        # Check if there is an RPT file on the export folder
-        if not os.path.isfile(RPT_file):
-            self.uc.bar_warn("No swmm.RPT file found. Please ensure the simulation has completed and verify the project export folder.")
-            return
 
-        # Check if the swmm.RPT has data on it
-        if os.path.getsize(RPT_file) == 0:
-            QApplication.restoreOverrideCursor()
-            self.uc.bar_warn("File  '" + os.path.basename(RPT_file) + "'  is empty!")
-            self.uc.bar_warn("WARNING 111123.1744: File  '" + os.path.basename(RPT_file) + "'  is empty!\n" +
-                                "Select a valid .RPT file.")
-            return
+        SWMMQINtimeSeries = []
+        SWMMOUTFINtimeSeries = []
+        RPT_dict = {}
+        SWMMQIN_dict = {}
+        SWMMOUTFIN_dict = {}
 
-        if intersection:
-            with open(RPT_file) as f:
-                if not intersection in f.read():
-                    self.uc.bar_error("Node " + intersection + " not found in file " + RPT_file)
-                    # QApplication.restoreOverrideCursor()
-                    self.uc.log_info("WARNING 111123.1742: Node " + intersection + " not found in file\n\n" + RPT_file +
-                                        "\n\nSelect a valid .RPT file.")
-                    return
+        # First check Scenarios with processed results - If a processed results file is selected, use this file.
+        # Otherwise, use the RPT file.
+        processed_results_file = s.value("FLO-2D/processed_results", "")
+        if os.path.exists(processed_results_file):
+            results_file = processed_results_file
+            units = "CMS" if self.gutils.get_cont_par("METRIC") == "1" else "CFS"
+            try:
+                with h5py.File(processed_results_file, 'r') as hdf:
+                    for j in range(1, 6):
+                        # Check if the node exists
+                        node_path = f"Scenario {j}/Storm Drain/Nodes/{intersection}"
+                        swmmqin_path = f"Scenario {j}/Storm Drain/SWMMQIN/{intersection}"
+                        if node_path in hdf:
+                            ScenariostimeSeries = []
+                            # Read the node data
+                            node_data = hdf[node_path][:]
+                            time_series = hdf[f"Scenario {j}/Storm Drain/Time Series"][:]
 
-        data = OrderedDict()
-        # Read RPT file.
-        try:
-            QApplication.setOverrideCursor(Qt.WaitCursor)
-
-            pd = ParseDAT()
-            par = pd.single_parser(RPT_file)
-
-            previous = []
-            units = "CMS"
-            for row in par:
-                if "Flow" in row and "Units" in row:
-                    units = "CMS" if "CMS" in row else "CFS" if "CFS" in row else "CMS"
-                if previous:
-                    cell = previous[2]
-                    for _ in range(3):
-                        next(par)
-                if "<<<" in row and "Node" in row:
-                    cell = row[2]
-                    for _ in range(4):
-                        next(par)
-                if previous or ("<<<" in row and "Node" in row):
-                    previous = []
-                    data[cell] = []
-                    for row2 in par:
-                        if "<<<" in row2 and "Node" in row2:
-                            previous = row2
-                            break
-                        if row2:
-                            if len(row2) == 6:
-                                data[cell].append(list(row2))
-                            else:
-                                break
-
-            if data:
-                if intersection is False:
-                    intersection = next(iter(data.items()))[0]
-                if not intersection in data:
-                    QApplication.restoreOverrideCursor()
-                    self.plot.clear()
-                    self.tview.model().setRowCount(0)
-                    self.uc.bar_error("Node " + intersection + " not found in file  '" + RPT_file + "'")
-
-                    QApplication.restoreOverrideCursor()
-                    self.uc.log_info("WARNING 111123.1743: Node " + intersection + " not found in file\n\n" + RPT_file +
-                                        "\n\nSelect a valid .RPT file.")
-                    return
-
-                node_series = data[intersection]
-                I = 1
-                day = 0
-                previousHour = -1
-                RPTtimeSeries = []
-                inflow_discharge_to_SD = []
-                outfall_discharge_to_FLO_2D = []
-                SWMMQINtimeSeries = []
-                SWMMOUTFINtimeSeries = []
-
-                for nextTime in node_series:
-                    time = nextTime[1]
-                    inflow = float(nextTime[2])
-                    flooding = float(nextTime[3])
-                    depth = float(nextTime[4])
-                    head = float(nextTime[5])
-                    currentHour, minutes, seconds = time.split(":")
-                    currentHour = int(currentHour)
-                    minutes = int(minutes) / 60
-                    seconds = int(seconds) / 3600
-                    if currentHour < previousHour:
-                        day = day + 24
-                    previousHour = currentHour
-                    hour = day + currentHour + minutes + seconds
-                    RPTtimeSeries.append([hour, inflow, flooding, depth, head])
-
-                if sd_type == 'node':
-                    # See if there are aditional .DAT files with SD data:
-                    SWMMQIN_file = GDS_dir + r"\SWMMQIN.OUT"
-                    if not os.path.isfile(SWMMQIN_file):
-                        self.uc.bar_info("There is no SWMMQIN.OUT file")
-                    else:
-                        inflow_discharge_to_SD = self.get_SWMMQIN(SWMMQIN_file)
-                        if intersection in inflow_discharge_to_SD:
-                            node_series = inflow_discharge_to_SD[intersection]
-                            I = 1
+                            # Convert byte strings back to regular strings
                             day = 0
                             previousHour = -1
+                            hours_lst = []
+                            for row in time_series:
+                                time = row[1].decode("utf-8")
+                                currentHour, minutes, seconds = time.split(":")
+                                currentHour = int(currentHour)
+                                minutes = int(minutes) / 60
+                                seconds = int(seconds) / 3600
+                                if currentHour < previousHour:
+                                    day = day + 24
+                                previousHour = currentHour
+                                hour = day + currentHour + minutes + seconds
+                                hours_lst.append(hour)
+                            node_data = [list(map(float, row)) for row in node_data]
+                            # Combine time series with node data
+                            for i, row in enumerate(node_data):
+                                row.insert(0, hours_lst[i])
+                                ScenariostimeSeries.append(row)
 
-                            for nextTime in node_series:
-                                hour = float(nextTime[0])
-                                discharge = float(nextTime[1])
-                                return_flow = float(nextTime[2])
-                                SWMMQINtimeSeries.append([hour, discharge, return_flow])
-                else:
-                    SWMMOUTFIN_file = GDS_dir + r"\SWMMOUTFIN.OUT"
-                    if not os.path.isfile(SWMMOUTFIN_file):
-                        self.uc.bar_info("There is no SWMMOUTFIN.OUT file")
-                    else:
-                        outfall_discharge_to_FLO_2D = self.get_SWMMOUTFIN(SWMMOUTFIN_file)
-                        grid_sql = "SELECT grid FROM user_swmm_outlets WHERE name = ?;"
-                        grid = self.gutils.execute(grid_sql, (intersection,)).fetchone()
-                        if grid:
-                            grid = str(grid[0])
-                            if grid in outfall_discharge_to_FLO_2D:
-                                node_series = outfall_discharge_to_FLO_2D[grid]
-                                I = 1
-                                day = 0
-                                previousHour = -1
+                            RPT_dict[f'Scenario {j}'] = ScenariostimeSeries
 
-                                for nextTime in node_series:
-                                    hour = float(nextTime[0])
-                                    discharge = float(nextTime[1])
-                                    SWMMOUTFINtimeSeries.append([hour, discharge])
+                        if swmmqin_path in hdf:
+                            # Read the node data
+                            swmmqin_data = hdf[swmmqin_path][:]
+                            swmmqin_data = [list(map(float, row)) for row in swmmqin_data]
+                            # Combine time series with node data
+                            for row in swmmqin_data:
+                                SWMMQINtimeSeries.append(row)
 
-                        else:
-                            self.uc.bar_info("Grid " + grid + " not found in Storm Drain Outfalls!")
+                            SWMMQIN_dict[f'Scenario {j}'] = SWMMQINtimeSeries
 
-                # Plot discharge graph:
-                self.uc.bar_info("Discharge for " + intersection + " from file  '" + RPT_file + "'")
-                self.show_discharge_table_and_plot(intersection, units, RPTtimeSeries,
-                                                   SWMMQINtimeSeries,
-                                                   SWMMOUTFINtimeSeries, sd_type)
-            else:
-                QApplication.restoreOverrideCursor()
-                self.uc.bar_error("No time series found in file " + RPT_file + " for node " + intersection)
-                self.uc.log_info("No time series found in file " + RPT_file + " for node " + intersection)
+            except Exception as e:
+                print(f"Error: {e}")
+
+            self.uc.bar_info(f"Reading scenarios processed results from {processed_results_file}")
+            self.uc.log_info(f"Reading scenarios processed results from {processed_results_file}")
+
+            # Plot discharge graph:
+            self.uc.bar_info("Discharge for " + intersection + " from file  '" + results_file + "'")
+            self.show_discharge_table_and_plot_scenarios(intersection, units, RPT_dict, SWMMQIN_dict, SWMMOUTFIN_dict, sd_type)
+
+            # else:
+            #     QApplication.restoreOverrideCursor()
+            #     self.uc.bar_error("No time series found in file " + RPT_file + " for node " + intersection)
+            #     self.uc.log_info("No time series found in file " + RPT_file + " for node " + intersection)
 
             QApplication.restoreOverrideCursor()
             return True
 
-        except Exception as e:
+        else:
+            # Check if there is an RPT file on the FLO-2D QSettings
+            RPT_file = GDS_dir + r"\swmm.RPT"
+            # Check if there is an RPT file on the export folder
+            if not os.path.isfile(RPT_file):
+                self.uc.bar_warn("No swmm.RPT file found. Please ensure the simulation has completed and verify the project export folder.")
+                return
+
+            # Check if the swmm.RPT has data on it
+            if os.path.getsize(RPT_file) == 0:
+                QApplication.restoreOverrideCursor()
+                self.uc.bar_warn("File  '" + os.path.basename(RPT_file) + "'  is empty!")
+                self.uc.bar_warn("WARNING 111123.1744: File  '" + os.path.basename(RPT_file) + "'  is empty!\n" +
+                                    "Select a valid .RPT file.")
+                return
+
+            results_file = RPT_file
+
+            if intersection:
+                with open(RPT_file) as f:
+                    if not intersection in f.read():
+                        self.uc.bar_error("Node " + intersection + " not found in file " + RPT_file)
+                        # QApplication.restoreOverrideCursor()
+                        self.uc.log_info("WARNING 111123.1742: Node " + intersection + " not found in file\n\n" + RPT_file +
+                                            "\n\nSelect a valid .RPT file.")
+                        return
+
+            data = OrderedDict()
+            # Read RPT file.
+            try:
+                QApplication.setOverrideCursor(Qt.WaitCursor)
+
+                pd = ParseDAT()
+                par = pd.single_parser(RPT_file)
+
+                previous = []
+                units = "CMS"
+                for row in par:
+                    if "Flow" in row and "Units" in row:
+                        units = "CMS" if "CMS" in row else "CFS" if "CFS" in row else "CMS"
+                    if previous:
+                        cell = previous[2]
+                        for _ in range(3):
+                            next(par)
+                    if "<<<" in row and "Node" in row:
+                        cell = row[2]
+                        for _ in range(4):
+                            next(par)
+                    if previous or ("<<<" in row and "Node" in row):
+                        previous = []
+                        data[cell] = []
+                        for row2 in par:
+                            if "<<<" in row2 and "Node" in row2:
+                                previous = row2
+                                break
+                            if row2:
+                                if len(row2) == 6:
+                                    data[cell].append(list(row2))
+                                else:
+                                    break
+
+                if data:
+                    if intersection is False:
+                        intersection = next(iter(data.items()))[0]
+                    if not intersection in data:
+                        QApplication.restoreOverrideCursor()
+                        self.plot.clear()
+                        self.tview.model().setRowCount(0)
+                        self.uc.bar_error("Node " + intersection + " not found in file  '" + RPT_file + "'")
+
+                        QApplication.restoreOverrideCursor()
+                        self.uc.log_info(
+                            "WARNING 111123.1743: Node " + intersection + " not found in file\n\n" + RPT_file +
+                            "\n\nSelect a valid .RPT file.")
+                        return
+
+            except Exception as e:
+                QApplication.restoreOverrideCursor()
+                self.uc.bar_error("Reading .RPT file failed!")
+                self.uc.log_info("Reading .RPT file failed!")
+                return False
+
+            node_series = data[intersection]
+            day = 0
+            previousHour = -1
+            RPTtimeSeries = []
+
+            for nextTime in node_series:
+                time = nextTime[1]
+                inflow = float(nextTime[2])
+                flooding = float(nextTime[3])
+                depth = float(nextTime[4])
+                head = float(nextTime[5])
+                currentHour, minutes, seconds = time.split(":")
+                currentHour = int(currentHour)
+                minutes = int(minutes) / 60
+                seconds = int(seconds) / 3600
+                if currentHour < previousHour:
+                    day = day + 24
+                previousHour = currentHour
+                hour = day + currentHour + minutes + seconds
+                RPTtimeSeries.append([hour, inflow, flooding, depth, head])
+
+            # See if there are aditional .DAT files with SD data:
+            SWMMQIN_file = GDS_dir + r"\SWMMQIN.OUT"
+            if not os.path.isfile(SWMMQIN_file):
+                self.uc.bar_info("There is no SWMMQIN.OUT file")
+                self.uc.log_info("There is no SWMMQIN.OUT file")
+            else:
+                inflow_discharge_to_SD = self.get_SWMMQIN(SWMMQIN_file)
+                if intersection in inflow_discharge_to_SD:
+                    node_series = inflow_discharge_to_SD[intersection]
+
+                    for nextTime in node_series:
+                        hour = float(nextTime[0])
+                        discharge = float(nextTime[1])
+                        return_flow = float(nextTime[2])
+                        SWMMQINtimeSeries.append([hour, discharge, return_flow])
+
+            SWMMOUTFIN_file = GDS_dir + r"\SWMMOUTFIN.OUT"
+            if not os.path.isfile(SWMMOUTFIN_file):
+                self.uc.bar_info("There is no SWMMOUTFIN.OUT file")
+                self.uc.log_info("There is no SWMMOUTFIN.OUT file")
+            else:
+                outfall_discharge_to_FLO_2D = self.get_SWMMOUTFIN(SWMMOUTFIN_file)
+                grid_sql = "SELECT grid FROM user_swmm_outlets WHERE name = ?;"
+                grid = self.gutils.execute(grid_sql, (intersection,)).fetchone()
+                if grid:
+                    grid = str(grid[0])
+                    if grid in outfall_discharge_to_FLO_2D:
+                        node_series = outfall_discharge_to_FLO_2D[grid]
+
+                        for nextTime in node_series:
+                            hour = float(nextTime[0])
+                            discharge = float(nextTime[1])
+                            SWMMOUTFINtimeSeries.append([hour, discharge])
+
+                        else:
+                            self.uc.bar_info("Grid " + grid + " not found in Storm Drain Outfalls!")
+
+            # Plot discharge graph:
+            self.uc.bar_info("Discharge for " + intersection + " from file  '" + results_file + "'")
+            self.show_discharge_table_and_plot(intersection, units, RPTtimeSeries,
+                                               SWMMQINtimeSeries,
+                                               SWMMOUTFINtimeSeries, sd_type)
+
             QApplication.restoreOverrideCursor()
-            self.uc.bar_error("Reading .RPT file failed!")
-            self.uc.log_info("Reading .RPT file failed!")
-            return False
+            return True
 
     def block_saving(self):
         model = self.tview.model()
@@ -5653,55 +5720,48 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             else:
                 grid = "?"          
 
-            try: # Build plot.
-                self.plot.clear()
-                timeRPT, inflowRPT, floodingRPT, depthRPT, headRPT = [], [], [], [], []
-                timeInToSD, dischargeInToSD, returnInToSD = [], [], []
-                timeOutToFLO, dischargeOutToFLO = [], []
-                
-                for row in RPTseries:
-                    timeRPT.append(row[0] if not row[0] is None else float("NaN"))
-                    inflowRPT.append(row[1] if not row[1] is None else float("NaN"))
-                    floodingRPT.append(row[2] if not row[2] is None else float("NaN"))
-                    depthRPT.append(row[3] if not row[3] is None else float("NaN"))
-                    headRPT.append(row[4] if not row[4] is None else float("NaN"))
-                
-                if SWMMQINtimeSeries:
-                    for row in SWMMQINtimeSeries:
-                        timeInToSD.append(row[0] if not row[0] is None else float("NaN"))
-                        dischargeInToSD.append(row[1] if not row[1] is None else float("NaN"))
-                        returnInToSD.append(row[2] if not row[2] is None else float("NaN")) 
-                
-                if SWMMOUTFINtimeseries:
-                    for row in SWMMOUTFINtimeseries:
-                        timeOutToFLO.append(row[0] if not row[0] is None else float("NaN"))
-                        dischargeOutToFLO.append(row[1] if not row[1] is None else float("NaN"))
-                
-                if self.plot.plot.legend is not None:
-                    plot_scene = self.plot.plot.legend.scene()
-                    if plot_scene is not None:
-                        plot_scene.removeItem(self.plot.plot.legend)
-                
-                self.plot.plot.legend = None
-                self.plot.plot.addLegend()
-                self.plot.plot.setTitle(title="Discharge " + node + " (grid " + grid + ")")
-                self.plot.plot.setLabel("bottom", text="Time (hours)")
-                self.plot.add_item(f"Total Inflow ({self.system_units[units][2]})", [timeRPT, inflowRPT], col=QColor(Qt.darkGreen), sty=Qt.SolidLine)
-                if SWMMOUTFINtimeseries:
-                    self.plot.add_item(f"Discharge to FLO-2D ({self.system_units[units][2]})", [timeOutToFLO, dischargeOutToFLO], col=QColor(Qt.black), sty=Qt.SolidLine)
-                if SWMMQINtimeSeries:
-                    self.plot.add_item(f"Return Discharge to FLO-2D ({self.system_units[units][2]})", [timeInToSD, returnInToSD], col=QColor(Qt.blue), sty=Qt.SolidLine)
-                    self.plot.add_item(f"Inflow Discharge to Storm Drain ({self.system_units[units][2]})", [timeInToSD, dischargeInToSD], col=QColor(Qt.darkYellow), sty=Qt.SolidLine, hide=True)
-                self.plot.add_item(f"Flooding ({self.system_units[units][2]})", [timeRPT, floodingRPT], col=QColor(Qt.red), sty=Qt.SolidLine, hide=True)
-                self.plot.add_item(f"Depth ({self.system_units[units][0]})", [timeRPT, depthRPT], col=QColor(Qt.darkMagenta), sty=Qt.SolidLine, hide=True)
-                self.plot.add_item(f"Head ({self.system_units[units][0]})", [timeRPT, headRPT], col=QColor(Qt.darkGray), sty=Qt.SolidLine, hide=True)
+            # try: # Build plot.
+            self.plot.clear()
+            timeRPT, inflowRPT, floodingRPT, depthRPT, headRPT = [], [], [], [], []
+            timeInToSD, dischargeInToSD, returnInToSD = [], [], []
+            timeOutToFLO, dischargeOutToFLO = [], []
 
-                # self.plot.plot.setLabel("left", text="Discharge (" + units + ")")
-                
-            except:
-                QApplication.restoreOverrideCursor()
-                self.uc.bar_warn("Error while building plot for SD discharge!")
-                return
+            for row in RPTseries:
+                timeRPT.append(row[0] if not row[0] is None else float("NaN"))
+                inflowRPT.append(row[1] if not row[1] is None else float("NaN"))
+                floodingRPT.append(row[2] if not row[2] is None else float("NaN"))
+                depthRPT.append(row[3] if not row[3] is None else float("NaN"))
+                headRPT.append(row[4] if not row[4] is None else float("NaN"))
+
+            if SWMMQINtimeSeries:
+                for row in SWMMQINtimeSeries:
+                    timeInToSD.append(row[0] if not row[0] is None else float("NaN"))
+                    dischargeInToSD.append(row[1] if not row[1] is None else float("NaN"))
+                    returnInToSD.append(row[2] if not row[2] is None else float("NaN"))
+
+            if SWMMOUTFINtimeseries:
+                for row in SWMMOUTFINtimeseries:
+                    timeOutToFLO.append(row[0] if not row[0] is None else float("NaN"))
+                    dischargeOutToFLO.append(row[1] if not row[1] is None else float("NaN"))
+
+            if self.plot.plot.legend is not None:
+                plot_scene = self.plot.plot.legend.scene()
+                if plot_scene is not None:
+                    plot_scene.removeItem(self.plot.plot.legend)
+
+            self.plot.plot.legend = None
+            self.plot.plot.addLegend()
+            self.plot.plot.setTitle(title="Discharge " + node + " (grid " + grid + ")")
+            self.plot.plot.setLabel("bottom", text="Time (hours)")
+            self.plot.add_item(f"Total Inflow ({self.system_units[units][2]})", [timeRPT, inflowRPT], col=QColor(Qt.darkGreen), sty=Qt.SolidLine)
+            if SWMMOUTFINtimeseries:
+                self.plot.add_item(f"Discharge to FLO-2D ({self.system_units[units][2]})", [timeOutToFLO, dischargeOutToFLO], col=QColor(Qt.black), sty=Qt.SolidLine)
+            if SWMMQINtimeSeries:
+                self.plot.add_item(f"Return Discharge to FLO-2D ({self.system_units[units][2]})", [timeInToSD, returnInToSD], col=QColor(Qt.blue), sty=Qt.SolidLine)
+                self.plot.add_item(f"Inflow Discharge to Storm Drain ({self.system_units[units][2]})", [timeInToSD, dischargeInToSD], col=QColor(Qt.darkYellow), sty=Qt.SolidLine, hide=True)
+            self.plot.add_item(f"Flooding ({self.system_units[units][2]})", [timeRPT, floodingRPT], col=QColor(Qt.red), sty=Qt.SolidLine, hide=True)
+            self.plot.add_item(f"Depth ({self.system_units[units][0]})", [timeRPT, depthRPT], col=QColor(Qt.darkMagenta), sty=Qt.SolidLine, hide=True)
+            self.plot.add_item(f"Head ({self.system_units[units][0]})", [timeRPT, headRPT], col=QColor(Qt.darkGray), sty=Qt.SolidLine, hide=True)
 
             try: # Build table.
                 discharge_data_model = StandardItemModel()
@@ -5730,7 +5790,199 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         except Exception as e:
             QApplication.restoreOverrideCursor()
             self.uc.show_error("Error while creating discharge plot for node "  + node, e)
-            return            
+            return
+
+    def show_discharge_table_and_plot_scenarios(self,
+                                                node,
+                                                units,
+                                                RPT_dict,
+                                                SWMMQIN_dict,
+                                                SWMMOUTFIN_dict,
+                                                sd_type):
+        # try:
+        self.SD_table.after_delete.disconnect()
+        self.SD_table.after_delete.connect(self.save_SD_table_data)
+        if sd_type == 'node':
+            grid_sql = "SELECT grid FROM user_swmm_inlets_junctions WHERE name = ?;"
+        else:
+            grid_sql = "SELECT grid FROM user_swmm_outlets WHERE name = ?;"
+        grid = self.gutils.execute(grid_sql, (node,)).fetchone()
+        if grid:
+            grid = str(grid[0])
+        else:
+            grid = "?"
+
+            # try:  # Build plot.
+        self.plot.clear()
+        self.plot.plot.legend = None
+        self.plot.plot.addLegend()
+
+        j = 1
+        for key, value in RPT_dict.items():
+
+            timeRPT, inflowRPT, floodingRPT, depthRPT, headRPT = [], [], [], [], []
+            # timeInToSD, dischargeInToSD, returnInToSD = [], [], []
+            # timeOutToFLO, dischargeOutToFLO = [], []
+
+            for row in value:
+                timeRPT.append(row[0] if not row[0] is None else float("NaN"))
+                inflowRPT.append(row[1] if not row[1] is None else float("NaN"))
+                floodingRPT.append(row[2] if not row[2] is None else float("NaN"))
+                depthRPT.append(row[3] if not row[3] is None else float("NaN"))
+                headRPT.append(row[4] if not row[4] is None else float("NaN"))
+
+            # if SWMMQINtimeSeries:
+            #     for row in SWMMQINtimeSeries:
+            #         timeInToSD.append(row[0] if not row[0] is None else float("NaN"))
+            #         dischargeInToSD.append(row[1] if not row[1] is None else float("NaN"))
+            #         returnInToSD.append(row[2] if not row[2] is None else float("NaN"))
+            #
+            # if SWMMOUTFINtimeseries:
+            #     for row in SWMMOUTFINtimeseries:
+            #         timeOutToFLO.append(row[0] if not row[0] is None else float("NaN"))
+            #         dischargeOutToFLO.append(row[1] if not row[1] is None else float("NaN"))
+
+            # if self.plot.plot.legend is not None:
+            #     plot_scene = self.plot.plot.legend.scene()
+            #     if plot_scene is not None:
+            #         plot_scene.removeItem(self.plot.plot.legend)
+
+            self.plot.plot.setTitle(title=key + " - Discharge " + node + " (grid " + grid + ")")
+            self.plot.plot.setLabel("bottom", text="Time (hours)")
+
+            variable_colors = {
+                1: ['#6BAF92', '#4E9B7F', '#31866C', '#186258', '#004D45'],
+                2: ['#5A82A6', '#416B91', '#2A557C', '#123F67', '#002A52'],
+                3: ['#C77A7A', '#AF6262', '#973B3B', '#7F2323', '#670C0C'],
+                4: ['#D9C26A', '#C0AC58', '#A89645', '#907032', '#78591F'],
+                5: ['#A6A6A6', '#8C8C8C', '#727272', '#595959', '#404040'],
+                6: ['#AA6BAF', '#934E9A', '#7C3185', '#651470', '#4F005B'],
+                7: ['#6BAFAA', '#4E9B95', '#318680', '#18626B', '#004D56']
+            }
+
+            if j == 1:
+                pen_style = Qt.SolidLine
+                ti = QColor(variable_colors[1][0])
+                df = QColor(variable_colors[2][0])
+                rd = QColor(variable_colors[3][0])
+                id = QColor(variable_colors[4][0])
+                fl = QColor(variable_colors[5][0])
+                de = QColor(variable_colors[6][0])
+                he = QColor(variable_colors[7][0])
+            if j == 2:
+                pen_style = Qt.DashLine
+                ti = QColor(variable_colors[1][1])
+                df = QColor(variable_colors[2][1])
+                rd = QColor(variable_colors[3][1])
+                id = QColor(variable_colors[4][1])
+                fl = QColor(variable_colors[5][1])
+                de = QColor(variable_colors[6][1])
+                he = QColor(variable_colors[7][1])
+            if j == 3:
+                pen_style = Qt.DotLine
+                ti = QColor(variable_colors[1][2])
+                df = QColor(variable_colors[2][2])
+                rd = QColor(variable_colors[3][2])
+                id = QColor(variable_colors[4][2])
+                fl = QColor(variable_colors[5][2])
+                de = QColor(variable_colors[6][2])
+                he = QColor(variable_colors[7][2])
+            if j == 4:
+                pen_style = Qt.DashDotLine
+                ti = QColor(variable_colors[1][3])
+                df = QColor(variable_colors[2][3])
+                rd = QColor(variable_colors[3][3])
+                id = QColor(variable_colors[4][3])
+                fl = QColor(variable_colors[5][3])
+                de = QColor(variable_colors[6][3])
+                he = QColor(variable_colors[7][3])
+            if j == 5:
+                pen_style = Qt.DashDotDotLine
+                ti = QColor(variable_colors[1][4])
+                df = QColor(variable_colors[2][4])
+                rd = QColor(variable_colors[3][4])
+                id = QColor(variable_colors[4][4])
+                fl = QColor(variable_colors[5][4])
+                de = QColor(variable_colors[6][4])
+                he = QColor(variable_colors[7][4])
+            self.plot.add_item(key + f" - Total Inflow ({self.system_units[units][2]})", [timeRPT, inflowRPT],
+                               col=ti, sty=pen_style)
+            # if SWMMOUTFINtimeseries:
+            #     self.plot.add_item(f"Discharge to FLO-2D ({self.system_units[units][2]})",
+            #                        [timeOutToFLO, dischargeOutToFLO], col=df, sty=Qt.SolidLine)
+            # if SWMMQINtimeSeries:
+            #     self.plot.add_item(f"Return Discharge to FLO-2D ({self.system_units[units][2]})",
+            #                        [timeInToSD, returnInToSD], col=rd, sty=Qt.SolidLine)
+            #     self.plot.add_item(f"Inflow Discharge to Storm Drain ({self.system_units[units][2]})",
+            #                        [timeInToSD, dischargeInToSD], col=id, sty=Qt.SolidLine,
+            #                        hide=True)
+            self.plot.add_item(key + f" - Flooding ({self.system_units[units][2]})", [timeRPT, floodingRPT],
+                               col=fl, sty=pen_style, hide=True)
+            self.plot.add_item(key + f" - Depth ({self.system_units[units][0]})", [timeRPT, depthRPT],
+                               col=de, sty=pen_style, hide=True)
+            self.plot.add_item(key + f" - Head ({self.system_units[units][0]})", [timeRPT, headRPT], col=he,
+                               sty=pen_style, hide=True)
+
+            j += 1
+
+        # try:  # Build table.
+        discharge_data_model = StandardItemModel()
+        self.tview.undoStack.clear()
+        self.tview.setModel(discharge_data_model)
+        discharge_data_model.clear()
+
+
+        # discharge_data_model.setHorizontalHeaderLabels(["Time (hours)",
+        #                                                 f"Inflow ({self.system_units[units][2]})",
+        #                                                 f"Flooding ({self.system_units[units][2]})",
+        #                                                 f"Depth ({self.system_units[units][0]})",
+        #                                                 f"Head ({self.system_units[units][0]})"])
+        i = 1
+        headers = ["Time (hours)"]
+        for key, value in RPT_dict.items():
+            headers.extend([
+                       f"Scenario {i} - Inflow ({self.system_units[units][2]})",
+                       f"Scenario {i} - Flooding ({self.system_units[units][2]})",
+                       f"Scenario {i} - Depth ({self.system_units[units][0]})",
+                       f"Scenario {i} - Head ({self.system_units[units][0]})"])
+            discharge_data_model.setHorizontalHeaderLabels(headers)
+
+            # Loop through the rows of data and add them
+            for row_idx, row in enumerate(value):
+                # Set the time for the first scenario (first column)
+                if i == 1:
+                    if row[0] is not None:
+                        discharge_data_model.setItem(row_idx, 0, StandardItem("{:.2f}".format(row[0])))
+                    else:
+                        discharge_data_model.setItem(row_idx, 0, StandardItem(""))
+
+                # Now handle the rest of the scenarios (columns 1-4, 5-8, etc.)
+                for col_idx, x in enumerate(row[1:], start=1):  # Skipping time for other scenarios
+                    # Calculate the column for each scenario
+                    column_idx = col_idx + (i - 1) * 4
+                    # Set the value in the correct column for the scenario
+                    if x is not None:
+                        discharge_data_model.setItem(row_idx, column_idx, StandardItem("{:.2f}".format(x)))
+                    else:
+                        discharge_data_model.setItem(row_idx, column_idx, StandardItem(""))
+
+            i += 1
+
+        # self.tview.horizontalHeader().setStretchLastSection(True)
+        # for col in range(3):
+        #     self.tview.setColumnWidth(col, 100)
+        # for i in range(discharge_data_model.rowCount()):
+        #     self.tview.setRowHeight(i, 20)
+        return
+        # except:
+        #     QApplication.restoreOverrideCursor()
+        #     self.uc.bar_warn("Error while building table for SD discharge!")
+        #     return
+
+        # except Exception as e:
+        #     QApplication.restoreOverrideCursor()
+        #     self.uc.show_error("Error while creating discharge plot for node " + node, e)
+        #     return
 
     def get_SWMMQIN(self, SWMMQIN_file):
         data = OrderedDict()            
