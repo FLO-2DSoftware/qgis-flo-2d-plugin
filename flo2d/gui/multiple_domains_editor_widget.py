@@ -2,10 +2,10 @@
 import math
 import os
 
-from PyQt5.QtCore import QSettings
+from PyQt5.QtCore import QSettings, QVariant
 from PyQt5.QtWidgets import QApplication, QProgressDialog, QInputDialog
 from qgis.PyQt.QtCore import NULL
-from qgis._core import QgsGeometry, QgsFeatureRequest, QgsPointXY
+from qgis._core import QgsGeometry, QgsFeatureRequest, QgsPointXY, QgsField
 
 from ..flo2d_tools.grid_tools import square_grid, build_grid, number_of_elements, grid_compas_neighbors
 from ..geopackage_utils import GeoPackageUtils
@@ -51,6 +51,7 @@ class MultipleDomainsEditorWidget(qtBaseClass, uiDialog):
 
         self.schematize_md_btn.clicked.connect(self.schematize_md)
         self.export_md_gpkg.clicked.connect(self.export_multi_domain)
+        self.create_subdomains_btn.clicked.connect(self.create_subdomains)
 
         self.mult_domains = self.lyrs.data["mult_domains"]["qlyr"]
         self.mult_domains.afterCommitChanges.connect(self.populate_md_cbos)
@@ -600,3 +601,70 @@ class MultipleDomainsEditorWidget(qtBaseClass, uiDialog):
                         if line:
                             inf.write(line + "\n")
 
+    def create_subdomains(self):
+        """
+        Function to create the subdomains
+        """
+        grid_layer = self.lyrs.data["grid"]["qlyr"]
+        self.calculate_flow_and_watersheds()
+
+    def calculate_flow_and_watersheds(self):
+        """
+        Calculate flow direction and watersheds using SQLite on a GeoPackage.
+        """
+        self.gutils.execute("DROP TABLE IF EXISTS schema_md_cells")
+        self.gutils.execute(f"CREATE TABLE schema_md_cells AS SELECT * FROM grid")
+
+        # Add `flow_to` and `watershed` fields if they don't exist
+        self.gutils.execute(f"PRAGMA table_info(schema_md_cells)")
+        self.gutils.execute("ALTER TABLE schema_md_cells ADD COLUMN flow_to INTEGER")
+        self.gutils.execute("ALTER TABLE schema_md_cells ADD COLUMN watershed INTEGER")
+
+        # Calculate flow direction (flow_to)
+        self.gutils.execute(f"""
+            WITH neighbors AS (
+                SELECT
+                    a.ROWID AS id,
+                    b.ROWID AS neighbor_id,
+                    a.elevation AS current_elevation,
+                    b.elevation AS neighbor_elevation
+                FROM schema_md_cells a, schema_md_cells b
+                WHERE ST_Touches(a.geom, b.geom)
+            ),
+            lowest_neighbors AS (
+                SELECT
+                    id,
+                    neighbor_id
+                FROM neighbors
+                WHERE neighbor_elevation = (
+                    SELECT MIN(neighbor_elevation)
+                    FROM neighbors n
+                    WHERE n.id = neighbors.id
+                )
+            )
+            UPDATE schema_md_cells
+            SET flow_to = (
+                SELECT neighbor_id
+                FROM lowest_neighbors
+                WHERE lowest_neighbors.id = schema_md_cells.ROWID
+            )
+        """)
+
+        self.gutils.execute(f"""
+            WITH RECURSIVE watershed_cte(id, watershed_id) AS (
+                SELECT ROWID, ROWID AS watershed_id
+                FROM schema_md_cells
+                WHERE flow_to IS NULL -- Cells without a downstream neighbor are the watershed outlets
+                UNION ALL
+                SELECT g.ROWID, cte.watershed_id
+                FROM schema_md_cells g
+                JOIN watershed_cte cte
+                ON g.flow_to = cte.id
+            )
+            UPDATE schema_md_cells
+            SET watershed = (
+                SELECT watershed_id
+                FROM watershed_cte
+                WHERE watershed_cte.id = schema_md_cells.ROWID
+            )
+        """)
