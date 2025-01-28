@@ -11,6 +11,7 @@
 # Lambda may not be necessary
 # pylint: disable=W0108
 import os
+import re
 import sys
 import time
 import traceback
@@ -85,7 +86,7 @@ from .gui.table_editor_widget import TableEditorWidget
 from .layers import Layers
 from .misc.invisible_lyrs_grps import InvisibleLayersAndGroups
 from .user_communication import UserCommunication
-from .utils import get_flo2dpro_version
+from .utils import get_flo2dpro_version, get_plugin_version
 
 from PIL import Image
 
@@ -857,7 +858,37 @@ class Flo2D(object):
                 if self.uc.question("This GeoPackage is outdated. Would you like to update it?"):
                     QApplication.setOverrideCursor(Qt.WaitCursor)
                     # Create an updated geopackage and copy old package data to it
-                    new_gpkg_path = gpkg_path[:-5] + "_v1.0.0.gpkg"
+                    plugin_v = get_plugin_version()
+                    original_base_path = gpkg_path[:-5]
+
+                    # Check for the versioning pattern to avoid duplicating versions
+                    pattern = r"_v\d+\.\d+\.\d+"
+                    if re.search(pattern, original_base_path):
+                        # Replace the existing version with the plugin version
+                        base_path = re.sub(pattern, f"_v{plugin_v}", original_base_path)
+                    else:
+                        # Append the plugin version if no pattern is found
+                        base_path = f"{original_base_path}_v{plugin_v}"
+
+                    # Start with the base path + ".gpkg"
+                    new_gpkg_path = f"{base_path}.gpkg"
+                    counter = 1
+
+                    # Regular expression to match files with counters in parentheses
+                    counter_pattern = r" \((\d+)\)\.gpkg"
+
+                    # Check for existing file paths and append a counter if necessary
+                    while os.path.exists(new_gpkg_path):
+                        # Check if the file name has a counter and extract the number
+                        match = re.search(counter_pattern, new_gpkg_path)
+                        if match:
+                            current_counter = int(match.group(1)) + 1
+                            new_gpkg_path = re.sub(counter_pattern, f" ({current_counter}).gpkg", new_gpkg_path)
+                        else:
+                            # If no counter is present, append the first counter
+                            new_gpkg_path = f"{base_path} ({counter}).gpkg"
+                        counter += 1
+
                     crs = QgsCoordinateReferenceSystem()
                     proj = self.gutils.get_grid_crs()
                     if proj:
@@ -905,7 +936,7 @@ class Flo2D(object):
                         self.gutils.set_metadata_par("QGIS_V", qgis_v)
                         self.gutils.set_metadata_par("FLO-2D_V", flo2d_v)
                         self.gutils.set_metadata_par("CRS", crs.authid())
-                        uri = f'geopackage:{new_gpkg_path}?projectName={proj_name + "_v1.0.0"}'
+                        uri = f'geopackage:{new_gpkg_path}?projectName={os.path.splitext(os.path.basename(new_gpkg_path))[0]}'
                         gpkg_path = new_gpkg_path
 
                         # add ported external layers back into the project
