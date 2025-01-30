@@ -67,6 +67,7 @@ from .gui.dlg_flopro import ExternalProgramFLO2D
 from .gui.dlg_gpkg_backup import GpkgBackupDialog
 from .gui.dlg_gpkg_management import GpkgManagementDialog
 from .gui.dlg_hazus import HazusDialog
+from .gui.dlg_import_multidomain import ImportMultipleDomainsDialog
 from .gui.dlg_issues import ErrorsDialog
 from .gui.dlg_levee_elev import LeveesToolDialog
 from .gui.dlg_mud_and_sediment import MudAndSedimentDialog
@@ -379,6 +380,11 @@ class Flo2D(object):
                     os.path.join(self.plugin_dir, "img/export_swmm.svg"),
                     "Export to INP",
                     lambda: self.export_inp(),
+                ),
+                (
+                    os.path.join(self.plugin_dir, "img/import_multidomains.svg"),
+                    "Import multiple domains",
+                    lambda: self.import_multidomains(),
                 ),
                 (
                     os.path.join(self.plugin_dir, "img/import_ras.svg"),
@@ -3495,6 +3501,18 @@ class Flo2D(object):
         """
         sd_editor = StormDrainEditorWidget(self.iface, self.f2d_plot, self.f2d_table, self.lyrs)
         sd_editor.export_storm_drain_INP_file(set_dat_dir=True)
+
+    @connection_required
+    def import_multidomains(self):
+        """
+        Function to import multiple domains into the FLO-2D project
+        """
+        dlg = ImportMultipleDomainsDialog(self.con, self.iface, self.lyrs)
+        ok = dlg.exec_()
+        if not ok:
+            return
+        else:
+            pass
 
     @connection_required
     def import_from_ras(self):
