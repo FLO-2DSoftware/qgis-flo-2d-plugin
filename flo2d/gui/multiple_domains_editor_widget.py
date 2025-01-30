@@ -5,9 +5,10 @@ import os
 from PyQt5.QtCore import QSettings, QVariant
 from PyQt5.QtWidgets import QApplication, QProgressDialog, QInputDialog
 from qgis.PyQt.QtCore import NULL
-from qgis._core import QgsGeometry, QgsFeatureRequest, QgsPointXY, QgsField
+from qgis._core import QgsGeometry, QgsFeatureRequest, QgsPointXY, QgsField, QgsSpatialIndex, QgsFeature
 
-from ..flo2d_tools.grid_tools import square_grid, build_grid, number_of_elements, grid_compas_neighbors
+from ..flo2d_tools.grid_tools import square_grid, build_grid, number_of_elements, grid_compas_neighbors, \
+    adjacent_grid_elevations, adjacent_grids, domain_tendency
 from ..geopackage_utils import GeoPackageUtils
 # FLO-2D Preprocessor tools for QGIS
 
@@ -606,65 +607,117 @@ class MultipleDomainsEditorWidget(qtBaseClass, uiDialog):
         Function to create the subdomains
         """
         grid_layer = self.lyrs.data["grid"]["qlyr"]
-        self.calculate_flow_and_watersheds()
+        point_layer = self.lyrs.data["user_elevation_points"]["qlyr"]
+        line_layer = self.lyrs.data["user_md_connect_lines"]["qlyr"]
+        cell_size = int(float(self.gutils.get_cont_par("CELLSIZE")))
 
-    def calculate_flow_and_watersheds(self):
-        """
-        Calculate flow direction and watersheds using SQLite on a GeoPackage.
-        """
-        self.gutils.execute("DROP TABLE IF EXISTS schema_md_cells")
-        self.gutils.execute(f"CREATE TABLE schema_md_cells AS SELECT * FROM grid")
+        QgsSpatialIndex(grid_layer)
 
-        # Add `flow_to` and `watershed` fields if they don't exist
-        self.gutils.execute(f"PRAGMA table_info(schema_md_cells)")
-        self.gutils.execute("ALTER TABLE schema_md_cells ADD COLUMN flow_to INTEGER")
-        self.gutils.execute("ALTER TABLE schema_md_cells ADD COLUMN watershed INTEGER")
+        directions = {
+            "N": 1,
+            "NE": 2,
+            "E": 3,
+            "SE": 4,
+            "S": 5,
+            "SW": 6,
+            "W": 7,
+            "NW": 8
+        }
 
-        # Calculate flow direction (flow_to)
-        self.gutils.execute(f"""
-            WITH neighbors AS (
-                SELECT
-                    a.ROWID AS id,
-                    b.ROWID AS neighbor_id,
-                    a.elevation AS current_elevation,
-                    b.elevation AS neighbor_elevation
-                FROM schema_md_cells a, schema_md_cells b
-                WHERE ST_Touches(a.geom, b.geom)
-            ),
-            lowest_neighbors AS (
-                SELECT
-                    id,
-                    neighbor_id
-                FROM neighbors
-                WHERE neighbor_elevation = (
-                    SELECT MIN(neighbor_elevation)
-                    FROM neighbors n
-                    WHERE n.id = neighbors.id
-                )
-            )
-            UPDATE schema_md_cells
-            SET flow_to = (
-                SELECT neighbor_id
-                FROM lowest_neighbors
-                WHERE lowest_neighbors.id = schema_md_cells.ROWID
-            )
-        """)
+        parallel_directions = {
+            1: [3, 7],
+            2: [8, 4],
+            3: [1, 5],
+            4: [2, 6],
+            5: [3, 5],
+            6: [8, 4],
+            7: [1, 5],
+            8: [2, 4],
+        }
 
-        self.gutils.execute(f"""
-            WITH RECURSIVE watershed_cte(id, watershed_id) AS (
-                SELECT ROWID, ROWID AS watershed_id
-                FROM schema_md_cells
-                WHERE flow_to IS NULL -- Cells without a downstream neighbor are the watershed outlets
-                UNION ALL
-                SELECT g.ROWID, cte.watershed_id
-                FROM schema_md_cells g
-                JOIN watershed_cte cte
-                ON g.flow_to = cte.id
-            )
-            UPDATE schema_md_cells
-            SET watershed = (
-                SELECT watershed_id
-                FROM watershed_cte
-                WHERE watershed_cte.id = schema_md_cells.ROWID
-            )
-        """)
+        # Get the first feature TODO Evaluate for multiple points
+        feature = next(point_layer.getFeatures())
+        geom = feature.geometry()
+        # Get the geometry as a point
+        point = geom.asPoint()
+        # Get the starting cell
+        start_cell = self.gutils.grid_on_point(point.x(), point.y())
+        # List of the grid already evaluated
+        evaluated_grids = [start_cell]
+        # Tendency direction -> Use to avoid getting back close to the start point
+        tendency_direction = domain_tendency(self.gutils, grid_layer, start_cell, cell_size)
+
+        # Here is the main code to get the grid that are the boundary of the subdomain
+        current_cell = start_cell
+        while current_cell:
+            elevs = adjacent_grid_elevations(self.gutils, grid_layer, current_cell, cell_size)
+            previous_elev = 9999
+            minimum_elev = None
+
+            # Find the lowest elevation cell
+            for elev in elevs:
+                if elev != -999 and elev < previous_elev:
+                    previous_elev = elev
+                    minimum_elev = previous_elev
+
+            # Determine flow direction
+            if minimum_elev is None:
+                break  # No valid flow direction
+
+            direction = elevs.index(minimum_elev) + 1
+            potential_dirs = parallel_directions[direction]
+            current_cell_feature = next(grid_layer.getFeatures(QgsFeatureRequest(current_cell)))
+            adjacent_cells = adjacent_grids(self.gutils, current_cell_feature, cell_size)
+            if current_cell != start_cell:
+                if None in adjacent_cells:
+                    break
+
+            # Try selecting from tendency direction first
+            next_cell = None
+            for potential_dir in potential_dirs:
+                if potential_dir in tendency_direction:
+                    cell = adjacent_cells[potential_dir - 1]
+                    if cell and cell not in evaluated_grids:
+                        next_cell = cell
+                        evaluated_grids.append(next_cell)
+                        break  # Move to the next cell
+
+            # If no cell found in tendency direction, use any available direction
+            if next_cell is None:
+                for potential_dir in potential_dirs:
+                    cell = adjacent_cells[potential_dir - 1]
+                    if cell and cell not in evaluated_grids:
+                        next_cell = cell
+                        evaluated_grids.append(next_cell)
+                        break  # Move to the next cell
+
+            current_cell = next_cell  # Update for the next iteration
+
+        # Create the line
+        centroids = []
+        for fid in evaluated_grids:
+            feature = grid_layer.getFeature(fid)
+            if feature and feature.geometry():
+                centroid = feature.geometry().centroid().asPoint()
+                centroids.append(QgsPointXY(centroid.x(), centroid.y()))
+
+        if len(centroids) < 2:
+            self.uc.log_info("Not enough centroids to create a line.")
+            self.uc.bar_error("Not enough centroids to create a line.")
+            return
+
+        # Create line geometry from centroids
+        line_geom = QgsGeometry.fromPolylineXY(centroids)
+
+        # Create a new feature for the line
+        line_feature = QgsFeature(line_layer.fields())
+        line_feature.setGeometry(line_geom)
+
+        # Start editing and add the feature to the line layer
+        line_layer.startEditing()
+        line_layer.addFeature(line_feature)
+        line_layer.commitChanges()
+        line_layer.updateExtents()
+        line_layer.triggerRepaint()
+
+        # self.uc.log_info(evaluated_grids)

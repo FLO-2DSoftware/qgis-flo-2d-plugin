@@ -2720,6 +2720,40 @@ def adjacent_grids(gutils, currentCell, cell_size):
 
     return n_grid, ne_grid, e_grid, se_grid, s_grid, sw_grid, w_grid, nw_grid
 
+def domain_tendency(gutils, grid_lyr, cell, cell_size):
+    cell = int(cell)
+    currentCell = next(grid_lyr.getFeatures(QgsFeatureRequest(cell)))
+    xx, yy = currentCell.geometry().centroid().asPoint()
+
+    # North cell:
+    y = yy + cell_size
+    x = xx
+    grid = gutils.grid_on_point(x, y)
+    if grid is None:
+        return [4, 5, 6]
+
+    # East cell:
+    y = yy
+    x = xx + cell_size
+    grid = gutils.grid_on_point(x, y)
+    if grid is None:
+        return [6, 7, 8]
+
+    # South cell:
+    y = yy - cell_size
+    x = xx
+    grid = gutils.grid_on_point(x, y)
+    if grid is None:
+        return [1, 2, 8]
+
+    # West cell:
+    y = yy
+    x = xx - cell_size
+    grid = gutils.grid_on_point(x, y)
+    if grid is None:
+        return [2, 3, 4]
+
+    return False
 
 def dirID(dir):
     if dir == 1:  # "N"
