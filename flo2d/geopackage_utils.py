@@ -271,7 +271,8 @@ class GeoPackageUtils(object):
         'user_infiltration', 'user_effective_impervious_area', 'raincell',
         'raincell_data', 'buildings_areas', 'buildings_stats', 'sd_fields', 'outrc', 'swmm_control',
         'user_tailings', 'user_tailing_reservoirs', 'tailing_reservoirs', 'tailing_cells', 'external_layers',
-        'user_swmm_inlets_junctions', 'user_swmm_outlets'
+        'user_swmm_inlets_junctions', 'user_swmm_outlets',
+        'mult_domains', 'user_md_connect_lines', 'schema_md_connect_cells', 'schema_md_cells'
     ]
 
     def __init__(self, con, iface):

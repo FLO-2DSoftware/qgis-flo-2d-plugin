@@ -548,6 +548,30 @@ class Layers(object):
                         "advanced": True
                     },
                 ),
+                (
+                    "user_md_connect_lines",
+                    {
+                        "name": "Connectivity Lines",
+                        "sgroup": "User Layers",
+                        "ssgroup": "Multiple Domains",
+                        "styles": ["connect_lines.qml"],
+                        "attrs_edit_widgets": {},
+                        "readonly": False,
+                        "advanced": False
+                    },
+                ),
+                (
+                "mult_domains",
+                {
+                    "name": "Domains",
+                    "sgroup": "User Layers",
+                    "ssgroup": "Multiple Domains",
+                    "styles": ["domains.qml"],
+                    "attrs_edit_widgets": {},
+                    "readonly": False,
+                    "advanced": False
+                    },
+                ),
                 # Schematic layers:
                 (
                     "grid",
@@ -907,7 +931,32 @@ class Layers(object):
                         "readonly": False,
                         "advanced": True
                     },
-                ),                
+                ),
+                # Multiple Domains Layers
+                (
+                    "schema_md_cells",
+                    {
+                        "name": "Domains Cells",
+                        "sgroup": "Schematic Layers",
+                        "ssgroup": "Multiple Domains",
+                        "styles": ["domain_cells.qml"],
+                        "attrs_edit_widgets": {},
+                        "readonly": False,
+                        "advanced": False
+                    },
+                ),
+                (
+                    "schema_md_connect_cells",
+                    {
+                        "name": "Connectivity Cells",
+                        "sgroup": "Schematic Layers",
+                        "ssgroup": "Multiple Domains",
+                        "styles": ["connect_cells.qml"],
+                        "attrs_edit_widgets": {},
+                        "readonly": False,
+                        "advanced": False
+                    },
+                ),
                 # Infiltration Layers
                 (
                     "infil",
