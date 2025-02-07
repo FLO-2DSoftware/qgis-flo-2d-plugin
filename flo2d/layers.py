@@ -934,24 +934,24 @@ class Layers(object):
                 ),
                 # Multiple Domains Layers
                 (
-                    "schema_md_cells",
-                    {
-                        "name": "Domains Cells",
-                        "sgroup": "Schematic Layers",
-                        "ssgroup": "Multiple Domains",
-                        "styles": ["domain_cells.qml"],
-                        "attrs_edit_widgets": {},
-                        "readonly": False,
-                        "advanced": False
-                    },
-                ),
-                (
                     "schema_md_connect_cells",
                     {
                         "name": "Connectivity Cells",
                         "sgroup": "Schematic Layers",
                         "ssgroup": "Multiple Domains",
                         "styles": ["connect_cells.qml"],
+                        "attrs_edit_widgets": {},
+                        "readonly": False,
+                        "advanced": False
+                    },
+                ),
+                (
+                    "schema_md_cells",
+                    {
+                        "name": "Domains Cells",
+                        "sgroup": "Schematic Layers",
+                        "ssgroup": "Multiple Domains",
+                        "styles": ["domain_cells.qml"],
                         "attrs_edit_widgets": {},
                         "readonly": False,
                         "advanced": False
@@ -1433,6 +1433,31 @@ class Layers(object):
                     {
                         "name": "Breach Fragility Curves",
                         "sgroup": "Levee and Breach Tables",
+                        "styles": None,
+                        "attrs_edit_widgets": {},
+                        "visible": False,
+                        "readonly": False,
+                        "advanced": True
+                    },
+                ),
+                # Multiple Domain Tables
+                (
+                    "mult_domains_methods",
+                    {
+                        "name": "Multiple Domains",
+                        "sgroup": "Multiple Domains Tables",
+                        "styles": None,
+                        "attrs_edit_widgets": {},
+                        "visible": False,
+                        "readonly": False,
+                        "advanced": True
+                    },
+                ),
+                (
+                    "md_method_1",
+                    {
+                        "name": "Import Method 1",
+                        "sgroup": "Multiple Domains Tables",
                         "styles": None,
                         "attrs_edit_widgets": {},
                         "visible": False,

@@ -1351,6 +1351,7 @@ SELECT gpkgAddGeometryTriggers('user_md_connect_lines', 'geom');
 CREATE TABLE "schema_md_cells" (
     "fid" INTEGER NOT NULL PRIMARY KEY,
     "domain_fid" INTEGER,
+    "domain_cell" INTEGER,
     "n_value" REAL,
     "elevation" REAL
 );
@@ -1361,13 +1362,65 @@ SELECT gpkgAddSpatialIndex('schema_md_cells', 'geom');
 
 CREATE TABLE "schema_md_connect_cells" (
     "fid" INTEGER NOT NULL PRIMARY KEY,
-    "domain_fid" INTEGER,
-    "grid_fid" INTEGER,
-    "domain_cell" INTEGER
+    "up_domain_fid" INTEGER,
+    "up_domain_cell" INTEGER,
+    "down_domain_fid" INTEGER,
+    "down_domain_cell" INTEGER
 );
 INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('schema_md_connect_cells', 'features', 4326);
 SELECT gpkgAddGeometryColumn('schema_md_connect_cells', 'geom', 'POINT', 0, 0, 0);
 SELECT gpkgAddGeometryTriggers('schema_md_connect_cells', 'geom');
+
+CREATE TABLE "mult_domains_methods" (
+    "fid" INTEGER NOT NULL PRIMARY KEY,
+    "subdomain_name" TEXT, -- name of the subdomain
+    "subdomain_path" TEXT, -- name of the subdomain
+    "import_method" INTEGER, -- NULL = was not imported, 1 CADPTS and Ups-Downs
+    "fid_method" INTEGER -- NULL = was not imported, 1 CADPTS and Ups-Downs
+);
+INSERT INTO gpkg_contents (table_name, data_type) VALUES ('mult_domains_methods', 'aspatial');
+
+CREATE TABLE "md_method_1" (
+    "fid" INTEGER NOT NULL PRIMARY KEY,
+    "subdomain_name" TEXT DEFAULT '', -- name of the subdomain
+    "fid_subdomain_1" INTEGER, -- fid of subdomain connected
+    "subdomain_name_1" TEXT DEFAULT '', -- name of the subdomain connected
+    "ds_file_1" TEXT DEFAULT '', -- ds file of the subdomain connected
+    "ups_downs_1" TEXT DEFAULT '', -- ups downs of the subdomain connected
+    "fid_subdomain_2" INTEGER, -- fid of subdomain connected
+    "subdomain_name_2" TEXT DEFAULT '', -- name of the subdomain connected
+    "ds_file_2" TEXT DEFAULT '', -- ds file of the subdomain connected
+    "ups_downs_2" TEXT DEFAULT '', -- ups downs of the subdomain connected
+    "fid_subdomain_3" INTEGER, -- fid of subdomain connected
+    "subdomain_name_3" TEXT DEFAULT '', -- name of the subdomain connected
+    "ds_file_3" TEXT DEFAULT '', -- ds file of the subdomain connected
+    "ups_downs_3" TEXT DEFAULT '', -- ups downs of the subdomain connected
+    "fid_subdomain_4" INTEGER, -- fid of subdomain connected
+    "subdomain_name_4" TEXT DEFAULT '', -- name of the subdomain connected
+    "ds_file_4" TEXT DEFAULT '', -- ds file of the subdomain connected
+    "ups_downs_4" TEXT DEFAULT '', -- ups downs of the subdomain connected
+    "fid_subdomain_5" INTEGER, -- fid of subdomain connected
+    "subdomain_name_5" TEXT DEFAULT '', -- name of the subdomain connected
+    "ds_file_5" TEXT DEFAULT '', -- ds file of the subdomain connected
+    "ups_downs_5" TEXT DEFAULT '', -- ups downs of the subdomain connected
+    "fid_subdomain_6" INTEGER, -- fid of subdomain connected
+    "subdomain_name_6" TEXT DEFAULT '', -- name of the subdomain connected
+    "ds_file_6" TEXT DEFAULT '', -- ds file of the subdomain connected
+    "ups_downs_6" TEXT DEFAULT '', -- ups downs of the subdomain connected
+    "fid_subdomain_7" INTEGER, -- fid of subdomain connected
+    "subdomain_name_7" TEXT DEFAULT '', -- name of the subdomain connected
+    "ds_file_7" TEXT DEFAULT '', -- ds file of the subdomain connected
+    "ups_downs_7" TEXT DEFAULT '', -- ups downs of the subdomain connected
+    "fid_subdomain_8" INTEGER, -- fid of subdomain connected
+    "subdomain_name_8" TEXT DEFAULT '', -- name of the subdomain connected
+    "ds_file_8" TEXT DEFAULT '', -- ds file of the subdomain connected
+    "ups_downs_8" TEXT DEFAULT '', -- ups downs of the subdomain connected
+    "fid_subdomain_9" INTEGER, -- fid of subdomain connected
+    "subdomain_name_9" TEXT DEFAULT '', -- name of the subdomain connected
+    "ds_file_9" TEXT DEFAULT '', -- ds file of the subdomain connected
+    "ups_downs_9" TEXT  DEFAULT '' -- ups downs of the subdomain connected
+);
+INSERT INTO gpkg_contents (table_name, data_type) VALUES ('md_method_1', 'aspatial');
 
 -- FPFROUDE.DAT
 
