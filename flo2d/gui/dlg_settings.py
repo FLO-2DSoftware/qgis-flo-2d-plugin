@@ -269,82 +269,58 @@ class SettingsDialog(qtBaseClass, uiDialog):
         self.uc.log_info("{0:.3f} seconds => create gutils ".format(time.time() - start_time))
         # CRS
         start_time = time.time()
-        if crs is None:
-            self.projectionSelector.selectCrs()
-            if self.projectionSelector.crs().isValid():
-                self.crs = self.projectionSelector.crs()
+
+        while True:
+            # No CRS selected yet
+            if crs is None:
+                self.projectionSelector.selectCrs()
+                selected_crs = self.projectionSelector.crs()
+
+                # Check if the user clicked "Cancel"
+                # If user clicks "Cancel" or does not select a valid CRS, exit the loop
+                if not selected_crs.isValid():
+                    msg = "No valid CRS was selected. Operation canceled."
+                    self.uc.show_warn(msg)
+                    self.uc.log_info(msg)
+                    self.proj_lab.setText("----")
+                    self.gpkgPathEdit.setText("")
+                    return  # Exit function instead of looping forever
+
+                # Store valid CRS
+                self.crs = selected_crs
             else:
-                msg = "WARNING 060319.1655: Choose a valid CRS!"
-                self.uc.show_warn(msg)
-                self.uc.log_info(msg)
-                return
-        else:
-            if crs.isValid():
-                self.crs = crs
-            else:
-                msg = "The geopackage does not contain a valid CRS!"
-                self.uc.show_warn(msg)
-                self.uc.log_info(msg)
-                return
-        auth, crsid = self.crs.authid().split(":")
-        self.proj_lab.setText(self.crs.description())
+                # Check if CRS is valid
+                if crs.isValid():
+                    self.crs = crs
+                else:
+                    msg = "The geopackage does not contain a valid CRS!"
+                    self.uc.show_warn(msg)
+                    self.uc.log_info(msg)
+                    return
 
-        si_units = [QgsUnitTypes.DistanceMeters,
-                    QgsUnitTypes.DistanceKilometers,
-                    QgsUnitTypes.DistanceCentimeters,
-                    QgsUnitTypes.DistanceMillimeters
-                    ]
-        imperial_units = [QgsUnitTypes.DistanceFeet,
-                    QgsUnitTypes.DistanceNauticalMiles,
-                    QgsUnitTypes.DistanceYards,
-                    QgsUnitTypes.DistanceMiles,
-                    QgsUnitTypes.Inches
-                    ]
+            auth, crsid = self.crs.authid().split(":")
+            self.proj_lab.setText(self.crs.description())
 
-        # Using this try/except block because old versions of QGIS does not have FeetUSSurvey or MilesUSSurvey
-        try:
-            imperial_units.append(QgsUnitTypes.FeetUSSurvey)
-            imperial_units.append(QgsUnitTypes.MilesUSSurvey)
-        except:
-            pass
-
-        if self.crs.mapUnits() in si_units:
-            self.si_units = True
-            mu = "Metric (International System)"
-        elif self.crs.mapUnits() in imperial_units:
-            self.si_units = False
-            mu = "English (Imperial System)"
-        elif self.crs.mapUnits() == QgsUnitTypes.DistanceDegrees:
-            msg = "The selected CRS uses degrees as units of distance. Please, choose a different projection!"
-            self.uc.show_warn(msg)
-            self.uc.log_info(msg)
-            self.proj_lab.setText("----")
-            self.gpkgPathEdit.setText("")
-            return
-        elif self.crs.mapUnits() == QgsUnitTypes.DistanceUnknownUnit:
-            msg = "Unknown map units. Choose a different projection!"
-            self.uc.show_warn(msg)
-            self.uc.log_info(msg)
-            self.proj_lab.setText("----")
-            self.gpkgPathEdit.setText("")
-            return
-        else:
-            msg = f"The System of Units for this CRS could not be identified. Please, confirm the System of Units."
-            answer = self.uc.dialog_with_2_customized_buttons(
-                "FLO-2D System of Units",
-                msg,
-                "Metric (International System)",
-                "English (Imperial System)")
-            if answer == QMessageBox.Yes:
+            if self.crs.mapUnits() == QgsUnitTypes.DistanceMeters:
                 self.si_units = True
                 mu = "Metric (International System)"
-            elif answer == QMessageBox.No:
+                break  # Exit loop if valid CRS with meters is selected
+            elif self.crs.mapUnits() == QgsUnitTypes.DistanceFeet:
                 self.si_units = False
                 mu = "English (Imperial System)"
+                break  # Exit loop if valid CRS with feet is selected
             else:
-                self.proj_lab.setText("----")
-                self.gpkgPathEdit.setText("")
-                return
+                # msg = "WARNING 060319.1655: Choose a valid CRS!\n\nFLO-2D only supports coordinate reference systems with distance units in feet or meters. Please select an appropriate CRS."
+                answer = self.uc.customized_question("WARNING 060319.1655",
+                    "Choose a valid CRS!\n\nFLO-2D only supports coordinate reference systems with distance units in feet or meters.\n\nSelect another CRS?"
+                )
+                if answer == QMessageBox.Yes:
+                    continue
+                else:
+                    self.proj_lab.setText("----")
+                    self.gpkgPathEdit.setText("")
+                    return
+
 
         self.unit_lab.setText(mu)
         proj = self.crs.toProj()
