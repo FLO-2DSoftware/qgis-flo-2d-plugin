@@ -1,3 +1,5 @@
+from collections import defaultdict
+
 import requests
 import processing
 from qgis._core import QgsVectorFileWriter
@@ -255,24 +257,57 @@ class SsurgoSoil(object):
 
         chfrags_response = requests.post(self.url, json=body).json()
 
+        # Dictionary to store data grouped by mupolygonkey
+        grouped_data = defaultdict(lambda: {"fragsize_r": [], "fragvol_r": [], "geometry": None, "mukey": None})
+
+        # Step 1: Group data by mupolygonkey
         if chfrags_response:
             for row in chfrags_response["Table"]:
-                # None attribute for empty data
-                row = [None if not attr else attr for attr in row]
-                feat = QgsFeature(self.soil_chfrags.fields())
-                # populate data
-                for index, col in enumerate(row):
-                    if index != len(self.chfrags_att_dict):
-                        feat.setAttribute(self.chfrags_att_dict[index]["name"], col)
-                    else:
-                        feat.setGeometry(QgsGeometry.fromWkt(col))
-                self.chfrags_prov.addFeatures([feat])
+                mupolygonkey, mukey, fragsize_r, fragvol_r, geometry = row
 
-            self.soil_chfrags = self.clip(self.soil_chfrags)
-            self.soil_chfrags = self.reprojectLayer(self.soil_chfrags, QgsProject.instance().crs())
+                # Store in dictionary
+                grouped_data[mupolygonkey]["fragsize_r"].append(fragsize_r if fragsize_r is not None else 0)
+                grouped_data[mupolygonkey]["fragvol_r"].append(fragvol_r if fragvol_r is not None else 0)
+                grouped_data[mupolygonkey]["geometry"] = geometry  # Store WKT geometry
+                grouped_data[mupolygonkey]["mukey"] = mukey
 
-            self.soil_chfrags.setName("chfrags")
-        if self.saveLayers: self.saveSoilDataToGpkg(self.soil_chfrags)
+        # Step 2: Compute Averages
+        processed_features = []
+
+        for mupolygonkey, values in grouped_data.items():
+            avg_fragsize = sum(float(x) for x in values["fragsize_r"] if x is not None) / len(values["fragsize_r"]) if \
+            values["fragsize_r"] else None
+            avg_fragvol = sum(float(x) for x in values["fragvol_r"] if x is not None) / len(values["fragvol_r"]) if \
+            values["fragvol_r"] else None
+
+            geometry = values["geometry"]
+            mukey = values["mukey"]
+
+            # Create feature
+            feat = QgsFeature(self.soil_chfrags.fields())
+
+            # Populate attributes with computed averages
+            feat.setAttribute("mupolygonkey", mupolygonkey)
+            feat.setAttribute("mukey", mukey)
+            feat.setAttribute("fragsize", avg_fragsize)
+            feat.setAttribute("fragvol", avg_fragvol)
+
+            # Set geometry
+            if geometry:
+                feat.setGeometry(QgsGeometry.fromWkt(geometry))
+
+            processed_features.append(feat)
+
+        # Step 3: Add features to provider
+        self.chfrags_prov.addFeatures(processed_features)
+
+        # Step 4: Clip, reproject, and save
+        self.soil_chfrags = self.clip(self.soil_chfrags)
+        self.soil_chfrags = self.reprojectLayer(self.soil_chfrags, QgsProject.instance().crs())
+        self.soil_chfrags.setName("chfrags")
+
+        if self.saveLayers:
+            self.saveSoilDataToGpkg(self.soil_chfrags)
 
     def downloadComp(self):
         """Method for downloading the component layer using PostRequest"""
@@ -328,7 +363,7 @@ class SsurgoSoil(object):
         """Method for combining the chorizon and chfrags layer"""
         self.ssurgo_layer = self.joinLayers(self.soil_chorizon, self.soil_chfrags)
         self.ssurgo_layer = self.joinLayers(self.ssurgo_layer, self.soil_comp)
-        # self.ssurgo_layer = self.deleteHoles(self.ssurgo_layer)
+        self.ssurgo_layer = self.deleteHoles(self.ssurgo_layer)
         self.ssurgo_layer.setName("ssurgo")
         if self.saveLayers: self.saveSoilDataToGpkg(self.ssurgo_layer)
 
@@ -423,9 +458,10 @@ class SsurgoSoil(object):
             if XKSAT_n > 50.8:
                 XKSAT_n = 50.8
 
-            # Suction(per Rawls, Brackensiek & Miller, 1983)
+            # Suction (per Rawls, Brackensiek & Miller, 1983)
             BubblingPressure = -21.674 * sand - 27.932 * clay - 81.975 * PM33C + 71.121 * sand * PM33C + 8.294 * clay * PM33C + 14.05 * sand * clay + 27.161
             BPadj = BubblingPressure + (0.02 * BubblingPressure ** 2 - 0.113 * BubblingPressure - 0.7)
+            PSIF = 0
             if BubblingPressure >= 0:
                 PSIF = (2 * lmbda + 3) / (2 * lmbda + 2) * BubblingPressure / 2 * 4.014630787
             if BPadj >= 0:
@@ -608,11 +644,13 @@ class SsurgoSoil(object):
         return xmin, ymin, xmax, ymax
 
     def deleteHoles(self, layer):
+        cell_size = float(self.gutils.get_cont_par("CELLSIZE"))
         alg_params = {
                       'INPUT' : layer,
-                      'MIN_AREA': 0,
+                      'MIN_AREA': cell_size * cell_size,
                       'OUTPUT': QgsProcessing.TEMPORARY_OUTPUT
                      }
+
         return processing.run("native:deleteholes", alg_params)["OUTPUT"]
 
     def saveSoilDataToGpkg(self, layer):

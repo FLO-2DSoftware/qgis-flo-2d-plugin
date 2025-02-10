@@ -501,21 +501,38 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
         QDesktopServices.openUrl(QUrl("https://flo-2dsoftware.github.io/FLO-2D-Documentation/Plugin1000/widgets/infiltration-editor/index.html"))        
 
     def calculate_green_ampt(self):
-        dlg = GreenAmptDialog(self.iface, self.lyrs)
-        ok = dlg.exec_()
-        if not ok:
-            return
-        try:
-            dlg.save_green_ampt_shapefile_fields()
-            self.gutils.disable_geom_triggers()
-            (
-                soil_lyr,
-                land_lyr,
-                fields,
-                vc_check,
-                log_area_average,
-            ) = dlg.green_ampt_parameters()
+        while True:
+            dlg = GreenAmptDialog(self.iface, self.lyrs)
+            ok = dlg.exec_()
+            if not ok:
+                return
+            try:
+                dlg.save_green_ampt_shapefile_fields()
+                self.gutils.disable_geom_triggers()
+                if dlg.green_ampt_parameters():
+                    (
+                        soil_lyr,
+                        land_lyr,
+                        fields,
+                        vc_check,
+                        log_area_average,
+                    ) = dlg.green_ampt_parameters()
+                    break
+                else:
+                    self.uc.show_critical(
+                        "Green-Ampt infiltration failed!\n\nPlease check if the Soil & Land Use Fields are correctly assigned."
+                    )
+                    self.uc.log_info(
+                        "Green-Ampt infiltration failed!\n\nPlease check if the Soil & Land Use Fields are correctly assigned."
+                    )
+                    continue
 
+            except Exception as e:
+                self.uc.bar_error("Green-Ampt infiltration failed!\n\nPlease check the Soil & Land Use Layers and Fields.")
+                self.uc.log_info("Green-Ampt infiltration failed!\n\nPlease check the Soil & Land Use Layers and Fields.")
+                return
+
+        try:
             inf_calc = InfiltrationCalculator(self.grid_lyr, self.iface, self.gutils)
             inf_calc.setup_green_ampt(soil_lyr, land_lyr, vc_check, log_area_average, *fields)
             grid_params = inf_calc.green_ampt_infiltration()
@@ -574,13 +591,13 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
             else:
                 QApplication.restoreOverrideCursor()
                 self.uc.show_critical(
-                    "ERROR 061218.1839: Green-Ampt infiltration failed!. Please check data in your input layers."
+                    "ERROR 061218.1839: Green-Ampt infiltration failed! Please check data in your input layers."
                 )
 
         except Exception as e:
             self.uc.log_info(traceback.format_exc())
             self.uc.show_error(
-                "ERROR 051218.1839: Green-Ampt infiltration failed!. Please check data in your input layers."
+                "ERROR 051218.1839: Green-Ampt infiltration failed! Please check data in your input layers."
                 + "\n__________________________________________________",
                 e,
             )
@@ -917,7 +934,35 @@ class GreenAmptDialog(uiDialog_green, qtBaseClass_green):
         if soil_lyr:
             soil_lyr = soil_lyr[0]
 
-        fields = [f.currentText() for f in chain(self.soil_combos, self.land_combos)]
+        fields = []
+
+        for f in chain(self.soil_combos, self.land_combos):
+            field_name = f.currentText()
+            if f in self.soil_combos:
+                # Check if field_exists
+                if soil_lyr.fields().indexFromName(field_name) != -1:
+                    field_type = soil_lyr.fields().field(field_name).type()
+                    # Check if field is numeric because all soil field are numeric
+                    if field_type not in [QVariant.Int, QVariant.Double]:
+                        return False
+                    else:
+                        fields.append(field_name)
+            if f in self.land_combos:
+                    # Check if field_exists
+                    if land_lyr.fields().indexFromName(field_name) != -1:
+                        field_type = land_lyr.fields().field(field_name).type()
+                        # Saturation is text
+                        if f == self.saturation_cbo:
+                            if field_type not in [QVariant.String]:
+                                return False
+                            else:
+                                fields.append(field_name)
+                        else:
+                            if field_type not in [QVariant.Int, QVariant.Double]:
+                                return False
+                            else:
+                                fields.append(field_name)
+
         vc_check = self.veg_cover_chbox.isChecked()
         log_area_average = self.log_area_average_chbox.isChecked()
         return soil_lyr, land_lyr, fields, vc_check, log_area_average
