@@ -3,7 +3,10 @@ import os.path
 import re
 from collections import OrderedDict
 
-import h5py
+try:
+    import h5py
+except ImportError:
+    pass
 from PyQt5.QtCore import QSettings
 from PyQt5.QtWidgets import QFileDialog
 

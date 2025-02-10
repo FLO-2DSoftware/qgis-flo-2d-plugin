@@ -16,6 +16,7 @@ try:
     import h5py
 except ImportError:
     pass
+
 import numpy as np
 from PyQt5.QtCore import QUrl
 from PyQt5.QtGui import QDesktopServices, QColor

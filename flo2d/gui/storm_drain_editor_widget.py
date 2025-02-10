@@ -14,7 +14,11 @@ from datetime import date, datetime, time, timedelta
 from math import isnan, modf
 from pathlib import Path
 
-import h5py
+try:
+    import h5py
+except ImportError:
+    pass
+
 from PyQt5.QtWidgets import QStyledItemDelegate, QGraphicsRectItem
 from qgis._core import QgsFeatureRequest, QgsDistanceArea
 from qgis._gui import QgsDockWidget
