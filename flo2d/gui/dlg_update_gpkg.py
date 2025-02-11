@@ -51,14 +51,17 @@ class UpdateGpkg(qtBaseClass, uiDialog):
         crs = QgsProject.instance().crs()
         self.proj_lab.setText(crs.description())
 
-        if crs.mapUnits() == QgsUnitTypes.DistanceMeters:
+        map_units = QgsUnitTypes.toString(crs.mapUnits())
+
+        if "meters" in map_units:
             mu = "meters"
-        elif crs.mapUnits() == QgsUnitTypes.DistanceFeet:
+        elif "feet" in map_units:
             mu = "feet"
         else:
             msg = "WARNING 060319.1654: Unknown map units."
             mu = ""
             self.uc.show_warn(msg)
+            self.uc.log_info(msg)
         self.unit_lab.setText(mu)
 
         contact = QgsProject.instance().metadata().author()
