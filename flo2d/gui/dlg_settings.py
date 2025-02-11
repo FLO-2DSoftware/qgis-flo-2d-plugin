@@ -301,16 +301,17 @@ class SettingsDialog(qtBaseClass, uiDialog):
             auth, crsid = self.crs.authid().split(":")
             self.proj_lab.setText(self.crs.description())
 
-            if self.crs.mapUnits() == QgsUnitTypes.DistanceMeters:
+            map_units = QgsUnitTypes.toString(self.crs.mapUnits())
+
+            if "meters" in map_units:
                 self.si_units = True
                 mu = "Metric (International System)"
                 break  # Exit loop if valid CRS with meters is selected
-            elif self.crs.mapUnits() == QgsUnitTypes.DistanceFeet:
+            elif "feet" in map_units:
                 self.si_units = False
                 mu = "English (Imperial System)"
                 break  # Exit loop if valid CRS with feet is selected
             else:
-                # msg = "WARNING 060319.1655: Choose a valid CRS!\n\nFLO-2D only supports coordinate reference systems with distance units in feet or meters. Please select an appropriate CRS."
                 answer = self.uc.customized_question("WARNING 060319.1655",
                     "Choose a valid CRS!\n\nFLO-2D only supports coordinate reference systems with distance units in feet or meters.\n\nSelect another CRS?"
                 )
@@ -320,7 +321,6 @@ class SettingsDialog(qtBaseClass, uiDialog):
                     self.proj_lab.setText("----")
                     self.gpkgPathEdit.setText("")
                     return
-
 
         self.unit_lab.setText(mu)
         proj = self.crs.toProj()
