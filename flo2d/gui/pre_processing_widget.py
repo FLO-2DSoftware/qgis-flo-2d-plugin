@@ -476,16 +476,22 @@ class PreProcessingWidget(qtBaseClass, uiDialog):
                                                               'METHOD': 1,
                                                               'OUTPUT_TABLE': 'TEMPORARY_OUTPUT'})
 
-        if QgsProject.instance().crs().mapUnits() == QgsUnitTypes.DistanceMeters:
+        map_units = QgsUnitTypes.toString(QgsProject.instance().crs().mapUnits())
+
+        if "meters" in map_units:
             area_unit = "km²"
             volume_unit = "M m³"
             area_conversion = 1000000
             volume_conversion = 1000000
-        else:
+        elif "feet" in map_units:
             area_unit = "acres"
             volume_unit = "acre-foot"
             area_conversion = 4047
             volume_conversion = 43560
+        else:
+            msg = "WARNING 060319.1654: Unknown map units."
+            self.uc.show_warn(msg)
+            self.uc.log_info(msg)
 
         formatted_output = f"{'='*30}\nArea ({area_unit}): {round(table['AREA']/area_conversion, 2)}\nVolume ({volume_unit}): {round(table['VOLUME']/volume_conversion, 2)}\n{'='*30}"
         self.results_te.setText(formatted_output)

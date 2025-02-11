@@ -533,13 +533,18 @@ class SettingsDialog(qtBaseClass, uiDialog):
                 pass
             self.gutils.set_cont_par(name, value)
         self.gutils.set_cont_par("PROJ", self.crs.toProj())
-        if self.crs.mapUnits() == QgsUnitTypes.DistanceMeters:
+
+        map_units = QgsUnitTypes.toString(self.crs.mapUnits())
+
+        if "meters" in map_units:
             metric = 1
-        elif self.crs.mapUnits() == QgsUnitTypes.DistanceFeet:
+        elif "feet" in map_units:
             self.si_units = False
             metric = 0
         else:
-            metric = 1
+            msg = "WARNING 060319.1654: Unknown map units."
+            self.uc.show_warn(msg)
+            self.uc.log_info(msg)
         self.gutils.set_cont_par("METRIC", metric)
         self.gutils.fill_empty_mult_globals()
 
