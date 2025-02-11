@@ -2,10 +2,10 @@ from collections import defaultdict
 
 import requests
 import processing
-from qgis._core import QgsVectorFileWriter
+from qgis._core import QgsVectorFileWriter, QgsSpatialIndex
 from qgis.core import (QgsDistanceArea, QgsFeature, QgsField,
                        QgsGeometry, QgsProcessing, QgsVectorLayer, QgsProject)
-from qgis.PyQt.QtCore import QVariant
+from qgis.PyQt.QtCore import QVariant, NULL
 from ..user_communication import UserCommunication
 import math
 from ..geopackage_utils import GeoPackageUtils
@@ -363,7 +363,7 @@ class SsurgoSoil(object):
         """Method for combining the chorizon and chfrags layer"""
         self.ssurgo_layer = self.joinLayers(self.soil_chorizon, self.soil_chfrags)
         self.ssurgo_layer = self.joinLayers(self.ssurgo_layer, self.soil_comp)
-        self.ssurgo_layer = self.deleteHoles(self.ssurgo_layer)
+        self.ssurgo_layer = self.fillHoles(self.ssurgo_layer)
         self.ssurgo_layer.setName("ssurgo")
         if self.saveLayers: self.saveSoilDataToGpkg(self.ssurgo_layer)
 
@@ -426,6 +426,8 @@ class SsurgoSoil(object):
             # Wilting point
             predict_wp = -0.024 * sand + 0.487 * clay + 0.006 * orgmat + 0.005 * sand * orgmat - 0.013 * clay * orgmat + 0.068 * sand * clay + 0.031
             wPoint = predict_wp + (0.14 * predict_wp - 0.02)
+            if wPoint <= 0:
+                wPoint = predict_wp
 
             # Field Capacity
             predict_fc = -0.251 * sand + 0.195 * clay + 0.011 * orgmat + 0.006 * sand * orgmat - 0.027 * clay * orgmat + 0.452 * sand * clay + 0.299
@@ -643,15 +645,54 @@ class SsurgoSoil(object):
         ymax = extent.yMaximum()
         return xmin, ymin, xmax, ymax
 
-    def deleteHoles(self, layer):
-        cell_size = float(self.gutils.get_cont_par("CELLSIZE"))
-        alg_params = {
-                      'INPUT' : layer,
-                      'MIN_AREA': cell_size * cell_size,
-                      'OUTPUT': QgsProcessing.TEMPORARY_OUTPUT
-                     }
+    def fillHoles(self, layer):
 
-        return processing.run("native:deleteholes", alg_params)["OUTPUT"]
+        self.grid_lyr.extent()
+        grid_extent_lyr = processing.run("native:extenttolayer",
+                       {'INPUT': self.grid_lyr.extent(),
+                        'OUTPUT': 'TEMPORARY_OUTPUT'})["OUTPUT"]
+
+        extent_clipped_lyr = processing.run("native:clip", {
+            'INPUT': grid_extent_lyr,
+            'OVERLAY': self.grid_lyr,
+            'OUTPUT': 'TEMPORARY_OUTPUT'})["OUTPUT"]
+
+        difference_lyr = processing.run("native:difference", {
+            'INPUT': extent_clipped_lyr,
+            'OVERLAY': layer,
+            'OUTPUT': 'TEMPORARY_OUTPUT', 'GRID_SIZE': None})["OUTPUT"]
+
+        # No need to fill holes because the layer has no holes
+        if difference_lyr.featureCount() <= 0:
+            return layer
+        # Fill the holes
+        else:
+            union_layer = processing.run("native:union", {
+                'INPUT': layer,
+                'OVERLAY': difference_lyr,
+                'OVERLAY_FIELDS_PREFIX': '', 'OUTPUT': 'TEMPORARY_OUTPUT', 'GRID_SIZE': None})["OUTPUT"]
+
+            # Build the spatial index directly from the layer
+            features = {f.id(): f for f in union_layer.getFeatures()}  # Store features in a dictionary
+            index = QgsSpatialIndex(union_layer.getFeatures())  # No need for insertFeature()
+
+            # Select the newly created polygon
+            new_features = [f for f in union_layer.getFeatures() if f['mukey'] == NULL]
+
+            union_layer.startEditing()
+            for new_feat in new_features:
+                geom = new_feat.geometry()
+                nearest_ids = index.nearestNeighbor(geom.centroid().asPoint(), 1)
+
+                if nearest_ids:
+                    nearest_feat = features[nearest_ids[0]]
+                    for field in union_layer.fields():
+                        new_feat.setAttribute(field.name(), nearest_feat[field.name()])
+
+                    union_layer.updateFeature(new_feat)  # Save the updated feature
+                    union_layer.commitChanges()
+
+        return union_layer
 
     def saveSoilDataToGpkg(self, layer):
         """
