@@ -501,21 +501,38 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
         QDesktopServices.openUrl(QUrl("https://flo-2dsoftware.github.io/FLO-2D-Documentation/Plugin1000/widgets/infiltration-editor/index.html"))        
 
     def calculate_green_ampt(self):
-        dlg = GreenAmptDialog(self.iface, self.lyrs)
-        ok = dlg.exec_()
-        if not ok:
-            return
-        try:
-            dlg.save_green_ampt_shapefile_fields()
-            self.gutils.disable_geom_triggers()
-            (
-                soil_lyr,
-                land_lyr,
-                fields,
-                vc_check,
-                log_area_average,
-            ) = dlg.green_ampt_parameters()
+        while True:
+            dlg = GreenAmptDialog(self.iface, self.lyrs)
+            ok = dlg.exec_()
+            if not ok:
+                return
+            try:
+                dlg.save_green_ampt_shapefile_fields()
+                self.gutils.disable_geom_triggers()
+                if dlg.green_ampt_parameters():
+                    (
+                        soil_lyr,
+                        land_lyr,
+                        fields,
+                        vc_check,
+                        log_area_average,
+                    ) = dlg.green_ampt_parameters()
+                    break
+                else:
+                    self.uc.show_critical(
+                        "Green-Ampt infiltration failed!\n\nPlease check if the Soil & Land Use Fields are correctly assigned."
+                    )
+                    self.uc.log_info(
+                        "Green-Ampt infiltration failed!\n\nPlease check if the Soil & Land Use Fields are correctly assigned."
+                    )
+                    continue
 
+            except Exception as e:
+                self.uc.bar_error("Green-Ampt infiltration failed!\n\nPlease check the Soil & Land Use Layers and Fields.")
+                self.uc.log_info("Green-Ampt infiltration failed!\n\nPlease check the Soil & Land Use Layers and Fields.")
+                return
+
+        try:
             inf_calc = InfiltrationCalculator(self.grid_lyr, self.iface, self.gutils)
             inf_calc.setup_green_ampt(soil_lyr, land_lyr, vc_check, log_area_average, *fields)
             grid_params = inf_calc.green_ampt_infiltration()
@@ -574,13 +591,13 @@ class InfilEditorWidget(qtBaseClass, uiDialog):
             else:
                 QApplication.restoreOverrideCursor()
                 self.uc.show_critical(
-                    "ERROR 061218.1839: Green-Ampt infiltration failed!. Please check data in your input layers."
+                    "ERROR 061218.1839: Green-Ampt infiltration failed! Please check data in your input layers."
                 )
 
         except Exception as e:
             self.uc.log_info(traceback.format_exc())
             self.uc.show_error(
-                "ERROR 051218.1839: Green-Ampt infiltration failed!. Please check data in your input layers."
+                "ERROR 051218.1839: Green-Ampt infiltration failed! Please check data in your input layers."
                 + "\n__________________________________________________",
                 e,
             )
@@ -840,7 +857,6 @@ class GreenAmptDialog(uiDialog_green, qtBaseClass_green):
         self.grid_lyr = self.lyrs.data["grid"]["qlyr"]
         self.setupUi(self)
         self.uc = UserCommunication(iface, "FLO-2D")
-        self.rb_NRCS = self.rb_NRCS
         self.soil_combos = [
             self.xksat_cbo,
             self.rtimps_cbo,
@@ -910,11 +926,43 @@ class GreenAmptDialog(uiDialog_green, qtBaseClass_green):
             c.addItems(fields)
 
     def green_ampt_parameters(self):
-        sidx = self.soil_cbo.currentIndex()
-        soil_lyr = self.soil_cbo.itemData(sidx)
-        lidx = self.land_cbo.currentIndex()
-        land_lyr = self.land_cbo.itemData(lidx)
-        fields = [f.currentText() for f in chain(self.soil_combos, self.land_combos)]
+
+        land_lyr = QgsProject.instance().mapLayersByName(self.land_cbo.currentText())
+        if land_lyr:
+            land_lyr = land_lyr[0]
+        soil_lyr = QgsProject.instance().mapLayersByName(self.soil_cbo.currentText())
+        if soil_lyr:
+            soil_lyr = soil_lyr[0]
+
+        fields = []
+
+        for f in chain(self.soil_combos, self.land_combos):
+            field_name = f.currentText()
+            if f in self.soil_combos:
+                # Check if field_exists
+                if soil_lyr.fields().indexFromName(field_name) != -1:
+                    field_type = soil_lyr.fields().field(field_name).type()
+                    # Check if field is numeric because all soil field are numeric
+                    if field_type not in [QVariant.Int, QVariant.Double]:
+                        return False
+                    else:
+                        fields.append(field_name)
+            if f in self.land_combos:
+                    # Check if field_exists
+                    if land_lyr.fields().indexFromName(field_name) != -1:
+                        field_type = land_lyr.fields().field(field_name).type()
+                        # Saturation is text
+                        if f == self.saturation_cbo:
+                            if field_type not in [QVariant.String]:
+                                return False
+                            else:
+                                fields.append(field_name)
+                        else:
+                            if field_type not in [QVariant.Int, QVariant.Double]:
+                                return False
+                            else:
+                                fields.append(field_name)
+
         vc_check = self.veg_cover_chbox.isChecked()
         log_area_average = self.log_area_average_chbox.isChecked()
         return soil_lyr, land_lyr, fields, vc_check, log_area_average
@@ -976,13 +1024,9 @@ class GreenAmptDialog(uiDialog_green, qtBaseClass_green):
     def calculate_ssurgo(self):
 
         # Verify if the user would like to save the intermediate calculation layers
-        saveLayers = True
-        answer = QMessageBox.question(self.iface.mainWindow(), 'NRCS G&A parameters',
-                                      'Remove intermediate calculation layers?', QMessageBox.Yes,
-                                      QMessageBox.No)
-        if answer == QMessageBox.Yes:
-            saveLayers = False
-
+        saveLayers = False
+        if self.ssurgo_chbox.isChecked():
+            saveLayers = True
         try:
             # Create the progress Dialog
             pd = QProgressDialog("Setting up...", None, 0, 7)
@@ -1043,6 +1087,9 @@ class GreenAmptDialog(uiDialog_green, qtBaseClass_green):
 
             QApplication.restoreOverrideCursor()
 
+            self.uc.log_info("Green-Ampt SSURGO soil layer successfully obtained!.")
+            self.uc.bar_info("Green-Ampt SSURGO soil layer successfully obtained!.")
+
         except Exception as e:
             self.uc.log_info(traceback.format_exc())
             self.uc.show_error(
@@ -1054,15 +1101,11 @@ class GreenAmptDialog(uiDialog_green, qtBaseClass_green):
     def calculate_osm(self):
 
         # Verify if the user would like to save the intermediate calculation layers
-        saveLayers = True
         layers = []
         temp_layers = []
-        answer = QMessageBox.question(self.iface.mainWindow(), 'OSM land use',
-                                      'Remove intermediate calculation layers?',
-                                      QMessageBox.Yes,
-                                      QMessageBox.No)
-        if answer == QMessageBox.Yes:
-            saveLayers = False
+        saveLayers = False
+        if self.osm_chbox.isChecked():
+            saveLayers = True
 
         # Create the progress Dialog
         pd = QProgressDialog("Getting OSM data...", None, 0, 11)
@@ -1467,6 +1510,41 @@ class GreenAmptDialog(uiDialog_green, qtBaseClass_green):
                     for layer in layers:
                         if layer != land_cover_vector:
                             QgsProject.instance().removeMapLayer(layer)
+                        else:
+                            gpkg_path = self.gutils.get_gpkg_path()
+                            flo2d_name = f"FLO-2D_{self.gutils.get_metadata_par('PROJ_NAME')}"
+                            group_name = "OSM Generator"
+                            flo2d_grp = root_group.findGroup(flo2d_name)
+                            if flo2d_grp.findGroup(group_name):
+                                group = flo2d_grp.findGroup(group_name)
+                            else:
+                                group = flo2d_grp.insertGroup(-1, group_name)
+                            options = QgsVectorFileWriter.SaveVectorOptions()
+                            options.driverName = "GPKG"
+                            options.includeZ = True
+                            options.overrideGeometryType = layer.wkbType()
+                            options.layerName = layer.name()
+                            options.actionOnExistingFile = QgsVectorFileWriter.CreateOrOverwriteLayer
+                            QgsVectorFileWriter.writeAsVectorFormatV3(
+                                layer,
+                                gpkg_path,
+                                QgsProject.instance().transformContext(),
+                                options)
+                            # Add back to the project
+                            gpkg_uri = f"{gpkg_path}|layername={layer.name()}"
+                            gpkg_layer = QgsVectorLayer(gpkg_uri, layer.name(), "ogr")
+                            QgsProject.instance().addMapLayer(gpkg_layer, False)
+                            gpkg_layer.setRenderer(layer.renderer().clone())
+                            gpkg_layer.triggerRepaint()
+                            group.insertLayer(0, gpkg_layer)
+                            if layer.name() == "landuse_layer":
+                                land_cover_vector = gpkg_layer
+                            layer = QgsProject.instance().mapLayersByName(gpkg_layer.name())[0]
+                            myLayerNode = root_group.findLayer(layer.id())
+                            myLayerNode.setExpanded(False)
+
+                            # Delete layer that is not in the gpkg
+                            QgsProject.instance().removeMapLayer(layer)
                 else:
                     gpkg_path = self.gutils.get_gpkg_path()
 
@@ -1556,6 +1634,9 @@ class GreenAmptDialog(uiDialog_green, qtBaseClass_green):
 
                 pd.setValue(11)
                 pd.close()
+
+                self.uc.log_info("Green-Ampt OSM land use successfully obtained!.")
+                self.uc.bar_info("Green-Ampt OSM land use successfully obtained!.")
 
         except Exception as e:
             self.uc.log_info(traceback.format_exc())
