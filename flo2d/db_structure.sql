@@ -1422,6 +1422,39 @@ CREATE TABLE "md_method_1" (
 );
 INSERT INTO gpkg_contents (table_name, data_type) VALUES ('md_method_1', 'aspatial');
 
+CREATE TABLE "md_method_2" (
+    "fid" INTEGER NOT NULL PRIMARY KEY,
+    "subdomain_name" TEXT DEFAULT '', -- name of the subdomain
+    "fid_subdomain_1" INTEGER, -- fid of subdomain connected
+    "subdomain_name_1" TEXT DEFAULT '', -- name of the subdomain connected
+    "ds_file_1" TEXT DEFAULT '', -- ds file of the subdomain connected
+    "fid_subdomain_2" INTEGER, -- fid of subdomain connected
+    "subdomain_name_2" TEXT DEFAULT '', -- name of the subdomain connected
+    "ds_file_2" TEXT DEFAULT '', -- ds file of the subdomain connected
+    "fid_subdomain_3" INTEGER, -- fid of subdomain connected
+    "subdomain_name_3" TEXT DEFAULT '', -- name of the subdomain connected
+    "ds_file_3" TEXT DEFAULT '', -- ds file of the subdomain connected
+    "fid_subdomain_4" INTEGER, -- fid of subdomain connected
+    "subdomain_name_4" TEXT DEFAULT '', -- name of the subdomain connected
+    "ds_file_4" TEXT DEFAULT '', -- ds file of the subdomain connected
+    "fid_subdomain_5" INTEGER, -- fid of subdomain connected
+    "subdomain_name_5" TEXT DEFAULT '', -- name of the subdomain connected
+    "ds_file_5" TEXT DEFAULT '', -- ds file of the subdomain connected
+    "fid_subdomain_6" INTEGER, -- fid of subdomain connected
+    "subdomain_name_6" TEXT DEFAULT '', -- name of the subdomain connected
+    "ds_file_6" TEXT DEFAULT '', -- ds file of the subdomain connected
+    "fid_subdomain_7" INTEGER, -- fid of subdomain connected
+    "subdomain_name_7" TEXT DEFAULT '', -- name of the subdomain connected
+    "ds_file_7" TEXT DEFAULT '', -- ds file of the subdomain connected
+    "fid_subdomain_8" INTEGER, -- fid of subdomain connected
+    "subdomain_name_8" TEXT DEFAULT '', -- name of the subdomain connected
+    "ds_file_8" TEXT DEFAULT '', -- ds file of the subdomain connected
+    "fid_subdomain_9" INTEGER, -- fid of subdomain connected
+    "subdomain_name_9" TEXT DEFAULT '', -- name of the subdomain connected
+    "ds_file_9" TEXT DEFAULT '' -- ds file of the subdomain connected
+);
+INSERT INTO gpkg_contents (table_name, data_type) VALUES ('md_method_2', 'aspatial');
+
 -- FPFROUDE.DAT
 
 CREATE TABLE "fpfroude" (

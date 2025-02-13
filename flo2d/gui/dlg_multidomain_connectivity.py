@@ -75,30 +75,59 @@ class MultipleDomainsConnectivityDialog(qtBaseClass, uiDialog):
 
     def fill_cbo_data(self):
         """
-        Function to fill the combo boxes with data from the 'md_method_1' table in the GeoPackage.
+        Function to fill the combo boxes with data from the 'md_method_x' table in the GeoPackage.
         """
         current_subdomain = self.current_subdomain_cbo.currentText()
-        selected_data = self.gutils.execute(
-            f"SELECT * FROM md_method_1 WHERE subdomain_name = ?;", (current_subdomain,)
-        ).fetchone()
 
-        if selected_data:
-            for i in range(1, 10):  # Loop through subdomains 1 to 9
-                subdomain_name_index = 3 + (i - 1) * 4  # Get index for subdomain name
-                ds_file_index = subdomain_name_index + 1  # Get index for ds_file
+        import_methods = self.gutils.execute(f"""SELECT import_method FROM mult_domains_methods WHERE subdomain_name = '{current_subdomain}'""").fetchall()
+        if import_methods:
+            for method in import_methods:
+                import_method = method[0]
+                if import_method == 1:
+                    selected_data = self.gutils.execute(
+                        f"SELECT * FROM md_method_1 WHERE subdomain_name = ?;", (current_subdomain,)
+                    ).fetchone()
 
-                subdomain_name = selected_data[subdomain_name_index] if selected_data[subdomain_name_index] else ""
-                ds_file = selected_data[ds_file_index] if selected_data[ds_file_index] else ""
+                    if selected_data:
+                        for i in range(1, 10):  # Loop through subdomains 1 to 9
+                            subdomain_name_index = 3 + (i - 1) * 4  # Get index for subdomain name
+                            ds_file_index = subdomain_name_index + 1  # Get index for ds_file
 
-                sub_cbo = getattr(self, f"sub{i}_cbo", None)
-                ds_cbo = getattr(self, f"ds{i}_file_cbo", None)
+                            subdomain_name = selected_data[subdomain_name_index] if selected_data[
+                                subdomain_name_index] else ""
+                            ds_file = selected_data[ds_file_index] if selected_data[ds_file_index] else ""
 
-                if sub_cbo:
-                    self.uc.log_info(str(subdomain_name))
-                    sub_cbo.setCurrentIndex(sub_cbo.findText(subdomain_name))
-                if ds_cbo:
-                    self.uc.log_info(str(ds_file))
-                    ds_cbo.setCurrentIndex(ds_cbo.findText(ds_file))
+                            sub_cbo = getattr(self, f"sub{i}_cbo", None)
+                            ds_cbo = getattr(self, f"ds{i}_file_cbo", None)
+
+                            if sub_cbo:
+                                sub_cbo.setCurrentIndex(sub_cbo.findText(subdomain_name))
+                            if ds_cbo:
+                                ds_cbo.setCurrentIndex(ds_cbo.findText(ds_file))
+
+                elif import_method == 2:
+                    selected_data = self.gutils.execute(
+                        f"SELECT * FROM md_method_2 WHERE subdomain_name = ?;", (current_subdomain,)
+                    ).fetchone()
+
+                    if selected_data:
+                        for i in range(1, 10):  # Loop through subdomains 1 to 9
+                            subdomain_name_index = 3 + (i - 1) * 3  # Get index for subdomain name
+                            ds_file_index = subdomain_name_index + 1  # Get index for ds_file
+
+                            subdomain_name = selected_data[subdomain_name_index] if selected_data[
+                                subdomain_name_index] else ""
+                            ds_file = selected_data[ds_file_index] if selected_data[ds_file_index] else ""
+
+                            sub_cbo = getattr(self, f"sub{i}_cbo", None)
+                            ds_cbo = getattr(self, f"ds{i}_file_cbo", None)
+
+                            if sub_cbo:
+                                sub_cbo.setCurrentIndex(sub_cbo.findText(subdomain_name))
+                            if ds_cbo:
+                                ds_cbo.setCurrentIndex(ds_cbo.findText(ds_file))
+                else:
+                    pass
 
     def save_cbo_data(self):
         """
@@ -106,43 +135,47 @@ class MultipleDomainsConnectivityDialog(qtBaseClass, uiDialog):
         """
         current_subdomain = self.current_subdomain_cbo.currentText()
 
-        # Get the selected fid for the current subdomain
-        selected_fid = self.gutils.execute(
-            "SELECT fid FROM md_method_1 WHERE subdomain_name = ?", (current_subdomain,)
-        ).fetchone()
+        import_method = self.gutils.execute(
+            f"""SELECT import_method FROM mult_domains_methods WHERE subdomain_name = '{current_subdomain}'""").fetchone()
+        if import_method:
+            # Get the selected fid for the current subdomain
+            selected_fid = self.gutils.execute(
+                f"SELECT fid FROM md_method_{import_method[0]} WHERE subdomain_name = ?", (current_subdomain,)
+            ).fetchone()
 
-        if not selected_fid:
-            return
+            if not selected_fid:
+                return
 
-        selected_fid = selected_fid[0]
+            selected_fid = selected_fid[0]
 
-        # Prepare data for update
-        update_data = {}
+            # Prepare data for update
+            update_data = {}
 
-        for i in range(1, 10):  # Loop through 1 to 9 (matching subdomain fields)
-            subdomain_cbo = getattr(self, f"sub{i}_cbo").currentText()
-            ds_file_cbo = getattr(self, f"ds{i}_file_cbo").currentText()
+            for i in range(1, 10):  # Loop through 1 to 9 (matching subdomain fields)
+                subdomain_cbo = getattr(self, f"sub{i}_cbo").currentText()
+                ds_file_cbo = getattr(self, f"ds{i}_file_cbo").currentText()
 
-            if subdomain_cbo:
-                fid_query = self.gutils.execute(
-                    "SELECT fid FROM mult_domains_methods WHERE subdomain_name = ?", (subdomain_cbo,)
-                ).fetchone()
-                fid_value = fid_query[0] if fid_query else "NULL"
-            else:
-                fid_value = "NULL"
+                if subdomain_cbo:
+                    fid_query = self.gutils.execute(
+                        "SELECT fid FROM mult_domains_methods WHERE subdomain_name = ?", (subdomain_cbo,)
+                    ).fetchone()
+                    fid_value = fid_query[0] if fid_query else "NULL"
+                else:
+                    fid_value = "NULL"
 
-            update_data[f"fid_subdomain_{i}"] = fid_value
-            update_data[f"subdomain_name_{i}"] = subdomain_cbo
-            update_data[f"ds_file_{i}"] = ds_file_cbo
+                update_data[f"fid_subdomain_{i}"] = fid_value
+                update_data[f"subdomain_name_{i}"] = subdomain_cbo
+                update_data[f"ds_file_{i}"] = ds_file_cbo
 
-        # Construct the SQL UPDATE query dynamically
-        set_clause = ", ".join([f"{col} = ?" for col in update_data.keys()])
-        values = list(update_data.values()) + [selected_fid]
+            # Construct the SQL UPDATE query dynamically
+            set_clause = ", ".join([f"{col} = ?" for col in update_data.keys()])
+            values = list(update_data.values()) + [selected_fid]
 
-        sql_query = f"UPDATE md_method_1 SET {set_clause} WHERE fid = ?"
+            sql_query = f"UPDATE md_method_{import_method[0]} SET {set_clause} WHERE fid = ?"
 
-        # Execute update query
-        self.gutils.execute(sql_query, values)
+            # Execute update query
+            self.gutils.execute(sql_query, values)
+
 
     def repopulate_cbos(self):
         """
@@ -269,7 +302,6 @@ class MultipleDomainsConnectivityDialog(qtBaseClass, uiDialog):
                             subdomain_name = ""
                             ds_file = ""
 
-                        self.uc.log_info(str([subdomain_name, ds_file, ups_downs_value, subdomain[0]]))
                         # Execute the update query
                         self.gutils.execute(
                             update_query.format(i=i),

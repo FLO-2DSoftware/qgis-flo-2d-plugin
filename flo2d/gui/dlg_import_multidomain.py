@@ -1,4 +1,5 @@
 import os.path
+import time
 
 import processing
 from PyQt5.QtCore import QSettings, Qt
@@ -231,7 +232,42 @@ class ImportMultipleDomainsDialog(qtBaseClass, uiDialog):
                     """
             self.gutils.execute(qry)
 
-            # self.open_multiple_domains_connectivity_dialog(domain_dir, domain_n)
+        # Only CADPTS
+        elif file1:
+            cadpts_files = []
+
+            for f in files:
+                if f.startswith("CADPTS_DS"):
+                    cadpts_files.append(f)
+
+            # CADPTS_DS and Ups-Dows-Connectivity_D always have the same size
+            n_connected_subdomains = len(cadpts_files)
+
+            # Add a line to the method
+            qry_method = f"""INSERT INTO md_method_2 (subdomain_name) VALUES ('{subdomain_name}');"""
+            self.gutils.execute(qry_method)
+
+            # Get the recent added fid
+            qry_method_fid = f"""SELECT fid FROM md_method_2 WHERE subdomain_name = '{subdomain_name}';"""
+            method_fid = self.gutils.execute(qry_method_fid).fetchone()[0]
+
+            # Get the
+            for i in range(1, n_connected_subdomains + 1):
+                qry_method = f"""
+                                   UPDATE md_method_2 
+                                   SET ds_file_{i} = '{cadpts_files[i - 1]}'
+                                   WHERE fid = {method_fid}; 
+                               """
+                self.gutils.execute(qry_method)
+
+            # Insert into mult_domains_methods
+            qry = f"""
+                       UPDATE mult_domains_methods 
+                       SET fid_method = {method_fid},
+                           import_method = 2
+                       WHERE subdomain_name = '{subdomain_name}'; 
+                   """
+            self.gutils.execute(qry)
         else:
             connectivity = {"subdomain_dir": domain_dir}
             s.setValue(f"FLO-2D/Subdomain {domain_n}", connectivity)
@@ -259,6 +295,12 @@ class ImportMultipleDomainsDialog(qtBaseClass, uiDialog):
         sub7_path = self.sub7_le.text()
         sub8_path = self.sub8_le.text()
         sub9_path = self.sub9_le.text()
+        sub10_path = self.sub10_le.text()
+        sub11_path = self.sub11_le.text()
+        sub12_path = self.sub12_le.text()
+        sub13_path = self.sub13_le.text()
+        sub14_path = self.sub14_le.text()
+        sub15_path = self.sub15_le.text()
 
         subdomains_paths = [
             sub1_path,
@@ -269,20 +311,45 @@ class ImportMultipleDomainsDialog(qtBaseClass, uiDialog):
             sub6_path,
             sub7_path,
             sub8_path,
-            sub9_path
+            sub9_path,
+            sub10_path,
+            sub11_path,
+            sub12_path,
+            sub13_path,
+            sub14_path,
+            sub15_path
         ]
 
         self.cell_size = int(float(self.cellsize_le.text()))
 
+        n_projects = sum(1 for item in subdomains_paths if item is not "")
+
         i = 1
 
-        # First import the whole grid and sub domains
+        pd = QProgressDialog(f"Importing Subdomain {i}...", None, i, n_projects)
+        pd.setWindowTitle("FLO-2D Import")
+        pd.setModal(True)
+        pd.forceShow()
+        pd.setValue(i)
+        QApplication.processEvents()
+
+        # First import the whole grid and subdomains
         for subdomain in subdomains_paths:
             if subdomain:
+                start_time = time.time()
                 # Import mannings and topo and add to the schema_md_cells
                 self.import_subdomains_mannings_n_topo_dat(subdomain, i)
-
+                end_time = time.time()
+                hours, rem = divmod(end_time - start_time, 3600)
+                minutes, seconds = divmod(rem, 60)
+                time_passed = "{:0>2}:{:0>2}:{:0>2}".format(int(hours), int(minutes), int(seconds))
+                self.uc.log_info(f"Time Elapsed to import Subdomain {i}: {time_passed}")
                 i += 1
+                pd.setLabelText(f"Importing Subdomain {i}...")
+                pd.setValue(i)
+                QApplication.processEvents()
+
+        pd.close()
 
         self.import_connectivity_cells()
 
@@ -320,31 +387,49 @@ class ImportMultipleDomainsDialog(qtBaseClass, uiDialog):
 
         topo_dat = f"{subdomain}/TOPO.DAT"
         mannings_dat = f"{subdomain}/MANNINGS_N.DAT"
+        cadpts_dat = f"{subdomain}/CADPTS.DAT"
+        fplain_dat = f"{subdomain}/FPLAIN.DAT"
 
-        # Read and parse TOPO & MANNINGS_N data efficiently
-        data = self.parser.double_parser(mannings_dat, topo_dat)
+        # Check for TOPO and MANNINGS_N first
+        if os.path.isfile(topo_dat) and os.path.isfile(mannings_dat):
 
-        domain_cell_fid = 1
+            # Read and parse TOPO & MANNINGS_N data efficiently
+            data = self.parser.pandas_double_parser(mannings_dat, topo_dat)
 
-        man = slice(1, 2)
-        coords = slice(2, 4)
-        elev = slice(4, None)
+            domain_cell_fid = 1
 
-        # Batch processing for better performance
-        batch_size = self.chunksize  # Set batch size from existing chunksize variable
+            man = slice(1, 2)
+            coords = slice(2, 4)
+            elev = slice(4, None)
 
-        for i, row in enumerate(data, start=1):
-            geom = " ".join(row[coords])
-            g = self.gutils.build_square(geom, self.cell_size)  # Avoid redundant processing
+            # Batch processing for better performance
+            batch_size = self.chunksize  # Set batch size from existing chunksize variable
 
-            sql_grid.append((fid, *row[man], *row[elev], g))
-            sql_schema_md.append((fid, subdomain_n, domain_cell_fid, *row[man], *row[elev], g))
+            for i, row in enumerate(data, start=1):
+                geom = " ".join(row[coords])
+                g = self.gutils.build_square(geom, self.cell_size)  # Avoid redundant processing
 
-            fid += 1
-            domain_cell_fid += 1
+                sql_grid.append((fid, *row[man], *row[elev], g))
+                sql_schema_md.append((fid, subdomain_n, domain_cell_fid, *row[man], *row[elev], g))
 
-            # Execute in batches for better efficiency
-            if len(sql_grid) >= batch_size:
+                fid += 1
+                domain_cell_fid += 1
+
+                # Execute in batches for better efficiency
+                if len(sql_grid) >= batch_size:
+                    self.gutils.execute_many(
+                        "INSERT INTO grid (fid, n_value, elevation, geom) VALUES (?, ?, ?, ?);",
+                        sql_grid
+                    )
+                    self.gutils.execute_many(
+                        "INSERT INTO schema_md_cells (fid, domain_fid, domain_cell, n_value, elevation, geom) VALUES (?, ?, ?, ?, ?, ?);",
+                        sql_schema_md
+                    )
+                    sql_grid.clear()
+                    sql_schema_md.clear()
+
+            # Insert remaining data if any
+            if sql_grid:
                 self.gutils.execute_many(
                     "INSERT INTO grid (fid, n_value, elevation, geom) VALUES (?, ?, ?, ?);",
                     sql_grid
@@ -353,82 +438,121 @@ class ImportMultipleDomainsDialog(qtBaseClass, uiDialog):
                     "INSERT INTO schema_md_cells (fid, domain_fid, domain_cell, n_value, elevation, geom) VALUES (?, ?, ?, ?, ?, ?);",
                     sql_schema_md
                 )
-                sql_grid.clear()
-                sql_schema_md.clear()
 
-        # Insert remaining data if any
-        if sql_grid:
-            self.gutils.execute_many(
-                "INSERT INTO grid (fid, n_value, elevation, geom) VALUES (?, ?, ?, ?);",
-                sql_grid
-            )
-            self.gutils.execute_many(
-                "INSERT INTO schema_md_cells (fid, domain_fid, domain_cell, n_value, elevation, geom) VALUES (?, ?, ?, ?, ?, ?);",
-                sql_schema_md
-            )
+            self.uc.bar_info(f"Subdomain {subdomain_n} grid created from TOPO.DAT and MANNINGS_N.DAT!")
+            self.uc.log_info(f"Subdomain {subdomain_n} grid created from TOPO.DAT and MANNINGS_N.DAT!")
+
+        # Import TOPO and MANNINGS from CADPTS and FPLAIN # TODO TEST THIS APPROACH
+        elif os.path.isfile(cadpts_dat) and os.path.isfile(fplain_dat):
+
+            # Read and parse CADPTS data efficiently
+            data = self.parser.double_parser(fplain_dat, cadpts_dat)
+
+            domain_cell_fid = 1
+
+            man = slice(5, 6)
+            elev = slice(6, 7)
+            coords = slice(8, None)
+
+            # Batch processing for better performance
+            batch_size = self.chunksize  # Set batch size from existing chunksize variable
+
+            for i, row in enumerate(data, start=1):
+                geom = " ".join(row[coords])
+                g = self.gutils.build_square(geom, self.cell_size)  # Avoid redundant processing
+
+                sql_grid.append((fid, *row[man], *row[elev], g))
+                sql_schema_md.append((fid, subdomain_n, domain_cell_fid, *row[man], *row[elev], g))
+
+                fid += 1
+                domain_cell_fid += 1
+
+                # Execute in batches for better efficiency
+                if len(sql_grid) >= batch_size:
+                    self.gutils.execute_many(
+                        "INSERT INTO grid (fid, n_value, elevation, geom) VALUES (?, ?, ?, ?);",
+                        sql_grid
+                    )
+                    self.gutils.execute_many(
+                        "INSERT INTO schema_md_cells (fid, domain_fid, domain_cell, n_value, elevation, geom) VALUES (?, ?, ?, ?, ?, ?);",
+                        sql_schema_md
+                    )
+                    sql_grid.clear()
+                    sql_schema_md.clear()
+
+            # Insert remaining data if any
+            if sql_grid:
+                self.gutils.execute_many(
+                    "INSERT INTO grid (fid, n_value, elevation, geom) VALUES (?, ?, ?, ?);",
+                    sql_grid
+                )
+                self.gutils.execute_many(
+                    "INSERT INTO schema_md_cells (fid, domain_fid, domain_cell, n_value, elevation, geom) VALUES (?, ?, ?, ?, ?, ?);",
+                    sql_schema_md
+                )
+
+            self.uc.bar_info(f"Subdomain {subdomain_n} grid created from CADPTS.DAT and FPLAIN.DAT!")
+            self.uc.log_info(f"Subdomain {subdomain_n} grid created from CADPTS.DAT and FPLAIN.DAT!")
+
+        # Import grid from CADPTS and set default mannings and topo
+        elif os.path.isfile(cadpts_dat):
+
+            mann = self.gutils.get_cont_par("MANNING")
+            elev = -9999
+
+            # Read and parse CADPTS data efficiently
+            data = self.parser.pandas_single_parser(cadpts_dat)
+
+            domain_cell_fid = 1
+
+            coords = slice(1, None)
+
+            # Batch processing for better performance
+            batch_size = self.chunksize  # Set batch size from existing chunksize variable
+
+            for i, row in enumerate(data, start=1):
+                geom = " ".join( list(map(str, row[coords])))
+                g = self.gutils.build_square(geom, self.cell_size)  # Avoid redundant processing
+
+                sql_grid.append((fid, mann, elev, g))
+                sql_schema_md.append((fid, subdomain_n, domain_cell_fid, mann, elev, g))
+
+                fid += 1
+                domain_cell_fid += 1
+
+                # Execute in batches for better efficiency
+                if len(sql_grid) >= batch_size:
+                    self.gutils.execute_many(
+                        "INSERT INTO grid (fid, n_value, elevation, geom) VALUES (?, ?, ?, ?);",
+                        sql_grid
+                    )
+                    self.gutils.execute_many(
+                        "INSERT INTO schema_md_cells (fid, domain_fid, domain_cell, n_value, elevation, geom) VALUES (?, ?, ?, ?, ?, ?);",
+                        sql_schema_md
+                    )
+                    sql_grid.clear()
+                    sql_schema_md.clear()
+
+            # Insert remaining data if any
+            if sql_grid:
+                self.gutils.execute_many(
+                    "INSERT INTO grid (fid, n_value, elevation, geom) VALUES (?, ?, ?, ?);",
+                    sql_grid
+                )
+                self.gutils.execute_many(
+                    "INSERT INTO schema_md_cells (fid, domain_fid, domain_cell, n_value, elevation, geom) VALUES (?, ?, ?, ?, ?, ?);",
+                    sql_schema_md
+                )
+
+            self.uc.bar_info(f"Subdomain {subdomain_n} grid created from CADPTS.DAT and default topo & mannings value!")
+            self.uc.log_info(f"Subdomain {subdomain_n} grid created from CADPTS.DAT and default topo & mannings value!")
+
+        else:
+            self.uc.bar_error("Failed to import topo and manning's data. Please check the input files!")
+            self.uc.log_info("Failed to import topo and manning's data. Please check the input files!")
+
 
         QApplication.restoreOverrideCursor()
-
-        # # Step 1: Import TOPO.DAT
-        # QApplication.setOverrideCursor(Qt.WaitCursor)
-        # # try:
-        #
-        # # Clear the grid layer and fix the fid number for multiple domains
-        # if subdomain_n == 1:
-        #     self.gutils.clear_tables("grid")
-        #     self.gutils.clear_tables("schema_md_cells")
-        #     self.gutils.clear_tables("schema_md_connect_cells")
-        #     fid = 1
-        # else:
-        #     fid = self.gutils.execute("SELECT COUNT(FID) FROM grid;").fetchone()[0] + 1
-        #
-        # sql_grid = ["""INSERT INTO grid (fid, n_value, elevation, geom) VALUES""", 4]
-        # sql_schema_md = ["""INSERT INTO schema_md_cells (fid, domain_fid, domain_cell, n_value, elevation, geom) VALUES""", 6]
-        #
-        # topo_dat = subdomain + "/TOPO.DAT"
-        # mannings_dat = subdomain + "/MANNINGS_N.DAT"
-        #
-        # data = self.parser.double_parser(mannings_dat, topo_dat)
-        #
-        # progDialog = QProgressDialog(f"Importing TOPO and MANNINGS_N for Subdomain {subdomain_n}. Please wait...", None, 0, sum(1 for _ in open(topo_dat, 'rb')))
-        # progDialog.setModal(True)
-        # progDialog.setValue(0)
-        # progDialog.show()
-        # QApplication.processEvents()
-        #
-        # domain_cell_fid = 1
-        #
-        # man = slice(1, 2)
-        # coords = slice(2, 4)
-        # elev = slice(4, None)
-        # i = 1
-        # for row in data:
-        #     if fid < self.chunksize:
-        #         geom = " ".join(row[coords])
-        #         g = self.gutils.build_square(geom, self.cell_size)
-        #         sql_grid += [tuple([fid] + row[man] + row[elev] + [g])] # TODO AVOID REPEATED CELLS
-        #         sql_schema_md += [tuple([fid] + [subdomain_n] + [domain_cell_fid] + row[man] + row[elev] + [g])]
-        #         fid += 1
-        #         domain_cell_fid += 1
-        #     else:
-        #         self.gutils.batch_execute(sql_grid)
-        #         self.gutils.batch_execute(sql_schema_md)
-        #         fid = 0
-        #
-        #     progDialog.setValue(i)
-        #     i += 1
-        #
-        # progDialog.close()
-        #
-        # if len(sql_grid) > 2:
-        #     self.gutils.batch_execute(sql_grid)
-        #     self.gutils.batch_execute(sql_schema_md)
-        # else:
-        #     pass
-        #
-        # # except Exception as e:
-        #
-        # QApplication.restoreOverrideCursor()
 
     def extract_ups_downs_cells(self, subdomains_paths):
         """
@@ -538,123 +662,164 @@ class ImportMultipleDomainsDialog(qtBaseClass, uiDialog):
 
         self.gutils.clear_tables("schema_md_connect_cells")
 
-        subdomain_connectivities = self.gutils.execute("""
-            SELECT 
-                md.fid, 
-                md.subdomain_path, 
-                im.fid_subdomain_1, im.ups_downs_1, 
-                im.fid_subdomain_2, im.ups_downs_2, 
-                im.fid_subdomain_3, im.ups_downs_3, 
-                im.fid_subdomain_4, im.ups_downs_4,
-                im.fid_subdomain_5, im.ups_downs_5, 
-                im.fid_subdomain_6, im.ups_downs_6, 
-                im.fid_subdomain_7, im.ups_downs_7, 
-                im.fid_subdomain_8, im.ups_downs_8, 
-                im.fid_subdomain_9, im.ups_downs_9
-            FROM 
-                mult_domains_methods AS md
-            JOIN md_method_1 AS im ON md.fid_method = im.fid
-        """).fetchall()
+        subdomains = self.gutils.execute(f"""SELECT fid, subdomain_name, import_method, fid_method FROM mult_domains_methods""").fetchall()
+        if subdomains:
+            for subdomain in subdomains:
+                import_method = subdomain[2]
+                if import_method == 1:
+                    subdomain_connectivities = self.gutils.execute("""
+                               SELECT 
+                                   md.fid, 
+                                   md.subdomain_path, 
+                                   im.fid_subdomain_1, im.ups_downs_1, 
+                                   im.fid_subdomain_2, im.ups_downs_2, 
+                                   im.fid_subdomain_3, im.ups_downs_3, 
+                                   im.fid_subdomain_4, im.ups_downs_4,
+                                   im.fid_subdomain_5, im.ups_downs_5, 
+                                   im.fid_subdomain_6, im.ups_downs_6, 
+                                   im.fid_subdomain_7, im.ups_downs_7, 
+                                   im.fid_subdomain_8, im.ups_downs_8, 
+                                   im.fid_subdomain_9, im.ups_downs_9
+                               FROM 
+                                   mult_domains_methods AS md
+                               JOIN md_method_1 AS im ON md.fid_method = im.fid
+                           """).fetchall()
 
-        if subdomain_connectivities:
-            bulk_insert_data = []  # Collect all insert statements in a list
+                    if subdomain_connectivities:
+                        bulk_insert_data = []  # Collect all insert statements in a list
 
-            for subdomain_connectivity in subdomain_connectivities:
-                md_fid = subdomain_connectivity[0]  # md.fid
-                subdomain_path = subdomain_connectivity[1]  # md.subdomain_path
+                        for subdomain_connectivity in subdomain_connectivities:
+                            md_fid = subdomain_connectivity[0]  # md.fid
+                            subdomain_path = subdomain_connectivity[1]  # md.subdomain_path
 
-                for i in range(9):  # Loop through fid_subdomain_x and ups_downs_x pairs
-                    fid_subdomain_index = 2 + (i * 2)  # Index for im.fid_subdomain_x
-                    ups_downs_index = fid_subdomain_index + 1  # Index for im.ups_downs_x
+                            for i in range(9):  # Loop through fid_subdomain_x and ups_downs_x pairs
+                                fid_subdomain_index = 2 + (i * 2)  # Index for im.fid_subdomain_x
+                                ups_downs_index = fid_subdomain_index + 1  # Index for im.ups_downs_x
 
-                    fid_subdomain = subdomain_connectivity[fid_subdomain_index]
-                    ups_downs_file = subdomain_connectivity[ups_downs_index]
+                                fid_subdomain = subdomain_connectivity[fid_subdomain_index]
+                                ups_downs_file = subdomain_connectivity[ups_downs_index]
 
-                    if fid_subdomain and ups_downs_file:  # Ensure values are valid
-                        full_path = f"{subdomain_path}/{ups_downs_file}"
+                                if fid_subdomain and ups_downs_file:  # Ensure values are valid
+                                    full_path = f"{subdomain_path}/{ups_downs_file}"
 
-                        # Read file contents once and process them
-                        with open(full_path) as f:
-                            lines = [list(map(int, line.strip().split())) for line in f]
+                                    # Read file contents once and process them
+                                    with open(full_path) as f:
+                                        lines = [list(map(int, line.strip().split())) for line in f]
 
-                        # Extract upstream and downstream cells
-                        upstream_cells, downstream_cells = zip(*lines)  # Unpacks into two lists
+                                    # Extract upstream and downstream cells
+                                    upstream_cells, downstream_cells = zip(*lines)  # Unpacks into two lists
 
-                        # Fetch all centroids in one go
-                        query = f"""
-                            SELECT domain_cell, ST_AsText(ST_Centroid(GeomFromGPB(geom))) 
-                            FROM schema_md_cells 
-                            WHERE domain_fid = {md_fid} 
-                            AND domain_cell IN ({",".join(map(str, upstream_cells))});
-                        """
-                        cell_centroids = dict(self.gutils.execute(query).fetchall())  # Convert to dictionary
+                                    # Fetch all centroids in one go
+                                    query = f"""
+                                               SELECT domain_cell, ST_AsText(ST_Centroid(GeomFromGPB(geom))) 
+                                               FROM schema_md_cells 
+                                               WHERE domain_fid = {md_fid} 
+                                               AND domain_cell IN ({",".join(map(str, upstream_cells))});
+                                           """
+                                    cell_centroids = dict(
+                                        self.gutils.execute(query).fetchall())  # Convert to dictionary
 
-                        # Collect bulk insert data
-                        for upstream, downstream in zip(upstream_cells, downstream_cells):
-                            if upstream in cell_centroids:
-                                bulk_insert_data.append(
-                                    (md_fid, upstream, fid_subdomain, downstream, cell_centroids[upstream]))
+                                    # Collect bulk insert data
+                                    for upstream, downstream in zip(upstream_cells, downstream_cells):
+                                        if upstream in cell_centroids:
+                                            bulk_insert_data.append(
+                                                (md_fid, upstream, fid_subdomain, downstream, cell_centroids[upstream]))
 
-            # Execute bulk insert
-            if bulk_insert_data:
-                self.gutils.execute_many("""
-                    INSERT INTO schema_md_connect_cells 
-                    (up_domain_fid, up_domain_cell, down_domain_fid, down_domain_cell, geom) 
-                    VALUES (?, ?, ?, ?, AsGPB(ST_GeomFromText(?)));
-                """, bulk_insert_data)
+                        # Execute bulk insert
+                        if bulk_insert_data:
+                            self.gutils.execute_many("""
+                                       INSERT INTO schema_md_connect_cells 
+                                       (up_domain_fid, up_domain_cell, down_domain_fid, down_domain_cell, geom) 
+                                       VALUES (?, ?, ?, ?, AsGPB(ST_GeomFromText(?)));
+                                   """, bulk_insert_data)
 
-    def create_connectivity_cells(self, extracted_cells):
-        """
-        Function to fill out the connectivity cells on the schema_md_connect_cells table
-        """
+                elif import_method == 2:
+                    subdomain_connectivities = self.gutils.execute("""
+                                                   SELECT 
+                                                       md.fid, 
+                                                       md.subdomain_path, 
+                                                       im.fid_subdomain_1, im.ds_file_1,
+                                                       im.fid_subdomain_2, im.ds_file_2,
+                                                       im.fid_subdomain_3, im.ds_file_3,
+                                                       im.fid_subdomain_4, im.ds_file_4,
+                                                       im.fid_subdomain_5, im.ds_file_5,
+                                                       im.fid_subdomain_6, im.ds_file_6,
+                                                       im.fid_subdomain_7, im.ds_file_7,
+                                                       im.fid_subdomain_8, im.ds_file_8,
+                                                       im.fid_subdomain_9, im.ds_file_9
+                                                   FROM 
+                                                       mult_domains_methods AS md
+                                                   JOIN md_method_2 AS im ON md.fid_method = im.fid
+                                               """).fetchall()
 
-        # Step 1: Find the lowest domain_fid
-        up_domain_fid = None
-        down_domain_fid = None
-        features_by_domain = {}
+                    if subdomain_connectivities:
+                        bulk_insert_data = []  # Collect all insert statements in a list
 
-        for feature in extracted_cells.getFeatures():
-            domain_fid = feature["domain_fid"]
-            if up_domain_fid is None or domain_fid < up_domain_fid:
-                up_domain_fid = domain_fid
+                        for subdomain_connectivity in subdomain_connectivities:
+                            md_fid = subdomain_connectivity[0]  # md.fid
+                            subdomain_path = subdomain_connectivity[1]  # md.subdomain_path
 
-            if domain_fid not in features_by_domain:
-                features_by_domain[domain_fid] = []
+                            for i in range(9):  # Loop through fid_subdomain_x and ups_downs_x pairs
+                                fid_subdomain_index = 2 + (i * 2)  # Index for im.fid_subdomain_x
+                                ds_index = fid_subdomain_index + 1  # Index for im.ups_downs_x
 
-            features_by_domain[domain_fid].append(feature)
+                                fid_subdomain = subdomain_connectivity[fid_subdomain_index]
+                                ds_file = subdomain_connectivity[ds_index]
 
-        selected_features = features_by_domain[up_domain_fid]
+                                if fid_subdomain and ds_file:  # Ensure values are valid
+                                    cadpts = f"{subdomain_path}/CADPTS.DAT"
+                                    cadpts_ds = f"{subdomain_path}/{ds_file}"
 
-        connectivity_data = []
+                                    # Using pandas to speed up
+                                    import pandas as pd
 
-        # Step 3: Assign grid_fid = fid
-        for feature in selected_features:
+                                    # Define column names (since files have no headers)
+                                    column_names = ["id", "x", "y"]
 
-            # Step 4: Find the closest cell from a different domain_fid
-            centroid = feature.geometry().centroid().asPoint()
+                                    # Read the CSV files without headers and assign column names
+                                    df1 = pd.read_csv(cadpts, names=column_names, delim_whitespace=True,
+                                                      dtype={"id": int, "x": float, "y": float})
+                                    df2 = pd.read_csv(cadpts_ds, names=column_names, delim_whitespace=True,
+                                                      dtype={"id": int, "x": float, "y": float})
 
-            min_distance = float(self.cell_size)
-            closest_fid = None
+                                    # Perform an inner join on x and y to find matching coordinates
+                                    matches = df1.merge(df2, on=["x", "y"], suffixes=('_file1', '_file2'))
 
-            for domain, features in features_by_domain.items():
-                if domain == up_domain_fid:
-                    continue  # Skip the same domain_fid
+                                    # Select only the matching IDs
+                                    result = matches[["id_file1", "id_file2"]]
 
-                for other_feature in features:
+                                    # Extract upstream and downstream cells
+                                    upstream_cells, downstream_cells = result["id_file1"].tolist(), result["id_file2"].tolist()  # Efficient unpacking
 
-                    other_centroid = other_feature.geometry().centroid().asPoint()
-                    distance = centroid.distance(other_centroid)
+                                    # Fetch all centroids in one go
+                                    query = f"""
+                                                  SELECT domain_cell, ST_AsText(ST_Centroid(GeomFromGPB(geom))) 
+                                                  FROM schema_md_cells 
+                                                  WHERE domain_fid = {md_fid} 
+                                                  AND domain_cell IN ({",".join(map(str, upstream_cells))});
+                                              """
+                                    cell_centroids = dict(
+                                        self.gutils.execute(query).fetchall())  # Convert to dictionary
 
-                    if distance <= min_distance:
-                        min_distance = distance
-                        closest_fid = other_feature["fid"]
-                        down_domain_fid = domain
+                                    # Collect bulk insert data
+                                    for upstream, downstream in zip(upstream_cells, downstream_cells):
+                                        if upstream in cell_centroids:
+                                            bulk_insert_data.append(
+                                                (md_fid, upstream, fid_subdomain, downstream, cell_centroids[upstream]))
 
-            # Step 5: Assign domain_cell as the closest feature's fid
-            if closest_fid is not None:
-                connectivity_data.append((up_domain_fid, feature["fid"], down_domain_fid, closest_fid, f"POINT({centroid.x()} {centroid.y()})"))
+                        # Execute bulk insert
+                        if bulk_insert_data:
+                            self.gutils.execute_many("""
+                                                          INSERT INTO schema_md_connect_cells 
+                                                          (up_domain_fid, up_domain_cell, down_domain_fid, down_domain_cell, geom) 
+                                                          VALUES (?, ?, ?, ?, AsGPB(ST_GeomFromText(?)));
+                                                      """, bulk_insert_data)
 
-        if connectivity_data:
-            qry = """INSERT INTO schema_md_connect_cells (up_domain_fid, up_domain_cell, down_domain_fid, down_domain_cell, geom) VALUES (?,?,?,?,AsGPB(ST_GeomFromText(?)));"""
-            self.uc.log_info(connectivity_data)
-            self.con.executemany(qry, connectivity_data)
+                else:
+                    pass
+
+
+
+
+
+

@@ -1465,6 +1465,18 @@ class Layers(object):
                         "advanced": True
                     },
                 ),
+                (
+                    "md_method_2",
+                    {
+                        "name": "Import Method 2",
+                        "sgroup": "Multiple Domains Tables",
+                        "styles": None,
+                        "attrs_edit_widgets": {},
+                        "visible": False,
+                        "readonly": False,
+                        "advanced": True
+                    },
+                ),
                 # Sediment Transport areas (with polygon geometry (square)):
                 (
                     "sed_supply_areas",
