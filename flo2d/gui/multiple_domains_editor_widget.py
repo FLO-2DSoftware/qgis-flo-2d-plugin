@@ -255,179 +255,179 @@ class MultipleDomainsEditorWidget(qtBaseClass, uiDialog):
         2. Create the connectivity
         """
 
-        if self.gutils.is_table_empty("mult_domains"):
-            self.uc.bar_info(f"There is no domain on the User Layers!")
-            self.uc.log_info(f"There is no domain on the User Layers!")
-            return
+        pass
 
-        # I'll need to iterate over all domains
-        domain_boundary = self.lyrs.data["mult_domains"]["qlyr"]
+        # if self.gutils.is_table_empty("mult_domains"):
+        #     self.uc.bar_info(f"There is no domain on the User Layers!")
+        #     self.uc.log_info(f"There is no domain on the User Layers!")
+        #     return
+        #
+        # # I'll need to iterate over all domains
+        # domain_boundary = self.lyrs.data["mult_domains"]["qlyr"]
+        #
+        # for feat in domain_boundary.getFeatures():
+        #
+        #     # Create the grid
+        #     self.square_grid(feat)
+        #     self.update_domain_cells(feat)
 
-        for feat in domain_boundary.getFeatures():
 
-            # Create the grid
-            self.square_grid(feat)
-            self.update_domain_cells(feat)
+    # def update_domain_cells(self, feature):
+    #     """
+    #     Function to update the domain cells
+    #     """
+    #     fid = feature["fid"]
+    #     cellsize = self.gutils.execute(f"SELECT domain_cellsize FROM mult_domains WHERE fid = {fid};").fetchone()[0]
+    #     cellsize_grid = self.gutils.get_cont_par("CELLSIZE")
+    #
+    #     cellsize_ratio = float(cellsize_grid) / float(cellsize)
+    #
+    #     # Intersect the connectivity line to the grid
+    #     connectivity_lines = self.lyrs.data["user_md_connect_lines"]["qlyr"]
+    #     connect_cells = self.lyrs.data["schema_md_connect_cells"]["qlyr"]
+    #
+    #     for line in connectivity_lines.getFeatures():
+    #         line_fid = line['fid']
+    #         int_grid_ids = self.gutils.execute(f"""
+    #                             SELECT
+    #                                 g.fid AS FID
+    #                             FROM
+    #                                 grid AS g, user_md_connect_lines AS cl
+    #                             WHERE
+    #                                 cl.domain_fid = "{line_fid}" AND cl.domain_fid = {fid} AND
+    #                                 ST_Intersects(CastAutomagic(g.geom), CastAutomagic(cl.geom));
+    #                             """).fetchall()
+    #
+    #         for int_grid_id in int_grid_ids:
+    #             int_grid_id = int_grid_id[0]
+    #             query = f"""
+    #                         SELECT
+    #                             g.fid AS grid_id,
+    #                             smc.fid AS smc_id,
+    #                             ST_Centroid(CastAutomagic(smc.geom)) AS smc_centroid,
+    #                             ST_Distance(ST_Centroid(CastAutomagic(g.geom)), ST_Centroid(CastAutomagic(smc.geom))) AS distance
+    #                         FROM
+    #                             grid AS g
+    #                         JOIN
+    #                             schema_md_cells AS smc
+    #                         ON
+    #                             ST_Distance(ST_Centroid(CastAutomagic(g.geom)), ST_Centroid(CastAutomagic(smc.geom))) IS NOT NULL
+    #                         WHERE
+    #                             g.fid = {int_grid_id}
+    #                         ORDER BY
+    #                             g.fid, distance
+    #                         LIMIT {cellsize_ratio};
+    #                     """
+    #             closest_domain_cells = self.gutils.execute(query).fetchall()
+    #             for closest_domain_cell in closest_domain_cells:
+    #                 grid_id, smc_id, smc_centroid, _ = closest_domain_cell
+    #                 data = [(fid, grid_id, smc_id, smc_centroid)]  # Wrap the tuple in a list
+    #                 qry = """INSERT INTO schema_md_connect_cells (domain_fid, grid_fid, domain_cell, geom) VALUES (?,?,?,?);"""
+    #                 self.con.executemany(qry, data)
+    #
+    #     # Update the layers
+    #     self.lyrs.update_layer_extents(domain_cells)
+    #     if domain_cells:
+    #         domain_cells.triggerRepaint()
+    #
+    #     self.lyrs.update_layer_extents(connect_cells)
+    #     if connect_cells:
+    #         connect_cells.triggerRepaint()
+    #
+    # def square_grid(self, feature):
+    #     """
+    #     Function for calculating and writing square grid into 'schema_md_cells' table.
+    #     """
+    #     fid = feature["fid"]
+    #     cellsize_domain = self.gutils.execute(f"SELECT domain_cellsize FROM mult_domains WHERE fid = {fid};").fetchone()[0]
+    #     cellsize_grid = self.gutils.get_cont_par("CELLSIZE")
+    #
+    #     cellsize_modulo = float(cellsize_grid) % float(cellsize_domain)
+    #     if cellsize_modulo != 0:
+    #         domain_name = self.gutils.execute(f"SELECT name FROM mult_domains WHERE fid = {fid};").fetchone()[0]
+    #         self.uc.bar_error(f"The cell size of {domain_name} is not compatible with the grid cell size!")
+    #         self.uc.log_info(f"The cell size of {domain_name} is not compatible with the grid cell size!")
+    #         return
+    #
+    #     polygons = list(self.build_grid(feature, cellsize_domain))
+    #     total_polygons = len(polygons)
+    #
+    #     progDialog = QProgressDialog(f"Creating Grid for domain {fid}. Please wait...", None, 0, total_polygons)
+    #     progDialog.setModal(True)
+    #     progDialog.setValue(0)
+    #     progDialog.show()
+    #     QApplication.processEvents()
+    #     i = 0
+    #
+    #     polygons = ((self.gutils.build_square_from_polygon(poly),) for poly in
+    #                 self.build_grid(feature, cellsize_domain))
+    #     sql = ["""INSERT INTO schema_md_cells (geom) VALUES""", 1]
+    #     for g_tuple in polygons:
+    #         sql.append(g_tuple)
+    #         progDialog.setValue(i)
+    #         i += 1
+    #     if len(sql) > 2:
+    #         self.gutils.batch_execute(sql)
+    #     else:
+    #         pass
 
-
-    def update_domain_cells(self, feature):
-        """
-        Function to update the domain cells
-        """
-        fid = feature["fid"]
-        cellsize = self.gutils.execute(f"SELECT domain_cellsize FROM mult_domains WHERE fid = {fid};").fetchone()[0]
-        cellsize_grid = self.gutils.get_cont_par("CELLSIZE")
-
-        cellsize_ratio = float(cellsize_grid) / float(cellsize)
-
-        # Intersect the connectivity line to the grid
-        connectivity_lines = self.lyrs.data["user_md_connect_lines"]["qlyr"]
-        domain_cells = self.lyrs.data["schema_md_cells"]["qlyr"]
-        connect_cells = self.lyrs.data["schema_md_connect_cells"]["qlyr"]
-
-        for line in connectivity_lines.getFeatures():
-            line_fid = line['fid']
-            int_grid_ids = self.gutils.execute(f"""
-                                SELECT
-                                    g.fid AS FID
-                                FROM
-                                    grid AS g, user_md_connect_lines AS cl
-                                WHERE
-                                    cl.domain_fid = "{line_fid}" AND cl.domain_fid = {fid} AND
-                                    ST_Intersects(CastAutomagic(g.geom), CastAutomagic(cl.geom));
-                                """).fetchall()
-
-            for int_grid_id in int_grid_ids:
-                int_grid_id = int_grid_id[0]
-                query = f"""
-                            SELECT
-                                g.fid AS grid_id,
-                                smc.fid AS smc_id,
-                                ST_Centroid(CastAutomagic(smc.geom)) AS smc_centroid,
-                                ST_Distance(ST_Centroid(CastAutomagic(g.geom)), ST_Centroid(CastAutomagic(smc.geom))) AS distance
-                            FROM
-                                grid AS g
-                            JOIN
-                                schema_md_cells AS smc
-                            ON
-                                ST_Distance(ST_Centroid(CastAutomagic(g.geom)), ST_Centroid(CastAutomagic(smc.geom))) IS NOT NULL
-                            WHERE
-                                g.fid = {int_grid_id}
-                            ORDER BY
-                                g.fid, distance
-                            LIMIT {cellsize_ratio};
-                        """
-                closest_domain_cells = self.gutils.execute(query).fetchall()
-                for closest_domain_cell in closest_domain_cells:
-                    grid_id, smc_id, smc_centroid, _ = closest_domain_cell
-                    data = [(fid, grid_id, smc_id, smc_centroid)]  # Wrap the tuple in a list
-                    qry = """INSERT INTO schema_md_connect_cells (domain_fid, grid_fid, domain_cell, geom) VALUES (?,?,?,?);"""
-                    self.con.executemany(qry, data)
-
-        # Update the layers
-        self.lyrs.update_layer_extents(domain_cells)
-        if domain_cells:
-            domain_cells.triggerRepaint()
-
-        self.lyrs.update_layer_extents(connect_cells)
-        if connect_cells:
-            connect_cells.triggerRepaint()
-
-    def square_grid(self, feature):
-        """
-        Function for calculating and writing square grid into 'schema_md_cells' table.
-        """
-        fid = feature["fid"]
-        cellsize_domain = self.gutils.execute(f"SELECT domain_cellsize FROM mult_domains WHERE fid = {fid};").fetchone()[0]
-        cellsize_grid = self.gutils.get_cont_par("CELLSIZE")
-
-        cellsize_modulo = float(cellsize_grid) % float(cellsize_domain)
-        if cellsize_modulo != 0:
-            domain_name = self.gutils.execute(f"SELECT name FROM mult_domains WHERE fid = {fid};").fetchone()[0]
-            self.uc.bar_error(f"The cell size of {domain_name} is not compatible with the grid cell size!")
-            self.uc.log_info(f"The cell size of {domain_name} is not compatible with the grid cell size!")
-            return
-
-        polygons = list(self.build_grid(feature, cellsize_domain))
-        total_polygons = len(polygons)
-
-        progDialog = QProgressDialog(f"Creating Grid for domain {fid}. Please wait...", None, 0, total_polygons)
-        progDialog.setModal(True)
-        progDialog.setValue(0)
-        progDialog.show()
-        QApplication.processEvents()
-        i = 0
-
-        polygons = ((self.gutils.build_square_from_polygon(poly),) for poly in
-                    self.build_grid(feature, cellsize_domain))
-        sql = ["""INSERT INTO schema_md_cells (geom) VALUES""", 1]
-        for g_tuple in polygons:
-            sql.append(g_tuple)
-            progDialog.setValue(i)
-            i += 1
-        if len(sql) > 2:
-            self.gutils.batch_execute(sql)
-        else:
-            pass
-
-    def build_grid(self, feature, cell_size, upper_left_coords=None):
-        """
-        Generator which creates grid with given cell size and inside given boundary layer.
-        """
-        half_size = cell_size * 0.5
-        geom = feature.geometry()
-        bbox = geom.boundingBox()
-        xmin = bbox.xMinimum()
-        xmax = bbox.xMaximum()
-        ymax = bbox.yMaximum()
-        ymin = bbox.yMinimum()
-        if upper_left_coords:
-            xmin, ymax = upper_left_coords
-        cols = int(math.ceil(abs(xmax - xmin) / cell_size))
-        rows = int(math.ceil(abs(ymax - ymin) / cell_size))
-        x = xmin + half_size
-        y = ymax - half_size
-        geos_geom_engine = QgsGeometry.createGeometryEngine(geom.constGet())
-        geos_geom_engine.prepareGeometry()
-        for col in range(cols):
-            y_tmp = y
-            for row in range(rows):
-                pnt = QgsGeometry.fromPointXY(QgsPointXY(x, y_tmp))
-                if geos_geom_engine.intersects(pnt.constGet()):
-                    poly = (
-                        x - half_size,
-                        y_tmp - half_size,
-                        x + half_size,
-                        y_tmp - half_size,
-                        x + half_size,
-                        y_tmp + half_size,
-                        x - half_size,
-                        y_tmp + half_size,
-                        x - half_size,
-                        y_tmp - half_size,
-                    )
-                    yield poly
-                else:
-                    pass
-                y_tmp -= cell_size
-            x += cell_size
+    # def build_grid(self, feature, cell_size, upper_left_coords=None):
+    #     """
+    #     Generator which creates grid with given cell size and inside given boundary layer.
+    #     """
+    #     half_size = cell_size * 0.5
+    #     geom = feature.geometry()
+    #     bbox = geom.boundingBox()
+    #     xmin = bbox.xMinimum()
+    #     xmax = bbox.xMaximum()
+    #     ymax = bbox.yMaximum()
+    #     ymin = bbox.yMinimum()
+    #     if upper_left_coords:
+    #         xmin, ymax = upper_left_coords
+    #     cols = int(math.ceil(abs(xmax - xmin) / cell_size))
+    #     rows = int(math.ceil(abs(ymax - ymin) / cell_size))
+    #     x = xmin + half_size
+    #     y = ymax - half_size
+    #     geos_geom_engine = QgsGeometry.createGeometryEngine(geom.constGet())
+    #     geos_geom_engine.prepareGeometry()
+    #     for col in range(cols):
+    #         y_tmp = y
+    #         for row in range(rows):
+    #             pnt = QgsGeometry.fromPointXY(QgsPointXY(x, y_tmp))
+    #             if geos_geom_engine.intersects(pnt.constGet()):
+    #                 poly = (
+    #                     x - half_size,
+    #                     y_tmp - half_size,
+    #                     x + half_size,
+    #                     y_tmp - half_size,
+    #                     x + half_size,
+    #                     y_tmp + half_size,
+    #                     x - half_size,
+    #                     y_tmp + half_size,
+    #                     x - half_size,
+    #                     y_tmp - half_size,
+    #                 )
+    #                 yield poly
+    #             else:
+    #                 pass
+    #             y_tmp -= cell_size
+    #         x += cell_size
 
     def delete_schema_md(self):
         """
         Function to delete the multiple domains schematized data
         """
-        if self.gutils.is_table_empty("schema_md_cells") and self.gutils.is_table_empty("schema_md_connect_cells"):
+        if self.gutils.is_table_empty("schema_md_connect_cells"):
             self.uc.bar_warn("There is no schematized multiple domains data!")
             self.uc.log_info("There is no schematized multiple domains data!")
             return
 
-        self.gutils.clear_tables("schema_md_cells", "schema_md_connect_cells")
+        self.gutils.clear_tables("schema_md_connect_cells")
 
         self.uc.bar_info("Schematized multiple domains deleted!")
         self.uc.log_info("Schematized multiple domains deleted!")
 
         self.lyrs.clear_rubber()
-        self.lyrs.data["schema_md_cells"]["qlyr"].triggerRepaint()
         self.lyrs.data["schema_md_connect_cells"]["qlyr"].triggerRepaint()
 
     def change_md_name(self):

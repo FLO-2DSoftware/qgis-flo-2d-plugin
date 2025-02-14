@@ -945,18 +945,6 @@ class Layers(object):
                         "advanced": False
                     },
                 ),
-                (
-                    "schema_md_cells",
-                    {
-                        "name": "Domains Cells",
-                        "sgroup": "Schematic Layers",
-                        "ssgroup": "Multiple Domains",
-                        "styles": ["domain_cells.qml"],
-                        "attrs_edit_widgets": {},
-                        "readonly": False,
-                        "advanced": False
-                    },
-                ),
                 # Infiltration Layers
                 (
                     "infil",
