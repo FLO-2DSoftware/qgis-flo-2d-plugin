@@ -83,7 +83,8 @@ CREATE TABLE "grid" (
     "water_elevation" REAL DEFAULT -9999,
     "flow_depth" REAL DEFAULT -9999,
     "domain_fid" INTEGER,
-    "domain_cell" INTEGER
+    "domain_cell" INTEGER,
+    "connectivity_fid" INTEGER
 );
 INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('grid', 'features', 4326);
 SELECT gpkgAddGeometryColumn('grid', 'geom', 'POLYGON', 0, 0, 0);

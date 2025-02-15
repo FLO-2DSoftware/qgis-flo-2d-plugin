@@ -321,6 +321,8 @@ class ImportMultipleDomainsDialog(qtBaseClass, uiDialog):
             sub15_path
         ]
 
+        self.import_connectivity_cells()
+
         self.cell_size = int(float(self.cellsize_le.text()))
 
         n_projects = sum(1 for item in subdomains_paths if item != "")
@@ -350,7 +352,7 @@ class ImportMultipleDomainsDialog(qtBaseClass, uiDialog):
 
         pd.close()
 
-        self.import_connectivity_cells()
+
 
         grid_lyr = self.lyrs.data["grid"]["qlyr"]
         grid_lyr.triggerRepaint()
@@ -369,14 +371,18 @@ class ImportMultipleDomainsDialog(qtBaseClass, uiDialog):
 
         QApplication.setOverrideCursor(Qt.WaitCursor)
 
+        self.gutils.execute("CREATE INDEX IF NOT EXISTS idx_grid_domain_fid_cell ON grid(domain_fid, domain_cell);")
+        connect_cells = []
+
         # Step 1: Clear tables if this is the first subdomain
         if subdomain_n == 1:
             self.gutils.clear_tables("grid")
-            self.gutils.clear_tables("schema_md_connect_cells")
             fid = 1
         else:
             fid = self.gutils.execute("SELECT MAX(fid) FROM grid;").fetchone()[0] or 0
             fid += 1  # Ensures unique fid values
+            connect_cells = [row[0] for row in self.gutils.execute(
+                f"SELECT down_domain_cell FROM schema_md_connect_cells WHERE down_domain_fid = {subdomain_n};").fetchall()]
 
         sql_grid = []
 
@@ -486,6 +492,23 @@ class ImportMultipleDomainsDialog(qtBaseClass, uiDialog):
             batch_size = self.chunksize  # Set batch size from existing chunksize variable
 
             for i, row in enumerate(data, start=1):
+
+                if subdomain_n != 1 and domain_cell_fid in connect_cells:
+                    connectivity_data = self.gutils.execute(
+                        "SELECT fid, up_domain_fid, up_domain_cell FROM schema_md_connect_cells WHERE down_domain_fid = ? AND down_domain_cell = ?;",
+                        (subdomain_n, domain_cell_fid)
+                    ).fetchone()
+
+                    # Check if we found a match
+                    if connectivity_data:
+                        # Update the grid table
+                        self.gutils.execute(
+                            "UPDATE grid SET connectivity_fid = ? WHERE domain_fid = ? AND domain_cell = ?;",
+                            (connectivity_data[0], connectivity_data[1], connectivity_data[2])
+                        )
+                        domain_cell_fid += 1
+                        continue
+
                 geom = " ".join( list(map(str, row[coords])))
                 g = self.gutils.build_square(geom, self.cell_size)  # Avoid redundant processing
 
@@ -623,6 +646,8 @@ class ImportMultipleDomainsDialog(qtBaseClass, uiDialog):
         """
         Function to import the connectivity cells based on the UPS-DOWS-CELLS
         """
+
+        self.gutils.clear_tables("schema_md_connect_cells")
 
         # Method 1
         subdomain_connectivities = self.gutils.execute("""
@@ -763,20 +788,20 @@ class ImportMultipleDomainsDialog(qtBaseClass, uiDialog):
                         upstream_cells, downstream_cells = result["id_file1"].tolist(), result["id_file2"].tolist()  # Efficient unpacking
 
                         # Fetch all centroids in one go
-                        query = f"""
-                                      SELECT domain_cell, ST_AsText(ST_Centroid(GeomFromGPB(geom))) 
-                                      FROM grid 
-                                      WHERE domain_fid = {md_fid} 
-                                      AND domain_cell IN ({",".join(map(str, upstream_cells))});
-                                  """
-                        cell_centroids = dict(
-                            self.gutils.execute(query).fetchall())  # Convert to dictionary
+                        # query = f"""
+                        #               SELECT domain_cell, ST_AsText(ST_Centroid(GeomFromGPB(geom)))
+                        #               FROM grid
+                        #               WHERE domain_fid = {md_fid}
+                        #               AND domain_cell IN ({",".join(map(str, upstream_cells))});
+                        #           """
+                        # cell_centroids = dict(
+                        #     self.gutils.execute(query).fetchall())  # Convert to dictionary
 
                         # Collect bulk insert data
                         for upstream, downstream in zip(upstream_cells, downstream_cells):
-                            if upstream in cell_centroids:
-                                bulk_insert_data.append(
-                                    (md_fid, upstream, fid_subdomain, downstream, cell_centroids[upstream]))
+                            # if upstream in cell_centroids:
+                            bulk_insert_data.append(
+                                (md_fid, upstream, fid_subdomain, downstream))
 
                     qpd.setValue(i + 1)
 
@@ -792,8 +817,8 @@ class ImportMultipleDomainsDialog(qtBaseClass, uiDialog):
             if bulk_insert_data:
                 self.gutils.execute_many("""
                                               INSERT INTO schema_md_connect_cells 
-                                              (up_domain_fid, up_domain_cell, down_domain_fid, down_domain_cell, geom) 
-                                              VALUES (?, ?, ?, ?, AsGPB(ST_GeomFromText(?)));
+                                              (up_domain_fid, up_domain_cell, down_domain_fid, down_domain_cell) 
+                                              VALUES (?, ?, ?, ?);
                                           """, bulk_insert_data)
 
 
