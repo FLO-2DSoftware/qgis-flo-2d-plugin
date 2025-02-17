@@ -79,55 +79,34 @@ class MultipleDomainsConnectivityDialog(qtBaseClass, uiDialog):
         """
         current_subdomain = self.current_subdomain_cbo.currentText()
 
-        import_methods = self.gutils.execute(f"""SELECT import_method FROM mult_domains_methods WHERE subdomain_name = '{current_subdomain}'""").fetchall()
-        if import_methods:
-            for method in import_methods:
-                import_method = method[0]
-                if import_method == 1:
-                    selected_data = self.gutils.execute(
-                        f"SELECT * FROM md_method_1 WHERE subdomain_name = ?;", (current_subdomain,)
-                    ).fetchone()
+        selected_data = self.gutils.execute(
+            f"SELECT * FROM mult_domains_con WHERE subdomain_name = ?;", (current_subdomain,)
+        ).fetchone()
 
-                    if selected_data:
-                        for i in range(1, 10):  # Loop through subdomains 1 to 9
-                            subdomain_name_index = 3 + (i - 1) * 4  # Get index for subdomain name
-                            ds_file_index = subdomain_name_index + 1  # Get index for ds_file
+        if selected_data:
+            for i in range(1, 10):  # Loop through subdomains 1 to 9
+                subdomain_name_index = 3 + (i - 1) * 5  # Get index for subdomain name
+                mult_domain_index = subdomain_name_index + 1  # Get index for ds_file
+                ds_file_index = subdomain_name_index + 2 # Get index for ds_file
+                ups_dows_index = subdomain_name_index + 3  # Get index for ds_file
 
-                            subdomain_name = selected_data[subdomain_name_index] if selected_data[
-                                subdomain_name_index] else ""
-                            ds_file = selected_data[ds_file_index] if selected_data[ds_file_index] else ""
+                subdomain_name = selected_data[subdomain_name_index] if selected_data[subdomain_name_index] else ""
+                mult_domain_file = selected_data[mult_domain_index] if selected_data[mult_domain_index] else ""
+                ds_file = selected_data[ds_file_index] if selected_data[ds_file_index] else ""
+                ups_dows_file = selected_data[ups_dows_index] if selected_data[ups_dows_index] else ""
 
-                            sub_cbo = getattr(self, f"sub{i}_cbo", None)
-                            ds_cbo = getattr(self, f"ds{i}_file_cbo", None)
+                sub_cbo = getattr(self, f"sub{i}_cbo", None)
+                ds_cbo = getattr(self, f"ds{i}_file_cbo", None)
 
-                            if sub_cbo:
-                                sub_cbo.setCurrentIndex(sub_cbo.findText(subdomain_name))
-                            if ds_cbo:
-                                ds_cbo.setCurrentIndex(ds_cbo.findText(ds_file))
-
-                elif import_method == 2:
-                    selected_data = self.gutils.execute(
-                        f"SELECT * FROM md_method_2 WHERE subdomain_name = ?;", (current_subdomain,)
-                    ).fetchone()
-
-                    if selected_data:
-                        for i in range(1, 10):  # Loop through subdomains 1 to 9
-                            subdomain_name_index = 3 + (i - 1) * 3  # Get index for subdomain name
-                            ds_file_index = subdomain_name_index + 1  # Get index for ds_file
-
-                            subdomain_name = selected_data[subdomain_name_index] if selected_data[
-                                subdomain_name_index] else ""
-                            ds_file = selected_data[ds_file_index] if selected_data[ds_file_index] else ""
-
-                            sub_cbo = getattr(self, f"sub{i}_cbo", None)
-                            ds_cbo = getattr(self, f"ds{i}_file_cbo", None)
-
-                            if sub_cbo:
-                                sub_cbo.setCurrentIndex(sub_cbo.findText(subdomain_name))
-                            if ds_cbo:
-                                ds_cbo.setCurrentIndex(ds_cbo.findText(ds_file))
-                else:
-                    pass
+                if sub_cbo:
+                    sub_cbo.setCurrentIndex(sub_cbo.findText(subdomain_name))
+                if ds_cbo:
+                    if mult_domain_file != "":
+                        ds_cbo.setCurrentIndex(ds_cbo.findText(mult_domain_file))
+                    elif ups_dows_file != "":
+                        ds_cbo.setCurrentIndex(ds_cbo.findText(ups_dows_file))
+                    elif ds_file != "":
+                        ds_cbo.setCurrentIndex(ds_cbo.findText(ds_file))
 
     def save_cbo_data(self):
         """
@@ -135,47 +114,55 @@ class MultipleDomainsConnectivityDialog(qtBaseClass, uiDialog):
         """
         current_subdomain = self.current_subdomain_cbo.currentText()
 
-        import_method = self.gutils.execute(
-            f"""SELECT import_method FROM mult_domains_methods WHERE subdomain_name = '{current_subdomain}'""").fetchone()
-        if import_method:
-            # Get the selected fid for the current subdomain
-            selected_fid = self.gutils.execute(
-                f"SELECT fid FROM md_method_{import_method[0]} WHERE subdomain_name = ?", (current_subdomain,)
-            ).fetchone()
+        # Get the selected fid for the current subdomain
+        selected_fid = self.gutils.execute(
+            f"SELECT fid FROM mult_domains_con WHERE subdomain_name = ?", (current_subdomain,)
+        ).fetchone()
 
-            if not selected_fid:
-                return
+        if not selected_fid:
+            return
 
-            selected_fid = selected_fid[0]
+        selected_fid = selected_fid[0]
 
-            # Prepare data for update
-            update_data = {}
+        # Prepare data for update
+        update_data = {}
 
-            for i in range(1, 10):  # Loop through 1 to 9 (matching subdomain fields)
-                subdomain_cbo = getattr(self, f"sub{i}_cbo").currentText()
-                ds_file_cbo = getattr(self, f"ds{i}_file_cbo").currentText()
+        for i in range(1, 10):  # Loop through 1 to 9 (matching subdomain fields)
+            subdomain_cbo = getattr(self, f"sub{i}_cbo").currentText()
+            file_cbo = getattr(self, f"ds{i}_file_cbo").currentText()
 
-                if subdomain_cbo:
-                    fid_query = self.gutils.execute(
-                        "SELECT fid FROM mult_domains_methods WHERE subdomain_name = ?", (subdomain_cbo,)
-                    ).fetchone()
-                    fid_value = fid_query[0] if fid_query else "NULL"
-                else:
-                    fid_value = "NULL"
+            if subdomain_cbo:
+                fid_query = self.gutils.execute(
+                    "SELECT fid FROM mult_domains_methods WHERE subdomain_name = ?", (subdomain_cbo,)
+                ).fetchone()
+                fid_value = fid_query[0] if fid_query else "NULL"
+            else:
+                fid_value = "NULL"
 
-                update_data[f"fid_subdomain_{i}"] = fid_value
-                update_data[f"subdomain_name_{i}"] = subdomain_cbo
-                update_data[f"ds_file_{i}"] = ds_file_cbo
+            update_data[f"fid_subdomain_{i}"] = fid_value
+            update_data[f"subdomain_name_{i}"] = subdomain_cbo
 
-            # Construct the SQL UPDATE query dynamically
-            set_clause = ", ".join([f"{col} = ?" for col in update_data.keys()])
-            values = list(update_data.values()) + [selected_fid]
+            if file_cbo.startswith("MULTIDOMAIN.DAT"):
+                update_data[f"mult_domains_{i}"] = file_cbo
+                update_data[f"ds_file_{i}"] = ""
+                update_data[f"ups_downs_{i}"] = ""
+            elif file_cbo.startswith("Ups-Dows-Connectivity_DS"):
+                update_data[f"mult_domains_{i}"] = ""
+                update_data[f"ds_file_{i}"] = ""
+                update_data[f"ups_downs_{i}"] = file_cbo
+            elif file_cbo.startswith("CADPTS_DS"):
+                update_data[f"mult_domains_{i}"] = ""
+                update_data[f"ds_file_{i}"] = file_cbo
+                update_data[f"ups_downs_{i}"] = ""
 
-            sql_query = f"UPDATE md_method_{import_method[0]} SET {set_clause} WHERE fid = ?"
+        # Construct the SQL UPDATE query dynamically
+        set_clause = ", ".join([f"{col} = ?" for col in update_data.keys()])
+        values = list(update_data.values()) + [selected_fid]
 
-            # Execute update query
-            self.gutils.execute(sql_query, values)
+        sql_query = f"UPDATE mult_domains_con SET {set_clause} WHERE fid = ?"
 
+        # Execute update query
+        self.gutils.execute(sql_query, values)
 
     def repopulate_cbos(self):
         """
@@ -223,18 +210,58 @@ class MultipleDomainsConnectivityDialog(qtBaseClass, uiDialog):
         current_subdomain = self.current_subdomain_cbo.currentText()
         subdomain_path = self.gutils.execute(f"""SELECT subdomain_path FROM mult_domains_methods WHERE subdomain_name = '{current_subdomain}';""").fetchone()
         if subdomain_path:
-            files = os.listdir(subdomain_path[0])
+            subdomain_connectivities = self.gutils.execute(f"""
+                       SELECT 
+                           im.fid_subdomain_1, im.mult_domains_1, im.ds_file_1, im.ups_downs_1, 
+                           im.fid_subdomain_2, im.mult_domains_2, im.ds_file_2, im.ups_downs_2, 
+                           im.fid_subdomain_3, im.mult_domains_3, im.ds_file_3, im.ups_downs_3, 
+                           im.fid_subdomain_4, im.mult_domains_4, im.ds_file_4, im.ups_downs_4,
+                           im.fid_subdomain_5, im.mult_domains_5, im.ds_file_5, im.ups_downs_5, 
+                           im.fid_subdomain_6, im.mult_domains_6, im.ds_file_6, im.ups_downs_6, 
+                           im.fid_subdomain_7, im.mult_domains_7, im.ds_file_7, im.ups_downs_7, 
+                           im.fid_subdomain_8, im.mult_domains_8, im.ds_file_8, im.ups_downs_8, 
+                           im.fid_subdomain_9, im.mult_domains_9, im.ds_file_9, im.ups_downs_9
+                       FROM 
+                           mult_domains_con AS im WHERE im.subdomain_name = '{current_subdomain}';
+                   """).fetchall()
+            if subdomain_connectivities:
 
-            cadpts_files = []
-            for f in files:
-                if f.startswith("CADPTS_DS"):
-                    cadpts_files.append(f)
+                for row in subdomain_connectivities:
+                    # Extract columns into separate lists for easier handling
+                    mult_domains = [row[i] for i in range(1, 28, 4)]  # mult_domains_1, _2, _3, etc.
+                    ds_files = [row[i] for i in range(2, 29, 4)]  # ds_file_1, _2, _3, etc.
+                    ups_downs = [row[i] for i in range(3, 30, 4)]  # ups_downs_1, _2, _3, etc.
 
-            connect_ds = list(self.subdomains_connectivity_cbos.keys())
-            for ds in connect_ds:
-                ds.clear()
-                ds.addItems(cadpts_files)
-                ds.setCurrentIndex(-1)
+                    # MULTDOMAIN.DAT
+                    if any(mult != "" for mult in mult_domains):
+                        pass
+
+                    # UPS-DOWS
+                    elif any(up != "" for up in ups_downs):
+                        ups_downs_files = [up for up in ups_downs if up != ""]
+                        self.uc.log_info(str(ups_downs_files))
+                        if ups_downs_files:
+                            connect_ds = self.subdomains_connectivity_cbos.keys()
+                            for ds in connect_ds:
+                                ds.clear()
+                                ds.addItems(ups_downs_files)
+                                ds.setCurrentIndex(-1)
+
+                    # Only CADPTS
+                    elif any(ds!= "" for ds in ds_files):
+                        cadpts_files = [ds for ds in ds_files if ds != ""]
+                        self.uc.log_info(str(cadpts_files))
+                        if cadpts_files:
+                            connect_ds = self.subdomains_connectivity_cbos.keys()
+                            for ds in connect_ds:
+                                ds.clear()
+                                ds.addItems(cadpts_files)
+                                ds.setCurrentIndex(-1)
+
+            else:
+                connect_ds = self.subdomains_connectivity_cbos.keys()
+                for ds in connect_ds:
+                    ds.clear()
 
     def hide_cbos(self):
         """
@@ -262,51 +289,51 @@ class MultipleDomainsConnectivityDialog(qtBaseClass, uiDialog):
         """Function to save the connectivity data into FLO-2D Settings"""
 
         # Adjust the UPS-DOWNS
-        subdomains = self.gutils.execute(f"""SELECT subdomain_name FROM md_method_1;""").fetchall()
-        if subdomains:
-            for subdomain in subdomains:
-
-                selected_data = self.gutils.execute(
-                    "SELECT * FROM md_method_1 WHERE subdomain_name = ?;", (subdomain[0],)
-                ).fetchone()
-
-                if selected_data:
-                    update_query = """
-                        UPDATE md_method_1 
-                        SET subdomain_name_{i} = ?, ds_file_{i} = ?, ups_downs_{i} = ?
-                        WHERE subdomain_name = ?;
-                    """
-
-                    for i in range(1, 10):  # Loop through subdomains 1 to 9
-                        subdomain_name_index = 3 + (i - 1) * 4
-                        ds_file_index = subdomain_name_index + 1
-                        ups_downs_index = subdomain_name_index + 2  # ups_downs is 2 columns after subdomain_name_x
-
-                        subdomain_name = selected_data[subdomain_name_index]
-                        ds_file = selected_data[ds_file_index]
-
-                        ups_downs_value = ""
-
-                        if subdomain_name and ds_file:  # Both exist, extract the correct 'x' from ds_file_x
-                            match = re.search(r'CADPTS_DS(\d+)\.DAT', ds_file)
-                            if match:
-                                ds_number = match.group(1)  # Extract x from CADPTS_DSx.DAT
-                                ups_downs_value = f"Ups-Dows-Connectivity_DS{ds_number}.OUT"
-                            else:
-                                # If the ds_file_x format is incorrect, reset everything
-                                subdomain_name = ""
-                                ds_file = ""
-                                ups_downs_value = ""
-
-                        else:  # Either is missing, reset subdomain_name_x and ds_file_x
-                            subdomain_name = ""
-                            ds_file = ""
-
-                        # Execute the update query
-                        self.gutils.execute(
-                            update_query.format(i=i),
-                            (subdomain_name, ds_file, ups_downs_value, subdomain[0]),
-                        )
+        # subdomains = self.gutils.execute(f"""SELECT subdomain_name FROM md_method_1;""").fetchall()
+        # if subdomains:
+        #     for subdomain in subdomains:
+        #
+        #         selected_data = self.gutils.execute(
+        #             "SELECT * FROM md_method_1 WHERE subdomain_name = ?;", (subdomain[0],)
+        #         ).fetchone()
+        #
+        #         if selected_data:
+        #             update_query = """
+        #                 UPDATE md_method_1
+        #                 SET subdomain_name_{i} = ?, ds_file_{i} = ?, ups_downs_{i} = ?
+        #                 WHERE subdomain_name = ?;
+        #             """
+        #
+        #             for i in range(1, 10):  # Loop through subdomains 1 to 9
+        #                 subdomain_name_index = 3 + (i - 1) * 4
+        #                 ds_file_index = subdomain_name_index + 1
+        #                 ups_downs_index = subdomain_name_index + 2  # ups_downs is 2 columns after subdomain_name_x
+        #
+        #                 subdomain_name = selected_data[subdomain_name_index]
+        #                 ds_file = selected_data[ds_file_index]
+        #
+        #                 ups_downs_value = ""
+        #
+        #                 if subdomain_name and ds_file:  # Both exist, extract the correct 'x' from ds_file_x
+        #                     match = re.search(r'CADPTS_DS(\d+)\.DAT', ds_file)
+        #                     if match:
+        #                         ds_number = match.group(1)  # Extract x from CADPTS_DSx.DAT
+        #                         ups_downs_value = f"Ups-Dows-Connectivity_DS{ds_number}.OUT"
+        #                     else:
+        #                         # If the ds_file_x format is incorrect, reset everything
+        #                         subdomain_name = ""
+        #                         ds_file = ""
+        #                         ups_downs_value = ""
+        #
+        #                 else:  # Either is missing, reset subdomain_name_x and ds_file_x
+        #                     subdomain_name = ""
+        #                     ds_file = ""
+        #
+        #                 # Execute the update query
+        #                 self.gutils.execute(
+        #                     update_query.format(i=i),
+        #                     (subdomain_name, ds_file, ups_downs_value, subdomain[0]),
+        #                 )
 
         self.uc.log_info("Connectivity saved!")
         self.uc.bar_info("Connectivity saved!")

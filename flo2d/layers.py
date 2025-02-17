@@ -1442,21 +1442,9 @@ class Layers(object):
                     },
                 ),
                 (
-                    "md_method_1",
+                    "mult_domains_con",
                     {
-                        "name": "Import Method 1",
-                        "sgroup": "Multiple Domains Tables",
-                        "styles": None,
-                        "attrs_edit_widgets": {},
-                        "visible": False,
-                        "readonly": False,
-                        "advanced": True
-                    },
-                ),
-                (
-                    "md_method_2",
-                    {
-                        "name": "Import Method 2",
+                        "name": "Multiple Domains Connections",
                         "sgroup": "Multiple Domains Tables",
                         "styles": None,
                         "attrs_edit_widgets": {},

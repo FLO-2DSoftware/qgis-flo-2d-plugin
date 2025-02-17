@@ -1366,85 +1366,60 @@ CREATE TABLE "mult_domains_methods" (
     "fid" INTEGER NOT NULL PRIMARY KEY,
     "subdomain_name" TEXT, -- name of the subdomain
     "subdomain_path" TEXT, -- name of the subdomain
-    "import_method" INTEGER, -- NULL = was not imported, 1 CADPTS and Ups-Downs
     "fid_method" INTEGER -- NULL = was not imported, 1 CADPTS and Ups-Downs
 );
 INSERT INTO gpkg_contents (table_name, data_type) VALUES ('mult_domains_methods', 'aspatial');
 
-CREATE TABLE "md_method_1" (
+CREATE TABLE "mult_domains_con" (
     "fid" INTEGER NOT NULL PRIMARY KEY,
     "subdomain_name" TEXT DEFAULT '', -- name of the subdomain
     "fid_subdomain_1" INTEGER, -- fid of subdomain connected
     "subdomain_name_1" TEXT DEFAULT '', -- name of the subdomain connected
+    "mult_domains_1" TEXT DEFAULT '', -- MULTDOMAINS of the subdomain connected
     "ds_file_1" TEXT DEFAULT '', -- ds file of the subdomain connected
     "ups_downs_1" TEXT DEFAULT '', -- ups downs of the subdomain connected
     "fid_subdomain_2" INTEGER, -- fid of subdomain connected
     "subdomain_name_2" TEXT DEFAULT '', -- name of the subdomain connected
+    "mult_domains_2" TEXT DEFAULT '', -- MULTDOMAINS of the subdomain connected
     "ds_file_2" TEXT DEFAULT '', -- ds file of the subdomain connected
     "ups_downs_2" TEXT DEFAULT '', -- ups downs of the subdomain connected
     "fid_subdomain_3" INTEGER, -- fid of subdomain connected
     "subdomain_name_3" TEXT DEFAULT '', -- name of the subdomain connected
+    "mult_domains_3" TEXT DEFAULT '', -- MULTDOMAINS of the subdomain connected
     "ds_file_3" TEXT DEFAULT '', -- ds file of the subdomain connected
     "ups_downs_3" TEXT DEFAULT '', -- ups downs of the subdomain connected
     "fid_subdomain_4" INTEGER, -- fid of subdomain connected
     "subdomain_name_4" TEXT DEFAULT '', -- name of the subdomain connected
+    "mult_domains_4" TEXT DEFAULT '', -- MULTDOMAINS of the subdomain connected
     "ds_file_4" TEXT DEFAULT '', -- ds file of the subdomain connected
     "ups_downs_4" TEXT DEFAULT '', -- ups downs of the subdomain connected
     "fid_subdomain_5" INTEGER, -- fid of subdomain connected
     "subdomain_name_5" TEXT DEFAULT '', -- name of the subdomain connected
+    "mult_domains_5" TEXT DEFAULT '', -- MULTDOMAINS of the subdomain connected
     "ds_file_5" TEXT DEFAULT '', -- ds file of the subdomain connected
     "ups_downs_5" TEXT DEFAULT '', -- ups downs of the subdomain connected
     "fid_subdomain_6" INTEGER, -- fid of subdomain connected
     "subdomain_name_6" TEXT DEFAULT '', -- name of the subdomain connected
+    "mult_domains_6" TEXT DEFAULT '', -- MULTDOMAINS of the subdomain connected
     "ds_file_6" TEXT DEFAULT '', -- ds file of the subdomain connected
     "ups_downs_6" TEXT DEFAULT '', -- ups downs of the subdomain connected
     "fid_subdomain_7" INTEGER, -- fid of subdomain connected
     "subdomain_name_7" TEXT DEFAULT '', -- name of the subdomain connected
+    "mult_domains_7" TEXT DEFAULT '', -- MULTDOMAINS of the subdomain connected
     "ds_file_7" TEXT DEFAULT '', -- ds file of the subdomain connected
     "ups_downs_7" TEXT DEFAULT '', -- ups downs of the subdomain connected
     "fid_subdomain_8" INTEGER, -- fid of subdomain connected
     "subdomain_name_8" TEXT DEFAULT '', -- name of the subdomain connected
+    "mult_domains_8" TEXT DEFAULT '', -- MULTDOMAINS of the subdomain connected
     "ds_file_8" TEXT DEFAULT '', -- ds file of the subdomain connected
     "ups_downs_8" TEXT DEFAULT '', -- ups downs of the subdomain connected
     "fid_subdomain_9" INTEGER, -- fid of subdomain connected
     "subdomain_name_9" TEXT DEFAULT '', -- name of the subdomain connected
+    "mult_domains_9" TEXT DEFAULT '', -- MULTDOMAINS of the subdomain connected
     "ds_file_9" TEXT DEFAULT '', -- ds file of the subdomain connected
     "ups_downs_9" TEXT  DEFAULT '' -- ups downs of the subdomain connected
 );
-INSERT INTO gpkg_contents (table_name, data_type) VALUES ('md_method_1', 'aspatial');
-
-CREATE TABLE "md_method_2" (
-    "fid" INTEGER NOT NULL PRIMARY KEY,
-    "subdomain_name" TEXT DEFAULT '', -- name of the subdomain
-    "fid_subdomain_1" INTEGER, -- fid of subdomain connected
-    "subdomain_name_1" TEXT DEFAULT '', -- name of the subdomain connected
-    "ds_file_1" TEXT DEFAULT '', -- ds file of the subdomain connected
-    "fid_subdomain_2" INTEGER, -- fid of subdomain connected
-    "subdomain_name_2" TEXT DEFAULT '', -- name of the subdomain connected
-    "ds_file_2" TEXT DEFAULT '', -- ds file of the subdomain connected
-    "fid_subdomain_3" INTEGER, -- fid of subdomain connected
-    "subdomain_name_3" TEXT DEFAULT '', -- name of the subdomain connected
-    "ds_file_3" TEXT DEFAULT '', -- ds file of the subdomain connected
-    "fid_subdomain_4" INTEGER, -- fid of subdomain connected
-    "subdomain_name_4" TEXT DEFAULT '', -- name of the subdomain connected
-    "ds_file_4" TEXT DEFAULT '', -- ds file of the subdomain connected
-    "fid_subdomain_5" INTEGER, -- fid of subdomain connected
-    "subdomain_name_5" TEXT DEFAULT '', -- name of the subdomain connected
-    "ds_file_5" TEXT DEFAULT '', -- ds file of the subdomain connected
-    "fid_subdomain_6" INTEGER, -- fid of subdomain connected
-    "subdomain_name_6" TEXT DEFAULT '', -- name of the subdomain connected
-    "ds_file_6" TEXT DEFAULT '', -- ds file of the subdomain connected
-    "fid_subdomain_7" INTEGER, -- fid of subdomain connected
-    "subdomain_name_7" TEXT DEFAULT '', -- name of the subdomain connected
-    "ds_file_7" TEXT DEFAULT '', -- ds file of the subdomain connected
-    "fid_subdomain_8" INTEGER, -- fid of subdomain connected
-    "subdomain_name_8" TEXT DEFAULT '', -- name of the subdomain connected
-    "ds_file_8" TEXT DEFAULT '', -- ds file of the subdomain connected
-    "fid_subdomain_9" INTEGER, -- fid of subdomain connected
-    "subdomain_name_9" TEXT DEFAULT '', -- name of the subdomain connected
-    "ds_file_9" TEXT DEFAULT '' -- ds file of the subdomain connected
-);
-INSERT INTO gpkg_contents (table_name, data_type) VALUES ('md_method_2', 'aspatial');
+INSERT INTO gpkg_contents (table_name, data_type) VALUES ('mult_domains_con', 'aspatial');
 
 -- FPFROUDE.DAT
 
