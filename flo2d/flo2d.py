@@ -63,6 +63,7 @@ from .geopackage_utils import GeoPackageUtils, connection_required, database_dis
 from .gui.dlg_components import ComponentsDialog
 from .gui.dlg_cont_toler_jj import ContToler_JJ
 from .gui.dlg_evap_editor import EvapEditorDialog
+from .gui.dlg_export_multidomain import ExportMultipleDomainsDialog
 from .gui.dlg_flopro import ExternalProgramFLO2D
 from .gui.dlg_gpkg_backup import GpkgBackupDialog
 from .gui.dlg_gpkg_management import GpkgManagementDialog
@@ -388,6 +389,11 @@ class Flo2D(object):
                     os.path.join(self.plugin_dir, "img/import_multidomains.svg"),
                     "Import multiple domains",
                     lambda: self.import_multidomains(),
+                ),
+                (
+                    os.path.join(self.plugin_dir, "img/export_multidomains.svg"),
+                    "Export multiple domains",
+                    lambda: self.export_multidomains(),
                 ),
                 (
                     os.path.join(self.plugin_dir, "img/import_ras.svg"),
@@ -3511,6 +3517,18 @@ class Flo2D(object):
         Function to import multiple domains into the FLO-2D project
         """
         dlg = ImportMultipleDomainsDialog(self.con, self.iface, self.lyrs)
+        ok = dlg.exec_()
+        if not ok:
+            return
+        else:
+            pass
+
+    @connection_required
+    def export_multidomains(self):
+        """
+        Function to export multiple domains into the FLO-2D project
+        """
+        dlg = ExportMultipleDomainsDialog(self.con, self.iface, self.lyrs)
         ok = dlg.exec_()
         if not ok:
             return

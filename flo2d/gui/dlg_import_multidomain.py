@@ -787,16 +787,6 @@ class ImportMultipleDomainsDialog(qtBaseClass, uiDialog):
                         # Extract upstream and downstream cells
                         upstream_cells, downstream_cells = result["id_file1"].tolist(), result["id_file2"].tolist()  # Efficient unpacking
 
-                        # Fetch all centroids in one go
-                        # query = f"""
-                        #               SELECT domain_cell, ST_AsText(ST_Centroid(GeomFromGPB(geom)))
-                        #               FROM grid
-                        #               WHERE domain_fid = {md_fid}
-                        #               AND domain_cell IN ({",".join(map(str, upstream_cells))});
-                        #           """
-                        # cell_centroids = dict(
-                        #     self.gutils.execute(query).fetchall())  # Convert to dictionary
-
                         # Collect bulk insert data
                         for upstream, downstream in zip(upstream_cells, downstream_cells):
                             # if upstream in cell_centroids:
