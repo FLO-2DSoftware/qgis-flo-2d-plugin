@@ -2,6 +2,7 @@ import os
 
 from PyQt5.QtCore import QSettings, Qt
 from PyQt5.QtWidgets import QFileDialog, QApplication
+from qgis.PyQt.QtCore import NULL
 
 from .ui_utils import load_ui
 from ..geopackage_utils import GeoPackageUtils
@@ -55,6 +56,35 @@ class ExportMultipleDomainsDialog(qtBaseClass, uiDialog):
         subdomains = self.gutils.execute("SELECT fid, subdomain_name FROM mult_domains_methods;").fetchall()
 
         if subdomains:
+            # Figure out the upstream domains
+            upstream_domains = {}
+            subdomain_connectivities = self.gutils.execute(f"""
+                                   SELECT
+                                       im.fid, 
+                                       im.fid_subdomain_1,
+                                       im.fid_subdomain_2,
+                                       im.fid_subdomain_3,
+                                       im.fid_subdomain_4,
+                                       im.fid_subdomain_5,
+                                       im.fid_subdomain_6,
+                                       im.fid_subdomain_7,
+                                       im.fid_subdomain_8,
+                                       im.fid_subdomain_9
+                                   FROM
+                                       mult_domains_con AS im;
+                                               """).fetchall()
+            if subdomain_connectivities:
+                for subdomain_connectivity in subdomain_connectivities:
+                    subdomain_fid = subdomain_connectivity[0]
+                    if subdomain_fid == NULL:
+                        continue
+                    for i in range(1, 10):
+                        if subdomain_connectivity[i] != NULL:
+                            if subdomain_connectivity[i] not in upstream_domains:
+                                upstream_domains[subdomain_connectivity[i]] = []
+                            if subdomain_fid not in upstream_domains[subdomain_connectivity[i]]:
+                                upstream_domains[subdomain_connectivity[i]].append(subdomain_fid)
+
             for subdomain in subdomains:
                 export_folder = os.path.join(self.export_directory_le.text(), subdomain[1])
                 if not os.path.exists(export_folder):
@@ -65,47 +95,25 @@ class ExportMultipleDomainsDialog(qtBaseClass, uiDialog):
                     )
                     records = self.gutils.execute(sql).fetchall()
                 else:
-                    method = self.gutils.execute(f"""
-                    SELECT fid, import_method, fid_method FROM mult_domains_methods WHERE subdomain_name = '{subdomain[1]}';
-                    """).fetchone()
-                    if method:
-                        # Get the current cells on the grid layer
-                        sub_grid_cells = self.gutils.execute(f"""SELECT 
-                                                                    g.domain_cell, 
-                                                                    g.n_value, 
-                                                                    g.elevation, 
-                                                                    ST_AsText(ST_Centroid(GeomFromGPB(g.geom)))
-                                                                FROM 
-                                                                    grid g
-                                                                WHERE 
-                                                                    g.domain_fid = {method[0]};""").fetchall()
-                        # Get the connectivity cells
-                        if method[1]:
-                            subdomain_connectivities = self.gutils.execute(f"""
-                                                                        SELECT 
-                                                                           fid_subdomain_1,
-                                                                           fid_subdomain_2,
-                                                                           fid_subdomain_3,
-                                                                           fid_subdomain_4,
-                                                                           fid_subdomain_5,
-                                                                           fid_subdomain_6,
-                                                                           fid_subdomain_7,
-                                                                           fid_subdomain_8,
-                                                                           fid_subdomain_9
-                                                                        FROM 
-                                                                           md_method_{method[1]} WHERE fid = {method[2]};
-                                                       """).fetchall()
-                            if subdomain_connectivities:
-                                for connectivity in subdomain_connectivities:
-                                    if connectivity[0] != 0:
-                                        sub_con_cells = self.gutils.execute(f"""
-                                                                SELECT c.down_domain_cell AS domain_cell, g.n_value, g.elevation, ST_AsText(ST_Centroid(GeomFromGPB(g.geom)))
-                                                                FROM grid g
-                                                                JOIN schema_md_connect_cells c ON g.domain_cell = c.up_domain_cell
-                                                                WHERE g.domain_fid = {method[2]} AND c.down_domain_fid = {connectivity[0]} AND g.connectivity_fid != 'NULL'""").fetchall()
-                                        sub_grid_cells.extend(sub_con_cells)
+                    sub_grid_cells = self.gutils.execute(f"""SELECT 
+                                                                g.domain_cell, 
+                                                                g.n_value, 
+                                                                g.elevation, 
+                                                                ST_AsText(ST_Centroid(GeomFromGPB(g.geom)))
+                                                            FROM 
+                                                                grid g
+                                                            WHERE 
+                                                                g.domain_fid = {subdomain[0]};""").fetchall()
 
-                        records = sorted(sub_grid_cells, key=lambda x: x[0])
+                    for upstream_domain in upstream_domains[subdomain[0]]:
+                        sub_con_cells = self.gutils.execute(f"""
+                                        SELECT c.down_domain_cell AS domain_cell, g.n_value, g.elevation, ST_AsText(ST_Centroid(GeomFromGPB(g.geom)))
+                                        FROM grid g
+                                        JOIN schema_md_connect_cells c ON g.domain_cell = c.up_domain_cell
+                                        WHERE c.down_domain_fid = {subdomain[0]} AND g.domain_fid = {upstream_domain} AND g.connectivity_fid != 'NULL'""").fetchall()
+                        sub_grid_cells.extend(sub_con_cells)
+
+                    records = sorted(sub_grid_cells, key=lambda x: x[0])
 
                 # try:
                 mannings = os.path.join(str(export_folder), "MANNINGS_N.DAT")

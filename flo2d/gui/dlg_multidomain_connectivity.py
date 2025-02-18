@@ -239,7 +239,6 @@ class MultipleDomainsConnectivityDialog(qtBaseClass, uiDialog):
                     # UPS-DOWS
                     elif any(up != "" for up in ups_downs):
                         ups_downs_files = [up for up in ups_downs if up != ""]
-                        self.uc.log_info(str(ups_downs_files))
                         if ups_downs_files:
                             connect_ds = self.subdomains_connectivity_cbos.keys()
                             for ds in connect_ds:
@@ -250,7 +249,6 @@ class MultipleDomainsConnectivityDialog(qtBaseClass, uiDialog):
                     # Only CADPTS
                     elif any(ds!= "" for ds in ds_files):
                         cadpts_files = [ds for ds in ds_files if ds != ""]
-                        self.uc.log_info(str(cadpts_files))
                         if cadpts_files:
                             connect_ds = self.subdomains_connectivity_cbos.keys()
                             for ds in connect_ds:
