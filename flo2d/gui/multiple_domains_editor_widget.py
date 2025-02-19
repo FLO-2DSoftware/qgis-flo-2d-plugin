@@ -428,7 +428,6 @@ class MultipleDomainsEditorWidget(qtBaseClass, uiDialog):
         self.uc.log_info("Schematized multiple domains deleted!")
 
         self.lyrs.clear_rubber()
-        self.lyrs.data["schema_md_connect_cells"]["qlyr"].triggerRepaint()
 
     def change_md_name(self):
         """

@@ -1,7 +1,9 @@
 import os
 import re
+import time
 
 from PyQt5.QtCore import QSettings
+from PyQt5.QtWidgets import QProgressDialog
 from qgis.PyQt.QtCore import NULL
 
 from .ui_utils import load_ui
@@ -22,29 +24,29 @@ class MultipleDomainsConnectivityDialog(qtBaseClass, uiDialog):
         self.uc = UserCommunication(iface, "FLO-2D")
         self.gutils = GeoPackageUtils(con, iface)
 
-        self.lbl_cb = {
-            self.label_1: self.sub1_cb,
-            self.label_2: self.sub2_cb,
-            self.label_3: self.sub3_cb,
-            self.label_4: self.sub4_cb,
-            self.label_5: self.sub5_cb,
-            self.label_6: self.sub6_cb,
-            self.label_7: self.sub7_cb,
-            self.label_8: self.sub8_cb,
-            self.label_9: self.sub9_cb,
-        }
+        self.hide_elements = [
+            [self.line_1, self.sub1_cbo, self.toolButton_1],
+            [self.line_2, self.sub2_cbo, self.toolButton_2],
+            [self.line_3, self.sub3_cbo, self.toolButton_3],
+            [self.line_4, self.sub4_cbo, self.toolButton_4],
+            [self.line_5, self.sub5_cbo, self.toolButton_5],
+            [self.line_6, self.sub6_cbo, self.toolButton_6],
+            [self.line_7, self.sub7_cbo, self.toolButton_7],
+            [self.line_8, self.sub8_cbo, self.toolButton_8],
+            [self.line_9, self.sub9_cbo, self.toolButton_9]
+        ]
 
-        self.subdomains_connectivity_cbos = {
-            self.ds1_file_cbo: self.sub1_cbo,
-            self.ds2_file_cbo: self.sub2_cbo,
-            self.ds3_file_cbo: self.sub3_cbo,
-            self.ds4_file_cbo: self.sub4_cbo,
-            self.ds5_file_cbo: self.sub5_cbo,
-            self.ds6_file_cbo: self.sub6_cbo,
-            self.ds7_file_cbo: self.sub7_cbo,
-            self.ds8_file_cbo: self.sub8_cbo,
-            self.ds9_file_cbo: self.sub9_cbo,
-        }
+        self.subdomains_connectivity_cbos = [
+            self.sub1_cbo,
+            self.sub2_cbo,
+            self.sub3_cbo,
+            self.sub4_cbo,
+            self.sub5_cbo,
+            self.sub6_cbo,
+            self.sub7_cbo,
+            self.sub8_cbo,
+            self.sub9_cbo
+        ]
 
         self.populate_current_subdomains()
 
@@ -53,15 +55,15 @@ class MultipleDomainsConnectivityDialog(qtBaseClass, uiDialog):
 
         self.current_subdomain_cbo.currentIndexChanged.connect(self.repopulate_cbos)
 
-        self.ds1_file_cbo.currentIndexChanged.connect(self.save_cbo_data)
-        self.ds2_file_cbo.currentIndexChanged.connect(self.save_cbo_data)
-        self.ds3_file_cbo.currentIndexChanged.connect(self.save_cbo_data)
-        self.ds4_file_cbo.currentIndexChanged.connect(self.save_cbo_data)
-        self.ds5_file_cbo.currentIndexChanged.connect(self.save_cbo_data)
-        self.ds6_file_cbo.currentIndexChanged.connect(self.save_cbo_data)
-        self.ds7_file_cbo.currentIndexChanged.connect(self.save_cbo_data)
-        self.ds8_file_cbo.currentIndexChanged.connect(self.save_cbo_data)
-        self.ds9_file_cbo.currentIndexChanged.connect(self.save_cbo_data)
+        self.toolButton_1.clicked.connect(lambda: self.remove_subdomain(self.sub1_cbo))
+        self.toolButton_2.clicked.connect(lambda: self.remove_subdomain(self.sub2_cbo))
+        self.toolButton_3.clicked.connect(lambda: self.remove_subdomain(self.sub3_cbo))
+        self.toolButton_4.clicked.connect(lambda: self.remove_subdomain(self.sub4_cbo))
+        self.toolButton_5.clicked.connect(lambda: self.remove_subdomain(self.sub5_cbo))
+        self.toolButton_6.clicked.connect(lambda: self.remove_subdomain(self.sub6_cbo))
+        self.toolButton_7.clicked.connect(lambda: self.remove_subdomain(self.sub7_cbo))
+        self.toolButton_8.clicked.connect(lambda: self.remove_subdomain(self.sub8_cbo))
+        self.toolButton_9.clicked.connect(lambda: self.remove_subdomain(self.sub9_cbo))
 
         self.sub1_cbo.currentIndexChanged.connect(self.save_cbo_data)
         self.sub2_cbo.currentIndexChanged.connect(self.save_cbo_data)
@@ -72,6 +74,12 @@ class MultipleDomainsConnectivityDialog(qtBaseClass, uiDialog):
         self.sub7_cbo.currentIndexChanged.connect(self.save_cbo_data)
         self.sub8_cbo.currentIndexChanged.connect(self.save_cbo_data)
         self.sub9_cbo.currentIndexChanged.connect(self.save_cbo_data)
+
+    def remove_subdomain(self, subdomain_cbo):
+        """
+        Function to set the current index to -1 on the removed subdomain
+        """
+        subdomain_cbo.setCurrentIndex(-1)
 
     def fill_cbo_data(self):
         """
@@ -85,28 +93,12 @@ class MultipleDomainsConnectivityDialog(qtBaseClass, uiDialog):
 
         if selected_data:
             for i in range(1, 10):  # Loop through subdomains 1 to 9
-                subdomain_name_index = 3 + (i - 1) * 5  # Get index for subdomain name
-                mult_domain_index = subdomain_name_index + 1  # Get index for ds_file
-                ds_file_index = subdomain_name_index + 2 # Get index for ds_file
-                ups_dows_index = subdomain_name_index + 3  # Get index for ds_file
-
+                subdomain_name_index = 3 + (i - 1) * 4  # Get index for subdomain name
                 subdomain_name = selected_data[subdomain_name_index] if selected_data[subdomain_name_index] else ""
-                mult_domain_file = selected_data[mult_domain_index] if selected_data[mult_domain_index] else ""
-                ds_file = selected_data[ds_file_index] if selected_data[ds_file_index] else ""
-                ups_dows_file = selected_data[ups_dows_index] if selected_data[ups_dows_index] else ""
-
                 sub_cbo = getattr(self, f"sub{i}_cbo", None)
-                ds_cbo = getattr(self, f"ds{i}_file_cbo", None)
 
                 if sub_cbo:
                     sub_cbo.setCurrentIndex(sub_cbo.findText(subdomain_name))
-                if ds_cbo:
-                    if mult_domain_file != "":
-                        ds_cbo.setCurrentIndex(ds_cbo.findText(mult_domain_file))
-                    elif ups_dows_file != "":
-                        ds_cbo.setCurrentIndex(ds_cbo.findText(ups_dows_file))
-                    elif ds_file != "":
-                        ds_cbo.setCurrentIndex(ds_cbo.findText(ds_file))
 
     def save_cbo_data(self):
         """
@@ -129,7 +121,6 @@ class MultipleDomainsConnectivityDialog(qtBaseClass, uiDialog):
 
         for i in range(1, 10):  # Loop through 1 to 9 (matching subdomain fields)
             subdomain_cbo = getattr(self, f"sub{i}_cbo").currentText()
-            file_cbo = getattr(self, f"ds{i}_file_cbo").currentText()
 
             if subdomain_cbo:
                 fid_query = self.gutils.execute(
@@ -141,19 +132,6 @@ class MultipleDomainsConnectivityDialog(qtBaseClass, uiDialog):
 
             update_data[f"fid_subdomain_{i}"] = fid_value
             update_data[f"subdomain_name_{i}"] = subdomain_cbo
-
-            if file_cbo.startswith("MULTIDOMAIN.DAT"):
-                update_data[f"mult_domains_{i}"] = file_cbo
-                update_data[f"ds_file_{i}"] = ""
-                update_data[f"ups_downs_{i}"] = ""
-            elif file_cbo.startswith("Ups-Dows-Connectivity_DS"):
-                update_data[f"mult_domains_{i}"] = ""
-                update_data[f"ds_file_{i}"] = ""
-                update_data[f"ups_downs_{i}"] = file_cbo
-            elif file_cbo.startswith("CADPTS_DS"):
-                update_data[f"mult_domains_{i}"] = ""
-                update_data[f"ds_file_{i}"] = file_cbo
-                update_data[f"ups_downs_{i}"] = ""
 
         # Construct the SQL UPDATE query dynamically
         set_clause = ", ".join([f"{col} = ?" for col in update_data.keys()])
@@ -170,7 +148,7 @@ class MultipleDomainsConnectivityDialog(qtBaseClass, uiDialog):
         """
         self.blockSignals(True)
         self.populate_subdomains()
-        self.populate_ds_cbos()
+        # self.populate_ds_cbos()
         self.fill_cbo_data()
         self.hide_cbos()
         self.blockSignals(False)
@@ -186,7 +164,7 @@ class MultipleDomainsConnectivityDialog(qtBaseClass, uiDialog):
                 self.current_subdomain_cbo.addItem(subdomain_name[0])
 
         self.populate_subdomains()
-        self.populate_ds_cbos()
+        # self.populate_ds_cbos()
         self.fill_cbo_data()
         self.hide_cbos()
 
@@ -195,143 +173,141 @@ class MultipleDomainsConnectivityDialog(qtBaseClass, uiDialog):
         Function to populate the subdomains
         """
         current_subdomain = self.current_subdomain_cbo.currentText()
-        connect_subdomains = list(self.subdomains_connectivity_cbos.values())
         subdomain_names = self.gutils.execute(f"""SELECT subdomain_name FROM mult_domains_methods WHERE NOT subdomain_name = '{current_subdomain}';""").fetchall()
         if subdomain_names:
-            for connect_subdomain in connect_subdomains:
+            for connect_subdomain in self.subdomains_connectivity_cbos:
                 connect_subdomain.clear()
                 connect_subdomain.addItems([s[0] for s in subdomain_names])
                 connect_subdomain.setCurrentIndex(-1)
 
-    def populate_ds_cbos(self):
-        """
-        This function populates the ds files
-        """
-        current_subdomain = self.current_subdomain_cbo.currentText()
-        subdomain_path = self.gutils.execute(f"""SELECT subdomain_path FROM mult_domains_methods WHERE subdomain_name = '{current_subdomain}';""").fetchone()
-        if subdomain_path:
-            subdomain_connectivities = self.gutils.execute(f"""
-                       SELECT 
-                           im.fid_subdomain_1, im.mult_domains_1, im.ds_file_1, im.ups_downs_1, 
-                           im.fid_subdomain_2, im.mult_domains_2, im.ds_file_2, im.ups_downs_2, 
-                           im.fid_subdomain_3, im.mult_domains_3, im.ds_file_3, im.ups_downs_3, 
-                           im.fid_subdomain_4, im.mult_domains_4, im.ds_file_4, im.ups_downs_4,
-                           im.fid_subdomain_5, im.mult_domains_5, im.ds_file_5, im.ups_downs_5, 
-                           im.fid_subdomain_6, im.mult_domains_6, im.ds_file_6, im.ups_downs_6, 
-                           im.fid_subdomain_7, im.mult_domains_7, im.ds_file_7, im.ups_downs_7, 
-                           im.fid_subdomain_8, im.mult_domains_8, im.ds_file_8, im.ups_downs_8, 
-                           im.fid_subdomain_9, im.mult_domains_9, im.ds_file_9, im.ups_downs_9
-                       FROM 
-                           mult_domains_con AS im WHERE im.subdomain_name = '{current_subdomain}';
-                   """).fetchall()
-            if subdomain_connectivities:
-
-                for row in subdomain_connectivities:
-                    # Extract columns into separate lists for easier handling
-                    mult_domains = [row[i] for i in range(1, 28, 4)]  # mult_domains_1, _2, _3, etc.
-                    ds_files = [row[i] for i in range(2, 29, 4)]  # ds_file_1, _2, _3, etc.
-                    ups_downs = [row[i] for i in range(3, 30, 4)]  # ups_downs_1, _2, _3, etc.
-
-                    # MULTDOMAIN.DAT
-                    if any(mult != "" for mult in mult_domains):
-                        pass
-
-                    # UPS-DOWS
-                    elif any(up != "" for up in ups_downs):
-                        ups_downs_files = [up for up in ups_downs if up != ""]
-                        if ups_downs_files:
-                            connect_ds = self.subdomains_connectivity_cbos.keys()
-                            for ds in connect_ds:
-                                ds.clear()
-                                ds.addItems(ups_downs_files)
-                                ds.setCurrentIndex(-1)
-
-                    # Only CADPTS
-                    elif any(ds!= "" for ds in ds_files):
-                        cadpts_files = [ds for ds in ds_files if ds != ""]
-                        if cadpts_files:
-                            connect_ds = self.subdomains_connectivity_cbos.keys()
-                            for ds in connect_ds:
-                                ds.clear()
-                                ds.addItems(cadpts_files)
-                                ds.setCurrentIndex(-1)
-
-            else:
-                connect_ds = self.subdomains_connectivity_cbos.keys()
-                for ds in connect_ds:
-                    ds.clear()
-
     def hide_cbos(self):
         """
-        This function hides the cbos that do not contain information related to the CADPTS_DS
+        This function hides the cbos that do not contain information related to the number of subdomains
         """
-        lbls = list(self.lbl_cb.keys())
-        cbs = list(self.lbl_cb.values())
         # Number of DS files
-        n_ds = self.ds1_file_cbo.count()
+        n_ds = self.sub1_cbo.count()
         i = 0
-        for ds_cbo, sub_cbo in self.subdomains_connectivity_cbos.items():
+        for elements in self.hide_elements:
             if i >= n_ds:
-                ds_cbo.setVisible(False)
-                sub_cbo.setVisible(False)
-                lbls[i].setVisible(False)
-                cbs[i].setVisible(False)
+                elements[0].setVisible(False)
+                elements[1].setVisible(False)
+                elements[2].setVisible(False)
             else:
-                ds_cbo.setVisible(True)
-                sub_cbo.setVisible(True)
-                lbls[i].setVisible(True)
-                cbs[i].setVisible(True)
+                elements[0].setVisible(True)
+                elements[1].setVisible(True)
+                elements[2].setVisible(True)
             i += 1
 
     def save_connectivity(self):
-        """Function to save the connectivity data into FLO-2D Settings"""
+        """Function to save the connectivity data into the schema_md_connect_cells"""
 
-        # Adjust the UPS-DOWNS
-        # subdomains = self.gutils.execute(f"""SELECT subdomain_name FROM md_method_1;""").fetchall()
-        # if subdomains:
-        #     for subdomain in subdomains:
-        #
-        #         selected_data = self.gutils.execute(
-        #             "SELECT * FROM md_method_1 WHERE subdomain_name = ?;", (subdomain[0],)
-        #         ).fetchone()
-        #
-        #         if selected_data:
-        #             update_query = """
-        #                 UPDATE md_method_1
-        #                 SET subdomain_name_{i} = ?, ds_file_{i} = ?, ups_downs_{i} = ?
-        #                 WHERE subdomain_name = ?;
-        #             """
-        #
-        #             for i in range(1, 10):  # Loop through subdomains 1 to 9
-        #                 subdomain_name_index = 3 + (i - 1) * 4
-        #                 ds_file_index = subdomain_name_index + 1
-        #                 ups_downs_index = subdomain_name_index + 2  # ups_downs is 2 columns after subdomain_name_x
-        #
-        #                 subdomain_name = selected_data[subdomain_name_index]
-        #                 ds_file = selected_data[ds_file_index]
-        #
-        #                 ups_downs_value = ""
-        #
-        #                 if subdomain_name and ds_file:  # Both exist, extract the correct 'x' from ds_file_x
-        #                     match = re.search(r'CADPTS_DS(\d+)\.DAT', ds_file)
-        #                     if match:
-        #                         ds_number = match.group(1)  # Extract x from CADPTS_DSx.DAT
-        #                         ups_downs_value = f"Ups-Dows-Connectivity_DS{ds_number}.OUT"
-        #                     else:
-        #                         # If the ds_file_x format is incorrect, reset everything
-        #                         subdomain_name = ""
-        #                         ds_file = ""
-        #                         ups_downs_value = ""
-        #
-        #                 else:  # Either is missing, reset subdomain_name_x and ds_file_x
-        #                     subdomain_name = ""
-        #                     ds_file = ""
-        #
-        #                 # Execute the update query
-        #                 self.gutils.execute(
-        #                     update_query.format(i=i),
-        #                     (subdomain_name, ds_file, ups_downs_value, subdomain[0]),
-        #                 )
+        self.gutils.clear_tables("schema_md_connect_cells")
+
+        subdomain_connectivities = self.gutils.execute("""
+                               SELECT 
+                                   md.fid, 
+                                   md.subdomain_path, 
+                                   im.fid_subdomain_1, im.subdomain_name_1, im.mult_domains_1, im.ds_file_1, 
+                                   im.fid_subdomain_2, im.subdomain_name_2, im.mult_domains_2, im.ds_file_2, 
+                                   im.fid_subdomain_3, im.subdomain_name_3, im.mult_domains_3, im.ds_file_3, 
+                                   im.fid_subdomain_4, im.subdomain_name_4, im.mult_domains_4, im.ds_file_4, 
+                                   im.fid_subdomain_5, im.subdomain_name_5, im.mult_domains_5, im.ds_file_5, 
+                                   im.fid_subdomain_6, im.subdomain_name_6, im.mult_domains_6, im.ds_file_6, 
+                                   im.fid_subdomain_7, im.subdomain_name_7, im.mult_domains_7, im.ds_file_7, 
+                                   im.fid_subdomain_8, im.subdomain_name_8, im.mult_domains_8, im.ds_file_8, 
+                                   im.fid_subdomain_9, im.subdomain_name_9, im.mult_domains_9, im.ds_file_9 
+                               FROM 
+                                   mult_domains_methods AS md
+                               JOIN mult_domains_con AS im ON md.fid_method = im.fid;
+                                           """).fetchall()
+        if subdomain_connectivities:
+            bulk_insert_data = []  # Collect all insert statements in a list
+
+            j = 1
+            qpd = QProgressDialog(f"Importing Connectivity for Subdomain {j}...", None, 0, 9)
+            qpd.setWindowTitle("FLO-2D Import")
+            qpd.setModal(True)
+            qpd.forceShow()
+            qpd.setValue(0)
+
+            for subdomain_connectivity in subdomain_connectivities:
+                start_time = time.time()
+                md_fid = subdomain_connectivity[0]  # md.fid
+                current_subdomain_path = subdomain_connectivity[1]  # md.subdomain_path
+
+                for i in range(9):  # Loop through fid_subdomain_x and ups_downs_x pairs
+                    subdomain_fid_index = 2 + (i - 1) * 4  # Get index for subdomain fid
+                    subdomain_name_index = subdomain_fid_index + 1  # Get index for subdomain name
+                    mult_domain_index = subdomain_fid_index + 2  # Get index for mult_domain
+                    ds_file_index = subdomain_fid_index + 3  # Get index for ds_file
+
+                    fid_subdomain = subdomain_connectivity[subdomain_fid_index]
+
+                    if not fid_subdomain or fid_subdomain == 0:
+                        continue
+
+                    mult_domain = subdomain_connectivity[mult_domain_index]
+                    ds_file = subdomain_connectivity[ds_file_index]
+
+                    # Get the connectivity through the MULTIDOMAIN.DAT
+                    if fid_subdomain and mult_domain:
+                        pass
+                    # Get the connectivity through the CADPTSs
+                    elif fid_subdomain and ds_file:
+                        cadpts = f"{current_subdomain_path}/CADPTS.DAT"
+
+                        connect_subdomain_path_qry = self.gutils.execute(f"SELECT subdomain_path FROM mult_domains_methods WHERE fid = {fid_subdomain}").fetchone()
+                        if connect_subdomain_path_qry:
+                            connect_subdomain_path = connect_subdomain_path_qry[0]
+                            cadpts_ds = f"{connect_subdomain_path}/CADPTS.DAT"
+                        else:
+                            continue
+
+                        # Using pandas to speed up
+                        import pandas as pd
+
+                        # Define column names (since files have no headers)
+                        column_names = ["id", "x", "y"]
+
+                        # Read the CSV files without headers and assign column names
+                        df1 = pd.read_csv(cadpts, names=column_names, sep=r'\s+',
+                                          dtype={"id": int, "x": float, "y": float})
+                        df2 = pd.read_csv(cadpts_ds, names=column_names, sep=r'\s+',
+                                          dtype={"id": int, "x": float, "y": float})
+
+                        # Perform an inner join on x and y to find matching coordinates
+                        matches = df1.merge(df2, on=["x", "y"], suffixes=('_file1', '_file2'))
+
+                        # Select only the matching IDs
+                        result = matches[["id_file1", "id_file2"]]
+
+                        # Extract upstream and downstream cells
+                        upstream_cells, downstream_cells = result["id_file1"].tolist(), result[
+                            "id_file2"].tolist()  # Efficient unpacking
+
+                        # Collect bulk insert data
+                        for upstream, downstream in zip(upstream_cells, downstream_cells):
+                            # if upstream in cell_centroids:
+                            bulk_insert_data.append(
+                                (md_fid, upstream, fid_subdomain, downstream))
+
+                    qpd.setValue(i + 1)
+
+                end_time = time.time()
+                hours, rem = divmod(end_time - start_time, 3600)
+                minutes, seconds = divmod(rem, 60)
+                time_passed = "{:0>2}:{:0>2}:{:0>2}".format(int(hours), int(minutes), int(seconds))
+                self.uc.log_info(f"Time Elapsed to import connectivity for Subdomain {j}: {time_passed}")
+                j += 1
+                qpd.setLabelText(f"Importing Connectivity for Subdomain {j}...")
+
+            # Execute bulk insert
+            if bulk_insert_data:
+                self.gutils.execute_many("""
+                                          INSERT INTO schema_md_connect_cells 
+                                          (up_domain_fid, up_domain_cell, down_domain_fid, down_domain_cell) 
+                                          VALUES (?, ?, ?, ?);
+                                      """, bulk_insert_data)
 
         self.uc.log_info("Connectivity saved!")
         self.uc.bar_info("Connectivity saved!")
@@ -342,9 +318,8 @@ class MultipleDomainsConnectivityDialog(qtBaseClass, uiDialog):
         """
         Function to block cbo signals
         """
-        for ds_cbo, sub_cbo in self.subdomains_connectivity_cbos.items():
-            ds_cbo.blockSignals(true_false)
-            sub_cbo.blockSignals(true_false)
+        for cbo in self.subdomains_connectivity_cbos:
+            cbo.blockSignals(true_false)
 
     def close_dlg(self):
         """

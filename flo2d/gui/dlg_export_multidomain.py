@@ -110,7 +110,7 @@ class ExportMultipleDomainsDialog(qtBaseClass, uiDialog):
                                         SELECT c.down_domain_cell AS domain_cell, g.n_value, g.elevation, ST_AsText(ST_Centroid(GeomFromGPB(g.geom)))
                                         FROM grid g
                                         JOIN schema_md_connect_cells c ON g.domain_cell = c.up_domain_cell
-                                        WHERE c.down_domain_fid = {subdomain[0]} AND g.domain_fid = {upstream_domain} AND g.connectivity_fid != 'NULL'""").fetchall()
+                                        WHERE c.down_domain_fid = {subdomain[0]} AND g.domain_fid = {upstream_domain} AND c.up_domain_fid = {upstream_domain} AND g.connectivity_fid != 'NULL'""").fetchall()
                         sub_grid_cells.extend(sub_con_cells)
 
                     records = sorted(sub_grid_cells, key=lambda x: x[0])
@@ -174,14 +174,4 @@ class ExportMultipleDomainsDialog(qtBaseClass, uiDialog):
         self.uc.log_info(f"Subdomains exported correctly!")
         self.uc.bar_info(f"Subdomains exported correctly!")
         self.close_dlg()
-        # SELECT g.domain_cell, g.domain_fid, g.n_value, g.elevation, g.connectivity_fid
-        # FROM grid g
-        # WHERE g.domain_fid = 2
-        #
-        # UNION
-        #
-        # SELECT c.down_domain_cell AS domain_cell, 2 AS domain_fid, g.n_value, g.elevation, g.connectivity_fid
-        # FROM grid g
-        # JOIN schema_md_connect_cells c ON g.domain_cell = c.up_domain_cell
-        # WHERE g.domain_fid = 1 AND c.down_domain_fid = 2;
         QApplication.restoreOverrideCursor()

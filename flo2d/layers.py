@@ -939,7 +939,7 @@ class Layers(object):
                         "name": "Connectivity Cells",
                         "sgroup": "Schematic Layers",
                         "ssgroup": "Multiple Domains",
-                        "styles": ["connect_cells.qml"],
+                        "styles": None,
                         "attrs_edit_widgets": {},
                         "readonly": False,
                         "advanced": False

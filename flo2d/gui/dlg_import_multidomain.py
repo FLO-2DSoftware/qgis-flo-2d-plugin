@@ -1,15 +1,13 @@
+import math
 import os.path
 import time
+from itertools import combinations
 
-import processing
 from PyQt5.QtCore import QSettings, Qt
 from PyQt5.QtWidgets import QFileDialog, QApplication, QProgressDialog
 from qgis.PyQt.QtCore import NULL
-from qgis._core import QgsProject, QgsVectorLayer
-from reportlab.lib.utils import fileName2FSEnc
 
 from .dlg_multidomain_connectivity import MultipleDomainsConnectivityDialog
-from .dlg_user2schema import User2SchemaDialog
 from .ui_utils import load_ui
 from ..flo2d_ie.flo2d_parser import ParseDAT
 from ..geopackage_utils import GeoPackageUtils
@@ -31,7 +29,6 @@ class ImportMultipleDomainsDialog(qtBaseClass, uiDialog):
 
         self.parser = ParseDAT()
         self.chunksize = float("inf")
-        self.cell_size = None
 
         self.subdomains_dlg_elements = [
             [self.label_1, self.sub1_le, self.sub1_tb],
@@ -67,13 +64,14 @@ class ImportMultipleDomainsDialog(qtBaseClass, uiDialog):
         self.sub14_tb.clicked.connect(lambda: self.select_subdomain_folder(self.sub14_le, 14))
         self.sub15_tb.clicked.connect(lambda: self.select_subdomain_folder(self.sub15_le, 15))
 
-        self.ok_btn.clicked.connect(self.import_global_domain)
         self.cancel_btn.clicked.connect(self.close_dlg)
 
         self.add_subdomain_btn.clicked.connect(self.add_subdomain)
         self.remove_subdomain_btn.clicked.connect(self.remove_subdomain)
 
         self.connect_btn.clicked.connect(self.open_multiple_domains_connectivity_dialog)
+
+        self.ok_btn.clicked.connect(self.import_global_domain)
 
         self.populate_subdomains()
 
@@ -139,10 +137,6 @@ class ImportMultipleDomainsDialog(qtBaseClass, uiDialog):
         else:
             self.hide_subdomains(0)
 
-
-        cell_size = int(float(self.gutils.get_cont_par("CELLSIZE")))
-        self.cellsize_le.setText(str(cell_size))
-
     def hide_subdomains(self, n_subdomains):
         """
         Function to hide the subdomains
@@ -178,9 +172,8 @@ class ImportMultipleDomainsDialog(qtBaseClass, uiDialog):
         domain_le.setText(domain_dir)
 
         files = os.listdir(domain_dir)
-        cadpts_ds = any(f.startswith("CADPTS_DS") for f in files)
-        ups_downs = any(f.startswith("Ups-Dows-Connectivity_DS") for f in files)
         multdomain_dat = any(f.startswith("MULTIDOMAIN.DAT") for f in files)
+        cadpts_ds = any(f.startswith("CADPTS_DS") for f in files)
 
         subdomain_name = os.path.basename(domain_dir)
 
@@ -203,7 +196,7 @@ class ImportMultipleDomainsDialog(qtBaseClass, uiDialog):
             for i in range(1, 10):
                 qry_method = f"""
                                 UPDATE mult_domains_con 
-                                SET mult_domains_{i} = 'MULTIDOMAIN.DAT'
+                                SET mult_domains_{i} = 1
                                 WHERE fid = {method_fid}; 
                                 """
                 self.gutils.execute(qry_method)
@@ -216,50 +209,7 @@ class ImportMultipleDomainsDialog(qtBaseClass, uiDialog):
                     """
             self.gutils.execute(qry)
 
-        # Project has CADPTS and Ups-Downs-Connecticity
-        elif cadpts_ds and ups_downs:
-
-            cadpts_files = []
-            ups_downs_files = []
-
-            for f in files:
-                if f.startswith("CADPTS_DS"):
-                    cadpts_files.append(f)
-
-            for f in files:
-                if f.startswith("Ups-Dows-Connectivity_DS"):
-                    ups_downs_files.append(f)
-
-            # CADPTS_DS and Ups-Dows-Connectivity_D always have the same size
-            n_connected_subdomains = len(cadpts_files)
-
-            # Add a line to the method
-            qry_method = f"""INSERT INTO mult_domains_con (subdomain_name) VALUES ('{subdomain_name}');"""
-            self.gutils.execute(qry_method)
-
-            # Get the recent added fid
-            qry_method_fid = f"""SELECT fid FROM mult_domains_con WHERE subdomain_name = '{subdomain_name}';"""
-            method_fid = self.gutils.execute(qry_method_fid).fetchone()[0]
-
-            # Update the files
-            for i in range(1, n_connected_subdomains + 1):
-                qry_method = f"""
-                            UPDATE mult_domains_con 
-                            SET ds_file_{i} = '{cadpts_files[i - 1]}', 
-                                ups_downs_{i} = '{ups_downs_files[i - 1]}'
-                            WHERE fid = {method_fid}; 
-                        """
-                self.gutils.execute(qry_method)
-
-            # Insert into mult_domains_methods
-            qry = f"""
-                        UPDATE mult_domains_methods 
-                        SET fid_method = {method_fid}
-                        WHERE subdomain_name = '{subdomain_name}'; 
-                    """
-            self.gutils.execute(qry)
-
-        # Only CADPTS
+        # CADPTS
         elif cadpts_ds:
             cadpts_files = []
 
@@ -278,11 +228,10 @@ class ImportMultipleDomainsDialog(qtBaseClass, uiDialog):
             qry_method_fid = f"""SELECT fid FROM mult_domains_con WHERE subdomain_name = '{subdomain_name}';"""
             method_fid = self.gutils.execute(qry_method_fid).fetchone()[0]
 
-            # Get the
             for i in range(1, n_connected_subdomains + 1):
                 qry_method = f"""
                                    UPDATE mult_domains_con 
-                                   SET ds_file_{i} = '{cadpts_files[i - 1]}'
+                                   SET ds_file_{i} = 1
                                    WHERE fid = {method_fid}; 
                                """
                 self.gutils.execute(qry_method)
@@ -343,10 +292,6 @@ class ImportMultipleDomainsDialog(qtBaseClass, uiDialog):
             sub15_path
         ]
 
-        self.import_connectivity_cells()
-
-        self.cell_size = int(float(self.cellsize_le.text()))
-
         n_projects = sum(1 for item in subdomains_paths if item != "")
 
         i = 1
@@ -361,8 +306,10 @@ class ImportMultipleDomainsDialog(qtBaseClass, uiDialog):
         for subdomain in subdomains_paths:
             if subdomain:
                 start_time = time.time()
+
                 # Import mannings and topo and add to grid
                 self.import_subdomains_mannings_n_topo_dat(subdomain, i)
+
                 end_time = time.time()
                 hours, rem = divmod(end_time - start_time, 3600)
                 minutes, seconds = divmod(rem, 60)
@@ -374,17 +321,13 @@ class ImportMultipleDomainsDialog(qtBaseClass, uiDialog):
 
         pd.close()
 
-
-
         grid_lyr = self.lyrs.data["grid"]["qlyr"]
         grid_lyr.triggerRepaint()
-        schema_md_connect_cells_lyr = self.lyrs.data["schema_md_connect_cells"]["qlyr"]
-        schema_md_connect_cells_lyr.triggerRepaint()
         self.lyrs.zoom_to_all()
 
-        self.close_dlg()
         self.uc.log_info("Import of Multiple Domains finished successfully")
         self.uc.bar_info("Import of Multiple Domains finished successfully")
+        self.close_dlg()
 
     def import_subdomains_mannings_n_topo_dat(self, subdomain, subdomain_n):
         """
@@ -395,6 +338,7 @@ class ImportMultipleDomainsDialog(qtBaseClass, uiDialog):
 
         self.gutils.execute("CREATE INDEX IF NOT EXISTS idx_grid_domain_fid_cell ON grid(domain_fid, domain_cell);")
         connect_cells = []
+        cell_size = None
 
         # Step 1: Clear tables if this is the first subdomain
         if subdomain_n == 1:
@@ -413,7 +357,7 @@ class ImportMultipleDomainsDialog(qtBaseClass, uiDialog):
         cadpts_dat = f"{subdomain}/CADPTS.DAT"
         fplain_dat = f"{subdomain}/FPLAIN.DAT"
 
-        # Check for TOPO and MANNINGS_N first
+        # Check for TOPO and MANNINGS_N first # TODO CHECK THIS
         if os.path.isfile(topo_dat) and os.path.isfile(mannings_dat):
 
             # Read and parse TOPO & MANNINGS_N data efficiently
@@ -503,6 +447,19 @@ class ImportMultipleDomainsDialog(qtBaseClass, uiDialog):
             mann = self.gutils.get_cont_par("MANNING")
             elev = -9999
 
+            # Calculate the cell_size for this cadpts
+            if not cell_size:
+                data_points = []
+                with open(cadpts_dat, "r") as file:
+                    for _ in range(10):  # Read only the first 10 lines
+                        line = file.readline()
+                        parts = line.split()
+                        if len(parts) == 3:  # Ensure the line contains three elements
+                            index, x, y = parts
+                            data_points.append((float(x), float(y)))
+
+                cell_size = min(math.sqrt((p1[0] - p2[0])**2 + (p1[1] - p2[1])**2) for p1, p2 in combinations(data_points, 2))
+
             # Read and parse CADPTS data efficiently
             data = self.parser.pandas_single_parser(cadpts_dat)
 
@@ -532,7 +489,7 @@ class ImportMultipleDomainsDialog(qtBaseClass, uiDialog):
                         continue
 
                 geom = " ".join( list(map(str, row[coords])))
-                g = self.gutils.build_square(geom, self.cell_size)  # Avoid redundant processing
+                g = self.gutils.build_square(geom, cell_size)  # Avoid redundant processing
 
                 sql_grid.append((fid, mann, elev, subdomain_n, domain_cell_fid, g))
 
@@ -664,112 +621,108 @@ class ImportMultipleDomainsDialog(qtBaseClass, uiDialog):
     #
     #     return intersected_cells_layers
 
-    def import_connectivity_cells(self):
-        """
-        Function to import the connectivity cells based on the UPS-DOWS-CELLS
-        """
-
-        self.gutils.clear_tables("schema_md_connect_cells")
-
-        subdomain_connectivities = self.gutils.execute("""
-                       SELECT 
-                           md.fid, 
-                           md.subdomain_path, 
-                           im.fid_subdomain_1, im.mult_domains_1, im.ds_file_1, im.ups_downs_1, 
-                           im.fid_subdomain_2, im.mult_domains_2, im.ds_file_2, im.ups_downs_2, 
-                           im.fid_subdomain_3, im.mult_domains_3, im.ds_file_3, im.ups_downs_3, 
-                           im.fid_subdomain_4, im.mult_domains_4, im.ds_file_4, im.ups_downs_4,
-                           im.fid_subdomain_5, im.mult_domains_5, im.ds_file_5, im.ups_downs_5, 
-                           im.fid_subdomain_6, im.mult_domains_6, im.ds_file_6, im.ups_downs_6, 
-                           im.fid_subdomain_7, im.mult_domains_7, im.ds_file_7, im.ups_downs_7, 
-                           im.fid_subdomain_8, im.mult_domains_8, im.ds_file_8, im.ups_downs_8, 
-                           im.fid_subdomain_9, im.mult_domains_9, im.ds_file_9, im.ups_downs_9
-                       FROM 
-                           mult_domains_methods AS md
-                       JOIN mult_domains_con AS im ON md.fid_method = im.fid;
-                                   """).fetchall()
-        if subdomain_connectivities:
-            bulk_insert_data = []  # Collect all insert statements in a list
-
-            j = 1
-            qpd = QProgressDialog(f"Importing Connectivity for Subdomain {j}...", None, 0, 9)
-            qpd.setWindowTitle("FLO-2D Import")
-            qpd.setModal(True)
-            qpd.forceShow()
-            qpd.setValue(0)
-
-            for subdomain_connectivity in subdomain_connectivities:
-                start_time = time.time()
-                md_fid = subdomain_connectivity[0]  # md.fid
-                subdomain_path = subdomain_connectivity[1]  # md.subdomain_path
-
-                for i in range(9):  # Loop through fid_subdomain_x and ups_downs_x pairs
-                    subdomain_fid_index = 2 + (i - 1) * 4  # Get index for subdomain fid
-                    mult_domain_index = subdomain_fid_index + 1  # Get index for mult_domain
-                    ds_file_index = subdomain_fid_index + 2  # Get index for ds_file
-                    ups_dows_index = subdomain_fid_index + 3  # Get index for ups_dows
-
-                    fid_subdomain = subdomain_connectivity[subdomain_fid_index]
-
-                    if not fid_subdomain or fid_subdomain == NULL:
-                        continue
-
-                    mult_domain = subdomain_connectivity[mult_domain_index]
-                    ds_file = subdomain_connectivity[ds_file_index]
-                    ups_dows = subdomain_connectivity[ups_dows_index]
-
-                    if fid_subdomain and mult_domain:
-                        pass
-                    elif fid_subdomain and ups_dows and ds_file:
-                        pass
-                    elif fid_subdomain and ds_file:
-                        cadpts = f"{subdomain_path}/CADPTS.DAT"
-                        cadpts_ds = f"{subdomain_path}/{ds_file}"
-
-                        # Using pandas to speed up
-                        import pandas as pd
-
-                        # Define column names (since files have no headers)
-                        column_names = ["id", "x", "y"]
-
-                        # Read the CSV files without headers and assign column names
-                        df1 = pd.read_csv(cadpts, names=column_names, sep=r'\s+',
-                                          dtype={"id": int, "x": float, "y": float})
-                        df2 = pd.read_csv(cadpts_ds, names=column_names, sep=r'\s+',
-                                          dtype={"id": int, "x": float, "y": float})
-
-                        # Perform an inner join on x and y to find matching coordinates
-                        matches = df1.merge(df2, on=["x", "y"], suffixes=('_file1', '_file2'))
-
-                        # Select only the matching IDs
-                        result = matches[["id_file1", "id_file2"]]
-
-                        # Extract upstream and downstream cells
-                        upstream_cells, downstream_cells = result["id_file1"].tolist(), result["id_file2"].tolist()  # Efficient unpacking
-
-                        # Collect bulk insert data
-                        for upstream, downstream in zip(upstream_cells, downstream_cells):
-                            # if upstream in cell_centroids:
-                            bulk_insert_data.append(
-                                (md_fid, upstream, fid_subdomain, downstream))
-
-                    qpd.setValue(i + 1)
-
-                end_time = time.time()
-                hours, rem = divmod(end_time - start_time, 3600)
-                minutes, seconds = divmod(rem, 60)
-                time_passed = "{:0>2}:{:0>2}:{:0>2}".format(int(hours), int(minutes), int(seconds))
-                self.uc.log_info(f"Time Elapsed to import connectivity for Subdomain {j}: {time_passed}")
-                j += 1
-                qpd.setLabelText(f"Importing Connectivity for Subdomain {j}...")
-
-            # Execute bulk insert
-            if bulk_insert_data:
-                self.gutils.execute_many("""
-                                              INSERT INTO schema_md_connect_cells 
-                                              (up_domain_fid, up_domain_cell, down_domain_fid, down_domain_cell) 
-                                              VALUES (?, ?, ?, ?);
-                                          """, bulk_insert_data)
+    # def import_connectivity_cells(self):
+    #     """
+    #     Function to import the connectivity cells based on the UPS-DOWS-CELLS
+    #     """
+    #
+    #     self.gutils.clear_tables("schema_md_connect_cells")
+    #
+    #     subdomain_connectivities = self.gutils.execute("""
+    #                    SELECT
+    #                        md.fid,
+    #                        md.subdomain_path,
+    #                        im.fid_subdomain_1, im.mult_domains_1, im.ds_file_1,
+    #                        im.fid_subdomain_2, im.mult_domains_2, im.ds_file_2,
+    #                        im.fid_subdomain_3, im.mult_domains_3, im.ds_file_3,
+    #                        im.fid_subdomain_4, im.mult_domains_4, im.ds_file_4,
+    #                        im.fid_subdomain_5, im.mult_domains_5, im.ds_file_5,
+    #                        im.fid_subdomain_6, im.mult_domains_6, im.ds_file_6,
+    #                        im.fid_subdomain_7, im.mult_domains_7, im.ds_file_7,
+    #                        im.fid_subdomain_8, im.mult_domains_8, im.ds_file_8,
+    #                        im.fid_subdomain_9, im.mult_domains_9, im.ds_file_9
+    #                    FROM
+    #                        mult_domains_methods AS md
+    #                    JOIN mult_domains_con AS im ON md.fid_method = im.fid;
+    #                                """).fetchall()
+    #     if subdomain_connectivities:
+    #         bulk_insert_data = []  # Collect all insert statements in a list
+    #
+    #         j = 1
+    #         qpd = QProgressDialog(f"Importing Connectivity for Subdomain {j}...", None, 0, 9)
+    #         qpd.setWindowTitle("FLO-2D Import")
+    #         qpd.setModal(True)
+    #         qpd.forceShow()
+    #         qpd.setValue(0)
+    #
+    #         for subdomain_connectivity in subdomain_connectivities:
+    #             start_time = time.time()
+    #             md_fid = subdomain_connectivity[0]  # md.fid
+    #             subdomain_path = subdomain_connectivity[1]  # md.subdomain_path
+    #
+    #             for i in range(9):  # Loop through fid_subdomain_x and ups_downs_x pairs
+    #                 subdomain_fid_index = 2 + (i - 1) * 3  # Get index for subdomain fid
+    #                 mult_domain_index = subdomain_fid_index + 1  # Get index for mult_domain
+    #                 ds_file_index = subdomain_fid_index + 2  # Get index for ds_file
+    #
+    #                 fid_subdomain = subdomain_connectivity[subdomain_fid_index]
+    #
+    #                 if not fid_subdomain or fid_subdomain == 0:
+    #                     continue
+    #
+    #                 mult_domain = subdomain_connectivity[mult_domain_index]
+    #                 ds_file = subdomain_connectivity[ds_file_index]
+    #
+    #                 if fid_subdomain and mult_domain:
+    #                     pass
+    #                 elif fid_subdomain and ds_file:
+    #                     cadpts = f"{subdomain_path}/CADPTS.DAT"
+    #                     cadpts_ds = f"{subdomain_path}/{ds_file}"
+    #
+    #                     # Using pandas to speed up
+    #                     import pandas as pd
+    #
+    #                     # Define column names (since files have no headers)
+    #                     column_names = ["id", "x", "y"]
+    #
+    #                     # Read the CSV files without headers and assign column names
+    #                     df1 = pd.read_csv(cadpts, names=column_names, sep=r'\s+',
+    #                                       dtype={"id": int, "x": float, "y": float})
+    #                     df2 = pd.read_csv(cadpts_ds, names=column_names, sep=r'\s+',
+    #                                       dtype={"id": int, "x": float, "y": float})
+    #
+    #                     # Perform an inner join on x and y to find matching coordinates
+    #                     matches = df1.merge(df2, on=["x", "y"], suffixes=('_file1', '_file2'))
+    #
+    #                     # Select only the matching IDs
+    #                     result = matches[["id_file1", "id_file2"]]
+    #
+    #                     # Extract upstream and downstream cells
+    #                     upstream_cells, downstream_cells = result["id_file1"].tolist(), result["id_file2"].tolist()  # Efficient unpacking
+    #
+    #                     # Collect bulk insert data
+    #                     for upstream, downstream in zip(upstream_cells, downstream_cells):
+    #                         # if upstream in cell_centroids:
+    #                         bulk_insert_data.append(
+    #                             (md_fid, upstream, fid_subdomain, downstream))
+    #
+    #                 qpd.setValue(i + 1)
+    #
+    #             end_time = time.time()
+    #             hours, rem = divmod(end_time - start_time, 3600)
+    #             minutes, seconds = divmod(rem, 60)
+    #             time_passed = "{:0>2}:{:0>2}:{:0>2}".format(int(hours), int(minutes), int(seconds))
+    #             self.uc.log_info(f"Time Elapsed to import connectivity for Subdomain {j}: {time_passed}")
+    #             j += 1
+    #             qpd.setLabelText(f"Importing Connectivity for Subdomain {j}...")
+    #
+    #         # Execute bulk insert
+    #         if bulk_insert_data:
+    #             self.gutils.execute_many("""
+    #                                           INSERT INTO schema_md_connect_cells
+    #                                           (up_domain_fid, up_domain_cell, down_domain_fid, down_domain_cell)
+    #                                           VALUES (?, ?, ?, ?);
+    #                                       """, bulk_insert_data)
 
 
 
