@@ -1,4 +1,5 @@
 import os
+import shutil
 
 from PyQt5.QtCore import QSettings, Qt
 from PyQt5.QtWidgets import QFileDialog, QApplication, QCheckBox
@@ -218,6 +219,14 @@ class ExportMultipleDomainsDialog(qtBaseClass, uiDialog):
         """
         QApplication.setOverrideCursor(Qt.WaitCursor)
 
+        # Figure out the export method
+        # 0 -> MULTIDOMAIN.DAT
+        # 1 -> CADPTS_DSx.DAT
+        # 2 -> NO CONNECTIVITY
+        # 3 -> ONLY MULTIDOMAIN.DAT
+        # 4 -> ONLY CADPTS_DSx.DAT
+        export_method = self.export_method_cbo.currentIndex()
+
         subdomains = self.gutils.execute("SELECT fid, subdomain_name FROM mult_domains_methods;").fetchall()
 
         if subdomains:
@@ -280,40 +289,82 @@ class ExportMultipleDomainsDialog(qtBaseClass, uiDialog):
 
                     records = sorted(sub_grid_cells, key=lambda x: x[0])
 
-                # try:
                 mannings = os.path.join(str(export_folder), "MANNINGS_N.DAT")
                 topo = os.path.join(str(export_folder), "TOPO.DAT")
                 cadpts = os.path.join(str(export_folder), "CADPTS.DAT")
 
+                nulls = 0
+
                 mline = "{0: >10} {1: >10}\n"
                 tline = "{0: >15} {1: >15} {2: >10}\n"
                 cline = "{0: >9} {1: >14} {2: >14}\n"
-                nulls = 0
-                with open(mannings, "w") as m, open(topo, "w") as t, open(cadpts, "w") as c:
-                    for row in records:
-                        fid, man, elev, geom = row
-                        if man == None or elev == None:
-                            nulls += 1
-                            if man == None:
-                                man = 0.04
-                            if elev == None:
-                                elev = -9999
-                        x, y = geom.strip("POINT()").split()
-                        m.write(mline.format(fid, "{0:.3f}".format(man)))
-                        t.write(
-                            tline.format(
-                                "{0:.4f}".format(float(x)),
-                                "{0:.4f}".format(float(y)),
-                                "{0:.4f}".format(elev),
+
+                # MULTIDOMAIN.DAT
+                if export_method == 0:
+                    pass
+                # CADPTS_DSx.DAT
+                elif export_method == 1:
+                    with open(mannings, "w") as m, open(topo, "w") as t, open(cadpts, "w") as c:
+                        for row in records:
+                            fid, man, elev, geom = row
+                            if man == None or elev == None:
+                                nulls += 1
+                                if man == None:
+                                    man = 0.04
+                                if elev == None:
+                                    elev = -9999
+                            x, y = geom.strip("POINT()").split()
+                            m.write(mline.format(fid, "{0:.3f}".format(man)))
+                            t.write(
+                                tline.format(
+                                    "{0:.4f}".format(float(x)),
+                                    "{0:.4f}".format(float(y)),
+                                    "{0:.4f}".format(elev),
+                                )
                             )
-                        )
-                        c.write(
-                            cline.format(
-                                fid,
-                                "{0:.3f}".format(float(x)),
-                                "{0:.3f}".format(float(y))
+                            c.write(
+                                cline.format(
+                                    fid,
+                                    "{0:.3f}".format(float(x)),
+                                    "{0:.3f}".format(float(y))
+                                )
                             )
-                        )
+                # NO CONNECTIVITY
+                elif export_method == 2:
+                    with open(mannings, "w") as m, open(topo, "w") as t:
+                        for row in records:
+                            fid, man, elev, geom = row
+                            if man == None or elev == None:
+                                nulls += 1
+                                if man == None:
+                                    man = 0.04
+                                if elev == None:
+                                    elev = -9999
+                            x, y = geom.strip("POINT()").split()
+                            m.write(mline.format(fid, "{0:.3f}".format(man)))
+                            t.write(
+                                tline.format(
+                                    "{0:.4f}".format(float(x)),
+                                    "{0:.4f}".format(float(y)),
+                                    "{0:.4f}".format(elev),
+                                )
+                            )
+                # ONLY MULTIDOMAIN.DAT
+                elif export_method == 3:
+                    pass
+                # ONLY CADPTS_DSx.DAT
+                elif export_method == 4:
+                    with open(cadpts, "w") as c:
+                        for row in records:
+                            fid, _, _, geom = row
+                            x, y = geom.strip("POINT()").split()
+                            c.write(
+                                cline.format(
+                                    fid,
+                                    "{0:.3f}".format(float(x)),
+                                    "{0:.3f}".format(float(y))
+                                )
+                            )
 
                 if nulls > 0:
                     QApplication.restoreOverrideCursor()
@@ -326,10 +377,39 @@ class ExportMultipleDomainsDialog(qtBaseClass, uiDialog):
                     )
                     QApplication.setOverrideCursor(Qt.WaitCursor)
 
+                # try:
                 # except Exception as e:
                 #     QApplication.restoreOverrideCursor()
                 #     self.uc.show_error("ERROR 101218.1541: exporting MANNINGS_N.DAT or TOPO.DAT failed!.\n", e)
                 #     QApplication.setOverrideCursor(Qt.WaitCursor)
+
+            # Copy and rename the CADPTS to CADPTS_DSx to the correct folders
+            if export_method in [1, 4]:
+                subdomain_connectivities_names = self.gutils.execute(f"""
+                                                   SELECT
+                                                       im.subdomain_name,
+                                                       im.subdomain_name_1,
+                                                       im.subdomain_name_2,
+                                                       im.subdomain_name_3,
+                                                       im.subdomain_name_4,
+                                                       im.subdomain_name_5,
+                                                       im.subdomain_name_6,
+                                                       im.subdomain_name_7,
+                                                       im.subdomain_name_8,
+                                                       im.subdomain_name_9
+                                                   FROM
+                                                       mult_domains_con AS im;
+                                                               """).fetchall()
+                if subdomain_connectivities_names:
+                    for subdomain_connectivity_name in subdomain_connectivities_names:
+                        current_subdomain = subdomain_connectivity_name[0]
+                        current_subdomain_folder = os.path.join(self.export_directory_le.text(), current_subdomain)
+                        for i in range(1, 10):
+                            downstream_subdomains_folder = os.path.join(self.export_directory_le.text(), subdomain_connectivity_name[i])
+                            if not os.path.exists(downstream_subdomains_folder) or subdomain_connectivity_name[i] == "":
+                                continue
+                            else:
+                                shutil.copy2(os.path.join(str(downstream_subdomains_folder), "CADPTS.DAT"), os.path.join(str(current_subdomain_folder), f"CADPTS_DS{i}.DAT"))
 
         else:
             self.uc.log_info(f"This project has no subdomains!")
