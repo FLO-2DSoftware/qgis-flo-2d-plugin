@@ -386,9 +386,39 @@ class ImportMultipleDomainsDialog(qtBaseClass, uiDialog):
             # Batch processing for better performance
             batch_size = self.chunksize  # Set batch size from existing chunksize variable
 
+            # Calculate the cell_size for this cadpts
+            if not cell_size:
+                data_points = []
+                with open(topo_dat, "r") as file:
+                    for _ in range(10):  # Read only the first 10 lines
+                        line = file.readline()
+                        parts = line.split()
+                        if len(parts) == 3:  # Ensure the line contains three elements
+                            x, y, _ = parts
+                            data_points.append((float(x), float(y)))
+
+                cell_size = min(math.sqrt((p1[0] - p2[0])**2 + (p1[1] - p2[1])**2) for p1, p2 in combinations(data_points, 2))
+
             for i, row in enumerate(data, start=1):
-                geom = " ".join(row[coords])
-                g = self.gutils.build_square(geom, self.cell_size)  # Avoid redundant processing
+
+                if subdomain_n != 1 and domain_cell_fid in connect_cells:
+                    connectivity_data = self.gutils.execute(
+                        "SELECT fid, up_domain_fid, up_domain_cell FROM schema_md_connect_cells WHERE down_domain_fid = ? AND down_domain_cell = ?;",
+                        (subdomain_n, domain_cell_fid)
+                    ).fetchone()
+
+                    # Check if we found a match
+                    if connectivity_data:
+                        # Update the grid table
+                        self.gutils.execute(
+                            "UPDATE grid SET connectivity_fid = ? WHERE domain_fid = ? AND domain_cell = ?;",
+                            (connectivity_data[0], connectivity_data[1], connectivity_data[2])
+                        )
+                        domain_cell_fid += 1
+                        continue
+
+                geom = " ".join(list(map(str, row[coords])))
+                g = self.gutils.build_square(geom, cell_size)  # Avoid redundant processing
 
                 sql_grid.append((fid, *row[man], *row[elev], subdomain_n, domain_cell_fid, g))
 
@@ -428,9 +458,39 @@ class ImportMultipleDomainsDialog(qtBaseClass, uiDialog):
             # Batch processing for better performance
             batch_size = self.chunksize  # Set batch size from existing chunksize variable
 
+            # Calculate the cell_size for this cadpts
+            if not cell_size:
+                data_points = []
+                with open(cadpts_dat, "r") as file:
+                    for _ in range(10):  # Read only the first 10 lines
+                        line = file.readline()
+                        parts = line.split()
+                        if len(parts) == 3:  # Ensure the line contains three elements
+                            index, x, y = parts
+                            data_points.append((float(x), float(y)))
+
+                cell_size = min(math.sqrt((p1[0] - p2[0])**2 + (p1[1] - p2[1])**2) for p1, p2 in combinations(data_points, 2))
+
             for i, row in enumerate(data, start=1):
-                geom = " ".join(row[coords])
-                g = self.gutils.build_square(geom, self.cell_size)  # Avoid redundant processing
+
+                if subdomain_n != 1 and domain_cell_fid in connect_cells:
+                    connectivity_data = self.gutils.execute(
+                        "SELECT fid, up_domain_fid, up_domain_cell FROM schema_md_connect_cells WHERE down_domain_fid = ? AND down_domain_cell = ?;",
+                        (subdomain_n, domain_cell_fid)
+                    ).fetchone()
+
+                    # Check if we found a match
+                    if connectivity_data:
+                        # Update the grid table
+                        self.gutils.execute(
+                            "UPDATE grid SET connectivity_fid = ? WHERE domain_fid = ? AND domain_cell = ?;",
+                            (connectivity_data[0], connectivity_data[1], connectivity_data[2])
+                        )
+                        domain_cell_fid += 1
+                        continue
+
+                geom = " ".join(list(map(str, row[coords])))
+                g = self.gutils.build_square(geom, cell_size)  # Avoid redundant processing
 
                 sql_grid.append((fid, *row[man], *row[elev], subdomain_n, domain_cell_fid, g))
 
@@ -502,7 +562,7 @@ class ImportMultipleDomainsDialog(qtBaseClass, uiDialog):
                         domain_cell_fid += 1
                         continue
 
-                geom = " ".join( list(map(str, row[coords])))
+                geom = " ".join(list(map(str, row[coords])))
                 g = self.gutils.build_square(geom, cell_size)  # Avoid redundant processing
 
                 sql_grid.append((fid, mann, elev, subdomain_n, domain_cell_fid, g))
