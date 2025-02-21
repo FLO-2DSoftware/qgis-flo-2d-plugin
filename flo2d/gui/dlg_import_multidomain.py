@@ -192,8 +192,22 @@ class ImportMultipleDomainsDialog(qtBaseClass, uiDialog):
             qry_method_fid = f"""SELECT fid FROM mult_domains_con WHERE subdomain_name = '{subdomain_name}';"""
             method_fid = self.gutils.execute(qry_method_fid).fetchone()[0]
 
-            # Update the files
-            for i in range(1, 10):
+            n_subdomains = []
+
+            multidomain_file = os.path.join(domain_dir, "MULTIDOMAIN.DAT")
+
+            with open(multidomain_file, "r") as f:
+                for line in f:
+                    data = line.strip().split()
+
+                    if not data:
+                        continue
+
+                    if data[0] == "N":
+                        # New subdomain identifier
+                        n_subdomains.append(int(data[1]))
+
+            for i in n_subdomains:
                 qry_method = f"""
                                 UPDATE mult_domains_con 
                                 SET mult_domains_{i} = 1

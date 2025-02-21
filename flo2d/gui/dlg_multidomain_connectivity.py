@@ -235,6 +235,8 @@ class MultipleDomainsConnectivityDialog(qtBaseClass, uiDialog):
                 md_fid = subdomain_connectivity[0]  # md.fid
                 current_subdomain_path = subdomain_connectivity[1]  # md.subdomain_path
 
+                used_multidomain_file = False
+
                 for i in range(9):  # Loop through fid_subdomain_x and ups_downs_x pairs
                     subdomain_fid_index = 2 + (i - 1) * 4  # Get index for subdomain fid
                     subdomain_name_index = subdomain_fid_index + 1  # Get index for subdomain name
@@ -251,7 +253,40 @@ class MultipleDomainsConnectivityDialog(qtBaseClass, uiDialog):
 
                     # Get the connectivity through the MULTIDOMAIN.DAT
                     if fid_subdomain and mult_domain:
-                        pass
+
+                        if used_multidomain_file:
+                            continue
+
+                        multidomain = f"{current_subdomain_path}/MULTIDOMAIN.DAT"
+
+                        multidomain_data = {}
+                        current_subdomain = None
+
+                        with open(multidomain, "r") as f:
+                            for line in f:
+                                data = line.strip().split()
+
+                                if not data:
+                                    continue
+
+                                if data[0] == "N":
+                                    current_subdomain = int(data[1])
+                                    multidomain_data[current_subdomain] = []
+
+                                elif data[0] == "D" and current_subdomain is not None:
+                                    up_domain_cell = int(data[1])
+                                    down_domain_cells = list(map(int, data[2:]))
+                                    multidomain_data[current_subdomain].append((up_domain_cell, down_domain_cells))
+
+                        j = 2 + (i - 1) * 4
+                        for subdomain, connections in multidomain_data.items():
+                            for up_domain_cell, down_domain_cells in connections:
+                                for down_domain_cell in down_domain_cells:
+                                    bulk_insert_data.append((md_fid, up_domain_cell, subdomain_connectivity[j], down_domain_cell))
+                            j +=  4
+
+                        used_multidomain_file = True
+
                     # Get the connectivity through the CADPTSs
                     elif fid_subdomain and ds_file:
                         cadpts = f"{current_subdomain_path}/CADPTS.DAT"
