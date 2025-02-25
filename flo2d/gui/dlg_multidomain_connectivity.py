@@ -1,10 +1,12 @@
+import itertools
 import os
 import re
 import time
 
-from PyQt5.QtCore import QSettings
+from PyQt5.QtCore import QSettings, QVariant
 from PyQt5.QtWidgets import QProgressDialog
 from qgis.PyQt.QtCore import NULL
+from qgis._core import QgsProject, QgsVectorLayer, QgsField, QgsFeature
 
 from .ui_utils import load_ui
 from ..geopackage_utils import GeoPackageUtils
@@ -164,7 +166,6 @@ class MultipleDomainsConnectivityDialog(qtBaseClass, uiDialog):
                 self.current_subdomain_cbo.addItem(subdomain_name[0])
 
         self.populate_subdomains()
-        # self.populate_ds_cbos()
         self.fill_cbo_data()
         self.hide_cbos()
 
@@ -224,117 +225,168 @@ class MultipleDomainsConnectivityDialog(qtBaseClass, uiDialog):
             bulk_insert_data = []  # Collect all insert statements in a list
 
             j = 1
-            qpd = QProgressDialog(f"Importing Connectivity for Subdomain {j}...", None, 0, 9)
+            qpd = QProgressDialog(f"Creating Connectivity for Subdomain {j}...", None, 0, 9)
             qpd.setWindowTitle("FLO-2D Import")
             qpd.setModal(True)
             qpd.forceShow()
             qpd.setValue(0)
 
             for subdomain_connectivity in subdomain_connectivities:
-                start_time = time.time()
-                md_fid = subdomain_connectivity[0]  # md.fid
-                current_subdomain_path = subdomain_connectivity[1]  # md.subdomain_path
+                # Create the connectivity
+                if subdomain_connectivity[1] is NULL or subdomain_connectivity[1] == "" or subdomain_connectivity[1] is None:
 
-                used_multidomain_file = False
+                    if self.gutils.is_table_empty("grid"):
+                        self.uc.bar_warn("There is no grid! Please create it before running tool.")
+                        self.uc.log_info("There is no grid! Please create it before running tool.")
+                        return
 
-                for i in range(9):  # Loop through fid_subdomain_x and ups_downs_x pairs
-                    subdomain_fid_index = 2 + (i - 1) * 4  # Get index for subdomain fid
-                    subdomain_name_index = subdomain_fid_index + 1  # Get index for subdomain name
-                    mult_domain_index = subdomain_fid_index + 2  # Get index for mult_domain
-                    ds_file_index = subdomain_fid_index + 3  # Get index for ds_file
+                    # Create the intersected lines
+                    polygon_layer = self.lyrs.data["mult_domains"]["qlyr"]
 
-                    fid_subdomain = subdomain_connectivity[subdomain_fid_index]
+                    # Create a new memory layer for intersections with the same CRS as the polygon layer
+                    intersection_layer = self.lyrs.data["user_md_connect_lines"]["qlyr"]
+                    provider = intersection_layer.dataProvider()
 
-                    if not fid_subdomain or fid_subdomain == 0:
-                        continue
+                    # Collect all features from the polygon layer
+                    features = list(polygon_layer.getFeatures())
 
-                    mult_domain = subdomain_connectivity[mult_domain_index]
-                    ds_file = subdomain_connectivity[ds_file_index]
+                    # Initialize a counter for the intersection feature's fid
+                    intersection_id = 1
 
-                    # Get the connectivity through the MULTIDOMAIN.DAT
-                    if fid_subdomain and mult_domain:
+                    # Iterate over all unique pairs of polygons using itertools.combinations
+                    for feat1, feat2 in itertools.combinations(features, 2):
+                        geom1 = feat1.geometry()
+                        geom2 = feat2.geometry()
 
-                        if used_multidomain_file:
+                        # Check if the two geometries touch (i.e., share a boundary)
+                        if geom1.touches(geom2):
+                            # Compute the shared border between the two geometries
+                            intersect_geom = geom1.intersection(geom2)
+
+                            # Create a new feature for the intersection layer
+                            new_feat = QgsFeature()
+                            new_feat.setGeometry(intersect_geom)
+                            # Here we assume that the polygon layer's unique identifier is stored in the "fid" field.
+                            new_feat.setAttributes([intersection_id, feat1["fid"], feat2["fid"], ""])
+                            provider.addFeature(new_feat)
+
+                            intersection_id += 1
+
+                    self.uc.log_info("Connectivity saved!")
+                    self.uc.bar_info("Connectivity saved!")
+
+                    self.lyrs.data["user_md_connect_lines"]["qlyr"].triggerRepaint()
+
+                    self.close_dlg()
+
+                    return
+
+                # Import the connectivity
+                else:
+                    start_time = time.time()
+                    md_fid = subdomain_connectivity[0]  # md.fid
+                    current_subdomain_path = subdomain_connectivity[1]  # md.subdomain_path
+
+                    used_multidomain_file = False
+
+                    for i in range(9):  # Loop through fid_subdomain_x and ups_downs_x pairs
+                        subdomain_fid_index = 2 + (i - 1) * 4  # Get index for subdomain fid
+                        subdomain_name_index = subdomain_fid_index + 1  # Get index for subdomain name
+                        mult_domain_index = subdomain_fid_index + 2  # Get index for mult_domain
+                        ds_file_index = subdomain_fid_index + 3  # Get index for ds_file
+
+                        fid_subdomain = subdomain_connectivity[subdomain_fid_index]
+
+                        if not fid_subdomain or fid_subdomain == 0:
                             continue
 
-                        multidomain = f"{current_subdomain_path}/MULTIDOMAIN.DAT"
+                        mult_domain = subdomain_connectivity[mult_domain_index]
+                        ds_file = subdomain_connectivity[ds_file_index]
 
-                        multidomain_data = {}
-                        current_subdomain = None
+                        # Get the connectivity through the MULTIDOMAIN.DAT
+                        if fid_subdomain and mult_domain:
 
-                        with open(multidomain, "r") as f:
-                            for line in f:
-                                data = line.strip().split()
+                            if used_multidomain_file:
+                                continue
 
-                                if not data:
-                                    continue
+                            multidomain = f"{current_subdomain_path}/MULTIDOMAIN.DAT"
 
-                                if data[0] == "N":
-                                    current_subdomain = int(data[1])
-                                    multidomain_data[current_subdomain] = []
+                            multidomain_data = {}
+                            current_subdomain = None
 
-                                elif data[0] == "D" and current_subdomain is not None:
-                                    up_domain_cell = int(data[1])
-                                    down_domain_cells = list(map(int, data[2:]))
-                                    multidomain_data[current_subdomain].append((up_domain_cell, down_domain_cells))
+                            with open(multidomain, "r") as f:
+                                for line in f:
+                                    data = line.strip().split()
 
-                        j = 2 + (i - 1) * 4
-                        for subdomain, connections in multidomain_data.items():
-                            for up_domain_cell, down_domain_cells in connections:
-                                for down_domain_cell in down_domain_cells:
-                                    bulk_insert_data.append((md_fid, up_domain_cell, subdomain_connectivity[j], down_domain_cell))
-                            j +=  4
+                                    if not data:
+                                        continue
 
-                        used_multidomain_file = True
+                                    if data[0] == "N":
+                                        current_subdomain = int(data[1])
+                                        multidomain_data[current_subdomain] = []
 
-                    # Get the connectivity through the CADPTSs
-                    elif fid_subdomain and ds_file:
-                        cadpts = f"{current_subdomain_path}/CADPTS.DAT"
+                                    elif data[0] == "D" and current_subdomain is not None:
+                                        up_domain_cell = int(data[1])
+                                        down_domain_cells = list(map(int, data[2:]))
+                                        multidomain_data[current_subdomain].append((up_domain_cell, down_domain_cells))
 
-                        connect_subdomain_path_qry = self.gutils.execute(f"SELECT subdomain_path FROM mult_domains_methods WHERE fid = {fid_subdomain}").fetchone()
-                        if connect_subdomain_path_qry:
-                            connect_subdomain_path = connect_subdomain_path_qry[0]
-                            cadpts_ds = f"{connect_subdomain_path}/CADPTS.DAT"
-                        else:
-                            continue
+                            j = 2 + (i - 1) * 4
+                            for subdomain, connections in multidomain_data.items():
+                                for up_domain_cell, down_domain_cells in connections:
+                                    for down_domain_cell in down_domain_cells:
+                                        bulk_insert_data.append((md_fid, up_domain_cell, subdomain_connectivity[j], down_domain_cell))
+                                j +=  4
 
-                        # Using pandas to speed up
-                        import pandas as pd
+                            used_multidomain_file = True
 
-                        # Define column names (since files have no headers)
-                        column_names = ["id", "x", "y"]
+                        # Get the connectivity through the CADPTSs
+                        elif fid_subdomain and ds_file:
+                            cadpts = f"{current_subdomain_path}/CADPTS.DAT"
 
-                        # Read the CSV files without headers and assign column names
-                        df1 = pd.read_csv(cadpts, names=column_names, sep=r'\s+',
-                                          dtype={"id": int, "x": float, "y": float})
-                        df2 = pd.read_csv(cadpts_ds, names=column_names, sep=r'\s+',
-                                          dtype={"id": int, "x": float, "y": float})
+                            connect_subdomain_path_qry = self.gutils.execute(f"SELECT subdomain_path FROM mult_domains_methods WHERE fid = {fid_subdomain}").fetchone()
+                            if connect_subdomain_path_qry:
+                                connect_subdomain_path = connect_subdomain_path_qry[0]
+                                cadpts_ds = f"{connect_subdomain_path}/CADPTS.DAT"
+                            else:
+                                continue
 
-                        # Perform an inner join on x and y to find matching coordinates
-                        matches = df1.merge(df2, on=["x", "y"], suffixes=('_file1', '_file2'))
+                            # Using pandas to speed up
+                            import pandas as pd
 
-                        # Select only the matching IDs
-                        result = matches[["id_file1", "id_file2"]]
+                            # Define column names (since files have no headers)
+                            column_names = ["id", "x", "y"]
 
-                        # Extract upstream and downstream cells
-                        upstream_cells, downstream_cells = result["id_file1"].tolist(), result[
-                            "id_file2"].tolist()  # Efficient unpacking
+                            # Read the CSV files without headers and assign column names
+                            df1 = pd.read_csv(cadpts, names=column_names, sep=r'\s+',
+                                              dtype={"id": int, "x": float, "y": float})
+                            df2 = pd.read_csv(cadpts_ds, names=column_names, sep=r'\s+',
+                                              dtype={"id": int, "x": float, "y": float})
 
-                        # Collect bulk insert data
-                        for upstream, downstream in zip(upstream_cells, downstream_cells):
-                            # if upstream in cell_centroids:
-                            bulk_insert_data.append(
-                                (md_fid, upstream, fid_subdomain, downstream))
+                            # Perform an inner join on x and y to find matching coordinates
+                            matches = df1.merge(df2, on=["x", "y"], suffixes=('_file1', '_file2'))
 
-                    qpd.setValue(i + 1)
+                            # Select only the matching IDs
+                            result = matches[["id_file1", "id_file2"]]
 
-                end_time = time.time()
-                hours, rem = divmod(end_time - start_time, 3600)
-                minutes, seconds = divmod(rem, 60)
-                time_passed = "{:0>2}:{:0>2}:{:0>2}".format(int(hours), int(minutes), int(seconds))
-                self.uc.log_info(f"Time Elapsed to import connectivity for Subdomain {j}: {time_passed}")
-                j += 1
-                qpd.setLabelText(f"Importing Connectivity for Subdomain {j}...")
+                            # Extract upstream and downstream cells
+                            upstream_cells, downstream_cells = result["id_file1"].tolist(), result[
+                                "id_file2"].tolist()  # Efficient unpacking
+
+                            # Collect bulk insert data
+                            for upstream, downstream in zip(upstream_cells, downstream_cells):
+                                # if upstream in cell_centroids:
+                                bulk_insert_data.append(
+                                    (md_fid, upstream, fid_subdomain, downstream))
+
+                        qpd.setValue(i + 1)
+
+                    end_time = time.time()
+                    hours, rem = divmod(end_time - start_time, 3600)
+                    minutes, seconds = divmod(rem, 60)
+                    time_passed = "{:0>2}:{:0>2}:{:0>2}".format(int(hours), int(minutes), int(seconds))
+                    self.uc.log_info(f"Time Elapsed to import connectivity for Subdomain {j}: {time_passed}")
+                    j += 1
+                    qpd.setLabelText(f"Importing Connectivity for Subdomain {j}...")
 
             # Execute bulk insert
             if bulk_insert_data:

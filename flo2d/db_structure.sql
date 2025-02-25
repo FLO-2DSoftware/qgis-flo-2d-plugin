@@ -1343,13 +1343,14 @@ SELECT gpkgAddGeometryTriggers('mult_domains', 'geom');
 
 CREATE TABLE "user_md_connect_lines" (
     "fid" INTEGER NOT NULL PRIMARY KEY,
-    "name" TEXT, -- fid of the domain on the mult_domains
-    "domain_fid" INTEGER,
+    "up_domain_fid" INTEGER,
+    "down_domain_fid" INTEGER,
     "notes" TEXT
 );
 INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('user_md_connect_lines', 'features', 4326);
 SELECT gpkgAddGeometryColumn('user_md_connect_lines', 'geom', 'LINESTRING', 0, 0, 0);
 SELECT gpkgAddGeometryTriggers('user_md_connect_lines', 'geom');
+SELECT gpkgAddSpatialIndex('user_md_connect_lines', 'geom');
 
 CREATE TABLE "schema_md_connect_cells" (
     "fid" INTEGER NOT NULL PRIMARY KEY,
