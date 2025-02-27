@@ -1,15 +1,17 @@
 #  -*- coding: utf-8 -*-
 import math
 import os
+import time
 
-from PyQt5.QtCore import QSettings, QVariant
+from PyQt5.QtCore import QSettings, QVariant, Qt
 from PyQt5.QtWidgets import QApplication, QProgressDialog, QInputDialog, QMessageBox
 from qgis.PyQt.QtCore import NULL
-from qgis._core import QgsGeometry, QgsFeatureRequest, QgsPointXY, QgsField, QgsSpatialIndex, QgsFeature
+from qgis._core import QgsGeometry, QgsFeatureRequest, QgsPointXY, QgsField, QgsSpatialIndex, QgsFeature, QgsProject, \
+    QgsTask, QgsApplication, QgsMessageLog
 
 from .dlg_multidomain_connectivity import MultipleDomainsConnectivityDialog
 from ..flo2d_tools.grid_tools import square_grid, build_grid, number_of_elements, grid_compas_neighbors, \
-    adjacent_grid_elevations, adjacent_grids, domain_tendency
+    adjacent_grid_elevations, adjacent_grids, domain_tendency, gridRegionGenerator
 from ..geopackage_utils import GeoPackageUtils
 # FLO-2D Preprocessor tools for QGIS
 
@@ -28,7 +30,6 @@ class MultipleDomainsEditorWidget(qtBaseClass, uiDialog):
         self.lyrs = lyrs
         self.setupUi(self)
         self.uc = UserCommunication(iface, "FLO-2D")
-        self.grid_lyr = None
         self.gutils = None
 
         self.setup_connection()
@@ -54,6 +55,7 @@ class MultipleDomainsEditorWidget(qtBaseClass, uiDialog):
         self.schematize_md_btn.clicked.connect(self.schematize_md)
         self.create_connectivity_btn.clicked.connect(self.open_multiple_domains_connectivity_dialog)
 
+        self.grid_lyr = self.lyrs.data["grid"]["qlyr"]
         self.mult_domains = self.lyrs.data["mult_domains"]["qlyr"]
         self.connect_lines = self.lyrs.data["user_md_connect_lines"]["qlyr"]
         self.mult_domains.afterCommitChanges.connect(self.save_user_md)
@@ -188,22 +190,131 @@ class MultipleDomainsEditorWidget(qtBaseClass, uiDialog):
         2. Create the connectivity
         """
 
-        pass
+        if self.gutils.is_table_empty("grid"):
+            self.uc.bar_warn("There is no grid! Please create it before running tool.")
+            self.uc.log_info("There is no grid! Please create it before running tool.")
+            return
 
-        # if self.gutils.is_table_empty("mult_domains"):
-        #     self.uc.bar_info(f"There is no domain on the User Layers!")
-        #     self.uc.log_info(f"There is no domain on the User Layers!")
-        #     return
-        #
-        # # I'll need to iterate over all domains
-        # domain_boundary = self.lyrs.data["mult_domains"]["qlyr"]
-        #
-        # for feat in domain_boundary.getFeatures():
-        #
-        #     # Create the grid
-        #     self.square_grid(feat)
-        #     self.update_domain_cells(feat)
+        QApplication.setOverrideCursor(Qt.WaitCursor)
+        start_time = time.time()
 
+        domain_ids = self.gutils.execute("SELECT fid FROM mult_domains ORDER BY fid DESC;").fetchall()
+
+        # Use grid generator to facilite the intersection
+        for request in gridRegionGenerator(self.gutils, self.grid_lyr, gridSpan=1000, regionPadding=50, showProgress=True):
+            feature_ids = [feature.id() for feature in self.grid_lyr.getFeatures(request)]
+            for domain_id in domain_ids:
+                # Construct a query that updates all relevant grid features at once
+                sql_update = f"""
+                    UPDATE grid
+                    SET domain_fid = {domain_id[0]}
+                    WHERE grid.fid IN ({','.join(map(str, feature_ids))})
+                    AND ST_Intersects(
+                        CastAutomagic((SELECT geom FROM mult_domains WHERE fid = {domain_id[0]})),
+                        CastAutomagic(grid.geom)
+                    );
+                    """
+                self.gutils.execute(sql_update)
+
+        progressDialog = QProgressDialog("Updating domain cells...", "Cancel", 0, 0)
+        progressDialog.setWindowModality(Qt.WindowModal)
+        progressDialog.setMinimumDuration(0)
+        progressDialog.setRange(0, 0)
+        progressDialog.show()
+
+        # Process domain_cells
+        for domain_id in domain_ids:
+            fids = self.gutils.execute(f"SELECT fid FROM grid WHERE domain_fid = {domain_id[0]} ORDER BY fid;").fetchall()
+            domain_cells_data = [(i + 1, fid[0]) for i, fid in enumerate(fids)]
+
+            QApplication.processEvents()
+            if progressDialog.wasCanceled():
+                break
+
+            # Update domain_cell for the current domain
+            self.gutils.execute_many("UPDATE grid SET domain_cell = ? WHERE fid = ?", domain_cells_data)
+
+        progressDialog.close()
+
+        QApplication.restoreOverrideCursor()
+
+        end_time = time.time()
+        hours, rem = divmod(end_time - start_time, 3600)
+        minutes, seconds = divmod(rem, 60)
+        time_passed = "{:0>2}:{:0>2}:{:0>2}".format(int(hours), int(minutes), int(seconds))
+
+        self.uc.bar_info(f"Schematization of subdomains finished in {time_passed}!")
+        self.uc.log_info(f"Schematization of subdomains finished in {time_passed}!")
+
+            # for domain_id in domain_ids:
+            #     # Fetch all fids for the current domain updated above
+            #     fids = self.gutils.execute(
+            #         f"SELECT fid FROM grid WHERE domain_fid = {domain_id[0]} AND fid IN ({','.join(map(str, feature_ids))}) ORDER BY fid;").fetchall()
+            #     domain_cells_data = [(i + 1, fid[0]) for i, fid in enumerate(fids)]
+            #
+            #     # Bulk update domain_cell
+            #     self.gutils.execute_many("UPDATE grid SET domain_cell = ? WHERE fid = ?", domain_cells_data)
+
+            # domain_ids = self.gutils.execute("SELECT fid FROM mult_domains;").fetchall()
+            #
+
+            #
+                # # Process domain_cells after updating domain_fid for the current domain
+                # fids = self.gutils.execute(f"SELECT fid FROM grid WHERE domain_fid = {domain_id[0]} ORDER BY fid;").fetchall()
+                # domain_cells_data = [(i + 1, fid[0]) for i, fid in enumerate(fids)]
+                #
+                # # Update domain_cell for the current domain
+                # self.gutils.execute_many("UPDATE grid SET domain_cell = ? WHERE fid = ?", domain_cells_data)
+
+
+
+        # QApplication.setOverrideCursor(Qt.WaitCursor)
+        #
+        # domain_ids = self.gutils.execute("SELECT fid FROM mult_domains;").fetchall()
+        #
+        # for domain_id in domain_ids:
+        #     start_time = time.time()
+        #
+        #     # Assign domain_fid to grid elements intersecting the current domain
+        #     self.gutils.execute(f"""
+        #                 UPDATE grid
+        #                 SET domain_fid = {domain_id[0]}
+        #                 WHERE ST_Intersects(
+        #                     CastAutomagic((SELECT geom FROM mult_domains WHERE fid = {domain_id[0]})),
+        #                     CastAutomagic(grid.geom)
+        #                 );
+        #             """)
+        #
+        #     end_time = time.time()
+        #     hours, rem = divmod(end_time - start_time, 3600)
+        #     minutes, seconds = divmod(rem, 60)
+        #     time_passed = "{:0>2}:{:0>2}:{:0>2}".format(int(hours), int(minutes), int(seconds))
+        #     self.uc.log_info(f"Intersection done for Domain {domain_id[0]}: {time_passed}")
+        #
+        #     start_time = time.time()
+        #
+        #     # Process domain_cells after updating domain_fid for the current domain
+        #     fids = self.gutils.execute(f"SELECT fid FROM grid WHERE domain_fid = {domain_id[0]} ORDER BY fid;").fetchall()
+        #     domain_cells_data = [(i + 1, fid[0]) for i, fid in enumerate(fids)]
+        #
+        #     end_time = time.time()
+        #     hours, rem = divmod(end_time - start_time, 3600)
+        #     minutes, seconds = divmod(rem, 60)
+        #     time_passed = "{:0>2}:{:0>2}:{:0>2}".format(int(hours), int(minutes), int(seconds))
+        #     self.uc.log_info(f"Processing data done for Domain {domain_id[0]}: {time_passed}")
+        #
+        #     start_time = time.time()
+        #
+        #     # Update domain_cell for the current domain
+        #     self.gutils.execute_many("UPDATE grid SET domain_cell = ? WHERE fid = ?", domain_cells_data)
+        #
+        #     end_time = time.time()
+        #     hours, rem = divmod(end_time - start_time, 3600)
+        #     minutes, seconds = divmod(rem, 60)
+        #     time_passed = "{:0>2}:{:0>2}:{:0>2}".format(int(hours), int(minutes), int(seconds))
+        #     self.uc.log_info(f"Execute the SQL for Domain {domain_id[0]}: {time_passed}")
+        #
+        # QApplication.restoreOverrideCursor()
 
     # def update_domain_cells(self, feature):
     #     """
@@ -712,3 +823,71 @@ class MultipleDomainsEditorWidget(qtBaseClass, uiDialog):
             provider.changeGeometryValues({feat.id(): geometry})
 
         self.connect_lines.triggerRepaint()
+
+
+# class DomainProcessingTask(QgsTask):
+#     def __init__(self, description, domain_id, gutils):
+#         super().__init__(description, QgsTask.CanCancel)
+#         self.domain_id = domain_id
+#         self.gutils = gutils
+#
+#     def run(self):
+#         """Here you implement your heavy lifting.
+#         Should periodically test for isCanceled() to gracefully
+#         abort.
+#         This method MUST return True or False.
+#         Raising exceptions will crash QGIS, so we handle them
+#         internally and raise them in self.finished
+#         """
+#
+#         QgsMessageLog.logMessage(self.description())
+#
+#         # Assign domain_fid to grid elements intersecting the current domain
+#         self.gutils.execute(f"""
+#             UPDATE grid
+#             SET domain_fid = {self.domain_id}
+#             WHERE ST_Intersects(
+#                 CastAutomagic(SELECT geom FROM mult_domains WHERE fid = {self.domain_id})),
+#                 CastAutomagic(grid.geom)
+#             );
+#         """)
+#
+#         # Fetch fids and prepare data for domain_cell update
+#         fids = self.gutils.fetch(f"SELECT fid FROM grid WHERE domain_fid = {self.domain_id} ORDER BY fid;")
+#         domain_cells_data = [(i + 1, fid[0]) for i, fid in enumerate(fids)]
+#
+#         # Update domain_cell for the current domain
+#         self.gutils.execute_many("UPDATE grid SET domain_cell = ? WHERE fid = ?", domain_cells_data)
+#
+#         return True
+#
+#     def finished(self, result):
+#         """
+#         This function is automatically called when the task has
+#         completed (successfully or not).
+#         You implement finished() to do whatever follow-up stuff
+#         should happen after the task is complete.
+#         finished is always called from the main thread, so it's safe
+#         to do GUI operations and raise Python exceptions here.
+#         result is the return value from self.run.
+#         """
+#         if result:
+#             QgsMessageLog.logMessage(f'Task "{self.description(),}" completed')
+#         else:
+#             if self.exception is None:
+#                 QgsMessageLog.logMessage(f'Task "{self.description(),}" not completed')
+#             else:
+#                 QgsMessageLog.logMessage(f'Task "{self.description(),}" error')
+#                 raise self.exception
+#
+#     def cancel(self):
+#         QgsMessageLog.logMessage(f'Task "{self.description(),}" was cancelled')
+#         super().cancel()
+#
+#     # def finished(self, result):
+#     #     if result:
+#     #         self.uc.bar_info(f"Domain {self.domain_id} processed successfully.")
+#     #         self.uc.log_info(f"Domain {self.domain_id} processed successfully.")
+#     #     else:
+#     #         self.uc.bar_warn(f"Processing failed for domain {self.domain_id}.")
+#     #         self.uc.log_info(f"Processing failed for domain {self.domain_id}.")

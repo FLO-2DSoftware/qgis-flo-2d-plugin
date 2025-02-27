@@ -1340,6 +1340,7 @@ CREATE TABLE "mult_domains" (
 INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('mult_domains', 'features', 4326);
 SELECT gpkgAddGeometryColumn('mult_domains', 'geom', 'POLYGON', 0, 0, 0);
 SELECT gpkgAddGeometryTriggers('mult_domains', 'geom');
+SELECT gpkgAddSpatialIndex('mult_domains', 'geom');
 
 CREATE TABLE "user_md_connect_lines" (
     "fid" INTEGER NOT NULL PRIMARY KEY,
