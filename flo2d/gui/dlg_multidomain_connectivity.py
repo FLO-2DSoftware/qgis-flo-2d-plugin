@@ -253,15 +253,19 @@ class MultipleDomainsConnectivityDialog(qtBaseClass, uiDialog):
                     # Initialize a counter for the intersection feature's fid
                     intersection_id = 1
 
+                    tolerance = 0.1
+
                     # Iterate over all unique pairs of polygons using itertools.combinations
                     for feat1, feat2 in itertools.combinations(features, 2):
-                        geom1 = feat1.geometry()
-                        geom2 = feat2.geometry()
+                        geom1_buff = feat1.geometry().buffer(tolerance, 5)  # Apply buffer with a segment count of 5
+                        geom2_buff = feat2.geometry().buffer(tolerance, 5)
 
                         # Check if the two geometries touch (i.e., share a boundary)
-                        if geom1.touches(geom2):
+                        if geom1_buff.intersection(geom2_buff):
                             # Compute the shared border between the two geometries
-                            intersect_geom = geom1.intersection(geom2)
+                            original_geom1 = feat1.geometry()
+                            original_geom2 = feat2.geometry()
+                            intersect_geom = original_geom1.intersection(original_geom2)
 
                             # Create a new feature for the intersection layer
                             new_feat = QgsFeature()

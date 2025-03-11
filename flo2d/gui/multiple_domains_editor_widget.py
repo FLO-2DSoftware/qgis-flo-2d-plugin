@@ -60,6 +60,7 @@ class MultipleDomainsEditorWidget(qtBaseClass, uiDialog):
         self.connect_lines = self.lyrs.data["user_md_connect_lines"]["qlyr"]
         self.mult_domains.afterCommitChanges.connect(self.save_user_md)
         self.md_name_cbo.currentIndexChanged.connect(self.md_index_changed)
+        self.connect_lines.afterCommitChanges.connect(self.populate_con_cbo)
         self.connect_line_cbo.currentIndexChanged.connect(self.con_index_changed)
 
     def setup_connection(self):
@@ -135,13 +136,16 @@ class MultipleDomainsEditorWidget(qtBaseClass, uiDialog):
         """
         Function to update the connectivity combobox when the index changes
         """
-        con_fid = int(self.connect_line_cbo.currentText())
+        if self.connect_line_cbo.currentText() == "":
+            pass
+        else:
+            con_fid = int(self.connect_line_cbo.currentText())
 
-        if self.con_center_btn.isChecked():
-            self.lyrs.show_feat_rubber(self.connect_lines.id(), con_fid)
-            feat = next(self.connect_lines.getFeatures(QgsFeatureRequest(con_fid)))
-            x, y = feat.geometry().centroid().asPoint()
-            center_canvas(self.iface, x, y)
+            if self.con_center_btn.isChecked():
+                self.lyrs.show_feat_rubber(self.connect_lines.id(), con_fid)
+                feat = next(self.connect_lines.getFeatures(QgsFeatureRequest(con_fid)))
+                x, y = feat.geometry().centroid().asPoint()
+                center_canvas(self.iface, x, y)
 
     def create_md_polygon(self):
         """
@@ -195,56 +199,77 @@ class MultipleDomainsEditorWidget(qtBaseClass, uiDialog):
             self.uc.log_info("There is no grid! Please create it before running tool.")
             return
 
+        # Check if there is data on the domain_cells and ask you if he wants to override
+
         QApplication.setOverrideCursor(Qt.WaitCursor)
-        start_time = time.time()
+
+        pd = QProgressDialog("Schematizing the subdomains...", "Cancel", 0, 0)
+        pd.setWindowModality(Qt.WindowModal)
+        pd.setMinimumDuration(0)
+        pd.setRange(0, 0)
+        pd.show()
+
+        QApplication.processEvents()
+
+        start_time_1 = time.time()
 
         domain_ids = self.gutils.execute("SELECT fid FROM mult_domains ORDER BY fid DESC;").fetchall()
 
-        # Use grid generator to facilite the intersection
+        # Use grid generator to speed up the intersection
         for request in gridRegionGenerator(self.gutils, self.grid_lyr, gridSpan=1000, regionPadding=50, showProgress=True):
             feature_ids = [feature.id() for feature in self.grid_lyr.getFeatures(request)]
-            for domain_id in domain_ids:
-                # Construct a query that updates all relevant grid features at once
-                sql_update = f"""
-                    UPDATE grid
-                    SET domain_fid = {domain_id[0]}
-                    WHERE grid.fid IN ({','.join(map(str, feature_ids))})
-                    AND ST_Intersects(
-                        CastAutomagic((SELECT geom FROM mult_domains WHERE fid = {domain_id[0]})),
-                        CastAutomagic(grid.geom)
-                    );
-                    """
-                self.gutils.execute(sql_update)
+            # WHERE grid.fid IN ({','.join(map(str, feature_ids))});
+            sql_update = f"""
+                UPDATE grid
+                SET domain_fid = (
+                    SELECT md.fid
+                    FROM mult_domains md
+                    WHERE ST_Intersects(CastAutomagic(md.geom), CastAutomagic(grid.geom))
+                )
+                WHERE grid.fid IN ({','.join(map(str, feature_ids))});
+            """
+            self.gutils.execute(sql_update)
 
-        progressDialog = QProgressDialog("Updating domain cells...", "Cancel", 0, 0)
-        progressDialog.setWindowModality(Qt.WindowModal)
-        progressDialog.setMinimumDuration(0)
-        progressDialog.setRange(0, 0)
-        progressDialog.show()
+        end_time_1 = time.time()
+        hours, rem = divmod(end_time_1 - start_time_1, 3600)
+        minutes, seconds = divmod(rem, 60)
+        time_passed_1 = "{:0>2}:{:0>2}:{:0>2}".format(int(hours), int(minutes), int(seconds))
 
         # Process domain_cells
         for domain_id in domain_ids:
+            start_time_2 = time.time()
             fids = self.gutils.execute(f"SELECT fid FROM grid WHERE domain_fid = {domain_id[0]} ORDER BY fid;").fetchall()
             domain_cells_data = [(i + 1, fid[0]) for i, fid in enumerate(fids)]
+            end_time_2 = time.time()
 
             QApplication.processEvents()
-            if progressDialog.wasCanceled():
+            if pd.wasCanceled():
                 break
 
+            start_time_3 = time.time()
             # Update domain_cell for the current domain
             self.gutils.execute_many("UPDATE grid SET domain_cell = ? WHERE fid = ?", domain_cells_data)
+            end_time_3 = time.time()
 
-        progressDialog.close()
+            hours, rem = divmod(end_time_2 - start_time_2, 3600)
+            minutes, seconds = divmod(rem, 60)
+            time_passed_2 = "{:0>2}:{:0>2}:{:0>2}".format(int(hours), int(minutes), int(seconds))
+
+            hours, rem = divmod(end_time_3 - start_time_3, 3600)
+            minutes, seconds = divmod(rem, 60)
+            time_passed_3 = "{:0>2}:{:0>2}:{:0>2}".format(int(hours), int(minutes), int(seconds))
+
+            self.uc.log_info(f"Select data {time_passed_2}!")
+            self.uc.log_info(f"Execute SQL {time_passed_3}!")
+
+        pd.close()
 
         QApplication.restoreOverrideCursor()
 
-        end_time = time.time()
-        hours, rem = divmod(end_time - start_time, 3600)
-        minutes, seconds = divmod(rem, 60)
-        time_passed = "{:0>2}:{:0>2}:{:0>2}".format(int(hours), int(minutes), int(seconds))
+        self.uc.log_info(f"Intersection {time_passed_1}!")
 
-        self.uc.bar_info(f"Schematization of subdomains finished in {time_passed}!")
-        self.uc.log_info(f"Schematization of subdomains finished in {time_passed}!")
+        self.uc.bar_info(f"Schematization of subdomains finished in {time_passed_1}!")
+        self.uc.log_info(f"Schematization of subdomains finished in {time_passed_1}!")
 
             # for domain_id in domain_ids:
             #     # Fetch all fids for the current domain updated above
@@ -515,6 +540,8 @@ class MultipleDomainsEditorWidget(qtBaseClass, uiDialog):
         if not self.uc.question(q):
             return
         self.gutils.execute(f"DELETE FROM mult_domains WHERE fid = {fid};")
+        self.gutils.execute(f"DELETE FROM mult_domains_methods WHERE fid = {fid};")
+        self.gutils.execute(f"DELETE FROM mult_domains_con WHERE fid = {fid};")
         self.populate_md_cbos()
         self.mult_domains.triggerRepaint()
         self.uc.bar_info("Domain deleted!")
@@ -755,8 +782,10 @@ class MultipleDomainsEditorWidget(qtBaseClass, uiDialog):
         dlg = MultipleDomainsConnectivityDialog(self.iface, self.con, self.lyrs)
         ok = dlg.exec_()
         if not ok:
+            self.populate_con_cbo()
             return
         else:
+            self.populate_con_cbo()
             pass
 
     def save_user_md(self):
