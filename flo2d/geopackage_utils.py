@@ -16,6 +16,7 @@ from functools import wraps
 
 from PyQt5.QtWidgets import QProgressDialog, QApplication
 from osgeo import ogr, gdal
+from qgis.PyQt.QtCore import NULL
 from qgis._core import QgsVectorLayer, QgsProject, QgsRasterLayer
 from qgis.core import QgsGeometry, QgsVectorFileWriter
 from .user_communication import UserCommunication
@@ -717,7 +718,7 @@ class GeoPackageUtils(object):
         self.execute("DETACH other;")
 
         # Make sure that the CELLSIZE on the cont table is an integer
-        cell_size = int(float(self.get_cont_par("CELLSIZE")))
+        cell_size = self.grid_cell_size()
         self.execute(f"""UPDATE cont SET value = '{cell_size}' WHERE name = 'CELLSIZE';""")
 
     def execute(self, statement, inputs=None, get_rowid=False):
@@ -903,6 +904,24 @@ class GeoPackageUtils(object):
         sql = """SELECT geom FROM "{0}" WHERE "{1}" = ?;"""
         geom = self.execute(sql.format(table, field), (gid,)).fetchone()[0]
         return geom
+
+    def grid_cell_size(self):
+        sql = """
+        SELECT 
+            ST_MinX(geom) as min_x, 
+            ST_MaxX(geom) as max_x 
+        FROM "grid" 
+        WHERE "fid" = 1;
+        """
+        # Execute the SQL query
+        result = self.execute(sql).fetchone()
+        if result:
+            min_x, max_x = result
+            # Calculate cell width and height
+            cell_size = int(abs(round(max_x - min_x, 0)))
+            return cell_size
+        else:
+            return None
 
     def grid_centroids(self, gids, table="grid", field="fid", buffers=False):
         cells = {}

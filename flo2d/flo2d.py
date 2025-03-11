@@ -893,7 +893,7 @@ class Flo2D(object):
                     else:
                         proj = self.gutils.get_cont_par("PROJ")
                         crs.createFromProj(proj)
-                    cell_size = int(float(self.gutils.get_cont_par("CELLSIZE")))
+                    cell_size = self.gutils.grid_cell_size()
                     # create new geopackage TODO: This should be on the geopackage_utils and not on the settings
                     dlg_settings = SettingsDialog(self.con, self.iface, self.lyrs, self.gutils)
                     dlg_settings.create_db(new_gpkg_path, crs)
