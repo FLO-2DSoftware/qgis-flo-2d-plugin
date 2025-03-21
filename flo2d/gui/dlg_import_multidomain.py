@@ -258,6 +258,24 @@ class ImportMultipleDomainsDialog(qtBaseClass, uiDialog):
                    """
             self.gutils.execute(qry)
 
+        # No connection file
+        else:
+            # Add a line to the method
+            qry_method = f"""INSERT INTO mult_domains_con (subdomain_name) VALUES ('{subdomain_name}');"""
+            self.gutils.execute(qry_method)
+
+            # Get the recent added fid
+            qry_method_fid = f"""SELECT fid FROM mult_domains_con WHERE subdomain_name = '{subdomain_name}';"""
+            method_fid = self.gutils.execute(qry_method_fid).fetchone()[0]
+
+            # Insert into mult_domains_methods
+            qry = f"""
+                       UPDATE mult_domains_methods 
+                       SET fid_method = {method_fid}
+                       WHERE subdomain_name = '{subdomain_name}'; 
+                   """
+            self.gutils.execute(qry)
+
         self.uc.log_info(f"Subdomain {domain_n} data saved to geopackage.")
         self.uc.bar_info(f"Subdomain {domain_n} data saved to geopackage.")
 
@@ -361,8 +379,8 @@ class ImportMultipleDomainsDialog(qtBaseClass, uiDialog):
         else:
             fid = self.gutils.execute("SELECT MAX(fid) FROM grid;").fetchone()[0] or 0
             fid += 1  # Ensures unique fid values
-            connect_cells = [row[0] for row in self.gutils.execute(
-                f"SELECT down_domain_cell FROM schema_md_connect_cells WHERE down_domain_fid = {subdomain_n};").fetchall()]
+            connect_cells = [" ".join(map(str, row)) for row in self.gutils.execute(
+                f"SELECT ST_X(geom) as x, ST_Y(geom) as y FROM schema_md_connect_cells WHERE down_domain_fid = {subdomain_n};").fetchall()]
 
         sql_grid = []
 
@@ -401,37 +419,44 @@ class ImportMultipleDomainsDialog(qtBaseClass, uiDialog):
 
             for i, row in enumerate(data, start=1):
 
-                if subdomain_n != 1 and domain_cell_fid in connect_cells:
-                    connectivity_data = self.gutils.execute(
-                        "SELECT fid, up_domain_fid, up_domain_cell FROM schema_md_connect_cells WHERE down_domain_fid = ? AND down_domain_cell = ?;",
-                        (subdomain_n, domain_cell_fid)
-                    ).fetchone()
-
-                    # Check if we found a match
-                    if connectivity_data:
-                        # Update the grid table
-                        self.gutils.execute(
-                            "UPDATE grid SET connectivity_fid = ? WHERE domain_fid = ? AND domain_cell = ?;",
-                            (connectivity_data[0], connectivity_data[1], connectivity_data[2])
-                        )
-                        domain_cell_fid += 1
-                        continue
-
                 geom = " ".join(list(map(str, row[coords])))
-                g = self.gutils.build_square(geom, cell_size)  # Avoid redundant processing
+                if connect_cells:
+                    self.uc.log_info(str(geom))
+                    self.uc.log_info(str(connect_cells))
+                if subdomain_n != 1 and geom in connect_cells:
+                    self.uc.log_info("Entrou!")
 
-                sql_grid.append((fid, *row[man], *row[elev], subdomain_n, domain_cell_fid, g))
+                    # self.uc.log_info(str(domain_cell_fid))
+                    # connectivity_data = self.gutils.execute(
+                    #     "SELECT fid, up_domain_fid, up_domain_cell FROM schema_md_connect_cells WHERE down_domain_fid = ? AND down_domain_cell = ?;",
+                    #     (subdomain_n, domain_cell_fid)
+                    # ).fetchone()
+                    #
+                    # # Check if we found a match
+                    # if connectivity_data:
+                    #     self.uc.log_info("Entrou2")
+                    #     # Update the grid table
+                    #     self.gutils.execute(
+                    #         "UPDATE grid SET connectivity_fid = ? WHERE domain_fid = ? AND domain_cell = ?;",
+                    #         (connectivity_data[0], connectivity_data[1], connectivity_data[2])
+                    #     )
+                    #     domain_cell_fid += 1
 
-                fid += 1
-                domain_cell_fid += 1
+                else:
+                    g = self.gutils.build_square(geom, cell_size)  # Avoid redundant processing
 
-                # Execute in batches for better efficiency
-                if len(sql_grid) >= batch_size:
-                    self.gutils.execute_many(
-                        "INSERT INTO grid (fid, n_value, elevation, domain_fid, domain_cell, geom) VALUES (?, ?, ?, ?, ?, ?);",
-                        sql_grid
-                    )
-                    sql_grid.clear()
+                    sql_grid.append((fid, *row[man], *row[elev], subdomain_n, domain_cell_fid, g))
+
+                    fid += 1
+                    domain_cell_fid += 1
+
+                    # Execute in batches for better efficiency
+                    if len(sql_grid) >= batch_size:
+                        self.gutils.execute_many(
+                            "INSERT INTO grid (fid, n_value, elevation, domain_fid, domain_cell, geom) VALUES (?, ?, ?, ?, ?, ?);",
+                            sql_grid
+                        )
+                        sql_grid.clear()
 
             # Insert remaining data if any
             if sql_grid:

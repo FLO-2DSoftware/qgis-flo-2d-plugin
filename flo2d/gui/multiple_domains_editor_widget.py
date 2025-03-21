@@ -1,13 +1,15 @@
 #  -*- coding: utf-8 -*-
+import itertools
 import math
 import os
 import time
 
 from PyQt5.QtCore import QSettings, QVariant, Qt
 from PyQt5.QtWidgets import QApplication, QProgressDialog, QInputDialog, QMessageBox
+from pyodbc import connect
 from qgis.PyQt.QtCore import NULL
 from qgis._core import QgsGeometry, QgsFeatureRequest, QgsPointXY, QgsField, QgsSpatialIndex, QgsFeature, QgsProject, \
-    QgsTask, QgsApplication, QgsMessageLog
+    QgsTask, QgsApplication, QgsMessageLog, QgsVectorLayer
 
 from .dlg_multidomain_connectivity import MultipleDomainsConnectivityDialog
 from ..flo2d_tools.grid_tools import square_grid, build_grid, number_of_elements, grid_compas_neighbors, \
@@ -34,7 +36,7 @@ class MultipleDomainsEditorWidget(qtBaseClass, uiDialog):
 
         self.setup_connection()
         self.populate_md_cbos()
-        self.populate_con_cbo()
+        # self.populate_con_cbo()
 
         # Domain Creation - Connections
         self.create_md_polygon_btn.clicked.connect(self.create_md_polygon)
@@ -46,22 +48,23 @@ class MultipleDomainsEditorWidget(qtBaseClass, uiDialog):
         self.md_center_btn.clicked.connect(self.md_center)
 
         # Shift connectivity line
-        self.nw_btn.clicked.connect(lambda: self.shift_connectivity(5))
-        self.ne_btn.clicked.connect(lambda: self.shift_connectivity(8))
-        self.sw_btn.clicked.connect(lambda: self.shift_connectivity(6))
-        self.se_btn.clicked.connect(lambda: self.shift_connectivity(7))
-        self.con_center_btn.clicked.connect(self.con_center)
+        # self.delete_con_btn.clicked.connect(self.delete_con)
+        # self.nw_btn.clicked.connect(lambda: self.shift_connectivity(5))
+        # self.ne_btn.clicked.connect(lambda: self.shift_connectivity(8))
+        # self.sw_btn.clicked.connect(lambda: self.shift_connectivity(6))
+        # self.se_btn.clicked.connect(lambda: self.shift_connectivity(7))
+        # self.con_center_btn.clicked.connect(self.con_center)
 
         self.schematize_md_btn.clicked.connect(self.schematize_md)
         self.create_connectivity_btn.clicked.connect(self.open_multiple_domains_connectivity_dialog)
 
         self.grid_lyr = self.lyrs.data["grid"]["qlyr"]
         self.mult_domains = self.lyrs.data["mult_domains"]["qlyr"]
-        self.connect_lines = self.lyrs.data["user_md_connect_lines"]["qlyr"]
+        # self.connect_lines = self.lyrs.data["user_md_connect_lines"]["qlyr"]
         self.mult_domains.afterCommitChanges.connect(self.save_user_md)
         self.md_name_cbo.currentIndexChanged.connect(self.md_index_changed)
-        self.connect_lines.afterCommitChanges.connect(self.populate_con_cbo)
-        self.connect_line_cbo.currentIndexChanged.connect(self.con_index_changed)
+        # self.connect_lines.afterCommitChanges.connect(self.populate_con_cbo)
+        # self.connect_line_cbo.currentIndexChanged.connect(self.con_index_changed)
 
     def setup_connection(self):
         """
@@ -97,19 +100,19 @@ class MultipleDomainsEditorWidget(qtBaseClass, uiDialog):
 
         self.uncheck_md_btns()
 
-    def populate_con_cbo(self):
-        """
-        Function to populate the connection cbo
-        """
-        self.connect_line_cbo.clear()
-
-        qry = "SELECT fid FROM user_md_connect_lines;"
-        rows = self.gutils.execute(qry).fetchall()
-        if rows:
-            cur_idx = 0
-            for i, row in enumerate(rows):
-                self.connect_line_cbo.addItem(str(row[0]))
-            self.connect_line_cbo.setCurrentIndex(cur_idx)
+    # def populate_con_cbo(self):
+    #     """
+    #     Function to populate the connection cbo
+    #     """
+    #     self.connect_line_cbo.clear()
+    #
+    #     qry = "SELECT fid FROM user_md_connect_lines;"
+    #     rows = self.gutils.execute(qry).fetchall()
+    #     if rows:
+    #         cur_idx = 0
+    #         for i, row in enumerate(rows):
+    #             self.connect_line_cbo.addItem(str(row[0]))
+    #         self.connect_line_cbo.setCurrentIndex(cur_idx)
 
     def md_index_changed(self):
         """
@@ -132,20 +135,20 @@ class MultipleDomainsEditorWidget(qtBaseClass, uiDialog):
             x, y = feat.geometry().centroid().asPoint()
             center_canvas(self.iface, x, y)
 
-    def con_index_changed(self):
-        """
-        Function to update the connectivity combobox when the index changes
-        """
-        if self.connect_line_cbo.currentText() == "":
-            pass
-        else:
-            con_fid = int(self.connect_line_cbo.currentText())
-
-            if self.con_center_btn.isChecked():
-                self.lyrs.show_feat_rubber(self.connect_lines.id(), con_fid)
-                feat = next(self.connect_lines.getFeatures(QgsFeatureRequest(con_fid)))
-                x, y = feat.geometry().centroid().asPoint()
-                center_canvas(self.iface, x, y)
+    # def con_index_changed(self):
+    #     """
+    #     Function to update the connectivity combobox when the index changes
+    #     """
+    #     if self.connect_line_cbo.currentText() == "":
+    #         pass
+    #     else:
+    #         con_fid = int(self.connect_line_cbo.currentText())
+    #
+    #         if self.con_center_btn.isChecked():
+    #             self.lyrs.show_feat_rubber(self.connect_lines.id(), con_fid)
+    #             feat = next(self.connect_lines.getFeatures(QgsFeatureRequest(con_fid)))
+    #             x, y = feat.geometry().centroid().asPoint()
+    #             center_canvas(self.iface, x, y)
 
     def create_md_polygon(self):
         """
@@ -211,292 +214,185 @@ class MultipleDomainsEditorWidget(qtBaseClass, uiDialog):
 
         QApplication.processEvents()
 
-        start_time_1 = time.time()
+        # Clear the grid layer
+        self.gutils.execute("""
+        UPDATE grid
+        SET domain_fid = NULL, 
+            domain_cell = NULL, 
+            connectivity_fid = NULL;
+        """)
 
-        domain_ids = self.gutils.execute("SELECT fid FROM mult_domains ORDER BY fid DESC;").fetchall()
+        # Clear the schema_md_connect_cells
+        self.gutils.clear_tables("schema_md_connect_cells")
 
-        # Use grid generator to speed up the intersection
-        for request in gridRegionGenerator(self.gutils, self.grid_lyr, gridSpan=1000, regionPadding=50, showProgress=True):
-            feature_ids = [feature.id() for feature in self.grid_lyr.getFeatures(request)]
-            # WHERE grid.fid IN ({','.join(map(str, feature_ids))});
-            sql_update = f"""
-                UPDATE grid
-                SET domain_fid = (
-                    SELECT md.fid
-                    FROM mult_domains md
-                    WHERE ST_Intersects(CastAutomagic(md.geom), CastAutomagic(grid.geom))
-                )
-                WHERE grid.fid IN ({','.join(map(str, feature_ids))});
-            """
-            self.gutils.execute(sql_update)
+        # Clear the user_md_connect_lines
+        self.gutils.clear_tables("user_md_connect_lines")
 
-        end_time_1 = time.time()
-        hours, rem = divmod(end_time_1 - start_time_1, 3600)
-        minutes, seconds = divmod(rem, 60)
-        time_passed_1 = "{:0>2}:{:0>2}:{:0>2}".format(int(hours), int(minutes), int(seconds))
+        # Add data to the schema_md_connect_cells and the grid.connectivity_fid
+        self.intersected_domains()
 
-        # Process domain_cells
+        domain_ids = self.gutils.execute("SELECT fid FROM mult_domains ORDER BY fid;").fetchall()
+
         for domain_id in domain_ids:
-            start_time_2 = time.time()
-            fids = self.gutils.execute(f"SELECT fid FROM grid WHERE domain_fid = {domain_id[0]} ORDER BY fid;").fetchall()
-            domain_cells_data = [(i + 1, fid[0]) for i, fid in enumerate(fids)]
-            end_time_2 = time.time()
+            domain_grids = self.gutils.execute(f"""
+                            SELECT grid.fid, grid.domain_cell, grid.connectivity_fid
+                            FROM mult_domains md
+                            JOIN grid ON ST_Intersects(CastAutomagic(md.geom), CastAutomagic(grid.geom)) 
+                            WHERE md.fid = {domain_id[0]};
+                        """).fetchall()
+            for i, (grid_fid, domain_cell, connectivity_fid) in enumerate(domain_grids):
+                if connectivity_fid in [NULL, None]:
+                    sql_update = f"""
+                                     UPDATE grid
+                                     SET 
+                                        domain_fid = {domain_id[0]}, 
+                                        domain_cell = {i + 1}
+                                     WHERE
+                                        fid = {grid_fid}
+                                 """
+                    self.gutils.execute(sql_update)
+                else:
+                    connect_domains = self.gutils.execute(f"""
+                        SELECT up_domain_fid, down_domain_fid FROM schema_md_connect_cells WHERE fid = {connectivity_fid};
+                    """).fetchall()
+                    if connect_domains:
+                        up_domain_fid, down_domain_fid = connect_domains[0]
+                        if domain_id[0] == up_domain_fid:
+                            if domain_cell in [NULL, None]:
+                                sql_update = f"""
+                                                 UPDATE grid
+                                                 SET
+                                                    domain_fid = {domain_id[0]},
+                                                    domain_cell = {i + 1}
+                                                 WHERE
+                                                    fid = {grid_fid}
+                                             """
+                                self.gutils.execute(sql_update)
+                                self.gutils.execute(
+                                    f"UPDATE schema_md_connect_cells SET up_domain_cell = {i + 1} WHERE fid = {connectivity_fid}")
+                        else:
+                            self.gutils.execute(
+                                f"UPDATE schema_md_connect_cells SET down_domain_cell = {i + 1} WHERE fid = {connectivity_fid}")
 
-            QApplication.processEvents()
-            if pd.wasCanceled():
-                break
-
-            start_time_3 = time.time()
-            # Update domain_cell for the current domain
-            self.gutils.execute_many("UPDATE grid SET domain_cell = ? WHERE fid = ?", domain_cells_data)
-            end_time_3 = time.time()
-
-            hours, rem = divmod(end_time_2 - start_time_2, 3600)
-            minutes, seconds = divmod(rem, 60)
-            time_passed_2 = "{:0>2}:{:0>2}:{:0>2}".format(int(hours), int(minutes), int(seconds))
-
-            hours, rem = divmod(end_time_3 - start_time_3, 3600)
-            minutes, seconds = divmod(rem, 60)
-            time_passed_3 = "{:0>2}:{:0>2}:{:0>2}".format(int(hours), int(minutes), int(seconds))
-
-            self.uc.log_info(f"Select data {time_passed_2}!")
-            self.uc.log_info(f"Execute SQL {time_passed_3}!")
-
-        pd.close()
+        # self.gutils.execute("""
+        # DELETE FROM schema_md_connect_cells
+        # WHERE up_domain_fid IS NULL
+        #    OR up_domain_cell IS NULL
+        #    OR down_domain_fid IS NULL
+        #    OR down_domain_cell IS NULL;
+        # """)
 
         QApplication.restoreOverrideCursor()
 
-        self.uc.log_info(f"Intersection {time_passed_1}!")
+    def intersected_domains(self):
+        """
+        Get the intersected cells between the domains and add data
+        to the schema_md_connect_cells and the grid.connectivity_fid
+        """
 
-        self.uc.bar_info(f"Schematization of subdomains finished in {time_passed_1}!")
-        self.uc.log_info(f"Schematization of subdomains finished in {time_passed_1}!")
+        downstream_domains = {}
+        subdomain_connectivities = self.gutils.execute(f"""
+                                           SELECT
+                                               im.fid, 
+                                               im.fid_subdomain_1,
+                                               im.fid_subdomain_2,
+                                               im.fid_subdomain_3,
+                                               im.fid_subdomain_4,
+                                               im.fid_subdomain_5,
+                                               im.fid_subdomain_6,
+                                               im.fid_subdomain_7,
+                                               im.fid_subdomain_8,
+                                               im.fid_subdomain_9
+                                           FROM
+                                               mult_domains_con AS im;
+                                                       """).fetchall()
+        if subdomain_connectivities:
+            for subdomain_connectivity in subdomain_connectivities:
+                subdomain_fid = subdomain_connectivity[0]
+                downstream_domains[subdomain_fid] = []
+                for i in range(1, 10):
+                    if subdomain_connectivity[i] not in [0, NULL, 'NULL', None]:
+                        downstream_domains[subdomain_fid].append(subdomain_connectivity[i])
 
-            # for domain_id in domain_ids:
-            #     # Fetch all fids for the current domain updated above
-            #     fids = self.gutils.execute(
-            #         f"SELECT fid FROM grid WHERE domain_fid = {domain_id[0]} AND fid IN ({','.join(map(str, feature_ids))}) ORDER BY fid;").fetchall()
-            #     domain_cells_data = [(i + 1, fid[0]) for i, fid in enumerate(fids)]
-            #
-            #     # Bulk update domain_cell
-            #     self.gutils.execute_many("UPDATE grid SET domain_cell = ? WHERE fid = ?", domain_cells_data)
+        # Create the intersected lines
+        polygon_layer = self.lyrs.data["mult_domains"]["qlyr"]
 
-            # domain_ids = self.gutils.execute("SELECT fid FROM mult_domains;").fetchall()
-            #
+        # Create a new memory layer for intersections with the same CRS as the polygon layer
+        intersection_layer = self.lyrs.data["user_md_connect_lines"]["qlyr"]
+        provider = intersection_layer.dataProvider()
 
-            #
-                # # Process domain_cells after updating domain_fid for the current domain
-                # fids = self.gutils.execute(f"SELECT fid FROM grid WHERE domain_fid = {domain_id[0]} ORDER BY fid;").fetchall()
-                # domain_cells_data = [(i + 1, fid[0]) for i, fid in enumerate(fids)]
-                #
-                # # Update domain_cell for the current domain
-                # self.gutils.execute_many("UPDATE grid SET domain_cell = ? WHERE fid = ?", domain_cells_data)
+        # Collect all features from the polygon layer
+        features = list(polygon_layer.getFeatures())
 
+        # Initialize a counter for the intersection feature's fid
+        intersection_id = 1
 
+        tolerance = 0.1
 
-        # QApplication.setOverrideCursor(Qt.WaitCursor)
-        #
-        # domain_ids = self.gutils.execute("SELECT fid FROM mult_domains;").fetchall()
-        #
-        # for domain_id in domain_ids:
-        #     start_time = time.time()
-        #
-        #     # Assign domain_fid to grid elements intersecting the current domain
-        #     self.gutils.execute(f"""
-        #                 UPDATE grid
-        #                 SET domain_fid = {domain_id[0]}
-        #                 WHERE ST_Intersects(
-        #                     CastAutomagic((SELECT geom FROM mult_domains WHERE fid = {domain_id[0]})),
-        #                     CastAutomagic(grid.geom)
-        #                 );
-        #             """)
-        #
-        #     end_time = time.time()
-        #     hours, rem = divmod(end_time - start_time, 3600)
-        #     minutes, seconds = divmod(rem, 60)
-        #     time_passed = "{:0>2}:{:0>2}:{:0>2}".format(int(hours), int(minutes), int(seconds))
-        #     self.uc.log_info(f"Intersection done for Domain {domain_id[0]}: {time_passed}")
-        #
-        #     start_time = time.time()
-        #
-        #     # Process domain_cells after updating domain_fid for the current domain
-        #     fids = self.gutils.execute(f"SELECT fid FROM grid WHERE domain_fid = {domain_id[0]} ORDER BY fid;").fetchall()
-        #     domain_cells_data = [(i + 1, fid[0]) for i, fid in enumerate(fids)]
-        #
-        #     end_time = time.time()
-        #     hours, rem = divmod(end_time - start_time, 3600)
-        #     minutes, seconds = divmod(rem, 60)
-        #     time_passed = "{:0>2}:{:0>2}:{:0>2}".format(int(hours), int(minutes), int(seconds))
-        #     self.uc.log_info(f"Processing data done for Domain {domain_id[0]}: {time_passed}")
-        #
-        #     start_time = time.time()
-        #
-        #     # Update domain_cell for the current domain
-        #     self.gutils.execute_many("UPDATE grid SET domain_cell = ? WHERE fid = ?", domain_cells_data)
-        #
-        #     end_time = time.time()
-        #     hours, rem = divmod(end_time - start_time, 3600)
-        #     minutes, seconds = divmod(rem, 60)
-        #     time_passed = "{:0>2}:{:0>2}:{:0>2}".format(int(hours), int(minutes), int(seconds))
-        #     self.uc.log_info(f"Execute the SQL for Domain {domain_id[0]}: {time_passed}")
-        #
-        # QApplication.restoreOverrideCursor()
+        # Iterate over all unique pairs of polygons using itertools.combinations
+        for feat1, feat2 in itertools.permutations(features, 2):
+            geom1_buff = feat1.geometry().buffer(tolerance, 5)  # Apply buffer with a segment count of 5
+            geom2_buff = feat2.geometry().buffer(tolerance, 5)
 
-    # def update_domain_cells(self, feature):
-    #     """
-    #     Function to update the domain cells
-    #     """
-    #     fid = feature["fid"]
-    #     cellsize = self.gutils.execute(f"SELECT domain_cellsize FROM mult_domains WHERE fid = {fid};").fetchone()[0]
-    #     cellsize_grid = self.gutils.get_cont_par("CELLSIZE")
-    #
-    #     cellsize_ratio = float(cellsize_grid) / float(cellsize)
-    #
-    #     # Intersect the connectivity line to the grid
-    #     connectivity_lines = self.lyrs.data["user_md_connect_lines"]["qlyr"]
-    #     connect_cells = self.lyrs.data["schema_md_connect_cells"]["qlyr"]
-    #
-    #     for line in connectivity_lines.getFeatures():
-    #         line_fid = line['fid']
-    #         int_grid_ids = self.gutils.execute(f"""
-    #                             SELECT
-    #                                 g.fid AS FID
-    #                             FROM
-    #                                 grid AS g, user_md_connect_lines AS cl
-    #                             WHERE
-    #                                 cl.domain_fid = "{line_fid}" AND cl.domain_fid = {fid} AND
-    #                                 ST_Intersects(CastAutomagic(g.geom), CastAutomagic(cl.geom));
-    #                             """).fetchall()
-    #
-    #         for int_grid_id in int_grid_ids:
-    #             int_grid_id = int_grid_id[0]
-    #             query = f"""
-    #                         SELECT
-    #                             g.fid AS grid_id,
-    #                             smc.fid AS smc_id,
-    #                             ST_Centroid(CastAutomagic(smc.geom)) AS smc_centroid,
-    #                             ST_Distance(ST_Centroid(CastAutomagic(g.geom)), ST_Centroid(CastAutomagic(smc.geom))) AS distance
-    #                         FROM
-    #                             grid AS g
-    #                         JOIN
-    #                             schema_md_cells AS smc
-    #                         ON
-    #                             ST_Distance(ST_Centroid(CastAutomagic(g.geom)), ST_Centroid(CastAutomagic(smc.geom))) IS NOT NULL
-    #                         WHERE
-    #                             g.fid = {int_grid_id}
-    #                         ORDER BY
-    #                             g.fid, distance
-    #                         LIMIT {cellsize_ratio};
-    #                     """
-    #             closest_domain_cells = self.gutils.execute(query).fetchall()
-    #             for closest_domain_cell in closest_domain_cells:
-    #                 grid_id, smc_id, smc_centroid, _ = closest_domain_cell
-    #                 data = [(fid, grid_id, smc_id, smc_centroid)]  # Wrap the tuple in a list
-    #                 qry = """INSERT INTO schema_md_connect_cells (domain_fid, grid_fid, domain_cell, geom) VALUES (?,?,?,?);"""
-    #                 self.con.executemany(qry, data)
-    #
-    #     # Update the layers
-    #     self.lyrs.update_layer_extents(domain_cells)
-    #     if domain_cells:
-    #         domain_cells.triggerRepaint()
-    #
-    #     self.lyrs.update_layer_extents(connect_cells)
-    #     if connect_cells:
-    #         connect_cells.triggerRepaint()
-    #
-    # def square_grid(self, feature):
-    #     """
-    #     Function for calculating and writing square grid into 'schema_md_cells' table.
-    #     """
-    #     fid = feature["fid"]
-    #     cellsize_domain = self.gutils.execute(f"SELECT domain_cellsize FROM mult_domains WHERE fid = {fid};").fetchone()[0]
-    #     cellsize_grid = self.gutils.get_cont_par("CELLSIZE")
-    #
-    #     cellsize_modulo = float(cellsize_grid) % float(cellsize_domain)
-    #     if cellsize_modulo != 0:
-    #         domain_name = self.gutils.execute(f"SELECT name FROM mult_domains WHERE fid = {fid};").fetchone()[0]
-    #         self.uc.bar_error(f"The cell size of {domain_name} is not compatible with the grid cell size!")
-    #         self.uc.log_info(f"The cell size of {domain_name} is not compatible with the grid cell size!")
-    #         return
-    #
-    #     polygons = list(self.build_grid(feature, cellsize_domain))
-    #     total_polygons = len(polygons)
-    #
-    #     progDialog = QProgressDialog(f"Creating Grid for domain {fid}. Please wait...", None, 0, total_polygons)
-    #     progDialog.setModal(True)
-    #     progDialog.setValue(0)
-    #     progDialog.show()
-    #     QApplication.processEvents()
-    #     i = 0
-    #
-    #     polygons = ((self.gutils.build_square_from_polygon(poly),) for poly in
-    #                 self.build_grid(feature, cellsize_domain))
-    #     sql = ["""INSERT INTO schema_md_cells (geom) VALUES""", 1]
-    #     for g_tuple in polygons:
-    #         sql.append(g_tuple)
-    #         progDialog.setValue(i)
-    #         i += 1
-    #     if len(sql) > 2:
-    #         self.gutils.batch_execute(sql)
-    #     else:
-    #         pass
+            # Check if the two geometries touch (i.e., share a boundary)
+            if geom1_buff.intersection(geom2_buff):
+                # Compute the shared border between the two geometries
+                original_geom1 = feat1.geometry()
+                original_geom2 = feat2.geometry()
+                intersect_geom = original_geom1.intersection(original_geom2)
 
-    # def build_grid(self, feature, cell_size, upper_left_coords=None):
-    #     """
-    #     Generator which creates grid with given cell size and inside given boundary layer.
-    #     """
-    #     half_size = cell_size * 0.5
-    #     geom = feature.geometry()
-    #     bbox = geom.boundingBox()
-    #     xmin = bbox.xMinimum()
-    #     xmax = bbox.xMaximum()
-    #     ymax = bbox.yMaximum()
-    #     ymin = bbox.yMinimum()
-    #     if upper_left_coords:
-    #         xmin, ymax = upper_left_coords
-    #     cols = int(math.ceil(abs(xmax - xmin) / cell_size))
-    #     rows = int(math.ceil(abs(ymax - ymin) / cell_size))
-    #     x = xmin + half_size
-    #     y = ymax - half_size
-    #     geos_geom_engine = QgsGeometry.createGeometryEngine(geom.constGet())
-    #     geos_geom_engine.prepareGeometry()
-    #     for col in range(cols):
-    #         y_tmp = y
-    #         for row in range(rows):
-    #             pnt = QgsGeometry.fromPointXY(QgsPointXY(x, y_tmp))
-    #             if geos_geom_engine.intersects(pnt.constGet()):
-    #                 poly = (
-    #                     x - half_size,
-    #                     y_tmp - half_size,
-    #                     x + half_size,
-    #                     y_tmp - half_size,
-    #                     x + half_size,
-    #                     y_tmp + half_size,
-    #                     x - half_size,
-    #                     y_tmp + half_size,
-    #                     x - half_size,
-    #                     y_tmp - half_size,
-    #                 )
-    #                 yield poly
-    #             else:
-    #                 pass
-    #             y_tmp -= cell_size
-    #         x += cell_size
+                # Create a new feature for the intersection layer
+                new_feat = QgsFeature()
+                new_feat.setGeometry(intersect_geom)
+                # Here we assume that the polygon layer's unique identifier is stored in the "fid" field.
+                if feat2["fid"] in downstream_domains[feat1["fid"]]:
+                    new_feat.setAttributes([intersection_id, feat1["fid"], feat2["fid"], ""])
+                    provider.addFeature(new_feat)
+
+                    intersection_id += 1
+
+        intersected_cells = self.gutils.execute("""
+            SELECT grid.fid, user_md_connect_lines.up_domain_fid, user_md_connect_lines.down_domain_fid, grid.geom 
+            FROM grid
+            JOIN user_md_connect_lines ON ST_Intersects(CastAutomagic(grid.geom), CastAutomagic(user_md_connect_lines.geom))
+        """).fetchall()
+
+        # Iterate over selected grid cells and update schema_md_connect_cells
+        for i, (grid_fid, up_domain_fid, down_domain_fid, geom) in enumerate(intersected_cells):
+            self.gutils.execute("""
+                INSERT INTO schema_md_connect_cells (up_domain_fid, down_domain_fid, geom)
+                VALUES (?, ?, AsGPB(ST_Centroid(GeomFromGPB(?))))
+            """, [up_domain_fid, down_domain_fid, geom])
+            self.gutils.execute(f"""
+            UPDATE grid
+            SET connectivity_fid = {i + 1} WHERE fid = {grid_fid};
+            """)
 
     def delete_schema_md(self):
         """
         Function to delete the multiple domains schematized data
         """
-        if self.gutils.is_table_empty("schema_md_connect_cells"):
-            self.uc.bar_warn("There is no schematized multiple domains data!")
-            self.uc.log_info("There is no schematized multiple domains data!")
-            return
+
+        QApplication.setOverrideCursor(Qt.WaitCursor)
 
         self.gutils.clear_tables("schema_md_connect_cells")
+        self.gutils.clear_tables("mult_domains_methods")
+        self.gutils.clear_tables("mult_domains_con")
+
+        # Clear the grid layer
+        self.gutils.execute("""
+        UPDATE grid
+        SET domain_fid = NULL, 
+            domain_cell = NULL, 
+            connectivity_fid = NULL;
+        """)
 
         self.uc.bar_info("Schematized multiple domains deleted!")
         self.uc.log_info("Schematized multiple domains deleted!")
 
         self.lyrs.clear_rubber()
+
+        QApplication.restoreOverrideCursor()
 
     def change_md_name(self):
         """
@@ -547,6 +443,27 @@ class MultipleDomainsEditorWidget(qtBaseClass, uiDialog):
         self.uc.bar_info("Domain deleted!")
         self.uc.log_info("Domain deleted!")
 
+    def delete_con(self):
+        """
+        Function to delete the connectivity line
+        """
+        if not self.connect_line_cbo.count():
+            return
+        fid_qry = self.gutils.execute(f"SELECT fid FROM user_md_connect_lines WHERE fid = '{self.connect_line_cbo.currentText()}';").fetchone()
+        if fid_qry:
+            fid = fid_qry[0]
+        else:
+            return
+        q = "Are you sure, you want delete the current connectivity line?"
+        if not self.uc.question(q):
+            return
+        self.gutils.execute(f"DELETE FROM user_md_connect_lines WHERE fid = {fid};")
+        self.populate_md_cbos()
+        # self.populate_con_cbo()
+        # self.connect_lines.triggerRepaint()
+        self.uc.bar_info("Connectivity line deleted!")
+        self.uc.log_info("Connectivity line deleted!")
+
     def md_center(self):
         """
         Function to check the md eye button
@@ -569,22 +486,22 @@ class MultipleDomainsEditorWidget(qtBaseClass, uiDialog):
             self.lyrs.clear_rubber()
             return
 
-    def con_center(self):
-        """
-        Function to check the con eye button
-        """
-        if self.con_center_btn.isChecked():
-            self.con_center_btn.setChecked(True)
-            fid = int(self.connect_line_cbo.currentText())
-            self.lyrs.show_feat_rubber(self.connect_lines.id(), fid)
-            feat = next(self.connect_lines.getFeatures(QgsFeatureRequest(fid)))
-            x, y = feat.geometry().centroid().asPoint()
-            center_canvas(self.iface, x, y)
-            return
-        else:
-            self.con_center_btn.setChecked(False)
-            self.lyrs.clear_rubber()
-            return
+    # def con_center(self):
+    #     """
+    #     Function to check the con eye button
+    #     """
+    #     if self.con_center_btn.isChecked():
+    #         self.con_center_btn.setChecked(True)
+    #         fid = int(self.connect_line_cbo.currentText())
+    #         self.lyrs.show_feat_rubber(self.connect_lines.id(), fid)
+    #         feat = next(self.connect_lines.getFeatures(QgsFeatureRequest(fid)))
+    #         x, y = feat.geometry().centroid().asPoint()
+    #         center_canvas(self.iface, x, y)
+    #         return
+    #     else:
+    #         self.con_center_btn.setChecked(False)
+    #         self.lyrs.clear_rubber()
+    #         return
 
     # def change_connect_name(self):
     #     """
@@ -782,10 +699,8 @@ class MultipleDomainsEditorWidget(qtBaseClass, uiDialog):
         dlg = MultipleDomainsConnectivityDialog(self.iface, self.con, self.lyrs)
         ok = dlg.exec_()
         if not ok:
-            self.populate_con_cbo()
             return
         else:
-            self.populate_con_cbo()
             pass
 
     def save_user_md(self):
@@ -826,32 +741,32 @@ class MultipleDomainsEditorWidget(qtBaseClass, uiDialog):
 
         self.populate_md_cbos()
 
-    def shift_connectivity(self, direction):
-        """
-        Function to shift the connectivity line
-        """
-        cell_size = float(self.cellsize_le.text())
-        con_fid = int(self.connect_line_cbo.currentText())
-
-        self.connect_lines = self.lyrs.data["user_md_connect_lines"]["qlyr"]
-        provider = self.connect_lines.dataProvider()
-        feat = next(self.connect_lines.getFeatures(QgsFeatureRequest(con_fid)))
-        geometry = feat.geometry()
-
-        translations = {
-            5: (-cell_size / 2, cell_size / 2),  # NE
-            6: (-cell_size / 2, -cell_size / 2),  # SE
-            7: (cell_size / 2, -cell_size / 2),  # SW
-            8: (cell_size / 2, cell_size / 2)  # NW
-        }
-
-        if direction in translations:
-            dx, dy = translations[direction]
-            geometry.translate(dx, dy)
-            # Update the feature with the new geometry
-            provider.changeGeometryValues({feat.id(): geometry})
-
-        self.connect_lines.triggerRepaint()
+    # def shift_connectivity(self, direction):
+    #     """
+    #     Function to shift the connectivity line
+    #     """
+    #     cell_size = float(self.cellsize_le.text())
+    #     con_fid = int(self.connect_line_cbo.currentText())
+    #
+    #     self.connect_lines = self.lyrs.data["user_md_connect_lines"]["qlyr"]
+    #     provider = self.connect_lines.dataProvider()
+    #     feat = next(self.connect_lines.getFeatures(QgsFeatureRequest(con_fid)))
+    #     geometry = feat.geometry()
+    #
+    #     translations = {
+    #         5: (-cell_size / 2, cell_size / 2),  # NE
+    #         6: (-cell_size / 2, -cell_size / 2),  # SE
+    #         7: (cell_size / 2, -cell_size / 2),  # SW
+    #         8: (cell_size / 2, cell_size / 2)  # NW
+    #     }
+    #
+    #     if direction in translations:
+    #         dx, dy = translations[direction]
+    #         geometry.translate(dx, dy)
+    #         # Update the feature with the new geometry
+    #         provider.changeGeometryValues({feat.id(): geometry})
+    #
+    #     self.connect_lines.triggerRepaint()
 
 
 # class DomainProcessingTask(QgsTask):

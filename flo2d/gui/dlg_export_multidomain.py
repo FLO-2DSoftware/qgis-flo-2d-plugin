@@ -368,7 +368,7 @@ class ExportMultipleDomainsDialog(qtBaseClass, uiDialog):
 
         if subdomains:
             # Figure out the upstream domains
-            upstream_domains = {}
+            downstream_domains = {}
             subdomain_connectivities = self.gutils.execute(f"""
                                    SELECT
                                        im.fid, 
@@ -387,44 +387,35 @@ class ExportMultipleDomainsDialog(qtBaseClass, uiDialog):
             if subdomain_connectivities:
                 for subdomain_connectivity in subdomain_connectivities:
                     subdomain_fid = subdomain_connectivity[0]
-                    if subdomain_fid == NULL:
-                        continue
+                    downstream_domains[subdomain_fid] = []
                     for i in range(1, 10):
-                        if subdomain_connectivity[i] != NULL:
-                            if subdomain_connectivity[i] not in upstream_domains:
-                                upstream_domains[subdomain_connectivity[i]] = []
-                            if subdomain_fid not in upstream_domains[subdomain_connectivity[i]]:
-                                upstream_domains[subdomain_connectivity[i]].append(subdomain_fid)
+                        if subdomain_connectivity[i] not in [0, NULL, 'NULL', None]:
+                            downstream_domains[subdomain_fid].append(subdomain_connectivity[i])
 
             for subdomain in subdomains:
+
                 export_folder = os.path.join(self.export_directory_le.text(), subdomain[1])
                 if not os.path.exists(export_folder):
                     os.makedirs(export_folder)
-                if subdomain[0] == 1:
-                    sql = (
-                        """SELECT fid, n_value, elevation, ST_AsText(ST_Centroid(GeomFromGPB(geom))) FROM grid WHERE domain_fid = 1 ORDER BY fid;"""
-                    )
-                    records = self.gutils.execute(sql).fetchall()
-                else:
-                    sub_grid_cells = self.gutils.execute(f"""SELECT 
-                                                                g.domain_cell, 
-                                                                g.n_value, 
-                                                                g.elevation, 
-                                                                ST_AsText(ST_Centroid(GeomFromGPB(g.geom)))
-                                                            FROM 
-                                                                grid g
-                                                            WHERE 
-                                                                g.domain_fid = {subdomain[0]};""").fetchall()
 
-                    for upstream_domain in upstream_domains[subdomain[0]]:
-                        sub_con_cells = self.gutils.execute(f"""
-                                        SELECT c.down_domain_cell AS domain_cell, g.n_value, g.elevation, ST_AsText(ST_Centroid(GeomFromGPB(g.geom)))
-                                        FROM grid g
-                                        JOIN schema_md_connect_cells c ON g.domain_cell = c.up_domain_cell
-                                        WHERE c.down_domain_fid = {subdomain[0]} AND g.domain_fid = {upstream_domain} AND c.up_domain_fid = {upstream_domain} AND g.connectivity_fid != 'NULL'""").fetchall()
-                        sub_grid_cells.extend(sub_con_cells)
+                sub_grid_cells = self.gutils.execute(f"""SELECT 
+                                                            g.domain_cell, 
+                                                            g.n_value, 
+                                                            g.elevation, 
+                                                            ST_AsText(ST_Centroid(GeomFromGPB(g.geom)))
+                                                        FROM 
+                                                            grid g
+                                                        WHERE 
+                                                            g.domain_fid = {subdomain[0]};""").fetchall()
 
-                    records = sorted(sub_grid_cells, key=lambda x: x[0])
+                sub_con_cells = self.gutils.execute(f"""
+                                SELECT c.down_domain_cell AS domain_cell, g.n_value, g.elevation, ST_AsText(ST_Centroid(GeomFromGPB(g.geom)))
+                                FROM grid g
+                                JOIN schema_md_connect_cells c ON g.domain_cell = c.up_domain_cell
+                                WHERE c.down_domain_fid = {subdomain[0]} AND g.connectivity_fid != 'NULL'""").fetchall()
+                sub_grid_cells.extend(sub_con_cells)
+
+                records = sorted(sub_grid_cells, key=lambda x: x[0])
 
                 mannings = os.path.join(str(export_folder), "MANNINGS_N.DAT")
                 topo = os.path.join(str(export_folder), "TOPO.DAT")
@@ -459,14 +450,14 @@ class ExportMultipleDomainsDialog(qtBaseClass, uiDialog):
                                     "{0:.4f}".format(elev),
                                 )
                             )
-                    connected_subdomains = self.gutils.execute(
-                        f"""SELECT DISTINCT down_domain_fid FROM schema_md_connect_cells WHERE up_domain_fid = {subdomain[0]};""").fetchall()
+
+                    connected_subdomains = downstream_domains[subdomain[0]]
                     if connected_subdomains:
                         with open(multidomain, "w") as md:
-                            for i, connected_subdomain in enumerate(connected_subdomains, start=1):
-                                md.write(mdline_n.format(i))
-                                connections = self.gutils.execute(
-                                    f"""SELECT up_domain_cell, down_domain_cell FROM schema_md_connect_cells WHERE up_domain_fid = {subdomain[0]} and down_domain_fid = {connected_subdomain[0]};""").fetchall()
+                            for connected_subdomain in connected_subdomains:
+                                md.write(mdline_n.format(connected_subdomain))
+                                sql_query = f"""SELECT up_domain_cell, down_domain_cell FROM schema_md_connect_cells WHERE up_domain_fid = {subdomain[0]} and down_domain_fid = {connected_subdomain};"""
+                                connections = self.gutils.execute(sql_query).fetchall()
                                 if connections:
                                     connection_dict = {}
                                     for up_domain_cell, down_domain_cell in connections:

@@ -1360,7 +1360,10 @@ CREATE TABLE "schema_md_connect_cells" (
     "down_domain_fid" INTEGER,
     "down_domain_cell" INTEGER
 );
-INSERT INTO gpkg_contents (table_name, data_type) VALUES ('schema_md_connect_cells', 'aspatial');
+INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('schema_md_connect_cells', 'features', 4326);
+SELECT gpkgAddGeometryColumn('schema_md_connect_cells', 'geom', 'POINT', 0, 0, 0);
+SELECT gpkgAddGeometryTriggers('schema_md_connect_cells', 'geom');
+SELECT gpkgAddSpatialIndex('schema_md_connect_cells', 'geom');
 
 CREATE TABLE "mult_domains_methods" (
     "fid" INTEGER NOT NULL PRIMARY KEY,

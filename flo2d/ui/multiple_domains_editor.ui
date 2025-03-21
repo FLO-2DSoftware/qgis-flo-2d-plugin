@@ -16,13 +16,10 @@
   <layout class="QGridLayout" name="gridLayout">
    <item row="0" column="0">
     <layout class="QGridLayout" name="gridLayout_2">
-     <item row="2" column="2">
-      <spacer name="horizontalSpacer_8">
+     <item row="2" column="3" colspan="3">
+      <spacer name="horizontalSpacer_7">
        <property name="orientation">
         <enum>Qt::Horizontal</enum>
-       </property>
-       <property name="sizeType">
-        <enum>QSizePolicy::Expanding</enum>
        </property>
        <property name="sizeHint" stdset="0">
         <size>
@@ -31,6 +28,44 @@
         </size>
        </property>
       </spacer>
+     </item>
+     <item row="1" column="5">
+      <widget class="QToolButton" name="md_center_btn">
+       <property name="text">
+        <string>...</string>
+       </property>
+       <property name="icon">
+        <iconset>
+         <normaloff>../img/eye-svgrepo-com.svg</normaloff>../img/eye-svgrepo-com.svg</iconset>
+       </property>
+       <property name="checkable">
+        <bool>true</bool>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="0">
+      <widget class="QLabel" name="label_2">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Maximum" vsizetype="Preferred">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="text">
+        <string>Domain Name</string>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="3">
+      <widget class="QToolButton" name="change_md_name_btn">
+       <property name="text">
+        <string>...</string>
+       </property>
+       <property name="icon">
+        <iconset>
+         <normaloff>../img/change_name.svg</normaloff>../img/change_name.svg</iconset>
+       </property>
+      </widget>
      </item>
      <item row="0" column="0" colspan="6">
       <layout class="QHBoxLayout" name="horizontalLayout">
@@ -117,23 +152,6 @@
        </item>
       </layout>
      </item>
-     <item row="1" column="1" colspan="2">
-      <widget class="QComboBox" name="md_name_cbo"/>
-     </item>
-     <item row="1" column="5">
-      <widget class="QToolButton" name="md_center_btn">
-       <property name="text">
-        <string>...</string>
-       </property>
-       <property name="icon">
-        <iconset>
-         <normaloff>../img/eye-svgrepo-com.svg</normaloff>../img/eye-svgrepo-com.svg</iconset>
-       </property>
-       <property name="checkable">
-        <bool>true</bool>
-       </property>
-      </widget>
-     </item>
      <item row="2" column="1">
       <widget class="QLineEdit" name="cellsize_le">
        <property name="sizePolicy">
@@ -144,16 +162,21 @@
        </property>
       </widget>
      </item>
-     <item row="1" column="4">
-      <widget class="QToolButton" name="delete_md_btn">
-       <property name="text">
-        <string>...</string>
+     <item row="2" column="2">
+      <spacer name="horizontalSpacer_8">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
        </property>
-       <property name="icon">
-        <iconset>
-         <normaloff>../img/mActionDeleteSelected.svg</normaloff>../img/mActionDeleteSelected.svg</iconset>
+       <property name="sizeType">
+        <enum>QSizePolicy::Expanding</enum>
        </property>
-      </widget>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>40</width>
+         <height>20</height>
+        </size>
+       </property>
+      </spacer>
      </item>
      <item row="2" column="0">
       <widget class="QLabel" name="label">
@@ -162,7 +185,7 @@
        </property>
       </widget>
      </item>
-     <item row="4" column="0" colspan="6">
+     <item row="3" column="0" colspan="6">
       <layout class="QHBoxLayout" name="horizontalLayout_3">
        <item>
         <spacer name="horizontalSpacer_4">
@@ -226,140 +249,19 @@
        </item>
       </layout>
      </item>
-     <item row="1" column="3">
-      <widget class="QToolButton" name="change_md_name_btn">
+     <item row="1" column="1" colspan="2">
+      <widget class="QComboBox" name="md_name_cbo"/>
+     </item>
+     <item row="1" column="4">
+      <widget class="QToolButton" name="delete_md_btn">
        <property name="text">
         <string>...</string>
        </property>
        <property name="icon">
         <iconset>
-         <normaloff>../img/change_name.svg</normaloff>../img/change_name.svg</iconset>
+         <normaloff>../img/mActionDeleteSelected.svg</normaloff>../img/mActionDeleteSelected.svg</iconset>
        </property>
       </widget>
-     </item>
-     <item row="2" column="3" colspan="3">
-      <spacer name="horizontalSpacer_7">
-       <property name="orientation">
-        <enum>Qt::Horizontal</enum>
-       </property>
-       <property name="sizeHint" stdset="0">
-        <size>
-         <width>40</width>
-         <height>20</height>
-        </size>
-       </property>
-      </spacer>
-     </item>
-     <item row="1" column="0">
-      <widget class="QLabel" name="label_2">
-       <property name="sizePolicy">
-        <sizepolicy hsizetype="Maximum" vsizetype="Preferred">
-         <horstretch>0</horstretch>
-         <verstretch>0</verstretch>
-        </sizepolicy>
-       </property>
-       <property name="text">
-        <string>Domain Name</string>
-       </property>
-      </widget>
-     </item>
-     <item row="3" column="0">
-      <widget class="QLabel" name="label_3">
-       <property name="text">
-        <string>Connectivity Line</string>
-       </property>
-      </widget>
-     </item>
-     <item row="3" column="1">
-      <widget class="QComboBox" name="connect_line_cbo"/>
-     </item>
-     <item row="3" column="2" colspan="4">
-      <layout class="QGridLayout" name="gridLayout_3">
-       <property name="spacing">
-        <number>0</number>
-       </property>
-       <item row="0" column="0" rowspan="3">
-        <layout class="QVBoxLayout" name="verticalLayout">
-         <property name="spacing">
-          <number>0</number>
-         </property>
-         <property name="rightMargin">
-          <number>6</number>
-         </property>
-         <item>
-          <widget class="QToolButton" name="con_center_btn">
-           <property name="text">
-            <string>...</string>
-           </property>
-           <property name="icon">
-            <iconset>
-             <normaloff>../img/eye-svgrepo-com.svg</normaloff>../img/eye-svgrepo-com.svg</iconset>
-           </property>
-           <property name="checkable">
-            <bool>true</bool>
-           </property>
-          </widget>
-         </item>
-        </layout>
-       </item>
-       <item row="2" column="3">
-        <widget class="QToolButton" name="se_btn">
-         <property name="text">
-          <string>...</string>
-         </property>
-         <property name="icon">
-          <iconset>
-           <normaloff>../img/arrow_6.svg</normaloff>../img/arrow_6.svg</iconset>
-         </property>
-        </widget>
-       </item>
-       <item row="0" column="3" rowspan="2">
-        <widget class="QToolButton" name="ne_btn">
-         <property name="text">
-          <string>...</string>
-         </property>
-         <property name="icon">
-          <iconset>
-           <normaloff>../img/arrow_5.svg</normaloff>../img/arrow_5.svg</iconset>
-         </property>
-        </widget>
-       </item>
-       <item row="2" column="2">
-        <widget class="QToolButton" name="sw_btn">
-         <property name="text">
-          <string>...</string>
-         </property>
-         <property name="icon">
-          <iconset>
-           <normaloff>../img/arrow_7.svg</normaloff>../img/arrow_7.svg</iconset>
-         </property>
-        </widget>
-       </item>
-       <item row="0" column="2" rowspan="2">
-        <widget class="QToolButton" name="nw_btn">
-         <property name="text">
-          <string>...</string>
-         </property>
-         <property name="icon">
-          <iconset>
-           <normaloff>../img/arrow_8.svg</normaloff>../img/arrow_8.svg</iconset>
-         </property>
-        </widget>
-       </item>
-       <item row="0" column="1" rowspan="3">
-        <spacer name="horizontalSpacer_2">
-         <property name="orientation">
-          <enum>Qt::Horizontal</enum>
-         </property>
-         <property name="sizeHint" stdset="0">
-          <size>
-           <width>40</width>
-           <height>20</height>
-          </size>
-         </property>
-        </spacer>
-       </item>
-      </layout>
      </item>
     </layout>
    </item>

@@ -233,57 +233,58 @@ class MultipleDomainsConnectivityDialog(qtBaseClass, uiDialog):
 
             for subdomain_connectivity in subdomain_connectivities:
                 # Create the connectivity
-                if subdomain_connectivity[1] is NULL or subdomain_connectivity[1] == "" or subdomain_connectivity[1] is None:
+                if subdomain_connectivity[1] in [NULL, "", None]:
+                    pass
 
-                    if self.gutils.is_table_empty("grid"):
-                        self.uc.bar_warn("There is no grid! Please create it before running tool.")
-                        self.uc.log_info("There is no grid! Please create it before running tool.")
-                        return
-
-                    # Create the intersected lines
-                    polygon_layer = self.lyrs.data["mult_domains"]["qlyr"]
-
-                    # Create a new memory layer for intersections with the same CRS as the polygon layer
-                    intersection_layer = self.lyrs.data["user_md_connect_lines"]["qlyr"]
-                    provider = intersection_layer.dataProvider()
-
-                    # Collect all features from the polygon layer
-                    features = list(polygon_layer.getFeatures())
-
-                    # Initialize a counter for the intersection feature's fid
-                    intersection_id = 1
-
-                    tolerance = 0.1
-
-                    # Iterate over all unique pairs of polygons using itertools.combinations
-                    for feat1, feat2 in itertools.combinations(features, 2):
-                        geom1_buff = feat1.geometry().buffer(tolerance, 5)  # Apply buffer with a segment count of 5
-                        geom2_buff = feat2.geometry().buffer(tolerance, 5)
-
-                        # Check if the two geometries touch (i.e., share a boundary)
-                        if geom1_buff.intersection(geom2_buff):
-                            # Compute the shared border between the two geometries
-                            original_geom1 = feat1.geometry()
-                            original_geom2 = feat2.geometry()
-                            intersect_geom = original_geom1.intersection(original_geom2)
-
-                            # Create a new feature for the intersection layer
-                            new_feat = QgsFeature()
-                            new_feat.setGeometry(intersect_geom)
-                            # Here we assume that the polygon layer's unique identifier is stored in the "fid" field.
-                            new_feat.setAttributes([intersection_id, feat1["fid"], feat2["fid"], ""])
-                            provider.addFeature(new_feat)
-
-                            intersection_id += 1
-
-                    self.uc.log_info("Connectivity saved!")
-                    self.uc.bar_info("Connectivity saved!")
-
-                    self.lyrs.data["user_md_connect_lines"]["qlyr"].triggerRepaint()
-
-                    self.close_dlg()
-
-                    return
+                    # if self.gutils.is_table_empty("grid"):
+                    #     self.uc.bar_warn("There is no grid! Please create it before running tool.")
+                    #     self.uc.log_info("There is no grid! Please create it before running tool.")
+                    #     return
+                    #
+                    # # Create the intersected lines
+                    # polygon_layer = self.lyrs.data["mult_domains"]["qlyr"]
+                    #
+                    # # Create a new memory layer for intersections with the same CRS as the polygon layer
+                    # intersection_layer = self.lyrs.data["user_md_connect_lines"]["qlyr"]
+                    # provider = intersection_layer.dataProvider()
+                    #
+                    # # Collect all features from the polygon layer
+                    # features = list(polygon_layer.getFeatures())
+                    #
+                    # # Initialize a counter for the intersection feature's fid
+                    # intersection_id = 1
+                    #
+                    # tolerance = 0.1
+                    #
+                    # # Iterate over all unique pairs of polygons using itertools.combinations
+                    # for feat1, feat2 in itertools.combinations(features, 2):
+                    #     geom1_buff = feat1.geometry().buffer(tolerance, 5)  # Apply buffer with a segment count of 5
+                    #     geom2_buff = feat2.geometry().buffer(tolerance, 5)
+                    #
+                    #     # Check if the two geometries touch (i.e., share a boundary)
+                    #     if geom1_buff.intersection(geom2_buff):
+                    #         # Compute the shared border between the two geometries
+                    #         original_geom1 = feat1.geometry()
+                    #         original_geom2 = feat2.geometry()
+                    #         intersect_geom = original_geom1.intersection(original_geom2)
+                    #
+                    #         # Create a new feature for the intersection layer
+                    #         new_feat = QgsFeature()
+                    #         new_feat.setGeometry(intersect_geom)
+                    #         # Here we assume that the polygon layer's unique identifier is stored in the "fid" field.
+                    #         new_feat.setAttributes([intersection_id, feat1["fid"], feat2["fid"], ""])
+                    #         provider.addFeature(new_feat)
+                    #
+                    #         intersection_id += 1
+                    #
+                    # self.uc.log_info("Connectivity saved!")
+                    # self.uc.bar_info("Connectivity saved!")
+                    #
+                    # self.lyrs.data["user_md_connect_lines"]["qlyr"].triggerRepaint()
+                    #
+                    # self.close_dlg()
+                    #
+                    # return
 
                 # Import the connectivity
                 else:
@@ -292,10 +293,10 @@ class MultipleDomainsConnectivityDialog(qtBaseClass, uiDialog):
                     current_subdomain_path = subdomain_connectivity[1]  # md.subdomain_path
 
                     used_multidomain_file = False
+                    multidomain_data = {}
 
                     for i in range(9):  # Loop through fid_subdomain_x and ups_downs_x pairs
                         subdomain_fid_index = 2 + (i - 1) * 4  # Get index for subdomain fid
-                        subdomain_name_index = subdomain_fid_index + 1  # Get index for subdomain name
                         mult_domain_index = subdomain_fid_index + 2  # Get index for mult_domain
                         ds_file_index = subdomain_fid_index + 3  # Get index for ds_file
 
@@ -314,12 +315,20 @@ class MultipleDomainsConnectivityDialog(qtBaseClass, uiDialog):
                                 continue
 
                             multidomain = f"{current_subdomain_path}/MULTIDOMAIN.DAT"
+                            topo = f"{current_subdomain_path}/TOPO.DAT"
 
-                            multidomain_data = {}
+                            if not os.path.isfile(topo):
+                                self.uc.log_info("TOPO.DAT not found!")
+                                self.uc.bar_error("TOPO.DAT not found!")
+                                return
+
                             current_subdomain = None
 
-                            with open(multidomain, "r") as f:
-                                for line in f:
+                            with open(multidomain, "r") as md, open(topo, "r") as tp:
+
+                                topo_lines = tp.readlines()
+
+                                for line in md:
                                     data = line.strip().split()
 
                                     if not data:
@@ -332,13 +341,15 @@ class MultipleDomainsConnectivityDialog(qtBaseClass, uiDialog):
                                     elif data[0] == "D" and current_subdomain is not None:
                                         up_domain_cell = int(data[1])
                                         down_domain_cells = list(map(int, data[2:]))
-                                        multidomain_data[current_subdomain].append((up_domain_cell, down_domain_cells))
+                                        topo_data = topo_lines[up_domain_cell - 1].split()
+                                        up_domain_coords = f"POINT({topo_data[0]} {topo_data[1]})"
+                                        multidomain_data[current_subdomain].append((up_domain_cell, down_domain_cells, up_domain_coords))
 
                             j = 2 + (i - 1) * 4
                             for subdomain, connections in multidomain_data.items():
-                                for up_domain_cell, down_domain_cells in connections:
+                                for up_domain_cell, down_domain_cells, up_domain_coords in connections:
                                     for down_domain_cell in down_domain_cells:
-                                        bulk_insert_data.append((md_fid, up_domain_cell, subdomain_connectivity[j], down_domain_cell))
+                                        bulk_insert_data.append((md_fid, up_domain_cell, subdomain, down_domain_cell, up_domain_coords))
                                 j +=  4
 
                             used_multidomain_file = True
@@ -394,10 +405,11 @@ class MultipleDomainsConnectivityDialog(qtBaseClass, uiDialog):
 
             # Execute bulk insert
             if bulk_insert_data:
+                self.uc.log_info(str(bulk_insert_data))
                 self.gutils.execute_many("""
                                           INSERT INTO schema_md_connect_cells 
-                                          (up_domain_fid, up_domain_cell, down_domain_fid, down_domain_cell) 
-                                          VALUES (?, ?, ?, ?);
+                                          (up_domain_fid, up_domain_cell, down_domain_fid, down_domain_cell, geom) 
+                                          VALUES (?, ?, ?, ?, GeomFromText(?));
                                       """, bulk_insert_data)
 
         self.uc.log_info("Connectivity saved!")
