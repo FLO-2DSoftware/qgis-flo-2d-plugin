@@ -214,73 +214,24 @@ class MultipleDomainsEditorWidget(qtBaseClass, uiDialog):
 
         QApplication.processEvents()
 
-        # Clear the grid layer
-        self.gutils.execute("""
-        UPDATE grid
-        SET domain_fid = NULL, 
-            domain_cell = NULL, 
-            connectivity_fid = NULL;
-        """)
-
         # Clear the schema_md_connect_cells
-        self.gutils.clear_tables("schema_md_connect_cells")
+        self.gutils.clear_tables("schema_md_cells")
 
         # Clear the user_md_connect_lines
         self.gutils.clear_tables("user_md_connect_lines")
 
-        # Add data to the schema_md_connect_cells and the grid.connectivity_fid
-        self.intersected_domains()
-
         domain_ids = self.gutils.execute("SELECT fid FROM mult_domains ORDER BY fid;").fetchall()
 
         for domain_id in domain_ids:
-            domain_grids = self.gutils.execute(f"""
-                            SELECT grid.fid, grid.domain_cell, grid.connectivity_fid
-                            FROM mult_domains md
-                            JOIN grid ON ST_Intersects(CastAutomagic(md.geom), CastAutomagic(grid.geom)) 
-                            WHERE md.fid = {domain_id[0]};
-                        """).fetchall()
-            for i, (grid_fid, domain_cell, connectivity_fid) in enumerate(domain_grids):
-                if connectivity_fid in [NULL, None]:
-                    sql_update = f"""
-                                     UPDATE grid
-                                     SET 
-                                        domain_fid = {domain_id[0]}, 
-                                        domain_cell = {i + 1}
-                                     WHERE
-                                        fid = {grid_fid}
-                                 """
-                    self.gutils.execute(sql_update)
-                else:
-                    connect_domains = self.gutils.execute(f"""
-                        SELECT up_domain_fid, down_domain_fid FROM schema_md_connect_cells WHERE fid = {connectivity_fid};
-                    """).fetchall()
-                    if connect_domains:
-                        up_domain_fid, down_domain_fid = connect_domains[0]
-                        if domain_id[0] == up_domain_fid:
-                            if domain_cell in [NULL, None]:
-                                sql_update = f"""
-                                                 UPDATE grid
-                                                 SET
-                                                    domain_fid = {domain_id[0]},
-                                                    domain_cell = {i + 1}
-                                                 WHERE
-                                                    fid = {grid_fid}
-                                             """
-                                self.gutils.execute(sql_update)
-                                self.gutils.execute(
-                                    f"UPDATE schema_md_connect_cells SET up_domain_cell = {i + 1} WHERE fid = {connectivity_fid}")
-                        else:
-                            self.gutils.execute(
-                                f"UPDATE schema_md_connect_cells SET down_domain_cell = {i + 1} WHERE fid = {connectivity_fid}")
+            self.gutils.execute(f"""
+            INSERT INTO schema_md_cells (grid_fid, domain_fid, domain_cell)
+            SELECT grid.fid, md.fid, ROW_NUMBER() OVER (ORDER BY grid.fid) AS domain_cell
+            FROM mult_domains md
+            JOIN grid ON ST_Intersects(CastAutomagic(md.geom), CastAutomagic(grid.geom)) 
+            WHERE md.fid = {domain_id[0]};         
+            """).fetchall()
 
-        # self.gutils.execute("""
-        # DELETE FROM schema_md_connect_cells
-        # WHERE up_domain_fid IS NULL
-        #    OR up_domain_cell IS NULL
-        #    OR down_domain_fid IS NULL
-        #    OR down_domain_cell IS NULL;
-        # """)
+        self.intersected_domains()
 
         QApplication.restoreOverrideCursor()
 
@@ -352,21 +303,20 @@ class MultipleDomainsEditorWidget(qtBaseClass, uiDialog):
                     intersection_id += 1
 
         intersected_cells = self.gutils.execute("""
-            SELECT grid.fid, user_md_connect_lines.up_domain_fid, user_md_connect_lines.down_domain_fid, grid.geom 
+            SELECT grid.fid, user_md_connect_lines.down_domain_fid, ST_AsText(ST_Centroid(GeomFromGPB(grid.geom)))
             FROM grid
             JOIN user_md_connect_lines ON ST_Intersects(CastAutomagic(grid.geom), CastAutomagic(user_md_connect_lines.geom))
         """).fetchall()
 
         # Iterate over selected grid cells and update schema_md_connect_cells
-        for i, (grid_fid, up_domain_fid, down_domain_fid, geom) in enumerate(intersected_cells):
-            self.gutils.execute("""
-                INSERT INTO schema_md_connect_cells (up_domain_fid, down_domain_fid, geom)
-                VALUES (?, ?, AsGPB(ST_Centroid(GeomFromGPB(?))))
-            """, [up_domain_fid, down_domain_fid, geom])
-            self.gutils.execute(f"""
-            UPDATE grid
-            SET connectivity_fid = {i + 1} WHERE fid = {grid_fid};
-            """)
+        for grid_fid, down_domain_fid, geom_text in intersected_cells:
+            sql_qry = """
+                UPDATE schema_md_cells 
+                SET down_domain_fid = ?, geom = ST_GeomFromText(?)
+                WHERE grid_fid = ?;
+            """
+            # Execute the query with parameters
+            self.gutils.execute(sql_qry, (down_domain_fid, geom_text, grid_fid))
 
     def delete_schema_md(self):
         """
@@ -375,17 +325,9 @@ class MultipleDomainsEditorWidget(qtBaseClass, uiDialog):
 
         QApplication.setOverrideCursor(Qt.WaitCursor)
 
-        self.gutils.clear_tables("schema_md_connect_cells")
+        self.gutils.clear_tables("schema_md_cells")
         self.gutils.clear_tables("mult_domains_methods")
         self.gutils.clear_tables("mult_domains_con")
-
-        # Clear the grid layer
-        self.gutils.execute("""
-        UPDATE grid
-        SET domain_fid = NULL, 
-            domain_cell = NULL, 
-            connectivity_fid = NULL;
-        """)
 
         self.uc.bar_info("Schematized multiple domains deleted!")
         self.uc.log_info("Schematized multiple domains deleted!")

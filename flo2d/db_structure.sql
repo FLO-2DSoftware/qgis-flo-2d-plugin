@@ -81,10 +81,7 @@ CREATE TABLE "grid" (
     "n_value" REAL DEFAULT 0.05,
     "elevation" REAL DEFAULT -9999,
     "water_elevation" REAL DEFAULT -9999,
-    "flow_depth" REAL DEFAULT -9999,
-    "domain_fid" INTEGER,
-    "domain_cell" INTEGER,
-    "connectivity_fid" INTEGER
+    "flow_depth" REAL DEFAULT -9999
 );
 INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('grid', 'features', 4326);
 SELECT gpkgAddGeometryColumn('grid', 'geom', 'POLYGON', 0, 0, 0);
@@ -1353,17 +1350,17 @@ SELECT gpkgAddGeometryColumn('user_md_connect_lines', 'geom', 'LINESTRING', 0, 0
 SELECT gpkgAddGeometryTriggers('user_md_connect_lines', 'geom');
 SELECT gpkgAddSpatialIndex('user_md_connect_lines', 'geom');
 
-CREATE TABLE "schema_md_connect_cells" (
+CREATE TABLE "schema_md_cells" (
     "fid" INTEGER NOT NULL PRIMARY KEY,
-    "up_domain_fid" INTEGER,
-    "up_domain_cell" INTEGER,
-    "down_domain_fid" INTEGER,
-    "down_domain_cell" INTEGER
+    "grid_fid" INTEGER,
+    "domain_fid" INTEGER,
+    "domain_cell" INTEGER,
+    "down_domain_fid" INTEGER
 );
-INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('schema_md_connect_cells', 'features', 4326);
-SELECT gpkgAddGeometryColumn('schema_md_connect_cells', 'geom', 'POINT', 0, 0, 0);
-SELECT gpkgAddGeometryTriggers('schema_md_connect_cells', 'geom');
-SELECT gpkgAddSpatialIndex('schema_md_connect_cells', 'geom');
+INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('schema_md_cells', 'features', 4326);
+SELECT gpkgAddGeometryColumn('schema_md_cells', 'geom', 'POINT', 0, 0, 0);
+SELECT gpkgAddGeometryTriggers('schema_md_cells', 'geom');
+SELECT gpkgAddSpatialIndex('schema_md_cells', 'geom');
 
 CREATE TABLE "mult_domains_methods" (
     "fid" INTEGER NOT NULL PRIMARY KEY,

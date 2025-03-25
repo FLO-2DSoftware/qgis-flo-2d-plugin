@@ -549,18 +549,6 @@ class Layers(object):
                     },
                 ),
                 (
-                    "user_md_connect_lines",
-                    {
-                        "name": "Connectivity Lines",
-                        "sgroup": "User Layers",
-                        "ssgroup": "Multiple Domains",
-                        "styles": ["connect_lines.qml"],
-                        "attrs_edit_widgets": {},
-                        "readonly": False,
-                        "advanced": False
-                    },
-                ),
-                (
                 "mult_domains",
                 {
                     "name": "Domains",
@@ -773,6 +761,31 @@ class Layers(object):
                         "advanced": True
                     },
                 ),
+                # Multiple Domains layers:
+                (
+                    "schema_md_cells",
+                    {
+                        "name": "Multiple Domain Cells",
+                        "sgroup": "Schematic Layers",
+                        "ssgroup": "Multiple Domains",
+                        "styles": None,
+                        "attrs_edit_widgets": {},
+                        "readonly": False,
+                        "advanced": False
+                    },
+                ),
+                (
+                    "user_md_connect_lines",
+                    {
+                        "name": "Connectivity Lines",
+                        "sgroup": "Schematic Layers",
+                        "ssgroup": "Multiple Domains",
+                        "styles": ["connect_lines.qml"],
+                        "attrs_edit_widgets": {},
+                        "readonly": False,
+                        "advanced": False
+                    },
+                ),
                 # Storm Drain layers:
                 (
                     "swmmflo",
@@ -930,19 +943,6 @@ class Layers(object):
                         "attrs_edit_widgets": {},
                         "readonly": False,
                         "advanced": True
-                    },
-                ),
-                # Multiple Domains Layers
-                (
-                    "schema_md_connect_cells",
-                    {
-                        "name": "Connectivity Cells",
-                        "sgroup": "Schematic Layers",
-                        "ssgroup": "Multiple Domains",
-                        "styles": None,
-                        "attrs_edit_widgets": {},
-                        "readonly": False,
-                        "advanced": False
                     },
                 ),
                 # Infiltration Layers

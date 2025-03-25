@@ -320,7 +320,7 @@ class GridToolsWidget(qtBaseClass, uiDialog):
 
                 # Copy data from the temporary table back to the original table
                 copy_data_query = "INSERT INTO grid SELECT new_fid, col, row, n_value, elevation, water_elevation, " \
-                                  "flow_depth, domain_fid, domain_cell, connectivity_fid, geom FROM temp_table;"
+                                  "flow_depth, geom FROM temp_table;"
                 self.gutils.execute(copy_data_query)
 
                 # Drop the temporary table

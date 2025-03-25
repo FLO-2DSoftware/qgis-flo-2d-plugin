@@ -398,22 +398,14 @@ class ExportMultipleDomainsDialog(qtBaseClass, uiDialog):
                 if not os.path.exists(export_folder):
                     os.makedirs(export_folder)
 
-                sub_grid_cells = self.gutils.execute(f"""SELECT 
-                                                            g.domain_cell, 
-                                                            g.n_value, 
-                                                            g.elevation, 
-                                                            ST_AsText(ST_Centroid(GeomFromGPB(g.geom)))
-                                                        FROM 
-                                                            grid g
-                                                        WHERE 
-                                                            g.domain_fid = {subdomain[0]};""").fetchall()
-
-                sub_con_cells = self.gutils.execute(f"""
-                                SELECT c.down_domain_cell AS domain_cell, g.n_value, g.elevation, ST_AsText(ST_Centroid(GeomFromGPB(g.geom)))
-                                FROM grid g
-                                JOIN schema_md_connect_cells c ON g.domain_cell = c.up_domain_cell
-                                WHERE c.down_domain_fid = {subdomain[0]} AND g.connectivity_fid != 'NULL'""").fetchall()
-                sub_grid_cells.extend(sub_con_cells)
+                sub_grid_cells = self.gutils.execute(f"""SELECT md.domain_cell, 
+                                                                g.n_value, 
+                                                                g.elevation,
+                                                                ST_AsText(ST_Centroid(GeomFromGPB(g.geom)))
+                                                            FROM grid g
+                                                            JOIN schema_md_cells md ON g.fid = md.grid_fid
+                                                            WHERE 
+                                                                md.domain_fid = {subdomain[0]};""").fetchall()
 
                 records = sorted(sub_grid_cells, key=lambda x: x[0])
 
@@ -456,17 +448,12 @@ class ExportMultipleDomainsDialog(qtBaseClass, uiDialog):
                         with open(multidomain, "w") as md:
                             for connected_subdomain in connected_subdomains:
                                 md.write(mdline_n.format(connected_subdomain))
-                                sql_query = f"""SELECT up_domain_cell, down_domain_cell FROM schema_md_connect_cells WHERE up_domain_fid = {subdomain[0]} and down_domain_fid = {connected_subdomain};"""
-                                connections = self.gutils.execute(sql_query).fetchall()
-                                if connections:
-                                    connection_dict = {}
-                                    for up_domain_cell, down_domain_cell in connections:
-                                        if up_domain_cell not in connection_dict:
-                                            connection_dict[up_domain_cell] = []
-                                        connection_dict[up_domain_cell].append(down_domain_cell)
-
-                                    for up_domain_cell, down_domain_cells in connection_dict.items():
-                                        md.write(mdline_d.format(up_domain_cell, " ".join(map(str, down_domain_cells))))
+                                up_cell_qry = f"""SELECT grid_fid, domain_cell FROM schema_md_cells WHERE domain_fid = {subdomain[0]} and down_domain_fid = {connected_subdomain};"""
+                                for grid_fid, up_cell in  self.gutils.execute(up_cell_qry).fetchall():
+                                    down_cells_qry = f"""SELECT domain_cell FROM schema_md_cells WHERE domain_fid = {connected_subdomain} and grid_fid = {grid_fid};"""
+                                    down_cells = self.gutils.execute(down_cells_qry).fetchall()
+                                    if down_cells:
+                                        md.write(mdline_d.format(str(up_cell), str(down_cells[0][0])))
 
                 # CADPTS_DSx.DAT
                 elif export_method == 1:

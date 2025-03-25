@@ -334,13 +334,15 @@ class ImportMultipleDomainsDialog(qtBaseClass, uiDialog):
         pd.forceShow()
         pd.setValue(i)
 
-        # First import the whole grid and subdomains
+        common_coords = self.find_common_coordinates(subdomains_paths)
+
+        # Import the whole grid and subdomains
         for subdomain in subdomains_paths:
             if subdomain:
                 start_time = time.time()
 
                 # Import mannings and topo and add to grid
-                self.import_subdomains_mannings_n_topo_dat(subdomain, i)
+                self.import_subdomains_mannings_n_topo_dat(subdomain, common_coords, i)
 
                 end_time = time.time()
                 hours, rem = divmod(end_time - start_time, 3600)
@@ -361,15 +363,47 @@ class ImportMultipleDomainsDialog(qtBaseClass, uiDialog):
         self.uc.bar_info("Import of Multiple Domains finished successfully")
         self.close_dlg()
 
-    def import_subdomains_mannings_n_topo_dat(self, subdomain, subdomain_n):
+    def find_common_coordinates(self, files):
+        """
+        Function to find the shared boundary cells between all subdomains
+        """
+
+        import pandas as pd
+        from collections import defaultdict
+
+        coords_count = defaultdict(int)  # Dictionary to count occurrences of each coordinate
+
+        for file in files:
+            if file:
+                # Read the file in chunks to manage memory usage
+                chunksize = 10000  # Adjust based on your memory availability
+                reader = pd.read_csv(os.path.join(file, "TOPO.DAT"), delim_whitespace=True, header=None, names=['x', 'y', 'elevation'],
+                                     chunksize=chunksize)
+
+                seen_in_this_file = set()
+                for chunk_index, chunk in enumerate(reader):
+                    # Use tuple pairs for efficient comparison and storage
+                    current_coords = set(zip(chunk['x'], chunk['y']))
+                    seen_in_this_file.update(current_coords)
+
+                # Update the global count only once per file to avoid double counting within the same file
+                for coord in seen_in_this_file:
+                    coords_count[coord] += 1
+
+        # Filter coordinates that appear in at least two different files and convert them to "x y" format at the end
+        common_coords = [f"{coord[0]} {coord[1]}" for coord, count in coords_count.items() if count >= 2]
+
+        return common_coords
+
+    def import_subdomains_mannings_n_topo_dat(self, subdomain, common_coords, subdomain_n):
         """
         Function to import multiple subdomains into one project
         """
 
         QApplication.setOverrideCursor(Qt.WaitCursor)
 
-        self.gutils.execute("CREATE INDEX IF NOT EXISTS idx_grid_domain_fid_cell ON grid(domain_fid, domain_cell);")
-        connect_cells = []
+        connect_cells = [" ".join(map(str, row)) for row in self.gutils.execute(
+            f"SELECT ST_X(geom) as x, ST_Y(geom) as y FROM schema_md_cells;").fetchall()]
         cell_size = None
 
         # Step 1: Clear tables if this is the first subdomain
@@ -379,10 +413,9 @@ class ImportMultipleDomainsDialog(qtBaseClass, uiDialog):
         else:
             fid = self.gutils.execute("SELECT MAX(fid) FROM grid;").fetchone()[0] or 0
             fid += 1  # Ensures unique fid values
-            connect_cells = [" ".join(map(str, row)) for row in self.gutils.execute(
-                f"SELECT ST_X(geom) as x, ST_Y(geom) as y FROM schema_md_connect_cells WHERE down_domain_fid = {subdomain_n};").fetchall()]
 
         sql_grid = []
+        sql_schema = []
 
         topo_dat = f"{subdomain}/TOPO.DAT"
         mannings_dat = f"{subdomain}/MANNINGS_N.DAT"
@@ -395,8 +428,6 @@ class ImportMultipleDomainsDialog(qtBaseClass, uiDialog):
             # Read and parse TOPO & MANNINGS_N data efficiently
             data = self.parser.pandas_double_parser(mannings_dat, topo_dat)
 
-            domain_cell_fid = 1
-
             man = slice(1, 2)
             coords = slice(2, 4)
             elev = slice(4, None)
@@ -404,7 +435,7 @@ class ImportMultipleDomainsDialog(qtBaseClass, uiDialog):
             # Batch processing for better performance
             batch_size = self.chunksize  # Set batch size from existing chunksize variable
 
-            # Calculate the cell_size for this cadpts
+            # Calculate the cell_size for this topo.dat
             if not cell_size:
                 data_points = []
                 with open(topo_dat, "r") as file:
@@ -420,49 +451,72 @@ class ImportMultipleDomainsDialog(qtBaseClass, uiDialog):
             for i, row in enumerate(data, start=1):
 
                 geom = " ".join(list(map(str, row[coords])))
-                if connect_cells:
-                    self.uc.log_info(str(geom))
-                    self.uc.log_info(str(connect_cells))
-                if subdomain_n != 1 and geom in connect_cells:
-                    self.uc.log_info("Entrou!")
 
-                    # self.uc.log_info(str(domain_cell_fid))
-                    # connectivity_data = self.gutils.execute(
-                    #     "SELECT fid, up_domain_fid, up_domain_cell FROM schema_md_connect_cells WHERE down_domain_fid = ? AND down_domain_cell = ?;",
-                    #     (subdomain_n, domain_cell_fid)
-                    # ).fetchone()
-                    #
-                    # # Check if we found a match
-                    # if connectivity_data:
-                    #     self.uc.log_info("Entrou2")
-                    #     # Update the grid table
-                    #     self.gutils.execute(
-                    #         "UPDATE grid SET connectivity_fid = ? WHERE domain_fid = ? AND domain_cell = ?;",
-                    #         (connectivity_data[0], connectivity_data[1], connectivity_data[2])
-                    #     )
-                    #     domain_cell_fid += 1
+                # Check if the geometry is in the common coords between all subdomains
+                if geom in common_coords:
 
+                    check_con_qry = f"""SELECT fid FROM schema_md_cells WHERE geom = ST_GeomFromText('POINT({geom})') AND domain_fid = {subdomain_n};"""
+                    check_con = self.gutils.execute(check_con_qry).fetchall()
+
+                    # Check if it is not constructed on the schema_md_cells table, construct it
+                    if not check_con:
+                        sql_schema.append((fid, subdomain_n, i))
+                    else:
+                        self.gutils.execute(f"UPDATE schema_md_cells SET grid_fid = {fid} WHERE geom = ST_GeomFromText('POINT({geom})') AND domain_fid = {subdomain_n};")
+
+                    g = self.gutils.build_square(geom, cell_size)
+                    check_grid_qry = f"""SELECT fid FROM grid WHERE geom = ?;"""
+                    check_grid = self.gutils.execute(check_grid_qry, (g,)).fetchall()
+
+                    # Check if it is not constructed on the grid table, construct it
+                    if not check_grid:
+                        # Construct the grid
+                        sql_grid.append((fid, *row[man], *row[elev], g))
+                        fid += 1
+
+                # If the grid is not on the grid table, construct the grid and add to schema_md_cells
                 else:
-                    g = self.gutils.build_square(geom, cell_size)  # Avoid redundant processing
+                    g = self.gutils.build_square(geom, cell_size)
+                    sql_grid.append((fid, *row[man], *row[elev], g))
 
-                    sql_grid.append((fid, *row[man], *row[elev], subdomain_n, domain_cell_fid, g))
+                    sql_schema.append((fid, subdomain_n, i))
 
                     fid += 1
-                    domain_cell_fid += 1
 
-                    # Execute in batches for better efficiency
-                    if len(sql_grid) >= batch_size:
-                        self.gutils.execute_many(
-                            "INSERT INTO grid (fid, n_value, elevation, domain_fid, domain_cell, geom) VALUES (?, ?, ?, ?, ?, ?);",
-                            sql_grid
-                        )
-                        sql_grid.clear()
+                # Execute in batches for better efficiency
+                if len(sql_grid) >= batch_size:
+                    self.gutils.execute_many(
+                        "INSERT INTO grid (fid, n_value, elevation, geom) VALUES (?, ?, ?, ?);",
+                        sql_grid
+                    )
+                    sql_grid.clear()
+
+                if len(sql_schema) >= batch_size:
+                    self.gutils.execute_many(
+                        f"""
+                           INSERT INTO schema_md_cells 
+                           (grid_fid, domain_fid, domain_cell) 
+                           VALUES (?, ?, ?);
+                        """,
+                        sql_schema
+                    )
+                    sql_schema.clear()
 
             # Insert remaining data if any
             if sql_grid:
                 self.gutils.execute_many(
-                    "INSERT INTO grid (fid, n_value, elevation, domain_fid, domain_cell, geom) VALUES (?, ?, ?, ?, ?, ?);",
+                    "INSERT INTO grid (fid, n_value, elevation, geom) VALUES (?, ?, ?, ?);",
                     sql_grid
+                )
+
+            if sql_schema:
+                self.gutils.execute_many(
+                    f"""
+                       INSERT INTO schema_md_cells 
+                       (grid_fid, domain_fid, domain_cell) 
+                       VALUES (?, ?, ?);
+                    """,
+                    sql_schema
                 )
 
             self.uc.bar_info(f"Subdomain {subdomain_n} grid created from TOPO.DAT and MANNINGS_N.DAT!")

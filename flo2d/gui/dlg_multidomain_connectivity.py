@@ -202,7 +202,7 @@ class MultipleDomainsConnectivityDialog(qtBaseClass, uiDialog):
     def save_connectivity(self):
         """Function to save the connectivity data into the schema_md_connect_cells"""
 
-        self.gutils.clear_tables("schema_md_connect_cells")
+        self.gutils.clear_tables("schema_md_cells")
 
         subdomain_connectivities = self.gutils.execute("""
                                SELECT 
@@ -340,16 +340,15 @@ class MultipleDomainsConnectivityDialog(qtBaseClass, uiDialog):
 
                                     elif data[0] == "D" and current_subdomain is not None:
                                         up_domain_cell = int(data[1])
-                                        down_domain_cells = list(map(int, data[2:]))
+                                        # down_domain_cells = list(map(int, data[2:]))
                                         topo_data = topo_lines[up_domain_cell - 1].split()
                                         up_domain_coords = f"POINT({topo_data[0]} {topo_data[1]})"
-                                        multidomain_data[current_subdomain].append((up_domain_cell, down_domain_cells, up_domain_coords))
+                                        multidomain_data[current_subdomain].append((up_domain_cell, up_domain_coords))
 
                             j = 2 + (i - 1) * 4
                             for subdomain, connections in multidomain_data.items():
-                                for up_domain_cell, down_domain_cells, up_domain_coords in connections:
-                                    for down_domain_cell in down_domain_cells:
-                                        bulk_insert_data.append((md_fid, up_domain_cell, subdomain, down_domain_cell, up_domain_coords))
+                                for up_domain_cell, up_domain_coords in connections:
+                                    bulk_insert_data.append((md_fid, up_domain_cell, subdomain, up_domain_coords))
                                 j +=  4
 
                             used_multidomain_file = True
@@ -405,11 +404,10 @@ class MultipleDomainsConnectivityDialog(qtBaseClass, uiDialog):
 
             # Execute bulk insert
             if bulk_insert_data:
-                self.uc.log_info(str(bulk_insert_data))
                 self.gutils.execute_many("""
-                                          INSERT INTO schema_md_connect_cells 
-                                          (up_domain_fid, up_domain_cell, down_domain_fid, down_domain_cell, geom) 
-                                          VALUES (?, ?, ?, ?, GeomFromText(?));
+                                          INSERT INTO schema_md_cells 
+                                          (domain_fid, domain_cell, down_domain_fid, geom) 
+                                          VALUES (?, ?, ?, GeomFromText(?));
                                       """, bulk_insert_data)
 
         self.uc.log_info("Connectivity saved!")
