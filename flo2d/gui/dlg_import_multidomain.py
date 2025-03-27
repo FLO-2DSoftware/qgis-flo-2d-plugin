@@ -504,53 +504,6 @@ class ImportMultipleDomainsDialog(qtBaseClass, uiDialog):
 
                             sql_schema.append((check_grid[0][0], subdomain_n, i))
 
-                    # g = self.gutils.build_square(geom, cell_size)
-                    # check_grid_qry = f"""SELECT fid FROM grid WHERE geom = ?;"""
-                    # check_grid = self.gutils.execute(check_grid_qry, (g,)).fetchall()
-                    #
-                    # # Check if it is not constructed on the GRID table, construct it
-                    # if not check_grid:
-                    #
-                    #     sql_grid.append((fid, *row[man], *row[elev], g))
-                    #
-                    #     # Check if it is not constructed on the SCHEMA_MD_CELLS table, construct it
-                    #     check_con_qry = f"""SELECT grid_fid FROM schema_md_cells WHERE geom = ST_GeomFromText('POINT({geom})') AND grid_fid IS NOT NULL;"""
-                    #     check_con = self.gutils.execute(check_con_qry).fetchall()
-                    #
-                    #     if check_con:
-                    #         self.gutils.execute(f"""UPDATE
-                    #                                     schema_md_cells
-                    #                                 SET
-                    #                                     grid_fid = {check_con[0][0]}
-                    #                                 WHERE
-                    #                                     geom = ST_GeomFromText('POINT({geom})');""")
-                    #
-                    #     else:
-                    #         sql_schema.append((fid, subdomain_n, i))
-                    #     fid += 1
-                    # else:
-                    #     check_con_qry = f"""SELECT grid_fid FROM schema_md_cells WHERE geom = ST_GeomFromText('POINT({geom})') AND grid_fid IS NOT NULL;"""
-                    #     check_con = self.gutils.execute(check_con_qry).fetchall()
-                    #
-                    #     if check_con:
-                    #         self.gutils.execute(f"""UPDATE
-                    #                                     schema_md_cells
-                    #                                 SET
-                    #                                     grid_fid = {check_con[0][0]}
-                    #                                 WHERE
-                    #                                     geom = ST_GeomFromText('POINT({geom})');""")
-                    #     # else:
-                    #     #     sql_schema.append((fid, subdomain_n, i))
-
-                    # g = self.gutils.build_square(geom, cell_size)
-                    # check_grid_qry = f"""SELECT fid FROM grid WHERE geom = ?;"""
-                    # check_grid = self.gutils.execute(check_grid_qry, (g,)).fetchall()
-
-                    # # Check if it is not constructed on the grid table, construct it
-                    # if not check_grid:
-                    #     # Construct the grid
-                    #     sql_grid.append((fid, *row[man], *row[elev], g))
-                    #     fid += 1
 
                 # If the grid is not on the grid table, construct the grid and add to schema_md_cells
                 else:
