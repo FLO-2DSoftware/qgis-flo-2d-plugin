@@ -234,22 +234,12 @@
          </item>
          <item>
           <property name="text">
-           <string>CADPTS_DSx.DAT</string>
-          </property>
-         </item>
-         <item>
-          <property name="text">
-           <string>NO CONNECTIVITY</string>
-          </property>
-         </item>
-         <item>
-          <property name="text">
            <string>ONLY MULTIDOMAIN.DAT</string>
           </property>
          </item>
          <item>
           <property name="text">
-           <string>ONLY CADPTS_DSx.DAT</string>
+           <string>NO CONNECTIVITY</string>
           </property>
          </item>
         </widget>
