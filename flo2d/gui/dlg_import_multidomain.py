@@ -5,7 +5,6 @@ from itertools import combinations
 
 from PyQt5.QtCore import QSettings, Qt
 from PyQt5.QtWidgets import QFileDialog, QApplication, QProgressDialog
-from qgis.PyQt.QtCore import NULL
 
 from .dlg_multidomain_connectivity import MultipleDomainsConnectivityDialog
 from .multiple_domains_editor_widget import MultipleDomainsEditorWidget
@@ -14,23 +13,59 @@ from ..flo2d_ie.flo2d_parser import ParseDAT
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
 
+MAX_SUBDOMAINS = 15
+
 uiDialog, qtBaseClass = load_ui("import_multiple_domains")
 
 
 class ImportMultipleDomainsDialog(qtBaseClass, uiDialog):
+    """
+    This class manages the dialog for importing multiple domains. It provides
+    functionality for adding/removing subdomains, selecting folders, handling
+    connectivity, and importing global and subdomain-specific data files.
+    """
+
     def __init__(self, con, iface, lyrs):
+        """
+        Initializes the ImportMultipleDomainsDialog class.
+
+        Sets up the dialog components, initializes attributes, and prepares the
+        dialog for interaction with the user.
+        """
+
+        # Call parent class initializers
         qtBaseClass.__init__(self)
         uiDialog.__init__(self)
+
+        # Initialize attributes
         self.iface = iface
-        self.setupUi(self)
         self.con = con
         self.lyrs = lyrs
         self.uc = UserCommunication(iface, "FLO-2D")
         self.gutils = GeoPackageUtils(con, iface)
-
         self.parser = ParseDAT()
         self.chunksize = float("inf")
 
+        # Setup the UI
+        self.setupUi(self)
+
+        # Initialize subdomain dialog elements
+        self.initialize_subdomain_elements()
+
+        # Setup button signal associations
+        self.setup_signals()
+
+        # Populate subdomains into the dialog
+        self.populate_subdomains()
+
+    def initialize_subdomain_elements(self):
+        """
+        Initializes the subdomains dialog elements.
+
+        Creates a list of subdomain-related UI elements such as labels, line edits,
+        and buttons for easy management.
+        """
+        # Group related UI elements as subdomains
         self.subdomains_dlg_elements = [
             [self.label_1, self.sub1_le, self.sub1_tb],
             [self.label_2, self.sub2_le, self.sub2_tb],
@@ -49,36 +84,35 @@ class ImportMultipleDomainsDialog(qtBaseClass, uiDialog):
             [self.label_15, self.sub15_le, self.sub15_tb],
         ]
 
-        self.sub1_tb.clicked.connect(lambda: self.select_subdomain_folder(self.sub1_le, 1))
-        self.sub2_tb.clicked.connect(lambda: self.select_subdomain_folder(self.sub2_le, 2))
-        self.sub3_tb.clicked.connect(lambda: self.select_subdomain_folder(self.sub3_le, 3))
-        self.sub4_tb.clicked.connect(lambda: self.select_subdomain_folder(self.sub4_le, 4))
-        self.sub5_tb.clicked.connect(lambda: self.select_subdomain_folder(self.sub5_le, 5))
-        self.sub6_tb.clicked.connect(lambda: self.select_subdomain_folder(self.sub6_le, 6))
-        self.sub7_tb.clicked.connect(lambda: self.select_subdomain_folder(self.sub7_le, 7))
-        self.sub8_tb.clicked.connect(lambda: self.select_subdomain_folder(self.sub8_le, 8))
-        self.sub9_tb.clicked.connect(lambda: self.select_subdomain_folder(self.sub9_le, 9))
-        self.sub10_tb.clicked.connect(lambda: self.select_subdomain_folder(self.sub10_le, 10))
-        self.sub11_tb.clicked.connect(lambda: self.select_subdomain_folder(self.sub11_le, 11))
-        self.sub12_tb.clicked.connect(lambda: self.select_subdomain_folder(self.sub12_le, 12))
-        self.sub13_tb.clicked.connect(lambda: self.select_subdomain_folder(self.sub13_le, 13))
-        self.sub14_tb.clicked.connect(lambda: self.select_subdomain_folder(self.sub14_le, 14))
-        self.sub15_tb.clicked.connect(lambda: self.select_subdomain_folder(self.sub15_le, 15))
+    def setup_signals(self):
+        """
+        Sets up signals for all UI elements (e.g., buttons).
 
+        Connects button clicks with their corresponding event-handling functions
+        to enable user interaction.
+        """
+
+        # Connect subdomain file selection buttons
+        for index, (_, line_edit, button) in enumerate(self.subdomains_dlg_elements, start=1):
+            button.clicked.connect(lambda _, le=line_edit, i=index: self.select_subdomain_folder(le, i))
+
+        # Connect cancel, add, remove, and OK buttons
         self.cancel_btn.clicked.connect(self.close_dlg)
-
         self.add_subdomain_btn.clicked.connect(self.add_subdomain)
         self.remove_subdomain_btn.clicked.connect(self.remove_subdomain)
 
+        # Manage domain connectivity
         self.connect_btn.clicked.connect(self.open_multiple_domains_connectivity_dialog)
 
+        # Trigger global domain import
         self.ok_btn.clicked.connect(self.import_global_domain)
-
-        self.populate_subdomains()
 
     def add_subdomain(self):
         """
-        Function to set one more subdomain visible
+        Adds a new subdomain.
+
+        Handles the user input for creating a new subdomain entry, and updates
+        the dialog as well as the internal database or project structure.
         """
         sub_paths = self.gutils.execute("SELECT fid, subdomain_path FROM mult_domains_methods;").fetchall()
         if sub_paths:
@@ -88,8 +122,12 @@ class ImportMultipleDomainsDialog(qtBaseClass, uiDialog):
 
     def remove_subdomain(self):
         """
-        Function to remove one subdomain and clear the tables
+        Removes an existing subdomain.
+
+        Deletes a subdomain based on user selection and cleans up relevant data
+        from the database or UI components.
         """
+
         # Get last visible element
         last_visible_element_idx = None
         for counter, elements in enumerate(self.subdomains_dlg_elements):
@@ -114,7 +152,10 @@ class ImportMultipleDomainsDialog(qtBaseClass, uiDialog):
 
     def open_multiple_domains_connectivity_dialog(self):
         """
-        Function to open the multiple domains connectivity and fill out the data
+        Opens the dialog for managing domain connectivity.
+
+        Launches an interface allowing the user to define the relationships
+        between domains such as upstream and downstream connections.
         """
         dlg = MultipleDomainsConnectivityDialog(self.iface, self.con, self.lyrs)
         ok = dlg.exec_()
@@ -125,7 +166,10 @@ class ImportMultipleDomainsDialog(qtBaseClass, uiDialog):
 
     def populate_subdomains(self):
         """
-        Function to populate the subdomains on the line edits
+        Populates the dialog with existing subdomain data.
+
+        Retrieves data associated with subdomains (e.g., from the database or loaded
+        project files) and displays it on the user interface for review or editing.
         """
 
         sub_paths = self.gutils.execute("SELECT fid, subdomain_path FROM mult_domains_methods;").fetchall()
@@ -152,7 +196,7 @@ class ImportMultipleDomainsDialog(qtBaseClass, uiDialog):
 
     def select_subdomain_folder(self, domain_le, domain_n):
         """
-        Function to select the subdomain folder
+        Allows the user to select a folder containing subdomain data.
         """
         s = QSettings()
         project_dir = s.value("FLO-2D/lastGdsDir")
@@ -282,98 +326,156 @@ class ImportMultipleDomainsDialog(qtBaseClass, uiDialog):
 
     def close_dlg(self):
         """
-        Function to close the dialog
+        Closes the dialog.
         """
         self.close()
 
+    # def import_global_domain(self):
+    #     """
+    #     Imports the global domain data.
+    #
+    #     Handles the parsing and importing of the global domain details from file
+    #     into the geopackage.
+    #     """
+    #
+    #     sub1_path = self.sub1_le.text()
+    #     sub2_path = self.sub2_le.text()
+    #     sub3_path = self.sub3_le.text()
+    #     sub4_path = self.sub4_le.text()
+    #     sub5_path = self.sub5_le.text()
+    #     sub6_path = self.sub6_le.text()
+    #     sub7_path = self.sub7_le.text()
+    #     sub8_path = self.sub8_le.text()
+    #     sub9_path = self.sub9_le.text()
+    #     sub10_path = self.sub10_le.text()
+    #     sub11_path = self.sub11_le.text()
+    #     sub12_path = self.sub12_le.text()
+    #     sub13_path = self.sub13_le.text()
+    #     sub14_path = self.sub14_le.text()
+    #     sub15_path = self.sub15_le.text()
+    #
+    #     subdomains_paths = [
+    #         sub1_path,
+    #         sub2_path,
+    #         sub3_path,
+    #         sub4_path,
+    #         sub5_path,
+    #         sub6_path,
+    #         sub7_path,
+    #         sub8_path,
+    #         sub9_path,
+    #         sub10_path,
+    #         sub11_path,
+    #         sub12_path,
+    #         sub13_path,
+    #         sub14_path,
+    #         sub15_path
+    #     ]
+    #
+    #     n_projects = sum(1 for item in subdomains_paths if item != "")
+    #
+    #     i = 1
+    #
+    #     pd = QProgressDialog(f"Importing Subdomain {i}...", None, i, n_projects + 1)
+    #     pd.setWindowTitle("FLO-2D Import")
+    #     pd.setModal(True)
+    #     pd.forceShow()
+    #     pd.setValue(i)
+    #
+    #     md = MultipleDomainsEditorWidget(self.iface, self.lyrs)
+    #     common_coords = md.find_common_coordinates(subdomains_paths)
+    #
+    #     # Import the whole grid and subdomains
+    #     for subdomain in subdomains_paths:
+    #         if subdomain:
+    #             start_time = time.time()
+    #
+    #             # Import mannings and topo and add to grid
+    #             self.import_subdomains_mannings_n_topo_dat(subdomain, common_coords, i)
+    #
+    #             end_time = time.time()
+    #             hours, rem = divmod(end_time - start_time, 3600)
+    #             minutes, seconds = divmod(rem, 60)
+    #             time_passed = "{:0>2}:{:0>2}:{:0>2}".format(int(hours), int(minutes), int(seconds))
+    #             self.uc.log_info(f"Time Elapsed to import Subdomain {i}: {time_passed}")
+    #             i += 1
+    #             pd.setLabelText(f"Importing Subdomain {i}...")
+    #             pd.setValue(i)
+    #
+    #     pd.close()
+    #
+    #     grid_lyr = self.lyrs.data["grid"]["qlyr"]
+    #     grid_lyr.triggerRepaint()
+    #     self.lyrs.zoom_to_all()
+    #
+    #     self.uc.log_info("Import of Multiple Domains finished successfully")
+    #     self.uc.bar_info("Import of Multiple Domains finished successfully")
+    #     self.close_dlg()
+
     def import_global_domain(self):
         """
-        Function to import the global domain
+        Imports the global domain data. Handles the parsing and importing
+        of global domain details from files into the geopackage.
         """
+        subdomains_paths = self.fetch_subdomain_paths()
+        total_subdomains = sum(1 for path in subdomains_paths if path)
 
-        sub1_path = self.sub1_le.text()
-        sub2_path = self.sub2_le.text()
-        sub3_path = self.sub3_le.text()
-        sub4_path = self.sub4_le.text()
-        sub5_path = self.sub5_le.text()
-        sub6_path = self.sub6_le.text()
-        sub7_path = self.sub7_le.text()
-        sub8_path = self.sub8_le.text()
-        sub9_path = self.sub9_le.text()
-        sub10_path = self.sub10_le.text()
-        sub11_path = self.sub11_le.text()
-        sub12_path = self.sub12_le.text()
-        sub13_path = self.sub13_le.text()
-        sub14_path = self.sub14_le.text()
-        sub15_path = self.sub15_le.text()
+        progress_dialog = QProgressDialog(f"Importing Subdomain 1...", None, 1, total_subdomains + 1)
+        progress_dialog.setWindowTitle("FLO-2D Import")
+        progress_dialog.setModal(True)
+        progress_dialog.forceShow()
+        progress_dialog.setValue(1)
 
-        subdomains_paths = [
-            sub1_path,
-            sub2_path,
-            sub3_path,
-            sub4_path,
-            sub5_path,
-            sub6_path,
-            sub7_path,
-            sub8_path,
-            sub9_path,
-            sub10_path,
-            sub11_path,
-            sub12_path,
-            sub13_path,
-            sub14_path,
-            sub15_path
-        ]
+        md_editor = MultipleDomainsEditorWidget(self.iface, self.lyrs)
+        common_coords = md_editor.find_common_coordinates(subdomains_paths)
 
-        n_projects = sum(1 for item in subdomains_paths if item != "")
-
-        i = 1
-
-        pd = QProgressDialog(f"Importing Subdomain {i}...", None, i, n_projects + 1)
-        pd.setWindowTitle("FLO-2D Import")
-        pd.setModal(True)
-        pd.forceShow()
-        pd.setValue(i)
-
-        md = MultipleDomainsEditorWidget(self.iface, self.lyrs)
-        common_coords = md.find_common_coordinates(subdomains_paths)
-
-        # Import the whole grid and subdomains
-        for subdomain in subdomains_paths:
-            if subdomain:
+        for current_progress, subdomain_path in enumerate(subdomains_paths, start=1):
+            if subdomain_path:
                 start_time = time.time()
+                self.import_subdomains_mannings_n_topo_dat(subdomain_path, common_coords, current_progress)
+                time_elapsed = self.calculate_time_elapsed(start_time)
+                self.uc.log_info(f"Time Elapsed to import Subdomain {current_progress}: {time_elapsed}")
 
-                # Import mannings and topo and add to grid
-                self.import_subdomains_mannings_n_topo_dat(subdomain, common_coords, i)
+                progress_dialog.setLabelText(f"Importing Subdomain {current_progress + 1}...")
+                progress_dialog.setValue(current_progress + 1)
 
-                end_time = time.time()
-                hours, rem = divmod(end_time - start_time, 3600)
-                minutes, seconds = divmod(rem, 60)
-                time_passed = "{:0>2}:{:0>2}:{:0>2}".format(int(hours), int(minutes), int(seconds))
-                self.uc.log_info(f"Time Elapsed to import Subdomain {i}: {time_passed}")
-                i += 1
-                pd.setLabelText(f"Importing Subdomain {i}...")
-                pd.setValue(i)
+        progress_dialog.close()
+        self.finalize_import()
 
-        pd.close()
+    def fetch_subdomain_paths(self):
+        """Fetch and return all subdomain paths from the UI."""
+        return [getattr(self, f'sub{i}_le').text() for i in range(1, MAX_SUBDOMAINS + 1)]
 
-        grid_lyr = self.lyrs.data["grid"]["qlyr"]
-        grid_lyr.triggerRepaint()
+    def calculate_time_elapsed(self, start_time):
+        """Calculate and format elapsed time."""
+        elapsed_time = time.time() - start_time
+        hours, remainder = divmod(elapsed_time, 3600)
+        minutes, seconds = divmod(remainder, 60)
+        return "{:02}:{:02}:{:02}".format(int(hours), int(minutes), int(seconds))
+
+    def finalize_import(self):
+        """Finalize the import process by refreshing the UI and showing success messages."""
+        grid_layer = self.lyrs.data["grid"]["qlyr"]
+        grid_layer.triggerRepaint()
         self.lyrs.zoom_to_all()
-
         self.uc.log_info("Import of Multiple Domains finished successfully")
         self.uc.bar_info("Import of Multiple Domains finished successfully")
         self.close_dlg()
 
     def import_subdomains_mannings_n_topo_dat(self, subdomain, common_coords, subdomain_n):
         """
-        Function to import multiple subdomains into one project
+        Imports subdomain-specific Manning's N and TOPO.DAT data.
+
+        This function is responsible for parsing Manning's N roughness coefficient
+        and TOPO.DAT (geometry, elevation) data for respective subdomains, validating
+        them, and saving/updating them in the project database or corresponding tables.
         """
 
         QApplication.setOverrideCursor(Qt.WaitCursor)
 
-        connect_cells = [" ".join(map(str, row)) for row in self.gutils.execute(
-            f"SELECT ST_X(geom) as x, ST_Y(geom) as y FROM schema_md_cells;").fetchall()]
+        # connect_cells = [" ".join(map(str, row)) for row in self.gutils.execute(
+        #     f"SELECT ST_X(geom) as x, ST_Y(geom) as y FROM schema_md_cells;").fetchall()]
+
         cell_size = None
 
         # Step 1: Clear tables if this is the first subdomain
@@ -389,8 +491,8 @@ class ImportMultipleDomainsDialog(qtBaseClass, uiDialog):
 
         topo_dat = f"{subdomain}/TOPO.DAT"
         mannings_dat = f"{subdomain}/MANNINGS_N.DAT"
-        cadpts_dat = f"{subdomain}/CADPTS.DAT"
-        fplain_dat = f"{subdomain}/FPLAIN.DAT"
+        # cadpts_dat = f"{subdomain}/CADPTS.DAT"
+        # fplain_dat = f"{subdomain}/FPLAIN.DAT"
 
         # Check for TOPO and MANNINGS_N first # TODO CHECK THIS
         if os.path.isfile(topo_dat) and os.path.isfile(mannings_dat):
@@ -523,363 +625,155 @@ class ImportMultipleDomainsDialog(qtBaseClass, uiDialog):
             self.uc.bar_info(f"Subdomain {subdomain_n} grid created from TOPO.DAT and MANNINGS_N.DAT!")
             self.uc.log_info(f"Subdomain {subdomain_n} grid created from TOPO.DAT and MANNINGS_N.DAT!")
 
-        # Import TOPO and MANNINGS from CADPTS and FPLAIN # TODO TEST THIS APPROACH
-        elif os.path.isfile(cadpts_dat) and os.path.isfile(fplain_dat):
-
-            # Read and parse CADPTS data efficiently
-            data = self.parser.double_parser(fplain_dat, cadpts_dat)
-
-            domain_cell_fid = 1
-
-            man = slice(5, 6)
-            elev = slice(6, 7)
-            coords = slice(8, None)
-
-            # Batch processing for better performance
-            batch_size = self.chunksize  # Set batch size from existing chunksize variable
-
-            # Calculate the cell_size for this cadpts
-            if not cell_size:
-                data_points = []
-                with open(cadpts_dat, "r") as file:
-                    for _ in range(10):  # Read only the first 10 lines
-                        line = file.readline()
-                        parts = line.split()
-                        if len(parts) == 3:  # Ensure the line contains three elements
-                            index, x, y = parts
-                            data_points.append((float(x), float(y)))
-
-                cell_size = min(math.sqrt((p1[0] - p2[0])**2 + (p1[1] - p2[1])**2) for p1, p2 in combinations(data_points, 2))
-
-            for i, row in enumerate(data, start=1):
-
-                if subdomain_n != 1 and domain_cell_fid in connect_cells:
-                    connectivity_data = self.gutils.execute(
-                        "SELECT fid, up_domain_fid, up_domain_cell FROM schema_md_connect_cells WHERE down_domain_fid = ? AND down_domain_cell = ?;",
-                        (subdomain_n, domain_cell_fid)
-                    ).fetchone()
-
-                    # Check if we found a match
-                    if connectivity_data:
-                        # Update the grid table
-                        self.gutils.execute(
-                            "UPDATE grid SET connectivity_fid = ? WHERE domain_fid = ? AND domain_cell = ?;",
-                            (connectivity_data[0], connectivity_data[1], connectivity_data[2])
-                        )
-                        domain_cell_fid += 1
-                        continue
-
-                geom = " ".join(list(map(str, row[coords])))
-                g = self.gutils.build_square(geom, cell_size)  # Avoid redundant processing
-
-                sql_grid.append((fid, *row[man], *row[elev], subdomain_n, domain_cell_fid, g))
-
-                fid += 1
-                domain_cell_fid += 1
-
-                # Execute in batches for better efficiency
-                if len(sql_grid) >= batch_size:
-                    self.gutils.execute_many(
-                        "INSERT INTO grid (fid, n_value, elevation, domain_fid, domain_cell, geom) VALUES (?, ?, ?, ?, ?, ?);",
-                        sql_grid
-                    )
-                    sql_grid.clear()
-
-            # Insert remaining data if any
-            if sql_grid:
-                self.gutils.execute_many(
-                    "INSERT INTO grid (fid, n_value, elevation, domain_fid, domain_cell, geom) VALUES (?, ?, ?, ?, ?, ?);",
-                    sql_grid
-                )
-
-            self.uc.bar_info(f"Subdomain {subdomain_n} grid created from CADPTS.DAT and FPLAIN.DAT!")
-            self.uc.log_info(f"Subdomain {subdomain_n} grid created from CADPTS.DAT and FPLAIN.DAT!")
-
-        # Import grid from CADPTS and set default mannings and topo
-        elif os.path.isfile(cadpts_dat):
-
-            mann = self.gutils.get_cont_par("MANNING")
-            elev = -9999
-
-            # Calculate the cell_size for this cadpts
-            if not cell_size:
-                data_points = []
-                with open(cadpts_dat, "r") as file:
-                    for _ in range(10):  # Read only the first 10 lines
-                        line = file.readline()
-                        parts = line.split()
-                        if len(parts) == 3:  # Ensure the line contains three elements
-                            index, x, y = parts
-                            data_points.append((float(x), float(y)))
-
-                cell_size = min(math.sqrt((p1[0] - p2[0])**2 + (p1[1] - p2[1])**2) for p1, p2 in combinations(data_points, 2))
-
-            # Read and parse CADPTS data efficiently
-            data = self.parser.pandas_single_parser(cadpts_dat)
-
-            domain_cell_fid = 1
-
-            coords = slice(1, None)
-
-            # Batch processing for better performance
-            batch_size = self.chunksize  # Set batch size from existing chunksize variable
-
-            for i, row in enumerate(data, start=1):
-
-                if subdomain_n != 1 and domain_cell_fid in connect_cells:
-                    connectivity_data = self.gutils.execute(
-                        "SELECT fid, up_domain_fid, up_domain_cell FROM schema_md_connect_cells WHERE down_domain_fid = ? AND down_domain_cell = ?;",
-                        (subdomain_n, domain_cell_fid)
-                    ).fetchone()
-
-                    # Check if we found a match
-                    if connectivity_data:
-                        # Update the grid table
-                        self.gutils.execute(
-                            "UPDATE grid SET connectivity_fid = ? WHERE domain_fid = ? AND domain_cell = ?;",
-                            (connectivity_data[0], connectivity_data[1], connectivity_data[2])
-                        )
-                        domain_cell_fid += 1
-                        continue
-
-                geom = " ".join(list(map(str, row[coords])))
-                g = self.gutils.build_square(geom, cell_size)  # Avoid redundant processing
-
-                sql_grid.append((fid, mann, elev, subdomain_n, domain_cell_fid, g))
-
-                fid += 1
-                domain_cell_fid += 1
-
-                # Execute in batches for better efficiency
-                if len(sql_grid) >= batch_size:
-                    self.gutils.execute_many(
-                        "INSERT INTO grid (fid, n_value, elevation, domain_fid, domain_cell, geom) VALUES (?, ?, ?, ?, ?, ?);",
-                        sql_grid
-                    )
-                    sql_grid.clear()
-
-            # Insert remaining data if any
-            if sql_grid:
-                self.gutils.execute_many(
-                    "INSERT INTO grid (fid, n_value, elevation, domain_fid, domain_cell, geom) VALUES (?, ?, ?, ?, ?, ?);",
-                    sql_grid
-                )
-
-            self.uc.bar_info(f"Subdomain {subdomain_n} grid created from CADPTS.DAT and default topo & mannings value!")
-            self.uc.log_info(f"Subdomain {subdomain_n} grid created from CADPTS.DAT and default topo & mannings value!")
+        # # Import TOPO and MANNINGS from CADPTS and FPLAIN
+        # elif os.path.isfile(cadpts_dat) and os.path.isfile(fplain_dat):
+        #
+        #     # Read and parse CADPTS data efficiently
+        #     data = self.parser.double_parser(fplain_dat, cadpts_dat)
+        #
+        #     domain_cell_fid = 1
+        #
+        #     man = slice(5, 6)
+        #     elev = slice(6, 7)
+        #     coords = slice(8, None)
+        #
+        #     # Batch processing for better performance
+        #     batch_size = self.chunksize  # Set batch size from existing chunksize variable
+        #
+        #     # Calculate the cell_size for this cadpts
+        #     if not cell_size:
+        #         data_points = []
+        #         with open(cadpts_dat, "r") as file:
+        #             for _ in range(10):  # Read only the first 10 lines
+        #                 line = file.readline()
+        #                 parts = line.split()
+        #                 if len(parts) == 3:  # Ensure the line contains three elements
+        #                     index, x, y = parts
+        #                     data_points.append((float(x), float(y)))
+        #
+        #         cell_size = min(math.sqrt((p1[0] - p2[0])**2 + (p1[1] - p2[1])**2) for p1, p2 in combinations(data_points, 2))
+        #
+        #     for i, row in enumerate(data, start=1):
+        #
+        #         if subdomain_n != 1 and domain_cell_fid in connect_cells:
+        #             connectivity_data = self.gutils.execute(
+        #                 "SELECT fid, up_domain_fid, up_domain_cell FROM schema_md_connect_cells WHERE down_domain_fid = ? AND down_domain_cell = ?;",
+        #                 (subdomain_n, domain_cell_fid)
+        #             ).fetchone()
+        #
+        #             # Check if we found a match
+        #             if connectivity_data:
+        #                 # Update the grid table
+        #                 self.gutils.execute(
+        #                     "UPDATE grid SET connectivity_fid = ? WHERE domain_fid = ? AND domain_cell = ?;",
+        #                     (connectivity_data[0], connectivity_data[1], connectivity_data[2])
+        #                 )
+        #                 domain_cell_fid += 1
+        #                 continue
+        #
+        #         geom = " ".join(list(map(str, row[coords])))
+        #         g = self.gutils.build_square(geom, cell_size)  # Avoid redundant processing
+        #
+        #         sql_grid.append((fid, *row[man], *row[elev], subdomain_n, domain_cell_fid, g))
+        #
+        #         fid += 1
+        #         domain_cell_fid += 1
+        #
+        #         # Execute in batches for better efficiency
+        #         if len(sql_grid) >= batch_size:
+        #             self.gutils.execute_many(
+        #                 "INSERT INTO grid (fid, n_value, elevation, domain_fid, domain_cell, geom) VALUES (?, ?, ?, ?, ?, ?);",
+        #                 sql_grid
+        #             )
+        #             sql_grid.clear()
+        #
+        #     # Insert remaining data if any
+        #     if sql_grid:
+        #         self.gutils.execute_many(
+        #             "INSERT INTO grid (fid, n_value, elevation, domain_fid, domain_cell, geom) VALUES (?, ?, ?, ?, ?, ?);",
+        #             sql_grid
+        #         )
+        #
+        #     self.uc.bar_info(f"Subdomain {subdomain_n} grid created from CADPTS.DAT and FPLAIN.DAT!")
+        #     self.uc.log_info(f"Subdomain {subdomain_n} grid created from CADPTS.DAT and FPLAIN.DAT!")
+        #
+        # # Import grid from CADPTS and set default mannings and topo
+        # elif os.path.isfile(cadpts_dat):
+        #
+        #     mann = self.gutils.get_cont_par("MANNING")
+        #     elev = -9999
+        #
+        #     # Calculate the cell_size for this cadpts
+        #     if not cell_size:
+        #         data_points = []
+        #         with open(cadpts_dat, "r") as file:
+        #             for _ in range(10):  # Read only the first 10 lines
+        #                 line = file.readline()
+        #                 parts = line.split()
+        #                 if len(parts) == 3:  # Ensure the line contains three elements
+        #                     index, x, y = parts
+        #                     data_points.append((float(x), float(y)))
+        #
+        #         cell_size = min(math.sqrt((p1[0] - p2[0])**2 + (p1[1] - p2[1])**2) for p1, p2 in combinations(data_points, 2))
+        #
+        #     # Read and parse CADPTS data efficiently
+        #     data = self.parser.pandas_single_parser(cadpts_dat)
+        #
+        #     domain_cell_fid = 1
+        #
+        #     coords = slice(1, None)
+        #
+        #     # Batch processing for better performance
+        #     batch_size = self.chunksize  # Set batch size from existing chunksize variable
+        #
+        #     for i, row in enumerate(data, start=1):
+        #
+        #         if subdomain_n != 1 and domain_cell_fid in connect_cells:
+        #             connectivity_data = self.gutils.execute(
+        #                 "SELECT fid, up_domain_fid, up_domain_cell FROM schema_md_connect_cells WHERE down_domain_fid = ? AND down_domain_cell = ?;",
+        #                 (subdomain_n, domain_cell_fid)
+        #             ).fetchone()
+        #
+        #             # Check if we found a match
+        #             if connectivity_data:
+        #                 # Update the grid table
+        #                 self.gutils.execute(
+        #                     "UPDATE grid SET connectivity_fid = ? WHERE domain_fid = ? AND domain_cell = ?;",
+        #                     (connectivity_data[0], connectivity_data[1], connectivity_data[2])
+        #                 )
+        #                 domain_cell_fid += 1
+        #                 continue
+        #
+        #         geom = " ".join(list(map(str, row[coords])))
+        #         g = self.gutils.build_square(geom, cell_size)  # Avoid redundant processing
+        #
+        #         sql_grid.append((fid, mann, elev, subdomain_n, domain_cell_fid, g))
+        #
+        #         fid += 1
+        #         domain_cell_fid += 1
+        #
+        #         # Execute in batches for better efficiency
+        #         if len(sql_grid) >= batch_size:
+        #             self.gutils.execute_many(
+        #                 "INSERT INTO grid (fid, n_value, elevation, domain_fid, domain_cell, geom) VALUES (?, ?, ?, ?, ?, ?);",
+        #                 sql_grid
+        #             )
+        #             sql_grid.clear()
+        #
+        #     # Insert remaining data if any
+        #     if sql_grid:
+        #         self.gutils.execute_many(
+        #             "INSERT INTO grid (fid, n_value, elevation, domain_fid, domain_cell, geom) VALUES (?, ?, ?, ?, ?, ?);",
+        #             sql_grid
+        #         )
+        #
+        #     self.uc.bar_info(f"Subdomain {subdomain_n} grid created from CADPTS.DAT and default topo & mannings value!")
+        #     self.uc.log_info(f"Subdomain {subdomain_n} grid created from CADPTS.DAT and default topo & mannings value!")
 
         else:
             self.uc.bar_error("Failed to import topo and manning's data. Please check the input files!")
             self.uc.log_info("Failed to import topo and manning's data. Please check the input files!")
 
-
         QApplication.restoreOverrideCursor()
-
-    # def extract_ups_downs_cells(self, subdomains_paths):
-    #     """
-    #     Function to extract the boundary cells between two subdomains
-    #     """
-    #     dissolved_domains = []
-    #     buffered_domains = []
-    #     intersected_cells_layers = []
-    #     i = 1
-    #
-    #     n_subdomains = len([x for x in subdomains_paths if x != ""])
-    #
-    #     progDialog = QProgressDialog(f"Getting the intersection between the domains. Please wait...", None, 0, n_subdomains)
-    #     progDialog.setModal(True)
-    #     progDialog.setValue(0)
-    #     progDialog.show()
-    #     QApplication.processEvents()
-    #
-    #     for subdomain in subdomains_paths:
-    #
-    #         if subdomain != "":
-    #             # Create a virtual layer that filters only domain=1
-    #             filtered_layer = processing.run("native:extractbyexpression", {
-    #                 'INPUT': schema_md_cells_lyr,
-    #                 'EXPRESSION': f'"domain_fid"={i}',
-    #                 'OUTPUT': 'TEMPORARY_OUTPUT'
-    #             })['OUTPUT']
-    #
-    #             # Run dissolve on the filtered layer
-    #             dissolved_layer = processing.run("native:dissolve", {
-    #                 'INPUT': filtered_layer,
-    #                 'FIELD': [],
-    #                 'SEPARATE_DISJOINT': False,
-    #                 'OUTPUT': 'TEMPORARY_OUTPUT'
-    #             })['OUTPUT']
-    #
-    #             dissolved_domains.append(dissolved_layer)
-    #
-    #             buffered_layer = processing.run("native:buffer", {
-    #                 'INPUT': dissolved_layer,
-    #                 'DISTANCE': (self.cell_size / 10), 'SEGMENTS': 5, 'END_CAP_STYLE': 0, 'JOIN_STYLE': 0, 'MITER_LIMIT': 2,
-    #                 'DISSOLVE': False, 'SEPARATE_DISJOINT': False, 'OUTPUT': 'TEMPORARY_OUTPUT'})['OUTPUT']
-    #
-    #             buffered_domains.append(buffered_layer)
-    #
-    #             progDialog.setValue(i)
-    #             i += 1
-    #
-    #     progDialog.close()
-    #
-    #     progDialog = QProgressDialog(f"Extracting the connectivity cells. Please wait...", None, 0, len(buffered_domains))
-    #     progDialog.setModal(True)
-    #     progDialog.setValue(0)
-    #     progDialog.show()
-    #     QApplication.processEvents()
-    #
-    #     intersect_results = []
-    #     for i in range(len(buffered_domains)):
-    #         for j in range(i + 1, len(buffered_domains)):  # Avoid redundant comparisons
-    #             layer1 = buffered_domains[i]
-    #             layer2 = buffered_domains[j]
-    #
-    #             # Check if the layers intersect
-    #             intersecting_features = processing.run("native:extractbylocation", {
-    #                 'INPUT': layer1,
-    #                 'PREDICATE': [0],  # "intersects"
-    #                 'INTERSECT': layer2,
-    #                 'OUTPUT': 'TEMPORARY_OUTPUT'
-    #             })['OUTPUT']
-    #
-    #             if intersecting_features:  # Proceed only if an intersection is found
-    #                 # Compute the intersection
-    #                 intersection_layer = processing.run("native:intersection", {
-    #                     'INPUT': layer1,
-    #                     'OVERLAY': layer2,
-    #                     'INPUT_FIELDS': [],
-    #                     'OVERLAY_FIELDS': [],
-    #                     'OUTPUT': 'TEMPORARY_OUTPUT'
-    #                 })['OUTPUT']
-    #
-    #                 if intersection_layer:
-    #
-    #                     # QgsProject.instance().addMapLayer(intersection_layer)
-    #                     intersect_results.append(intersection_layer)
-    #
-    #                     intersecting_grid_polygons = processing.run("native:extractbylocation", {
-    #                         'INPUT': schema_md_cells_lyr,
-    #                         'PREDICATE': [0],  # "intersects"
-    #                         'INTERSECT': intersection_layer,
-    #                         'OUTPUT': 'TEMPORARY_OUTPUT'
-    #                     })['OUTPUT']
-    #
-    #                     # QgsProject.instance().addMapLayer(intersecting_grid_polygons)
-    #                     if intersecting_grid_polygons.featureCount() > 0:
-    #                         intersected_cells_layers.append(intersecting_grid_polygons)
-    #
-    #         progDialog.setValue(i)
-    #     progDialog.close()
-    #
-    #     return intersected_cells_layers
-
-    # def import_connectivity_cells(self):
-    #     """
-    #     Function to import the connectivity cells based on the UPS-DOWS-CELLS
-    #     """
-    #
-    #     self.gutils.clear_tables("schema_md_connect_cells")
-    #
-    #     subdomain_connectivities = self.gutils.execute("""
-    #                    SELECT
-    #                        md.fid,
-    #                        md.subdomain_path,
-    #                        im.fid_subdomain_1, im.mult_domains_1, im.ds_file_1,
-    #                        im.fid_subdomain_2, im.mult_domains_2, im.ds_file_2,
-    #                        im.fid_subdomain_3, im.mult_domains_3, im.ds_file_3,
-    #                        im.fid_subdomain_4, im.mult_domains_4, im.ds_file_4,
-    #                        im.fid_subdomain_5, im.mult_domains_5, im.ds_file_5,
-    #                        im.fid_subdomain_6, im.mult_domains_6, im.ds_file_6,
-    #                        im.fid_subdomain_7, im.mult_domains_7, im.ds_file_7,
-    #                        im.fid_subdomain_8, im.mult_domains_8, im.ds_file_8,
-    #                        im.fid_subdomain_9, im.mult_domains_9, im.ds_file_9
-    #                    FROM
-    #                        mult_domains_methods AS md
-    #                    JOIN mult_domains_con AS im ON md.fid_method = im.fid;
-    #                                """).fetchall()
-    #     if subdomain_connectivities:
-    #         bulk_insert_data = []  # Collect all insert statements in a list
-    #
-    #         j = 1
-    #         qpd = QProgressDialog(f"Importing Connectivity for Subdomain {j}...", None, 0, 9)
-    #         qpd.setWindowTitle("FLO-2D Import")
-    #         qpd.setModal(True)
-    #         qpd.forceShow()
-    #         qpd.setValue(0)
-    #
-    #         for subdomain_connectivity in subdomain_connectivities:
-    #             start_time = time.time()
-    #             md_fid = subdomain_connectivity[0]  # md.fid
-    #             subdomain_path = subdomain_connectivity[1]  # md.subdomain_path
-    #
-    #             for i in range(9):  # Loop through fid_subdomain_x and ups_downs_x pairs
-    #                 subdomain_fid_index = 2 + (i - 1) * 3  # Get index for subdomain fid
-    #                 mult_domain_index = subdomain_fid_index + 1  # Get index for mult_domain
-    #                 ds_file_index = subdomain_fid_index + 2  # Get index for ds_file
-    #
-    #                 fid_subdomain = subdomain_connectivity[subdomain_fid_index]
-    #
-    #                 if not fid_subdomain or fid_subdomain == 0:
-    #                     continue
-    #
-    #                 mult_domain = subdomain_connectivity[mult_domain_index]
-    #                 ds_file = subdomain_connectivity[ds_file_index]
-    #
-    #                 if fid_subdomain and mult_domain:
-    #                     pass
-    #                 elif fid_subdomain and ds_file:
-    #                     cadpts = f"{subdomain_path}/CADPTS.DAT"
-    #                     cadpts_ds = f"{subdomain_path}/{ds_file}"
-    #
-    #                     # Using pandas to speed up
-    #                     import pandas as pd
-    #
-    #                     # Define column names (since files have no headers)
-    #                     column_names = ["id", "x", "y"]
-    #
-    #                     # Read the CSV files without headers and assign column names
-    #                     df1 = pd.read_csv(cadpts, names=column_names, sep=r'\s+',
-    #                                       dtype={"id": int, "x": float, "y": float})
-    #                     df2 = pd.read_csv(cadpts_ds, names=column_names, sep=r'\s+',
-    #                                       dtype={"id": int, "x": float, "y": float})
-    #
-    #                     # Perform an inner join on x and y to find matching coordinates
-    #                     matches = df1.merge(df2, on=["x", "y"], suffixes=('_file1', '_file2'))
-    #
-    #                     # Select only the matching IDs
-    #                     result = matches[["id_file1", "id_file2"]]
-    #
-    #                     # Extract upstream and downstream cells
-    #                     upstream_cells, downstream_cells = result["id_file1"].tolist(), result["id_file2"].tolist()  # Efficient unpacking
-    #
-    #                     # Collect bulk insert data
-    #                     for upstream, downstream in zip(upstream_cells, downstream_cells):
-    #                         # if upstream in cell_centroids:
-    #                         bulk_insert_data.append(
-    #                             (md_fid, upstream, fid_subdomain, downstream))
-    #
-    #                 qpd.setValue(i + 1)
-    #
-    #             end_time = time.time()
-    #             hours, rem = divmod(end_time - start_time, 3600)
-    #             minutes, seconds = divmod(rem, 60)
-    #             time_passed = "{:0>2}:{:0>2}:{:0>2}".format(int(hours), int(minutes), int(seconds))
-    #             self.uc.log_info(f"Time Elapsed to import connectivity for Subdomain {j}: {time_passed}")
-    #             j += 1
-    #             qpd.setLabelText(f"Importing Connectivity for Subdomain {j}...")
-    #
-    #         # Execute bulk insert
-    #         if bulk_insert_data:
-    #             self.gutils.execute_many("""
-    #                                           INSERT INTO schema_md_connect_cells
-    #                                           (up_domain_fid, up_domain_cell, down_domain_fid, down_domain_cell)
-    #                                           VALUES (?, ?, ?, ?);
-    #                                       """, bulk_insert_data)
-
-
-
-
 
 

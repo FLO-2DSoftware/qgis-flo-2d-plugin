@@ -768,7 +768,7 @@ class Layers(object):
                         "name": "Multiple Domain Cells",
                         "sgroup": "Schematic Layers",
                         "ssgroup": "Multiple Domains",
-                        "styles": None,
+                        "styles": ["domain_cells.qml"],
                         "attrs_edit_widgets": {},
                         "readonly": False,
                         "advanced": False
