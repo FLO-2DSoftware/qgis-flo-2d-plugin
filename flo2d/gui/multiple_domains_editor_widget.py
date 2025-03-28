@@ -1,22 +1,12 @@
 #  -*- coding: utf-8 -*-
 import itertools
-import math
 import os
-import time
-
-from PyQt5.QtCore import QSettings, QVariant, Qt
+from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QApplication, QProgressDialog, QInputDialog, QMessageBox
-from pyodbc import connect
 from qgis.PyQt.QtCore import NULL
-from qgis._core import QgsGeometry, QgsFeatureRequest, QgsPointXY, QgsField, QgsSpatialIndex, QgsFeature, QgsProject, \
-    QgsTask, QgsApplication, QgsMessageLog, QgsVectorLayer
-
+from qgis._core import QgsFeatureRequest, QgsFeature
 from .dlg_multidomain_connectivity import MultipleDomainsConnectivityDialog
-from ..flo2d_tools.grid_tools import square_grid, build_grid, number_of_elements, grid_compas_neighbors, \
-    adjacent_grid_elevations, adjacent_grids, domain_tendency, gridRegionGenerator
 from ..geopackage_utils import GeoPackageUtils
-# FLO-2D Preprocessor tools for QGIS
-
 from ..user_communication import UserCommunication
 from .ui_utils import load_ui, center_canvas
 
@@ -24,7 +14,19 @@ uiDialog, qtBaseClass = load_ui("multiple_domains_editor")
 
 
 class MultipleDomainsEditorWidget(qtBaseClass, uiDialog):
+    """
+    Class to handle editing and managing multiple domains.
+    It provides functionalities for creating, deleting, and modifying domains,
+    along with utility methods to handle domain-specific operations.
+    """
+
     def __init__(self, iface, lyrs):
+        """
+        Initializes the MultipleDomainsEditorWidget instance.
+
+        It sets up required attributes, initializes UI components, and
+        ensures connections with other application modules.
+        """
         qtBaseClass.__init__(self)
         uiDialog.__init__(self)
         self.iface = iface
@@ -51,15 +53,15 @@ class MultipleDomainsEditorWidget(qtBaseClass, uiDialog):
 
         self.grid_lyr = self.lyrs.data["grid"]["qlyr"]
         self.mult_domains = self.lyrs.data["mult_domains"]["qlyr"]
-        # self.connect_lines = self.lyrs.data["user_md_connect_lines"]["qlyr"]
         self.mult_domains.afterCommitChanges.connect(self.save_user_md)
         self.md_name_cbo.currentIndexChanged.connect(self.md_index_changed)
-        # self.connect_lines.afterCommitChanges.connect(self.populate_con_cbo)
-        # self.connect_line_cbo.currentIndexChanged.connect(self.con_index_changed)
 
     def setup_connection(self):
         """
-        Function to set up connection
+        Sets up required database connections for handling domain operations.
+
+        Ensures smooth communication between the widget and the database, as well as
+        connectivity with other components of the application.
         """
         con = self.iface.f2d["con"]
         if con is None:
@@ -70,10 +72,15 @@ class MultipleDomainsEditorWidget(qtBaseClass, uiDialog):
 
     def populate_md_cbos(self, fid=None):
         """
-        Function to populate the multi domain comboboxes
+        Populates the ComboBoxes in the UI with data from the multiple domains.
+
+        Retrieves necessary domain data from the database and adds it to the ComboBoxes
+        for user selection and interaction.
         """
         self.md_name_cbo.clear()
         self.cellsize_le.clear()
+        self.cellsize_le.setVisible(False)
+        self.cellsize_lbl.setVisible(False)
 
         qry = "SELECT fid, name FROM mult_domains;"
         rows = self.gutils.execute(qry).fetchall()
@@ -93,7 +100,10 @@ class MultipleDomainsEditorWidget(qtBaseClass, uiDialog):
 
     def md_index_changed(self):
         """
-        Function to update the multi domain comboxes when the index changes
+        Handles actions when the index of the domain ComboBox changes.
+
+        Updates the UI and performs necessary operations to reflect changes based
+        on the selected domain.
         """
         domain_name = self.md_name_cbo.currentText()
         cellsize = self.gutils.execute(f"SELECT domain_cellsize FROM mult_domains WHERE name = '{domain_name}';").fetchone()
@@ -114,7 +124,10 @@ class MultipleDomainsEditorWidget(qtBaseClass, uiDialog):
 
     def create_md_polygon(self):
         """
-        Function to start editing and finish editing the connectivity
+        Creates a polygon for a selected domain.
+
+        This method allows the user to define or edit polygons representing domains
+        directly within the application.
         """
         if self.lyrs.any_lyr_in_edit("mult_domains"):
             self.uc.bar_info(f"Domains saved!")
@@ -130,7 +143,10 @@ class MultipleDomainsEditorWidget(qtBaseClass, uiDialog):
 
     def save_md_changes(self):
         """
-        Function to save multiple domain changes
+        Saves changes made to the multiple domains.
+
+        This method ensures that all modifications to the domains are committed
+        to the database or application environment.
         """
         mult_domains_edited = self.lyrs.save_lyrs_edits("mult_domains")
         if mult_domains_edited:
@@ -139,13 +155,18 @@ class MultipleDomainsEditorWidget(qtBaseClass, uiDialog):
 
     def uncheck_md_btns(self):
         """
-        Function to uncheck the checked buttons
+        Unchecks all toggle buttons related to multiple domains.
+
+        A utility method to reset the toggle button states in the UI.
         """
         self.create_md_polygon_btn.setChecked(False)
 
     def cancel_mult_domains_edits(self):
         """
-        Function to rollback user edits on the mult_domains layers
+        Cancels all edits to the multiple domains.
+
+        Reverts any unsaved changes and restores the domains to their previous
+        state.
         """
         user_lyr_edited = self.lyrs.rollback_lyrs_edits("mult_domains")
         if user_lyr_edited:
@@ -155,8 +176,6 @@ class MultipleDomainsEditorWidget(qtBaseClass, uiDialog):
     def schematize_md(self):
         """
         Function to schematize the multiple domains
-        1. Create the Subdomain grids
-        2. Create the connectivity
         """
 
         if self.gutils.is_table_empty("grid"):
@@ -199,8 +218,10 @@ class MultipleDomainsEditorWidget(qtBaseClass, uiDialog):
 
     def intersected_domains(self):
         """
-        Get the intersected cells between the domains and add data
-        to the schema_md_connect_cells and the grid.connectivity_fid
+        Identifies domains that intersect with each other.
+
+        This method analyzes spatial relationships between domains and determines
+        intersections, which are then used for further operations.
         """
 
         downstream_domains = {}
@@ -282,7 +303,10 @@ class MultipleDomainsEditorWidget(qtBaseClass, uiDialog):
 
     def delete_schema_md(self):
         """
-        Function to delete the multiple domains schematized data
+        Deletes the schematic data of the domains.
+
+        A utility method to clean up domain schematics when they are no longer
+        needed.
         """
 
         QApplication.setOverrideCursor(Qt.WaitCursor)
@@ -300,7 +324,10 @@ class MultipleDomainsEditorWidget(qtBaseClass, uiDialog):
 
     def change_md_name(self):
         """
-        Function to change the domain name
+        Changes the name of a selected domain.
+
+        Allows the user to rename a domain, ensuring that the change is
+        reflected everywhere.
         """
         if not self.md_name_cbo.count():
             return
@@ -327,7 +354,9 @@ class MultipleDomainsEditorWidget(qtBaseClass, uiDialog):
 
     def delete_md(self):
         """
-        Function to delete the domain
+        Deletes a selected domain.
+
+        Completely removes the domain's data from the application and database.
         """
         if not self.md_name_cbo.count():
             return
@@ -349,7 +378,9 @@ class MultipleDomainsEditorWidget(qtBaseClass, uiDialog):
 
     def delete_con(self):
         """
-        Function to delete the connectivity line
+        Deletes connectivity information for a selected domain.
+
+        Removes any network connections or relationships associated with the domain.
         """
         if not self.connect_line_cbo.count():
             return
@@ -392,7 +423,10 @@ class MultipleDomainsEditorWidget(qtBaseClass, uiDialog):
 
     def open_multiple_domains_connectivity_dialog(self):
         """
-        Function to open the multiple domains connectivity and fill out the data
+        Opens the connectivity dialog for multiple domains.
+
+        Allows the user to manage and define relationships between connected
+        domains.
         """
         dlg = MultipleDomainsConnectivityDialog(self.iface, self.con, self.lyrs)
         ok = dlg.exec_()
@@ -403,7 +437,10 @@ class MultipleDomainsEditorWidget(qtBaseClass, uiDialog):
 
     def save_user_md(self):
         """
-        Function to save the recently added multiple domain polygon to the methods table.
+        Saves the user-defined multiple domain data.
+
+        Ensures that the custom domain data provided by the user is validated
+        and stored in the application and database.
         """
         md_names = self.gutils.execute("""SELECT fid, name FROM mult_domains""").fetchall()
         if md_names:
@@ -441,7 +478,10 @@ class MultipleDomainsEditorWidget(qtBaseClass, uiDialog):
 
     def find_common_coordinates(self, project_paths):
         """
-        Function to find the shared boundary cells between all subdomains
+        Finds and returns the common coordinates between multiple domains.
+
+        A utility method to identify overlapping or shared spatial data between
+        domains.
         """
 
         import pandas as pd
