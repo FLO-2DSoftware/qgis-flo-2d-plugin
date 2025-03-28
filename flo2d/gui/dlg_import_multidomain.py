@@ -8,6 +8,7 @@ from PyQt5.QtWidgets import QFileDialog, QApplication, QProgressDialog
 from qgis.PyQt.QtCore import NULL
 
 from .dlg_multidomain_connectivity import MultipleDomainsConnectivityDialog
+from .multiple_domains_editor_widget import MultipleDomainsEditorWidget
 from .ui_utils import load_ui
 from ..flo2d_ie.flo2d_parser import ParseDAT
 from ..geopackage_utils import GeoPackageUtils
@@ -334,7 +335,8 @@ class ImportMultipleDomainsDialog(qtBaseClass, uiDialog):
         pd.forceShow()
         pd.setValue(i)
 
-        common_coords = self.find_common_coordinates(subdomains_paths)
+        md = MultipleDomainsEditorWidget(self.iface, self.lyrs)
+        common_coords = md.find_common_coordinates(subdomains_paths)
 
         # Import the whole grid and subdomains
         for subdomain in subdomains_paths:
@@ -362,38 +364,6 @@ class ImportMultipleDomainsDialog(qtBaseClass, uiDialog):
         self.uc.log_info("Import of Multiple Domains finished successfully")
         self.uc.bar_info("Import of Multiple Domains finished successfully")
         self.close_dlg()
-
-    def find_common_coordinates(self, files):
-        """
-        Function to find the shared boundary cells between all subdomains
-        """
-
-        import pandas as pd
-        from collections import defaultdict
-
-        coords_count = defaultdict(int)  # Dictionary to count occurrences of each coordinate
-
-        for file in files:
-            if file:
-                # Read the file in chunks to manage memory usage
-                chunksize = 10000  # Adjust based on your memory availability
-                reader = pd.read_csv(os.path.join(file, "TOPO.DAT"), delim_whitespace=True, header=None, names=['x', 'y', 'elevation'],
-                                     chunksize=chunksize)
-
-                seen_in_this_file = set()
-                for chunk_index, chunk in enumerate(reader):
-                    # Use tuple pairs for efficient comparison and storage
-                    current_coords = set(zip(chunk['x'], chunk['y']))
-                    seen_in_this_file.update(current_coords)
-
-                # Update the global count only once per file to avoid double counting within the same file
-                for coord in seen_in_this_file:
-                    coords_count[coord] += 1
-
-        # Filter coordinates that appear in at least two different files and convert them to "x y" format at the end
-        common_coords = [f"{coord[0]} {coord[1]}" for coord, count in coords_count.items() if count >= 2]
-
-        return common_coords
 
     def import_subdomains_mannings_n_topo_dat(self, subdomain, common_coords, subdomain_n):
         """
@@ -473,9 +443,12 @@ class ImportMultipleDomainsDialog(qtBaseClass, uiDialog):
                             self.gutils.execute(f"""UPDATE
                                                         schema_md_cells
                                                     SET
-                                                        grid_fid = {fid}
+                                                        grid_fid = {fid},
+                                                        domain_cell = {i}
                                                     WHERE
-                                                        geom = ST_GeomFromText('POINT({geom})');""")
+                                                        geom = ST_GeomFromText('POINT({geom})')
+                                                    AND
+                                                        domain_fid = {subdomain_n};""")
 
                         # It does not exist - Create
                         else:
@@ -495,62 +468,12 @@ class ImportMultipleDomainsDialog(qtBaseClass, uiDialog):
                             self.gutils.execute(f"""UPDATE
                                                        schema_md_cells
                                                    SET
-                                                       grid_fid = {check_grid[0][0]}
+                                                       grid_fid = {check_grid[0][0]},
+                                                       domain_cell = {i}
                                                    WHERE
-                                                       geom = ST_GeomFromText('POINT({geom})');""")
-
-                        # It does not exist - Create
-                        # else:
-
-                            sql_schema.append((check_grid[0][0], subdomain_n, i))
-
-                    # g = self.gutils.build_square(geom, cell_size)
-                    # check_grid_qry = f"""SELECT fid FROM grid WHERE geom = ?;"""
-                    # check_grid = self.gutils.execute(check_grid_qry, (g,)).fetchall()
-                    #
-                    # # Check if it is not constructed on the GRID table, construct it
-                    # if not check_grid:
-                    #
-                    #     sql_grid.append((fid, *row[man], *row[elev], g))
-                    #
-                    #     # Check if it is not constructed on the SCHEMA_MD_CELLS table, construct it
-                    #     check_con_qry = f"""SELECT grid_fid FROM schema_md_cells WHERE geom = ST_GeomFromText('POINT({geom})') AND grid_fid IS NOT NULL;"""
-                    #     check_con = self.gutils.execute(check_con_qry).fetchall()
-                    #
-                    #     if check_con:
-                    #         self.gutils.execute(f"""UPDATE
-                    #                                     schema_md_cells
-                    #                                 SET
-                    #                                     grid_fid = {check_con[0][0]}
-                    #                                 WHERE
-                    #                                     geom = ST_GeomFromText('POINT({geom})');""")
-                    #
-                    #     else:
-                    #         sql_schema.append((fid, subdomain_n, i))
-                    #     fid += 1
-                    # else:
-                    #     check_con_qry = f"""SELECT grid_fid FROM schema_md_cells WHERE geom = ST_GeomFromText('POINT({geom})') AND grid_fid IS NOT NULL;"""
-                    #     check_con = self.gutils.execute(check_con_qry).fetchall()
-                    #
-                    #     if check_con:
-                    #         self.gutils.execute(f"""UPDATE
-                    #                                     schema_md_cells
-                    #                                 SET
-                    #                                     grid_fid = {check_con[0][0]}
-                    #                                 WHERE
-                    #                                     geom = ST_GeomFromText('POINT({geom})');""")
-                    #     # else:
-                    #     #     sql_schema.append((fid, subdomain_n, i))
-
-                    # g = self.gutils.build_square(geom, cell_size)
-                    # check_grid_qry = f"""SELECT fid FROM grid WHERE geom = ?;"""
-                    # check_grid = self.gutils.execute(check_grid_qry, (g,)).fetchall()
-
-                    # # Check if it is not constructed on the grid table, construct it
-                    # if not check_grid:
-                    #     # Construct the grid
-                    #     sql_grid.append((fid, *row[man], *row[elev], g))
-                    #     fid += 1
+                                                       geom = ST_GeomFromText('POINT({geom})')
+                                                   AND
+                                                       domain_fid = {subdomain_n};""")
 
                 # If the grid is not on the grid table, construct the grid and add to schema_md_cells
                 else:

@@ -36,7 +36,6 @@ class MultipleDomainsEditorWidget(qtBaseClass, uiDialog):
 
         self.setup_connection()
         self.populate_md_cbos()
-        # self.populate_con_cbo()
 
         # Domain Creation - Connections
         self.create_md_polygon_btn.clicked.connect(self.create_md_polygon)
@@ -46,14 +45,6 @@ class MultipleDomainsEditorWidget(qtBaseClass, uiDialog):
         self.change_md_name_btn.clicked.connect(self.change_md_name)
         self.delete_md_btn.clicked.connect(self.delete_md)
         self.md_center_btn.clicked.connect(self.md_center)
-
-        # Shift connectivity line
-        # self.delete_con_btn.clicked.connect(self.delete_con)
-        # self.nw_btn.clicked.connect(lambda: self.shift_connectivity(5))
-        # self.ne_btn.clicked.connect(lambda: self.shift_connectivity(8))
-        # self.sw_btn.clicked.connect(lambda: self.shift_connectivity(6))
-        # self.se_btn.clicked.connect(lambda: self.shift_connectivity(7))
-        # self.con_center_btn.clicked.connect(self.con_center)
 
         self.schematize_md_btn.clicked.connect(self.schematize_md)
         self.create_connectivity_btn.clicked.connect(self.open_multiple_domains_connectivity_dialog)
@@ -100,20 +91,6 @@ class MultipleDomainsEditorWidget(qtBaseClass, uiDialog):
 
         self.uncheck_md_btns()
 
-    # def populate_con_cbo(self):
-    #     """
-    #     Function to populate the connection cbo
-    #     """
-    #     self.connect_line_cbo.clear()
-    #
-    #     qry = "SELECT fid FROM user_md_connect_lines;"
-    #     rows = self.gutils.execute(qry).fetchall()
-    #     if rows:
-    #         cur_idx = 0
-    #         for i, row in enumerate(rows):
-    #             self.connect_line_cbo.addItem(str(row[0]))
-    #         self.connect_line_cbo.setCurrentIndex(cur_idx)
-
     def md_index_changed(self):
         """
         Function to update the multi domain comboxes when the index changes
@@ -134,21 +111,6 @@ class MultipleDomainsEditorWidget(qtBaseClass, uiDialog):
             feat = next(self.mult_domains.getFeatures(QgsFeatureRequest(fid)))
             x, y = feat.geometry().centroid().asPoint()
             center_canvas(self.iface, x, y)
-
-    # def con_index_changed(self):
-    #     """
-    #     Function to update the connectivity combobox when the index changes
-    #     """
-    #     if self.connect_line_cbo.currentText() == "":
-    #         pass
-    #     else:
-    #         con_fid = int(self.connect_line_cbo.currentText())
-    #
-    #         if self.con_center_btn.isChecked():
-    #             self.lyrs.show_feat_rubber(self.connect_lines.id(), con_fid)
-    #             feat = next(self.connect_lines.getFeatures(QgsFeatureRequest(con_fid)))
-    #             x, y = feat.geometry().centroid().asPoint()
-    #             center_canvas(self.iface, x, y)
 
     def create_md_polygon(self):
         """
@@ -428,212 +390,6 @@ class MultipleDomainsEditorWidget(qtBaseClass, uiDialog):
             self.lyrs.clear_rubber()
             return
 
-    # def con_center(self):
-    #     """
-    #     Function to check the con eye button
-    #     """
-    #     if self.con_center_btn.isChecked():
-    #         self.con_center_btn.setChecked(True)
-    #         fid = int(self.connect_line_cbo.currentText())
-    #         self.lyrs.show_feat_rubber(self.connect_lines.id(), fid)
-    #         feat = next(self.connect_lines.getFeatures(QgsFeatureRequest(fid)))
-    #         x, y = feat.geometry().centroid().asPoint()
-    #         center_canvas(self.iface, x, y)
-    #         return
-    #     else:
-    #         self.con_center_btn.setChecked(False)
-    #         self.lyrs.clear_rubber()
-    #         return
-
-    # def change_connect_name(self):
-    #     """
-    #     Function to change the connectivity name
-    #     """
-    #     if not self.connect_name_cbo.count():
-    #         return
-    #     fid_qry = self.gutils.execute(f"SELECT fid FROM user_md_connect_lines WHERE name = '{self.connect_name_cbo.currentText()}';").fetchone()
-    #     if fid_qry:
-    #         fid = fid_qry[0]
-    #     else:
-    #         return
-    #     new_name, ok = QInputDialog.getText(None, "Change name", "New name:")
-    #     if not ok or not new_name:
-    #         return
-    #     if not self.connect_name_cbo.findText(new_name) == -1:
-    #         msg = "Connectivity with name {} already exists in the database. Please, choose another name.".format(
-    #             new_name
-    #         )
-    #         self.uc.show_warn(msg)
-    #         self.uc.log_info(msg)
-    #         return
-    #
-    #     self.gutils.execute(f"UPDATE user_md_connect_lines SET name = '{new_name}' WHERE fid = {fid};")
-    #     self.populate_connect_cbos()
-    #     self.uc.bar_info("Connectivity name changed!")
-    #     self.uc.log_info("Connectivity name changed!")
-
-    # def delete_connect(self):
-    #     """
-    #     Function to delete the connectivity
-    #     """
-    #     if not self.connect_name_cbo.count():
-    #         return
-    #     fid_qry = self.gutils.execute(f"SELECT fid FROM user_md_connect_lines WHERE name = '{self.connect_name_cbo.currentText()}';").fetchone()
-    #     if fid_qry:
-    #         fid = fid_qry[0]
-    #     else:
-    #         return
-    #     q = "Are you sure, you want delete the current connectivity?"
-    #     if not self.uc.question(q):
-    #         return
-    #     self.gutils.execute(f"DELETE FROM user_md_connect_lines WHERE fid = {fid};")
-    #     self.populate_connect_cbos()
-    #     self.user_md_connect_lines.triggerRepaint()
-    #     self.uc.bar_info("Connectivity deleted!")
-    #     self.uc.log_info("Connectivity deleted!")
-
-    # def connect_center(self):
-    #     """
-    #     Function to check the connectivity eye button
-    #     """
-    #     if self.connect_center_btn.isChecked():
-    #         self.connect_center_btn.setChecked(True)
-    #         fid_qry = self.gutils.execute(
-    #             f"SELECT fid FROM user_md_connect_lines WHERE name = '{self.connect_name_cbo.currentText()}';").fetchone()
-    #         if fid_qry:
-    #             fid = fid_qry[0]
-    #         else:
-    #             return
-    #         self.lyrs.show_feat_rubber(self.user_md_connect_lines.id(), fid)
-    #         feat = next(self.user_md_connect_lines.getFeatures(QgsFeatureRequest(fid)))
-    #         x, y = feat.geometry().centroid().asPoint()
-    #         center_canvas(self.iface, x, y)
-    #         return
-    #     else:
-    #         self.connect_center_btn.setChecked(False)
-    #         self.lyrs.clear_rubber()
-    #         return
-
-    # def create_subdomains(self):
-    #     """
-    #     Function to create the subdomains
-    #     """
-    #     grid_layer = self.lyrs.data["grid"]["qlyr"]
-    #     point_layer = self.lyrs.data["user_elevation_points"]["qlyr"]
-    #     # line_layer = self.lyrs.data["user_md_connect_lines"]["qlyr"]
-    #     cell_size = int(float(self.gutils.get_cont_par("CELLSIZE")))
-    #
-    #     QgsSpatialIndex(grid_layer)
-    #
-    #     directions = {
-    #         "N": 1,
-    #         "NE": 2,
-    #         "E": 3,
-    #         "SE": 4,
-    #         "S": 5,
-    #         "SW": 6,
-    #         "W": 7,
-    #         "NW": 8
-    #     }
-    #
-    #     parallel_directions = {
-    #         1: [3, 7],
-    #         2: [8, 4],
-    #         3: [1, 5],
-    #         4: [2, 6],
-    #         5: [3, 5],
-    #         6: [8, 4],
-    #         7: [1, 5],
-    #         8: [2, 4],
-    #     }
-    #
-    #     # Get the first feature TODO Evaluate for multiple points
-    #     feature = next(point_layer.getFeatures())
-    #     geom = feature.geometry()
-    #     # Get the geometry as a point
-    #     point = geom.asPoint()
-    #     # Get the starting cell
-    #     start_cell = self.gutils.grid_on_point(point.x(), point.y())
-    #     # List of the grid already evaluated
-    #     evaluated_grids = [start_cell]
-    #     # Tendency direction -> Use to avoid getting back close to the start point
-    #     tendency_direction = domain_tendency(self.gutils, grid_layer, start_cell, cell_size)
-    #
-    #     # Here is the main code to get the grid that are the boundary of the subdomain
-    #     current_cell = start_cell
-    #     while current_cell:
-    #         elevs = adjacent_grid_elevations(self.gutils, grid_layer, current_cell, cell_size)
-    #         previous_elev = 9999
-    #         minimum_elev = None
-    #
-    #         # Find the lowest elevation cell
-    #         for elev in elevs:
-    #             if elev != -999 and elev < previous_elev:
-    #                 previous_elev = elev
-    #                 minimum_elev = previous_elev
-    #
-    #         # Determine flow direction
-    #         if minimum_elev is None:
-    #             break  # No valid flow direction
-    #
-    #         direction = elevs.index(minimum_elev) + 1
-    #         potential_dirs = parallel_directions[direction]
-    #         current_cell_feature = next(grid_layer.getFeatures(QgsFeatureRequest(current_cell)))
-    #         adjacent_cells = adjacent_grids(self.gutils, current_cell_feature, cell_size)
-    #         if current_cell != start_cell:
-    #             if None in adjacent_cells:
-    #                 break
-    #
-    #         # Try selecting from tendency direction first
-    #         next_cell = None
-    #         for potential_dir in potential_dirs:
-    #             if potential_dir in tendency_direction:
-    #                 cell = adjacent_cells[potential_dir - 1]
-    #                 if cell and cell not in evaluated_grids:
-    #                     next_cell = cell
-    #                     evaluated_grids.append(next_cell)
-    #                     break  # Move to the next cell
-    #
-    #         # If no cell found in tendency direction, use any available direction
-    #         if next_cell is None:
-    #             for potential_dir in potential_dirs:
-    #                 cell = adjacent_cells[potential_dir - 1]
-    #                 if cell and cell not in evaluated_grids:
-    #                     next_cell = cell
-    #                     evaluated_grids.append(next_cell)
-    #                     break  # Move to the next cell
-    #
-    #         current_cell = next_cell  # Update for the next iteration
-    #
-    #     # Create the line
-    #     centroids = []
-    #     for fid in evaluated_grids:
-    #         feature = grid_layer.getFeature(fid)
-    #         if feature and feature.geometry():
-    #             centroid = feature.geometry().centroid().asPoint()
-    #             centroids.append(QgsPointXY(centroid.x(), centroid.y()))
-    #
-    #     if len(centroids) < 2:
-    #         self.uc.log_info("Not enough centroids to create a line.")
-    #         self.uc.bar_error("Not enough centroids to create a line.")
-    #         return
-    #
-    #     # Create line geometry from centroids
-    #     line_geom = QgsGeometry.fromPolylineXY(centroids)
-    #
-    #     # Create a new feature for the line
-    #     line_feature = QgsFeature(line_layer.fields())
-    #     line_feature.setGeometry(line_geom)
-    #
-    #     # Start editing and add the feature to the line layer
-    #     line_layer.startEditing()
-    #     line_layer.addFeature(line_feature)
-    #     line_layer.commitChanges()
-    #     line_layer.updateExtents()
-    #     line_layer.triggerRepaint()
-    #
-    #     # self.uc.log_info(evaluated_grids)
-
     def open_multiple_domains_connectivity_dialog(self):
         """
         Function to open the multiple domains connectivity and fill out the data
@@ -683,97 +439,34 @@ class MultipleDomainsEditorWidget(qtBaseClass, uiDialog):
 
         self.populate_md_cbos()
 
-    # def shift_connectivity(self, direction):
-    #     """
-    #     Function to shift the connectivity line
-    #     """
-    #     cell_size = float(self.cellsize_le.text())
-    #     con_fid = int(self.connect_line_cbo.currentText())
-    #
-    #     self.connect_lines = self.lyrs.data["user_md_connect_lines"]["qlyr"]
-    #     provider = self.connect_lines.dataProvider()
-    #     feat = next(self.connect_lines.getFeatures(QgsFeatureRequest(con_fid)))
-    #     geometry = feat.geometry()
-    #
-    #     translations = {
-    #         5: (-cell_size / 2, cell_size / 2),  # NE
-    #         6: (-cell_size / 2, -cell_size / 2),  # SE
-    #         7: (cell_size / 2, -cell_size / 2),  # SW
-    #         8: (cell_size / 2, cell_size / 2)  # NW
-    #     }
-    #
-    #     if direction in translations:
-    #         dx, dy = translations[direction]
-    #         geometry.translate(dx, dy)
-    #         # Update the feature with the new geometry
-    #         provider.changeGeometryValues({feat.id(): geometry})
-    #
-    #     self.connect_lines.triggerRepaint()
+    def find_common_coordinates(self, project_paths):
+        """
+        Function to find the shared boundary cells between all subdomains
+        """
 
+        import pandas as pd
+        from collections import defaultdict
 
-# class DomainProcessingTask(QgsTask):
-#     def __init__(self, description, domain_id, gutils):
-#         super().__init__(description, QgsTask.CanCancel)
-#         self.domain_id = domain_id
-#         self.gutils = gutils
-#
-#     def run(self):
-#         """Here you implement your heavy lifting.
-#         Should periodically test for isCanceled() to gracefully
-#         abort.
-#         This method MUST return True or False.
-#         Raising exceptions will crash QGIS, so we handle them
-#         internally and raise them in self.finished
-#         """
-#
-#         QgsMessageLog.logMessage(self.description())
-#
-#         # Assign domain_fid to grid elements intersecting the current domain
-#         self.gutils.execute(f"""
-#             UPDATE grid
-#             SET domain_fid = {self.domain_id}
-#             WHERE ST_Intersects(
-#                 CastAutomagic(SELECT geom FROM mult_domains WHERE fid = {self.domain_id})),
-#                 CastAutomagic(grid.geom)
-#             );
-#         """)
-#
-#         # Fetch fids and prepare data for domain_cell update
-#         fids = self.gutils.fetch(f"SELECT fid FROM grid WHERE domain_fid = {self.domain_id} ORDER BY fid;")
-#         domain_cells_data = [(i + 1, fid[0]) for i, fid in enumerate(fids)]
-#
-#         # Update domain_cell for the current domain
-#         self.gutils.execute_many("UPDATE grid SET domain_cell = ? WHERE fid = ?", domain_cells_data)
-#
-#         return True
-#
-#     def finished(self, result):
-#         """
-#         This function is automatically called when the task has
-#         completed (successfully or not).
-#         You implement finished() to do whatever follow-up stuff
-#         should happen after the task is complete.
-#         finished is always called from the main thread, so it's safe
-#         to do GUI operations and raise Python exceptions here.
-#         result is the return value from self.run.
-#         """
-#         if result:
-#             QgsMessageLog.logMessage(f'Task "{self.description(),}" completed')
-#         else:
-#             if self.exception is None:
-#                 QgsMessageLog.logMessage(f'Task "{self.description(),}" not completed')
-#             else:
-#                 QgsMessageLog.logMessage(f'Task "{self.description(),}" error')
-#                 raise self.exception
-#
-#     def cancel(self):
-#         QgsMessageLog.logMessage(f'Task "{self.description(),}" was cancelled')
-#         super().cancel()
-#
-#     # def finished(self, result):
-#     #     if result:
-#     #         self.uc.bar_info(f"Domain {self.domain_id} processed successfully.")
-#     #         self.uc.log_info(f"Domain {self.domain_id} processed successfully.")
-#     #     else:
-#     #         self.uc.bar_warn(f"Processing failed for domain {self.domain_id}.")
-#     #         self.uc.log_info(f"Processing failed for domain {self.domain_id}.")
+        coords_count = defaultdict(int)  # Dictionary to count occurrences of each coordinate
+
+        for path in project_paths:
+            if path:
+                # Read the file in chunks to manage memory usage
+                chunksize = 10000  # Adjust based on your memory availability
+                reader = pd.read_csv(os.path.join(path, "TOPO.DAT"), delim_whitespace=True, header=None, names=['x', 'y', 'elevation'],
+                                     chunksize=chunksize)
+
+                seen_in_this_file = set()
+                for chunk_index, chunk in enumerate(reader):
+                    # Use tuple pairs for efficient comparison and storage
+                    current_coords = set(zip(chunk['x'], chunk['y']))
+                    seen_in_this_file.update(current_coords)
+
+                # Update the global count only once per file to avoid double counting within the same file
+                for coord in seen_in_this_file:
+                    coords_count[coord] += 1
+
+        # Filter coordinates that appear in at least two different files and convert them to "x y" format at the end
+        common_coords = [f"{coord[0]} {coord[1]}" for coord, count in coords_count.items() if count >= 2]
+
+        return common_coords
