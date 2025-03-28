@@ -398,7 +398,7 @@ class ExportMultipleDomainsDialog(qtBaseClass, uiDialog):
                 if not os.path.exists(export_folder):
                     os.makedirs(export_folder)
 
-                sub_grid_cells = self.gutils.execute(f"""SELECT md.domain_cell, 
+                sub_grid_cells = self.gutils.execute(f"""SELECT DISTINCT md.domain_cell, 
                                                                 g.n_value, 
                                                                 g.elevation,
                                                                 ST_AsText(ST_Centroid(GeomFromGPB(g.geom)))
