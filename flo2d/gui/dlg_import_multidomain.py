@@ -242,6 +242,9 @@ class ImportMultipleDomainsDialog(qtBaseClass, uiDialog):
             multidomain_file = os.path.join(domain_dir, "MULTIDOMAIN.DAT")
 
             with open(multidomain_file, "r") as f:
+
+                i = 1
+
                 for line in f:
                     data = line.strip().split()
 
@@ -250,7 +253,8 @@ class ImportMultipleDomainsDialog(qtBaseClass, uiDialog):
 
                     if data[0] == "N":
                         # New subdomain identifier
-                        n_subdomains.append(int(data[1]))
+                        n_subdomains.append(i)
+                        i += 1
 
             for i in n_subdomains:
                 qry_method = f"""

@@ -53,6 +53,8 @@ class MultipleDomainsEditorWidget(qtBaseClass, uiDialog):
 
         self.grid_lyr = self.lyrs.data["grid"]["qlyr"]
         self.mult_domains = self.lyrs.data["mult_domains"]["qlyr"]
+        self.schema_md_cells = self.lyrs.data["schema_md_cells"]["qlyr"]
+        self.user_md_connect_lines = self.lyrs.data["user_md_connect_lines"]["qlyr"]
         self.mult_domains.afterCommitChanges.connect(self.save_user_md)
         self.md_name_cbo.currentIndexChanged.connect(self.md_index_changed)
 
@@ -214,6 +216,10 @@ class MultipleDomainsEditorWidget(qtBaseClass, uiDialog):
 
         self.intersected_domains()
 
+        self.mult_domains.triggerRepaint()
+        self.schema_md_cells.triggerRepaint()
+        self.user_md_connect_lines.triggerRepaint()
+
         QApplication.restoreOverrideCursor()
 
     def intersected_domains(self):
@@ -348,6 +354,8 @@ class MultipleDomainsEditorWidget(qtBaseClass, uiDialog):
             return
 
         self.gutils.execute(f"UPDATE mult_domains SET name = '{new_name}' WHERE fid = {fid};")
+        self.gutils.execute(f"UPDATE mult_domains_methods SET subdomain_name = '{new_name}' WHERE fid = {fid};")
+        self.gutils.execute(f"UPDATE mult_domains_con SET subdomain_name = '{new_name}' WHERE fid = {fid};")
         self.populate_md_cbos()
         self.uc.bar_info("Domain name changed!")
         self.uc.log_info("Domain name changed!")
