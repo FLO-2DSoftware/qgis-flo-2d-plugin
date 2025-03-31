@@ -34,6 +34,8 @@ class ExportMultipleDomainsDialog(qtBaseClass, uiDialog):
         self.ok2_btn.clicked.connect(self.export_selected_subdomains)
         self.cancel_btn.clicked.connect(self.close_dlg)
 
+        self.export_method_cbo.currentIndexChanged.connect(self.block_export_selected_subdomains)
+
         self.select_dir_tb.clicked.connect(self.select_dir)
 
         self.populate_subdomains()
@@ -60,6 +62,28 @@ class ExportMultipleDomainsDialog(qtBaseClass, uiDialog):
                     checkbox.setVisible(True)  # Show it
                 else:
                     checkbox.setVisible(False)  # Hide extra checkboxes
+
+    def block_export_selected_subdomains(self):
+        """
+        Block all checkboxes and disable the Export All if the export_method_cbo's index is 2 or 3 (CADPTS.DAT).
+        """
+        if self.export_method_cbo.currentIndex() in [2, 3]:
+            # Disable all checkboxes related to subdomains
+            # Loop over checkboxes in order
+            for i in range(1, 16):
+                checkbox = self.findChild(QCheckBox, f"checkBox_{i}")  # Find checkbox by name
+                if checkbox:
+                    checkbox.setEnabled(False)
+            # Disable the ok button
+            self.ok2_btn.setEnabled(False)
+        else:
+            for i in range(1, 16):
+                checkbox = self.findChild(QCheckBox, f"checkBox_{i}")  # Find checkbox by name
+                if checkbox:
+                    checkbox.setEnabled(True)
+            # Disable the ok button
+            self.ok2_btn.setEnabled(True)
+
 
     def close_dlg(self):
         """
