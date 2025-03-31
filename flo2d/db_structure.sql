@@ -1326,6 +1326,91 @@ INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('fpxsec_cells'
 SELECT gpkgAddGeometryColumn('fpxsec_cells', 'geom', 'POINT', 0, 0, 0);
 SELECT gpkgAddGeometryTriggers('fpxsec_cells', 'geom');
 
+-- MULTIDOMAIN.DAT
+
+CREATE TABLE "mult_domains" (
+    "fid" INTEGER NOT NULL PRIMARY KEY,
+    "name" TEXT,
+    "domain_cellsize" INTEGER,
+    "notes" TEXT
+);
+INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('mult_domains', 'features', 4326);
+SELECT gpkgAddGeometryColumn('mult_domains', 'geom', 'POLYGON', 0, 0, 0);
+SELECT gpkgAddGeometryTriggers('mult_domains', 'geom');
+SELECT gpkgAddSpatialIndex('mult_domains', 'geom');
+
+CREATE TABLE "user_md_connect_lines" (
+    "fid" INTEGER NOT NULL PRIMARY KEY,
+    "up_domain_fid" INTEGER,
+    "down_domain_fid" INTEGER,
+    "notes" TEXT
+);
+INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('user_md_connect_lines', 'features', 4326);
+SELECT gpkgAddGeometryColumn('user_md_connect_lines', 'geom', 'LINESTRING', 0, 0, 0);
+SELECT gpkgAddGeometryTriggers('user_md_connect_lines', 'geom');
+SELECT gpkgAddSpatialIndex('user_md_connect_lines', 'geom');
+
+CREATE TABLE "schema_md_cells" (
+    "fid" INTEGER NOT NULL PRIMARY KEY,
+    "grid_fid" INTEGER,
+    "domain_fid" INTEGER,
+    "domain_cell" INTEGER,
+    "down_domain_fid" INTEGER
+);
+INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('schema_md_cells', 'features', 4326);
+SELECT gpkgAddGeometryColumn('schema_md_cells', 'geom', 'POINT', 0, 0, 0);
+SELECT gpkgAddGeometryTriggers('schema_md_cells', 'geom');
+SELECT gpkgAddSpatialIndex('schema_md_cells', 'geom');
+
+CREATE TABLE "mult_domains_methods" (
+    "fid" INTEGER NOT NULL PRIMARY KEY,
+    "subdomain_name" TEXT, -- name of the subdomain
+    "subdomain_path" TEXT, -- name of the subdomain
+    "fid_method" INTEGER -- NULL = was not imported, 1 CADPTS and Ups-Downs
+);
+INSERT INTO gpkg_contents (table_name, data_type) VALUES ('mult_domains_methods', 'aspatial');
+
+CREATE TABLE "mult_domains_con" (
+    "fid" INTEGER NOT NULL PRIMARY KEY,
+    "subdomain_name" TEXT DEFAULT '', -- name of the subdomain
+    "fid_subdomain_1" INTEGER DEFAULT 0, -- fid of subdomain connected
+    "subdomain_name_1" TEXT DEFAULT '', -- name of the subdomain connected
+    "mult_domains_1" INTEGER DEFAULT 0, -- MULTDOMAINS of the subdomain connected
+    "ds_file_1" INTEGER DEFAULT 0, -- ds file of the subdomain connected
+    "fid_subdomain_2" INTEGER DEFAULT 0, -- fid of subdomain connected
+    "subdomain_name_2" TEXT DEFAULT '', -- name of the subdomain connected
+    "mult_domains_2" INTEGER DEFAULT 0, -- MULTDOMAINS of the subdomain connected
+    "ds_file_2" INTEGER DEFAULT 0, -- ds file of the subdomain connected
+    "fid_subdomain_3" INTEGER DEFAULT 0, -- fid of subdomain connected
+    "subdomain_name_3" TEXT DEFAULT '', -- name of the subdomain connected
+    "mult_domains_3" INTEGER DEFAULT 0, -- MULTDOMAINS of the subdomain connected
+    "ds_file_3" INTEGER DEFAULT 0, -- ds file of the subdomain connected
+    "fid_subdomain_4" INTEGER DEFAULT 0, -- fid of subdomain connected
+    "subdomain_name_4" TEXT DEFAULT '', -- name of the subdomain connected
+    "mult_domains_4" INTEGER DEFAULT 0, -- MULTDOMAINS of the subdomain connected
+    "ds_file_4" INTEGER DEFAULT 0, -- ds file of the subdomain connected
+    "fid_subdomain_5" INTEGER DEFAULT 0, -- fid of subdomain connected
+    "subdomain_name_5" TEXT DEFAULT '', -- name of the subdomain connected
+    "mult_domains_5" INTEGER DEFAULT 0, -- MULTDOMAINS of the subdomain connected
+    "ds_file_5" INTEGER DEFAULT 0, -- ds file of the subdomain connected
+    "fid_subdomain_6" INTEGER DEFAULT 0, -- fid of subdomain connected
+    "subdomain_name_6" TEXT DEFAULT '', -- name of the subdomain connected
+    "mult_domains_6" INTEGER DEFAULT 0, -- MULTDOMAINS of the subdomain connected
+    "ds_file_6" INTEGER DEFAULT 0, -- ds file of the subdomain connected
+    "fid_subdomain_7" INTEGER DEFAULT 0, -- fid of subdomain connected
+    "subdomain_name_7" TEXT DEFAULT '', -- name of the subdomain connected
+    "mult_domains_7" INTEGER DEFAULT 0, -- MULTDOMAINS of the subdomain connected
+    "ds_file_7" INTEGER DEFAULT 0, -- ds file of the subdomain connected
+    "fid_subdomain_8" INTEGER DEFAULT 0, -- fid of subdomain connected
+    "subdomain_name_8" TEXT DEFAULT '', -- name of the subdomain connected
+    "mult_domains_8" INTEGER DEFAULT 0, -- MULTDOMAINS of the subdomain connected
+    "ds_file_8" INTEGER DEFAULT 0, -- ds file of the subdomain connected
+    "fid_subdomain_9" INTEGER DEFAULT 0, -- fid of subdomain connected
+    "subdomain_name_9" TEXT DEFAULT '', -- name of the subdomain connected
+    "mult_domains_9" INTEGER DEFAULT 0, -- MULTDOMAINS of the subdomain connected
+    "ds_file_9" INTEGER DEFAULT 0 -- ds file of the subdomain connected
+);
+INSERT INTO gpkg_contents (table_name, data_type) VALUES ('mult_domains_con', 'aspatial');
 
 -- FPFROUDE.DAT
 

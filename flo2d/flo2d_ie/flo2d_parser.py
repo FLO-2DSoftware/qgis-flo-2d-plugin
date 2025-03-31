@@ -14,6 +14,8 @@ from itertools import chain, repeat, zip_longest
 from operator import attrgetter
 from typing import Any
 
+import pandas as pd
+
 from ..flo2d_hdf5.hdf5_descriptions import CONTROL, GRID, NEIGHBORS, STORMDRAIN, BC, CHANNEL, HYSTRUCT, INFIL, RAIN, \
     REDUCTION_FACTORS, LEVEE, EVAPOR, FLOODPLAIN, GUTTER, TAILINGS, SPATIALLY_VARIABLE, MULT, SD
 from ..utils import Msge
@@ -406,12 +408,36 @@ class ParseDAT(object):
                     yield row
 
     @staticmethod
+    def pandas_single_parser(file1, chunksize=10000):
+        """Parse one large text file line-by-line using pandas in chunks."""
+        f_iter = pd.read_csv(file1, sep=r'\s+', header=None, chunksize=chunksize)
+
+        for chunk in f_iter:
+            for row in chunk.itertuples(index=False, name=None):
+                yield list(row)
+
+    @staticmethod
     def double_parser(file1, file2):
         with open(file1, "r") as f1, open(file2, "r") as f2:
             for line1, line2 in zip(f1, f2):
                 row = line1.split() + line2.split()
                 if row:
                     yield row
+
+    @staticmethod
+    def pandas_double_parser(file1, file2, chunksize=10000):
+        """Parse two large text files line-by-line using pandas in chunks."""
+        # Open both files in chunks
+        f1_iter = pd.read_csv(file1, sep=r'\s+', header=None, chunksize=chunksize)
+        f2_iter = pd.read_csv(file2, sep=r'\s+', header=None, chunksize=chunksize)
+
+        # Iterate over chunks simultaneously
+        for chunk1, chunk2 in zip(f1_iter, f2_iter):
+            # Concatenate the dataframes horizontally
+            combined = pd.concat([chunk1, chunk2], axis=1)
+            # Convert each row to a list and yield
+            for row in combined.itertuples(index=False, name=None):
+                yield list(row)
 
     @staticmethod
     def swmminp_parser(swmminp_file):

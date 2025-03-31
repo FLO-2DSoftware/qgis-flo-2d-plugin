@@ -548,6 +548,18 @@ class Layers(object):
                         "advanced": True
                     },
                 ),
+                (
+                "mult_domains",
+                {
+                    "name": "Domains",
+                    "sgroup": "User Layers",
+                    "ssgroup": "Multiple Domains",
+                    "styles": ["domains.qml"],
+                    "attrs_edit_widgets": {},
+                    "readonly": False,
+                    "advanced": False
+                    },
+                ),
                 # Schematic layers:
                 (
                     "grid",
@@ -749,6 +761,31 @@ class Layers(object):
                         "advanced": True
                     },
                 ),
+                # Multiple Domains layers:
+                (
+                    "schema_md_cells",
+                    {
+                        "name": "Multiple Domain Cells",
+                        "sgroup": "Schematic Layers",
+                        "ssgroup": "Multiple Domains",
+                        "styles": ["domain_cells.qml"],
+                        "attrs_edit_widgets": {},
+                        "readonly": False,
+                        "advanced": False
+                    },
+                ),
+                (
+                    "user_md_connect_lines",
+                    {
+                        "name": "Connectivity Lines",
+                        "sgroup": "Schematic Layers",
+                        "ssgroup": "Multiple Domains",
+                        "styles": ["connect_lines.qml"],
+                        "attrs_edit_widgets": {},
+                        "readonly": False,
+                        "advanced": False
+                    },
+                ),
                 # Storm Drain layers:
                 (
                     "swmmflo",
@@ -907,7 +944,7 @@ class Layers(object):
                         "readonly": False,
                         "advanced": True
                     },
-                ),                
+                ),
                 # Infiltration Layers
                 (
                     "infil",
@@ -1384,6 +1421,31 @@ class Layers(object):
                     {
                         "name": "Breach Fragility Curves",
                         "sgroup": "Levee and Breach Tables",
+                        "styles": None,
+                        "attrs_edit_widgets": {},
+                        "visible": False,
+                        "readonly": False,
+                        "advanced": True
+                    },
+                ),
+                # Multiple Domain Tables
+                (
+                    "mult_domains_methods",
+                    {
+                        "name": "Multiple Domains",
+                        "sgroup": "Multiple Domains Tables",
+                        "styles": None,
+                        "attrs_edit_widgets": {},
+                        "visible": False,
+                        "readonly": False,
+                        "advanced": True
+                    },
+                ),
+                (
+                    "mult_domains_con",
+                    {
+                        "name": "Multiple Domains Connections",
+                        "sgroup": "Multiple Domains Tables",
                         "styles": None,
                         "attrs_edit_widgets": {},
                         "visible": False,
