@@ -2904,6 +2904,78 @@ def cell_elevation(self, x, y):
     return elev
 
 
+def render_grid_subdomains(grid_layer, render, unique_subdomains):
+    if render:
+        try:
+            # Generate distinct random colors for each subdomain
+            colors = _generate_colors(len(unique_subdomains))
+            subdomain_colors = dict(zip(unique_subdomains, colors))
+
+            # Create a list of QGIS ranges for the renderer
+            myRangeList = []
+            for subdomain_id, color in subdomain_colors.items():
+                symbol = QgsSymbol.defaultSymbol(grid_layer.geometryType())
+                symbol.symbolLayer(0).setStrokeStyle(Qt.PenStyle(Qt.NoPen))
+                symbol.setColor(QColor(color))
+                try:
+                    symbol.setSize(1)  # Symbol size here
+                except:
+                    pass
+
+                # Define range specific to this subdomain
+                myRange = QgsRendererRange(
+                    float(subdomain_id),
+                    float(subdomain_id),
+                    symbol,
+                    f"{subdomain_id}"
+                )
+                myRangeList.append(myRange)
+
+            # Apply graduated symbol renderer with field "subdomain"
+            myRenderer = QgsGraduatedSymbolRenderer("domain_fid", myRangeList)
+            grid_layer.setRenderer(myRenderer)
+            grid_layer.triggerRepaint()
+
+            # Ensure layer visibility in the QGIS TOC
+            prj = QgsProject.instance()
+            prj.layerTreeRoot().findLayer(grid_layer.id()).setItemVisibilityCheckedParentRecursive(True)
+        except Exception as e:
+            raise Flo2dError("Error while rendering subdomains: {}".format(e))
+    else:
+        style_path2 = get_file_path("styles", "grid.qml")
+        if os.path.isfile(style_path2):
+            err_msg, res = grid_layer.loadNamedStyle(style_path2)
+            if not res:
+                QApplication.restoreOverrideCursor()
+                msg = "Unable to load style {}.\n{}".format(style_path2, err_msg)
+                raise Flo2dError(msg)
+        else:
+            QApplication.restoreOverrideCursor()
+            raise Flo2dError("Unable to load style {}".format(style_path2))
+        prj = QgsProject.instance()
+        prj.layerTreeRoot().findLayer(grid_layer.id()).setItemVisibilityCheckedParentRecursive(True)
+
+
+def _generate_colors(n):
+    """
+    Generate `n` distinct random colors for subdomains.
+
+    Args:
+        n (int): Number of colors to generate.
+    Returns:
+        list: List of hex color strings.
+    """
+    import random
+    return [
+        "#{:02X}{:02X}{:02X}".format(
+            random.randint(0, 255),
+            random.randint(0, 255),
+            random.randint(0, 255)
+        )
+        for _ in range(n)
+    ]
+
+
 def render_grid_elevations2(elevs_lyr, show_nodata, mini, mini2, maxi):
     if show_nodata:
         colors = [

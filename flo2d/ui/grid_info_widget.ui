@@ -192,6 +192,13 @@
        </property>
       </widget>
      </item>
+     <item>
+      <widget class="QCheckBox" name="render_subdomains_chbox">
+       <property name="text">
+        <string>Render subdomains</string>
+       </property>
+      </widget>
+     </item>
     </layout>
    </item>
   </layout>
