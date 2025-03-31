@@ -5,6 +5,7 @@ from itertools import combinations
 
 from PyQt5.QtCore import QSettings, Qt
 from PyQt5.QtWidgets import QFileDialog, QApplication, QProgressDialog
+from qgis.PyQt.QtCore import NULL
 
 from .dlg_multidomain_connectivity import MultipleDomainsConnectivityDialog
 from .multiple_domains_editor_widget import MultipleDomainsEditorWidget
@@ -334,88 +335,6 @@ class ImportMultipleDomainsDialog(qtBaseClass, uiDialog):
         """
         self.close()
 
-    # def import_global_domain(self):
-    #     """
-    #     Imports the global domain data.
-    #
-    #     Handles the parsing and importing of the global domain details from file
-    #     into the geopackage.
-    #     """
-    #
-    #     sub1_path = self.sub1_le.text()
-    #     sub2_path = self.sub2_le.text()
-    #     sub3_path = self.sub3_le.text()
-    #     sub4_path = self.sub4_le.text()
-    #     sub5_path = self.sub5_le.text()
-    #     sub6_path = self.sub6_le.text()
-    #     sub7_path = self.sub7_le.text()
-    #     sub8_path = self.sub8_le.text()
-    #     sub9_path = self.sub9_le.text()
-    #     sub10_path = self.sub10_le.text()
-    #     sub11_path = self.sub11_le.text()
-    #     sub12_path = self.sub12_le.text()
-    #     sub13_path = self.sub13_le.text()
-    #     sub14_path = self.sub14_le.text()
-    #     sub15_path = self.sub15_le.text()
-    #
-    #     subdomains_paths = [
-    #         sub1_path,
-    #         sub2_path,
-    #         sub3_path,
-    #         sub4_path,
-    #         sub5_path,
-    #         sub6_path,
-    #         sub7_path,
-    #         sub8_path,
-    #         sub9_path,
-    #         sub10_path,
-    #         sub11_path,
-    #         sub12_path,
-    #         sub13_path,
-    #         sub14_path,
-    #         sub15_path
-    #     ]
-    #
-    #     n_projects = sum(1 for item in subdomains_paths if item != "")
-    #
-    #     i = 1
-    #
-    #     pd = QProgressDialog(f"Importing Subdomain {i}...", None, i, n_projects + 1)
-    #     pd.setWindowTitle("FLO-2D Import")
-    #     pd.setModal(True)
-    #     pd.forceShow()
-    #     pd.setValue(i)
-    #
-    #     md = MultipleDomainsEditorWidget(self.iface, self.lyrs)
-    #     common_coords = md.find_common_coordinates(subdomains_paths)
-    #
-    #     # Import the whole grid and subdomains
-    #     for subdomain in subdomains_paths:
-    #         if subdomain:
-    #             start_time = time.time()
-    #
-    #             # Import mannings and topo and add to grid
-    #             self.import_subdomains_mannings_n_topo_dat(subdomain, common_coords, i)
-    #
-    #             end_time = time.time()
-    #             hours, rem = divmod(end_time - start_time, 3600)
-    #             minutes, seconds = divmod(rem, 60)
-    #             time_passed = "{:0>2}:{:0>2}:{:0>2}".format(int(hours), int(minutes), int(seconds))
-    #             self.uc.log_info(f"Time Elapsed to import Subdomain {i}: {time_passed}")
-    #             i += 1
-    #             pd.setLabelText(f"Importing Subdomain {i}...")
-    #             pd.setValue(i)
-    #
-    #     pd.close()
-    #
-    #     grid_lyr = self.lyrs.data["grid"]["qlyr"]
-    #     grid_lyr.triggerRepaint()
-    #     self.lyrs.zoom_to_all()
-    #
-    #     self.uc.log_info("Import of Multiple Domains finished successfully")
-    #     self.uc.bar_info("Import of Multiple Domains finished successfully")
-    #     self.close_dlg()
-
     def import_global_domain(self):
         """
         Imports the global domain data. Handles the parsing and importing
@@ -541,7 +460,7 @@ class ImportMultipleDomainsDialog(qtBaseClass, uiDialog):
                         sql_grid.append((fid, *row[man], *row[elev], g))
 
                         # Check if it is not constructed on the SCHEMA_MD_CELLS table
-                        check_con_qry = f"""SELECT fid FROM schema_md_cells WHERE geom = ST_GeomFromText('POINT({geom})');"""
+                        check_con_qry = f"""SELECT fid, domain_cell FROM schema_md_cells WHERE geom = ST_GeomFromText('POINT({geom})');"""
                         check_con = self.gutils.execute(check_con_qry).fetchall()
 
                         # It exists - Update
@@ -566,7 +485,7 @@ class ImportMultipleDomainsDialog(qtBaseClass, uiDialog):
                     else:
 
                         # Check if it is not constructed on the SCHEMA_MD_CELLS table
-                        check_con_qry = f"""SELECT fid FROM schema_md_cells WHERE geom = ST_GeomFromText('POINT({geom})');"""
+                        check_con_qry = f"""SELECT fid, domain_cell FROM schema_md_cells WHERE geom = ST_GeomFromText('POINT({geom})');"""
                         check_con = self.gutils.execute(check_con_qry).fetchall()
 
                         # It exists - Update
@@ -580,6 +499,7 @@ class ImportMultipleDomainsDialog(qtBaseClass, uiDialog):
                                                        geom = ST_GeomFromText('POINT({geom})')
                                                    AND
                                                        domain_fid = {subdomain_n};""")
+                            sql_schema.append((check_grid[0][0], subdomain_n, i))
 
                 # If the grid is not on the grid table, construct the grid and add to schema_md_cells
                 else:
