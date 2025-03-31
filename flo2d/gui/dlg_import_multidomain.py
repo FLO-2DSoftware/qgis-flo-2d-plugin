@@ -474,7 +474,7 @@ class ImportMultipleDomainsDialog(qtBaseClass, uiDialog):
                                                         geom = ST_GeomFromText('POINT({geom})')
                                                     AND
                                                         domain_fid = {subdomain_n};""")
-
+                            sql_schema.append((fid, subdomain_n, i))
                         # It does not exist - Create
                         else:
                             sql_schema.append((fid, subdomain_n, i))
@@ -499,6 +499,8 @@ class ImportMultipleDomainsDialog(qtBaseClass, uiDialog):
                                                        geom = ST_GeomFromText('POINT({geom})')
                                                    AND
                                                        domain_fid = {subdomain_n};""")
+                            sql_schema.append((check_grid[0][0], subdomain_n, i))
+                        else:
                             sql_schema.append((check_grid[0][0], subdomain_n, i))
 
                 # If the grid is not on the grid table, construct the grid and add to schema_md_cells
