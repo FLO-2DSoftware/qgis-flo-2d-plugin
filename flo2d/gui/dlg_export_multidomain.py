@@ -223,9 +223,9 @@ class ExportMultipleDomainsDialog(qtBaseClass, uiDialog):
                                     if down_cells:
                                         md.write(mdline_d.format(str(up_cell), str(down_cells[0][0])))
 
-                # CADPTS_DSx.DAT
+                # NO CONNECTIVITY
                 elif export_method == 2:
-                    with open(mannings, "w") as m, open(topo, "w") as t, open(cadpts, "w") as c:
+                    with open(mannings, "w") as m, open(topo, "w") as t:
                         for row in records:
                             fid, man, elev, geom = row
                             if man == None or elev == None:
