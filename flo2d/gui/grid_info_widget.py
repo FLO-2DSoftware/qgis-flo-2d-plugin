@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-
+from qgis._core import QgsVectorLayerJoinInfo
 # FLO-2D Preprocessor tools for QGIS
 # Copyright Â© 2016 Lutra Consulting for FLO-2D
 
@@ -13,7 +13,7 @@ from qgis.PyQt.QtCore import QSize, Qt
 from qgis.PyQt.QtGui import QColor, QIntValidator, QStandardItem, QStandardItemModel
 from qgis.PyQt.QtWidgets import QApplication
 
-from ..flo2d_tools.grid_tools import number_of_elements, render_grid_elevations2
+from ..flo2d_tools.grid_tools import number_of_elements, render_grid_elevations2, render_grid_subdomains
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
 from ..utils import (
@@ -57,6 +57,7 @@ class GridInfoWidget(qtBaseClass, uiDialog):
         self.idEdit.setValidator(validator)
 
         self.render_elevations_chbox.clicked.connect(self.render_elevations)
+        self.render_subdomains_chbox.clicked.connect(self.render_subdomains)
         self.find_cell_btn.clicked.connect(self.find_cell)
         set_icon(self.find_cell_btn, "eye-svgrepo-com.svg")
 
@@ -142,9 +143,11 @@ class GridInfoWidget(qtBaseClass, uiDialog):
         try:
             if self.gutils.is_table_empty("user_model_boundary"):
                 self.uc.bar_warn("There is no computational domain! Please digitize it before running tool.")
+                self.uc.log_info("There is no computational domain! Please digitize it before running tool.")
                 return
             if self.gutils.is_table_empty("grid"):
                 self.uc.bar_warn("There is no grid! Please create it before running tool.")
+                self.uc.log_info("There is no grid! Please create it before running tool.")
                 return
             elevs = [x[0] for x in self.gutils.execute("SELECT elevation FROM grid").fetchall()]
             elevs = [x if x is not None else -9999 for x in elevs]
@@ -166,6 +169,58 @@ class GridInfoWidget(qtBaseClass, uiDialog):
             self.uc.show_error("ERROR 110721.0545: render of elevations failed!.\n", e)
             # self.uc.bar_error("ERROR 100721.1759: is the grid defined?")
             self.lyrs.clear_rubber()
+
+    def render_subdomains(self):
+        try:
+            # Check if required data exists
+            if self.gutils.is_table_empty("user_model_boundary"):
+                self.uc.bar_warn("There is no computational domain! Please digitize it before running the tool.")
+                self.uc.log_info("There is no computational domain! Please digitize it before running the tool.")
+                return
+            if self.gutils.is_table_empty("grid"):
+                self.uc.bar_warn("There is no grid! Please create it before running the tool.")
+                self.uc.log_info("There is no grid! Please create it before running the tool.")
+                return
+            if self.gutils.is_table_empty("schema_md_cells"):
+                self.uc.bar_warn("There are no subdomains! Please digitize and assign them before running the tool.")
+                self.uc.log_info("There are no subdomains! Please digitize and assign them before running the tool.")
+                return
+
+            self.schema_md_cells = self.lyrs.data["schema_md_cells"]["qlyr"]
+
+            # Remove any pre-existing joins on the grid layer
+            for join in self.grid.vectorJoins():
+                self.grid.removeJoin(join.joinLayerId())
+
+            # Add a join between the 'grid' layer and 'schema_md_cells' layer
+            join_object = QgsVectorLayerJoinInfo()
+            join_object.setJoinLayer(self.schema_md_cells)
+            join_object.setTargetFieldName("fid")  # Field in 'grid'
+            join_object.setJoinFieldName("grid_fid")  # Field in 'schema_md_cells'
+            join_object.setUsingMemoryCache(True)  # Use memory cache for efficiency
+            join_object.setPrefix("")  # No prefix to keep field names clean
+
+            # Add the join to the grid layer
+            self.grid.addJoin(join_object)
+
+            # Extract unique subdomains from the 'subdomain' field in the joined layer
+            values = self.schema_md_cells.uniqueValues(
+                self.schema_md_cells.fields().lookupField("domain_fid")
+            )
+            if not values:
+                self.uc.bar_warn("No subdomains found to render.")
+                self.uc.log_info("No subdomains found to render.")
+                return
+
+            # Render the grid layer with categorized symbology
+            render_grid_subdomains(self.grid, self.render_subdomains_chbox.isChecked(), values)
+
+            # Repaint layers
+            self.lyrs.lyrs_to_repaint = [self.grid]
+            self.lyrs.repaint_layers()
+        except Exception as e:
+            self.uc.bar_error("ERROR: Rendering subdomains failed!")
+            self.uc.log_info("ERROR: Rendering subdomains failed!")
 
     def plot_grid_rainfall(self, feat):
         si = "inches" if self.gutils.get_cont_par("METRIC") == "0" else "mm"
