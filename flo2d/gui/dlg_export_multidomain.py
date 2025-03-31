@@ -6,6 +6,7 @@ from PyQt5.QtWidgets import QFileDialog, QApplication, QCheckBox
 from qgis.PyQt.QtCore import NULL
 
 from .ui_utils import load_ui
+from ..flo2d_ie.flo2dgeopackage import Flo2dGeoPackage
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
 
@@ -29,6 +30,7 @@ class ExportMultipleDomainsDialog(qtBaseClass, uiDialog):
         self.lyrs = lyrs
         self.uc = UserCommunication(iface, "FLO-2D")
         self.gutils = GeoPackageUtils(con, iface)
+        self.f2g = Flo2dGeoPackage(con, iface)
 
         self.ok_btn.clicked.connect(self.export_subdomains)
         self.ok2_btn.clicked.connect(self.export_selected_subdomains)
@@ -118,14 +120,17 @@ class ExportMultipleDomainsDialog(qtBaseClass, uiDialog):
         Export Methods:
             - 0: MULTIDOMAIN.DAT
             - 1: ONLY MULTIDOMAIN.DAT
-            - 2: NO CONNECTIVITY
+            - 2: CADPTS.DAT
+            - 3: ONLY CADPTS.DAT
+            - 4: NO CONNECTIVITY
         """
         QApplication.setOverrideCursor(Qt.WaitCursor)
 
         # Figure out the export method
         # 0 -> MULTIDOMAIN.DAT
-        # 1 -> ONLY MULTIDOMAIN.DAT
-        # 2 -> NO CONNECTIVITY
+        # 2 -> CADPTS.DAT
+        # 3 -> ONLY CADPTS.DAT
+        # 4 -> NO CONNECTIVITY
         export_method = self.export_method_cbo.currentIndex()
 
         export_subdomains = []
@@ -186,6 +191,8 @@ class ExportMultipleDomainsDialog(qtBaseClass, uiDialog):
                                                                 md.domain_fid = {subdomains[0]};""").fetchall()
 
                 records = sorted(sub_grid_cells, key=lambda x: x[0])
+
+                self.f2g.export_cont_toler_dat(export_folder)
 
                 mannings = os.path.join(str(export_folder), "MANNINGS_N.DAT")
                 topo = os.path.join(str(export_folder), "TOPO.DAT")
@@ -376,7 +383,9 @@ class ExportMultipleDomainsDialog(qtBaseClass, uiDialog):
         # Figure out the export method
         # 0 -> MULTIDOMAIN.DAT
         # 1 -> ONLY MULTIDOMAIN.DAT
-        # 2 -> NO CONNECTIVITY
+        # 2 -> CADPTS.DAT
+        # 3 -> ONLY CADPTS.DAT
+        # 4 -> NO CONNECTIVITY
         export_method = self.export_method_cbo.currentIndex()
 
         subdomains = self.gutils.execute("SELECT fid, subdomain_name FROM mult_domains_methods;").fetchall()
@@ -423,6 +432,8 @@ class ExportMultipleDomainsDialog(qtBaseClass, uiDialog):
                                                                 md.domain_fid = {subdomain[0]};""").fetchall()
 
                 records = sorted(sub_grid_cells, key=lambda x: x[0])
+
+                self.f2g.export_cont_toler_dat(export_folder)
 
                 mannings = os.path.join(str(export_folder), "MANNINGS_N.DAT")
                 topo = os.path.join(str(export_folder), "TOPO.DAT")
