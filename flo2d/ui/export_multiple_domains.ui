@@ -239,6 +239,16 @@
          </item>
          <item>
           <property name="text">
+           <string>CADPTS.DAT</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>ONLY CADPTS.DAT</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
            <string>NO CONNECTIVITY</string>
           </property>
          </item>
