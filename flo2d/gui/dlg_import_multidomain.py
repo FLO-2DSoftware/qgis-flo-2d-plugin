@@ -396,9 +396,6 @@ class ImportMultipleDomainsDialog(qtBaseClass, uiDialog):
 
         QApplication.setOverrideCursor(Qt.WaitCursor)
 
-        # connect_cells = [" ".join(map(str, row)) for row in self.gutils.execute(
-        #     f"SELECT ST_X(geom) as x, ST_Y(geom) as y FROM schema_md_cells;").fetchall()]
-
         cell_size = None
 
         # Step 1: Clear tables if this is the first subdomain
@@ -414,10 +411,18 @@ class ImportMultipleDomainsDialog(qtBaseClass, uiDialog):
 
         topo_dat = f"{subdomain}/TOPO.DAT"
         mannings_dat = f"{subdomain}/MANNINGS_N.DAT"
-        # cadpts_dat = f"{subdomain}/CADPTS.DAT"
-        # fplain_dat = f"{subdomain}/FPLAIN.DAT"
+        cadpts_dat = f"{subdomain}/CADPTS.DAT"
+        fplain_dat = f"{subdomain}/FPLAIN.DAT"
 
-        # Check for TOPO and MANNINGS_N first # TODO CHECK THIS
+        data = None
+        man = None
+        coords = None
+        elev = None
+
+        f1_used = None
+        f2_used = None
+
+        # Check for TOPO and MANNINGS_N first
         if os.path.isfile(topo_dat) and os.path.isfile(mannings_dat):
 
             # Read and parse TOPO & MANNINGS_N data efficiently
@@ -427,8 +432,8 @@ class ImportMultipleDomainsDialog(qtBaseClass, uiDialog):
             coords = slice(2, 4)
             elev = slice(4, None)
 
-            # Batch processing for better performance
-            batch_size = self.chunksize  # Set batch size from existing chunksize variable
+            f1_used = "TOPO.DAT"
+            f2_used = "MANNINGS_N.DAT"
 
             # Calculate the cell_size for this topo.dat
             if not cell_size:
@@ -441,7 +446,67 @@ class ImportMultipleDomainsDialog(qtBaseClass, uiDialog):
                             x, y, _ = parts
                             data_points.append((float(x), float(y)))
 
+                cell_size = min(
+                    math.sqrt((p1[0] - p2[0]) ** 2 + (p1[1] - p2[1]) ** 2) for p1, p2 in combinations(data_points, 2))
+
+        # Import TOPO and MANNINGS from CADPTS and FPLAIN
+        elif os.path.isfile(cadpts_dat) and os.path.isfile(fplain_dat):
+
+            # Read and parse CADPTS data efficiently
+            data = self.parser.double_parser(fplain_dat, cadpts_dat)
+
+            man = slice(5, 6)
+            elev = slice(6, 7)
+            coords = slice(8, None)
+
+            f1_used = "CADPTS.DAT"
+            f2_used = "FPLAIN.DAT"
+
+            # Calculate the cell_size for this cadpts
+            if not cell_size:
+                data_points = []
+                with open(cadpts_dat, "r") as file:
+                    for _ in range(10):  # Read only the first 10 lines
+                        line = file.readline()
+                        parts = line.split()
+                        if len(parts) == 3:  # Ensure the line contains three elements
+                            index, x, y = parts
+                            data_points.append((float(x), float(y)))
+
                 cell_size = min(math.sqrt((p1[0] - p2[0])**2 + (p1[1] - p2[1])**2) for p1, p2 in combinations(data_points, 2))
+
+        # Import grid from CADPTS and set default mannings and topo
+        elif os.path.isfile(cadpts_dat):
+
+            # Read and parse CADPTS data efficiently
+            data = self.parser.pandas_single_parser(cadpts_dat)
+
+            coords = slice(1, None)
+
+            f1_used = "CADPTS.DAT"
+            f2_used = "default mannings and elevation"
+
+            # Calculate the cell_size for this cadpts
+            if not cell_size:
+                data_points = []
+                with open(cadpts_dat, "r") as file:
+                    for _ in range(10):  # Read only the first 10 lines
+                        line = file.readline()
+                        parts = line.split()
+                        if len(parts) == 3:  # Ensure the line contains three elements
+                            index, x, y = parts
+                            data_points.append((float(x), float(y)))
+
+                cell_size = min(math.sqrt((p1[0] - p2[0])**2 + (p1[1] - p2[1])**2) for p1, p2 in combinations(data_points, 2))
+
+        else:
+            self.uc.bar_warn("Failed to import grid data. Please check the input files!")
+            self.uc.log_info("Failed to import grid data. Please check the input files!")
+
+        try:
+
+            # Batch processing for better performance
+            batch_size = self.chunksize  # Set batch size from existing chunksize variable
 
             for i, row in enumerate(data, start=1):
 
@@ -457,7 +522,12 @@ class ImportMultipleDomainsDialog(qtBaseClass, uiDialog):
 
                     # It does not exist
                     if not check_grid:
-                        sql_grid.append((fid, *row[man], *row[elev], g))
+                        if man and elev:
+                            sql_grid.append((fid, *row[man], *row[elev], g))
+                        else:
+                            mannings = self.gutils.get_cont_par("MANNING")
+                            elevation = -9999
+                            sql_grid.append((fid, mannings, elevation, g))
 
                         # Check if it is not constructed on the SCHEMA_MD_CELLS table
                         check_con_qry = f"""SELECT fid, domain_cell FROM schema_md_cells WHERE geom = ST_GeomFromText('POINT({geom})');"""
@@ -506,7 +576,12 @@ class ImportMultipleDomainsDialog(qtBaseClass, uiDialog):
                 # If the grid is not on the grid table, construct the grid and add to schema_md_cells
                 else:
                     g = self.gutils.build_square(geom, cell_size)
-                    sql_grid.append((fid, *row[man], *row[elev], g))
+                    if man and elev:
+                        sql_grid.append((fid, *row[man], *row[elev], g))
+                    else:
+                        mannings = self.gutils.get_cont_par("MANNING")
+                        elevation = -9999
+                        sql_grid.append((fid, mannings, elevation, g))
 
                     sql_schema.append((fid, subdomain_n, i))
 
@@ -548,158 +623,14 @@ class ImportMultipleDomainsDialog(qtBaseClass, uiDialog):
                     sql_schema
                 )
 
-            self.uc.bar_info(f"Subdomain {subdomain_n} grid created from TOPO.DAT and MANNINGS_N.DAT!")
-            self.uc.log_info(f"Subdomain {subdomain_n} grid created from TOPO.DAT and MANNINGS_N.DAT!")
+            self.uc.bar_info(f"Subdomain {subdomain_n} grid created from {f1_used} and {f2_used}!")
+            self.uc.log_info(f"Subdomain {subdomain_n} grid created from {f1_used} and {f2_used}!")
 
-        # # Import TOPO and MANNINGS from CADPTS and FPLAIN
-        # elif os.path.isfile(cadpts_dat) and os.path.isfile(fplain_dat):
-        #
-        #     # Read and parse CADPTS data efficiently
-        #     data = self.parser.double_parser(fplain_dat, cadpts_dat)
-        #
-        #     domain_cell_fid = 1
-        #
-        #     man = slice(5, 6)
-        #     elev = slice(6, 7)
-        #     coords = slice(8, None)
-        #
-        #     # Batch processing for better performance
-        #     batch_size = self.chunksize  # Set batch size from existing chunksize variable
-        #
-        #     # Calculate the cell_size for this cadpts
-        #     if not cell_size:
-        #         data_points = []
-        #         with open(cadpts_dat, "r") as file:
-        #             for _ in range(10):  # Read only the first 10 lines
-        #                 line = file.readline()
-        #                 parts = line.split()
-        #                 if len(parts) == 3:  # Ensure the line contains three elements
-        #                     index, x, y = parts
-        #                     data_points.append((float(x), float(y)))
-        #
-        #         cell_size = min(math.sqrt((p1[0] - p2[0])**2 + (p1[1] - p2[1])**2) for p1, p2 in combinations(data_points, 2))
-        #
-        #     for i, row in enumerate(data, start=1):
-        #
-        #         if subdomain_n != 1 and domain_cell_fid in connect_cells:
-        #             connectivity_data = self.gutils.execute(
-        #                 "SELECT fid, up_domain_fid, up_domain_cell FROM schema_md_connect_cells WHERE down_domain_fid = ? AND down_domain_cell = ?;",
-        #                 (subdomain_n, domain_cell_fid)
-        #             ).fetchone()
-        #
-        #             # Check if we found a match
-        #             if connectivity_data:
-        #                 # Update the grid table
-        #                 self.gutils.execute(
-        #                     "UPDATE grid SET connectivity_fid = ? WHERE domain_fid = ? AND domain_cell = ?;",
-        #                     (connectivity_data[0], connectivity_data[1], connectivity_data[2])
-        #                 )
-        #                 domain_cell_fid += 1
-        #                 continue
-        #
-        #         geom = " ".join(list(map(str, row[coords])))
-        #         g = self.gutils.build_square(geom, cell_size)  # Avoid redundant processing
-        #
-        #         sql_grid.append((fid, *row[man], *row[elev], subdomain_n, domain_cell_fid, g))
-        #
-        #         fid += 1
-        #         domain_cell_fid += 1
-        #
-        #         # Execute in batches for better efficiency
-        #         if len(sql_grid) >= batch_size:
-        #             self.gutils.execute_many(
-        #                 "INSERT INTO grid (fid, n_value, elevation, domain_fid, domain_cell, geom) VALUES (?, ?, ?, ?, ?, ?);",
-        #                 sql_grid
-        #             )
-        #             sql_grid.clear()
-        #
-        #     # Insert remaining data if any
-        #     if sql_grid:
-        #         self.gutils.execute_many(
-        #             "INSERT INTO grid (fid, n_value, elevation, domain_fid, domain_cell, geom) VALUES (?, ?, ?, ?, ?, ?);",
-        #             sql_grid
-        #         )
-        #
-        #     self.uc.bar_info(f"Subdomain {subdomain_n} grid created from CADPTS.DAT and FPLAIN.DAT!")
-        #     self.uc.log_info(f"Subdomain {subdomain_n} grid created from CADPTS.DAT and FPLAIN.DAT!")
-        #
-        # # Import grid from CADPTS and set default mannings and topo
-        # elif os.path.isfile(cadpts_dat):
-        #
-        #     mann = self.gutils.get_cont_par("MANNING")
-        #     elev = -9999
-        #
-        #     # Calculate the cell_size for this cadpts
-        #     if not cell_size:
-        #         data_points = []
-        #         with open(cadpts_dat, "r") as file:
-        #             for _ in range(10):  # Read only the first 10 lines
-        #                 line = file.readline()
-        #                 parts = line.split()
-        #                 if len(parts) == 3:  # Ensure the line contains three elements
-        #                     index, x, y = parts
-        #                     data_points.append((float(x), float(y)))
-        #
-        #         cell_size = min(math.sqrt((p1[0] - p2[0])**2 + (p1[1] - p2[1])**2) for p1, p2 in combinations(data_points, 2))
-        #
-        #     # Read and parse CADPTS data efficiently
-        #     data = self.parser.pandas_single_parser(cadpts_dat)
-        #
-        #     domain_cell_fid = 1
-        #
-        #     coords = slice(1, None)
-        #
-        #     # Batch processing for better performance
-        #     batch_size = self.chunksize  # Set batch size from existing chunksize variable
-        #
-        #     for i, row in enumerate(data, start=1):
-        #
-        #         if subdomain_n != 1 and domain_cell_fid in connect_cells:
-        #             connectivity_data = self.gutils.execute(
-        #                 "SELECT fid, up_domain_fid, up_domain_cell FROM schema_md_connect_cells WHERE down_domain_fid = ? AND down_domain_cell = ?;",
-        #                 (subdomain_n, domain_cell_fid)
-        #             ).fetchone()
-        #
-        #             # Check if we found a match
-        #             if connectivity_data:
-        #                 # Update the grid table
-        #                 self.gutils.execute(
-        #                     "UPDATE grid SET connectivity_fid = ? WHERE domain_fid = ? AND domain_cell = ?;",
-        #                     (connectivity_data[0], connectivity_data[1], connectivity_data[2])
-        #                 )
-        #                 domain_cell_fid += 1
-        #                 continue
-        #
-        #         geom = " ".join(list(map(str, row[coords])))
-        #         g = self.gutils.build_square(geom, cell_size)  # Avoid redundant processing
-        #
-        #         sql_grid.append((fid, mann, elev, subdomain_n, domain_cell_fid, g))
-        #
-        #         fid += 1
-        #         domain_cell_fid += 1
-        #
-        #         # Execute in batches for better efficiency
-        #         if len(sql_grid) >= batch_size:
-        #             self.gutils.execute_many(
-        #                 "INSERT INTO grid (fid, n_value, elevation, domain_fid, domain_cell, geom) VALUES (?, ?, ?, ?, ?, ?);",
-        #                 sql_grid
-        #             )
-        #             sql_grid.clear()
-        #
-        #     # Insert remaining data if any
-        #     if sql_grid:
-        #         self.gutils.execute_many(
-        #             "INSERT INTO grid (fid, n_value, elevation, domain_fid, domain_cell, geom) VALUES (?, ?, ?, ?, ?, ?);",
-        #             sql_grid
-        #         )
-        #
-        #     self.uc.bar_info(f"Subdomain {subdomain_n} grid created from CADPTS.DAT and default topo & mannings value!")
-        #     self.uc.log_info(f"Subdomain {subdomain_n} grid created from CADPTS.DAT and default topo & mannings value!")
+        except Exception as e:
+            self.uc.bar_error("Failed to import topo and manning's data. Please check the input files!\n" + str(e))
+            self.uc.log_info("Failed to import topo and manning's data. Please check the input files!\n" + str(e))
 
-        else:
-            self.uc.bar_error("Failed to import topo and manning's data. Please check the input files!")
-            self.uc.log_info("Failed to import topo and manning's data. Please check the input files!")
+        finally:
 
-        QApplication.restoreOverrideCursor()
-
+            QApplication.restoreOverrideCursor()
 

@@ -1,12 +1,8 @@
-import itertools
 import os
-import re
 import time
 
-from PyQt5.QtCore import QSettings, QVariant
 from PyQt5.QtWidgets import QProgressDialog
 from qgis.PyQt.QtCore import NULL
-from qgis._core import QgsProject, QgsVectorLayer, QgsField, QgsFeature
 
 from .ui_utils import load_ui
 from ..geopackage_utils import GeoPackageUtils
@@ -76,6 +72,8 @@ class MultipleDomainsConnectivityDialog(qtBaseClass, uiDialog):
         self.sub7_cbo.currentIndexChanged.connect(self.save_cbo_data)
         self.sub8_cbo.currentIndexChanged.connect(self.save_cbo_data)
         self.sub9_cbo.currentIndexChanged.connect(self.save_cbo_data)
+
+        self.schema_md_cells = self.lyrs.data["schema_md_cells"]["qlyr"]
 
     def remove_subdomain(self, subdomain_cbo):
         """
@@ -381,17 +379,18 @@ class MultipleDomainsConnectivityDialog(qtBaseClass, uiDialog):
                             matches = df1.merge(df2, on=["x", "y"], suffixes=('_file1', '_file2'))
 
                             # Select only the matching IDs
-                            result = matches[["id_file1", "id_file2"]]
+                            result = matches[["id_file1", "id_file2", "x", "y"]]
 
                             # Extract upstream and downstream cells
-                            upstream_cells, downstream_cells = result["id_file1"].tolist(), result[
-                                "id_file2"].tolist()  # Efficient unpacking
+                            upstream_cells = result["id_file1"].tolist()
+                            downstream_cells = result["id_file2"].tolist()
+                            coordinates = result[["x", "y"]].values.tolist()
 
                             # Collect bulk insert data
-                            for upstream, downstream in zip(upstream_cells, downstream_cells):
-                                # if upstream in cell_centroids:
-                                bulk_insert_data.append(
-                                    (md_fid, upstream, fid_subdomain, downstream))
+                            for (upstream, downstream, coord) in zip(upstream_cells, downstream_cells, coordinates):
+                                coords = f"POINT({coord[0]} {coord[1]})"
+                                bulk_insert_data.append((md_fid, upstream, fid_subdomain, coords))
+                                bulk_insert_data.append((fid_subdomain, "", "", coords))
 
                         qpd.setValue(i + 1)
 
@@ -410,6 +409,12 @@ class MultipleDomainsConnectivityDialog(qtBaseClass, uiDialog):
                                           (domain_fid, domain_cell, down_domain_fid, geom) 
                                           VALUES (?, ?, ?, GeomFromText(?));
                                       """, bulk_insert_data)
+
+        self.schema_md_cells.triggerRepaint()
+        schema_md_cells_layer = self.lyrs.get_layer_by_name("Multiple Domain Cells", group=self.lyrs.group)
+        extent = schema_md_cells_layer.layer().extent()
+        self.iface.mapCanvas().setExtent(extent)
+        self.iface.mapCanvas().refresh()
 
         self.uc.log_info("Connectivity saved!")
         self.uc.bar_info("Connectivity saved!")

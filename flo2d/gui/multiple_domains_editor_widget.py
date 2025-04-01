@@ -501,8 +501,25 @@ class MultipleDomainsEditorWidget(qtBaseClass, uiDialog):
             if path:
                 # Read the file in chunks to manage memory usage
                 chunksize = 10000  # Adjust based on your memory availability
-                reader = pd.read_csv(os.path.join(path, "TOPO.DAT"), delim_whitespace=True, header=None, names=['x', 'y', 'elevation'],
-                                     chunksize=chunksize)
+
+                if os.path.isfile(os.path.join(path, "TOPO.DAT")):
+                    reader = pd.read_csv(os.path.join(path, "TOPO.DAT"),
+                                         delim_whitespace=True,
+                                         header=None,
+                                         names=['x', 'y', 'elevation'],
+                                         chunksize=chunksize)
+                elif os.path.isfile(os.path.join(path, "CADPTS.DAT")):
+                    reader = pd.read_csv(os.path.join(path, "CADPTS.DAT"),
+                                         delim_whitespace=True,
+                                         header=None,
+                                         names=['id', 'x', 'y'],
+                                         chunksize=chunksize)
+                else:
+                    self.uc.bar_error(
+                        "No TOPO.DAT or CADPTS.DAT found in the project directory.")
+                    self.uc.log_info(
+                        "No TOPO.DAT or CADPTS.DAT found in the project directory.")
+                    return
 
                 seen_in_this_file = set()
                 for chunk_index, chunk in enumerate(reader):
