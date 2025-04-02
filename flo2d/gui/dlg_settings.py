@@ -324,6 +324,7 @@ class SettingsDialog(qtBaseClass, uiDialog):
 
         self.unit_lab.setText(mu)
         proj = self.crs.toProj()
+        QgsProject.instance().setCrs(self.crs)
 
         # check if the CRS exist in the db
         sql = "SELECT * FROM gpkg_spatial_ref_sys WHERE srs_id=?;"
