@@ -6056,11 +6056,10 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             # Create a new memory layer for point geometries
             SD_all_nodes_layer = QgsVectorLayer("Point", 'SD All Points', 'memory')
 
-            crs = layer1.crs()  # crs is a QgsCoordinateReferenceSystem
-            unit = crs.mapUnits()  # unit is a QgsUnitTypes.DistanceUnit
-
-            if QgsProject.instance().crs().mapUnits() == QgsUnitTypes.DistanceMeters:
+            # Meters
+            if self.gutils.get_cont_par("METRIC") == "1":
                 distance_units = "mts"
+            # Feet
             else:
                 distance_units = "feet"
 
@@ -6558,8 +6557,10 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         self.plot_item_name = "Pump Curve:   " + name
         self.plot.plot.setTitle("Pump Curve:   " + name)
 
-        if QgsProject.instance().crs().mapUnits() == QgsUnitTypes.DistanceMeters:
+        # Meters
+        if self.gutils.get_cont_par("METRIC") == "1":
             units = "CMS"
+        # Feet
         else:
             units = "CFS"
 

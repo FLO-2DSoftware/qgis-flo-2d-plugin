@@ -51,14 +51,17 @@ class UpdateGpkg(qtBaseClass, uiDialog):
         crs = QgsProject.instance().crs()
         self.proj_lab.setText(crs.description())
 
-        if crs.mapUnits() == QgsUnitTypes.DistanceMeters:
-            mu = "meters"
-        elif crs.mapUnits() == QgsUnitTypes.DistanceFeet:
-            mu = "feet"
+        map_units = QgsUnitTypes.toString(crs.mapUnits())
+
+        if "meters" in map_units:
+            mu = "Metric (International System)"
+        elif "feet" in map_units:
+            mu = "English (Imperial System)"
         else:
-            msg = "WARNING 060319.1654: Unknown map units."
-            mu = ""
+            msg = "WARNING 060319.1654: Choose a valid CRS!\n\nFLO-2D only supports coordinate reference systems with distance units in feet or meters."
             self.uc.show_warn(msg)
+            self.uc.log_info(msg)
+            return
         self.unit_lab.setText(mu)
 
         contact = QgsProject.instance().metadata().author()

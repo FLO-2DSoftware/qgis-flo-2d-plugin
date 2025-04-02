@@ -476,11 +476,13 @@ class PreProcessingWidget(qtBaseClass, uiDialog):
                                                               'METHOD': 1,
                                                               'OUTPUT_TABLE': 'TEMPORARY_OUTPUT'})
 
-        if QgsProject.instance().crs().mapUnits() == QgsUnitTypes.DistanceMeters:
+        # Meters
+        if self.gutils.get_cont_par("METRIC") == "1":
             area_unit = "km²"
             volume_unit = "M m³"
             area_conversion = 1000000
             volume_conversion = 1000000
+        # Feet
         else:
             area_unit = "acres"
             volume_unit = "acre-foot"
