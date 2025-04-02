@@ -6056,17 +6056,12 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             # Create a new memory layer for point geometries
             SD_all_nodes_layer = QgsVectorLayer("Point", 'SD All Points', 'memory')
 
-            crs = layer1.crs()  # crs is a QgsCoordinateReferenceSystem
-            map_units = QgsUnitTypes.toString(crs.mapUnits())
-
-            if "meters" in map_units:
+            # Meters
+            if self.gutils.get_cont_par("METRIC") == "1":
                 distance_units = "mts"
-            elif "feet" in map_units:
-                distance_units = "feet"
+            # Feet
             else:
-                msg = "WARNING 060319.1654: Unknown map units."
-                self.uc.show_warn(msg)
-                self.uc.log_info(msg)
+                distance_units = "feet"
 
             dialog = TwoInputsDialog("Do you want to overwrite Inlet and Outfall nodes\n" +
                                      "for all links (conduits, pumps, orifices, and weirs)?",
@@ -6562,16 +6557,12 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         self.plot_item_name = "Pump Curve:   " + name
         self.plot.plot.setTitle("Pump Curve:   " + name)
 
-        map_units = QgsUnitTypes.toString(QgsProject.instance().crs().mapUnits())
-
-        if "meters" in map_units:
+        # Meters
+        if self.gutils.get_cont_par("METRIC") == "1":
             units = "CMS"
-        elif "feet" in map_units:
-            units = "CFS"
+        # Feet
         else:
-            msg = "WARNING 060319.1654: Unknown map units."
-            self.uc.show_warn(msg)
-            self.uc.log_info(msg)
+            units = "CFS"
 
         idx = self.pump_curve_type_cbo.currentIndex() + 1
 
