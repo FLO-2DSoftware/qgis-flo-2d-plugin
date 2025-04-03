@@ -14,6 +14,7 @@ from PyQt5.QtWidgets import QFileDialog, QApplication
 from PyQt5.QtGui import QDesktopServices
 from qgis._analysis import QgsRasterCalculatorEntry, QgsRasterCalculator
 
+from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
 from .ui_utils import load_ui
 from qgis._core import QgsProject, QgsVectorLayer, QgsField, QgsRasterLayer, QgsUnitTypes
@@ -27,7 +28,11 @@ class PreProcessingWidget(qtBaseClass, uiDialog):
         uiDialog.__init__(self)
 
         self.iface = iface
+        self.con = None
+        self.gutils = None
         self.canvas = iface.mapCanvas()
+
+        self.setup_connection()
 
         self.lyrs = lyrs
         self.setupUi(self)
@@ -67,11 +72,13 @@ class PreProcessingWidget(qtBaseClass, uiDialog):
         """
         Initial settings after connection to GeoPackage.
         """
-        self.populate_raster_cbo()
-        QgsProject.instance().legendLayersAdded.connect(self.populate_raster_cbo)
-        QgsProject.instance().layersRemoved.connect(self.populate_raster_cbo)
-        QgsProject.instance().legendLayersAdded.connect(self.populate_raster_converter_cbo)
-        QgsProject.instance().layersRemoved.connect(self.populate_raster_converter_cbo)
+
+        con = self.iface.f2d["con"]
+        if con is None:
+            return
+        else:
+            self.con = con
+            self.gutils = GeoPackageUtils(self.con, self.iface)
 
     def select_output_raster(self):
         """
