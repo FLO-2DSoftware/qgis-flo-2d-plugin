@@ -193,6 +193,8 @@ class ExportMultipleDomainsDialog(qtBaseClass, uiDialog):
                 records = sorted(sub_grid_cells, key=lambda x: x[0])
 
                 self.f2g.export_cont_toler_dat(export_folder)
+                self.f2g.export_rain_dat(export_folder)
+                self.f2g.export_outflow_dat(export_folder)
 
                 mannings = os.path.join(str(export_folder), "MANNINGS_N.DAT")
                 topo = os.path.join(str(export_folder), "TOPO.DAT")
@@ -434,6 +436,8 @@ class ExportMultipleDomainsDialog(qtBaseClass, uiDialog):
                 records = sorted(sub_grid_cells, key=lambda x: x[0])
 
                 self.f2g.export_cont_toler_dat(export_folder)
+                self.f2g.export_rain_dat(export_folder)
+                self.f2g.export_outflow_dat(export_folder)
 
                 mannings = os.path.join(str(export_folder), "MANNINGS_N.DAT")
                 topo = os.path.join(str(export_folder), "TOPO.DAT")
