@@ -24,7 +24,7 @@ from ..geopackage_utils import GeoPackageUtils
 # from ..gui.bc_editor_widget import BCEditorWidget
 from ..layers import Layers
 from ..utils import float_or_zero, get_BC_Border
-from .flo2d_parser import ParseDAT, ParseHDF5
+from .flo2d_parser import ParseDAT, ParseHDF5, HDF5Dataset
 
 
 def create_array(line_format, max_columns, array_type, *args):
@@ -3584,69 +3584,43 @@ class Flo2dGeoPackage(GeoPackageUtils):
         cont_group = self.parser.control_group
 
         cont_variables = [
-            "SIMUL",
-            "TOUT",
-            "LGPLOT",
-            "METRIC",
-            "IBACKUP",
-            "ICHANNEL",
-            "MSTREET",
-            "LEVEE",
-            "IWRFS",
-            "IMULTC",
-            "IRAIN",
-            "INFIL",
-            "IEVAP",
-            "MUD",
-            "ISED",
-            "IMODFLOW",
-            "SWMM",
-            "IHYDRSTRUCT",
-            "IFLOODWAY",
-            "IDEBRV",
-            "AMANN",
-            "DEPTHDUR",
-            "XCONC",
-            "XARF",
-            "FROUDL",
-            "SHALLOWN",
-            "ENCROACH",
-            "NOPRTFP",
-            "DEPRESSDEPTH",
-            "NOPRTC",
-            "ITIMTEP",
-            "TIMTEP",
-            "STARTIMTEP",
-            "ENDTIMTEP",
-            "GRAPTIM",
+            "SIMUL", "TOUT", "LGPLOT", "METRIC", "IBACKUP", "ICHANNEL", "MSTREET", "LEVEE", "IWRFS",
+            "IMULTC", "IRAIN", "INFIL", "IEVAP", "MUD", "ISED", "IMODFLOW", "SWMM", "IHYDRSTRUCT",
+            "IFLOODWAY", "IDEBRV", "AMANN", "DEPTHDUR", "XCONC", "XARF", "FROUDL", "SHALLOWN",
+            "ENCROACH", "NOPRTFP", "DEPRESSDEPTH", "NOPRTC", "ITIMTEP", "TIMTEP", "STARTIMTEP",
+            "ENDTIMTEP", "GRAPTIM"
         ]
 
         tol_variables = [
-            "TOLGLOBAL",
-            "DEPTOL",
-            "COURANTFP",
-            "COURANTC",
-            "COURANTST",
-            "TIME_ACCEL"
+            "TOLGLOBAL", "DEPTOL", "COURANTFP", "COURANTC", "COURANTST", "TIME_ACCEL"
         ]
 
-        cont_group.create_dataset('CONT', [])
+        # Collect control values
+        cont_data = []
         for var in cont_variables:
             sql = f"""SELECT value FROM cont WHERE name = '{var}';"""
-            value = self.execute(sql).fetchone()[0]
-            if value is not None:
-                cont_group.datasets["CONT"].data.append(float(value))
-            else:
-                cont_group.datasets["CONT"].data.append(-9999)
+            result = self.execute(sql).fetchone()
+            value = float(result[0]) if result and result[0] is not None else -9999
+            cont_data.append(value)
 
-        cont_group.create_dataset('TOLER', [])
+        # Convert to recarray with variable names as fields
+        cont_dtype = [(name, float) for name in cont_variables]
+        cont_array = np.rec.array([tuple(cont_data)], dtype=cont_dtype)
+
+        cont_group.datasets["CONT"] = HDF5Dataset("CONT", cont_array, group=cont_group)
+
+        # Collect tolerance values
+        tol_data = []
         for var in tol_variables:
             sql = f"""SELECT value FROM cont WHERE name = '{var}';"""
-            value = self.execute(sql).fetchone()[0]
-            if value is not None:
-                cont_group.datasets["TOLER"].data.append(float(value))
-            else:
-                cont_group.datasets["TOLER"].data.append(-9999)
+            result = self.execute(sql).fetchone()
+            value = float(result[0]) if result and result[0] is not None else -9999
+            tol_data.append(value)
+
+        tol_dtype = [(name, float) for name in tol_variables]
+        tol_array = np.rec.array([tuple(tol_data)], dtype=tol_dtype)
+
+        cont_group.datasets["TOLER"] = HDF5Dataset("TOLER", tol_array, group=cont_group)
 
         self.parser.write_groups(cont_group)
         return True
@@ -3773,7 +3747,13 @@ class Flo2dGeoPackage(GeoPackageUtils):
             records = self.execute(sql)
             nulls = 0
             grid_group = self.parser.grid_group
-            coordinates_line = "{0} {1}"
+
+            gridcodes = []
+            mannings = []
+            elevations = []
+            coordinates = []
+            neighbors = []
+
             for row in records:
                 fid, man, elev, geom = row
                 if man is None or elev is None:
@@ -3782,17 +3762,33 @@ class Flo2dGeoPackage(GeoPackageUtils):
                         man = 0.04
                     if elev is None:
                         elev = -9999
+
                 x, y = [float(coord) for coord in geom.strip("POINT()").split()]
-                grid_group.datasets["GRIDCODE"].data.append(fid)
-                grid_group.datasets["MANNING"].data.append(man)
-                grid_group.datasets["ELEVATION"].data.append(elev)
-                grid_group.datasets["COORDINATES"].data.append(
-                    create_array(coordinates_line, 2, np.float_, tuple([x, y])))
-                # grid_group.datasets["X"].data.append(x)
-                # grid_group.datasets["Y"].data.append(y)
-            neighbors_line = "{0} {1} {2} {3} {4} {5} {6} {7}"
-            for row in grid_compas_neighbors(self.gutils):
-                grid_group.datasets["NEIGHBOURS"].data.append(create_array(neighbors_line, 8, np.int_, tuple(row)))
+
+                gridcodes.append((fid,))
+                mannings.append((man,))
+                elevations.append((elev,))
+                coordinates.append((x, y))
+            all_neighbors = grid_compas_neighbors(self.gutils)
+            for neighbor in all_neighbors:
+                neighbors.append((neighbor[0], neighbor[1], neighbor[2], neighbor[3], neighbor[4], neighbor[5], neighbor[6], neighbor[7]))
+
+            # Convert all at once at the end
+            grid_group.datasets["GRIDCODE"] = HDF5Dataset("GRIDCODE", np.rec.array(gridcodes, dtype=[("ID", float)]), group=grid_group)
+            grid_group.datasets["MANNING"] = HDF5Dataset("MANNING", np.rec.array(mannings, dtype=[("FPNVALUE", float)]), group=grid_group)
+            grid_group.datasets["ELEVATION"] = HDF5Dataset("ELEVATION", np.rec.array(elevations, dtype=[("ELEV", float)]), group=grid_group)
+            grid_group.datasets["COORDINATES"] = HDF5Dataset("COORDINATES", np.rec.array(coordinates, dtype=[("XCOORD", float), ("YCOORD", float)]), group=grid_group)
+            grid_group.datasets["NEIGHBOURS"] = HDF5Dataset("NEIGHBOURS", np.rec.array(neighbors, dtype=[
+                ("N", int),
+                ("E", int),
+                ("S", int),
+                ("W", int),
+                ("NE", int),
+                ("SE", int),
+                ("SW", int),
+                ("NW", int)
+            ]), group=grid_group)
+
             self.parser.write_groups(grid_group)
             if nulls > 0:
                 QApplication.restoreOverrideCursor()
