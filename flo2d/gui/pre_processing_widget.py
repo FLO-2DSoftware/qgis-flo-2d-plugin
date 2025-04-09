@@ -61,6 +61,9 @@ class PreProcessingWidget(qtBaseClass, uiDialog):
 
         self.remove_dam_btn.clicked.connect(self.remove_dam)
 
+        QgsProject.instance().layersAdded.connect(self.populate_raster_cbo)
+        QgsProject.instance().layerRemoved.connect(self.populate_raster_cbo)
+
         # connections raster converter
         self.populate_raster_converter_cbo()
         self.populate_units()
