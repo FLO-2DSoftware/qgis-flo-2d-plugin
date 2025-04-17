@@ -1,4 +1,9 @@
 # -*- coding: utf-8 -*-
+from PyQt5.QtCore import Qt
+from PyQt5.QtGui import QColor
+from networkx.algorithms.connectivity.edge_augmentation import collapse
+from qgis._core import QgsFeatureRequest
+
 from .table_editor_widget import StandardItemModel
 # FLO-2D Preprocessor tools for QGIS
 
@@ -7,7 +12,7 @@ from .table_editor_widget import StandardItemModel
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 
-from .ui_utils import load_ui
+from .ui_utils import load_ui, center_canvas, zoom_show_n_cells, zoom
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
 
@@ -35,7 +40,7 @@ class AreasEditorWidget(qtBaseClass, uiDialog):
             self.tolerance_areas_grp: 'tolspatial',
             self.blocked_areas_grp: 'user_blocked_areas',
             self.roughness_grp: 'user_roughness',
-            self.steep_slopen_grp: ''
+            self.steep_slopen_grp: 'user_steep_slope_n_areas'
         }
 
         self.areas_grp_cbo = {
@@ -46,8 +51,45 @@ class AreasEditorWidget(qtBaseClass, uiDialog):
             self.tolerance_cbo: 'tolspatial',
             self.blocked_cbo: 'user_blocked_areas',
             self.roughness_cbo: 'user_roughness',
-            self.steep_slopen_cbo: 'user_steep_slope_n'
+            self.steep_slopen_cbo: 'user_steep_slope_n_areas'
         }
+
+        self.del_no_exchange_btn.clicked.connect(lambda: self.delete_area_fid(self.noexchange_cbo, 'user_noexchange_chan_areas'))
+        self.del_building_btn.clicked.connect(lambda: self.delete_area_fid(self.buildings_cbo, 'buildings_areas'))
+        self.del_shallown_btn.clicked.connect(lambda: self.delete_area_fid(self.shallown_cbo, 'spatialshallow'))
+        self.del_froude_btn.clicked.connect(lambda: self.delete_area_fid(self.froude_cbo, 'fpfroude'))
+        self.del_tolerance_btn.clicked.connect(lambda: self.delete_area_fid(self.tolerance_cbo, 'tolspatial'))
+        self.del_blocked_btn.clicked.connect(lambda: self.delete_area_fid(self.blocked_cbo, 'user_blocked_areas'))
+        self.del_roughness_btn.clicked.connect(lambda: self.delete_area_fid(self.roughness_cbo, 'user_roughness'))
+        self.del_steep_slopen_btn.clicked.connect(lambda: self.delete_area_fid(self.steep_slopen_cbo, 'user_steep_slope_n_areas'))
+
+        self.eye_no_exchange_btn.clicked.connect(lambda: self.center_area_fid(self.noexchange_cbo, self.eye_no_exchange_btn, 'user_noexchange_chan_areas'))
+        self.eye_building_btn.clicked.connect(lambda: self.center_area_fid(self.buildings_cbo, self.eye_building_btn, 'buildings_areas'))
+        self.eye_shallown_btn.clicked.connect(lambda: self.center_area_fid(self.shallown_cbo, self.eye_shallown_btn, 'spatialshallow'))
+        self.eye_froude_btn.clicked.connect(lambda: self.center_area_fid(self.froude_cbo, self.eye_froude_btn, 'fpfroude'))
+        self.eye_tolerance_btn.clicked.connect(lambda: self.center_area_fid(self.tolerance_cbo, self.eye_tolerance_btn, 'tolspatial'))
+        self.eye_blocked_btn.clicked.connect(lambda: self.center_area_fid(self.blocked_cbo, self.eye_blocked_btn, 'user_blocked_areas'))
+        self.eye_roughness_btn.clicked.connect(lambda: self.center_area_fid(self.roughness_cbo, self.eye_roughness_btn, 'user_roughness'))
+        self.eye_steep_slopen_btn.clicked.connect(lambda: self.center_area_fid(self.steep_slopen_cbo, self.eye_steep_slopen_btn, 'user_steep_slope_n_areas'))
+
+        self.noexchange_cbo.currentIndexChanged.connect(lambda: self.populate_cbo_areas(self.noexchange_cbo))
+        self.buildings_cbo.currentIndexChanged.connect(lambda: self.populate_cbo_areas(self.buildings_cbo))
+        self.shallown_cbo.currentIndexChanged.connect(lambda: self.populate_cbo_areas(self.shallown_cbo))
+        self.froude_cbo.currentIndexChanged.connect(lambda: self.populate_cbo_areas(self.froude_cbo))
+        self.tolerance_cbo.currentIndexChanged.connect(lambda: self.populate_cbo_areas(self.tolerance_cbo))
+        self.blocked_cbo.currentIndexChanged.connect(lambda: self.populate_cbo_areas(self.blocked_cbo))
+        self.roughness_cbo.currentIndexChanged.connect(lambda: self.populate_cbo_areas(self.roughness_cbo))
+        self.steep_slopen_cbo.currentIndexChanged.connect(lambda: self.populate_cbo_areas(self.steep_slopen_cbo))
+
+        # Building Areas
+        self.adj_factor_dsp.editingFinished.connect(self.save_building_adj_factor)
+        self.shallown_dsb.editingFinished.connect(self.save_shallown)
+        self.froud_dsb.editingFinished.connect(self.save_froude)
+        self.tolerance_dsb.editingFinished.connect(self.save_tolerance)
+        self.collapse_chbox.stateChanged.connect(self.save_blocked_areas)
+        self.arf_chbox.stateChanged.connect(self.save_blocked_areas)
+        self.wrf_chbox.stateChanged.connect(self.save_blocked_areas)
+        self.mannings_dsb.editingFinished.connect(self.save_mannings)
 
         self.populate_grps()
 
@@ -72,12 +114,14 @@ class AreasEditorWidget(qtBaseClass, uiDialog):
             for i, areas_grp in enumerate(self.areas_grps.keys(), start=1):
                 if i == selected_areas_idx:
                     areas_grp.setVisible(True)
+                    self.populate_cbos()
                 else:
                     areas_grp.setVisible(False)
         else:
             self.enable_btns(False)
             for areas_grp in self.areas_grps.keys():
                 areas_grp.setVisible(False)
+
 
     def enable_btns(self, enable):
         """
@@ -115,7 +159,204 @@ class AreasEditorWidget(qtBaseClass, uiDialog):
                     self.populate_cbos()
 
     def populate_cbos(self):
+        selected_areas_idx = self.areas_cbo.currentIndex()
+        if selected_areas_idx != 0:
+            for i, (area_cbo, areas_lyr) in enumerate(self.areas_grp_cbo.items(), start=1):
+                if i == selected_areas_idx:
+                    qry = f"""SELECT fid FROM {areas_lyr};"""
+                    rows = self.gutils.execute(qry).fetchall()
+                    area_cbo.clear()
+                    if not rows:
+                        return
+                    for row in rows:
+                        area_cbo.addItem(str(row[0]))
+                    area_cbo.setCurrentIndex(0)
 
-        pass
+    def populate_cbo_areas(self, area_cbo):
+        if area_cbo == self.buildings_cbo:
+            fid = self.buildings_cbo.currentText()
+            if fid:
+                qry = f"""SELECT adjustment_factor FROM buildings_areas WHERE fid = {fid};"""
+                rows = self.gutils.execute(qry).fetchall()
+                if rows:
+                    if rows[0][0] is not None:
+                        self.adj_factor_dsp.setValue(rows[0][0])
+                    else:
+                        self.adj_factor_dsp.setValue(0)
+                else:
+                    self.adj_factor_dsp.setValue(0)
+        elif area_cbo == self.shallown_cbo:
+            fid = self.shallown_cbo.currentText()
+            if fid:
+                qry = f"""SELECT shallow_n FROM spatialshallow WHERE fid = {fid};"""
+                rows = self.gutils.execute(qry).fetchall()
+                if rows:
+                    if rows[0][0] is not None:
+                        self.shallown_dsb.setValue(rows[0][0])
+                    else:
+                        self.shallown_dsb.setValue(0)
+                else:
+                    self.shallown_dsb.setValue(0)
+        elif area_cbo == self.froude_cbo:
+            fid = self.froude_cbo.currentText()
+            if fid:
+                qry = f"""SELECT froudefp FROM fpfroude WHERE fid = {fid};"""
+                rows = self.gutils.execute(qry).fetchall()
+                if rows:
+                    if rows[0][0] is not None:
+                        self.froud_dsb.setValue(rows[0][0])
+                    else:
+                        self.froud_dsb.setValue(0)
+                else:
+                    self.froud_dsb.setValue(0)
+        elif area_cbo == self.tolerance_cbo:
+            fid = self.tolerance_cbo.currentText()
+            if fid:
+                qry = f"""SELECT tol FROM tolspatial WHERE fid = {fid};"""
+                rows = self.gutils.execute(qry).fetchall()
+                if rows:
+                    if rows[0][0] is not None:
+                        self.tolerance_dsb.setValue(rows[0][0])
+                    else:
+                        self.tolerance_dsb.setValue(0)
+                else:
+                    self.tolerance_dsb.setValue(0)
+        elif area_cbo == self.roughness_cbo:
+            fid = self.roughness_cbo.currentText()
+            if fid:
+                qry = f"""SELECT n FROM user_roughness WHERE fid = {fid};"""
+                rows = self.gutils.execute(qry).fetchall()
+                if rows:
+                    if rows[0][0] is not None:
+                        self.mannings_dsb.setValue(rows[0][0])
+                    else:
+                        self.mannings_dsb.setValue(0)
+                else:
+                    self.mannings_dsb.setValue(0)
+        elif area_cbo == self.blocked_cbo:
+            fid = self.blocked_cbo.currentText()
+            if fid:
+                qry = f"""SELECT collapse, calc_arf, calc_wrf FROM user_blocked_areas WHERE fid = {fid};"""
+                rows = self.gutils.execute(qry).fetchall()
+                if rows:
+                    self.collapse_chbox.setChecked(rows[0][0] == 1)
+                    self.arf_chbox.setChecked(rows[0][1] == 1)
+                    self.wrf_chbox.setChecked(rows[0][2] == 1)
+                else:
+                    self.collapse_chbox.setChecked(False)
+                    self.arf_chbox.setChecked(False)
+                    self.wrf_chbox.setChecked(False)
 
+    def delete_area_fid(self, area_cbo, area_lyr):
+        selected_areas_fid = int(area_cbo.currentText())
+        try:
+            qry = f"DELETE FROM {area_lyr} WHERE fid = ?"
+            self.gutils.execute(qry, (selected_areas_fid,))  # Use parameterized query
+            self.populate_cbos()
+
+            self.lyrs.lyrs_to_repaint = [self.lyrs.data[area_lyr]["qlyr"]]
+            self.lyrs.repaint_layers()
+
+            self.uc.bar_info(f"Fid {selected_areas_fid} was deleted from {area_lyr}!")
+            self.uc.log_info(f"Fid {selected_areas_fid} was deleted from {area_lyr}!")
+        except Exception as e:
+            self.uc.bar_error(f"Error while deleting fid {selected_areas_fid} from {area_lyr}!")
+            self.uc.log_info(f"Error while deleting fid {selected_areas_fid} from {area_lyr}!")
+
+    def center_area_fid(self, area_cbo, area_eye, area_lyr):
+        if area_eye.isChecked():
+            area_eye.setChecked(True)
+            lyr = self.lyrs.data[area_lyr]["qlyr"]
+            selected_areas_fid = int(area_cbo.currentText())
+            self.lyrs.show_feat_rubber(lyr.id(), selected_areas_fid, QColor(Qt.red))
+            feat = next(lyr.getFeatures(QgsFeatureRequest(int(area_cbo.currentText()))))
+            x, y = feat.geometry().centroid().asPoint()
+            center_canvas(self.iface, x, y)
+            zoom(self.iface, 0.4)
+            return
+        else:
+            area_eye.setChecked(False)
+            self.lyrs.clear_rubber()
+            return
+
+    def save_building_adj_factor(self):
+        """
+        Updates the adjustment factor for a selected building area in the database.
+        """
+        fid_text = self.buildings_cbo.currentText()
+        if fid_text:
+            fid = int(fid_text)
+            adj_factor = self.adj_factor_dsp.value()
+            update_qry = f"""UPDATE buildings_areas SET adjustment_factor = {adj_factor} WHERE fid = {fid};"""
+            self.gutils.execute(update_qry)
+
+    def save_shallown(self):
+        """
+        Updates the shallow_n value for a selected spatial shallow area in the database.
+        """
+        fid_text = self.shallown_cbo.currentText()
+        if fid_text:
+            fid = int(fid_text)
+            shallown = self.shallown_dsb.value()
+            update_qry = f"""UPDATE spatialshallow SET shallow_n = {shallown} WHERE fid = {fid};"""
+            self.gutils.execute(update_qry)
+
+    def save_froude(self):
+        """
+        Updates the froude value for a selected area in the database.
+        """
+        fid_text = self.froude_cbo.currentText()
+        if fid_text:
+            fid = int(fid_text)
+            froude = self.froud_dsb.value()
+            update_qry = f"""UPDATE fpfroude SET froudefp = {froude} WHERE fid = {fid};"""
+            self.gutils.execute(update_qry)
+
+    def save_tolerance(self):
+        """
+        Updates the tolerance value for a selected area in the database.
+        """
+        fid_text = self.tolerance_cbo.currentText()
+        if fid_text:
+            fid = int(fid_text)
+            tolerance = self.tolerance_dsb.value()
+            update_qry = f"""UPDATE tolspatial SET tol = {tolerance} WHERE fid = {fid};"""
+            self.gutils.execute(update_qry)
+
+    def save_mannings(self):
+        """
+        Updates the Manning's n value for a selected area in the database.
+        """
+        fid_text = self.roughness_cbo.currentText()
+        if fid_text:
+            fid = int(fid_text)
+            mannings = self.mannings_dsb.value()
+            update_qry = f"""UPDATE user_roughness SET n = {mannings} WHERE fid = {fid};"""
+            self.gutils.execute(update_qry)
+
+    def save_blocked_areas(self):
+        """
+        Updates the blocked area properties for a selected area in the database.
+        """
+        fid_text = self.blocked_cbo.currentText()
+        if fid_text:
+            fid = int(fid_text)
+
+            if self.collapse_chbox.isChecked():
+                collapse_chbox_state = 1
+            else:
+                collapse_chbox_state = 0
+
+            if self.arf_chbox.isChecked():
+                arf_chbox_state = 1
+            else:
+                arf_chbox_state = 0
+
+            if self.wrf_chbox.isChecked():
+                wrf_chbox_state = 1
+            else:
+                wrf_chbox_state = 0
+
+            update_qry = f"""UPDATE user_blocked_areas SET collapse = {collapse_chbox_state}, calc_arf = {arf_chbox_state}, calc_wrf = {wrf_chbox_state} WHERE fid = {fid};"""
+            self.gutils.execute(update_qry)
 
