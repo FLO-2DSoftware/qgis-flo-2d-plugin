@@ -13,14 +13,15 @@ from qgis.PyQt.QtCore import QSize, Qt
 from qgis.PyQt.QtGui import QColor, QIntValidator, QStandardItem, QStandardItemModel
 from qgis.PyQt.QtWidgets import QApplication
 
-from ..flo2d_tools.grid_tools import number_of_elements, render_grid_elevations2, render_grid_subdomains
+from ..flo2d_tools.grid_tools import number_of_elements, render_grid_elevations2, render_grid_subdomains, \
+    clear_grid_render, render_grid_mannings
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
 from ..utils import (
     is_number,
     m_fdata,
     second_smallest,
-    set_min_max_elevs,
+    set_min_max_elevs, set_min_max_n_values,
 )
 from .ui_utils import center_canvas, load_ui, set_icon, zoom
 
@@ -56,8 +57,7 @@ class GridInfoWidget(qtBaseClass, uiDialog):
         validator = QIntValidator()
         self.idEdit.setValidator(validator)
 
-        self.render_elevations_chbox.clicked.connect(self.render_elevations)
-        self.render_subdomains_chbox.clicked.connect(self.render_subdomains)
+        self.render_cbo.currentIndexChanged.connect(self.render)
         self.find_cell_btn.clicked.connect(self.find_cell)
         set_icon(self.find_cell_btn, "eye-svgrepo-com.svg")
 
@@ -103,7 +103,8 @@ class GridInfoWidget(qtBaseClass, uiDialog):
                     self.grid = self.lyrs.data["grid"]["qlyr"]
                     self.n_cells = number_of_elements(self.gutils, self.grid)
                     self.n_cells_lbl.setText("Number of cells: " + "{:,}".format(self.n_cells) + "   ")
-                    if self.plot_ckbox.isChecked():
+
+                    if self.render_cbo.currentIndex() == 1:
                         self.plot_grid_rainfall(feat)
                     self.lyrs.show_feat_rubber(self.grid.id(), int(gid), QColor(Qt.yellow))
                 else:
@@ -135,19 +136,51 @@ class GridInfoWidget(qtBaseClass, uiDialog):
         row = self.gutils.execute(qry).fetchone()
         if is_number(row[0]):
             if row[0] == "0":
-                self.render_elevations_chbox.setChecked(False)
+                self.render_cbo.setCurrentIndex(0)
             else:
-                self.render_elevations_chbox.setChecked(True)
+                self.render_cbo.setCurrentIndex(2)
+
+    def render(self):
+        """
+        Function to render different types of features
+        """
+        if self.render_cbo.currentIndex() == 0:
+            self.clear_render()
+        if self.render_cbo.currentIndex() == 2:
+            self.render_elevations()
+        if self.render_cbo.currentIndex() == 3:
+            self.render_mannings()
+        if self.render_cbo.currentIndex() == 4:
+            self.render_subdomains()
+
+    def clear_render(self):
+        """
+        Call the function to clear the renders on grid_tools
+        """
+        try:
+            if self.gutils.is_table_empty("grid"):
+                self.uc.bar_warn("There is no grid! Please create it before running tool.")
+                self.uc.log_info("There is no grid! Please create it before running tool.")
+                return
+            clear_grid_render(self.grid)
+            self.lyrs.lyrs_to_repaint = [self.grid]
+            self.lyrs.repaint_layers()
+        except Exception as e:
+            self.uc.bar_error("ERROR: Clear render failed!")
+            self.uc.log_info("ERROR: Clear render failed!")
+            self.lyrs.clear_rubber()
 
     def render_elevations(self):
         try:
             if self.gutils.is_table_empty("user_model_boundary"):
                 self.uc.bar_warn("There is no computational domain! Please digitize it before running tool.")
                 self.uc.log_info("There is no computational domain! Please digitize it before running tool.")
+                self.render_cbo.setCurrentIndex(0)
                 return
             if self.gutils.is_table_empty("grid"):
                 self.uc.bar_warn("There is no grid! Please create it before running tool.")
                 self.uc.log_info("There is no grid! Please create it before running tool.")
+                self.render_cbo.setCurrentIndex(0)
                 return
             elevs = [x[0] for x in self.gutils.execute("SELECT elevation FROM grid").fetchall()]
             elevs = [x if x is not None else -9999 for x in elevs]
@@ -157,7 +190,7 @@ class GridInfoWidget(qtBaseClass, uiDialog):
                 maxi = max(elevs)
                 render_grid_elevations2(
                     self.grid,
-                    self.render_elevations_chbox.isChecked(),
+                    True,
                     mini,
                     mini2,
                     maxi,
@@ -169,6 +202,40 @@ class GridInfoWidget(qtBaseClass, uiDialog):
             self.uc.show_error("ERROR 110721.0545: render of elevations failed!.\n", e)
             # self.uc.bar_error("ERROR 100721.1759: is the grid defined?")
             self.lyrs.clear_rubber()
+            self.render_cbo.setCurrentIndex(0)
+
+    def render_mannings(self):
+        try:
+            if self.gutils.is_table_empty("user_model_boundary"):
+                self.uc.bar_warn("There is no computational domain! Please digitize it before running tool.")
+                self.uc.log_info("There is no computational domain! Please digitize it before running tool.")
+                self.render_cbo.setCurrentIndex(0)
+                return
+            if self.gutils.is_table_empty("grid"):
+                self.uc.bar_warn("There is no grid! Please create it before running tool.")
+                self.uc.log_info("There is no grid! Please create it before running tool.")
+                self.render_cbo.setCurrentIndex(0)
+                return
+            n_values = [x[0] for x in self.gutils.execute("SELECT n_value FROM grid").fetchall()]
+            n_values = [x if x is not None else 0.04 for x in n_values]
+            if n_values:
+                mini = min(n_values)
+                mini2 = second_smallest(n_values)
+                maxi = max(n_values)
+                render_grid_mannings(
+                    self.grid,
+                    True,
+                    mini,
+                    mini2,
+                    maxi,
+                )
+                set_min_max_n_values(mini, maxi)
+                self.lyrs.lyrs_to_repaint = [self.grid]
+                self.lyrs.repaint_layers()
+        except Exception as e:
+            self.uc.show_error("ERROR 110721.0545: render of mannings failed!.\n", e)
+            self.render_cbo.setCurrentIndex(0)
+            self.lyrs.clear_rubber()
 
     def render_subdomains(self):
         try:
@@ -176,14 +243,17 @@ class GridInfoWidget(qtBaseClass, uiDialog):
             if self.gutils.is_table_empty("user_model_boundary"):
                 self.uc.bar_warn("There is no computational domain! Please digitize it before running the tool.")
                 self.uc.log_info("There is no computational domain! Please digitize it before running the tool.")
+                self.render_cbo.setCurrentIndex(0)
                 return
             if self.gutils.is_table_empty("grid"):
                 self.uc.bar_warn("There is no grid! Please create it before running the tool.")
                 self.uc.log_info("There is no grid! Please create it before running the tool.")
+                self.render_cbo.setCurrentIndex(0)
                 return
             if self.gutils.is_table_empty("schema_md_cells"):
                 self.uc.bar_warn("There are no subdomains! Please digitize and assign them before running the tool.")
                 self.uc.log_info("There are no subdomains! Please digitize and assign them before running the tool.")
+                self.render_cbo.setCurrentIndex(0)
                 return
 
             self.schema_md_cells = self.lyrs.data["schema_md_cells"]["qlyr"]
@@ -213,12 +283,13 @@ class GridInfoWidget(qtBaseClass, uiDialog):
                 return
 
             # Render the grid layer with categorized symbology
-            render_grid_subdomains(self.grid, self.render_subdomains_chbox.isChecked(), values)
+            render_grid_subdomains(self.grid, True, values)
 
             # Repaint layers
             self.lyrs.lyrs_to_repaint = [self.grid]
             self.lyrs.repaint_layers()
         except Exception as e:
+            self.render_cbo.setCurrentIndex(0)
             self.uc.bar_error("ERROR: Rendering subdomains failed!")
             self.uc.log_info("ERROR: Rendering subdomains failed!")
 
