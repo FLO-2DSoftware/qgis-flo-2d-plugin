@@ -179,24 +179,39 @@
       </widget>
      </item>
      <item>
-      <widget class="QCheckBox" name="plot_ckbox">
+      <widget class="QLabel" name="label_5">
        <property name="text">
-        <string>Plot rain</string>
+        <string>Render:</string>
        </property>
       </widget>
      </item>
      <item>
-      <widget class="QCheckBox" name="render_elevations_chbox">
-       <property name="text">
-        <string>Render elev</string>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QCheckBox" name="render_subdomains_chbox">
-       <property name="text">
-        <string>Render subdomains</string>
-       </property>
+      <widget class="QComboBox" name="render_cbo">
+       <item>
+        <property name="text">
+         <string/>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Rain</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Elevation</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Mannings</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Subdomains</string>
+        </property>
+       </item>
       </widget>
      </item>
     </layout>

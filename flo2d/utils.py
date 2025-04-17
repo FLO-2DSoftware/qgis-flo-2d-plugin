@@ -13,6 +13,8 @@ from flo2d.flo2d_versions.flo2d_versions import FLO2D_VERSIONS
 BC_BORDER = None  # Static variable used to hold BC for type 5 outflow.
 MIN_ELEVS = 0
 MAX_ELEVS = 0
+MIN_N_VALUES = 0
+MAX_N_VALUES = 0
 old_IDEBRV = 0
 
 grid_index = {}
@@ -165,6 +167,16 @@ def get_min_max_elevs():
 def set_min_max_elevs(mini, maxi):
     global MIN_ELEVS, MAX_ELEVS
     MIN_ELEVS, MAX_ELEVS = mini, maxi
+
+
+def get_min_max_n_values():
+    global MIN_N_VALUES, MAX_N_VALUES
+    return MIN_N_VALUES, MAX_N_VALUES
+
+
+def set_min_max_n_values(mini, maxi):
+    global MIN_N_VALUES, MAX_N_VALUES
+    MIN_N_VALUES, MAX_N_VALUES = mini, maxi
 
 
 def is_grid_index():
