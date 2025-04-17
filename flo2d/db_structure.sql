@@ -685,6 +685,21 @@ CREATE TABLE "noexchange_chan_cells" (
 );
 INSERT INTO gpkg_contents (table_name, data_type) VALUES ('noexchange_chan_cells', 'aspatial');
 
+CREATE TABLE "user_steep_slope_n_areas" (
+    "fid" INTEGER NOT NULL PRIMARY KEY,
+    "notes" TEXT
+);
+INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('user_steep_slope_n_areas', 'features', 4326);
+SELECT gpkgAddGeometryColumn('user_steep_slope_n_areas', 'geom', 'POLYGON', 0, 0, 0);
+SELECT gpkgAddGeometryTriggers('user_steep_slope_n_areas', 'geom');
+
+CREATE TABLE "steep_slope_n_cells" (
+    "fid" INTEGER NOT NULL PRIMARY KEY,
+    "area_fid" INTEGER, -- fid of steep_slope_n_area polygon
+    "grid_fid" INTEGER -- STEEP SLOPE N
+);
+INSERT INTO gpkg_contents (table_name, data_type) VALUES ('steep_slope_n_cells', 'aspatial');
+
 --CREATE TRIGGER "find_noexchange_cells_insert"
 --    AFTER INSERT ON "user_noexchange_chan_areas"
 --    WHEN (NEW."geom" NOT NULL AND NOT ST_IsEmpty(NEW."geom"))

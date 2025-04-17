@@ -350,6 +350,19 @@ class Layers(object):
                     },
                 ),
                 (
+                    "user_steep_slope_n_areas",
+                    {
+                        "name": "Steep Slope n Areas",
+                        "sgroup": "User Layers",
+                        "ssgroup": "Areas",
+                        "styles": ["user_steep_slope_n.qml"],
+                        "attrs_edit_widgets": {},
+                        "module": ["all"],
+                        "readonly": False,
+                        "advanced": False
+                    },
+                ),
+                (
                     "mult_areas",
                     {
                         "name": "Multiple Channel Areas",
@@ -1224,6 +1237,18 @@ class Layers(object):
                         "sgroup": "Tables",
                         "styles": None,
                         "attrs_edit_widgets": {},
+                        "readonly": False,
+                        "advanced": True
+                    },
+                ),
+                (
+                    "steep_slope_n_cells",
+                    {
+                        "name": "Steep Slope n Cells",
+                        "sgroup": "Tables",
+                        "styles": None,
+                        "attrs_edit_widgets": {},
+                        "module": ["all"],
                         "readonly": False,
                         "advanced": True
                     },
