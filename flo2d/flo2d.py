@@ -2648,6 +2648,7 @@ class Flo2D(object):
             "import_breach",
             "import_gutter",
             "import_fpfroude",
+            "import_steep_slopen",
             "import_swmminp",
             "import_swmmflo",
             "import_swmmflort",
@@ -2754,6 +2755,9 @@ class Flo2D(object):
 
                     if "Spatial Froude" not in dlg_components.components:
                         import_calls.remove("import_fpfroude")
+
+                    if "Spatial Steep Slope-n" not in dlg_components.components:
+                        import_calls.remove("import_steep_slopen")
 
                     if import_calls:
 
@@ -2884,6 +2888,7 @@ class Flo2D(object):
             "BREACH.DAT": "import_breach",
             "GUTTER.DAT": "import_gutter",
             "FPFROUDE.DAT": "import_fpfroude",
+            "STEEP_SLOPEN.DAT": "import_steep_slopen",
             f"{swmm_file_name}": "import_swmminp",
             "SWMMFLO.DAT": "import_swmmflo",
             "SWMMFLORT.DAT": "import_swmmflort",
