@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # FLO-2D Preprocessor tools for QGIS
+import traceback
 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -8,9 +9,13 @@
 
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QColor
-from qgis._core import QgsFeatureRequest
+from PyQt5.QtWidgets import QApplication
+from qgis._core import QgsFeatureRequest, QgsFeature, QgsGeometry
 
+from .grid_tools_widget import GridToolsWidget
 from .ui_utils import load_ui, center_canvas
+from ..flo2d_tools.grid_tools import evaluate_spatial_tolerance, evaluate_spatial_froude, evaluate_spatial_shallow, \
+    evaluate_spatial_noexchange, evaluate_arfwrf, evaluate_roughness
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
 
@@ -444,50 +449,89 @@ class AreasEditorWidget(qtBaseClass, uiDialog):
         """
         Schematizes the selected areas in the database.
         """
-        selected_areas_idx = self.areas_cbo.currentIndex()
-        if selected_areas_idx != 0:
-            for i, areas_lyr in enumerate(self.areas_grps.values(), start=1):
-                if i == selected_areas_idx:
-                    if areas_lyr == 'buildings_areas':
-                        pass
-                    elif areas_lyr == 'spatialshallow':
-                        pass
-                    elif areas_lyr == 'fpfroude':
-                        pass
-                    elif areas_lyr == 'tolspatial':
-                        pass
-                    elif areas_lyr == 'user_roughness':
-                        pass
-                    elif areas_lyr == 'user_blocked_areas':
-                        pass
-                    elif areas_lyr == 'user_steep_slope_n_areas':
-                        try:
-                            self.gutils.clear_tables("steep_slope_n_cells")
-                            qry = """SELECT COUNT(*) FROM user_steep_slope_n_areas WHERE global = 1;"""
-                            result = self.gutils.execute(qry).fetchone()
-                            # Save global steep slope n value
-                            if result and result[0] > 0:
-                                insert_qry = """INSERT INTO steep_slope_n_cells (global) VALUES (?);"""
-                                self.gutils.execute(insert_qry, (1,))
-                            # Save individual cells
-                            else:
-                                intersection_qry = """
-                                    INSERT INTO steep_slope_n_cells (global, area_fid, grid_fid)
-                                    SELECT 0, a.fid AS area_fid, g.fid AS grid_fid
-                                    FROM
-                                        grid AS g,
-                                        user_steep_slope_n_areas AS a
-                                    WHERE
-                                        ST_Intersects(CastAutomagic(g.geom), CastAutomagic(a.geom));
-                                """
-                                self.gutils.execute(intersection_qry)
-                            self.uc.bar_info(f"Schematizing Steep Slope n Areas completed!")
-                            self.uc.log_info(f"Schematizing Steep Slope n Areas completed!")
-                        except Exception as e:
-                            self.uc.bar_error(f"Error schematizing Steep Slope n Areas!")
-                            self.uc.log_info(f"Error schematizing Steep Slope n Areas!")
-                    elif areas_lyr == 'user_noexchange_chan_areas':
-                        pass
+        try:
+            QApplication.setOverrideCursor(Qt.WaitCursor)
+            grid_lyr = self.lyrs.data["grid"]["qlyr"]
+            selected_areas_idx = self.areas_cbo.currentIndex()
+            if selected_areas_idx != 0:
+                for i, areas_lyr in enumerate(self.areas_grps.values(), start=1):
+                    if i == selected_areas_idx:
+                        if areas_lyr == 'buildings_areas':
+                            self.uc.bar_warn("Assignment of building areas to building polygons. Not implemented yet!")
+                            self.uc.log_info("Assignment of building areas to building polygons. Not implemented yet!")
+                        elif areas_lyr == 'spatialshallow':
+                            user_spatialshallow_lyr = self.lyrs.data["spatialshallow"]["qlyr"]
+                            evaluate_spatial_shallow(self.gutils, grid_lyr, user_spatialshallow_lyr)
+                            self.uc.bar_info(f"Schematizing Shallow-n Areas completed!")
+                            self.uc.log_info(f"Schematizing Shallow-n Areas completed!")
+                        elif areas_lyr == 'fpfroude':
+                            user_froude_lyr = self.lyrs.data["fpfroude"]["qlyr"]
+                            evaluate_spatial_froude(self.gutils, grid_lyr, user_froude_lyr)
+                            self.uc.bar_info(f"Schematizing Froude Areas completed!")
+                            self.uc.log_info(f"Schematizing Froude Areas completed!")
+                        elif areas_lyr == 'tolspatial':
+                            user_tol_lyr = self.lyrs.data["tolspatial"]["qlyr"]
+                            evaluate_spatial_tolerance(self.gutils, grid_lyr, user_tol_lyr)
+                            self.uc.bar_info(f"Schematizing Tolerance Areas completed!")
+                            self.uc.log_info(f"Schematizing Tolerance Areas completed!")
+                        elif areas_lyr == 'user_roughness':
+                            rough_lyr = self.lyrs.data["user_roughness"]["qlyr"]
+                            evaluate_roughness(self.gutils, grid_lyr, rough_lyr, "n", "Centroids")
+                            self.uc.bar_info(f"Roughness updaded!")
+                            self.uc.log_info(f"Roughness updaded!")
+                        elif areas_lyr == 'user_blocked_areas':
+                            user_arf_lyr = self.lyrs.data["user_blocked_areas"]["qlyr"]
+                            if evaluate_arfwrf(self.gutils, grid_lyr, user_arf_lyr):
+                                if self.replace_ARF_WRF_duplicates():
+                                    arf_lyr = self.lyrs.data["blocked_cells"]["qlyr"]
+                                    arf_lyr.reload()
+                                    self.lyrs.update_layer_extents(arf_lyr)
+
+                                    self.lyrs.update_style_blocked(arf_lyr.id())
+                                    self.iface.mapCanvas().clearCache()
+                                    user_arf_lyr.triggerRepaint()
+                                    QApplication.restoreOverrideCursor()
+                                    self.uc.bar_info("ARF and WRF values calculated! The ARF and WRF switch is now enabled.")
+                                    self.uc.log_info("ARF and WRF values calculated! The ARF and WRF switch is now enabled.")
+                                    # Set ARFs on the Control Parameters
+                                    self.gutils.set_cont_par("IWRFS", 1)
+                        elif areas_lyr == 'user_steep_slope_n_areas':
+                            try:
+                                self.gutils.clear_tables("steep_slope_n_cells")
+                                qry = """SELECT COUNT(*) FROM user_steep_slope_n_areas WHERE global = 1;"""
+                                result = self.gutils.execute(qry).fetchone()
+                                # Save global steep slope n value
+                                if result and result[0] > 0:
+                                    insert_qry = """INSERT INTO steep_slope_n_cells (global) VALUES (?);"""
+                                    self.gutils.execute(insert_qry, (1,))
+                                # Save individual cells
+                                else:
+                                    intersection_qry = """
+                                        INSERT INTO steep_slope_n_cells (global, area_fid, grid_fid)
+                                        SELECT 0, a.fid AS area_fid, g.fid AS grid_fid
+                                        FROM
+                                            grid AS g,
+                                            user_steep_slope_n_areas AS a
+                                        WHERE
+                                            ST_Intersects(CastAutomagic(g.geom), CastAutomagic(a.geom));
+                                    """
+                                    self.gutils.execute(intersection_qry)
+                                self.uc.bar_info(f"Schematizing Steep Slope n Areas completed!")
+                                self.uc.log_info(f"Schematizing Steep Slope n Areas completed!")
+                            except Exception as e:
+                                self.uc.bar_error(f"Error schematizing Steep Slope n Areas!")
+                                self.uc.log_info(f"Error schematizing Steep Slope n Areas!")
+                        elif areas_lyr == 'user_noexchange_chan_areas':
+                            user_noexchange_chan_lyr = self.lyrs.data["user_noexchange_chan_areas"]["qlyr"]
+                            evaluate_spatial_noexchange(self.gutils, grid_lyr, user_noexchange_chan_lyr)
+                            self.uc.bar_info(f"Schematizing No-Exchange Channel Areas completed!")
+                            self.uc.log_info(f"Schematizing No-Exchange Channel Areas completed!")
+
+        except Exception as e:
+            self.uc.bar_error(f"Error schematizing areas!")
+            self.uc.log_info(f"Error schematizing areas!")
+        finally:
+            QApplication.restoreOverrideCursor()
 
     def delete_schematized_areas(self):
         selected_areas_idx = self.areas_cbo.currentIndex()
@@ -497,26 +541,153 @@ class AreasEditorWidget(qtBaseClass, uiDialog):
                     if areas_lyr == 'buildings_areas':
                         pass
                     elif areas_lyr == 'spatialshallow':
-                        pass
+                        del_qry = """DELETE FROM spatialshallow_cells;"""
+                        self.gutils.execute(del_qry)
+                        self.uc.bar_info(f"Schematized Shallow-n Areas deleted!")
+                        self.uc.log_info(f"Schematized Shallow-n Areas deleted!")
                     elif areas_lyr == 'fpfroude':
-                        pass
+                        del_qry = """DELETE FROM fpfroude_cells;"""
+                        self.gutils.execute(del_qry)
+                        self.uc.bar_info(f"Schematized Froude Areas deleted!")
+                        self.uc.log_info(f"Schematized Froude Areas deleted!")
                     elif areas_lyr == 'tolspatial':
-                        pass
+                        del_qry = """DELETE FROM tolspatial_cells;"""
+                        self.gutils.execute(del_qry)
+                        self.uc.bar_info(f"Schematized Tolerance Areas deleted!")
+                        self.uc.log_info(f"Schematized Tolerance Areas deleted!")
                     elif areas_lyr == 'user_roughness':
                         pass
                     elif areas_lyr == 'user_blocked_areas':
-                        pass
+                        del_qry = """DELETE FROM blocked_cells;"""
+                        self.gutils.execute(del_qry)
+                        self.lyrs.lyrs_to_repaint = [self.lyrs.data["blocked_cells"]["qlyr"]]
+                        self.lyrs.repaint_layers()
+                        self.uc.bar_info(f"Schematized Blocked Areas deleted!")
+                        self.uc.log_info(f"Schematized Blocked Areas deleted!")
                     elif areas_lyr == 'user_steep_slope_n_areas':
                         del_qry = """DELETE FROM steep_slope_n_cells;"""
                         self.gutils.execute(del_qry)
                         self.uc.bar_info(f"Schematized Steep Slope n Areas deleted!")
                         self.uc.log_info(f"Schematized Steep Slope n Areas deleted!")
                     elif areas_lyr == 'user_noexchange_chan_areas':
-                        pass
+                        del_qry = """DELETE FROM noexchange_chan_cells;"""
+                        self.gutils.execute(del_qry)
+                        self.uc.bar_info(f"Schematized No-Exchange Channel Areas deleted!")
+                        self.uc.log_info(f"Schematized No-Exchange Channel Areas deleted!")
 
+    def replace_ARF_WRF_duplicates(self):
+        try:
+            new_feats = []
+            arf_lyr = self.lyrs.data["blocked_cells"]["qlyr"]
+            fields = arf_lyr.fields()
+            arf_feats = arf_lyr.getFeatures()
+            # get first 'blocked_cells' (ARF_WRF layer) feature.
+            f0 = next(arf_feats)
+            grid0 = f0["grid_fid"]
 
+            # Assign initial values for variables to accumulate duplicate cell.
+            area_fid = f0["area_fid"]
+            arf = f0["arf"]
+            wrf1 = f0["wrf1"]
+            wrf2 = f0["wrf2"]
+            wrf3 = f0["wrf3"]
+            wrf4 = f0["wrf4"]
+            wrf5 = f0["wrf5"]
+            wrf6 = f0["wrf6"]
+            wrf7 = f0["wrf7"]
+            wrf8 = f0["wrf8"]
 
+            try:
+                while True:
+                    f1 = next(arf_feats)
+                    grid1 = f1["grid_fid"]
+                    if grid1 == grid0:
+                        # Accumulate values for all fields of this duplicate cell.
+                        #                         area_fid += f1['area_fid']
+                        arf += f1["arf"]
+                        wrf1 += f1["wrf1"]
+                        wrf2 += f1["wrf2"]
+                        wrf3 += f1["wrf3"]
+                        wrf4 += f1["wrf4"]
+                        wrf5 += f1["wrf5"]
+                        wrf6 += f1["wrf6"]
+                        wrf7 += f1["wrf7"]
+                        wrf8 += f1["wrf8"]
+                    else:
+                        # Create feature with the accumulated values of duplicated cell.
+                        new_feat = QgsFeature()
+                        new_feat.setFields(fields)
 
+                        geom0 = f0.geometry()
+                        point0 = geom0.asPoint()
+                        new_geom0 = QgsGeometry.fromPointXY(point0)
+                        new_feat.setGeometry(new_geom0)
 
+                        new_feat["grid_fid"] = grid0
+                        new_feat["area_fid"] = area_fid
+                        new_feat["arf"] = arf if arf <= 1 else 1
+                        new_feat["wrf1"] = wrf1 if wrf1 <= 1 else 1
+                        new_feat["wrf2"] = wrf2 if wrf2 <= 1 else 1
+                        new_feat["wrf3"] = wrf3 if wrf3 <= 1 else 1
+                        new_feat["wrf4"] = wrf4 if wrf4 <= 1 else 1
+                        new_feat["wrf5"] = wrf5 if wrf5 <= 1 else 1
+                        new_feat["wrf6"] = wrf6 if wrf6 <= 1 else 1
+                        new_feat["wrf7"] = wrf7 if wrf7 <= 1 else 1
+                        new_feat["wrf8"] = wrf8 if wrf8 <= 1 else 1
+                        new_feats.append(new_feat)
 
+                        # Make f1 feature the next f0:
+                        f0 = f1
+                        grid0 = f0["grid_fid"]
+                        area_fid = f0["area_fid"]
+                        arf = f0["arf"]
+                        wrf1 = f0["wrf1"]
+                        wrf2 = f0["wrf2"]
+                        wrf3 = f0["wrf3"]
+                        wrf4 = f0["wrf4"]
+                        wrf5 = f0["wrf5"]
+                        wrf6 = f0["wrf6"]
+                        wrf7 = f0["wrf7"]
+                        wrf8 = f0["wrf8"]
+            except StopIteration:
+                new_feat = QgsFeature()
+                new_feat.setFields(fields)
 
+                geom0 = f0.geometry()
+                point0 = geom0.asPoint()
+                new_geom0 = QgsGeometry.fromPointXY(point0)
+                new_feat.setGeometry(new_geom0)
+
+                new_feat["grid_fid"] = grid0
+                new_feat["area_fid"] = area_fid
+                new_feat["arf"] = arf
+                new_feat["wrf1"] = wrf1
+                new_feat["wrf2"] = wrf2
+                new_feat["wrf3"] = wrf3
+                new_feat["wrf4"] = wrf4
+                new_feat["wrf5"] = wrf5
+                new_feat["wrf6"] = wrf6
+                new_feat["wrf7"] = wrf7
+                new_feat["wrf8"] = wrf8
+                new_feats.append(new_feat)
+
+            # Clear 'blocked_cells' and add all features with values accumulated.
+            self.gutils.clear_tables("blocked_cells")
+            arf_lyr.startEditing()
+            arf_lyr.addFeatures(new_feats)
+            arf_lyr.commitChanges()
+            arf_lyr.updateExtents()
+            arf_lyr.triggerRepaint()
+            arf_lyr.removeSelection()
+
+            return True
+
+        except Exception as e:
+            self.uc.log_info(traceback.format_exc())
+            QApplication.restoreOverrideCursor()
+            self.uc.show_error(
+                "ERROR 060319.1609: Replacing duplicated ARFs and WRFs failed!.\n"
+                "________________________________________________________________",
+                e,
+            )
+            return False
