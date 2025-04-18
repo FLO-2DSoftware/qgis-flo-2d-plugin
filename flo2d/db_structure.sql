@@ -687,6 +687,7 @@ INSERT INTO gpkg_contents (table_name, data_type) VALUES ('noexchange_chan_cells
 
 CREATE TABLE "user_steep_slope_n_areas" (
     "fid" INTEGER NOT NULL PRIMARY KEY,
+    "global" INTEGER DEFAULT 0,
     "notes" TEXT
 );
 INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('user_steep_slope_n_areas', 'features', 4326);
@@ -695,6 +696,7 @@ SELECT gpkgAddGeometryTriggers('user_steep_slope_n_areas', 'geom');
 
 CREATE TABLE "steep_slope_n_cells" (
     "fid" INTEGER NOT NULL PRIMARY KEY,
+    "global" INTEGER,
     "area_fid" INTEGER, -- fid of steep_slope_n_area polygon
     "grid_fid" INTEGER -- STEEP SLOPE N
 );

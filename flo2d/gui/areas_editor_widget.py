@@ -1,10 +1,4 @@
 # -*- coding: utf-8 -*-
-from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QColor
-from networkx.algorithms.connectivity.edge_augmentation import collapse
-from qgis._core import QgsFeatureRequest
-
-from .table_editor_widget import StandardItemModel
 # FLO-2D Preprocessor tools for QGIS
 
 # This program is free software; you can redistribute it and/or
@@ -12,7 +6,11 @@ from .table_editor_widget import StandardItemModel
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version
 
-from .ui_utils import load_ui, center_canvas, zoom_show_n_cells, zoom
+from PyQt5.QtCore import Qt
+from PyQt5.QtGui import QColor
+from qgis._core import QgsFeatureRequest
+
+from .ui_utils import load_ui, center_canvas
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
 
@@ -81,6 +79,9 @@ class AreasEditorWidget(qtBaseClass, uiDialog):
         self.roughness_cbo.currentIndexChanged.connect(lambda: self.populate_cbo_areas(self.roughness_cbo, self.eye_roughness_btn))
         self.steep_slopen_cbo.currentIndexChanged.connect(lambda: self.populate_cbo_areas(self.steep_slopen_cbo, self.eye_steep_slopen_btn))
 
+        self.schema_btn.clicked.connect(self.schematize_areas)
+        self.del_schema_btn.clicked.connect(self.delete_schematized_areas)
+
         # Building Areas
         self.adj_factor_dsp.editingFinished.connect(self.save_building_adj_factor)
         self.shallown_dsb.editingFinished.connect(self.save_shallown)
@@ -90,6 +91,7 @@ class AreasEditorWidget(qtBaseClass, uiDialog):
         self.arf_chbox.stateChanged.connect(self.save_blocked_areas)
         self.wrf_chbox.stateChanged.connect(self.save_blocked_areas)
         self.mannings_dsb.editingFinished.connect(self.save_mannings)
+        self.steep_slopen_global_chbox.stateChanged.connect(self.save_global_steep_slopen)
 
         self.populate_grps()
 
@@ -130,6 +132,7 @@ class AreasEditorWidget(qtBaseClass, uiDialog):
         self.create_polygon_btn.setEnabled(enable)
         self.revert_changes_btn.setEnabled(enable)
         self.schema_btn.setEnabled(enable)
+        self.del_schema_btn.setEnabled(enable)
 
     def create_areas_polygon(self):
 
@@ -289,13 +292,21 @@ class AreasEditorWidget(qtBaseClass, uiDialog):
                     x, y = feat.geometry().centroid().asPoint()
                     center_canvas(self.iface, x, y)
         elif area_cbo == self.steep_slopen_cbo:
-            if eye_btn.isChecked():
-                lyr = self.lyrs.data['user_steep_slope_n_areas']["qlyr"]
-                selected_areas_fid = int(area_cbo.currentText())
-                self.lyrs.show_feat_rubber(lyr.id(), selected_areas_fid, QColor(Qt.red))
-                feat = next(lyr.getFeatures(QgsFeatureRequest(int(area_cbo.currentText()))))
-                x, y = feat.geometry().centroid().asPoint()
-                center_canvas(self.iface, x, y)
+            fid = self.steep_slopen_cbo.currentText()
+            if fid:
+                qry = """SELECT COUNT(*) FROM user_steep_slope_n_areas WHERE global = 1;"""
+                result = self.gutils.execute(qry).fetchone()
+                if result and result[0] > 0:
+                    self.steep_slopen_global_chbox.setChecked(True)
+                else:
+                    self.steep_slopen_global_chbox.setChecked(False)
+                if eye_btn.isChecked():
+                    lyr = self.lyrs.data['user_steep_slope_n_areas']["qlyr"]
+                    selected_areas_fid = int(fid)
+                    self.lyrs.show_feat_rubber(lyr.id(), selected_areas_fid, QColor(Qt.red))
+                    feat = next(lyr.getFeatures(QgsFeatureRequest(selected_areas_fid)))
+                    x, y = feat.geometry().centroid().asPoint()
+                    center_canvas(self.iface, x, y)
         elif area_cbo == self.noexchange_cbo:
             if eye_btn.isChecked():
                 lyr = self.lyrs.data['user_noexchange_chan_areas']["qlyr"]
@@ -416,4 +427,96 @@ class AreasEditorWidget(qtBaseClass, uiDialog):
 
             update_qry = f"""UPDATE user_blocked_areas SET collapse = {collapse_chbox_state}, calc_arf = {arf_chbox_state}, calc_wrf = {wrf_chbox_state} WHERE fid = {fid};"""
             self.gutils.execute(update_qry)
+
+    def save_global_steep_slopen(self):
+        """
+        Updates the global steep slope n value for a selected area in the database.
+        """
+        try:
+            global_value = 1 if self.steep_slopen_global_chbox.isChecked() else 0
+            qry = """UPDATE user_steep_slope_n_areas SET global = ?;"""
+            self.gutils.execute(qry, (global_value,))
+        except Exception as e:
+            self.uc.bar_error(f"Error updating global steep slope n value!")
+            self.uc.log_info(f"Error updating global steep slope n value!")
+
+    def schematize_areas(self):
+        """
+        Schematizes the selected areas in the database.
+        """
+        selected_areas_idx = self.areas_cbo.currentIndex()
+        if selected_areas_idx != 0:
+            for i, areas_lyr in enumerate(self.areas_grps.values(), start=1):
+                if i == selected_areas_idx:
+                    if areas_lyr == 'buildings_areas':
+                        pass
+                    elif areas_lyr == 'spatialshallow':
+                        pass
+                    elif areas_lyr == 'fpfroude':
+                        pass
+                    elif areas_lyr == 'tolspatial':
+                        pass
+                    elif areas_lyr == 'user_roughness':
+                        pass
+                    elif areas_lyr == 'user_blocked_areas':
+                        pass
+                    elif areas_lyr == 'user_steep_slope_n_areas':
+                        try:
+                            self.gutils.clear_tables("steep_slope_n_cells")
+                            qry = """SELECT COUNT(*) FROM user_steep_slope_n_areas WHERE global = 1;"""
+                            result = self.gutils.execute(qry).fetchone()
+                            # Save global steep slope n value
+                            if result and result[0] > 0:
+                                insert_qry = """INSERT INTO steep_slope_n_cells (global) VALUES (?);"""
+                                self.gutils.execute(insert_qry, (1,))
+                            # Save individual cells
+                            else:
+                                intersection_qry = """
+                                    INSERT INTO steep_slope_n_cells (global, area_fid, grid_fid)
+                                    SELECT 0, a.fid AS area_fid, g.fid AS grid_fid
+                                    FROM
+                                        grid AS g,
+                                        user_steep_slope_n_areas AS a
+                                    WHERE
+                                        ST_Intersects(CastAutomagic(g.geom), CastAutomagic(a.geom));
+                                """
+                                self.gutils.execute(intersection_qry)
+                            self.uc.bar_info(f"Schematizing Steep Slope n Areas completed!")
+                            self.uc.log_info(f"Schematizing Steep Slope n Areas completed!")
+                        except Exception as e:
+                            self.uc.bar_error(f"Error schematizing Steep Slope n Areas!")
+                            self.uc.log_info(f"Error schematizing Steep Slope n Areas!")
+                    elif areas_lyr == 'user_noexchange_chan_areas':
+                        pass
+
+    def delete_schematized_areas(self):
+        selected_areas_idx = self.areas_cbo.currentIndex()
+        if selected_areas_idx != 0:
+            for i, areas_lyr in enumerate(self.areas_grps.values(), start=1):
+                if i == selected_areas_idx:
+                    if areas_lyr == 'buildings_areas':
+                        pass
+                    elif areas_lyr == 'spatialshallow':
+                        pass
+                    elif areas_lyr == 'fpfroude':
+                        pass
+                    elif areas_lyr == 'tolspatial':
+                        pass
+                    elif areas_lyr == 'user_roughness':
+                        pass
+                    elif areas_lyr == 'user_blocked_areas':
+                        pass
+                    elif areas_lyr == 'user_steep_slope_n_areas':
+                        del_qry = """DELETE FROM steep_slope_n_cells;"""
+                        self.gutils.execute(del_qry)
+                        self.uc.bar_info(f"Schematized Steep Slope n Areas deleted!")
+                        self.uc.log_info(f"Schematized Steep Slope n Areas deleted!")
+                    elif areas_lyr == 'user_noexchange_chan_areas':
+                        pass
+
+
+
+
+
+
 
