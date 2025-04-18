@@ -154,8 +154,8 @@ class ComponentsDialog(qtBaseClass, uiDialog):
 
             if os.path.isfile(last_dir + r"\STEEP_SLOPEN.DAT"):
                 if os.path.getsize(last_dir + r"\STEEP_SLOPEN.DAT") > 0:
-                    self.spatial_froude_chbox.setChecked(True)
-                    self.spatial_froude_chbox.setEnabled(True)
+                    self.spatial_steep_slopen_chbox.setChecked(True)
+                    self.spatial_steep_slopen_chbox.setEnabled(True)
 
         elif self.in_or_out == "out":
             self.setWindowTitle("FLO-2D Components to Export")

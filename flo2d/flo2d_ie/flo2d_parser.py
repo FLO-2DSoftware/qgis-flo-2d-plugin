@@ -1011,6 +1011,12 @@ class ParseDAT(object):
         data = [row[1:] for row in par]
         return data
 
+    def parse_steep_slopen(self):
+        steep_slopen = self.dat_files["STEEP_SLOPEN.DAT"]
+        par = self.single_parser(steep_slopen)
+        data = [row for row in par]
+        return data
+
     def parse_gutter(self):
         gutter = self.dat_files["GUTTER.DAT"]
         par = self.single_parser(gutter)

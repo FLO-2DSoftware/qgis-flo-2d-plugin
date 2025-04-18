@@ -1860,6 +1860,8 @@ class Flo2D(object):
                 dat = "SWMM.INP"
             elif call == 'export_steep_slopen':
                 dat = "STEEP_SLOPEN.DAT"
+            elif call == 'import_steep_slopen':
+                dat = "STEEP_SLOPEN.DAT"
             else:
                 dat = call.split("_")[-1].upper() + ".DAT"
             if call.startswith("import"):
@@ -1950,6 +1952,7 @@ class Flo2D(object):
             "import_breach",
             "import_gutter",
             "import_fpfroude",
+            "import_steep_slopen",
             "import_swmminp",
             "import_swmmflo",
             "import_swmmflort",
@@ -2083,6 +2086,9 @@ class Flo2D(object):
                     if "Spatial Froude" not in dlg_components.components:
                         import_calls.remove("import_fpfroude")
 
+                    if "Spatial Steep Slope-n" not in dlg_components.components:
+                        import_calls.remove("import_steep_slopen")
+
                     tables = [
                         "all_schem_bc",
                         "blocked_cells",
@@ -2163,6 +2169,7 @@ class Flo2D(object):
                         "sed_supply_cells",
                         "spatialshallow",
                         "spatialshallow_cells",
+                        "steep_slope_n_cells",
                         "storm_drains",
                         "street_elems",
                         "street_general",
@@ -2204,6 +2211,7 @@ class Flo2D(object):
                         "user_reservoirs",
                         "user_right_bank",
                         "user_roughness",
+                        "user_steep_slope_n_areas",
                         "user_streets",
                         "user_struct",
                         "user_swmm_conduits",

@@ -1591,6 +1591,26 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
         self.batch_execute(fpfroude_sql, cells_sql)
 
+    def import_steep_slopen(self):
+        cells_sql = ["""INSERT INTO steep_slope_n_cells (global, grid_fid) VALUES""", 2]
+
+        self.clear_tables("steep_slope_n_cells")
+
+        data = self.parser.parse_steep_slopen()
+
+        first_value = int(data[0][0])  # Get the first value from the first line
+
+        if first_value == 0:
+            return
+        elif first_value == 1:
+            cells_sql += [(1, 0)]
+        elif first_value == 2:
+            grid_ids = [int(row[0]) for row in data[1:]]
+            for grid_id in grid_ids:
+                cells_sql += [(0, grid_id)]
+
+        self.batch_execute(cells_sql)
+
     def import_gutter(self):
         gutter_globals_sql = [
             """INSERT INTO gutter_globals (width, height, n_value) VALUES""",
