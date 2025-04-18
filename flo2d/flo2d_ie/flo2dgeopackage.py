@@ -3790,7 +3790,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             steep_slopen = os.path.join(outdir, "STEEP_SLOPEN.DAT")
 
             # Check if there are global steep slope areas
-            qry = """SELECT COUNT(*) FROM user_steep_slope_n_areas WHERE global = 1;"""
+            qry = """SELECT COUNT(*) FROM steep_slope_n_cells WHERE global = 1;"""
             result = self.gutils.execute(qry).fetchone()
 
             with open(steep_slopen, "w") as s:
@@ -3820,7 +3820,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             spatially_variable_group = self.parser.spatially_variable_group
 
             # Check if there are global steep slope areas
-            qry = """SELECT COUNT(*) FROM user_steep_slope_n_areas WHERE global = 1;"""
+            qry = """SELECT COUNT(*) FROM steep_slope_n_cells WHERE global = 1;"""
             result = self.gutils.execute(qry).fetchone()
 
             if result and result[0] > 0:
