@@ -310,6 +310,7 @@ class ParseDAT(object):
             "FPXSEC.DAT": None,
             "BREACH.DAT": None,
             "FPFROUDE.DAT": None,
+            "STEEP_SLOPEN.DAT": None,
             "SWMM.INP": None,
             "SWMMFLO.DAT": None,
             "SWMMFLORT.DAT": None,

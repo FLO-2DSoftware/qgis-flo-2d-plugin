@@ -3759,6 +3759,45 @@ class Flo2dGeoPackage(GeoPackageUtils):
             self.uc.show_error("ERROR 101218.1535: exporting CONT.DAT or TOLER.DAT failed!.\n", e)
             return False
 
+    def export_steep_slopen(self, output=None):
+        if self.parsed_format == self.FORMAT_DAT:
+            return self.export_steep_slopen_dat(output)
+        elif self.parsed_format == self.FORMAT_HDF5:
+            return self.export_steep_slopen_hdf5()
+
+    def export_steep_slopen_dat(self, outdir):
+        try:
+            steep_slopen = os.path.join(outdir, "STEEP_SLOPEN.DAT")
+
+            # Check if there are global steep slope areas
+            qry = """SELECT COUNT(*) FROM user_steep_slope_n_areas WHERE global = 1;"""
+            result = self.gutils.execute(qry).fetchone()
+
+            with open(steep_slopen, "w") as s:
+                if result and result[0] > 0:
+                    # Write global steep slope value
+                    s.write("1\n")
+                else:
+                    # Write individual steep slope grid IDs
+                    sql = """SELECT grid_fid FROM steep_slope_n_cells ORDER BY fid;"""
+                    records = self.execute(sql)
+                    s.write("2\n")
+                    for row in records:
+                        grid_fid = row[0]  # Unpack the first value
+                        s.write(f"{grid_fid}\n")
+
+            return True
+
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.uc.bar_error("ERROR: exporting STEEP_SLOPEN.DAT failed!")
+            self.uc.log_info("ERROR: exporting STEEP_SLOPEN.DAT failed!\n", e)
+            QApplication.setOverrideCursor(Qt.WaitCursor)
+            return False
+
+    def export_steep_slopen_hdf5(self):
+        pass
+
     def export_mannings_n_topo(self, output=None):
         if self.parsed_format == self.FORMAT_DAT:
             return self.export_mannings_n_topo_dat(output)

@@ -1854,6 +1854,8 @@ class Flo2D(object):
                 dat = "BRIDGE_XSEC.DAT"
             elif call == "import_swmminp":
                 dat = "SWMM.INP"
+            elif call == 'export_steep_slopen':
+                dat = "STEEP_SLOPEN.DAT"
             else:
                 dat = call.split("_")[-1].upper() + ".DAT"
             if call.startswith("import"):
@@ -3022,6 +3024,7 @@ class Flo2D(object):
                 "export_breach",
                 "export_gutter",
                 "export_fpfroude",
+                "export_steep_slopen",
                 "export_swmmflo",
                 "export_swmmflort",
                 "export_swmmoutf",
@@ -3141,6 +3144,9 @@ class Flo2D(object):
 
                 if "Manning's n and Topo" not in dlg_components.components:
                     export_calls.remove("export_mannings_n_topo")
+
+                if "Spatial Steep Slope-n" not in dlg_components.components:
+                    export_calls.remove("export_steep_slopen")
 
                 try:
                     s = QSettings()
