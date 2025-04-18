@@ -3816,7 +3816,46 @@ class Flo2dGeoPackage(GeoPackageUtils):
             return False
 
     def export_steep_slopen_hdf5(self):
-        pass
+        try:
+            spatially_variable_group = self.parser.spatially_variable_group
+
+            # Check if there are global steep slope areas
+            qry = """SELECT COUNT(*) FROM user_steep_slope_n_areas WHERE global = 1;"""
+            result = self.gutils.execute(qry).fetchone()
+
+            if result and result[0] > 0:
+                # Write global steep slope value
+                try:
+                    spatially_variable_group.datasets["STEEP_SLOPEN_GLOBAL"].data.append(1)
+                except:
+                    spatially_variable_group.create_dataset('STEEP_SLOPEN_GLOBAL', [])
+                    spatially_variable_group.datasets["STEEP_SLOPEN_GLOBAL"].data.append(1)
+            else:
+                # Write individual steep slope grid IDs
+                try:
+                    spatially_variable_group.datasets["STEEP_SLOPEN_GLOBAL"].data.append(2)
+                except:
+                    spatially_variable_group.create_dataset('STEEP_SLOPEN_GLOBAL', [])
+                    spatially_variable_group.datasets["STEEP_SLOPEN_GLOBAL"].data.append(2)
+                sql = """SELECT grid_fid FROM steep_slope_n_cells ORDER BY fid;"""
+                records = self.execute(sql)
+                for row in records:
+                    grid_fid = row[0]  # Unpack the first value
+                    try:
+                        spatially_variable_group.datasets["STEEP_SLOPEN"].data.append(grid_fid)
+                    except:
+                        spatially_variable_group.create_dataset('STEEP_SLOPEN', [])
+                        spatially_variable_group.datasets["STEEP_SLOPEN"].data.append(grid_fid)
+
+            self.parser.write_groups(spatially_variable_group)
+            return True
+
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.uc.bar_error("ERROR: exporting STEEP_SLOPEN to hdf5 failed!")
+            self.uc.log_info("ERROR: exporting STEEP_SLOPEN to hdf5 failed!\n", e)
+            QApplication.setOverrideCursor(Qt.WaitCursor)
+            return False
 
     def export_mannings_n_topo(self, output=None):
         if self.parsed_format == self.FORMAT_DAT:

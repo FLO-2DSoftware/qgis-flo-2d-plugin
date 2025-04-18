@@ -3286,6 +3286,7 @@ class Flo2D(object):
                 "export_mult",
                 "export_fpxsec",
                 "export_fpfroude",
+                "export_steep_slopen",
                 "export_sed",
                 "export_swmmflo",
                 "export_swmmflort",
@@ -3384,6 +3385,9 @@ class Flo2D(object):
 
                 if "Manning's n and Topo" not in dlg_components.components:
                     export_calls.remove("export_mannings_n_topo")
+
+                if "Spatial Steep Slope-n" not in dlg_components.components:
+                    export_calls.remove("export_steep_slopen")
 
                 try:
                     s = QSettings()
