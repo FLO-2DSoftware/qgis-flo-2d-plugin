@@ -72,14 +72,14 @@ class AreasEditorWidget(qtBaseClass, uiDialog):
         self.eye_roughness_btn.clicked.connect(lambda: self.center_area_fid(self.roughness_cbo, self.eye_roughness_btn, 'user_roughness'))
         self.eye_steep_slopen_btn.clicked.connect(lambda: self.center_area_fid(self.steep_slopen_cbo, self.eye_steep_slopen_btn, 'user_steep_slope_n_areas'))
 
-        self.noexchange_cbo.currentIndexChanged.connect(lambda: self.populate_cbo_areas(self.noexchange_cbo))
-        self.buildings_cbo.currentIndexChanged.connect(lambda: self.populate_cbo_areas(self.buildings_cbo))
-        self.shallown_cbo.currentIndexChanged.connect(lambda: self.populate_cbo_areas(self.shallown_cbo))
-        self.froude_cbo.currentIndexChanged.connect(lambda: self.populate_cbo_areas(self.froude_cbo))
-        self.tolerance_cbo.currentIndexChanged.connect(lambda: self.populate_cbo_areas(self.tolerance_cbo))
-        self.blocked_cbo.currentIndexChanged.connect(lambda: self.populate_cbo_areas(self.blocked_cbo))
-        self.roughness_cbo.currentIndexChanged.connect(lambda: self.populate_cbo_areas(self.roughness_cbo))
-        self.steep_slopen_cbo.currentIndexChanged.connect(lambda: self.populate_cbo_areas(self.steep_slopen_cbo))
+        self.noexchange_cbo.currentIndexChanged.connect(lambda: self.populate_cbo_areas(self.noexchange_cbo, self.eye_no_exchange_btn))
+        self.buildings_cbo.currentIndexChanged.connect(lambda: self.populate_cbo_areas(self.buildings_cbo, self.eye_building_btn))
+        self.shallown_cbo.currentIndexChanged.connect(lambda: self.populate_cbo_areas(self.shallown_cbo, self.eye_shallown_btn))
+        self.froude_cbo.currentIndexChanged.connect(lambda: self.populate_cbo_areas(self.froude_cbo, self.eye_froude_btn))
+        self.tolerance_cbo.currentIndexChanged.connect(lambda: self.populate_cbo_areas(self.tolerance_cbo, self.eye_tolerance_btn))
+        self.blocked_cbo.currentIndexChanged.connect(lambda: self.populate_cbo_areas(self.blocked_cbo, self.eye_blocked_btn))
+        self.roughness_cbo.currentIndexChanged.connect(lambda: self.populate_cbo_areas(self.roughness_cbo, self.eye_roughness_btn))
+        self.steep_slopen_cbo.currentIndexChanged.connect(lambda: self.populate_cbo_areas(self.steep_slopen_cbo, self.eye_steep_slopen_btn))
 
         # Building Areas
         self.adj_factor_dsp.editingFinished.connect(self.save_building_adj_factor)
@@ -172,7 +172,7 @@ class AreasEditorWidget(qtBaseClass, uiDialog):
                         area_cbo.addItem(str(row[0]))
                     area_cbo.setCurrentIndex(0)
 
-    def populate_cbo_areas(self, area_cbo):
+    def populate_cbo_areas(self, area_cbo, eye_btn):
         if area_cbo == self.buildings_cbo:
             fid = self.buildings_cbo.currentText()
             if fid:
@@ -185,6 +185,13 @@ class AreasEditorWidget(qtBaseClass, uiDialog):
                         self.adj_factor_dsp.setValue(0)
                 else:
                     self.adj_factor_dsp.setValue(0)
+                if eye_btn.isChecked():
+                    lyr = self.lyrs.data['buildings_areas']["qlyr"]
+                    selected_areas_fid = int(area_cbo.currentText())
+                    self.lyrs.show_feat_rubber(lyr.id(), selected_areas_fid, QColor(Qt.red))
+                    feat = next(lyr.getFeatures(QgsFeatureRequest(int(area_cbo.currentText()))))
+                    x, y = feat.geometry().centroid().asPoint()
+                    center_canvas(self.iface, x, y)
         elif area_cbo == self.shallown_cbo:
             fid = self.shallown_cbo.currentText()
             if fid:
@@ -197,6 +204,13 @@ class AreasEditorWidget(qtBaseClass, uiDialog):
                         self.shallown_dsb.setValue(0)
                 else:
                     self.shallown_dsb.setValue(0)
+                if eye_btn.isChecked():
+                    lyr = self.lyrs.data['spatialshallow']["qlyr"]
+                    selected_areas_fid = int(area_cbo.currentText())
+                    self.lyrs.show_feat_rubber(lyr.id(), selected_areas_fid, QColor(Qt.red))
+                    feat = next(lyr.getFeatures(QgsFeatureRequest(int(area_cbo.currentText()))))
+                    x, y = feat.geometry().centroid().asPoint()
+                    center_canvas(self.iface, x, y)
         elif area_cbo == self.froude_cbo:
             fid = self.froude_cbo.currentText()
             if fid:
@@ -209,6 +223,13 @@ class AreasEditorWidget(qtBaseClass, uiDialog):
                         self.froud_dsb.setValue(0)
                 else:
                     self.froud_dsb.setValue(0)
+                if eye_btn.isChecked():
+                    lyr = self.lyrs.data['fpfroude']["qlyr"]
+                    selected_areas_fid = int(area_cbo.currentText())
+                    self.lyrs.show_feat_rubber(lyr.id(), selected_areas_fid, QColor(Qt.red))
+                    feat = next(lyr.getFeatures(QgsFeatureRequest(int(area_cbo.currentText()))))
+                    x, y = feat.geometry().centroid().asPoint()
+                    center_canvas(self.iface, x, y)
         elif area_cbo == self.tolerance_cbo:
             fid = self.tolerance_cbo.currentText()
             if fid:
@@ -221,6 +242,13 @@ class AreasEditorWidget(qtBaseClass, uiDialog):
                         self.tolerance_dsb.setValue(0)
                 else:
                     self.tolerance_dsb.setValue(0)
+                if eye_btn.isChecked():
+                    lyr = self.lyrs.data['tolspatial']["qlyr"]
+                    selected_areas_fid = int(area_cbo.currentText())
+                    self.lyrs.show_feat_rubber(lyr.id(), selected_areas_fid, QColor(Qt.red))
+                    feat = next(lyr.getFeatures(QgsFeatureRequest(int(area_cbo.currentText()))))
+                    x, y = feat.geometry().centroid().asPoint()
+                    center_canvas(self.iface, x, y)
         elif area_cbo == self.roughness_cbo:
             fid = self.roughness_cbo.currentText()
             if fid:
@@ -233,6 +261,13 @@ class AreasEditorWidget(qtBaseClass, uiDialog):
                         self.mannings_dsb.setValue(0)
                 else:
                     self.mannings_dsb.setValue(0)
+                if eye_btn.isChecked():
+                    lyr = self.lyrs.data['user_roughness']["qlyr"]
+                    selected_areas_fid = int(area_cbo.currentText())
+                    self.lyrs.show_feat_rubber(lyr.id(), selected_areas_fid, QColor(Qt.red))
+                    feat = next(lyr.getFeatures(QgsFeatureRequest(int(area_cbo.currentText()))))
+                    x, y = feat.geometry().centroid().asPoint()
+                    center_canvas(self.iface, x, y)
         elif area_cbo == self.blocked_cbo:
             fid = self.blocked_cbo.currentText()
             if fid:
@@ -246,6 +281,29 @@ class AreasEditorWidget(qtBaseClass, uiDialog):
                     self.collapse_chbox.setChecked(False)
                     self.arf_chbox.setChecked(False)
                     self.wrf_chbox.setChecked(False)
+                if eye_btn.isChecked():
+                    lyr = self.lyrs.data['user_blocked_areas']["qlyr"]
+                    selected_areas_fid = int(area_cbo.currentText())
+                    self.lyrs.show_feat_rubber(lyr.id(), selected_areas_fid, QColor(Qt.red))
+                    feat = next(lyr.getFeatures(QgsFeatureRequest(int(area_cbo.currentText()))))
+                    x, y = feat.geometry().centroid().asPoint()
+                    center_canvas(self.iface, x, y)
+        elif area_cbo == self.steep_slopen_cbo:
+            if eye_btn.isChecked():
+                lyr = self.lyrs.data['user_steep_slope_n_areas']["qlyr"]
+                selected_areas_fid = int(area_cbo.currentText())
+                self.lyrs.show_feat_rubber(lyr.id(), selected_areas_fid, QColor(Qt.red))
+                feat = next(lyr.getFeatures(QgsFeatureRequest(int(area_cbo.currentText()))))
+                x, y = feat.geometry().centroid().asPoint()
+                center_canvas(self.iface, x, y)
+        elif area_cbo == self.noexchange_cbo:
+            if eye_btn.isChecked():
+                lyr = self.lyrs.data['user_noexchange_chan_areas']["qlyr"]
+                selected_areas_fid = int(area_cbo.currentText())
+                self.lyrs.show_feat_rubber(lyr.id(), selected_areas_fid, QColor(Qt.red))
+                feat = next(lyr.getFeatures(QgsFeatureRequest(int(area_cbo.currentText()))))
+                x, y = feat.geometry().centroid().asPoint()
+                center_canvas(self.iface, x, y)
 
     def delete_area_fid(self, area_cbo, area_lyr):
         selected_areas_fid = int(area_cbo.currentText())
@@ -272,7 +330,6 @@ class AreasEditorWidget(qtBaseClass, uiDialog):
             feat = next(lyr.getFeatures(QgsFeatureRequest(int(area_cbo.currentText()))))
             x, y = feat.geometry().centroid().asPoint()
             center_canvas(self.iface, x, y)
-            zoom(self.iface, 0.4)
             return
         else:
             area_eye.setChecked(False)
