@@ -1591,6 +1591,26 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
         self.batch_execute(fpfroude_sql, cells_sql)
 
+    def import_steep_slopen(self):
+        cells_sql = ["""INSERT INTO steep_slope_n_cells (global, grid_fid) VALUES""", 2]
+
+        self.clear_tables("steep_slope_n_cells")
+
+        data = self.parser.parse_steep_slopen()
+
+        first_value = int(data[0][0])  # Get the first value from the first line
+
+        if first_value == 0:
+            return
+        elif first_value == 1:
+            cells_sql += [(1, 0)]
+        elif first_value == 2:
+            grid_ids = [int(row[0]) for row in data[1:]]
+            for grid_id in grid_ids:
+                cells_sql += [(0, grid_id)]
+
+        self.batch_execute(cells_sql)
+
     def import_gutter(self):
         gutter_globals_sql = [
             """INSERT INTO gutter_globals (width, height, n_value) VALUES""",
@@ -3757,6 +3777,84 @@ class Flo2dGeoPackage(GeoPackageUtils):
         except Exception as e:
             QApplication.restoreOverrideCursor()
             self.uc.show_error("ERROR 101218.1535: exporting CONT.DAT or TOLER.DAT failed!.\n", e)
+            return False
+
+    def export_steep_slopen(self, output=None):
+        if self.parsed_format == self.FORMAT_DAT:
+            return self.export_steep_slopen_dat(output)
+        elif self.parsed_format == self.FORMAT_HDF5:
+            return self.export_steep_slopen_hdf5()
+
+    def export_steep_slopen_dat(self, outdir):
+        try:
+            steep_slopen = os.path.join(outdir, "STEEP_SLOPEN.DAT")
+
+            # Check if there are global steep slope areas
+            qry = """SELECT COUNT(*) FROM steep_slope_n_cells WHERE global = 1;"""
+            result = self.gutils.execute(qry).fetchone()
+
+            with open(steep_slopen, "w") as s:
+                if result and result[0] > 0:
+                    # Write global steep slope value
+                    s.write("1\n")
+                else:
+                    # Write individual steep slope grid IDs
+                    sql = """SELECT grid_fid FROM steep_slope_n_cells ORDER BY fid;"""
+                    records = self.execute(sql)
+                    s.write("2\n")
+                    for row in records:
+                        grid_fid = row[0]  # Unpack the first value
+                        s.write(f"{grid_fid}\n")
+
+            return True
+
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.uc.bar_error("ERROR: exporting STEEP_SLOPEN.DAT failed!")
+            self.uc.log_info("ERROR: exporting STEEP_SLOPEN.DAT failed!\n", e)
+            QApplication.setOverrideCursor(Qt.WaitCursor)
+            return False
+
+    def export_steep_slopen_hdf5(self):
+        try:
+            spatially_variable_group = self.parser.spatially_variable_group
+
+            # Check if there are global steep slope areas
+            qry = """SELECT COUNT(*) FROM steep_slope_n_cells WHERE global = 1;"""
+            result = self.gutils.execute(qry).fetchone()
+
+            if result and result[0] > 0:
+                # Write global steep slope value
+                try:
+                    spatially_variable_group.datasets["STEEP_SLOPEN_GLOBAL"].data.append(1)
+                except:
+                    spatially_variable_group.create_dataset('STEEP_SLOPEN_GLOBAL', [])
+                    spatially_variable_group.datasets["STEEP_SLOPEN_GLOBAL"].data.append(1)
+            else:
+                # Write individual steep slope grid IDs
+                try:
+                    spatially_variable_group.datasets["STEEP_SLOPEN_GLOBAL"].data.append(2)
+                except:
+                    spatially_variable_group.create_dataset('STEEP_SLOPEN_GLOBAL', [])
+                    spatially_variable_group.datasets["STEEP_SLOPEN_GLOBAL"].data.append(2)
+                sql = """SELECT grid_fid FROM steep_slope_n_cells ORDER BY fid;"""
+                records = self.execute(sql)
+                for row in records:
+                    grid_fid = row[0]  # Unpack the first value
+                    try:
+                        spatially_variable_group.datasets["STEEP_SLOPEN"].data.append(grid_fid)
+                    except:
+                        spatially_variable_group.create_dataset('STEEP_SLOPEN', [])
+                        spatially_variable_group.datasets["STEEP_SLOPEN"].data.append(grid_fid)
+
+            self.parser.write_groups(spatially_variable_group)
+            return True
+
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.uc.bar_error("ERROR: exporting STEEP_SLOPEN to hdf5 failed!")
+            self.uc.log_info("ERROR: exporting STEEP_SLOPEN to hdf5 failed!\n", e)
+            QApplication.setOverrideCursor(Qt.WaitCursor)
             return False
 
     def export_mannings_n_topo(self, output=None):

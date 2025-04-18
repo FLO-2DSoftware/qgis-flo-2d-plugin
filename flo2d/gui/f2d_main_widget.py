@@ -12,6 +12,7 @@ from PyQt5.QtWidgets import QApplication, QFileDialog
 from qgis.PyQt.QtCore import QSize
 from qgis._gui import QgsDockWidget
 
+from .areas_editor_widget import AreasEditorWidget
 from .bc_editor_widget_new import BCEditorWidgetNew
 from .multiple_domains_editor_widget import MultipleDomainsEditorWidget
 from ..user_communication import UserCommunication
@@ -53,6 +54,7 @@ class FLO2DWidget(qtBaseClass, uiDialog):
         self.setup_street_editor()
         self.setup_struct_editor()
         self.setup_rain_editor()
+        self.setup_areas_editor()
         self.setup_channels_editor()
         self.setup_xsec_editor()
         self.setup_storm_drain_editor()
@@ -76,6 +78,7 @@ class FLO2DWidget(qtBaseClass, uiDialog):
             self.ic_editor_grp,
             self.street_editor_grp,
             self.rain_editor_grp,
+            self.areas_editor_grp,
             self.channels_editor_grp,
             self.struct_editor_grp,
             self.xs_editor_grp,
@@ -165,6 +168,10 @@ class FLO2DWidget(qtBaseClass, uiDialog):
     def setup_rain_editor(self):
         self.rain_editor = RainEditorWidget(self.iface, self.plot, self.table, self.lyrs)
         self.rain_editor_lout.addWidget(self.rain_editor)
+
+    def setup_areas_editor(self):
+        self.areas_editor = AreasEditorWidget(self.iface, self.lyrs)
+        self.areas_editor_lout.addWidget(self.areas_editor)
 
     def setup_channels_editor(self):
         self.channels_editor = ChannelsEditorWidget(self.iface, self.lyrs)

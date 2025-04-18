@@ -310,6 +310,7 @@ class ParseDAT(object):
             "FPXSEC.DAT": None,
             "BREACH.DAT": None,
             "FPFROUDE.DAT": None,
+            "STEEP_SLOPEN.DAT": None,
             "SWMM.INP": None,
             "SWMMFLO.DAT": None,
             "SWMMFLORT.DAT": None,
@@ -1008,6 +1009,12 @@ class ParseDAT(object):
         fpfroude = self.dat_files["FPFROUDE.DAT"]
         par = self.single_parser(fpfroude)
         data = [row[1:] for row in par]
+        return data
+
+    def parse_steep_slopen(self):
+        steep_slopen = self.dat_files["STEEP_SLOPEN.DAT"]
+        par = self.single_parser(steep_slopen)
+        data = [row for row in par]
         return data
 
     def parse_gutter(self):
