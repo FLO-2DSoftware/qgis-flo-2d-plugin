@@ -50,7 +50,7 @@ class ContToler_JJ(qtBaseClass, uiDialog):
                     "label": "Increment n Value at runtime",
                     "type": "r",
                     "dat": "CONT",
-                    "min": 0.00,
+                    "min": -99.00,
                     "max": float("inf"),
                     "dec": 2,
                 },
