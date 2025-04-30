@@ -1552,14 +1552,47 @@ class Flo2D(object):
 
     def run_profiles(self):
         self.uncheck_all_info_tools()
+
+        s = QSettings()
+        last_dir = s.value("FLO-2D/lastGdsDir", "")
+
+        # Check if CHAN.DAT exists in the last_dir
+        chan_file = os.path.join(last_dir, "CHAN.DAT")
+        if not os.path.exists(chan_file):
+            self.uc.bar_warn("CHAN.DAT file is missing in the directory: " + last_dir)
+            self.uc.log_info("CHAN.DAT file is missing in the directory: " + last_dir)
+            return
+
         self.run_program("PROFILES.exe")
 
     def run_hydrog(self):
         self.uncheck_all_info_tools()
+
+        s = QSettings()
+        last_dir = s.value("FLO-2D/lastGdsDir", "")
+
+        # Check if CHAN.DAT exists in the last_dir
+        summary_file = os.path.join(last_dir, "SUMMARY.OUT")
+        if not os.path.exists(summary_file):
+            self.uc.bar_warn("SUMMARY.OUT file is missing in the directory: " + last_dir)
+            self.uc.log_info("SUMMARY.OUT file is missing in the directory: " + last_dir)
+            return
+
         self.run_program("HYDROG.exe")
 
     def run_maxplot(self):
         self.uncheck_all_info_tools()
+
+        s = QSettings()
+        last_dir = s.value("FLO-2D/lastGdsDir", "")
+
+        # Check if CHAN.DAT exists in the last_dir
+        cadpts_file = os.path.join(last_dir, "CADPTS.DAT")
+        if not os.path.exists(cadpts_file):
+            self.uc.bar_warn("CADPTS.DAT file is missing in the directory: " + last_dir)
+            self.uc.log_info("CADPTS.DAT file is missing in the directory: " + last_dir)
+            return
+
         self.run_program("MAXPLOT.exe")
 
     def run_swmm5_gui(self):
