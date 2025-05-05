@@ -127,6 +127,7 @@ class GridToolsWidget(qtBaseClass, uiDialog):
         self.shallow_n_btn.clicked.connect(self.eval_shallow_n)
         self.gutter_btn.clicked.connect(self.eval_gutter)
         self.noexchange_btn.clicked.connect(self.eval_noexchange)
+        self.steep_slopen_btn.clicked.connect(self.eval_steep_slopen)
         self.other_variable_btn.clicked.connect(self.other_variable)
         # self.tailings_btn.clicked.connect(self.get_tailings)
         self.help_btn.clicked.connect(self.show_grid_widget_help)
@@ -1474,6 +1475,60 @@ class GridToolsWidget(qtBaseClass, uiDialog):
             self.lyrs.update_layer_extents(tol_lyr)
             QApplication.restoreOverrideCursor()
             self.uc.show_info("No-exchange areas selected!")
+        except Exception as e:
+            self.uc.log_info(traceback.format_exc())
+            self.uc.show_warn(
+                "WARNING 060319.1721: Selection of no-exchange cells failed! Please check your No-xchange Cells (Tables layer)."
+            )
+            QApplication.restoreOverrideCursor()
+
+    def eval_steep_slopen(self):
+        grid_empty = self.gutils.is_table_empty("grid")
+        if grid_empty:
+            self.uc.bar_warn("There is no grid. Please, create it before evaluating the steep slope-n cells.")
+            self.uc.log_info("There is no grid. Please, create it before evaluating the steep slope-n cells.")
+            return
+        else:
+            pass
+        if not self.gutils.is_table_empty("steep_slope_n_cells"):
+            q = "There are some steep slope-n cells already defined in the database. Overwrite them?\n\n"
+            q += "Please, note that the new steep slope-n cells will be evaluated for existing steep slope-n polygons ONLY."
+            if not self.uc.question(q):
+                return
+        if not self.lyrs.save_edits_and_proceed("Steep Slope n Cells"):
+            return
+        if self.gutils.is_table_empty("user_steep_slope_n_areas"):
+            w = 'There are no "steep slope-n" polygons in Steep Slope n Areas (User Layers)!.\n\n'
+            w += "Please digitize them before running tool."
+            self.uc.bar_warn(w)
+            self.uc.log_info(w)
+            return
+        try:
+            QApplication.setOverrideCursor(Qt.WaitCursor)
+            self.gutils.clear_tables("steep_slope_n_cells")
+            qry = """SELECT COUNT(*) FROM user_steep_slope_n_areas WHERE global = 1;"""
+            result = self.gutils.execute(qry).fetchone()
+            # Save global steep slope n value
+            if result and result[0] > 0:
+                insert_qry = """INSERT INTO steep_slope_n_cells (global) VALUES (?);"""
+                self.gutils.execute(insert_qry, (1,))
+            # Save individual cells
+            else:
+                intersection_qry = """
+                                        INSERT INTO steep_slope_n_cells (global, area_fid, grid_fid)
+                                        SELECT 0, a.fid AS area_fid, g.fid AS grid_fid
+                                        FROM
+                                            grid AS g,
+                                            user_steep_slope_n_areas AS a
+                                        WHERE
+                                            ST_Intersects(CastAutomagic(g.geom), CastAutomagic(a.geom));
+                                    """
+                self.gutils.execute(intersection_qry)
+            steep_slopen_lyr = self.lyrs.data["user_steep_slope_n_areas"]["qlyr"]
+            steep_slopen_lyr.reload()
+            self.lyrs.update_layer_extents(steep_slopen_lyr)
+            QApplication.restoreOverrideCursor()
+            self.uc.show_info("Steep Slope-n areas selected!")
         except Exception as e:
             self.uc.log_info(traceback.format_exc())
             self.uc.show_warn(

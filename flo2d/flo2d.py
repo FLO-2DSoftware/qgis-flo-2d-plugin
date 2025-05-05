@@ -1267,6 +1267,7 @@ class Flo2D(object):
                 "export_breach",
                 "export_gutter",
                 "export_fpfroude",
+                "export_steep_slopen",
                 "export_swmmflo",
                 "export_swmmflort",
                 "export_swmmoutf",
@@ -1381,6 +1382,9 @@ class Flo2D(object):
 
                 if "Manning's n and Topo" not in dlg_components.components:
                     export_calls.remove("export_mannings_n_topo")
+
+                if "Spatial Steep Slope-n" not in dlg_components.components:
+                    export_calls.remove("export_steep_slopen")
 
                 try:
 
@@ -1887,6 +1891,10 @@ class Flo2D(object):
                 dat = "BRIDGE_XSEC.DAT"
             elif call == "import_swmminp":
                 dat = "SWMM.INP"
+            elif call == 'export_steep_slopen':
+                dat = "STEEP_SLOPEN.DAT"
+            elif call == 'import_steep_slopen':
+                dat = "STEEP_SLOPEN.DAT"
             else:
                 dat = call.split("_")[-1].upper() + ".DAT"
             if call.startswith("import"):
@@ -1977,6 +1985,7 @@ class Flo2D(object):
             "import_breach",
             "import_gutter",
             "import_fpfroude",
+            "import_steep_slopen",
             "import_swmminp",
             "import_swmmflo",
             "import_swmmflort",
@@ -2110,6 +2119,9 @@ class Flo2D(object):
                     if "Spatial Froude" not in dlg_components.components:
                         import_calls.remove("import_fpfroude")
 
+                    if "Spatial Steep Slope-n" not in dlg_components.components:
+                        import_calls.remove("import_steep_slopen")
+
                     tables = [
                         "all_schem_bc",
                         "blocked_cells",
@@ -2190,6 +2202,7 @@ class Flo2D(object):
                         "sed_supply_cells",
                         "spatialshallow",
                         "spatialshallow_cells",
+                        "steep_slope_n_cells",
                         "storm_drains",
                         "street_elems",
                         "street_general",
@@ -2231,6 +2244,7 @@ class Flo2D(object):
                         "user_reservoirs",
                         "user_right_bank",
                         "user_roughness",
+                        "user_steep_slope_n_areas",
                         "user_streets",
                         "user_struct",
                         "user_swmm_conduits",
@@ -2667,6 +2681,7 @@ class Flo2D(object):
             "import_breach",
             "import_gutter",
             "import_fpfroude",
+            "import_steep_slopen",
             "import_swmminp",
             "import_swmmflo",
             "import_swmmflort",
@@ -2773,6 +2788,9 @@ class Flo2D(object):
 
                     if "Spatial Froude" not in dlg_components.components:
                         import_calls.remove("import_fpfroude")
+
+                    if "Spatial Steep Slope-n" not in dlg_components.components:
+                        import_calls.remove("import_steep_slopen")
 
                     if import_calls:
 
@@ -2903,6 +2921,7 @@ class Flo2D(object):
             "BREACH.DAT": "import_breach",
             "GUTTER.DAT": "import_gutter",
             "FPFROUDE.DAT": "import_fpfroude",
+            "STEEP_SLOPEN.DAT": "import_steep_slopen",
             f"{swmm_file_name}": "import_swmminp",
             "SWMMFLO.DAT": "import_swmmflo",
             "SWMMFLORT.DAT": "import_swmmflort",
@@ -3055,6 +3074,7 @@ class Flo2D(object):
                 "export_breach",
                 "export_gutter",
                 "export_fpfroude",
+                "export_steep_slopen",
                 "export_swmmflo",
                 "export_swmmflort",
                 "export_swmmoutf",
@@ -3174,6 +3194,9 @@ class Flo2D(object):
 
                 if "Manning's n and Topo" not in dlg_components.components:
                     export_calls.remove("export_mannings_n_topo")
+
+                if "Spatial Steep Slope-n" not in dlg_components.components:
+                    export_calls.remove("export_steep_slopen")
 
                 try:
                     s = QSettings()
@@ -3296,6 +3319,7 @@ class Flo2D(object):
                 "export_mult",
                 "export_fpxsec",
                 "export_fpfroude",
+                "export_steep_slopen",
                 "export_sed",
                 "export_swmmflo",
                 "export_swmmflort",
@@ -3394,6 +3418,9 @@ class Flo2D(object):
 
                 if "Manning's n and Topo" not in dlg_components.components:
                     export_calls.remove("export_mannings_n_topo")
+
+                if "Spatial Steep Slope-n" not in dlg_components.components:
+                    export_calls.remove("export_steep_slopen")
 
                 try:
                     s = QSettings()
