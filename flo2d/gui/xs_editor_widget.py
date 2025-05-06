@@ -1985,33 +1985,64 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
             self.uc.bar_warn("Error while building table for channel!")
             return
 
-    def parse_hychan(self, HYCHAN_file):
+    def parse_hychan(self, HYCHAN_file, mode):
         """
-        Function to parse the two types of HYCHAN.OUT - clear water and mudflow
+        Function to parse the two types of HYCHAN.OUT - clear water and mudflow.
+        Modes:
+            - "peaks": Returns peak values (peaks_dict, peaks_list).
+            - "time_series": Returns time series data (ts_dict, ts_list).
         """
-        # Read HYCHAN.OUT and create a dictionary of grid: [max_water_elev, peak_discharge].
-        peaks_dict = {}
-        peaks_list = []
+        result_dict = {}
+        result_list = []
+
+        def parse_data_line(line, max_sed_con, lists):
+            """Helper function to parse a single data line."""
+            line = line.split()
+            lists["time"].append(float(line[0]))
+            lists["elevation"].append(float(line[1]))
+            lists["depth"].append(float(line[2]))
+            lists["velocity"].append(float(line[3]))
+            lists["discharge"].append(float(line[4]))
+            lists["froude"].append(float(line[5]))
+            if max_sed_con is not None:
+                lists["con"].append(float(line[6]))
+            else:
+                lists["flow_area"].append(float(line[6]))
+                lists["w_perimeter"].append(float(line[7]))
+                lists["hyd_radius"].append(float(line[8]))
+                lists["top_width"].append(float(line[9]))
+                lists["width_depth"].append(float(line[10]))
+                lists["energy_slope"].append(float(line[11]))
+                lists["shear_stress"].append(float(line[12]))
+                lists["surf_area"].append(float(line[13]))
+
         with open(HYCHAN_file, "r") as myfile:
             while True:
                 try:
-                    # Check if it is a clear water or mudflow simulation
-                    velocity_list = []
-                    froude_list = []
-                    flow_area_list = []
-                    con_list = []
-                    w_perimeter_list = []
-                    hyd_radius_list = []
-                    top_width_list = []
-                    width_depth_list = []
-                    energy_slope_list = []
-                    shear_stress_list = []
-                    surf_area_list = []
+                    # Initialize lists for data
+                    lists = {
+                        "time": [],
+                        "elevation": [],
+                        "depth": [],
+                        "velocity": [],
+                        "discharge": [],
+                        "froude": [],
+                        "flow_area": [],
+                        "con": [],
+                        "w_perimeter": [],
+                        "hyd_radius": [],
+                        "top_width": [],
+                        "width_depth": [],
+                        "energy_slope": [],
+                        "shear_stress": [],
+                        "surf_area": [],
+                    }
                     line = next(myfile)
                     if "CHANNEL HYDROGRAPH FOR ELEMENT NO:" in line:
                         grid = line.split()[-1]
                         peak_discharge = max_water_elev = max_sed_con = None
 
+                        # Parse header lines
                         for _ in range(3):
                             line = next(myfile)
                             if "DISCHARGE" in line:
@@ -2025,74 +2056,81 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
                         for _ in range(4):
                             line = next(myfile)
 
+                        # Parse data rows
                         while True:
-                            line = next(myfile)
-                            if not line.strip():  # If the line is empty, exit the loop
+                            try:
+                                line = next(myfile)
+                                if not line.strip():  # If the line is empty, exit the loop
+                                    break
+                                parse_data_line(line, max_sed_con, lists)
+                            except StopIteration:
+                                # Handle the end of the file gracefully
                                 break
-                            line = line.split()
-                            velocity_list.append(float(line[3]))
-                            froude_list.append(float(line[5]))
+
+                        # Handle results based on mode
+                        if mode == "peaks":
                             if max_sed_con is not None:
-                                con_list.append(float(line[6]))
+                                result_dict[grid] = [
+                                    max_water_elev,
+                                    peak_discharge,
+                                    max_sed_con,
+                                    max(lists["velocity"]),
+                                    max(lists["froude"]),
+                                    max(lists["con"]),
+                                ]
+                                result_list.append((grid, *result_dict[grid]))
                             else:
-                                flow_area_list.append(float(line[6]))
-                                w_perimeter_list.append(float(line[7]))
-                                hyd_radius_list.append(float(line[8]))
-                                top_width_list.append(float(line[9]))
-                                width_depth_list.append(float(line[10]))
-                                energy_slope_list.append(float(line[11]))
-                                shear_stress_list.append(float(line[12]))
-                                surf_area_list.append(float(line[13]))
-                        if max_sed_con is not None:
-                            peaks_dict[grid] = [max_water_elev,
-                                                peak_discharge,
-                                                max_sed_con,
-                                                max(velocity_list),
-                                                max(froude_list),
-                                                max(con_list)
-                                                ]
-                            peaks_list.append((grid,
-                                               max_water_elev,
-                                               peak_discharge,
-                                               max_sed_con,
-                                               max(velocity_list),
-                                               max(froude_list),
-                                               max(con_list)
-                                               ))
-                        else:
-                            peaks_dict[grid] = [max_water_elev,
-                                                peak_discharge,
-                                                max(velocity_list),
-                                                max(froude_list),
-                                                max(flow_area_list),
-                                                max(w_perimeter_list),
-                                                max(hyd_radius_list),
-                                                max(top_width_list),
-                                                max(width_depth_list),
-                                                max(energy_slope_list),
-                                                max(shear_stress_list),
-                                                max(surf_area_list),
-                                                ]
-                            peaks_list.append((grid,
-                                               max_water_elev,
-                                               peak_discharge,
-                                               max(velocity_list),
-                                               max(froude_list),
-                                               max(flow_area_list),
-                                               max(w_perimeter_list),
-                                               max(hyd_radius_list),
-                                               max(top_width_list),
-                                               max(width_depth_list),
-                                               max(energy_slope_list),
-                                               max(shear_stress_list),
-                                               max(surf_area_list),
-                                               ))
+                                result_dict[grid] = [
+                                    max_water_elev,
+                                    peak_discharge,
+                                    max(lists["velocity"]),
+                                    max(lists["froude"]),
+                                    max(lists["flow_area"]),
+                                    max(lists["w_perimeter"]),
+                                    max(lists["hyd_radius"]),
+                                    max(lists["top_width"]),
+                                    max(lists["width_depth"]),
+                                    max(lists["energy_slope"]),
+                                    max(lists["shear_stress"]),
+                                    max(lists["surf_area"]),
+                                ]
+                                result_list.append((grid, *result_dict[grid]))
+                        elif mode == "time_series":
+                            if max_sed_con is not None:
+                                result_dict[grid] = [
+                                    lists["time"],
+                                    lists["elevation"],
+                                    lists["depth"],
+                                    lists["velocity"],
+                                    lists["discharge"],
+                                    lists["froude"],
+                                    lists["con"],
+                                ]
+                                result_list.append((grid, *result_dict[grid]))
+                            else:
+                                result_dict[grid] = [
+                                    lists["time"],
+                                    lists["elevation"],
+                                    lists["depth"],
+                                    lists["velocity"],
+                                    lists["discharge"],
+                                    lists["froude"],
+                                    lists["flow_area"],
+                                    lists["w_perimeter"],
+                                    lists["hyd_radius"],
+                                    lists["top_width"],
+                                    lists["width_depth"],
+                                    lists["energy_slope"],
+                                    lists["shear_stress"],
+                                    lists["surf_area"],
+                                ]
+                                result_list.append((grid, *result_dict[grid]))
                     else:
                         pass
                 except StopIteration:
                     break
 
-        return peaks_dict, peaks_list
+        return result_dict, result_list
 
     def show_channel_peaks(self, table, fid):
         """
@@ -2121,7 +2159,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
             self.uc.bar_warn("File  '" + os.path.basename(HYCHAN_file) + "'  is empty!")
             return
 
-        peaks_dict, peaks_list = self.parse_hychan(HYCHAN_file)
+        peaks_dict, peaks_list = self.parse_hychan(HYCHAN_file, mode="peaks")
 
         if self.plot.plot.legend is not None:
             plot_scene = self.plot.plot.legend.scene()
@@ -2363,44 +2401,8 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
             return
 
         xc_fid = str(self.gutils.execute(f"SELECT fid FROM chan_elems WHERE id = '{fid}'").fetchone()[0])
-        with open(HYCHAN_file, "r") as myfile:
-            time_list = []
-            thalweg_list = []
-            discharge_list = []
-            velocity_list = []
-            froude_list = []
-            flow_area_list = []
-            w_perimeter_list = []
-            hyd_radius_list = []
-            top_width_list = []
-            width_depth_list = []
-            energy_slope_list = []
-            shear_stress_list = []
-            surf_area_list = []
-            while True:
-                line = next(myfile)
-                if "CHANNEL HYDROGRAPH FOR ELEMENT NO:" in line and line.split()[-1] == xc_fid:
-                    for _ in range(7):
-                        line = next(myfile)
-                    while True:
-                        line = next(myfile)
-                        if not line.strip():  # If the line is empty, exit the loop
-                            break
-                        line = line.split()
-                        time_list.append(float(line[0]))
-                        thalweg_list.append(float(line[2]))
-                        velocity_list.append(float(line[3]))
-                        discharge_list.append(float(line[4]))
-                        froude_list.append(float(line[5]))
-                        flow_area_list.append(float(line[6]))
-                        w_perimeter_list.append(float(line[7]))
-                        hyd_radius_list.append(float(line[8]))
-                        top_width_list.append(float(line[9]))
-                        width_depth_list.append(float(line[10]))
-                        energy_slope_list.append(float(line[11]))
-                        shear_stress_list.append(float(line[12]))
-                        surf_area_list.append(float(line[13]))
-                    break
+
+        ts_dict, ts_list = self.parse_hychan(HYCHAN_file, mode="time_series")
 
         self.plot.clear()
         if self.plot.plot.legend is not None:
@@ -2408,105 +2410,143 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
             if plot_scene is not None:
                 plot_scene.removeItem(self.plot.plot.legend)
 
+        values = ts_dict[xc_fid]
+
+        # Check if discharge is empty
+        if all(value == 0 for value in values[4]):
+            data_model = StandardItemModel()
+            self.tview.undoStack.clear()
+            self.tview.setModel(data_model)
+            data_model.clear()
+            self.uc.bar_warn("This channel cross section has no flow data!")
+            self.uc.log_info("This channel cross section has no flow data!")
+            return
+
         self.plot.plot.legend = None
         self.plot.plot.addLegend(offset=(0, 30))
         self.plot.plot.setTitle(title=f"Cross Section - {xc_fid}")
         self.plot.plot.setLabel("bottom", text="Time (hrs)")
         self.plot.plot.setLabel("left", text="")
-        self.plot.add_item(f"Discharge ({self.system_units[units][2]})", [time_list, discharge_list],
-                           col=QColor(Qt.darkYellow), sty=Qt.SolidLine)
-        self.plot.add_item(f"Thalweg depth ({self.system_units[units][0]})", [time_list, thalweg_list],
-                           col=QColor(Qt.black), sty=Qt.SolidLine,
-                           hide=True)
-        self.plot.add_item(f"Velocity ({self.system_units[units][1]})", [time_list, velocity_list],
-                           col=QColor(Qt.darkGreen), sty=Qt.SolidLine,
-                           hide=True)
-        self.plot.add_item(f"Froude", [time_list, froude_list], col=QColor(Qt.blue), sty=Qt.SolidLine, hide=True)
-        self.plot.add_item(f"Flow area ({self.system_units[units][3]})", [time_list, flow_area_list],
-                           col=QColor(Qt.red), sty=Qt.SolidLine,
-                           hide=True)
-        self.plot.add_item(f"Wetted perimeter ({self.system_units[units][0]})", [time_list, w_perimeter_list],
-                           col=QColor(Qt.yellow),
-                           sty=Qt.SolidLine, hide=True)
-        self.plot.add_item(f"Hydraulic radius ({self.system_units[units][0]})", [time_list, hyd_radius_list],
-                           col=QColor(Qt.darkBlue),
-                           sty=Qt.SolidLine, hide=True)
-        self.plot.add_item(f"Top width ({self.system_units[units][0]})", [time_list, top_width_list],
-                           col=QColor(Qt.darkRed), sty=Qt.SolidLine,
-                           hide=True)
-        self.plot.add_item(f"Width/Depth", [time_list, width_depth_list], col=QColor(Qt.darkCyan), sty=Qt.SolidLine,
-                           hide=True)
-        self.plot.add_item(f"Energy slope", [time_list, energy_slope_list], col=QColor(Qt.magenta), sty=Qt.SolidLine,
-                           hide=True)
-        self.plot.add_item(f"Shear stress ({self.system_units[units][4]})", [time_list, shear_stress_list],
-                           col=QColor(Qt.darkYellow),
-                           hide=True)
-        self.plot.add_item(f"Surface Area ({self.system_units[units][3]})", [time_list, surf_area_list],
-                           col=QColor(Qt.darkMagenta), hide=True)
+        self.plot.add_item(f"Discharge ({self.system_units[units][2]})", [values[0], values[4]], col=QColor(Qt.darkYellow), sty=Qt.SolidLine)
+        self.plot.add_item(f"Elevation ({self.system_units[units][0]})", [values[0], values[1]], col=QColor(Qt.green), sty=Qt.SolidLine, hide=True)
+        self.plot.add_item(f"Thalweg depth ({self.system_units[units][0]})", [values[0], values[2]], col=QColor(Qt.black), sty=Qt.SolidLine, hide=True)
+        self.plot.add_item(f"Velocity ({self.system_units[units][1]})", [values[0], values[3]], col=QColor(Qt.darkGreen), sty=Qt.SolidLine, hide=True)
+        self.plot.add_item(f"Froude", [values[0], values[5]], col=QColor(Qt.blue), sty=Qt.SolidLine, hide=True)
+        if len(values) == 7:
+            self.plot.add_item(f"Concentration", [values[0], values[6]], col=QColor(Qt.red), sty=Qt.SolidLine, hide=True)
+        else:
+            self.plot.add_item(f"Flow area ({self.system_units[units][3]})", [values[0], values[6]], col=QColor(Qt.red), sty=Qt.SolidLine, hide=True)
+            self.plot.add_item(f"Wetted perimeter ({self.system_units[units][0]})", [values[0], values[7]], col=QColor(Qt.yellow), sty=Qt.SolidLine, hide=True)
+            self.plot.add_item(f"Hydraulic radius ({self.system_units[units][0]})", [values[0], values[8]], col=QColor(Qt.darkBlue), sty=Qt.SolidLine, hide=True)
+            self.plot.add_item(f"Top width ({self.system_units[units][0]})", [values[0], values[9]], col=QColor(Qt.darkRed), sty=Qt.SolidLine, hide=True)
+            self.plot.add_item(f"Width/Depth", [values[0], values[10]], col=QColor(Qt.darkCyan), sty=Qt.SolidLine, hide=True)
+            self.plot.add_item(f"Energy slope", [values[0], values[11]], col=QColor(Qt.magenta), sty=Qt.SolidLine, hide=True)
+            self.plot.add_item(f"Shear stress ({self.system_units[units][4]})", [values[0], values[12]], col=QColor(Qt.darkYellow), hide=True)
+            self.plot.add_item(f"Surface Area ({self.system_units[units][3]})", [values[0], values[13]], col=QColor(Qt.darkMagenta), hide=True)
 
         try:  # Build table.
             data_model = StandardItemModel()
             self.tview.undoStack.clear()
             self.tview.setModel(data_model)
             data_model.clear()
-            data_model.setHorizontalHeaderLabels(["Time (hours)",
-                                                  f"Thalweg depth ({self.system_units[units][0]})",
-                                                  f"Velocity ({self.system_units[units][1]})",
-                                                  f"Discharge ({self.system_units[units][2]})",
-                                                  f"Froude",
-                                                  f"Flow area ({self.system_units[units][2]})",
-                                                  f"Wetted perimeter ({self.system_units[units][0]})",
-                                                  f"Hydraulic radius ({self.system_units[units][0]})",
-                                                  f"Top width ({self.system_units[units][0]})",
-                                                  f"Width/Depth",
-                                                  f"Energy slope",
-                                                  f"Shear stress ({self.system_units[units][4]})",
-                                                  f"Surface Area ({self.system_units[units][3]})",
-                                                  ])
+            if len(values) == 7:
+                data_model.setHorizontalHeaderLabels(["Time (hours)",
+                                                      f"Elevation ({self.system_units[units][0]})",
+                                                      f"Thalweg depth ({self.system_units[units][0]})",
+                                                      f"Velocity ({self.system_units[units][1]})",
+                                                      f"Discharge ({self.system_units[units][2]})",
+                                                      f"Froude",
+                                                      f"Concentration"
+                                                      ])
 
-            data = zip(time_list,
-                       thalweg_list,
-                       velocity_list,
-                       discharge_list,
-                       froude_list,
-                       flow_area_list,
-                       w_perimeter_list,
-                       hyd_radius_list,
-                       top_width_list,
-                       width_depth_list,
-                       energy_slope_list,
-                       shear_stress_list,
-                       surf_area_list)
+                data = zip(values[0],
+                           values[1],
+                           values[2],
+                           values[3],
+                           values[4],
+                           values[5],
+                           values[6])
 
-            for time, thalweg, velocity, discharge, froude, flow_area, w_perimeter, hyd_radius, top_width, width_depth, energy_slope, shear_stress, surf_area in data:
-                time_item = StandardItem("{:.2f}".format(time)) if time is not None else StandardItem("")
-                thalweg_item = StandardItem("{:.2f}".format(thalweg)) if thalweg is not None else StandardItem("")
-                velocity_item = StandardItem("{:.2f}".format(velocity)) if velocity is not None else StandardItem("")
-                discharge_item = StandardItem("{:.2f}".format(discharge)) if discharge is not None else StandardItem("")
-                froude_item = StandardItem("{:.2f}".format(froude)) if froude is not None else StandardItem("")
-                flow_area_item = StandardItem("{:.2f}".format(flow_area)) if flow_area is not None else StandardItem("")
-                w_perimeter_item = StandardItem("{:.2f}".format(w_perimeter)) if w_perimeter is not None else StandardItem("")
-                hyd_radius_item = StandardItem("{:.2f}".format(hyd_radius)) if hyd_radius is not None else StandardItem("")
-                top_width_item = StandardItem("{:.2f}".format(top_width)) if top_width is not None else StandardItem("")
-                width_depth_item = StandardItem("{:.2f}".format(width_depth)) if width_depth is not None else StandardItem("")
-                energy_slope_item = StandardItem("{:.2f}".format(energy_slope)) if energy_slope is not None else StandardItem("")
-                shear_stress_item = StandardItem("{:.2f}".format(shear_stress)) if shear_stress is not None else StandardItem("")
-                surf_area_item = StandardItem("{:.2f}".format(surf_area)) if surf_area is not None else StandardItem("")
+                for time, elevation, thalweg, velocity, discharge, froude, concentration in data:
+                    time_item = StandardItem("{:.2f}".format(time)) if time is not None else StandardItem("")
+                    elevation_item = StandardItem("{:.2f}".format(elevation)) if elevation is not None else StandardItem("")
+                    thalweg_item = StandardItem("{:.2f}".format(thalweg)) if thalweg is not None else StandardItem("")
+                    velocity_item = StandardItem("{:.2f}".format(velocity)) if velocity is not None else StandardItem("")
+                    discharge_item = StandardItem("{:.2f}".format(discharge)) if discharge is not None else StandardItem("")
+                    froude_item = StandardItem("{:.2f}".format(froude)) if froude is not None else StandardItem("")
+                    concentration_item = StandardItem("{:.2f}".format(concentration)) if concentration is not None else StandardItem("")
+
+                    data_model.appendRow([time_item,
+                                          elevation_item,
+                                          thalweg_item,
+                                          velocity_item,
+                                          discharge_item,
+                                          froude_item,
+                                          concentration_item])
+
+            else:
+                data_model.setHorizontalHeaderLabels(["Time (hours)",
+                                                      f"Elevation ({self.system_units[units][0]})",
+                                                      f"Thalweg depth ({self.system_units[units][0]})",
+                                                      f"Velocity ({self.system_units[units][1]})",
+                                                      f"Discharge ({self.system_units[units][2]})",
+                                                      f"Froude",
+                                                      f"Flow area ({self.system_units[units][2]})",
+                                                      f"Wetted perimeter ({self.system_units[units][0]})",
+                                                      f"Hydraulic radius ({self.system_units[units][0]})",
+                                                      f"Top width ({self.system_units[units][0]})",
+                                                      f"Width/Depth",
+                                                      f"Energy slope",
+                                                      f"Shear stress ({self.system_units[units][4]})",
+                                                      f"Surface Area ({self.system_units[units][3]})",
+                                                      ])
+
+                data = zip(values[0],
+                           values[1],
+                           values[2],
+                           values[3],
+                           values[4],
+                           values[5],
+                           values[6],
+                           values[7],
+                           values[8],
+                           values[9],
+                           values[10],
+                           values[11],
+                           values[12],
+                           values[13])
+
+                for time, elevation, thalweg, velocity, discharge, froude, flow_area, w_perimeter, hyd_radius, top_width, width_depth, energy_slope, shear_stress, surf_area in data:
+                    time_item = StandardItem("{:.2f}".format(time)) if time is not None else StandardItem("")
+                    elevation_item = StandardItem("{:.2f}".format(elevation)) if elevation is not None else StandardItem("")
+                    thalweg_item = StandardItem("{:.2f}".format(thalweg)) if thalweg is not None else StandardItem("")
+                    velocity_item = StandardItem("{:.2f}".format(velocity)) if velocity is not None else StandardItem("")
+                    discharge_item = StandardItem("{:.2f}".format(discharge)) if discharge is not None else StandardItem("")
+                    froude_item = StandardItem("{:.2f}".format(froude)) if froude is not None else StandardItem("")
+                    flow_area_item = StandardItem("{:.2f}".format(flow_area)) if flow_area is not None else StandardItem("")
+                    w_perimeter_item = StandardItem("{:.2f}".format(w_perimeter)) if w_perimeter is not None else StandardItem("")
+                    hyd_radius_item = StandardItem("{:.2f}".format(hyd_radius)) if hyd_radius is not None else StandardItem("")
+                    top_width_item = StandardItem("{:.2f}".format(top_width)) if top_width is not None else StandardItem("")
+                    width_depth_item = StandardItem("{:.2f}".format(width_depth)) if width_depth is not None else StandardItem("")
+                    energy_slope_item = StandardItem("{:.2f}".format(energy_slope)) if energy_slope is not None else StandardItem("")
+                    shear_stress_item = StandardItem("{:.2f}".format(shear_stress)) if shear_stress is not None else StandardItem("")
+                    surf_area_item = StandardItem("{:.2f}".format(surf_area)) if surf_area is not None else StandardItem("")
 
 
-                data_model.appendRow([time_item,
-                                      thalweg_item,
-                                      velocity_item,
-                                      discharge_item,
-                                      froude_item,
-                                      flow_area_item,
-                                      w_perimeter_item,
-                                      hyd_radius_item,
-                                      top_width_item,
-                                      width_depth_item,
-                                      energy_slope_item,
-                                      shear_stress_item,
-                                      surf_area_item])
+                    data_model.appendRow([time_item,
+                                          elevation_item,
+                                          thalweg_item,
+                                          velocity_item,
+                                          discharge_item,
+                                          froude_item,
+                                          flow_area_item,
+                                          w_perimeter_item,
+                                          hyd_radius_item,
+                                          top_width_item,
+                                          width_depth_item,
+                                          energy_slope_item,
+                                          shear_stress_item,
+                                          surf_area_item])
 
             self.tview.horizontalHeader().setStretchLastSection(True)
             for col in range(3):
