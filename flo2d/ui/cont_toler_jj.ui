@@ -1040,7 +1040,7 @@
                        </sizepolicy>
                       </property>
                       <property name="toolTip">
-                       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;AMANN&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Increments the floodplain Manning’s n roughness coefficient at runtime.&lt;/p&gt;&lt;p&gt;AMANN = 0, n = n&lt;/p&gt;&lt;p&gt;ABS(AMANN) &amp;lt; 1, n = n + AMANN (positive or negative)&lt;/p&gt;&lt;p&gt;AMANN &amp;gt; 1, n = n * AMANN (positive)&lt;/p&gt;&lt;p&gt;AMANN &amp;lt; -1, n = n * (1 + AMANN) where AMANN is negative&lt;/p&gt;&lt;p&gt;After AMANN is applied, the shallow n is applied.&lt;/p&gt;&lt;p&gt;AMANN = -99 no depth integrate n-value adjustment and no adjustment for exceeding Courant number.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;AMANN&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Increments the floodplain Manning’s n roughness coefficient at runtime.&lt;/p&gt;&lt;p&gt;AMANN = 0, n = n&lt;/p&gt;&lt;p&gt;ABS(AMANN) &amp;lt; 1, n = n + AMANN (positive or negative)&lt;/p&gt;&lt;p&gt;AMANN &amp;gt; 1, n = n * AMANN (positive)&lt;/p&gt;&lt;p&gt;AMANN &amp;lt; -1, n = n * (1 + AMANN) where AMANN is negative&lt;/p&gt;&lt;p&gt;After AMANN is applied, the shallow n is applied.&lt;/p&gt;&lt;p&gt;AMANN = -99 no depth integrated n-value adjustment and no adjustment for exceeding Courant number.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                       </property>
                       <property name="text">
                        <string>n-value Adjustment</string>
