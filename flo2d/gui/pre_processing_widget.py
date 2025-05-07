@@ -65,7 +65,6 @@ class PreProcessingWidget(qtBaseClass, uiDialog):
         QgsProject.instance().layerRemoved.connect(self.populate_raster_cbo)
 
         # connections raster converter
-        self.populate_raster_converter_cbo()
         self.populate_units()
         self.raster_converter_cbo.activated.connect(self.populate_units)
         self.convert_raster_btn.clicked.connect(self.convert_raster)
@@ -180,21 +179,19 @@ class PreProcessingWidget(qtBaseClass, uiDialog):
         Get loaded rasters into combobox dam removal.
         """
         self.srcRasterCbo.clear()
-        rasters = self.lyrs.list_group_rlayers()
-        for r in rasters:
-            self.srcRasterCbo.addItem(r.name(), r.dataProvider().dataSourceUri())
-
-    def populate_raster_converter_cbo(self):
-        """
-        Get loaded rasters into combobox raster converted.
-        """
         self.raster_converter_cbo.clear()
-        rasters = self.lyrs.list_group_rlayers()
-        for r in rasters:
-            crs = r.crs()
-            unit = QgsUnitTypes.toString(crs.mapUnits())
-            if unit in ['feet', 'meters']:
-                self.raster_converter_cbo.addItem(r.name(), r.dataProvider().dataSourceUri())
+
+        # Retrieve all raster layers in the project
+        rasters = [layer for layer in QgsProject.instance().mapLayers().values() if isinstance(layer, QgsRasterLayer)]
+        if not rasters:
+            return
+        else:
+            for r in rasters:
+                self.srcRasterCbo.addItem(r.name(), r.dataProvider().dataSourceUri())
+                crs = r.crs()
+                unit = QgsUnitTypes.toString(crs.mapUnits())
+                if unit in ['feet', 'meters']:
+                    self.raster_converter_cbo.addItem(r.name(), r.dataProvider().dataSourceUri())
 
         self.populate_units()
 
