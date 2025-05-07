@@ -1268,6 +1268,7 @@ class Flo2D(object):
                 "export_gutter",
                 "export_fpfroude",
                 "export_steep_slopen",
+                "export_lid_volume",
                 "export_swmmflo",
                 "export_swmmflort",
                 "export_swmmoutf",
@@ -1385,6 +1386,9 @@ class Flo2D(object):
 
                 if "Spatial Steep Slope-n" not in dlg_components.components:
                     export_calls.remove("export_steep_slopen")
+
+                if "LID Volume" not in dlg_components.components:
+                    export_calls.remove("export_lid_volume")
 
                 try:
 
@@ -1895,6 +1899,10 @@ class Flo2D(object):
                 dat = "STEEP_SLOPEN.DAT"
             elif call == 'import_steep_slopen':
                 dat = "STEEP_SLOPEN.DAT"
+            elif call == 'export_lid_volume':
+                dat = "LID_VOLUME.DAT"
+            elif call == 'import_lid_volume':
+                dat = "LID_VOLUME.DAT"
             else:
                 dat = call.split("_")[-1].upper() + ".DAT"
             if call.startswith("import"):
@@ -3076,6 +3084,7 @@ class Flo2D(object):
                 "export_gutter",
                 "export_fpfroude",
                 "export_steep_slopen",
+                "export_lid_volume",
                 "export_swmmflo",
                 "export_swmmflort",
                 "export_swmmoutf",
@@ -3199,6 +3208,9 @@ class Flo2D(object):
                 if "Spatial Steep Slope-n" not in dlg_components.components:
                     export_calls.remove("export_steep_slopen")
 
+                if "LID Volume" not in dlg_components.components:
+                    export_calls.remove("export_lid_volume")
+
                 try:
                     s = QSettings()
                     s.setValue("FLO-2D/lastGdsDir", outdir)
@@ -3321,6 +3333,7 @@ class Flo2D(object):
                 "export_fpxsec",
                 "export_fpfroude",
                 "export_steep_slopen",
+                "export_lid_volume",
                 "export_sed",
                 "export_swmmflo",
                 "export_swmmflort",
@@ -3422,6 +3435,9 @@ class Flo2D(object):
 
                 if "Spatial Steep Slope-n" not in dlg_components.components:
                     export_calls.remove("export_steep_slopen")
+
+                if "LID Volume" not in dlg_components.components:
+                    export_calls.remove("export_lid_volume")
 
                 try:
                     s = QSettings()
