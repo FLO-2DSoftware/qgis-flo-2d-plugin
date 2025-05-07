@@ -1,6 +1,6 @@
 [general]
 name=FLO-2D
-version=1.1.0
+version=2.0.0
 qgisMinimumVersion=3.22
 qgisMaximumVersion=3.99
 description=FLO-2D tools for QGIS
@@ -9,7 +9,7 @@ email=contact@flo-2d.com
 about=The FLO-2D Plugin for QGIS is a tool to develop, format, analyze, and display data used by the FLO-2D Flood Model. The Plugin can import project data, generate data and ex-port appropriately formatted FLO-2D data input files for a FLO-2D Project. The FLO-2D-Plugin reference manual, installed on your computer with the software, describes the assumptions, functions, and processes applied in the QGIS Plugin. A companion manual, the FLO-2D QGIS Plugin User’s Manual, describes the workflow, outlines the data structure and presents tutorials for the Plugin. It does not address the functionality and use of the FLO-2D model which has a separate set of reference manuals.
 
 changelog=
- <p>1.1.0
+ <p>2.0.0
  - General
     Add warnings for missing CHAN.DAT, SUMMARY.OUT, and CADPTS.DAT files in run profiles, hydrog, and maxplot functions (#1680)
     Add rendering options for Mannings and improve grid rendering logic

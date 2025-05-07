@@ -1714,15 +1714,32 @@ class Flo2D(object):
                 new_gpkg = uri[len("geopackage:"):].split('?')[0]
             else:
                 QApplication.restoreOverrideCursor()
-                self.uc.show_warn("<b>It looks like you're trying to open an old FLO-2D *.qgz project.</b><br><br>"
-                                  "Please use the 'Open FLO-2D Project' option on the toolbar to port your project to the new format. This process will not damage your old project.<br><br>"
-                                  "<a href='https://documentation.flo-2d.com/Plugin1000/toolbar/flo-2d-project/Open%20FLO-2D%20Project.html'>Open Project Instructions</a><br>"
-                                  "<a href='https://flo-2d.com/contact'>Tech Support</a>"
+                msg = ("<b>It looks like you're trying to open an old FLO-2D geopackage or FLO-2D *.qgz project.</b><br><br>"
+                          "Please use the 'Open FLO-2D Project' option on the toolbar to port your project to the new format. This process will not damage your old project.<br><br>"
+                          "<a href='https://documentation.flo-2d.com/Plugin1000/toolbar/flo-2d-project/Open%20FLO-2D%20Project.html'>Open Project Instructions</a><br>"
+                          "<a href='https://flo-2d.com/contact'>Tech Support</a>"
                 )
+                self.uc.show_warn(msg)
+                self.uc.log_info(msg)
                 return
 
         if '%20' in new_gpkg:
             new_gpkg = new_gpkg.replace('%20', ' ')
+
+        self.con = database_connect(new_gpkg)
+        self.gutils = GeoPackageUtils(self.con, self.iface)
+
+        if not self.gutils.check_gpkg_version():
+            QApplication.restoreOverrideCursor()
+            msg = (
+                "<b>It looks like you're trying to open an old FLO-2D geopackage or FLO-2D *.qgz project.</b><br><br>"
+                "Please use the 'Open FLO-2D Project' option on the toolbar to port your project to the new format. This process will not damage your old project.<br><br>"
+                "<a href='https://documentation.flo-2d.com/Plugin1000/toolbar/flo-2d-project/Open%20FLO-2D%20Project.html'>Open Project Instructions</a><br>"
+                "<a href='https://flo-2d.com/contact'>Tech Support</a>"
+                )
+            self.uc.show_warn(msg)
+            self.uc.log_info(msg)
+            return
 
         # Geopackage associated with the project
         if old_gpkg:
@@ -4894,12 +4911,17 @@ class Flo2D(object):
         if not uri.startswith("geopackage:"):
             return
 
-        for layer_id in layer_ids:
-            layer = QgsProject.instance().mapLayer(layer_id)
-            if layer:
-                layer_name = layer.name()
-                external_layers = self.gutils.execute(
-                    f"SELECT fid FROM external_layers WHERE name = '{layer_name}' AND type = 'user';").fetchall()
-                if external_layers:
-                    fid = external_layers[0][0]
-                    self.gutils.execute(f"DELETE FROM external_layers WHERE fid = '{fid}';")
+        self.con = database_connect(gpkg)
+        self.gutils = GeoPackageUtils(self.con, self.iface)
+        try:
+            for layer_id in layer_ids:
+                layer = QgsProject.instance().mapLayer(layer_id)
+                if layer:
+                    layer_name = layer.name()
+                    external_layers = self.gutils.execute(
+                        f"SELECT fid FROM external_layers WHERE name = '{layer_name}' AND type = 'user';").fetchall()
+                    if external_layers:
+                        fid = external_layers[0][0]
+                        self.gutils.execute(f"DELETE FROM external_layers WHERE fid = '{fid}';")
+        except:
+            pass
