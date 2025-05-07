@@ -1268,6 +1268,7 @@ class Flo2D(object):
                 "export_gutter",
                 "export_fpfroude",
                 "export_steep_slopen",
+                "export_lid_volume",
                 "export_swmmflo",
                 "export_swmmflort",
                 "export_swmmoutf",
@@ -1385,6 +1386,9 @@ class Flo2D(object):
 
                 if "Spatial Steep Slope-n" not in dlg_components.components:
                     export_calls.remove("export_steep_slopen")
+
+                if "LID Volume" not in dlg_components.components:
+                    export_calls.remove("export_lid_volume")
 
                 try:
 
@@ -1895,6 +1899,10 @@ class Flo2D(object):
                 dat = "STEEP_SLOPEN.DAT"
             elif call == 'import_steep_slopen':
                 dat = "STEEP_SLOPEN.DAT"
+            elif call == 'export_lid_volume':
+                dat = "LID_VOLUME.DAT"
+            elif call == 'import_lid_volume':
+                dat = "LID_VOLUME.DAT"
             else:
                 dat = call.split("_")[-1].upper() + ".DAT"
             if call.startswith("import"):
@@ -1986,6 +1994,7 @@ class Flo2D(object):
             "import_gutter",
             "import_fpfroude",
             "import_steep_slopen",
+            "import_lid_volume",
             "import_swmminp",
             "import_swmmflo",
             "import_swmmflort",
@@ -2122,6 +2131,9 @@ class Flo2D(object):
                     if "Spatial Steep Slope-n" not in dlg_components.components:
                         import_calls.remove("import_steep_slopen")
 
+                    if "LID Volume" not in dlg_components.components:
+                        import_calls.remove("import_lid_volume")
+
                     tables = [
                         "all_schem_bc",
                         "blocked_cells",
@@ -2168,6 +2180,7 @@ class Flo2D(object):
                         "levee_failure",
                         "levee_fragility",
                         "levee_general",
+                        "lid_volume_cells"
                         "mud_areas",
                         "mud_cells",
                         "mult",
@@ -2239,6 +2252,7 @@ class Flo2D(object):
                         "user_infiltration",
                         "user_left_bank",
                         "user_levee_lines",
+                        "user_lid_volume_areas",
                         "user_model_boundary",
                         "user_noexchange_chan_areas",
                         "user_reservoirs",
@@ -2464,6 +2478,7 @@ class Flo2D(object):
                     "levee_failure",
                     "levee_fragility",
                     "levee_general",
+                    "lid_volume_cells",
                     "mud_areas",
                     "mud_cells",
                     "mult",
@@ -2525,6 +2540,7 @@ class Flo2D(object):
                     "user_infiltration",
                     "user_left_bank",
                     "user_levee_lines",
+                    "user_lid_volume_areas",
                     "user_model_boundary",
                     "user_noexchange_chan_areas",
                     "user_reservoirs",
@@ -2682,6 +2698,7 @@ class Flo2D(object):
             "import_gutter",
             "import_fpfroude",
             "import_steep_slopen",
+            "import_lid_volume",
             "import_swmminp",
             "import_swmmflo",
             "import_swmmflort",
@@ -2791,6 +2808,9 @@ class Flo2D(object):
 
                     if "Spatial Steep Slope-n" not in dlg_components.components:
                         import_calls.remove("import_steep_slopen")
+
+                    if "LID Volume" not in dlg_components.components:
+                        import_calls.remove("import_lid_volume")
 
                     if import_calls:
 
@@ -2922,6 +2942,7 @@ class Flo2D(object):
             "GUTTER.DAT": "import_gutter",
             "FPFROUDE.DAT": "import_fpfroude",
             "STEEP_SLOPEN.DAT": "import_steep_slopen",
+            "LID_VOLUME.DAT": "import_lid_volume",
             f"{swmm_file_name}": "import_swmminp",
             "SWMMFLO.DAT": "import_swmmflo",
             "SWMMFLORT.DAT": "import_swmmflort",
@@ -3075,6 +3096,7 @@ class Flo2D(object):
                 "export_gutter",
                 "export_fpfroude",
                 "export_steep_slopen",
+                "export_lid_volume",
                 "export_swmmflo",
                 "export_swmmflort",
                 "export_swmmoutf",
@@ -3198,6 +3220,9 @@ class Flo2D(object):
                 if "Spatial Steep Slope-n" not in dlg_components.components:
                     export_calls.remove("export_steep_slopen")
 
+                if "LID Volume" not in dlg_components.components:
+                    export_calls.remove("export_lid_volume")
+
                 try:
                     s = QSettings()
                     s.setValue("FLO-2D/lastGdsDir", outdir)
@@ -3320,6 +3345,7 @@ class Flo2D(object):
                 "export_fpxsec",
                 "export_fpfroude",
                 "export_steep_slopen",
+                "export_lid_volume",
                 "export_sed",
                 "export_swmmflo",
                 "export_swmmflort",
@@ -3421,6 +3447,9 @@ class Flo2D(object):
 
                 if "Spatial Steep Slope-n" not in dlg_components.components:
                     export_calls.remove("export_steep_slopen")
+
+                if "LID Volume" not in dlg_components.components:
+                    export_calls.remove("export_lid_volume")
 
                 try:
                     s = QSettings()

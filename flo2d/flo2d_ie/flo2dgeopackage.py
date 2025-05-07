@@ -1611,6 +1611,19 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
         self.batch_execute(cells_sql)
 
+    def import_lid_volume(self):
+        cells_sql = ["""INSERT INTO lid_volume_cells (grid_fid, volume) VALUES""", 2]
+
+        self.clear_tables("lid_volume_cells")
+
+        data = self.parser.parse_lid_volume()
+
+        for i, row in enumerate(data, 1):
+            gid, volume = row
+            cells_sql += [(gid, volume)]
+
+        self.batch_execute(cells_sql)
+
     def import_gutter(self):
         gutter_globals_sql = [
             """INSERT INTO gutter_globals (width, height, n_value) VALUES""",
@@ -3787,6 +3800,10 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
     def export_steep_slopen_dat(self, outdir):
         try:
+
+            if self.is_table_empty("steep_slope_n_cells"):
+                return False
+
             steep_slopen = os.path.join(outdir, "STEEP_SLOPEN.DAT")
 
             # Check if there are global steep slope areas
@@ -3817,6 +3834,10 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
     def export_steep_slopen_hdf5(self):
         try:
+
+            if self.is_table_empty("steep_slope_n_cells"):
+                return False
+
             spatially_variable_group = self.parser.spatially_variable_group
 
             # Check if there are global steep slope areas
@@ -3854,6 +3875,65 @@ class Flo2dGeoPackage(GeoPackageUtils):
             QApplication.restoreOverrideCursor()
             self.uc.bar_error("ERROR: exporting STEEP_SLOPEN to hdf5 failed!")
             self.uc.log_info("ERROR: exporting STEEP_SLOPEN to hdf5 failed!\n", e)
+            QApplication.setOverrideCursor(Qt.WaitCursor)
+            return False
+
+    def export_lid_volume(self, output=None):
+        if self.parsed_format == self.FORMAT_DAT:
+            return self.export_lid_volume_dat(output)
+        elif self.parsed_format == self.FORMAT_HDF5:
+            return self.export_lid_volume_hdf5()
+
+    def export_lid_volume_dat(self, outdir):
+        try:
+            if self.is_table_empty("lid_volume_cells"):
+                return False
+
+            lid_volume = os.path.join(outdir, "LID_VOLUME.DAT")
+
+            with open(lid_volume, "w") as lid:
+                # Write individual lid volume grid IDs
+                sql = """SELECT grid_fid, volume FROM lid_volume_cells ORDER BY fid;"""
+                records = self.execute(sql)
+                for row in records:
+                    grid_fid = row[0]
+                    volume = row[1]
+                    lid.write(f"{grid_fid} {volume}\n")
+
+            return True
+
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.uc.bar_error("ERROR: exporting LID_VOLUME.DAT failed!")
+            self.uc.log_info("ERROR: exporting LID_VOLUME.DAT failed!\n", e)
+            QApplication.setOverrideCursor(Qt.WaitCursor)
+            return False
+
+    def export_lid_volume_hdf5(self):
+        try:
+            if self.is_table_empty("lid_volume_cells"):
+                return False
+
+            spatially_variable_group = self.parser.spatially_variable_group
+
+            sql = """SELECT grid_fid, volume FROM lid_volume_cells ORDER BY fid;"""
+            records = self.execute(sql)
+            for row in records:
+                grid_fid = row[0]
+                volume = row[1]
+                try:
+                    spatially_variable_group.datasets["LID_VOLUME"].data.append([grid_fid, volume])
+                except:
+                    spatially_variable_group.create_dataset('LID_VOLUME', [])
+                    spatially_variable_group.datasets["LID_VOLUME"].data.append([grid_fid, volume])
+
+            self.parser.write_groups(spatially_variable_group)
+            return True
+
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.uc.bar_error("ERROR: exporting LID_VOLUME to hdf5 failed!")
+            self.uc.log_info("ERROR: exporting LID_VOLUME to hdf5 failed!\n", e)
             QApplication.setOverrideCursor(Qt.WaitCursor)
             return False
 

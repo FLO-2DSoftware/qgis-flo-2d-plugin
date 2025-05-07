@@ -363,6 +363,19 @@ class Layers(object):
                     },
                 ),
                 (
+                    "user_lid_volume_areas",
+                    {
+                        "name": "LID Volume Areas",
+                        "sgroup": "User Layers",
+                        "ssgroup": "Areas",
+                        "styles": ["user_lid_volume.qml"],
+                        "attrs_edit_widgets": {},
+                        "module": ["all"],
+                        "readonly": False,
+                        "advanced": False
+                    },
+                ),
+                (
                     "mult_areas",
                     {
                         "name": "Multiple Channel Areas",
@@ -1245,6 +1258,18 @@ class Layers(object):
                     "steep_slope_n_cells",
                     {
                         "name": "Steep Slope n Cells",
+                        "sgroup": "Tables",
+                        "styles": None,
+                        "attrs_edit_widgets": {},
+                        "module": ["all"],
+                        "readonly": False,
+                        "advanced": True
+                    },
+                ),
+                (
+                    "lid_volume_cells",
+                    {
+                        "name": "LID Volume Cells",
                         "sgroup": "Tables",
                         "styles": None,
                         "attrs_edit_widgets": {},

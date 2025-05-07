@@ -157,6 +157,11 @@ class ComponentsDialog(qtBaseClass, uiDialog):
                     self.spatial_steep_slopen_chbox.setChecked(True)
                     self.spatial_steep_slopen_chbox.setEnabled(True)
 
+            if os.path.isfile(last_dir + r"\LID_VOLUME.DAT"):
+                if os.path.getsize(last_dir + r"\LID_VOLUME.DAT") > 0:
+                    self.spatial_lid_volume_chbox.setChecked(True)
+                    self.spatial_lid_volume_chbox.setEnabled(True)
+
         elif self.in_or_out == "out":
             self.setWindowTitle("FLO-2D Components to Export")
             self.file_lbl.setText(last_dir)
@@ -319,6 +324,10 @@ class ComponentsDialog(qtBaseClass, uiDialog):
                 self.spatial_steep_slopen_chbox.setChecked(True)
                 self.spatial_steep_slopen_chbox.setEnabled(True)
 
+            if not self.gutils.is_table_empty("lid_volume_cells"):
+                self.spatial_lid_volume_chbox.setChecked(True)
+                self.spatial_lid_volume_chbox.setEnabled(True)
+
             if not self.gutils.is_table_empty("grid"):
                 self.mannings_n_and_Topo_chbox.setChecked(True)
                 self.mannings_n_and_Topo_chbox.setEnabled(True)
@@ -399,6 +408,9 @@ class ComponentsDialog(qtBaseClass, uiDialog):
         if self.spatial_steep_slopen_chbox.isChecked():
             self.components.append("Spatial Steep Slope-n")
 
+        if self.spatial_lid_volume_chbox.isChecked():
+            self.components.append("LID Volume")
+
         if self.mannings_n_and_Topo_chbox.isChecked():
             self.components.append("Manning's n and Topo")
 
@@ -454,5 +466,7 @@ class ComponentsDialog(qtBaseClass, uiDialog):
             self.spatial_froude_chbox.setChecked(select)
         if self.spatial_steep_slopen_chbox.isEnabled():
             self.spatial_steep_slopen_chbox.setChecked(select)
+        if self.spatial_lid_volume_chbox.isEnabled():
+            self.spatial_lid_volume_chbox.setChecked(select)
         if self.mannings_n_and_Topo_chbox.isEnabled():
             self.mannings_n_and_Topo_chbox.setChecked(select)

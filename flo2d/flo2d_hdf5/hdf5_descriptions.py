@@ -100,6 +100,9 @@ SPATIALLY_VARIABLE = {
     "TOLSPATIAL": "Spatially Variable Tolerance Values",
     "FPFROUDE": "Spatially Variable Froude Values",
     "SHALLOWN_SPATIAL": "Spatially Variable Shallow-n Values",
+    "STEEP_SLOPEN": "Spatially Variable Steep Slope-n Values",
+    "STEEP_SLOPEN_GLOBAL": "Global Steep Slope-n Switch",
+    "LID_VOLUME": "Spatially Variable LID Volume Values",
 }
 
 LEVEE = {
