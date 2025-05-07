@@ -274,7 +274,8 @@ class GeoPackageUtils(object):
         'user_tailings', 'user_tailing_reservoirs', 'tailing_reservoirs', 'tailing_cells', 'external_layers',
         'user_swmm_inlets_junctions', 'user_swmm_outlets',
         'mult_domains', 'user_md_connect_lines', 'schema_md_cells', 'mult_domains_methods',
-        'mult_domains_con', 'user_steep_slope_n_areas', 'steep_slope_n_cells'
+        'mult_domains_con', 'user_steep_slope_n_areas', 'steep_slope_n_cells',
+        'user_lid_volume_areas', 'lid_volume_cells'
     ]
 
     def __init__(self, con, iface):

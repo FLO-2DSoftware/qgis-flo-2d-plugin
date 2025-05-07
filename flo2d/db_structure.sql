@@ -702,6 +702,23 @@ CREATE TABLE "steep_slope_n_cells" (
 );
 INSERT INTO gpkg_contents (table_name, data_type) VALUES ('steep_slope_n_cells', 'aspatial');
 
+CREATE TABLE "user_lid_volume_areas" (
+    "fid" INTEGER NOT NULL PRIMARY KEY,
+    "volume" REAL,
+    "notes" TEXT
+);
+INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('user_lid_volume_areas', 'features', 4326);
+SELECT gpkgAddGeometryColumn('user_lid_volume_areas', 'geom', 'POLYGON', 0, 0, 0);
+SELECT gpkgAddGeometryTriggers('user_lid_volume_areas', 'geom');
+
+CREATE TABLE "lid_volume_cells" (
+    "fid" INTEGER NOT NULL PRIMARY KEY,
+    "volume" REAL,
+    "area_fid" INTEGER,
+    "grid_fid" INTEGER
+);
+INSERT INTO gpkg_contents (table_name, data_type) VALUES ('lid_volume_cells', 'aspatial');
+
 --CREATE TRIGGER "find_noexchange_cells_insert"
 --    AFTER INSERT ON "user_noexchange_chan_areas"
 --    WHEN (NEW."geom" NOT NULL AND NOT ST_IsEmpty(NEW."geom"))

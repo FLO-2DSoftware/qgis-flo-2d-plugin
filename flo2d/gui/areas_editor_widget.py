@@ -43,7 +43,8 @@ class AreasEditorWidget(qtBaseClass, uiDialog):
             self.tolerance_areas_grp: 'tolspatial',
             self.blocked_areas_grp: 'user_blocked_areas',
             self.roughness_grp: 'user_roughness',
-            self.steep_slopen_grp: 'user_steep_slope_n_areas'
+            self.steep_slopen_grp: 'user_steep_slope_n_areas',
+            self.lid_volume_grp: 'user_lid_volume_areas'
         }
 
         self.areas_grp_cbo = {
@@ -54,7 +55,8 @@ class AreasEditorWidget(qtBaseClass, uiDialog):
             self.tolerance_cbo: 'tolspatial',
             self.blocked_cbo: 'user_blocked_areas',
             self.roughness_cbo: 'user_roughness',
-            self.steep_slopen_cbo: 'user_steep_slope_n_areas'
+            self.steep_slopen_cbo: 'user_steep_slope_n_areas',
+            self.lid_volume_cbo: 'user_lid_volume_areas'
         }
 
         self.del_no_exchange_btn.clicked.connect(lambda: self.delete_area_fid(self.noexchange_cbo, 'user_noexchange_chan_areas'))
@@ -65,6 +67,7 @@ class AreasEditorWidget(qtBaseClass, uiDialog):
         self.del_blocked_btn.clicked.connect(lambda: self.delete_area_fid(self.blocked_cbo, 'user_blocked_areas'))
         self.del_roughness_btn.clicked.connect(lambda: self.delete_area_fid(self.roughness_cbo, 'user_roughness'))
         self.del_steep_slopen_btn.clicked.connect(lambda: self.delete_area_fid(self.steep_slopen_cbo, 'user_steep_slope_n_areas'))
+        self.del_lid_volume_btn.clicked.connect(lambda: self.delete_area_fid(self.lid_volume_cbo, 'user_lid_volume_areas'))
 
         self.eye_no_exchange_btn.clicked.connect(lambda: self.center_area_fid(self.noexchange_cbo, self.eye_no_exchange_btn, 'user_noexchange_chan_areas'))
         self.eye_building_btn.clicked.connect(lambda: self.center_area_fid(self.buildings_cbo, self.eye_building_btn, 'buildings_areas'))
@@ -74,6 +77,7 @@ class AreasEditorWidget(qtBaseClass, uiDialog):
         self.eye_blocked_btn.clicked.connect(lambda: self.center_area_fid(self.blocked_cbo, self.eye_blocked_btn, 'user_blocked_areas'))
         self.eye_roughness_btn.clicked.connect(lambda: self.center_area_fid(self.roughness_cbo, self.eye_roughness_btn, 'user_roughness'))
         self.eye_steep_slopen_btn.clicked.connect(lambda: self.center_area_fid(self.steep_slopen_cbo, self.eye_steep_slopen_btn, 'user_steep_slope_n_areas'))
+        self.eye_lid_volume_btn.clicked.connect(lambda: self.center_area_fid(self.lid_volume_cbo, self.eye_lid_volume_btn, 'user_lid_volume_areas'))
 
         self.noexchange_cbo.currentIndexChanged.connect(lambda: self.populate_cbo_areas(self.noexchange_cbo, self.eye_no_exchange_btn))
         self.buildings_cbo.currentIndexChanged.connect(lambda: self.populate_cbo_areas(self.buildings_cbo, self.eye_building_btn))
@@ -83,11 +87,11 @@ class AreasEditorWidget(qtBaseClass, uiDialog):
         self.blocked_cbo.currentIndexChanged.connect(lambda: self.populate_cbo_areas(self.blocked_cbo, self.eye_blocked_btn))
         self.roughness_cbo.currentIndexChanged.connect(lambda: self.populate_cbo_areas(self.roughness_cbo, self.eye_roughness_btn))
         self.steep_slopen_cbo.currentIndexChanged.connect(lambda: self.populate_cbo_areas(self.steep_slopen_cbo, self.eye_steep_slopen_btn))
+        self.lid_volume_cbo.currentIndexChanged.connect(lambda: self.populate_cbo_areas(self.lid_volume_cbo, self.eye_lid_volume_btn))
 
         self.schema_btn.clicked.connect(self.schematize_areas)
         self.del_schema_btn.clicked.connect(self.delete_schematized_areas)
 
-        # Building Areas
         self.adj_factor_dsp.editingFinished.connect(self.save_building_adj_factor)
         self.shallown_dsb.editingFinished.connect(self.save_shallown)
         self.froud_dsb.editingFinished.connect(self.save_froude)
@@ -97,6 +101,7 @@ class AreasEditorWidget(qtBaseClass, uiDialog):
         self.wrf_chbox.stateChanged.connect(self.save_blocked_areas)
         self.mannings_dsb.editingFinished.connect(self.save_mannings)
         self.steep_slopen_global_chbox.stateChanged.connect(self.save_global_steep_slopen)
+        self.volume_dsb.editingFinished.connect(self.save_volume)
 
         self.populate_grps()
 
@@ -320,6 +325,25 @@ class AreasEditorWidget(qtBaseClass, uiDialog):
                 feat = next(lyr.getFeatures(QgsFeatureRequest(int(area_cbo.currentText()))))
                 x, y = feat.geometry().centroid().asPoint()
                 center_canvas(self.iface, x, y)
+        elif area_cbo == self.lid_volume_cbo:
+            fid = self.lid_volume_cbo.currentText()
+            if fid:
+                qry = f"""SELECT volume FROM user_lid_volume_areas WHERE fid = {fid};"""
+                rows = self.gutils.execute(qry).fetchall()
+                if rows:
+                    if rows[0][0] is not None:
+                        self.volume_dsb.setValue(rows[0][0])
+                    else:
+                        self.volume_dsb.setValue(0)
+                else:
+                    self.volume_dsb.setValue(0)
+                if eye_btn.isChecked():
+                    lyr = self.lyrs.data['user_lid_volume_areas']["qlyr"]
+                    selected_areas_fid = int(area_cbo.currentText())
+                    self.lyrs.show_feat_rubber(lyr.id(), selected_areas_fid, QColor(Qt.red))
+                    feat = next(lyr.getFeatures(QgsFeatureRequest(int(area_cbo.currentText()))))
+                    x, y = feat.geometry().centroid().asPoint()
+                    center_canvas(self.iface, x, y)
 
     def delete_area_fid(self, area_cbo, area_lyr):
         selected_areas_fid = int(area_cbo.currentText())
@@ -405,6 +429,17 @@ class AreasEditorWidget(qtBaseClass, uiDialog):
             fid = int(fid_text)
             mannings = self.mannings_dsb.value()
             update_qry = f"""UPDATE user_roughness SET n = {mannings} WHERE fid = {fid};"""
+            self.gutils.execute(update_qry)
+
+    def save_volume(self):
+        """
+        Updates the volume value for a selected area in the database.
+        """
+        fid_text = self.lid_volume_cbo.currentText()
+        if fid_text:
+            fid = int(fid_text)
+            volume = self.volume_dsb.value()
+            update_qry = f"""UPDATE user_lid_volume_areas SET volume = {volume} WHERE fid = {fid};"""
             self.gutils.execute(update_qry)
 
     def save_blocked_areas(self):
@@ -526,6 +561,24 @@ class AreasEditorWidget(qtBaseClass, uiDialog):
                             evaluate_spatial_noexchange(self.gutils, grid_lyr, user_noexchange_chan_lyr)
                             self.uc.bar_info(f"Schematizing No-Exchange Channel Areas completed!")
                             self.uc.log_info(f"Schematizing No-Exchange Channel Areas completed!")
+                        elif areas_lyr == 'user_lid_volume_areas':
+                            try:
+                                self.gutils.clear_tables("lid_volume_cells")
+                                intersection_qry = """
+                                                                    INSERT INTO lid_volume_cells (volume, area_fid, grid_fid)
+                                                                    SELECT a.volume AS volume, a.fid AS area_fid, g.fid AS grid_fid
+                                                                    FROM
+                                                                        grid AS g,
+                                                                        user_lid_volume_areas AS a
+                                                                    WHERE
+                                                                        ST_Intersects(CastAutomagic(g.geom), CastAutomagic(a.geom));
+                                                                """
+                                self.gutils.execute(intersection_qry)
+                                self.uc.bar_info(f"Schematizing LID Volume Areas completed!")
+                                self.uc.log_info(f"Schematizing LID Volume Areas completed!")
+                            except Exception as e:
+                                self.uc.bar_error(f"Error schematizing LID Volume Areas!")
+                                self.uc.log_info(f"Error schematizing LID Volume Areas!")
 
         except Exception as e:
             self.uc.bar_error(f"Error schematizing areas!")
@@ -574,6 +627,11 @@ class AreasEditorWidget(qtBaseClass, uiDialog):
                         self.gutils.execute(del_qry)
                         self.uc.bar_info(f"Schematized No-Exchange Channel Areas deleted!")
                         self.uc.log_info(f"Schematized No-Exchange Channel Areas deleted!")
+                    elif areas_lyr == 'user_lid_volume_areas':
+                        del_qry = """DELETE FROM lid_volume_cells;"""
+                        self.gutils.execute(del_qry)
+                        self.uc.bar_info(f"Schematized LID Volume Areas deleted!")
+                        self.uc.log_info(f"Schematized LID Volume Areas deleted!")
 
     def replace_ARF_WRF_duplicates(self):
         try:

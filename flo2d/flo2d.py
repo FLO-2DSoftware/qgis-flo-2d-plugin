@@ -2245,6 +2245,7 @@ class Flo2D(object):
                         "user_right_bank",
                         "user_roughness",
                         "user_steep_slope_n_areas",
+                        "user_lid_volume_areas",
                         "user_streets",
                         "user_struct",
                         "user_swmm_conduits",

@@ -128,6 +128,7 @@ class GridToolsWidget(qtBaseClass, uiDialog):
         self.gutter_btn.clicked.connect(self.eval_gutter)
         self.noexchange_btn.clicked.connect(self.eval_noexchange)
         self.steep_slopen_btn.clicked.connect(self.eval_steep_slopen)
+        self.lid_volume_btn.clicked.connect(self.eval_lid_volume)
         self.other_variable_btn.clicked.connect(self.other_variable)
         # self.tailings_btn.clicked.connect(self.get_tailings)
         self.help_btn.clicked.connect(self.show_grid_widget_help)
@@ -1532,7 +1533,53 @@ class GridToolsWidget(qtBaseClass, uiDialog):
         except Exception as e:
             self.uc.log_info(traceback.format_exc())
             self.uc.show_warn(
-                "WARNING 060319.1721: Selection of no-exchange cells failed! Please check your No-xchange Cells (Tables layer)."
+                "WARNING 060319.1721: Selection of Steep Slope-n cells failed! Please check your Steep Slope-n Cells (Tables layer)."
+            )
+            QApplication.restoreOverrideCursor()
+
+    def eval_lid_volume(self):
+        grid_empty = self.gutils.is_table_empty("grid")
+        if grid_empty:
+            self.uc.bar_warn("There is no grid. Please, create it before sampling LID Volume cells.")
+            self.uc.log_info("There is no grid. Please, create it before sampling LID Volume cells.")
+            return
+        else:
+            pass
+        if not self.gutils.is_table_empty("lid_volume_cells"):
+            q = "There are some LID Volume cells already defined in the database. Overwrite them?\n\n"
+            q += "Please, note that the new LID Volume cells will be evaluated for existing LID Volume polygons ONLY."
+            if not self.uc.question(q):
+                return
+        if not self.lyrs.save_edits_and_proceed("LID Volume Cells"):
+            return
+        if self.gutils.is_table_empty("user_lid_volume_areas"):
+            w = 'There are no "LID Volume" polygons in LID Volume Areas (User Layers)!.\n\n'
+            w += "Please digitize them before running tool."
+            self.uc.bar_warn(w)
+            self.uc.log_info(w)
+            return
+        try:
+            QApplication.setOverrideCursor(Qt.WaitCursor)
+            self.gutils.clear_tables("lid_volume_cells")
+            intersection_qry = """
+                                    INSERT INTO lid_volume_cells (volume, area_fid, grid_fid)
+                                    SELECT a.volume AS volume, a.fid AS area_fid, g.fid AS grid_fid
+                                    FROM
+                                        grid AS g,
+                                        user_lid_volume_areas AS a
+                                    WHERE
+                                        ST_Intersects(CastAutomagic(g.geom), CastAutomagic(a.geom));
+                                """
+            self.gutils.execute(intersection_qry)
+            lid_volume_lyr = self.lyrs.data["user_lid_volume_areas"]["qlyr"]
+            lid_volume_lyr.reload()
+            self.lyrs.update_layer_extents(lid_volume_lyr)
+            QApplication.restoreOverrideCursor()
+            self.uc.show_info("LID Volume areas selected!")
+        except Exception as e:
+            self.uc.log_info(traceback.format_exc())
+            self.uc.show_warn(
+                "WARNING 060319.1721: Selection of LID Volume cells failed! Please check your LID Volume Cells (Tables layer)."
             )
             QApplication.restoreOverrideCursor()
 
