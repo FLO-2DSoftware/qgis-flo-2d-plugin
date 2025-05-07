@@ -311,6 +311,7 @@ class ParseDAT(object):
             "BREACH.DAT": None,
             "FPFROUDE.DAT": None,
             "STEEP_SLOPEN.DAT": None,
+            "LID_VOLUME.DAT": None,
             "SWMM.INP": None,
             "SWMMFLO.DAT": None,
             "SWMMFLORT.DAT": None,
@@ -1014,6 +1015,12 @@ class ParseDAT(object):
     def parse_steep_slopen(self):
         steep_slopen = self.dat_files["STEEP_SLOPEN.DAT"]
         par = self.single_parser(steep_slopen)
+        data = [row for row in par]
+        return data
+
+    def parse_lid_volume(self):
+        lid_volume = self.dat_files["LID_VOLUME.DAT"]
+        par = self.single_parser(lid_volume)
         data = [row for row in par]
         return data
 

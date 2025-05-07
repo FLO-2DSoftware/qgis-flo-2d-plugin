@@ -1611,6 +1611,19 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
         self.batch_execute(cells_sql)
 
+    def import_lid_volume(self):
+        cells_sql = ["""INSERT INTO lid_volume_cells (grid_fid, volume) VALUES""", 2]
+
+        self.clear_tables("lid_volume_cells")
+
+        data = self.parser.parse_lid_volume()
+
+        for i, row in enumerate(data, 1):
+            gid, volume = row
+            cells_sql += [(gid, volume)]
+
+        self.batch_execute(cells_sql)
+
     def import_gutter(self):
         gutter_globals_sql = [
             """INSERT INTO gutter_globals (width, height, n_value) VALUES""",
