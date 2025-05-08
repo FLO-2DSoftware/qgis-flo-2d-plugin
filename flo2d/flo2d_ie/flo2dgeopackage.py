@@ -3606,7 +3606,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
         self.batch_execute(wstime_sql)
 
-    def export_cont_toler(self, output=None):
+    def export_cont_toler(self, output=None, subdomain=None):
+        """subdomain: Placeholder parameter for compatibility with other code logic."""
         if self.parsed_format == self.FORMAT_DAT:
             return self.export_cont_toler_dat(output)
         elif self.parsed_format == self.FORMAT_HDF5:
@@ -4045,6 +4046,47 @@ class Flo2dGeoPackage(GeoPackageUtils):
             self.uc.show_error("ERROR 101218.1541: exporting MANNINGS_N.DAT or TOPO.DAT failed!.\n", e)
             QApplication.setOverrideCursor(Qt.WaitCursor)
             return False
+
+    def export_mannings_n_topo_md(self, outdir, subdomain):
+        
+        sub_grid_cells = self.gutils.execute(f"""SELECT DISTINCT 
+                                                    md.domain_cell, 
+                                                    g.n_value, 
+                                                    g.elevation,
+                                                    ST_AsText(ST_Centroid(GeomFromGPB(g.geom)))
+                                                 FROM 
+                                                    grid g
+                                                 JOIN 
+                                                    schema_md_cells md ON g.fid = md.grid_fid
+                                                 WHERE 
+                                                     md.domain_fid = {subdomain};""").fetchall()
+
+        records = sorted(sub_grid_cells, key=lambda x: x[0])
+
+        mannings = os.path.join(outdir, "MANNINGS_N.DAT")
+        topo = os.path.join(outdir, "TOPO.DAT")
+
+        mline = "{0: >10} {1: >10}\n"
+        tline = "{0: >15} {1: >15} {2: >10}\n"
+
+        with open(mannings, "w") as m, open(topo, "w") as t:
+            for row in records:
+                fid, man, elev, geom = row
+                if man == None or elev == None:
+                    if man == None:
+                        man = 0.04
+                    if elev == None:
+                        elev = -9999
+                x, y = geom.strip("POINT()").split()
+                m.write(mline.format(fid, "{0:.3f}".format(man)))
+                t.write(
+                    tline.format(
+                        "{0:.4f}".format(float(x)),
+                        "{0:.4f}".format(float(y)),
+                        "{0:.4f}".format(elev),
+                    )
+                )
+        return True
 
     # def export_neighbours(self):
     #     if self.parsed_format == self.FORMAT_DAT:
@@ -5162,6 +5204,132 @@ class Flo2dGeoPackage(GeoPackageUtils):
             scs_sql = """SELECT grid_fid,scsn FROM infil_cells_scs ORDER BY grid_fid;"""
             horton_sql = """SELECT grid_fid, fhorti, fhortf, deca FROM infil_cells_horton ORDER BY grid_fid;"""
             chan_sql = """SELECT grid_fid, hydconch FROM infil_chan_elems ORDER by grid_fid;"""
+
+            line1 = "{0}"
+            line2 = "\n" + "  {}" * 6
+            line2h = "\n{0}"
+            line3 = "\n" + "  {}" * 3
+            line4 = "\n{0}"
+            line4ab = "\nR  {0}  {1}  {2}"
+            line5 = "\n{0}  {1}"
+            line6 = "\nF {0:<8} {1:<7.4f} {2:<7.4f} {3:<7.4f} {4:<7.4f} {5:<7.4f} {6:<7.4f}"
+            #         line6 = '\n' + 'F' + '  {}' * 7
+            line7 = "\nS  {0}  {1}"
+            line8 = "\nC  {0}  {1}"
+            line9 = "\nI {0:<7.4f} {1:<7.4f} {2:<7.4f}"
+            line10 = "\nH  {0:<8} {1:<7.4f} {2:<7.4f} {3:<7.4f}"
+
+            infil_row = self.execute(infil_sql).fetchone()
+            if infil_row is None:
+                return False
+            else:
+                pass
+            infil = os.path.join(outdir, "INFIL.DAT")
+            with open(infil, "w") as i:
+                gen = [x if x is not None else "" for x in infil_row[1:]]
+                v1, v2, v3, v4, v5, v9, v2h = (
+                    gen[0],
+                    gen[1:7],
+                    gen[7:10],
+                    gen[10:11],
+                    gen[11:13],
+                    gen[13:16],
+                    gen[16]
+                )
+                i.write(line1.format(v1))
+                if v1 == 1 or v1 == 3:
+                    i.write(line2.format(*v2))
+                    i.write(line3.format(*v3))
+                    if v2[5] == 1:
+                        i.write(line4.format(*v4))
+                    #                     for val, line in zip([v2, v3, v4], [line2, line3, line4]):
+                    # #                         if any(val) is True:
+                    #                             i.write(line.format(*val))
+                    # #                         else:
+                    # #                             pass
+                    for row in self.execute(infil_r_sql):
+                        row = [x if x is not None else "" for x in row]
+                        i.write(line4ab.format(*row))
+                if v1 == 2 or v1 == 3:
+                    if any(v5) is True:
+                        i.write(line5.format(*v5))
+                    else:
+                        pass
+                for row in self.execute(green_sql):
+                    i.write(line6.format(*row))
+                for row in self.execute(scs_sql):
+                    i.write(line7.format(*row))
+                for row in self.execute(chan_sql):
+                    i.write(line8.format(*row))
+                if any(v9) is True:
+                    i.write(line2h.format(str(v2h)))
+                    i.write(line9.format(*v9))
+                else:
+                    pass
+                for row in self.execute(horton_sql):
+                    i.write(line10.format(*row))
+
+            return True
+
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.uc.show_error("ERROR 101218.1559: exporting INFIL.DAT failed!.\n", e)
+            return False
+
+    def export_infil_md(self, outdir, subdomain):
+        # check if there is any infiltration defined.
+        try:
+            if self.is_table_empty("infil"):
+                return False
+            infil_sql = """SELECT * FROM infil;"""
+            infil_r_sql = """SELECT hydcx, hydcxfinal, soildepthcx FROM infil_chan_seg ORDER BY chan_seg_fid, fid;"""
+            green_sql = f"""SELECT 
+                                md.domain_cell, 
+                                hydc, 
+                                soils, 
+                                dtheta, 
+                                abstrinf, 
+                                rtimpf, 
+                                soil_depth 
+                            FROM 
+                                infil_cells_green AS ga
+                            JOIN 
+                                schema_md_cells md ON ga.grid_fid = md.grid_fid
+                            WHERE 
+                                md.domain_fid = {subdomain}"""
+
+            scs_sql = f"""SELECT 
+                            md.domain_cell, 
+                            scsn 
+                        FROM 
+                            infil_cells_scs AS scs
+                        JOIN 
+                            schema_md_cells md ON scs.grid_fid = md.grid_fid
+                        WHERE 
+                            md.domain_fid = {subdomain}"""
+
+
+            horton_sql = f"""SELECT 
+                                md.domain_cell, 
+                                fhorti, 
+                                fhortf, 
+                                deca 
+                            FROM 
+                                infil_cells_horton AS ht
+                            JOIN 
+                                schema_md_cells md ON ht.grid_fid = md.grid_fid
+                            WHERE 
+                                md.domain_fid = {subdomain}"""
+
+            chan_sql = f"""SELECT 
+                            md.domain_cell, 
+                            hydconch 
+                          FROM 
+                            infil_chan_elems AS ch
+                          JOIN 
+                            schema_md_cells md ON ch.grid_fid = md.grid_fid
+                          WHERE 
+                            md.domain_fid = {subdomain}"""
 
             line1 = "{0}"
             line2 = "\n" + "  {}" * 6
