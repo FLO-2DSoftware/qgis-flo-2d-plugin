@@ -5091,6 +5091,95 @@ class Flo2dGeoPackage(GeoPackageUtils):
         #     self.uc.show_error("ERROR 101218.1543: exporting RAIN.DAT failed!.\n", e)
         #     return False
 
+    def export_rain_md(self, outdir, subdomain):
+        # check if there is any rain defined.
+        # try:
+
+        # Check if rain table is empty and return False if true
+        if self.is_table_empty("rain"):
+            self.uc.log_info("Rain table is empty!")
+            self.uc.bar_info("Rain table is empty!")
+            return False
+
+        rain_sql = """SELECT time_series_fid, irainreal, irainbuilding, tot_rainfall,
+                                rainabs, irainarf, movingstorm, rainspeed, iraindir
+                         FROM rain;"""
+
+        ts_data_sql = """SELECT time, value FROM rain_time_series_data WHERE series_fid = ? ORDER BY fid;"""
+
+        rain_cells_sql = f"""SELECT 
+                                md.domain_cell, 
+                                arf 
+                            FROM 
+                                rain_arf_cells AS ra
+                            JOIN 
+                                schema_md_cells md ON ra.grid_fid = md.grid_fid
+                             WHERE 
+                                md.domain_fid = {subdomain};"""
+
+        rain_line1 = "{0}  {1}\n"
+        rain_line2 = "{0}   {1}  {2}  {3}\n"
+        tsd_line3 = "R {0}   {1}\n"  # Rainfall Time series distribution
+        rain_line4 = "{0}   {1}\n"
+
+        cell_line5 = "{0: <10} {1}\n"
+
+        rain_row = self.execute(
+            rain_sql
+        ).fetchone()  # Returns a single feature with all the singlevalues of the rain table:
+        # time_series_fid, irainreal, irainbuilding, tot_rainfall, rainabs,
+        # irainarf, movingstorm, rainspeed, iraindir.
+
+        # If no data was found on the rain table, return False
+        if rain_row is None:
+            return False
+
+        # If tot_rainfall is zero, return False
+        if rain_row[1] == 0 and rain_row[3] == 0:
+            self.uc.log_info("Total Storm Rainfall is not defined!")
+            self.uc.bar_warn("Total Storm Rainfall is not defined!")
+            return False
+
+        rain = os.path.join(outdir, "RAIN.DAT")
+        with open(rain, "w") as r:
+            r.write(rain_line1.format(*rain_row[1:3]))  # irainreal, irainbuilding
+            r.write(rain_line2.format(*rain_row[3:7]))  # tot_rainfall (RTT), rainabs, irainarf, movingstorm
+
+            fid = rain_row[
+                0
+            ]  # time_series_fid (pointer to the 'rain_time_series_data' table where the pairs (time , distribution) are.
+            for row in self.execute(ts_data_sql, (fid,)):
+                if None not in row:  # Writes 3rd. lines if rain_time_series_data exists (Rainfall distribution).
+                    r.write(
+                        tsd_line3.format(*row)
+                    )  # Writes 'R time value (i.e. distribution)' (i.e. 'R  R_TIME R_DISTR' in FLO-2D jargon).
+                    # This is a time series created from the Rainfall Distribution tool in the Rain Editor,
+                    # selected from a list
+
+            if rain_row[6] == 1:  # if movingstorm from rain = 0, omit this line.
+                if (
+                        rain_row[-1] is not None
+                ):  # row[-1] is the last value of tuple (time_series_fid, irainreal, irainbuilding, tot_rainfall,
+                    # rainabs, irainarf, movingstorm, rainspeed, iraindir).
+                    r.write(
+                        rain_line4.format(*rain_row[-2:])
+                    )  # Write the last 2 values (-2 means 2 from last): rainspeed and iraindir.
+                else:
+                    pass
+            else:
+                pass
+
+            if rain_row[5] == 1:  # if irainarf from rain = 0, omit this line.
+                for row in self.execute(rain_cells_sql):
+                    r.write(cell_line5.format(row[0], "{0:.3f}".format(row[1])))
+
+        return True
+
+        # except Exception as e:
+        #     QApplication.restoreOverrideCursor()
+        #     self.uc.show_error("ERROR 101218.1543: exporting RAIN.DAT failed!.\n", e)
+        #     return False
+
     def export_raincell(self, outdir):
         QApplication.setOverrideCursor(Qt.WaitCursor)
         try:
