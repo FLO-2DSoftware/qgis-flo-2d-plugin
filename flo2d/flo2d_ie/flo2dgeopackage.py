@@ -4926,6 +4926,183 @@ class Flo2dGeoPackage(GeoPackageUtils):
             self.uc.show_warn(msg)
         return True
 
+    def export_outflow_md(self, outdir, subdomain):
+        # check if there are any outflows defined.
+        try:
+
+            outflow_sql = """
+               SELECT fid, fp_out, chan_out, hydro_out, chan_tser_fid, chan_qhpar_fid, chan_qhtab_fid, fp_tser_fid
+               FROM outflow WHERE fid = ?;"""
+
+            outflow_cells_sql = f"""SELECT 
+                                    outflow_fid, 
+                                    md.domain_cell 
+                                FROM 
+                                    outflow_cells AS oc
+                                JOIN 
+                                    schema_md_cells md ON oc.grid_fid = md.grid_fid
+                                WHERE 
+								    md.domain_fid = {subdomain};"""
+
+            qh_params_data_sql = """SELECT hmax, coef, exponent FROM qh_params_data WHERE params_fid = ?;"""
+            qh_table_data_sql = """SELECT depth, q FROM qh_table_data WHERE table_fid = ? ORDER BY fid;"""
+            ts_data_sql = """SELECT time, value FROM outflow_time_series_data WHERE series_fid = ? ORDER BY fid;"""
+
+            k_line = "K  {0}\n"
+            qh_params_line = "H  {0}  {1}  {2}\n"
+            qh_table_line = "T  {0}  {1}\n"
+            n_line = "N     {0}  {1}\n"
+            ts_line = "S  {0}  {1}\n"
+            o_line = "{0}  {1}\n"
+
+            out_cells = self.execute(outflow_cells_sql).fetchall()
+
+            outflow = os.path.join(outdir, "OUTFLOW.DAT")
+            floodplains = {}
+            previous_oid = -1
+            row = None
+            border = get_BC_Border()
+
+            warning = ""
+            with open(outflow, "w") as o:
+                if out_cells:
+                    for oid, gid in out_cells:
+                        if previous_oid != oid:
+                            row = self.execute(outflow_sql, (oid,)).fetchone()
+                            if row is not None:
+                                row = [x if x is not None and x != "" else 0 for x in row]
+                                previous_oid = oid
+                            else:
+                                warning += (
+                                        "<br>* Cell " + str(
+                                    gid) + " in 'outflow_cells' table points to 'outflow' table with"
+                                )
+                                warning += "<br> 'outflow_fid' = " + str(oid) + ".<br>"
+                                continue
+                        else:
+                            pass
+
+                        if row is not None:
+                            (
+                                fid,
+                                fp_out,
+                                chan_out,
+                                hydro_out,
+                                chan_tser_fid,
+                                chan_qhpar_fid,
+                                chan_qhtab_fid,
+                                fp_tser_fid,
+                            ) = row
+                            if gid not in floodplains and (fp_out == 1 or hydro_out > 0):
+                                floodplains[gid] = hydro_out
+                            if chan_out == 1:
+                                o.write(k_line.format(gid))
+                                for values in self.execute(qh_params_data_sql, (chan_qhpar_fid,)):
+                                    o.write(qh_params_line.format(*values))
+                                for values in self.execute(qh_table_data_sql, (chan_qhtab_fid,)):
+                                    o.write(qh_table_line.format(*values))
+                            else:
+                                pass
+
+                            if chan_tser_fid > 0 or fp_tser_fid > 0:
+                                if border is not None:
+                                    if gid in border:
+                                        continue
+                                nostacfp = 1 if chan_tser_fid == 1 else 0
+                                o.write(n_line.format(gid, nostacfp))
+                                series_fid = chan_tser_fid if chan_tser_fid > 0 else fp_tser_fid
+                                for values in self.execute(ts_data_sql, (series_fid,)):
+                                    o.write(ts_line.format(*values))
+                            else:
+                                pass
+
+                # Write O1, O2, ... lines with the multi domain logic, don't allow for user hydro_out
+                if any(hydro_out > 0 for _, hydro_out in floodplains.items()):
+                    self.uc.bar_warn("During multiple domain export, the outflow hydrograph boundary condition is automatically replaced by the connections between the domains.")
+                    self.uc.log_info("During multiple domain export, the outflow hydrograph boundary condition is automatically replaced by the connections between the domains.")
+
+                outflow_md_connections_sql = f"""SELECT
+                                                       fid_subdomain_1,
+                                                       fid_subdomain_2,
+                                                       fid_subdomain_3,
+                                                       fid_subdomain_4,
+                                                       fid_subdomain_5,
+                                                       fid_subdomain_6,
+                                                       fid_subdomain_7,
+                                                       fid_subdomain_8,
+                                                       fid_subdomain_9
+                                                   FROM
+                                                       mult_domains_con AS im
+                                                   WHERE 
+                                                        fid = {subdomain};"""
+
+                result = self.gutils.execute(outflow_md_connections_sql).fetchone()
+
+                # Initialize fid_subdomains
+                fid_subdomains = [fid for fid in result if fid not in (0, None, 'NULL')] if result else []
+
+                # Find fids greater than 9
+                fids_greater_than_9 = [fid for fid in fid_subdomains if int(fid) > 9]
+
+                # Find available fids between 1 and 9
+                used_fids = set(fid_subdomains)  # Already used fids
+                available_fids = [i for i in range(1, 10) if i not in used_fids]
+
+                # Create a dictionary to map fids greater than 9 to the lowest available fid
+                fid_mapping = {}
+                for fid in fids_greater_than_9:
+                    if available_fids:
+                        new_fid = available_fids.pop(0)  # Get the lowest available fid
+                        fid_mapping[fid] = new_fid
+
+                # Proceed only if fid_subdomains is not empty
+                if fid_subdomains:
+                    placeholders = ", ".join("?" for _ in fid_subdomains)  # Create placeholders for the IN clause
+                    outflow_md_cells_sql = f"""
+                        SELECT 
+                            domain_cell, 
+                            down_domain_fid 
+                        FROM 
+                            schema_md_cells AS md
+                        JOIN 
+                            mult_domains_con mdc ON mdc.fid = md.domain_fid
+                        WHERE 
+                            domain_fid = ? AND down_domain_fid IS NOT NULL AND down_domain_fid IN ({placeholders})
+                        ORDER BY 
+                            down_domain_fid, domain_cell;
+                    """
+                    outflow_md_cells = self.execute(outflow_md_cells_sql, (subdomain, *fid_subdomains)).fetchall()
+
+                    for cell in outflow_md_cells:
+                        gid = cell[0]
+                        hydro_out = cell[1]
+                        if hydro_out > 9:
+                            # Check if the hydro_out value is in the mapping
+                            if hydro_out in fid_mapping:
+                                # Replace the hydro_out value with the mapped value
+                                hydro_out = fid_mapping[hydro_out]
+                        ident = "O{0}".format(hydro_out)
+                        o.write(o_line.format(ident, gid))
+                        if border is not None and gid in border:
+                            border.remove(gid)
+
+                # Write lines 'O cell_id":
+                if border is not None:
+                    for b in border:
+                        o.write(o_line.format("O", b))
+
+            QApplication.restoreOverrideCursor()
+            if warning != "":
+                msg = "ERROR 170319.2018: error while exporting OUTFLOW.DAT!<br><br>" + warning
+                msg += "<br><br><FONT COLOR=red>Did you schematize the Boundary Conditions?</FONT>"
+                self.uc.show_warn(msg)
+            return True
+
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.uc.show_error("ERROR 101218.1543: exporting OUTFLOW.DAT failed!.\n", e)
+            return False
+
     def export_rain(self, output=None):
         if self.parsed_format == self.FORMAT_DAT:
             return self.export_rain_dat(output)

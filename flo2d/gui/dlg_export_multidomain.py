@@ -393,7 +393,11 @@ class ExportMultipleDomainsDialog(qtBaseClass, uiDialog):
 
         subdomains = self.gutils.execute("SELECT fid, subdomain_name FROM mult_domains_methods;").fetchall()
 
+        # Subdomains that had the FID changed due to the maximum of 9 subdomains
+        subdomains_fid_changed_msg = ""
+
         if subdomains:
+
             # Figure out the upstream domains
             downstream_domains = {}
             subdomain_connectivities = self.gutils.execute(f"""
@@ -427,7 +431,7 @@ class ExportMultipleDomainsDialog(qtBaseClass, uiDialog):
                 # "export_inflow",
                 # "export_tailings",
                 # 'export_outrc',
-                # "export_outflow",
+                "export_outflow_md",
                 "export_rain_md",
                 # "export_evapor",
                 "export_infil_md",
@@ -458,6 +462,14 @@ class ExportMultipleDomainsDialog(qtBaseClass, uiDialog):
                 "export_mannings_n_topo_md",
             ]
 
+            # Add a dummy cell to the outflow cells to show the Outflow checkbox
+            count = self.gutils.execute("SELECT COUNT(*) FROM outflow_cells;").fetchone()[0]
+            dummy_added = False
+            if count == 0:
+                # Add a dummy row if the table is empty
+                self.gutils.execute("INSERT INTO outflow_cells (fid) VALUES (1);")
+                dummy_added = True
+
             dlg_components = ComponentsDialog(self.con, self.iface, self.lyrs, "out")
             QApplication.restoreOverrideCursor()
 
@@ -476,8 +488,8 @@ class ExportMultipleDomainsDialog(qtBaseClass, uiDialog):
                 # if "Streets" not in dlg_components.components:
                 #     export_calls.remove("export_street")
 
-                # if "Outflow Elements" not in dlg_components.components:
-                #     export_calls.remove("export_outflow")
+                if "Outflow Elements" not in dlg_components.components:
+                    export_calls.remove("export_outflow_md")
 
                 # if "Inflow Elements" not in dlg_components.components:
                 #     export_calls.remove("export_inflow")
@@ -562,6 +574,10 @@ class ExportMultipleDomainsDialog(qtBaseClass, uiDialog):
             progDialog.setValue(0)
             progDialog.show()
             i = 0
+
+            # Remove the dummy cell on the outflow_cells
+            if dummy_added:
+                self.gutils.execute("DELETE FROM outflow_cells WHERE fid = 1;")
 
             for subdomain in subdomains:
 
@@ -672,15 +688,15 @@ class ExportMultipleDomainsDialog(qtBaseClass, uiDialog):
                 subdomain_connectivities_names = self.gutils.execute(f"""
                                                    SELECT
                                                        im.subdomain_name,
-                                                       im.subdomain_name_1,
-                                                       im.subdomain_name_2,
-                                                       im.subdomain_name_3,
-                                                       im.subdomain_name_4,
-                                                       im.subdomain_name_5,
-                                                       im.subdomain_name_6,
-                                                       im.subdomain_name_7,
-                                                       im.subdomain_name_8,
-                                                       im.subdomain_name_9
+                                                       im.subdomain_name_1, fid_subdomain_1,
+                                                       im.subdomain_name_2, fid_subdomain_2,
+                                                       im.subdomain_name_3, fid_subdomain_3,
+                                                       im.subdomain_name_4, fid_subdomain_4,
+                                                       im.subdomain_name_5, fid_subdomain_5,
+                                                       im.subdomain_name_6, fid_subdomain_6,
+                                                       im.subdomain_name_7, fid_subdomain_7,
+                                                       im.subdomain_name_8, fid_subdomain_8,
+                                                       im.subdomain_name_9, fid_subdomain_9
                                                    FROM
                                                        mult_domains_con AS im;
                                                                """).fetchall()
@@ -689,15 +705,49 @@ class ExportMultipleDomainsDialog(qtBaseClass, uiDialog):
                         current_subdomain = subdomain_connectivity_name[0]
                         current_subdomain_folder = os.path.join(self.export_directory_le.text(),
                                                                 current_subdomain)
+
+                        # Collect all fid_subdomain_x values
+                        fid_subdomains = [subdomain_connectivity_name[2 * i] for i in range(1, 10) if
+                                          subdomain_connectivity_name[2 * i] not in (0, None, "NULL", "")]
+                        fids_greater_than_9 = [fid for fid in fid_subdomains if fid > 9]
+
+                        # Find available fids between 1 and 9
+                        used_fids = set(fid_subdomains)
+                        available_fids = [i for i in range(1, 10) if i not in used_fids]
+
+                        # Create a mapping for fids greater than 9
+                        fid_mapping = {}
+                        for fid in fids_greater_than_9:
+                            if available_fids:
+                                new_fid = available_fids.pop(0)
+                                fid_mapping[fid] = new_fid
+
                         for i in range(1, 10):
                             downstream_subdomains_folder = os.path.join(self.export_directory_le.text(),
-                                                                        subdomain_connectivity_name[i])
-                            if not os.path.exists(downstream_subdomains_folder) or subdomain_connectivity_name[
-                                i] == "":
+                                                                        subdomain_connectivity_name[2 * i - 1])
+                            fid_subdomain = subdomain_connectivity_name[2 * i]
+
+                            # Remap fid_subdomain if it is greater than 9
+                            if fid_subdomain in fid_mapping:
+                                original_fid = fid_subdomain
+                                fid_subdomain = fid_mapping[fid_subdomain]
+
+                                adjustment_file_path = os.path.join(str(current_subdomain_folder), "qgis_multidomain_adjust.txt")
+                                with open(adjustment_file_path, "a") as adjustment_file:
+                                    adjustment_file.write(f"{subdomain_connectivity_name[2 * i - 1]} ({original_fid}) -> {subdomain_connectivity_name[2 * i - 1]} ({fid_subdomain})\n")
+
+                                msg = (
+                                    f"Subdomain '{current_subdomain}': The subdomain '{subdomain_connectivity_name[2 * i - 1]}' "
+                                    f"with FID {original_fid} has been renamed to FID {fid_subdomain}.\n"
+                                )
+
+                                subdomains_fid_changed_msg += msg
+
+                            if not os.path.exists(downstream_subdomains_folder) or subdomain_connectivity_name[2 * i - 1] == "":
                                 continue
                             else:
                                 shutil.copy2(os.path.join(str(downstream_subdomains_folder), "CADPTS.DAT"),
-                                             os.path.join(str(current_subdomain_folder), f"CADPTS_DS{i}.DAT"))
+                                             os.path.join(str(current_subdomain_folder), f"CADPTS_DS{fid_subdomain}.DAT"))
 
                         # The strings list 'export_calls', contains the names of
                         # the methods in the class Flo2dGeoPackage to export (write) the
@@ -942,6 +992,14 @@ class ExportMultipleDomainsDialog(qtBaseClass, uiDialog):
             self.uc.bar_warn(f"This project has no subdomains!")
 
         QApplication.restoreOverrideCursor()
+        if subdomains_fid_changed_msg != "":
+            header_msg = (
+                "Some subdomain FIDs exceed the maximum allowed value of 9 in the FLO-2D engine. "
+                "To comply with this restriction, the following subdomains have been updated. "
+                "A file named qgis_multidomain_adjust.txt has been saved in the project directory to document these adjustments.\n\n"
+            )
+            self.uc.show_info(header_msg + subdomains_fid_changed_msg)
+            self.uc.log_info(header_msg + subdomains_fid_changed_msg)
         self.uc.log_info(f"Subdomains exported correctly!")
         self.uc.bar_info(f"Subdomains exported correctly!")
         self.close_dlg()
