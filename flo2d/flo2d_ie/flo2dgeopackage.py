@@ -8387,6 +8387,42 @@ class Flo2dGeoPackage(GeoPackageUtils):
             self.uc.show_error("ERROR 101218.1901: exporting SHALLOWN_SPATIAL.DAT failed!", e)
             return False
 
+    def export_shallowNSpatial_md(self, outdir, subdomain):
+        # check if there is any shallow-n defined.
+        try:
+            if self.is_table_empty("spatialshallow"):
+                return False
+            shallow_sql = """SELECT fid, shallow_n FROM spatialshallow ORDER BY fid;"""
+            cell_sql = f"""SELECT 
+                            md.domain_cell 
+                        FROM 
+                            spatialshallow_cells AS ss
+                        JOIN 
+							schema_md_cells md ON ss.grid_fid = md.grid_fid
+                        WHERE 
+                            area_fid = ? AND md.domain_fid = {subdomain};"""
+
+            line1 = "{0} {1}\n"
+
+            shallow_rows = self.execute(shallow_sql).fetchall()
+            if not shallow_rows:
+                return False
+            else:
+                pass
+            shallow_dat = os.path.join(outdir, "SHALLOWN_SPATIAL.DAT")
+            with open(shallow_dat, "w") as s:
+                for fid, shallow_n in shallow_rows:
+                    for row in self.execute(cell_sql, (fid,)):
+                        gid = row[0]
+                        s.write(line1.format(gid, shallow_n))
+
+            return True
+
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.uc.show_error("ERROR 101218.1901: exporting SHALLOWN_SPATIAL.DAT failed!", e)
+            return False
+
     def export_swmmflo(self, output=None):
         if self.parsed_format == self.FORMAT_DAT:
             return self.export_swmmflo_dat(output)
