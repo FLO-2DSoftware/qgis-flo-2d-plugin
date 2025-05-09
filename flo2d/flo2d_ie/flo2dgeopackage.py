@@ -3818,18 +3818,19 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 else:
                     # Write individual steep slope grid IDs
                     sql = """SELECT grid_fid FROM steep_slope_n_cells ORDER BY fid;"""
-                    records = self.execute(sql)
-                    s.write("2\n")
-                    for row in records:
-                        grid_fid = row[0]  # Unpack the first value
-                        s.write(f"{grid_fid}\n")
+                    records = self.gutils.execute(sql).fetchall()
+                    if records:
+                        s.write("2\n")
+                        for row in records:
+                            grid_fid = row[0]  # Unpack the first value
+                            s.write(f"{grid_fid}\n")
 
             return True
 
         except Exception as e:
             QApplication.restoreOverrideCursor()
             self.uc.bar_error("ERROR: exporting STEEP_SLOPEN.DAT failed!")
-            self.uc.log_info("ERROR: exporting STEEP_SLOPEN.DAT failed!\n", e)
+            self.uc.log_info("ERROR: exporting STEEP_SLOPEN.DAT failed!\n")
             QApplication.setOverrideCursor(Qt.WaitCursor)
             return False
 
@@ -3860,14 +3861,15 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     spatially_variable_group.create_dataset('STEEP_SLOPEN_GLOBAL', [])
                     spatially_variable_group.datasets["STEEP_SLOPEN_GLOBAL"].data.append(2)
                 sql = """SELECT grid_fid FROM steep_slope_n_cells ORDER BY fid;"""
-                records = self.execute(sql)
-                for row in records:
-                    grid_fid = row[0]  # Unpack the first value
-                    try:
-                        spatially_variable_group.datasets["STEEP_SLOPEN"].data.append(grid_fid)
-                    except:
-                        spatially_variable_group.create_dataset('STEEP_SLOPEN', [])
-                        spatially_variable_group.datasets["STEEP_SLOPEN"].data.append(grid_fid)
+                records = self.gutils.execute(sql).fetchall()
+                if records:
+                    for row in records:
+                        grid_fid = row[0]  # Unpack the first value
+                        try:
+                            spatially_variable_group.datasets["STEEP_SLOPEN"].data.append(grid_fid)
+                        except:
+                            spatially_variable_group.create_dataset('STEEP_SLOPEN', [])
+                            spatially_variable_group.datasets["STEEP_SLOPEN"].data.append(grid_fid)
 
             self.parser.write_groups(spatially_variable_group)
             return True
@@ -3875,7 +3877,50 @@ class Flo2dGeoPackage(GeoPackageUtils):
         except Exception as e:
             QApplication.restoreOverrideCursor()
             self.uc.bar_error("ERROR: exporting STEEP_SLOPEN to hdf5 failed!")
-            self.uc.log_info("ERROR: exporting STEEP_SLOPEN to hdf5 failed!\n", e)
+            self.uc.log_info("ERROR: exporting STEEP_SLOPEN to hdf5 failed!\n")
+            QApplication.setOverrideCursor(Qt.WaitCursor)
+            return False
+
+    def export_steep_slopen_md(self, outdir, subdomain):
+        try:
+
+            if self.is_table_empty("steep_slope_n_cells"):
+                return False
+
+            steep_slopen = os.path.join(outdir, "STEEP_SLOPEN.DAT")
+
+            # Check if there are global steep slope areas
+            qry = """SELECT COUNT(*) FROM steep_slope_n_cells WHERE global = 1;"""
+            result = self.gutils.execute(qry).fetchone()
+
+            with open(steep_slopen, "w") as s:
+                if result and result[0] > 0:
+                    # Write global steep slope value
+                    s.write("1\n")
+                else:
+                    # Write individual steep slope grid IDs
+                    sql = f"""SELECT 
+                                md.domain_cell
+                            FROM 
+                                steep_slope_n_cells AS ss
+                            JOIN 
+                                schema_md_cells md ON ss.grid_fid = md.grid_fid
+                            WHERE 
+                                md.domain_fid =  {subdomain}
+                            ;"""
+                    records = self.gutils.execute(sql).fetchall()
+                    if records:
+                        s.write("2\n")
+                        for row in records:
+                            grid_fid = row[0]  # Unpack the first value
+                            s.write(f"{grid_fid}\n")
+
+            return True
+
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.uc.bar_error("ERROR: exporting STEEP_SLOPEN.DAT failed!")
+            self.uc.log_info("ERROR: exporting STEEP_SLOPEN.DAT failed!\n")
             QApplication.setOverrideCursor(Qt.WaitCursor)
             return False
 
