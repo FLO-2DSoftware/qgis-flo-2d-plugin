@@ -620,7 +620,7 @@ class ExportMultipleDomainsDialog(qtBaseClass, uiDialog):
                                                                          JOIN 
                                                                             schema_md_cells md ON g.fid = md.grid_fid
                                                                          WHERE 
-                                                                             md.domain_fid = {subdomain};""").fetchall()
+                                                                             md.domain_fid = {subdomain[0]};""").fetchall()
 
                         records = sorted(sub_grid_cells, key=lambda x: x[0])
 
@@ -648,7 +648,7 @@ class ExportMultipleDomainsDialog(qtBaseClass, uiDialog):
                                                                          JOIN 
                                                                             schema_md_cells md ON g.fid = md.grid_fid
                                                                          WHERE 
-                                                                             md.domain_fid = {subdomain};""").fetchall()
+                                                                             md.domain_fid = {subdomain[0]};""").fetchall()
 
                         records = sorted(sub_grid_cells, key=lambda x: x[0])
 
@@ -664,40 +664,40 @@ class ExportMultipleDomainsDialog(qtBaseClass, uiDialog):
                                     )
                                 )
 
-                    if export_method in [2, 3]:
-                        subdomain_connectivities_names = self.gutils.execute(f"""
-                                                           SELECT
-                                                               im.subdomain_name,
-                                                               im.subdomain_name_1,
-                                                               im.subdomain_name_2,
-                                                               im.subdomain_name_3,
-                                                               im.subdomain_name_4,
-                                                               im.subdomain_name_5,
-                                                               im.subdomain_name_6,
-                                                               im.subdomain_name_7,
-                                                               im.subdomain_name_8,
-                                                               im.subdomain_name_9
-                                                           FROM
-                                                               mult_domains_con AS im;
-                                                                       """).fetchall()
-                        if subdomain_connectivities_names:
-                            for subdomain_connectivity_name in subdomain_connectivities_names:
-                                current_subdomain = subdomain_connectivity_name[0]
-                                current_subdomain_folder = os.path.join(self.export_directory_le.text(),
-                                                                        current_subdomain)
-                                for i in range(1, 10):
-                                    downstream_subdomains_folder = os.path.join(self.export_directory_le.text(),
-                                                                                subdomain_connectivity_name[i])
-                                    if not os.path.exists(downstream_subdomains_folder) or subdomain_connectivity_name[
-                                        i] == "":
-                                        continue
-                                    else:
-                                        shutil.copy2(os.path.join(str(downstream_subdomains_folder), "CADPTS.DAT"),
-                                                     os.path.join(str(current_subdomain_folder), f"CADPTS_DS{i}.DAT"))
-
                 i += 1
                 progDialog.setValue(i)
                 QApplication.processEvents()
+
+            if export_method in [2, 3]:
+                subdomain_connectivities_names = self.gutils.execute(f"""
+                                                   SELECT
+                                                       im.subdomain_name,
+                                                       im.subdomain_name_1,
+                                                       im.subdomain_name_2,
+                                                       im.subdomain_name_3,
+                                                       im.subdomain_name_4,
+                                                       im.subdomain_name_5,
+                                                       im.subdomain_name_6,
+                                                       im.subdomain_name_7,
+                                                       im.subdomain_name_8,
+                                                       im.subdomain_name_9
+                                                   FROM
+                                                       mult_domains_con AS im;
+                                                               """).fetchall()
+                if subdomain_connectivities_names:
+                    for subdomain_connectivity_name in subdomain_connectivities_names:
+                        current_subdomain = subdomain_connectivity_name[0]
+                        current_subdomain_folder = os.path.join(self.export_directory_le.text(),
+                                                                current_subdomain)
+                        for i in range(1, 10):
+                            downstream_subdomains_folder = os.path.join(self.export_directory_le.text(),
+                                                                        subdomain_connectivity_name[i])
+                            if not os.path.exists(downstream_subdomains_folder) or subdomain_connectivity_name[
+                                i] == "":
+                                continue
+                            else:
+                                shutil.copy2(os.path.join(str(downstream_subdomains_folder), "CADPTS.DAT"),
+                                             os.path.join(str(current_subdomain_folder), f"CADPTS_DS{i}.DAT"))
 
                         # The strings list 'export_calls', contains the names of
                         # the methods in the class Flo2dGeoPackage to export (write) the
