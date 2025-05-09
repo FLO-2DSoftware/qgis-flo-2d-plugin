@@ -3983,6 +3983,39 @@ class Flo2dGeoPackage(GeoPackageUtils):
             QApplication.setOverrideCursor(Qt.WaitCursor)
             return False
 
+    def export_lid_volume_md(self, outdir, subdomain):
+        try:
+            if self.is_table_empty("lid_volume_cells"):
+                return False
+
+            lid_volume = os.path.join(outdir, "LID_VOLUME.DAT")
+
+            with open(lid_volume, "w") as lid:
+                # Write individual lid volume grid IDs
+                sql = f"""SELECT 
+                            md.domain_cell, 
+                            volume 
+                        FROM 
+                            lid_volume_cells AS lv
+                        JOIN 
+                            schema_md_cells md ON lv.grid_fid = md.grid_fid
+                        WHERE 
+                            md.domain_fid = {subdomain};"""
+                records = self.execute(sql)
+                for row in records:
+                    grid_fid = row[0]
+                    volume = row[1]
+                    lid.write(f"{grid_fid} {volume}\n")
+
+            return True
+
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.uc.bar_error("ERROR: exporting LID_VOLUME.DAT failed!")
+            self.uc.log_info("ERROR: exporting LID_VOLUME.DAT failed!\n", e)
+            QApplication.setOverrideCursor(Qt.WaitCursor)
+            return False
+
     def export_mannings_n_topo(self, output=None):
         if self.parsed_format == self.FORMAT_DAT:
             return self.export_mannings_n_topo_dat(output)
