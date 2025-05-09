@@ -8198,6 +8198,47 @@ class Flo2dGeoPackage(GeoPackageUtils):
             self.uc.show_error("ERROR 101218.1617: exporting FPFROUDE.DAT failed!.\n", e)
             return False
 
+    def export_fpfroude_md(self, outdir, subdomain):
+        try:
+            # Check if there is any limiting Froude number defined.
+            if self.is_table_empty("fpfroude"):
+                return False
+
+            # Single query to get all necessary data
+            fpfroude_sql = f"""
+                            SELECT 
+                                md.domain_cell, 
+                                f.froudefp
+                            FROM 
+                                fpfroude_cells AS fc
+                            JOIN 
+                                fpfroude AS f ON fc.area_fid = f.fid
+                            JOIN 
+                                schema_md_cells AS md ON fc.grid_fid = md.grid_fid
+                            WHERE 
+                                md.domain_fid = {subdomain}
+                            """
+
+            # Fetch all rows at once
+            fpfroude_rows = self.execute(fpfroude_sql).fetchall()
+            if not fpfroude_rows:
+                return False
+
+            # Prepare file path
+            fpfroude_dat = os.path.join(outdir, "FPFROUDE.DAT")
+
+            # Batch write to the file
+            with open(fpfroude_dat, "w") as f:
+                lines = [f"F {gid} {froudefp}\n" for gid, froudefp in fpfroude_rows]
+                f.writelines(lines)
+
+            return True
+
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.uc.show_error("ERROR 101218.1617: exporting FPFROUDE.DAT failed!.\n", e)
+            return False
+
     def export_shallowNSpatial(self, output=None):
         if self.parsed_format == self.FORMAT_DAT:
             return self.export_shallowNSpatial_dat(output)
