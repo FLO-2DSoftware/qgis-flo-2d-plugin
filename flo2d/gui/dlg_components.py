@@ -162,6 +162,11 @@ class ComponentsDialog(qtBaseClass, uiDialog):
                     self.spatial_lid_volume_chbox.setChecked(True)
                     self.spatial_lid_volume_chbox.setEnabled(True)
 
+            if os.path.isfile(last_dir + r"\SHALLOWN_SPATIAL.DAT"):
+                if os.path.getsize(last_dir + r"\SHALLOWN_SPATIAL.DAT") > 0:
+                    self.spatial_shallow_n_chbox.setChecked(True)
+                    self.spatial_shallow_n_chbox.setEnabled(True)
+
         elif self.in_or_out == "out":
             self.setWindowTitle("FLO-2D Components to Export")
             self.file_lbl.setText(last_dir)

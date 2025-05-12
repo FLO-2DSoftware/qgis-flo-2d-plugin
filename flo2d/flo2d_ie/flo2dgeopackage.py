@@ -3575,6 +3575,22 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
         self.batch_execute(tolspatial_sql, cells_sql)
 
+    def import_shallowNSpatial(self):
+        shallowNSpatial_sql = ["""INSERT INTO spatialshallow (geom, shallow_n) VALUES""", 2]
+        cells_sql = ["""INSERT INTO spatialshallow_cells (area_fid, grid_fid) VALUES""", 2]
+
+        self.clear_tables("spatialshallow", "spatialshallow_cells")
+        data = self.parser.parse_shallowNSpatial()
+        gids = (x[0] for x in data)
+        cells = self.grid_centroids(gids)
+        for i, row in enumerate(data, 1):
+            gid, shallow_n = row
+            geom = self.build_square(cells[gid], self.shrink)
+            shallowNSpatial_sql += [(geom, shallow_n)]
+            cells_sql += [(i, gid)]
+
+        self.batch_execute(shallowNSpatial_sql, cells_sql)
+
     def import_wsurf(self):
         wsurf_sql = ["""INSERT INTO wsurf (geom, grid_fid, wselev) VALUES""", 3]
 

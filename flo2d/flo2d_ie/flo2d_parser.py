@@ -1099,6 +1099,12 @@ class ParseDAT(object):
         data = [row for row in par]
         return data
 
+    def parse_shallowNSpatial(self):
+        shallowNSpatial = self.dat_files["SHALLOWN_SPATIAL.DAT"]
+        par = self.single_parser(shallowNSpatial)
+        data = [row for row in par]
+        return data
+
     def parse_wsurf(self):
         wsurf = self.dat_files["WSURF.DAT"]
         par = self.single_parser(wsurf)
