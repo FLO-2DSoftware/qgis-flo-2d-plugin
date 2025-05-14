@@ -64,14 +64,15 @@ class Flo2dGeoPackage(GeoPackageUtils):
         if self.parsed_format == self.FORMAT_DAT:
             self.parser = ParseDAT()
             self.parser.scan_project_dir(fpath)
+            self.cell_size = int(round(self.parser.calculate_cellsize()))
         elif self.parsed_format == self.FORMAT_HDF5:
             self.parser = ParseHDF5()
             self.parser.hdf5_filepath = fpath
+            self.cell_size = int(round(self.parser.calculate_cellsize()))
         else:
             raise NotImplementedError("Unsupported extension type.")
         if not get_cell_size:
             return True
-        self.cell_size = int(round(self.parser.calculate_cellsize()))
         if self.cell_size == 0:
             self.uc.show_info(
                 "ERROR 060319.1604: Cell size is 0 - something went wrong!\nDoes TOPO.DAT file exist or is empty?"
@@ -230,14 +231,14 @@ class Flo2dGeoPackage(GeoPackageUtils):
             sql = ["""INSERT INTO grid (fid, n_value, elevation, geom) VALUES""", 4]
 
             self.clear_tables("grid")
-            grid_group = self.parser.read_groups("Grid")[0]
+            grid_group = self.parser.read_groups("Input/Grid")[0]
 
             c = 0
             grid_code_list = grid_group.datasets["GRIDCODE"].data
             manning_list = grid_group.datasets["MANNING"].data
-            elevation_list = grid_group.datasets["Z"].data
-            x_list = grid_group.datasets["X"].data
-            y_list = grid_group.datasets["Y"].data
+            elevation_list = grid_group.datasets["ELEVATION"].data
+            x_list = grid_group.datasets["COORDINATES"].data[:, 0]
+            y_list = grid_group.datasets["COORDINATES"].data[:, 1]
             for grid_code, manning, z, x, y in zip(grid_code_list, manning_list, elevation_list, x_list, y_list):
                 if c < self.chunksize:
                     g = self.build_square_xy(x, y, self.cell_size)

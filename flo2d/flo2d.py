@@ -2412,10 +2412,40 @@ class Flo2D(object):
         """
         self.uncheck_all_info_tools()
         self.gutils.disable_geom_triggers()
-        self.f2g = Flo2dGeoPackage(self.con, self.iface)
         import_calls = [
             "import_cont_toler",
             "import_mannings_n_topo",
+            # "import_tolspatial",
+            # "import_inflow",
+            # "import_tailings",
+            # "import_outrc",
+            # "import_outflow",
+            # "import_rain",
+            # "import_raincell",
+            # "import_evapor",
+            # "import_infil",
+            # "import_chan",
+            # "import_xsec",
+            # "import_hystruc",
+            # "import_hystruc_bridge_xs",
+            # "import_street",
+            # "import_arf",
+            # "import_mult",
+            # "import_sed",
+            # "import_levee",
+            # "import_fpxsec",
+            # "import_breach",
+            # "import_gutter",
+            # "import_fpfroude",
+            # "import_steep_slopen",
+            # "import_shallowNSpatial",
+            # "import_lid_volume",
+            # "import_swmminp",
+            # "import_swmmflo",
+            # "import_swmmflort",
+            # "import_swmmoutf",
+            # "import_swmmflodropbox",
+            # "import_sdclogging",
         ]
         s = QSettings()
         last_dir = s.value("FLO-2D/lastGdsDir", "")
@@ -2427,252 +2457,248 @@ class Flo2D(object):
         )
 
         if not input_hdf5:
+            self.uc.bar_info("Import cancelled!")
+            self.uc.log_info("Import cancelled!")
             self.gutils.enable_geom_triggers()
             return
         indir = os.path.dirname(input_hdf5)
+        s = QSettings()
+        s.setValue("FLO-2D/lastGdsDir", indir)
         self.f2g = Flo2dGeoPackage(self.con, self.iface, parsed_format=Flo2dGeoPackage.FORMAT_HDF5)
         self.f2g.set_parser(input_hdf5)
-        try:
-            s = QSettings()
-            s.setValue("FLO-2D/lastGdsDir", indir)
-            QApplication.setOverrideCursor(Qt.WaitCursor)
-            self.call_IO_methods(import_calls, True)
-            self.uc.bar_info("Project imported from " + input_hdf5, dur=3)
-            self.uc.log_info("Project imported from " + input_hdf5, dur=3)
-            QApplication.restoreOverrideCursor()
-        finally:
-            QApplication.restoreOverrideCursor()
-            empty = self.f2g.is_table_empty("grid")
-            # check if a grid exists in the grid table
-            if not empty:
-                q = "There is a grid already defined in GeoPackage. Overwrite it?"
-                if self.uc.question(q):
-                    pass
-                else:
-                    self.uc.bar_info("Import cancelled!", dur=3)
-                    self.uc.log_info("Import cancelled!")
-                    self.gutils.enable_geom_triggers()
-                    return
-            try:
-                QApplication.setOverrideCursor(Qt.WaitCursor)
-                tables = [
-                    "all_schem_bc",
-                    "blocked_cells",
-                    "breach",
-                    "breach_cells",
-                    "breach_fragility_curves",
-                    "breach_global",
-                    "buildings_areas",
-                    "buildings_stats",
-                    "chan",
-                    "chan_confluences",
-                    "chan_elems",
-                    "chan_elems_interp",
-                    "chan_n",
-                    "chan_r",
-                    "chan_t",
-                    "chan_v",
-                    "chan_wsel",
-                    "chan_elems",
-                    "cont",
-                    "culvert_equations",
-                    "evapor",
-                    "evapor_hourly",
-                    "evapor_monthly",
-                    "fpfroude",
-                    "fpfroude_cells",
-                    "fpxsec",
-                    "fpxsec_cells",
-                    "grid",
-                    "gutter_areas",
-                    "gutter_cells",
-                    "gutter_globals",
-                    "infil",
-                    "infil_cells_green",
-                    "infil_cells_horton",
-                    "infil_cells_scs",
-                    "infil_chan_elems",
-                    "infil_chan_seg",
-                    "inflow",
-                    "inflow_cells",
-                    "inflow_time_series",
-                    "inflow_time_series_data",
-                    "levee_data",
-                    "levee_failure",
-                    "levee_fragility",
-                    "levee_general",
-                    "lid_volume_cells",
-                    "mud_areas",
-                    "mud_cells",
-                    "mult",
-                    "mult_areas",
-                    "mult_cells",
-                    "noexchange_chan_cells",
-                    "outflow",
-                    "outflow_cells",
-                    "outflow_time_series",
-                    "outflow_time_series_data",
-                    "qh_params",
-                    "qh_params_data",
-                    "qh_table",
-                    "qh_table_data",
-                    "rain",
-                    "rain_arf_cells",
-                    "rain_time_series",
-                    "rain_time_series_data",
-                    "raincell",
-                    "raincell_data",
-                    "rat_curves",
-                    "rat_table",
-                    "rbank",
-                    "reservoirs",
-                    "repl_rat_curves",
-                    "sed_group_areas",
-                    "sed_group_cells",
-                    "sed_groups",
-                    "sed_rigid_areas",
-                    "sed_rigid_cells",
-                    "sed_supply_areas",
-                    "sed_supply_cells",
-                    "spatialshallow",
-                    "spatialshallow_cells",
-                    "storm_drains",
-                    "street_elems",
-                    "street_general",
-                    "street_seg",
-                    "streets",
-                    "struct",
-                    "swmmflo",
-                    "swmmflort",
-                    "swmmflort_data",
-                    "swmmoutf",
-                    "tailing_reservoirs",
-                    "tolspatial",
-                    "tolspatial_cells",
-                    "user_bc_lines",
-                    "user_bc_points",
-                    "user_bc_polygons",
-                    "user_blocked_areas",
-                    "user_chan_n",
-                    "user_chan_r",
-                    "user_chan_t",
-                    "user_chan_v",
-                    "user_elevation_points",
-                    "user_elevation_polygons",
-                    "user_fpxsec",
-                    "user_infiltration",
-                    "user_left_bank",
-                    "user_levee_lines",
-                    "user_lid_volume_areas",
-                    "user_model_boundary",
-                    "user_noexchange_chan_areas",
-                    "user_reservoirs",
-                    "user_right_bank",
-                    "user_roughness",
-                    "user_streets",
-                    "user_struct",
-                    "user_swmm_conduits",
-                    "user_swmm_inlets_junctions",
-                    "user_swmm_outlets",
-                    "user_xsec_n_data",
-                    "user_xsections",
-                    "wstime",
-                    "wsurf",
-                    "xsec_n_data",
-                ]
-
-                for table in tables:
-                    self.gutils.clear_tables(table)
-
-                self.call_IO_methods(import_calls, True)
-
-                # save CRS to table cont
-                self.gutils.set_cont_par("PROJ", self.crs.toProj())
-
-                # load layers and tables
-                self.load_layers()
-                self.uc.bar_info("Project imported!", dur=3)
-                self.uc.log_info("Project imported!")
+        QApplication.setOverrideCursor(Qt.WaitCursor)
+        empty = self.f2g.is_table_empty("grid")
+        if not empty:
+            q = "There is a grid already defined in GeoPackage. Overwrite it?"
+            if self.uc.question(q):
+                pass
+            else:
+                self.uc.bar_info("Import cancelled!", dur=3)
+                self.uc.log_info("Import cancelled!")
                 self.gutils.enable_geom_triggers()
+                return
 
-                if "import_chan" in import_calls:
-                    self.gutils.create_schematized_rbank_lines_from_xs_tips()
+        QApplication.setOverrideCursor(Qt.WaitCursor)
+        tables = [
+            "all_schem_bc",
+            "blocked_cells",
+            "breach",
+            "breach_cells",
+            "breach_fragility_curves",
+            "breach_global",
+            "buildings_areas",
+            "buildings_stats",
+            "chan",
+            "chan_confluences",
+            "chan_elems",
+            "chan_elems_interp",
+            "chan_n",
+            "chan_r",
+            "chan_t",
+            "chan_v",
+            "chan_wsel",
+            "chan_elems",
+            "cont",
+            "culvert_equations",
+            "evapor",
+            "evapor_hourly",
+            "evapor_monthly",
+            "fpfroude",
+            "fpfroude_cells",
+            "fpxsec",
+            "fpxsec_cells",
+            "grid",
+            "gutter_areas",
+            "gutter_cells",
+            "gutter_globals",
+            "infil",
+            "infil_cells_green",
+            "infil_cells_horton",
+            "infil_cells_scs",
+            "infil_chan_elems",
+            "infil_chan_seg",
+            "inflow",
+            "inflow_cells",
+            "inflow_time_series",
+            "inflow_time_series_data",
+            "levee_data",
+            "levee_failure",
+            "levee_fragility",
+            "levee_general",
+            "lid_volume_cells",
+            "mud_areas",
+            "mud_cells",
+            "mult",
+            "mult_areas",
+            "mult_cells",
+            "noexchange_chan_cells",
+            "outflow",
+            "outflow_cells",
+            "outflow_time_series",
+            "outflow_time_series_data",
+            "qh_params",
+            "qh_params_data",
+            "qh_table",
+            "qh_table_data",
+            "rain",
+            "rain_arf_cells",
+            "rain_time_series",
+            "rain_time_series_data",
+            "raincell",
+            "raincell_data",
+            "rat_curves",
+            "rat_table",
+            "rbank",
+            "reservoirs",
+            "repl_rat_curves",
+            "sed_group_areas",
+            "sed_group_cells",
+            "sed_groups",
+            "sed_rigid_areas",
+            "sed_rigid_cells",
+            "sed_supply_areas",
+            "sed_supply_cells",
+            "spatialshallow",
+            "spatialshallow_cells",
+            "storm_drains",
+            "street_elems",
+            "street_general",
+            "street_seg",
+            "streets",
+            "struct",
+            "swmmflo",
+            "swmmflort",
+            "swmmflort_data",
+            "swmmoutf",
+            "tailing_reservoirs",
+            "tolspatial",
+            "tolspatial_cells",
+            "user_bc_lines",
+            "user_bc_points",
+            "user_bc_polygons",
+            "user_blocked_areas",
+            "user_chan_n",
+            "user_chan_r",
+            "user_chan_t",
+            "user_chan_v",
+            "user_elevation_points",
+            "user_elevation_polygons",
+            "user_fpxsec",
+            "user_infiltration",
+            "user_left_bank",
+            "user_levee_lines",
+            "user_lid_volume_areas",
+            "user_model_boundary",
+            "user_noexchange_chan_areas",
+            "user_reservoirs",
+            "user_right_bank",
+            "user_roughness",
+            "user_streets",
+            "user_struct",
+            "user_swmm_conduits",
+            "user_swmm_inlets_junctions",
+            "user_swmm_outlets",
+            "user_xsec_n_data",
+            "user_xsections",
+            "wstime",
+            "wsurf",
+            "xsec_n_data",
+        ]
 
-                self.setup_dock_widgets()
-                self.lyrs.refresh_layers()
-                self.lyrs.zoom_to_all()
-                # See if geopackage has grid with 'col' and 'row' fields:
-                grid_lyr = self.lyrs.data["grid"]["qlyr"]
-                field_index = grid_lyr.fields().indexFromName("col")
-                if field_index == -1:
+        for table in tables:
+            self.gutils.clear_tables(table)
+
+        self.call_IO_methods(import_calls, True)
+
+        # save CRS to table cont
+        self.gutils.set_cont_par("PROJ", self.crs.toProj())
+        self.gutils.set_cont_par("CELLSIZE", int(round(self.f2g.parser.calculate_cellsize())))
+
+        # load layers and tables
+        self.load_layers()
+        self.uc.bar_info("Project successfully imported!", dur=3)
+        self.uc.log_info("Project successfully imported!")
+        self.gutils.enable_geom_triggers()
+
+        if "import_chan" in import_calls:
+            self.gutils.create_schematized_rbank_lines_from_xs_tips()
+
+        self.setup_dock_widgets()
+        self.lyrs.refresh_layers()
+        self.lyrs.zoom_to_all()
+
+        # See if geopackage has grid with 'col' and 'row' fields:
+        grid_lyr = self.lyrs.data["grid"]["qlyr"]
+        field_index = grid_lyr.fields().indexFromName("col")
+        if field_index == -1:
+            QApplication.restoreOverrideCursor()
+
+            add_new_colums = self.uc.customized_question(
+                "FLO-2D",
+                "WARNING 290521.0500:    Old GeoPackage.\n\nGrid table doesn't have 'col' and 'row' fields!\n\n"
+                + "Would you like to add the 'col' and 'row' fields to the grid table?",
+                QMessageBox.Yes | QMessageBox.No | QMessageBox.Cancel,
+                QMessageBox.Cancel,
+            )
+
+            if add_new_colums == QMessageBox.Cancel:
+                return
+
+            if add_new_colums == QMessageBox.No:
+                return
+            else:
+                if add_col_and_row_fields(grid_lyr):
+                    assign_col_row_indexes_to_grid(grid_lyr, self.gutils)
+        else:
+            cell = self.gutils.execute("SELECT col FROM grid WHERE fid = 1").fetchone()
+            if cell is None:
+                QApplication.setOverrideCursor(Qt.ArrowCursor)
+                proceed = self.uc.question(
+                    "Grid layer's fields 'col' and 'row' have NULL values!\n\nWould you like to assign them?"
+                )
+                QApplication.restoreOverrideCursor()
+                if proceed:
+                    QApplication.setOverrideCursor(Qt.WaitCursor)
+                    assign_col_row_indexes_to_grid(self.lyrs.data["grid"]["qlyr"], self.gutils)
                     QApplication.restoreOverrideCursor()
-
-                    add_new_colums = self.uc.customized_question(
-                        "FLO-2D",
-                        "WARNING 290521.0500:    Old GeoPackage.\n\nGrid table doesn't have 'col' and 'row' fields!\n\n"
-                        + "Would you like to add the 'col' and 'row' fields to the grid table?",
-                        QMessageBox.Yes | QMessageBox.No | QMessageBox.Cancel,
-                        QMessageBox.Cancel,
-                    )
-
-                    if add_new_colums == QMessageBox.Cancel:
-                        return
-
-                    if add_new_colums == QMessageBox.No:
-                        return
-                    else:
-                        if add_col_and_row_fields(grid_lyr):
-                            assign_col_row_indexes_to_grid(grid_lyr, self.gutils)
                 else:
-                    cell = self.gutils.execute("SELECT col FROM grid WHERE fid = 1").fetchone()
-                    if cell is None:
-                        QApplication.setOverrideCursor(Qt.ArrowCursor)
-                        proceed = self.uc.question(
-                            "Grid layer's fields 'col' and 'row' have NULL values!\n\nWould you like to assign them?"
-                        )
-                        QApplication.restoreOverrideCursor()
-                        if proceed:
-                            QApplication.setOverrideCursor(Qt.WaitCursor)
-                            assign_col_row_indexes_to_grid(self.lyrs.data["grid"]["qlyr"], self.gutils)
-                            QApplication.restoreOverrideCursor()
-                        else:
-                            return
+                    return
 
-                QApplication.restoreOverrideCursor()
-            except Exception as e:
-                QApplication.restoreOverrideCursor()
-                self.uc.show_error("ERROR 050521.0349: importing from .HDF5 file!.\n", e)
-            finally:
-                QApplication.restoreOverrideCursor()
-                self.gutils.enable_geom_triggers()
+        QApplication.restoreOverrideCursor()
+        # except Exception as e:
+        #     QApplication.restoreOverrideCursor()
+        #     self.uc.show_error("ERROR 050521.0349: importing from .HDF5 file!.\n", e)
+        # finally:
+        QApplication.restoreOverrideCursor()
+        self.gutils.enable_geom_triggers()
 
-                # Check the imported components on the schema2user
-                specific_components = []
+        # Check the imported components on the schema2user
+        specific_components = []
 
-                # Boundary Conditions
-                if "import_inflow" in import_calls or "import_outflow" in import_calls or "import_tailings" in import_calls:
-                    specific_components.append(2)
+        # Boundary Conditions
+        if "import_inflow" in import_calls or "import_outflow" in import_calls or "import_tailings" in import_calls:
+            specific_components.append(2)
 
-                if "import_chan" in import_calls or "import_xsec" in import_calls:
-                    specific_components.append(3)
+        if "import_chan" in import_calls or "import_xsec" in import_calls:
+            specific_components.append(3)
 
-                if "import_hystruc" in import_calls or "import_hystruc_bridge_xs" in import_calls:
-                    specific_components.append(7)
+        if "import_hystruc" in import_calls or "import_hystruc_bridge_xs" in import_calls:
+            specific_components.append(7)
 
-                if "import_levee" in import_calls:
-                    specific_components.append(4)
+        if "import_levee" in import_calls:
+            specific_components.append(4)
 
-                if "import_fpxsec" in import_calls:
-                    specific_components.append(5)
+        if "import_fpxsec" in import_calls:
+            specific_components.append(5)
 
-                if "import_mannings_n_topo" in import_calls:
-                    specific_components.append(1)
+        if "import_mannings_n_topo" in import_calls:
+            specific_components.append(1)
 
-                if len(specific_components) > 0:
-                    msg = "To complete the user layer functionality, use the <FONT COLOR=black>Convert Schematic " \
-                          "Layers to User Layers</FONT> tool in the FLO-2D panel."
-                    self.uc.show_info(msg)
-                    self.schematic2user(True)
+        if len(specific_components) > 0:
+            msg = "To complete the user layer functionality, use the <FONT COLOR=black>Convert Schematic " \
+                  "Layers to User Layers</FONT> tool in the FLO-2D panel."
+            self.uc.show_info(msg)
+            self.schematic2user(True)
 
     @connection_required
     def import_components(self):
