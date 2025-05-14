@@ -7803,6 +7803,139 @@ class Flo2dGeoPackage(GeoPackageUtils):
             self.uc.show_error("ERROR 101218.1612: exporting SED.DAT failed!.\n", e)
             return False
 
+    def export_sed_md(self, outdir, subdomain):
+        try:
+            # check if there is any sedimentation data defined.
+            if self.is_table_empty("mud") and self.is_table_empty("sed"):
+                return False
+
+            ISED = self.gutils.get_cont_par("ISED")
+            MUD = self.gutils.get_cont_par("MUD")
+
+            if ISED == "0" and MUD == "0":
+                return False
+
+            sed_m_sql = """SELECT va, vb, ysa, ysb, sgsm, xkx FROM mud ORDER BY fid;"""
+            sed_ce_sql = """SELECT isedeqg, isedsizefrac, dfifty, sgrad, sgst, dryspwt, cvfg, isedsupply, isedisplay, scourdep
+                            FROM sed ORDER BY fid;"""
+            sed_z_sql = """SELECT dist_fid, isedeqi, bedthick, cvfi FROM sed_groups ORDER BY dist_fid;"""
+            sed_p_sql = """SELECT sediam, sedpercent FROM sed_group_frac_data WHERE dist_fid = ? ORDER BY sedpercent;"""
+            areas_d_sql = """SELECT fid, debrisv FROM mud_areas ORDER BY fid;"""
+
+            cells_d_sql = f"""SELECT 
+                                md.domain_cell 
+                            FROM 
+                                mud_cells AS mc
+                            JOIN 
+                                schema_md_cells md ON mc.grid_fid = md.grid_fid
+                            WHERE 
+                                area_fid = ? AND md.domain_fid = {subdomain};"""
+
+            cells_r_sql = f"""SELECT 
+                                md.domain_cell 
+                            FROM 
+                                sed_rigid_cells AS rc
+                            JOIN 
+                                schema_md_cells md ON rc.grid_fid = md.grid_fid
+                            WHERE 
+                                md.domain_fid = {subdomain};"""
+
+            areas_s_sql = """SELECT fid, dist_fid, isedcfp, ased, bsed FROM sed_supply_areas ORDER BY dist_fid;"""
+
+            cells_s_sql = f"""SELECT 
+                                md.domain_cell  
+                            FROM 
+                                sed_supply_cells AS sc
+                            JOIN 
+                                schema_md_cells md ON sc.grid_fid = md.grid_fid
+                            WHERE 
+                                area_fid = ? AND md.domain_fid = {subdomain};"""
+
+            data_n_sql = """SELECT ssediam, ssedpercent FROM sed_supply_frac_data WHERE dist_fid = ? ORDER BY ssedpercent;"""
+
+            group_sql = f"""
+                            SELECT 
+                                md.domain_cell, sg.group_fid
+                            FROM 
+                                sed_group_areas AS sg
+                            JOIN 
+                                sed_group_cells AS gc ON sg.fid = gc.area_fid
+                            JOIN 
+                                schema_md_cells AS md ON gc.grid_fid = md.grid_fid
+                            WHERE 
+                                md.domain_fid = {subdomain}
+                            ORDER BY 
+                                sg.fid;
+                        """
+
+            line1 = "M  {0}  {1}  {2}  {3}  {4}  {5}\n"
+            line2 = "C  {0}  {1}  {2}  {3}  {4}  {5}  {6} {7}  {8}\n"
+            line3 = "Z  {0}  {1}  {2}\n"
+            line4 = "P  {0}  {1}\n"
+            line5 = "D  {0}  {1}\n"
+            line6 = "E  {0}\n"
+            line7 = "R  {0}\n"
+            line8 = "S  {0}  {1}  {2}  {3}\n"
+            line9 = "N  {0}  {1}\n"
+            line10 = "G  {0}  {1}\n"
+
+            m_data = self.execute(sed_m_sql).fetchone()
+            ce_data = self.execute(sed_ce_sql).fetchone()
+            if m_data is None and ce_data is None:
+                return False
+
+            sed = os.path.join(outdir, "SED.DAT")
+            with open(sed, "w") as s:
+                if MUD in ["1", "2"] and m_data is not None:
+                    # Mud/debris transport or 2 phase flow:
+                    s.write(line1.format(*m_data))
+
+                    if int(self.gutils.get_cont_par("IDEBRV")) == 1:
+                        for aid, debrisv in self.execute(areas_d_sql):
+                            result = self.execute(cells_d_sql, (aid,)).fetchone()
+                            if result:  # Ensure result is not None
+                                gid = result[0]
+                                s.write(line5.format(gid, debrisv))
+                    e_data = None
+
+                if (ISED == "1" or MUD == "2") and ce_data is not None:
+                    # Sediment Transport or 2 phase flow:
+                    e_data = ce_data[-1]
+                    s.write(line2.format(*ce_data[:-1]))
+
+                    for row in self.execute(sed_z_sql):
+                        dist_fid = row[0]
+                        s.write(line3.format(*row[1:]))
+                        for prow in self.execute(sed_p_sql, (dist_fid,)):
+                            s.write(line4.format(*prow))
+
+                    if e_data is not None:
+                        s.write(line6.format(e_data))
+
+                    for row in self.execute(cells_r_sql):
+                        s.write(line7.format(*row))
+
+                    for row in self.execute(areas_s_sql):
+                        aid = row[0]
+                        dist_fid = row[1]
+                        result = self.execute(cells_s_sql, (aid,)).fetchone()
+                        if result:
+                            gid = result[0]
+                            s.write(line8.format(gid, *row[2:]))
+                            for nrow in self.execute(data_n_sql, (dist_fid,)):
+                                s.write(line9.format(*nrow))
+
+                    result = self.execute(group_sql).fetchall()
+                    for grid_id, group_id in result:
+                        s.write(line10.format(grid_id, group_id))
+
+            return True
+
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.uc.show_error("ERROR 101218.1612: exporting SED.DAT failed!.\n", e)
+            return False
+
     def export_levee(self, output=None):
         if self.parsed_format == self.FORMAT_DAT:
             return self.export_levee_dat(output)

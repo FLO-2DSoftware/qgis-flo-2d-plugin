@@ -443,7 +443,7 @@ class ExportMultipleDomainsDialog(qtBaseClass, uiDialog):
                 # "export_street",
                 "export_arf_md",
                 # "export_mult",
-                "export_sed",
+                "export_sed_md",
                 # "export_levee",
                 # "export_fpxsec",
                 # "export_breach",
