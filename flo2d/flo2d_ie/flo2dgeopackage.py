@@ -3575,6 +3575,22 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
         self.batch_execute(tolspatial_sql, cells_sql)
 
+    def import_shallowNSpatial(self):
+        shallowNSpatial_sql = ["""INSERT INTO spatialshallow (geom, shallow_n) VALUES""", 2]
+        cells_sql = ["""INSERT INTO spatialshallow_cells (area_fid, grid_fid) VALUES""", 2]
+
+        self.clear_tables("spatialshallow", "spatialshallow_cells")
+        data = self.parser.parse_shallowNSpatial()
+        gids = (x[0] for x in data)
+        cells = self.grid_centroids(gids)
+        for i, row in enumerate(data, 1):
+            gid, shallow_n = row
+            geom = self.build_square(cells[gid], self.shrink)
+            shallowNSpatial_sql += [(geom, shallow_n)]
+            cells_sql += [(i, gid)]
+
+        self.batch_execute(shallowNSpatial_sql, cells_sql)
+
     def import_wsurf(self):
         wsurf_sql = ["""INSERT INTO wsurf (geom, grid_fid, wselev) VALUES""", 3]
 
@@ -3606,7 +3622,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
         self.batch_execute(wstime_sql)
 
-    def export_cont_toler(self, output=None):
+    def export_cont_toler(self, output=None, subdomain=None):
+        """subdomain: Placeholder parameter for compatibility with other code logic."""
         if self.parsed_format == self.FORMAT_DAT:
             return self.export_cont_toler_dat(output)
         elif self.parsed_format == self.FORMAT_HDF5:
@@ -3817,18 +3834,19 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 else:
                     # Write individual steep slope grid IDs
                     sql = """SELECT grid_fid FROM steep_slope_n_cells ORDER BY fid;"""
-                    records = self.execute(sql)
-                    s.write("2\n")
-                    for row in records:
-                        grid_fid = row[0]  # Unpack the first value
-                        s.write(f"{grid_fid}\n")
+                    records = self.gutils.execute(sql).fetchall()
+                    if records:
+                        s.write("2\n")
+                        for row in records:
+                            grid_fid = row[0]  # Unpack the first value
+                            s.write(f"{grid_fid}\n")
 
             return True
 
         except Exception as e:
             QApplication.restoreOverrideCursor()
             self.uc.bar_error("ERROR: exporting STEEP_SLOPEN.DAT failed!")
-            self.uc.log_info("ERROR: exporting STEEP_SLOPEN.DAT failed!\n", e)
+            self.uc.log_info("ERROR: exporting STEEP_SLOPEN.DAT failed!\n")
             QApplication.setOverrideCursor(Qt.WaitCursor)
             return False
 
@@ -3859,14 +3877,15 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     spatially_variable_group.create_dataset('STEEP_SLOPEN_GLOBAL', [])
                     spatially_variable_group.datasets["STEEP_SLOPEN_GLOBAL"].data.append(2)
                 sql = """SELECT grid_fid FROM steep_slope_n_cells ORDER BY fid;"""
-                records = self.execute(sql)
-                for row in records:
-                    grid_fid = row[0]  # Unpack the first value
-                    try:
-                        spatially_variable_group.datasets["STEEP_SLOPEN"].data.append(grid_fid)
-                    except:
-                        spatially_variable_group.create_dataset('STEEP_SLOPEN', [])
-                        spatially_variable_group.datasets["STEEP_SLOPEN"].data.append(grid_fid)
+                records = self.gutils.execute(sql).fetchall()
+                if records:
+                    for row in records:
+                        grid_fid = row[0]  # Unpack the first value
+                        try:
+                            spatially_variable_group.datasets["STEEP_SLOPEN"].data.append(grid_fid)
+                        except:
+                            spatially_variable_group.create_dataset('STEEP_SLOPEN', [])
+                            spatially_variable_group.datasets["STEEP_SLOPEN"].data.append(grid_fid)
 
             self.parser.write_groups(spatially_variable_group)
             return True
@@ -3874,7 +3893,50 @@ class Flo2dGeoPackage(GeoPackageUtils):
         except Exception as e:
             QApplication.restoreOverrideCursor()
             self.uc.bar_error("ERROR: exporting STEEP_SLOPEN to hdf5 failed!")
-            self.uc.log_info("ERROR: exporting STEEP_SLOPEN to hdf5 failed!\n", e)
+            self.uc.log_info("ERROR: exporting STEEP_SLOPEN to hdf5 failed!\n")
+            QApplication.setOverrideCursor(Qt.WaitCursor)
+            return False
+
+    def export_steep_slopen_md(self, outdir, subdomain):
+        try:
+
+            if self.is_table_empty("steep_slope_n_cells"):
+                return False
+
+            steep_slopen = os.path.join(outdir, "STEEP_SLOPEN.DAT")
+
+            # Check if there are global steep slope areas
+            qry = """SELECT COUNT(*) FROM steep_slope_n_cells WHERE global = 1;"""
+            result = self.gutils.execute(qry).fetchone()
+
+            with open(steep_slopen, "w") as s:
+                if result and result[0] > 0:
+                    # Write global steep slope value
+                    s.write("1\n")
+                else:
+                    # Write individual steep slope grid IDs
+                    sql = f"""SELECT 
+                                md.domain_cell
+                            FROM 
+                                steep_slope_n_cells AS ss
+                            JOIN 
+                                schema_md_cells md ON ss.grid_fid = md.grid_fid
+                            WHERE 
+                                md.domain_fid =  {subdomain}
+                            ;"""
+                    records = self.gutils.execute(sql).fetchall()
+                    if records:
+                        s.write("2\n")
+                        for row in records:
+                            grid_fid = row[0]  # Unpack the first value
+                            s.write(f"{grid_fid}\n")
+
+            return True
+
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.uc.bar_error("ERROR: exporting STEEP_SLOPEN.DAT failed!")
+            self.uc.log_info("ERROR: exporting STEEP_SLOPEN.DAT failed!\n")
             QApplication.setOverrideCursor(Qt.WaitCursor)
             return False
 
@@ -3934,6 +3996,39 @@ class Flo2dGeoPackage(GeoPackageUtils):
             QApplication.restoreOverrideCursor()
             self.uc.bar_error("ERROR: exporting LID_VOLUME to hdf5 failed!")
             self.uc.log_info("ERROR: exporting LID_VOLUME to hdf5 failed!\n", e)
+            QApplication.setOverrideCursor(Qt.WaitCursor)
+            return False
+
+    def export_lid_volume_md(self, outdir, subdomain):
+        try:
+            if self.is_table_empty("lid_volume_cells"):
+                return False
+
+            lid_volume = os.path.join(outdir, "LID_VOLUME.DAT")
+
+            with open(lid_volume, "w") as lid:
+                # Write individual lid volume grid IDs
+                sql = f"""SELECT 
+                            md.domain_cell, 
+                            volume 
+                        FROM 
+                            lid_volume_cells AS lv
+                        JOIN 
+                            schema_md_cells md ON lv.grid_fid = md.grid_fid
+                        WHERE 
+                            md.domain_fid = {subdomain};"""
+                records = self.execute(sql)
+                for row in records:
+                    grid_fid = row[0]
+                    volume = row[1]
+                    lid.write(f"{grid_fid} {volume}\n")
+
+            return True
+
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.uc.bar_error("ERROR: exporting LID_VOLUME.DAT failed!")
+            self.uc.log_info("ERROR: exporting LID_VOLUME.DAT failed!\n", e)
             QApplication.setOverrideCursor(Qt.WaitCursor)
             return False
 
@@ -4045,6 +4140,47 @@ class Flo2dGeoPackage(GeoPackageUtils):
             self.uc.show_error("ERROR 101218.1541: exporting MANNINGS_N.DAT or TOPO.DAT failed!.\n", e)
             QApplication.setOverrideCursor(Qt.WaitCursor)
             return False
+
+    def export_mannings_n_topo_md(self, outdir, subdomain):
+        
+        sub_grid_cells = self.gutils.execute(f"""SELECT DISTINCT 
+                                                    md.domain_cell, 
+                                                    g.n_value, 
+                                                    g.elevation,
+                                                    ST_AsText(ST_Centroid(GeomFromGPB(g.geom)))
+                                                 FROM 
+                                                    grid g
+                                                 JOIN 
+                                                    schema_md_cells md ON g.fid = md.grid_fid
+                                                 WHERE 
+                                                     md.domain_fid = {subdomain};""").fetchall()
+
+        records = sorted(sub_grid_cells, key=lambda x: x[0])
+
+        mannings = os.path.join(outdir, "MANNINGS_N.DAT")
+        topo = os.path.join(outdir, "TOPO.DAT")
+
+        mline = "{0: >10} {1: >10}\n"
+        tline = "{0: >15} {1: >15} {2: >10}\n"
+
+        with open(mannings, "w") as m, open(topo, "w") as t:
+            for row in records:
+                fid, man, elev, geom = row
+                if man == None or elev == None:
+                    if man == None:
+                        man = 0.04
+                    if elev == None:
+                        elev = -9999
+                x, y = geom.strip("POINT()").split()
+                m.write(mline.format(fid, "{0:.3f}".format(man)))
+                t.write(
+                    tline.format(
+                        "{0:.4f}".format(float(x)),
+                        "{0:.4f}".format(float(y)),
+                        "{0:.4f}".format(elev),
+                    )
+                )
+        return True
 
     # def export_neighbours(self):
     #     if self.parsed_format == self.FORMAT_DAT:
@@ -4884,6 +5020,183 @@ class Flo2dGeoPackage(GeoPackageUtils):
             self.uc.show_warn(msg)
         return True
 
+    def export_outflow_md(self, outdir, subdomain):
+        # check if there are any outflows defined.
+        try:
+
+            outflow_sql = """
+               SELECT fid, fp_out, chan_out, hydro_out, chan_tser_fid, chan_qhpar_fid, chan_qhtab_fid, fp_tser_fid
+               FROM outflow WHERE fid = ?;"""
+
+            outflow_cells_sql = f"""SELECT 
+                                    outflow_fid, 
+                                    md.domain_cell 
+                                FROM 
+                                    outflow_cells AS oc
+                                JOIN 
+                                    schema_md_cells md ON oc.grid_fid = md.grid_fid
+                                WHERE 
+								    md.domain_fid = {subdomain};"""
+
+            qh_params_data_sql = """SELECT hmax, coef, exponent FROM qh_params_data WHERE params_fid = ?;"""
+            qh_table_data_sql = """SELECT depth, q FROM qh_table_data WHERE table_fid = ? ORDER BY fid;"""
+            ts_data_sql = """SELECT time, value FROM outflow_time_series_data WHERE series_fid = ? ORDER BY fid;"""
+
+            k_line = "K  {0}\n"
+            qh_params_line = "H  {0}  {1}  {2}\n"
+            qh_table_line = "T  {0}  {1}\n"
+            n_line = "N     {0}  {1}\n"
+            ts_line = "S  {0}  {1}\n"
+            o_line = "{0}  {1}\n"
+
+            out_cells = self.execute(outflow_cells_sql).fetchall()
+
+            outflow = os.path.join(outdir, "OUTFLOW.DAT")
+            floodplains = {}
+            previous_oid = -1
+            row = None
+            border = get_BC_Border()
+
+            warning = ""
+            with open(outflow, "w") as o:
+                if out_cells:
+                    for oid, gid in out_cells:
+                        if previous_oid != oid:
+                            row = self.execute(outflow_sql, (oid,)).fetchone()
+                            if row is not None:
+                                row = [x if x is not None and x != "" else 0 for x in row]
+                                previous_oid = oid
+                            else:
+                                warning += (
+                                        "<br>* Cell " + str(
+                                    gid) + " in 'outflow_cells' table points to 'outflow' table with"
+                                )
+                                warning += "<br> 'outflow_fid' = " + str(oid) + ".<br>"
+                                continue
+                        else:
+                            pass
+
+                        if row is not None:
+                            (
+                                fid,
+                                fp_out,
+                                chan_out,
+                                hydro_out,
+                                chan_tser_fid,
+                                chan_qhpar_fid,
+                                chan_qhtab_fid,
+                                fp_tser_fid,
+                            ) = row
+                            if gid not in floodplains and (fp_out == 1 or hydro_out > 0):
+                                floodplains[gid] = hydro_out
+                            if chan_out == 1:
+                                o.write(k_line.format(gid))
+                                for values in self.execute(qh_params_data_sql, (chan_qhpar_fid,)):
+                                    o.write(qh_params_line.format(*values))
+                                for values in self.execute(qh_table_data_sql, (chan_qhtab_fid,)):
+                                    o.write(qh_table_line.format(*values))
+                            else:
+                                pass
+
+                            if chan_tser_fid > 0 or fp_tser_fid > 0:
+                                if border is not None:
+                                    if gid in border:
+                                        continue
+                                nostacfp = 1 if chan_tser_fid == 1 else 0
+                                o.write(n_line.format(gid, nostacfp))
+                                series_fid = chan_tser_fid if chan_tser_fid > 0 else fp_tser_fid
+                                for values in self.execute(ts_data_sql, (series_fid,)):
+                                    o.write(ts_line.format(*values))
+                            else:
+                                pass
+
+                # Write O1, O2, ... lines with the multi domain logic, don't allow for user hydro_out
+                if any(hydro_out > 0 for _, hydro_out in floodplains.items()):
+                    self.uc.bar_warn("During multiple domain export, the outflow hydrograph boundary condition is automatically replaced by the connections between the domains.")
+                    self.uc.log_info("During multiple domain export, the outflow hydrograph boundary condition is automatically replaced by the connections between the domains.")
+
+                outflow_md_connections_sql = f"""SELECT
+                                                       fid_subdomain_1,
+                                                       fid_subdomain_2,
+                                                       fid_subdomain_3,
+                                                       fid_subdomain_4,
+                                                       fid_subdomain_5,
+                                                       fid_subdomain_6,
+                                                       fid_subdomain_7,
+                                                       fid_subdomain_8,
+                                                       fid_subdomain_9
+                                                   FROM
+                                                       mult_domains_con AS im
+                                                   WHERE 
+                                                        fid = {subdomain};"""
+
+                result = self.gutils.execute(outflow_md_connections_sql).fetchone()
+
+                # Initialize fid_subdomains
+                fid_subdomains = [fid for fid in result if fid not in (0, None, 'NULL')] if result else []
+
+                # Find fids greater than 9
+                fids_greater_than_9 = [fid for fid in fid_subdomains if int(fid) > 9]
+
+                # Find available fids between 1 and 9
+                used_fids = set(fid_subdomains)  # Already used fids
+                available_fids = [i for i in range(1, 10) if i not in used_fids]
+
+                # Create a dictionary to map fids greater than 9 to the lowest available fid
+                fid_mapping = {}
+                for fid in fids_greater_than_9:
+                    if available_fids:
+                        new_fid = available_fids.pop(0)  # Get the lowest available fid
+                        fid_mapping[fid] = new_fid
+
+                # Proceed only if fid_subdomains is not empty
+                if fid_subdomains:
+                    placeholders = ", ".join("?" for _ in fid_subdomains)  # Create placeholders for the IN clause
+                    outflow_md_cells_sql = f"""
+                        SELECT 
+                            domain_cell, 
+                            down_domain_fid 
+                        FROM 
+                            schema_md_cells AS md
+                        JOIN 
+                            mult_domains_con mdc ON mdc.fid = md.domain_fid
+                        WHERE 
+                            domain_fid = ? AND down_domain_fid IS NOT NULL AND down_domain_fid IN ({placeholders})
+                        ORDER BY 
+                            down_domain_fid, domain_cell;
+                    """
+                    outflow_md_cells = self.execute(outflow_md_cells_sql, (subdomain, *fid_subdomains)).fetchall()
+
+                    for cell in outflow_md_cells:
+                        gid = cell[0]
+                        hydro_out = cell[1]
+                        if hydro_out > 9:
+                            # Check if the hydro_out value is in the mapping
+                            if hydro_out in fid_mapping:
+                                # Replace the hydro_out value with the mapped value
+                                hydro_out = fid_mapping[hydro_out]
+                        ident = "O{0}".format(hydro_out)
+                        o.write(o_line.format(ident, gid))
+                        if border is not None and gid in border:
+                            border.remove(gid)
+
+                # Write lines 'O cell_id":
+                if border is not None:
+                    for b in border:
+                        o.write(o_line.format("O", b))
+
+            QApplication.restoreOverrideCursor()
+            if warning != "":
+                msg = "ERROR 170319.2018: error while exporting OUTFLOW.DAT!<br><br>" + warning
+                msg += "<br><br><FONT COLOR=red>Did you schematize the Boundary Conditions?</FONT>"
+                self.uc.show_warn(msg)
+            return True
+
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.uc.show_error("ERROR 101218.1543: exporting OUTFLOW.DAT failed!.\n", e)
+            return False
+
     def export_rain(self, output=None):
         if self.parsed_format == self.FORMAT_DAT:
             return self.export_rain_dat(output)
@@ -4985,6 +5298,95 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
         ts_data_sql = """SELECT time, value FROM rain_time_series_data WHERE series_fid = ? ORDER BY fid;"""
         rain_cells_sql = """SELECT grid_fid, arf FROM rain_arf_cells ORDER BY fid;"""
+
+        rain_line1 = "{0}  {1}\n"
+        rain_line2 = "{0}   {1}  {2}  {3}\n"
+        tsd_line3 = "R {0}   {1}\n"  # Rainfall Time series distribution
+        rain_line4 = "{0}   {1}\n"
+
+        cell_line5 = "{0: <10} {1}\n"
+
+        rain_row = self.execute(
+            rain_sql
+        ).fetchone()  # Returns a single feature with all the singlevalues of the rain table:
+        # time_series_fid, irainreal, irainbuilding, tot_rainfall, rainabs,
+        # irainarf, movingstorm, rainspeed, iraindir.
+
+        # If no data was found on the rain table, return False
+        if rain_row is None:
+            return False
+
+        # If tot_rainfall is zero, return False
+        if rain_row[1] == 0 and rain_row[3] == 0:
+            self.uc.log_info("Total Storm Rainfall is not defined!")
+            self.uc.bar_warn("Total Storm Rainfall is not defined!")
+            return False
+
+        rain = os.path.join(outdir, "RAIN.DAT")
+        with open(rain, "w") as r:
+            r.write(rain_line1.format(*rain_row[1:3]))  # irainreal, irainbuilding
+            r.write(rain_line2.format(*rain_row[3:7]))  # tot_rainfall (RTT), rainabs, irainarf, movingstorm
+
+            fid = rain_row[
+                0
+            ]  # time_series_fid (pointer to the 'rain_time_series_data' table where the pairs (time , distribution) are.
+            for row in self.execute(ts_data_sql, (fid,)):
+                if None not in row:  # Writes 3rd. lines if rain_time_series_data exists (Rainfall distribution).
+                    r.write(
+                        tsd_line3.format(*row)
+                    )  # Writes 'R time value (i.e. distribution)' (i.e. 'R  R_TIME R_DISTR' in FLO-2D jargon).
+                    # This is a time series created from the Rainfall Distribution tool in the Rain Editor,
+                    # selected from a list
+
+            if rain_row[6] == 1:  # if movingstorm from rain = 0, omit this line.
+                if (
+                        rain_row[-1] is not None
+                ):  # row[-1] is the last value of tuple (time_series_fid, irainreal, irainbuilding, tot_rainfall,
+                    # rainabs, irainarf, movingstorm, rainspeed, iraindir).
+                    r.write(
+                        rain_line4.format(*rain_row[-2:])
+                    )  # Write the last 2 values (-2 means 2 from last): rainspeed and iraindir.
+                else:
+                    pass
+            else:
+                pass
+
+            if rain_row[5] == 1:  # if irainarf from rain = 0, omit this line.
+                for row in self.execute(rain_cells_sql):
+                    r.write(cell_line5.format(row[0], "{0:.3f}".format(row[1])))
+
+        return True
+
+        # except Exception as e:
+        #     QApplication.restoreOverrideCursor()
+        #     self.uc.show_error("ERROR 101218.1543: exporting RAIN.DAT failed!.\n", e)
+        #     return False
+
+    def export_rain_md(self, outdir, subdomain):
+        # check if there is any rain defined.
+        # try:
+
+        # Check if rain table is empty and return False if true
+        if self.is_table_empty("rain"):
+            self.uc.log_info("Rain table is empty!")
+            self.uc.bar_info("Rain table is empty!")
+            return False
+
+        rain_sql = """SELECT time_series_fid, irainreal, irainbuilding, tot_rainfall,
+                                rainabs, irainarf, movingstorm, rainspeed, iraindir
+                         FROM rain;"""
+
+        ts_data_sql = """SELECT time, value FROM rain_time_series_data WHERE series_fid = ? ORDER BY fid;"""
+
+        rain_cells_sql = f"""SELECT 
+                                md.domain_cell, 
+                                arf 
+                            FROM 
+                                rain_arf_cells AS ra
+                            JOIN 
+                                schema_md_cells md ON ra.grid_fid = md.grid_fid
+                             WHERE 
+                                md.domain_fid = {subdomain};"""
 
         rain_line1 = "{0}  {1}\n"
         rain_line2 = "{0}   {1}  {2}  {3}\n"
@@ -5162,6 +5564,132 @@ class Flo2dGeoPackage(GeoPackageUtils):
             scs_sql = """SELECT grid_fid,scsn FROM infil_cells_scs ORDER BY grid_fid;"""
             horton_sql = """SELECT grid_fid, fhorti, fhortf, deca FROM infil_cells_horton ORDER BY grid_fid;"""
             chan_sql = """SELECT grid_fid, hydconch FROM infil_chan_elems ORDER by grid_fid;"""
+
+            line1 = "{0}"
+            line2 = "\n" + "  {}" * 6
+            line2h = "\n{0}"
+            line3 = "\n" + "  {}" * 3
+            line4 = "\n{0}"
+            line4ab = "\nR  {0}  {1}  {2}"
+            line5 = "\n{0}  {1}"
+            line6 = "\nF {0:<8} {1:<7.4f} {2:<7.4f} {3:<7.4f} {4:<7.4f} {5:<7.4f} {6:<7.4f}"
+            #         line6 = '\n' + 'F' + '  {}' * 7
+            line7 = "\nS  {0}  {1}"
+            line8 = "\nC  {0}  {1}"
+            line9 = "\nI {0:<7.4f} {1:<7.4f} {2:<7.4f}"
+            line10 = "\nH  {0:<8} {1:<7.4f} {2:<7.4f} {3:<7.4f}"
+
+            infil_row = self.execute(infil_sql).fetchone()
+            if infil_row is None:
+                return False
+            else:
+                pass
+            infil = os.path.join(outdir, "INFIL.DAT")
+            with open(infil, "w") as i:
+                gen = [x if x is not None else "" for x in infil_row[1:]]
+                v1, v2, v3, v4, v5, v9, v2h = (
+                    gen[0],
+                    gen[1:7],
+                    gen[7:10],
+                    gen[10:11],
+                    gen[11:13],
+                    gen[13:16],
+                    gen[16]
+                )
+                i.write(line1.format(v1))
+                if v1 == 1 or v1 == 3:
+                    i.write(line2.format(*v2))
+                    i.write(line3.format(*v3))
+                    if v2[5] == 1:
+                        i.write(line4.format(*v4))
+                    #                     for val, line in zip([v2, v3, v4], [line2, line3, line4]):
+                    # #                         if any(val) is True:
+                    #                             i.write(line.format(*val))
+                    # #                         else:
+                    # #                             pass
+                    for row in self.execute(infil_r_sql):
+                        row = [x if x is not None else "" for x in row]
+                        i.write(line4ab.format(*row))
+                if v1 == 2 or v1 == 3:
+                    if any(v5) is True:
+                        i.write(line5.format(*v5))
+                    else:
+                        pass
+                for row in self.execute(green_sql):
+                    i.write(line6.format(*row))
+                for row in self.execute(scs_sql):
+                    i.write(line7.format(*row))
+                for row in self.execute(chan_sql):
+                    i.write(line8.format(*row))
+                if any(v9) is True:
+                    i.write(line2h.format(str(v2h)))
+                    i.write(line9.format(*v9))
+                else:
+                    pass
+                for row in self.execute(horton_sql):
+                    i.write(line10.format(*row))
+
+            return True
+
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.uc.show_error("ERROR 101218.1559: exporting INFIL.DAT failed!.\n", e)
+            return False
+
+    def export_infil_md(self, outdir, subdomain):
+        # check if there is any infiltration defined.
+        try:
+            if self.is_table_empty("infil"):
+                return False
+            infil_sql = """SELECT * FROM infil;"""
+            infil_r_sql = """SELECT hydcx, hydcxfinal, soildepthcx FROM infil_chan_seg ORDER BY chan_seg_fid, fid;"""
+            green_sql = f"""SELECT 
+                                md.domain_cell, 
+                                hydc, 
+                                soils, 
+                                dtheta, 
+                                abstrinf, 
+                                rtimpf, 
+                                soil_depth 
+                            FROM 
+                                infil_cells_green AS ga
+                            JOIN 
+                                schema_md_cells md ON ga.grid_fid = md.grid_fid
+                            WHERE 
+                                md.domain_fid = {subdomain}"""
+
+            scs_sql = f"""SELECT 
+                            md.domain_cell, 
+                            scsn 
+                        FROM 
+                            infil_cells_scs AS scs
+                        JOIN 
+                            schema_md_cells md ON scs.grid_fid = md.grid_fid
+                        WHERE 
+                            md.domain_fid = {subdomain}"""
+
+
+            horton_sql = f"""SELECT 
+                                md.domain_cell, 
+                                fhorti, 
+                                fhortf, 
+                                deca 
+                            FROM 
+                                infil_cells_horton AS ht
+                            JOIN 
+                                schema_md_cells md ON ht.grid_fid = md.grid_fid
+                            WHERE 
+                                md.domain_fid = {subdomain}"""
+
+            chan_sql = f"""SELECT 
+                            md.domain_cell, 
+                            hydconch 
+                          FROM 
+                            infil_chan_elems AS ch
+                          JOIN 
+                            schema_md_cells md ON ch.grid_fid = md.grid_fid
+                          WHERE 
+                            md.domain_fid = {subdomain}"""
 
             line1 = "{0}"
             line2 = "\n" + "  {}" * 6
@@ -6523,6 +7051,95 @@ class Flo2dGeoPackage(GeoPackageUtils):
             self.uc.show_error("ERROR 101218.1610: exporting ARF.DAT failed!.", e)
             return False
 
+    def export_arf_md(self, outdir, subdomain):
+        """
+        Function to export arf data to HDF5 file
+        """
+        try:
+            if self.is_table_empty("blocked_cells"):
+                return False
+            cont_sql = """SELECT name, value FROM cont WHERE name = 'IARFBLOCKMOD';"""
+
+            tbc_sql = f"""SELECT 
+                            md.domain_cell, 
+                            area_fid 
+                        FROM 
+                            blocked_cells AS bc
+                        JOIN 
+							schema_md_cells md ON bc.grid_fid = md.grid_fid
+                        WHERE 
+                            arf = 1 AND md.domain_fid = {subdomain};"""
+
+            pbc_sql = f"""SELECT 
+                            md.domain_cell, 
+                            area_fid,  
+                            arf, wrf1, wrf2, wrf3, wrf4, wrf5, wrf6, wrf7, wrf8
+                         FROM 
+                            blocked_cells AS bc
+                         JOIN 
+							schema_md_cells md ON bc.grid_fid = md.grid_fid
+                         WHERE 
+                            arf < 1 AND md.domain_fid = {subdomain};"""
+
+            collapse_sql = """SELECT collapse FROM user_blocked_areas WHERE fid = ?;"""
+
+            line1 = "S  {}\n"
+            line2 = " T   {}\n"
+            #         line3 = '   {}' * 10 + '\n'
+            line3 = "{0:<8} {1:<5.2f} {2:<5.2f} {3:<5.2f} {4:<5.2f} {5:<5.2f} {6:<5.2f} {7:<5.2f} {8:5.2f} {9:<5.2f}\n"
+            option = self.execute(cont_sql).fetchone()
+            if option is None:
+                # TODO: We need to implement correct export of 'IARFBLOCKMOD'
+                option = ("IARFBLOCKMOD", 0)
+
+            arf = os.path.join(outdir, "ARF.DAT")
+
+            with open(arf, "w") as a:
+                head = option[-1]
+                if head is not None:
+                    a.write(line1.format(head))
+                else:
+                    pass
+
+                # Totally blocked grid elements:
+                for row in self.execute(tbc_sql):
+                    collapse = self.execute(collapse_sql, (row[1],)).fetchone()
+                    if collapse:
+                        cll = collapse[0]
+                    else:
+                        cll = 0
+                    cll = [cll if cll is not None else 0]
+                    cell = row[0]
+                    if cll[0] == 1:
+                        cell = -cell
+                    a.write(line2.format(cell))
+
+                # Partially blocked grid elements:
+                for row in self.execute(pbc_sql):
+                    row = [x if x is not None else "" for x in row]
+                    # Is there any side blocked? If not omit it:
+                    any_blocked = sum(row) - row[0] - row[1]
+                    if any_blocked > 0:
+                        collapse = self.execute(collapse_sql, (row[1],)).fetchone()
+                        if collapse:
+                            cll = collapse[0]
+                        else:
+                            cll = 0
+                        cll = [cll if cll is not None else 0]
+                        cell = row[0]
+                        arf_value = row[2]
+                        if cll[0] == 1:
+                            arf_value = -arf_value
+                        a.write(line3.format(cell, arf_value, *row[3:]))
+            #                     a.write(line3.format(*row))
+
+            return True
+
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.uc.show_error("ERROR 101218.1610: exporting ARF.DAT failed!.", e)
+            return False
+
     def export_mult(self, output=None):
         if self.parsed_format == self.FORMAT_DAT:
             return self.export_mult_dat(output)
@@ -6734,6 +7351,42 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 return False
             tol_poly_sql = """SELECT fid, tol FROM tolspatial ORDER BY fid;"""
             tol_cells_sql = """SELECT grid_fid FROM tolspatial_cells WHERE area_fid = ? ORDER BY grid_fid;"""
+
+            line1 = "{0}  {1}\n"
+
+            tol_poly_rows = self.execute(tol_poly_sql).fetchall()  # A list of pairs (fid number, tolerance value),
+            # one for each tolerance polygon.                                                       #(fid, tol), that is, (polygon fid, tolerance value)
+            if not tol_poly_rows:
+                return False
+            else:
+                pass
+            tolspatial_dat = os.path.join(outdir, "TOLSPATIAL.DAT")  # path and name of file to write
+            with open(tolspatial_dat, "w") as t:
+                for fid, tol in tol_poly_rows:
+                    for row in self.execute(tol_cells_sql, (fid,)):
+                        gid = row[0]
+                        t.write(line1.format(gid, tol))
+            return True
+
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.uc.show_error("ERROR 101218.1539: exporting TOLSPATIAL.DAT failed!", e)
+            return False
+
+    def export_tolspatial_md(self, outdir, subdomain):
+        # check if there is any tolerance data defined.
+        try:
+            if self.is_table_empty("tolspatial"):
+                return False
+            tol_poly_sql = """SELECT fid, tol FROM tolspatial ORDER BY fid;"""
+            tol_cells_sql = f"""SELECT 
+                                    md.domain_cell
+                                FROM 
+                                    tolspatial_cells AS tc
+                                JOIN 
+									schema_md_cells md ON tc.grid_fid = md.grid_fid    
+                                WHERE 
+                                    area_fid = ? AND md.domain_fid = {subdomain}"""
 
             line1 = "{0}  {1}\n"
 
@@ -7142,6 +7795,139 @@ class Flo2dGeoPackage(GeoPackageUtils):
                             if gids:
                                 for g in gids[0]:
                                     s.write(line10.format(g, group_fid))
+
+            return True
+
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.uc.show_error("ERROR 101218.1612: exporting SED.DAT failed!.\n", e)
+            return False
+
+    def export_sed_md(self, outdir, subdomain):
+        try:
+            # check if there is any sedimentation data defined.
+            if self.is_table_empty("mud") and self.is_table_empty("sed"):
+                return False
+
+            ISED = self.gutils.get_cont_par("ISED")
+            MUD = self.gutils.get_cont_par("MUD")
+
+            if ISED == "0" and MUD == "0":
+                return False
+
+            sed_m_sql = """SELECT va, vb, ysa, ysb, sgsm, xkx FROM mud ORDER BY fid;"""
+            sed_ce_sql = """SELECT isedeqg, isedsizefrac, dfifty, sgrad, sgst, dryspwt, cvfg, isedsupply, isedisplay, scourdep
+                            FROM sed ORDER BY fid;"""
+            sed_z_sql = """SELECT dist_fid, isedeqi, bedthick, cvfi FROM sed_groups ORDER BY dist_fid;"""
+            sed_p_sql = """SELECT sediam, sedpercent FROM sed_group_frac_data WHERE dist_fid = ? ORDER BY sedpercent;"""
+            areas_d_sql = """SELECT fid, debrisv FROM mud_areas ORDER BY fid;"""
+
+            cells_d_sql = f"""SELECT 
+                                md.domain_cell 
+                            FROM 
+                                mud_cells AS mc
+                            JOIN 
+                                schema_md_cells md ON mc.grid_fid = md.grid_fid
+                            WHERE 
+                                area_fid = ? AND md.domain_fid = {subdomain};"""
+
+            cells_r_sql = f"""SELECT 
+                                md.domain_cell 
+                            FROM 
+                                sed_rigid_cells AS rc
+                            JOIN 
+                                schema_md_cells md ON rc.grid_fid = md.grid_fid
+                            WHERE 
+                                md.domain_fid = {subdomain};"""
+
+            areas_s_sql = """SELECT fid, dist_fid, isedcfp, ased, bsed FROM sed_supply_areas ORDER BY dist_fid;"""
+
+            cells_s_sql = f"""SELECT 
+                                md.domain_cell  
+                            FROM 
+                                sed_supply_cells AS sc
+                            JOIN 
+                                schema_md_cells md ON sc.grid_fid = md.grid_fid
+                            WHERE 
+                                area_fid = ? AND md.domain_fid = {subdomain};"""
+
+            data_n_sql = """SELECT ssediam, ssedpercent FROM sed_supply_frac_data WHERE dist_fid = ? ORDER BY ssedpercent;"""
+
+            group_sql = f"""
+                            SELECT 
+                                md.domain_cell, sg.group_fid
+                            FROM 
+                                sed_group_areas AS sg
+                            JOIN 
+                                sed_group_cells AS gc ON sg.fid = gc.area_fid
+                            JOIN 
+                                schema_md_cells AS md ON gc.grid_fid = md.grid_fid
+                            WHERE 
+                                md.domain_fid = {subdomain}
+                            ORDER BY 
+                                sg.fid;
+                        """
+
+            line1 = "M  {0}  {1}  {2}  {3}  {4}  {5}\n"
+            line2 = "C  {0}  {1}  {2}  {3}  {4}  {5}  {6} {7}  {8}\n"
+            line3 = "Z  {0}  {1}  {2}\n"
+            line4 = "P  {0}  {1}\n"
+            line5 = "D  {0}  {1}\n"
+            line6 = "E  {0}\n"
+            line7 = "R  {0}\n"
+            line8 = "S  {0}  {1}  {2}  {3}\n"
+            line9 = "N  {0}  {1}\n"
+            line10 = "G  {0}  {1}\n"
+
+            m_data = self.execute(sed_m_sql).fetchone()
+            ce_data = self.execute(sed_ce_sql).fetchone()
+            if m_data is None and ce_data is None:
+                return False
+
+            sed = os.path.join(outdir, "SED.DAT")
+            with open(sed, "w") as s:
+                if MUD in ["1", "2"] and m_data is not None:
+                    # Mud/debris transport or 2 phase flow:
+                    s.write(line1.format(*m_data))
+
+                    if int(self.gutils.get_cont_par("IDEBRV")) == 1:
+                        for aid, debrisv in self.execute(areas_d_sql):
+                            result = self.execute(cells_d_sql, (aid,)).fetchone()
+                            if result:  # Ensure result is not None
+                                gid = result[0]
+                                s.write(line5.format(gid, debrisv))
+                    e_data = None
+
+                if (ISED == "1" or MUD == "2") and ce_data is not None:
+                    # Sediment Transport or 2 phase flow:
+                    e_data = ce_data[-1]
+                    s.write(line2.format(*ce_data[:-1]))
+
+                    for row in self.execute(sed_z_sql):
+                        dist_fid = row[0]
+                        s.write(line3.format(*row[1:]))
+                        for prow in self.execute(sed_p_sql, (dist_fid,)):
+                            s.write(line4.format(*prow))
+
+                    if e_data is not None:
+                        s.write(line6.format(e_data))
+
+                    for row in self.execute(cells_r_sql):
+                        s.write(line7.format(*row))
+
+                    for row in self.execute(areas_s_sql):
+                        aid = row[0]
+                        dist_fid = row[1]
+                        result = self.execute(cells_s_sql, (aid,)).fetchone()
+                        if result:
+                            gid = result[0]
+                            s.write(line8.format(gid, *row[2:]))
+                            for nrow in self.execute(data_n_sql, (dist_fid,)):
+                                s.write(line9.format(*nrow))
+
+                    result = self.execute(group_sql).fetchall()
+                    for grid_id, group_id in result:
+                        s.write(line10.format(grid_id, group_id))
 
             return True
 
@@ -7675,6 +8461,47 @@ class Flo2dGeoPackage(GeoPackageUtils):
             self.uc.show_error("ERROR 101218.1617: exporting FPFROUDE.DAT failed!.\n", e)
             return False
 
+    def export_fpfroude_md(self, outdir, subdomain):
+        try:
+            # Check if there is any limiting Froude number defined.
+            if self.is_table_empty("fpfroude"):
+                return False
+
+            # Single query to get all necessary data
+            fpfroude_sql = f"""
+                            SELECT 
+                                md.domain_cell, 
+                                f.froudefp
+                            FROM 
+                                fpfroude_cells AS fc
+                            JOIN 
+                                fpfroude AS f ON fc.area_fid = f.fid
+                            JOIN 
+                                schema_md_cells AS md ON fc.grid_fid = md.grid_fid
+                            WHERE 
+                                md.domain_fid = {subdomain}
+                            """
+
+            # Fetch all rows at once
+            fpfroude_rows = self.execute(fpfroude_sql).fetchall()
+            if not fpfroude_rows:
+                return False
+
+            # Prepare file path
+            fpfroude_dat = os.path.join(outdir, "FPFROUDE.DAT")
+
+            # Batch write to the file
+            with open(fpfroude_dat, "w") as f:
+                lines = [f"F {gid} {froudefp}\n" for gid, froudefp in fpfroude_rows]
+                f.writelines(lines)
+
+            return True
+
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.uc.show_error("ERROR 101218.1617: exporting FPFROUDE.DAT failed!.\n", e)
+            return False
+
     def export_shallowNSpatial(self, output=None):
         if self.parsed_format == self.FORMAT_DAT:
             return self.export_shallowNSpatial_dat(output)
@@ -7723,6 +8550,42 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 return False
             shallow_sql = """SELECT fid, shallow_n FROM spatialshallow ORDER BY fid;"""
             cell_sql = """SELECT grid_fid FROM spatialshallow_cells WHERE area_fid = ? ORDER BY grid_fid;"""
+
+            line1 = "{0} {1}\n"
+
+            shallow_rows = self.execute(shallow_sql).fetchall()
+            if not shallow_rows:
+                return False
+            else:
+                pass
+            shallow_dat = os.path.join(outdir, "SHALLOWN_SPATIAL.DAT")
+            with open(shallow_dat, "w") as s:
+                for fid, shallow_n in shallow_rows:
+                    for row in self.execute(cell_sql, (fid,)):
+                        gid = row[0]
+                        s.write(line1.format(gid, shallow_n))
+
+            return True
+
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.uc.show_error("ERROR 101218.1901: exporting SHALLOWN_SPATIAL.DAT failed!", e)
+            return False
+
+    def export_shallowNSpatial_md(self, outdir, subdomain):
+        # check if there is any shallow-n defined.
+        try:
+            if self.is_table_empty("spatialshallow"):
+                return False
+            shallow_sql = """SELECT fid, shallow_n FROM spatialshallow ORDER BY fid;"""
+            cell_sql = f"""SELECT 
+                            md.domain_cell 
+                        FROM 
+                            spatialshallow_cells AS ss
+                        JOIN 
+							schema_md_cells md ON ss.grid_fid = md.grid_fid
+                        WHERE 
+                            area_fid = ? AND md.domain_fid = {subdomain};"""
 
             line1 = "{0} {1}\n"
 
