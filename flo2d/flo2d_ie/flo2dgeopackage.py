@@ -585,6 +585,12 @@ class Flo2dGeoPackage(GeoPackageUtils):
         self.execute(qhtab_name_qry)
 
     def import_rain(self):
+        if self.parsed_format == self.FORMAT_DAT:
+            return self.import_rain_dat()
+        elif self.parsed_format == self.FORMAT_HDF5:
+            return self.import_rain_hdf5()
+
+    def import_rain_dat(self):
         rain_sql = [
             """INSERT INTO rain (time_series_fid, irainreal, irainbuilding, tot_rainfall,
                                          rainabs, irainarf, movingstorm, rainspeed, iraindir) VALUES""",
@@ -628,6 +634,67 @@ class Flo2dGeoPackage(GeoPackageUtils):
         self.batch_execute(ts_sql, rain_sql, tsd_sql, cells_sql)  # rain_arf_sql
         name_qry = """UPDATE rain_time_series SET name = 'Time series ' || cast (fid as text) """
         self.execute(name_qry)
+
+    def import_rain_hdf5(self):
+        rain_sql = [
+            """INSERT INTO rain (time_series_fid, irainreal, irainbuilding, tot_rainfall,
+                                 rainabs, irainarf, movingstorm, rainspeed, iraindir) VALUES""",
+            9,
+        ]
+        ts_sql = ["""INSERT INTO rain_time_series (fid) VALUES""", 1]
+        tsd_sql = [
+            """INSERT INTO rain_time_series_data (series_fid, time, value) VALUES""",
+            3,
+        ]
+        cells_sql = [
+            """INSERT INTO rain_arf_cells (rain_arf_area_fid, grid_fid, arf) VALUES""",
+            3,
+        ]
+
+        self.clear_tables(
+            "rain",
+            "rain_arf_cells",
+            "rain_time_series",
+            "rain_time_series_data",
+        )
+
+        try:
+            # Access the rain group
+            rain_group = self.parser.read_groups("Input/Rainfall")[0]
+
+            # Read RAIN_GLOBAL dataset
+            rain_global = rain_group.datasets["RAIN_GLOBAL"].data
+            if len(rain_global) < 8:
+                raise ValueError("RAIN_GLOBAL dataset is incomplete.")
+            rain_sql += [(1,) + tuple(rain_global[:8])]
+
+            # Insert time series data
+            ts_sql += [(1,)]
+            rain_data = rain_group.datasets["RAIN_DATA"].data
+            for row in rain_data:
+                time, value = row
+                tsd_sql += [(1, time, value)]
+
+            # Insert ARF data if available
+            if "RAIN_ARF" in rain_group.datasets:
+                rain_arf = rain_group.datasets["RAIN_ARF"].data
+                for i, row in enumerate(rain_arf, 1):
+                    grid_fid, arf = row
+                    cells_sql += [(i, int(grid_fid), float(arf))]
+
+            # Execute batch inserts
+            self.batch_execute(ts_sql, rain_sql, tsd_sql, cells_sql)
+
+            # Update time series name
+            name_qry = """UPDATE rain_time_series SET name = 'Time series ' || cast(fid as text);"""
+            self.execute(name_qry)
+
+            return True
+
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.uc.show_error("ERROR: Importing RAIN data from HDF5 failed!", e)
+            return False
 
     def import_raincell(self):
         head_sql = [
