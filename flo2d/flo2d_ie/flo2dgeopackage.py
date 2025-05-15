@@ -724,6 +724,12 @@ class Flo2dGeoPackage(GeoPackageUtils):
         self.batch_execute(head_sql, data_sql)
 
     def import_infil(self):
+        if self.parsed_format == self.FORMAT_DAT:
+            return self.import_infil_dat()
+        elif self.parsed_format == self.FORMAT_HDF5:
+            return self.import_infil_hdf5()
+
+    def import_infil_dat(self):
         infil_params = [
             "infmethod",
             "abstr",
@@ -801,6 +807,130 @@ class Flo2dGeoPackage(GeoPackageUtils):
             infil_horton_sql,
             infil_chan_sql,
         )
+
+    def import_infil_hdf5(self):
+        infil_params = [
+            "infmethod",
+            "abstr",
+            "sati",
+            "satf",
+            "poros",
+            "soild",
+            "infchan",
+            "hydcall",
+            "soilall",
+            "hydcadj",
+            "hydcxx",
+            "scsnall",
+            "abstr1",
+            "fhortoni",
+            "fhortonf",
+            "decaya",
+            "fhortonia"
+        ]
+        infil_sql = ["INSERT INTO infil (" + ", ".join(infil_params) + ") VALUES", 17]
+        infil_seg_sql = [
+            """INSERT INTO infil_chan_seg (chan_seg_fid, hydcx, hydcxfinal, soildepthcx) VALUES""",
+            4,
+        ]
+        infil_green_sql = [
+            """INSERT INTO infil_cells_green (grid_fid, hydc, soils, dtheta,
+                                                                 abstrinf, rtimpf, soil_depth) VALUES""",
+            7,
+        ]
+        infil_scs_sql = ["""INSERT INTO infil_cells_scs (grid_fid, scsn) VALUES""", 2]
+        infil_horton_sql = [
+            """INSERT INTO infil_cells_horton (grid_fid, fhorti, fhortf, deca) VALUES""",
+            4,
+        ]
+        infil_chan_sql = [
+            """INSERT INTO infil_chan_elems (grid_fid, hydconch) VALUES""",
+            2,
+        ]
+
+        sqls = {
+            "F": infil_green_sql,
+            "S": infil_scs_sql,
+            "H": infil_horton_sql,
+            "C": infil_chan_sql,
+        }
+
+        self.clear_tables(
+            "infil",
+            "infil_chan_seg",
+            "infil_cells_green",
+            "infil_cells_scs",
+            "infil_cells_horton",
+            "infil_chan_elems",
+        )
+
+        try:
+            # Access the infiltration group
+            infil_group = self.parser.read_groups("Input/Infiltration")[0]
+
+            # Read INFIL_METHOD dataset
+            infil_method = infil_group.datasets["INFIL_METHOD"].data[0]
+            infil_data = [infil_method] + [None] * (len(infil_params) - 1)
+
+            # Populate infil_sql with global infiltration parameters
+            if infil_method == 1 or infil_method == 3:  # Green-Ampt
+                infil_ga_global = infil_group.datasets["INFIL_GA_GLOBAL"].data
+                infil_data[1:7] = infil_ga_global[:6]  # ABSTR, SATI, SATF, POROS, SOILD, INFCHAN
+                infil_data[7:10] = infil_ga_global[6:9]  # HYDCALL, SOILALL, HYDCADJ
+
+            if infil_method == 2 or infil_method == 3:  # SCS
+                infil_scs_global = infil_group.datasets["INFIL_SCS_GLOBAL"].data
+                infil_data[11:13] = infil_scs_global[:2]  # SCSNALL, ABSTR1
+
+            if infil_method == 4:  # Horton
+                infil_horton_global = infil_group.datasets["INFIL_HORTON_GLOBAL"].data
+                infil_data[13:17] = infil_horton_global[:4]  # FHORTONI, FHORTONF, DECAYA, FHORTONIA
+
+            infil_sql += [tuple(infil_data)]
+
+            # Populate infil_chan_seg
+            if "INFIL_CHAN_SEG" in infil_group.datasets:
+                infil_chan_seg_data = infil_group.datasets["INFIL_CHAN_SEG"].data
+                for i, row in enumerate(infil_chan_seg_data, 1):
+                    infil_seg_sql += [(i,) + tuple(row)]
+
+            # Populate infil_cells_green
+            if "INFIL_GA_CELLS" in infil_group.datasets:
+                infil_ga_cells = infil_group.datasets["INFIL_GA_CELLS"].data
+                for row in infil_ga_cells:
+                    sqls["F"] += [tuple(row)]
+
+            # Populate infil_cells_scs
+            if "INFIL_SCS_CELLS" in infil_group.datasets:
+                infil_scs_cells = infil_group.datasets["INFIL_SCS_CELLS"].data
+                for row in infil_scs_cells:
+                    sqls["S"] += [tuple(row)]
+
+            # Populate infil_cells_horton
+            if "INFIL_HORTON_CELLS" in infil_group.datasets:
+                infil_horton_cells = infil_group.datasets["INFIL_HORTON_CELLS"].data
+                for row in infil_horton_cells:
+                    sqls["H"] += [tuple(row)]
+
+            # Populate infil_chan_elems
+            if "INFIL_CHAN_ELEMS" in infil_group.datasets:
+                infil_chan_elems = infil_group.datasets["INFIL_CHAN_ELEMS"].data
+                for row in infil_chan_elems:
+                    sqls["C"] += [tuple(row)]
+
+            # Execute batch inserts
+            self.batch_execute(
+                infil_sql,
+                infil_seg_sql,
+                infil_green_sql,
+                infil_scs_sql,
+                infil_horton_sql,
+                infil_chan_sql,
+            )
+
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.uc.show_error("ERROR: Importing INFIL data from HDF5 failed!", e)
 
     def import_evapor(self):
         evapor_sql = ["""INSERT INTO evapor (ievapmonth, iday, clocktime) VALUES""", 3]
