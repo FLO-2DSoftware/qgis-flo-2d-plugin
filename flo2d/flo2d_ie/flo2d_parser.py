@@ -500,6 +500,7 @@ class ParseDAT(object):
                 row.insert(index, default)
 
     def parse_cont(self):
+
         results = {}
         cont = self.dat_files["CONT.DAT"]
         with open(cont, "r") as f:

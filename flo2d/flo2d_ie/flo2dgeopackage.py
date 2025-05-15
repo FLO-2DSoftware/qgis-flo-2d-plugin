@@ -111,20 +111,33 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
     def import_cont_toler_hdf5(self):
         sql = ["""INSERT OR REPLACE INTO cont (name, value, note) VALUES""", 3]
-        mann = self.get_cont_par("MANNING")
-        control_group = self.parser.read_groups("Control")[0]
-        mann_dataset = control_group.datasets["MANNING"]
-        man_from_dataset = mann_dataset.data[0]
-        if not mann and not man_from_dataset:
-            mann = "0.05"
-        else:
-            pass
-        self.clear_tables("cont")
-        for option, dataset in control_group.datasets.items():
-            option_value = dataset.data[0]
-            sql += [(option, option_value.decode(), self.PARAMETER_DESCRIPTION[option])]
-        sql += [("CELLSIZE", self.cell_size, self.PARAMETER_DESCRIPTION["CELLSIZE"])]
-        sql += [("MANNING", mann, self.PARAMETER_DESCRIPTION["MANNING"])]
+        control_group = self.parser.read_groups("Input/Control Parameters")[0]
+        cont_dataset = control_group.datasets["CONT"].data
+        toler_dataset = control_group.datasets["TOLER"].data
+
+        # Define variable names
+        cont_variables = [
+            "SIMUL", "TOUT", "LGPLOT", "METRIC", "IBACKUP", "ICHANNEL", "MSTREET", "LEVEE",
+            "IWRFS", "IMULTC", "IRAIN", "INFIL", "IEVAP", "MUD", "ISED", "IMODFLOW", "SWMM",
+            "IHYDRSTRUCT", "IFLOODWAY", "IDEBRV", "AMANN", "DEPTHDUR", "XCONC", "XARF",
+            "FROUDL", "SHALLOWN", "ENCROACH", "NOPRTFP", "DEPRESSDEPTH", "NOPRTC", "ITIMTEP",
+            "TIMTEP", "STARTIMTEP", "ENDTIMTEP", "GRAPTIM"
+        ]
+
+        tol_variables = [
+            "TOLGLOBAL", "DEPTOL", "COURANTFP", "COURANTC", "COURANTST", "TIME_ACCEL"
+        ]
+
+        # Insert CONT variables
+        for i, var in enumerate(cont_variables):
+            value = cont_dataset[i] if i < len(cont_dataset) else -9999
+            sql += [(var, value, self.PARAMETER_DESCRIPTION.get(var, ""))]
+
+        # Insert TOLER variables
+        for i, var in enumerate(tol_variables):
+            value = toler_dataset[i] if i < len(toler_dataset) else -9999
+            sql += [(var, value, self.PARAMETER_DESCRIPTION.get(var, ""))]
+
         self.batch_execute(sql)
 
     def import_mannings_n_topo(self):
@@ -3561,6 +3574,12 @@ class Flo2dGeoPackage(GeoPackageUtils):
             self.uc.bar_warn(f"Some Outfalls are outside the grid! Check log messages for more information.")
 
     def import_tolspatial(self):
+        if self.parsed_format == self.FORMAT_DAT:
+            return self.import_tolspatial_dat()
+        elif self.parsed_format == self.FORMAT_HDF5:
+            return self.import_tolspatial_hdf5()
+
+    def import_tolspatial_dat(self):
         tolspatial_sql = ["""INSERT INTO tolspatial (geom, tol) VALUES""", 2]
         cells_sql = ["""INSERT INTO tolspatial_cells (area_fid, grid_fid) VALUES""", 2]
 
@@ -3575,6 +3594,35 @@ class Flo2dGeoPackage(GeoPackageUtils):
             cells_sql += [(i, gid)]
 
         self.batch_execute(tolspatial_sql, cells_sql)
+
+    def import_tolspatial_hdf5(self):
+        tolspatial_sql = ["""INSERT INTO tolspatial (geom, tol) VALUES""", 2]
+        cells_sql = ["""INSERT INTO tolspatial_cells (area_fid, grid_fid) VALUES""", 2]
+
+        self.clear_tables("tolspatial", "tolspatial_cells")
+
+        try:
+            # Access the TOLSPATIAL dataset
+            spatially_variable_group = self.parser.read_groups("Input/Spatially Variable")[0]
+            tolspatial_data = spatially_variable_group.datasets["TOLSPATIAL"].data
+
+            # Process each row in the dataset
+            gids = set()
+            for i, row in enumerate(tolspatial_data, 1):
+                gid, tol = row
+                gids.add(gid)
+                geom = self.build_square(self.grid_centroids([gid])[gid], self.shrink)
+                tolspatial_sql += [(geom, tol)]
+                cells_sql += [(i, gid)]
+
+            self.batch_execute(tolspatial_sql, cells_sql)
+            return True
+
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.uc.log_info("ERROR: Importing TOLSPATIAL from HDF5 failed!")
+            self.uc.show_error("ERROR: Importing TOLSPATIAL from HDF5 failed!", e)
+            return False
 
     def import_shallowNSpatial(self):
         shallowNSpatial_sql = ["""INSERT INTO spatialshallow (geom, shallow_n) VALUES""", 2]
