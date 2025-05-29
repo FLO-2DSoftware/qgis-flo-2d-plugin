@@ -712,8 +712,11 @@ class InfilGlobal(uiDialog_glob, qtBaseClass_glob):
             return
         self.chan_dlg.save_channel_params()
 
-    def save_imethod(self):
-        self.global_imethod = self.current_imethod
+    def save_imethod(self, method=None):
+        if method:
+            self.global_imethod = method
+        else:
+            self.global_imethod = self.current_imethod
         self.global_changed.emit(self.global_imethod)
 
     def green_checked(self):
