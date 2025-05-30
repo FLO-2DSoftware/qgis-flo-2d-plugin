@@ -139,6 +139,13 @@ class Flo2dGeoPackage(GeoPackageUtils):
             value = toler_dataset[i] if i < len(toler_dataset) else -9999
             sql += [(var, value, self.PARAMETER_DESCRIPTION.get(var, ""))]
 
+        mann = self.get_cont_par("MANNING")
+        if not mann:
+            mann = "0.05"
+        else:
+            pass
+        sql += [("MANNING", mann, self.PARAMETER_DESCRIPTION["MANNING"])]
+
         self.batch_execute(sql)
 
     def import_mannings_n_topo(self):
@@ -7289,7 +7296,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             if self.is_table_empty("blocked_cells"):
                 return False
             cont_sql = """SELECT name, value FROM cont WHERE name = 'IARFBLOCKMOD';"""
-            tbc_sql = """SELECT grid_fid, area_fid FROM blocked_cells WHERE arf = 1 ORDER BY grid_fid;"""
+            tbc_sql = """SELECT grid_fid, area_fid, arf FROM blocked_cells WHERE arf IN (1, -1);"""
 
             pbc_sql = """SELECT grid_fid, area_fid,  arf, wrf1, wrf2, wrf3, wrf4, wrf5, wrf6, wrf7, wrf8
                          FROM blocked_cells WHERE arf < 1 ORDER BY grid_fid;"""
@@ -7323,7 +7330,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                         cll = 0
                     cll = [cll if cll is not None else 0]
                     cell = row[0]
-                    if cll[0] == 1:
+                    if cll[0] == 1 or row[2] == -1:
                         cell = -cell
                     arfwrf_group.datasets["ARF_TOTALLY_BLOCKED"].data.append(cell)
 
