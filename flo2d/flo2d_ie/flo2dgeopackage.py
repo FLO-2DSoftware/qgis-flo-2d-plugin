@@ -19,7 +19,6 @@ from qgis._core import QgsGeometry, QgsPointXY
 from qgis.core import NULL
 from qgis.PyQt.QtCore import Qt
 from qgis.PyQt.QtWidgets import QApplication, QProgressDialog
-from statsmodels.sandbox.distributions.sppatch import expect
 
 from ..flo2d_tools.grid_tools import grid_compas_neighbors, number_of_elements, cell_centroid
 from ..geopackage_utils import GeoPackageUtils
@@ -405,103 +404,107 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
     def import_inflow_hdf5(self):
         try:
-            self.clear_tables(
-                "inflow",
-                "inflow_cells",
-                "reservoirs",
-                "tailing_reservoirs",
-                "user_reservoirs",
-                "user_tailing_reservoirs",
-                "inflow_time_series",
-                "inflow_time_series_data",
-            )
 
-            inflow_sql = ["""INSERT INTO inflow (time_series_fid, ident, inoutfc, geom_type, bc_fid) VALUES""", 5]
-            cells_sql = ["""INSERT INTO inflow_cells (inflow_fid, grid_fid) VALUES""", 2]
-            ts_sql = ["""INSERT INTO inflow_time_series (fid, name) VALUES""", 2]
-            tsd_sql = ["""INSERT INTO inflow_time_series_data (series_fid, time, value, value2) VALUES""", 4,]
+            inflow_group = self.parser.read_groups("Input/Boundary Conditions/Inflow")
+            if inflow_group:
+                inflow_group = inflow_group[0]
 
-            # Reservoirs
-            schematic_reservoirs_sql = ["""INSERT INTO reservoirs (grid_fid, wsel, n_value, geom) VALUES""", 4]
-            user_reservoirs_sql = ["""INSERT INTO user_reservoirs (wsel, n_value, geom) VALUES""", 3]
+                self.clear_tables(
+                    "inflow",
+                    "inflow_cells",
+                    "reservoirs",
+                    "tailing_reservoirs",
+                    "user_reservoirs",
+                    "user_tailing_reservoirs",
+                    "inflow_time_series",
+                    "inflow_time_series_data",
+                )
 
-            # Tailings Reservoirs
-            schematic_tailings_reservoirs_sql = ["""INSERT INTO tailing_reservoirs (grid_fid, wsel, n_value, tailings, geom) VALUES""", 5]
-            user_tailing_reservoirs = ["""INSERT INTO user_tailing_reservoirs (wsel, n_value, tailings, geom) VALUES""", 4]
+                inflow_sql = ["""INSERT INTO inflow (time_series_fid, ident, inoutfc, geom_type, bc_fid) VALUES""", 5]
+                cells_sql = ["""INSERT INTO inflow_cells (inflow_fid, grid_fid) VALUES""", 2]
+                ts_sql = ["""INSERT INTO inflow_time_series (fid, name) VALUES""", 2]
+                tsd_sql = ["""INSERT INTO inflow_time_series_data (series_fid, time, value, value2) VALUES""", 4,]
 
-            inflow_group = self.parser.read_groups("Input/Boundary Conditions/Inflow")[0]
+                # Reservoirs
+                schematic_reservoirs_sql = ["""INSERT INTO reservoirs (grid_fid, wsel, n_value, geom) VALUES""", 4]
+                user_reservoirs_sql = ["""INSERT INTO user_reservoirs (wsel, n_value, geom) VALUES""", 3]
 
-            # Import inflow global parameters if present
-            if "INF_GLOBAL" in inflow_group.datasets:
-                inflow_global = inflow_group.datasets["INF_GLOBAL"].data
-                self.execute("INSERT INTO cont (name, value, note) VALUES (?, ?, ?)", ("IHOURDAILY", int(inflow_global[0]), GeoPackageUtils.PARAMETER_DESCRIPTION["IHOURDAILY"]))
-                self.execute("INSERT INTO cont (name, value, note) VALUES (?, ?, ?)", ("IDEPLT", int(inflow_global[1]), GeoPackageUtils.PARAMETER_DESCRIPTION["IDEPLT"]))
+                # Tailings Reservoirs
+                schematic_tailings_reservoirs_sql = ["""INSERT INTO tailing_reservoirs (grid_fid, wsel, n_value, tailings, geom) VALUES""", 5]
+                user_tailing_reservoirs = ["""INSERT INTO user_tailing_reservoirs (wsel, n_value, tailings, geom) VALUES""", 4]
 
-            # Import inflow time series
-            if "INF_GRID" in inflow_group.datasets:
-                for i, inflow_grid in enumerate(inflow_group.datasets["INF_GRID"].data, start=1):
-                    ifc, inoutfc, khiin, ts_id = inflow_grid
-                    if ifc == 0:
-                        ident = 'F'
-                    else:
-                        ident = 'C'
-                    inflow_sql += [(int(ts_id), ident, int(inoutfc), 'point', i)]
-                    cells_sql += [(i, int(khiin))]
-                    ts_sql += [(int(ts_id), "Time series " + str(ts_id))]
+                # Import inflow global parameters if present
+                if "INF_GLOBAL" in inflow_group.datasets:
+                    inflow_global = inflow_group.datasets["INF_GLOBAL"].data
+                    self.execute("INSERT INTO cont (name, value, note) VALUES (?, ?, ?)", ("IHOURDAILY", int(inflow_global[0]), GeoPackageUtils.PARAMETER_DESCRIPTION["IHOURDAILY"]))
+                    self.execute("INSERT INTO cont (name, value, note) VALUES (?, ?, ?)", ("IDEPLT", int(inflow_global[1]), GeoPackageUtils.PARAMETER_DESCRIPTION["IDEPLT"]))
 
-            # Import inflow time series data
-            if "TS_INF_DATA" in inflow_group.datasets:
-                for tsd in inflow_group.datasets["TS_INF_DATA"].data:
-                    ts_id, hpj1, hpj2, hpj3 = tsd
-                    tsd_sql += [(ts_id, hpj1, hpj2, hpj3)]
+                # Import inflow time series
+                if "INF_GRID" in inflow_group.datasets:
+                    for i, inflow_grid in enumerate(inflow_group.datasets["INF_GRID"].data, start=1):
+                        ifc, inoutfc, khiin, ts_id = inflow_grid
+                        if ifc == 0:
+                            ident = 'F'
+                        else:
+                            ident = 'C'
+                        inflow_sql += [(int(ts_id), ident, int(inoutfc), 'point', i)]
+                        cells_sql += [(i, int(khiin))]
+                        ts_sql += [(int(ts_id), "Time series " + str(ts_id))]
 
-            # Import reservoir
-            if "RESERVOIRS" in inflow_group.datasets:
-                grid_group = self.parser.read_groups("Input/Grid")[0]
-                x_list = grid_group.datasets["COORDINATES"].data[:, 0]
-                y_list = grid_group.datasets["COORDINATES"].data[:, 1]
-                for reservoir in inflow_group.datasets["RESERVOIRS"].data:
-                    grid_fid, wsel, n_value, tailings = reservoir
-                    user_geom = self.build_point_xy(x_list[int(grid_fid) - 1], y_list[int(grid_fid) - 1])
-                    schema_geom = self.build_square_xy(x_list[int(grid_fid) - 1], y_list[int(grid_fid) - 1], self.cell_size)
-                    # Water
-                    if int(tailings) == -9999:
-                        schematic_reservoirs_sql += [(grid_fid, wsel, n_value, schema_geom)]
-                        user_reservoirs_sql += [(wsel, n_value, user_geom)]
-                    # Tailings
-                    else:
-                        schematic_tailings_reservoirs_sql += [(grid_fid, wsel, n_value, tailings, schema_geom)]
-                        user_tailing_reservoirs += [(wsel, n_value, tailings, user_geom)]
+                # Import inflow time series data
+                if "TS_INF_DATA" in inflow_group.datasets:
+                    for tsd in inflow_group.datasets["TS_INF_DATA"].data:
+                        ts_id, hpj1, hpj2, hpj3 = tsd
+                        tsd_sql += [(ts_id, hpj1, hpj2, hpj3)]
 
-            if inflow_sql:
-                self.batch_execute(inflow_sql)
+                # Import reservoir
+                if "RESERVOIRS" in inflow_group.datasets:
+                    grid_group = self.parser.read_groups("Input/Grid")[0]
+                    x_list = grid_group.datasets["COORDINATES"].data[:, 0]
+                    y_list = grid_group.datasets["COORDINATES"].data[:, 1]
+                    for reservoir in inflow_group.datasets["RESERVOIRS"].data:
+                        grid_fid, wsel, n_value, tailings = reservoir
+                        user_geom = self.build_point_xy(x_list[int(grid_fid) - 1], y_list[int(grid_fid) - 1])
+                        schema_geom = self.build_square_xy(x_list[int(grid_fid) - 1], y_list[int(grid_fid) - 1], self.cell_size)
+                        # Water
+                        if int(tailings) == -9999:
+                            schematic_reservoirs_sql += [(grid_fid, wsel, n_value, schema_geom)]
+                            user_reservoirs_sql += [(wsel, n_value, user_geom)]
+                        # Tailings
+                        else:
+                            schematic_tailings_reservoirs_sql += [(grid_fid, wsel, n_value, tailings, schema_geom)]
+                            user_tailing_reservoirs += [(wsel, n_value, tailings, user_geom)]
 
-            if cells_sql:
-                self.batch_execute(cells_sql)
+                if inflow_sql:
+                    self.batch_execute(inflow_sql)
 
-            if ts_sql:
-                self.batch_execute(ts_sql)
+                if cells_sql:
+                    self.batch_execute(cells_sql)
 
-            if tsd_sql:
-                self.batch_execute(tsd_sql)
+                if ts_sql:
+                    self.batch_execute(ts_sql)
 
-            if schematic_reservoirs_sql:
-                self.batch_execute(schematic_reservoirs_sql)
+                if tsd_sql:
+                    self.batch_execute(tsd_sql)
 
-            if user_reservoirs_sql:
-                self.batch_execute(user_reservoirs_sql)
+                if schematic_reservoirs_sql:
+                    self.batch_execute(schematic_reservoirs_sql)
 
-            if schematic_tailings_reservoirs_sql:
-                self.batch_execute(schematic_tailings_reservoirs_sql)
+                if user_reservoirs_sql:
+                    self.batch_execute(user_reservoirs_sql)
 
-            if user_tailing_reservoirs:
-                self.batch_execute(user_tailing_reservoirs)
+                if schematic_tailings_reservoirs_sql:
+                    self.batch_execute(schematic_tailings_reservoirs_sql)
 
-            return True
+                if user_tailing_reservoirs:
+                    self.batch_execute(user_tailing_reservoirs)
+
+                return True
 
         except Exception as e:
             QApplication.restoreOverrideCursor()
             self.uc.show_error("ERROR: importing INFLOW from HDF5 failed!\n", e)
+            self.uc.log_info("ERROR: importing INFLOW from HDF5 failed!")
             return False
 
     def import_outrc(self):
@@ -529,6 +532,12 @@ class Flo2dGeoPackage(GeoPackageUtils):
             self.batch_execute(outrc_sql)
 
     def import_tailings(self):
+        if self.parsed_format == self.FORMAT_DAT:
+            return self.import_tailings_dat()
+        elif self.parsed_format == self.FORMAT_HDF5:
+            return self.import_tailings_hdf5()
+
+    def import_tailings_dat(self):
         tailings_sql = [
             """INSERT INTO tailing_cells (grid, tailings_surf_elev, water_surf_elev, concentration, geom) VALUES""",
             5,
@@ -576,6 +585,69 @@ class Flo2dGeoPackage(GeoPackageUtils):
             self.batch_execute(tailings_sd_sql)
             qry = """UPDATE tailing_cells SET name = 'Tailings ' ||  cast(fid as text);"""
             self.execute(qry)
+
+    def import_tailings_hdf5(self):
+        try:
+            # Access the tailings group
+            tailings_group = self.parser.read_groups("Input/Tailings")
+            if tailings_group:
+                tailings_group = tailings_group[0]
+
+                self.clear_tables("tailing_cells")
+
+                tailings_sql = [
+                    """INSERT INTO tailing_cells (grid, tailings_surf_elev, water_surf_elev, concentration, geom) VALUES""",
+                    5,
+                ]
+                tailings_cv_sql = [
+                    """INSERT INTO tailing_cells (grid, tailings_surf_elev, water_surf_elev, concentration, geom) VALUES""",
+                    5,
+                ]
+                tailings_sd_sql = [
+                    """INSERT INTO tailing_cells (grid, tailings_surf_elev, water_surf_elev, concentration, geom) VALUES""",
+                    5,
+                ]
+
+                # Import TAILINGS dataset
+                if "TAILINGS" in tailings_group.datasets:
+                    data = tailings_group.datasets["TAILINGS"].data
+                    for row in data:
+                        grid_fid, tailings_surf_elev = row
+                        square = self.build_square(self.grid_centroids([grid_fid])[grid_fid], self.shrink)
+                        tailings_sql += [(grid_fid, tailings_surf_elev, 0, 0, square)]
+                    self.batch_execute(tailings_sql)
+                    qry = """UPDATE tailing_cells SET name = 'Tailings ' ||  cast(fid as text);"""
+                    self.execute(qry)
+
+                # Import TAILINGS_CV if present
+                if "TAILINGS_CV" in tailings_group.datasets:
+                    data = tailings_group.datasets["TAILINGS_CV"].data
+                    for row in data:
+                        grid_fid, tailings_surf_elev, concentration = row
+                        square = self.build_square(self.grid_centroids([grid_fid])[grid_fid], self.shrink)
+                        tailings_cv_sql += [(grid_fid, tailings_surf_elev, 0, concentration, square)]
+                    self.batch_execute(tailings_cv_sql)
+                    qry = """UPDATE tailing_cells SET name = 'Tailings ' ||  cast(fid as text);"""
+                    self.execute(qry)
+
+                # Import TAILINGS_STACK_DEPTH if present
+                if "TAILINGS_STACK_DEPTH" in tailings_group.datasets:
+                    data = tailings_group.datasets["TAILINGS_STACK_DEPTH"].data
+                    for row in data:
+                        grid_fid, water_surf_elev, tailings_surf_elev = row
+                        square = self.build_square(self.grid_centroids([grid_fid])[grid_fid], self.shrink)
+                        tailings_sd_sql += [(grid_fid, tailings_surf_elev, water_surf_elev, 0, square)]
+                    self.batch_execute(tailings_sd_sql)
+                    qry = """UPDATE tailing_cells SET name = 'Tailings ' ||  cast(fid as text);"""
+                    self.execute(qry)
+
+                return True
+
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.uc.show_error("ERROR: importing TAILINGS from HDF5 failed!\n", e)
+            self.uc.log_info("ERROR: importing TAILINGS from HDF5 failed!")
+            return False
 
     def import_outflow(self):
         outflow_sql = [
@@ -988,7 +1060,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             try:
 
                 # Read INFIL_METHOD dataset
-                infil_method = infil_group.datasets["INFIL_METHOD"].data[0]
+                infil_method = int(infil_group.datasets["INFIL_METHOD"].data[0])
                 infil_data = [infil_method] + [None] * (len(infil_params) - 1)
 
                 # Populate infil_sql with global infiltration parameters
@@ -5005,21 +5077,17 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 pass
 
             tailings_group = self.parser.tailings_group
-            # tailings_group.create_dataset('TAILINGS', [])
-            #
-            # for row in rows:
-            #     tailings_group.datasets["TAILINGS"].data.append(create_array(line1, 4, np.float_, tuple(row)))
 
             cv = self.execute(concentration_sql).fetchone()[0]
-            MUD = self.gutils.get_cont_par("MUD")
-            ISED = self.gutils.get_cont_par("ISED")
+            MUD = int(float(self.gutils.get_cont_par("MUD")))
+            ISED = int(float(self.gutils.get_cont_par("ISED")))
 
             # Don't export any tailings
-            if MUD == '0' and ISED == '0':
+            if MUD == 0 and ISED == 0:
                 return False
 
             # TAILINGS and TAILINGS_CV
-            elif MUD == '1' or ISED == '1':
+            elif MUD == 1 or ISED == 1:
                 # Export TAILINGS_CV
                 if cv == 1:
                     for row in rows:
@@ -5039,7 +5107,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                             tailings_group.datasets["TAILINGS"].data.append([row[0], row[1]])
 
             # TAILINGS_STACK_DEPTH.DAT
-            elif MUD == '2':
+            elif MUD == 2:
                 for row in rows:
                     try:
                         tailings_group.datasets["TAILINGS_STACK_DEPTH"].data.append([row[0], row[2], row[1]])

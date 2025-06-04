@@ -2417,7 +2417,7 @@ class Flo2D(object):
             "import_mannings_n_topo",
             "import_tolspatial",
             "import_inflow",
-            # "import_tailings",
+            "import_tailings",
             # "import_outrc",
             # "import_outflow",
             "import_rain",
