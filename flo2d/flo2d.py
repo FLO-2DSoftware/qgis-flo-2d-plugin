@@ -2416,7 +2416,7 @@ class Flo2D(object):
             "import_cont_toler",
             "import_mannings_n_topo",
             "import_tolspatial",
-            # "import_inflow",
+            "import_inflow",
             # "import_tailings",
             # "import_outrc",
             # "import_outflow",

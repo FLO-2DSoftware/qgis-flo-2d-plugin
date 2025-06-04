@@ -19,6 +19,7 @@ from qgis._core import QgsGeometry, QgsPointXY
 from qgis.core import NULL
 from qgis.PyQt.QtCore import Qt
 from qgis.PyQt.QtWidgets import QApplication, QProgressDialog
+from statsmodels.sandbox.distributions.sppatch import expect
 
 from ..flo2d_tools.grid_tools import grid_compas_neighbors, number_of_elements, cell_centroid
 from ..geopackage_utils import GeoPackageUtils
@@ -284,6 +285,12 @@ class Flo2dGeoPackage(GeoPackageUtils):
             self.uc.show_error("ERROR 040521.1154: importing Grid data from HDF5 file!\n", e)
 
     def import_inflow(self):
+        if self.parsed_format == self.FORMAT_DAT:
+            return self.import_inflow_dat()
+        elif self.parsed_format == self.FORMAT_HDF5:
+            return self.import_inflow_hdf5()
+
+    def import_inflow_dat(self):
         cont_sql = ["""INSERT INTO cont (name, value, note) VALUES""", 3]
         inflow_sql = [
             """INSERT INTO inflow (time_series_fid, ident, inoutfc, bc_fid) VALUES""",
@@ -395,6 +402,100 @@ class Flo2dGeoPackage(GeoPackageUtils):
         except Exception as e:
             self.uc.log_info(traceback.format_exc())
             self.uc.show_error("ERROR 070719.1051: Import inflows failed!.", e)
+
+    def import_inflow_hdf5(self):
+        try:
+            self.clear_tables(
+                "inflow",
+                "inflow_cells",
+                "reservoirs",
+                "tailing_reservoirs",
+                "user_reservoirs",
+                "user_tailing_reservoirs",
+                "inflow_time_series",
+                "inflow_time_series_data",
+            )
+
+            inflow_sql = ["""INSERT INTO inflow (time_series_fid, ident, inoutfc, geom_type, bc_fid) VALUES""", 5]
+            cells_sql = ["""INSERT INTO inflow_cells (inflow_fid, grid_fid) VALUES""", 2]
+            ts_sql = ["""INSERT INTO inflow_time_series (fid, name) VALUES""", 2]
+            tsd_sql = ["""INSERT INTO inflow_time_series_data (series_fid, time, value, value2) VALUES""", 4,]
+
+            # # Reservoirs
+            # schematic_reservoirs_sql = ["""INSERT INTO reservoirs (grid_fid, wsel, n_value, geom) VALUES""", 4]
+            # user_reservoirs_sql = ["""INSERT INTO user_reservoirs (wsel, n_value, geom) VALUES""", 3]
+            #
+            # # Tailings Reservoirs
+            # schematic_tailings_reservoirs_sql = ["""INSERT INTO tailing_reservoirs (grid_fid, wsel, n_value, tailings, geom) VALUES""", 5]
+            # user_tailing_reservoirs = ["""INSERT INTO user_tailing_reservoirs (wsel, n_value, tailings, geom) VALUES""", 4]
+
+            inflow_group = self.parser.read_groups("Input/Boundary Conditions/Inflow")[0]
+
+            # Import inflow global parameters if present
+            if "INF_GLOBAL" in inflow_group.datasets:
+                inflow_global = inflow_group.datasets["INF_GLOBAL"].data
+                self.execute("INSERT INTO cont (name, value, note) VALUES (?, ?, ?)", ("IHOURDAILY", int(inflow_global[0]), GeoPackageUtils.PARAMETER_DESCRIPTION["IHOURDAILY"]))
+                self.execute("INSERT INTO cont (name, value, note) VALUES (?, ?, ?)", ("IDEPLT", int(inflow_global[1]), GeoPackageUtils.PARAMETER_DESCRIPTION["IDEPLT"]))
+
+            # Import inflow time series
+            if "INF_GRID" in inflow_group.datasets:
+                for i, inflow_grid in enumerate(inflow_group.datasets["INF_GRID"].data, start=1):
+                    ifc, inoutfc, khiin, ts_id = inflow_grid
+                    if ifc == 0:
+                        ident = 'F'
+                    else:
+                        ident = 'C'
+                    inflow_sql += [(int(ts_id), ident, int(inoutfc), 'point', i)]
+                    cells_sql += [(i, int(khiin))]
+                    ts_sql += [(int(ts_id), "Time series " + str(ts_id))]
+
+            # Import inflow time series data
+            if "TS_INF_DATA" in inflow_group.datasets:
+                for tsd in inflow_group.datasets["TS_INF_DATA"].data:
+                    ts_id, hpj1, hpj2, hpj3 = tsd
+                    tsd_sql += [(ts_id, hpj1, hpj2, hpj3)]
+
+            if inflow_sql:
+                self.batch_execute(inflow_sql)
+
+            if cells_sql:
+                self.batch_execute(cells_sql)
+
+            if ts_sql:
+                self.batch_execute(ts_sql)
+
+            if tsd_sql:
+                self.batch_execute(tsd_sql)
+
+            #
+            # # Import inflow main table
+            # if "INFLOW" in inflow_group.datasets:
+            #     for inflow in inflow_group.datasets["INFLOW"].data:
+            #         # inflow: (time_series_fid, ident, inoutfc, bc_fid)
+            #         self.execute(
+            #             "INSERT INTO inflow (time_series_fid, ident, inoutfc, bc_fid) VALUES (?, ?, ?, ?);",
+            #             (inflow[0], inflow[1], inflow[2], inflow[3])
+            #         )
+            #
+            # # Import inflow cells
+            # if "INFLOW_CELLS" in inflow_group.datasets:
+            #     for cell in inflow_group.datasets["INFLOW_CELLS"].data:
+            #         # cell: (inflow_fid, grid_fid)
+            #         self.execute(
+            #             "INSERT INTO inflow_cells (inflow_fid, grid_fid) VALUES (?, ?);",
+            #             (cell[0], cell[1])
+            #         )
+            #
+            # # Import reservoirs and tailings if present (similar to above)
+            # # ...
+            #
+            # self.con.commit()
+            return True
+
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.uc.show_error("ERROR: importing INFLOW from HDF5 failed!\n", e)
+            return False
 
     def import_outrc(self):
         """
@@ -3867,20 +3968,23 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
         try:
             # Access the TOLSPATIAL dataset
-            spatially_variable_group = self.parser.read_groups("Input/Spatially Variable")[0]
-            tolspatial_data = spatially_variable_group.datasets["TOLSPATIAL"].data
+            spatially_variable_group = self.parser.read_groups("Input/Spatially Variable")
+            if spatially_variable_group:
+                spatially_variable_group = spatially_variable_group[0]
+                if "TOLSPATIAL" in spatially_variable_group.datasets:
+                    tolspatial_data = spatially_variable_group.datasets["TOLSPATIAL"].data
 
-            # Process each row in the dataset
-            gids = set()
-            for i, row in enumerate(tolspatial_data, 1):
-                gid, tol = row
-                gids.add(gid)
-                geom = self.build_square(self.grid_centroids([gid])[gid], self.shrink)
-                tolspatial_sql += [(geom, tol)]
-                cells_sql += [(i, gid)]
+                    # Process each row in the dataset
+                    gids = set()
+                    for i, row in enumerate(tolspatial_data, 1):
+                        gid, tol = row
+                        gids.add(gid)
+                        geom = self.build_square(self.grid_centroids([gid])[gid], self.shrink)
+                        tolspatial_sql += [(geom, tol)]
+                        cells_sql += [(i, gid)]
 
-            self.batch_execute(tolspatial_sql, cells_sql)
-            return True
+                    self.batch_execute(tolspatial_sql, cells_sql)
+                    return True
 
         except Exception as e:
             QApplication.restoreOverrideCursor()
@@ -3996,9 +4100,9 @@ class Flo2dGeoPackage(GeoPackageUtils):
         cont_group.create_dataset('CONT', [])
         for var in cont_variables:
             sql = f"""SELECT value FROM cont WHERE name = '{var}';"""
-            value = self.execute(sql).fetchone()[0]
+            value = self.execute(sql).fetchone()
             if value is not None:
-                cont_group.datasets["CONT"].data.append(float(value))
+                cont_group.datasets["CONT"].data.append(float(value[0]))
             else:
                 cont_group.datasets["CONT"].data.append(-9999)
 
