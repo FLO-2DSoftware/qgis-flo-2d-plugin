@@ -421,13 +421,13 @@ class Flo2dGeoPackage(GeoPackageUtils):
             ts_sql = ["""INSERT INTO inflow_time_series (fid, name) VALUES""", 2]
             tsd_sql = ["""INSERT INTO inflow_time_series_data (series_fid, time, value, value2) VALUES""", 4,]
 
-            # # Reservoirs
-            # schematic_reservoirs_sql = ["""INSERT INTO reservoirs (grid_fid, wsel, n_value, geom) VALUES""", 4]
-            # user_reservoirs_sql = ["""INSERT INTO user_reservoirs (wsel, n_value, geom) VALUES""", 3]
-            #
-            # # Tailings Reservoirs
-            # schematic_tailings_reservoirs_sql = ["""INSERT INTO tailing_reservoirs (grid_fid, wsel, n_value, tailings, geom) VALUES""", 5]
-            # user_tailing_reservoirs = ["""INSERT INTO user_tailing_reservoirs (wsel, n_value, tailings, geom) VALUES""", 4]
+            # Reservoirs
+            schematic_reservoirs_sql = ["""INSERT INTO reservoirs (grid_fid, wsel, n_value, geom) VALUES""", 4]
+            user_reservoirs_sql = ["""INSERT INTO user_reservoirs (wsel, n_value, geom) VALUES""", 3]
+
+            # Tailings Reservoirs
+            schematic_tailings_reservoirs_sql = ["""INSERT INTO tailing_reservoirs (grid_fid, wsel, n_value, tailings, geom) VALUES""", 5]
+            user_tailing_reservoirs = ["""INSERT INTO user_tailing_reservoirs (wsel, n_value, tailings, geom) VALUES""", 4]
 
             inflow_group = self.parser.read_groups("Input/Boundary Conditions/Inflow")[0]
 
@@ -455,6 +455,24 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     ts_id, hpj1, hpj2, hpj3 = tsd
                     tsd_sql += [(ts_id, hpj1, hpj2, hpj3)]
 
+            # Import reservoir
+            if "RESERVOIRS" in inflow_group.datasets:
+                grid_group = self.parser.read_groups("Input/Grid")[0]
+                x_list = grid_group.datasets["COORDINATES"].data[:, 0]
+                y_list = grid_group.datasets["COORDINATES"].data[:, 1]
+                for reservoir in inflow_group.datasets["RESERVOIRS"].data:
+                    grid_fid, wsel, n_value, tailings = reservoir
+                    user_geom = self.build_point_xy(x_list[int(grid_fid) - 1], y_list[int(grid_fid) - 1])
+                    schema_geom = self.build_square_xy(x_list[int(grid_fid) - 1], y_list[int(grid_fid) - 1], self.cell_size)
+                    # Water
+                    if int(tailings) == -9999:
+                        schematic_reservoirs_sql += [(grid_fid, wsel, n_value, schema_geom)]
+                        user_reservoirs_sql += [(wsel, n_value, user_geom)]
+                    # Tailings
+                    else:
+                        schematic_tailings_reservoirs_sql += [(grid_fid, wsel, n_value, tailings, schema_geom)]
+                        user_tailing_reservoirs += [(wsel, n_value, tailings, user_geom)]
+
             if inflow_sql:
                 self.batch_execute(inflow_sql)
 
@@ -467,29 +485,18 @@ class Flo2dGeoPackage(GeoPackageUtils):
             if tsd_sql:
                 self.batch_execute(tsd_sql)
 
-            #
-            # # Import inflow main table
-            # if "INFLOW" in inflow_group.datasets:
-            #     for inflow in inflow_group.datasets["INFLOW"].data:
-            #         # inflow: (time_series_fid, ident, inoutfc, bc_fid)
-            #         self.execute(
-            #             "INSERT INTO inflow (time_series_fid, ident, inoutfc, bc_fid) VALUES (?, ?, ?, ?);",
-            #             (inflow[0], inflow[1], inflow[2], inflow[3])
-            #         )
-            #
-            # # Import inflow cells
-            # if "INFLOW_CELLS" in inflow_group.datasets:
-            #     for cell in inflow_group.datasets["INFLOW_CELLS"].data:
-            #         # cell: (inflow_fid, grid_fid)
-            #         self.execute(
-            #             "INSERT INTO inflow_cells (inflow_fid, grid_fid) VALUES (?, ?);",
-            #             (cell[0], cell[1])
-            #         )
-            #
-            # # Import reservoirs and tailings if present (similar to above)
-            # # ...
-            #
-            # self.con.commit()
+            if schematic_reservoirs_sql:
+                self.batch_execute(schematic_reservoirs_sql)
+
+            if user_reservoirs_sql:
+                self.batch_execute(user_reservoirs_sql)
+
+            if schematic_tailings_reservoirs_sql:
+                self.batch_execute(schematic_tailings_reservoirs_sql)
+
+            if user_tailing_reservoirs:
+                self.batch_execute(user_tailing_reservoirs)
+
             return True
 
         except Exception as e:
@@ -918,128 +925,132 @@ class Flo2dGeoPackage(GeoPackageUtils):
         )
 
     def import_infil_hdf5(self):
-        infil_params = [
-            "infmethod",
-            "abstr",
-            "sati",
-            "satf",
-            "poros",
-            "soild",
-            "infchan",
-            "hydcall",
-            "soilall",
-            "hydcadj",
-            "hydcxx",
-            "scsnall",
-            "abstr1",
-            "fhortoni",
-            "fhortonf",
-            "decaya",
-            "fhortonia"
-        ]
-        infil_sql = ["INSERT INTO infil (" + ", ".join(infil_params) + ") VALUES", 17]
-        infil_seg_sql = [
-            """INSERT INTO infil_chan_seg (chan_seg_fid, hydcx, hydcxfinal, soildepthcx) VALUES""",
-            4,
-        ]
-        infil_green_sql = [
-            """INSERT INTO infil_cells_green (grid_fid, hydc, soils, dtheta,
-                                                                 abstrinf, rtimpf, soil_depth) VALUES""",
-            7,
-        ]
-        infil_scs_sql = ["""INSERT INTO infil_cells_scs (grid_fid, scsn) VALUES""", 2]
-        infil_horton_sql = [
-            """INSERT INTO infil_cells_horton (grid_fid, fhorti, fhortf, deca) VALUES""",
-            4,
-        ]
-        infil_chan_sql = [
-            """INSERT INTO infil_chan_elems (grid_fid, hydconch) VALUES""",
-            2,
-        ]
+        # Access the infiltration group
+        infil_group = self.parser.read_groups("Input/Infiltration")
+        if infil_group:
+            infil_group = infil_group[0]
 
-        sqls = {
-            "F": infil_green_sql,
-            "S": infil_scs_sql,
-            "H": infil_horton_sql,
-            "C": infil_chan_sql,
-        }
+            infil_params = [
+                "infmethod",
+                "abstr",
+                "sati",
+                "satf",
+                "poros",
+                "soild",
+                "infchan",
+                "hydcall",
+                "soilall",
+                "hydcadj",
+                "hydcxx",
+                "scsnall",
+                "abstr1",
+                "fhortoni",
+                "fhortonf",
+                "decaya",
+                "fhortonia"
+            ]
+            infil_sql = ["INSERT INTO infil (" + ", ".join(infil_params) + ") VALUES", 17]
+            infil_seg_sql = [
+                """INSERT INTO infil_chan_seg (chan_seg_fid, hydcx, hydcxfinal, soildepthcx) VALUES""",
+                4,
+            ]
+            infil_green_sql = [
+                """INSERT INTO infil_cells_green (grid_fid, hydc, soils, dtheta,
+                                                                     abstrinf, rtimpf, soil_depth) VALUES""",
+                7,
+            ]
+            infil_scs_sql = ["""INSERT INTO infil_cells_scs (grid_fid, scsn) VALUES""", 2]
+            infil_horton_sql = [
+                """INSERT INTO infil_cells_horton (grid_fid, fhorti, fhortf, deca) VALUES""",
+                4,
+            ]
+            infil_chan_sql = [
+                """INSERT INTO infil_chan_elems (grid_fid, hydconch) VALUES""",
+                2,
+            ]
 
-        self.clear_tables(
-            "infil",
-            "infil_chan_seg",
-            "infil_cells_green",
-            "infil_cells_scs",
-            "infil_cells_horton",
-            "infil_chan_elems",
-        )
+            sqls = {
+                "F": infil_green_sql,
+                "S": infil_scs_sql,
+                "H": infil_horton_sql,
+                "C": infil_chan_sql,
+            }
 
-        try:
-            # Access the infiltration group
-            infil_group = self.parser.read_groups("Input/Infiltration")[0]
-
-            # Read INFIL_METHOD dataset
-            infil_method = infil_group.datasets["INFIL_METHOD"].data[0]
-            infil_data = [infil_method] + [None] * (len(infil_params) - 1)
-
-            # Populate infil_sql with global infiltration parameters
-            if infil_method == 1 or infil_method == 3:  # Green-Ampt
-                infil_ga_global = infil_group.datasets["INFIL_GA_GLOBAL"].data
-                infil_data[1:7] = infil_ga_global[:6]  # ABSTR, SATI, SATF, POROS, SOILD, INFCHAN
-                infil_data[7:10] = infil_ga_global[6:9]  # HYDCALL, SOILALL, HYDCADJ
-
-            if infil_method == 2 or infil_method == 3:  # SCS
-                infil_scs_global = infil_group.datasets["INFIL_SCS_GLOBAL"].data
-                infil_data[11:13] = infil_scs_global[:2]  # SCSNALL, ABSTR1
-
-            if infil_method == 4:  # Horton
-                infil_horton_global = infil_group.datasets["INFIL_HORTON_GLOBAL"].data
-                infil_data[13:17] = infil_horton_global[:4]  # FHORTONI, FHORTONF, DECAYA, FHORTONIA
-
-            infil_sql += [tuple(infil_data)]
-
-            # Populate infil_chan_seg
-            if "INFIL_CHAN_SEG" in infil_group.datasets:
-                infil_chan_seg_data = infil_group.datasets["INFIL_CHAN_SEG"].data
-                for i, row in enumerate(infil_chan_seg_data, 1):
-                    infil_seg_sql += [(i,) + tuple(row)]
-
-            # Populate infil_cells_green
-            if "INFIL_GA_CELLS" in infil_group.datasets:
-                infil_ga_cells = infil_group.datasets["INFIL_GA_CELLS"].data
-                for row in infil_ga_cells:
-                    sqls["F"] += [tuple(row)]
-
-            # Populate infil_cells_scs
-            if "INFIL_SCS_CELLS" in infil_group.datasets:
-                infil_scs_cells = infil_group.datasets["INFIL_SCS_CELLS"].data
-                for row in infil_scs_cells:
-                    sqls["S"] += [tuple(row)]
-
-            # Populate infil_cells_horton
-            if "INFIL_HORTON_CELLS" in infil_group.datasets:
-                infil_horton_cells = infil_group.datasets["INFIL_HORTON_CELLS"].data
-                for row in infil_horton_cells:
-                    sqls["H"] += [tuple(row)]
-
-            # Populate infil_chan_elems
-            if "INFIL_CHAN_ELEMS" in infil_group.datasets:
-                infil_chan_elems = infil_group.datasets["INFIL_CHAN_ELEMS"].data
-                for row in infil_chan_elems:
-                    sqls["C"] += [tuple(row)]
-
-            # Execute batch inserts
-            self.batch_execute(
-                infil_sql,
-                infil_seg_sql,
-                infil_green_sql,
-                infil_scs_sql,
-                infil_horton_sql,
-                infil_chan_sql,
+            self.clear_tables(
+                "infil",
+                "infil_chan_seg",
+                "infil_cells_green",
+                "infil_cells_scs",
+                "infil_cells_horton",
+                "infil_chan_elems",
             )
 
-        except Exception as e:
-            QApplication.restoreOverrideCursor()
-            self.uc.show_error("ERROR: Importing INFIL data from HDF5 failed!", e)
+            try:
+
+                # Read INFIL_METHOD dataset
+                infil_method = infil_group.datasets["INFIL_METHOD"].data[0]
+                infil_data = [infil_method] + [None] * (len(infil_params) - 1)
+
+                # Populate infil_sql with global infiltration parameters
+                if infil_method == 1 or infil_method == 3:  # Green-Ampt
+                    infil_ga_global = infil_group.datasets["INFIL_GA_GLOBAL"].data
+                    infil_data[1:7] = infil_ga_global[:6]  # ABSTR, SATI, SATF, POROS, SOILD, INFCHAN
+                    infil_data[7:10] = infil_ga_global[6:9]  # HYDCALL, SOILALL, HYDCADJ
+
+                if infil_method == 2 or infil_method == 3:  # SCS
+                    infil_scs_global = infil_group.datasets["INFIL_SCS_GLOBAL"].data
+                    infil_data[11:13] = infil_scs_global[:2]  # SCSNALL, ABSTR1
+
+                if infil_method == 4:  # Horton
+                    infil_horton_global = infil_group.datasets["INFIL_HORTON_GLOBAL"].data
+                    infil_data[13:17] = infil_horton_global[:4]  # FHORTONI, FHORTONF, DECAYA, FHORTONIA
+
+                infil_sql += [tuple(infil_data)]
+
+                # Populate infil_chan_seg
+                if "INFIL_CHAN_SEG" in infil_group.datasets:
+                    infil_chan_seg_data = infil_group.datasets["INFIL_CHAN_SEG"].data
+                    for i, row in enumerate(infil_chan_seg_data, 1):
+                        infil_seg_sql += [(i,) + tuple(row)]
+
+                # Populate infil_cells_green
+                if "INFIL_GA_CELLS" in infil_group.datasets:
+                    infil_ga_cells = infil_group.datasets["INFIL_GA_CELLS"].data
+                    for row in infil_ga_cells:
+                        sqls["F"] += [tuple(row)]
+
+                # Populate infil_cells_scs
+                if "INFIL_SCS_CELLS" in infil_group.datasets:
+                    infil_scs_cells = infil_group.datasets["INFIL_SCS_CELLS"].data
+                    for row in infil_scs_cells:
+                        sqls["S"] += [tuple(row)]
+
+                # Populate infil_cells_horton
+                if "INFIL_HORTON_CELLS" in infil_group.datasets:
+                    infil_horton_cells = infil_group.datasets["INFIL_HORTON_CELLS"].data
+                    for row in infil_horton_cells:
+                        sqls["H"] += [tuple(row)]
+
+                # Populate infil_chan_elems
+                if "INFIL_CHAN_ELEMS" in infil_group.datasets:
+                    infil_chan_elems = infil_group.datasets["INFIL_CHAN_ELEMS"].data
+                    for row in infil_chan_elems:
+                        sqls["C"] += [tuple(row)]
+
+                # Execute batch inserts
+                self.batch_execute(
+                    infil_sql,
+                    infil_seg_sql,
+                    infil_green_sql,
+                    infil_scs_sql,
+                    infil_horton_sql,
+                    infil_chan_sql,
+                )
+
+            except Exception as e:
+                QApplication.restoreOverrideCursor()
+                self.uc.show_error("ERROR: Importing INFIL data from HDF5 failed!", e)
+                self.uc.log_info("ERROR: Importing INFIL data from HDF5 failed!")
 
     def import_evapor(self):
         evapor_sql = ["""INSERT INTO evapor (ievapmonth, iday, clocktime) VALUES""", 3]
@@ -1482,57 +1493,60 @@ class Flo2dGeoPackage(GeoPackageUtils):
             )
 
     def import_arf_hdf5(self):
-        # try:
-        cont_sql = ["""INSERT INTO cont (name, value) VALUES""", 2]
-        cells_sql = [
-            """INSERT INTO blocked_cells (geom, area_fid, grid_fid, arf,
-                                                   wrf1, wrf2, wrf3, wrf4, wrf5, wrf6, wrf7, wrf8) VALUES""",
-            12,
-        ]
+        try:
+            arfwrf_group = self.parser.read_groups("Input/Reduction Factors")
+            if arfwrf_group:
+                arfwrf_group = arfwrf_group[0]
 
-        self.clear_tables("blocked_cells")
+                cont_sql = ["""INSERT INTO cont (name, value) VALUES""", 2]
+                cells_sql = [
+                    """INSERT INTO blocked_cells (geom, area_fid, grid_fid, arf,
+                                                           wrf1, wrf2, wrf3, wrf4, wrf5, wrf6, wrf7, wrf8) VALUES""",
+                    12,
+                ]
 
-        # Access the ARF/WRF group
-        arfwrf_group = self.parser.read_groups("Input/Reduction Factors")[0]
-        grid_group = self.parser.read_groups("Input/Grid")[0]
+                self.clear_tables("blocked_cells")
 
-        # Read ARF_GLOBAL dataset
-        if "ARF_GLOBAL" in arfwrf_group.datasets:
-            arf_global = arfwrf_group.datasets["ARF_GLOBAL"].data[0]
-            cont_sql += [("IARFBLOCKMOD", arf_global)]
+                grid_group = self.parser.read_groups("Input/Grid")[0]
 
-        # Read ARF_TOTALLY_BLOCKED dataset
-        if "ARF_TOTALLY_BLOCKED" in arfwrf_group.datasets:
-            totally_blocked = arfwrf_group.datasets["ARF_TOTALLY_BLOCKED"].data
-            x_list = grid_group.datasets["COORDINATES"].data[:, 0]
-            y_list = grid_group.datasets["COORDINATES"].data[:, 1]
-            for i, cell in enumerate(totally_blocked, 1):
-                grid_fid = abs(int(cell))
-                arf = 1 if cell > 0 else -1
-                geom = self.build_point_xy(x_list[grid_fid - 1], y_list[grid_fid - 1])
-                cells_sql += [(geom, i, grid_fid, arf) + (0,) * 8]  # Remaining WRF values are 0
+                # Read ARF_GLOBAL dataset
+                if "ARF_GLOBAL" in arfwrf_group.datasets:
+                    arf_global = arfwrf_group.datasets["ARF_GLOBAL"].data[0]
+                    cont_sql += [("IARFBLOCKMOD", arf_global)]
 
-        # Read ARF_PARTIALLY_BLOCKED dataset
-        if "ARF_PARTIALLY_BLOCKED" in arfwrf_group.datasets:
-            partially_blocked = arfwrf_group.datasets["ARF_PARTIALLY_BLOCKED"].data
-            x_list = grid_group.datasets["COORDINATES"].data[:, 0]
-            y_list = grid_group.datasets["COORDINATES"].data[:, 1]
-            for i, row in enumerate(partially_blocked, 1):
-                grid_fid = int(row[0])
-                arf = row[1]
-                wrf_values = row[2:]
-                geom = self.build_point_xy(x_list[grid_fid - 1], y_list[grid_fid - 1])
-                cells_sql += [(geom, i, grid_fid, arf) + tuple(wrf_values)]
+                # Read ARF_TOTALLY_BLOCKED dataset
+                if "ARF_TOTALLY_BLOCKED" in arfwrf_group.datasets:
+                    totally_blocked = arfwrf_group.datasets["ARF_TOTALLY_BLOCKED"].data
+                    x_list = grid_group.datasets["COORDINATES"].data[:, 0]
+                    y_list = grid_group.datasets["COORDINATES"].data[:, 1]
+                    for i, cell in enumerate(totally_blocked, 1):
+                        grid_fid = abs(int(cell))
+                        arf = 1 if cell > 0 else -1
+                        geom = self.build_point_xy(x_list[grid_fid - 1], y_list[grid_fid - 1])
+                        cells_sql += [(geom, i, grid_fid, arf) + (0,) * 8]  # Remaining WRF values are 0
 
-        # Execute batch inserts
-        self.batch_execute(cont_sql, cells_sql)
+                # Read ARF_PARTIALLY_BLOCKED dataset
+                if "ARF_PARTIALLY_BLOCKED" in arfwrf_group.datasets:
+                    partially_blocked = arfwrf_group.datasets["ARF_PARTIALLY_BLOCKED"].data
+                    x_list = grid_group.datasets["COORDINATES"].data[:, 0]
+                    y_list = grid_group.datasets["COORDINATES"].data[:, 1]
+                    for i, row in enumerate(partially_blocked, 1):
+                        grid_fid = int(row[0])
+                        arf = row[1]
+                        wrf_values = row[2:]
+                        geom = self.build_point_xy(x_list[grid_fid - 1], y_list[grid_fid - 1])
+                        cells_sql += [(geom, i, grid_fid, arf) + tuple(wrf_values)]
 
-        # except Exception as e:
-        #     self.uc.show_error(
-        #         "ERROR: Importing ARF data from HDF5 failed!"
-        #         + "\n__________________________________________________",
-        #         e,
-        #     )
+                # Execute batch inserts
+                self.batch_execute(cont_sql, cells_sql)
+
+        except Exception as e:
+            self.uc.show_error(
+                "ERROR: Importing ARF data from HDF5 failed!"
+                + "\n__________________________________________________",
+                e,
+            )
+            self.uc.log_info("ERROR: Importing ARF data from HDF5 failed!")
 
     def import_mult(self):
         try:
@@ -4646,14 +4660,17 @@ class Flo2dGeoPackage(GeoPackageUtils):
         four_values = "{0}  {1}  {2}  {3}"
         five_values = "{0}  {1}  {2}  {3}  {4}"
 
-        ideplt = self.execute(cont_sql, ("IDEPLT",)).fetchone()[0]
-        ihourdaily = self.execute(cont_sql, ("IHOURDAILY",)).fetchone()[0]
-
-        if ihourdaily is None:
-            ihourdaily = 0
-        if ideplt is None:
+        ideplt = self.execute(cont_sql, ("IDEPLT",)).fetchone()
+        if ideplt:
+            ideplt = ideplt[0]
+        else:
             first_gid = self.execute("""SELECT grid_fid FROM inflow_cells ORDER BY fid LIMIT 1;""").fetchone()[0]
             ideplt = first_gid if first_gid is not None else 0
+        ihourdaily = self.execute(cont_sql, ("IHOURDAILY",)).fetchone()
+        if ihourdaily:
+            ihourdaily = ihourdaily[0]
+        else:
+            ihourdaily = 0
 
         inflow_global = [float(ihourdaily), float(ideplt)]
 
@@ -4733,7 +4750,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
         if not self.is_table_empty("tailing_reservoirs"):
 
             schematic_tailings_reservoirs_sql = (
-                """SELECT grid_fid, wsel, tailings, n_value FROM tailing_reservoirs ORDER BY fid;"""
+                """SELECT grid_fid, wsel, n_value, tailings FROM tailing_reservoirs ORDER BY fid;"""
             )
             for res in self.execute(schematic_tailings_reservoirs_sql):
                 res = [x if (x is not None and x != "") else -9999 for x in res]
