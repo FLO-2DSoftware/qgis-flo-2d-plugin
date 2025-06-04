@@ -6018,10 +6018,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
         if self.is_table_empty("chan"):
             return False
 
-        chan_sql = """SELECT fid, depinitial, froudc, roughadj, isedn FROM chan ORDER BY fid;"""
-        chan_elems_sql = (
-            """SELECT fid, rbankgrid, fcn, xlen, type FROM chan_elems WHERE seg_fid = ? ORDER BY nr_in_seg;"""
-        )
+        chan_sql = """SELECT fid, depinitial, froudc, roughadj, ibaseflow, isedn FROM chan ORDER BY fid;"""
+        chan_elems_sql = ("""SELECT fid, rbankgrid, fcn, xlen, type FROM chan_elems WHERE seg_fid = ? ORDER BY nr_in_seg;""")
 
         chan_r_sql = """SELECT elem_fid, bankell, bankelr, fcw, fcd FROM chan_r WHERE elem_fid = ?;"""
         chan_v_sql = """SELECT elem_fid, bankell, bankelr, fcd, a1, a2, b1, b2, c1, c2,
@@ -6033,7 +6031,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
         chan_conf_sql = """SELECT conf_fid, type, chan_elem_fid FROM chan_confluences ORDER BY fid;"""
         chan_e_sql = """SELECT grid_fid FROM noexchange_chan_cells ORDER BY fid;"""
 
-        segment = "{}  {}  {}  {}  {}\n"
+        segment = "{}  {}  {}  {}  {}  {}\n"
         chanbank = " {0: <10} {1}\n"
 
         sqls = {
@@ -6059,8 +6057,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
             row = [x if x is not None else "0" for x in row]
             fid = row[0]
             if ISED == "0":
-                row[4] = -9999
-            channel_group.datasets["CHAN_GLOBAL"].data.append(create_array(segment, 5, np.float_, tuple(row)))
+                row[5] = -9999
+            channel_group.datasets["CHAN_GLOBAL"].data.append(create_array(segment, 6, np.float_, tuple(row)))
             # Writes depinitial, froudc, roughadj, isedn from 'chan' table (schematic layer).
             # A single line for each channel segment.
             for elems in self.execute(
