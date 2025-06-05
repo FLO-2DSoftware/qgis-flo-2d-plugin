@@ -2419,7 +2419,7 @@ class Flo2D(object):
             "import_inflow",
             "import_tailings",
             # "import_outrc",
-            # "import_outflow",
+            "import_outflow",
             "import_rain",
             # "import_raincell",
             # "import_evapor",
@@ -2469,6 +2469,7 @@ class Flo2D(object):
         QApplication.setOverrideCursor(Qt.WaitCursor)
         empty = self.f2g.is_table_empty("grid")
         if not empty:
+            QApplication.restoreOverrideCursor()
             q = "There is a grid already defined in GeoPackage. Overwrite it?"
             if self.uc.question(q):
                 pass

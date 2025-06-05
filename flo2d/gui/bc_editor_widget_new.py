@@ -1824,11 +1824,10 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
             row = [x if x is not None else "" for x in row]
             fid, name, typ, geom_type = row
             if not geom_type:
-                outflows_skipped += 1
-                continue
+                geom_type = 'point'
             if not name:
                 name = "Outflow {}".format(fid)
-            self.outflow_bc_name_cbo.addItem(name, [fid, typ, geom_type])
+            self.outflow_bc_name_cbo.addItem(name, [fid, int(typ), geom_type])
             if fid == outflow_fid:
                 cur_out_idx = i - outflows_skipped
 
@@ -1844,7 +1843,7 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
         self.outflow.get_row()
 
         if not self.outflow.geom_type:
-            return
+            self.outflow.geom_type = "point"
         self.bc_lyr = self.get_user_bc_lyr_for_geomtype(self.outflow.geom_type)
         self.show_outflow_rb()
         if self.outflow.hydro_out:
@@ -1929,7 +1928,7 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
         else:
             self.type_fid = int(self.outflow.typ)
         if not self.outflow.geom_type:
-            return
+            self.outflow.geom_type = "point"
         self.bc_lyr = self.get_user_bc_lyr_for_geomtype(self.outflow.geom_type)
         self.show_outflow_rb()
         if self.outflow_bc_center_btn.isChecked():
