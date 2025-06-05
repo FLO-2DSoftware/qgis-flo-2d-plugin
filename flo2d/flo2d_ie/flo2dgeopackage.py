@@ -779,151 +779,64 @@ class Flo2dGeoPackage(GeoPackageUtils):
         self.execute(qhtab_name_qry)
 
     def import_outflow_hdf5(self):
-        # try:
-        outflow_group = self.parser.read_groups("Input/Boundary Conditions/Outflow")
-        if outflow_group:
-            outflow_group = outflow_group[0]
+        try:
+            outflow_group = self.parser.read_groups("Input/Boundary Conditions/Outflow")
+            if outflow_group:
+                outflow_group = outflow_group[0]
 
-            self.clear_tables(
-                "outflow",
-                "outflow_cells",
-                "qh_params",
-                "qh_params_data",
-                "qh_table",
-                "qh_table_data",
-                "outflow_time_series",
-                "outflow_time_series_data",
-            )
+                self.clear_tables(
+                    "outflow",
+                    "outflow_cells",
+                    "qh_params",
+                    "qh_params_data",
+                    "qh_table",
+                    "qh_table_data",
+                    "outflow_time_series",
+                    "outflow_time_series_data",
+                )
 
-            floodplain_outflow_sql = [
-                """INSERT INTO outflow (fid, fp_out, hydro_out, chan_tser_fid, chan_qhpar_fid, chan_qhtab_fid, fp_tser_fid, bc_fid) VALUES""",
-                8,
-            ]
+                floodplain_outflow_sql = [
+                    """INSERT INTO outflow (fid, fp_out, hydro_out, chan_tser_fid, chan_qhpar_fid, chan_qhtab_fid, fp_tser_fid, bc_fid) VALUES""",
+                    8,
+                ]
 
-            channel_outflow_sql = [
-                """INSERT INTO outflow (fid, chan_out, hydro_out, chan_tser_fid, chan_qhpar_fid, chan_qhtab_fid, fp_tser_fid, bc_fid) VALUES""",
-                8,
-            ]
+                channel_outflow_sql = [
+                    """INSERT INTO outflow (fid, chan_out, hydro_out, chan_tser_fid, chan_qhpar_fid, chan_qhtab_fid, fp_tser_fid, bc_fid) VALUES""",
+                    8,
+                ]
 
-            cells_sql = ["""INSERT OR REPLACE INTO outflow_cells (outflow_fid, grid_fid, geom_type) VALUES""", 3]
-            qh_params_sql = ["""INSERT OR REPLACE INTO qh_params (fid, name) VALUES""", 2]
-            qh_params_data_sql = ["""INSERT INTO qh_params_data (params_fid, hmax, coef, exponent) VALUES""", 4]
-            qh_tab_sql = ["""INSERT INTO qh_table (fid, name) VALUES""", 2]
-            qh_tab_data_sql = ["""INSERT INTO qh_table_data (table_fid, depth, q) VALUES""", 3]
-            ts_sql = ["""INSERT OR REPLACE INTO outflow_time_series (fid, name) VALUES""", 2]
-            ts_data_sql = ["""INSERT INTO outflow_time_series_data (series_fid, time, value) VALUES""", 3]
+                cells_sql = ["""INSERT OR REPLACE INTO outflow_cells (outflow_fid, grid_fid, geom_type) VALUES""", 3]
+                qh_params_sql = ["""INSERT OR REPLACE INTO qh_params (fid, name) VALUES""", 2]
+                qh_params_data_sql = ["""INSERT INTO qh_params_data (params_fid, hmax, coef, exponent) VALUES""", 4]
+                qh_tab_sql = ["""INSERT INTO qh_table (fid, name) VALUES""", 2]
+                qh_tab_data_sql = ["""INSERT INTO qh_table_data (table_fid, depth, q) VALUES""", 3]
+                ts_sql = ["""INSERT OR REPLACE INTO outflow_time_series (fid, name) VALUES""", 2]
+                ts_data_sql = ["""INSERT INTO outflow_time_series_data (series_fid, time, value) VALUES""", 3]
 
-            update_sql = []
-            parsed_grid = {}
-            fid = 1
-            bc_fid = self.execute("SELECT MAX(fid) FROM all_schem_bc;").fetchone()
-            if bc_fid and bc_fid[0] is not None:
-                bc_fid = bc_fid[0] + 1
-            else:
-                bc_fid = 1
+                update_sql = []
+                parsed_grid = {}
+                fid = 1
+                bc_fid = self.execute("SELECT MAX(fid) FROM all_schem_bc;").fetchone()
+                if bc_fid and bc_fid[0] is not None:
+                    bc_fid = bc_fid[0] + 1
+                else:
+                    bc_fid = 1
 
-            # Read datasets
-            if "FP_OUT_GRID" in outflow_group.datasets:
-                data = outflow_group.datasets["FP_OUT_GRID"].data
-                for grid in data:
-                    if grid not in parsed_grid.keys():
-                        parsed_grid[grid] = fid
-                        floodplain_outflow_sql += [
-                            (
-                                fid,
-                                1,
-                                0,
-                                0,
-                                0,
-                                0,
-                                0,
-                                bc_fid,
-                            )
-                        ]
-                        cells_sql += [
-                            (
-                                fid,
-                                int(grid),
-                                'point'
-                            )
-                        ]
-                        fid += 1
-                        bc_fid += 1
-                    else:
-                        existing_fid = parsed_grid[grid]
-                        update_sql.append(f"UPDATE outflow SET fp_out = 1 WHERE fid = {existing_fid};")
-
-            if "CH_OUT_GRID" in outflow_group.datasets:
-                data = outflow_group.datasets["CH_OUT_GRID"].data
-                for grid in data:
-                    if grid not in parsed_grid.keys():
-                        parsed_grid[grid] = fid
-                        channel_outflow_sql += [
-                            (
-                                fid,
-                                1,
-                                0,
-                                0,
-                                0,
-                                0,
-                                0,
-                                bc_fid,
-                            )
-                        ]
-                        cells_sql += [
-                            (
-                                fid,
-                                int(grid),
-                                'point'
-                            )
-                        ]
-                        fid += 1
-                        bc_fid += 1
-                    else:
-                        existing_fid = parsed_grid[grid]
-                        update_sql.append(f"UPDATE outflow SET chan_out = 1 WHERE fid = {existing_fid};")
-
-            if "HYD_OUT_GRID" in outflow_group.datasets:
-                data = outflow_group.datasets["HYD_OUT_GRID"].data
-                for row in data:
-                    hydro_out, grid = row
-                    floodplain_outflow_sql += [
-                        (
-                            fid,
-                            0,
-                            int(hydro_out),
-                            0,
-                            0,
-                            0,
-                            0,
-                            bc_fid,
-                        )
-                    ]
-                    cells_sql += [
-                        (
-                            fid,
-                            int(grid),
-                            'point'
-                        )
-                    ]
-                    fid += 1
-                    bc_fid += 1
-
-            if "TS_OUT_GRID" in outflow_group.datasets:
-                data = outflow_group.datasets["TS_OUT_GRID"].data
-                for row in data:
-                    grid, cell_type, ts_id = row
-                    if grid not in parsed_grid.keys():
-                        if int(cell_type) == 0:  # floodplain
+                # Read datasets
+                if "FP_OUT_GRID" in outflow_group.datasets:
+                    data = outflow_group.datasets["FP_OUT_GRID"].data
+                    for grid in data:
+                        if grid not in parsed_grid.keys():
+                            parsed_grid[grid] = fid
                             floodplain_outflow_sql += [
                                 (
                                     fid,
+                                    1,
                                     0,
                                     0,
                                     0,
                                     0,
                                     0,
-                                    int(ts_id),
                                     bc_fid,
                                 )
                             ]
@@ -934,17 +847,23 @@ class Flo2dGeoPackage(GeoPackageUtils):
                                     'point'
                                 )
                             ]
-                            ts_sql += [(int(ts_id), "Time series " + str(ts_id))]
                             fid += 1
                             bc_fid += 1
+                        else:
+                            existing_fid = parsed_grid[grid]
+                            update_sql.append(f"UPDATE outflow SET fp_out = 1 WHERE fid = {existing_fid};")
 
-                        if int(cell_type) == 1:  # channel
+                if "CH_OUT_GRID" in outflow_group.datasets:
+                    data = outflow_group.datasets["CH_OUT_GRID"].data
+                    for grid in data:
+                        if grid not in parsed_grid.keys():
+                            parsed_grid[grid] = fid
                             channel_outflow_sql += [
                                 (
                                     fid,
+                                    1,
                                     0,
                                     0,
-                                    int(ts_id),
                                     0,
                                     0,
                                     0,
@@ -958,38 +877,23 @@ class Flo2dGeoPackage(GeoPackageUtils):
                                     'point'
                                 )
                             ]
-                            ts_sql += [(int(ts_id), "Time series " + str(ts_id))]
                             fid += 1
                             bc_fid += 1
-                    else:
-                        if int(cell_type) == 0:  # floodplain
+                        else:
                             existing_fid = parsed_grid[grid]
-                            update_sql.append(f"UPDATE outflow SET fp_tser_fid = {int(ts_id)} WHERE fid = {existing_fid};")
-                            ts_sql += [(int(ts_id), "Time series " + str(ts_id))]
+                            update_sql.append(f"UPDATE outflow SET chan_out = 1 WHERE fid = {existing_fid};")
 
-                        if int(cell_type) == 1:  # channel
-                            existing_fid = parsed_grid[grid]
-                            update_sql.append(f"UPDATE outflow SET chan_tser_fid = {int(ts_id)} WHERE fid = {existing_fid};")
-                            ts_sql += [(int(ts_id), "Time series " + str(ts_id))]
-
-            if "TS_OUT_DATA" in outflow_group.datasets:
-                data = outflow_group.datasets["TS_OUT_DATA"].data
-                for row in data:
-                    ts_id, time, value = row
-                    ts_data_sql += [(int(ts_id), time, value)]
-
-            if "QH_PARAMS_GRID" in outflow_group.datasets:
-                data = outflow_group.datasets["QH_PARAMS_GRID"].data
-                for row in data:
-                    grid, qh_params_id = row
-                    if grid not in parsed_grid.keys():
-                        channel_outflow_sql += [
+                if "HYD_OUT_GRID" in outflow_group.datasets:
+                    data = outflow_group.datasets["HYD_OUT_GRID"].data
+                    for row in data:
+                        hydro_out, grid = row
+                        floodplain_outflow_sql += [
                             (
                                 fid,
-                                1,
+                                0,
+                                int(hydro_out),
                                 0,
                                 0,
-                                qh_params_id,
                                 0,
                                 0,
                                 bc_fid,
@@ -1002,189 +906,210 @@ class Flo2dGeoPackage(GeoPackageUtils):
                                 'point'
                             )
                         ]
-                        qh_params_sql += [(int(qh_params_id), "Q(h) parameters " + str(qh_params_id))]
                         fid += 1
                         bc_fid += 1
-                    else:
-                        existing_fid = parsed_grid[grid]
-                        update_sql.append(
-                            f"UPDATE outflow SET chan_qhpar_fid = {int(qh_params_id)} WHERE fid = {existing_fid};")
-                        qh_params_sql += [(int(qh_params_id), "Q(h) parameters " + str(qh_params_id))]
 
-            if "QH_PARAMS" in outflow_group.datasets:
-                data = outflow_group.datasets["QH_PARAMS"].data
-                for row in data:
-                    qh_params_id, param1, param2, param3 = row
-                    qh_params_data_sql += [(int(qh_params_id), param1, param2, param3)]
+                if "TS_OUT_GRID" in outflow_group.datasets:
+                    data = outflow_group.datasets["TS_OUT_GRID"].data
+                    for row in data:
+                        grid, cell_type, ts_id = row
+                        if grid not in parsed_grid.keys():
+                            if int(cell_type) == 0:  # floodplain
+                                floodplain_outflow_sql += [
+                                    (
+                                        fid,
+                                        0,
+                                        0,
+                                        0,
+                                        0,
+                                        0,
+                                        int(ts_id),
+                                        bc_fid,
+                                    )
+                                ]
+                                cells_sql += [
+                                    (
+                                        fid,
+                                        int(grid),
+                                        'point'
+                                    )
+                                ]
+                                ts_sql += [(int(ts_id), "Time series " + str(ts_id))]
+                                fid += 1
+                                bc_fid += 1
 
-            if "QH_TABLE_GRID" in outflow_group.datasets:
-                data = outflow_group.datasets["QH_TABLE_GRID"].data
-                for row in data:
-                    grid, qh_table_id = row
-                    if grid not in parsed_grid.keys():
-                        channel_outflow_sql += [
-                            (
-                                fid,
-                                1,
-                                0,
-                                0,
-                                0,
-                                qh_table_id,
-                                0,
-                                bc_fid,
-                            )
-                        ]
-                        cells_sql += [
-                            (
-                                fid,
-                                int(grid),
-                                'point'
-                            )
-                        ]
-                        qh_tab_sql += [(int(qh_table_id), "Q(h) table " + str(qh_table_id))]
-                        fid += 1
-                        bc_fid += 1
-                    else:
-                        existing_fid = parsed_grid[grid]
-                        update_sql.append(
-                            f"UPDATE outflow SET chan_qhtab_fid = {int(qh_table_id)} WHERE fid = {existing_fid};")
-                        qh_tab_data_sql += [(int(qh_table_id), "Q(h) parameters " + str(qh_table_id))]
+                            if int(cell_type) == 1:  # channel
+                                channel_outflow_sql += [
+                                    (
+                                        fid,
+                                        0,
+                                        0,
+                                        int(ts_id),
+                                        0,
+                                        0,
+                                        0,
+                                        bc_fid,
+                                    )
+                                ]
+                                cells_sql += [
+                                    (
+                                        fid,
+                                        int(grid),
+                                        'point'
+                                    )
+                                ]
+                                ts_sql += [(int(ts_id), "Time series " + str(ts_id))]
+                                fid += 1
+                                bc_fid += 1
+                        else:
+                            if int(cell_type) == 0:  # floodplain
+                                existing_fid = parsed_grid[grid]
+                                update_sql.append(f"UPDATE outflow SET fp_tser_fid = {int(ts_id)} WHERE fid = {existing_fid};")
+                                ts_sql += [(int(ts_id), "Time series " + str(ts_id))]
 
-            if "QH_TABLE" in outflow_group.datasets:
-                data = outflow_group.datasets["QH_TABLE"].data
-                for row in data:
-                    qh_table_id, param1, param2 = row
-                    qh_tab_data_sql += [(int(qh_table_id), param1, param2)]
+                            if int(cell_type) == 1:  # channel
+                                existing_fid = parsed_grid[grid]
+                                update_sql.append(f"UPDATE outflow SET chan_tser_fid = {int(ts_id)} WHERE fid = {existing_fid};")
+                                ts_sql += [(int(ts_id), "Time series " + str(ts_id))]
 
-            if floodplain_outflow_sql:
-                self.batch_execute(floodplain_outflow_sql)
+                if "TS_OUT_DATA" in outflow_group.datasets:
+                    data = outflow_group.datasets["TS_OUT_DATA"].data
+                    for row in data:
+                        ts_id, time, value = row
+                        ts_data_sql += [(int(ts_id), time, value)]
 
-            if channel_outflow_sql:
-                self.batch_execute(channel_outflow_sql)
+                if "QH_PARAMS_GRID" in outflow_group.datasets:
+                    data = outflow_group.datasets["QH_PARAMS_GRID"].data
+                    for row in data:
+                        grid, qh_params_id = row
+                        if grid not in parsed_grid.keys():
+                            channel_outflow_sql += [
+                                (
+                                    fid,
+                                    1,
+                                    0,
+                                    0,
+                                    qh_params_id,
+                                    0,
+                                    0,
+                                    bc_fid,
+                                )
+                            ]
+                            cells_sql += [
+                                (
+                                    fid,
+                                    int(grid),
+                                    'point'
+                                )
+                            ]
+                            qh_params_sql += [(int(qh_params_id), "Q(h) parameters " + str(qh_params_id))]
+                            fid += 1
+                            bc_fid += 1
+                        else:
+                            existing_fid = parsed_grid[grid]
+                            update_sql.append(
+                                f"UPDATE outflow SET chan_qhpar_fid = {int(qh_params_id)} WHERE fid = {existing_fid};")
+                            qh_params_sql += [(int(qh_params_id), "Q(h) parameters " + str(qh_params_id))]
 
-            if ts_sql:
-                self.batch_execute(ts_sql)
+                if "QH_PARAMS" in outflow_group.datasets:
+                    data = outflow_group.datasets["QH_PARAMS"].data
+                    for row in data:
+                        qh_params_id, param1, param2, param3 = row
+                        qh_params_data_sql += [(int(qh_params_id), param1, param2, param3)]
 
-            if ts_data_sql:
-                self.batch_execute(ts_data_sql)
+                if "QH_TABLE_GRID" in outflow_group.datasets:
+                    data = outflow_group.datasets["QH_TABLE_GRID"].data
+                    for row in data:
+                        grid, qh_table_id = row
+                        if grid not in parsed_grid.keys():
+                            channel_outflow_sql += [
+                                (
+                                    fid,
+                                    1,
+                                    0,
+                                    0,
+                                    0,
+                                    qh_table_id,
+                                    0,
+                                    bc_fid,
+                                )
+                            ]
+                            cells_sql += [
+                                (
+                                    fid,
+                                    int(grid),
+                                    'point'
+                                )
+                            ]
+                            qh_tab_sql += [(int(qh_table_id), "Q(h) table " + str(qh_table_id))]
+                            fid += 1
+                            bc_fid += 1
+                        else:
+                            existing_fid = parsed_grid[grid]
+                            update_sql.append(
+                                f"UPDATE outflow SET chan_qhtab_fid = {int(qh_table_id)} WHERE fid = {existing_fid};")
+                            qh_tab_data_sql += [(int(qh_table_id), "Q(h) parameters " + str(qh_table_id))]
 
-            if qh_params_sql:
-                self.batch_execute(qh_params_sql)
+                if "QH_TABLE" in outflow_group.datasets:
+                    data = outflow_group.datasets["QH_TABLE"].data
+                    for row in data:
+                        qh_table_id, param1, param2 = row
+                        qh_tab_data_sql += [(int(qh_table_id), param1, param2)]
 
-            if qh_params_data_sql:
-                self.batch_execute(qh_params_data_sql)
+                if floodplain_outflow_sql:
+                    self.batch_execute(floodplain_outflow_sql)
 
-            if qh_tab_sql:
-                self.batch_execute(qh_tab_sql)
+                if channel_outflow_sql:
+                    self.batch_execute(channel_outflow_sql)
 
-            if qh_tab_data_sql:
-                self.batch_execute(qh_tab_data_sql)
+                if ts_sql:
+                    self.batch_execute(ts_sql)
 
-            if update_sql:
-                for qry in update_sql:
-                    self.execute(qry)
+                if ts_data_sql:
+                    self.batch_execute(ts_data_sql)
 
-            if cells_sql:
-                self.batch_execute(cells_sql)
+                if qh_params_sql:
+                    self.batch_execute(qh_params_sql)
 
-            type_qry = """UPDATE outflow SET type = (CASE
-                                WHEN (fp_out > 0 AND chan_out = 0 AND fp_tser_fid = 0) THEN 1
-                                WHEN (fp_out = 0 AND chan_out > 0 AND chan_tser_fid = 0 AND
-                                      chan_qhpar_fid = 0 AND chan_qhtab_fid = 0) THEN 2
-                                WHEN (fp_out > 0 AND chan_out > 0) THEN 3
-                                WHEN (hydro_out > 0) THEN 4
-                                WHEN (fp_out = 0 AND fp_tser_fid > 0) THEN 5
-                                WHEN (chan_out = 0 AND chan_tser_fid > 0) THEN 6
-                                WHEN (fp_out > 0 AND fp_tser_fid > 0) THEN 7
-                                WHEN (chan_out > 0 AND chan_tser_fid > 0) THEN 8
-                                WHEN (chan_qhpar_fid > 0) THEN 9 -- depth-discharge qhpar
-                                WHEN (chan_qhtab_fid > 0) THEN 10
-                                ELSE 0
-                            END),
-                            name = 'Outflow ' ||  cast(fid as text);"""
-            self.execute(type_qry)
+                if qh_params_data_sql:
+                    self.batch_execute(qh_params_data_sql)
 
-            # hyd_out_grid = outflow_group.datasets[
-            #     "HYD_OUT_GRID"].data if "HYD_OUT_GRID" in outflow_group.datasets else []
-            # ts_out_grid = outflow_group.datasets[
-            #     "TS_OUT_GRID"].data if "TS_OUT_GRID" in outflow_group.datasets else []
-            # ts_out_data = outflow_group.datasets[
-            #     "TS_OUT_DATA"].data if "TS_OUT_DATA" in outflow_group.datasets else []
-            # qh_params_grid = outflow_group.datasets[
-            #     "QH_PARAMS_GRID"].data if "QH_PARAMS_GRID" in outflow_group.datasets else []
-            # qh_params = outflow_group.datasets[
-            #     "QH_PARAMS"].data if "QH_PARAMS" in outflow_group.datasets else []
-            # qh_table_grid = outflow_group.datasets[
-            #     "QH_TABLE_GRID"].data if "QH_TABLE_GRID" in outflow_group.datasets else []
-            # qh_table = outflow_group.datasets[
-            #     "QH_TABLE"].data if "QH_TABLE" in outflow_group.datasets else []
+                if qh_tab_sql:
+                    self.batch_execute(qh_tab_sql)
 
-            # # Insert outflow main table
-            # for row in fp_out_grid:
-            #     outflow_sql += [tuple(row)]
-            # # Insert outflow cells
-            # for row in ch_out_grid:
-            #     cells_sql += [tuple(row)]
-            # # Insert QH params
-            # for row in hyd_out_grid:
-            #     qh_params_sql += [(row[0],)]
-            # for row in ts_out_grid:
-            #     qh_params_data_sql += [tuple(row)]
-            # # Insert QH table
-            # for row in ts_out_data:
-            #     qh_tab_sql += [(row[0],)]
-            # for row in qh_params_grid:
-            #     qh_tab_data_sql += [tuple(row)]
-            # # Insert time series
-            # for row in qh_params:
-            #     ts_sql += [(row[0],)]
-            # for row in qh_table_grid:
-            #     ts_data_sql += [tuple(row)]
-            # for row in qh_table:
-            #     ts_data_sql += [tuple(row)]
+                if qh_tab_data_sql:
+                    self.batch_execute(qh_tab_data_sql)
 
-            # self.batch_execute(
-            #     qh_params_sql,
-            #     qh_params_data_sql,
-            #     qh_tab_sql,
-            #     qh_tab_data_sql,
-            #     ts_sql,
-            #     ts_data_sql,
-            #     outflow_sql,
-            #     cells_sql,
-            # )
+                if update_sql:
+                    for qry in update_sql:
+                        self.execute(qry)
 
-            # # Update names and types as in import_outflow_dat
-            # type_qry = """UPDATE outflow SET type = (CASE
-            #             WHEN (fp_out > 0 AND chan_out = 0 AND fp_tser_fid = 0) THEN 1
-            #             WHEN (fp_out = 0 AND chan_out > 0 AND chan_tser_fid = 0 AND
-            #                   chan_qhpar_fid = 0 AND chan_qhtab_fid = 0) THEN 2
-            #             WHEN (fp_out > 0 AND chan_out > 0) THEN 3
-            #             WHEN (hydro_out > 0) THEN 4
-            #             WHEN (fp_out = 0 AND fp_tser_fid > 0) THEN 5
-            #             WHEN (chan_out = 0 AND chan_tser_fid > 0) THEN 6
-            #             WHEN (fp_out > 0 AND fp_tser_fid > 0) THEN 7
-            #             WHEN (chan_out > 0 AND chan_tser_fid > 0) THEN 8
-            #             WHEN (chan_qhpar_fid > 0) THEN 10
-            #             WHEN (chan_qhtab_fid > 0) THEN 11
-            #             ELSE 0
-            #         END),
-            #         name = 'Outflow ' ||  cast(fid as text);"""
-            # self.execute(type_qry)
-            # ts_name_qry = """UPDATE outflow_time_series SET name = 'Time series ' ||  cast(fid as text);"""
-            # self.execute(ts_name_qry)
-            # qhpar_name_qry = """UPDATE qh_params SET name = 'Q(h) parameters ' ||  cast(fid as text);"""
-            # self.execute(qhpar_name_qry)
-            # qhtab_name_qry = """UPDATE qh_table SET name = 'Q(h) table ' ||  cast(fid as text);"""
-            # self.execute(qhtab_name_qry)
+                if cells_sql:
+                    self.batch_execute(cells_sql)
 
-            return True
+                type_qry = """UPDATE outflow SET type = (CASE
+                                    WHEN (fp_out > 0 AND chan_out = 0 AND fp_tser_fid = 0) THEN 1
+                                    WHEN (fp_out = 0 AND chan_out > 0 AND chan_tser_fid = 0 AND
+                                          chan_qhpar_fid = 0 AND chan_qhtab_fid = 0) THEN 2
+                                    WHEN (fp_out > 0 AND chan_out > 0) THEN 3
+                                    WHEN (hydro_out > 0) THEN 4
+                                    WHEN (fp_out = 0 AND fp_tser_fid > 0) THEN 5
+                                    WHEN (chan_out = 0 AND chan_tser_fid > 0) THEN 6
+                                    WHEN (fp_out > 0 AND fp_tser_fid > 0) THEN 7
+                                    WHEN (chan_out > 0 AND chan_tser_fid > 0) THEN 8
+                                    WHEN (chan_qhpar_fid > 0) THEN 9 -- depth-discharge qhpar
+                                    WHEN (chan_qhtab_fid > 0) THEN 10
+                                    ELSE 0
+                                END),
+                                name = 'Outflow ' ||  cast(fid as text);"""
+                self.execute(type_qry)
+                return True
 
-        # except Exception as e:
-        #     QApplication.restoreOverrideCursor()
-        #     self.uc.show_error("ERROR: importing OUTFLOW from HDF5 failed!\n", e)
-        #     self.uc.log_info("ERROR: importing OUTFLOW from HDF5 failed!")
-        #     return False
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.uc.show_error("ERROR: importing OUTFLOW from HDF5 failed!\n", e)
+            self.uc.log_info("ERROR: importing OUTFLOW from HDF5 failed!")
+            return False
 
     def import_rain(self):
         if self.parsed_format == self.FORMAT_DAT:
