@@ -4925,6 +4925,12 @@ class Flo2dGeoPackage(GeoPackageUtils):
             return False
 
     def import_shallowNSpatial(self):
+        if self.parsed_format == self.FORMAT_DAT:
+            return self.import_shallowNSpatial_dat()
+        elif self.parsed_format == self.FORMAT_HDF5:
+            return self.import_shallowNSpatial_hdf5()
+
+    def import_shallowNSpatial_dat(self):
         shallowNSpatial_sql = ["""INSERT INTO spatialshallow (geom, shallow_n) VALUES""", 2]
         cells_sql = ["""INSERT INTO spatialshallow_cells (area_fid, grid_fid) VALUES""", 2]
 
@@ -4939,6 +4945,37 @@ class Flo2dGeoPackage(GeoPackageUtils):
             cells_sql += [(i, gid)]
 
         self.batch_execute(shallowNSpatial_sql, cells_sql)
+
+    def import_shallowNSpatial_hdf5(self):
+        try:
+            shallowNSpatial_group = self.parser.read_groups("Input/Spatially Variable")
+            if shallowNSpatial_group:
+                shallowNSpatial_group = shallowNSpatial_group[0]
+
+                shallowNSpatial_sql = ["""INSERT INTO spatialshallow (geom, shallow_n) VALUES""", 2]
+                cells_sql = ["""INSERT INTO spatialshallow_cells (area_fid, grid_fid) VALUES""", 2]
+
+                self.clear_tables("spatialshallow", "spatialshallow_cells")
+
+                # Process SHALLOWN_SPATIAL dataset
+                if "SHALLOWN_SPATIAL" in shallowNSpatial_group.datasets:
+                    data = shallowNSpatial_group.datasets["SHALLOWN_SPATIAL"].data
+                    for i, row in enumerate(data, start=1):
+                        grid, shallowNSpatial = row
+                        geom = self.build_square(self.grid_centroids([int(grid)])[int(grid)], self.cell_size)
+                        shallowNSpatial_sql += [(geom, shallowNSpatial)]
+                        cells_sql += [(i, int(grid))]
+
+                if shallowNSpatial_sql:
+                    self.batch_execute(shallowNSpatial_sql)
+
+                if cells_sql:
+                    self.batch_execute(cells_sql)
+
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.uc.show_error("ERROR: Importing SHALLOWN_SPATIAL data from HDF5 failed!", e)
+            self.uc.log_info("ERROR: Importing SHALLOWN_SPATIAL data from HDF5 failed!")
 
     def import_wsurf(self):
         wsurf_sql = ["""INSERT INTO wsurf (geom, grid_fid, wselev) VALUES""", 3]
