@@ -38,6 +38,9 @@
       <layout class="QHBoxLayout" name="horizontalLayout_5">
        <item>
         <widget class="QLabel" name="label_12">
+         <property name="toolTip">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;IGRID(I)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;p&gt;Floodplain grid element number&lt;/p&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;p&gt;Range: 1 - NNOD&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
          <property name="text">
           <string>Element</string>
          </property>
@@ -48,6 +51,9 @@
        </item>
        <item>
         <widget class="QComboBox" name="individual_multiple_channel_element_cbo">
+         <property name="toolTip">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;IGRID(I)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
          <property name="editable">
           <bool>false</bool>
          </property>

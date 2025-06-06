@@ -89,7 +89,7 @@
                </sizepolicy>
               </property>
               <property name="toolTip">
-               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;WDRALL&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(ft or m)&lt;/p&gt;&lt;p&gt;Global assignment of the multiple channel width to all grid elements. If WDRALL = 0, all global variables are set to zero. &lt;/p&gt;&lt;p&gt;0 - 1000 ft&lt;/p&gt;&lt;p&gt;0 - 300 m&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;WDRALL&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(ft or m)&lt;/p&gt;&lt;p&gt;Global assignment of the multiple channel width to all grid elements. If WDRALL = 0, all global variables are set to zero. &lt;/p&gt;&lt;p&gt;Range:&lt;/p&gt;&lt;p&gt;0 - 1000 ft&lt;/p&gt;&lt;p&gt;0 - 300 m&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
               <property name="text">
                <string>Multiple channel width</string>
@@ -155,7 +155,7 @@
                </sizepolicy>
               </property>
               <property name="toolTip">
-               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;DMALL&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(ft or m)&lt;/p&gt;&lt;p&gt;Global assignment of the maximum depth to all grid elements.&lt;/p&gt;&lt;p&gt;0 - 1000 ft&lt;/p&gt;&lt;p&gt;0 - 300 m&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;DMALL&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(ft or m)&lt;/p&gt;&lt;p&gt;Global assignment of the maximum depth to all grid elements.&lt;/p&gt;&lt;p&gt;Range:&lt;/p&gt;&lt;p&gt;0 - 1000 ft&lt;/p&gt;&lt;p&gt;0 - 300 m&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
               <property name="text">
                <string>Maximum depth</string>
@@ -272,7 +272,7 @@
                </sizepolicy>
               </property>
               <property name="toolTip">
-               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;XNMULTALL(K)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Global assignment of the multiple channel n-values to all the grid elements.&lt;/p&gt;&lt;p&gt;0.01 - 0.5&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;XNMULTALL(K)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Global assignment of the multiple channel n-values to all the grid elements.&lt;/p&gt;&lt;p&gt;Range: 0.01 - 0.5&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
               <property name="text">
                <string>Manning's n-value</string>
@@ -342,7 +342,7 @@
                </sizepolicy>
               </property>
               <property name="toolTip">
-               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;SSLOPEMIN&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(dimensionless)&lt;/p&gt;&lt;p&gt;Minimum slope that multiple channel assignments will be made at run time. &lt;/p&gt;&lt;p&gt;0.0 - 1.0&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;SSLOPEMIN&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(dimensionless)&lt;/p&gt;&lt;p&gt;Minimum slope that multiple channel assignments will be made at run time. &lt;/p&gt;&lt;p&gt;Range: 0.0 - 1.0&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
               <property name="text">
                <string>Minimum slope</string>
@@ -405,7 +405,7 @@
                </sizepolicy>
               </property>
               <property name="toolTip">
-               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;SSLOPEMAX&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(dimensionless)&lt;/p&gt;&lt;p&gt;Maximum slope that multiple channel assignments will be made at run time. &lt;/p&gt;&lt;p&gt;0.0 - 1.0&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;SSLOPEMAX&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(dimensionless)&lt;/p&gt;&lt;p&gt;Maximum slope that multiple channel assignments will be made at run time. &lt;/p&gt;&lt;p&gt;Range: 0.0 - 1.0&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
               <property name="text">
                <string>Maximum slope</string>
@@ -468,7 +468,7 @@
                </sizepolicy>
               </property>
               <property name="toolTip">
-               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;AVULD50&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(mm)&lt;/p&gt;&lt;p&gt;Bed material D50 sediment size fraction. Assignment of AVULD50 triggers the avulsion component that will allow a multiple channel to seek a new path if the channel conveyance capacity is exceeded.&lt;/p&gt;&lt;p&gt;0.00 - 100.0&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;AVULD50&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(mm)&lt;/p&gt;&lt;p&gt;Bed material D50 sediment size fraction. Assignment of AVULD50 triggers the avulsion component that will allow a multiple channel to seek a new path if the channel conveyance capacity is exceeded.&lt;/p&gt;&lt;p&gt;Range: 0.00 - 100.0&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
               <property name="text">
                <string>Surface sediment size (D50)</string>
@@ -535,7 +535,7 @@
            </sizepolicy>
           </property>
           <property name="toolTip">
-           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;WMC&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(ft or m)&lt;/p&gt;&lt;p&gt;Incremental width by which multiple channels will be expanded when the maximum depth DM is exceeded&lt;/p&gt;&lt;p&gt;0 - 1000 ft&lt;/p&gt;&lt;p&gt;0 - 300 m&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;WMC&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(ft or m)&lt;/p&gt;&lt;p&gt;Incremental width by which multiple channels will be expanded when the maximum depth DM is exceeded&lt;/p&gt;&lt;p&gt;Range: &lt;/p&gt;&lt;p&gt;0 - 1000 ft&lt;/p&gt;&lt;p&gt;0 - 300 m&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
           </property>
           <property name="text">
            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Incremental width to increase the rill/gully width when the conveyance capacity is exceeded&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
