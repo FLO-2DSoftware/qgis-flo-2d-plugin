@@ -2675,6 +2675,12 @@ class Flo2dGeoPackage(GeoPackageUtils):
         self.batch_execute(lgeneral_sql, ldata_sql, lfailure_sql, lfragility_sql)
 
     def import_fpxsec(self):
+        if self.parsed_format == self.FORMAT_DAT:
+            return self.import_fpxsec_dat()
+        elif self.parsed_format == self.FORMAT_HDF5:
+            return self.import_fpxsec_hdf5()
+
+    def import_fpxsec_dat(self):
         cont_sql = ["""INSERT INTO cont (name, value) VALUES""", 2]
         fpxsec_sql = ["""INSERT INTO fpxsec (geom, iflo, nnxsec) VALUES""", 3]
         cells_sql = [
@@ -2694,6 +2700,52 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 cells_sql += [(grid_geom, i, gid)]
 
         self.batch_execute(cont_sql, fpxsec_sql, cells_sql)
+
+    def import_fpxsec_hdf5(self):
+        try:
+            fpxsec_group = self.parser.read_groups("Input/Floodplain")
+            if fpxsec_group:
+                fpxsec_group = fpxsec_group[0]
+
+            cont_sql = ["""INSERT INTO cont (name, value) VALUES""", 2]
+            fpxsec_sql = ["""INSERT INTO fpxsec (geom, iflo, nnxsec) VALUES""", 3]
+            cells_sql = ["""INSERT INTO fpxsec_cells (geom, fpxsec_fid, grid_fid) VALUES""", 3]
+
+            self.clear_tables("fpxsec", "fpxsec_cells")
+
+            # Read FPXSEC_GLOBAL dataset
+            if "FPXSEC_GLOBAL" in fpxsec_group.datasets:
+                nxprt = fpxsec_group.datasets["FPXSEC_GLOBAL"].data[0]
+                cont_sql += [("NXPRT", nxprt)]
+
+            # Read FPXSEC_DATA dataset
+            if "FPXSEC_DATA" in fpxsec_group.datasets:
+                data = fpxsec_group.datasets["FPXSEC_DATA"].data
+                grid_group = self.parser.read_groups("Input/Grid")[0]
+                x_list = grid_group.datasets["COORDINATES"].data[:, 0]
+                y_list = grid_group.datasets["COORDINATES"].data[:, 1]
+                for i, row in enumerate(data, start=1):
+                    iflo, nnxsec = row[:2]
+                    gids = [int(g) for g in row[2:] if int(g) != -9999]
+                    line_geom = self.build_linestring(gids)
+                    fpxsec_sql += [(line_geom, int(iflo), int(nnxsec))]
+                    for gid in gids:
+                        point_geom = self.build_point_xy(x_list[int(gid) - 1], y_list[int(gid) - 1])
+                        cells_sql += [(point_geom, i, int(gid))]
+
+            if cont_sql:
+                self.batch_execute(cont_sql)
+
+            if fpxsec_sql:
+                self.batch_execute(fpxsec_sql)
+
+            if cells_sql:
+                self.batch_execute(cells_sql)
+
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.uc.show_error("ERROR: Importing FPXSEC data from HDF5 failed!", e)
+            self.uc.log_info("ERROR: Importing FPXSEC data from HDF5 failed!")
 
     def import_breach(self):
         glob = [

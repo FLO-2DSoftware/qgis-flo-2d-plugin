@@ -2433,7 +2433,7 @@ class Flo2D(object):
             # "import_mult",
             # "import_sed",
             # "import_levee",
-            # "import_fpxsec",
+            "import_fpxsec",
             # "import_breach",
             # "import_gutter",
             # "import_fpfroude",
