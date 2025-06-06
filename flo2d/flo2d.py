@@ -2425,7 +2425,7 @@ class Flo2D(object):
             # "import_evapor",
             "import_infil",
             "import_chan",
-            # "import_xsec",
+            "import_xsec",
             # "import_hystruc",
             # "import_hystruc_bridge_xs",
             # "import_street",

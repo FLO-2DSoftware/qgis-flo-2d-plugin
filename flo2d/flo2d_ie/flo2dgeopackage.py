@@ -1830,6 +1830,12 @@ class Flo2dGeoPackage(GeoPackageUtils):
             QApplication.restoreOverrideCursor()
 
     def import_xsec(self):
+        if self.parsed_format == self.FORMAT_DAT:
+            return self.import_xsec_dat()
+        elif self.parsed_format == self.FORMAT_HDF5:
+            return self.import_xsec_hdf5()
+
+    def import_xsec_dat(self):
         xsec_sql = ["""INSERT INTO xsec_n_data (chan_n_nxsecnum, xi, yi) VALUES""", 3]
         self.clear_tables("xsec_n_data")
         data = self.parser.parse_xsec()
@@ -1841,44 +1847,32 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
         self.batch_execute(xsec_sql)
 
-    #     def import_hystruc(self):
-    #         try:
-    #             hystruc_params = ['geom', 'type', 'structname', 'ifporchan', 'icurvtable', 'inflonod', 'outflonod', 'inoutcont',
-    #                               'headrefel', 'clength', 'cdiameter']
-    #             hystruc_sql = ['INSERT INTO struct (' + ', '.join(hystruc_params) + ') VALUES', 11]
-    #             ratc_sql = ['''INSERT INTO rat_curves (struct_fid, hdepexc, coefq, expq, coefa, expa) VALUES''', 6]
-    #             repl_ratc_sql = ['''INSERT INTO repl_rat_curves (struct_fid, repdep, rqcoef, rqexp, racoef, raexp) VALUES''', 6]
-    #             ratt_sql = ['''INSERT INTO rat_table (struct_fid, hdepth, qtable, atable) VALUES''', 4]
-    #             culvert_sql = ['''INSERT INTO culvert_equations (struct_fid, typec, typeen, culvertn, ke, cubase) VALUES''', 6]
-    #             storm_sql = ['''INSERT INTO storm_drains (struct_fid, istormdout, stormdmax) VALUES''', 3]
-    #
-    #             sqls = {
-    #                 'C': ratc_sql,
-    #                 'R': repl_ratc_sql,
-    #                 'T': ratt_sql,
-    #                 'F': culvert_sql,
-    #                 'D': storm_sql
-    #             }
-    #
-    #             self.clear_tables('struct', 'rat_curves', 'repl_rat_curves', 'rat_table', 'culvert_equations', 'storm_drains')
-    #             data = self.parser.parse_hystruct()
-    #             nodes = slice(3, 5)
-    #             for i, hs in enumerate(data, 1):
-    #                 params = hs[:-1]   # Line 'S' (first line of next structure)
-    #                 elems = hs[-1]     # Lines 'C', 'R', 'I', 'F', and/ or 'D' (rest of lines of next structure)
-    #                 geom = self.build_linestring(params[nodes])
-    #                 typ = list(elems.keys())[0] if len(elems) == 1 else 'C'
-    #                 hystruc_sql += [(geom, typ) + tuple(params)]
-    #                 for char in list(elems.keys()):
-    #                     for row in elems[char]:
-    #                         sqls[char] += [(i,) + tuple(row)]
-    #
-    #             self.batch_execute(hystruc_sql, ratc_sql, repl_ratc_sql, ratt_sql, culvert_sql, storm_sql)
-    #             qry = '''UPDATE struct SET notes = 'imported';'''
-    #             self.execute(qry)
-    #         except Exception:
-    #             QApplication.restoreOverrideCursor()
-    #             self.uc.show_warn('ERROR 040220.0742: Importing hydraulic structures from HYSTRUC.DAT failed!')
+    def import_xsec_hdf5(self):
+        channel_group = self.parser.read_groups("Input/Channels")
+        if channel_group:
+            channel_group = channel_group[0]
+            xsec_sql = ["""INSERT INTO xsec_n_data (chan_n_nxsecnum, xi, yi) VALUES""", 3]
+            self.clear_tables("xsec_n_data")
+
+            # Process XSEC_DATA
+            if "XSEC_DATA" in channel_group.datasets:
+                data = channel_group.datasets["XSEC_DATA"].data
+                for row in data:
+                    chan_n_nxsecnum, xi, yi = row
+                    xsec_sql += [(chan_n_nxsecnum, xi, yi)]
+
+            # Process XSEC_NAME
+            if "XSEC_NAME" in channel_group.datasets:
+                data = channel_group.datasets["XSEC_NAME"].data
+                for row in data:
+                    nsecum, xsecname = row
+                    self.execute(
+                        "UPDATE chan_n SET xsecname = ? WHERE nxsecnum = ?;",
+                        (xsecname, int(nsecum))
+                    )
+
+            if xsec_sql:
+                self.batch_execute(xsec_sql)
 
     def import_hystruc(self):
         try:
