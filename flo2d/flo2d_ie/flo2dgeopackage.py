@@ -2850,6 +2850,12 @@ class Flo2dGeoPackage(GeoPackageUtils):
         self.gutils.execute("UPDATE breach_global SET useglobaldata = ?;", (use_global_data,))
 
     def import_fpfroude(self):
+        if self.parsed_format == self.FORMAT_DAT:
+            return self.import_fpfroude_dat()
+        elif self.parsed_format == self.FORMAT_HDF5:
+            return self.import_fpfroude_hdf5()
+
+    def import_fpfroude_dat(self):
         fpfroude_sql = ["""INSERT INTO fpfroude (geom, froudefp) VALUES""", 2]
         cells_sql = ["""INSERT INTO fpfroude_cells (area_fid, grid_fid) VALUES""", 2]
 
@@ -2864,6 +2870,37 @@ class Flo2dGeoPackage(GeoPackageUtils):
             cells_sql += [(i, gid)]
 
         self.batch_execute(fpfroude_sql, cells_sql)
+
+    def import_fpfroude_hdf5(self):
+        try:
+            fpfroude_group = self.parser.read_groups("Input/Spatially Variable")
+            if fpfroude_group:
+                fpfroude_group = fpfroude_group[0]
+
+                fpfroude_sql = ["""INSERT INTO fpfroude (geom, froudefp) VALUES""", 2]
+                cells_sql = ["""INSERT INTO fpfroude_cells (area_fid, grid_fid) VALUES""", 2]
+
+                self.clear_tables("fpfroude", "fpfroude_cells")
+
+                # Process FPFROUDE dataset
+                if "FPFROUDE" in fpfroude_group.datasets:
+                    data = fpfroude_group.datasets["FPFROUDE"].data
+                    for i, row in enumerate(data, start=1):
+                        grid, froudefp = row
+                        geom = self.build_square(self.grid_centroids([int(grid)])[int(grid)], self.cell_size)
+                        fpfroude_sql += [(geom, froudefp)]
+                        cells_sql += [(i, int(grid))]
+
+                if fpfroude_sql:
+                    self.batch_execute(fpfroude_sql)
+
+                if cells_sql:
+                    self.batch_execute(cells_sql)
+
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.uc.show_error("ERROR: Importing FPFROUDE data from HDF5 failed!", e)
+            self.uc.log_info("ERROR: Importing FPFROUDE data from HDF5 failed!")
 
     def import_steep_slopen(self):
         cells_sql = ["""INSERT INTO steep_slope_n_cells (global, grid_fid) VALUES""", 2]
