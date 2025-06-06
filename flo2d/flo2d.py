@@ -2432,7 +2432,7 @@ class Flo2D(object):
             "import_arf",
             # "import_mult",
             # "import_sed",
-            # "import_levee",
+            "import_levee",
             "import_fpxsec",
             # "import_breach",
             # "import_gutter",

@@ -2636,6 +2636,12 @@ class Flo2dGeoPackage(GeoPackageUtils):
             QApplication.setOverrideCursor(Qt.WaitCursor)
 
     def import_levee(self):
+        if self.parsed_format == self.FORMAT_DAT:
+            return self.import_levee_dat()
+        elif self.parsed_format == self.FORMAT_HDF5:
+            return self.import_levee_hdf5()
+
+    def import_levee_dat(self):
         lgeneral_sql = [
             """INSERT INTO levee_general (raiselev, ilevfail, gfragchar, gfragprob) VALUES""",
             4,
@@ -2673,6 +2679,62 @@ class Flo2dGeoPackage(GeoPackageUtils):
             lfragility_sql += [tuple(row)]
 
         self.batch_execute(lgeneral_sql, ldata_sql, lfailure_sql, lfragility_sql)
+
+    def import_levee_hdf5(self):
+        try:
+            levee_group = self.parser.read_groups("Input/Levee")
+            if levee_group:
+                levee_group = levee_group[0]
+
+                lgeneral_sql = [
+                    """INSERT INTO levee_general (raiselev, ilevfail) VALUES""",
+                    2,
+                ]
+                ldata_sql = [
+                    """INSERT INTO levee_data (geom, grid_fid, ldir, levcrest) VALUES""",
+                    4,
+                ]
+                lfailure_sql = [
+                    """INSERT INTO levee_failure (grid_fid, lfaildir, failevel, failtime,
+                                                              levbase, failwidthmax, failrate, failwidrate) VALUES""",
+                    8,
+                ]
+
+                self.clear_tables("levee_general", "levee_data", "levee_failure", "levee_fragility")
+
+                # Process LEVEE_GLOBAL dataset
+                if "LEVEE_GLOBAL" in levee_group.datasets:
+                    data = levee_group.datasets["LEVEE_GLOBAL"].data
+                    for row in data:
+                        raiselev, ilevfail = row
+                        lgeneral_sql += [(raiselev, int(ilevfail))]
+
+                if "LEVEE_DATA" in levee_group.datasets:
+                    data = levee_group.datasets["LEVEE_DATA"].data
+                    for row in data:
+                        lgridno, ldir, levcrest = row
+                        geom = self.build_levee(int(lgridno), str(int(ldir)), self.cell_size)
+                        ldata_sql += [(geom, int(lgridno), int(ldir), levcrest)]
+
+                if "LEVEE_FAILURE" in levee_group.datasets:
+                    data = levee_group.datasets["LEVEE_FAILURE"].data
+                    for row in data:
+                        lfailgrid, lfaildir, failevel, failtime, levbase, failwidthmax, failrate, failwidrate = row
+                        lfailure_sql += [(int(lfailgrid), lfaildir, failevel, failtime, levbase, failwidthmax, failrate, failwidrate)]
+
+                if lgeneral_sql:
+                    self.batch_execute(lgeneral_sql)
+
+                if ldata_sql:
+                    self.batch_execute(ldata_sql)
+
+                if lfailure_sql:
+                    self.batch_execute(lfailure_sql)
+
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.uc.show_error("ERROR: Importing LEVEE data from HDF5 failed!", e)
+            self.uc.log_info("ERROR: Importing LEVEE data from HDF5 failed!")
 
     def import_fpxsec(self):
         if self.parsed_format == self.FORMAT_DAT:
