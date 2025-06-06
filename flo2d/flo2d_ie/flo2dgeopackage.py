@@ -1487,6 +1487,12 @@ class Flo2dGeoPackage(GeoPackageUtils):
         self.batch_execute(evapor_sql, evapor_month_sql, evapor_hour_sql)
 
     def import_chan(self):
+        if self.parsed_format == self.FORMAT_DAT:
+            return self.import_chan_dat()
+        elif self.parsed_format == self.FORMAT_HDF5:
+            return self.import_chan_hdf5()
+
+    def import_chan_dat(self):
 
         QApplication.setOverrideCursor(Qt.WaitCursor)
 
@@ -1614,6 +1620,214 @@ class Flo2dGeoPackage(GeoPackageUtils):
             self.uc.log_info(
                 "WARNING 010219.0742: Import channels failed!. Check CHAN.DAT and CHANBANK.DAT files."
             )
+
+    def import_chan_hdf5(self):
+        channel_group = self.parser.read_groups("Input/Channels")
+        if channel_group:
+            channel_group = channel_group[0]
+
+            chan_sql = [
+                """INSERT INTO chan (geom, depinitial, froudc, roughadj, isedn, ibaseflow) VALUES""",
+                6,
+            ]
+            chan_elems_sql = [
+                """INSERT INTO chan_elems (geom, fid, seg_fid, nr_in_seg, rbankgrid, fcn, xlen, type) VALUES""",
+                8,
+            ]
+            chan_r_sql = [
+                """INSERT INTO chan_r (elem_fid, bankell, bankelr, fcw, fcd) VALUES""",
+                5,
+            ]
+            # chan_v_sql = [
+            #     """INSERT INTO chan_v (elem_fid, bankell, bankelr, fcd, a1, a2, b1, b2, c1, c2,
+            #                                          excdep, a11, a22, b11, b22, c11, c22) VALUES""",
+            #     17,
+            # ]
+            chan_t_sql = [
+                """INSERT INTO chan_t (elem_fid, bankell, bankelr, fcw, fcd, zl, zr) VALUES""",
+                7,
+            ]
+            chan_n_sql = [
+                """INSERT INTO chan_n (elem_fid, nxsecnum, xsecname) VALUES""",
+                3
+            ]
+            chan_wsel_sql = [
+                """INSERT INTO chan_wsel (seg_fid, istart, wselstart, iend, wselend) VALUES""",
+                5,
+            ]
+            chan_conf_sql = [
+                """INSERT INTO chan_confluences (geom, conf_fid, type, chan_elem_fid) VALUES""",
+                4,
+            ]
+            chan_e_sql = [
+                """INSERT INTO user_noexchange_chan_areas (geom) VALUES""",
+                1
+            ]
+            elems_e_sql = [
+                """INSERT INTO noexchange_chan_cells (area_fid, grid_fid) VALUES""",
+                2,
+            ]
+
+            # try:
+            self.clear_tables(
+                "chan",
+                "chan_elems",
+                "chan_r",
+                "chan_v",
+                "chan_t",
+                "chan_n",
+                "chan_confluences",
+                "user_noexchange_chan_areas",
+                "noexchange_chan_cells",
+                "chan_wsel",
+            )
+
+            xs_geom = {}
+            left_bank_geom = {}
+            left_bank_grids = []
+            prev_chan_id = None
+            i = 1
+
+            # Read CHANBANK dataset (maps left to right bank grids)
+            if "CHANBANK" in channel_group.datasets:
+                data = channel_group.datasets["CHANBANK"].data
+                for row in data:
+                    left_bank_grid, right_bank_grid = row
+                    xs_geom[int(left_bank_grid)] = int(right_bank_grid)
+
+            # Helper function to flush geometry per channel
+            def flush_channel_geometry():
+                if left_bank_grids and prev_chan_id is not None:
+                    left_bank_geom[prev_chan_id] = self.build_linestring(left_bank_grids)
+
+            # Process CHAN_NATURAL
+            if "CHAN_NATURAL" in channel_group.datasets:
+                data = channel_group.datasets["CHAN_NATURAL"].data
+                for row in data:
+                    chan_id, grid, fcn, xlen, nxecnum = row
+                    chan_id = int(chan_id)
+                    grid = int(grid)
+
+                    if prev_chan_id is not None and chan_id != prev_chan_id:
+                        flush_channel_geometry()
+                        left_bank_grids = []
+                        i = 1
+
+                    chan_n_sql += [(grid, nxecnum, f"XS {int(nxecnum)}")]
+                    geom = self.build_linestring([grid, xs_geom[grid]])
+                    chan_elems_sql += [(geom, grid, chan_id, i, xs_geom[grid], fcn, xlen, "N")]
+                    left_bank_grids.append(grid)
+                    prev_chan_id = chan_id
+                    i += 1
+
+            # Process CHAN_RECTANGULAR
+            if "CHAN_RECTANGULAR" in channel_group.datasets:
+                data = channel_group.datasets["CHAN_RECTANGULAR"].data
+                for row in data:
+                    chan_id, grid, bankell, bankelr, fcn, fcw, fcd, xlen = row
+                    chan_id = int(chan_id)
+                    grid = int(grid)
+
+                    if prev_chan_id is not None and chan_id != prev_chan_id:
+                        flush_channel_geometry()
+                        left_bank_grids = []
+                        i = 1
+
+                    chan_r_sql += [(grid, bankell, bankelr, fcw, fcd)]
+                    geom = self.build_linestring([grid, xs_geom[grid]])
+                    chan_elems_sql += [(geom, grid, chan_id, i, xs_geom[grid], fcn, xlen, "R")]
+                    left_bank_grids.append(grid)
+                    prev_chan_id = chan_id
+                    i += 1
+
+            # Process CHAN_TRAPEZOIDAL
+            if "CHAN_TRAPEZOIDAL" in channel_group.datasets:
+                data = channel_group.datasets["CHAN_TRAPEZOIDAL"].data
+                for row in data:
+                    chan_id, grid, bankell, bankelr, fcn, fcw, fcd, xlen, zl, zr = row
+                    chan_id = int(chan_id)
+                    grid = int(grid)
+
+                    if prev_chan_id is not None and chan_id != prev_chan_id:
+                        flush_channel_geometry()
+                        left_bank_grids = []
+                        i = 1
+
+                    chan_t_sql += [(grid, bankell, bankelr, fcw, fcd, zl, zr)]
+                    geom = self.build_linestring([grid, xs_geom[grid]])
+                    chan_elems_sql += [(geom, grid, chan_id, i, xs_geom[grid], fcn, xlen, "T")]
+                    left_bank_grids.append(grid)
+                    prev_chan_id = chan_id
+                    i += 1
+
+            # Finalize last channel after all groups
+            flush_channel_geometry()
+
+            # Process CHAN_GLOBAL for main channel table
+            if "CHAN_GLOBAL" in channel_group.datasets:
+                data = channel_group.datasets["CHAN_GLOBAL"].data
+                for row in data:
+                    chan_id, depinitial, froudc, roughadj, isedn = row
+                    chan_id = int(chan_id)
+                    geom = left_bank_geom.get(chan_id)
+                    chan_sql += [(geom, depinitial, froudc, roughadj, isedn, 0)]
+
+            # Process CONFLUENCES
+            if "CONFLUENCES" in channel_group.datasets:
+                grid_group = self.parser.read_groups("Input/Grid")[0]
+                x_list = grid_group.datasets["COORDINATES"].data[:, 0]
+                y_list = grid_group.datasets["COORDINATES"].data[:, 1]
+                data = channel_group.datasets["CONFLUENCES"].data
+                for row in data:
+                    con_id, river_type, grid = row
+                    geom = self.build_point_xy(x_list[int(grid) - 1], y_list[int(grid) - 1])
+                    chan_conf_sql += [(geom, int(con_id), int(river_type), int(grid))]
+
+            # Process noexchange areas and cells
+            if "NOEXCHANGE" in channel_group.datasets:
+                data = channel_group.datasets["NOEXCHANGE"].data
+                for i, grid in enumerate(data, start=1):
+                    geom = self.build_square(self.grid_centroids([int(grid)])[int(grid)], self.cell_size)
+                    chan_e_sql += [(geom,)]
+                    elems_e_sql += [(i, int(grid))]
+
+            # Process CHAN_WSEL
+            if "CHAN_WSE" in channel_group.datasets:
+                data = channel_group.datasets["CHAN_WSE"].data
+                for row in data:
+                    seg_fid, istart, wselstart, iend, wselend = row
+                    chan_wsel_sql += [(int(seg_fid), int(istart), wselstart, int(iend), wselend)]
+
+            if chan_n_sql:
+                self.batch_execute(chan_n_sql)
+
+            if chan_r_sql:
+                self.batch_execute(chan_r_sql)
+
+            if chan_t_sql:
+                self.batch_execute(chan_t_sql)
+
+            if chan_sql:
+                self.batch_execute(chan_sql)
+
+            if chan_elems_sql:
+                self.batch_execute(chan_elems_sql)
+
+            if chan_conf_sql:
+                self.batch_execute(chan_conf_sql)
+
+            if chan_e_sql:
+                self.batch_execute(chan_e_sql)
+
+            if elems_e_sql:
+                self.batch_execute(elems_e_sql)
+
+            if chan_wsel_sql:
+                self.batch_execute(chan_wsel_sql)
+
+            qry = """UPDATE chan SET name = 'Channel ' ||  cast(fid as text);"""
+            self.execute(qry)
+            QApplication.restoreOverrideCursor()
 
     def import_xsec(self):
         xsec_sql = ["""INSERT INTO xsec_n_data (chan_n_nxsecnum, xi, yi) VALUES""", 3]
@@ -6979,13 +7193,10 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     wselend,
                 ) = row
                 try:
-                    channel_group.datasets["WSE_START"].data.append([seg_fid, istart, wselstart])
-                    channel_group.datasets["WSE_END"].data.append([seg_fid, iend, wselend])
+                    channel_group.datasets["CHAN_WSE"].data.append([seg_fid, istart, wselstart, iend, wselend])
                 except:
-                    channel_group.create_dataset('WSE_START', [])
-                    channel_group.datasets["WSE_START"].data.append([seg_fid, istart, wselstart])
-                    channel_group.create_dataset('WSE_END', [])
-                    channel_group.datasets["WSE_END"].data.append([seg_fid, iend, wselend])
+                    channel_group.create_dataset('CHAN_WSE', [])
+                    channel_group.datasets["CHAN_WSE"].data.append([seg_fid, istart, wselstart, iend, wselend])
                 finally:
                     segment_added.append(row[0])
 

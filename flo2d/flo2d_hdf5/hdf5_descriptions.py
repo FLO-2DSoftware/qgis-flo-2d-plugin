@@ -57,6 +57,7 @@ CHANNEL = {
     "XSEC_DATA": "Cross Section Data",
     "XSEC_NAME": "Cross Section Name",
     "NOEXCHANGE": "No Exchange Grids",
+    "CHAN_WSE": "Channel Water Surface Elevation",
 }
 
 HYSTRUCT = {
