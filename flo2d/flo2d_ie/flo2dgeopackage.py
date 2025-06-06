@@ -1767,10 +1767,15 @@ class Flo2dGeoPackage(GeoPackageUtils):
             if "CHAN_GLOBAL" in channel_group.datasets:
                 data = channel_group.datasets["CHAN_GLOBAL"].data
                 for row in data:
-                    chan_id, depinitial, froudc, roughadj, isedn = row
+                    # This is done because some hdf5 do not have the ibaseflow on it
+                    if len(row) < 6:
+                        chan_id, depinitial, froudc, roughadj, isedn = row
+                        ibaseflow = 0
+                    else:
+                        chan_id, depinitial, froudc, roughadj, ibaseflow, isedn = row
                     chan_id = int(chan_id)
                     geom = left_bank_geom.get(chan_id)
-                    chan_sql += [(geom, depinitial, froudc, roughadj, isedn, 0)]
+                    chan_sql += [(geom, depinitial, froudc, roughadj, isedn, ibaseflow)]
 
             # Process CONFLUENCES
             if "CONFLUENCES" in channel_group.datasets:
@@ -1866,6 +1871,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 data = channel_group.datasets["XSEC_NAME"].data
                 for row in data:
                     nsecum, xsecname = row
+                    if isinstance(xsecname, bytes):
+                        xsecname = xsecname.decode("utf-8")
                     self.execute(
                         "UPDATE chan_n SET xsecname = ? WHERE nxsecnum = ?;",
                         (xsecname, int(nsecum))
