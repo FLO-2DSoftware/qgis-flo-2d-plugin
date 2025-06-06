@@ -2166,6 +2166,12 @@ class Flo2dGeoPackage(GeoPackageUtils):
             self.uc.log_info("ERROR 040220.0742: Importing HDF5 hydraulic structures failed!")
 
     def import_hystruc_bridge_xs(self):
+        if self.parsed_format == self.FORMAT_DAT:
+            return self.import_hystruc_bridge_xs_dat()
+        elif self.parsed_format == self.FORMAT_HDF5:
+            return self.import_hystruc_bridge_xs_hdf5()
+
+    def import_hystruc_bridge_xs_dat(self):
         try:
             bridge_xs_sql = [
                 """INSERT INTO bridge_xs (struct_fid, xup, yup, yb) VALUES""",
@@ -2210,6 +2216,34 @@ class Flo2dGeoPackage(GeoPackageUtils):
             self.uc.log_info(
                 "ERROR 101122.1107: Importing hydraulic structures bridge xsecs from BRIDGE_XSEC.DAT failed!"
             )
+            QApplication.setOverrideCursor(Qt.WaitCursor)
+
+    def import_hystruc_bridge_xs_hdf5(self):
+        try:
+            hydrostruct_group = self.parser.read_groups("Input/Hydraulic Structures")
+            if hydrostruct_group:
+                hydrostruct_group = hydrostruct_group[0]
+                bridge_xs_sql = [
+                    """INSERT INTO bridge_xs (struct_fid, xup, yup, yb) VALUES""",
+                    4,
+                ]
+
+                self.clear_tables("bridge_xs")
+
+                # Process RAT_TABLE
+                if "BRIDGE_XSEC" in hydrostruct_group.datasets:
+                    data = hydrostruct_group.datasets["BRIDGE_XSEC"].data
+                    for row in data:
+                        ibridge, xup, yup, yb = row
+                        bridge_xs_sql += [(int(ibridge), xup, yup, yb)]
+
+                if bridge_xs_sql:
+                    self.batch_execute(bridge_xs_sql)
+
+        except Exception:
+            QApplication.restoreOverrideCursor()
+            self.uc.show_warn("Importing HDF5 bridge xsecs failed!")
+            self.uc.log_info("Importing HDF5 bridge xsecs failed!")
             QApplication.setOverrideCursor(Qt.WaitCursor)
 
     def import_street(self):
