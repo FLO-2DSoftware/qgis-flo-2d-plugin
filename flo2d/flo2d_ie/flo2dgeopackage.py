@@ -4897,6 +4897,12 @@ class Flo2dGeoPackage(GeoPackageUtils):
             QApplication.restoreOverrideCursor()
 
     def import_swmmflo(self):
+        if self.parsed_format == self.FORMAT_DAT:
+            return self.import_swmmflo_dat()
+        elif self.parsed_format == self.FORMAT_HDF5:
+            return self.import_swmmflo_hdf5()
+
+    def import_swmmflo_dat(self):
 
         swmmflo_sql = [
             """INSERT INTO swmmflo (geom, swmmchar, swmm_jt, swmm_iden, intype, swmm_length,
@@ -4929,6 +4935,45 @@ class Flo2dGeoPackage(GeoPackageUtils):
             swmmflo_sql += [(geom,) + tuple(row)]
 
         self.batch_execute(swmmflo_sql)
+
+    def import_swmmflo_hdf5(self):
+        try:
+            stormdrain_group = self.parser.read_groups("Input/Storm Drain")
+            if stormdrain_group:
+                stormdrain_group = stormdrain_group[0]
+
+                swmmflo_sql = [
+                    """INSERT INTO swmmflo (geom, fid, swmmchar, swmm_jt, swmm_iden, intype, swmm_length,
+                                                       swmm_width, swmm_height, swmm_coeff, flapgate, curbheight, swmm_feature) VALUES""",
+                    13,
+                ]
+
+                self.clear_tables("swmmflo")
+
+                # Process SWMMFLO_DATA dataset
+                if "SWMMFLO_DATA" in stormdrain_group.datasets:
+                    data = stormdrain_group.datasets["SWMMFLO_DATA"].data
+                    name = stormdrain_group.datasets["SWMMFLO_NAME"].data
+                    node_id_to_name = {int(row[0]): row[1] for row in name}
+                    grid_group = self.parser.read_groups("Input/Grid")[0]
+                    x_list = grid_group.datasets["COORDINATES"].data[:, 0]
+                    y_list = grid_group.datasets["COORDINATES"].data[:, 1]
+                    for row in data:
+                        node_id, swmm_jt, intype, swmm_length, swmm_width, swmm_height, swmm_coeff, feature, curbheight = row
+                        swmm_ident = node_id_to_name.get(int(node_id), None)
+                        if isinstance(swmm_ident, bytes):
+                            swmm_ident = swmm_ident.decode("utf-8")
+                        geom = self.build_point_xy(x_list[int(swmm_jt) - 1], y_list[int(swmm_jt) - 1])
+                        swmm_char = "D"
+                        swmmflo_sql += [(geom, int(node_id), swmm_char, int(swmm_jt), swmm_ident, intype, swmm_length, swmm_width, swmm_height, swmm_coeff, 0, curbheight, feature)]
+
+                if swmmflo_sql:
+                    self.batch_execute(swmmflo_sql)
+
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.uc.show_error("ERROR: Importing SWMMFLO data from HDF5 failed!", e)
+            self.uc.log_info("ERROR: Importing SWMMFLO data from HDF5 failed!")
 
     def import_swmmflodropbox(self):
         """
