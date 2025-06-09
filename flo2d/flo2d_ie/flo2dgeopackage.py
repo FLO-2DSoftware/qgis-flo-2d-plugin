@@ -2769,40 +2769,40 @@ class Flo2dGeoPackage(GeoPackageUtils):
             if fpxsec_group:
                 fpxsec_group = fpxsec_group[0]
 
-            cont_sql = ["""INSERT INTO cont (name, value) VALUES""", 2]
-            fpxsec_sql = ["""INSERT INTO fpxsec (geom, iflo, nnxsec) VALUES""", 3]
-            cells_sql = ["""INSERT INTO fpxsec_cells (geom, fpxsec_fid, grid_fid) VALUES""", 3]
+                cont_sql = ["""INSERT INTO cont (name, value) VALUES""", 2]
+                fpxsec_sql = ["""INSERT INTO fpxsec (geom, iflo, nnxsec) VALUES""", 3]
+                cells_sql = ["""INSERT INTO fpxsec_cells (geom, fpxsec_fid, grid_fid) VALUES""", 3]
 
-            self.clear_tables("fpxsec", "fpxsec_cells")
+                self.clear_tables("fpxsec", "fpxsec_cells")
 
-            # Read FPXSEC_GLOBAL dataset
-            if "FPXSEC_GLOBAL" in fpxsec_group.datasets:
-                nxprt = fpxsec_group.datasets["FPXSEC_GLOBAL"].data[0]
-                cont_sql += [("NXPRT", nxprt)]
+                # Read FPXSEC_GLOBAL dataset
+                if "FPXSEC_GLOBAL" in fpxsec_group.datasets:
+                    nxprt = fpxsec_group.datasets["FPXSEC_GLOBAL"].data[0]
+                    cont_sql += [("NXPRT", nxprt)]
 
-            # Read FPXSEC_DATA dataset
-            if "FPXSEC_DATA" in fpxsec_group.datasets:
-                data = fpxsec_group.datasets["FPXSEC_DATA"].data
-                grid_group = self.parser.read_groups("Input/Grid")[0]
-                x_list = grid_group.datasets["COORDINATES"].data[:, 0]
-                y_list = grid_group.datasets["COORDINATES"].data[:, 1]
-                for i, row in enumerate(data, start=1):
-                    iflo, nnxsec = row[:2]
-                    gids = [int(g) for g in row[2:] if int(g) != -9999]
-                    line_geom = self.build_linestring(gids)
-                    fpxsec_sql += [(line_geom, int(iflo), int(nnxsec))]
-                    for gid in gids:
-                        point_geom = self.build_point_xy(x_list[int(gid) - 1], y_list[int(gid) - 1])
-                        cells_sql += [(point_geom, i, int(gid))]
+                # Read FPXSEC_DATA dataset
+                if "FPXSEC_DATA" in fpxsec_group.datasets:
+                    data = fpxsec_group.datasets["FPXSEC_DATA"].data
+                    grid_group = self.parser.read_groups("Input/Grid")[0]
+                    x_list = grid_group.datasets["COORDINATES"].data[:, 0]
+                    y_list = grid_group.datasets["COORDINATES"].data[:, 1]
+                    for i, row in enumerate(data, start=1):
+                        iflo, nnxsec = row[:2]
+                        gids = [int(g) for g in row[2:] if int(g) != -9999]
+                        line_geom = self.build_linestring(gids)
+                        fpxsec_sql += [(line_geom, int(iflo), int(nnxsec))]
+                        for gid in gids:
+                            point_geom = self.build_point_xy(x_list[int(gid) - 1], y_list[int(gid) - 1])
+                            cells_sql += [(point_geom, i, int(gid))]
 
-            if cont_sql:
-                self.batch_execute(cont_sql)
+                if cont_sql:
+                    self.batch_execute(cont_sql)
 
-            if fpxsec_sql:
-                self.batch_execute(fpxsec_sql)
+                if fpxsec_sql:
+                    self.batch_execute(fpxsec_sql)
 
-            if cells_sql:
-                self.batch_execute(cells_sql)
+                if cells_sql:
+                    self.batch_execute(cells_sql)
 
         except Exception as e:
             QApplication.restoreOverrideCursor()
@@ -2965,6 +2965,12 @@ class Flo2dGeoPackage(GeoPackageUtils):
             self.uc.log_info("ERROR: Importing FPFROUDE data from HDF5 failed!")
 
     def import_steep_slopen(self):
+        if self.parsed_format == self.FORMAT_DAT:
+            return self.import_steep_slopen_dat()
+        elif self.parsed_format == self.FORMAT_HDF5:
+            return self.import_steep_slopen_hdf5()
+
+    def import_steep_slopen_dat(self):
         cells_sql = ["""INSERT INTO steep_slope_n_cells (global, grid_fid) VALUES""", 2]
 
         self.clear_tables("steep_slope_n_cells")
@@ -2983,6 +2989,45 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 cells_sql += [(0, grid_id)]
 
         self.batch_execute(cells_sql)
+
+    def import_steep_slopen_hdf5(self):
+        try:
+            steep_slopen_group = self.parser.read_groups("Input/Spatially Variable")
+            if steep_slopen_group:
+                steep_slopen_group = steep_slopen_group[0]
+
+                user_steep_slopen_sql = ["""INSERT INTO user_steep_slope_n_areas (geom, global) VALUES""", 2]
+                cells_sql = ["""INSERT INTO steep_slope_n_cells (global, area_fid, grid_fid) VALUES""", 3]
+
+                self.clear_tables("steep_slope_n_cells", "user_steep_slope_n_areas")
+
+                # Process STEEP_SLOPEN_GLOBAL dataset
+                if "STEEP_SLOPEN_GLOBAL" in steep_slopen_group.datasets:
+                    data = steep_slopen_group.datasets["STEEP_SLOPEN_GLOBAL"].data
+                    isteepn_global = int(data[0])
+                    if isteepn_global == 0:
+                        return
+                    elif isteepn_global == 1:
+                        self.execute("INSERT INTO steep_slope_n_cells (global) VALUES (1);")
+                        return
+                    elif isteepn_global == 2:
+                        if "STEEP_SLOPEN" in steep_slopen_group.datasets:
+                            grid_elems = steep_slopen_group.datasets["STEEP_SLOPEN"].data
+                            for i, grid in enumerate(grid_elems, start=1):
+                                geom = self.build_square(self.grid_centroids([int(grid)])[int(grid)], self.cell_size)
+                                cells_sql += [(0, i, int(grid))]
+                                user_steep_slopen_sql += [(geom, 0)]
+
+                if cells_sql:
+                    self.batch_execute(cells_sql)
+
+                if user_steep_slopen_sql:
+                    self.batch_execute(user_steep_slopen_sql)
+
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.uc.show_error("ERROR: Importing STEEP_SLOPEN data from HDF5 failed!", e)
+            self.uc.log_info("ERROR: Importing STEEP_SLOPEN data from HDF5 failed!")
 
     def import_lid_volume(self):
         cells_sql = ["""INSERT INTO lid_volume_cells (grid_fid, volume) VALUES""", 2]
