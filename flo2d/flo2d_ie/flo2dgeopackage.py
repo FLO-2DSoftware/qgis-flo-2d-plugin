@@ -2998,6 +2998,12 @@ class Flo2dGeoPackage(GeoPackageUtils):
         self.batch_execute(cells_sql)
 
     def import_gutter(self):
+        if self.parsed_format == self.FORMAT_DAT:
+            return self.import_gutter_dat()
+        elif self.parsed_format == self.FORMAT_HDF5:
+            return self.import_gutter_hdf5()
+
+    def import_gutter_dat(self):
         gutter_globals_sql = [
             """INSERT INTO gutter_globals (width, height, n_value) VALUES""",
             3,
@@ -3024,6 +3030,57 @@ class Flo2dGeoPackage(GeoPackageUtils):
             cells_sql += [(geom, i, gid)]
 
         self.batch_execute(gutter_globals_sql, gutter_areas_sql, cells_sql)
+
+    def import_gutter_hdf5(self):
+        try:
+            gutter_group = self.parser.read_groups("Input/Gutter")
+            if gutter_group:
+                gutter_group = gutter_group[0]
+
+                gutter_globals_sql = [
+                    """INSERT INTO gutter_globals (width, height, n_value) VALUES""",
+                    3,
+                ]
+                gutter_areas_sql = [
+                    """INSERT INTO gutter_areas (geom, width, height, n_value, direction) VALUES""",
+                    5,
+                ]
+                cells_sql = [
+                    """INSERT INTO gutter_cells (geom, area_fid, grid_fid) VALUES""",
+                    3,
+                ]
+
+                self.clear_tables("gutter_globals", "gutter_areas", "gutter_lines", "gutter_cells")
+
+                # Process GUTTER_GLOBAL dataset
+                if "GUTTER_GLOBAL" in gutter_group.datasets:
+                    data = gutter_group.datasets["GUTTER_GLOBAL"].data
+                    for row in data:
+                        strwidth, curbheight, n_value = row
+                        gutter_globals_sql += [(strwidth, curbheight, n_value)]
+
+                # Process GUTTER_DATA dataset
+                if "GUTTER_DATA" in gutter_group.datasets:
+                    data = gutter_group.datasets["GUTTER_DATA"].data
+                    for i, row in enumerate(data, start=1):
+                        igrid, widstr, curbht, xnstr, icurbdir = row
+                        geom = self.build_square(self.grid_centroids([int(igrid)])[int(igrid)], self.cell_size)
+                        gutter_areas_sql += [(geom, widstr, curbht, xnstr, int(icurbdir))]
+                        cells_sql += [(geom, i, int(igrid))]
+
+                if gutter_globals_sql:
+                    self.batch_execute(gutter_globals_sql)
+
+                if gutter_areas_sql:
+                    self.batch_execute(gutter_areas_sql)
+
+                if cells_sql:
+                    self.batch_execute(cells_sql)
+
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.uc.show_error("ERROR: Importing GUTTER data from HDF5 failed!", e)
+            self.uc.log_info("ERROR: Importing GUTTER data from HDF5 failed!")
 
     def import_swmminp(self, swmm_file="SWMM.INP", delete_existing=True):
         """

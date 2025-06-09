@@ -2435,7 +2435,7 @@ class Flo2D(object):
             "import_levee",
             "import_fpxsec",
             # "import_breach",
-            # "import_gutter",
+            "import_gutter",
             "import_fpfroude",
             # "import_steep_slopen",
             "import_shallowNSpatial",
