@@ -3168,7 +3168,12 @@ class Flo2dGeoPackage(GeoPackageUtils):
         """
         Function to import the SWMM.INP -> refactored from the old method on the storm drain editor widget
         """
-        swmminp_dict = self.parser.parse_swmminp(swmm_file)
+        if self.parsed_format == self.FORMAT_HDF5:
+            dat_parser = ParseDAT()
+            dat_parser.scan_project_dir(self.parser.hdf5_filepath)
+            swmminp_dict = dat_parser.parse_swmminp(swmm_file)
+        else:
+            swmminp_dict = self.parser.parse_swmminp(swmm_file)
 
         coordinates_data = swmminp_dict.get('COORDINATES', [])
         if len(coordinates_data) == 0:
