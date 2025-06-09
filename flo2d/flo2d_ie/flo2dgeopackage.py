@@ -5078,6 +5078,12 @@ class Flo2dGeoPackage(GeoPackageUtils):
             self.uc.show_error("ERROR 150221.1535: importing SWMMFLORT.DAT failed!.\n", e)
 
     def import_swmmoutf(self):
+        if self.parsed_format == self.FORMAT_DAT:
+            return self.import_swmmoutf_dat()
+        elif self.parsed_format == self.FORMAT_HDF5:
+            return self.import_swmmoutf_hdf5()
+
+    def import_swmmoutf_dat(self):
         swmmoutf_sql = [
             """INSERT INTO swmmoutf (geom, name, grid_fid, outf_flo) VALUES""",
             4,
@@ -5115,6 +5121,75 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
         if have_outside:
             self.uc.bar_warn(f"Some Outfalls are outside the grid! Check log messages for more information.")
+
+    def import_swmmoutf_hdf5(self):
+        try:
+            stormdrain_group = self.parser.read_groups("Input/Storm Drain")
+            if stormdrain_group:
+                stormdrain_group = stormdrain_group[0]
+
+                swmmoutf_sql = [
+                    """INSERT INTO swmmoutf (geom, fid, name, grid_fid, outf_flo) VALUES""",
+                    5,
+                ]
+
+                self.clear_tables("swmmoutf")
+
+                if "SWMMOUTF_DATA" in stormdrain_group.datasets:
+                    data = stormdrain_group.datasets["SWMMOUTF_DATA"].data
+                    name = stormdrain_group.datasets["SWMMOUTF_NAME"].data
+                    node_id_to_name = {int(row[0]): row[1] for row in name}
+                    grid_group = self.parser.read_groups("Input/Grid")[0]
+                    x_list = grid_group.datasets["COORDINATES"].data[:, 0]
+                    y_list = grid_group.datasets["COORDINATES"].data[:, 1]
+                    for row in data:
+                        outfall_id, outf_grid, outf_flo2dvol = row
+                        outf_name = node_id_to_name.get(int(outfall_id), None)
+                        if isinstance(outf_name, bytes):
+                            outf_name = outf_name.decode("utf-8")
+                        geom = self.build_point_xy(x_list[int(outf_grid) - 1], y_list[int(outf_grid) - 1])
+                        swmmoutf_sql += [(geom, int(outfall_id), outf_name, int(outf_grid), int(outf_flo2dvol))]
+
+                if swmmoutf_sql:
+                    self.batch_execute(swmmoutf_sql)
+
+
+                # data = self.parser.parse_swmmoutf()
+                # gids = []
+                # # Outfall outside the grid -> Don't look for the grid centroid
+                # for x in data:
+                #     if x[1] != '-9999':
+                #         gids.append(x[1])
+                # cells = self.grid_centroids(gids, buffers=True)
+                # have_outside = False
+                # for row in data:
+                #     outfall_name = row[0]
+                #     gid = row[1]
+                #     allow_q = row[2]
+                #     # Update the swmm_allow_discharge on the user_swmm_outlets
+                #     self.execute(f"UPDATE user_swmm_outlets SET swmm_allow_discharge = {allow_q} WHERE name = '{outfall_name}';")
+                #     # Outfall outside the grid -> Add exactly over the Storm Drain Outfalls
+                #     if gid == '-9999':
+                #         have_outside = True
+                #         geom_qry = self.execute(f"SELECT geom FROM user_swmm_outlets WHERE name = '{outfall_name}'").fetchone()
+                #         if geom_qry:
+                #             geom = geom_qry[0]
+                #         else:  # When there is no SWMM.INP
+                #             self.uc.log_info(f"{outfall_name} outside the grid!")
+                #             continue
+                #     else:
+                #         geom = cells[gid]
+                #     swmmoutf_sql += [(geom,) + tuple(row)]
+                #
+                # self.batch_execute(swmmoutf_sql)
+                #
+                # if have_outside:
+                #     self.uc.bar_warn(f"Some Outfalls are outside the grid! Check log messages for more information.")
+
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.uc.show_error("ERROR: Importing SWMMOUTF data from HDF5 failed!", e)
+            self.uc.log_info("ERROR: Importing SWMMOUTF data from HDF5 failed!")
 
     def import_tolspatial(self):
         if self.parsed_format == self.FORMAT_DAT:

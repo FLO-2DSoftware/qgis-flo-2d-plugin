@@ -2443,7 +2443,7 @@ class Flo2D(object):
             # "import_swmminp",
             "import_swmmflo",
             # "import_swmmflort",
-            # "import_swmmoutf",
+            "import_swmmoutf",
             # "import_swmmflodropbox",
             # "import_sdclogging",
         ]
