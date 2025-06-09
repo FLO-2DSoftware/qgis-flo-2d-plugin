@@ -3030,6 +3030,12 @@ class Flo2dGeoPackage(GeoPackageUtils):
             self.uc.log_info("ERROR: Importing STEEP_SLOPEN data from HDF5 failed!")
 
     def import_lid_volume(self):
+        if self.parsed_format == self.FORMAT_DAT:
+            return self.import_lid_volume_dat()
+        elif self.parsed_format == self.FORMAT_HDF5:
+            return self.import_lid_volume_hdf5()
+
+    def import_lid_volume_dat(self):
         cells_sql = ["""INSERT INTO lid_volume_cells (grid_fid, volume) VALUES""", 2]
 
         self.clear_tables("lid_volume_cells")
@@ -3041,6 +3047,37 @@ class Flo2dGeoPackage(GeoPackageUtils):
             cells_sql += [(gid, volume)]
 
         self.batch_execute(cells_sql)
+
+    def import_lid_volume_hdf5(self):
+        try:
+            lid_volume_group = self.parser.read_groups("Input/Spatially Variable")
+            if lid_volume_group:
+                lid_volume_group = lid_volume_group[0]
+
+                user_lid_volume_sql = ["""INSERT INTO user_lid_volume_areas (geom, volume) VALUES""", 2]
+                cells_sql = ["""INSERT INTO lid_volume_cells (grid_fid, area_fid, volume) VALUES""", 3]
+
+                self.clear_tables("lid_volume_cells")
+
+                # Process LID_VOLUME dataset
+                if "LID_VOLUME" in lid_volume_group.datasets:
+                    data = lid_volume_group.datasets["LID_VOLUME"].data
+                    for i, row in enumerate(data, start=1):
+                        grid, lid_volume = row
+                        geom = self.build_square(self.grid_centroids([int(grid)])[int(grid)], self.cell_size)
+                        user_lid_volume_sql += [(geom, lid_volume)]
+                        cells_sql += [(int(grid), i, lid_volume)]
+
+                if cells_sql:
+                    self.batch_execute(cells_sql)
+
+                if user_lid_volume_sql:
+                    self.batch_execute(user_lid_volume_sql)
+
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.uc.show_error("ERROR: Importing LID_VOLUME data from HDF5 failed!", e)
+            self.uc.log_info("ERROR: Importing LID_VOLUME data from HDF5 failed!")
 
     def import_gutter(self):
         if self.parsed_format == self.FORMAT_DAT:

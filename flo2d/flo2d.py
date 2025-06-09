@@ -2439,7 +2439,7 @@ class Flo2D(object):
             "import_fpfroude",
             "import_steep_slopen",
             "import_shallowNSpatial",
-            # "import_lid_volume",
+            "import_lid_volume",
             # "import_swmminp",
             # "import_swmmflo",
             # "import_swmmflort",
