@@ -4976,6 +4976,12 @@ class Flo2dGeoPackage(GeoPackageUtils):
             self.uc.log_info("ERROR: Importing SWMMFLO data from HDF5 failed!")
 
     def import_swmmflodropbox(self):
+        if self.parsed_format == self.FORMAT_DAT:
+            return self.import_swmmflodropbox_dat()
+        elif self.parsed_format == self.FORMAT_HDF5:
+            return self.import_swmmflodropbox_hdf5()
+
+    def import_swmmflodropbox_dat(self):
         """
         Function to import the SWMMFLODROPBOX.DAT
         """
@@ -4984,6 +4990,32 @@ class Flo2dGeoPackage(GeoPackageUtils):
             name = row[0]
             area = row[2]
             self.execute(f"UPDATE user_swmm_inlets_junctions SET drboxarea = '{area}' WHERE name = '{name}'")
+
+    def import_swmmflodropbox_hdf5(self):
+        """
+        Function to import the SWMMFLODROPBOX.DAT
+        """
+        try:
+            stormdrain_group = self.parser.read_groups("Input/Storm Drain")
+            if stormdrain_group:
+                stormdrain_group = stormdrain_group[0]
+
+                # Process SWMMFLODROPBOX dataset
+                if "SWMMFLODROPBOX" in stormdrain_group.datasets:
+                    data = stormdrain_group.datasets["SWMMFLODROPBOX"].data
+                    name = stormdrain_group.datasets["SWMMFLO_NAME"].data
+                    node_id_to_name = {int(row[0]): row[1] for row in name}
+                    for row in data:
+                        node_id, swmmdropbox = row
+                        name = node_id_to_name.get(int(node_id), None)
+                        if isinstance(name, bytes):
+                            name = name.decode("utf-8")
+                        self.execute(f"UPDATE user_swmm_inlets_junctions SET drboxarea = '{swmmdropbox}' WHERE name = '{name}'")
+
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.uc.show_error("Importing SWMMFLODROPBOX data from HDF5 failed!", e)
+            self.uc.log_info("Importing SWMMFLODROPBOX data from HDF5 failed!")
 
     def import_sdclogging(self):
         """
