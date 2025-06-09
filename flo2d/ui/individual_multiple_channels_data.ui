@@ -39,7 +39,7 @@
        <item>
         <widget class="QLabel" name="label_12">
          <property name="toolTip">
-          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;IGRID(I)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Floodplain grid element number&lt;/p&gt;&lt;p&gt;Range: 1 - NNOD&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;IGRID(I)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Floodplain grid element number.&lt;/p&gt;&lt;p&gt;Range: 1 - NNOD&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
          </property>
          <property name="text">
           <string>Element</string>
@@ -95,7 +95,7 @@
                </size>
               </property>
               <property name="toolTip">
-               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;WDR(K)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(ft or m)&lt;/p&gt;&lt;p&gt;Channel width for individual grid elements. WDR supersedes WDRALL.&lt;/p&gt;&lt;p&gt;Range:&lt;br/&gt;0 - 1000 ft&lt;/p&gt;&lt;p&gt;0 - 300 m&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;WDR(K)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(ft or m)&lt;/p&gt;&lt;p&gt;Channel width for individual grid elements. WDR supersedes WDRALL.&lt;/p&gt;&lt;p&gt;Range:&lt;/p&gt;&lt;p&gt;0 - 1000 ft&lt;/p&gt;&lt;p&gt;0 - 300 m&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
               <property name="text">
                <string>Channel width</string>
