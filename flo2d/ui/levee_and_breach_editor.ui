@@ -129,7 +129,7 @@
           <item>
            <widget class="QPushButton" name="show_levees_btn">
             <property name="toolTip">
-             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Levee Grid Elements.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Individual Levee Data.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
             </property>
             <property name="text">
              <string>Levee Grid Elements</string>
@@ -199,7 +199,7 @@
                        </sizepolicy>
                       </property>
                       <property name="toolTip">
-                       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;ILEVFAIL = 0&lt;/p&gt;&lt;p&gt;No failure.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;ILEVFAIL = 0&lt;/p&gt;&lt;p&gt;No levee failure.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                       </property>
                       <property name="text">
                        <string>No failure</string>
@@ -260,7 +260,7 @@
                     </sizepolicy>
                    </property>
                    <property name="toolTip">
-                    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;RAISELEV&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Incremental height (ft or m) that all the levee grid element crest elevations are raised.&lt;/p&gt;&lt;p&gt;0 - 100&lt;/p&gt;&lt;p&gt;0 - 30&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;RAISELEV&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(ft or m)&lt;/p&gt;&lt;p&gt;Incremental height that all the levee grid element crest elevations are raised.&lt;/p&gt;&lt;p&gt;Range:&lt;/p&gt;&lt;p&gt;0 - 100 ft&lt;/p&gt;&lt;p&gt;0 - 30 m&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                    </property>
                    <property name="text">
                     <string>Increment in crest elevation for all levee elements</string>
