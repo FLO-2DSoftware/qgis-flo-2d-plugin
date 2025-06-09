@@ -221,7 +221,7 @@
                </sizepolicy>
               </property>
               <property name="toolTip">
-               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;NODCHNSALL&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Global assignment of the number of multiple channels to all grid elements. &lt;/p&gt;&lt;p&gt;1 - 100&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;NODCHNSALL&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Global assignment of the number of multiple channels to all grid elements. &lt;/p&gt;&lt;p&gt;Range: 1 - 100&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
               <property name="text">
                <string>Number of multiple channels</string>
@@ -272,7 +272,7 @@
                </sizepolicy>
               </property>
               <property name="toolTip">
-               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;XNMULTALL(K)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Global assignment of the multiple channel n-values to all the grid elements.&lt;/p&gt;&lt;p&gt;Range: 0.01 - 0.5&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;XNMULTALL(K)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(dimensionless)&lt;/p&gt;&lt;p&gt;Global assignment of the multiple channel n-values to all the grid elements.&lt;/p&gt;&lt;p&gt;Range: 0.01 - 0.5&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
               <property name="text">
                <string>Manning's n-value</string>
