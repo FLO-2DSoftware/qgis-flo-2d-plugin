@@ -2445,7 +2445,7 @@ class Flo2D(object):
             "import_swmmflort",
             "import_swmmoutf",
             "import_swmmflodropbox",
-            # "import_sdclogging",
+            "import_sdclogging",
         ]
         s = QSettings()
         last_dir = s.value("FLO-2D/lastGdsDir", "")
