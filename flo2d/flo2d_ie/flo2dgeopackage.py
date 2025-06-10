@@ -2340,8 +2340,9 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
                 # Read ARF_GLOBAL dataset
                 if "ARF_GLOBAL" in arfwrf_group.datasets:
-                    arf_global = arfwrf_group.datasets["ARF_GLOBAL"].data[0]
-                    cont_sql += [("IARFBLOCKMOD", arf_global)]
+                    arf_global = arfwrf_group.datasets["ARF_GLOBAL"].data
+                    if arf_global:
+                        cont_sql += [("IARFBLOCKMOD", arf_global[0])]
 
                 # Read ARF_TOTALLY_BLOCKED dataset
                 if "ARF_TOTALLY_BLOCKED" in arfwrf_group.datasets:
