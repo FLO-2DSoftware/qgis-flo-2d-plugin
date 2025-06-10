@@ -14,6 +14,7 @@ from itertools import chain, repeat, zip_longest
 from operator import attrgetter
 from typing import Any
 
+import numpy as np
 import pandas as pd
 
 from ..flo2d_hdf5.hdf5_descriptions import CONTROL, GRID, NEIGHBORS, STORMDRAIN, BC, CHANNEL, HYSTRUCT, INFIL, RAIN, \
@@ -62,6 +63,12 @@ class ParseHDF5:
     @property
     def control_group(self):
         group_name = "Input/Control Parameters"
+        group = HDF5Group(group_name)
+        return group
+
+    @property
+    def qgis_group(self):
+        group_name = "Input/QGIS"
         group = HDF5Group(group_name)
         return group
 
@@ -257,18 +264,30 @@ class ParseHDF5:
             return 0
         if not os.path.getsize(self.hdf5_filepath) > 0:
             return 0
-        x_dataset = self.read("X", "Grid")
-        x_data = x_dataset.data
-        first_x = x_data[0]
-        dx_coords = (abs(first_x - x) for x in x_data)
-        try:
-            size = min(dx for dx in dx_coords if dx > 0)
-        except ValueError:
-            y_dataset = self.read("Y", "Grid")
-            y_data = y_dataset.data
-            first_y = y_data[0]
-            dy_coords = (abs(first_y - y) for y in y_data)
-            size = min(dy for dy in dy_coords if dy > 0)
+
+        # Read COORDINATES dataset
+        coordinates_dataset = self.read("COORDINATES", "Input/Grid")
+        coordinates = coordinates_dataset.data
+
+        # Extract x and y coordinates
+        x_coords = coordinates[:, 0]
+        y_coords = coordinates[:, 1]
+
+        # Calculate differences in x-coordinates
+        dx = np.diff(np.sort(np.unique(x_coords)))
+        dx = dx[dx > 0]  # Filter out non-positive differences
+
+        if dx.size > 0:
+            size = np.min(dx)
+        else:
+            # Calculate differences in y-coordinates if no valid dx
+            dy = np.diff(np.sort(np.unique(y_coords)))
+            dy = dy[dy > 0]  # Filter out non-positive differences
+            if dy.size > 0:
+                size = np.min(dy)
+            else:
+                return 0
+
         cell_size += size
         return cell_size
 
@@ -487,6 +506,7 @@ class ParseDAT(object):
                 row.insert(index, default)
 
     def parse_cont(self):
+
         results = {}
         cont = self.dat_files["CONT.DAT"]
         with open(cont, "r") as f:

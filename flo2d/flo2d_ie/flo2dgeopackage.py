@@ -15,11 +15,12 @@ from operator import itemgetter
 
 import numpy as np
 from PyQt5.QtCore import QSettings
+from qgis._core import QgsGeometry, QgsPointXY
 from qgis.core import NULL
 from qgis.PyQt.QtCore import Qt
 from qgis.PyQt.QtWidgets import QApplication, QProgressDialog
 
-from ..flo2d_tools.grid_tools import grid_compas_neighbors, number_of_elements
+from ..flo2d_tools.grid_tools import grid_compas_neighbors, number_of_elements, cell_centroid
 from ..geopackage_utils import GeoPackageUtils
 # from ..gui.bc_editor_widget import BCEditorWidget
 from ..layers import Layers
@@ -64,14 +65,15 @@ class Flo2dGeoPackage(GeoPackageUtils):
         if self.parsed_format == self.FORMAT_DAT:
             self.parser = ParseDAT()
             self.parser.scan_project_dir(fpath)
+            self.cell_size = int(round(self.parser.calculate_cellsize()))
         elif self.parsed_format == self.FORMAT_HDF5:
             self.parser = ParseHDF5()
             self.parser.hdf5_filepath = fpath
+            self.cell_size = int(round(self.parser.calculate_cellsize()))
         else:
             raise NotImplementedError("Unsupported extension type.")
         if not get_cell_size:
             return True
-        self.cell_size = int(round(self.parser.calculate_cellsize()))
         if self.cell_size == 0:
             self.uc.show_info(
                 "ERROR 060319.1604: Cell size is 0 - something went wrong!\nDoes TOPO.DAT file exist or is empty?"
@@ -110,20 +112,40 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
     def import_cont_toler_hdf5(self):
         sql = ["""INSERT OR REPLACE INTO cont (name, value, note) VALUES""", 3]
+        control_group = self.parser.read_groups("Input/Control Parameters")[0]
+        cont_dataset = control_group.datasets["CONT"].data
+        toler_dataset = control_group.datasets["TOLER"].data
+
+        # Define variable names
+        cont_variables = [
+            "SIMUL", "TOUT", "LGPLOT", "METRIC", "IBACKUP", "ICHANNEL", "MSTREET", "LEVEE",
+            "IWRFS", "IMULTC", "IRAIN", "INFIL", "IEVAP", "MUD", "ISED", "IMODFLOW", "SWMM",
+            "IHYDRSTRUCT", "IFLOODWAY", "IDEBRV", "AMANN", "DEPTHDUR", "XCONC", "XARF",
+            "FROUDL", "SHALLOWN", "ENCROACH", "NOPRTFP", "DEPRESSDEPTH", "NOPRTC", "ITIMTEP",
+            "TIMTEP", "STARTIMTEP", "ENDTIMTEP", "GRAPTIM"
+        ]
+
+        tol_variables = [
+            "TOLGLOBAL", "DEPTOL", "COURANTFP", "COURANTC", "COURANTST", "TIME_ACCEL"
+        ]
+
+        # Insert CONT variables
+        for i, var in enumerate(cont_variables):
+            value = cont_dataset[i] if i < len(cont_dataset) else -9999
+            sql += [(var, value, self.PARAMETER_DESCRIPTION.get(var, ""))]
+
+        # Insert TOLER variables
+        for i, var in enumerate(tol_variables):
+            value = toler_dataset[i] if i < len(toler_dataset) else -9999
+            sql += [(var, value, self.PARAMETER_DESCRIPTION.get(var, ""))]
+
         mann = self.get_cont_par("MANNING")
-        control_group = self.parser.read_groups("Control")[0]
-        mann_dataset = control_group.datasets["MANNING"]
-        man_from_dataset = mann_dataset.data[0]
-        if not mann and not man_from_dataset:
+        if not mann:
             mann = "0.05"
         else:
             pass
-        self.clear_tables("cont")
-        for option, dataset in control_group.datasets.items():
-            option_value = dataset.data[0]
-            sql += [(option, option_value.decode(), self.PARAMETER_DESCRIPTION[option])]
-        sql += [("CELLSIZE", self.cell_size, self.PARAMETER_DESCRIPTION["CELLSIZE"])]
         sql += [("MANNING", mann, self.PARAMETER_DESCRIPTION["MANNING"])]
+
         self.batch_execute(sql)
 
     def import_mannings_n_topo(self):
@@ -230,14 +252,14 @@ class Flo2dGeoPackage(GeoPackageUtils):
             sql = ["""INSERT INTO grid (fid, n_value, elevation, geom) VALUES""", 4]
 
             self.clear_tables("grid")
-            grid_group = self.parser.read_groups("Grid")[0]
+            grid_group = self.parser.read_groups("Input/Grid")[0]
 
             c = 0
             grid_code_list = grid_group.datasets["GRIDCODE"].data
             manning_list = grid_group.datasets["MANNING"].data
-            elevation_list = grid_group.datasets["Z"].data
-            x_list = grid_group.datasets["X"].data
-            y_list = grid_group.datasets["Y"].data
+            elevation_list = grid_group.datasets["ELEVATION"].data
+            x_list = grid_group.datasets["COORDINATES"].data[:, 0]
+            y_list = grid_group.datasets["COORDINATES"].data[:, 1]
             for grid_code, manning, z, x, y in zip(grid_code_list, manning_list, elevation_list, x_list, y_list):
                 if c < self.chunksize:
                     g = self.build_square_xy(x, y, self.cell_size)
@@ -262,6 +284,12 @@ class Flo2dGeoPackage(GeoPackageUtils):
             self.uc.show_error("ERROR 040521.1154: importing Grid data from HDF5 file!\n", e)
 
     def import_inflow(self):
+        if self.parsed_format == self.FORMAT_DAT:
+            return self.import_inflow_dat()
+        elif self.parsed_format == self.FORMAT_HDF5:
+            return self.import_inflow_hdf5()
+
+    def import_inflow_dat(self):
         cont_sql = ["""INSERT INTO cont (name, value, note) VALUES""", 3]
         inflow_sql = [
             """INSERT INTO inflow (time_series_fid, ident, inoutfc, bc_fid) VALUES""",
@@ -374,6 +402,111 @@ class Flo2dGeoPackage(GeoPackageUtils):
             self.uc.log_info(traceback.format_exc())
             self.uc.show_error("ERROR 070719.1051: Import inflows failed!.", e)
 
+    def import_inflow_hdf5(self):
+        try:
+
+            inflow_group = self.parser.read_groups("Input/Boundary Conditions/Inflow")
+            if inflow_group:
+                inflow_group = inflow_group[0]
+
+                self.clear_tables(
+                    "inflow",
+                    "inflow_cells",
+                    "reservoirs",
+                    "tailing_reservoirs",
+                    "user_reservoirs",
+                    "user_tailing_reservoirs",
+                    "inflow_time_series",
+                    "inflow_time_series_data",
+                )
+
+                inflow_sql = ["""INSERT INTO inflow (time_series_fid, ident, inoutfc, geom_type, bc_fid) VALUES""", 5]
+                cells_sql = ["""INSERT INTO inflow_cells (inflow_fid, grid_fid) VALUES""", 2]
+                ts_sql = ["""INSERT OR REPLACE INTO inflow_time_series (fid, name) VALUES""", 2]
+                tsd_sql = ["""INSERT INTO inflow_time_series_data (series_fid, time, value, value2) VALUES""", 4,]
+
+                # Reservoirs
+                schematic_reservoirs_sql = ["""INSERT INTO reservoirs (grid_fid, wsel, n_value, geom) VALUES""", 4]
+                user_reservoirs_sql = ["""INSERT INTO user_reservoirs (wsel, n_value, geom) VALUES""", 3]
+
+                # Tailings Reservoirs
+                schematic_tailings_reservoirs_sql = ["""INSERT INTO tailing_reservoirs (grid_fid, wsel, n_value, tailings, geom) VALUES""", 5]
+                user_tailing_reservoirs = ["""INSERT INTO user_tailing_reservoirs (wsel, n_value, tailings, geom) VALUES""", 4]
+
+                # Import inflow global parameters if present
+                if "INF_GLOBAL" in inflow_group.datasets:
+                    inflow_global = inflow_group.datasets["INF_GLOBAL"].data
+                    self.execute("INSERT INTO cont (name, value, note) VALUES (?, ?, ?)", ("IHOURDAILY", int(inflow_global[0]), GeoPackageUtils.PARAMETER_DESCRIPTION["IHOURDAILY"]))
+                    self.execute("INSERT INTO cont (name, value, note) VALUES (?, ?, ?)", ("IDEPLT", int(inflow_global[1]), GeoPackageUtils.PARAMETER_DESCRIPTION["IDEPLT"]))
+
+                # Import inflow time series
+                if "INF_GRID" in inflow_group.datasets:
+                    for i, inflow_grid in enumerate(inflow_group.datasets["INF_GRID"].data, start=1):
+                        ifc, inoutfc, khiin, ts_id = inflow_grid
+                        if ifc == 0:
+                            ident = 'F'
+                        else:
+                            ident = 'C'
+                        inflow_sql += [(int(ts_id), ident, int(inoutfc), 'point', i)]
+                        cells_sql += [(i, int(khiin))]
+                        ts_sql += [(int(ts_id), "Time series " + str(ts_id))]
+
+                # Import inflow time series data
+                if "TS_INF_DATA" in inflow_group.datasets:
+                    for tsd in inflow_group.datasets["TS_INF_DATA"].data:
+                        ts_id, hpj1, hpj2, hpj3 = tsd
+                        tsd_sql += [(ts_id, hpj1, hpj2, hpj3)]
+
+                # Import reservoir
+                if "RESERVOIRS" in inflow_group.datasets:
+                    grid_group = self.parser.read_groups("Input/Grid")[0]
+                    x_list = grid_group.datasets["COORDINATES"].data[:, 0]
+                    y_list = grid_group.datasets["COORDINATES"].data[:, 1]
+                    for reservoir in inflow_group.datasets["RESERVOIRS"].data:
+                        grid_fid, wsel, n_value, tailings = reservoir
+                        user_geom = self.build_point_xy(x_list[int(grid_fid) - 1], y_list[int(grid_fid) - 1])
+                        schema_geom = self.build_square_xy(x_list[int(grid_fid) - 1], y_list[int(grid_fid) - 1], self.cell_size)
+                        # Water
+                        if int(tailings) == -9999:
+                            schematic_reservoirs_sql += [(grid_fid, wsel, n_value, schema_geom)]
+                            user_reservoirs_sql += [(wsel, n_value, user_geom)]
+                        # Tailings
+                        else:
+                            schematic_tailings_reservoirs_sql += [(grid_fid, wsel, n_value, tailings, schema_geom)]
+                            user_tailing_reservoirs += [(wsel, n_value, tailings, user_geom)]
+
+                if inflow_sql:
+                    self.batch_execute(inflow_sql)
+
+                if cells_sql:
+                    self.batch_execute(cells_sql)
+
+                if ts_sql:
+                    self.batch_execute(ts_sql)
+
+                if tsd_sql:
+                    self.batch_execute(tsd_sql)
+
+                if schematic_reservoirs_sql:
+                    self.batch_execute(schematic_reservoirs_sql)
+
+                if user_reservoirs_sql:
+                    self.batch_execute(user_reservoirs_sql)
+
+                if schematic_tailings_reservoirs_sql:
+                    self.batch_execute(schematic_tailings_reservoirs_sql)
+
+                if user_tailing_reservoirs:
+                    self.batch_execute(user_tailing_reservoirs)
+
+                return True
+
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.uc.show_error("ERROR: importing INFLOW from HDF5 failed!\n", e)
+            self.uc.log_info("ERROR: importing INFLOW from HDF5 failed!")
+            return False
+
     def import_outrc(self):
         """
         Function to import the OUTRC.DAT file into the project
@@ -399,6 +532,12 @@ class Flo2dGeoPackage(GeoPackageUtils):
             self.batch_execute(outrc_sql)
 
     def import_tailings(self):
+        if self.parsed_format == self.FORMAT_DAT:
+            return self.import_tailings_dat()
+        elif self.parsed_format == self.FORMAT_HDF5:
+            return self.import_tailings_hdf5()
+
+    def import_tailings_dat(self):
         tailings_sql = [
             """INSERT INTO tailing_cells (grid, tailings_surf_elev, water_surf_elev, concentration, geom) VALUES""",
             5,
@@ -447,7 +586,76 @@ class Flo2dGeoPackage(GeoPackageUtils):
             qry = """UPDATE tailing_cells SET name = 'Tailings ' ||  cast(fid as text);"""
             self.execute(qry)
 
+    def import_tailings_hdf5(self):
+        try:
+            # Access the tailings group
+            tailings_group = self.parser.read_groups("Input/Tailings")
+            if tailings_group:
+                tailings_group = tailings_group[0]
+
+                self.clear_tables("tailing_cells")
+
+                tailings_sql = [
+                    """INSERT INTO tailing_cells (grid, tailings_surf_elev, water_surf_elev, concentration, geom) VALUES""",
+                    5,
+                ]
+                tailings_cv_sql = [
+                    """INSERT INTO tailing_cells (grid, tailings_surf_elev, water_surf_elev, concentration, geom) VALUES""",
+                    5,
+                ]
+                tailings_sd_sql = [
+                    """INSERT INTO tailing_cells (grid, tailings_surf_elev, water_surf_elev, concentration, geom) VALUES""",
+                    5,
+                ]
+
+                # Import TAILINGS dataset
+                if "TAILINGS" in tailings_group.datasets:
+                    data = tailings_group.datasets["TAILINGS"].data
+                    for row in data:
+                        grid_fid, tailings_surf_elev = row
+                        square = self.build_square(self.grid_centroids([grid_fid])[grid_fid], self.cell_size)
+                        tailings_sql += [(grid_fid, tailings_surf_elev, 0, 0, square)]
+                    self.batch_execute(tailings_sql)
+                    qry = """UPDATE tailing_cells SET name = 'Tailings ' ||  cast(fid as text);"""
+                    self.execute(qry)
+
+                # Import TAILINGS_CV if present
+                if "TAILINGS_CV" in tailings_group.datasets:
+                    data = tailings_group.datasets["TAILINGS_CV"].data
+                    for row in data:
+                        grid_fid, tailings_surf_elev, concentration = row
+                        square = self.build_square(self.grid_centroids([grid_fid])[grid_fid], self.cell_size)
+                        tailings_cv_sql += [(grid_fid, tailings_surf_elev, 0, concentration, square)]
+                    self.batch_execute(tailings_cv_sql)
+                    qry = """UPDATE tailing_cells SET name = 'Tailings ' ||  cast(fid as text);"""
+                    self.execute(qry)
+
+                # Import TAILINGS_STACK_DEPTH if present
+                if "TAILINGS_STACK_DEPTH" in tailings_group.datasets:
+                    data = tailings_group.datasets["TAILINGS_STACK_DEPTH"].data
+                    for row in data:
+                        grid_fid, water_surf_elev, tailings_surf_elev = row
+                        square = self.build_square(self.grid_centroids([grid_fid])[grid_fid], self.cell_size)
+                        tailings_sd_sql += [(grid_fid, tailings_surf_elev, water_surf_elev, 0, square)]
+                    self.batch_execute(tailings_sd_sql)
+                    qry = """UPDATE tailing_cells SET name = 'Tailings ' ||  cast(fid as text);"""
+                    self.execute(qry)
+
+                return True
+
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.uc.show_error("ERROR: importing TAILINGS from HDF5 failed!\n", e)
+            self.uc.log_info("ERROR: importing TAILINGS from HDF5 failed!")
+            return False
+
     def import_outflow(self):
+        if self.parsed_format == self.FORMAT_DAT:
+            return self.import_outflow_dat()
+        elif self.parsed_format == self.FORMAT_HDF5:
+            return self.import_outflow_hdf5()
+
+    def import_outflow_dat(self):
         outflow_sql = [
             """INSERT INTO outflow (chan_out, fp_out, hydro_out, chan_tser_fid, chan_qhpar_fid,
                                             chan_qhtab_fid, fp_tser_fid, bc_fid) VALUES""",
@@ -570,7 +778,346 @@ class Flo2dGeoPackage(GeoPackageUtils):
         qhtab_name_qry = """UPDATE qh_table SET name = 'Q(h) table ' ||  cast(fid as text);"""
         self.execute(qhtab_name_qry)
 
+    def import_outflow_hdf5(self):
+        try:
+            outflow_group = self.parser.read_groups("Input/Boundary Conditions/Outflow")
+            if outflow_group:
+                outflow_group = outflow_group[0]
+
+                self.clear_tables(
+                    "outflow",
+                    "outflow_cells",
+                    "qh_params",
+                    "qh_params_data",
+                    "qh_table",
+                    "qh_table_data",
+                    "outflow_time_series",
+                    "outflow_time_series_data",
+                )
+
+                floodplain_outflow_sql = [
+                    """INSERT INTO outflow (fid, fp_out, hydro_out, chan_tser_fid, chan_qhpar_fid, chan_qhtab_fid, fp_tser_fid, bc_fid) VALUES""",
+                    8,
+                ]
+
+                channel_outflow_sql = [
+                    """INSERT INTO outflow (fid, chan_out, hydro_out, chan_tser_fid, chan_qhpar_fid, chan_qhtab_fid, fp_tser_fid, bc_fid) VALUES""",
+                    8,
+                ]
+
+                cells_sql = ["""INSERT OR REPLACE INTO outflow_cells (outflow_fid, grid_fid, geom_type) VALUES""", 3]
+                qh_params_sql = ["""INSERT OR REPLACE INTO qh_params (fid, name) VALUES""", 2]
+                qh_params_data_sql = ["""INSERT INTO qh_params_data (params_fid, hmax, coef, exponent) VALUES""", 4]
+                qh_tab_sql = ["""INSERT INTO qh_table (fid, name) VALUES""", 2]
+                qh_tab_data_sql = ["""INSERT INTO qh_table_data (table_fid, depth, q) VALUES""", 3]
+                ts_sql = ["""INSERT OR REPLACE INTO outflow_time_series (fid, name) VALUES""", 2]
+                ts_data_sql = ["""INSERT INTO outflow_time_series_data (series_fid, time, value) VALUES""", 3]
+
+                update_sql = []
+                parsed_grid = {}
+                fid = 1
+                bc_fid = self.execute("SELECT MAX(fid) FROM all_schem_bc;").fetchone()
+                if bc_fid and bc_fid[0] is not None:
+                    bc_fid = bc_fid[0] + 1
+                else:
+                    bc_fid = 1
+
+                # Read datasets
+                if "FP_OUT_GRID" in outflow_group.datasets:
+                    data = outflow_group.datasets["FP_OUT_GRID"].data
+                    for grid in data:
+                        if grid not in parsed_grid.keys():
+                            parsed_grid[grid] = fid
+                            floodplain_outflow_sql += [
+                                (
+                                    fid,
+                                    1,
+                                    0,
+                                    0,
+                                    0,
+                                    0,
+                                    0,
+                                    bc_fid,
+                                )
+                            ]
+                            cells_sql += [
+                                (
+                                    fid,
+                                    int(grid),
+                                    'point'
+                                )
+                            ]
+                            fid += 1
+                            bc_fid += 1
+                        else:
+                            existing_fid = parsed_grid[grid]
+                            update_sql.append(f"UPDATE outflow SET fp_out = 1 WHERE fid = {existing_fid};")
+
+                if "CH_OUT_GRID" in outflow_group.datasets:
+                    data = outflow_group.datasets["CH_OUT_GRID"].data
+                    for grid in data:
+                        if grid not in parsed_grid.keys():
+                            parsed_grid[grid] = fid
+                            channel_outflow_sql += [
+                                (
+                                    fid,
+                                    1,
+                                    0,
+                                    0,
+                                    0,
+                                    0,
+                                    0,
+                                    bc_fid,
+                                )
+                            ]
+                            cells_sql += [
+                                (
+                                    fid,
+                                    int(grid),
+                                    'point'
+                                )
+                            ]
+                            fid += 1
+                            bc_fid += 1
+                        else:
+                            existing_fid = parsed_grid[grid]
+                            update_sql.append(f"UPDATE outflow SET chan_out = 1 WHERE fid = {existing_fid};")
+
+                if "HYD_OUT_GRID" in outflow_group.datasets:
+                    data = outflow_group.datasets["HYD_OUT_GRID"].data
+                    for row in data:
+                        hydro_out, grid = row
+                        floodplain_outflow_sql += [
+                            (
+                                fid,
+                                0,
+                                int(hydro_out),
+                                0,
+                                0,
+                                0,
+                                0,
+                                bc_fid,
+                            )
+                        ]
+                        cells_sql += [
+                            (
+                                fid,
+                                int(grid),
+                                'point'
+                            )
+                        ]
+                        fid += 1
+                        bc_fid += 1
+
+                if "TS_OUT_GRID" in outflow_group.datasets:
+                    data = outflow_group.datasets["TS_OUT_GRID"].data
+                    for row in data:
+                        grid, cell_type, ts_id = row
+                        if grid not in parsed_grid.keys():
+                            if int(cell_type) == 0:  # floodplain
+                                floodplain_outflow_sql += [
+                                    (
+                                        fid,
+                                        0,
+                                        0,
+                                        0,
+                                        0,
+                                        0,
+                                        int(ts_id),
+                                        bc_fid,
+                                    )
+                                ]
+                                cells_sql += [
+                                    (
+                                        fid,
+                                        int(grid),
+                                        'point'
+                                    )
+                                ]
+                                ts_sql += [(int(ts_id), "Time series " + str(ts_id))]
+                                fid += 1
+                                bc_fid += 1
+
+                            if int(cell_type) == 1:  # channel
+                                channel_outflow_sql += [
+                                    (
+                                        fid,
+                                        0,
+                                        0,
+                                        int(ts_id),
+                                        0,
+                                        0,
+                                        0,
+                                        bc_fid,
+                                    )
+                                ]
+                                cells_sql += [
+                                    (
+                                        fid,
+                                        int(grid),
+                                        'point'
+                                    )
+                                ]
+                                ts_sql += [(int(ts_id), "Time series " + str(ts_id))]
+                                fid += 1
+                                bc_fid += 1
+                        else:
+                            if int(cell_type) == 0:  # floodplain
+                                existing_fid = parsed_grid[grid]
+                                update_sql.append(f"UPDATE outflow SET fp_tser_fid = {int(ts_id)} WHERE fid = {existing_fid};")
+                                ts_sql += [(int(ts_id), "Time series " + str(ts_id))]
+
+                            if int(cell_type) == 1:  # channel
+                                existing_fid = parsed_grid[grid]
+                                update_sql.append(f"UPDATE outflow SET chan_tser_fid = {int(ts_id)} WHERE fid = {existing_fid};")
+                                ts_sql += [(int(ts_id), "Time series " + str(ts_id))]
+
+                if "TS_OUT_DATA" in outflow_group.datasets:
+                    data = outflow_group.datasets["TS_OUT_DATA"].data
+                    for row in data:
+                        ts_id, time, value = row
+                        ts_data_sql += [(int(ts_id), time, value)]
+
+                if "QH_PARAMS_GRID" in outflow_group.datasets:
+                    data = outflow_group.datasets["QH_PARAMS_GRID"].data
+                    for row in data:
+                        grid, qh_params_id = row
+                        if grid not in parsed_grid.keys():
+                            channel_outflow_sql += [
+                                (
+                                    fid,
+                                    1,
+                                    0,
+                                    0,
+                                    qh_params_id,
+                                    0,
+                                    0,
+                                    bc_fid,
+                                )
+                            ]
+                            cells_sql += [
+                                (
+                                    fid,
+                                    int(grid),
+                                    'point'
+                                )
+                            ]
+                            qh_params_sql += [(int(qh_params_id), "Q(h) parameters " + str(qh_params_id))]
+                            fid += 1
+                            bc_fid += 1
+                        else:
+                            existing_fid = parsed_grid[grid]
+                            update_sql.append(
+                                f"UPDATE outflow SET chan_qhpar_fid = {int(qh_params_id)} WHERE fid = {existing_fid};")
+                            qh_params_sql += [(int(qh_params_id), "Q(h) parameters " + str(qh_params_id))]
+
+                if "QH_PARAMS" in outflow_group.datasets:
+                    data = outflow_group.datasets["QH_PARAMS"].data
+                    for row in data:
+                        qh_params_id, param1, param2, param3 = row
+                        qh_params_data_sql += [(int(qh_params_id), param1, param2, param3)]
+
+                if "QH_TABLE_GRID" in outflow_group.datasets:
+                    data = outflow_group.datasets["QH_TABLE_GRID"].data
+                    for row in data:
+                        grid, qh_table_id = row
+                        if grid not in parsed_grid.keys():
+                            channel_outflow_sql += [
+                                (
+                                    fid,
+                                    1,
+                                    0,
+                                    0,
+                                    0,
+                                    qh_table_id,
+                                    0,
+                                    bc_fid,
+                                )
+                            ]
+                            cells_sql += [
+                                (
+                                    fid,
+                                    int(grid),
+                                    'point'
+                                )
+                            ]
+                            qh_tab_sql += [(int(qh_table_id), "Q(h) table " + str(qh_table_id))]
+                            fid += 1
+                            bc_fid += 1
+                        else:
+                            existing_fid = parsed_grid[grid]
+                            update_sql.append(
+                                f"UPDATE outflow SET chan_qhtab_fid = {int(qh_table_id)} WHERE fid = {existing_fid};")
+                            qh_tab_data_sql += [(int(qh_table_id), "Q(h) parameters " + str(qh_table_id))]
+
+                if "QH_TABLE" in outflow_group.datasets:
+                    data = outflow_group.datasets["QH_TABLE"].data
+                    for row in data:
+                        qh_table_id, param1, param2 = row
+                        qh_tab_data_sql += [(int(qh_table_id), param1, param2)]
+
+                if floodplain_outflow_sql:
+                    self.batch_execute(floodplain_outflow_sql)
+
+                if channel_outflow_sql:
+                    self.batch_execute(channel_outflow_sql)
+
+                if ts_sql:
+                    self.batch_execute(ts_sql)
+
+                if ts_data_sql:
+                    self.batch_execute(ts_data_sql)
+
+                if qh_params_sql:
+                    self.batch_execute(qh_params_sql)
+
+                if qh_params_data_sql:
+                    self.batch_execute(qh_params_data_sql)
+
+                if qh_tab_sql:
+                    self.batch_execute(qh_tab_sql)
+
+                if qh_tab_data_sql:
+                    self.batch_execute(qh_tab_data_sql)
+
+                if update_sql:
+                    for qry in update_sql:
+                        self.execute(qry)
+
+                if cells_sql:
+                    self.batch_execute(cells_sql)
+
+                type_qry = """UPDATE outflow SET type = (CASE
+                                    WHEN (fp_out > 0 AND chan_out = 0 AND fp_tser_fid = 0) THEN 1
+                                    WHEN (fp_out = 0 AND chan_out > 0 AND chan_tser_fid = 0 AND
+                                          chan_qhpar_fid = 0 AND chan_qhtab_fid = 0) THEN 2
+                                    WHEN (fp_out > 0 AND chan_out > 0) THEN 3
+                                    WHEN (hydro_out > 0) THEN 4
+                                    WHEN (fp_out = 0 AND fp_tser_fid > 0) THEN 5
+                                    WHEN (chan_out = 0 AND chan_tser_fid > 0) THEN 6
+                                    WHEN (fp_out > 0 AND fp_tser_fid > 0) THEN 7
+                                    WHEN (chan_out > 0 AND chan_tser_fid > 0) THEN 8
+                                    WHEN (chan_qhpar_fid > 0) THEN 9 -- depth-discharge qhpar
+                                    WHEN (chan_qhtab_fid > 0) THEN 10
+                                    ELSE 0
+                                END),
+                                name = 'Outflow ' ||  cast(fid as text);"""
+                self.execute(type_qry)
+                return True
+
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.uc.show_error("ERROR: importing OUTFLOW from HDF5 failed!\n", e)
+            self.uc.log_info("ERROR: importing OUTFLOW from HDF5 failed!")
+            return False
+
     def import_rain(self):
+        if self.parsed_format == self.FORMAT_DAT:
+            return self.import_rain_dat()
+        elif self.parsed_format == self.FORMAT_HDF5:
+            return self.import_rain_hdf5()
+
+    def import_rain_dat(self):
         rain_sql = [
             """INSERT INTO rain (time_series_fid, irainreal, irainbuilding, tot_rainfall,
                                          rainabs, irainarf, movingstorm, rainspeed, iraindir) VALUES""",
@@ -615,6 +1162,67 @@ class Flo2dGeoPackage(GeoPackageUtils):
         name_qry = """UPDATE rain_time_series SET name = 'Time series ' || cast (fid as text) """
         self.execute(name_qry)
 
+    def import_rain_hdf5(self):
+        rain_sql = [
+            """INSERT INTO rain (time_series_fid, irainreal, irainbuilding, tot_rainfall,
+                                 rainabs, irainarf, movingstorm, rainspeed, iraindir) VALUES""",
+            9,
+        ]
+        ts_sql = ["""INSERT INTO rain_time_series (fid) VALUES""", 1]
+        tsd_sql = [
+            """INSERT INTO rain_time_series_data (series_fid, time, value) VALUES""",
+            3,
+        ]
+        cells_sql = [
+            """INSERT INTO rain_arf_cells (rain_arf_area_fid, grid_fid, arf) VALUES""",
+            3,
+        ]
+
+        self.clear_tables(
+            "rain",
+            "rain_arf_cells",
+            "rain_time_series",
+            "rain_time_series_data",
+        )
+
+        try:
+            # Access the rain group
+            rain_group = self.parser.read_groups("Input/Rainfall")[0]
+
+            # Read RAIN_GLOBAL dataset
+            rain_global = rain_group.datasets["RAIN_GLOBAL"].data
+            if len(rain_global) < 8:
+                raise ValueError("RAIN_GLOBAL dataset is incomplete.")
+            rain_sql += [(1,) + tuple(rain_global[:8])]
+
+            # Insert time series data
+            ts_sql += [(1,)]
+            rain_data = rain_group.datasets["RAIN_DATA"].data
+            for row in rain_data:
+                time, value = row
+                tsd_sql += [(1, time, value)]
+
+            # Insert ARF data if available
+            if "RAIN_ARF" in rain_group.datasets:
+                rain_arf = rain_group.datasets["RAIN_ARF"].data
+                for i, row in enumerate(rain_arf, 1):
+                    grid_fid, arf = row
+                    cells_sql += [(i, int(grid_fid), float(arf))]
+
+            # Execute batch inserts
+            self.batch_execute(ts_sql, rain_sql, tsd_sql, cells_sql)
+
+            # Update time series name
+            name_qry = """UPDATE rain_time_series SET name = 'Time series ' || cast(fid as text);"""
+            self.execute(name_qry)
+
+            return True
+
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.uc.show_error("ERROR: Importing RAIN data from HDF5 failed!", e)
+            return False
+
     def import_raincell(self):
         head_sql = [
             """INSERT INTO raincell (rainintime, irinters, timestamp) VALUES""",
@@ -643,6 +1251,12 @@ class Flo2dGeoPackage(GeoPackageUtils):
         self.batch_execute(head_sql, data_sql)
 
     def import_infil(self):
+        if self.parsed_format == self.FORMAT_DAT:
+            return self.import_infil_dat()
+        elif self.parsed_format == self.FORMAT_HDF5:
+            return self.import_infil_hdf5()
+
+    def import_infil_dat(self):
         infil_params = [
             "infmethod",
             "abstr",
@@ -721,6 +1335,134 @@ class Flo2dGeoPackage(GeoPackageUtils):
             infil_chan_sql,
         )
 
+    def import_infil_hdf5(self):
+        # Access the infiltration group
+        infil_group = self.parser.read_groups("Input/Infiltration")
+        if infil_group:
+            infil_group = infil_group[0]
+
+            infil_params = [
+                "infmethod",
+                "abstr",
+                "sati",
+                "satf",
+                "poros",
+                "soild",
+                "infchan",
+                "hydcall",
+                "soilall",
+                "hydcadj",
+                "hydcxx",
+                "scsnall",
+                "abstr1",
+                "fhortoni",
+                "fhortonf",
+                "decaya",
+                "fhortonia"
+            ]
+            infil_sql = ["INSERT INTO infil (" + ", ".join(infil_params) + ") VALUES", 17]
+            infil_seg_sql = [
+                """INSERT INTO infil_chan_seg (chan_seg_fid, hydcx, hydcxfinal, soildepthcx) VALUES""",
+                4,
+            ]
+            infil_green_sql = [
+                """INSERT INTO infil_cells_green (grid_fid, hydc, soils, dtheta,
+                                                                     abstrinf, rtimpf, soil_depth) VALUES""",
+                7,
+            ]
+            infil_scs_sql = ["""INSERT INTO infil_cells_scs (grid_fid, scsn) VALUES""", 2]
+            infil_horton_sql = [
+                """INSERT INTO infil_cells_horton (grid_fid, fhorti, fhortf, deca) VALUES""",
+                4,
+            ]
+            infil_chan_sql = [
+                """INSERT INTO infil_chan_elems (grid_fid, hydconch) VALUES""",
+                2,
+            ]
+
+            sqls = {
+                "F": infil_green_sql,
+                "S": infil_scs_sql,
+                "H": infil_horton_sql,
+                "C": infil_chan_sql,
+            }
+
+            self.clear_tables(
+                "infil",
+                "infil_chan_seg",
+                "infil_cells_green",
+                "infil_cells_scs",
+                "infil_cells_horton",
+                "infil_chan_elems",
+            )
+
+            try:
+
+                # Read INFIL_METHOD dataset
+                infil_method = int(infil_group.datasets["INFIL_METHOD"].data[0])
+                infil_data = [infil_method] + [None] * (len(infil_params) - 1)
+
+                # Populate infil_sql with global infiltration parameters
+                if infil_method == 1 or infil_method == 3:  # Green-Ampt
+                    infil_ga_global = infil_group.datasets["INFIL_GA_GLOBAL"].data
+                    infil_data[1:7] = infil_ga_global[:6]  # ABSTR, SATI, SATF, POROS, SOILD, INFCHAN
+                    infil_data[7:10] = infil_ga_global[6:9]  # HYDCALL, SOILALL, HYDCADJ
+
+                if infil_method == 2 or infil_method == 3:  # SCS
+                    infil_scs_global = infil_group.datasets["INFIL_SCS_GLOBAL"].data
+                    infil_data[11:13] = infil_scs_global[:2]  # SCSNALL, ABSTR1
+
+                if infil_method == 4:  # Horton
+                    infil_horton_global = infil_group.datasets["INFIL_HORTON_GLOBAL"].data
+                    infil_data[13:17] = infil_horton_global[:4]  # FHORTONI, FHORTONF, DECAYA, FHORTONIA
+
+                infil_sql += [tuple(infil_data)]
+
+                # Populate infil_chan_seg
+                if "INFIL_CHAN_SEG" in infil_group.datasets:
+                    infil_chan_seg_data = infil_group.datasets["INFIL_CHAN_SEG"].data
+                    for i, row in enumerate(infil_chan_seg_data, 1):
+                        infil_seg_sql += [(i,) + tuple(row)]
+
+                # Populate infil_cells_green
+                if "INFIL_GA_CELLS" in infil_group.datasets:
+                    infil_ga_cells = infil_group.datasets["INFIL_GA_CELLS"].data
+                    for row in infil_ga_cells:
+                        sqls["F"] += [tuple(row)]
+
+                # Populate infil_cells_scs
+                if "INFIL_SCS_CELLS" in infil_group.datasets:
+                    infil_scs_cells = infil_group.datasets["INFIL_SCS_CELLS"].data
+                    for row in infil_scs_cells:
+                        sqls["S"] += [tuple(row)]
+
+                # Populate infil_cells_horton
+                if "INFIL_HORTON_CELLS" in infil_group.datasets:
+                    infil_horton_cells = infil_group.datasets["INFIL_HORTON_CELLS"].data
+                    for row in infil_horton_cells:
+                        sqls["H"] += [tuple(row)]
+
+                # Populate infil_chan_elems
+                if "INFIL_CHAN_ELEMS" in infil_group.datasets:
+                    infil_chan_elems = infil_group.datasets["INFIL_CHAN_ELEMS"].data
+                    for row in infil_chan_elems:
+                        sqls["C"] += [tuple(row)]
+
+                # Execute batch inserts
+                self.batch_execute(
+                    infil_sql,
+                    infil_seg_sql,
+                    infil_green_sql,
+                    infil_scs_sql,
+                    infil_horton_sql,
+                    infil_chan_sql,
+                )
+
+            except Exception as e:
+                QApplication.restoreOverrideCursor()
+                self.uc.show_error("ERROR: Importing INFIL data from HDF5 failed!", e)
+                self.uc.log_info("ERROR: Importing INFIL data from HDF5 failed!")
+
     def import_evapor(self):
         evapor_sql = ["""INSERT INTO evapor (ievapmonth, iday, clocktime) VALUES""", 3]
         evapor_month_sql = [
@@ -745,6 +1487,12 @@ class Flo2dGeoPackage(GeoPackageUtils):
         self.batch_execute(evapor_sql, evapor_month_sql, evapor_hour_sql)
 
     def import_chan(self):
+        if self.parsed_format == self.FORMAT_DAT:
+            return self.import_chan_dat()
+        elif self.parsed_format == self.FORMAT_HDF5:
+            return self.import_chan_hdf5()
+
+    def import_chan_dat(self):
 
         QApplication.setOverrideCursor(Qt.WaitCursor)
 
@@ -873,7 +1621,226 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 "WARNING 010219.0742: Import channels failed!. Check CHAN.DAT and CHANBANK.DAT files."
             )
 
+    def import_chan_hdf5(self):
+        channel_group = self.parser.read_groups("Input/Channels")
+        if channel_group:
+            channel_group = channel_group[0]
+
+            chan_sql = [
+                """INSERT INTO chan (geom, depinitial, froudc, roughadj, isedn, ibaseflow) VALUES""",
+                6,
+            ]
+            chan_elems_sql = [
+                """INSERT INTO chan_elems (geom, fid, seg_fid, nr_in_seg, rbankgrid, fcn, xlen, type) VALUES""",
+                8,
+            ]
+            chan_r_sql = [
+                """INSERT INTO chan_r (elem_fid, bankell, bankelr, fcw, fcd) VALUES""",
+                5,
+            ]
+            # chan_v_sql = [
+            #     """INSERT INTO chan_v (elem_fid, bankell, bankelr, fcd, a1, a2, b1, b2, c1, c2,
+            #                                          excdep, a11, a22, b11, b22, c11, c22) VALUES""",
+            #     17,
+            # ]
+            chan_t_sql = [
+                """INSERT INTO chan_t (elem_fid, bankell, bankelr, fcw, fcd, zl, zr) VALUES""",
+                7,
+            ]
+            chan_n_sql = [
+                """INSERT INTO chan_n (elem_fid, nxsecnum, xsecname) VALUES""",
+                3
+            ]
+            chan_wsel_sql = [
+                """INSERT INTO chan_wsel (seg_fid, istart, wselstart, iend, wselend) VALUES""",
+                5,
+            ]
+            chan_conf_sql = [
+                """INSERT INTO chan_confluences (geom, conf_fid, type, chan_elem_fid) VALUES""",
+                4,
+            ]
+            chan_e_sql = [
+                """INSERT INTO user_noexchange_chan_areas (geom) VALUES""",
+                1
+            ]
+            elems_e_sql = [
+                """INSERT INTO noexchange_chan_cells (area_fid, grid_fid) VALUES""",
+                2,
+            ]
+
+            # try:
+            self.clear_tables(
+                "chan",
+                "chan_elems",
+                "chan_r",
+                "chan_v",
+                "chan_t",
+                "chan_n",
+                "chan_confluences",
+                "user_noexchange_chan_areas",
+                "noexchange_chan_cells",
+                "chan_wsel",
+            )
+
+            xs_geom = {}
+            left_bank_geom = {}
+            left_bank_grids = []
+            prev_chan_id = None
+            i = 1
+
+            # Read CHANBANK dataset (maps left to right bank grids)
+            if "CHANBANK" in channel_group.datasets:
+                data = channel_group.datasets["CHANBANK"].data
+                for row in data:
+                    left_bank_grid, right_bank_grid = row
+                    xs_geom[int(left_bank_grid)] = int(right_bank_grid)
+
+            # Helper function to flush geometry per channel
+            def flush_channel_geometry():
+                if left_bank_grids and prev_chan_id is not None:
+                    left_bank_geom[prev_chan_id] = self.build_linestring(left_bank_grids)
+
+            # Process CHAN_NATURAL
+            if "CHAN_NATURAL" in channel_group.datasets:
+                data = channel_group.datasets["CHAN_NATURAL"].data
+                for row in data:
+                    chan_id, grid, fcn, xlen, nxecnum = row
+                    chan_id = int(chan_id)
+                    grid = int(grid)
+
+                    if prev_chan_id is not None and chan_id != prev_chan_id:
+                        flush_channel_geometry()
+                        left_bank_grids = []
+                        i = 1
+
+                    chan_n_sql += [(grid, nxecnum, f"XS {int(nxecnum)}")]
+                    geom = self.build_linestring([grid, xs_geom[grid]])
+                    chan_elems_sql += [(geom, grid, chan_id, i, xs_geom[grid], fcn, xlen, "N")]
+                    left_bank_grids.append(grid)
+                    prev_chan_id = chan_id
+                    i += 1
+
+            # Process CHAN_RECTANGULAR
+            if "CHAN_RECTANGULAR" in channel_group.datasets:
+                data = channel_group.datasets["CHAN_RECTANGULAR"].data
+                for row in data:
+                    chan_id, grid, bankell, bankelr, fcn, fcw, fcd, xlen = row
+                    chan_id = int(chan_id)
+                    grid = int(grid)
+
+                    if prev_chan_id is not None and chan_id != prev_chan_id:
+                        flush_channel_geometry()
+                        left_bank_grids = []
+                        i = 1
+
+                    chan_r_sql += [(grid, bankell, bankelr, fcw, fcd)]
+                    geom = self.build_linestring([grid, xs_geom[grid]])
+                    chan_elems_sql += [(geom, grid, chan_id, i, xs_geom[grid], fcn, xlen, "R")]
+                    left_bank_grids.append(grid)
+                    prev_chan_id = chan_id
+                    i += 1
+
+            # Process CHAN_TRAPEZOIDAL
+            if "CHAN_TRAPEZOIDAL" in channel_group.datasets:
+                data = channel_group.datasets["CHAN_TRAPEZOIDAL"].data
+                for row in data:
+                    chan_id, grid, bankell, bankelr, fcn, fcw, fcd, xlen, zl, zr = row
+                    chan_id = int(chan_id)
+                    grid = int(grid)
+
+                    if prev_chan_id is not None and chan_id != prev_chan_id:
+                        flush_channel_geometry()
+                        left_bank_grids = []
+                        i = 1
+
+                    chan_t_sql += [(grid, bankell, bankelr, fcw, fcd, zl, zr)]
+                    geom = self.build_linestring([grid, xs_geom[grid]])
+                    chan_elems_sql += [(geom, grid, chan_id, i, xs_geom[grid], fcn, xlen, "T")]
+                    left_bank_grids.append(grid)
+                    prev_chan_id = chan_id
+                    i += 1
+
+            # Finalize last channel after all groups
+            flush_channel_geometry()
+
+            # Process CHAN_GLOBAL for main channel table
+            if "CHAN_GLOBAL" in channel_group.datasets:
+                data = channel_group.datasets["CHAN_GLOBAL"].data
+                for row in data:
+                    # This is done because some hdf5 do not have the ibaseflow on it
+                    if len(row) < 6:
+                        chan_id, depinitial, froudc, roughadj, isedn = row
+                        ibaseflow = 0
+                    else:
+                        chan_id, depinitial, froudc, roughadj, ibaseflow, isedn = row
+                    chan_id = int(chan_id)
+                    geom = left_bank_geom.get(chan_id)
+                    chan_sql += [(geom, depinitial, froudc, roughadj, isedn, ibaseflow)]
+
+            # Process CONFLUENCES
+            if "CONFLUENCES" in channel_group.datasets:
+                grid_group = self.parser.read_groups("Input/Grid")[0]
+                x_list = grid_group.datasets["COORDINATES"].data[:, 0]
+                y_list = grid_group.datasets["COORDINATES"].data[:, 1]
+                data = channel_group.datasets["CONFLUENCES"].data
+                for row in data:
+                    con_id, river_type, grid = row
+                    geom = self.build_point_xy(x_list[int(grid) - 1], y_list[int(grid) - 1])
+                    chan_conf_sql += [(geom, int(con_id), int(river_type), int(grid))]
+
+            # Process noexchange areas and cells
+            if "NOEXCHANGE" in channel_group.datasets:
+                data = channel_group.datasets["NOEXCHANGE"].data
+                for i, grid in enumerate(data, start=1):
+                    geom = self.build_square(self.grid_centroids([int(grid)])[int(grid)], self.cell_size)
+                    chan_e_sql += [(geom,)]
+                    elems_e_sql += [(i, int(grid))]
+
+            # Process CHAN_WSEL
+            if "CHAN_WSE" in channel_group.datasets:
+                data = channel_group.datasets["CHAN_WSE"].data
+                for row in data:
+                    seg_fid, istart, wselstart, iend, wselend = row
+                    chan_wsel_sql += [(int(seg_fid), int(istart), wselstart, int(iend), wselend)]
+
+            if chan_n_sql:
+                self.batch_execute(chan_n_sql)
+
+            if chan_r_sql:
+                self.batch_execute(chan_r_sql)
+
+            if chan_t_sql:
+                self.batch_execute(chan_t_sql)
+
+            if chan_sql:
+                self.batch_execute(chan_sql)
+
+            if chan_elems_sql:
+                self.batch_execute(chan_elems_sql)
+
+            if chan_conf_sql:
+                self.batch_execute(chan_conf_sql)
+
+            if chan_e_sql:
+                self.batch_execute(chan_e_sql)
+
+            if elems_e_sql:
+                self.batch_execute(elems_e_sql)
+
+            if chan_wsel_sql:
+                self.batch_execute(chan_wsel_sql)
+
+            qry = """UPDATE chan SET name = 'Channel ' ||  cast(fid as text);"""
+            self.execute(qry)
+            QApplication.restoreOverrideCursor()
+
     def import_xsec(self):
+        if self.parsed_format == self.FORMAT_DAT:
+            return self.import_xsec_dat()
+        elif self.parsed_format == self.FORMAT_HDF5:
+            return self.import_xsec_hdf5()
+
+    def import_xsec_dat(self):
         xsec_sql = ["""INSERT INTO xsec_n_data (chan_n_nxsecnum, xi, yi) VALUES""", 3]
         self.clear_tables("xsec_n_data")
         data = self.parser.parse_xsec()
@@ -885,46 +1852,42 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
         self.batch_execute(xsec_sql)
 
-    #     def import_hystruc(self):
-    #         try:
-    #             hystruc_params = ['geom', 'type', 'structname', 'ifporchan', 'icurvtable', 'inflonod', 'outflonod', 'inoutcont',
-    #                               'headrefel', 'clength', 'cdiameter']
-    #             hystruc_sql = ['INSERT INTO struct (' + ', '.join(hystruc_params) + ') VALUES', 11]
-    #             ratc_sql = ['''INSERT INTO rat_curves (struct_fid, hdepexc, coefq, expq, coefa, expa) VALUES''', 6]
-    #             repl_ratc_sql = ['''INSERT INTO repl_rat_curves (struct_fid, repdep, rqcoef, rqexp, racoef, raexp) VALUES''', 6]
-    #             ratt_sql = ['''INSERT INTO rat_table (struct_fid, hdepth, qtable, atable) VALUES''', 4]
-    #             culvert_sql = ['''INSERT INTO culvert_equations (struct_fid, typec, typeen, culvertn, ke, cubase) VALUES''', 6]
-    #             storm_sql = ['''INSERT INTO storm_drains (struct_fid, istormdout, stormdmax) VALUES''', 3]
-    #
-    #             sqls = {
-    #                 'C': ratc_sql,
-    #                 'R': repl_ratc_sql,
-    #                 'T': ratt_sql,
-    #                 'F': culvert_sql,
-    #                 'D': storm_sql
-    #             }
-    #
-    #             self.clear_tables('struct', 'rat_curves', 'repl_rat_curves', 'rat_table', 'culvert_equations', 'storm_drains')
-    #             data = self.parser.parse_hystruct()
-    #             nodes = slice(3, 5)
-    #             for i, hs in enumerate(data, 1):
-    #                 params = hs[:-1]   # Line 'S' (first line of next structure)
-    #                 elems = hs[-1]     # Lines 'C', 'R', 'I', 'F', and/ or 'D' (rest of lines of next structure)
-    #                 geom = self.build_linestring(params[nodes])
-    #                 typ = list(elems.keys())[0] if len(elems) == 1 else 'C'
-    #                 hystruc_sql += [(geom, typ) + tuple(params)]
-    #                 for char in list(elems.keys()):
-    #                     for row in elems[char]:
-    #                         sqls[char] += [(i,) + tuple(row)]
-    #
-    #             self.batch_execute(hystruc_sql, ratc_sql, repl_ratc_sql, ratt_sql, culvert_sql, storm_sql)
-    #             qry = '''UPDATE struct SET notes = 'imported';'''
-    #             self.execute(qry)
-    #         except Exception:
-    #             QApplication.restoreOverrideCursor()
-    #             self.uc.show_warn('ERROR 040220.0742: Importing hydraulic structures from HYSTRUC.DAT failed!')
+    def import_xsec_hdf5(self):
+        channel_group = self.parser.read_groups("Input/Channels")
+        if channel_group:
+            channel_group = channel_group[0]
+            xsec_sql = ["""INSERT INTO xsec_n_data (chan_n_nxsecnum, xi, yi) VALUES""", 3]
+            self.clear_tables("xsec_n_data")
+
+            # Process XSEC_DATA
+            if "XSEC_DATA" in channel_group.datasets:
+                data = channel_group.datasets["XSEC_DATA"].data
+                for row in data:
+                    chan_n_nxsecnum, xi, yi = row
+                    xsec_sql += [(chan_n_nxsecnum, xi, yi)]
+
+            # Process XSEC_NAME
+            if "XSEC_NAME" in channel_group.datasets:
+                data = channel_group.datasets["XSEC_NAME"].data
+                for row in data:
+                    nsecum, xsecname = row
+                    if isinstance(xsecname, bytes):
+                        xsecname = xsecname.decode("utf-8")
+                    self.execute(
+                        "UPDATE chan_n SET xsecname = ? WHERE nxsecnum = ?;",
+                        (xsecname, int(nsecum))
+                    )
+
+            if xsec_sql:
+                self.batch_execute(xsec_sql)
 
     def import_hystruc(self):
+        if self.parsed_format == self.FORMAT_DAT:
+            return self.import_hystruc_dat()
+        elif self.parsed_format == self.FORMAT_HDF5:
+            return self.import_hystruc_hdf5()
+
+    def import_hystruc_dat(self):
         try:
             hystruc_params = [
                 "geom",
@@ -1039,7 +2002,176 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 "ERROR 040220.0742: Importing hydraulic structures failed!\nPlease check HYSTRUC.DAT data format and values."
             )
 
+    def import_hystruc_hdf5(self):
+        try:
+            hydrostruct_group = self.parser.read_groups("Input/Hydraulic Structures")
+            if hydrostruct_group:
+                hydrostruct_group = hydrostruct_group[0]
+
+                self.clear_tables(
+                    "struct",
+                    "rat_curves",
+                    "repl_rat_curves",
+                    "rat_table",
+                    "culvert_equations",
+                    "storm_drains",
+                    "bridge_variables",
+                )
+
+                hystruc_params = [
+                    "geom",
+                    "ifporchan",
+                    "icurvtable",
+                    "inflonod",
+                    "outflonod",
+                    "inoutcont",
+                    "headrefel",
+                    "clength",
+                    "cdiameter",
+                ]
+
+                hystruc_sql = [
+                    "INSERT INTO struct (" + ", ".join(hystruc_params) + ") VALUES",
+                    9,
+                ]
+                ratc_sql = [
+                    """INSERT INTO rat_curves (struct_fid, hdepexc, coefq, expq, coefa, expa) VALUES""",
+                    6,
+                ]
+                repl_ratc_sql = [
+                    """INSERT INTO repl_rat_curves (struct_fid, repdep, rqcoef, rqexp, racoef, raexp) VALUES""",
+                    6,
+                ]
+                ratt_sql = [
+                    """INSERT INTO rat_table (struct_fid, hdepth, qtable, atable) VALUES""",
+                    4,
+                ]
+                culvert_sql = [
+                    """INSERT INTO culvert_equations (struct_fid, typec, typeen, culvertn, ke, cubase, multibarrels) VALUES""",
+                    7,
+                ]
+                storm_sql = [
+                    """INSERT INTO storm_drains (struct_fid, istormdout, stormdmax) VALUES""",
+                    3,
+                ]
+                bridge_sql = [
+                    """INSERT INTO bridge_variables (struct_fid, IBTYPE, COEFF, C_PRIME_USER, KF_COEF, KWW_COEF, KPHI_COEF, KY_COEF, KX_COEF, KJ_COEF, BOPENING, BLENGTH, BN_VALUE, UPLENGTH12, LOWCHORD, DECKHT, DECKLENGTH, PIERWIDTH, SLUICECOEFADJ, ORIFICECOEFADJ, COEFFWEIRB, WINGWALL_ANGLE, PHI_ANGLE, LBTOEABUT, RBTOEABUT) VALUES""",
+                    25,
+                ]
+
+                # Process STR_CONTROL
+                if "STR_CONTROL" in hydrostruct_group.datasets:
+                    data = hydrostruct_group.datasets["STR_CONTROL"].data
+                    for row in data:
+                        struct_fid, ifporchan, icurvtable, inflonod, outflonod, inoutcont, headrefel, clength, cdiameter = row
+                        geom = self.build_linestring([int(inflonod), int(outflonod)])
+                        hystruc_sql += [(geom, int(ifporchan), int(icurvtable), int(inflonod), int(outflonod), int(inoutcont), headrefel, clength, cdiameter)]
+
+                # Process RAT_CURVES
+                if "RATING_CURVE" in hydrostruct_group.datasets:
+                    data = hydrostruct_group.datasets["RATING_CURVE"].data
+                    for row in data:
+                        struct_fid, hdepexc, coefq, expq, coefa, expa, repdep, rqcoef, rqexp, racoef, raexp = row
+                        ratc_sql += [(int(struct_fid), hdepexc, coefq, expq, coefa, expa)]
+                        repl_ratc_sql += [(int(struct_fid), repdep, rqcoef, rqexp, racoef, raexp)]
+
+                # Process RAT_TABLE
+                if "RATING_TABLE" in hydrostruct_group.datasets:
+                    data = hydrostruct_group.datasets["RATING_TABLE"].data
+                    for row in data:
+                        rt_fid, hdepth, qtable, atable = row
+                        ratt_sql += [(int(rt_fid), hdepth, qtable, atable)]
+
+                # Process CULVERT EQUATIONS
+                if "CULVERT_EQUATIONS" in hydrostruct_group.datasets:
+                    data = hydrostruct_group.datasets["CULVERT_EQUATIONS"].data
+                    for row in data:
+                        struct_fid, typec, typeen, culvertn, ke, cubase, multibarrels = row
+                        culvert_sql += [(int(struct_fid), typec, typeen, culvertn, ke, cubase, int(multibarrels))]
+
+                # Process STORM_DRAIN
+                if "STORM_DRAIN" in hydrostruct_group.datasets:
+                    data = hydrostruct_group.datasets["STORM_DRAIN"].data
+                    for row in data:
+                        struct_fid, istormdout, stormdmax = row
+                        storm_sql += [(int(struct_fid), int(istormdout), stormdmax)]
+
+                # Process BRIDGE VARIABLES
+                if "BRIDGE_VARIABLES" in hydrostruct_group.datasets:
+                    data = hydrostruct_group.datasets["BRIDGE_VARIABLES"].data
+                    for row in data:
+                        (struct_fid,
+                         IBTYPE,
+                         COEFF,
+                         C_PRIME_USER,
+                         KF_COEF,
+                         KWW_COEF,
+                         KPHI_COEF,
+                         KY_COEF,
+                         KX_COEF,
+                         KJ_COEF,
+                         BOPENING,
+                         BLENGTH,
+                         BN_VALUE,
+                         UPLENGTH12,
+                         LOWCHORD,
+                         DECKHT,
+                         DECKLENGTH,
+                         PIERWIDTH,
+                         SLUICECOEFADJ,
+                         ORIFICECOEFADJ,
+                         COEFFWEIRB,
+                         WINGWALL_ANGLE,
+                         PHI_ANGLE,
+                         LBTOEABUT,
+                         RBTOEABUT) = row
+                        bridge_sql += [(int(struct_fid), IBTYPE, COEFF, C_PRIME_USER, KF_COEF, KWW_COEF, KPHI_COEF, KY_COEF, KX_COEF, KJ_COEF, BOPENING, BLENGTH, BN_VALUE, UPLENGTH12, LOWCHORD, DECKHT, DECKLENGTH, PIERWIDTH, SLUICECOEFADJ, ORIFICECOEFADJ, COEFFWEIRB, WINGWALL_ANGLE, PHI_ANGLE, LBTOEABUT, RBTOEABUT)]
+
+                if hystruc_sql:
+                    self.batch_execute(hystruc_sql)
+
+                if ratc_sql:
+                    self.batch_execute(ratc_sql)
+
+                if repl_ratc_sql:
+                    self.batch_execute(repl_ratc_sql)
+
+                if ratt_sql:
+                    self.batch_execute(ratt_sql)
+
+                if culvert_sql:
+                    self.batch_execute(culvert_sql)
+
+                if storm_sql:
+                    self.batch_execute(storm_sql)
+
+                if bridge_sql:
+                    self.batch_execute(bridge_sql)
+
+                # Process STR_NAME
+                if "STR_NAME" in hydrostruct_group.datasets:
+                    data = hydrostruct_group.datasets["STR_NAME"].data
+                    for row in data:
+                        struct_fid, structname = row
+                        if isinstance(structname, bytes):
+                            structname = structname.decode("utf-8")
+                        self.execute(
+                            "UPDATE struct SET structname = ? WHERE fid = ?;",
+                            (structname, int(struct_fid))
+                        )
+
+        except Exception:
+            QApplication.restoreOverrideCursor()
+            self.uc.show_warn("ERROR 040220.0742: Importing HDF5 hydraulic structures failed!")
+            self.uc.log_info("ERROR 040220.0742: Importing HDF5 hydraulic structures failed!")
+
     def import_hystruc_bridge_xs(self):
+        if self.parsed_format == self.FORMAT_DAT:
+            return self.import_hystruc_bridge_xs_dat()
+        elif self.parsed_format == self.FORMAT_HDF5:
+            return self.import_hystruc_bridge_xs_hdf5()
+
+    def import_hystruc_bridge_xs_dat(self):
         try:
             bridge_xs_sql = [
                 """INSERT INTO bridge_xs (struct_fid, xup, yup, yb) VALUES""",
@@ -1086,6 +2218,34 @@ class Flo2dGeoPackage(GeoPackageUtils):
             )
             QApplication.setOverrideCursor(Qt.WaitCursor)
 
+    def import_hystruc_bridge_xs_hdf5(self):
+        try:
+            hydrostruct_group = self.parser.read_groups("Input/Hydraulic Structures")
+            if hydrostruct_group:
+                hydrostruct_group = hydrostruct_group[0]
+                bridge_xs_sql = [
+                    """INSERT INTO bridge_xs (struct_fid, xup, yup, yb) VALUES""",
+                    4,
+                ]
+
+                self.clear_tables("bridge_xs")
+
+                # Process RAT_TABLE
+                if "BRIDGE_XSEC" in hydrostruct_group.datasets:
+                    data = hydrostruct_group.datasets["BRIDGE_XSEC"].data
+                    for row in data:
+                        ibridge, xup, yup, yb = row
+                        bridge_xs_sql += [(int(ibridge), xup, yup, yb)]
+
+                if bridge_xs_sql:
+                    self.batch_execute(bridge_xs_sql)
+
+        except Exception:
+            QApplication.restoreOverrideCursor()
+            self.uc.show_warn("Importing HDF5 bridge xsecs failed!")
+            self.uc.log_info("Importing HDF5 bridge xsecs failed!")
+            QApplication.setOverrideCursor(Qt.WaitCursor)
+
     def import_street(self):
         general_sql = [
             """INSERT INTO street_general (strman, istrflo, strfno, depx, widst) VALUES""",
@@ -1127,6 +2287,12 @@ class Flo2dGeoPackage(GeoPackageUtils):
         self.batch_execute(general_sql, streets_sql, seg_sql, elem_sql)
 
     def import_arf(self):
+        if self.parsed_format == self.FORMAT_DAT:
+            return self.import_arf_dat()
+        elif self.parsed_format == self.FORMAT_HDF5:
+            return self.import_arf_hdf5()
+
+    def import_arf_dat(self):
         try:
             cont_sql = ["""INSERT INTO cont (name, value) VALUES""", 2]
             cells_sql = [
@@ -1154,6 +2320,63 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 + "\n__________________________________________________",
                 e,
             )
+
+    def import_arf_hdf5(self):
+        try:
+            arfwrf_group = self.parser.read_groups("Input/Reduction Factors")
+            if arfwrf_group:
+                arfwrf_group = arfwrf_group[0]
+
+                cont_sql = ["""INSERT INTO cont (name, value) VALUES""", 2]
+                cells_sql = [
+                    """INSERT INTO blocked_cells (geom, area_fid, grid_fid, arf,
+                                                           wrf1, wrf2, wrf3, wrf4, wrf5, wrf6, wrf7, wrf8) VALUES""",
+                    12,
+                ]
+
+                self.clear_tables("blocked_cells")
+
+                grid_group = self.parser.read_groups("Input/Grid")[0]
+
+                # Read ARF_GLOBAL dataset
+                if "ARF_GLOBAL" in arfwrf_group.datasets:
+                    arf_global = arfwrf_group.datasets["ARF_GLOBAL"].data
+                    if arf_global:
+                        cont_sql += [("IARFBLOCKMOD", arf_global[0])]
+
+                # Read ARF_TOTALLY_BLOCKED dataset
+                if "ARF_TOTALLY_BLOCKED" in arfwrf_group.datasets:
+                    totally_blocked = arfwrf_group.datasets["ARF_TOTALLY_BLOCKED"].data
+                    x_list = grid_group.datasets["COORDINATES"].data[:, 0]
+                    y_list = grid_group.datasets["COORDINATES"].data[:, 1]
+                    for i, cell in enumerate(totally_blocked, 1):
+                        grid_fid = abs(int(cell))
+                        arf = 1 if cell > 0 else -1
+                        geom = self.build_point_xy(x_list[grid_fid - 1], y_list[grid_fid - 1])
+                        cells_sql += [(geom, i, grid_fid, arf) + (0,) * 8]  # Remaining WRF values are 0
+
+                # Read ARF_PARTIALLY_BLOCKED dataset
+                if "ARF_PARTIALLY_BLOCKED" in arfwrf_group.datasets:
+                    partially_blocked = arfwrf_group.datasets["ARF_PARTIALLY_BLOCKED"].data
+                    x_list = grid_group.datasets["COORDINATES"].data[:, 0]
+                    y_list = grid_group.datasets["COORDINATES"].data[:, 1]
+                    for i, row in enumerate(partially_blocked, 1):
+                        grid_fid = int(row[0])
+                        arf = row[1]
+                        wrf_values = row[2:]
+                        geom = self.build_point_xy(x_list[grid_fid - 1], y_list[grid_fid - 1])
+                        cells_sql += [(geom, i, grid_fid, arf) + tuple(wrf_values)]
+
+                # Execute batch inserts
+                self.batch_execute(cont_sql, cells_sql)
+
+        except Exception as e:
+            self.uc.show_error(
+                "ERROR: Importing ARF data from HDF5 failed!"
+                + "\n__________________________________________________",
+                e,
+            )
+            self.uc.log_info("ERROR: Importing ARF data from HDF5 failed!")
 
     def import_mult(self):
         try:
@@ -1414,6 +2637,12 @@ class Flo2dGeoPackage(GeoPackageUtils):
             QApplication.setOverrideCursor(Qt.WaitCursor)
 
     def import_levee(self):
+        if self.parsed_format == self.FORMAT_DAT:
+            return self.import_levee_dat()
+        elif self.parsed_format == self.FORMAT_HDF5:
+            return self.import_levee_hdf5()
+
+    def import_levee_dat(self):
         lgeneral_sql = [
             """INSERT INTO levee_general (raiselev, ilevfail, gfragchar, gfragprob) VALUES""",
             4,
@@ -1452,7 +2681,69 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
         self.batch_execute(lgeneral_sql, ldata_sql, lfailure_sql, lfragility_sql)
 
+    def import_levee_hdf5(self):
+        try:
+            levee_group = self.parser.read_groups("Input/Levee")
+            if levee_group:
+                levee_group = levee_group[0]
+
+                lgeneral_sql = [
+                    """INSERT INTO levee_general (raiselev, ilevfail) VALUES""",
+                    2,
+                ]
+                ldata_sql = [
+                    """INSERT INTO levee_data (geom, grid_fid, ldir, levcrest) VALUES""",
+                    4,
+                ]
+                lfailure_sql = [
+                    """INSERT INTO levee_failure (grid_fid, lfaildir, failevel, failtime,
+                                                              levbase, failwidthmax, failrate, failwidrate) VALUES""",
+                    8,
+                ]
+
+                self.clear_tables("levee_general", "levee_data", "levee_failure", "levee_fragility")
+
+                # Process LEVEE_GLOBAL dataset
+                if "LEVEE_GLOBAL" in levee_group.datasets:
+                    data = levee_group.datasets["LEVEE_GLOBAL"].data
+                    for row in data:
+                        raiselev, ilevfail = row
+                        lgeneral_sql += [(raiselev, int(ilevfail))]
+
+                if "LEVEE_DATA" in levee_group.datasets:
+                    data = levee_group.datasets["LEVEE_DATA"].data
+                    for row in data:
+                        lgridno, ldir, levcrest = row
+                        geom = self.build_levee(int(lgridno), str(int(ldir)), self.cell_size)
+                        ldata_sql += [(geom, int(lgridno), int(ldir), levcrest)]
+
+                if "LEVEE_FAILURE" in levee_group.datasets:
+                    data = levee_group.datasets["LEVEE_FAILURE"].data
+                    for row in data:
+                        lfailgrid, lfaildir, failevel, failtime, levbase, failwidthmax, failrate, failwidrate = row
+                        lfailure_sql += [(int(lfailgrid), lfaildir, failevel, failtime, levbase, failwidthmax, failrate, failwidrate)]
+
+                if lgeneral_sql:
+                    self.batch_execute(lgeneral_sql)
+
+                if ldata_sql:
+                    self.batch_execute(ldata_sql)
+
+                if lfailure_sql:
+                    self.batch_execute(lfailure_sql)
+
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.uc.show_error("ERROR: Importing LEVEE data from HDF5 failed!", e)
+            self.uc.log_info("ERROR: Importing LEVEE data from HDF5 failed!")
+
     def import_fpxsec(self):
+        if self.parsed_format == self.FORMAT_DAT:
+            return self.import_fpxsec_dat()
+        elif self.parsed_format == self.FORMAT_HDF5:
+            return self.import_fpxsec_hdf5()
+
+    def import_fpxsec_dat(self):
         cont_sql = ["""INSERT INTO cont (name, value) VALUES""", 2]
         fpxsec_sql = ["""INSERT INTO fpxsec (geom, iflo, nnxsec) VALUES""", 3]
         cells_sql = [
@@ -1472,6 +2763,52 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 cells_sql += [(grid_geom, i, gid)]
 
         self.batch_execute(cont_sql, fpxsec_sql, cells_sql)
+
+    def import_fpxsec_hdf5(self):
+        try:
+            fpxsec_group = self.parser.read_groups("Input/Floodplain")
+            if fpxsec_group:
+                fpxsec_group = fpxsec_group[0]
+
+                cont_sql = ["""INSERT INTO cont (name, value) VALUES""", 2]
+                fpxsec_sql = ["""INSERT INTO fpxsec (geom, iflo, nnxsec) VALUES""", 3]
+                cells_sql = ["""INSERT INTO fpxsec_cells (geom, fpxsec_fid, grid_fid) VALUES""", 3]
+
+                self.clear_tables("fpxsec", "fpxsec_cells")
+
+                # Read FPXSEC_GLOBAL dataset
+                if "FPXSEC_GLOBAL" in fpxsec_group.datasets:
+                    nxprt = fpxsec_group.datasets["FPXSEC_GLOBAL"].data[0]
+                    cont_sql += [("NXPRT", str(nxprt))]
+
+                # Read FPXSEC_DATA dataset
+                if "FPXSEC_DATA" in fpxsec_group.datasets:
+                    data = fpxsec_group.datasets["FPXSEC_DATA"].data
+                    grid_group = self.parser.read_groups("Input/Grid")[0]
+                    x_list = grid_group.datasets["COORDINATES"].data[:, 0]
+                    y_list = grid_group.datasets["COORDINATES"].data[:, 1]
+                    for i, row in enumerate(data, start=1):
+                        iflo, nnxsec = row[:2]
+                        gids = [int(g) for g in row[2:] if int(g) != -9999]
+                        line_geom = self.build_linestring(gids)
+                        fpxsec_sql += [(line_geom, int(iflo), int(nnxsec))]
+                        for gid in gids:
+                            point_geom = self.build_point_xy(x_list[int(gid) - 1], y_list[int(gid) - 1])
+                            cells_sql += [(point_geom, i, int(gid))]
+
+                if cont_sql:
+                    self.batch_execute(cont_sql)
+
+                if fpxsec_sql:
+                    self.batch_execute(fpxsec_sql)
+
+                if cells_sql:
+                    self.batch_execute(cells_sql)
+
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.uc.show_error("ERROR: Importing FPXSEC data from HDF5 failed!", e)
+            self.uc.log_info("ERROR: Importing FPXSEC data from HDF5 failed!")
 
     def import_breach(self):
         glob = [
@@ -1576,6 +2913,12 @@ class Flo2dGeoPackage(GeoPackageUtils):
         self.gutils.execute("UPDATE breach_global SET useglobaldata = ?;", (use_global_data,))
 
     def import_fpfroude(self):
+        if self.parsed_format == self.FORMAT_DAT:
+            return self.import_fpfroude_dat()
+        elif self.parsed_format == self.FORMAT_HDF5:
+            return self.import_fpfroude_hdf5()
+
+    def import_fpfroude_dat(self):
         fpfroude_sql = ["""INSERT INTO fpfroude (geom, froudefp) VALUES""", 2]
         cells_sql = ["""INSERT INTO fpfroude_cells (area_fid, grid_fid) VALUES""", 2]
 
@@ -1591,7 +2934,44 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
         self.batch_execute(fpfroude_sql, cells_sql)
 
+    def import_fpfroude_hdf5(self):
+        try:
+            fpfroude_group = self.parser.read_groups("Input/Spatially Variable")
+            if fpfroude_group:
+                fpfroude_group = fpfroude_group[0]
+
+                fpfroude_sql = ["""INSERT INTO fpfroude (geom, froudefp) VALUES""", 2]
+                cells_sql = ["""INSERT INTO fpfroude_cells (area_fid, grid_fid) VALUES""", 2]
+
+                self.clear_tables("fpfroude", "fpfroude_cells")
+
+                # Process FPFROUDE dataset
+                if "FPFROUDE" in fpfroude_group.datasets:
+                    data = fpfroude_group.datasets["FPFROUDE"].data
+                    for i, row in enumerate(data, start=1):
+                        grid, froudefp = row
+                        geom = self.build_square(self.grid_centroids([int(grid)])[int(grid)], self.cell_size)
+                        fpfroude_sql += [(geom, froudefp)]
+                        cells_sql += [(i, int(grid))]
+
+                if fpfroude_sql:
+                    self.batch_execute(fpfroude_sql)
+
+                if cells_sql:
+                    self.batch_execute(cells_sql)
+
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.uc.show_error("ERROR: Importing FPFROUDE data from HDF5 failed!", e)
+            self.uc.log_info("ERROR: Importing FPFROUDE data from HDF5 failed!")
+
     def import_steep_slopen(self):
+        if self.parsed_format == self.FORMAT_DAT:
+            return self.import_steep_slopen_dat()
+        elif self.parsed_format == self.FORMAT_HDF5:
+            return self.import_steep_slopen_hdf5()
+
+    def import_steep_slopen_dat(self):
         cells_sql = ["""INSERT INTO steep_slope_n_cells (global, grid_fid) VALUES""", 2]
 
         self.clear_tables("steep_slope_n_cells")
@@ -1611,7 +2991,52 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
         self.batch_execute(cells_sql)
 
+    def import_steep_slopen_hdf5(self):
+        try:
+            steep_slopen_group = self.parser.read_groups("Input/Spatially Variable")
+            if steep_slopen_group:
+                steep_slopen_group = steep_slopen_group[0]
+
+                user_steep_slopen_sql = ["""INSERT INTO user_steep_slope_n_areas (geom, global) VALUES""", 2]
+                cells_sql = ["""INSERT INTO steep_slope_n_cells (global, area_fid, grid_fid) VALUES""", 3]
+
+                self.clear_tables("steep_slope_n_cells", "user_steep_slope_n_areas")
+
+                # Process STEEP_SLOPEN_GLOBAL dataset
+                if "STEEP_SLOPEN_GLOBAL" in steep_slopen_group.datasets:
+                    data = steep_slopen_group.datasets["STEEP_SLOPEN_GLOBAL"].data
+                    isteepn_global = int(data[0])
+                    if isteepn_global == 0:
+                        return
+                    elif isteepn_global == 1:
+                        self.execute("INSERT INTO steep_slope_n_cells (global) VALUES (1);")
+                        return
+                    elif isteepn_global == 2:
+                        if "STEEP_SLOPEN" in steep_slopen_group.datasets:
+                            grid_elems = steep_slopen_group.datasets["STEEP_SLOPEN"].data
+                            for i, grid in enumerate(grid_elems, start=1):
+                                geom = self.build_square(self.grid_centroids([int(grid)])[int(grid)], self.cell_size)
+                                cells_sql += [(0, i, int(grid))]
+                                user_steep_slopen_sql += [(geom, 0)]
+
+                if cells_sql:
+                    self.batch_execute(cells_sql)
+
+                if user_steep_slopen_sql:
+                    self.batch_execute(user_steep_slopen_sql)
+
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.uc.show_error("ERROR: Importing STEEP_SLOPEN data from HDF5 failed!", e)
+            self.uc.log_info("ERROR: Importing STEEP_SLOPEN data from HDF5 failed!")
+
     def import_lid_volume(self):
+        if self.parsed_format == self.FORMAT_DAT:
+            return self.import_lid_volume_dat()
+        elif self.parsed_format == self.FORMAT_HDF5:
+            return self.import_lid_volume_hdf5()
+
+    def import_lid_volume_dat(self):
         cells_sql = ["""INSERT INTO lid_volume_cells (grid_fid, volume) VALUES""", 2]
 
         self.clear_tables("lid_volume_cells")
@@ -1624,7 +3049,44 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
         self.batch_execute(cells_sql)
 
+    def import_lid_volume_hdf5(self):
+        try:
+            lid_volume_group = self.parser.read_groups("Input/Spatially Variable")
+            if lid_volume_group:
+                lid_volume_group = lid_volume_group[0]
+
+                user_lid_volume_sql = ["""INSERT INTO user_lid_volume_areas (geom, volume) VALUES""", 2]
+                cells_sql = ["""INSERT INTO lid_volume_cells (grid_fid, area_fid, volume) VALUES""", 3]
+
+                self.clear_tables("lid_volume_cells")
+
+                # Process LID_VOLUME dataset
+                if "LID_VOLUME" in lid_volume_group.datasets:
+                    data = lid_volume_group.datasets["LID_VOLUME"].data
+                    for i, row in enumerate(data, start=1):
+                        grid, lid_volume = row
+                        geom = self.build_square(self.grid_centroids([int(grid)])[int(grid)], self.cell_size)
+                        user_lid_volume_sql += [(geom, lid_volume)]
+                        cells_sql += [(int(grid), i, lid_volume)]
+
+                if cells_sql:
+                    self.batch_execute(cells_sql)
+
+                if user_lid_volume_sql:
+                    self.batch_execute(user_lid_volume_sql)
+
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.uc.show_error("ERROR: Importing LID_VOLUME data from HDF5 failed!", e)
+            self.uc.log_info("ERROR: Importing LID_VOLUME data from HDF5 failed!")
+
     def import_gutter(self):
+        if self.parsed_format == self.FORMAT_DAT:
+            return self.import_gutter_dat()
+        elif self.parsed_format == self.FORMAT_HDF5:
+            return self.import_gutter_hdf5()
+
+    def import_gutter_dat(self):
         gutter_globals_sql = [
             """INSERT INTO gutter_globals (width, height, n_value) VALUES""",
             3,
@@ -1652,11 +3114,67 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
         self.batch_execute(gutter_globals_sql, gutter_areas_sql, cells_sql)
 
+    def import_gutter_hdf5(self):
+        try:
+            gutter_group = self.parser.read_groups("Input/Gutter")
+            if gutter_group:
+                gutter_group = gutter_group[0]
+
+                gutter_globals_sql = [
+                    """INSERT INTO gutter_globals (width, height, n_value) VALUES""",
+                    3,
+                ]
+                gutter_areas_sql = [
+                    """INSERT INTO gutter_areas (geom, width, height, n_value, direction) VALUES""",
+                    5,
+                ]
+                cells_sql = [
+                    """INSERT INTO gutter_cells (geom, area_fid, grid_fid) VALUES""",
+                    3,
+                ]
+
+                self.clear_tables("gutter_globals", "gutter_areas", "gutter_lines", "gutter_cells")
+
+                # Process GUTTER_GLOBAL dataset
+                if "GUTTER_GLOBAL" in gutter_group.datasets:
+                    data = gutter_group.datasets["GUTTER_GLOBAL"].data
+                    for row in data:
+                        strwidth, curbheight, n_value = row
+                        gutter_globals_sql += [(strwidth, curbheight, n_value)]
+
+                # Process GUTTER_DATA dataset
+                if "GUTTER_DATA" in gutter_group.datasets:
+                    data = gutter_group.datasets["GUTTER_DATA"].data
+                    for i, row in enumerate(data, start=1):
+                        igrid, widstr, curbht, xnstr, icurbdir = row
+                        geom = self.build_square(self.grid_centroids([int(igrid)])[int(igrid)], self.cell_size)
+                        gutter_areas_sql += [(geom, widstr, curbht, xnstr, int(icurbdir))]
+                        cells_sql += [(geom, i, int(igrid))]
+
+                if gutter_globals_sql:
+                    self.batch_execute(gutter_globals_sql)
+
+                if gutter_areas_sql:
+                    self.batch_execute(gutter_areas_sql)
+
+                if cells_sql:
+                    self.batch_execute(cells_sql)
+
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.uc.show_error("ERROR: Importing GUTTER data from HDF5 failed!", e)
+            self.uc.log_info("ERROR: Importing GUTTER data from HDF5 failed!")
+
     def import_swmminp(self, swmm_file="SWMM.INP", delete_existing=True):
         """
         Function to import the SWMM.INP -> refactored from the old method on the storm drain editor widget
         """
-        swmminp_dict = self.parser.parse_swmminp(swmm_file)
+        if self.parsed_format == self.FORMAT_HDF5:
+            dat_parser = ParseDAT()
+            dat_parser.scan_project_dir(self.parser.hdf5_filepath)
+            swmminp_dict = dat_parser.parse_swmminp(swmm_file)
+        else:
+            swmminp_dict = self.parser.parse_swmminp(swmm_file)
 
         coordinates_data = swmminp_dict.get('COORDINATES', [])
         if len(coordinates_data) == 0:
@@ -3385,6 +4903,12 @@ class Flo2dGeoPackage(GeoPackageUtils):
             QApplication.restoreOverrideCursor()
 
     def import_swmmflo(self):
+        if self.parsed_format == self.FORMAT_DAT:
+            return self.import_swmmflo_dat()
+        elif self.parsed_format == self.FORMAT_HDF5:
+            return self.import_swmmflo_hdf5()
+
+    def import_swmmflo_dat(self):
 
         swmmflo_sql = [
             """INSERT INTO swmmflo (geom, swmmchar, swmm_jt, swmm_iden, intype, swmm_length,
@@ -3418,7 +4942,52 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
         self.batch_execute(swmmflo_sql)
 
+    def import_swmmflo_hdf5(self):
+        try:
+            stormdrain_group = self.parser.read_groups("Input/Storm Drain")
+            if stormdrain_group:
+                stormdrain_group = stormdrain_group[0]
+
+                swmmflo_sql = [
+                    """INSERT INTO swmmflo (geom, fid, swmmchar, swmm_jt, swmm_iden, intype, swmm_length,
+                                                       swmm_width, swmm_height, swmm_coeff, flapgate, curbheight, swmm_feature) VALUES""",
+                    13,
+                ]
+
+                self.clear_tables("swmmflo")
+
+                # Process SWMMFLO_DATA dataset
+                if "SWMMFLO_DATA" in stormdrain_group.datasets:
+                    data = stormdrain_group.datasets["SWMMFLO_DATA"].data
+                    name = stormdrain_group.datasets["SWMMFLO_NAME"].data
+                    node_id_to_name = {int(row[0]): row[1] for row in name}
+                    grid_group = self.parser.read_groups("Input/Grid")[0]
+                    x_list = grid_group.datasets["COORDINATES"].data[:, 0]
+                    y_list = grid_group.datasets["COORDINATES"].data[:, 1]
+                    for row in data:
+                        node_id, swmm_jt, intype, swmm_length, swmm_width, swmm_height, swmm_coeff, feature, curbheight = row
+                        swmm_ident = node_id_to_name.get(int(node_id), None)
+                        if isinstance(swmm_ident, bytes):
+                            swmm_ident = swmm_ident.decode("utf-8")
+                        geom = self.build_point_xy(x_list[int(swmm_jt) - 1], y_list[int(swmm_jt) - 1])
+                        swmm_char = "D"
+                        swmmflo_sql += [(geom, int(node_id), swmm_char, int(swmm_jt), swmm_ident, intype, swmm_length, swmm_width, swmm_height, swmm_coeff, 0, curbheight, feature)]
+
+                if swmmflo_sql:
+                    self.batch_execute(swmmflo_sql)
+
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.uc.show_error("ERROR: Importing SWMMFLO data from HDF5 failed!", e)
+            self.uc.log_info("ERROR: Importing SWMMFLO data from HDF5 failed!")
+
     def import_swmmflodropbox(self):
+        if self.parsed_format == self.FORMAT_DAT:
+            return self.import_swmmflodropbox_dat()
+        elif self.parsed_format == self.FORMAT_HDF5:
+            return self.import_swmmflodropbox_hdf5()
+
+    def import_swmmflodropbox_dat(self):
         """
         Function to import the SWMMFLODROPBOX.DAT
         """
@@ -3428,7 +4997,39 @@ class Flo2dGeoPackage(GeoPackageUtils):
             area = row[2]
             self.execute(f"UPDATE user_swmm_inlets_junctions SET drboxarea = '{area}' WHERE name = '{name}'")
 
+    def import_swmmflodropbox_hdf5(self):
+        """
+        Function to import the SWMMFLODROPBOX.DAT
+        """
+        try:
+            stormdrain_group = self.parser.read_groups("Input/Storm Drain")
+            if stormdrain_group:
+                stormdrain_group = stormdrain_group[0]
+
+                # Process SWMMFLODROPBOX dataset
+                if "SWMMFLODROPBOX" in stormdrain_group.datasets:
+                    data = stormdrain_group.datasets["SWMMFLODROPBOX"].data
+                    name = stormdrain_group.datasets["SWMMFLO_NAME"].data
+                    node_id_to_name = {int(row[0]): row[1] for row in name}
+                    for row in data:
+                        node_id, swmmdropbox = row
+                        name = node_id_to_name.get(int(node_id), None)
+                        if isinstance(name, bytes):
+                            name = name.decode("utf-8")
+                        self.execute(f"UPDATE user_swmm_inlets_junctions SET drboxarea = '{swmmdropbox}' WHERE name = '{name}'")
+
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.uc.show_error("Importing SWMMFLODROPBOX data from HDF5 failed!", e)
+            self.uc.log_info("Importing SWMMFLODROPBOX data from HDF5 failed!")
+
     def import_sdclogging(self):
+        if self.parsed_format == self.FORMAT_DAT:
+            return self.import_sdclogging_dat()
+        elif self.parsed_format == self.FORMAT_HDF5:
+            return self.import_sdclogging_hdf5()
+
+    def import_sdclogging_dat(self):
         """
         Function to import the SDCLOGGING.DAT
         """
@@ -3441,7 +5042,41 @@ class Flo2dGeoPackage(GeoPackageUtils):
                                    SET swmm_clogging_factor = '{clog_fact}', swmm_time_for_clogging = '{clog_time}'
                                    WHERE name = '{name}'""")
 
+    def import_sdclogging_hdf5(self):
+        """
+        Function to import the SDCLOGGING from hdf5 file
+        """
+        try:
+            stormdrain_group = self.parser.read_groups("Input/Storm Drain")
+            if stormdrain_group:
+                stormdrain_group = stormdrain_group[0]
+
+                # Process SDCLOGGING dataset
+                if "SDCLOGGING" in stormdrain_group.datasets:
+                    data = stormdrain_group.datasets["SDCLOGGING"].data
+                    name = stormdrain_group.datasets["SWMMFLO_NAME"].data
+                    node_id_to_name = {int(row[0]): row[1] for row in name}
+                    for row in data:
+                        node_id, swmm_clogfac, clogtime = row
+                        name = node_id_to_name.get(int(node_id), None)
+                        if isinstance(name, bytes):
+                            name = name.decode("utf-8")
+                        self.execute(f"""UPDATE user_swmm_inlets_junctions
+                                               SET swmm_clogging_factor = '{swmm_clogfac}', swmm_time_for_clogging = '{clogtime}'
+                                               WHERE name = '{name}'""")
+
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.uc.show_error("Importing SDCLOGGING data from HDF5 failed!", e)
+            self.uc.log_info("Importing SDCLOGGING data from HDF5 failed!")
+
     def import_swmmflort(self):
+        if self.parsed_format == self.FORMAT_DAT:
+            return self.import_swmmflort_dat()
+        elif self.parsed_format == self.FORMAT_HDF5:
+            return self.import_swmmflort_hdf5()
+
+    def import_swmmflort_dat(self):
         """
         Reads SWMMFLORT.DAT (Rating Tables).
 
@@ -3520,7 +5155,86 @@ class Flo2dGeoPackage(GeoPackageUtils):
             QApplication.restoreOverrideCursor()
             self.uc.show_error("ERROR 150221.1535: importing SWMMFLORT.DAT failed!.\n", e)
 
+    def import_swmmflort_hdf5(self):
+        """
+        Reads SWMMFLORT.DAT (Rating Tables).
+
+        Reads rating tables from SWMMFLORT.DAT and fills data of QGIS tables swmmflort and swmmflort_data.
+
+        """
+        # try:
+        stormdrain_group = self.parser.read_groups("Input/Storm Drain")
+        if stormdrain_group:
+            stormdrain_group = stormdrain_group[0]
+
+            swmmflort_sql = [
+                """INSERT OR REPLACE INTO swmmflort (fid, grid_fid, name) VALUES""",
+                3,
+            ]
+
+            swmmflort_data_sql = [
+                """INSERT INTO swmmflort_data (swmm_rt_fid, depth, q) VALUES""",
+                3,
+            ]
+
+            swmmflo_culvert_sql = [
+                """INSERT INTO swmmflo_culvert (grid_fid, name, cdiameter, typec, typeen, cubase, multbarrels) VALUES""",
+                7,
+            ]
+
+            self.clear_tables("swmmflort", "swmmflort_data", "swmmflo_culvert")
+
+            # Process RATING_TABLE dataset
+            if "RATING_TABLE" in stormdrain_group.datasets:
+                data = stormdrain_group.datasets["RATING_TABLE"].data
+                grid = stormdrain_group.datasets["SWMMFLO_DATA"].data
+                node_id_to_grid = {int(row[0]): row[1] for row in grid}
+                name = stormdrain_group.datasets["SWMMFLO_NAME"].data
+                node_id_to_name = {int(row[0]): row[1] for row in name}
+                for i, row in enumerate(data, start=1):
+                    node_id, depth, q = row
+                    grid_fid = node_id_to_grid.get(int(node_id), None)
+                    rt_name = node_id_to_name.get(int(node_id), None)
+                    if isinstance(rt_name, bytes):
+                        rt_name = rt_name.decode("utf-8")
+                    swmmflort_sql += [(int(node_id), int(grid_fid), rt_name)]
+                    swmmflort_data_sql += [(int(node_id), depth, q)]
+
+            if "CULVERT_EQUATIONS" in stormdrain_group.datasets:
+                data = stormdrain_group.datasets["CULVERT_EQUATIONS"].data
+                grid = stormdrain_group.datasets["SWMMFLO_DATA"].data
+                node_id_to_grid = {int(row[0]): row[1] for row in grid}
+                name = stormdrain_group.datasets["SWMMFLO_NAME"].data
+                node_id_to_name = {int(row[0]): row[1] for row in name}
+                for row in data:
+                    node_id, cdiameter, typec, typeen, cubase, multbarrels = row
+                    grid_fid = node_id_to_grid.get(int(node_id), None)
+                    culvert_name = node_id_to_name.get(int(node_id), None)
+                    if isinstance(culvert_name, bytes):
+                        culvert_name = culvert_name.decode("utf-8")
+                    swmmflo_culvert_sql += [(int(grid_fid), culvert_name, cdiameter, int(typec), int(typeen), cubase, int(multbarrels))]
+
+            if swmmflort_sql:
+                self.batch_execute(swmmflort_sql)
+
+            if swmmflort_data_sql:
+                self.batch_execute(swmmflort_data_sql)
+
+            if swmmflo_culvert_sql:
+                self.batch_execute(swmmflo_culvert_sql)
+
+        # except Exception as e:
+        #     QApplication.restoreOverrideCursor()
+        #     self.uc.show_error("Importing SWMMFLORT from hdf5 failed!.\n", e)
+        #     self.uc.show_error("Importing SWMMFLORT from hdf5 failed!")
+
     def import_swmmoutf(self):
+        if self.parsed_format == self.FORMAT_DAT:
+            return self.import_swmmoutf_dat()
+        elif self.parsed_format == self.FORMAT_HDF5:
+            return self.import_swmmoutf_hdf5()
+
+    def import_swmmoutf_dat(self):
         swmmoutf_sql = [
             """INSERT INTO swmmoutf (geom, name, grid_fid, outf_flo) VALUES""",
             4,
@@ -3559,7 +5273,82 @@ class Flo2dGeoPackage(GeoPackageUtils):
         if have_outside:
             self.uc.bar_warn(f"Some Outfalls are outside the grid! Check log messages for more information.")
 
+    def import_swmmoutf_hdf5(self):
+        try:
+            stormdrain_group = self.parser.read_groups("Input/Storm Drain")
+            if stormdrain_group:
+                stormdrain_group = stormdrain_group[0]
+
+                swmmoutf_sql = [
+                    """INSERT INTO swmmoutf (geom, fid, name, grid_fid, outf_flo) VALUES""",
+                    5,
+                ]
+
+                self.clear_tables("swmmoutf")
+
+                if "SWMMOUTF_DATA" in stormdrain_group.datasets:
+                    data = stormdrain_group.datasets["SWMMOUTF_DATA"].data
+                    name = stormdrain_group.datasets["SWMMOUTF_NAME"].data
+                    node_id_to_name = {int(row[0]): row[1] for row in name}
+                    grid_group = self.parser.read_groups("Input/Grid")[0]
+                    x_list = grid_group.datasets["COORDINATES"].data[:, 0]
+                    y_list = grid_group.datasets["COORDINATES"].data[:, 1]
+                    for row in data:
+                        outfall_id, outf_grid, outf_flo2dvol = row
+                        outf_name = node_id_to_name.get(int(outfall_id), None)
+                        if isinstance(outf_name, bytes):
+                            outf_name = outf_name.decode("utf-8")
+                        geom = self.build_point_xy(x_list[int(outf_grid) - 1], y_list[int(outf_grid) - 1])
+                        swmmoutf_sql += [(geom, int(outfall_id), outf_name, int(outf_grid), int(outf_flo2dvol))]
+
+                if swmmoutf_sql:
+                    self.batch_execute(swmmoutf_sql)
+
+
+                # data = self.parser.parse_swmmoutf()
+                # gids = []
+                # # Outfall outside the grid -> Don't look for the grid centroid
+                # for x in data:
+                #     if x[1] != '-9999':
+                #         gids.append(x[1])
+                # cells = self.grid_centroids(gids, buffers=True)
+                # have_outside = False
+                # for row in data:
+                #     outfall_name = row[0]
+                #     gid = row[1]
+                #     allow_q = row[2]
+                #     # Update the swmm_allow_discharge on the user_swmm_outlets
+                #     self.execute(f"UPDATE user_swmm_outlets SET swmm_allow_discharge = {allow_q} WHERE name = '{outfall_name}';")
+                #     # Outfall outside the grid -> Add exactly over the Storm Drain Outfalls
+                #     if gid == '-9999':
+                #         have_outside = True
+                #         geom_qry = self.execute(f"SELECT geom FROM user_swmm_outlets WHERE name = '{outfall_name}'").fetchone()
+                #         if geom_qry:
+                #             geom = geom_qry[0]
+                #         else:  # When there is no SWMM.INP
+                #             self.uc.log_info(f"{outfall_name} outside the grid!")
+                #             continue
+                #     else:
+                #         geom = cells[gid]
+                #     swmmoutf_sql += [(geom,) + tuple(row)]
+                #
+                # self.batch_execute(swmmoutf_sql)
+                #
+                # if have_outside:
+                #     self.uc.bar_warn(f"Some Outfalls are outside the grid! Check log messages for more information.")
+
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.uc.show_error("ERROR: Importing SWMMOUTF data from HDF5 failed!", e)
+            self.uc.log_info("ERROR: Importing SWMMOUTF data from HDF5 failed!")
+
     def import_tolspatial(self):
+        if self.parsed_format == self.FORMAT_DAT:
+            return self.import_tolspatial_dat()
+        elif self.parsed_format == self.FORMAT_HDF5:
+            return self.import_tolspatial_hdf5()
+
+    def import_tolspatial_dat(self):
         tolspatial_sql = ["""INSERT INTO tolspatial (geom, tol) VALUES""", 2]
         cells_sql = ["""INSERT INTO tolspatial_cells (area_fid, grid_fid) VALUES""", 2]
 
@@ -3575,7 +5364,45 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
         self.batch_execute(tolspatial_sql, cells_sql)
 
+    def import_tolspatial_hdf5(self):
+        tolspatial_sql = ["""INSERT INTO tolspatial (geom, tol) VALUES""", 2]
+        cells_sql = ["""INSERT INTO tolspatial_cells (area_fid, grid_fid) VALUES""", 2]
+
+        self.clear_tables("tolspatial", "tolspatial_cells")
+
+        try:
+            # Access the TOLSPATIAL dataset
+            spatially_variable_group = self.parser.read_groups("Input/Spatially Variable")
+            if spatially_variable_group:
+                spatially_variable_group = spatially_variable_group[0]
+                if "TOLSPATIAL" in spatially_variable_group.datasets:
+                    tolspatial_data = spatially_variable_group.datasets["TOLSPATIAL"].data
+
+                    # Process each row in the dataset
+                    gids = set()
+                    for i, row in enumerate(tolspatial_data, 1):
+                        gid, tol = row
+                        gids.add(gid)
+                        geom = self.build_square(self.grid_centroids([gid])[gid], self.shrink)
+                        tolspatial_sql += [(geom, tol)]
+                        cells_sql += [(i, gid)]
+
+                    self.batch_execute(tolspatial_sql, cells_sql)
+                    return True
+
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.uc.log_info("ERROR: Importing TOLSPATIAL from HDF5 failed!")
+            self.uc.show_error("ERROR: Importing TOLSPATIAL from HDF5 failed!", e)
+            return False
+
     def import_shallowNSpatial(self):
+        if self.parsed_format == self.FORMAT_DAT:
+            return self.import_shallowNSpatial_dat()
+        elif self.parsed_format == self.FORMAT_HDF5:
+            return self.import_shallowNSpatial_hdf5()
+
+    def import_shallowNSpatial_dat(self):
         shallowNSpatial_sql = ["""INSERT INTO spatialshallow (geom, shallow_n) VALUES""", 2]
         cells_sql = ["""INSERT INTO spatialshallow_cells (area_fid, grid_fid) VALUES""", 2]
 
@@ -3590,6 +5417,37 @@ class Flo2dGeoPackage(GeoPackageUtils):
             cells_sql += [(i, gid)]
 
         self.batch_execute(shallowNSpatial_sql, cells_sql)
+
+    def import_shallowNSpatial_hdf5(self):
+        try:
+            shallowNSpatial_group = self.parser.read_groups("Input/Spatially Variable")
+            if shallowNSpatial_group:
+                shallowNSpatial_group = shallowNSpatial_group[0]
+
+                shallowNSpatial_sql = ["""INSERT INTO spatialshallow (geom, shallow_n) VALUES""", 2]
+                cells_sql = ["""INSERT INTO spatialshallow_cells (area_fid, grid_fid) VALUES""", 2]
+
+                self.clear_tables("spatialshallow", "spatialshallow_cells")
+
+                # Process SHALLOWN_SPATIAL dataset
+                if "SHALLOWN_SPATIAL" in shallowNSpatial_group.datasets:
+                    data = shallowNSpatial_group.datasets["SHALLOWN_SPATIAL"].data
+                    for i, row in enumerate(data, start=1):
+                        grid, shallowNSpatial = row
+                        geom = self.build_square(self.grid_centroids([int(grid)])[int(grid)], self.cell_size)
+                        shallowNSpatial_sql += [(geom, shallowNSpatial)]
+                        cells_sql += [(i, int(grid))]
+
+                if shallowNSpatial_sql:
+                    self.batch_execute(shallowNSpatial_sql)
+
+                if cells_sql:
+                    self.batch_execute(cells_sql)
+
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.uc.show_error("ERROR: Importing SHALLOWN_SPATIAL data from HDF5 failed!", e)
+            self.uc.log_info("ERROR: Importing SHALLOWN_SPATIAL data from HDF5 failed!")
 
     def import_wsurf(self):
         wsurf_sql = ["""INSERT INTO wsurf (geom, grid_fid, wselev) VALUES""", 3]
@@ -3630,80 +5488,99 @@ class Flo2dGeoPackage(GeoPackageUtils):
             return self.export_cont_toler_hdf5()
 
     def export_cont_toler_hdf5(self):
-        # try:
-        cont_group = self.parser.control_group
+        try:
+            cont_group = self.parser.control_group
+            qgis_group = self.parser.qgis_group
 
-        cont_variables = [
-            "SIMUL",
-            "TOUT",
-            "LGPLOT",
-            "METRIC",
-            "IBACKUP",
-            "ICHANNEL",
-            "MSTREET",
-            "LEVEE",
-            "IWRFS",
-            "IMULTC",
-            "IRAIN",
-            "INFIL",
-            "IEVAP",
-            "MUD",
-            "ISED",
-            "IMODFLOW",
-            "SWMM",
-            "IHYDRSTRUCT",
-            "IFLOODWAY",
-            "IDEBRV",
-            "AMANN",
-            "DEPTHDUR",
-            "XCONC",
-            "XARF",
-            "FROUDL",
-            "SHALLOWN",
-            "ENCROACH",
-            "NOPRTFP",
-            "DEPRESSDEPTH",
-            "NOPRTC",
-            "ITIMTEP",
-            "TIMTEP",
-            "STARTIMTEP",
-            "ENDTIMTEP",
-            "GRAPTIM",
-        ]
+            cont_variables = [
+                "SIMUL",
+                "TOUT",
+                "LGPLOT",
+                "METRIC",
+                "IBACKUP",
+                "ICHANNEL",
+                "MSTREET",
+                "LEVEE",
+                "IWRFS",
+                "IMULTC",
+                "IRAIN",
+                "INFIL",
+                "IEVAP",
+                "MUD",
+                "ISED",
+                "IMODFLOW",
+                "SWMM",
+                "IHYDRSTRUCT",
+                "IFLOODWAY",
+                "IDEBRV",
+                "AMANN",
+                "DEPTHDUR",
+                "XCONC",
+                "XARF",
+                "FROUDL",
+                "SHALLOWN",
+                "ENCROACH",
+                "NOPRTFP",
+                "DEPRESSDEPTH",
+                "NOPRTC",
+                "ITIMTEP",
+                "TIMTEP",
+                "STARTIMTEP",
+                "ENDTIMTEP",
+                "GRAPTIM",
+            ]
 
-        tol_variables = [
-            "TOLGLOBAL",
-            "DEPTOL",
-            "COURANTFP",
-            "COURANTC",
-            "COURANTST",
-            "TIME_ACCEL"
-        ]
+            tol_variables = [
+                "TOLGLOBAL",
+                "DEPTOL",
+                "COURANTFP",
+                "COURANTC",
+                "COURANTST",
+                "TIME_ACCEL"
+            ]
 
-        cont_group.create_dataset('CONT', [])
-        for var in cont_variables:
-            sql = f"""SELECT value FROM cont WHERE name = '{var}';"""
-            value = self.execute(sql).fetchone()[0]
-            if value is not None:
-                cont_group.datasets["CONT"].data.append(float(value))
-            else:
-                cont_group.datasets["CONT"].data.append(-9999)
+            cont_group.create_dataset('CONT', [])
+            for var in cont_variables:
+                sql = f"""SELECT value FROM cont WHERE name = '{var}';"""
+                value = self.execute(sql).fetchone()
+                if value is not None:
+                    cont_group.datasets["CONT"].data.append(float(value[0]))
+                else:
+                    cont_group.datasets["CONT"].data.append(-9999)
 
-        cont_group.create_dataset('TOLER', [])
-        for var in tol_variables:
-            sql = f"""SELECT value FROM cont WHERE name = '{var}';"""
-            value = self.execute(sql).fetchone()[0]
-            if value is not None:
-                cont_group.datasets["TOLER"].data.append(float(value))
-            else:
-                cont_group.datasets["TOLER"].data.append(-9999)
+            cont_group.create_dataset('TOLER', [])
+            for var in tol_variables:
+                sql = f"""SELECT value FROM cont WHERE name = '{var}';"""
+                value = self.execute(sql).fetchone()
+                if value is not None:
+                    cont_group.datasets["TOLER"].data.append(float(value[0]))
+                else:
+                    cont_group.datasets["TOLER"].data.append(-9999)
 
-        self.parser.write_groups(cont_group)
-        return True
-        # except Exception as e:
-        #     QApplication.restoreOverrideCursor()
-        #     self.uc.show_error("ERROR 101218.1535: exporting Control data failed!.\n", e)
-        #     return False
+            qgis_group.create_dataset('INFO', [])
+
+            info_data = [
+                ["CONTACT", self.gutils.get_metadata_par("CONTACT") or ""],
+                ["EMAIL", self.gutils.get_metadata_par("EMAIL") or ""],
+                ["COMPANY", self.gutils.get_metadata_par("COMPANY") or ""],
+                ["PHONE", self.gutils.get_metadata_par("PHONE") or ""],
+                ["PROJ_NAME", self.gutils.get_metadata_par("PROJ_NAME") or ""],
+                ["PLUGIN_V", self.gutils.get_metadata_par("PLUGIN_V") or ""],
+                ["QGIS_V", self.gutils.get_metadata_par("QGIS_V") or ""],
+                ["FLO-2D_V", self.gutils.get_metadata_par("FLO-2D_V") or ""],
+                ["CRS", self.gutils.get_metadata_par("CRS") or ""],
+            ]
+
+            for data in info_data:
+                qgis_group.datasets["INFO"].data.append([data[0], data[1]])
+
+            self.parser.write_groups(cont_group, qgis_group)
+            return True
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.uc.show_error("Exporting Control data to HDF5 file failed!.\n", e)
+            self.uc.log_info("Exporting Control data to HDF5 file failed!.\n")
+            return False
 
     def export_cont_toler_dat(self, outdir):
         try:
@@ -4229,14 +6106,17 @@ class Flo2dGeoPackage(GeoPackageUtils):
         four_values = "{0}  {1}  {2}  {3}"
         five_values = "{0}  {1}  {2}  {3}  {4}"
 
-        ideplt = self.execute(cont_sql, ("IDEPLT",)).fetchone()[0]
-        ihourdaily = self.execute(cont_sql, ("IHOURDAILY",)).fetchone()[0]
-
-        if ihourdaily is None:
-            ihourdaily = 0
-        if ideplt is None:
+        ideplt = self.execute(cont_sql, ("IDEPLT",)).fetchone()
+        if ideplt:
+            ideplt = ideplt[0]
+        else:
             first_gid = self.execute("""SELECT grid_fid FROM inflow_cells ORDER BY fid LIMIT 1;""").fetchone()[0]
             ideplt = first_gid if first_gid is not None else 0
+        ihourdaily = self.execute(cont_sql, ("IHOURDAILY",)).fetchone()
+        if ihourdaily:
+            ihourdaily = ihourdaily[0]
+        else:
+            ihourdaily = 0
 
         inflow_global = [float(ihourdaily), float(ideplt)]
 
@@ -4316,7 +6196,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
         if not self.is_table_empty("tailing_reservoirs"):
 
             schematic_tailings_reservoirs_sql = (
-                """SELECT grid_fid, wsel, tailings, n_value FROM tailing_reservoirs ORDER BY fid;"""
+                """SELECT grid_fid, wsel, n_value, tailings FROM tailing_reservoirs ORDER BY fid;"""
             )
             for res in self.execute(schematic_tailings_reservoirs_sql):
                 res = [x if (x is not None and x != "") else -9999 for x in res]
@@ -4571,21 +6451,17 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 pass
 
             tailings_group = self.parser.tailings_group
-            # tailings_group.create_dataset('TAILINGS', [])
-            #
-            # for row in rows:
-            #     tailings_group.datasets["TAILINGS"].data.append(create_array(line1, 4, np.float_, tuple(row)))
 
             cv = self.execute(concentration_sql).fetchone()[0]
-            MUD = self.gutils.get_cont_par("MUD")
-            ISED = self.gutils.get_cont_par("ISED")
+            MUD = int(float(self.gutils.get_cont_par("MUD")))
+            ISED = int(float(self.gutils.get_cont_par("ISED")))
 
             # Don't export any tailings
-            if MUD == '0' and ISED == '0':
+            if MUD == 0 and ISED == 0:
                 return False
 
             # TAILINGS and TAILINGS_CV
-            elif MUD == '1' or ISED == '1':
+            elif MUD == 1 or ISED == 1:
                 # Export TAILINGS_CV
                 if cv == 1:
                     for row in rows:
@@ -4605,7 +6481,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                             tailings_group.datasets["TAILINGS"].data.append([row[0], row[1]])
 
             # TAILINGS_STACK_DEPTH.DAT
-            elif MUD == '2':
+            elif MUD == 2:
                 for row in rows:
                     try:
                         tailings_group.datasets["TAILINGS_STACK_DEPTH"].data.append([row[0], row[2], row[1]])
@@ -6136,13 +8012,10 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     wselend,
                 ) = row
                 try:
-                    channel_group.datasets["WSE_START"].data.append([seg_fid, istart, wselstart])
-                    channel_group.datasets["WSE_END"].data.append([seg_fid, iend, wselend])
+                    channel_group.datasets["CHAN_WSE"].data.append([seg_fid, istart, wselstart, iend, wselend])
                 except:
-                    channel_group.create_dataset('WSE_START', [])
-                    channel_group.datasets["WSE_START"].data.append([seg_fid, istart, wselstart])
-                    channel_group.create_dataset('WSE_END', [])
-                    channel_group.datasets["WSE_END"].data.append([seg_fid, iend, wselend])
+                    channel_group.create_dataset('CHAN_WSE', [])
+                    channel_group.datasets["CHAN_WSE"].data.append([seg_fid, istart, wselstart, iend, wselend])
                 finally:
                     segment_added.append(row[0])
 
@@ -6981,7 +8854,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             if self.is_table_empty("blocked_cells"):
                 return False
             cont_sql = """SELECT name, value FROM cont WHERE name = 'IARFBLOCKMOD';"""
-            tbc_sql = """SELECT grid_fid, area_fid FROM blocked_cells WHERE arf = 1 ORDER BY grid_fid;"""
+            tbc_sql = """SELECT grid_fid, area_fid, arf FROM blocked_cells WHERE arf IN (1, -1);"""
 
             pbc_sql = """SELECT grid_fid, area_fid,  arf, wrf1, wrf2, wrf3, wrf4, wrf5, wrf6, wrf7, wrf8
                          FROM blocked_cells WHERE arf < 1 ORDER BY grid_fid;"""
@@ -7015,7 +8888,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                         cll = 0
                     cll = [cll if cll is not None else 0]
                     cell = row[0]
-                    if cll[0] == 1:
+                    if cll[0] == 1 or row[2] == -1:
                         cell = -cell
                     arfwrf_group.datasets["ARF_TOTALLY_BLOCKED"].data.append(cell)
 

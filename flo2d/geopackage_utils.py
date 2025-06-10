@@ -1055,6 +1055,14 @@ class GeoPackageUtils(object):
         gpb_buff = self.execute(gpb).fetchone()[0]
         return gpb_buff
 
+    def build_point_xy(self, x, y):
+        gpb = """SELECT AsGPB(ST_GeomFromText('POINT({} {})'))""".format(
+            x,
+            y
+        )
+        gpb_buff = self.execute(gpb).fetchone()[0]
+        return gpb_buff
+
     def build_square(self, wkt_geom, size):
         x, y = [float(x) for x in wkt_geom.strip("POINT()").split()]
         half_size = float(size) * 0.5
