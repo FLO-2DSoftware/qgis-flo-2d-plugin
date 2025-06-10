@@ -5487,80 +5487,100 @@ class Flo2dGeoPackage(GeoPackageUtils):
             return self.export_cont_toler_hdf5()
 
     def export_cont_toler_hdf5(self):
-        # try:
-        cont_group = self.parser.control_group
+        try:
+            cont_group = self.parser.control_group
+            qgis_group = self.parser.qgis_group
 
-        cont_variables = [
-            "SIMUL",
-            "TOUT",
-            "LGPLOT",
-            "METRIC",
-            "IBACKUP",
-            "ICHANNEL",
-            "MSTREET",
-            "LEVEE",
-            "IWRFS",
-            "IMULTC",
-            "IRAIN",
-            "INFIL",
-            "IEVAP",
-            "MUD",
-            "ISED",
-            "IMODFLOW",
-            "SWMM",
-            "IHYDRSTRUCT",
-            "IFLOODWAY",
-            "IDEBRV",
-            "AMANN",
-            "DEPTHDUR",
-            "XCONC",
-            "XARF",
-            "FROUDL",
-            "SHALLOWN",
-            "ENCROACH",
-            "NOPRTFP",
-            "DEPRESSDEPTH",
-            "NOPRTC",
-            "ITIMTEP",
-            "TIMTEP",
-            "STARTIMTEP",
-            "ENDTIMTEP",
-            "GRAPTIM",
-        ]
+            cont_variables = [
+                "SIMUL",
+                "TOUT",
+                "LGPLOT",
+                "METRIC",
+                "IBACKUP",
+                "ICHANNEL",
+                "MSTREET",
+                "LEVEE",
+                "IWRFS",
+                "IMULTC",
+                "IRAIN",
+                "INFIL",
+                "IEVAP",
+                "MUD",
+                "ISED",
+                "IMODFLOW",
+                "SWMM",
+                "IHYDRSTRUCT",
+                "IFLOODWAY",
+                "IDEBRV",
+                "AMANN",
+                "DEPTHDUR",
+                "XCONC",
+                "XARF",
+                "FROUDL",
+                "SHALLOWN",
+                "ENCROACH",
+                "NOPRTFP",
+                "DEPRESSDEPTH",
+                "NOPRTC",
+                "ITIMTEP",
+                "TIMTEP",
+                "STARTIMTEP",
+                "ENDTIMTEP",
+                "GRAPTIM",
+            ]
 
-        tol_variables = [
-            "TOLGLOBAL",
-            "DEPTOL",
-            "COURANTFP",
-            "COURANTC",
-            "COURANTST",
-            "TIME_ACCEL"
-        ]
+            tol_variables = [
+                "TOLGLOBAL",
+                "DEPTOL",
+                "COURANTFP",
+                "COURANTC",
+                "COURANTST",
+                "TIME_ACCEL"
+            ]
 
-        cont_group.create_dataset('CONT', [])
-        for var in cont_variables:
-            sql = f"""SELECT value FROM cont WHERE name = '{var}';"""
-            value = self.execute(sql).fetchone()
-            if value is not None:
-                cont_group.datasets["CONT"].data.append(float(value[0]))
-            else:
-                cont_group.datasets["CONT"].data.append(-9999)
+            cont_group.create_dataset('CONT', [])
+            for var in cont_variables:
+                sql = f"""SELECT value FROM cont WHERE name = '{var}';"""
+                value = self.execute(sql).fetchone()
+                if value is not None:
+                    cont_group.datasets["CONT"].data.append(float(value[0]))
+                else:
+                    cont_group.datasets["CONT"].data.append(-9999)
 
-        cont_group.create_dataset('TOLER', [])
-        for var in tol_variables:
-            sql = f"""SELECT value FROM cont WHERE name = '{var}';"""
-            value = self.execute(sql).fetchone()[0]
-            if value is not None:
-                cont_group.datasets["TOLER"].data.append(float(value))
-            else:
-                cont_group.datasets["TOLER"].data.append(-9999)
+            cont_group.create_dataset('TOLER', [])
+            for var in tol_variables:
+                sql = f"""SELECT value FROM cont WHERE name = '{var}';"""
+                value = self.execute(sql).fetchone()[0]
+                if value is not None:
+                    cont_group.datasets["TOLER"].data.append(float(value))
+                else:
+                    cont_group.datasets["TOLER"].data.append(-9999)
 
-        self.parser.write_groups(cont_group)
-        return True
-        # except Exception as e:
-        #     QApplication.restoreOverrideCursor()
-        #     self.uc.show_error("ERROR 101218.1535: exporting Control data failed!.\n", e)
-        #     return False
+            qgis_group.create_dataset('INFO', [])
+
+            info_data = [
+                ["CONTACT", self.gutils.get_metadata_par("CONTACT") or ""],
+                ["EMAIL", self.gutils.get_metadata_par("EMAIL") or ""],
+                ["COMPANY", self.gutils.get_metadata_par("COMPANY") or ""],
+                ["PHONE", self.gutils.get_metadata_par("PHONE") or ""],
+                ["PROJ_NAME", self.gutils.get_metadata_par("PROJ_NAME") or ""],
+                ["PLUGIN_V", self.gutils.get_metadata_par("PLUGIN_V") or ""],
+                ["QGIS_V", self.gutils.get_metadata_par("QGIS_V") or ""],
+                ["FLO-2D_V", self.gutils.get_metadata_par("FLO-2D_V") or ""],
+                ["CRS", self.gutils.get_metadata_par("CRS") or ""],
+            ]
+
+            for data in info_data:
+                qgis_group.datasets["INFO"].data.append([data[0], data[1]])
+
+            self.parser.write_groups(cont_group)
+            self.parser.write_groups(qgis_group)
+            return True
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.uc.show_error("Exporting Control data to HDF5 file failed!.\n", e)
+            self.uc.log_info("Exporting Control data to HDF5 file failed!.\n")
+            return False
 
     def export_cont_toler_dat(self, outdir):
         try:

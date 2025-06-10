@@ -67,6 +67,12 @@ class ParseHDF5:
         return group
 
     @property
+    def qgis_group(self):
+        group_name = "Input/QGIS"
+        group = HDF5Group(group_name)
+        return group
+
+    @property
     def tol_group(self):
         group_name = "Input/Tolerance"
         group = HDF5Group(group_name)
