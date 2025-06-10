@@ -199,7 +199,7 @@
                        </sizepolicy>
                       </property>
                       <property name="toolTip">
-                       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;ILEVFAIL = 0&lt;/p&gt;&lt;p&gt;No levee failure.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;ILEVFAIL&lt;/span&gt;&lt;/p&gt;&lt;p&gt;ILEVFAIL = 0&lt;/p&gt;&lt;p&gt;No levee failure.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                       </property>
                       <property name="text">
                        <string>No failure</string>
@@ -218,7 +218,7 @@
                        </sizepolicy>
                       </property>
                       <property name="toolTip">
-                       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;ILEVFAIL = 1&lt;/p&gt;&lt;p&gt;Prescribed level failure rates of breach opening or wall col lapse.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;ILEVFAIL&lt;/span&gt;&lt;/p&gt;&lt;p&gt;ILEVFAIL = 1&lt;/p&gt;&lt;p&gt;Prescribed level failure rates of breach opening or wall col lapse.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                       </property>
                       <property name="text">
                        <string>Prescribed Failure</string>
@@ -234,7 +234,7 @@
                        </sizepolicy>
                       </property>
                       <property name="toolTip">
-                       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;ILEVFAIL = 2&lt;/p&gt;&lt;p&gt;Iinitiate the levee or dam breach failure routine.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;ILEVFAIL&lt;/span&gt;&lt;/p&gt;&lt;p&gt;ILEVFAIL = 2&lt;/p&gt;&lt;p&gt;Initiate the levee or dam breach failure routine.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                       </property>
                       <property name="text">
                        <string>Breach Failure</string>

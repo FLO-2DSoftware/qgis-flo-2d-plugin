@@ -948,7 +948,7 @@
         <item row="3" column="0">
          <widget class="QLabel" name="label_4">
           <property name="toolTip">
-           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;FAILWIDTHMAX (LF,LD)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(ft or m)&lt;/p&gt;&lt;p&gt;The maximum breach width (ft or m). The breach can extend into more than one grid element direction if necessary and the failure width can be larger than one grid element.&lt;/p&gt;&lt;p&gt;Range: 0 - No upper limit&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;FAILWIDTHMAX (LF,LD)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(ft or m)&lt;/p&gt;&lt;p&gt;The maximum breach width. The breach can extend into more than one grid element direction if necessary and the failure width can be larger than one grid element.&lt;/p&gt;&lt;p&gt;Range: 0 - No upper limit&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
           </property>
           <property name="text">
            <string>Maximum levee breach width</string>
@@ -961,7 +961,7 @@
         <item row="1" column="0">
          <widget class="QLabel" name="label_2">
           <property name="toolTip">
-           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;FAILTIME(LF,LD)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(hrs)&lt;/p&gt;&lt;p&gt;The duration that the levee will fail after the FAILEVEL elevation is exceeded by the flow depth.&lt;/p&gt;&lt;p&gt;If FAILTIME = 0.0, the level erosion begins immediately when pipe elevation is exceeded.&lt;/p&gt;&lt;p&gt;If FAILTIME &amp;gt; 0.0, the start time for time to 1 ft and time to 2 ft is based on the model start time 0.0 hr.&lt;/p&gt;&lt;p&gt;If FAILTIME &amp;lt; 0.0, the start time for time to 1 ft and time to 2 ft is the first dam or levee breach time for multiple breaches.&lt;/p&gt;&lt;p&gt;If FAILTIME = -99.0, the start time for time to 1 ft and time to 2 is the first&lt;/p&gt;&lt;p&gt;dam or levee breach time for multiple breaches and FAILTIME is reset to 0.0 hr.s.&lt;/p&gt;&lt;p&gt;Range: -99.0 to SIMUL-99.0&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;FAILTIME(LF,LD)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(hrs)&lt;/p&gt;&lt;p&gt;The duration that the levee will fail after the FAILEVEL elevation is exceeded by the flow depth.&lt;/p&gt;&lt;p&gt;If FAILTIME = 0.0, the level erosion begins immediately when pipe elevation is exceeded.&lt;/p&gt;&lt;p&gt;If FAILTIME &amp;gt; 0.0, the start time for time to 1 ft and time to 2 ft is based on the model start time 0.0 hr.&lt;/p&gt;&lt;p&gt;If FAILTIME &amp;lt; 0.0, the start time for time to 1 ft and time to 2 ft is the first dam or levee breach time for multiple breaches.&lt;/p&gt;&lt;p&gt;If FAILTIME = -99.0, the start time for time to 1 ft and time to 2 is the first&lt;/p&gt;&lt;p&gt;dam or levee breach time for multiple breaches and FAILTIME is reset to 0.0 hrs.&lt;/p&gt;&lt;p&gt;Range: -99.0 to SIMUL-99.0&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
           </property>
           <property name="text">
            <string>Duration (hrs) for failure after failure levee exceeded</string>
