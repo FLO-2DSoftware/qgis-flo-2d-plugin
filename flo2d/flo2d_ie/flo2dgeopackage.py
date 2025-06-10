@@ -2778,7 +2778,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 # Read FPXSEC_GLOBAL dataset
                 if "FPXSEC_GLOBAL" in fpxsec_group.datasets:
                     nxprt = fpxsec_group.datasets["FPXSEC_GLOBAL"].data[0]
-                    cont_sql += [("NXPRT", nxprt)]
+                    cont_sql += [("NXPRT", str(nxprt))]
 
                 # Read FPXSEC_DATA dataset
                 if "FPXSEC_DATA" in fpxsec_group.datasets:
@@ -5550,9 +5550,9 @@ class Flo2dGeoPackage(GeoPackageUtils):
             cont_group.create_dataset('TOLER', [])
             for var in tol_variables:
                 sql = f"""SELECT value FROM cont WHERE name = '{var}';"""
-                value = self.execute(sql).fetchone()[0]
+                value = self.execute(sql).fetchone()
                 if value is not None:
-                    cont_group.datasets["TOLER"].data.append(float(value))
+                    cont_group.datasets["TOLER"].data.append(float(value[0]))
                 else:
                     cont_group.datasets["TOLER"].data.append(-9999)
 
@@ -5573,8 +5573,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             for data in info_data:
                 qgis_group.datasets["INFO"].data.append([data[0], data[1]])
 
-            self.parser.write_groups(cont_group)
-            self.parser.write_groups(qgis_group)
+            self.parser.write_groups(cont_group, qgis_group)
             return True
         except Exception as e:
             QApplication.restoreOverrideCursor()
