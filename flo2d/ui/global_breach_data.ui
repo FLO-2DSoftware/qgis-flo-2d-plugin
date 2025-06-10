@@ -70,8 +70,8 @@
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>458</width>
-        <height>273</height>
+        <width>441</width>
+        <height>522</height>
        </rect>
       </property>
       <layout class="QGridLayout" name="gridLayout_6">
@@ -81,7 +81,7 @@
           <string>Global Shell Data</string>
          </property>
          <property name="collapsed">
-          <bool>true</bool>
+          <bool>false</bool>
          </property>
          <property name="saveCollapsedState">
           <bool>false</bool>
@@ -262,7 +262,7 @@
           <string>Global Miscellaneous Data</string>
          </property>
          <property name="collapsed">
-          <bool>true</bool>
+          <bool>false</bool>
          </property>
          <property name="saveCollapsedState">
           <bool>false</bool>
@@ -381,7 +381,7 @@
           <string>Global Geometry Data</string>
          </property>
          <property name="collapsed">
-          <bool>true</bool>
+          <bool>false</bool>
          </property>
          <property name="saveCollapsedState">
           <bool>false</bool>
@@ -390,12 +390,16 @@
           <item row="0" column="0">
            <layout class="QGridLayout" name="gridLayout_15">
             <item row="0" column="1">
-             <widget class="QDoubleSpinBox" name="gzu_dbox"/>
+             <widget class="QDoubleSpinBox" name="gzu_dbox">
+              <property name="toolTip">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;GZU&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
+             </widget>
             </item>
             <item row="1" column="0">
              <widget class="QLabel" name="label_2">
               <property name="toolTip">
-               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Global slope of the downstream face of the levee or dam for an unspecified failure location. &lt;/p&gt;&lt;p&gt;GZD is expressed as a ratio of the GZD (horizontal : vertical).&lt;/p&gt;&lt;p&gt; For example: GZD = 2.0 represents 2.0 horizontal to 1.0 vertical.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;GZD&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(dimensionless)&lt;/p&gt;&lt;p&gt;Global slope of the downstream face of the levee or dam for an unspecified failure location. &lt;/p&gt;&lt;p&gt;GZD is expressed as the ratio of horizontal to vertical distance.&lt;/p&gt;&lt;p&gt;For example: GZD = 2.0 represents 2.0 horizontal to 1.0 vertical.&lt;/p&gt;&lt;p&gt;Range: 0.1 - 10&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
               <property name="text">
                <string>Down stream face slope</string>
@@ -408,7 +412,7 @@
             <item row="3" column="0">
              <widget class="QLabel" name="label_7">
               <property name="toolTip">
-               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Global crest width of the levee or dam (ft or m) for an unspecified failure location. &lt;/p&gt;&lt;p&gt;The crest width can be zero.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;GCRESTWIDTH&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(ft or m)&lt;/p&gt;&lt;p&gt;Global crest width of the levee or dam for an unspecified failure location. &lt;/p&gt;&lt;p&gt;The crest width can be zero.&lt;/p&gt;&lt;p&gt;Range: 0 - No upper limit&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
               <property name="text">
                <string>Crest width</string>
@@ -419,12 +423,16 @@
              </widget>
             </item>
             <item row="3" column="1">
-             <widget class="QDoubleSpinBox" name="gcrestwidth_dbox"/>
+             <widget class="QDoubleSpinBox" name="gcrestwidth_dbox">
+              <property name="toolTip">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;GCRESTWIDTH&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
+             </widget>
             </item>
             <item row="0" column="0">
              <widget class="QLabel" name="label">
               <property name="toolTip">
-               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Global slope of the upstream face of the levee or dam for an unspecified failure location. &lt;/p&gt;&lt;p&gt;GZU is expressed as a ratio of the GZU (horizontal : vertical). &lt;/p&gt;&lt;p&gt;For example: GZU = 2.0 represents 2.0 horizontal to 1.0 vertical.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;GZU&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(dimensionless)&lt;/p&gt;&lt;p&gt;Global slope of the upstream face of the levee or dam for an unspecified failure location. &lt;/p&gt;&lt;p&gt;GZU is expressed as the ratio of horizontal to vertical distance.&lt;/p&gt;&lt;p&gt;For example: GZU = 2.0 represents 2.0 horizontal to 1.0 vertical.&lt;/p&gt;&lt;p&gt;Range: 0.1 - 10&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
               <property name="text">
                <string>Upstream face slope</string>
@@ -435,15 +443,23 @@
              </widget>
             </item>
             <item row="2" column="1">
-             <widget class="QDoubleSpinBox" name="gzc_dbox"/>
+             <widget class="QDoubleSpinBox" name="gzc_dbox">
+              <property name="toolTip">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;GZC&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
+             </widget>
             </item>
             <item row="1" column="1">
-             <widget class="QDoubleSpinBox" name="gzd_dbox"/>
+             <widget class="QDoubleSpinBox" name="gzd_dbox">
+              <property name="toolTip">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;GZD&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
+             </widget>
             </item>
             <item row="2" column="0">
              <widget class="QLabel" name="label_3">
               <property name="toolTip">
-               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Global average slope of the upstream and downstream face of the levee or dam core material for an unspecified failure location. &lt;/p&gt;&lt;p&gt;GZC is expressed as a ratio of the GZC (horizontal:1 (vertical).&lt;/p&gt;&lt;p&gt;For example: GZC = 2.0 represents 2.0 horizontal to 1.0 vertical.&lt;/p&gt;&lt;p&gt;If there is no core set GZC = 0.0;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;GZC&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(dimensionless)&lt;/p&gt;&lt;p&gt;Global average slope of the upstream and downstream face of the levee or dam core material for an unspecified failure location. &lt;/p&gt;&lt;p&gt;GZC is expressed as a ratio of horizontal to vertical distance.&lt;/p&gt;&lt;p&gt;For example: GZC = 2.0 represents 2.0 horizontal to 1.0 vertical.&lt;/p&gt;&lt;p&gt;If there is no core set GZC = 0.0;&lt;/p&gt;&lt;p&gt;Range: 0.1 - 10&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
               <property name="text">
                <string>Core average face slope</string>
@@ -456,7 +472,7 @@
             <item row="0" column="2">
              <widget class="QLabel" name="label_8">
               <property name="toolTip">
-               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Global crest length of the levee or dam (ft or m) for an unspecified failure location. &lt;/p&gt;&lt;p&gt;If GCRESTLENGTH = 0.0, the crest length will default to the grid element octagon side. &lt;/p&gt;&lt;p&gt;If crest length is greater than the grid element octagon side, it will be reset to the octagon side length.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;GCRESTLENGTH&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(ft or m)&lt;/p&gt;&lt;p&gt;Global crest length of the levee or dam for an unspecified failure location. &lt;/p&gt;&lt;p&gt;If GCRESTLENGTH = 0.0, the crest length will default to the grid element octagon side. &lt;/p&gt;&lt;p&gt;If crest length is greater than the grid element octagon side, it will be reset to the octagon side length.&lt;/p&gt;&lt;p&gt;Range: 0 - No upper limit&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
               <property name="text">
                <string>Crest length</string>
@@ -467,12 +483,16 @@
              </widget>
             </item>
             <item row="0" column="3">
-             <widget class="QDoubleSpinBox" name="gcrestlength_dbox"/>
+             <widget class="QDoubleSpinBox" name="gcrestlength_dbox">
+              <property name="toolTip">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;GCRESTLENGTH&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
+             </widget>
             </item>
             <item row="1" column="2">
              <widget class="QLabel" name="label_4">
               <property name="toolTip">
-               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Maximum allowable global breach top width (ft or m) as constrained by the valley cross section for an unspecified failure location. &lt;/p&gt;&lt;p&gt;GBRTOPWIDMAX = 0.0 if the levee is continuous through adjoining grid elements (default = grid element octagon side).&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;GBRBOTWIDMAX&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(ft or m)&lt;/p&gt;&lt;p&gt;Maximum allowable global breach bottom width as constrained by the valley cross section for an unspecified failure location.&lt;/p&gt;&lt;p&gt;Set GBRBOTWIDWAX = 0.0 if the levee is continuous through adjoining grid elements (default = grid element octagon side).&lt;/p&gt;&lt;p&gt;Range: 0 - No upper limit&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
               <property name="text">
                <string>Maximum bottom width</string>
@@ -483,12 +503,16 @@
              </widget>
             </item>
             <item row="1" column="3">
-             <widget class="QDoubleSpinBox" name="gbrbotwidmax_dbox"/>
+             <widget class="QDoubleSpinBox" name="gbrbotwidmax_dbox">
+              <property name="toolTip">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;GBRBOTWIDWAX&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
+             </widget>
             </item>
             <item row="2" column="2">
              <widget class="QLabel" name="label_5">
               <property name="toolTip">
-               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Maximum allowable global breach bottom width (ft or m) as constrained by the valley cross section for an unspecified failure location.&lt;/p&gt;&lt;p&gt;Set GBRBOTWIDWAX = 0.0 if the levee is continuous through adjoining grid elements (default = grid element octagon side).&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;GBRTOPWIDMAX&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(ft or m)&lt;/p&gt;&lt;p&gt;Maximum allowable global breach top width as constrained by the valley cross section for an unspecified failure location. &lt;/p&gt;&lt;p&gt;GBRTOPWIDMAX = 0.0 if the levee is continuous through adjoining grid elements (default = grid element octagon side).&lt;/p&gt;&lt;p&gt;Range: 0 - No upper limit&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
               <property name="text">
                <string>Maximum top width</string>
@@ -499,12 +523,16 @@
              </widget>
             </item>
             <item row="2" column="3">
-             <widget class="QDoubleSpinBox" name="gbrtopwidmax_dbox"/>
+             <widget class="QDoubleSpinBox" name="gbrtopwidmax_dbox">
+              <property name="toolTip">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;GBRTOPWIDMAX&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
+             </widget>
             </item>
             <item row="3" column="2">
              <widget class="QLabel" name="label_6">
               <property name="toolTip">
-               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Initial global breach or pipe bottom elevation (ft or m) for an unspecified failure location. &lt;/p&gt;&lt;p&gt;If the model will locate the failure grid element instead of user specified failure location, then set GBRBOTTOMEL = distance below the dam or levee crest elevation (ft or m). &lt;/p&gt;&lt;p&gt;In general, GBRBOTTOMEL be less than 10 ft (3 m).&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;GBRBOTTOMEL&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(ft or m)&lt;/p&gt;&lt;p&gt;Initial global breach or pipe bottom elevation for an unspecified failure location. &lt;/p&gt;&lt;p&gt;If the model will locate the failure grid element instead of user specified failure location, then set GBRBOTTOMEL = distance below the dam or levee crest elevation. &lt;/p&gt;&lt;p&gt;In general, GBRBOTTOMEL be less than 10 ft (3 m).&lt;/p&gt;&lt;p&gt;Range: 0 - No upper limit&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
               <property name="text">
                <string>Pipe bottom elevation</string>
@@ -515,7 +543,11 @@
              </widget>
             </item>
             <item row="3" column="3">
-             <widget class="QDoubleSpinBox" name="gbrbottomel_dbox"/>
+             <widget class="QDoubleSpinBox" name="gbrbottomel_dbox">
+              <property name="toolTip">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;GBRBOTTOMEL&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
+             </widget>
             </item>
            </layout>
           </item>
@@ -528,7 +560,7 @@
           <string>Global Core Data</string>
          </property>
          <property name="collapsed">
-          <bool>true</bool>
+          <bool>false</bool>
          </property>
          <property name="saveCollapsedState">
           <bool>false</bool>
@@ -539,7 +571,7 @@
             <item row="0" column="0">
              <widget class="QLabel" name="label_13">
               <property name="toolTip">
-               <string>Mean sediment size (D50 in mm) of the levee or dam core material.</string>
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;GD50C&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(mm)&lt;/p&gt;&lt;p&gt;Mean sediment size (D50) of the levee or dam core material.&lt;/p&gt;&lt;p&gt;Range: 0.0625 - 2&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
               <property name="text">
                <string>Mean sediment size</string>
@@ -551,6 +583,9 @@
             </item>
             <item row="1" column="1">
              <widget class="QDoubleSpinBox" name="gporc_dbox">
+              <property name="toolTip">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;GPORC&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
               <property name="value">
                <double>0.350000000000000</double>
               </property>
@@ -559,7 +594,7 @@
             <item row="2" column="0">
              <widget class="QLabel" name="label_15">
               <property name="toolTip">
-               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Global unit weight (lb/ft3 or N/m3) of the levee or dam core material for an unspecified failure location. &lt;/p&gt;&lt;p&gt;Set GUWC = 0.0 if there no core.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;GUWC&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(lb/ft3 or N/m3)&lt;/p&gt;&lt;p&gt;Global unit weight of the levee or dam core material for an unspecified failure location. &lt;/p&gt;&lt;p&gt;Set GUWC = 0.0 if there no core.&lt;/p&gt;&lt;p&gt;Range:&lt;/p&gt;&lt;p&gt;85 - 120 lb/ft3&lt;/p&gt;&lt;p&gt;13500 - 19000 N/m3&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
               <property name="text">
                <string>Unit weight</string>
@@ -572,7 +607,7 @@
             <item row="0" column="2">
              <widget class="QLabel" name="label_9">
               <property name="toolTip">
-               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Global angle (degrees) of internal friction of the core material for the entire levee or dam. &lt;/p&gt;&lt;p&gt;Set AFRC = 0.0 for no core.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;AFRC&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(degrees)&lt;/p&gt;&lt;p&gt;Global angle of internal friction of the core material for the entire levee or dam. &lt;/p&gt;&lt;p&gt;Set AFRC = 0.0 for no core.&lt;/p&gt;&lt;p&gt;Range: 0 - 50&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
               <property name="text">
                <string>Angle of internal friction</string>
@@ -585,7 +620,7 @@
             <item row="1" column="0">
              <widget class="QLabel" name="label_14">
               <property name="toolTip">
-               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Global porosity of the levee or dam core material for an unspecified failure location. &lt;/p&gt;&lt;p&gt;Typical range: 0.35 to 0.45. Set GPORC = 0.0 for no core material.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;GPORC&lt;br/&gt;(dimensionless)&lt;/p&gt;&lt;p&gt;Global porosity of the levee or dam core material for an unspecified failure location. &lt;/p&gt;&lt;p&gt;Typical range: 0.35 to 0.45. Set GPORC = 0.0 for no core material.&lt;/p&gt;&lt;p&gt;Range: 0.35 - 0.45&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
               <property name="text">
                <string>Porosity</string>
@@ -597,6 +632,9 @@
             </item>
             <item row="0" column="3">
              <widget class="QDoubleSpinBox" name="gafrc_dbox">
+              <property name="toolTip">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;AFRC&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
               <property name="maximum">
                <double>999.000000000000000</double>
               </property>
@@ -607,6 +645,9 @@
             </item>
             <item row="2" column="1">
              <widget class="QDoubleSpinBox" name="guwc_dbox">
+              <property name="toolTip">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;GUWC&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
               <property name="maximum">
                <double>9999.000000000000000</double>
               </property>
@@ -617,6 +658,9 @@
             </item>
             <item row="0" column="1">
              <widget class="QDoubleSpinBox" name="gd50c_dbox">
+              <property name="toolTip">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;D50C&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
               <property name="value">
                <double>0.020000000000000</double>
               </property>
@@ -625,7 +669,7 @@
             <item row="3" column="0">
              <widget class="QLabel" name="label_16">
               <property name="toolTip">
-               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Global Manning’s n-value of the levee or dam core material for an unspecified failure location. &lt;/p&gt;&lt;p&gt;If GCNC = 0.0 and a core is present, Manning’s n-value for the core material will computed from Strickler’s equation. &lt;/p&gt;&lt;p&gt;This results in a very low n-value and is not recommended. &lt;/p&gt;&lt;p&gt;If GCNC &amp;gt; 1., the n-value will be computed from a Moody diagram (Darcy f vs. D50). &lt;/p&gt;&lt;p&gt;Set GCNC = 0.0 for no core material.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;GCNC&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(dimensionless)&lt;/p&gt;&lt;p&gt;Global Manning’s n-value of the levee or dam core material for an unspecified failure location. &lt;/p&gt;&lt;p&gt;If GCNC = 0.0 and a core is present, Manning’s n-value for the core material will computed from Strickler’s equation. &lt;/p&gt;&lt;p&gt;This results in a very low n-value and is not recommended. &lt;/p&gt;&lt;p&gt;If GCNC &amp;gt; 1., the n-value will be computed from a Moody diagram (Darcy f vs. D50). &lt;/p&gt;&lt;p&gt;Set GCNC = 0.0 for no core material.&lt;/p&gt;&lt;p&gt;Range: 0.03 - 0.1&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
               <property name="text">
                <string>Manning's n-value</string>
@@ -637,6 +681,9 @@
             </item>
             <item row="3" column="1">
              <widget class="QDoubleSpinBox" name="gcnc_dbox">
+              <property name="toolTip">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;GCNC&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
               <property name="value">
                <double>0.200000000000000</double>
               </property>
@@ -645,7 +692,7 @@
             <item row="1" column="2">
              <widget class="QLabel" name="label_10">
               <property name="toolTip">
-               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Global cohesive strength (lb/ft2 or N/m2) of the levee or dam core material for an unspecified failure location. &lt;/p&gt;&lt;p&gt;If there is no core, GCOHC = 0.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;GCOHC&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(lb/ft2 or N/m2)&lt;/p&gt;&lt;p&gt;Global cohesive strength of the levee or dam core material for an unspecified failure location. &lt;/p&gt;&lt;p&gt;If there is no core, GCOHC = 0.&lt;/p&gt;&lt;p&gt;Range:&lt;br/&gt;0 - 750 lb/ft2&lt;/p&gt;&lt;p&gt;0 - 30000 N/m2&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
               <property name="text">
                <string>Cohesive strength</string>
@@ -657,6 +704,9 @@
             </item>
             <item row="1" column="3">
              <widget class="QDoubleSpinBox" name="gcohc_dbox">
+              <property name="toolTip">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;GCOHC&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
               <property name="maximum">
                <double>9999.000000000000000</double>
               </property>
@@ -668,7 +718,7 @@
             <item row="2" column="2">
              <widget class="QLabel" name="label_11">
               <property name="toolTip">
-               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Global sediment gradient, ratio of D90 to D30 of the levee or dam core material for an unspecified failure location. &lt;/p&gt;&lt;p&gt;If there is no core material, set GUNFCC = 0.0. &lt;/p&gt;&lt;p&gt;If the there is core material and GUNFCC = 0.0, it is reset to 10.0.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;GUNFCC&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;p&gt;Global sediment gradient, ratio of D90 to D30 of the levee or dam core material for an unspecified failure location. &lt;/p&gt;&lt;p&gt;If there is no core material, set GUNFCC = 0.0. &lt;/p&gt;&lt;p&gt;If the there is core material and GUNFCC = 0.0, it is reset to 10.0.&lt;/p&gt;&lt;p&gt;Range: 1 - 20&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
               <property name="text">
                <string>Core sediment gradient</string>
@@ -680,6 +730,9 @@
             </item>
             <item row="2" column="3">
              <widget class="QDoubleSpinBox" name="gunfcc_dbox">
+              <property name="toolTip">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;GUNFCC&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
               <property name="maximum">
                <double>9999.000000000000000</double>
               </property>
