@@ -151,3 +151,15 @@ SD = {
     "SWMM_INP": "SWMM Input File",
     "SWMM_INI": "SWMM Configuration File",
 }
+
+SEDIMENT = {
+    "MUDFLOW_PARAMS": "Mudflow Parameters",
+    "MUDFLOW_AREAS" : "Mudflow Areas",
+    "SED_PARAMS": "Sediment Parameters",
+    "SED_GROUPS": "Sediment Groups",
+    "SED_GROUPS_FRAC_DATA": "Sediment Groups Fraction Data",
+    "SED_RIGID_CELLS": "Sediment Rigid Cells",
+    "SED_SUPPLY_AREAS": "Sediment Supply Areas",
+    "SED_SUPPLY_FRAC_DATA": "Sediment Supply Fraction Data",
+    "SED_GROUPS_AREAS": "Sediment Groups Areas",
+}

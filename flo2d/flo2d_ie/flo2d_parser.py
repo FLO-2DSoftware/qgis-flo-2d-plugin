@@ -18,7 +18,7 @@ import numpy as np
 import pandas as pd
 
 from ..flo2d_hdf5.hdf5_descriptions import CONTROL, GRID, NEIGHBORS, STORMDRAIN, BC, CHANNEL, HYSTRUCT, INFIL, RAIN, \
-    REDUCTION_FACTORS, LEVEE, EVAPOR, FLOODPLAIN, GUTTER, TAILINGS, SPATIALLY_VARIABLE, MULT, SD
+    REDUCTION_FACTORS, LEVEE, EVAPOR, FLOODPLAIN, GUTTER, TAILINGS, SPATIALLY_VARIABLE, MULT, SD, SEDIMENT
 from ..utils import Msge
 
 try:
@@ -154,7 +154,7 @@ class ParseHDF5:
         return group
     @property
     def sed_group(self):
-        group_name = "Input/Sediment"
+        group_name = "Input/Mudflow and Sediment Transport"
         group = HDF5Group(group_name)
         return group
 
@@ -205,7 +205,7 @@ class ParseHDF5:
             ds = hdf5_group.create_dataset(dataset.name, data=dataset.data, compression="gzip")
             attributes_dicts = [CONTROL, GRID, NEIGHBORS, STORMDRAIN, BC, CHANNEL, HYSTRUCT, INFIL, RAIN,
                                 REDUCTION_FACTORS, LEVEE, EVAPOR, FLOODPLAIN, GUTTER, TAILINGS, SPATIALLY_VARIABLE,
-                                MULT, SD]
+                                MULT, SD, SEDIMENT]
 
             for attributes_dict in attributes_dicts:
                 if dataset.name in attributes_dict:

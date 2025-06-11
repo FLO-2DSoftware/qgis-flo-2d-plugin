@@ -9493,16 +9493,13 @@ class Flo2dGeoPackage(GeoPackageUtils):
             areas_g_sql = """SELECT fid, group_fid FROM sed_group_areas ORDER BY fid;"""
             cells_g_sql = """SELECT grid_fid FROM sed_group_cells WHERE area_fid = ? ORDER BY grid_fid;"""
 
-            line1 = "M  {0}  {1}  {2}  {3}  {4}  {5}\n"
-            line2 = "C  {0}  {1}  {2}  {3}  {4}  {5}  {6} {7}  {8}\n"
-            line3 = "Z  {0}  {1}  {2}\n"
-            line4 = "P  {0}  {1}\n"
-            line5 = "D  {0}  {1}\n"
-            line6 = "E  {0}\n"
-            line7 = "R  {0}\n"
-            line8 = "S  {0}  {1}  {2}  {3}\n"
-            line9 = "N  {0}  {1}\n"
-            line10 = "G  {0}  {1}\n"
+            one_value = "{0}\n"
+            two_values = "{0}  {1}\n"
+            three_values = "{0}  {1}  {2}\n"
+            four_values = "{0}  {1}  {2}  {3}\n"
+            five_values = "{0}  {1}  {2}  {3}  {4}\n"
+            six_values = "{0}  {1}  {2}  {3}  {4}  {5}\n"
+            ten_values = "{0}  {1}  {2}  {3}  {4}  {5}  {6}  {7}  {8}  {9}\n"
 
             m_data = self.execute(sed_m_sql).fetchone()
             ce_data = self.execute(sed_ce_sql).fetchone()
@@ -9510,55 +9507,86 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 return False
 
             sed_group = self.parser.sed_group
-            sed_group.create_dataset('Sediment Data', [])
 
             if MUD in ["1", "2"] and m_data is not None:
                 # Mud/debris transport or 2 phase flow:
-                sed_group.datasets["Sediment Data"].data.append(create_array(line1, 10, np.string_, m_data))
-                # s.write(line1.format(*m_data))
+                try:
+                    sed_group.datasets["MUDFLOW_PARAMS"].data.append(create_array(six_values, 6, np.float_, m_data))
+                except:
+                    sed_group.create_dataset('MUDFLOW_PARAMS', [])
+                    sed_group.datasets["MUDFLOW_PARAMS"].data.append(create_array(six_values, 6, np.float_, m_data))
 
                 if int(self.gutils.get_cont_par("IDEBRV")) == 1:
                     for aid, debrisv in self.execute(areas_d_sql):
                         gid = self.execute(cells_d_sql, (aid,)).fetchone()[0]
-                        sed_group.datasets["Sediment Data"].data.append(
-                            create_array(line5, 10, np.string_, gid, debrisv))
-                        # s.write(line5.format(gid, debrisv))
-                e_data = None
+                        try:
+                            sed_group.datasets["MUDFLOW_AREAS"].data.append(
+                                create_array(two_values, 2, np.float_, (gid, debrisv)))
+                        except:
+                            sed_group.create_dataset('MUDFLOW_AREAS', [])
+                            sed_group.datasets["MUDFLOW_AREAS"].data.append(
+                                create_array(two_values, 2, np.float_, (gid, debrisv)))
 
             if (ISED == "1" or MUD == "2") and ce_data is not None:
                 # Sediment Transport or 2 phase flow:
-                e_data = ce_data[-1]
-
-                sed_group.datasets["Sediment Data"].data.append(
-                    create_array(line2, 10, np.string_, tuple(ce_data[:-1])))
-                # s.write(line2.format(*ce_data[:-1]))
+                try:
+                    sed_group.datasets["SED_PARAMS"].data.append(
+                        create_array(ten_values, 10, np.float_, tuple(ce_data)))
+                except:
+                    sed_group.create_dataset('SED_PARAMS', [])
+                    sed_group.datasets["SED_PARAMS"].data.append(
+                        create_array(ten_values, 10, np.float_, tuple(ce_data)))
 
                 for row in self.execute(sed_z_sql):
                     dist_fid = row[0]
-                    sed_group.datasets["Sediment Data"].data.append(create_array(line3, 10, np.string_, tuple(row[1:])))
-                    # s.write(line3.format(*row[1:]))
-                    for prow in self.execute(sed_p_sql, (dist_fid,)):
-                        sed_group.datasets["Sediment Data"].data.append(create_array(line4, 10, np.string_, prow))
-                        # s.write(line4.format(*prow))
 
-                if e_data is not None:
-                    sed_group.datasets["Sediment Data"].data.append(create_array(line6, 10, np.string_, e_data))
-                    # s.write(line6.format(e_data))
+                    try:
+                        sed_group.datasets["SED_GROUPS"].data.append(
+                            create_array(four_values, 4, np.float_, row))
+                    except:
+                        sed_group.create_dataset('SED_GROUPS', [])
+                        sed_group.datasets["SED_GROUPS"].data.append(
+                            create_array(four_values, 4, np.float_, row))
+
+                    for prow in self.execute(sed_p_sql, (dist_fid,)):
+                        try:
+                            sed_group.datasets["SED_GROUPS_FRAC_DATA"].data.append(
+                                create_array(three_values, 3, np.float_, dist_fid, *prow))
+                        except:
+                            sed_group.create_dataset('SED_GROUPS_FRAC_DATA', [])
+                            sed_group.datasets["SED_GROUPS_FRAC_DATA"].data.append(
+                                create_array(three_values, 3, np.float_, dist_fid, *prow))
 
                 for row in self.execute(cells_r_sql):
-                    sed_group.datasets["Sediment Data"].data.append(create_array(line7, 10, np.string_, row))
-                    # s.write(line7.format(*row))
+                    try:
+                        sed_group.datasets["SED_RIGID_CELLS"].data.append(
+                            create_array(one_value, 1, np.int_, row))
+                    except:
+                        sed_group.create_dataset('SED_RIGID_CELLS', [])
+                        sed_group.datasets["SED_RIGID_CELLS"].data.append(
+                            create_array(one_value, 1, np.int_, row))
 
                 for row in self.execute(areas_s_sql):
                     aid = row[0]
                     dist_fid = row[1]
                     gid = self.execute(cells_s_sql, (aid,)).fetchone()[0]
-                    sed_group.datasets["Sediment Data"].data.append(
-                        create_array(line8, 10, np.string_, gid, tuple(row[2:])))
-                    # s.write(line8.format(gid, *row[2:]))
+
+                    try:
+                        sed_group.datasets["SED_SUPPLY_AREAS"].data.append(
+                            create_array(five_values, 5, np.float_, dist_fid, gid, *row[2:]))
+                    except:
+                        sed_group.create_dataset('SED_SUPPLY_AREAS', [])
+                        sed_group.datasets["SED_SUPPLY_AREAS"].data.append(
+                            create_array(five_values, 5, np.float_, dist_fid, gid, *row[2:]))
+
                     for nrow in self.execute(data_n_sql, (dist_fid,)):
-                        sed_group.datasets["Sediment Data"].data.append(create_array(line9, 10, np.string_, nrow))
-                        # s.write(line9.format(*nrow))
+                        try:
+                            sed_group.datasets["SED_SUPPLY_FRAC_DATA"].data.append(
+                                create_array(three_values, 3, np.float_, dist_fid, *nrow))
+                        except:
+                            sed_group.create_dataset('SED_SUPPLY_FRAC_DATA', [])
+                            sed_group.datasets["SED_SUPPLY_FRAC_DATA"].data.append(
+                                create_array(three_values, 3, np.float_, dist_fid, *nrow))
 
                 areas_g = self.execute(areas_g_sql)
                 if areas_g:
@@ -9566,16 +9594,21 @@ class Flo2dGeoPackage(GeoPackageUtils):
                         gids = self.execute(cells_g_sql, (aid,)).fetchall()
                         if gids:
                             for g in gids:
-                                sed_group.datasets["Sediment Data"].data.append(
-                                    create_array(line10, 10, np.string_, tuple(g[0]), group_fid))
-                                # s.write(line10.format(g[0], group_fid))
+                                try:
+                                    sed_group.datasets["SED_GROUPS_AREAS"].data.append(
+                                        create_array(two_values, 2, np.int_, group_fid, g[0]))
+                                except:
+                                    sed_group.create_dataset('SED_GROUPS_AREAS', [])
+                                    sed_group.datasets["SED_GROUPS_AREAS"].data.append(
+                                        create_array(two_values, 2, np.int_, group_fid, g[0]))
 
             self.parser.write_groups(sed_group)
             return True
 
         except Exception as e:
             QApplication.restoreOverrideCursor()
-            self.uc.show_error("ERROR 101218.1612: exporting SED.DAT failed!.\n", e)
+            self.uc.show_error("Error while exporting sediment data to hdf5 failed!.\n", e)
+            self.uc.log_info("Error while exporting sediment data to hdf5 failed!")
             return False
 
     def export_sed_dat(self, outdir):
