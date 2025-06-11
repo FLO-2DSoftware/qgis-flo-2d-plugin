@@ -3176,34 +3176,32 @@ class Flo2dGeoPackage(GeoPackageUtils):
         else:
             swmminp_dict = self.parser.parse_swmminp(swmm_file)
 
-        coordinates_data = swmminp_dict.get('COORDINATES', [])
-        if len(coordinates_data) == 0:
-            self.uc.show_warn(
-                "WARNING 060319.1729: SWMM input file has no coordinates defined!"
-            )
-            self.uc.log_info(
-                "WARNING 060319.1729: SWMM input file has no coordinates defined!"
-            )
-            return
+        if swmminp_dict:
 
-        # QApplication.setOverrideCursor(Qt.WaitCursor)
+            coordinates_data = swmminp_dict.get('COORDINATES', [])
+            if len(coordinates_data) == 0:
+                self.uc.show_warn(
+                    "WARNING 060319.1729: SWMM input file has no coordinates defined!"
+                )
+                self.uc.log_info(
+                    "WARNING 060319.1729: SWMM input file has no coordinates defined!"
+                )
+                return
 
-        self.import_swmminp_control(swmminp_dict)
-        self.import_swmminp_inflows(swmminp_dict, delete_existing)
-        self.import_swmminp_patterns(swmminp_dict, delete_existing)
-        self.import_swmminp_ts(swmminp_dict, delete_existing)
-        self.import_swmminp_curves(swmminp_dict, delete_existing)
-        self.import_swmminp_inlets_junctions(swmminp_dict, delete_existing)
-        self.import_swmminp_outfalls(swmminp_dict, delete_existing)
-        self.import_swmminp_storage_units(swmminp_dict, delete_existing)
-        self.import_swmminp_conduits(swmminp_dict, delete_existing)
-        self.import_swmminp_pumps(swmminp_dict, delete_existing)
-        self.import_swmminp_orifices(swmminp_dict, delete_existing)
-        self.import_swmminp_weirs(swmminp_dict, delete_existing)
+            self.import_swmminp_control(swmminp_dict)
+            self.import_swmminp_inflows(swmminp_dict, delete_existing)
+            self.import_swmminp_patterns(swmminp_dict, delete_existing)
+            self.import_swmminp_ts(swmminp_dict, delete_existing)
+            self.import_swmminp_curves(swmminp_dict, delete_existing)
+            self.import_swmminp_inlets_junctions(swmminp_dict, delete_existing)
+            self.import_swmminp_outfalls(swmminp_dict, delete_existing)
+            self.import_swmminp_storage_units(swmminp_dict, delete_existing)
+            self.import_swmminp_conduits(swmminp_dict, delete_existing)
+            self.import_swmminp_pumps(swmminp_dict, delete_existing)
+            self.import_swmminp_orifices(swmminp_dict, delete_existing)
+            self.import_swmminp_weirs(swmminp_dict, delete_existing)
 
-        self.remove_outside_junctions()
-
-        # QApplication.restoreOverrideCursor()
+            self.remove_outside_junctions()
 
     def remove_outside_junctions(self):
         """

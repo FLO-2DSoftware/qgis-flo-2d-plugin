@@ -478,6 +478,9 @@ class ParseDAT(object):
         sections = defaultdict(list)
         current_section = None
 
+        if not swmminp_file:
+            return {}
+
         with open(swmminp_file, 'r') as inp_file:
             for line in inp_file:
                 line = line.strip()
