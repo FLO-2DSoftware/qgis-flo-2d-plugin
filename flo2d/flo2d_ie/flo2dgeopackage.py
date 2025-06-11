@@ -2453,6 +2453,12 @@ class Flo2dGeoPackage(GeoPackageUtils):
             )
 
     def import_sed(self):
+        if self.parsed_format == self.FORMAT_DAT:
+            return self.import_sed_dat()
+        elif self.parsed_format == self.FORMAT_HDF5:
+            return self.import_sed_hdf5()
+
+    def import_sed_dat(self):
         sed_m_sql = ["""INSERT INTO mud (va, vb, ysa, ysb, sgsm, xkx) VALUES""", 6]
         sed_c_sql = [
             """INSERT INTO sed (isedeqg, isedsizefrac, dfifty, sgrad, sgst, dryspwt,
@@ -2635,6 +2641,204 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 e,
             )
             QApplication.setOverrideCursor(Qt.WaitCursor)
+
+    def import_sed_hdf5(self):
+        # try:
+        sed_group = self.parser.read_groups("Input/Mudflow and Sediment Transport")
+        if sed_group:
+            sed_group = sed_group[0]
+
+            sed_m_sql = [
+                """INSERT INTO mud (va, vb, ysa, ysb, sgsm, xkx) VALUES""",
+                6,
+            ]
+            sed_c_sql = [
+                """INSERT INTO sed (isedeqg, isedsizefrac, dfifty, sgrad, sgst, dryspwt,
+                                             cvfg, isedsupply, isedisplay, scourdep) VALUES""",
+                10,
+            ]
+            # sgf_sql = [
+            #     """INSERT INTO sed_group_frac (fid) VALUES""",
+            #     1,
+            # ]
+            sed_z_sql = [
+                """INSERT INTO sed_groups (dist_fid, isedeqi, bedthick, cvfi) VALUES""",
+                4,
+            ]
+            sed_p_sql = [
+                """INSERT INTO sed_group_frac_data (dist_fid, sediam, sedpercent) VALUES""",
+                3,
+            ]
+            areas_d_sql = ["""INSERT INTO mud_areas (geom, debrisv) VALUES""", 2]
+            cells_d_sql = ["""INSERT INTO mud_cells (area_fid, grid_fid) VALUES""", 2]
+            areas_g_sql = ["""INSERT INTO sed_group_areas (geom, group_fid) VALUES""", 2]
+            cells_g_sql = ["""INSERT INTO sed_group_cells (area_fid, grid_fid) VALUES""", 2]
+            areas_r_sql = ["""INSERT INTO sed_rigid_areas (geom) VALUES""", 1]
+            areas_s_sql = [
+                """INSERT INTO sed_supply_areas (geom, dist_fid, isedcfp, ased, bsed) VALUES""",
+                5,
+            ]
+            cells_s_sql = [
+                """INSERT INTO sed_supply_cells (area_fid, grid_fid) VALUES""",
+                2,
+            ]
+            sed_n_sql = ["""INSERT INTO sed_supply_frac (fid) VALUES""", 1]
+            data_n_sql = [
+                """INSERT INTO sed_supply_frac_data (dist_fid, ssediam, ssedpercent) VALUES""",
+                3,
+            ]
+
+            self.clear_tables(
+                "mud",
+                "mud_areas",
+                "mud_cells",
+                "sed",
+                "sed_groups",
+                "sed_group_areas",
+                "sed_group_cells",
+                "sed_group_frac",
+                "sed_group_frac_data",
+                "sed_rigid_areas",
+                "sed_rigid_cells",
+                "sed_supply_areas",
+                "sed_supply_cells",
+                "sed_supply_frac",
+                "sed_supply_frac_data",
+            )
+
+            # Process MUDFLOW_PARAMS
+            if "MUDFLOW_PARAMS" in sed_group.datasets:
+                data = sed_group.datasets["MUDFLOW_PARAMS"].data
+                for row in data:
+                    va, vb, ysa, ysb, sgsm, xkx = row
+                    sed_m_sql += [(va, vb, ysa, ysb, sgsm, xkx)]
+
+            # Process SED_PARAMS
+            if "SED_PARAMS" in sed_group.datasets:
+                data = sed_group.datasets["SED_PARAMS"].data
+                for row in data:
+                    isedeqg, isedsizefrac, dfifty, sgrad, sgst, dryspwt, cvfg, isedsupply, isedisplay, scourdep = row
+                    sed_c_sql += [(int(isedeqg), int(isedsizefrac), dfifty, sgrad, sgst, dryspwt, cvfg, int(isedsupply), int(isedisplay), scourdep)]
+
+            if "SED_GROUPS" in sed_group.datasets:
+                data = sed_group.datasets["SED_GROUPS"].data
+                for row in data:
+                    dist_fid, isedeqi, bedthick, cvfi = row
+                    sed_z_sql += [(int(dist_fid), int(isedeqi), bedthick, cvfi)]
+
+            if "SED_GROUPS_FRAC_DATA" in sed_group.datasets:
+                data = sed_group.datasets["SED_GROUPS_FRAC_DATA"].data
+                for row in data:
+                    dist_fid, sediam, sedpercent = row
+                    sed_p_sql += [(int(dist_fid), sediam, sedpercent)]
+
+            if "MUDFLOW_AREAS" in sed_group.datasets:
+                data = sed_group.datasets["MUDFLOW_AREAS"].data
+                for i, row in enumerate(data, start=1):
+                    grid, debrisv = row
+                    geom = self.build_square(self.grid_centroids([int(grid)])[int(grid)], self.cell_size)
+                    areas_d_sql += [(geom, debrisv)]
+                    cells_d_sql += [(i, int(grid))]
+
+            if "SED_GROUPS_AREAS" in sed_group.datasets:
+                data = sed_group.datasets["SED_GROUPS_AREAS"].data
+                for i, row in enumerate(data, start=1):
+                    group_id, grid = row
+                    geom = self.build_square(self.grid_centroids([int(grid)])[int(grid)], self.cell_size)
+                    areas_g_sql += [(geom, int(group_id))]
+                    cells_g_sql += [(int(group_id), int(grid))]
+
+            if "SED_RIGID_CELLS" in sed_group.datasets:
+                data = sed_group.datasets["SED_RIGID_CELLS"].data
+                for grid in data:
+                    grid = grid[0]
+                    geom = self.build_square(self.grid_centroids([int(grid)])[int(grid)], self.shrink)
+                    areas_r_sql += [(geom,)]
+
+            if "SED_SUPPLY_AREAS" in sed_group.datasets:
+                data = sed_group.datasets["SED_SUPPLY_AREAS"].data
+                for row in data:
+                    dist_fid, isedgrid, isedcfp, ased, bsed = row
+                    geom = self.build_square(self.grid_centroids([int(isedgrid)])[int(isedgrid)], self.cell_size)
+                    areas_s_sql += [(geom, int(dist_fid), int(isedcfp), ased, bsed)]
+                    cells_s_sql += [(int(dist_fid), int(isedgrid))]
+
+            if "SED_SUPPLY_FRAC_DATA" in sed_group.datasets:
+                data = sed_group.datasets["SED_SUPPLY_FRAC_DATA"].data
+                for i, row in enumerate(data, start=1):
+                    dist_fid, ssediam, ssedpercent = row
+                    sed_n_sql += [(i,)]
+                    data_n_sql += [(int(dist_fid), ssediam, ssedpercent)]
+
+            if sed_m_sql:
+                self.batch_execute(sed_m_sql)
+
+            if sed_c_sql:
+                self.batch_execute(sed_c_sql)
+
+            if sed_z_sql:
+                self.batch_execute(sed_z_sql)
+
+            if sed_p_sql:
+                self.batch_execute(sed_p_sql)
+
+            if areas_d_sql:
+                self.batch_execute(areas_d_sql)
+
+            if cells_d_sql:
+                self.batch_execute(cells_d_sql)
+
+            if areas_g_sql:
+                self.batch_execute(areas_g_sql)
+
+            if cells_g_sql:
+                self.batch_execute(cells_g_sql)
+
+            if areas_r_sql:
+                self.batch_execute(areas_r_sql)
+
+            if areas_s_sql:
+                self.batch_execute(areas_s_sql)
+
+            if cells_s_sql:
+                self.batch_execute(cells_s_sql)
+
+            if sed_n_sql:
+                self.batch_execute(sed_n_sql)
+
+            if data_n_sql:
+                self.batch_execute(data_n_sql)
+
+            if self.is_table_empty("mud_cells"):
+                self.set_cont_par("IDEBRV", 0)
+
+            if self.is_table_empty("mud") and self.is_table_empty("sed"):
+                self.set_cont_par("MUD", 0)
+                self.set_cont_par("ISED", 0)
+
+            elif self.is_table_empty("mud") and not self.is_table_empty("sed"):
+                self.set_cont_par("MUD", 0)
+                self.set_cont_par("ISED", 1)
+
+            elif not self.is_table_empty("mud") and self.is_table_empty("sed"):
+                self.set_cont_par("MUD", 1)
+                self.set_cont_par("ISED", 0)
+
+            elif not self.is_table_empty("mud") and not self.is_table_empty("sed"):
+                self.set_cont_par("MUD", 2)
+                self.set_cont_par("ISED", 0)
+
+            return True
+
+        # except Exception as e:
+        #     QApplication.restoreOverrideCursor()
+        #     self.uc.show_error(
+        #         "Error while importing Mudflow and Sediment Transport from hdf5 file!"
+        #         + "\n__________________________________________________",
+        #         e,
+        #     )
+        #     self.uc.log_info("Error while importing Mudflow and Sediment Transport from hdf5 file!")
+        #     QApplication.setOverrideCursor(Qt.WaitCursor)
 
     def import_levee(self):
         if self.parsed_format == self.FORMAT_DAT:
@@ -9490,7 +9694,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             data_n_sql = (
                 """SELECT ssediam, ssedpercent FROM sed_supply_frac_data WHERE dist_fid = ? ORDER BY ssedpercent;"""
             )
-            areas_g_sql = """SELECT fid, group_fid FROM sed_group_areas ORDER BY fid;"""
+            areas_g_sql = """SELECT DISTINCT group_fid FROM sed_group_areas ORDER BY fid;"""
             cells_g_sql = """SELECT grid_fid FROM sed_group_cells WHERE area_fid = ? ORDER BY grid_fid;"""
 
             one_value = "{0}\n"
@@ -9516,7 +9720,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     sed_group.create_dataset('MUDFLOW_PARAMS', [])
                     sed_group.datasets["MUDFLOW_PARAMS"].data.append(create_array(six_values, 6, np.float_, m_data))
 
-                if int(self.gutils.get_cont_par("IDEBRV")) == 1:
+                if int(float(self.gutils.get_cont_par("IDEBRV"))) == 1:
                     for aid, debrisv in self.execute(areas_d_sql):
                         gid = self.execute(cells_d_sql, (aid,)).fetchone()[0]
                         try:
@@ -9590,17 +9794,17 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
                 areas_g = self.execute(areas_g_sql)
                 if areas_g:
-                    for aid, group_fid in areas_g:
-                        gids = self.execute(cells_g_sql, (aid,)).fetchall()
+                    for group_fid in areas_g:
+                        gids = self.execute(cells_g_sql, (group_fid[0],)).fetchall()
                         if gids:
                             for g in gids:
                                 try:
                                     sed_group.datasets["SED_GROUPS_AREAS"].data.append(
-                                        create_array(two_values, 2, np.int_, group_fid, g[0]))
+                                        create_array(two_values, 2, np.int_, group_fid[0], g[0]))
                                 except:
                                     sed_group.create_dataset('SED_GROUPS_AREAS', [])
                                     sed_group.datasets["SED_GROUPS_AREAS"].data.append(
-                                        create_array(two_values, 2, np.int_, group_fid, g[0]))
+                                        create_array(two_values, 2, np.int_, group_fid[0], g[0]))
 
             self.parser.write_groups(sed_group)
             return True
