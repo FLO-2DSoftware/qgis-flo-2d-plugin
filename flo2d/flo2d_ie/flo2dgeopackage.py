@@ -6726,6 +6726,12 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 pass
 
             if row is not None:
+
+                def to_int(val):
+                    if isinstance(val, bytes):
+                        return int.from_bytes(val, byteorder='little')
+                    return int(val)
+
                 (
                     fid,
                     fp_out,
@@ -6735,7 +6741,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     chan_qhpar_fid,
                     chan_qhtab_fid,
                     fp_tser_fid,
-                ) = row
+                ) = (to_int(x) for x in row)
 
                 # 1. Floodplain outflow (no hydrograph)
                 variables = (chan_out, hydro_out, chan_tser_fid, chan_qhpar_fid, chan_qhtab_fid, fp_tser_fid)
