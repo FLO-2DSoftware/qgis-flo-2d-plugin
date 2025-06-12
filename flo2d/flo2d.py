@@ -2421,7 +2421,7 @@ class Flo2D(object):
             # "import_outrc",
             "import_outflow",
             "import_rain",
-            # "import_raincell",
+            "import_raincell",
             # "import_evapor",
             "import_infil",
             "import_chan",
