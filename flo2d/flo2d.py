@@ -2428,7 +2428,7 @@ class Flo2D(object):
             "import_xsec",
             "import_hystruc",
             "import_hystruc_bridge_xs",
-            # "import_street",
+            "import_street",
             "import_arf",
             # "import_mult",
             "import_sed",

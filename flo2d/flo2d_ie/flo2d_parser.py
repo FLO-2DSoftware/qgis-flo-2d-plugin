@@ -18,7 +18,7 @@ import numpy as np
 import pandas as pd
 
 from ..flo2d_hdf5.hdf5_descriptions import CONTROL, GRID, NEIGHBORS, STORMDRAIN, BC, CHANNEL, HYSTRUCT, INFIL, RAIN, \
-    REDUCTION_FACTORS, LEVEE, EVAPOR, FLOODPLAIN, GUTTER, TAILINGS, SPATIALLY_VARIABLE, MULT, SD, SEDIMENT
+    REDUCTION_FACTORS, LEVEE, EVAPOR, FLOODPLAIN, GUTTER, TAILINGS, SPATIALLY_VARIABLE, MULT, SD, SEDIMENT, STREET
 from ..utils import Msge
 
 try:
@@ -152,6 +152,7 @@ class ParseHDF5:
         group_name = "Input/Floodplain"
         group = HDF5Group(group_name)
         return group
+
     @property
     def sed_group(self):
         group_name = "Input/Mudflow and Sediment Transport"
@@ -183,6 +184,12 @@ class ParseHDF5:
         return group
 
     @property
+    def street_group(self):
+        group_name = "Input/Street"
+        group = HDF5Group(group_name)
+        return group
+
+    @property
     def groups(self):
         grouped_datasets_list = [
             self.control_group,
@@ -205,7 +212,7 @@ class ParseHDF5:
             ds = hdf5_group.create_dataset(dataset.name, data=dataset.data, compression="gzip")
             attributes_dicts = [CONTROL, GRID, NEIGHBORS, STORMDRAIN, BC, CHANNEL, HYSTRUCT, INFIL, RAIN,
                                 REDUCTION_FACTORS, LEVEE, EVAPOR, FLOODPLAIN, GUTTER, TAILINGS, SPATIALLY_VARIABLE,
-                                MULT, SD, SEDIMENT]
+                                MULT, SD, SEDIMENT, STREET]
 
             for attributes_dict in attributes_dicts:
                 if dataset.name in attributes_dict:
