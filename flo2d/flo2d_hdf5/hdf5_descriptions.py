@@ -114,7 +114,10 @@ LEVEE = {
     "LEVEE": "Levee and Failure Data",
     "LEVEE_GLOBAL": "Levee Global Data",
     "LEVEE_DATA": "Levee Data",
-    "LEVEE_FAILURE": "Levee Failure Data"
+    "LEVEE_FAILURE": "Levee Failure Data",
+    "BREACH_GLOBAL": "Breach Global Data",
+    "BREACH_INDIVIDUAL": "Breach Individual Data",
+    "FRAGILITY_CURVES": "Breach Fragility Curves",
 }
 
 EVAPOR = {

@@ -3164,6 +3164,12 @@ class Flo2dGeoPackage(GeoPackageUtils):
             self.uc.log_info("ERROR: Importing FPXSEC data from HDF5 failed!")
 
     def import_breach(self):
+        if self.parsed_format == self.FORMAT_DAT:
+            return self.import_breach_dat()
+        elif self.parsed_format == self.FORMAT_HDF5:
+            return self.import_breach_hdf5()
+
+    def import_breach_dat(self):
         glob = [
             "ibreachsedeqn",
             "gbratio",
@@ -3264,6 +3270,132 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
         # Set 'useglobaldata' to 1 if there are 'G' lines, 0 otherwise:
         self.gutils.execute("UPDATE breach_global SET useglobaldata = ?;", (use_global_data,))
+
+    def import_breach_hdf5(self):
+        try:
+            levee_group = self.parser.read_groups("Input/Levee")
+            if levee_group:
+                levee_group = levee_group[0]
+                glob = [
+                    "ibreachsedeqn",
+                    "gbratio",
+                    "gweircoef",
+                    "gbreachtime",
+                    "useglobaldata",
+                    "gzu",
+                    "gzd",
+                    "gzc",
+                    "gcrestwidth",
+                    "gcrestlength",
+                    "gbrbotwidmax",
+                    "gbrtopwidmax",
+                    "gbrbottomel",
+                    "gd50c",
+                    "gporc",
+                    "guwc",
+                    "gcnc",
+                    "gafrc",
+                    "gcohc",
+                    "gunfcc",
+                    "gd50s",
+                    "gpors",
+                    "guws",
+                    "gcns",
+                    "gafrs",
+                    "gcohs",
+                    "gunfcs",
+                    "ggrasslength",
+                    "ggrasscond",
+                    "ggrassvmaxp",
+                    "gsedconmax",
+                    "gd50df",
+                    "gunfcdf",
+                ]
+
+                local = [
+                    "geom",
+                    "ibreachdir",
+                    "zu",
+                    "zd",
+                    "zc",
+                    "crestwidth",
+                    "crestlength",
+                    "brbotwidmax",
+                    "brtopwidmax",
+                    "brbottomel",
+                    "weircoef",
+                    "d50c",
+                    "porc",
+                    "uwc",
+                    "cnc",
+                    "afrc",
+                    "cohc",
+                    "unfcc",
+                    "d50s",
+                    "pors",
+                    "uws",
+                    "cns",
+                    "afrs",
+                    "cohs",
+                    "unfcs",
+                    "bratio",
+                    "grasslength",
+                    "grasscond",
+                    "grassvmaxp",
+                    "sedconmax",
+                    "d50df",
+                    "unfcdf",
+                    "breachtime",
+                ]
+
+                global_sql = ["INSERT INTO breach_global (" + ", ".join(glob) + ") VALUES", 33]
+                local_sql = ["INSERT INTO breach (" + ", ".join(local) + ") VALUES", 33]
+                cells_sql = ["""INSERT INTO breach_cells (breach_fid, grid_fid) VALUES""", 2]
+                frag_sql = [
+                    """INSERT INTO breach_fragility_curves (fragchar, prfail, prdepth) VALUES""",
+                    3,
+                ]
+
+                # Read BREACH_GLOBAL dataset
+                if "BREACH_GLOBAL" in levee_group.datasets:
+                    data = levee_group.datasets["BREACH_GLOBAL"].data
+                    for row in data:
+                        row[4] = int(row[4])
+                        global_sql += [tuple(row)]
+
+                if "BREACH_INDIVIDUAL" in levee_group.datasets:
+                    data = levee_group.datasets["BREACH_INDIVIDUAL"].data
+                    grid_group = self.parser.read_groups("Input/Grid")[0]
+                    x_list = grid_group.datasets["COORDINATES"].data[:, 0]
+                    y_list = grid_group.datasets["COORDINATES"].data[:, 1]
+                    for i, row in enumerate(data, start=1):
+                        grid = int(row[0])
+                        geom = self.build_point_xy(x_list[grid - 1], y_list[grid - 1])
+                        local_sql += [(geom,) + tuple(row[1:])]
+                        cells_sql += [(i, grid)]
+
+                if "FRAGILITY_CURVES" in levee_group.datasets:
+                    data = levee_group.datasets["FRAGILITY_CURVES"].data
+                    for row in data:
+                        frag_sql += [tuple(row)]
+
+                if global_sql:
+                    self.batch_execute(global_sql)
+
+                if local_sql:
+                    self.batch_execute(local_sql)
+
+                if cells_sql:
+                    self.batch_execute(cells_sql)
+
+                if frag_sql:
+                    self.batch_execute(frag_sql)
+
+                return True
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.uc.show_error("Error while importing BREACH data from HDF5!", e)
+            self.uc.log_info("Error while importing FPXSEC data from HDF5!")
 
     def import_fpfroude(self):
         if self.parsed_format == self.FORMAT_DAT:
@@ -10482,7 +10614,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
     def export_breach_hdf5(self):
         """
-        Function to export brach data to hdf5
+        Function to export breach data to hdf5
         """
         # check if there is any breach defined.
         try:
@@ -10499,98 +10631,74 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 return False
 
             # Writes BREACH.DAT if ILEVFAIL = 2.
+            breach_global_columns = [
+                "ibreachsedeqn", "gbratio", "gweircoef", "gbreachtime", "useglobaldata",
+                "gzu", "gzd", "gzc", "gcrestwidth", "gcrestlength", "gbrbotwidmax", "gbrtopwidmax",
+                "gbrbottomel", "gd50c", "gporc", "guwc", "gcnc", "gafrc", "gcohc", "gunfcc",
+                "gd50s", "gpors", "guws", "gcns", "gafrs", "gcohs", "gunfcs", "ggrasslength",
+                "ggrasscond", "ggrassvmaxp", "gsedconmax", "gd50df", "gunfcdf"
+            ]
 
-            global_sql = """SELECT * FROM breach_global ORDER BY fid;"""
-            local_sql = """SELECT * FROM breach ORDER BY fid;"""
+            breach_individual_columns = [
+                "fid", "ibreachdir", "zu", "zd", "zc", "crestwidth", "crestlength",
+                "brbotwidmax", "brtopwidmax", "brbottomel", "weircoef", "d50c", "porc", "uwc",
+                "cnc", "afrc", "cohc", "unfcc", "d50s", "pors", "uws", "cns", "afrs", "cohs",
+                "unfcs", "bratio", "grasslength", "grasscond", "grassvmaxp", "sedconmax",
+                "d50df", "unfcdf", "breachtime"
+            ]
+
+            global_sql = f"""
+                SELECT {', '.join(breach_global_columns)}
+                FROM breach_global
+                ORDER BY fid;
+            """
+            local_sql = f"""
+                SELECT {', '.join(breach_individual_columns)} 
+                FROM breach 
+                ORDER BY fid;"""
+
             cells_sql = """SELECT grid_fid FROM breach_cells WHERE breach_fid = ?;"""
             frag_sql = """SELECT fragchar, prfail, prdepth FROM breach_fragility_curves ORDER BY fid;"""
 
-            b1, g1, g2, g3, g4 = (
-                slice(1, 5),
-                slice(6, 14),
-                slice(14, 21),
-                slice(21, 28),
-                slice(28, 34),
-            )
-            b2, d1, d2, d3, d4 = (
-                slice(0, 2),
-                slice(2, 11),
-                slice(11, 18),
-                slice(18, 25),
-                slice(25, 33),
-            )
-
-            bline = "B{0} {1}\n"
-            line_1 = "{0}1 {1}\n"
-            line_2 = "{0}2 {1}\n"
-            line_3 = "{0}3 {1}\n"
-            line_4 = "{0}4 {1}\n"
-            fline = "F {0} {1} {2}\n"
-
-            parts = [
-                [g1, d1, line_1],
-                [g2, d2, line_2],
-                [g3, d3, line_3],
-                [g4, d4, line_4],
-            ]
-
             global_rows = self.execute(global_sql).fetchall()
             local_rows = self.execute(local_sql).fetchall()
-            fragility_rows = self.execute(frag_sql)
+            fragility_rows = self.execute(frag_sql).fetchall()
 
             if not global_rows and not local_rows:
                 return False
-            else:
-                pass
 
             levee_group = self.parser.levee_group
-            levee_group.create_dataset('Breach', [])
 
-            c = 1
+            if global_rows:
+                levee_group.create_dataset('BREACH_GLOBAL', [])
+                for row in global_rows:
+                    row = list(row)
+                    row[0] = int(row[0])
+                    row[4] = int(row[4])
+                    levee_group.datasets["BREACH_GLOBAL"].data.append(row)
 
-            for row in global_rows:
-                # Write 'B1' line (general variables):
-                row_slice = [str(x) if x is not None else "" for x in row[b1]]
-                levee_group.datasets["Breach"].data.append(create_array(bline, 10, np.string_, c, " ".join(row_slice)))
+            if local_rows:
+                levee_group.create_dataset('BREACH_INDIVIDUAL', [])
+                for row in local_rows:
+                    row = list(row)
+                    fid = row[0]
+                    row[1] = int(row[1])
+                    gid = self.execute(cells_sql, (fid,)).fetchone()[0]
+                    levee_group.datasets["BREACH_INDIVIDUAL"].data.append([gid] + row[1:])
 
-                # Write G1,G2,G3,G4 lines if 'Use Global Data' checkbox is selected in Global Breach Data dialog:
-                if not local_rows:
-                    if row[5] == 1:  # useglobaldata
-                        for gslice, dslice, line in parts:
-                            row_slice = [str(x) if x is not None else "" for x in row[gslice]]
-                            if any(row_slice) is True:
-                                levee_group.datasets["Breach"].data.append(
-                                    create_array(line, 10, np.string_, "G", "  ".join(row_slice)))
-                            else:
-                                pass
-
-            c += 1
-
-            for row in local_rows:
-                fid = row[0]
-                gid = self.execute(cells_sql, (fid,)).fetchone()[0]
-                row_slice = [str(x) if x is not None else "" for x in row[b2]]
-                row_slice[0] = str(gid)
-                row_slice[1] = str(int(row_slice[1]))
-                levee_group.datasets["Breach"].data.append(create_array(bline, 10, np.string_, c, " ".join(row_slice)))
-                for gslice, dslice, line in parts:
-                    row_slice = [str(x) if x is not None else "" for x in row[dslice]]
-                    if any(row_slice) is True:
-                        levee_group.datasets["Breach"].data.append(
-                            create_array(line, 10, np.string_, "D", "  ".join(row_slice)))
-                    else:
-                        pass
-            c += 1
-
-            for row in fragility_rows:
-                levee_group.datasets["Breach"].data.append(create_array(fline, 10, np.string_, row))
+            if fragility_rows:
+                levee_group.create_dataset('FRAGILITY_CURVES', [])
+                for row in fragility_rows:
+                    fragchar, prfail, prdepth = row
+                    levee_group.datasets["FRAGILITY_CURVES"].data.append([fragchar, prfail, prdepth])
 
             self.parser.write_groups(levee_group)
             return True
 
         except Exception as e:
             QApplication.restoreOverrideCursor()
-            self.uc.show_error("ERROR 101218.1616: exporting BREACH.DAT failed!.\n", e)
+            self.uc.show_error("Error while exporting BREACH data to hdf5 file!\n", e)
+            self.uc.log_info("Error while exporting BREACH data to hdf5 file!")
             return False
 
     def export_breach_dat(self, outdir):
