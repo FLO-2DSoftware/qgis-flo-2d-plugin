@@ -1224,6 +1224,12 @@ class Flo2dGeoPackage(GeoPackageUtils):
             return False
 
     def import_raincell(self):
+        if self.parsed_format == self.FORMAT_DAT:
+            return self.import_raincell_dat()
+        elif self.parsed_format == self.FORMAT_HDF5:
+            return self.import_raincell_hdf5()
+
+    def import_raincell_dat(self):
         head_sql = [
             """INSERT INTO raincell (rainintime, irinters, timestamp) VALUES""",
             3,
@@ -1249,6 +1255,69 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 data_sql += [(time_interval,) + tuple(row)]
             time_interval += time_step
         self.batch_execute(head_sql, data_sql)
+
+    def import_raincell_hdf5(self):
+        # try:
+        # Access the tailings group
+        rain_group = self.parser.read_groups("Input/Rainfall")
+        if rain_group:
+            rain_group = rain_group[0]
+
+            head_sql = [
+                """INSERT INTO raincell (rainintime, irinters, timestamp) VALUES""",
+                3,
+            ]
+            data_sql = [
+                """INSERT INTO raincell_data (time_interval, rrgrid, iraindum) VALUES""",
+                3,
+            ]
+
+            self.clear_tables("raincell", "raincell_data")
+
+            rainintime, irinters, timestamp = None, None, None
+
+            # Read IRINTERS dataset
+            if "IRINTERS" in rain_group.datasets:
+                irinters = rain_group.datasets["IRINTERS"].data[0]
+
+            # Read RAININTIME dataset
+            if "RAININTIME" in rain_group.datasets:
+                rainintime = rain_group.datasets["RAININTIME"].data[0]
+
+            # Read TIMESTAMP dataset
+            if "TIMESTAMP" in rain_group.datasets:
+                timestamp = rain_group.datasets["TIMESTAMP"].data[0]
+
+            if irinters and rainintime and timestamp:
+                head_sql += [(rainintime, int(irinters), timestamp)]
+
+            # Read IRAINDUM dataset
+            if "IRAINDUM" in rain_group.datasets:
+                data = rain_group.datasets["IRAINDUM"].data
+                n_grids, n_intervals = data.shape
+                result = []
+                for i in range(n_intervals):
+                    for rrgrid in range(n_grids):
+                        result.append((i, rrgrid + 1, data[rrgrid, i]))
+                result_array = np.array(result)
+                for row in result_array:
+                    data_sql += [(row[0], int(row[1]), row[2])]
+
+            if head_sql:
+                self.batch_execute(head_sql)
+
+            if data_sql:
+                self.batch_execute(data_sql)
+
+            pass
+
+        return True
+
+        # except Exception as e:
+        #     QApplication.restoreOverrideCursor()
+        #     self.uc.show_error("Error while importing RAINCELL data from HDF5!", e)
+        #     self.uc.log_info("Error while importing RAINCELL data from HDF5!")
+        #     return False
 
     def import_infil(self):
         if self.parsed_format == self.FORMAT_DAT:
@@ -7535,7 +7604,13 @@ class Flo2dGeoPackage(GeoPackageUtils):
         #     self.uc.show_error("ERROR 101218.1543: exporting RAIN.DAT failed!.\n", e)
         #     return False
 
-    def export_raincell(self, outdir):
+    def export_raincell(self, output=None):
+        if self.parsed_format == self.FORMAT_DAT:
+            return self.export_raincell_dat(output)
+        elif self.parsed_format == self.FORMAT_HDF5:
+            return self.export_raincell_hdf5()
+
+    def export_raincell_dat(self, outdir):
         QApplication.setOverrideCursor(Qt.WaitCursor)
         try:
             if self.is_table_empty("raincell"):
@@ -7630,6 +7705,51 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
         finally:
             QApplication.restoreOverrideCursor()
+
+    def export_raincell_hdf5(self):
+        try:
+            if self.is_table_empty("raincell"):
+                return False
+
+            head_sql = """SELECT rainintime, irinters, timestamp FROM raincell LIMIT 1;"""
+
+            rain_group = self.parser.rain_group
+
+            header = self.gutils.execute(head_sql).fetchone()
+            if header:
+                qry_data = "SELECT iraindum FROM raincell_data"
+                qry_timeinterval = "SELECT DISTINCT time_interval FROM raincell_data"
+                rainintime, irinters, timestamp = header
+
+                if isinstance(rainintime, bytes):
+                    rainintime = int.from_bytes(rainintime, byteorder="little", signed=False)
+                if isinstance(timestamp, bytes):
+                    timestamp = timestamp.decode("utf-8")
+
+                rain_group.create_dataset('RAININTIME', [int(rainintime)])
+                rain_group.create_dataset('IRINTERS', [int(irinters)])
+                rain_group.create_dataset('TIMESTAMP', [np.array([timestamp], dtype=np.string_)])
+                rain_group.create_dataset("IRAINDUM", [])
+
+                timeinterval = self.gutils.execute(qry_timeinterval).fetchall()
+
+                all_data = []
+                for interval in timeinterval:
+                    batch_query = qry_data + f" WHERE time_interval = {interval[0]} ORDER BY rrgrid, time_interval"
+                    data = self.gutils.execute(batch_query).fetchall()
+                    all_data.append(np.array(data).flatten())
+
+                iraindum_array = np.stack(all_data, axis=1)
+                rain_group.datasets["IRAINDUM"].data = iraindum_array
+
+                self.parser.write_groups(rain_group)
+                return True
+
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.uc.show_error("Error while exporting RAINCELL data to hdf5 file!\n", e)
+            self.uc.log_info("Error while exporting RAINCELL data to hdf5 file!")
+            return False
 
     def export_infil(self, output=None):
         if self.parsed_format == self.FORMAT_DAT:

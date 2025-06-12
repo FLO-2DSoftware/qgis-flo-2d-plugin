@@ -358,7 +358,7 @@ class RainEditorWidget(qtBaseClass, uiDialog):
             if outdir:
                 flo2dgeo = Flo2dGeoPackage(self.con, self.iface)
                 QApplication.setOverrideCursor(Qt.WaitCursor)
-                out = flo2dgeo.export_raincell(outdir)
+                out = flo2dgeo.export_raincell_dat(outdir)
                 QApplication.restoreOverrideCursor()
                 if out:
                     self.uc.bar_info("RAINCELL.DAT was exported!")
