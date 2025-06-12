@@ -2316,6 +2316,12 @@ class Flo2dGeoPackage(GeoPackageUtils):
             QApplication.setOverrideCursor(Qt.WaitCursor)
 
     def import_street(self):
+        if self.parsed_format == self.FORMAT_DAT:
+            return self.import_street_dat()
+        elif self.parsed_format == self.FORMAT_HDF5:
+            return self.import_street_hdf5()
+
+    def import_street_dat(self):
         general_sql = [
             """INSERT INTO street_general (strman, istrflo, strfno, depx, widst) VALUES""",
             5,
@@ -2354,6 +2360,80 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 seg_fid += 1
 
         self.batch_execute(general_sql, streets_sql, seg_sql, elem_sql)
+
+    def import_street_hdf5(self):
+        try:
+            street_group = self.parser.read_groups("Input/Street")
+            if street_group:
+                street_group = street_group[0]
+                general_sql = [
+                    """INSERT INTO street_general (strman, istrflo, strfno, depx, widst) VALUES""",
+                    5,
+                ]
+                streets_sql = ["""INSERT INTO streets (stname) VALUES""", 1]
+                seg_sql = [
+                    """INSERT INTO street_seg (geom, str_fid, igridn, depex, stman, elstr) VALUES""",
+                    6,
+                ]
+                elem_sql = ["""INSERT INTO street_elems (seg_fid, istdir, widr) VALUES""", 3]
+
+                self.clear_tables("street_general", "streets", "street_seg", "street_elems")
+
+                dir_dict = {}
+
+                # Process STREET_GLOBAL dataset
+                if "STREET_GLOBAL" in street_group.datasets:
+                    data = street_group.datasets["STREET_GLOBAL"].data
+                    for row in data:
+                        strman, istrflo, strfno, depx, widst = row
+                        general_sql += [(strman, int(istrflo), strfno, depx, widst)]
+
+                # Process STREET_NAME dataset
+                if "STREET_NAMES" in street_group.datasets:
+                    data = street_group.datasets["STREET_NAMES"].data
+                    for name in data:
+                        if isinstance(name, (list, np.ndarray)) and len(name) > 0:
+                            name_val = name[0]
+                        else:
+                            name_val = name
+                        if isinstance(name_val, bytes):
+                            name_val = name_val.decode("utf-8")
+                        streets_sql += [(name_val,)]
+
+                # Process STREET_ELEM dataset
+                if "STREET_ELEMS" in street_group.datasets:
+                    data = street_group.datasets["STREET_ELEMS"].data
+                    for row in data:
+                        seg_fid, istdir, widr = row
+                        dir_dict.setdefault(seg_fid, []).append(str(int(istdir)))
+                        elem_sql += [(int(seg_fid), int(istdir), widr)]
+
+                # Process STREET_SEG dataset
+                if "STREET_SEG" in street_group.datasets:
+                    data = street_group.datasets["STREET_SEG"].data
+                    for row in data:
+                        seg_fid, igridn, depex, stman, elstr = row
+                        directions = dir_dict.get(seg_fid, [])
+                        geom = self.build_multilinestring(int(igridn), directions, self.cell_size)
+                        seg_sql += [(geom, int(seg_fid), int(igridn), depex, stman, elstr)]
+
+                if general_sql:
+                    self.batch_execute(general_sql)
+
+                if streets_sql:
+                    self.batch_execute(streets_sql)
+
+                if elem_sql:
+                    self.batch_execute(elem_sql)
+
+                if seg_sql:
+                    self.batch_execute(seg_sql)
+
+                return True
+        except Exception:
+            QApplication.restoreOverrideCursor()
+            self.uc.show_warn("Importing HDF5 street data failed!")
+            self.uc.log_info("Importing HDF5 street data failed!")
 
     def import_arf(self):
         if self.parsed_format == self.FORMAT_DAT:
