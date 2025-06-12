@@ -95,7 +95,7 @@
                </size>
               </property>
               <property name="toolTip">
-               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;WDR(K)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(ft or m)&lt;/p&gt;&lt;p&gt;Channel width for individual grid elements. WDR supersedes WDRALL.&lt;/p&gt;&lt;p&gt;Range:&lt;/p&gt;&lt;p&gt;0 - 1000 ft&lt;/p&gt;&lt;p&gt;0 - 300 m&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;WDR(K)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(ft or m)&lt;/p&gt;&lt;p&gt;Channel width for individual grid elements.&lt;/p&gt;&lt;p&gt;WDR supersedes WDRALL.&lt;/p&gt;&lt;p&gt;Range:&lt;/p&gt;&lt;p&gt;0 - 1000 ft&lt;/p&gt;&lt;p&gt;0 - 300 m&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
               <property name="text">
                <string>Channel width</string>
@@ -149,7 +149,7 @@
                </size>
               </property>
               <property name="toolTip">
-               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;DM(K)&lt;/p&gt;&lt;p&gt;(ft or m)&lt;/p&gt;&lt;p&gt;Maximum depth of multiple channels for individual grid elements. When the flow depth exceeds the multiple channel depth DM, the flow width WDR of the gully is increased by the incremental width WMC. DM supersedes the DMALL depth assignment.&lt;/p&gt;&lt;p&gt;Range:&lt;/p&gt;&lt;p&gt;0 - 1000 ft&lt;/p&gt;&lt;p&gt;0 - 300 m&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;DM(K)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(ft or m)&lt;/p&gt;&lt;p&gt;Maximum depth of multiple channels for individual grid elements.&lt;/p&gt;&lt;p&gt;When the flow depth exceeds the multiple channel depth DM, the flow width WDR of the gully is increased by the incremental width WMC.&lt;/p&gt;&lt;p&gt;DM supersedes the DMALL depth assignment.&lt;/p&gt;&lt;p&gt;Range:&lt;/p&gt;&lt;p&gt;0 - 1000 ft&lt;/p&gt;&lt;p&gt;0 - 300 m&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
               <property name="text">
                <string>Maximum depth</string>
@@ -203,7 +203,7 @@
                </size>
               </property>
               <property name="toolTip">
-               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;NODCHNS(K)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Number of multiple channels assigned in each grid element. If NODCHNS is set equal to zero then the overland flow without multiple channels is as sumed. NODCHNS supersedes NODCHNSALL value.&lt;/p&gt;&lt;p&gt;Range: 0 - 100&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;NODCHNS(K)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Number of multiple channels assigned in each grid element.&lt;/p&gt;&lt;p&gt;If NODCHNS is set equal to zero then the overland flow without multiple channels is as sumed.&lt;/p&gt;&lt;p&gt;NODCHNS supersedes NODCHNSALL value.&lt;/p&gt;&lt;p&gt;Range: 0 - 100&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
               <property name="text">
                <string>Number of multiple channels</string>
@@ -254,7 +254,7 @@
                </size>
               </property>
               <property name="toolTip">
-               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;XNMULT(K)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Channel n-values for individual grid elements. Supersedes XNMULTALL.&lt;/p&gt;&lt;p&gt;Range: 0.01 - 0.5&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;XNMULT(K)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(dimensionless)&lt;/p&gt;&lt;p&gt;Channel n-values for individual grid elements. Supersedes XNMULTALL.&lt;/p&gt;&lt;p&gt;Range: 0.01 - 0.5&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
               <property name="text">
                <string>Manning's n-value</string>
