@@ -775,7 +775,7 @@
                        </size>
                       </property>
                       <property name="toolTip">
-                       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;ITIMTEP&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(hours)&lt;/p&gt;&lt;p&gt;Output interval (hrs) that the flow depth, resolved velocity, x-velocity, y-velocity and water surface elevation datasets are reported to the TIMDEP output files for a post-simulation flood animation. TIMTEP should be a multiple of TOUT.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;ITIMTEP&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                       </property>
                       <property name="minimum">
                        <double>0.000000000000000</double>
@@ -807,6 +807,9 @@
                         <width>16777215</width>
                         <height>16777215</height>
                        </size>
+                      </property>
+                      <property name="toolTip">
+                       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;ITIMTEP&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(hours)&lt;/p&gt;&lt;p&gt;Output interval (hrs) that the flow depth, resolved velocity, x-velocity, y-velocity and water surface elevation datasets are reported to the TIMDEP output files for a post-simulation flood animation. TIMTEP should be a multiple of TOUT.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                       </property>
                       <property name="text">
                        <string>Output Interval (hrs)</string>
@@ -842,6 +845,9 @@
                         <height>0</height>
                        </size>
                       </property>
+                      <property name="toolTip">
+                       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;ITIMTEP&lt;/span&gt;&lt;/p&gt;&lt;p&gt;0 = No time series output is written.&lt;/p&gt;&lt;p&gt;1 = TIMDEP.OUT and TIMDEP_NC4.out are written.&lt;/p&gt;&lt;p&gt;2 = TIMDEP.HDF5 files is written.&lt;/p&gt;&lt;p&gt;3 = TIMDEPNC.HDF5 file is written.&lt;/p&gt;&lt;p&gt;4 = All time series output is written.&lt;/p&gt;&lt;p&gt;5 = Extract a time series for specific cells. Requires TIMDEPCELL.DAT&lt;/p&gt;&lt;p&gt;11 = TIMDEP.OUT and TIMDEP_NC4.OUT are written for the time interval.&lt;/p&gt;&lt;p&gt;21 = TIMDEP.HDF5 files is written for the time interval.&lt;/p&gt;&lt;p&gt;31 = TIMDEPNC.HDF5 file is written for the time interval.&lt;/p&gt;&lt;p&gt;41 = All time series output is written for the time interval.&lt;/p&gt;&lt;p&gt;51 = Extract a time series during the time interval for specific cells. Requires TIMDEPCELL.DAT&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                      </property>
                       <property name="text">
                        <string>Time Series Output</string>
                       </property>
@@ -871,7 +877,7 @@
                        </size>
                       </property>
                       <property name="toolTip">
-                       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;ITIMTEP&lt;/span&gt;&lt;/p&gt;&lt;p&gt;0 = No time series output is written.&lt;/p&gt;&lt;p&gt;1 = TIMDEP.OUT and TIMDEP_NC4.out are written.&lt;/p&gt;&lt;p&gt;2 = TIMDEP.HDF5 files is written.&lt;/p&gt;&lt;p&gt;3 = TIMDEPNC.HDF5 file is written.&lt;/p&gt;&lt;p&gt;4 = All time series output is written.&lt;/p&gt;&lt;p&gt;5 = Extract a time series for specific cells. Requires TIMDEPCELL.DAT&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;ITIMTEP&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                       </property>
                       <item>
                        <property name="text">
@@ -1746,7 +1752,7 @@
                        </size>
                       </property>
                       <property name="toolTip">
-                       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;DEPRESSDEP&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                       </property>
                       <property name="minimum">
                        <double>0.000000000000000</double>
@@ -1818,7 +1824,7 @@
                        </size>
                       </property>
                       <property name="toolTip">
-                       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;NOPRTFP&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                       </property>
                       <property name="currentIndex">
                        <number>2</number>
@@ -1885,7 +1891,7 @@
                        </size>
                       </property>
                       <property name="toolTip">
-                       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;NOPRTC&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                       </property>
                       <property name="currentIndex">
                        <number>2</number>
@@ -1987,6 +1993,9 @@
                       <verstretch>0</verstretch>
                      </sizepolicy>
                     </property>
+                    <property name="toolTip">
+                     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;COURANTST&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(dimensionless)&lt;/p&gt;&lt;p&gt;Courant number for streets. Courant number for floodplain. Numerical stability parameter that relates the floodwave movement in streets to the discretized model in space and time.&lt;/p&gt;&lt;p&gt;Range: 0.2 - 0.9&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                    </property>
                     <property name="text">
                      <string>Street Courant</string>
                     </property>
@@ -2030,6 +2039,9 @@
                       <horstretch>0</horstretch>
                       <verstretch>0</verstretch>
                      </sizepolicy>
+                    </property>
+                    <property name="toolTip">
+                     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;COURANTC&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(dimensionless)&lt;/p&gt;&lt;p&gt;Courant number for channels. Courant-Friedrich-Lewy numerical stability parameter that relates the floodwave movement in channels to the discretized model in space and time.&lt;/p&gt;&lt;p&gt;Range: 0.2 - 0.9&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                     </property>
                     <property name="text">
                      <string>Channel Courant</string>
@@ -2075,6 +2087,9 @@
                       <verstretch>0</verstretch>
                      </sizepolicy>
                     </property>
+                    <property name="toolTip">
+                     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;COURANTFP&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(dimensionless)&lt;/p&gt;&lt;p&gt;Courant number for floodplain. Numerical stability parameter that relates the floodwave movement for overland flow to the discretized model in space and time. &lt;/p&gt;&lt;p&gt;Range: 0.2 - 0.9&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                    </property>
                     <property name="layoutDirection">
                      <enum>Qt::RightToLeft</enum>
                     </property>
@@ -2093,6 +2108,9 @@
                       <horstretch>0</horstretch>
                       <verstretch>0</verstretch>
                      </sizepolicy>
+                    </property>
+                    <property name="toolTip">
+                     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;TIME_ACCEL&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(dimensionless)&lt;/p&gt;&lt;p&gt;Coefficient to increase the rate of incremental timestep change. Default value = 0.1 A value of 0.1 may result in a a more stable simulation time. A value of 0.2 or higher may result in a faster simulation.&lt;/p&gt;&lt;p&gt;Range: 0.1 to 2&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                     </property>
                     <property name="text">
                      <string>Change Acelerator Rate</string>
@@ -2115,6 +2133,9 @@
                       <width>0</width>
                       <height>0</height>
                      </size>
+                    </property>
+                    <property name="toolTip">
+                     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;TIME_ACCEL&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                     </property>
                     <property name="maximum">
                      <double>1.000000000000000</double>
@@ -2186,6 +2207,9 @@
                       <verstretch>0</verstretch>
                      </sizepolicy>
                     </property>
+                    <property name="toolTip">
+                     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;TOLGLOBAL&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(ft or m)&lt;/p&gt;&lt;p&gt;Surface detention. TOLGLOBAL is a minimum value of the flow depth for flood routing.&lt;/p&gt;&lt;p&gt;A typical value river flooding is 0.10 ft. &lt;/p&gt;&lt;p&gt;Use a small value for rainfall runoff .&lt;/p&gt;&lt;p&gt;Range:&lt;/p&gt;&lt;p&gt;0.004 - 0.5 ft&lt;/p&gt;&lt;p&gt;0.0012 - 0.03 m&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                    </property>
                     <property name="layoutDirection">
                      <enum>Qt::RightToLeft</enum>
                     </property>
@@ -2235,6 +2259,9 @@
                       <horstretch>0</horstretch>
                       <verstretch>0</verstretch>
                      </sizepolicy>
+                    </property>
+                    <property name="toolTip">
+                     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;DEPTOL&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(ft or m)&lt;/p&gt;&lt;p&gt;Tolerance value for the percent change in the flow depth for a given timestep.&lt;/p&gt;&lt;p&gt;When a given element DEPTOL is exceeded, the timestep will be reduced.&lt;/p&gt;&lt;p&gt;If DEPTOL = 0, then the timestep is governed by the Courant numerical stability criteria.&lt;/p&gt;&lt;p&gt;It is recommended that DEPTOL only be used for specific ponded flow conditions where the Courant number is ineffective.&lt;/p&gt;&lt;p&gt;Range: &lt;/p&gt;&lt;p&gt;0.1 - 0.5 ft&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'Google Sans'; font-size:13px; color:#1f1f1f; background-color:#ffffff;&quot;&gt;0.03048  - 0.1524 m&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                     </property>
                     <property name="layoutDirection">
                      <enum>Qt::RightToLeft</enum>

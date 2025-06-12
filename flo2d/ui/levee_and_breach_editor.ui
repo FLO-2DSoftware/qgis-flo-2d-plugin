@@ -128,6 +128,9 @@
           </item>
           <item>
            <widget class="QPushButton" name="show_levees_btn">
+            <property name="toolTip">
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Individual Levee Data.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            </property>
             <property name="text">
              <string>Levee Grid Elements</string>
             </property>
@@ -195,6 +198,9 @@
                         <verstretch>0</verstretch>
                        </sizepolicy>
                       </property>
+                      <property name="toolTip">
+                       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;ILEVFAIL&lt;/span&gt;&lt;/p&gt;&lt;p&gt;ILEVFAIL = 0&lt;/p&gt;&lt;p&gt;No levee failure.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                      </property>
                       <property name="text">
                        <string>No failure</string>
                       </property>
@@ -211,6 +217,9 @@
                         <verstretch>0</verstretch>
                        </sizepolicy>
                       </property>
+                      <property name="toolTip">
+                       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;ILEVFAIL&lt;/span&gt;&lt;/p&gt;&lt;p&gt;ILEVFAIL = 1&lt;/p&gt;&lt;p&gt;Prescribed level failure rates of breach opening or wall col lapse.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                      </property>
                       <property name="text">
                        <string>Prescribed Failure</string>
                       </property>
@@ -223,6 +232,9 @@
                         <horstretch>0</horstretch>
                         <verstretch>0</verstretch>
                        </sizepolicy>
+                      </property>
+                      <property name="toolTip">
+                       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;ILEVFAIL&lt;/span&gt;&lt;/p&gt;&lt;p&gt;ILEVFAIL = 2&lt;/p&gt;&lt;p&gt;Initiate the levee or dam breach failure routine.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                       </property>
                       <property name="text">
                        <string>Breach Failure</string>
@@ -247,6 +259,9 @@
                      <verstretch>0</verstretch>
                     </sizepolicy>
                    </property>
+                   <property name="toolTip">
+                    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;RAISELEV&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(ft or m)&lt;/p&gt;&lt;p&gt;Incremental height that all the levee grid element crest elevations are raised.&lt;/p&gt;&lt;p&gt;Range:&lt;/p&gt;&lt;p&gt;0 - 100 ft&lt;/p&gt;&lt;p&gt;0 - 30 m&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                   </property>
                    <property name="text">
                     <string>Increment in crest elevation for all levee elements</string>
                    </property>
@@ -265,6 +280,9 @@
                      <horstretch>0</horstretch>
                      <verstretch>0</verstretch>
                     </sizepolicy>
+                   </property>
+                   <property name="toolTip">
+                    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;RAISELEV&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                    </property>
                    <property name="buttonSymbols">
                     <enum>QAbstractSpinBox::UpDownArrows</enum>
@@ -446,6 +464,9 @@
                <verstretch>0</verstretch>
               </sizepolicy>
              </property>
+             <property name="toolTip">
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;IBREACHSEDEQN&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Sediment transport equation that is used to compute the breach erosion. Out of eleven transport equations in FLO 2D only Tofaletti and MPM-Woo are not available. See the list of sediment transport equation numbers in SED.DAT.&lt;/p&gt;&lt;p&gt;Range: 1 - 11&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+             </property>
              <property name="text">
               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Sediment routing equation&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
              </property>
@@ -473,6 +494,9 @@
                <width>0</width>
                <height>25</height>
               </size>
+             </property>
+             <property name="toolTip">
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;IBREACHSEDEQN&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
              </property>
              <item>
               <property name="text">
@@ -539,6 +563,9 @@
             <layout class="QGridLayout" name="gridLayout">
              <item row="0" column="0">
               <widget class="QLabel" name="label_24">
+               <property name="toolTip">
+                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;GWEIRCOEF&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(dimensionless)&lt;/p&gt;&lt;p&gt;Global weir coefficient for piping or breach channel weir for an unspecified failure location.&lt;/p&gt;&lt;p&gt;Range: 2.85 – 3.05. &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               </property>
                <property name="text">
                 <string>Weir coefficient</string>
                </property>
@@ -549,6 +576,9 @@
              </item>
              <item row="0" column="1">
               <widget class="QDoubleSpinBox" name="weir_coefficient_dbox">
+               <property name="toolTip">
+                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;GWEIRCOEF&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               </property>
                <property name="decimals">
                 <number>4</number>
                </property>
@@ -572,6 +602,9 @@
                  <verstretch>0</verstretch>
                 </sizepolicy>
                </property>
+               <property name="toolTip">
+                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;BREACHTIME&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Delay (in hours) between when the water surface exceeds &lt;span style=&quot; font-family:'Courier New';&quot;&gt;BRBOTTOMEL&lt;/span&gt; and when levee/dam erosion begins.&lt;span style=&quot; font-family:'Courier New';&quot;&gt;0&lt;/span&gt;: Erosion starts immediately once the water exceeds &lt;span style=&quot; font-family:'Courier New';&quot;&gt;BRBOTTOMEL,&lt;/span&gt;&lt;span style=&quot; font-family:'Courier New';&quot;&gt;&amp;gt;0&lt;/span&gt;: A fixed delay, starting from model time = 0.0 hr, &lt;span style=&quot; font-family:'Courier New';&quot;&gt;&amp;lt;0&lt;/span&gt;: Used for multiple breach scenarios—delay starts from the first breach event, not from model time zero, &lt;span style=&quot; font-family:'Courier New';&quot;&gt;=-99&lt;/span&gt;: Also for multiple breaches; same behavior as &lt;span style=&quot; font-family:'Courier New';&quot;&gt;&amp;lt; 0&lt;/span&gt;, but resets &lt;span style=&quot; font-family:'Courier New';&quot;&gt;BREACHTIME&lt;/span&gt; to 0 after the first breach.&lt;/p&gt;&lt;p&gt;- SIMULT to SIMULT-99&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               </property>
                <property name="text">
                 <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Time to initial failure&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                </property>
@@ -585,6 +618,9 @@
              </item>
              <item row="0" column="1">
               <widget class="QDoubleSpinBox" name="time_to_initial_failure_dbox">
+               <property name="toolTip">
+                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;BREACHTIME&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               </property>
                <property name="decimals">
                 <number>4</number>
                </property>
@@ -604,6 +640,9 @@
           <layout class="QGridLayout" name="gridLayout_2">
            <item row="0" column="0">
             <widget class="QLabel" name="label_23">
+             <property name="toolTip">
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;BRATIO&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(dimensionless)&lt;/p&gt;&lt;p&gt;Ratio of the initial breach width to breach depth.&lt;/p&gt;&lt;p&gt;Range: 1 - 5&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+             </property>
              <property name="text">
               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Initial breach witdth/depth ratio&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
              </property>
@@ -617,6 +656,9 @@
            </item>
            <item row="0" column="1">
             <widget class="QDoubleSpinBox" name="initial_breach_width_depth_ratio_dbox">
+             <property name="toolTip">
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;BRATIO&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+             </property>
              <property name="decimals">
               <number>4</number>
              </property>
@@ -652,6 +694,9 @@
          <layout class="QGridLayout" name="gridLayout_5">
           <item row="0" column="0">
            <widget class="QPushButton" name="global_breach_data_btn">
+            <property name="toolTip">
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Global breach data.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            </property>
             <property name="text">
              <string>Global Breach Data</string>
             </property>
@@ -659,6 +704,9 @@
           </item>
           <item row="0" column="2">
            <widget class="QPushButton" name="individual_breach_data_btn">
+            <property name="toolTip">
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Individual breach data.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            </property>
             <property name="text">
              <string>Individual Breach Data</string>
             </property>
@@ -713,6 +761,9 @@
          <widget class="QPushButton" name="levee_fragility_curves_btn">
           <property name="enabled">
            <bool>false</bool>
+          </property>
+          <property name="toolTip">
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;PRFAIL&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Levee fragility curve point of failure probability. 80% indicates a higher probability of levee failure most likely corresponding to a higher elevation on the levee. A low value of 10% would indicate a weak levee most likely corresponding to a levee piping failure close to the toe of the levee.&lt;/p&gt;&lt;p&gt;Range: 0.0 - 1.0&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
           </property>
           <property name="text">
            <string>Levee Fragility Curves</string>

@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>513</width>
-    <height>542</height>
+    <height>548</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -41,6 +41,9 @@
          <width>25</width>
          <height>16777215</height>
         </size>
+       </property>
+       <property name="toolTip">
+        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Next&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
        </property>
        <property name="text">
         <string/>
@@ -84,6 +87,9 @@
          <height>16777215</height>
         </size>
        </property>
+       <property name="toolTip">
+        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Previous&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+       </property>
        <property name="text">
         <string/>
        </property>
@@ -116,6 +122,9 @@
        <property name="focusPolicy">
         <enum>Qt::NoFocus</enum>
        </property>
+       <property name="toolTip">
+        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Close&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+       </property>
        <property name="text">
         <string>Close</string>
        </property>
@@ -136,6 +145,9 @@
      </item>
      <item row="0" column="1">
       <widget class="QPushButton" name="levee_data_save_btn">
+       <property name="toolTip">
+        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Apply Changes&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+       </property>
        <property name="text">
         <string>Apply Change</string>
        </property>
@@ -152,6 +164,9 @@
          <horstretch>0</horstretch>
          <verstretch>0</verstretch>
         </sizepolicy>
+       </property>
+       <property name="toolTip">
+        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;LEVFRAGRID(LP)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Individual levee grid element with fragility curve assignment. T he fragility curves must be assigned in BREACH.DAT.&lt;/p&gt;&lt;p&gt;Range: 1 - NNOD&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
        </property>
        <property name="text">
         <string>Levee grid element</string>
@@ -180,6 +195,9 @@
          <width>90</width>
          <height>16777215</height>
         </size>
+       </property>
+       <property name="toolTip">
+        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;LEVFRAGRID(LP)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
        </property>
        <property name="layoutDirection">
         <enum>Qt::LeftToRight</enum>
@@ -241,6 +259,9 @@
              <height>16777215</height>
             </size>
            </property>
+           <property name="toolTip">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;LGRIDNO(L)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;The grid element number containing the levee segment.&lt;/p&gt;&lt;p&gt;LGRIDNO = 1 to NNOD; default no overtop flows reported.&lt;/p&gt;&lt;p&gt;LGRIDNO = -1 to -NNOD; overtop flow rates reported to OVERTOP. OUT.&lt;/p&gt;&lt;p&gt;Range:&lt;/p&gt;&lt;p&gt;1 - NNOD&lt;/p&gt;&lt;p&gt;      or&lt;/p&gt;&lt;p&gt;-1 to -NNOD&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           </property>
            <property name="clearButtonEnabled">
             <bool>true</bool>
            </property>
@@ -265,6 +286,9 @@
              <width>28</width>
              <height>16777215</height>
             </size>
+           </property>
+           <property name="toolTip">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Lock into the selected levee gird element.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
            </property>
            <property name="text">
             <string/>
@@ -293,7 +317,7 @@
           <enum>Qt::NoFocus</enum>
          </property>
          <property name="toolTip">
-          <string>Zoom In</string>
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Zoom In&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
          </property>
          <property name="toolTipDuration">
           <number>2</number>
@@ -319,7 +343,7 @@
           <enum>Qt::NoFocus</enum>
          </property>
          <property name="toolTip">
-          <string>Zoom Out</string>
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Zoom Out&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
          </property>
          <property name="toolTipDuration">
           <number>2</number>
@@ -872,8 +896,7 @@
         <item row="0" column="0">
          <widget class="QLabel" name="label">
           <property name="toolTip">
-           <string>The maximum elevation of the prescribed levee failure if different than the
-levee crest (LEVELEV). Set FAILEVEL = 0 to fail the levee when overtopped.</string>
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;FAILEVEL(LF,LD)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(ft or m)&lt;/p&gt;&lt;p&gt;The maximum elevation of the prescribed levee failure if different than the levee crest (LEVELEV). Set FAILEVEL = 0 to fail the levee when over topped.&lt;/p&gt;&lt;p&gt;Range: 0.01 - No upper limit&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
           </property>
           <property name="text">
            <string>Elevation of prescribed failure (if different than top of levee)</string>
@@ -886,8 +909,7 @@ levee crest (LEVELEV). Set FAILEVEL = 0 to fail the levee when overtopped.</stri
         <item row="5" column="0">
          <widget class="QLabel" name="label_9">
           <property name="toolTip">
-           <string>The rate at which the levee breach widens (ft/hr or m/hr). Set failwidrate =
-0 for wall collapse.</string>
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;FAILWIDRATE (LF,LD)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(ft/hr or m/hr)&lt;/p&gt;&lt;p&gt;The rate at which the levee breach widens. Set failwidrate = 0 for wall collapse.&lt;/p&gt;&lt;p&gt;Range:&lt;/p&gt;&lt;p&gt;0.01 - 1000 ft/hr&lt;/p&gt;&lt;p&gt;0.25 - 300 m/hr&lt;br/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
           </property>
           <property name="text">
            <string>Horizontal rate of levee breach opening</string>
@@ -900,9 +922,7 @@ levee crest (LEVELEV). Set FAILEVEL = 0 to fail the levee when overtopped.</stri
         <item row="2" column="0">
          <widget class="QLabel" name="label_3">
           <property name="toolTip">
-           <string>The prescribed final failure elevation. Vertical failure growth stops at this
-elevation.
-Set LEVBASE = 0 if the levee fails to the floodplain elevation.</string>
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;LEVBASE(LF,LD)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(ft or m)&lt;/p&gt;&lt;p&gt;The prescribed final failure elevation. Vertical failure growth stops at this elevation.&lt;/p&gt;&lt;p&gt;Set LEVBASE = 0 if the levee fails to the floodplain elevation.&lt;/p&gt;&lt;p&gt;Range: 0 - No upper limit&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
           </property>
           <property name="text">
            <string>Base elevation of levee failure if different from floodplain elevation</string>
@@ -915,8 +935,7 @@ Set LEVBASE = 0 if the levee fails to the floodplain elevation.</string>
         <item row="4" column="0">
          <widget class="QLabel" name="label_8">
           <property name="toolTip">
-           <string>The rate of vertical levee failure (ft/hr or m/hr). Set failrate = 0 for wall
-collapse.</string>
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;FAILRATE(LF,LD)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(ft/hr or m/hr)&lt;/p&gt;&lt;p&gt;The rate of vertical levee failure. Set failrate = 0 for wall collapse.&lt;/p&gt;&lt;p&gt;Range:&lt;/p&gt;&lt;p&gt;0.01 - 1000 ft/hr&lt;/p&gt;&lt;p&gt;0.25 - 300 m/hr&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
           </property>
           <property name="text">
            <string>Vertical rate of levee breach opening</string>
@@ -929,9 +948,7 @@ collapse.</string>
         <item row="3" column="0">
          <widget class="QLabel" name="label_4">
           <property name="toolTip">
-           <string>The maximum breach width (ft or m). The breach can extend into more
-than one grid element direction if necessary and the failure width can be
-larger than one grid element.</string>
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;FAILWIDTHMAX (LF,LD)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(ft or m)&lt;/p&gt;&lt;p&gt;The maximum breach width. The breach can extend into more than one grid element direction if necessary and the failure width can be larger than one grid element.&lt;/p&gt;&lt;p&gt;Range: 0 - No upper limit&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
           </property>
           <property name="text">
            <string>Maximum levee breach width</string>
@@ -944,7 +961,7 @@ larger than one grid element.</string>
         <item row="1" column="0">
          <widget class="QLabel" name="label_2">
           <property name="toolTip">
-           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;The duration (hr) that the levee will fail after the FAILEVEL elevation is&lt;/p&gt;&lt;p&gt;exceeded by the flow depth.&lt;/p&gt;&lt;p&gt;If FAILTIME = 0.0 if the level erosion begins immediately when pipe elevation&lt;/p&gt;&lt;p&gt;is exceeded.&lt;/p&gt;&lt;p&gt;If FAILTIME &amp;gt; 0.0, the start time for time to 1 ft and time to 2 ft is based&lt;/p&gt;&lt;p&gt;on the model start time 0.0 hr.&lt;/p&gt;&lt;p&gt;If FAILTIME &amp;lt; 0.0, the start time for time to 1 ft and time to 2 ft is the first&lt;/p&gt;&lt;p&gt;dam or levee breach time for multiple breaches.&lt;/p&gt;&lt;p&gt;If FAILTIME = -99.0, the start time for time to 1 ft and time to 2 is the first&lt;/p&gt;&lt;p&gt;dam or levee breach time for multiple breaches and FAILTIME is reset to&lt;/p&gt;&lt;p&gt;0.0 hr.s.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;FAILTIME(LF,LD)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(hrs)&lt;/p&gt;&lt;p&gt;The duration that the levee will fail after the FAILEVEL elevation is exceeded by the flow depth.&lt;/p&gt;&lt;p&gt;If FAILTIME = 0.0, the level erosion begins immediately when pipe elevation is exceeded.&lt;/p&gt;&lt;p&gt;If FAILTIME &amp;gt; 0.0, the start time for time to 1 ft and time to 2 ft is based on the model start time 0.0 hr.&lt;/p&gt;&lt;p&gt;If FAILTIME &amp;lt; 0.0, the start time for time to 1 ft and time to 2 ft is the first dam or levee breach time for multiple breaches.&lt;/p&gt;&lt;p&gt;If FAILTIME = -99.0, the start time for time to 1 ft and time to 2 is the first&lt;/p&gt;&lt;p&gt;dam or levee breach time for multiple breaches and FAILTIME is reset to 0.0 hrs.&lt;/p&gt;&lt;p&gt;Range: -99.0 to SIMUL-99.0&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
           </property>
           <property name="text">
            <string>Duration (hrs) for failure after failure levee exceeded</string>
@@ -974,6 +991,9 @@ larger than one grid element.</string>
             <height>16777215</height>
            </size>
           </property>
+          <property name="toolTip">
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;FAILEVEL(LF,LD)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+          </property>
           <property name="maximum">
            <double>99999.000000000000000</double>
           </property>
@@ -999,6 +1019,9 @@ larger than one grid element.</string>
             <height>16777215</height>
            </size>
           </property>
+          <property name="toolTip">
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;FAILTIME(LF,LD)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+          </property>
           <property name="minimum">
            <double>-99.000000000000000</double>
           </property>
@@ -1023,6 +1046,9 @@ larger than one grid element.</string>
             <width>71</width>
             <height>16777215</height>
            </size>
+          </property>
+          <property name="toolTip">
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;LEVBASE(LF,LD)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
           </property>
           <property name="maximum">
            <double>99999.000000000000000</double>
@@ -1050,7 +1076,7 @@ larger than one grid element.</string>
            </size>
           </property>
           <property name="toolTip">
-           <string/>
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;FAILWIDTHMAX (LF,LD)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
           </property>
           <property name="maximum">
            <double>99999.000000000000000</double>
@@ -1078,7 +1104,7 @@ larger than one grid element.</string>
            </size>
           </property>
           <property name="toolTip">
-           <string/>
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;FAILRATE(LF,LD)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
           </property>
           <property name="minimum">
            <double>0.000000000000000</double>
@@ -1107,6 +1133,9 @@ larger than one grid element.</string>
             <width>71</width>
             <height>16777215</height>
            </size>
+          </property>
+          <property name="toolTip">
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;FAILWIDRATE (LF,LD)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
           </property>
           <property name="maximum">
            <double>9999.000000000000000</double>
