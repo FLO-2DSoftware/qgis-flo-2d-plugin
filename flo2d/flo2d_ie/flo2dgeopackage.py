@@ -9019,45 +9019,43 @@ class Flo2dGeoPackage(GeoPackageUtils):
         try:
             if self.is_table_empty("streets"):
                 return False
-            street_gen_sql = """SELECT * FROM street_general ORDER BY fid;"""
-            streets_sql = """SELECT stname FROM streets ORDER BY fid;"""
-            streets_seg_sql = """SELECT igridn, depex, stman, elstr FROM street_seg WHERE str_fid = ? ORDER BY fid;"""
-            streets_elem_sql = """SELECT istdir, widr FROM street_elems WHERE seg_fid = ? ORDER BY fid;"""
-
-            line1 = "  {}" * 5 + "\n"
-            line2 = " N {}\n"
-            line3 = " S" + "  {}" * 4 + "\n"
-            line4 = " W" + "  {}" * 2 + "\n"
+            street_gen_sql = """SELECT strman, istrflo, strfno, depx, widst FROM street_general ORDER BY fid;"""
+            streets_sql = """SELECT fid, stname FROM streets ORDER BY fid;"""
+            streets_seg_sql = """SELECT fid, igridn, depex, stman, elstr FROM street_seg WHERE str_fid = ? ORDER BY fid;"""
+            streets_elem_sql = """SELECT seg_fid, istdir, widr FROM street_elems WHERE seg_fid = ? ORDER BY fid;"""
 
             head = self.execute(street_gen_sql).fetchone()
             if head is None:
                 return False
-            else:
-                pass
-            # street = os.path.join(outdir, "STREET.DAT")
-            channel_group = self.parser.channel_group
-            channel_group.create_dataset('STREET', [])
 
-            channel_group.datasets["STREET"].data.append(create_array(line1, 5, np.string_, tuple(head[1:])))
-            # s.write(line1.format(*head[1:]))
-            seg_fid = 1
-            for i, sts in enumerate(self.execute(streets_sql), 1):
-                channel_group.datasets["STREET"].data.append(create_array(line2, 5, np.string_, sts))
-                # s.write(line2.format(*sts))
-                for seg in self.execute(streets_seg_sql, (i,)):
-                    channel_group.datasets["STREET"].data.append(create_array(line3, 5, np.string_, seg))
-                    # s.write(line3.format(*seg))
+            street_group = self.parser.street_group
+
+            street_group.create_dataset('STREET_GLOBAL', [])
+            strman, istrflo, strfno, depx, widst = head
+            street_group.datasets["STREET_GLOBAL"].data.append([strman, int(istrflo), strfno, depx, widst])
+
+            street_group.create_dataset('STREET_NAMES', [])
+            street_group.create_dataset('STREET_SEG', [])
+            street_group.create_dataset('STREET_ELEMS', [])
+            for row in self.execute(streets_sql).fetchall():
+                fid, stname = row
+                if isinstance(stname, bytes):
+                    stname = stname.decode('utf-8')
+                street_group.datasets["STREET_NAMES"].data.append([stname])
+                for seg in self.execute(streets_seg_sql, (fid,)):
+                    seg_fid, igridn, depex, stman, elstr = seg
+                    street_group.datasets["STREET_SEG"].data.append([int(fid), int(igridn), depex, stman, elstr])
                     for elem in self.execute(streets_elem_sql, (seg_fid,)):
-                        channel_group.datasets["STREET"].data.append(create_array(line4, 5, np.string_, elem))
-                        # s.write(line4.format(*elem))
-                    seg_fid += 1
+                        seg_fid, istdir, widr = elem
+                        street_group.datasets["STREET_ELEMS"].data.append([int(seg_fid), int(istdir), widr])
 
-            self.parser.write_groups(channel_group)
+            self.parser.write_groups(street_group)
             return True
 
         except Exception as e:
             QApplication.restoreOverrideCursor()
-            self.uc.show_error("ERROR 101218.1609: exporting STREET.DAT failed!.\n", e)
+            self.uc.show_error("Error while exporting STREET data to hdf5 file!\n", e)
+            self.uc.log_info("Error while exporting STREET data to hdf5 file!")
             return False
 
     def export_street_dat(self, outdir):

@@ -167,3 +167,10 @@ SEDIMENT = {
     "SED_SUPPLY_FRAC_DATA": "Sediment Supply Fraction Data",
     "SED_GROUPS_AREAS": "Sediment Groups Areas",
 }
+
+STREET = {
+    "STREET_GLOBAL": "Street Global Data",
+    "STREET_NAMES": "Street Names",
+    "STREET_SEG": "Street Segments Data",
+    "STREET_ELEMS": "Street Elements Data",
+}
