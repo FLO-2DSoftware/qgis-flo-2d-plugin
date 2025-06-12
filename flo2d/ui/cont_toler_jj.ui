@@ -1994,7 +1994,7 @@
                      </sizepolicy>
                     </property>
                     <property name="toolTip">
-                     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;COURANTST&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Courant number for streets. Courant number for floodplain. Numerical stability parameter that relates the floodwave movement in streets to the discretized model in space and time.&lt;/p&gt;&lt;p&gt;0.2 - 0.9&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;COURANTST&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(dimensionless)&lt;/p&gt;&lt;p&gt;Courant number for streets. Courant number for floodplain. Numerical stability parameter that relates the floodwave movement in streets to the discretized model in space and time.&lt;/p&gt;&lt;p&gt;Range: 0.2 - 0.9&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                     </property>
                     <property name="text">
                      <string>Street Courant</string>
@@ -2041,7 +2041,7 @@
                      </sizepolicy>
                     </property>
                     <property name="toolTip">
-                     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;COURANTC&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Courant number for channels. Courant-Friedrich-Lewy numerical stability parameter that relates the floodwave movement in channels to the discretized model in space and time.&lt;/p&gt;&lt;p&gt;0.2 - 0.9&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;COURANTC&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(dimensionless)&lt;/p&gt;&lt;p&gt;Courant number for channels. Courant-Friedrich-Lewy numerical stability parameter that relates the floodwave movement in channels to the discretized model in space and time.&lt;/p&gt;&lt;p&gt;Range: 0.2 - 0.9&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                     </property>
                     <property name="text">
                      <string>Channel Courant</string>
@@ -2088,7 +2088,7 @@
                      </sizepolicy>
                     </property>
                     <property name="toolTip">
-                     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;COURANTFP&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Courant number for floodplain. Numerical stability parameter that relates the floodwave movement for overland flow to the discretized model in space and time. &lt;/p&gt;&lt;p&gt;0.2 - 0.9&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;COURANTFP&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(dimensionless)&lt;/p&gt;&lt;p&gt;Courant number for floodplain. Numerical stability parameter that relates the floodwave movement for overland flow to the discretized model in space and time. &lt;/p&gt;&lt;p&gt;Range: 0.2 - 0.9&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                     </property>
                     <property name="layoutDirection">
                      <enum>Qt::RightToLeft</enum>
@@ -2110,7 +2110,7 @@
                      </sizepolicy>
                     </property>
                     <property name="toolTip">
-                     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;TIME_ACCEL&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Coefficient to increase the rate of incremental timestep change. Default value = 0.1 A value of 0.1 may result in a a more stable simulation time. A value of 0.2 or higher may result in a faster simulation.&lt;/p&gt;&lt;p&gt;0.1 to 2&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;TIME_ACCEL&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(dimensionless)&lt;/p&gt;&lt;p&gt;Coefficient to increase the rate of incremental timestep change. Default value = 0.1 A value of 0.1 may result in a a more stable simulation time. A value of 0.2 or higher may result in a faster simulation.&lt;/p&gt;&lt;p&gt;Range: 0.1 to 2&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                     </property>
                     <property name="text">
                      <string>Change Acelerator Rate</string>
@@ -2208,7 +2208,7 @@
                      </sizepolicy>
                     </property>
                     <property name="toolTip">
-                     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;TOLGLOBAL&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Surface detention. TOLGLOBAL is a minimum value of the flow depth for flood routing. A typical value river flooding is 0.10 ft (see comment 1). Use a small value for rainfall runoff (0.004 ft to 0.10 ft; 0.0012 m to 0.030m). &lt;/p&gt;&lt;p&gt;0.004 - 0.5&lt;/p&gt;&lt;p&gt;,&lt;/p&gt;&lt;p&gt;0.0012 - 0.03&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;TOLGLOBAL&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(ft or m)&lt;/p&gt;&lt;p&gt;Surface detention. TOLGLOBAL is a minimum value of the flow depth for flood routing.&lt;/p&gt;&lt;p&gt;A typical value river flooding is 0.10 ft. &lt;/p&gt;&lt;p&gt;Use a small value for rainfall runoff .&lt;/p&gt;&lt;p&gt;Range:&lt;/p&gt;&lt;p&gt;0.004 - 0.5 ft&lt;/p&gt;&lt;p&gt;0.0012 - 0.03 m&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                     </property>
                     <property name="layoutDirection">
                      <enum>Qt::RightToLeft</enum>
@@ -2261,7 +2261,7 @@
                      </sizepolicy>
                     </property>
                     <property name="toolTip">
-                     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;DEPTOL&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Tolerance value for the percent change in the flow depth for a given timestep.  When a given element DEPTOL is exceeded, the timestep will be reduced.  If DEPTOL = 0, then the timestep is governed by the Courant numerical stability criteria.  It is recommended that DEPTOL only be used for specific ponded flow conditions where the Courant number is ineffective.&lt;/p&gt;&lt;p&gt;0.1 - 0.5&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;DEPTOL&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(ft or m)&lt;/p&gt;&lt;p&gt;Tolerance value for the percent change in the flow depth for a given timestep.&lt;/p&gt;&lt;p&gt;When a given element DEPTOL is exceeded, the timestep will be reduced.&lt;/p&gt;&lt;p&gt;If DEPTOL = 0, then the timestep is governed by the Courant numerical stability criteria.&lt;/p&gt;&lt;p&gt;It is recommended that DEPTOL only be used for specific ponded flow conditions where the Courant number is ineffective.&lt;/p&gt;&lt;p&gt;Range: &lt;/p&gt;&lt;p&gt;0.1 - 0.5 ft&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'Google Sans'; font-size:13px; color:#1f1f1f; background-color:#ffffff;&quot;&gt;0.03048  - 0.1524 m&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                     </property>
                     <property name="layoutDirection">
                      <enum>Qt::RightToLeft</enum>
