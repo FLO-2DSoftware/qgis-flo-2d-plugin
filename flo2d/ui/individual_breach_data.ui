@@ -23,9 +23,9 @@
       <property name="geometry">
        <rect>
         <x>0</x>
-        <y>-285</y>
-        <width>514</width>
-        <height>572</height>
+        <y>0</y>
+        <width>531</width>
+        <height>287</height>
        </rect>
       </property>
       <layout class="QGridLayout" name="gridLayout_7">
@@ -35,7 +35,7 @@
           <string>Individual Shell Data</string>
          </property>
          <property name="collapsed">
-          <bool>false</bool>
+          <bool>true</bool>
          </property>
          <property name="saveCollapsedState">
           <bool>false</bool>
@@ -220,7 +220,7 @@
             <item row="2" column="2">
              <widget class="QLabel" name="label_27">
               <property name="toolTip">
-               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;UNFCS&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(dimensionless)&lt;/p&gt;&lt;p&gt;Sediment gradient, ratio of D90 to D30 of the levee or dam shell material for a prescribed grid element failure location. &lt;/p&gt;&lt;p&gt;If UNFCS = 0.0, the default&lt;/p&gt;&lt;p&gt;value is 10.0.&lt;/p&gt;&lt;p&gt;Range: 1 - 20&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;UNFCS&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(dimensionless)&lt;/p&gt;&lt;p&gt;Sediment gradient, ratio of D90 to D30 of the levee or dam shell material for a prescribed grid element failure location. &lt;/p&gt;&lt;p&gt;If UNFCS = 0.0, the default value is 10.0.&lt;/p&gt;&lt;p&gt;Range: 1 - 20&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
               <property name="text">
                <string>Shell sediment gradient</string>
@@ -270,7 +270,7 @@
           <string>Individual Geometry Data</string>
          </property>
          <property name="collapsed">
-          <bool>false</bool>
+          <bool>true</bool>
          </property>
          <property name="saveCollapsedState">
           <bool>false</bool>
@@ -294,7 +294,7 @@
             <item row="1" column="0">
              <widget class="QLabel" name="label_2">
               <property name="toolTip">
-               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;ZD&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(dimensionless)&lt;/p&gt;&lt;p&gt;Slope of the downstream face of the levee or dam for a prescribed grid element&lt;/p&gt;&lt;p&gt;failure location. ZD is expressed as a ratio of horizontal to vertical distance.&lt;/p&gt;&lt;p&gt;For example: ZD = 2.0 represents 2.0 horizontal to 1.0 vertical.&lt;/p&gt;&lt;p&gt;Range: 0.1 - 10&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;ZD&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(dimensionless)&lt;/p&gt;&lt;p&gt;Slope of the downstream face of the levee or dam for a prescribed grid element failure location.&lt;/p&gt;&lt;p&gt;ZD is expressed as a ratio of horizontal to vertical distance.&lt;/p&gt;&lt;p&gt;For example: ZD = 2.0 represents 2.0 horizontal to 1.0 vertical.&lt;/p&gt;&lt;p&gt;Range: 0.1 - 10&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
               <property name="text">
                <string>Down stream face slope</string>
@@ -307,7 +307,7 @@
             <item row="0" column="0">
              <widget class="QLabel" name="label">
               <property name="toolTip">
-               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;ZU&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(dimensionless)&lt;/p&gt;&lt;p&gt;Slope of the upstream face of the levee or dam for a prescribed grid element&lt;/p&gt;&lt;p&gt;failure location. ZU is expressed as a ratio of horizontal to vertical distance.&lt;/p&gt;&lt;p&gt;For example: ZU = 2.0 represents 2.0 horizontal to 1.0 vertical.&lt;/p&gt;&lt;p&gt;Range: 0.1 - 10&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;ZU&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(dimensionless)&lt;/p&gt;&lt;p&gt;Slope of the upstream face of the levee or dam for a prescribed grid element failure location.&lt;/p&gt;&lt;p&gt;ZU is expressed as a ratio of horizontal to vertical distance.&lt;/p&gt;&lt;p&gt;For example: ZU = 2.0 represents 2.0 horizontal to 1.0 vertical.&lt;/p&gt;&lt;p&gt;Range: 0.1 - 10&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
               <property name="text">
                <string>Upstream face slope</string>
@@ -542,7 +542,7 @@
           <string>Individual Core Data</string>
          </property>
          <property name="collapsed">
-          <bool>false</bool>
+          <bool>true</bool>
          </property>
          <property name="saveCollapsedState">
           <bool>false</bool>
@@ -553,7 +553,7 @@
             <item row="2" column="0">
              <widget class="QLabel" name="label_15">
               <property name="toolTip">
-               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;UWC&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(lb/ft3 or N/m3)&lt;/p&gt;&lt;p&gt;Unit weight of the levee or dam core material for a prescribed grid element failure location. Set UWC = 0.0 if there no core.&lt;/p&gt;&lt;p&gt;Range:&lt;/p&gt;&lt;p&gt;85 -120 lb/ft3&lt;/p&gt;&lt;p&gt;13500 - 19000 N/m3&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;UWC&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(lb/ft3 or N/m3)&lt;/p&gt;&lt;p&gt;Unit weight of the levee or dam core material for a prescribed grid element failure location.&lt;/p&gt;&lt;p&gt;Set UWC = 0.0 if there no core. &lt;/p&gt;&lt;p&gt;Range:&lt;/p&gt;&lt;p&gt;85 -120 lb/ft3&lt;/p&gt;&lt;p&gt;13500 - 19000 N/m3&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
               <property name="text">
                <string>Unit weight</string>
@@ -727,7 +727,7 @@
             <item row="2" column="2">
              <widget class="QLabel" name="label_11">
               <property name="toolTip">
-               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;UNFCC&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(dimensionless)&lt;/p&gt;&lt;p&gt;Sediment gradient, ratio of D90 to D30 of the levee or dam core material for a prescribed grid element failure location.&lt;/p&gt;&lt;p&gt;If there is no core material, set UNFCC = 0.0.&lt;/p&gt;&lt;p&gt;If the there is core material and UNFCC = 0.0, it is resetto 10.0.&lt;/p&gt;&lt;p&gt;Range: 1 - 20&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;UNFCC&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(dimensionless)&lt;/p&gt;&lt;p&gt;Sediment gradient, ratio of D90 to D30 of the levee or dam core material for a prescribed grid element failure location.&lt;/p&gt;&lt;p&gt;If there is no core material, set UNFCC = 0.0.&lt;/p&gt;&lt;p&gt;If the there is core material and UNFCC = 0.0, it is reset to 10.0.&lt;/p&gt;&lt;p&gt;Range: 1 - 20&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
               <property name="text">
                <string>Core sediment gradient</string>
@@ -777,7 +777,7 @@
           <string>Individual Miscellaneous Data</string>
          </property>
          <property name="collapsed">
-          <bool>false</bool>
+          <bool>true</bool>
          </property>
          <property name="saveCollapsedState">
           <bool>false</bool>
@@ -801,7 +801,7 @@
             <item row="0" column="2">
              <widget class="QLabel" name="label_33">
               <property name="toolTip">
-               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;SEDCONMAX&lt;/p&gt;&lt;p&gt;(dimensionless)&lt;/p&gt;&lt;p&gt;Maximum sediment concentration by volume in the breach discharge fora prescribed grid element failure location.&lt;/p&gt;&lt;p&gt;If SEDCONMAX = 0.0, a default value of 0.5 is used.&lt;/p&gt;&lt;p&gt;Range = 0.2 to 0.55. &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;SEDCONMAX&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(dimensionless)&lt;/p&gt;&lt;p&gt;Maximum sediment concentration by volume in the breach discharge fora prescribed grid element failure location.&lt;/p&gt;&lt;p&gt;If SEDCONMAX = 0.0, a default value of 0.5 is used.&lt;/p&gt;&lt;p&gt;Range: 0.2 to 0.55. &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
               <property name="text">
                <string>Max. sediment conc.</string>
@@ -813,6 +813,9 @@
             </item>
             <item row="2" column="1">
              <widget class="QDoubleSpinBox" name="grasscond_dbox">
+              <property name="toolTip">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;GRASSCOND&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
               <property name="decimals">
                <number>3</number>
               </property>
@@ -863,7 +866,7 @@
             <item row="2" column="0">
              <widget class="QLabel" name="label_30">
               <property name="toolTip">
-               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;GRASSCOND&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(dimensionless)&lt;/p&gt;&lt;p&gt;Condition of the grass on the downstream face of the levee or dam for a prescribed failure location.&lt;/p&gt;&lt;p&gt;0.0 for a poor stand or no grass; 1.0 for a good stand of grass.&lt;/p&gt;&lt;p&gt;Range: 0 - 1&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               <string notr="true">&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;GRASSCOND&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(dimensionless)&lt;/p&gt;&lt;p&gt;Condition of the grass on the downstream face of the levee or dam for a prescribed failure location.&lt;/p&gt;&lt;p&gt;0.0 for a poor stand or no grass; 1.0 for a good stand of grass.&lt;/p&gt;&lt;p&gt;Range: 0 - 1&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
               <property name="text">
                <string>Downstream grass condition</string>
@@ -918,7 +921,7 @@
             <item row="1" column="2">
              <widget class="QLabel" name="label_34">
               <property name="toolTip">
-               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;D50DF&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(mm)&lt;/p&gt;&lt;p&gt;Mean sediment size (D50) of the top one foot (0.3 m) of the downstream&lt;/p&gt;&lt;p&gt;face (riprap material). If D50DF = 0.0, then D50DF = D50S.&lt;/p&gt;&lt;p&gt;Range: 1.0 - 100&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;D50DF&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(mm)&lt;/p&gt;&lt;p&gt;Mean sediment size (D50) of the top one foot (0.3 m) of the downstream face (riprap material).&lt;/p&gt;&lt;p&gt;If D50DF = 0.0, then D50DF = D50S.&lt;/p&gt;&lt;p&gt;Range: 1.0 - 100&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
               <property name="text">
                <string>Mean sediment (riprap) size</string>
