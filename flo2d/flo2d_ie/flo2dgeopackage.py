@@ -3164,6 +3164,12 @@ class Flo2dGeoPackage(GeoPackageUtils):
             self.uc.log_info("ERROR: Importing FPXSEC data from HDF5 failed!")
 
     def import_breach(self):
+        if self.parsed_format == self.FORMAT_DAT:
+            return self.import_breach_dat()
+        elif self.parsed_format == self.FORMAT_HDF5:
+            return self.import_breach_hdf5()
+
+    def import_breach_dat(self):
         glob = [
             "ibreachsedeqn",
             "gbratio",
@@ -3264,6 +3270,132 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
         # Set 'useglobaldata' to 1 if there are 'G' lines, 0 otherwise:
         self.gutils.execute("UPDATE breach_global SET useglobaldata = ?;", (use_global_data,))
+
+    def import_breach_hdf5(self):
+        try:
+            levee_group = self.parser.read_groups("Input/Levee")
+            if levee_group:
+                levee_group = levee_group[0]
+                glob = [
+                    "ibreachsedeqn",
+                    "gbratio",
+                    "gweircoef",
+                    "gbreachtime",
+                    "useglobaldata",
+                    "gzu",
+                    "gzd",
+                    "gzc",
+                    "gcrestwidth",
+                    "gcrestlength",
+                    "gbrbotwidmax",
+                    "gbrtopwidmax",
+                    "gbrbottomel",
+                    "gd50c",
+                    "gporc",
+                    "guwc",
+                    "gcnc",
+                    "gafrc",
+                    "gcohc",
+                    "gunfcc",
+                    "gd50s",
+                    "gpors",
+                    "guws",
+                    "gcns",
+                    "gafrs",
+                    "gcohs",
+                    "gunfcs",
+                    "ggrasslength",
+                    "ggrasscond",
+                    "ggrassvmaxp",
+                    "gsedconmax",
+                    "gd50df",
+                    "gunfcdf",
+                ]
+
+                local = [
+                    "geom",
+                    "ibreachdir",
+                    "zu",
+                    "zd",
+                    "zc",
+                    "crestwidth",
+                    "crestlength",
+                    "brbotwidmax",
+                    "brtopwidmax",
+                    "brbottomel",
+                    "weircoef",
+                    "d50c",
+                    "porc",
+                    "uwc",
+                    "cnc",
+                    "afrc",
+                    "cohc",
+                    "unfcc",
+                    "d50s",
+                    "pors",
+                    "uws",
+                    "cns",
+                    "afrs",
+                    "cohs",
+                    "unfcs",
+                    "bratio",
+                    "grasslength",
+                    "grasscond",
+                    "grassvmaxp",
+                    "sedconmax",
+                    "d50df",
+                    "unfcdf",
+                    "breachtime",
+                ]
+
+                global_sql = ["INSERT INTO breach_global (" + ", ".join(glob) + ") VALUES", 33]
+                local_sql = ["INSERT INTO breach (" + ", ".join(local) + ") VALUES", 33]
+                cells_sql = ["""INSERT INTO breach_cells (breach_fid, grid_fid) VALUES""", 2]
+                frag_sql = [
+                    """INSERT INTO breach_fragility_curves (fragchar, prfail, prdepth) VALUES""",
+                    3,
+                ]
+
+                # Read BREACH_GLOBAL dataset
+                if "BREACH_GLOBAL" in levee_group.datasets:
+                    data = levee_group.datasets["BREACH_GLOBAL"].data
+                    for row in data:
+                        row[4] = int(row[4])
+                        global_sql += [tuple(row)]
+
+                if "BREACH_INDIVIDUAL" in levee_group.datasets:
+                    data = levee_group.datasets["BREACH_INDIVIDUAL"].data
+                    grid_group = self.parser.read_groups("Input/Grid")[0]
+                    x_list = grid_group.datasets["COORDINATES"].data[:, 0]
+                    y_list = grid_group.datasets["COORDINATES"].data[:, 1]
+                    for i, row in enumerate(data, start=1):
+                        grid = int(row[0])
+                        geom = self.build_point_xy(x_list[grid - 1], y_list[grid - 1])
+                        local_sql += [(geom,) + tuple(row[1:])]
+                        cells_sql += [(i, grid)]
+
+                if "FRAGILITY_CURVES" in levee_group.datasets:
+                    data = levee_group.datasets["FRAGILITY_CURVES"].data
+                    for row in data:
+                        frag_sql += [tuple(row)]
+
+                if global_sql:
+                    self.batch_execute(global_sql)
+
+                if local_sql:
+                    self.batch_execute(local_sql)
+
+                if cells_sql:
+                    self.batch_execute(cells_sql)
+
+                if frag_sql:
+                    self.batch_execute(frag_sql)
+
+                return True
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.uc.show_error("Error while importing BREACH data from HDF5!", e)
+            self.uc.log_info("Error while importing FPXSEC data from HDF5!")
 
     def import_fpfroude(self):
         if self.parsed_format == self.FORMAT_DAT:
