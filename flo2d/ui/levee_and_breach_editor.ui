@@ -564,7 +564,7 @@
              <item row="0" column="0">
               <widget class="QLabel" name="label_24">
                <property name="toolTip">
-                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;WEIRCOEF&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(dimensionless)&lt;/p&gt;&lt;p&gt;Weir coefficient for piping or breach channel weir for a prescribed grid element failure location.&lt;/p&gt;&lt;p&gt;Range: 2.85 – 3.05&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;GWEIRCOEF&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(dimensionless)&lt;/p&gt;&lt;p&gt;Global weir coefficient for piping or breach channel weir for an unspecified failure location.&lt;/p&gt;&lt;p&gt;Range: 2.85 – 3.05. &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                </property>
                <property name="text">
                 <string>Weir coefficient</string>
@@ -577,7 +577,7 @@
              <item row="0" column="1">
               <widget class="QDoubleSpinBox" name="weir_coefficient_dbox">
                <property name="toolTip">
-                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;WEIRCOEF&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;GWEIRCOEF&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                </property>
                <property name="decimals">
                 <number>4</number>
