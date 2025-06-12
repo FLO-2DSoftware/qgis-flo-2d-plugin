@@ -7535,7 +7535,13 @@ class Flo2dGeoPackage(GeoPackageUtils):
         #     self.uc.show_error("ERROR 101218.1543: exporting RAIN.DAT failed!.\n", e)
         #     return False
 
-    def export_raincell(self, outdir):
+    def export_raincell(self, output=None):
+        if self.parsed_format == self.FORMAT_DAT:
+            return self.export_raincell_dat(output)
+        elif self.parsed_format == self.FORMAT_HDF5:
+            return self.export_raincell_hdf5()
+
+    def export_raincell_dat(self, outdir):
         QApplication.setOverrideCursor(Qt.WaitCursor)
         try:
             if self.is_table_empty("raincell"):
@@ -7630,6 +7636,46 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
         finally:
             QApplication.restoreOverrideCursor()
+
+    def export_raincell_hdf5(self):
+        try:
+            if self.is_table_empty("raincell"):
+                return False
+
+            head_sql = """SELECT rainintime, irinters, timestamp FROM raincell LIMIT 1;"""
+
+            rain_group = self.parser.rain_group
+
+            header = self.gutils.execute(head_sql).fetchone()
+            if header:
+                qry_data = "SELECT iraindum FROM raincell_data"
+                qry_timeinterval = "SELECT DISTINCT time_interval FROM raincell_data"
+                rainintime, irinters, timestamp = header
+
+                rain_group.create_dataset('RAININTIME', [int(rainintime)])
+                rain_group.create_dataset('IRINTERS', [int(irinters)])
+                rain_group.create_dataset('TIMESTAMP', [np.array([timestamp], dtype=np.string_)])
+                rain_group.create_dataset("IRAINDUM", [])
+
+                timeinterval = self.gutils.execute(qry_timeinterval).fetchall()
+
+                all_data = []
+                for interval in timeinterval:
+                    batch_query = qry_data + f" WHERE time_interval = {interval[0]} ORDER BY rrgrid, time_interval"
+                    data = self.gutils.execute(batch_query).fetchall()
+                    all_data.append(np.array(data).flatten())
+
+                iraindum_array = np.stack(all_data, axis=1)
+                rain_group.datasets["IRAINDUM"].data = iraindum_array
+
+                self.parser.write_groups(rain_group)
+                return True
+
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.uc.show_error("Error while exporting RAINCELL data to hdf5 file!\n", e)
+            self.uc.log_info("Error while exporting RAINCELL data to hdf5 file!")
+            return False
 
     def export_infil(self, output=None):
         if self.parsed_format == self.FORMAT_DAT:

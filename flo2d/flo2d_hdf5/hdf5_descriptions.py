@@ -87,7 +87,11 @@ INFIL = {
 RAIN = {
     "RAIN_GLOBAL": "Global Rainfall Data",
     "RAIN_DATA": "Rainfall Data",
-    "RAIN_ARF": "Rainfall ARF"
+    "RAIN_ARF": "Rainfall ARF",
+    "RAININTIME": "Time interval in minutes of the realtime rainfall data",
+    "IRINTERS": "Number of intervals in the dataset",
+    "TIMESTAMP": "Timestamp indicates the start and end time of the storm",
+    "IRAINDUM": "Rainfall data in the grid cells",
 }
 
 REDUCTION_FACTORS = {
