@@ -23,7 +23,7 @@
       <property name="geometry">
        <rect>
         <x>0</x>
-        <y>0</y>
+        <y>-285</y>
         <width>514</width>
         <height>572</height>
        </rect>
@@ -123,7 +123,7 @@
             <item row="2" column="0">
              <widget class="QLabel" name="label_23">
               <property name="toolTip">
-               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;UWS&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(lb/ft3 or N/m3)&lt;/p&gt;&lt;p&gt;Unit weight (lb/ft3 or N/m3) of the levee or dam shell material for a prescribed grid element failure location.&lt;/p&gt;&lt;p&gt;Range:&lt;/p&gt;&lt;p&gt;85 - 120 lb/ft3&lt;/p&gt;&lt;p&gt;13500 - 19000 N/m3&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;UWS&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(lb/ft3 or N/m3)&lt;/p&gt;&lt;p&gt;Unit weight of the levee or dam shell material for a prescribed grid element failure location.&lt;/p&gt;&lt;p&gt;Range:&lt;/p&gt;&lt;p&gt;85 - 120 lb/ft3&lt;/p&gt;&lt;p&gt;13500 - 19000 N/m3&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
               <property name="text">
                <string>Unit weight</string>
@@ -161,6 +161,9 @@
             </item>
             <item row="3" column="0">
              <widget class="QLabel" name="label_24">
+              <property name="toolTip">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;CNS&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(dimensionless)&lt;/p&gt;&lt;p&gt;Manning’s n-value of the levee or dam shell material.&lt;/p&gt;&lt;p&gt;If CNS = 0., Manning’s n-value for the shell material will computed from Strickler’s equation.&lt;/p&gt;&lt;p&gt;If CNS &amp;gt; 1., the n-value will be computed from a Moody diagram (Darcy f vs. D50).&lt;/p&gt;&lt;p&gt;Range: 0.02 - 0.25&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
               <property name="text">
                <string>Manning's n-value</string>
               </property>
@@ -172,10 +175,7 @@
             <item row="3" column="1">
              <widget class="QDoubleSpinBox" name="cns_dbox">
               <property name="toolTip">
-               <string>Manning’s n-value of the levee or dam shell material. If
-CNS = 0., Manning’s n-value for the shell material will computed from
-Strickler’s equation. If CNS &gt; 1., the n-value will be computed from a
-Moody diagram (Darcy f vs. D50).</string>
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;CNS&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
               <property name="decimals">
                <number>3</number>
@@ -385,7 +385,7 @@ Moody diagram (Darcy f vs. D50).</string>
             <item row="2" column="0">
              <widget class="QLabel" name="label_3">
               <property name="toolTip">
-               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;ZC&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(dimensionless)&lt;/p&gt;&lt;p&gt;Average slope of the upstream and downstream face of the levee or dam core material for a prescribed failure location. &lt;/p&gt;&lt;p&gt;ZC is expressed as a ratio of horizontal to vertical distance.&lt;/p&gt;&lt;p&gt;For example: ZC = 2.0 represents 2.0 horizontal to 1.0 vertical.&lt;/p&gt;&lt;p&gt;If there is no core set ZC = 0.&lt;/p&gt;&lt;p&gt;Range:0.1 - 10&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;ZC&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(dimensionless)&lt;/p&gt;&lt;p&gt;Average slope of the upstream and downstream face of the levee or dam core material for a prescribed failure location. &lt;/p&gt;&lt;p&gt;ZC is expressed as a ratio of horizontal to vertical distance.&lt;/p&gt;&lt;p&gt;For example: ZC = 2.0 represents 2.0 horizontal to 1.0 vertical.&lt;/p&gt;&lt;p&gt;If there is no core set ZC = 0.&lt;/p&gt;&lt;p&gt;Range: 0.1 - 10&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
               <property name="text">
                <string>Core average face slope</string>
@@ -656,7 +656,7 @@ Moody diagram (Darcy f vs. D50).</string>
             <item row="1" column="0">
              <widget class="QLabel" name="label_14">
               <property name="toolTip">
-               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;PORC&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(dimensionless)&lt;/p&gt;&lt;p&gt;Porosity of the levee or dam core material for a prescribed grid element failure location. Set GPORC = 0.0 for no core material.&lt;/p&gt;&lt;p&gt;Range: 0.35 - 0.45&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;PORC&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(dimensionless)&lt;/p&gt;&lt;p&gt;Porosity of the levee or dam core material for a prescribed grid element failure location.&lt;/p&gt;&lt;p&gt;Set GPORC = 0.0 for no core material.&lt;/p&gt;&lt;p&gt;Range: 0.35 - 0.45&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
               <property name="text">
                <string>Porosity</string>
@@ -669,7 +669,7 @@ Moody diagram (Darcy f vs. D50).</string>
             <item row="3" column="0">
              <widget class="QLabel" name="label_16">
               <property name="toolTip">
-               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;CNC&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(dimensionless)&lt;/p&gt;&lt;p&gt;Manning’s n-value of the levee or dam core material. If CNC = 0., Manning’s n-value for the core material will computed from Strickler’s equation.&lt;/p&gt;&lt;p&gt;If CNC &amp;gt; 1., the n-value will be computed from a Moody diagram (Darcy fvs. D50). Set CNC = 0.0 for no core material.&lt;/p&gt;&lt;p&gt;Range: 0.02 - 0.25&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;CNC&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(dimensionless)&lt;/p&gt;&lt;p&gt;Manning’s n-value of the levee or dam core material.&lt;/p&gt;&lt;p&gt;If CNC = 0., Manning’s n-value for the core material will computed from Strickler’s equation.&lt;/p&gt;&lt;p&gt;If CNC &amp;gt; 1., the n-value will be computed from a Moody diagram (Darcy fvs. D50). &lt;/p&gt;&lt;p&gt;Set CNC = 0.0 for no core material.&lt;/p&gt;&lt;p&gt;Range: 0.02 - 0.25&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
               <property name="text">
                <string>Manning's n-value</string>
@@ -698,7 +698,7 @@ Moody diagram (Darcy f vs. D50).</string>
             <item row="1" column="2">
              <widget class="QLabel" name="label_10">
               <property name="toolTip">
-               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;COHC&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(lb/ft2 or N/m2)&lt;/p&gt;&lt;p&gt;Cohesive strength (lb/ft2 or N/m2) of the levee or dam core material. If there&lt;/p&gt;&lt;p&gt;is no core, COHC = 0.&lt;/p&gt;&lt;p&gt;Range:&lt;/p&gt;&lt;p&gt;0 - 750 lb/ft2&lt;/p&gt;&lt;p&gt;0 - 30000 N/m2&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;COHC&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(lb/ft2 or N/m2)&lt;/p&gt;&lt;p&gt;Cohesive strength (lb/ft2 or N/m2) of the levee or dam core material.&lt;/p&gt;&lt;p&gt;If there is no core, COHC = 0.&lt;/p&gt;&lt;p&gt;Range:&lt;/p&gt;&lt;p&gt;0 - 750 lb/ft2&lt;/p&gt;&lt;p&gt;0 - 30000 N/m2&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
               <property name="text">
                <string>Cohesive strength</string>
@@ -801,9 +801,7 @@ Moody diagram (Darcy f vs. D50).</string>
             <item row="0" column="2">
              <widget class="QLabel" name="label_33">
               <property name="toolTip">
-               <string>Maximum sediment concentration by volume in the breach discharge for
-a prescribed grid element failure location. Typical range = 0.2 to 0.55. If
-SEDCONMAX = 0.0, a default value of 0.5 is used.</string>
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;SEDCONMAX&lt;/p&gt;&lt;p&gt;(dimensionless)&lt;/p&gt;&lt;p&gt;Maximum sediment concentration by volume in the breach discharge fora prescribed grid element failure location.&lt;/p&gt;&lt;p&gt;If SEDCONMAX = 0.0, a default value of 0.5 is used.&lt;/p&gt;&lt;p&gt;Range = 0.2 to 0.55. &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
               <property name="text">
                <string>Max. sediment conc.</string>
@@ -825,6 +823,9 @@ SEDCONMAX = 0.0, a default value of 0.5 is used.</string>
             </item>
             <item row="0" column="3">
              <widget class="QDoubleSpinBox" name="sedconmax_dbox">
+              <property name="toolTip">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;SEDCONMAX&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
               <property name="decimals">
                <number>3</number>
               </property>
@@ -862,9 +863,7 @@ SEDCONMAX = 0.0, a default value of 0.5 is used.</string>
             <item row="2" column="0">
              <widget class="QLabel" name="label_30">
               <property name="toolTip">
-               <string>Condition of the grass on the downstream face of the levee or dam for a
-prescribed failure location. 0.0 for a poor stand or no grass; 1.0 for a good
-stand of grass.</string>
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;GRASSCOND&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(dimensionless)&lt;/p&gt;&lt;p&gt;Condition of the grass on the downstream face of the levee or dam for a prescribed failure location.&lt;/p&gt;&lt;p&gt;0.0 for a poor stand or no grass; 1.0 for a good stand of grass.&lt;/p&gt;&lt;p&gt;Range: 0 - 1&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
               <property name="text">
                <string>Downstream grass condition</string>
@@ -893,9 +892,7 @@ stand of grass.</string>
             <item row="3" column="0">
              <widget class="QLabel" name="label_31">
               <property name="toolTip">
-               <string>Maximum permissible velocity (fps or mps) for a grass-lined downstream
-face before the grass is eroded for a prescribed failure location. Range: 3 to 6
-fps (1 to 2 mps). If no grass, set GRASSVMAXP = 0.0.</string>
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;GRASSVMAXP&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(fps or mps)&lt;/p&gt;&lt;p&gt;Maximum permissible velocity for a grass-lined downstream face before the grass is eroded for a prescribed failure location.&lt;/p&gt;&lt;p&gt;If no grass, set GRASSVMAXP = 0.0.&lt;/p&gt;&lt;p&gt;Range:&lt;/p&gt;&lt;p&gt;3 - 6 fps&lt;/p&gt;&lt;p&gt;1 - 2 mps&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
               <property name="text">
                <string>Maximum grass velocity</string>
@@ -907,6 +904,9 @@ fps (1 to 2 mps). If no grass, set GRASSVMAXP = 0.0.</string>
             </item>
             <item row="3" column="1">
              <widget class="QDoubleSpinBox" name="grassvmaxp_dbox">
+              <property name="toolTip">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;GRASSVMAXP&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
               <property name="decimals">
                <number>3</number>
               </property>
@@ -918,8 +918,7 @@ fps (1 to 2 mps). If no grass, set GRASSVMAXP = 0.0.</string>
             <item row="1" column="2">
              <widget class="QLabel" name="label_34">
               <property name="toolTip">
-               <string>Mean sediment size (D50 in mm) of the top one foot (0.3 m) of the downstream
-face (riprap material). If D50DF = 0.0, then D50DF = D50S.</string>
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;D50DF&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(mm)&lt;/p&gt;&lt;p&gt;Mean sediment size (D50) of the top one foot (0.3 m) of the downstream&lt;/p&gt;&lt;p&gt;face (riprap material). If D50DF = 0.0, then D50DF = D50S.&lt;/p&gt;&lt;p&gt;Range: 1.0 - 100&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
               <property name="text">
                <string>Mean sediment (riprap) size</string>
@@ -931,6 +930,9 @@ face (riprap material). If D50DF = 0.0, then D50DF = D50S.</string>
             </item>
             <item row="1" column="3">
              <widget class="QDoubleSpinBox" name="d50df_dbox">
+              <property name="toolTip">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;D50DF&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
               <property name="decimals">
                <number>3</number>
               </property>
@@ -942,10 +944,7 @@ face (riprap material). If D50DF = 0.0, then D50DF = D50S.</string>
             <item row="2" column="2">
              <widget class="QLabel" name="label_35">
               <property name="toolTip">
-               <string>Sediment gradient, ratio of D90 to D30 of the downstream face upper one
-foot of material (riprap) for a prescribed grid element failure location. If
-UNFCDF = 0.0 : UNDFCDF = UNFCS when D50DF = 0.0 and UNDFCDF
-= 3.0 when D50DF &gt; 0.0.</string>
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;UNDFCDF&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(dimensionless)&lt;/p&gt;&lt;p&gt;Sediment gradient, ratio of D90 to D30 of the downstream face upper one foot of material (riprap) for a prescribed grid element failure location.&lt;/p&gt;&lt;p&gt;If UNFCDF = 0.0 : UNDFCDF = UNFCS when D50DF = 0.0 and UNDFCDF = 3.0 when D50DF &amp;gt; 0.0.&lt;/p&gt;&lt;p&gt;Range: 1 - 20&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
               <property name="text">
                <string>Sediment (riprap) gradient</string>
@@ -957,6 +956,9 @@ UNFCDF = 0.0 : UNDFCDF = UNFCS when D50DF = 0.0 and UNDFCDF
             </item>
             <item row="2" column="3">
              <widget class="QDoubleSpinBox" name="unfcdf_dbox">
+              <property name="toolTip">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;UNDFCDF&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
               <property name="decimals">
                <number>3</number>
               </property>
@@ -968,19 +970,7 @@ UNFCDF = 0.0 : UNDFCDF = UNFCS when D50DF = 0.0 and UNDFCDF
             <item row="3" column="2">
              <widget class="QLabel" name="label_37">
               <property name="toolTip">
-               <string>The cumulative duration (hrs) that the levee erosion will initiate
-after the water surface exceeds the specified pipe elevation
-BRBOTTOMEL.
-If BREACHTIME = 0 if the level erosion begins immediately
-when pipe elevation is exceeded.
-If BREACHTIME &gt; or = 0.0, the start time for time to 1 ft
-and time to 2 ft is based on the model start time 0.0 hr.
-If BREACHTIME &lt; 0.0, the start time for time to 1 ft and
-time to 2 ft is the first dam or levee breach time for multiple
-breaches.
-If BREACHTIME = -99.0, the start time for time to 1 ft and
-time to 2 is the first dam or levee breach time for multiple
-breaches and BEACHTIME is reset to 0.0 hr.</string>
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;BEACHTIME&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(hrs)&lt;/p&gt;&lt;p&gt;The cumulative duration that the levee erosion will initiate after the water surface exceeds the specified pipe elevation BRBOTTOMEL.&lt;/p&gt;&lt;p&gt;If BREACHTIME = 0 if the level erosion begins immediately when pipe elevation is exceeded.&lt;/p&gt;&lt;p&gt;If BREACHTIME &amp;gt; or = 0.0, the start time for time to 1 ft and time to 2 ft is based on the model start time 0.0 hr.&lt;/p&gt;&lt;p&gt;If BREACHTIME &amp;lt; 0.0, the start time for time to 1 ft and time to 2 ft is the first dam or levee breach time for multiple breaches.&lt;/p&gt;&lt;p&gt;If BREACHTIME = -99.0, the start time for time to 1 ft and time to 2 is the first dam or levee breach time for multiple breaches and BEACHTIME is reset to 0.0 hr.&lt;/p&gt;&lt;p&gt;Range: - SIMULT to SIMULT-99&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
               <property name="text">
                <string>Breach time</string>
@@ -992,6 +982,9 @@ breaches and BEACHTIME is reset to 0.0 hr.</string>
             </item>
             <item row="3" column="3">
              <widget class="QDoubleSpinBox" name="breachtime_dbox">
+              <property name="toolTip">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;BEACHTIME&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
               <property name="decimals">
                <number>3</number>
               </property>
