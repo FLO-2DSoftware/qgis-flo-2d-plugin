@@ -37,6 +37,9 @@
        <verstretch>0</verstretch>
       </sizepolicy>
      </property>
+     <property name="toolTip">
+      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;ICHANGRID(I)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Channel grid element number.&lt;/p&gt;&lt;p&gt;Range: 1 - NNOD&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+     </property>
      <property name="text">
       <string>Channel segment</string>
      </property>
@@ -49,6 +52,9 @@
     <widget class="QComboBox" name="channel_segment_cbo">
      <property name="enabled">
       <bool>true</bool>
+     </property>
+     <property name="toolTip">
+      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;ICHANGRID(I)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
      </property>
     </widget>
    </item>
@@ -124,7 +130,7 @@
              </sizepolicy>
             </property>
             <property name="toolTip">
-             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;FROUDC&lt;/p&gt;&lt;p&gt;Maximum channel Froude number if the Froude number exceeds FROUDC, the Manning’s n roughness value is increased by 0.001. Set FROUDC = 0 for no adjustments of the n-value in a given channel segment. The increased nvalues are reported in the ROUGH.OUT and CHAN.RGH files.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;FROUDC(K)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Maximum channel Froude number if the Froude number exceeds FROUDC, the Manning’s n roughness value is increased by 0.001.&lt;/p&gt;&lt;p&gt;Set FROUDC = 0 for no adjustments of the n-value in a given channel segment.&lt;/p&gt;&lt;p&gt;The increased n values are reported in the ROUGH.OUT and CHAN.RGH files.&lt;/p&gt;&lt;p&gt;Range: 0.0 - 5&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
             </property>
             <property name="text">
              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Maximun Froude number&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
@@ -141,6 +147,9 @@
               <horstretch>0</horstretch>
               <verstretch>0</verstretch>
              </sizepolicy>
+            </property>
+            <property name="toolTip">
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;FROUDC(K)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
             </property>
             <property name="buttonSymbols">
              <enum>QAbstractSpinBox::UpDownArrows</enum>
@@ -169,7 +178,7 @@
              </sizepolicy>
             </property>
             <property name="toolTip">
-             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;ROUGHADJ&lt;/p&gt;&lt;p&gt;A coefficient used in the depth adjustment of the Manning’s n-value and the shallown value for channel segments.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;ROUGHADJ&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(dimensionless)&lt;/p&gt;&lt;p&gt;A coefficient used in the depth adjustment of the Manning’s n-value and the shallown value for channel segments.&lt;/p&gt;&lt;p&gt;Range: 0.00 - 1.2&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
             </property>
             <property name="text">
              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Roughness adjustment coefficient&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
@@ -186,6 +195,9 @@
               <horstretch>0</horstretch>
               <verstretch>0</verstretch>
              </sizepolicy>
+            </property>
+            <property name="toolTip">
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;ROUGHADJ&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
             </property>
             <property name="buttonSymbols">
              <enum>QAbstractSpinBox::UpDownArrows</enum>
@@ -214,7 +226,7 @@
              </sizepolicy>
             </property>
             <property name="toolTip">
-             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;ISEDN&lt;/p&gt;&lt;p&gt;Sediment transport equation or data group for routing by size fractions for the channel segment. Set ISED = 1 in the CONT.DAT file to use this option. Choose one of the two following options for each channel segment:&lt;/p&gt;&lt;p&gt;For sediment routing without size fractions: Set ISEDN(K) = 1 - 11 (one of eleven sediment transport equations).&lt;/p&gt;&lt;p&gt;or&lt;/p&gt;&lt;p&gt;For sediment routing with size fractions: Set ISEDN(K) = sediment data group (Line 3 in SED.DAT which includes a sediment transport equation).&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;ISEDN(K)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Sediment transport equation or data group for routing by size fractions for the channel segment.&lt;/p&gt;&lt;p&gt;Set ISED = 1 in the CONT.DAT file to use this option.&lt;/p&gt;&lt;p&gt;Choose one of the two following options for each channel segment:&lt;/p&gt;&lt;p&gt;For sediment routing without size fractions: Set ISEDN(K) = 1 - 11 (one of eleven sediment transport equations).&lt;/p&gt;&lt;p&gt;or&lt;/p&gt;&lt;p&gt;For sediment routing with size fractions: Set ISEDN(K) = sediment data group (Line 3 in SED.DAT which includes a sediment transport equation).&lt;/p&gt;&lt;p&gt;Range: 0 - 10&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
             </property>
             <property name="text">
              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Transport equation (if ISED = 1 in CONT.DAT)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
@@ -231,6 +243,9 @@
               <horstretch>0</horstretch>
               <verstretch>0</verstretch>
              </sizepolicy>
+            </property>
+            <property name="toolTip">
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;ISEDN(K)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
             </property>
             <item>
              <property name="text">
@@ -296,8 +311,7 @@
           <item>
            <widget class="QLabel" name="label">
             <property name="toolTip">
-             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;IBASEFLOW&lt;/p&gt;&lt;p&gt;Baseflow of a channel to establish a flow condition for floodwave
-arrival time segment is used.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;IBASEFLOW(K)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Baseflow of a channel to establish a flow condition for floodwave arrival time.&lt;/p&gt;&lt;p&gt;Place this line after each segment if more than one segment is used.&lt;/p&gt;&lt;p&gt;Range: 0 - No upper limit&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
             </property>
             <property name="text">
              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Channel Baseflow&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
@@ -314,6 +328,9 @@ arrival time segment is used.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               <horstretch>0</horstretch>
               <verstretch>0</verstretch>
              </sizepolicy>
+            </property>
+            <property name="toolTip">
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;IBASEFLOW(K)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
             </property>
             <property name="buttonSymbols">
              <enum>QAbstractSpinBox::UpDownArrows</enum>
@@ -348,7 +365,7 @@ arrival time segment is used.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
       <item row="0" column="0">
        <widget class="QLabel" name="label_23">
         <property name="toolTip">
-         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;DEPINITIAL&lt;/p&gt;&lt;p&gt;DEPINITIAL(K) = 0 for no initial channel flow depth in the channel segment (default).&lt;/p&gt;&lt;p&gt;DEPINITIAL(K) = Initial flow depth for the all channel elements in the channel segment (optional).&lt;/p&gt;&lt;p&gt;DEPINITIAL(K) = -1 to assign an initial water surface elevation to a channel reach.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;DEPINITIAL(K)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;DEPINITIAL(K) = 0 for no initial channel flow depth in the channel segment (default).&lt;/p&gt;&lt;p&gt;DEPINITIAL(K) = Initial flow depth for the all channel elements in the channel segment (optional).&lt;/p&gt;&lt;p&gt;DEPINITIAL(K) = -1 to assign an initial water surface eleva tion to a channel reach.&lt;/p&gt;&lt;p&gt;Range: &lt;/p&gt;&lt;p&gt;0.0 - No upper limit&lt;/p&gt;&lt;p&gt;-1&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
         </property>
         <property name="text">
          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Initial flow depth for all channel elements&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
@@ -357,6 +374,9 @@ arrival time segment is used.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
       </item>
       <item row="0" column="1">
        <widget class="QDoubleSpinBox" name="initial_flow_for_all_dbox">
+        <property name="toolTip">
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;DEPINITIAL(K)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+        </property>
         <property name="decimals">
          <number>4</number>
         </property>
@@ -407,7 +427,7 @@ arrival time segment is used.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                </sizepolicy>
               </property>
               <property name="toolTip">
-               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;IEND&lt;/p&gt;&lt;p&gt;Last channel element for which a starting water surface elevation is specified.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;IEND&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Last channel element for which a starting water surface elevation is specified.&lt;/p&gt;&lt;p&gt;Range: 1 - NNOD&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
               <property name="text">
                <string>Last element</string>
@@ -426,7 +446,7 @@ arrival time segment is used.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                </sizepolicy>
               </property>
               <property name="toolTip">
-               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;WSELEND&lt;/p&gt;&lt;p&gt;Ending water surface elevation for the channel element IEND (ft or m).&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;WSELEND&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(ft or m)&lt;/p&gt;&lt;p&gt;Ending water surface elevation for the channel element IEND.&lt;/p&gt;&lt;p&gt;Range:&lt;/p&gt;&lt;p&gt;0 - 30,000 ft&lt;/p&gt;&lt;p&gt;0 - 9,000 m&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
               <property name="text">
                <string>Ending water elevation</string>
@@ -439,7 +459,7 @@ arrival time segment is used.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
             <item row="1" column="0">
              <widget class="QSpinBox" name="last_element_box">
               <property name="toolTip">
-               <string/>
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;IEND&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
               <property name="maximum">
                <number>99999999</number>
@@ -455,7 +475,7 @@ arrival time segment is used.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                </sizepolicy>
               </property>
               <property name="toolTip">
-               <string/>
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;WSELEND&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
               <property name="buttonSymbols">
                <enum>QAbstractSpinBox::UpDownArrows</enum>
@@ -489,7 +509,7 @@ arrival time segment is used.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                </sizepolicy>
               </property>
               <property name="toolTip">
-               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;ISTART&lt;/p&gt;&lt;p&gt;First channel element for which a starting water surface elevation is specified.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;ISTART&lt;/span&gt;&lt;/p&gt;&lt;p&gt;First channel element for which a starting water surface elevation is specified.&lt;/p&gt;&lt;p&gt;Range: 1 - NNOD&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
               <property name="text">
                <string>First element</string>
@@ -508,7 +528,7 @@ arrival time segment is used.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                </sizepolicy>
               </property>
               <property name="toolTip">
-               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;WSELSTART&lt;/p&gt;&lt;p&gt;Starting water surface elevation for the channel element ISTART (ft or m).&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;WSELSTART&lt;/span&gt;&lt;/p&gt;&lt;p&gt; (ft or m)&lt;/p&gt;&lt;p&gt;Starting water surface elevation for the channel element ISTART.&lt;/p&gt;&lt;p&gt;Range:&lt;br/&gt;0 - 30,000 ft&lt;/p&gt;&lt;p&gt;0 - 9,000 m&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
               <property name="text">
                <string>Starting water elevation</string>
@@ -521,7 +541,7 @@ arrival time segment is used.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
             <item row="1" column="0">
              <widget class="QSpinBox" name="first_element_box">
               <property name="toolTip">
-               <string/>
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;ISTART&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
               <property name="maximum">
                <number>99999999</number>
@@ -537,7 +557,7 @@ arrival time segment is used.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                </sizepolicy>
               </property>
               <property name="toolTip">
-               <string/>
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;WSELSTART&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
               <property name="buttonSymbols">
                <enum>QAbstractSpinBox::UpDownArrows</enum>
@@ -564,6 +584,9 @@ arrival time segment is used.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
    </item>
    <item row="3" column="1" colspan="2">
     <widget class="QPushButton" name="view_channel_geometry_btn">
+     <property name="toolTip">
+      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Schematic Channel Segments.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+     </property>
      <property name="text">
       <string>View Schematized Channel Geometry</string>
      </property>
