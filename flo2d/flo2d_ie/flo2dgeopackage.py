@@ -2528,6 +2528,12 @@ class Flo2dGeoPackage(GeoPackageUtils):
             self.uc.log_info("ERROR: Importing ARF data from HDF5 failed!")
 
     def import_mult(self):
+        if self.parsed_format == self.FORMAT_DAT:
+            return self.import_mult_dat()
+        elif self.parsed_format == self.FORMAT_HDF5:
+            return self.import_mult_hdf5()
+
+    def import_mult_dat(self):
         try:
             self.clear_tables("mult", "mult_areas", "mult_lines", "mult_cells")
             head, data = self.parser.parse_mult()
@@ -2600,6 +2606,97 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 + "\n__________________________________________________",
                 e,
             )
+
+    def import_mult_hdf5(self):
+        mult_group = self.parser.read_groups("Input/Multiple Channels")
+        if mult_group:
+            mult_group = mult_group[0]
+            try:
+                mult_sql = [
+                    """INSERT INTO mult (wmc, wdrall, dmall, nodchansall,
+                                                 xnmultall, sslopemin, sslopemax, avuld50, simple_n) VALUES""",
+                    9,
+                ]
+                mult_area_sql = [
+                    """INSERT INTO mult_areas (geom, wdr, dm, nodchns, xnmult) VALUES""",
+                    5,
+                ]
+                mult_cells_sql = [
+                    """INSERT INTO mult_cells (area_fid, grid_fid, wdr, dm, nodchns, xnmult) VALUES""",
+                    6,
+                ]
+
+                self.clear_tables("mult", "mult_areas", "mult_lines", "mult_cells")
+
+                # Process MULT_GLOBAL dataset
+                if "MULT_GLOBAL" in mult_group.datasets:
+                    data = mult_group.datasets["MULT_GLOBAL"].data
+                    for row in data:
+                        wmc, wdrall, dmall, nodchansall, xnmultall, sslopemin, sslopemax, avuld50, simple_n = row
+                        mult_sql += [(wmc, wdrall, dmall, nodchansall, xnmultall, sslopemin, sslopemax, avuld50, simple_n)]
+
+                # Process MULT dataset
+                if "MULT" in mult_group.datasets:
+                    data = mult_group.datasets["MULT"].data
+                    for i, row in enumerate(data, start=1):
+                        gid, wdr, dm, nodchns, xnmult = row
+                        geom = self.build_square(self.grid_centroids([int(gid)])[int(gid)], self.shrink)
+                        mult_area_sql += [(geom, wdr, dm, int(nodchns), xnmult)]
+                        mult_cells_sql += [(i, int(gid), wdr, dm, int(nodchns), xnmult)]
+
+                self.gutils.disable_geom_triggers()
+                if mult_sql:
+                    self.batch_execute(mult_sql)
+
+                if mult_area_sql:
+                    self.batch_execute(mult_area_sql)
+
+                if mult_cells_sql:
+                    self.batch_execute(mult_cells_sql)
+                self.gutils.enable_geom_triggers()
+
+            except Exception as e:
+                self.uc.show_error(
+                    "Error while importing MULT data from hdf5 file!"
+                    + "\n__________________________________________________",
+                    e,
+                )
+                self.uc.log_info("Error while importing MULT data from hdf5 file!")
+
+            # Import Simplified Multiple Channels:
+            try:
+                simple_mult_cells_sql = [
+                    """INSERT INTO simple_mult_cells (grid_fid) VALUES""",
+                    1,
+                ]
+
+                self.clear_tables("simple_mult_lines", "simple_mult_cells")
+
+                self.gutils.disable_geom_triggers()
+                # Process SIMPLE_MULT_GLOBAL dataset
+                if "SIMPLE_MULT_GLOBAL" in mult_group.datasets:
+                    data = mult_group.datasets["SIMPLE_MULT_GLOBAL"].data
+                    n_value = data[0]
+                    self.gutils.execute(f"""UPDATE mult SET simple_n = '{n_value[0]}'; """)
+
+                # Process SIMPLE_MULT dataset
+                if "SIMPLE_MULT" in mult_group.datasets:
+                    data = mult_group.datasets["SIMPLE_MULT"].data
+                    for grid in data:
+                        gid = int(grid[0])
+                        simple_mult_cells_sql += [(gid,)]
+
+                if simple_mult_cells_sql:
+                    self.batch_execute(simple_mult_cells_sql)
+                self.gutils.enable_geom_triggers()
+
+            except Exception as e:
+                self.uc.show_error(
+                    "Error while importing SIMPLE_MULT data from hdf5 file!"
+                    + "\n__________________________________________________",
+                    e,
+                )
+                self.uc.log_info("Error while importing SIMPLE_MULT data from hdf5 file!")
 
     def import_sed(self):
         if self.parsed_format == self.FORMAT_DAT:
@@ -9577,13 +9674,13 @@ class Flo2dGeoPackage(GeoPackageUtils):
             try:
                 # Multiple Channels (not simplified):
                 mult_cell_sql = """SELECT grid_fid, wdr, dm, nodchns, xnmult FROM mult_cells ORDER BY grid_fid ;"""
-                global_data_values = " {}" * 8 + "\n"
+                global_data_values = " {}" * 9 + "\n"
                 five_values = " {}" * 5 + "\n"
 
                 mult_group.create_dataset('MULT_GLOBAL', [])
                 mult_group.create_dataset('MULT', [])
 
-                mult_group.datasets["MULT_GLOBAL"].data.append(create_array(global_data_values, 8, np.float_, head[1:]))
+                mult_group.datasets["MULT_GLOBAL"].data.append(create_array(global_data_values, 9, np.float_, head[1:]))
 
                 mult_cells = self.execute(mult_cell_sql).fetchall()
 
