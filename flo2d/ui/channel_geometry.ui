@@ -26,6 +26,9 @@
       <layout class="QHBoxLayout" name="horizontalLayout">
        <item>
         <widget class="QLabel" name="label">
+         <property name="toolTip">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;ICHANGRID(I)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Channel grid element number.&lt;/p&gt;&lt;p&gt;Range: 1 - NNOD&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
          <property name="text">
           <string>Channel segment</string>
          </property>
@@ -35,7 +38,11 @@
         </widget>
        </item>
        <item>
-        <widget class="QComboBox" name="channel_segment_cbo"/>
+        <widget class="QComboBox" name="channel_segment_cbo">
+         <property name="toolTip">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;ICHANGRID(I)&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
+        </widget>
        </item>
       </layout>
      </item>
@@ -77,7 +84,7 @@
              </size>
             </property>
             <property name="toolTip">
-             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;FROUDC&lt;/p&gt;&lt;p&gt;Maximum channel Froude number if the Froude number exceeds FROUDC, the Manning’s n roughness value is increased by 0.001. Set FROUDC = 0 for no adjustments of the n-value in a given channel segment. The increased nvalues are reported in the ROUGH.OUT and CHAN.RGH files.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;FROUDC(K)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Maximum channel Froude number if the Froude number exceeds FROUDC, the Manning’s n roughness value is increased by 0.001.&lt;/p&gt;&lt;p&gt;Set FROUDC = 0 for no adjustments of the n-value in a given channel segment.&lt;/p&gt;&lt;p&gt;The increased n values are reported in the ROUGH.OUT and CHAN.RGH files.&lt;/p&gt;&lt;p&gt;Range: 0.0 - 5&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
             </property>
             <property name="text">
              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Maximum Froude number&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
@@ -94,6 +101,9 @@
               <horstretch>0</horstretch>
               <verstretch>0</verstretch>
              </sizepolicy>
+            </property>
+            <property name="toolTip">
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;FROUDC(K)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
             </property>
             <property name="buttonSymbols">
              <enum>QAbstractSpinBox::UpDownArrows</enum>
@@ -128,7 +138,7 @@
              </size>
             </property>
             <property name="toolTip">
-             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;ROUGHADJ&lt;/p&gt;&lt;p&gt;A coefficient used in the depth adjustment of the Manning’s n-value and the shallown value for channel segments.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;ROUGHADJ&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(dimensionless)&lt;/p&gt;&lt;p&gt;A coefficient used in the depth adjustment of the Manning’s n-value and the shallown value for channel segments.&lt;/p&gt;&lt;p&gt;Range: 0.00 - 1.2&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
             </property>
             <property name="text">
              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Roughness adjustment&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
@@ -145,6 +155,9 @@
               <horstretch>0</horstretch>
               <verstretch>0</verstretch>
              </sizepolicy>
+            </property>
+            <property name="toolTip">
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;ROUGHADJ&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
             </property>
             <property name="buttonSymbols">
              <enum>QAbstractSpinBox::UpDownArrows</enum>
@@ -179,7 +192,7 @@
              </size>
             </property>
             <property name="toolTip">
-             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;ISEDN&lt;/p&gt;&lt;p&gt;Sediment transport equation or data group for routing by size fractions for the channel segment. Set ISED = 1 in the CONT.DAT file to use this option. Choose one of the two following options for each channel segment:&lt;/p&gt;&lt;p&gt;For sediment routing without size fractions: Set ISEDN(K) = 1 - 11 (one of eleven sediment transport equations).&lt;/p&gt;&lt;p&gt;or&lt;/p&gt;&lt;p&gt;For sediment routing with size fractions: Set ISEDN(K) = sediment data group (Line 3 in SED.DAT which includes a sediment transport equation).&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;ISEDN(K)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Sediment transport equation or data group for routing by size fractions for the channel segment.&lt;/p&gt;&lt;p&gt;Set ISED = 1 in the CONT.DAT file to use this option.&lt;/p&gt;&lt;p&gt;Choose one of the two following options for each channel segment:&lt;/p&gt;&lt;p&gt;For sediment routing without size fractions: Set ISEDN(K) = 1 - 11 (one of eleven sediment transport equations).&lt;/p&gt;&lt;p&gt;or&lt;/p&gt;&lt;p&gt;For sediment routing with size fractions: Set ISEDN(K) = sediment data group (Line 3 in SED.DAT which includes a sediment transport equation).&lt;/p&gt;&lt;p&gt;Range: 0 - 10&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
             </property>
             <property name="text">
              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Transport equation (if ISED = 1 in CONT.DAT)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
@@ -196,6 +209,9 @@
               <horstretch>0</horstretch>
               <verstretch>0</verstretch>
              </sizepolicy>
+            </property>
+            <property name="toolTip">
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;ISEDN(K)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
             </property>
             <item>
              <property name="text">
@@ -273,7 +289,7 @@
              </size>
             </property>
             <property name="toolTip">
-             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;IBASEFLOW&lt;/p&gt;&lt;p&gt;Baseflow of a channel to establish a flow condition for floodwave arrival time. Place this line after each segment if more than one segment is used.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;IBASEFLOW(K)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Baseflow of a channel to establish a flow condition for floodwave arrival time.&lt;/p&gt;&lt;p&gt;Place this line after each segment if more than one segment is used.&lt;/p&gt;&lt;p&gt;Range: 0 - No upper limit&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
             </property>
             <property name="text">
              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Channel Baseflow&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
@@ -290,6 +306,9 @@
               <horstretch>0</horstretch>
               <verstretch>0</verstretch>
              </sizepolicy>
+            </property>
+            <property name="toolTip">
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;IBASEFLOW(K)&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
             </property>
             <property name="buttonSymbols">
              <enum>QAbstractSpinBox::UpDownArrows</enum>
@@ -328,8 +347,8 @@
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>1063</width>
-        <height>938</height>
+        <width>1097</width>
+        <height>467</height>
        </rect>
       </property>
       <layout class="QGridLayout" name="gridLayout_26">
@@ -340,10 +359,10 @@
            <property name="title">
             <string>Initial flow depth</string>
            </property>
-           <property name="collapsed" stdset="0">
+           <property name="collapsed">
             <bool>true</bool>
            </property>
-           <property name="saveCollapsedState" stdset="0">
+           <property name="saveCollapsedState">
             <bool>false</bool>
            </property>
            <layout class="QGridLayout" name="gridLayout_8">
@@ -373,7 +392,7 @@
                        </sizepolicy>
                       </property>
                       <property name="toolTip">
-                       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;ISTART&lt;/p&gt;&lt;p&gt;First channel element for which a starting water surface elevation is specified.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;ISTART&lt;/span&gt;&lt;/p&gt;&lt;p&gt;First channel element for which a starting water surface elevation is specified.&lt;/p&gt;&lt;p&gt;Range: 1 - NNOD&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                       </property>
                       <property name="text">
                        <string>First element</string>
@@ -392,7 +411,7 @@
                        </sizepolicy>
                       </property>
                       <property name="toolTip">
-                       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;WSELSTART&lt;/p&gt;&lt;p&gt;Starting water surface elevation for the channel element ISTART (ft or m).&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;WSELSTART&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(ft or m)&lt;/p&gt;&lt;p&gt;Starting water surface elevation for the channel element ISTART.&lt;/p&gt;&lt;p&gt;Range:&lt;/p&gt;&lt;p&gt;0 - 30,000 ft&lt;/p&gt;&lt;p&gt;0 - 9,000 m&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                       </property>
                       <property name="text">
                        <string>Starting water elevation</string>
@@ -423,7 +442,7 @@
                        </size>
                       </property>
                       <property name="toolTip">
-                       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;ISTART&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                       </property>
                       <property name="maximum">
                        <number>99999999</number>
@@ -451,7 +470,7 @@
                        </size>
                       </property>
                       <property name="toolTip">
-                       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;WSELSTART&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                       </property>
                       <property name="buttonSymbols">
                        <enum>QAbstractSpinBox::UpDownArrows</enum>
@@ -485,7 +504,7 @@
                        </sizepolicy>
                       </property>
                       <property name="toolTip">
-                       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;IEND&lt;/p&gt;&lt;p&gt;Last channel element for which a starting water surface elevation is specified.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;IEND&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Last channel element for which a starting water surface elevation is specified.&lt;/p&gt;&lt;p&gt;Range: 1 - NNOD&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                       </property>
                       <property name="text">
                        <string>Last element</string>
@@ -504,7 +523,7 @@
                        </sizepolicy>
                       </property>
                       <property name="toolTip">
-                       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;WSELEND&lt;/p&gt;&lt;p&gt;Ending water surface elevation for the channel element IEND (ft or m).&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;WSELEND&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(ft or m)&lt;/p&gt;&lt;p&gt;Ending water surface elevation for the channel element IEND.&lt;/p&gt;&lt;p&gt;Range:&lt;/p&gt;&lt;p&gt;0 - 30,000 ft&lt;/p&gt;&lt;p&gt;0 - 9,000 m&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                       </property>
                       <property name="text">
                        <string>Ending water elevation</string>
@@ -535,7 +554,7 @@
                        </size>
                       </property>
                       <property name="toolTip">
-                       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;IEND&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                       </property>
                       <property name="maximum">
                        <number>99999999</number>
@@ -569,7 +588,7 @@
                        </size>
                       </property>
                       <property name="toolTip">
-                       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;WSELEND&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                       </property>
                       <property name="buttonSymbols">
                        <enum>QAbstractSpinBox::UpDownArrows</enum>
@@ -596,7 +615,7 @@
                 <item row="0" column="0">
                  <widget class="QLabel" name="label_23">
                   <property name="toolTip">
-                   <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;DEPINITIAL&lt;/p&gt;&lt;p&gt;DEPINITIAL(K) = 0 for no initial channel flow depth in the channel segment (default).&lt;/p&gt;&lt;p&gt;DEPINITIAL(K) = Initial flow depth for the all channel elements in the channel segment (optional).&lt;/p&gt;&lt;p&gt;DEPINITIAL(K) = -1 to assign an initial water surface elevation to a channel reach.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                   <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;DEPINITIAL(K)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;DEPINITIAL(K) = 0 for no initial channel flow depth in the channel segment (default).&lt;/p&gt;&lt;p&gt;DEPINITIAL(K) = Initial flow depth for the all channel elements in the channel segment (optional).&lt;/p&gt;&lt;p&gt;DEPINITIAL(K) = -1 to assign an initial water surface eleva tion to a channel reach.&lt;/p&gt;&lt;p&gt;Range: &lt;/p&gt;&lt;p&gt;0.0 - No upper limit&lt;/p&gt;&lt;p&gt;-1&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                   </property>
                   <property name="text">
                    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Initial flow depth for all elements of this channel segment&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
@@ -626,6 +645,9 @@
                     <height>16777215</height>
                    </size>
                   </property>
+                  <property name="toolTip">
+                   <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;DEPINITIAL(K)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                  </property>
                   <property name="buttonSymbols">
                    <enum>QAbstractSpinBox::UpDownArrows</enum>
                   </property>
@@ -652,10 +674,10 @@
            <property name="title">
             <string>Grid elements of selected channel segment</string>
            </property>
-           <property name="collapsed" stdset="0">
-            <bool>true</bool>
+           <property name="collapsed">
+            <bool>false</bool>
            </property>
-           <property name="saveCollapsedState" stdset="0">
+           <property name="saveCollapsedState">
             <bool>false</bool>
            </property>
            <layout class="QGridLayout" name="gridLayout_9">
@@ -682,7 +704,7 @@
                  <item row="0" column="0">
                   <widget class="QLabel" name="label_2">
                    <property name="toolTip">
-                    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;ICHANGRID&lt;/p&gt;&lt;p&gt;Channel grid element number.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;ICHANGRID(I)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Channel grid element number.&lt;/p&gt;&lt;p&gt;Range: 1 - NNOD&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                    </property>
                    <property name="text">
                     <string>Grid element number</string>
@@ -695,7 +717,7 @@
                  <item row="0" column="1">
                   <widget class="QComboBox" name="grid_element_cbo">
                    <property name="toolTip">
-                    <string/>
+                    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;ICHANGRID(I)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                    </property>
                   </widget>
                  </item>
@@ -712,7 +734,7 @@
                     </sizepolicy>
                    </property>
                    <property name="toolTip">
-                    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;SHAPE = ‘R’, rectangular channel geometry (width and depth data).&lt;/p&gt;&lt;p&gt;SHAPE = ‘V’, variable area channel geometry (power relationships).&lt;/p&gt;&lt;p&gt;SHAPE = ‘T’, trapezoidal channel (bottom width, depth and slopes data).&lt;/p&gt;&lt;p&gt;SHAPE = ‘N’, channel cross sections (cross section survey data).&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;SHAPE&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Character line identifier; &lt;/p&gt;&lt;p&gt;SHAPE = ‘R’, rectangular channel geometry (width and depth data). &lt;/p&gt;&lt;p&gt;SHAPE = ‘V’, variable area channel geometry (power relationships). &lt;/p&gt;&lt;p&gt;SHAPE = ‘T’, trapezoidal channel (bottom width, depth and slopes data). &lt;/p&gt;&lt;p&gt;SHAPE = ‘N’, channel cross sections (cross section survey data). &lt;/p&gt;&lt;p&gt;Variable is case sensitive and it must be upper case.&lt;/p&gt;&lt;p&gt;Range: R, V, T or N&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                    </property>
                    <property name="text">
                     <string>Shape</string>
@@ -729,6 +751,9 @@
                      <horstretch>0</horstretch>
                      <verstretch>0</verstretch>
                     </sizepolicy>
+                   </property>
+                   <property name="toolTip">
+                    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;SHAPE&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                    </property>
                    <item>
                     <property name="text">
@@ -759,7 +784,7 @@
                  <item row="0" column="0">
                   <widget class="QLabel" name="label_15">
                    <property name="toolTip">
-                    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;FCN&lt;/p&gt;&lt;p&gt;Average Manning’s n roughness coefficient the channel in the grid element ICHANGRID&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;FCN(I)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(dimensionless)&lt;/p&gt;&lt;p&gt;Average Manning’s n roughness coefficient the channel in the grid element ICHANGRID.&lt;/p&gt;&lt;p&gt;Range: 0.01 - 0.15&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                    </property>
                    <property name="text">
                     <string>Manning's n</string>
@@ -768,6 +793,9 @@
                  </item>
                  <item row="0" column="1">
                   <widget class="QDoubleSpinBox" name="manning_dbox">
+                   <property name="toolTip">
+                    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;FCN(I) &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                   </property>
                    <property name="decimals">
                     <number>4</number>
                    </property>
@@ -780,7 +808,7 @@
                  <item row="0" column="0">
                   <widget class="QLabel" name="label_16">
                    <property name="toolTip">
-                    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;XLEN&lt;/p&gt;&lt;p&gt;Channel length contained within the grid element ICHANGRID (ft). If more than one channel exists in a given grid element, assign XLEN(I) equal to the average representative flow length in one direction.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;XLEN(I)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(ft or m)&lt;/p&gt;&lt;p&gt;Channel length contained within the grid element ICHANGRID (ft).&lt;/p&gt;&lt;p&gt;If more than one channel exists in a given grid element, assign XLEN(I) equal to the average representative flow length in one direction&lt;/p&gt;&lt;p&gt;Range: 0.01 - No upper limit&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                    </property>
                    <property name="text">
                     <string>Channel  length</string>
@@ -789,6 +817,9 @@
                  </item>
                  <item row="0" column="1">
                   <widget class="QDoubleSpinBox" name="channel_length_dbox">
+                   <property name="toolTip">
+                    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;XLEN(I)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                   </property>
                    <property name="decimals">
                     <number>2</number>
                    </property>
@@ -809,7 +840,7 @@
                    <item row="0" column="0">
                     <widget class="QLabel" name="label_3">
                      <property name="toolTip">
-                      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;BANKELL&lt;/p&gt;&lt;p&gt;Left bank elevation looking downstream.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;BANKELL(I)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(ft or m)&lt;/p&gt;&lt;p&gt;Left bank elevation looking downstream &lt;/p&gt;&lt;p&gt;Range: 0.01 - No upper limit&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                      </property>
                      <property name="text">
                       <string>Left bank elevation</string>
@@ -822,7 +853,7 @@
                    <item row="1" column="0">
                     <widget class="QLabel" name="label_4">
                      <property name="toolTip">
-                      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;BANKELR&lt;/p&gt;&lt;p&gt;Right bank elevation looking downstream&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;BANKELR(I)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(ft or m)&lt;/p&gt;&lt;p&gt;Right bank elevation looking downstream.&lt;/p&gt;&lt;p&gt;Range: 0.01 - No upper limit&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                      </property>
                      <property name="text">
                       <string>Right bank elevation</string>
@@ -838,6 +869,9 @@
                   <layout class="QGridLayout" name="gridLayout_10">
                    <item row="0" column="0">
                     <widget class="QDoubleSpinBox" name="left_bank_elevation_dbox">
+                     <property name="toolTip">
+                      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;BANKELL(I)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                     </property>
                      <property name="decimals">
                       <number>4</number>
                      </property>
@@ -848,6 +882,9 @@
                    </item>
                    <item row="1" column="0">
                     <widget class="QDoubleSpinBox" name="right_bank_elevation_dbox">
+                     <property name="toolTip">
+                      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;BANKELR(I)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                     </property>
                      <property name="decimals">
                       <number>4</number>
                      </property>
@@ -870,7 +907,7 @@
                    <item row="0" column="0">
                     <widget class="QLabel" name="label_9">
                      <property name="toolTip">
-                      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;ZL&lt;/p&gt;&lt;p&gt;ZL(I) is the left side slope of the trapezoidal channel.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;ZL(I)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(dimensionless)&lt;/p&gt;&lt;p&gt;ZL(I) is the left side slope of the trapezoidal channel.&lt;/p&gt;&lt;p&gt;Range:&lt;/p&gt;&lt;p&gt;0.01 - 100&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                      </property>
                      <property name="text">
                       <string>Left side slope</string>
@@ -883,7 +920,7 @@
                    <item row="1" column="0">
                     <widget class="QLabel" name="label_11">
                      <property name="toolTip">
-                      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;ZR&lt;/p&gt;&lt;p&gt;ZR(I) is the right side slope of the trapezoidal channel.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;ZR(I)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(dimensionless)&lt;/p&gt;&lt;p&gt;ZR(I) is the right side slope of the trapezoidal channel.&lt;/p&gt;&lt;p&gt;Range: 0.01 - 100&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                      </property>
                      <property name="text">
                       <string>Right side slope</string>
@@ -899,6 +936,9 @@
                   <layout class="QGridLayout" name="gridLayout_2">
                    <item row="0" column="0">
                     <widget class="QDoubleSpinBox" name="left_side_slope_dbox">
+                     <property name="toolTip">
+                      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;ZL(I)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                     </property>
                      <property name="decimals">
                       <number>4</number>
                      </property>
@@ -909,6 +949,9 @@
                    </item>
                    <item row="1" column="0">
                     <widget class="QDoubleSpinBox" name="right_side_slope_dbox">
+                     <property name="toolTip">
+                      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;ZR(I)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                     </property>
                      <property name="decimals">
                       <number>4</number>
                      </property>
@@ -930,6 +973,9 @@
                   <layout class="QGridLayout" name="gridLayout_6">
                    <item row="0" column="0">
                     <widget class="QDoubleSpinBox" name="average_channel_width_dbox">
+                     <property name="toolTip">
+                      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;FCW(I)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                     </property>
                      <property name="decimals">
                       <number>4</number>
                      </property>
@@ -940,6 +986,9 @@
                    </item>
                    <item row="1" column="0">
                     <widget class="QDoubleSpinBox" name="thalweg_channel_depth_dbox">
+                     <property name="toolTip">
+                      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;FCD(I)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                     </property>
                      <property name="decimals">
                       <number>4</number>
                      </property>
@@ -955,7 +1004,7 @@
                    <item row="0" column="0">
                     <widget class="QLabel" name="label_5">
                      <property name="toolTip">
-                      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;FCW&lt;/p&gt;&lt;p&gt;Set FCW(I) = channel width for rectangular channel.&lt;/p&gt;&lt;p&gt;Set FCW(I) = width of channel base for trapezoidal channel.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;FCW(I)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(ft or m)&lt;/p&gt;&lt;p&gt;Set FCW(I) = channel width for rectangular channel.&lt;/p&gt;&lt;p&gt;Set FCW(I) = width of channel base for trapezoidal channel. &lt;/p&gt;&lt;p&gt;Range: 0.1 - No upper limit&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                      </property>
                      <property name="text">
                       <string>Average width</string>
@@ -968,7 +1017,7 @@
                    <item row="1" column="0">
                     <widget class="QLabel" name="label_7">
                      <property name="toolTip">
-                      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;FCD&lt;/p&gt;&lt;p&gt;Channel thalweg depth (ft or m). The thalweg depth is the deepest part of the channel measured from the lowest top of bank&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;FCD(I)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(ft or m)&lt;/p&gt;&lt;p&gt;Channel thalweg depth.&lt;/p&gt;&lt;p&gt;The thalweg depth is the deepest part of the channel measured from the lowest top of bank.&lt;/p&gt;&lt;p&gt;Range: &lt;/p&gt;&lt;p&gt;0.01 - 1000 ft&lt;/p&gt;&lt;p&gt;0.003048 - 300 m&lt;/p&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                      </property>
                      <property name="text">
                       <string>Thalweg depth</string>
@@ -984,6 +1033,9 @@
                </item>
                <item row="1" column="6">
                 <widget class="QLabel" name="label_8">
+                 <property name="toolTip">
+                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;NXSECNUM(I)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Surveyed cross section number assigned in the XSEC.DAT file that will represent the specific channel element.&lt;/p&gt;&lt;p&gt;This variable is used only for the cross section data option. &lt;/p&gt;&lt;p&gt;Set NXSECNUM = 0, if there is no cross section data for the channel element (I). &lt;/p&gt;&lt;p&gt;The cross section data is interpolated and assigned in the PROFILES program. &lt;/p&gt;&lt;p&gt;Range: 1 -  NNODC&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                 </property>
                  <property name="text">
                   <string>XS number</string>
                  </property>
@@ -1008,6 +1060,9 @@
                    <width>65</width>
                    <height>0</height>
                   </size>
+                 </property>
+                 <property name="toolTip">
+                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;NXSECNUM(I)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                  </property>
                  <property name="frameShape">
                   <enum>QFrame::Box</enum>
