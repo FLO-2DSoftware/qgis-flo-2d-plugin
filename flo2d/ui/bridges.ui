@@ -58,6 +58,9 @@
      <layout class="QGridLayout" name="gridLayout_12">
       <item row="0" column="0">
        <widget class="QLabel" name="label_2">
+        <property name="toolTip">
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;IBTYPE&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Type of bridge configuration&lt;/p&gt;&lt;p&gt;Range: 1 - 4&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+        </property>
         <property name="text">
          <string>Type of bridge configuration</string>
         </property>
@@ -68,6 +71,9 @@
       </item>
       <item row="0" column="1">
        <widget class="QComboBox" name="IBTYPE_cbo">
+        <property name="toolTip">
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;IBTYPE&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+        </property>
         <property name="editable">
          <bool>false</bool>
         </property>
@@ -169,6 +175,9 @@
                 <height>16777215</height>
                </size>
               </property>
+              <property name="toolTip">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;COEFF*&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
              </widget>
             </item>
             <item row="0" column="0">
@@ -180,7 +189,7 @@
                </sizepolicy>
               </property>
               <property name="toolTip">
-               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;COEFF*&lt;/p&gt;&lt;p&gt;Overall bridge discharge coefficient – assigned or computed (default = 0.).&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;COEFF*&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(dimensionless)&lt;/p&gt;&lt;p&gt;Overall bridge discharge coefficient – assigned or computed (default = 0.).&lt;/p&gt;&lt;p&gt;Range: 0.1 - 1.0&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
               <property name="text">
                <string>Overall bridge discharge coefficient</string>
@@ -203,7 +212,7 @@
                </sizepolicy>
               </property>
               <property name="toolTip">
-               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;C_PRIME_USER*&lt;/p&gt;&lt;p&gt;Baseline bridge discharge coefficient to be adjusted with detail coefficients.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;C_PRIME_USER*&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(dimensionless)&lt;/p&gt;&lt;p&gt;Baseline bridge discharge coefficient to be adjusted with detail coefficients.&lt;/p&gt;&lt;p&gt;Range: 0.5 - 1.0&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
               <property name="text">
                <string>Baseline bridge discharge coefficient</string>
@@ -233,6 +242,9 @@
                 <height>16777215</height>
                </size>
               </property>
+              <property name="toolTip">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;C_PRIME_USER*&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
              </widget>
             </item>
            </layout>
@@ -248,7 +260,7 @@
                </sizepolicy>
               </property>
               <property name="toolTip">
-               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;KF_COEF*&lt;/p&gt;&lt;p&gt;Froude number coefficient – assigned or computed (= 0.)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;KF_COEF*&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(dimensionless)&lt;/p&gt;&lt;p&gt;Froude number coefficient – assigned or computed (= 0.).&lt;/p&gt;&lt;p&gt;Range: 0.9 - 1.1&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
               <property name="text">
                <string>Froude number coefficient</string>
@@ -278,6 +290,9 @@
                 <height>16777215</height>
                </size>
               </property>
+              <property name="toolTip">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;KF_COEF*&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
              </widget>
             </item>
            </layout>
@@ -293,7 +308,7 @@
                </sizepolicy>
               </property>
               <property name="toolTip">
-               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;KWW_COEF*&lt;br/&gt;Wingwall coefficient – assigned or computed (= 0.)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;KWW_COEF*&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(dimensionless)&lt;/p&gt;&lt;p&gt;Wingwall coefficient – assigned or computed (= 0.).&lt;/p&gt;&lt;p&gt;Range: 1.0 - 1.13&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
               <property name="text">
                <string>Wingwall coefficient</string>
@@ -323,6 +338,9 @@
                 <height>16777215</height>
                </size>
               </property>
+              <property name="toolTip">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;KWW_COEF*&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
              </widget>
             </item>
            </layout>
@@ -345,7 +363,7 @@
                </sizepolicy>
               </property>
               <property name="toolTip">
-               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;KPHI_COEF*&lt;/p&gt;&lt;p&gt;Flow angle with bridge coefficient – assigned or computed (= 0.)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;KPHI_COEF*&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(dimensionless)&lt;/p&gt;&lt;p&gt;Flow angle with bridge coefficient – assigned or computed (= 0.).&lt;/p&gt;&lt;p&gt;Range: 0.7 - 1.0&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
               <property name="text">
                <string>Flow angle with bridge coefficient</string>
@@ -375,6 +393,9 @@
                 <height>16777215</height>
                </size>
               </property>
+              <property name="toolTip">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;KPHI_COEF*&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
              </widget>
             </item>
            </layout>
@@ -390,7 +411,7 @@
                </sizepolicy>
               </property>
               <property name="toolTip">
-               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;KY_COEF*&lt;/p&gt;&lt;p&gt;Coefficient associated with sloping embankments and vertical abutments (= 0.)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;KY_COEF*&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(dimensionless)&lt;/p&gt;&lt;p&gt;Coefficient associated with sloping embankments and vertical abutments (= 0.).&lt;/p&gt;&lt;p&gt;Range: 0.85 - 1.0&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
               <property name="text">
                <string>Coefficient associated with sloping embankments and vertical abutments</string>
@@ -423,6 +444,9 @@
                 <height>16777215</height>
                </size>
               </property>
+              <property name="toolTip">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;KY_COEF*&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
              </widget>
             </item>
            </layout>
@@ -438,7 +462,7 @@
                </sizepolicy>
               </property>
               <property name="toolTip">
-               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;KX_COEF*&lt;/p&gt;&lt;p&gt;Coefficient associated with sloping abutments – assigned or computed (=0.)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;KX_COEF*&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(dimensionless)&lt;/p&gt;&lt;p&gt;Coefficient associated with sloping abutments – assigned or computed (= 0.).&lt;/p&gt;&lt;p&gt;Range: 1.0 - 1.13&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
               <property name="text">
                <string>Coefficient associated with sloping abutments</string>
@@ -471,6 +495,9 @@
                 <height>16777215</height>
                </size>
               </property>
+              <property name="toolTip">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;KX_COEF*&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
              </widget>
             </item>
            </layout>
@@ -486,7 +513,7 @@
                </sizepolicy>
               </property>
               <property name="toolTip">
-               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;KJ_COEF*&lt;/p&gt;&lt;p&gt;Coefficient associated with pier and piles – assigned or computer (= 0.)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;KJ_COEF*&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(dimensionless)&lt;/p&gt;&lt;p&gt;Coefficient associated with pier and piles – assigned or computer (= 0.).&lt;/p&gt;&lt;p&gt;Range: 0.6 - 1.0&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
               <property name="text">
                <string>Coefficient associated with pier and piles</string>
@@ -518,6 +545,9 @@
                 <width>53</width>
                 <height>16777215</height>
                </size>
+              </property>
+              <property name="toolTip">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;KJ_COEF*&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
              </widget>
             </item>
@@ -572,7 +602,7 @@
             <item row="0" column="0">
              <widget class="QLabel" name="label_23">
               <property name="toolTip">
-               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;BN_VALUE&lt;/p&gt;&lt;p&gt;Bridge reach n-value&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;BN_VALUE&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(dimensionless)&lt;/p&gt;&lt;p&gt;Bridge reach n-value.&lt;/p&gt;&lt;p&gt;Range: 0.030 - 0.200&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
               <property name="text">
                <string>Bridge reach n-value</string>
@@ -605,6 +635,9 @@
                 <height>16777215</height>
                </size>
               </property>
+              <property name="toolTip">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;BN_VALUE&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
               <property name="maximum">
                <double>9999.000000000000000</double>
               </property>
@@ -620,7 +653,7 @@
             <item row="0" column="0">
              <widget class="QLabel" name="label_22">
               <property name="toolTip">
-               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;UPLENGTH&lt;/p&gt;&lt;p&gt;Distance to upstream cross section unaffected by bridge backwater (ft or m)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;UPLENGTH&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(ft or m)&lt;/p&gt;&lt;p&gt;Distance to upstream cross section unaffected by bridge backwater.&lt;/p&gt;&lt;p&gt;Range: 0.0 - No upper limit&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
               <property name="text">
                <string>Distance to upstream cross section unaffected by bridge backwater</string>
@@ -653,6 +686,9 @@
                 <height>16777215</height>
                </size>
               </property>
+              <property name="toolTip">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;UPLENGTH&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
               <property name="maximum">
                <double>9999.000000000000000</double>
               </property>
@@ -668,7 +704,7 @@
             <item row="0" column="0">
              <widget class="QLabel" name="label_52">
               <property name="toolTip">
-               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;BOPENING&lt;/p&gt;&lt;p&gt;Bridge opening width (ft or m).&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;BOPENING&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(ft or m)&lt;/p&gt;&lt;p&gt;Bridge opening width.&lt;/p&gt;&lt;p&gt;Range: 0.0 - No upper limit&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
               <property name="text">
                <string>Bridge opening width</string>
@@ -701,6 +737,9 @@
                 <height>16777215</height>
                </size>
               </property>
+              <property name="toolTip">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;BOPENING&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
               <property name="maximum">
                <double>9999.000000000000000</double>
               </property>
@@ -716,7 +755,7 @@
             <item row="0" column="0">
              <widget class="QLabel" name="label_10">
               <property name="toolTip">
-               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;BLENGTH&lt;/p&gt;&lt;p&gt;Bridge length from upstream edge to downstream abutment (ft or m).&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;BLENGTH&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(ft or m)&lt;/p&gt;&lt;p&gt;Bridge length from upstream edge to downstream abutment.&lt;/p&gt;&lt;p&gt;Range: 0.0 - No upper limit&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
               <property name="text">
                <string>Bridge length from upstream edge to downstream abutment</string>
@@ -749,6 +788,9 @@
                 <height>16777215</height>
                </size>
               </property>
+              <property name="toolTip">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;BLENGTH&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
               <property name="maximum">
                <double>9999.000000000000000</double>
               </property>
@@ -764,7 +806,7 @@
             <item row="0" column="0">
              <widget class="QLabel" name="label_21">
               <property name="toolTip">
-               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;DECKHT&lt;/p&gt;&lt;p&gt;Average elevation of the top of the deck railing for overtop flow (ft or m)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;DECKHT&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(ft or m)&lt;/p&gt;&lt;p&gt;Average elevation of the top of the deck railing for overtop flow.&lt;/p&gt;&lt;p&gt;Range: 0.0 - No upper limit&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
               <property name="text">
                <string>Average elevation of the top of the deck railing for overtop flow</string>
@@ -797,6 +839,9 @@
                 <height>16777215</height>
                </size>
               </property>
+              <property name="toolTip">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;DECKHT&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
               <property name="maximum">
                <double>9999.000000000000000</double>
               </property>
@@ -812,7 +857,7 @@
             <item row="0" column="0">
              <widget class="QLabel" name="label_11">
               <property name="toolTip">
-               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;LOWCHORD&lt;/p&gt;&lt;p&gt;Average elevation of the low chord (ft or m).&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;LOWCHORD&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(ft or m)&lt;/p&gt;&lt;p&gt;Average elevation of the low chord.&lt;/p&gt;&lt;p&gt;Range: 0.0 - No upper limit&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
               <property name="text">
                <string>Average elevation of the low chord</string>
@@ -845,6 +890,9 @@
                 <height>16777215</height>
                </size>
               </property>
+              <property name="toolTip">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;LOWCHORD&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
               <property name="maximum">
                <double>9999.000000000000000</double>
               </property>
@@ -860,7 +908,7 @@
             <item row="0" column="0">
              <widget class="QLabel" name="label_20">
               <property name="toolTip">
-               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;DECKLENGTH&lt;/p&gt;&lt;p&gt;Deck weir length (ft or m)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;DECKLENGTH&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(ft or m)&lt;/p&gt;&lt;p&gt;Deck weir length.&lt;/p&gt;&lt;p&gt;Range: 0.0 - No upper limit&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
               <property name="text">
                <string>Deck weir length</string>
@@ -893,6 +941,9 @@
                 <height>16777215</height>
                </size>
               </property>
+              <property name="toolTip">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;DECKLENGTH&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
               <property name="maximum">
                <double>9999.000000000000000</double>
               </property>
@@ -908,7 +959,7 @@
             <item row="0" column="0">
              <widget class="QLabel" name="label_19">
               <property name="toolTip">
-               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;PIERWIDTH&lt;/p&gt;&lt;p&gt;Combined pier or pile cross section width (flow blockage width in ft or m)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;PIERWIDTH&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(ft or m)&lt;/p&gt;&lt;p&gt;Combined pier or pile cross section width (flow blockage width).&lt;/p&gt;&lt;p&gt;Range: 0.0 - No upper limit&lt;/p&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
               <property name="text">
                <string>Combined pier or pile cross section width</string>
@@ -941,6 +992,9 @@
                 <height>16777215</height>
                </size>
               </property>
+              <property name="toolTip">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;PIERWIDTH&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
               <property name="maximum">
                <double>9999.000000000000000</double>
               </property>
@@ -963,7 +1017,7 @@
             <item row="0" column="0">
              <widget class="QLabel" name="label_18">
               <property name="toolTip">
-               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;SLUICECOEFADJ&lt;/p&gt;&lt;p&gt;Adjustment factor to raise or lower the sluice gate coefficient which is 0.33 for Yu/Z = 1.0.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;SLUICECOEFADJ&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(dimensionless)&lt;/p&gt;&lt;p&gt;Adjustment factor to raise or lower the sluice gate coefficient which is 0.33 for Yu/Z = 1.0.&lt;/p&gt;&lt;p&gt;Range: 0.0 - 2.0&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
               <property name="text">
                <string>Adjustment factor to raise or lower the sluice gate coefficient which is 0.33 for Yu/Z = 1.0</string>
@@ -996,6 +1050,9 @@
                 <height>16777215</height>
                </size>
               </property>
+              <property name="toolTip">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;SLUICECOEFADJ&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
               <property name="maximum">
                <double>9999.000000000000000</double>
               </property>
@@ -1011,7 +1068,7 @@
             <item row="0" column="0">
              <widget class="QLabel" name="label_17">
               <property name="toolTip">
-               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;ORIFICECOEFADJ&lt;/p&gt;&lt;p&gt;Adjustment factor to raise or lower the orifice flow coefficient which is 0.80 for Yu/Z = 1.0&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;ORIFICECOEFADJ&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(dimensionless)&lt;/p&gt;&lt;p&gt;Adjustment factor to raise or lower the orifice flow coefficient which is 0.80 for Yu/Z = 1.0.&lt;/p&gt;&lt;p&gt;Range: 0.0 - 2.0&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
               <property name="text">
                <string>Adjustment factor to raise or lower the orifice flow coefficient which is 0.80 for Yu/Z = 1.0</string>
@@ -1044,6 +1101,9 @@
                 <height>16777215</height>
                </size>
               </property>
+              <property name="toolTip">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;ORIFICECOEFADJ&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
               <property name="maximum">
                <double>9999.000000000000000</double>
               </property>
@@ -1059,7 +1119,7 @@
             <item row="0" column="0">
              <widget class="QLabel" name="label_16">
               <property name="toolTip">
-               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;COEFFWEIRB&lt;/p&gt;&lt;p&gt;Weir coefficient for flow over the bridge deck. For metric: COEFFWIERB x 0.552.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;COEFFWEIRB&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(dimensionless)&lt;/p&gt;&lt;p&gt;Weir coefficient for flow over the bridge deck.&lt;/p&gt;&lt;p&gt;For metric: COEFFWIERB x 0.552.&lt;/p&gt;&lt;p&gt;Range: 2.65 - 3.21 &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
               <property name="text">
                <string>Weir coefficient for flow over the bridge deck.</string>
@@ -1092,6 +1152,9 @@
                 <height>16777215</height>
                </size>
               </property>
+              <property name="toolTip">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;COEFFWEIRB&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
               <property name="maximum">
                <double>9999.000000000000000</double>
               </property>
@@ -1107,7 +1170,7 @@
             <item row="0" column="0">
              <widget class="QLabel" name="label_15">
               <property name="toolTip">
-               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;WINGWALL_ANGLE&lt;/p&gt;&lt;p&gt;Angle the wingwall makes with the abutment perpendicular to the flow&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;WINGWALL_ANGLE&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(degrees)&lt;/p&gt;&lt;p&gt;Angle the wingwall makes with the abutment perpendicular to the flow.&lt;/p&gt;&lt;p&gt;Range: 30⁰ - 60⁰&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
               <property name="text">
                <string>Angle the wingwall makes with the abutment perpendicular to the flow</string>
@@ -1140,6 +1203,9 @@
                 <height>16777215</height>
                </size>
               </property>
+              <property name="toolTip">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;WINGWALL_ANGLE&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
               <property name="maximum">
                <double>9999.000000000000000</double>
               </property>
@@ -1152,7 +1218,7 @@
             <item row="0" column="0">
              <widget class="QLabel" name="label_13">
               <property name="toolTip">
-               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;PHI_ANGLE&lt;/p&gt;&lt;p&gt;Angle the flow makes with the bridge alignment perpendicular to the flow&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;PHI_ANGLE&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(degrees)&lt;/p&gt;&lt;p&gt;Angle the flow makes with the bridge alignment perpendicular to the flow.&lt;/p&gt;&lt;p&gt;Range: 0⁰ - 45⁰&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
               <property name="text">
                <string>Angle the flow makes with the bridge alignment perpendicular to the flow</string>
@@ -1185,6 +1251,9 @@
                 <height>16777215</height>
                </size>
               </property>
+              <property name="toolTip">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;PHI_ANGLE&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
               <property name="maximum">
                <double>9999.000000000000000</double>
               </property>
@@ -1200,7 +1269,7 @@
             <item row="0" column="0">
              <widget class="QLabel" name="label_14">
               <property name="toolTip">
-               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;LBTOEABUT&lt;/p&gt;&lt;p&gt;Toe elevation of the left abutment (ft or m)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;LBTOEABUT&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(ft or m)&lt;/p&gt;&lt;p&gt;Toe elevation of the left abutment.&lt;/p&gt;&lt;p&gt;Range: ELEVA TION&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
               <property name="text">
                <string>Toe elevation of the left abutment</string>
@@ -1233,6 +1302,9 @@
                 <height>16777215</height>
                </size>
               </property>
+              <property name="toolTip">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;LBTOEABUT&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
               <property name="maximum">
                <double>9999.000000000000000</double>
               </property>
@@ -1248,7 +1320,7 @@
             <item row="0" column="0">
              <widget class="QLabel" name="label_12">
               <property name="toolTip">
-               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;RBTOEABUT&lt;/p&gt;&lt;p&gt;Toe elevation of the right abutment (ft or m)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;RBTOEABUT&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(ft or m)&lt;/p&gt;&lt;p&gt;Toe elevation of the right abutment.&lt;/p&gt;&lt;p&gt;Range: ELEVATION&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
               <property name="text">
                <string>Toe elevation of the right abutment</string>
@@ -1280,6 +1352,9 @@
                 <width>62</width>
                 <height>16777215</height>
                </size>
+              </property>
+              <property name="toolTip">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;RBTOEABUT&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
               <property name="maximum">
                <double>9999.000000000000000</double>
