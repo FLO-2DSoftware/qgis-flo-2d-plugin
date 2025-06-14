@@ -72,6 +72,9 @@
               <verstretch>0</verstretch>
              </sizepolicy>
             </property>
+            <property name="toolTip">
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;RTT&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(inches or mm)&lt;/p&gt;&lt;p&gt;Total storm rainfall.&lt;/p&gt;&lt;p&gt;Range: 0.0 - No upper limit&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            </property>
             <property name="text">
              <string>Total Storm Rainfall</string>
             </property>
@@ -86,7 +89,7 @@
              </sizepolicy>
             </property>
             <property name="toolTip">
-             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Total storm rainfall (inches or mm).&lt;/p&gt;&lt;p&gt;FLO-2D variable : RTT (RAIN.DAT).&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;RTT&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
             </property>
             <property name="buttonSymbols">
              <enum>QAbstractSpinBox::UpDownArrows</enum>
@@ -127,6 +130,9 @@
               <verstretch>0</verstretch>
              </sizepolicy>
             </property>
+            <property name="toolTip">
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;RAINABS&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(inches or mm)&lt;/p&gt;&lt;p&gt;Rainfall interception and abstraction if infil tration is not being modeled.&lt;/p&gt;&lt;p&gt;Range: &lt;/p&gt;&lt;p&gt;0 - 1 inches&lt;/p&gt;&lt;p&gt;0 - 25.4 mm&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            </property>
             <property name="text">
              <string>Rainfall Abstraction</string>
             </property>
@@ -141,7 +147,7 @@
              </sizepolicy>
             </property>
             <property name="toolTip">
-             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Rainfall interception and abstraction (inches or mm) if infiltration is not being modeled.&lt;/p&gt;&lt;p&gt;FLO-2D variable: RAINABS (RAIN.DAT)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;RAINABS&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
             </property>
             <property name="buttonSymbols">
              <enum>QAbstractSpinBox::UpDownArrows</enum>
@@ -181,7 +187,7 @@
            </sizepolicy>
           </property>
           <property name="toolTip">
-           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Indicates that individual grid element depth area reduction values will be assigned.&lt;/p&gt;&lt;p&gt;FLO-2D variable: IRAINBUILDING (RAIN.DAT).&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;IRAINBUILDING&lt;/span&gt;&lt;/p&gt;&lt;p&gt;IRAINBUILDING = 1 indicates that rainfall on an ARF = 1 grid element will be contributed to the surface water runoff for that element.&lt;/p&gt;&lt;p&gt;0 = off&lt;/p&gt;&lt;p&gt;1 = on&lt;/p&gt;&lt;p&gt;Range: 0,1&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
           </property>
           <property name="text">
            <string>Building Rain</string>
@@ -282,6 +288,9 @@
                  <width>99999</width>
                  <height>16777215</height>
                 </size>
+               </property>
+               <property name="toolTip">
+                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;R_DISTR(I)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Rainfall distribution as a cumulative percentage of the total storm which initiates at the time interval R_TIME(I).&lt;/p&gt;&lt;p&gt;Range: 0 - 1&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                </property>
                <property name="text">
                 <string>Time vs % of Total Storm Series</string>
@@ -455,7 +464,7 @@
               </sizepolicy>
              </property>
              <property name="toolTip">
-              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;List of distribution time series names defined in the Rain Time Series layer. The actual data (time, value) is stored in layer Rain Time Series Data. The index of the selected time series is also updated in field time_series_fid of  Rain layer.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;R_TIME(I)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Time (hrs) corresponding to the start of the specified rainfall interval.&lt;/p&gt;&lt;p&gt;Range: 0.0 - No upper limit&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
              </property>
              <item>
               <property name="text">
@@ -498,7 +507,7 @@
          </sizepolicy>
         </property>
         <property name="toolTip">
-         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Check this swith if moving storm is to be simulated.&lt;/p&gt;&lt;p&gt;FLO-2D variable: MOVINGSTORM (RAIN.DAT):&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;MOVINGSTORM&lt;/span&gt;&lt;/p&gt;&lt;p&gt;MOVINGSTORM = 0 indicates that a moving storm will not be simulated.&lt;/p&gt;&lt;p&gt;MOVINGSTORM = 1 indicates that a moving storm will be simulated.&lt;/p&gt;&lt;p&gt;Range: 0,1&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
         </property>
         <property name="title">
          <string>Moving Storm</string>
@@ -532,7 +541,7 @@
             </sizepolicy>
            </property>
            <property name="toolTip">
-            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Direction of the moving storm. Directions are as follows:&lt;/p&gt;&lt;p&gt;1 = N 5 = NE&lt;/p&gt;&lt;p&gt;2 = E 6 = SE&lt;/p&gt;&lt;p&gt;3 = S 7 = SW&lt;/p&gt;&lt;p&gt;4 = W 8 = NW&lt;/p&gt;&lt;p&gt;FLO-2D variable: IRAINDIR (RAIN.DAT).&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;IRAINDIR&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Direction of the moving storm. Directions are as follows:&lt;/p&gt;&lt;p&gt;1 = N &lt;/p&gt;&lt;p&gt;2 = E &lt;/p&gt;&lt;p&gt;3 = S &lt;/p&gt;&lt;p&gt;4 = W&lt;/p&gt;&lt;p&gt;5 = NE&lt;/p&gt;&lt;p&gt;6 = SE&lt;/p&gt;&lt;p&gt;7 = SW&lt;/p&gt;&lt;p&gt;8 = NW&lt;/p&gt;&lt;p&gt;Range: 1 - 8&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
            </property>
            <property name="title">
             <string>Direction of Moving Storm</string>
@@ -545,6 +554,9 @@
                 <horstretch>0</horstretch>
                 <verstretch>0</verstretch>
                </sizepolicy>
+              </property>
+              <property name="toolTip">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;8 = NW&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
               <property name="text">
                <string>NW</string>
@@ -559,6 +571,9 @@
                 <verstretch>0</verstretch>
                </sizepolicy>
               </property>
+              <property name="toolTip">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;1 = N&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
               <property name="text">
                <string>N</string>
               </property>
@@ -571,6 +586,9 @@
                 <horstretch>0</horstretch>
                 <verstretch>0</verstretch>
                </sizepolicy>
+              </property>
+              <property name="toolTip">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;5 = NE&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
               <property name="text">
                <string>NE</string>
@@ -585,6 +603,9 @@
                 <verstretch>0</verstretch>
                </sizepolicy>
               </property>
+              <property name="toolTip">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;4 = W &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
               <property name="text">
                <string>W</string>
               </property>
@@ -597,6 +618,9 @@
                 <horstretch>0</horstretch>
                 <verstretch>0</verstretch>
                </sizepolicy>
+              </property>
+              <property name="toolTip">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;2 = E &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
               <property name="text">
                <string>E</string>
@@ -611,6 +635,9 @@
                 <verstretch>0</verstretch>
                </sizepolicy>
               </property>
+              <property name="toolTip">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;7 = SW&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
               <property name="text">
                <string>SW</string>
               </property>
@@ -624,6 +651,9 @@
                 <verstretch>0</verstretch>
                </sizepolicy>
               </property>
+              <property name="toolTip">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;3 = S &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
               <property name="text">
                <string>S</string>
               </property>
@@ -636,6 +666,9 @@
                 <horstretch>0</horstretch>
                 <verstretch>0</verstretch>
                </sizepolicy>
+              </property>
+              <property name="toolTip">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;6 = SE&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
               <property name="text">
                <string>SE</string>
@@ -654,6 +687,9 @@
                <horstretch>0</horstretch>
                <verstretch>0</verstretch>
               </sizepolicy>
+             </property>
+             <property name="toolTip">
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;RAINSPEED&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(mph or kph)&lt;/p&gt;&lt;p&gt;Storm speed.&lt;/p&gt;&lt;p&gt;Range:&lt;/p&gt;&lt;p&gt;0 - 100 mph&lt;/p&gt;&lt;p&gt;0 - 50 kph&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
              </property>
              <property name="text">
               <string>Moving Storm Speed:</string>
@@ -687,7 +723,7 @@
               </size>
              </property>
              <property name="toolTip">
-              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Storm speed (mph or kph).&lt;/p&gt;&lt;p&gt;FLO-2D variable: RAINSPEED (RAIN.DAT).&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;RAINSPEED&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
              </property>
              <property name="decimals">
               <number>4</number>
@@ -720,7 +756,7 @@
          </size>
         </property>
         <property name="toolTip">
-         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Select a raster layer to sample a rainfall depth area reduction value into each intersected cell.&lt;/p&gt;&lt;p&gt;Data will be stored in QGIS in the &amp;quot;Rain ARF Cells&amp;quot; layer.&lt;/p&gt;&lt;p&gt;When exporting the FLO-2D files using the FLO-2D tool bar, the RAIN.DAT file will have the rainfall area reduction values stored as lines 5: pairs of (cell number, reduction value), (IRGRID, RAINARF).&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;IRAINARF&lt;/span&gt;&lt;/p&gt;&lt;p&gt;IRAINARF = 1 indicates that individual grid element depth area reduction values will be assigned.&lt;/p&gt;&lt;p&gt;0 = off&lt;/p&gt;&lt;p&gt;1 = on&lt;/p&gt;&lt;p&gt;Range: 0, 1&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
         </property>
         <property name="title">
          <string>Spatial Variation (Depth Area Reduction)</string>
@@ -738,6 +774,9 @@
                <horstretch>0</horstretch>
                <verstretch>0</verstretch>
               </sizepolicy>
+             </property>
+             <property name="toolTip">
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;RAINARF&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Rainfall depth area reduction to create spatially variable rainfall.&lt;/p&gt;&lt;p&gt;This data is automatically generated in the GDS processor program.&lt;/p&gt;&lt;p&gt;Range: 0 - 1&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
              </property>
              <property name="text">
               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Select a raster layer to sample a rainfall depth area reduction value into intersected cells:&lt;br/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
@@ -771,7 +810,7 @@
               </size>
              </property>
              <property name="toolTip">
-              <string/>
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;RAINARF&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
              </property>
              <property name="text">
               <string/>
@@ -805,7 +844,7 @@
          </sizepolicy>
         </property>
         <property name="toolTip">
-         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;If real-time rainfall is to be simulated, the &amp;quot;Real-Time Rainfall&amp;quot; checkbox should be selected.&lt;/p&gt;&lt;p&gt;Use the button below to import Realtime Rainfall data from .ASC files defined in a .RFC file catalog. Locally stores pairs (rainfall, grid element) for each interval in the &amp;quot;Realtime Rainfall Data&amp;quot; layer, and the number of files, time interval, and time stamp in the &amp;quot;Realtime Rainfall&amp;quot; layern.&lt;/p&gt;&lt;p&gt;The FLO-2D tool &amp;quot;Export GDS files&amp;quot; stores the above data in file RAINCELL.DAT.&lt;/p&gt;&lt;p&gt;FLO-2D variable: IRAINREAL (RAIN.DAT).&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;IRAINREAL&lt;/span&gt;&lt;/p&gt;&lt;p&gt;IRAINREAL = 1 indicates that real-time rainfall (e.g. NEXRAD) will be simulated.&lt;/p&gt;&lt;p&gt;The RAINCELL.DAT file containing the spatial and temporal rainfall data must be prepared by the GDS.&lt;/p&gt;&lt;p&gt;0 = off &lt;/p&gt;&lt;p&gt;1 = on&lt;/p&gt;&lt;p&gt;Range: 0, 1&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
         </property>
         <property name="title">
          <string>Realtime Rainfall</string>
@@ -847,7 +886,7 @@
                </size>
               </property>
               <property name="toolTip">
-               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Imports Realtime Rainfall data from .ASC files using a .RFC file catalog of selected ASCII files.&lt;/p&gt;&lt;p&gt;Locally stores pairs (rainfall, grid element) for each interval in the &amp;quot;Realtime Rainfall Data&amp;quot; layer, and the number of files, time interval, and time stamp in the &amp;quot;Realtime Rainfall&amp;quot; layer.&lt;/p&gt;&lt;p&gt;The FLO-2D tool &amp;quot;Export GDS files&amp;quot; stores the above data in file RAINCELL.DAT.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;IRAINREAL&lt;/p&gt;&lt;p&gt;Import&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
               <property name="text">
                <string>Import Realtime Rainfall
@@ -871,6 +910,9 @@ ASCII files</string>
                 <width>115</width>
                 <height>25</height>
                </size>
+              </property>
+              <property name="toolTip">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;IRAINREAL&lt;/p&gt;&lt;p&gt;Export&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
               <property name="text">
                <string>Export RealTime Rainfall</string>
