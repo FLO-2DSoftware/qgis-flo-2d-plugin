@@ -253,6 +253,9 @@
      </item>
      <item>
       <widget class="QToolButton" name="center_fpxs_chbox">
+       <property name="toolTip">
+        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Lock into the selected floodplain xs.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+       </property>
        <property name="text">
         <string>...</string>
        </property>
@@ -352,7 +355,7 @@
            </size>
           </property>
           <property name="toolTip">
-           <string>Change floodplain XS name</string>
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Rename selected floodplain xs.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
           </property>
           <property name="text">
            <string>...</string>
