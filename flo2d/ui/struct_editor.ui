@@ -242,6 +242,9 @@
          <height>16777215</height>
         </size>
        </property>
+       <property name="toolTip">
+        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;IFPORCHAN(I)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;IFPORCHAN(I) = 0; for a floodplain structure (shares discharge between two floodplain elements).&lt;/p&gt;&lt;p&gt;IFPORCHAN(I) = 1; for a channel hydraulic structure (shares discharge between two channel elements).&lt;/p&gt;&lt;p&gt;IFPORCHAN(I) = 2; for a floodplain to channel structure (shares dis charge between a floodplain element {inflow} and channel structure {out flow}).&lt;/p&gt;&lt;p&gt;IFPORCHAN(I) = 3; for a channel to floodplain structure (shares discharge between a channel {inflow} element and a floodplain element {outflow})).&lt;/p&gt;&lt;p&gt;Range: 0 - 3&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+       </property>
        <property name="text">
         <string>Type</string>
        </property>
@@ -278,6 +281,9 @@
          <height>0</height>
         </size>
        </property>
+       <property name="toolTip">
+        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;STRUCTNAME(I)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Hydraulic structure name (15 characters or less).&lt;/p&gt;&lt;p&gt;This name is for user identification purposes only.&lt;/p&gt;&lt;p&gt;No spaces allowed in the name.&lt;/p&gt;&lt;p&gt;Range: Alpha Numeric&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+       </property>
        <property name="text">
         <string>Structure</string>
        </property>
@@ -302,6 +308,9 @@
          <width>16777215</width>
          <height>25</height>
         </size>
+       </property>
+       <property name="toolTip">
+        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;STRUCTNAME(I)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
        </property>
       </widget>
      </item>
@@ -344,6 +353,9 @@
          <width>16777215</width>
          <height>16777215</height>
         </size>
+       </property>
+       <property name="toolTip">
+        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;IFPORCHAN(I)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
        </property>
        <item>
         <property name="text">
@@ -512,6 +524,9 @@
               <height>20</height>
              </size>
             </property>
+            <property name="toolTip">
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;ICURVTABLE(I)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Set ICURVTABLE(I) = 0 for a structure rating curve.&lt;/p&gt;&lt;p&gt;Set ICURVTABLE(I) = 1 for a structure rating table.&lt;/p&gt;&lt;p&gt;Set ICULVTABLE(I) = 2 to use the culvert equations.&lt;/p&gt;&lt;p&gt;Range: 0 - 2&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            </property>
             <property name="sizeAdjustPolicy">
              <enum>QComboBox::AdjustToMinimumContentsLength</enum>
             </property>
@@ -543,6 +558,9 @@
            <width>80</width>
            <height>16777215</height>
           </size>
+         </property>
+         <property name="toolTip">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;CDIAMETER(I,J)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
          </property>
          <property name="buttonSymbols">
           <enum>QAbstractSpinBox::NoButtons</enum>
@@ -581,6 +599,9 @@
            <height>16777215</height>
           </size>
          </property>
+         <property name="toolTip">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;STORMDMAXQ(I)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
          <property name="buttonSymbols">
           <enum>QAbstractSpinBox::NoButtons</enum>
          </property>
@@ -614,6 +635,9 @@
            <width>80</width>
            <height>16777215</height>
           </size>
+         </property>
+         <property name="toolTip">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;HEADREFEL(I)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
          </property>
          <property name="buttonSymbols">
           <enum>QAbstractSpinBox::NoButtons</enum>
@@ -652,6 +676,9 @@
            <height>16777215</height>
           </size>
          </property>
+         <property name="toolTip">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;CLENGTH(I)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
          <property name="buttonSymbols">
           <enum>QAbstractSpinBox::NoButtons</enum>
          </property>
@@ -686,6 +713,9 @@
            <height>16777215</height>
           </size>
          </property>
+         <property name="toolTip">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;INOUTCONT(I,J)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;INOUTCONT(I,J) = 0; to compute the discharge based on only the headwater depth above the appropriate floodplain or channel bed eleva tion (or reference elevation if assigned). Suggested revisions are listed in REVISED_RATING_TABLE.OUT. No tailwater effects or potential upstream flow are considered.&lt;/p&gt;&lt;p&gt;INOUTCONT(I,J) = 1; reduced discharge for tailwater submergence, but does not allow upstream flow. Suggested rating table revisions posted to REVISED_RATING_ TABLE.OUT.&lt;/p&gt;&lt;p&gt;INOUTCONT(I,J) = 2; reduced discharge for tailwater submergence. Upstream flow is possible. Suggested rating table revisions posted to REVISED_RATING_TABLE.OUT. Necessary for all structure types if submergence and upstream flow is required.&lt;/p&gt;&lt;p&gt;Range:&lt;/p&gt;&lt;p&gt;0 = inlet&lt;/p&gt;&lt;p&gt;1 = revised&lt;/p&gt;&lt;p&gt;2 = outlet / revised&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
          <property name="text">
           <string>Tail water</string>
          </property>
@@ -713,6 +743,9 @@
            <width>16777215</width>
            <height>16777215</height>
           </size>
+         </property>
+         <property name="toolTip">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;INOUTCONT(I,J)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
          </property>
          <item>
           <property name="text">
@@ -746,7 +779,7 @@
           </size>
          </property>
          <property name="toolTip">
-          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;CDIAMETER&lt;/p&gt;&lt;p&gt;Circular culvert diameter (ft or m). For the generalized culvert equations&lt;/p&gt;&lt;p&gt;CDIAMETER is the circular culvert diameter or the box culvert height&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;CDIAMETER(I,J)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(ft or m)&lt;/p&gt;&lt;p&gt;Circular culvert diameter. &lt;/p&gt;&lt;p&gt;For the generalized culvert equations CDIAMETER is the circular culvert diameter or the box culvert height.&lt;/p&gt;&lt;p&gt;Range: 0.1 - No upper limit&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
          </property>
          <property name="text">
           <string>Circular diameter or box culvert height</string>
@@ -768,7 +801,7 @@
           </size>
          </property>
          <property name="toolTip">
-          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;HEADREFEL&lt;/p&gt;&lt;p&gt;Reference elevation above which the headwater depth is determined for&lt;/p&gt;&lt;p&gt;either the discharge rating curve or rating table. Set HEADREFEL(I) =&lt;/p&gt;&lt;p&gt;0.0 to use the existing channel bed or floodplain elevation for the reference&lt;/p&gt;&lt;p&gt;elevation to compute the headwater depth (ft or m).&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;HEADREFEL(I)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(ft or m)&lt;/p&gt;&lt;p&gt;Reference elevation above which the headwater depth is determined for either the discharge rating curve or rating table.&lt;/p&gt;&lt;p&gt;Set HEADREFEL(I) = 0.0 to use the existing channel bed or floodplain elevation for the reference elevation to compute the headwater depth.&lt;/p&gt;&lt;p&gt;Range:&lt;/p&gt;&lt;p&gt;.01 - 30,000 ft&lt;/p&gt;&lt;p&gt;.25 - 9,000 m&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
          </property>
          <property name="text">
           <string>Reference elevation for headwater</string>
@@ -790,7 +823,7 @@
           </size>
          </property>
          <property name="toolTip">
-          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;CLENGTH&lt;/p&gt;&lt;p&gt;Culvert length (ft or m). When a long culvert is simulated (&amp;gt;500 ft or&lt;/p&gt;&lt;p&gt;152.4 m), CLENGTH must be assigned to that culvert’s length to activate&lt;/p&gt;&lt;p&gt;the long culvert routing routine.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;CLENGTH(I)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(ft or m)&lt;/p&gt;&lt;p&gt;Culvert length.&lt;/p&gt;&lt;p&gt;When a long culvert is simulated (&amp;gt;500 ft or 152.4 m), CLENGTH must be assigned to that culvert’s length to activate the long culvert routing routine.&lt;/p&gt;&lt;p&gt;Range:&lt;/p&gt;&lt;p&gt;1 - No upper limit (ft)&lt;/p&gt;&lt;p&gt;1 - No upper limit (m)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
          </property>
          <property name="text">
           <string>Culvert or conduit length</string>
@@ -812,7 +845,7 @@
           </size>
          </property>
          <property name="toolTip">
-          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;STORMDMAXQ&lt;br/&gt;Maximum allowable discharge (conveyance capacity) of the collection&lt;/p&gt;&lt;p&gt;pipe represented by the ISTORMDOUT element. (cfs or cms)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;STORMDMAXQ(I)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(cfs or cms)&lt;/p&gt;&lt;p&gt;Maximum allowable discharge (conveyance capacity) of the collection pipe represented by the ISTORMDOUT element.&lt;/p&gt;&lt;p&gt;Range: 0 - No upper limit&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
          </property>
          <property name="text">
           <string>Storm drain capacity</string>
