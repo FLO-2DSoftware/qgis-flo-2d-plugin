@@ -347,8 +347,8 @@
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>1080</width>
-        <height>598</height>
+        <width>1097</width>
+        <height>467</height>
        </rect>
       </property>
       <layout class="QGridLayout" name="gridLayout_26">
@@ -675,7 +675,7 @@
             <string>Grid elements of selected channel segment</string>
            </property>
            <property name="collapsed">
-            <bool>false</bool>
+            <bool>true</bool>
            </property>
            <property name="saveCollapsedState">
             <bool>false</bool>
