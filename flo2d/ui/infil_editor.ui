@@ -585,8 +585,7 @@ Hydraulic conductivity for the selected feature.
       <item row="1" column="1">
        <widget class="QLabel" name="label_9">
         <property name="toolTip">
-         <string>SCSCN
-Curve number for the selected feature.</string>
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;SCSNALL&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Global floodplain SCS curve number for infiltration.&lt;/p&gt;&lt;p&gt;The variable can range from 1 to 99 but use engineering judgment.&lt;/p&gt;&lt;p&gt;Values lower than 67 will result in an excessive loss and variables higher than 99 will be reset to 99.&lt;/p&gt;&lt;p&gt;Range: 1 - 99&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
         </property>
         <property name="text">
          <string>SCS Curve Number</string>
@@ -629,7 +628,11 @@ Curve number for the selected feature.</string>
        </widget>
       </item>
       <item row="1" column="2">
-       <widget class="QSpinBox" name="spin_scsn"/>
+       <widget class="QSpinBox" name="spin_scsn">
+        <property name="toolTip">
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;SCSNALL&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+        </property>
+       </widget>
       </item>
      </layout>
     </widget>
