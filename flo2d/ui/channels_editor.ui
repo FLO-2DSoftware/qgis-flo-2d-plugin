@@ -528,7 +528,7 @@
                </sizepolicy>
               </property>
               <property name="toolTip">
-               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;WSELSTART&lt;/span&gt;&lt;/p&gt;&lt;p&gt; (ft or m)&lt;/p&gt;&lt;p&gt;Starting water surface elevation for the channel element ISTART.&lt;/p&gt;&lt;p&gt;Range:&lt;br/&gt;0 - 30,000 ft&lt;/p&gt;&lt;p&gt;0 - 9,000 m&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;WSELSTART&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(ft or m)&lt;/p&gt;&lt;p&gt;Starting water surface elevation for the channel element ISTART.&lt;/p&gt;&lt;p&gt;Range:&lt;/p&gt;&lt;p&gt;0 - 30,000 ft&lt;/p&gt;&lt;p&gt;0 - 9,000 m&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
               <property name="text">
                <string>Starting water elevation</string>
