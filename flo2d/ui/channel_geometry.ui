@@ -1074,6 +1074,9 @@
                </item>
                <item row="2" column="6">
                 <widget class="QLabel" name="label_33">
+                 <property name="toolTip">
+                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;XSECNAME(I)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Cross section name (less than 15 characters, not case sensitive).&lt;/p&gt;&lt;p&gt;This name is for cross section ID purposes only and it is not used by the model.&lt;/p&gt;&lt;p&gt;Do not use spaces in the name.&lt;/p&gt;&lt;p&gt;Range: Alpha Numeric&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                 </property>
                  <property name="text">
                   <string>XS name</string>
                  </property>
@@ -1096,6 +1099,9 @@
                    <height>0</height>
                   </size>
                  </property>
+                 <property name="toolTip">
+                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;XSECNAME(I)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                 </property>
                  <property name="frameShape">
                   <enum>QFrame::Box</enum>
                  </property>
@@ -1109,6 +1115,9 @@
                </item>
                <item row="3" column="6">
                 <widget class="QLabel" name="label_10">
+                 <property name="toolTip">
+                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;RIGHTBANK&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Right bank channel grid element corresponding the LEFT BANK element.&lt;/p&gt;&lt;p&gt;Range: 1 - NNOD&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                 </property>
                  <property name="text">
                   <string>Right bank cell</string>
                  </property>
@@ -1130,6 +1139,9 @@
                    <width>65</width>
                    <height>0</height>
                   </size>
+                 </property>
+                 <property name="toolTip">
+                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;RIGHTBANK&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                  </property>
                  <property name="frameShape">
                   <enum>QFrame::Box</enum>
