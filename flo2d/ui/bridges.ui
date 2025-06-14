@@ -59,7 +59,7 @@
       <item row="0" column="0">
        <widget class="QLabel" name="label_2">
         <property name="toolTip">
-         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;IBTYPE&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Type of bridge configuration&lt;/p&gt;&lt;p&gt;Range: 1 - 4&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;IBTYPE&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Type of bridge configuration.&lt;/p&gt;&lt;p&gt;Range: 1 - 4&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
         </property>
         <property name="text">
          <string>Type of bridge configuration</string>
