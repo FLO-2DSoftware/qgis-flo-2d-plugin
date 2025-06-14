@@ -45,6 +45,9 @@
          <verstretch>0</verstretch>
         </sizepolicy>
        </property>
+       <property name="toolTip">
+        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;GFRAGCHAR&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Global levee fragility curve ID.&lt;/p&gt;&lt;p&gt;One letter (e.g. S) and one number (e.g. 3) and must correspond to a levee fragility curve ID in the BREACH.DAT file.&lt;/p&gt;&lt;p&gt;Variable is case sensitive and it must be upper case.&lt;/p&gt;&lt;p&gt;Range: Alpha Numeric &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+       </property>
        <property name="text">
         <string>Fragility curve ID</string>
        </property>
@@ -54,7 +57,11 @@
       </widget>
      </item>
      <item row="0" column="1">
-      <widget class="QComboBox" name="ID_cbo"/>
+      <widget class="QComboBox" name="ID_cbo">
+       <property name="toolTip">
+        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;GFRAGCHAR&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+       </property>
+      </widget>
      </item>
     </layout>
    </item>
