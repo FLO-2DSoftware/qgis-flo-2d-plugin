@@ -535,7 +535,7 @@
            </sizepolicy>
           </property>
           <property name="toolTip">
-           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;WMC&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(ft or m)&lt;/p&gt;&lt;p&gt;Incremental width by which multiple channels will be expanded when the maximum depth DM is exceeded&lt;/p&gt;&lt;p&gt;Range: &lt;/p&gt;&lt;p&gt;0 - 1000 ft&lt;/p&gt;&lt;p&gt;0 - 300 m&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;WMC&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(ft or m)&lt;/p&gt;&lt;p&gt;Incremental width by which multiple channels will be expanded when the maximum depth DM is exceeded.&lt;/p&gt;&lt;p&gt;Range: &lt;/p&gt;&lt;p&gt;0 - 1000 ft&lt;/p&gt;&lt;p&gt;0 - 300 m&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
           </property>
           <property name="text">
            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Incremental width to increase the rill/gully width when the conveyance capacity is exceeded&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
@@ -657,7 +657,7 @@
           <item>
            <widget class="QLabel" name="label">
             <property name="toolTip">
-             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;XNMULTTRICHN&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Global assignment of the multiple channel n-values to all the grid ele ments.&lt;/p&gt;&lt;p&gt;Range: 0.01 - 0.5&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;XNMULTTRICHN&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Global assignment of the multiple channel n-values to all the grid elements.&lt;/p&gt;&lt;p&gt;Range: 0.01 - 0.5&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
             </property>
             <property name="text">
              <string>Simplified n-Manning</string>
