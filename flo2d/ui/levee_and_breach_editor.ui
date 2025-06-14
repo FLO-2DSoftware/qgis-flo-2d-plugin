@@ -763,7 +763,7 @@
            <bool>false</bool>
           </property>
           <property name="toolTip">
-           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;PRFAIL&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Levee fragility curve point of failure probability. 80% indicates a higher probability of levee failure most likely corresponding to a higher elevation on the levee. A low value of 10% would indicate a weak levee most likely corresponding to a levee piping failure close to the toe of the levee.&lt;/p&gt;&lt;p&gt;Range: 0.0 - 1.0&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Set levee fragility curves.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
           </property>
           <property name="text">
            <string>Levee Fragility Curves</string>
