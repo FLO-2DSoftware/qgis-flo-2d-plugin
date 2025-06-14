@@ -347,8 +347,8 @@
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>1097</width>
-        <height>467</height>
+        <width>1080</width>
+        <height>598</height>
        </rect>
       </property>
       <layout class="QGridLayout" name="gridLayout_26">
@@ -1161,6 +1161,9 @@
                       <layout class="QGridLayout" name="gridLayout_15">
                        <item row="1" column="2">
                         <widget class="QDoubleSpinBox" name="first_area_exp_dbox">
+                         <property name="toolTip">
+                          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;A2(I)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                         </property>
                          <property name="decimals">
                           <number>4</number>
                          </property>
@@ -1171,6 +1174,9 @@
                        </item>
                        <item row="2" column="1">
                         <widget class="QDoubleSpinBox" name="first_wetted_coeff_dbox">
+                         <property name="toolTip">
+                          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;B1(I)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                         </property>
                          <property name="decimals">
                           <number>4</number>
                          </property>
@@ -1191,6 +1197,9 @@
                        </item>
                        <item row="1" column="1">
                         <widget class="QDoubleSpinBox" name="first_area_coeff_dbox">
+                         <property name="toolTip">
+                          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;A1(I)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                         </property>
                          <property name="decimals">
                           <number>4</number>
                          </property>
@@ -1201,6 +1210,9 @@
                        </item>
                        <item row="3" column="1">
                         <widget class="QDoubleSpinBox" name="first_top_width_coeff_dbox">
+                         <property name="toolTip">
+                          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;C1(I)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                         </property>
                          <property name="decimals">
                           <number>4</number>
                          </property>
@@ -1211,6 +1223,9 @@
                        </item>
                        <item row="3" column="2">
                         <widget class="QDoubleSpinBox" name="first_top_width_exp_dbox">
+                         <property name="toolTip">
+                          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;C2(I)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                         </property>
                          <property name="decimals">
                           <number>4</number>
                          </property>
@@ -1221,6 +1236,9 @@
                        </item>
                        <item row="2" column="2">
                         <widget class="QDoubleSpinBox" name="first_wetted_exp_dbox">
+                         <property name="toolTip">
+                          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;B2(I)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                         </property>
                          <property name="decimals">
                           <number>4</number>
                          </property>
@@ -1242,7 +1260,7 @@
                        <item row="1" column="0">
                         <widget class="QLabel" name="label_6">
                          <property name="toolTip">
-                          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;A1&lt;/p&gt;&lt;p&gt;Coefficient for the variable area regression relationships.&lt;/p&gt;&lt;p&gt;A2&lt;/p&gt;&lt;p&gt;Exponent for the variable area regression relationships.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;A1(I)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(dimensionless)&lt;/p&gt;&lt;p&gt;Coefficient for the variable area regression relationships.&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;A2(I)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(dimensionless)&lt;/p&gt;&lt;p&gt;Exponent for the variable area regression relationships.&lt;/p&gt;&lt;p&gt;Range: 0.0 - No upper limit&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                          </property>
                          <property name="text">
                           <string>Area</string>
@@ -1255,7 +1273,7 @@
                        <item row="2" column="0">
                         <widget class="QLabel" name="label_17">
                          <property name="toolTip">
-                          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;B1&lt;/p&gt;&lt;p&gt;Coefficient for the variable wetted perimeter relationships.&lt;/p&gt;&lt;p&gt;B2&lt;/p&gt;&lt;p&gt;Exponent for the variable wetted perimeter relationships.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;B1(I)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(dimensionless)&lt;/p&gt;&lt;p&gt;Coefficient for the variable wetted perimeter relationships.&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;B2(I)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(dimensionless)&lt;/p&gt;&lt;p&gt;Exponent for the variable wetted perimeter relationships.&lt;/p&gt;&lt;p&gt;Range: 0.0 - No upper limit&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                          </property>
                          <property name="text">
                           <string>Wetted perimeter</string>
@@ -1268,7 +1286,7 @@
                        <item row="3" column="0">
                         <widget class="QLabel" name="label_18">
                          <property name="toolTip">
-                          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;C1&lt;/p&gt;&lt;p&gt;Coefficient for the variable top width relationships.&lt;/p&gt;&lt;p&gt;C2&lt;/p&gt;&lt;p&gt;Exponent for the variable top width relationships.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;C1(I)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(dimensionless)&lt;/p&gt;&lt;p&gt;Coefficient for the variable top width relationships.&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;C2(I)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(dimensionless)&lt;/p&gt;&lt;p&gt;Exponent for the variable top width relationships.&lt;/p&gt;&lt;p&gt;Range: 0.0 - No upper limit&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                          </property>
                          <property name="text">
                           <string>Top width</string>
@@ -1322,6 +1340,9 @@
                        </item>
                        <item row="3" column="2">
                         <widget class="QDoubleSpinBox" name="second_top_width_exp_dbox">
+                         <property name="toolTip">
+                          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;C22(I)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                         </property>
                          <property name="decimals">
                           <number>4</number>
                          </property>
@@ -1332,6 +1353,9 @@
                        </item>
                        <item row="2" column="1">
                         <widget class="QDoubleSpinBox" name="second_wetted_coeff_dbox">
+                         <property name="toolTip">
+                          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;B11(I)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                         </property>
                          <property name="decimals">
                           <number>4</number>
                          </property>
@@ -1352,6 +1376,9 @@
                        </item>
                        <item row="1" column="1">
                         <widget class="QDoubleSpinBox" name="second_area_coeff_dbox">
+                         <property name="toolTip">
+                          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;A11(I)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                         </property>
                          <property name="decimals">
                           <number>4</number>
                          </property>
@@ -1362,6 +1389,9 @@
                        </item>
                        <item row="3" column="1">
                         <widget class="QDoubleSpinBox" name="second_top_width_coeff_dbox">
+                         <property name="toolTip">
+                          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;C11(I)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                         </property>
                          <property name="decimals">
                           <number>4</number>
                          </property>
@@ -1372,6 +1402,9 @@
                        </item>
                        <item row="1" column="2">
                         <widget class="QDoubleSpinBox" name="second_area_exp_dbox">
+                         <property name="toolTip">
+                          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;A22(I)&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                         </property>
                          <property name="decimals">
                           <number>4</number>
                          </property>
@@ -1382,6 +1415,9 @@
                        </item>
                        <item row="2" column="2">
                         <widget class="QDoubleSpinBox" name="second_wetted_exp_dbox">
+                         <property name="toolTip">
+                          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;B22(I)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                         </property>
                          <property name="decimals">
                           <number>4</number>
                          </property>
@@ -1393,7 +1429,7 @@
                        <item row="1" column="0">
                         <widget class="QLabel" name="label_13">
                          <property name="toolTip">
-                          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;A11&lt;/p&gt;&lt;p&gt;Coefficient for the variable area regression relationships for flow depth above EXCDEP.&lt;/p&gt;&lt;p&gt;A22&lt;/p&gt;&lt;p&gt;Exponent for the variable area regression relationships for flow depth above EXCDEP.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;A11(I)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(dimensionless)&lt;/p&gt;&lt;p&gt;Coefficient for the variable area regression relationships for flow depth above EXCDEP(I).&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;A22(I)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(dimensionless)&lt;/p&gt;&lt;p&gt;Exponent for the variable area regression relationships for flow depth above EXCDEP(I).&lt;/p&gt;&lt;p&gt;Range: 0.0 - No upper limit&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                          </property>
                          <property name="text">
                           <string>Area</string>
@@ -1406,7 +1442,7 @@
                        <item row="2" column="0">
                         <widget class="QLabel" name="label_31">
                          <property name="toolTip">
-                          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;B11&lt;/p&gt;&lt;p&gt;Coefficient for the variable wetted perimeter relationships for flow above EXCDEP.&lt;/p&gt;&lt;p&gt;B22&lt;/p&gt;&lt;p&gt;Exponent for the variable wetted perimeter relationships for flow above EXCDEP.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;B11(I)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(dimensionless)&lt;/p&gt;&lt;p&gt;Coefficient for the variable wetted perimeter relationships for flow above EXCDEP(I).&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;B22(I)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(dimensionless)&lt;/p&gt;&lt;p&gt;Exponent for the variable wetted perimeter relationships for flow above EXCDEP(I).&lt;/p&gt;&lt;p&gt;Range: 0.0 - No upper limit&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                          </property>
                          <property name="text">
                           <string>Wetted perimeter</string>
@@ -1419,7 +1455,7 @@
                        <item row="3" column="0">
                         <widget class="QLabel" name="label_32">
                          <property name="toolTip">
-                          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;C11&lt;/p&gt;&lt;p&gt;Coefficient for the variable top width relationships for flow depth above EXCDEP.&lt;/p&gt;&lt;p&gt;C22&lt;/p&gt;&lt;p&gt;Exponent for the variable top width relationships for flow depth above EXCDEP.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;C11(I)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(dimensionless)&lt;/p&gt;&lt;p&gt;Coefficient for the variable top width relationships for flow depth above EXCDEP(I).&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;C22(I)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(dimensionless)&lt;/p&gt;&lt;p&gt;Exponent for the variable top width relationships for flow depth above EXCDEP(I).&lt;/p&gt;&lt;p&gt;Range: 0.0 - No upper limit&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                          </property>
                          <property name="text">
                           <string>Top width</string>
@@ -1446,6 +1482,9 @@
                      </item>
                      <item row="1" column="0">
                       <widget class="QDoubleSpinBox" name="second_depth_dbox">
+                       <property name="toolTip">
+                        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;EXCDEP(I)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                       </property>
                        <property name="decimals">
                         <number>4</number>
                        </property>
@@ -1457,7 +1496,7 @@
                      <item row="0" column="0">
                       <widget class="QLabel" name="label_12">
                        <property name="toolTip">
-                        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;EXCDEP&lt;/p&gt;&lt;p&gt;Channel depth above which a second variable area relationship will apply. If only one channel geometry relationship is used, set EXCDEP(I) = 0.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;EXCDEP(I)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(ft or m)&lt;/p&gt;&lt;p&gt;Channel depth above which a second variable area relationship will apply.&lt;/p&gt;&lt;p&gt;If only one channel geometry relationship is used, set EXCDEP(I) = 0.&lt;/p&gt;&lt;p&gt;Range: 0.0 - No upper limit&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                        </property>
                        <property name="text">
                         <string>Depth for second relationship</string>
