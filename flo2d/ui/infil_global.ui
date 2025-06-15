@@ -125,7 +125,7 @@
       <item row="3" column="2">
        <widget class="QLabel" name="label_8">
         <property name="toolTip">
-         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;SOILD&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(ft or m)&lt;/p&gt;&lt;p&gt;Global Green-Ampt infiltration soil limiting depth storage. Maximum soil depth for infiltration.&lt;/p&gt;&lt;p&gt;Set SOILD = 0 to have unlimited infiltration and do not assign spatially variable SOIL_DEPTH(N).&lt;/p&gt;&lt;p&gt;Range:&lt;/p&gt;&lt;p&gt;0.0 - 100. ft&lt;/p&gt;&lt;p&gt;0.0 - 30. m&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;SOILD&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(ft or m)&lt;/p&gt;&lt;p&gt;Global Green-Ampt infiltration soil limiting depth storage.&lt;/p&gt;&lt;p&gt;Maximum soil depth for infiltration.&lt;/p&gt;&lt;p&gt;Set SOILD = 0 to have unlimited infiltration and do not assign spatially variable SOIL_DEPTH(N).&lt;/p&gt;&lt;p&gt;Range:&lt;/p&gt;&lt;p&gt;0.0 - 100. ft&lt;/p&gt;&lt;p&gt;0.0 - 30. m&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
         </property>
         <property name="text">
          <string>Soil Depth</string>
@@ -154,7 +154,7 @@
       <item row="2" column="0">
        <widget class="QLabel" name="label_3">
         <property name="toolTip">
-         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;HYDCALL&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(inches/hr or mm/hr)&lt;/p&gt;&lt;p&gt;Average global floodplain hydraulic conductivity.&lt;/p&gt;&lt;p&gt;Range:&lt;/p&gt;&lt;p&gt;0.01 - 10 inches/h&lt;/p&gt;&lt;p&gt;0.25 - 250 mm/hr&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;HYDCALL&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(inches/hr or mm/hr)&lt;/p&gt;&lt;p&gt;Average global floodplain hydraulic conductivity.&lt;/p&gt;&lt;p&gt;Range:&lt;/p&gt;&lt;p&gt;0.01 - 10 inches/hr&lt;/p&gt;&lt;p&gt;0.25 - 250 mm/hr&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
         </property>
         <property name="text">
          <string>Average global floodplain hydraulic conductivity</string>
@@ -228,7 +228,7 @@
       <item row="0" column="0">
        <widget class="QLabel" name="label">
         <property name="toolTip">
-         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;ABSTR&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(inches or mm)&lt;/p&gt;&lt;p&gt;Green Ampt global floodplain rainfall abstraction or interception.&lt;/p&gt;&lt;p&gt;Range: &lt;/p&gt;&lt;p&gt;0 - 1 ft&lt;/p&gt;&lt;p&gt;0 - 25 m&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;ABSTR&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(inches or mm)&lt;/p&gt;&lt;p&gt;Green Ampt global floodplain rainfall abstraction or interception.&lt;/p&gt;&lt;p&gt;Range: &lt;/p&gt;&lt;p&gt;0 - 1 inches&lt;/p&gt;&lt;p&gt;0 - 25 m&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
         </property>
         <property name="text">
          <string>Initial Abstraction</string>
