@@ -202,7 +202,7 @@
      <item>
       <widget class="QLabel" name="label">
        <property name="toolTip">
-        <string>Name of the infiltration feature.</string>
+        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Infiltration feature name.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
        </property>
        <property name="text">
         <string>Infiltration name</string>
@@ -231,7 +231,7 @@
         </size>
        </property>
        <property name="toolTip">
-        <string>Select infitration feature.</string>
+        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Infiltration feature name.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
        </property>
        <property name="editable">
         <bool>false</bool>
