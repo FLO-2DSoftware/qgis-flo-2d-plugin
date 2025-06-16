@@ -2655,6 +2655,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     self.batch_execute(mult_cells_sql)
                 self.gutils.enable_geom_triggers()
 
+                self.set_cont_par("IMULTC", 1)
+
             except Exception as e:
                 self.uc.show_error(
                     "Error while importing MULT data from hdf5 file!"
@@ -2689,6 +2691,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 if simple_mult_cells_sql:
                     self.batch_execute(simple_mult_cells_sql)
                 self.gutils.enable_geom_triggers()
+
+                self.set_cont_par("IMULTC", 1)
 
             except Exception as e:
                 self.uc.show_error(
