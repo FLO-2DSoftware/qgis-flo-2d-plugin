@@ -181,7 +181,7 @@
            </sizepolicy>
           </property>
           <property name="toolTip">
-           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Indicates that individual grid element depth area reduction values will be assigned.&lt;/p&gt;&lt;p&gt;FLO-2D variable: IRAINBUILDING (RAIN.DAT).&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Indicates that individual grid element depth reduction values will be assigned.&lt;/p&gt;&lt;p&gt;FLO-2D variable: IRAINBUILDING (RAIN.DAT).&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
           </property>
           <property name="text">
            <string>Building Rain</string>
@@ -720,10 +720,10 @@
          </size>
         </property>
         <property name="toolTip">
-         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Select a raster layer to sample a rainfall depth area reduction value into each intersected cell.&lt;/p&gt;&lt;p&gt;Data will be stored in QGIS in the &amp;quot;Rain ARF Cells&amp;quot; layer.&lt;/p&gt;&lt;p&gt;When exporting the FLO-2D files using the FLO-2D tool bar, the RAIN.DAT file will have the rainfall area reduction values stored as lines 5: pairs of (cell number, reduction value), (IRGRID, RAINARF).&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Select a raster layer to sample a rainfall depth reduction value into each intersected cell.&lt;/p&gt;&lt;p&gt;Data will be stored in QGIS in the &amp;quot;Rain ARF Cells&amp;quot; layer.&lt;/p&gt;&lt;p&gt;When exporting the FLO-2D files using the FLO-2D tool bar, the RAIN.DAT file will have the rainfall area reduction values stored as lines 5: pairs of (cell number, reduction value), (IRGRID, RAINARF).&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
         </property>
         <property name="title">
-         <string>Spatial Variation (Depth Area Reduction)</string>
+         <string>Spatial Variation (Depth Reduction)</string>
         </property>
         <property name="checkable">
          <bool>true</bool>
@@ -740,7 +740,7 @@
               </sizepolicy>
              </property>
              <property name="text">
-              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Select a raster layer to sample a rainfall depth area reduction value into intersected cells:&lt;br/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Select a raster layer to sample a rainfall depth reduction value into intersected cells:&lt;br/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
              </property>
              <property name="alignment">
               <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
