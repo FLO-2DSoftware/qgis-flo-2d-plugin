@@ -81,7 +81,7 @@ class ParseHDF5:
     @property
     def grid_group(self):
         group_name = "Input/Grid"
-        group_datasets = ["GRIDCODE", "MANNING", "COORDINATES", "ELEVATION", "NEIGHBOURS"]
+        group_datasets = ["GRIDCODE", "MANNING", "COORDINATES", "ELEVATION", "NEIGHBORS"]
         group = HDF5Group(group_name)
         for dataset_name in group_datasets:
             group.create_dataset(dataset_name, [])
