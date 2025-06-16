@@ -22,6 +22,7 @@ from qgis.PyQt.QtWidgets import QApplication, QProgressDialog
 
 from ..flo2d_tools.grid_tools import grid_compas_neighbors, number_of_elements, cell_centroid
 from ..geopackage_utils import GeoPackageUtils
+from ..gui.dlg_settings import SettingsDialog
 # from ..gui.bc_editor_widget import BCEditorWidget
 from ..layers import Layers
 from ..utils import float_or_zero, get_BC_Border
@@ -111,10 +112,6 @@ class Flo2dGeoPackage(GeoPackageUtils):
         self.batch_execute(sql)
 
     def import_cont_toler_hdf5(self):
-        sql = ["""INSERT OR REPLACE INTO cont (name, value, note) VALUES""", 3]
-        control_group = self.parser.read_groups("Input/Control Parameters")[0]
-        cont_dataset = control_group.datasets["CONT"].data
-        toler_dataset = control_group.datasets["TOLER"].data
 
         # Define variable names
         cont_variables = [
@@ -129,24 +126,44 @@ class Flo2dGeoPackage(GeoPackageUtils):
             "TOLGLOBAL", "DEPTOL", "COURANTFP", "COURANTC", "COURANTST", "TIME_ACCEL"
         ]
 
-        # Insert CONT variables
-        for i, var in enumerate(cont_variables):
-            value = cont_dataset[i] if i < len(cont_dataset) else -9999
-            sql += [(var, value, self.PARAMETER_DESCRIPTION.get(var, ""))]
+        sql = ["""INSERT OR REPLACE INTO cont (name, value, note) VALUES""", 3]
 
-        # Insert TOLER variables
-        for i, var in enumerate(tol_variables):
-            value = toler_dataset[i] if i < len(toler_dataset) else -9999
-            sql += [(var, value, self.PARAMETER_DESCRIPTION.get(var, ""))]
+        control_group = self.parser.read_groups("Input/Control Parameters")
+        if control_group:
+            control_group = control_group[0]
 
-        mann = self.get_cont_par("MANNING")
-        if not mann:
-            mann = "0.05"
+            cont_dataset = control_group.datasets["CONT"].data
+            toler_dataset = control_group.datasets["TOLER"].data
+
+            # Insert CONT variables
+            for i, var in enumerate(cont_variables):
+                value = cont_dataset[i] if i < len(cont_dataset) else -9999
+                sql += [(var, value, self.PARAMETER_DESCRIPTION.get(var, ""))]
+
+            # Insert TOLER variables
+            for i, var in enumerate(tol_variables):
+                value = toler_dataset[i] if i < len(toler_dataset) else -9999
+                sql += [(var, value, self.PARAMETER_DESCRIPTION.get(var, ""))]
+
+            mann = self.get_cont_par("MANNING")
+            if not mann:
+                mann = "0.05"
+            else:
+                pass
+            sql += [("MANNING", mann, self.PARAMETER_DESCRIPTION["MANNING"])]
+
+            self.batch_execute(sql)
         else:
-            pass
-        sql += [("MANNING", mann, self.PARAMETER_DESCRIPTION["MANNING"])]
-
-        self.batch_execute(sql)
+            mann = self.get_cont_par("MANNING")
+            if not mann:
+                mann = "0.05"
+            else:
+                pass
+            sql += [("CELLSIZE", self.cell_size, self.PARAMETER_DESCRIPTION["CELLSIZE"])]
+            sql += [("MANNING", mann, self.PARAMETER_DESCRIPTION["MANNING"])]
+            self.batch_execute(sql)
+            dlg_settings = SettingsDialog(self.con, self.iface, self.lyrs, self.gutils)
+            dlg_settings.set_default_controls(self.con)
 
     def import_mannings_n_topo(self):
         if self.parsed_format == self.FORMAT_DAT:
@@ -1902,6 +1919,9 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
             qry = """UPDATE chan SET name = 'Channel ' ||  cast(fid as text);"""
             self.execute(qry)
+
+            self.set_cont_par("ICHANNEL" , 1)  # Set ICHANNEL to 1 after import
+
             QApplication.restoreOverrideCursor()
 
     def import_xsec(self):
