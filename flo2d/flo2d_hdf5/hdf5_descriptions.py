@@ -11,7 +11,7 @@ GRID = {
     "MANNING": "Global n Value Adjustment",
     "COORDINATES": "Longitude - Latitude",
     "ELEVATION": "Elevation",
-    "NEIGHBOURS": "Neighbours"
+    "NEIGHBORS": "Neighbors"
 }
 
 NEIGHBORS = {

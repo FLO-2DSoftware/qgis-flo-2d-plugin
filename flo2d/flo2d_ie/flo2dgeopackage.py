@@ -6527,7 +6527,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 # grid_group.datasets["Y"].data.append(y)
             neighbors_line = "{0} {1} {2} {3} {4} {5} {6} {7}"
             for row in grid_compas_neighbors(self.gutils):
-                grid_group.datasets["NEIGHBOURS"].data.append(create_array(neighbors_line, 8, np.int_, tuple(row)))
+                grid_group.datasets["NEIGHBORS"].data.append(create_array(neighbors_line, 8, np.int_, tuple(row)))
             self.parser.write_groups(grid_group)
             if nulls > 0:
                 QApplication.restoreOverrideCursor()
