@@ -469,9 +469,20 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         swmm = 1 if self.gutils.get_cont_par("SWMM") == "1" else 0
         self.simulate_stormdrain_chbox.setChecked(swmm)
 
-        self.user_swmm_inlets_junctions_lyr.featureAdded.connect(self.inlet_junction_added)
-        self.user_swmm_outlets_lyr.featureAdded.connect(self.outlet_added)
-        self.user_swmm_storage_units_lyr.featureAdded.connect(self.storage_unit_added)
+        self.user_swmm_inlets_junctions_lyr.featureAdded.connect(
+            lambda fid: self._feature_added(self.user_swmm_inlets_junctions_lyr, fid, "user_swmm_inlets_junctions"))
+        self.user_swmm_outlets_lyr.featureAdded.connect(
+            lambda fid: self._feature_added(self.user_swmm_outlets_lyr, fid, "user_swmm_outlets"))
+        self.user_swmm_storage_units_lyr.featureAdded.connect(
+            lambda fid: self._feature_added(self.user_swmm_storage_units_lyr, fid, "user_swmm_storage_units"))
+
+        self.user_swmm_inlets_junctions_lyr.geometryChanged.connect(
+            lambda fid, geom: self._geometry_changed(fid, geom, "user_swmm_inlets_junctions"))
+        self.user_swmm_outlets_lyr.geometryChanged.connect(
+            lambda fid, geom: self._geometry_changed(fid, geom, "user_swmm_outlets"))
+        self.user_swmm_storage_units_lyr.geometryChanged.connect(
+            lambda fid, geom: self._geometry_changed(fid, geom, "user_swmm_storage_units"))
+
         self.user_swmm_conduits_lyr.featureAdded.connect(self.conduit_added)
         self.user_swmm_weirs_lyr.featureAdded.connect(self.weir_added)
         self.user_swmm_pumps_lyr.featureAdded.connect(self.pump_added)
@@ -6849,65 +6860,37 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             self.uc.log_info("Storm Drain control data saved!")
             dlg_INP_groups.save_INP_control()
 
-    def inlet_junction_added(self, fid):
+    def _feature_added(self, layer, fid, table_name):
         """
-        Function to add an inlet/junction
+        Generic handler for featureAdded
         """
-        feat = next(self.user_swmm_inlets_junctions_lyr.getFeatures(QgsFeatureRequest(fid)))
-        geom = feat.geometry()
-        if geom is None:
+        feat = next(layer.getFeatures(QgsFeatureRequest(fid)), None)
+        if feat is None:
             return
+        geom = feat.geometry()
+        self._update_grid_field(fid, geom, table_name)
+
+    def _geometry_changed(self, fid, geom, table_name):
+        """
+        Generic handler for geometryChanged
+        """
+        self._update_grid_field(fid, geom, table_name)
+
+    def _update_grid_field(self, fid, geom, table_name):
+        """
+        Calculates grid ID based on geometry and updates the table
+        """
+        if geom is None or geom.isEmpty():
+            return
+
         point = geom.asPoint()
         grid_fid = self.gutils.grid_on_point(point.x(), point.y())
 
         self.gutils.execute(f"""
-                                UPDATE 
-                                    user_swmm_inlets_junctions
-                                SET 
-                                    grid = '{grid_fid}'
-                                WHERE 
-                                    fid = '{fid}';
-                            """)
-
-    def outlet_added(self, fid):
-        """
-        Function to add an outlet
-        """
-        feat = next(self.user_swmm_outlets_lyr.getFeatures(QgsFeatureRequest(fid)))
-        geom = feat.geometry()
-        if geom is None:
-            return
-        point = geom.asPoint()
-        grid_fid = self.gutils.grid_on_point(point.x(), point.y())
-
-        self.gutils.execute(f"""
-                                UPDATE 
-                                    user_swmm_outlets
-                                SET 
-                                    grid = '{grid_fid}'
-                                WHERE 
-                                    fid = '{fid}';
-                            """)
-
-    def storage_unit_added(self, fid):
-        """
-        Function to add a storage unit
-        """
-        feat = next(self.user_swmm_storage_units_lyr.getFeatures(QgsFeatureRequest(fid)))
-        geom = feat.geometry()
-        if geom is None:
-            return
-        point = geom.asPoint()
-        grid_fid = self.gutils.grid_on_point(point.x(), point.y())
-
-        self.gutils.execute(f"""
-                                UPDATE 
-                                    user_swmm_storage_units
-                                SET 
-                                    grid = '{grid_fid}'
-                                WHERE 
-                                    fid = '{fid}';
-                            """)
+            UPDATE {table_name}
+            SET grid = '{grid_fid}'
+            WHERE fid = '{fid}';
+        """)
 
     def conduit_added(self, fid):
         """
