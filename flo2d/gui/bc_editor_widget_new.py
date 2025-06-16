@@ -918,19 +918,22 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
                                 else:
                                     batch_updates.append((time_series_fid, n[1][1], n[1][2], n[0][0]))
 
-                if len(batch_updates[0]) == 4:
-                    self.gutils.execute_many(f"""UPDATE inflow_time_series_data SET
-                                         series_fid = ?,
-                                         time = ?,
-                                         value = ?
-                                         WHERE fid = ?""", batch_updates)
-                else:
-                    self.gutils.execute_many(f"""UPDATE inflow_time_series_data SET
-                                         series_fid = ?,
-                                         time = ?,
-                                         value = ?,
-                                         value2 = ?,
-                                         WHERE fid = ?""", batch_updates)
+                self.uc.log_info(str(batch_updates))
+
+                if batch_updates:
+                    if len(batch_updates[0]) == 4:
+                        self.gutils.execute_many(f"""UPDATE inflow_time_series_data SET
+                                             series_fid = ?,
+                                             time = ?,
+                                             value = ?
+                                             WHERE fid = ?""", batch_updates)
+                    else:
+                        self.gutils.execute_many(f"""UPDATE inflow_time_series_data SET
+                                             series_fid = ?,
+                                             time = ?,
+                                             value = ?,
+                                             value2 = ?,
+                                             WHERE fid = ?""", batch_updates)
                 self.gutils.batch_execute(insert_ts_sql, insert_inflow_sql, insert_cells_sql, insert_tsd_sql)
 
                 if len(update_all_schem_sql) > 0:
