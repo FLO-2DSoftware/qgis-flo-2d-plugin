@@ -564,7 +564,7 @@
       <item row="1" column="4">
        <widget class="QDoubleSpinBox" name="spin_fhortonia">
         <property name="toolTip">
-         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-family:'Arial','Helvetica','sans-serif'; font-size:small; color:#222222; background-color:#ffffff;&quot;&gt;ABSTR&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;ABSTR&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
         </property>
         <property name="decimals">
          <number>4</number>
