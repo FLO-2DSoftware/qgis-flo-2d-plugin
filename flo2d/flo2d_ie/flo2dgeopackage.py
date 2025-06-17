@@ -6123,7 +6123,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             for var in cont_variables:
                 sql = f"""SELECT value FROM cont WHERE name = '{var}';"""
                 value = self.execute(sql).fetchone()
-                if value is not None:
+                if value and value[0] is not None:
                     cont_group.datasets["CONT"].data.append(float(value[0]))
                 else:
                     cont_group.datasets["CONT"].data.append(-9999)
@@ -6132,7 +6132,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             for var in tol_variables:
                 sql = f"""SELECT value FROM cont WHERE name = '{var}';"""
                 value = self.execute(sql).fetchone()
-                if value is not None:
+                if value and value[0] is not None:
                     cont_group.datasets["TOLER"].data.append(float(value[0]))
                 else:
                     cont_group.datasets["TOLER"].data.append(-9999)
