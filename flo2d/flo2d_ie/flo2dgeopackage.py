@@ -1801,7 +1801,10 @@ class Flo2dGeoPackage(GeoPackageUtils):
                         i = 1
 
                     chan_n_sql += [(grid, nxecnum, f"XS {int(nxecnum)}")]
-                    geom = self.build_linestring([grid, xs_geom[grid]])
+                    if xs_geom[grid] not in [0, "0"]:
+                        geom = self.build_linestring([grid, xs_geom[grid]])
+                    else:
+                        geom = None
                     chan_elems_sql += [(geom, grid, chan_id, i, xs_geom[grid], fcn, xlen, "N")]
                     left_bank_grids.append(grid)
                     prev_chan_id = chan_id
@@ -1821,7 +1824,10 @@ class Flo2dGeoPackage(GeoPackageUtils):
                         i = 1
 
                     chan_r_sql += [(grid, bankell, bankelr, fcw, fcd)]
-                    geom = self.build_linestring([grid, xs_geom[grid]])
+                    if xs_geom[grid] not in [0, "0"]:
+                        geom = self.build_linestring([grid, xs_geom[grid]])
+                    else:
+                        geom = None
                     chan_elems_sql += [(geom, grid, chan_id, i, xs_geom[grid], fcn, xlen, "R")]
                     left_bank_grids.append(grid)
                     prev_chan_id = chan_id
@@ -1841,7 +1847,10 @@ class Flo2dGeoPackage(GeoPackageUtils):
                         i = 1
 
                     chan_t_sql += [(grid, bankell, bankelr, fcw, fcd, zl, zr)]
-                    geom = self.build_linestring([grid, xs_geom[grid]])
+                    if xs_geom[grid] not in [0, "0"]:
+                        geom = self.build_linestring([grid, xs_geom[grid]])
+                    else:
+                        geom = None
                     chan_elems_sql += [(geom, grid, chan_id, i, xs_geom[grid], fcn, xlen, "T")]
                     left_bank_grids.append(grid)
                     prev_chan_id = chan_id
