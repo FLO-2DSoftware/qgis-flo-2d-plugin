@@ -96,7 +96,7 @@
         <x>0</x>
         <y>0</y>
         <width>952</width>
-        <height>528</height>
+        <height>527</height>
        </rect>
       </property>
       <property name="sizePolicy">
@@ -1263,7 +1263,7 @@
                        </sizepolicy>
                       </property>
                       <property name="toolTip">
-                       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;ARFBLOCKMOD&lt;/span&gt; (ARF.DAT)&lt;/p&gt;&lt;p&gt;Setting IARFBLOCKMOD = 0.9 will change the ARF = 1. to ARF = 0.9 for all the totally blocked elements.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;ARFBLOCKMOD&lt;/span&gt; (ARF.DAT)&lt;/p&gt;&lt;p&gt;Global revision to the ARF = 1 value to the grid elements that are total blocked from receiving any flow (ITTAWF elements).&lt;/p&gt;&lt;p&gt;Setting IARFBLOCKMOD = 0.9 will change the ARF = 1. to ARF = 0.9 for all the ITTAWF elements &lt;/p&gt;&lt;p&gt;Range: 0. - 1.&lt;/p&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                       </property>
                       <property name="text">
                        <string>Global ARF = 1 Revision</string>
@@ -1288,7 +1288,7 @@
                        </size>
                       </property>
                       <property name="toolTip">
-                       <string>IARFBLOCKMOD</string>
+                       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;ARFBLOCKMOD&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                       </property>
                       <property name="decimals">
                        <number>2</number>
@@ -1723,7 +1723,7 @@
                   <string>Floodplain/Channel Display Options</string>
                  </property>
                  <property name="collapsed">
-                  <bool>true</bool>
+                  <bool>false</bool>
                  </property>
                  <property name="saveCollapsedState">
                   <bool>false</bool>
@@ -1793,7 +1793,7 @@
                        </sizepolicy>
                       </property>
                       <property name="toolTip">
-                       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;DEPRESSDEPTH&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(ft)&lt;/p&gt;&lt;p&gt;The DEPRESSDEPTH variable has two functions:&lt;/p&gt;&lt;p&gt;1. DEPRESSDEPTH identifies depressed grid elements that are lower than all contiguous nodes. A value of DEPRESSDEPTH = 3.0 ft is suggested. Depressed elements may be real, but in most cases isolated depressed elements are a result of poor topographic data.&lt;/p&gt;&lt;p&gt;2. Identifies low levee crst elevations. A typical value of DEPRESSDEPTH 3.0 (default value if zero). &lt;/p&gt;&lt;p&gt;Range: -110.0 to 10.0&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;DEPRESSDEPTH&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(ft)&lt;/p&gt;&lt;p&gt;The DEPRESSDEPTH variable has two functions:&lt;/p&gt;&lt;p&gt;1. DEPRESSDEPTH identifies depressed grid elements that are lower than all contiguous nodes. A value of DEPRESSDEPTH = 3.0 ft is suggested. Depressed elements may be real, but in most cases isolated depressed elements are a result of poor topographic data.&lt;/p&gt;&lt;p&gt;2. Identifies low levee crst elevations. A typical value of DEPRESSDEPTH 3.0 (default value if zero).&lt;/p&gt;&lt;p&gt;DEPRESSDEPTH = 0.0 to 10.0 ft; Identifies the wall with a crest elevation lower than DEPRESSDEPTH in LOW_LEVEE_CREST_ELEVATIONS.OUT file.&lt;/p&gt;&lt;p&gt;DEPRESSDEPTH = -1.0 to - 10.0 ft; Assesses the side of the wall where the crest elevation is assigned to determine if the levee height is lower than the DEPRESSDEPTH value.&lt;/p&gt;&lt;p&gt;DEPRESSDEPTH = -101.0 to -110.0 ft; Assesses both sides of the wall to determine if the height is lower than DEPRESSDEPTH (1 ft to 10 ft).&lt;/p&gt;&lt;p&gt;If DEPRESSDEPTH is negative, LEVEE.BAC file is written as a backup file omitting the low levees that can be renamed as LEVEE.DAT.&lt;/p&gt;&lt;p&gt;Range: -110.0 to 10.0&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                       </property>
                       <property name="text">
                        <string>Depress Depth</string>
