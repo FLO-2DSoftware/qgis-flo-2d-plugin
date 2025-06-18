@@ -9,18 +9,27 @@
 # of the License, or (at your option) any later version
 
 import os
+import shutil
 import unittest
+
+import h5py
+import numpy as np
 
 from .utilities import get_qgis_app
 
 QGIS_APP = get_qgis_app()
 THIS_DIR = os.path.dirname(os.path.abspath(__file__))
-IMPORT_DATA_DIR_1 = os.path.join(THIS_DIR, "data", "import")
-IMPORT_DATA_DIR_2 = os.path.join(THIS_DIR, "data", "import_2")
+IMPORT_DATA_DIR_1 = os.path.join(THIS_DIR, "data", "import_dat_1")
+IMPORT_DATA_DIR_2 = os.path.join(THIS_DIR, "data", "import_dat_2")
+IMPORT_HDF5_DIR_1 = os.path.join(THIS_DIR, "data", "import_hdf5_1")
+IMPORT_HDF5_DIR_2 = os.path.join(THIS_DIR, "data", "import_hdf5_2")
 VECTOR_PATH = os.path.join(THIS_DIR, "data", "vector")
 EXPORT_DATA_DIR = os.path.join(THIS_DIR, "data")
+EXPORT_HDF5_DIR = os.path.join(THIS_DIR, "data", "import_hdf5_1", "export_project_1.hdf5")
 CONT_1 = os.path.join(IMPORT_DATA_DIR_1, "CONT.DAT")
 CONT_2 = os.path.join(IMPORT_DATA_DIR_2, "CONT.DAT")
+HDF5_1 = os.path.join(IMPORT_HDF5_DIR_1, "project_1.hdf5")
+HDF5_2 = os.path.join(IMPORT_HDF5_DIR_2, "project_2.hdf5")
 
 from flo2d.flo2d_ie.flo2dgeopackage import Flo2dGeoPackage
 from flo2d.geopackage_utils import database_create
@@ -41,7 +50,34 @@ def export_paths(*inpaths):
         pass
     return paths
 
-class TestFlo2dGeoPackage(unittest.TestCase):
+def get_all_datasets(h5file):
+    """Recursively retrieve all dataset paths in an HDF5 file."""
+    datasets = []
+    def visitor(name, obj):
+        if isinstance(obj, h5py.Dataset):
+            datasets.append(name)
+    h5file.visititems(visitor)
+    return datasets
+
+def compare_datasets(file1_path, file2_path, dataset):
+    with h5py.File(file1_path, 'r') as f1, h5py.File(file2_path, 'r') as f2:
+        # Check if the dataset exists in both files
+        if dataset not in f1 or dataset not in f2:
+            return False
+        d1 = f1[dataset]
+        d2 = f2[dataset]
+        return datasets_equal(d1, d2)
+
+def datasets_equal(d1, d2):
+    """Compare datasets by shape, dtype, and values."""
+    if d1.shape != d2.shape or d1.dtype != d2.dtype:
+        return False
+    try:
+        return np.array_equal(d1[()], d2[()])
+    except Exception:
+        return False
+
+class TestFlo2dGeoPackageDat(unittest.TestCase):
     con = database_create(":memory:")
     con_2 = database_create(":memory:")
 
@@ -516,10 +552,386 @@ class TestFlo2dGeoPackage(unittest.TestCase):
         in_len, out_len = file_len(infile), file_len(outfile)
         self.assertEqual(in_len, out_len)
 
+class TestFlo2dGeoPackageHDF5(unittest.TestCase):
+    con = database_create(":memory:")
+    con_2 = database_create(":memory:")
 
-# Running tests:
+    @classmethod
+    def setUpClass(cls):
+        cls.f2g = Flo2dGeoPackage(cls.con, None, parsed_format=Flo2dGeoPackage.FORMAT_HDF5)
+        cls.f2g.disable_geom_triggers()
+        cls.f2g.set_parser(HDF5_1)
+        cls.f2g.import_mannings_n_topo()
+
+        h5py.File(EXPORT_HDF5_DIR, "w")
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.con.close()
+        if os.path.isfile(EXPORT_HDF5_DIR):
+            os.remove(EXPORT_HDF5_DIR)
+        else:
+            pass
+
+    def test_import_cont_toler(self):
+        self.f2g.import_cont_toler()
+        self.assertFalse(self.f2g.is_table_empty("cont"))
+        controls = self.f2g.execute("""SELECT name, value FROM cont;""").fetchall()
+        self.assertEqual(len(controls), 44)
+
+    def test_import_mannings_n_topo(self):
+        cellsize = self.f2g.execute("""SELECT value FROM cont WHERE name = 'CELLSIZE';""").fetchone()[0]
+        self.assertEqual(float(cellsize), 30)
+        rows = self.f2g.execute("""SELECT COUNT(fid) FROM grid;""").fetchone()[0]
+        self.assertEqual(float(rows), 54315)
+        n_value = self.f2g.execute("""SELECT fid FROM grid WHERE n_value > 1;""").fetchone()
+        self.assertIsNone(n_value)
+        elevation = self.f2g.execute("""SELECT fid FROM grid WHERE elevation IS NULL;""").fetchone()
+        self.assertIsNone(elevation)
+
+    def test_import_inflow(self):
+        self.f2g.clear_tables("inflow")
+        self.f2g.import_inflow()
+        rows = self.f2g.execute("""SELECT time_series_fid FROM inflow;""").fetchall()
+        self.assertEqual(len(rows), 1)
+        self.assertListEqual([(1,)], rows)
+
+    def test_import_outflow(self):
+        self.f2g.import_outflow()
+        outflows = self.f2g.execute("""SELECT COUNT(fid) FROM outflow;""").fetchone()[0]
+        self.assertEqual(float(outflows), 1)
+
+    def test_import_rain(self):
+        self.f2g.import_rain()
+        tot = self.f2g.execute("""SELECT tot_rainfall FROM rain;""").fetchone()[0]
+        self.assertEqual(float(tot), 3.74)
+
+    def test_import_infil(self):
+        self.f2g.import_infil()
+        scsnall = self.f2g.execute("""SELECT infmethod FROM infil;""").fetchone()[0]
+        self.assertEqual(float(scsnall), 1)
+        cells_count = self.f2g.execute("""SELECT COUNT(fid) FROM infil_cells_green;""").fetchone()[0]
+        self.assertEqual(int(cells_count), 54315)
+        result_query = self.f2g.execute(
+            """SELECT grid_fid, hydc, soils, dtheta, abstrinf, rtimpf, soil_depth FROM infil_cells_green;""")
+        cell_values = result_query.fetchone()
+        self.assertEqual(cell_values[0], 1)
+        self.assertEqual(cell_values[1], 0.248)
+        self.assertEqual(cell_values[2], 14.375)
+        self.assertEqual(cell_values[3], 0.197)
+        self.assertEqual(cell_values[4], 0.087)
+        self.assertEqual(cell_values[5], 0.725)
+        self.assertEqual(cell_values[6], 1.25)
+
+    def test_import_chan(self):
+        self.f2g.import_chan()
+        nelem = self.f2g.execute("""SELECT fcn FROM chan_elems WHERE fid = 47271;""").fetchone()[0]
+        self.assertEqual(nelem, 0.04)
+        nxsec = self.f2g.execute("""SELECT nxsecnum FROM chan_n WHERE elem_fid = 47271;""").fetchone()[0]
+        self.assertEqual(nxsec, 29)
+
+    def test_import_xsec(self):
+        self.f2g.import_chan()
+        self.f2g.import_xsec()
+        nxsec = self.f2g.execute("""SELECT COUNT(nxsecnum) FROM chan_n;""").fetchone()[0]
+        xsec = self.f2g.execute("""SELECT COUNT(DISTINCT chan_n_nxsecnum) FROM xsec_n_data;""").fetchone()[0]
+        self.assertEqual(nxsec, xsec)
+
+    def test_import_hystruc(self):
+        self.f2g.import_hystruc()
+        rrows = self.f2g.execute("""SELECT COUNT(fid) FROM repl_rat_curves;""").fetchone()[0]
+        self.assertEqual(rrows, 4)
+        frow = self.f2g.execute("""SELECT structname FROM struct WHERE fid = 4;""").fetchone()[0]
+        self.assertEqual(frow, "TRYCLine2")
+
+    def test_import_arf(self):
+        self.f2g.import_arf()
+        c = self.f2g.execute("""SELECT COUNT(fid) FROM blocked_cells;""").fetchone()[0]
+        self.assertEqual(c, 21888)
+
+    def test_import_levee(self):
+        self.f2g.import_levee()
+        sides = self.f2g.execute("""SELECT COUNT(fid) FROM levee_data;""").fetchone()[0]
+        self.assertEqual(sides, 9471)
+        gfragchar = self.f2g.execute("""SELECT ilevfail FROM levee_general;""").fetchone()[0]
+        self.assertEqual(float(gfragchar), 1)
+
+    def test_import_fpxsec(self):
+        self.f2g.import_fpxsec()
+        fpxsec = self.f2g.execute("""SELECT COUNT(fid) FROM fpxsec;""").fetchone()[0]
+        self.assertEqual(fpxsec, 4)
+
+    def test_import_fpfroude(self):
+        self.f2g.import_fpfroude()
+        count = self.f2g.execute("""SELECT COUNT(fid) FROM fpfroude;""").fetchone()[0]
+        self.assertEqual(count, 54315)
+
+    def test_import_swmmflo(self):
+        self.f2g.import_swmmflo()
+        count = self.f2g.execute("""SELECT COUNT(fid) FROM swmmflo;""").fetchone()[0]
+        self.assertEqual(count, 184)
+        length = self.f2g.execute("""SELECT MAX(swmm_length) FROM swmmflo;""").fetchone()[0]
+        self.assertEqual(length, 98.05)
+
+    def test_import_swmmflort(self):
+        self.f2g.import_swmmflort()
+        fids = self.f2g.execute("""SELECT fid FROM swmmflort;""").fetchall()
+        dist_fids = self.f2g.execute("""SELECT DISTINCT swmm_rt_fid FROM swmmflort_data;""").fetchall()
+        self.assertListEqual(fids, dist_fids)
+
+    def test_import_swmmoutf(self):
+        self.f2g.import_swmmoutf()
+        expected = [(46617, "O-35-32-35-A", 1)]
+        row = self.f2g.execute("""SELECT grid_fid, name, outf_flo FROM swmmoutf;""").fetchone()
+        self.assertListEqual([row], expected)
+
+    def test_import_tolspatial(self):
+        self.f2g.import_tolspatial()
+        count = self.f2g.execute("""SELECT COUNT(fid) FROM tolspatial;""").fetchone()[0]
+        self.assertEqual(count, 18245)
+
+    def test_export_cont(self):
+
+        self.f2g_exp = Flo2dGeoPackage(self.con_2, None, parsed_format=Flo2dGeoPackage.FORMAT_HDF5)
+        shutil.copy2(HDF5_1, EXPORT_HDF5_DIR)
+        self.f2g_exp.set_parser(EXPORT_HDF5_DIR, get_cell_size=False)
+
+        self.f2g_exp.import_cont_toler()
+        self.f2g_exp.export_cont_toler()
+
+        self.assertTrue(compare_datasets(HDF5_1, EXPORT_HDF5_DIR, "Input/Control Parameters/CONT"))
+        self.assertTrue(compare_datasets(HDF5_1, EXPORT_HDF5_DIR, "Input/Control Parameters/TOLER"))
+
+    def test_export_mannings_n_topo(self):
+
+        self.f2g_exp = Flo2dGeoPackage(self.con_2, None, parsed_format=Flo2dGeoPackage.FORMAT_HDF5)
+        shutil.copy2(HDF5_1, EXPORT_HDF5_DIR)
+        self.f2g_exp.set_parser(EXPORT_HDF5_DIR, get_cell_size=False)
+
+        self.f2g_exp.import_cont_toler()
+        self.f2g_exp.import_mannings_n_topo()
+        self.f2g_exp.export_mannings_n_topo()
+
+        self.assertTrue(compare_datasets(HDF5_1, EXPORT_HDF5_DIR, "Input/Grid/COORDINATES"))
+        self.assertTrue(compare_datasets(HDF5_1, EXPORT_HDF5_DIR, "Input/Grid/ELEVATION"))
+        self.assertTrue(compare_datasets(HDF5_1, EXPORT_HDF5_DIR, "Input/Grid/GRIDCODE"))
+        self.assertTrue(compare_datasets(HDF5_1, EXPORT_HDF5_DIR, "Input/Grid/MANNING"))
+        self.assertTrue(compare_datasets(HDF5_1, EXPORT_HDF5_DIR, "Input/Grid/NEIGHBORS"))
+
+    def test_export_inflow(self):
+
+        self.f2g_exp = Flo2dGeoPackage(self.con_2, None, parsed_format=Flo2dGeoPackage.FORMAT_HDF5)
+        shutil.copy2(HDF5_1, EXPORT_HDF5_DIR)
+        self.f2g_exp.set_parser(EXPORT_HDF5_DIR, get_cell_size=False)
+
+        self.f2g_exp.import_cont_toler()
+        self.f2g_exp.import_inflow()
+        self.f2g_exp.export_inflow()
+
+        self.assertTrue(compare_datasets(HDF5_1, EXPORT_HDF5_DIR, "Input/Boundary Conditions/Inflow/INF_GLOBAL"))
+        self.assertTrue(compare_datasets(HDF5_1, EXPORT_HDF5_DIR, "Input/Boundary Conditions/Inflow/INF_GRID"))
+        self.assertTrue(compare_datasets(HDF5_1, EXPORT_HDF5_DIR, "Input/Boundary Conditions/Inflow/TS_INF_DATA"))
+
+    def test_export_outflow(self):
+
+        self.f2g_exp = Flo2dGeoPackage(self.con_2, None, parsed_format=Flo2dGeoPackage.FORMAT_HDF5)
+        shutil.copy2(HDF5_1, EXPORT_HDF5_DIR)
+        self.f2g_exp.set_parser(EXPORT_HDF5_DIR, get_cell_size=False)
+
+        self.f2g_exp.import_cont_toler()
+        self.f2g_exp.import_outflow()
+        self.f2g_exp.export_outflow()
+
+        self.assertTrue(compare_datasets(HDF5_1, EXPORT_HDF5_DIR, "Input/Boundary Conditions/Outflow/CH_OUT_GRID"))
+        self.assertTrue(compare_datasets(HDF5_1, EXPORT_HDF5_DIR, "Input/Boundary Conditions/Outflow/FP_OUT_GRID"))
+
+    def test_export_rain(self):
+
+        self.f2g_exp = Flo2dGeoPackage(self.con_2, None, parsed_format=Flo2dGeoPackage.FORMAT_HDF5)
+        shutil.copy2(HDF5_1, EXPORT_HDF5_DIR)
+        self.f2g_exp.set_parser(EXPORT_HDF5_DIR, get_cell_size=False)
+
+        self.f2g_exp.import_cont_toler()
+        self.f2g_exp.import_rain()
+        self.f2g_exp.export_rain()
+
+        self.assertTrue(compare_datasets(HDF5_1, EXPORT_HDF5_DIR, "Input/Rainfall/RAIN_DATA"))
+        self.assertTrue(compare_datasets(HDF5_1, EXPORT_HDF5_DIR, "Input/Rainfall/RAIN_GLOBAL"))
+
+    def test_export_infil(self):
+
+        self.f2g_exp = Flo2dGeoPackage(self.con_2, None, parsed_format=Flo2dGeoPackage.FORMAT_HDF5)
+        shutil.copy2(HDF5_1, EXPORT_HDF5_DIR)
+        self.f2g_exp.set_parser(EXPORT_HDF5_DIR, get_cell_size=False)
+
+        self.f2g_exp.import_cont_toler()
+        self.f2g_exp.import_infil()
+        self.f2g_exp.export_infil()
+
+        self.assertTrue(compare_datasets(HDF5_1, EXPORT_HDF5_DIR, "Input/Infiltration/INFIL_GA_CELLS"))
+        self.assertTrue(compare_datasets(HDF5_1, EXPORT_HDF5_DIR, "Input/Infiltration/INFIL_GA_GLOBAL"))
+        self.assertTrue(compare_datasets(HDF5_1, EXPORT_HDF5_DIR, "Input/Infiltration/INFIL_METHOD"))
+
+    def test_export_chan(self):
+
+        self.f2g_exp = Flo2dGeoPackage(self.con_2, None, parsed_format=Flo2dGeoPackage.FORMAT_HDF5)
+        shutil.copy2(HDF5_1, EXPORT_HDF5_DIR)
+        self.f2g_exp.set_parser(EXPORT_HDF5_DIR, get_cell_size=False)
+
+        self.f2g_exp.import_cont_toler()
+        self.f2g_exp.import_mannings_n_topo()
+        self.f2g_exp.import_chan()
+        self.f2g_exp.export_chan()
+
+        self.assertTrue(compare_datasets(HDF5_1, EXPORT_HDF5_DIR, "Input/Channels/CHANBANK"))
+        self.assertTrue(compare_datasets(HDF5_1, EXPORT_HDF5_DIR, "Input/Channels/CHAN_GLOBAL"))
+        self.assertTrue(compare_datasets(HDF5_1, EXPORT_HDF5_DIR, "Input/Channels/CHAN_NATURAL"))
+
+    def test_export_xsec(self):
+        self.f2g_exp = Flo2dGeoPackage(self.con_2, None, parsed_format=Flo2dGeoPackage.FORMAT_HDF5)
+        shutil.copy2(HDF5_1, EXPORT_HDF5_DIR)
+        self.f2g_exp.set_parser(EXPORT_HDF5_DIR, get_cell_size=False)
+
+        self.f2g_exp.import_cont_toler()
+        self.f2g_exp.import_mannings_n_topo()
+        self.f2g_exp.import_chan()
+        self.f2g_exp.import_xsec()
+        self.f2g_exp.export_xsec()
+        self.assertTrue(compare_datasets(HDF5_1, EXPORT_HDF5_DIR, "Input/Channels/XSEC_DATA"))
+        self.assertTrue(compare_datasets(HDF5_1, EXPORT_HDF5_DIR, "Input/Channels/XSEC_NAME"))
+
+
+    def test_export_hystruc(self):
+
+        self.f2g_exp = Flo2dGeoPackage(self.con_2, None, parsed_format=Flo2dGeoPackage.FORMAT_HDF5)
+        shutil.copy2(HDF5_1, EXPORT_HDF5_DIR)
+        self.f2g_exp.set_parser(EXPORT_HDF5_DIR, get_cell_size=False)
+
+        self.f2g_exp.import_cont_toler()
+        self.f2g_exp.import_mannings_n_topo()
+        self.f2g_exp.import_hystruc()
+        self.f2g_exp.export_hystruc()
+
+        self.assertTrue(compare_datasets(HDF5_1, EXPORT_HDF5_DIR, "Input/Hydraulic Structures/CULVERT_EQUATIONS"))
+        self.assertTrue(compare_datasets(HDF5_1, EXPORT_HDF5_DIR, "Input/Hydraulic Structures/RATING_CURVE"))
+        self.assertTrue(compare_datasets(HDF5_1, EXPORT_HDF5_DIR, "Input/Hydraulic Structures/RATING_TABLE"))
+        self.assertTrue(compare_datasets(HDF5_1, EXPORT_HDF5_DIR, "Input/Hydraulic Structures/STORM_DRAIN"))
+        self.assertTrue(compare_datasets(HDF5_1, EXPORT_HDF5_DIR, "Input/Hydraulic Structures/STR_CONTROL"))
+        self.assertTrue(compare_datasets(HDF5_1, EXPORT_HDF5_DIR, "Input/Hydraulic Structures/STR_NAME"))
+
+    def test_export_arf(self):
+
+        self.f2g_exp = Flo2dGeoPackage(self.con_2, None, parsed_format=Flo2dGeoPackage.FORMAT_HDF5)
+        shutil.copy2(HDF5_1, EXPORT_HDF5_DIR)
+        self.f2g_exp.set_parser(EXPORT_HDF5_DIR, get_cell_size=False)
+
+        self.f2g_exp.import_cont_toler()
+        self.f2g_exp.import_arf()
+        self.f2g_exp.export_arf()
+
+        self.assertTrue(compare_datasets(HDF5_1, EXPORT_HDF5_DIR, "Input/Reduction Factors/ARF_GLOBAL"))
+        self.assertTrue(compare_datasets(HDF5_1, EXPORT_HDF5_DIR, "Input/Reduction Factors/ARF_PARTIALLY_BLOCKED"))
+        self.assertTrue(compare_datasets(HDF5_1, EXPORT_HDF5_DIR, "Input/Reduction Factors/ARF_TOTALLY_BLOCKED"))
+
+    def test_export_levee(self):
+
+        self.f2g_exp = Flo2dGeoPackage(self.con_2, None, parsed_format=Flo2dGeoPackage.FORMAT_HDF5)
+        shutil.copy2(HDF5_1, EXPORT_HDF5_DIR)
+        self.f2g_exp.set_parser(EXPORT_HDF5_DIR, get_cell_size=False)
+
+        self.f2g_exp.import_cont_toler()
+        self.f2g_exp.import_mannings_n_topo()
+        self.f2g_exp.import_levee()
+        self.f2g_exp.export_levee()
+
+        self.assertTrue(compare_datasets(HDF5_1, EXPORT_HDF5_DIR, "Input/Levee/LEVEE_DATA"))
+        self.assertTrue(compare_datasets(HDF5_1, EXPORT_HDF5_DIR, "Input/Levee/LEVEE_FAILURE"))
+        self.assertTrue(compare_datasets(HDF5_1, EXPORT_HDF5_DIR, "Input/Levee/LEVEE_GLOBAL"))
+
+    def test_export_fpxsec(self):
+        self.f2g_exp = Flo2dGeoPackage(self.con_2, None, parsed_format=Flo2dGeoPackage.FORMAT_HDF5)
+        shutil.copy2(HDF5_1, EXPORT_HDF5_DIR)
+        self.f2g_exp.set_parser(EXPORT_HDF5_DIR, get_cell_size=False)
+
+        self.f2g_exp.import_cont_toler()
+        self.f2g_exp.import_mannings_n_topo()
+        self.f2g_exp.import_fpxsec()
+        self.f2g_exp.export_fpxsec()
+
+        self.assertTrue(compare_datasets(HDF5_1, EXPORT_HDF5_DIR, "Input/Floodplain/FPXSEC_DATA"))
+        self.assertTrue(compare_datasets(HDF5_1, EXPORT_HDF5_DIR, "Input/Floodplain/FPXSEC_GLOBAL"))
+
+    # @unittest.skip("Takes too much time.")
+    # def test_export_fpfroude(self):
+    #
+    #     self.f2g_exp = Flo2dGeoPackage(self.con_2, None, parsed_format=Flo2dGeoPackage.FORMAT_HDF5)
+    #     shutil.copy2(HDF5_1, EXPORT_HDF5_DIR)
+    #     self.f2g_exp.set_parser(EXPORT_HDF5_DIR, get_cell_size=False)
+    #
+    #     self.f2g_exp.import_cont_toler()
+    #     self.f2g_exp.import_mannings_n_topo()
+    #     self.f2g_exp.import_fpfroude()
+    #     self.f2g_exp.export_fpfroude()
+    #
+    #     self.assertTrue(compare_datasets(HDF5_1, EXPORT_HDF5_DIR, "Input/Spatially Variable/FPFROUDE"))
+
+    def test_export_swmmflo(self):
+
+        self.f2g_exp = Flo2dGeoPackage(self.con_2, None, parsed_format=Flo2dGeoPackage.FORMAT_HDF5)
+        shutil.copy2(HDF5_1, EXPORT_HDF5_DIR)
+        self.f2g_exp.set_parser(EXPORT_HDF5_DIR, get_cell_size=False)
+
+        self.f2g_exp.import_cont_toler()
+        self.f2g_exp.import_mannings_n_topo()
+        self.f2g_exp.import_swmmflo()
+        self.f2g_exp.export_swmmflo()
+
+        self.assertTrue(compare_datasets(HDF5_1, EXPORT_HDF5_DIR, "Input/Storm Drain/SWMMFLO_DATA"))
+        self.assertTrue(compare_datasets(HDF5_1, EXPORT_HDF5_DIR, "Input/Storm Drain/SWMMFLO_NAME"))
+
+    def test_export_swmmflort(self):
+
+        self.f2g_exp = Flo2dGeoPackage(self.con_2, None, parsed_format=Flo2dGeoPackage.FORMAT_HDF5)
+        shutil.copy2(HDF5_1, EXPORT_HDF5_DIR)
+        self.f2g_exp.set_parser(EXPORT_HDF5_DIR, get_cell_size=False)
+
+        self.f2g_exp.import_cont_toler()
+        self.f2g_exp.import_mannings_n_topo()
+        self.f2g_exp.import_swmmflo()
+        self.f2g_exp.import_swmmflort()
+        self.f2g_exp.export_swmmflort()
+
+        self.assertTrue(compare_datasets(HDF5_1, EXPORT_HDF5_DIR, "Input/Storm Drain/RATING_TABLE"))
+        self.assertTrue(compare_datasets(HDF5_1, EXPORT_HDF5_DIR, "Input/Storm Drain/CULVERT_EQUATIONS"))
+
+    def test_export_swmmoutf(self):
+
+        self.f2g_exp = Flo2dGeoPackage(self.con_2, None, parsed_format=Flo2dGeoPackage.FORMAT_HDF5)
+        shutil.copy2(HDF5_1, EXPORT_HDF5_DIR)
+        self.f2g_exp.set_parser(EXPORT_HDF5_DIR, get_cell_size=False)
+
+        self.f2g_exp.import_cont_toler()
+        self.f2g_exp.import_mannings_n_topo()
+        self.f2g_exp.import_swmmoutf()
+        self.f2g_exp.export_swmmoutf()
+
+        self.assertTrue(compare_datasets(HDF5_1, EXPORT_HDF5_DIR, "Input/Storm Drain/SWMMOUTF_DATA"))
+        self.assertTrue(compare_datasets(HDF5_1, EXPORT_HDF5_DIR, "Input/Storm Drain/SWMMOUTF_NAME"))
+
+    def test_export_tolspatial(self):
+        self.f2g_exp = Flo2dGeoPackage(self.con_2, None, parsed_format=Flo2dGeoPackage.FORMAT_HDF5)
+        shutil.copy2(HDF5_1, EXPORT_HDF5_DIR)
+        self.f2g_exp.set_parser(EXPORT_HDF5_DIR, get_cell_size=False)
+
+        self.f2g_exp.import_cont_toler()
+        self.f2g_exp.import_mannings_n_topo()
+        self.f2g_exp.import_tolspatial()
+        self.f2g_exp.export_tolspatial()
+
+        self.assertTrue(compare_datasets(HDF5_1, EXPORT_HDF5_DIR, "Input/Spatially Variable/TOLSPATIAL"))
+
 if __name__ == "__main__":
-    cases = [TestFlo2dGeoPackage]
+    cases = [TestFlo2dGeoPackageDat, TestFlo2dGeoPackageHDF5]
     suite = unittest.TestSuite()
     for t in cases:
         tests = unittest.TestLoader().loadTestsFromTestCase(t)

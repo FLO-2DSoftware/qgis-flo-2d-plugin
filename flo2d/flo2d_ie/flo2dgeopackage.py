@@ -150,6 +150,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 mann = "0.05"
             else:
                 pass
+            sql += [("CELLSIZE", self.cell_size, self.PARAMETER_DESCRIPTION["CELLSIZE"])]
             sql += [("MANNING", mann, self.PARAMETER_DESCRIPTION["MANNING"])]
 
             self.batch_execute(sql)
@@ -5997,7 +5998,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     for i, row in enumerate(tolspatial_data, 1):
                         gid, tol = row
                         gids.add(gid)
-                        geom = self.build_square(self.grid_centroids([gid])[gid], self.shrink)
+                        geom = self.build_square(self.grid_centroids([gid])[gid], self.cell_size)
                         tolspatial_sql += [(geom, tol)]
                         cells_sql += [(i, gid)]
 
