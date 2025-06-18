@@ -13,7 +13,8 @@ RUN apt-get update && apt-get install -y \
 
 # Install Python dependencies if necessary
 RUN pip3 install --upgrade pip \
-    && pip3 install pandas
+    && pip3 install pandas \
+    && pip3 install hdf5
 
 ENV QGIS_PREFIX_PATH=/usr
 ENV GDAL_FILENAME_IS_UTF8=YES
