@@ -1669,17 +1669,18 @@ class Flo2D(object):
                     self.uc.bar_info(exe_name + " started!", dur=3)
                     self.uc.log_info(exe_name + " started!")
                 else:
-                    if os.path.isfile(project_dir + "\\" + "CONT.DAT"):
+                    if os.path.isfile(project_dir + "\\" + "CONT.DAT") or os.path.isfile(project_dir + "\\" + "Input.hdf5"):
                         program = ProgramExecutor(flo2d_dir, project_dir, exe_name)
                         program.perform()
                         self.uc.bar_info(exe_name + " started!", dur=3)
                         self.uc.log_info(exe_name + " started!")
                     else:
                         self.uc.show_warn(
-                            "CONT.DAT is not in directory:\n\n" + f"{project_dir}\n\n" + f"Select the correct directory.")
+                            f"No FLO-2D input file(s) found in the directory:\n\n{project_dir}\n\nPlease ensure that either 'Input.hdf5' or 'CONT.DAT' exists in the selected directory.")
+                        self.uc.bar_warn(
+                            f"No FLO-2D input file(s) found in the directory!")
                         self.uc.log_info(
-                            "CONT.DAT is not in directory:\n\n" + f"{project_dir}\n\n" + f"Select the correct directory.")
-                        self.run_settings()
+                            f"No FLO-2D input file(s) found in the directory:\n\n{project_dir}\n\nPlease ensure that either 'Input.hdf5' or 'CONT.DAT' exists in the selected directory.")
             else:
                 self.uc.show_warn("WARNING 241020.0424: Program " + exe_name + " is not in directory\n\n" + flo2d_dir)
                 self.uc.log_info("WARNING 241020.0424: Program " + exe_name + " is not in directory\n\n" + flo2d_dir)
