@@ -8072,7 +8072,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
                 rain_group.create_dataset('RAININTIME', [int(rainintime)])
                 rain_group.create_dataset('IRINTERS', [int(irinters)])
-                rain_group.create_dataset('TIMESTAMP', [np.array([timestamp], dtype=np.string_)])
+                rain_group.create_dataset('TIMESTAMP', [np.array([timestamp], dtype=np.bytes_)])
                 rain_group.create_dataset("IRAINDUM", [])
 
                 timeinterval = self.gutils.execute(qry_timeinterval).fetchall()
@@ -8501,14 +8501,14 @@ class Flo2dGeoPackage(GeoPackageUtils):
             evap_group.create_dataset('EVAPOR', [])
             # evapor = os.path.join(outdir, "EVAPOR.DAT")
 
-            evap_group.datasets["EVAPOR"].data.append(create_array(head, 3, np.string_, evapor_row))
+            evap_group.datasets["EVAPOR"].data.append(create_array(head, 3, np.bytes_, evapor_row))
             # e.write(head.format(*evapor_row))
             for mrow in self.execute(evapor_month_sql):
                 month = mrow[0]
-                evap_group.datasets["EVAPOR"].data.append(create_array(monthly, 3, np.string_, mrow))
+                evap_group.datasets["EVAPOR"].data.append(create_array(monthly, 3, np.bytes_, mrow))
                 # e.write(monthly.format(*mrow))
                 for hrow in self.execute(evapor_hour_sql, (month,)):
-                    evap_group.datasets["EVAPOR"].data.append(create_array(hourly, 3, np.string_, hrow))
+                    evap_group.datasets["EVAPOR"].data.append(create_array(hourly, 3, np.bytes_, hrow))
                     # e.write(hourly.format(*hrow))
 
             self.parser.write_groups(evap_group)
@@ -8866,7 +8866,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
             for nxecnum, xsecname in chan_n:
                 channel_group.datasets["XSEC_NAME"].data.append(
-                    create_array(xsec_line, 2, np.string_, tuple([nxecnum, xsecname])))
+                    create_array(xsec_line, 2, np.bytes_, tuple([nxecnum, xsecname])))
                 for xi, yi in self.execute(xsec_sql, (nxecnum,)):
                     channel_group.datasets["XSEC_DATA"].data.append([nxecnum, xi, yi])
 
@@ -9031,7 +9031,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 headrefel,
                 clength,
                 cdiameter))
-            hystruc_group.datasets["STR_NAME"].data.append(create_array(two_values, 2, np.string_, fid, struct_name))
+            hystruc_group.datasets["STR_NAME"].data.append(create_array(two_values, 2, np.bytes_, fid, struct_name))
 
             #  0: rating curve
             #  1: rating table
@@ -9325,7 +9325,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             data = []
             with open(src, 'r') as bridge_coeff_data:
                 for line in bridge_coeff_data:
-                    hystruc_group.datasets["BRIDGE_COEFF_DATA"].data.append(create_array(line, 13, np.string_))
+                    hystruc_group.datasets["BRIDGE_COEFF_DATA"].data.append(create_array(line, 13, np.bytes_))
 
             self.parser.write_groups(hystruc_group)
             return True
@@ -10579,11 +10579,11 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     dtype=float))
 
         # if None not in glob_frag:
-        #     levee_group.datasets["LEVEE"].data.append(create_array(line6, 8, np.string_, glob_frag))
+        #     levee_group.datasets["LEVEE"].data.append(create_array(line6, 8, np.bytes_, glob_frag))
         # else:
         #     pass
         # for row in self.execute(levee_frag_sql):
-        #     levee_group.datasets["LEVEE"].data.append(create_array(line7, 8, np.string_, row))
+        #     levee_group.datasets["LEVEE"].data.append(create_array(line7, 8, np.bytes_, row))
 
         self.parser.write_groups(levee_group)
         return True
@@ -11256,7 +11256,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
                 # if intype != 0:
                 stormdrain_group.datasets["SWMMFLO_NAME"].data.append(
-                    create_array(swmmflo_name, 2, np.string_, tuple([fid, swmm_iden])))
+                    create_array(swmmflo_name, 2, np.bytes_, tuple([fid, swmm_iden])))
 
                 stormdrain_group.datasets["SWMMFLO_DATA"].data.append([
                     fid,
@@ -11660,7 +11660,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
                 stormdrain_group.datasets["SWMMOUTF_DATA"].data.append([fid, grid_fid, outf_flo])
                 stormdrain_group.datasets["SWMMOUTF_NAME"].data.append(
-                    create_array(swmmoutf_name, 2, np.string_, tuple([fid, name])))
+                    create_array(swmmoutf_name, 2, np.bytes_, tuple([fid, name])))
 
             self.parser.write_groups(stormdrain_group)
             return True

@@ -76,10 +76,10 @@ class HDFProcessor(object):
         with h5py.File(self.hdf_path, "w") as hdf_file:
 
             rainintime, irinters, timestamp = header
-            hdf_file.attrs["hdf5_version"] = np.array([h5py.version.hdf5_version], dtype=np.string_)
-            hdf_file.attrs["plugin"] = np.array(["FLO-2D"], dtype=np.string_)
+            hdf_file.attrs["hdf5_version"] = np.array([h5py.version.hdf5_version], dtype=np.bytes_)
+            hdf_file.attrs["plugin"] = np.array(["FLO-2D"], dtype=np.bytes_)
             grp = hdf_file.create_group("raincell")
-            tstamp = np.array([timestamp], dtype=np.string_)
+            tstamp = np.array([timestamp], dtype=np.bytes_)
 
             # Not scalar datasets
             datasets = [
@@ -102,7 +102,7 @@ class HDFProcessor(object):
             ]
             for name, value, description in datasets:
                 dts = grp.create_dataset(name, data=value)
-                dts.attrs["description"] = np.array([description], dtype=np.string_)
+                dts.attrs["description"] = np.array([description], dtype=np.bytes_)
 
             # Scalar dataset
             n_cells = self.gutils.execute(qry_size).fetchone()[0] / irinters
