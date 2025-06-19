@@ -2221,6 +2221,8 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
 
         for st, data in ordered_dict:
             if "max_sed_con" in data.keys():
+                if data["max_water_elev"] == 0:
+                    data["max_water_elev"] = data["bed_elev"]
                 sta.append(data["station"])
                 lb.append(data["lbank_elev"])
                 rb.append(data["rbank_elev"])
@@ -2232,6 +2234,8 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
                 max_froude.append(data["max_froude"])
                 max_con.append(data["max_con"])
             elif "max_water_elev" in data.keys():
+                if data["max_water_elev"] == 0:
+                    data["max_water_elev"] = data["bed_elev"]
                 sta.append(data["station"])
                 lb.append(data["lbank_elev"])
                 rb.append(data["rbank_elev"])
