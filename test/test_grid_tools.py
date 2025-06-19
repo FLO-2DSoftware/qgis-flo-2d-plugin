@@ -25,8 +25,8 @@ from flo2d.flo2d_tools.grid_tools import (build_grid, calculate_arfwrf,
                                           poly2grid)
 from flo2d.geopackage_utils import database_create
 
-IMPORT_DATA_DIR_1 = os.path.join(THIS_DIR, "data", "import")
-IMPORT_DATA_DIR_2 = os.path.join(THIS_DIR, "data", "import_2")
+IMPORT_DATA_DIR_1 = os.path.join(THIS_DIR, "data", "import_dat_1")
+IMPORT_DATA_DIR_2 = os.path.join(THIS_DIR, "data", "import_dat_2")
 CONT_1 = os.path.join(IMPORT_DATA_DIR_1, "CONT.DAT")
 CONT_2 = os.path.join(IMPORT_DATA_DIR_2, "CONT.DAT")
 
