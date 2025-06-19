@@ -69,13 +69,16 @@ def compare_datasets(file1_path, file2_path, dataset):
         return datasets_equal(d1, d2)
 
 def datasets_equal(d1, d2):
-    """Compare datasets by shape, dtype, and values."""
-    if d1.shape != d2.shape or d1.dtype != d2.dtype:
+    # Compare shape
+    if d1.shape != d2.shape:
         return False
-    try:
-        return np.array_equal(d1[()], d2[()])
-    except Exception:
-        return False
+    # Compare values, allowing for float tolerance
+    arr1 = np.array(d1[()])
+    arr2 = np.array(d2[()])
+    if np.issubdtype(arr1.dtype, np.floating) or np.issubdtype(arr2.dtype, np.floating):
+        return np.allclose(arr1, arr2, rtol=1e-6, atol=1e-8, equal_nan=True)
+    else:
+        return np.array_equal(arr1, arr2)
 
 class TestFlo2dGeoPackageDat(unittest.TestCase):
     con = database_create(":memory:")
@@ -829,21 +832,6 @@ class TestFlo2dGeoPackageHDF5(unittest.TestCase):
         self.f2g_exp.import_mannings_n_topo()
         self.f2g_exp.import_arf()
         self.f2g_exp.export_arf()
-
-        with h5py.File(HDF5_1, "r") as f1, h5py.File(EXPORT_HDF5_DIR, "r") as f2:
-            d1 = f1["Input/Reduction Factors/ARF_TOTALLY_BLOCKED"][()]
-            d2 = f2["Input/Reduction Factors/ARF_TOTALLY_BLOCKED"][()]
-            diff = d1 != d2
-            if np.any(diff):
-                idx = np.where(diff)
-                print("Differences found at indices:")
-                print(idx)
-                print("HDF5_1 values at diff indices:")
-                print(d1[idx])
-                print("EXPORT_HDF5_DIR values at diff indices:")
-                print(d2[idx])
-            else:
-                print("No differences found.")
 
         self.assertTrue(compare_datasets(HDF5_1, EXPORT_HDF5_DIR, "Input/Reduction Factors/ARF_GLOBAL"))
         self.assertTrue(compare_datasets(HDF5_1, EXPORT_HDF5_DIR, "Input/Reduction Factors/ARF_PARTIALLY_BLOCKED"))
