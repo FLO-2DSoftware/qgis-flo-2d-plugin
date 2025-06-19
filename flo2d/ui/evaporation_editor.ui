@@ -40,7 +40,16 @@
         <enum>QFrame::Plain</enum>
        </property>
        <layout class="QVBoxLayout" name="verticalLayout">
-        <property name="margin">
+        <property name="leftMargin">
+         <number>0</number>
+        </property>
+        <property name="topMargin">
+         <number>0</number>
+        </property>
+        <property name="rightMargin">
+         <number>0</number>
+        </property>
+        <property name="bottomMargin">
          <number>0</number>
         </property>
         <item>
@@ -55,7 +64,16 @@
            <string>Start of the Simulation</string>
           </property>
           <layout class="QVBoxLayout" name="verticalLayout_9">
-           <property name="margin">
+           <property name="leftMargin">
+            <number>3</number>
+           </property>
+           <property name="topMargin">
+            <number>3</number>
+           </property>
+           <property name="rightMargin">
+            <number>3</number>
+           </property>
+           <property name="bottomMargin">
             <number>3</number>
            </property>
            <item>
@@ -73,13 +91,20 @@
                </property>
                <item>
                 <widget class="QLabel" name="label_3">
+                 <property name="toolTip">
+                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;IEVAPMONTH&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Starting month of simulation.&lt;/p&gt;&lt;p&gt;Range: 1 - 12&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                 </property>
                  <property name="text">
                   <string>Month</string>
                  </property>
                 </widget>
                </item>
                <item>
-                <widget class="QComboBox" name="monthCbo"/>
+                <widget class="QComboBox" name="monthCbo">
+                 <property name="toolTip">
+                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;IEVAPMONTH&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                 </property>
+                </widget>
                </item>
               </layout>
              </item>
@@ -93,13 +118,20 @@
                </property>
                <item>
                 <widget class="QLabel" name="label_6">
+                 <property name="toolTip">
+                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;IDAY&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Starting day of the week.&lt;/p&gt;&lt;p&gt;Range: 1 - 7&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                 </property>
                  <property name="text">
                   <string>Day</string>
                  </property>
                 </widget>
                </item>
                <item>
-                <widget class="QComboBox" name="dayCbo"/>
+                <widget class="QComboBox" name="dayCbo">
+                 <property name="toolTip">
+                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;IDAY&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                 </property>
+                </widget>
                </item>
               </layout>
              </item>
@@ -113,13 +145,20 @@
                </property>
                <item>
                 <widget class="QLabel" name="label_7">
+                 <property name="toolTip">
+                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;CLOCKTIME&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(hrs)&lt;/p&gt;&lt;p&gt;Starting clock time of the simulation time during the day.&lt;/p&gt;&lt;p&gt;Range: 0.0 - 24.0&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                 </property>
                  <property name="text">
                   <string>Time</string>
                  </property>
                 </widget>
                </item>
                <item>
-                <widget class="QComboBox" name="timeCbo"/>
+                <widget class="QComboBox" name="timeCbo">
+                 <property name="toolTip">
+                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;CLOCKTIME&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                 </property>
+                </widget>
                </item>
               </layout>
              </item>
@@ -146,7 +185,16 @@
            <string>Evaporation Data</string>
           </property>
           <layout class="QHBoxLayout" name="horizontalLayout">
-           <property name="margin">
+           <property name="leftMargin">
+            <number>3</number>
+           </property>
+           <property name="topMargin">
+            <number>3</number>
+           </property>
+           <property name="rightMargin">
+            <number>3</number>
+           </property>
+           <property name="bottomMargin">
             <number>3</number>
            </property>
            <item>
@@ -166,6 +214,9 @@
              </item>
              <item>
               <widget class="QLabel" name="label_4">
+               <property name="toolTip">
+                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;EVAP(I)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(in/month or mm/month)&lt;/p&gt;&lt;p&gt;Monthly evaporation rate.&lt;/p&gt;&lt;p&gt;Range:&lt;/p&gt;&lt;p&gt;0 - 100 in/month&lt;/p&gt;&lt;p&gt;0 - 2500 mm/month&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               </property>
                <property name="text">
                 <string>Monthly Rate</string>
                </property>
@@ -191,6 +242,9 @@
                  <height>16777215</height>
                 </size>
                </property>
+               <property name="toolTip">
+                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;EVAP(I)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               </property>
               </widget>
              </item>
             </layout>
@@ -205,6 +259,9 @@
              </property>
              <item>
               <widget class="QLabel" name="label_5">
+               <property name="toolTip">
+                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;EVAPER(I,J)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Hourly percentage of the daily total evaporation for each month.&lt;/p&gt;&lt;p&gt;There will be 24 values that will total 1.00 for each of the twelve months. &lt;/p&gt;&lt;p&gt;Range: 0.0 - 1.0&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               </property>
                <property name="text">
                 <string>Hourly Percentage</string>
                </property>
@@ -218,7 +275,11 @@
               </widget>
              </item>
              <item>
-              <widget class="QTableView" name="hourlyEvapTView"/>
+              <widget class="QTableView" name="hourlyEvapTView">
+               <property name="toolTip">
+                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;EVAPER(I,J)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               </property>
+              </widget>
              </item>
             </layout>
            </item>
@@ -269,7 +330,16 @@
         <enum>QFrame::Plain</enum>
        </property>
        <layout class="QGridLayout" name="gridLayout">
-        <property name="margin">
+        <property name="leftMargin">
+         <number>0</number>
+        </property>
+        <property name="topMargin">
+         <number>0</number>
+        </property>
+        <property name="rightMargin">
+         <number>0</number>
+        </property>
+        <property name="bottomMargin">
          <number>0</number>
         </property>
         <property name="spacing">
