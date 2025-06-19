@@ -830,6 +830,14 @@ class TestFlo2dGeoPackageHDF5(unittest.TestCase):
         self.f2g_exp.import_arf()
         self.f2g_exp.export_arf()
 
+        with h5py.File(HDF5_1, "r") as f1, h5py.File(EXPORT_HDF5_DIR, "r") as f2:
+            d1 = f1["Input/Reduction Factors/ARF_TOTALLY_BLOCKED"][()]
+            d2 = f2["Input/Reduction Factors/ARF_TOTALLY_BLOCKED"][()]
+            print("HDF5_1 ARF_TOTALLY_BLOCKED:")
+            print(np.array2string(d1, threshold=20))
+            print("\nEXPORT_HDF5_DIR ARF_TOTALLY_BLOCKED:")
+            print(np.array2string(d2, threshold=20))
+
         self.assertTrue(compare_datasets(HDF5_1, EXPORT_HDF5_DIR, "Input/Reduction Factors/ARF_GLOBAL"))
         self.assertTrue(compare_datasets(HDF5_1, EXPORT_HDF5_DIR, "Input/Reduction Factors/ARF_PARTIALLY_BLOCKED"))
         self.assertTrue(compare_datasets(HDF5_1, EXPORT_HDF5_DIR, "Input/Reduction Factors/ARF_TOTALLY_BLOCKED"))
