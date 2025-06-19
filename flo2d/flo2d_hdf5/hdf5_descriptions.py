@@ -11,7 +11,7 @@ GRID = {
     "MANNING": "Global n Value Adjustment",
     "COORDINATES": "Longitude - Latitude",
     "ELEVATION": "Elevation",
-    "NEIGHBOURS": "Neighbours"
+    "NEIGHBORS": "Neighbors"
 }
 
 NEIGHBORS = {
@@ -87,7 +87,11 @@ INFIL = {
 RAIN = {
     "RAIN_GLOBAL": "Global Rainfall Data",
     "RAIN_DATA": "Rainfall Data",
-    "RAIN_ARF": "Rainfall ARF"
+    "RAIN_ARF": "Rainfall ARF",
+    "RAININTIME": "Time interval in minutes of the realtime rainfall data",
+    "IRINTERS": "Number of intervals in the dataset",
+    "TIMESTAMP": "Timestamp indicates the start and end time of the storm",
+    "IRAINDUM": "Rainfall data in the grid cells",
 }
 
 REDUCTION_FACTORS = {
@@ -110,7 +114,10 @@ LEVEE = {
     "LEVEE": "Levee and Failure Data",
     "LEVEE_GLOBAL": "Levee Global Data",
     "LEVEE_DATA": "Levee Data",
-    "LEVEE_FAILURE": "Levee Failure Data"
+    "LEVEE_FAILURE": "Levee Failure Data",
+    "BREACH_GLOBAL": "Breach Global Data",
+    "BREACH_INDIVIDUAL": "Breach Individual Data",
+    "FRAGILITY_CURVES": "Breach Fragility Curves",
 }
 
 EVAPOR = {
@@ -162,4 +169,11 @@ SEDIMENT = {
     "SED_SUPPLY_AREAS": "Sediment Supply Areas",
     "SED_SUPPLY_FRAC_DATA": "Sediment Supply Fraction Data",
     "SED_GROUPS_AREAS": "Sediment Groups Areas",
+}
+
+STREET = {
+    "STREET_GLOBAL": "Street Global Data",
+    "STREET_NAMES": "Street Names",
+    "STREET_SEG": "Street Segments Data",
+    "STREET_ELEMS": "Street Elements Data",
 }

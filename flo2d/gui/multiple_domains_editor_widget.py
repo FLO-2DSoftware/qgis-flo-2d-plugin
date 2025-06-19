@@ -220,6 +220,9 @@ class MultipleDomainsEditorWidget(qtBaseClass, uiDialog):
         self.schema_md_cells.triggerRepaint()
         self.user_md_connect_lines.triggerRepaint()
 
+        self.uc.bar_info("Schematizing multiple domains finished!")
+        self.uc.log_info("Schematizing multiple domains finished!")
+
         QApplication.restoreOverrideCursor()
 
     def intersected_domains(self):

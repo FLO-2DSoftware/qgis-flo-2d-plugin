@@ -748,7 +748,7 @@ class ExportMultipleDomainsDialog(qtBaseClass, uiDialog):
                     #     export_calls.remove("export_fpxsec")
 
                     if "Mudflow and Sediment Transport" not in dlg_components.components:
-                        export_calls.remove("export_sed")
+                        export_calls.remove("export_sed_md")
 
                     # if "Evaporation" not in dlg_components.components:
                     #     export_calls.remove("export_evapor")

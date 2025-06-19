@@ -759,7 +759,7 @@
          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;IRAINARF&lt;/span&gt;&lt;/p&gt;&lt;p&gt;IRAINARF = 1 indicates that individual grid element depth area reduction values will be assigned.&lt;/p&gt;&lt;p&gt;0 = off&lt;/p&gt;&lt;p&gt;1 = on&lt;/p&gt;&lt;p&gt;Range: 0, 1&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
         </property>
         <property name="title">
-         <string>Spatial Variation (Depth Area Reduction)</string>
+         <string>Spatial Variation (Depth Reduction)</string>
         </property>
         <property name="checkable">
          <bool>true</bool>
@@ -779,7 +779,7 @@
               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;RAINARF&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Rainfall depth area reduction to create spatially variable rainfall.&lt;/p&gt;&lt;p&gt;This data is automatically generated in the GDS processor program.&lt;/p&gt;&lt;p&gt;Range: 0 - 1&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
              </property>
              <property name="text">
-              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Select a raster layer to sample a rainfall depth area reduction value into intersected cells:&lt;br/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Select a raster layer to sample a rainfall depth reduction value into intersected cells:&lt;br/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
              </property>
              <property name="alignment">
               <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>

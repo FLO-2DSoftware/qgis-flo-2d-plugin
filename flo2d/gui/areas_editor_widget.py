@@ -474,8 +474,26 @@ class AreasEditorWidget(qtBaseClass, uiDialog):
         """
         try:
             global_value = 1 if self.steep_slopen_global_chbox.isChecked() else 0
-            qry = """UPDATE user_steep_slope_n_areas SET global = ?;"""
-            self.gutils.execute(qry, (global_value,))
+            table_empty = self.gutils.is_table_empty("user_steep_slope_n_areas")
+
+            if global_value == 1:
+                if table_empty:
+                    qry = "INSERT INTO user_steep_slope_n_areas (global) VALUES (?);"
+                    self.gutils.execute(qry, (global_value,))
+                else:
+                    qry = "UPDATE user_steep_slope_n_areas SET global = ?;"
+                    self.gutils.execute(qry, (global_value,))
+            else:
+                if not table_empty:
+                    # Set global=0 for all rows with geometry
+                    update_qry = "UPDATE user_steep_slope_n_areas SET global = ? WHERE geom IS NOT NULL;"
+                    self.gutils.execute(update_qry, (global_value,))
+                    # Delete all rows without geometry
+                    delete_qry = "DELETE FROM user_steep_slope_n_areas WHERE geom IS NULL;"
+                    self.gutils.execute(delete_qry)
+
+            self.populate_cbos()
+
         except Exception as e:
             self.uc.bar_error(f"Error updating global steep slope n value!")
             self.uc.log_info(f"Error updating global steep slope n value!")
