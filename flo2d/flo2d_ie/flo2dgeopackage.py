@@ -2502,61 +2502,61 @@ class Flo2dGeoPackage(GeoPackageUtils):
             )
 
     def import_arf_hdf5(self):
-        try:
-            arfwrf_group = self.parser.read_groups("Input/Reduction Factors")
-            if arfwrf_group:
-                arfwrf_group = arfwrf_group[0]
+        # try:
+        arfwrf_group = self.parser.read_groups("Input/Reduction Factors")
+        if arfwrf_group:
+            arfwrf_group = arfwrf_group[0]
 
-                cont_sql = ["""INSERT INTO cont (name, value) VALUES""", 2]
-                cells_sql = [
-                    """INSERT INTO blocked_cells (geom, area_fid, grid_fid, arf,
-                                                           wrf1, wrf2, wrf3, wrf4, wrf5, wrf6, wrf7, wrf8) VALUES""",
-                    12,
-                ]
+            cont_sql = ["""INSERT INTO cont (name, value) VALUES""", 2]
+            cells_sql = [
+                """INSERT INTO blocked_cells (geom, area_fid, grid_fid, arf,
+                                                       wrf1, wrf2, wrf3, wrf4, wrf5, wrf6, wrf7, wrf8) VALUES""",
+                12,
+            ]
 
-                self.clear_tables("blocked_cells")
+            self.clear_tables("blocked_cells")
 
-                grid_group = self.parser.read_groups("Input/Grid")[0]
+            grid_group = self.parser.read_groups("Input/Grid")[0]
 
-                # Read ARF_GLOBAL dataset
-                if "ARF_GLOBAL" in arfwrf_group.datasets:
-                    arf_global = arfwrf_group.datasets["ARF_GLOBAL"].data
-                    if arf_global.size > 0:
-                        cont_sql += [("IARFBLOCKMOD", arf_global[0])]
+            # Read ARF_GLOBAL dataset
+            if "ARF_GLOBAL" in arfwrf_group.datasets:
+                arf_global = arfwrf_group.datasets["ARF_GLOBAL"].data
+                if arf_global.size > 0:
+                    cont_sql += [("IARFBLOCKMOD", arf_global[0])]
 
-                # Read ARF_TOTALLY_BLOCKED dataset
-                if "ARF_TOTALLY_BLOCKED" in arfwrf_group.datasets:
-                    totally_blocked = arfwrf_group.datasets["ARF_TOTALLY_BLOCKED"].data
-                    x_list = grid_group.datasets["COORDINATES"].data[:, 0]
-                    y_list = grid_group.datasets["COORDINATES"].data[:, 1]
-                    for i, cell in enumerate(totally_blocked, 1):
-                        grid_fid = abs(int(cell))
-                        arf = 1 if cell > 0 else -1
-                        geom = self.build_point_xy(x_list[grid_fid - 1], y_list[grid_fid - 1])
-                        cells_sql += [(geom, i, grid_fid, arf) + (0,) * 8]  # Remaining WRF values are 0
+            # Read ARF_TOTALLY_BLOCKED dataset
+            if "ARF_TOTALLY_BLOCKED" in arfwrf_group.datasets:
+                totally_blocked = arfwrf_group.datasets["ARF_TOTALLY_BLOCKED"].data
+                x_list = grid_group.datasets["COORDINATES"].data[:, 0]
+                y_list = grid_group.datasets["COORDINATES"].data[:, 1]
+                for i, cell in enumerate(totally_blocked, 1):
+                    grid_fid = abs(int(cell))
+                    arf = 1 if cell > 0 else -1
+                    geom = self.build_point_xy(x_list[grid_fid - 1], y_list[grid_fid - 1])
+                    cells_sql += [(geom, i, grid_fid, arf) + (0,) * 8]  # Remaining WRF values are 0
 
-                # Read ARF_PARTIALLY_BLOCKED dataset
-                if "ARF_PARTIALLY_BLOCKED" in arfwrf_group.datasets:
-                    partially_blocked = arfwrf_group.datasets["ARF_PARTIALLY_BLOCKED"].data
-                    x_list = grid_group.datasets["COORDINATES"].data[:, 0]
-                    y_list = grid_group.datasets["COORDINATES"].data[:, 1]
-                    for i, row in enumerate(partially_blocked, 1):
-                        grid_fid = int(row[0])
-                        arf = row[1]
-                        wrf_values = row[2:]
-                        geom = self.build_point_xy(x_list[grid_fid - 1], y_list[grid_fid - 1])
-                        cells_sql += [(geom, i, grid_fid, arf) + tuple(wrf_values)]
+            # Read ARF_PARTIALLY_BLOCKED dataset
+            if "ARF_PARTIALLY_BLOCKED" in arfwrf_group.datasets:
+                partially_blocked = arfwrf_group.datasets["ARF_PARTIALLY_BLOCKED"].data
+                x_list = grid_group.datasets["COORDINATES"].data[:, 0]
+                y_list = grid_group.datasets["COORDINATES"].data[:, 1]
+                for i, row in enumerate(partially_blocked, 1):
+                    grid_fid = int(row[0])
+                    arf = row[1]
+                    wrf_values = row[2:]
+                    geom = self.build_point_xy(x_list[grid_fid - 1], y_list[grid_fid - 1])
+                    cells_sql += [(geom, i, grid_fid, arf) + tuple(wrf_values)]
 
-                # Execute batch inserts
-                self.batch_execute(cont_sql, cells_sql)
+            # Execute batch inserts
+            self.batch_execute(cont_sql, cells_sql)
 
-        except Exception as e:
-            self.uc.show_error(
-                "ERROR: Importing ARF data from HDF5 failed!"
-                + "\n__________________________________________________",
-                e,
-            )
-            self.uc.log_info("ERROR: Importing ARF data from HDF5 failed!")
+        # except Exception as e:
+        #     self.uc.show_error(
+        #         "ERROR: Importing ARF data from HDF5 failed!"
+        #         + "\n__________________________________________________",
+        #         e,
+        #     )
+        #     self.uc.log_info("ERROR: Importing ARF data from HDF5 failed!")
 
     def import_mult(self):
         if self.parsed_format == self.FORMAT_DAT:
