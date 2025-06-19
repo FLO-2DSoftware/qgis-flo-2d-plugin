@@ -219,6 +219,9 @@
                </item>
                <item row="0" column="3">
                 <widget class="QToolButton" name="delete_seg_btn">
+                 <property name="toolTip">
+                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Delete current channel segment.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                 </property>
                  <property name="text">
                   <string>...</string>
                  </property>
@@ -230,6 +233,9 @@
                </item>
                <item row="0" column="4">
                 <widget class="QToolButton" name="center_seg_chbox">
+                 <property name="toolTip">
+                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Lock into the selected channel segment.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                 </property>
                  <property name="text">
                   <string/>
                  </property>
@@ -244,6 +250,9 @@
                </item>
                <item row="0" column="2">
                 <widget class="QToolButton" name="rename_seg_btn">
+                 <property name="toolTip">
+                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Rename selected channel segment.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                 </property>
                  <property name="text">
                   <string/>
                  </property>
@@ -363,7 +372,7 @@
              <item row="0" column="2">
               <widget class="QToolButton" name="rename_res_btn">
                <property name="toolTip">
-                <string>Change reservoir name</string>
+                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Rename selected reservoir.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                </property>
                <property name="text">
                 <string>...</string>
@@ -417,6 +426,9 @@
              </item>
              <item row="0" column="4">
               <widget class="QToolButton" name="center_res_chbox">
+               <property name="toolTip">
+                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Lock into the selected reservoir.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               </property>
                <property name="text">
                 <string>...</string>
                </property>
@@ -458,7 +470,7 @@
              <item row="0" column="3">
               <widget class="QToolButton" name="delete_res_btn">
                <property name="toolTip">
-                <string>Delete current reservoir</string>
+                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Delete current reservoir.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                </property>
                <property name="text">
                 <string>...</string>
@@ -774,6 +786,9 @@
                </item>
                <item row="0" column="4">
                 <widget class="QToolButton" name="center_tal_chbox">
+                 <property name="toolTip">
+                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Lock into the selected tailings stack.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                 </property>
                  <property name="layoutDirection">
                   <enum>Qt::LeftToRight</enum>
                  </property>
@@ -832,6 +847,9 @@
                </item>
                <item row="0" column="2">
                 <widget class="QToolButton" name="rename_tal_btn">
+                 <property name="toolTip">
+                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Rename selected tailings stack.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                 </property>
                  <property name="text">
                   <string>...</string>
                  </property>
@@ -863,7 +881,7 @@
                <item row="0" column="3">
                 <widget class="QToolButton" name="delete_tailings_btn">
                  <property name="toolTip">
-                  <string>Delete tailings</string>
+                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Delete current tailings stack.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                  </property>
                  <property name="text">
                   <string>...</string>
@@ -988,6 +1006,9 @@
              </item>
              <item row="0" column="3">
               <widget class="QToolButton" name="delete_tal_res_btn">
+               <property name="toolTip">
+                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Delete current tailing reservoir.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               </property>
                <property name="text">
                 <string>...</string>
                </property>
@@ -1022,6 +1043,9 @@
              </item>
              <item row="0" column="2">
               <widget class="QToolButton" name="rename_tal_res_btn">
+               <property name="toolTip">
+                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Rename selected tailing reservoir.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               </property>
                <property name="text">
                 <string>...</string>
                </property>
@@ -1033,6 +1057,9 @@
              </item>
              <item row="0" column="4">
               <widget class="QToolButton" name="center_tal_res_chbox">
+               <property name="toolTip">
+                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Lock into the selected tailing reservoir.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               </property>
                <property name="text">
                 <string>...</string>
                </property>
