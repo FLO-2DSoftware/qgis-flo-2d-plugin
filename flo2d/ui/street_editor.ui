@@ -178,6 +178,9 @@
      </property>
      <item>
       <widget class="QLabel" name="label">
+       <property name="toolTip">
+        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;STNAME&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Character name of the street&lt;/p&gt;&lt;p&gt;Up to 15 characters can be used.&lt;/p&gt;&lt;p&gt;The street name is not used in the model.&lt;/p&gt;&lt;p&gt;No spaces allowed.&lt;/p&gt;&lt;p&gt;Range: Alpha Numeric&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+       </property>
        <property name="text">
         <string>Street name</string>
        </property>
@@ -204,6 +207,9 @@
          <height>0</height>
         </size>
        </property>
+       <property name="toolTip">
+        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;STNAME&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+       </property>
       </widget>
      </item>
      <item>
@@ -219,6 +225,9 @@
          <width>31</width>
          <height>30</height>
         </size>
+       </property>
+       <property name="toolTip">
+        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Rename the selected street.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
        </property>
        <property name="text">
         <string>...</string>
@@ -242,6 +251,9 @@
          <width>31</width>
          <height>30</height>
         </size>
+       </property>
+       <property name="toolTip">
+        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Lock into the selected street.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
        </property>
        <property name="text">
         <string/>
@@ -267,6 +279,9 @@
      </property>
      <item>
       <widget class="QLabel" name="label_n">
+       <property name="toolTip">
+        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;STMAN(L)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(dimensionless)&lt;/p&gt;&lt;p&gt;Optional spatially variable street n-value within a given grid element.&lt;/p&gt;&lt;p&gt;STMAN(L) supercedes the STRMAN value.&lt;/p&gt;&lt;p&gt;If STMAN(L) = 0, the global value STRMAN will be assigned to the grid element street segment.&lt;/p&gt;&lt;p&gt;Range: 0.01 - 0.25&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+       </property>
        <property name="text">
         <string>N value</string>
        </property>
@@ -277,6 +292,9 @@
      </item>
      <item>
       <widget class="QDoubleSpinBox" name="spin_n">
+       <property name="toolTip">
+        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;STMAN(L)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+       </property>
        <property name="decimals">
         <number>3</number>
        </property>
@@ -293,6 +311,9 @@
      </item>
      <item>
       <widget class="QLabel" name="label_e">
+       <property name="toolTip">
+        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;ELSTR(L)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(ft or m)&lt;/p&gt;&lt;p&gt;Optional street elevation.&lt;/p&gt;&lt;p&gt;This elevation will supercede the flood plain grid element elevation.&lt;/p&gt;&lt;p&gt;If ELSTR(L) = 0, the model will assign the street elevation as the grid element elevation, FP(I,6) minus the curb height DEPEX(L) or DEPX to the street elevation ELSTR(L) &lt;/p&gt;&lt;p&gt;Range:&lt;/p&gt;&lt;p&gt;0 - 30,000 ft&lt;/p&gt;&lt;p&gt;0 - 9,000 m&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+       </property>
        <property name="text">
         <string>Elevation</string>
        </property>
@@ -303,6 +324,9 @@
      </item>
      <item>
       <widget class="QDoubleSpinBox" name="spin_e">
+       <property name="toolTip">
+        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;ELSTR(L) &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+       </property>
        <property name="decimals">
         <number>2</number>
        </property>
@@ -323,6 +347,9 @@
      </property>
      <item>
       <widget class="QLabel" name="label_h">
+       <property name="toolTip">
+        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;DEPEX(L)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(ft or m)&lt;/p&gt;&lt;p&gt;Optional curb height for individual grid elements that supercedes the global curb height DEPX. Set DEPEX(L) = 0.0 to use DEPX.&lt;/p&gt;&lt;p&gt;Range:&lt;/p&gt;&lt;p&gt;0.01 - 2 ft&lt;/p&gt;&lt;p&gt;0.25 - 0.6 m&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+       </property>
        <property name="text">
         <string>Curb height</string>
        </property>
@@ -333,6 +360,9 @@
      </item>
      <item>
       <widget class="QDoubleSpinBox" name="spin_h">
+       <property name="toolTip">
+        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;DEPEX(L)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+       </property>
        <property name="decimals">
         <number>2</number>
        </property>
@@ -349,6 +379,9 @@
      </item>
      <item>
       <widget class="QLabel" name="label_w">
+       <property name="toolTip">
+        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;WIDR(K)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(ft or m)&lt;/p&gt;&lt;p&gt;Optional grid element street width in the ISTDIR direction.&lt;/p&gt;&lt;p&gt;If the grid element contains more than one street, Line 4 must be repeated.&lt;/p&gt;&lt;p&gt;If a given grid element has more than one street in one direction, modify WIDR(K) to represent the combined widths of the streets.&lt;/p&gt;&lt;p&gt;Up to 8 street segments, one for each of the 8 compass directions, can be assigned according to the ISTDIR variable.&lt;/p&gt;&lt;p&gt;By setting WIDR(K) = 0.0, the WIDST global width will be assigned to that street segment &lt;/p&gt;&lt;p&gt;Range:&lt;/p&gt;&lt;p&gt;0.0 - 1,000 ft&lt;/p&gt;&lt;p&gt;0.0 - 300 m&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+       </property>
        <property name="text">
         <string>Street width</string>
        </property>
@@ -359,6 +392,9 @@
      </item>
      <item>
       <widget class="QDoubleSpinBox" name="spin_w">
+       <property name="toolTip">
+        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;WIDR(K)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+       </property>
        <property name="decimals">
         <number>2</number>
        </property>

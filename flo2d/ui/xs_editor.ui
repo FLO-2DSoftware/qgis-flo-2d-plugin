@@ -177,6 +177,9 @@
             <height>0</height>
            </size>
           </property>
+          <property name="toolTip">
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;XSECNAME&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Cross section name (less than 15 characters, not case sensitive).&lt;/p&gt;&lt;p&gt;This name is for cross section ID purposes only and it is not used by the model.&lt;/p&gt;&lt;p&gt;Do not use spaces in the name.&lt;/p&gt;&lt;p&gt;Range: Alpha Numeric&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+          </property>
           <property name="text">
            <string>Name</string>
           </property>
@@ -196,10 +199,16 @@
             <height>0</height>
            </size>
           </property>
+          <property name="toolTip">
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;XSECNAME&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+          </property>
          </widget>
         </item>
         <item>
          <widget class="QToolButton" name="rename_xs_btn">
+          <property name="toolTip">
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Rename the selected cross section.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+          </property>
           <property name="text">
            <string>...</string>
           </property>
@@ -211,6 +220,9 @@
         </item>
         <item>
          <widget class="QToolButton" name="xs_center_btn">
+          <property name="toolTip">
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Lock into the selected croos section.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+          </property>
           <property name="text">
            <string>...</string>
           </property>
@@ -238,6 +250,9 @@
             <height>16777215</height>
            </size>
           </property>
+          <property name="toolTip">
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;FPNVALUE&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Manning’s n roughness coefficient assigned to grid element I.&lt;/p&gt;&lt;p&gt;Range: 0.010 - 0.4 &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+          </property>
           <property name="text">
            <string>n</string>
           </property>
@@ -256,6 +271,9 @@
             <width>16777215</width>
             <height>16777215</height>
            </size>
+          </property>
+          <property name="toolTip">
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;SHAPE&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Character line identifier;&lt;/p&gt;&lt;p&gt;SHAPE = ‘R’, rectangular channel geometry (width and depth data).&lt;/p&gt;&lt;p&gt;SHAPE = ‘V’, variable area channel geometry (power relationships).&lt;/p&gt;&lt;p&gt;SHAPE = ‘T’, trapezoidal channel (bottom width, depth and slopes data).&lt;/p&gt;&lt;p&gt;SHAPE = ‘N’, channel cross sections (cross section survey data).&lt;/p&gt;&lt;p&gt;Variable is case sensitive and it must be upper case.&lt;/p&gt;&lt;p&gt;Range: R, V, T or N&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
           </property>
           <property name="text">
            <string>Type</string>
@@ -276,6 +294,9 @@
             <height>16777215</height>
            </size>
           </property>
+          <property name="toolTip">
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;SHAPE&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+          </property>
          </widget>
         </item>
         <item row="0" column="3">
@@ -291,6 +312,9 @@
             <width>80</width>
             <height>0</height>
            </size>
+          </property>
+          <property name="toolTip">
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;FPNVALUE&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
           </property>
           <property name="buttonSymbols">
            <enum>QAbstractSpinBox::NoButtons</enum>

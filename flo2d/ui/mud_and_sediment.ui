@@ -54,8 +54,8 @@
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>851</width>
-        <height>695</height>
+        <width>872</width>
+        <height>286</height>
        </rect>
       </property>
       <layout class="QGridLayout" name="gridLayout_3">
@@ -110,6 +110,9 @@
                      <height>0</height>
                     </size>
                    </property>
+                   <property name="toolTip">
+                    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;JDEBNOD&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                   </property>
                    <property name="maximum">
                     <number>100000000</number>
                    </property>
@@ -136,7 +139,7 @@
                     </size>
                    </property>
                    <property name="toolTip">
-                    <string>Volume of the debris basin in ft3 or m3</string>
+                    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;DEBRISV&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(ft&lt;span style=&quot; vertical-align:super;&quot;&gt;3&lt;/span&gt; or m&lt;span style=&quot; vertical-align:super;&quot;&gt;3&lt;/span&gt;)&lt;/p&gt;&lt;p&gt;Volume of the debris basin.&lt;/p&gt;&lt;p&gt;Range: 0 - No upper limit&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                    </property>
                    <property name="text">
                     <string>Debris basin volume</string>
@@ -167,7 +170,7 @@
                     </size>
                    </property>
                    <property name="toolTip">
-                    <string>Grid element with the debris basin. The grid element must be a node listed in INFLOW.DAT</string>
+                    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;JDEBNOD&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Grid element with the debris basin.&lt;/p&gt;&lt;p&gt;The grid element must be a node listed in INFLOW.DAT.&lt;/p&gt;&lt;p&gt;Range: 1 - NNOD&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                    </property>
                    <property name="text">
                     <string>Debris basin cell</string>
@@ -190,6 +193,9 @@
                      <width>0</width>
                      <height>0</height>
                     </size>
+                   </property>
+                   <property name="toolTip">
+                    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;DEBRISV&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                    </property>
                    <property name="decimals">
                     <number>0</number>
@@ -228,13 +234,16 @@
               <property name="checkable">
                <bool>false</bool>
               </property>
+              <property name="collapsed">
+               <bool>true</bool>
+              </property>
               <layout class="QGridLayout" name="gridLayout_14">
                <item row="0" column="0">
                 <layout class="QGridLayout" name="gridLayout_18">
                  <item row="0" column="0">
                   <widget class="QLabel" name="label_7">
                    <property name="toolTip">
-                    <string>Mudflow sediment specific gravity</string>
+                    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;SGSM&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Mudflow sediment specific gravity.&lt;/p&gt;&lt;p&gt;Range: 2.5 - 2.8&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                    </property>
                    <property name="text">
                     <string>Mudflow specific gravity</string>
@@ -263,6 +272,9 @@
                      <width>80</width>
                      <height>20</height>
                     </size>
+                   </property>
+                   <property name="toolTip">
+                    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;XKX&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                    </property>
                    <property name="decimals">
                     <number>0</number>
@@ -295,6 +307,9 @@
                      <height>20</height>
                     </size>
                    </property>
+                   <property name="toolTip">
+                    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;SGSM&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                   </property>
                    <property name="decimals">
                     <number>2</number>
                    </property>
@@ -306,7 +321,7 @@
                  <item row="1" column="0">
                   <widget class="QLabel" name="label_8">
                    <property name="toolTip">
-                    <string>The laminar flow resistance parameter for overland flow</string>
+                    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;XKX&lt;/span&gt;&lt;/p&gt;&lt;p&gt;The laminar flow resistance parameter for overland flow.&lt;/p&gt;&lt;p&gt;It is suggested that a value of 2,480 initially be used for mudflows.&lt;/p&gt;&lt;p&gt;If a value of XKX is entered, it will be used by the model.&lt;/p&gt;&lt;p&gt;If XKX = 0, then XKX is computed by the following formulas where FPN is the floodplain grid ele ment Manning’s n-value:&lt;/p&gt;&lt;p&gt;FPN &amp;lt; 0.01,  XKX = 24&lt;/p&gt;&lt;p&gt;0.01 &amp;lt; FPN &amp;lt; 0.025,  XKX = 1,460,865.85&lt;span style=&quot; vertical-align:super;&quot;&gt;*&lt;/span&gt;(FPN)&lt;span style=&quot; vertical-align:super;&quot;&gt;2.381&lt;/span&gt;&lt;/p&gt;&lt;p&gt;0.25 &amp;lt; FPN,  XKX = 2,480 &lt;/p&gt;&lt;p&gt;Range: 24 - 50,000&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                    </property>
                    <property name="text">
                     <string>Laminar flow resistance</string>
@@ -356,7 +371,7 @@
                       <item>
                        <widget class="QLabel" name="label_10">
                         <property name="toolTip">
-                         <string>Exponent in the viscosity versus sediment concentration by volume relationship</string>
+                         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;VB&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(dimensionless)&lt;/p&gt;&lt;p&gt;Exponent in the viscosity versus sediment concentration by volume relationship.&lt;/p&gt;&lt;p&gt;Range: 0 - No upper limit&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                         </property>
                         <property name="text">
                          <string>Exponent</string>
@@ -386,6 +401,9 @@
                           <height>20</height>
                          </size>
                         </property>
+                        <property name="toolTip">
+                         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;VB&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                        </property>
                         <property name="decimals">
                          <number>7</number>
                         </property>
@@ -398,7 +416,7 @@
                       <item>
                        <widget class="QLabel" name="label_9">
                         <property name="toolTip">
-                         <string>Coefficient in the viscosity versus sediment concentration by volume relationship</string>
+                         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;VA&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(dimensionless)&lt;/p&gt;&lt;p&gt;Coefficient in the viscosity versus sediment concentration by volume relationship.&lt;/p&gt;&lt;p&gt;The relationship is based on a viscosity given in poises (dynes-s/ cm2) for either the English or Metric system.&lt;/p&gt;&lt;p&gt;Range: 0 - No upper limit&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                         </property>
                         <property name="text">
                          <string>Coefficient</string>
@@ -427,6 +445,9 @@
                           <width>115</width>
                           <height>20</height>
                          </size>
+                        </property>
+                        <property name="toolTip">
+                         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;VA&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                         </property>
                         <property name="decimals">
                          <number>7</number>
@@ -470,7 +491,7 @@
                          </size>
                         </property>
                         <property name="toolTip">
-                         <string>Relationships available from the literature and field data</string>
+                         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Relationships available from the literature and field data.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                         </property>
                         <property name="maxVisibleItems">
                          <number>20</number>
@@ -594,7 +615,7 @@
                       <item>
                        <widget class="QLabel" name="label_11">
                         <property name="toolTip">
-                         <string>Coefficient of the yield stress versus sediment concentration by volume relationship</string>
+                         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;YSA&lt;/p&gt;&lt;p&gt;(dimensionless)&lt;/p&gt;&lt;p&gt;Coefficient of the yield stress versus sediment concentration by volume relationship.&lt;/p&gt;&lt;p&gt;Range: 0 - No upper limit&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                         </property>
                         <property name="text">
                          <string>Coefficient</string>
@@ -624,6 +645,9 @@
                           <height>20</height>
                          </size>
                         </property>
+                        <property name="toolTip">
+                         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;YSA&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                        </property>
                         <property name="decimals">
                          <number>7</number>
                         </property>
@@ -639,7 +663,7 @@
                       <item>
                        <widget class="QLabel" name="label_12">
                         <property name="toolTip">
-                         <string>Exponent of yield stress versus sediment concentration by volume relationship</string>
+                         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;YSB&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(dimensionless)&lt;/p&gt;&lt;p&gt;Exponent of yield stress versus sediment concentration by volume relationship.&lt;/p&gt;&lt;p&gt;Range: 0 - No upper limit&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                         </property>
                         <property name="text">
                          <string>Exponent</string>
@@ -668,6 +692,9 @@
                           <width>115</width>
                           <height>20</height>
                          </size>
+                        </property>
+                        <property name="toolTip">
+                         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;YSB&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                         </property>
                         <property name="decimals">
                          <number>7</number>
@@ -974,6 +1001,9 @@
             </item>
             <item row="1" column="0">
              <widget class="QgsCollapsibleGroupBox" name="sed_size_fraction_grp">
+              <property name="toolTip">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;BEDTHICK&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(ft or m)&lt;/p&gt;&lt;p&gt;Sediment bed thickness for sediment routing by size fraction.&lt;/p&gt;&lt;p&gt;The available sediment volume for a size fraction within a grid element is defined by the bed thickness times the floodplain or channel element surface area times the percent size distribution. &lt;/p&gt;&lt;p&gt;The default bed thickness is 10 ft (3 m) for the floodplain if bed thickness is less than 0.1 ft. &lt;/p&gt;&lt;p&gt;If there is no available sediment volume for a given size fraction, no further scour of the bed will occur for that sediment size fraction.&lt;/p&gt;&lt;p&gt;Range: &lt;/p&gt;&lt;p&gt;0 - 100  ft&lt;/p&gt;&lt;p&gt;0 - 30 m&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
               <property name="title">
                <string>Use Size Fraction</string>
               </property>
@@ -1360,6 +1390,9 @@
               <property name="title">
                <string>Sediment Transport Parameters</string>
               </property>
+              <property name="collapsed">
+               <bool>true</bool>
+              </property>
               <layout class="QGridLayout" name="gridLayout_25">
                <item row="0" column="1">
                 <layout class="QGridLayout" name="gridLayout_13">
@@ -1382,6 +1415,9 @@
                      <width>16777215</width>
                      <height>16777215</height>
                     </size>
+                   </property>
+                   <property name="toolTip">
+                    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;DRYSPWT&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                    </property>
                    <property name="maximum">
                     <double>100000.000000000000000</double>
@@ -1412,7 +1448,7 @@
                     </size>
                    </property>
                    <property name="toolTip">
-                    <string>Sediment specific gravity</string>
+                    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;SGST&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Sediment specific gravity&lt;/p&gt;&lt;p&gt;Range: 2.6 - 2.8&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                    </property>
                    <property name="layoutDirection">
                     <enum>Qt::LeftToRight</enum>
@@ -1446,7 +1482,7 @@
                     </size>
                    </property>
                    <property name="toolTip">
-                    <string>Maximum allowable scour depth (ft or m) for all floodplain elements</string>
+                    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;SCOURDEP&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(ft or m)&lt;/p&gt;&lt;p&gt;Maximum allowable scour depth for all floodplain elements.&lt;/p&gt;&lt;p&gt;Range:&lt;/p&gt;&lt;p&gt;0 - 100 ft&lt;/p&gt;&lt;p&gt;0 - 30 m&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                    </property>
                    <property name="text">
                     <string>Maximum scour depth</string>
@@ -1496,7 +1532,7 @@
                     </size>
                    </property>
                    <property name="toolTip">
-                    <string>Sediment size (D50) in mm for sediment routing</string>
+                    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;DFIFTY&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(mm)&lt;/p&gt;&lt;p&gt;Sediment size (D50 ) for sediment routing.&lt;/p&gt;&lt;p&gt;Range: 30625 - No upper limit&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                    </property>
                    <property name="text">
                     <string>D50 (mm)</string>
@@ -1529,6 +1565,9 @@
                      <height>16777215</height>
                     </size>
                    </property>
+                   <property name="toolTip">
+                    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;SCOURDEP&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                   </property>
                    <property name="maximum">
                     <double>10000.000000000000000</double>
                    </property>
@@ -1556,6 +1595,9 @@
                      <width>16777215</width>
                      <height>16777215</height>
                     </size>
+                   </property>
+                   <property name="toolTip">
+                    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;CVFG&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                    </property>
                    <property name="decimals">
                     <number>4</number>
@@ -1589,7 +1631,7 @@
                     </size>
                    </property>
                    <property name="toolTip">
-                    <string>Dry specific weight of the sediment (lb/ft3 or N/m3)</string>
+                    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;DRYSPWT&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(lb/ft&lt;span style=&quot; vertical-align:super;&quot;&gt;3&lt;/span&gt; or N/m&lt;span style=&quot; vertical-align:super;&quot;&gt;3&lt;/span&gt;)&lt;/p&gt;&lt;p&gt;Dry specific weight of the sediment.&lt;/p&gt;&lt;p&gt;Range: 70 - 130&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                    </property>
                    <property name="text">
                     <string>Dry specific weight</string>
@@ -1622,6 +1664,9 @@
                      <height>16777215</height>
                     </size>
                    </property>
+                   <property name="toolTip">
+                    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;ISEDISPLAY&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                   </property>
                    <property name="maximum">
                     <number>10000000</number>
                    </property>
@@ -1646,6 +1691,9 @@
                      <width>16777215</width>
                      <height>16777215</height>
                     </size>
+                   </property>
+                   <property name="toolTip">
+                    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;DFIFTY&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                    </property>
                    <property name="decimals">
                     <number>4</number>
@@ -1676,7 +1724,7 @@
                     </size>
                    </property>
                    <property name="toolTip">
-                    <string>Fine sediment volumetric concentration for overland</string>
+                    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;CVFG&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Fine sediment volumetric concentration for overland, channel, and streets.&lt;/p&gt;&lt;p&gt;This value is superseded by CVFI in Line 3. &lt;/p&gt;&lt;p&gt;Concentration by volume of sediment for sizes less than 0.0625 mm (sand-silt split).&lt;/p&gt;&lt;p&gt;This concentration by volume generally ranges from 5% to 15% and is expressed as a decimal (0.05 for 5% concentration by volume).&lt;/p&gt;&lt;p&gt;It is used only in Woo-MPM sediment transport equation.&lt;/p&gt;&lt;p&gt;Range: 0 - 0.2&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                    </property>
                    <property name="text">
                     <string>Global fine sediment volume concentration</string>
@@ -1704,8 +1752,7 @@
                     </size>
                    </property>
                    <property name="toolTip">
-                    <string>Grid element (channel or floodplain) for which the sediment transport capacity
-for all the sediment transport equations will be listed by output interval TOUT in the SEDTRAN.OUT file</string>
+                    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;ISEDISPLAY&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Grid element (channel or floodplain) for which the sediment transport ca pacity for all the sediment transport equations will be listed by output inter val TOUT in the SEDTRAN.OUT file. &lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-style:italic;&quot;&gt;Note that only one equation is used in the actual sediment routing calculations, but the results of all equa tions are presented in SEDTRAN.OUT.&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Range: 1 - NNOD&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                    </property>
                    <property name="text">
                     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;SEDTRAN.OUT Node&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
@@ -1738,6 +1785,9 @@ for all the sediment transport equations will be listed by output interval TOUT 
                      <height>16777215</height>
                     </size>
                    </property>
+                   <property name="toolTip">
+                    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;SGST&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                   </property>
                    <property name="buttonSymbols">
                     <enum>QAbstractSpinBox::UpDownArrows</enum>
                    </property>
@@ -1769,6 +1819,9 @@ for all the sediment transport equations will be listed by output interval TOUT 
                      <height>16777215</height>
                     </size>
                    </property>
+                   <property name="toolTip">
+                    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;SGRAD&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                   </property>
                    <property name="maximum">
                     <double>10000.000000000000000</double>
                    </property>
@@ -1792,7 +1845,7 @@ for all the sediment transport equations will be listed by output interval TOUT 
                     </size>
                    </property>
                    <property name="toolTip">
-                    <string>Transport equation used in sediment routing for overland flow</string>
+                    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;ISEDEQG&lt;/p&gt;&lt;p&gt;Transport equation number used in sediment routing for overland flow, channels and streets.&lt;/p&gt;&lt;p&gt;In Line 2 (Line ‘C’), ISEDEQG will set the sediment transport equation for floodplain sediment routing and channel routing.&lt;/p&gt;&lt;p&gt;In Line 3 (Line ‘Z’), ISEDEQI will set the sediment transport equation for sediment routing by size fractions with a sediment transport equation assigned to each group. &lt;/p&gt;&lt;p&gt;Set ISEDEQG or ISEDEQI as follows for the appropriate sediment transport equation:&lt;/p&gt;&lt;p&gt;ISEDEQ = 1, Zeller and Fullerton &lt;/p&gt;&lt;p&gt;ISEDEQ = 2, Yang &lt;/p&gt;&lt;p&gt;ISEDEQ = 3, Englund and Hansen &lt;/p&gt;&lt;p&gt;ISEDEQ = 4, Ackers and White &lt;/p&gt;&lt;p&gt;ISEDEQ = 5, Laursen &lt;/p&gt;&lt;p&gt;ISEDEQ = 6, Toffaleti &lt;/p&gt;&lt;p&gt;ISEDEQ = 7, Woo-MPM &lt;/p&gt;&lt;p&gt;ISEDEQ = 8, MPM-Smart &lt;/p&gt;&lt;p&gt;ISEDEQ = 9, Karim-Kennedy &lt;/p&gt;&lt;p&gt;ISEDEQ = 10, Parker, Klingeman &amp;amp; McLean &lt;/p&gt;&lt;p&gt;ISEDEQ = 11, Van Rijn&lt;/p&gt;&lt;p&gt;Range: 1 - 11&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                    </property>
                    <property name="text">
                     <string>Sediment transport equation</string>
@@ -1826,7 +1879,7 @@ for all the sediment transport equations will be listed by output interval TOUT 
                     </size>
                    </property>
                    <property name="toolTip">
-                    <string>Sediment gradation coefficient (non-dimensional) for the sediment transport routine</string>
+                    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;SGRAD&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(dimensionless)&lt;/p&gt;&lt;p&gt;Sediment gradation coefficient for the sediment transport routine.&lt;/p&gt;&lt;p&gt;Range: 1.0 - 10.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                    </property>
                    <property name="text">
                     <string>Gradation coefficient</string>
@@ -1871,6 +1924,9 @@ for all the sediment transport equations will be listed by output interval TOUT 
                      <width>16777215</width>
                      <height>16777215</height>
                     </size>
+                   </property>
+                   <property name="toolTip">
+                    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;ISEDEQG&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                    </property>
                    <item>
                     <property name="text">
@@ -1936,6 +1992,9 @@ for all the sediment transport equations will be listed by output interval TOUT 
             </item>
             <item row="3" column="0">
              <widget class="QgsCollapsibleGroupBox" name="rigid_bed_grp">
+              <property name="toolTip">
+               <string/>
+              </property>
               <property name="title">
                <string>Rigid Bed Nodes</string>
               </property>
@@ -2139,6 +2198,9 @@ for all the sediment transport equations will be listed by output interval TOUT 
         <layout class="QGridLayout" name="gridLayout_2">
          <item row="0" column="0">
           <widget class="QRadioButton" name="mud_debris_transport_radio">
+           <property name="toolTip">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Mud/Debris Transport&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           </property>
            <property name="text">
             <string>Mud / Debris Transport</string>
            </property>
@@ -2146,6 +2208,9 @@ for all the sediment transport equations will be listed by output interval TOUT 
          </item>
          <item row="0" column="1">
           <widget class="QRadioButton" name="sediment_transport_radio">
+           <property name="toolTip">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Sediment Transport&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           </property>
            <property name="text">
             <string>Sediment Transport</string>
            </property>
@@ -2158,6 +2223,9 @@ for all the sediment transport equations will be listed by output interval TOUT 
              <horstretch>0</horstretch>
              <verstretch>0</verstretch>
             </sizepolicy>
+           </property>
+           <property name="toolTip">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Restor Defaults&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
            </property>
            <property name="text">
             <string>Restore Defaults</string>
@@ -2182,6 +2250,9 @@ for all the sediment transport equations will be listed by output interval TOUT 
          </item>
          <item row="0" column="2">
           <widget class="QRadioButton" name="two_phase_radio">
+           <property name="toolTip">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Two Phase&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           </property>
            <property name="text">
             <string>Two Phase</string>
            </property>
@@ -2189,6 +2260,9 @@ for all the sediment transport equations will be listed by output interval TOUT 
          </item>
          <item row="0" column="3" colspan="2">
           <widget class="QRadioButton" name="none_transport_radio">
+           <property name="toolTip">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;None&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           </property>
            <property name="text">
             <string>None</string>
            </property>

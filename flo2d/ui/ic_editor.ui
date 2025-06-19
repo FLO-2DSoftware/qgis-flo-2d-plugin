@@ -184,6 +184,9 @@
                    <height>0</height>
                   </size>
                  </property>
+                 <property name="toolTip">
+                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;TAILINGSDEPTH&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                 </property>
                  <property name="buttonSymbols">
                   <enum>QAbstractSpinBox::UpDownArrows</enum>
                  </property>
@@ -216,6 +219,9 @@
                </item>
                <item row="0" column="3">
                 <widget class="QToolButton" name="delete_seg_btn">
+                 <property name="toolTip">
+                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Delete current channel segment.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                 </property>
                  <property name="text">
                   <string>...</string>
                  </property>
@@ -227,6 +233,9 @@
                </item>
                <item row="0" column="4">
                 <widget class="QToolButton" name="center_seg_chbox">
+                 <property name="toolTip">
+                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Lock into the selected channel segment.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                 </property>
                  <property name="text">
                   <string/>
                  </property>
@@ -241,6 +250,9 @@
                </item>
                <item row="0" column="2">
                 <widget class="QToolButton" name="rename_seg_btn">
+                 <property name="toolTip">
+                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Rename selected channel segment.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                 </property>
                  <property name="text">
                   <string/>
                  </property>
@@ -270,6 +282,9 @@
                    <width>0</width>
                    <height>0</height>
                   </size>
+                 </property>
+                 <property name="toolTip">
+                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;TAILINGSDEPTH&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(ft or m)&lt;/p&gt;&lt;p&gt;Tailings depth for a specific grid element.&lt;/p&gt;&lt;p&gt;Range: 0.01 - No upper limit&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                  </property>
                  <property name="text">
                   <string>Initial depth</string>
@@ -357,7 +372,7 @@
              <item row="0" column="2">
               <widget class="QToolButton" name="rename_res_btn">
                <property name="toolTip">
-                <string>Change reservoir name</string>
+                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Rename selected reservoir.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                </property>
                <property name="text">
                 <string>...</string>
@@ -395,6 +410,9 @@
                  <height>0</height>
                 </size>
                </property>
+               <property name="toolTip">
+                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;RESERVOIRN&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               </property>
                <property name="maximum">
                 <double>1.000000000000000</double>
                </property>
@@ -408,6 +426,9 @@
              </item>
              <item row="0" column="4">
               <widget class="QToolButton" name="center_res_chbox">
+               <property name="toolTip">
+                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Lock into the selected reservoir.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               </property>
                <property name="text">
                 <string>...</string>
                </property>
@@ -438,6 +459,9 @@
              </item>
              <item row="2" column="0">
               <widget class="QLabel" name="label_12">
+               <property name="toolTip">
+                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;RESERVOIRN&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(dimensionless)&lt;/p&gt;&lt;p&gt;Optional reservoir n-value for all reservoir elements as signed a starting water surface elevation.&lt;/p&gt;&lt;p&gt;If RESERVOIRN is not assigned, the model will use the floodplain element n- value.&lt;/p&gt;&lt;p&gt;The n-value should be high enough to reduce reservoir velocities to less than 2.0 fps (0.67 mps).&lt;/p&gt;&lt;p&gt;A value of 0.25 is suggested. &lt;/p&gt;&lt;p&gt;Rsnge: 0.1 - 0.4&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               </property>
                <property name="text">
                 <string>Manning's</string>
                </property>
@@ -446,7 +470,7 @@
              <item row="0" column="3">
               <widget class="QToolButton" name="delete_res_btn">
                <property name="toolTip">
-                <string>Delete current reservoir</string>
+                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Delete current reservoir.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                </property>
                <property name="text">
                 <string>...</string>
@@ -688,6 +712,9 @@
                  <property name="enabled">
                   <bool>true</bool>
                  </property>
+                 <property name="toolTip">
+                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;CVTFP(J)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Concentration of tailing material for a single grid element.&lt;/p&gt;&lt;p&gt;Range: 0 - 0.65&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                 </property>
                  <property name="text">
                   <string>Concentration</string>
                  </property>
@@ -736,6 +763,9 @@
                    <height>0</height>
                   </size>
                  </property>
+                 <property name="toolTip">
+                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;TAILINGSELEV(II)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                 </property>
                  <property name="maximum">
                   <double>9999.000000000000000</double>
                  </property>
@@ -746,6 +776,9 @@
                  <property name="enabled">
                   <bool>true</bool>
                  </property>
+                 <property name="toolTip">
+                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;TAILINGSELEV(II)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(ft or m)&lt;/p&gt;&lt;p&gt;Tailings dam material surface elevation.&lt;/p&gt;&lt;p&gt;Range: 0 - No upper limit&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                 </property>
                  <property name="text">
                   <string>Tailings elev.</string>
                  </property>
@@ -753,6 +786,9 @@
                </item>
                <item row="0" column="4">
                 <widget class="QToolButton" name="center_tal_chbox">
+                 <property name="toolTip">
+                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Lock into the selected tailings stack.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                 </property>
                  <property name="layoutDirection">
                   <enum>Qt::LeftToRight</enum>
                  </property>
@@ -785,6 +821,9 @@
                    <height>0</height>
                   </size>
                  </property>
+                 <property name="toolTip">
+                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;CVTFP(J)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                 </property>
                  <property name="maximum">
                   <double>1.000000000000000</double>
                  </property>
@@ -808,6 +847,9 @@
                </item>
                <item row="0" column="2">
                 <widget class="QToolButton" name="rename_tal_btn">
+                 <property name="toolTip">
+                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Rename selected tailings stack.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                 </property>
                  <property name="text">
                   <string>...</string>
                  </property>
@@ -828,6 +870,9 @@
                    <height>0</height>
                   </size>
                  </property>
+                 <property name="toolTip">
+                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;RESERVOIREL&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(ft or m)&lt;/p&gt;&lt;p&gt;Water surface elevation of the reservoir or ponded water area.&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-style:italic;&quot;&gt;Note: Negative water surface elevation assigns the reservoir bed elevations below the breach foundation elevation as dead pool ground and reduces the reservoir starting flow depth for those dead pool elements.&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Range: 0 to Dam Crest&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                 </property>
                  <property name="text">
                   <string>Water surf. elev.</string>
                  </property>
@@ -836,7 +881,7 @@
                <item row="0" column="3">
                 <widget class="QToolButton" name="delete_tailings_btn">
                  <property name="toolTip">
-                  <string>Delete tailings</string>
+                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Delete current tailings stack.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                  </property>
                  <property name="text">
                   <string>...</string>
@@ -883,6 +928,9 @@
                    <height>0</height>
                   </size>
                  </property>
+                 <property name="toolTip">
+                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;RESERVOIREL&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                 </property>
                  <property name="maximum">
                   <double>9999.000000000000000</double>
                  </property>
@@ -915,6 +963,9 @@
              </item>
              <item row="3" column="0">
               <widget class="QLabel" name="label_13">
+               <property name="toolTip">
+                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;RESERVOIRN&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(dimensionless)&lt;/p&gt;&lt;p&gt;Optional reservoir n-value for all reservoir elements as signed a starting water surface elevation.&lt;/p&gt;&lt;p&gt;If RESERVOIRN is not assigned, the model will use the floodplain element n- value.&lt;/p&gt;&lt;p&gt;The n-value should be high enough to reduce reservoir velocities to less than 2.0 fps (0.67 mps).&lt;/p&gt;&lt;p&gt;A value of 0.25 is suggested. &lt;/p&gt;&lt;p&gt;Rsnge: 0.1 - 0.4&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               </property>
                <property name="text">
                 <string>Manning's</string>
                </property>
@@ -935,6 +986,9 @@
              </item>
              <item row="2" column="0">
               <widget class="QLabel" name="label_11">
+               <property name="toolTip">
+                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;RESERVOIREL&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(ft or m)&lt;/p&gt;&lt;p&gt;Water surface elevation of the reservoir or ponded water area.&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-style:italic;&quot;&gt;Note: Negative water surface elevation assigns the reservoir bed elevations below the breach foundation elevation as dead pool ground and reduces the reservoir starting flow depth for those dead pool elements.&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Range: 0 to Dam Crest&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               </property>
                <property name="text">
                 <string>Water surf. elev.</string>
                </property>
@@ -942,6 +996,9 @@
              </item>
              <item row="2" column="1">
               <widget class="QDoubleSpinBox" name="wse_tal_res_sb">
+               <property name="toolTip">
+                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;RESERVOIREL&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               </property>
                <property name="maximum">
                 <double>9999.000000000000000</double>
                </property>
@@ -949,6 +1006,9 @@
              </item>
              <item row="0" column="3">
               <widget class="QToolButton" name="delete_tal_res_btn">
+               <property name="toolTip">
+                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Delete current tailing reservoir.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               </property>
                <property name="text">
                 <string>...</string>
                </property>
@@ -973,6 +1033,9 @@
              </item>
              <item row="1" column="1">
               <widget class="QDoubleSpinBox" name="tal_res_elev_sb">
+               <property name="toolTip">
+                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;TAILINGSELEV(II)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               </property>
                <property name="maximum">
                 <double>9999.000000000000000</double>
                </property>
@@ -980,6 +1043,9 @@
              </item>
              <item row="0" column="2">
               <widget class="QToolButton" name="rename_tal_res_btn">
+               <property name="toolTip">
+                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Rename selected tailing reservoir.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               </property>
                <property name="text">
                 <string>...</string>
                </property>
@@ -991,6 +1057,9 @@
              </item>
              <item row="0" column="4">
               <widget class="QToolButton" name="center_tal_res_chbox">
+               <property name="toolTip">
+                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Lock into the selected tailing reservoir.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               </property>
                <property name="text">
                 <string>...</string>
                </property>
@@ -1005,6 +1074,9 @@
              </item>
              <item row="3" column="1">
               <widget class="QDoubleSpinBox" name="tal_n_sbox">
+               <property name="toolTip">
+                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;RESERVOIRN&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               </property>
                <property name="maximum">
                 <double>1.000000000000000</double>
                </property>
@@ -1031,6 +1103,9 @@
              </item>
              <item row="1" column="0">
               <widget class="QLabel" name="label_10">
+               <property name="toolTip">
+                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;TAILINGSELEV(II)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(ft or m)&lt;/p&gt;&lt;p&gt;Tailings dam material surface elevation.&lt;/p&gt;&lt;p&gt;Range: 0 - No upper limit&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               </property>
                <property name="text">
                 <string>Tailing elev.</string>
                </property>

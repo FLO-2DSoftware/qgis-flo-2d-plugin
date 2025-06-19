@@ -465,7 +465,7 @@
               </sizepolicy>
              </property>
              <property name="toolTip">
-              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;IBREACHSEDEQN&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Sediment transport equation that is used to compute the breach erosion. Out of eleven transport equations in FLO 2D only Tofaletti and MPM-Woo are not available. See the list of sediment transport equation numbers in SED.DAT.&lt;/p&gt;&lt;p&gt;Range: 1 - 11&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;IBREACHSEDEQN&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Sediment transport equation that is used to compute the breach erosion.&lt;/p&gt;&lt;p&gt;Out of eleven transport equations in FLO 2D only Tofaletti and MPM-Woo are not available.&lt;/p&gt;&lt;p&gt;See the list of sediment transport equation numbers in SED.DAT.&lt;/p&gt;&lt;p&gt;Range: 1 - 11&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
              </property>
              <property name="text">
               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Sediment routing equation&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
@@ -564,7 +564,7 @@
              <item row="0" column="0">
               <widget class="QLabel" name="label_24">
                <property name="toolTip">
-                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;GWEIRCOEF&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(dimensionless)&lt;/p&gt;&lt;p&gt;Global weir coefficient for piping or breach channel weir for an unspecified failure location.&lt;/p&gt;&lt;p&gt;Range: 2.85 – 3.05. &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;GWEIRCOEF&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(dimensionless)&lt;/p&gt;&lt;p&gt;Global weir coefficient for piping or breach channel weir for an unspecified failure location.&lt;/p&gt;&lt;p&gt;Range: 2.85 – 3.05&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                </property>
                <property name="text">
                 <string>Weir coefficient</string>
@@ -603,7 +603,7 @@
                 </sizepolicy>
                </property>
                <property name="toolTip">
-                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;BREACHTIME&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Delay (in hours) between when the water surface exceeds &lt;span style=&quot; font-family:'Courier New';&quot;&gt;BRBOTTOMEL&lt;/span&gt; and when levee/dam erosion begins.&lt;span style=&quot; font-family:'Courier New';&quot;&gt;0&lt;/span&gt;: Erosion starts immediately once the water exceeds &lt;span style=&quot; font-family:'Courier New';&quot;&gt;BRBOTTOMEL,&lt;/span&gt;&lt;span style=&quot; font-family:'Courier New';&quot;&gt;&amp;gt;0&lt;/span&gt;: A fixed delay, starting from model time = 0.0 hr, &lt;span style=&quot; font-family:'Courier New';&quot;&gt;&amp;lt;0&lt;/span&gt;: Used for multiple breach scenarios—delay starts from the first breach event, not from model time zero, &lt;span style=&quot; font-family:'Courier New';&quot;&gt;=-99&lt;/span&gt;: Also for multiple breaches; same behavior as &lt;span style=&quot; font-family:'Courier New';&quot;&gt;&amp;lt; 0&lt;/span&gt;, but resets &lt;span style=&quot; font-family:'Courier New';&quot;&gt;BREACHTIME&lt;/span&gt; to 0 after the first breach.&lt;/p&gt;&lt;p&gt;- SIMULT to SIMULT-99&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;BREACHTIME&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(hrs)&lt;/p&gt;&lt;p&gt;Delay between when the water surface exceeds &lt;span style=&quot; font-family:'Courier New';&quot;&gt;BRBOTTOMEL&lt;/span&gt; and when levee/dam erosion begins;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'Courier New';&quot;&gt;0&lt;/span&gt;: Erosion starts immediately once the water exceeds &lt;span style=&quot; font-family:'Courier New';&quot;&gt;BRBOTTOMEL&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'Courier New';&quot;&gt;&amp;gt;0&lt;/span&gt;: A fixed delay, starting from model time = 0.0 hr&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'Courier New';&quot;&gt;&amp;lt;0&lt;/span&gt;: Used for multiple breach scenarios—delay starts from the first breach event, not from model time zero&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'Courier New';&quot;&gt;=-99&lt;/span&gt;: Also for multiple breaches; same behavior as &lt;span style=&quot; font-family:'Courier New';&quot;&gt;&amp;lt; 0&lt;/span&gt;, but resets &lt;span style=&quot; font-family:'Courier New';&quot;&gt;BREACHTIME&lt;/span&gt; to 0 after the first breach.&lt;/p&gt;&lt;p&gt;Range: - SIMULT to SIMULT-99&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                </property>
                <property name="text">
                 <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Time to initial failure&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
@@ -763,7 +763,7 @@
            <bool>false</bool>
           </property>
           <property name="toolTip">
-           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;PRFAIL&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Levee fragility curve point of failure probability. 80% indicates a higher probability of levee failure most likely corresponding to a higher elevation on the levee. A low value of 10% would indicate a weak levee most likely corresponding to a levee piping failure close to the toe of the levee.&lt;/p&gt;&lt;p&gt;Range: 0.0 - 1.0&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Set levee fragility curves.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
           </property>
           <property name="text">
            <string>Levee Fragility Curves</string>

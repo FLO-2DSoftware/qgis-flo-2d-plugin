@@ -150,7 +150,7 @@
         </size>
        </property>
        <property name="toolTip">
-        <string>Define global infiltration first.</string>
+        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Define global infiltration parameters first.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
        </property>
        <property name="text">
         <string>Global Infiltration</string>
@@ -202,7 +202,7 @@
      <item>
       <widget class="QLabel" name="label">
        <property name="toolTip">
-        <string>Name of the infiltration feature.</string>
+        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Infiltration feature name.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
        </property>
        <property name="text">
         <string>Infiltration name</string>
@@ -231,7 +231,7 @@
         </size>
        </property>
        <property name="toolTip">
-        <string>Select infitration feature.</string>
+        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Infiltration feature name.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
        </property>
        <property name="editable">
         <bool>false</bool>
@@ -240,6 +240,9 @@
      </item>
      <item>
       <widget class="QToolButton" name="change_name_btn">
+       <property name="toolTip">
+        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Rename the selected infiltration.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+       </property>
        <property name="text">
         <string>...</string>
        </property>
@@ -256,6 +259,9 @@
          <horstretch>0</horstretch>
          <verstretch>0</verstretch>
         </sizepolicy>
+       </property>
+       <property name="toolTip">
+        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Lock into the selected infiltration.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
        </property>
        <property name="text">
         <string/>
@@ -313,7 +319,7 @@
            </size>
           </property>
           <property name="toolTip">
-           <string>Calculate  Green-Ampt infiltration from soil and landuse polygons.</string>
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Calculate Green-Ampt infiltration from soil and landuse polygons.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
           </property>
           <property name="layoutDirection">
            <enum>Qt::LeftToRight</enum>
@@ -327,6 +333,9 @@
       </item>
       <item row="4" column="0">
        <widget class="QGroupBox" name="fplain_grp">
+        <property name="toolTip">
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;INFCHAN&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Set switch to 1 to simulate channel infiltration.&lt;/p&gt;&lt;p&gt;0 = off&lt;/p&gt;&lt;p&gt;1 = on&lt;/p&gt;&lt;p&gt;Range: 0,1&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+        </property>
         <property name="title">
          <string>Floodplain Element</string>
         </property>
@@ -340,9 +349,7 @@
          <item row="1" column="0">
           <widget class="QLabel" name="label_4">
            <property name="toolTip">
-            <string>DTHETA
-Soil moisture deficit of the selected feature.
- </string>
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;DTHETA(N)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(dimensionless)&lt;/p&gt;&lt;p&gt;The grid element soil moisture deficit (SATF-SATI) is expressed as a decimal with a range from 0.0 to 1.0.&lt;/p&gt;&lt;p&gt;It can also represent the grid element volumetric soil moisture deficit that is defined as the soil moisture deficit multiplied by the porosity (SATF-SATI)*POROS with a range from 0.3 to 0.5. &lt;/p&gt;&lt;p&gt;Set POROS = 0 for the volumetric soil moisture deficiency.&lt;/p&gt;&lt;p&gt;Range:&lt;/p&gt;&lt;p&gt;0.0 - 1&lt;/p&gt;&lt;p&gt;0.0 - 0.5&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
            </property>
            <property name="text">
             <string>Soil Moisture Deficit</string>
@@ -357,6 +364,9 @@ Soil moisture deficit of the selected feature.
          </item>
          <item row="0" column="3">
           <widget class="QDoubleSpinBox" name="spin_soils">
+           <property name="toolTip">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;SOILS(N)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           </property>
            <property name="decimals">
             <number>4</number>
            </property>
@@ -367,6 +377,9 @@ Soil moisture deficit of the selected feature.
          </item>
          <item row="1" column="1">
           <widget class="QDoubleSpinBox" name="spin_dtheta">
+           <property name="toolTip">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;DTHETA(N)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           </property>
            <property name="decimals">
             <number>4</number>
            </property>
@@ -377,6 +390,9 @@ Soil moisture deficit of the selected feature.
          </item>
          <item row="0" column="1">
           <widget class="QDoubleSpinBox" name="spin_hydc">
+           <property name="toolTip">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;HYDC(N)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           </property>
            <property name="decimals">
             <number>4</number>
            </property>
@@ -388,9 +404,7 @@ Soil moisture deficit of the selected feature.
          <item row="0" column="2">
           <widget class="QLabel" name="label_3">
            <property name="toolTip">
-            <string>SOILS
-Capillary suction head for the selected feature.
-(in or mm)</string>
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;SOILS(N)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(inches or mm)&lt;/p&gt;&lt;p&gt;Capillary suction head for floodplain grid elements.&lt;/p&gt;&lt;p&gt;Range:&lt;/p&gt;&lt;p&gt;1 - 20 inches&lt;/p&gt;&lt;p&gt;25 - 500 mm&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
            </property>
            <property name="text">
             <string>Capillary Suction</string>
@@ -405,6 +419,9 @@ Capillary suction head for the selected feature.
          </item>
          <item row="1" column="3">
           <widget class="QDoubleSpinBox" name="spin_abstrinf">
+           <property name="toolTip">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;ABSTRINF(N)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           </property>
            <property name="decimals">
             <number>4</number>
            </property>
@@ -416,7 +433,7 @@ Capillary suction head for the selected feature.
          <item row="0" column="0">
           <widget class="QLabel" name="label_2">
            <property name="toolTip">
-            <string>Hydraulic conductivity of the selected feature. (in/hr or mm/hr)</string>
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;HYDC(N)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(inches/hr or mm/hr)&lt;/p&gt;&lt;p&gt;Grid element average hydraulic conductivity.&lt;/p&gt;&lt;p&gt;Range:&lt;/p&gt;&lt;p&gt;0.01 - 10 inches/hr&lt;/p&gt;&lt;p&gt;0.25 - 250 mm/hr&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
            </property>
            <property name="text">
             <string>Hydraulic Conduct.</string>
@@ -432,9 +449,7 @@ Capillary suction head for the selected feature.
          <item row="1" column="2">
           <widget class="QLabel" name="label_5">
            <property name="toolTip">
-            <string>ABSTRINF
-Initial abstraction for the selected feature.
-(in or mm)</string>
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;ABSTRINF(N)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(inches or mm)&lt;/p&gt;&lt;p&gt;Grid element rainfall abstraction.&lt;/p&gt;&lt;p&gt;Range:&lt;/p&gt;&lt;p&gt;0 - 1 inches&lt;/p&gt;&lt;p&gt;0 - 25 mm&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
            </property>
            <property name="text">
             <string>Rainfall Abstraction</string>
@@ -450,9 +465,7 @@ Initial abstraction for the selected feature.
          <item row="2" column="0">
           <widget class="QLabel" name="label_6">
            <property name="toolTip">
-            <string>RTIMPF
-Percent Impervious area of the selected feature.
-(decimal percentage)</string>
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;RTIMPF(N)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Percent impervious floodplain area on a grid element.&lt;/p&gt;&lt;p&gt;Range: 0.0 - 1&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
            </property>
            <property name="text">
             <string>Impervious Area</string>
@@ -467,6 +480,9 @@ Percent Impervious area of the selected feature.
          </item>
          <item row="2" column="1">
           <widget class="QDoubleSpinBox" name="spin_rtimpf">
+           <property name="toolTip">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;RTIMPF(N)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           </property>
            <property name="decimals">
             <number>4</number>
            </property>
@@ -478,10 +494,7 @@ Percent Impervious area of the selected feature.
          <item row="2" column="2">
           <widget class="QLabel" name="label_7">
            <property name="toolTip">
-            <string>SOIL_DEPTH
-Soil depth for the selected feature.
-Not used if global soil depth is 0.
-(ft or m)</string>
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;SOIL_DEPTH(N)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(ft or m)&lt;/p&gt;&lt;p&gt;Spatially variable Green-Ampt infiltration soil limiting depth storage.&lt;/p&gt;&lt;p&gt;Maximum soil depth for infiltration on a grid element.&lt;/p&gt;&lt;p&gt;Range:&lt;/p&gt;&lt;p&gt;0.0 - 100. ft&lt;/p&gt;&lt;p&gt;0.0 - 30. m&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
            </property>
            <property name="text">
             <string>Soil Depth</string>
@@ -496,6 +509,9 @@ Not used if global soil depth is 0.
          </item>
          <item row="2" column="3">
           <widget class="QDoubleSpinBox" name="spin_soil_depth">
+           <property name="toolTip">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;SOIL_DEPTH(N)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           </property>
            <property name="decimals">
             <number>4</number>
            </property>
@@ -522,9 +538,7 @@ Not used if global soil depth is 0.
          <item row="0" column="1">
           <widget class="QLabel" name="label_8">
            <property name="toolTip">
-            <string>HYDCONCH
-Hydraulic conductivity for the selected feature.
-(in/hr or mm/hr)</string>
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;HYDCONCH(N)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(inches/hr or mm/hr)&lt;/p&gt;&lt;p&gt;Hydraulic conductivity for a channel element.&lt;/p&gt;&lt;p&gt;Range:&lt;/p&gt;&lt;p&gt;0.01 - 10 inches/hr&lt;/p&gt;&lt;p&gt;0.25 - 250  mm/hr&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
            </property>
            <property name="text">
             <string>Hydraulic Conduct.</string>
@@ -536,6 +550,9 @@ Hydraulic conductivity for the selected feature.
          </item>
          <item row="0" column="2">
           <widget class="QDoubleSpinBox" name="spin_hydconch">
+           <property name="toolTip">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;HYDCONCH(N)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           </property>
            <property name="decimals">
             <number>4</number>
            </property>
@@ -585,8 +602,7 @@ Hydraulic conductivity for the selected feature.
       <item row="1" column="1">
        <widget class="QLabel" name="label_9">
         <property name="toolTip">
-         <string>SCSCN
-Curve number for the selected feature.</string>
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;SCSCN(N)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;SCS curve numbers for spatially variable infiltration of the floodplain grid elements.&lt;/p&gt;&lt;p&gt;The variable can range from 1 to 99 but use engineering judgment.&lt;/p&gt;&lt;p&gt;Values lower than 67 will result in an excessive loss and variables higher than 99 will be reset to 99.&lt;/p&gt;&lt;p&gt;Range: 1 - 99&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
         </property>
         <property name="text">
          <string>SCS Curve Number</string>
@@ -623,13 +639,20 @@ Curve number for the selected feature.</string>
           <height>16777215</height>
          </size>
         </property>
+        <property name="toolTip">
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Compute SCS curve number.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+        </property>
         <property name="text">
          <string>Calculate SCS CN</string>
         </property>
        </widget>
       </item>
       <item row="1" column="2">
-       <widget class="QSpinBox" name="spin_scsn"/>
+       <widget class="QSpinBox" name="spin_scsn">
+        <property name="toolTip">
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;SCSCN(N)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+        </property>
+       </widget>
       </item>
      </layout>
     </widget>
@@ -643,9 +666,7 @@ Curve number for the selected feature.</string>
       <item row="0" column="0">
        <widget class="QLabel" name="label_10">
         <property name="toolTip">
-         <string>FHORTF
-Initial Horton infiltration rate for the selected feature.
-(in/hr both unit systems}</string>
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;FHORTI (INFGRID(IF))&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(inches/hr)&lt;/p&gt;&lt;p&gt;Horton’s equation spatially variable floodplain initial infiltration rate.&lt;/p&gt;&lt;p&gt;No metric.&lt;/p&gt;&lt;p&gt;Range: 3.0 - 5.0&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
         </property>
         <property name="text">
          <string>Initial Rate</string>
@@ -661,9 +682,7 @@ Initial Horton infiltration rate for the selected feature.
       <item row="0" column="2">
        <widget class="QLabel" name="label_11">
         <property name="toolTip">
-         <string>FHORTI
-Final Horton infiltration rate for the selected feature.
-(in/hr both unit systems}</string>
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;FHORTF (INFGRID(IF))&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(inches/hr)&lt;/p&gt;&lt;p&gt;Horton’s equation spatially variable floodplain final infiltration rate.&lt;/p&gt;&lt;p&gt;No metric.&lt;/p&gt;&lt;p&gt;Range: 0.5 - 1.0&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
         </property>
         <property name="text">
          <string>Final Rate</string>
@@ -679,9 +698,7 @@ Final Horton infiltration rate for the selected feature.
       <item row="0" column="4">
        <widget class="QLabel" name="label_12">
         <property name="toolTip">
-         <string>DECA
-Horton decay coefficient for the selected feature.
-(1/second)</string>
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;DECA (INFGRID(IF))&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(1/ second)&lt;/p&gt;&lt;p&gt;Horton’s equation spatially variable decay coefficient.&lt;/p&gt;&lt;p&gt;No metric.&lt;/p&gt;&lt;p&gt;Range: 0.0007 - 0.0018&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
         </property>
         <property name="text">
          <string>Decay Coeff.</string>
@@ -697,7 +714,7 @@ Horton decay coefficient for the selected feature.
       <item row="0" column="1">
        <widget class="QDoubleSpinBox" name="spin_fhorti">
         <property name="toolTip">
-         <string/>
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;FHORTI (INFGRID(IF))&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
         </property>
         <property name="decimals">
          <number>4</number>
@@ -709,6 +726,9 @@ Horton decay coefficient for the selected feature.
       </item>
       <item row="0" column="3">
        <widget class="QDoubleSpinBox" name="spin_fhortf">
+        <property name="toolTip">
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;FHORTF (INFGRID(IF))&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+        </property>
         <property name="decimals">
          <number>4</number>
         </property>
@@ -719,6 +739,9 @@ Horton decay coefficient for the selected feature.
       </item>
       <item row="0" column="5">
        <widget class="QDoubleSpinBox" name="spin_deca">
+        <property name="toolTip">
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;DECA (INFGRID(IF))&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+        </property>
         <property name="decimals">
          <number>4</number>
         </property>

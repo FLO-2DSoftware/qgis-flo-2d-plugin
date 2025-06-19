@@ -447,6 +447,9 @@
         </item>
         <item row="3" column="0">
          <widget class="QLabel" name="component_label">
+          <property name="toolTip">
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;NOSTACFP&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Channel or floodplain identifier.&lt;/p&gt;&lt;p&gt;If NOSTACFP = 0, the following stage-time relationship is for a floodplain element.&lt;/p&gt;&lt;p&gt;If NOSTACFP = 1, the stage-time relationship is for a chan nel element.&lt;/p&gt;&lt;p&gt;Range: 0 - 1&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+          </property>
           <property name="text">
            <string>Component</string>
           </property>
@@ -492,7 +495,7 @@
           <item>
            <widget class="QRadioButton" name="ifc_fplain_radio">
             <property name="toolTip">
-             <string>Flooplain</string>
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;NOSTACFP = 0&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
             </property>
             <property name="text">
              <string>Floodplain</string>
@@ -505,7 +508,7 @@
           <item>
            <widget class="QRadioButton" name="ifc_chan_radio">
             <property name="toolTip">
-             <string>Channel</string>
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;NOSTACFP = 1&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
             </property>
             <property name="text">
              <string>Channel</string>
