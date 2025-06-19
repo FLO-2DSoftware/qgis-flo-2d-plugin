@@ -54,8 +54,8 @@
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>872</width>
-        <height>286</height>
+        <width>851</width>
+        <height>343</height>
        </rect>
       </property>
       <layout class="QGridLayout" name="gridLayout_3">
@@ -91,7 +91,7 @@
                <bool>false</bool>
               </property>
               <property name="collapsed">
-               <bool>true</bool>
+               <bool>false</bool>
               </property>
               <layout class="QGridLayout" name="gridLayout_15">
                <item row="0" column="0">
@@ -139,7 +139,7 @@
                     </size>
                    </property>
                    <property name="toolTip">
-                    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;DEBRISV&lt;/span&gt;&lt;/p&gt;&lt;p&gt;ft&lt;span style=&quot; vertical-align:super;&quot;&gt;3&lt;/span&gt; or m&lt;span style=&quot; vertical-align:super;&quot;&gt;3&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Volume of the debris basin.&lt;/p&gt;&lt;p&gt;Range: 0 - No upper limit&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;DEBRISV&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(ft&lt;span style=&quot; vertical-align:super;&quot;&gt;3&lt;/span&gt; or m&lt;span style=&quot; vertical-align:super;&quot;&gt;3&lt;/span&gt;)&lt;/p&gt;&lt;p&gt;Volume of the debris basin.&lt;/p&gt;&lt;p&gt;Range: 0 - No upper limit&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                    </property>
                    <property name="text">
                     <string>Debris basin volume</string>
