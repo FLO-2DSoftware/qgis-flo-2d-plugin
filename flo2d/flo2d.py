@@ -3372,14 +3372,13 @@ class Flo2D(object):
 
         s = QSettings()
         last_dir = s.value("FLO-2D/lastGdsDir", "")
-        output_hdf5, _ = QFileDialog.getSaveFileName(
+        outdir = QFileDialog.getExistingDirectory(
             None,
-            "Save FLO-2D model data into HDF5 format",
+            "Select directory to save FLO-2D HDF5 Input file",
             directory=last_dir,
-            filter="HDF5 file (*.hdf5; *.HDF5)",
         )
-        if output_hdf5:
-            outdir = os.path.dirname(output_hdf5)
+        if outdir:
+            output_hdf5 = os.path.join(outdir, "Input.hdf5")
             self.f2g = Flo2dGeoPackage(self.con, self.iface, parsed_format=Flo2dGeoPackage.FORMAT_HDF5)
             self.f2g.set_parser(output_hdf5, get_cell_size=False)
             export_calls = [
