@@ -53,9 +53,9 @@
       <property name="geometry">
        <rect>
         <x>0</x>
-        <y>-115</y>
-        <width>855</width>
-        <height>478</height>
+        <y>0</y>
+        <width>872</width>
+        <height>310</height>
        </rect>
       </property>
       <layout class="QGridLayout" name="gridLayout_3">
@@ -761,7 +761,7 @@
                <bool>false</bool>
               </property>
               <property name="collapsed">
-               <bool>false</bool>
+               <bool>true</bool>
               </property>
               <layout class="QGridLayout" name="gridLayout">
                <item row="0" column="0">
