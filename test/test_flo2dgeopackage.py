@@ -826,6 +826,7 @@ class TestFlo2dGeoPackageHDF5(unittest.TestCase):
         self.f2g_exp.set_parser(EXPORT_HDF5_DIR, get_cell_size=False)
 
         self.f2g_exp.import_cont_toler()
+        self.f2g_exp.import_mannings_n_topo()
         self.f2g_exp.import_arf()
         self.f2g_exp.export_arf()
 
