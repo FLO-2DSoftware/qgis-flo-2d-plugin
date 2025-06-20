@@ -53,9 +53,9 @@
       <property name="geometry">
        <rect>
         <x>0</x>
-        <y>0</y>
-        <width>872</width>
-        <height>310</height>
+        <y>-462</y>
+        <width>855</width>
+        <height>772</height>
        </rect>
       </property>
       <layout class="QGridLayout" name="gridLayout_3">
@@ -749,7 +749,7 @@
             <item row="2" column="0">
              <widget class="QgsCollapsibleGroupBox" name="sed_rating_curve_grp">
               <property name="toolTip">
-               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;ISEDSUPPLY&lt;/span&gt;&lt;/p&gt;&lt;p&gt;ISEDSUPPLY = 1 if a sediment rating curve will be used to define the sediment supply to a channel reach or floodplain area. &lt;/p&gt;&lt;p&gt;Range: 0, 1&lt;/p&gt;&lt;p&gt;When checked, it enables to use of the following variables;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;ISEDGRID(N):&lt;/span&gt; Grid element that will be a sediment supply node (channel or floodplain) with a sediment rating curve.&lt;/p&gt;&lt;p&gt;Range: 1 - NNOD&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;ISEDCFP(N):&lt;/span&gt; ISEDCFP(N) = 0 for a floodplain sediment supply rating curve, ISEDCFP(N) = 1 for a channel sediment supply rating curve.&lt;/p&gt;&lt;p&gt;Range: 0, 1&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;ASED(N): &lt;/span&gt;Sediment rating curve coefficient.&lt;/p&gt;&lt;p&gt;Range: 0 - No upper limit&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;BSED(N):&lt;/span&gt; (tons/day or kg/day). Sediment rating curve exponent. Q&lt;span style=&quot; vertical-align:sub;&quot;&gt;s&lt;/span&gt; = ASED* Q&lt;span style=&quot; vertical-align:sub;&quot;&gt;w&lt;/span&gt;&lt;span style=&quot; vertical-align:super;&quot;&gt;BSED&lt;/span&gt;, where: Q&lt;span style=&quot; vertical-align:sub;&quot;&gt;w&lt;/span&gt; is the water discharge (cfs or cms) and Q&lt;span style=&quot; vertical-align:sub;&quot;&gt;s&lt;/span&gt; is the sediment supply . &lt;/p&gt;&lt;p&gt;Range: 0 - No upper limit&lt;/p&gt;&lt;p&gt;dist_fid:&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;SSEDIAM:&lt;/span&gt; (mm). Representative sediment supply diamete for sediment routing by size fraction.&lt;/p&gt;&lt;p&gt;Range: 0 - No upper limit.&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;SSEDPERCENT&lt;/span&gt;: (decimal). Sediment supply size distribution percentage. Represents the percent of the sediment that is finer than the representative size diameter.&lt;/p&gt;&lt;p&gt;Range: 0 - 1&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;ISEDSUPPLY&lt;/span&gt;&lt;/p&gt;&lt;p&gt;ISEDSUPPLY = 1 if a sediment rating curve will be used to define the sediment supply to a channel reach or floodplain area. &lt;/p&gt;&lt;p&gt;Range: 0, 1&lt;/p&gt;&lt;p&gt;When checked, it enables to use of the following variables;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;ISEDGRID(N):&lt;/span&gt; Grid element that will be a sediment supply node (channel or floodplain) with a sediment rating curve.&lt;/p&gt;&lt;p&gt;Range: 1 - NNOD&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;ISEDCFP(N):&lt;/span&gt; ISEDCFP(N) = 0 for a floodplain sediment supply rating curve, ISEDCFP(N) = 1 for a channel sediment supply rating curve.&lt;/p&gt;&lt;p&gt;Range: 0, 1&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;ASED(N): &lt;/span&gt;Sediment rating curve coefficient.&lt;/p&gt;&lt;p&gt;Range: 0 - No upper limit&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;BSED(N):&lt;/span&gt; (tons/day or kg/day). Sediment rating curve exponent. Q&lt;span style=&quot; vertical-align:sub;&quot;&gt;s&lt;/span&gt; = ASED* Q&lt;span style=&quot; vertical-align:sub;&quot;&gt;w&lt;/span&gt;&lt;span style=&quot; vertical-align:super;&quot;&gt;BSED&lt;/span&gt;, where: Q&lt;span style=&quot; vertical-align:sub;&quot;&gt;w&lt;/span&gt; is the water discharge (cfs or cms) and Q&lt;span style=&quot; vertical-align:sub;&quot;&gt;s&lt;/span&gt; is the sediment supply . &lt;/p&gt;&lt;p&gt;Range: 0 - No upper limit&lt;/p&gt;&lt;p&gt;dist_fid:*****************************************  MISSING *******************************************************&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;SSEDIAM:&lt;/span&gt; (mm). Representative sediment supply diamete for sediment routing by size fraction.&lt;/p&gt;&lt;p&gt;Range: 0 - No upper limit.&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;SSEDPERCENT&lt;/span&gt;: (decimal). Sediment supply size distribution percentage. Represents the percent of the sediment that is finer than the representative size diameter.&lt;/p&gt;&lt;p&gt;Range: 0 - 1&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
               <property name="title">
                <string>Use Sediment Supply Rating Curve</string>
@@ -761,7 +761,7 @@
                <bool>false</bool>
               </property>
               <property name="collapsed">
-               <bool>true</bool>
+               <bool>false</bool>
               </property>
               <layout class="QGridLayout" name="gridLayout">
                <item row="0" column="0">
@@ -1017,7 +1017,7 @@
                <bool>false</bool>
               </property>
               <property name="collapsed">
-               <bool>true</bool>
+               <bool>false</bool>
               </property>
               <layout class="QGridLayout" name="gridLayout_23">
                <item row="0" column="0">
