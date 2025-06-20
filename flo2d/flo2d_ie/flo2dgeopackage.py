@@ -3491,12 +3491,14 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 # Read BREACH_GLOBAL dataset
                 if "BREACH_GLOBAL" in levee_group.datasets:
                     data = levee_group.datasets["BREACH_GLOBAL"].data
+                    data = data.T
                     for row in data:
                         row[4] = int(row[4])
                         global_sql += [tuple(row)]
 
                 if "BREACH_INDIVIDUAL" in levee_group.datasets:
                     data = levee_group.datasets["BREACH_INDIVIDUAL"].data
+                    data = data.T
                     grid_group = self.parser.read_groups("Input/Grid")[0]
                     x_list = grid_group.datasets["COORDINATES"].data[:, 0]
                     y_list = grid_group.datasets["COORDINATES"].data[:, 1]
@@ -10807,16 +10809,25 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     row = list(row)
                     row[0] = int(row[0])
                     row[4] = int(row[4])
-                    levee_group.datasets["BREACH_GLOBAL"].data.append(row)
+                    for value in row:
+                        levee_group.datasets["BREACH_GLOBAL"].data.append([value])
 
             if local_rows:
                 levee_group.create_dataset('BREACH_INDIVIDUAL', [])
+                columns = []
                 for row in local_rows:
                     row = list(row)
                     fid = row[0]
                     row[1] = int(row[1])
                     gid = self.execute(cells_sql, (fid,)).fetchone()[0]
-                    levee_group.datasets["BREACH_INDIVIDUAL"].data.append([gid] + row[1:])
+                    columns.append([gid] + row[1:])
+
+                # Transpose to get columns
+                columns = list(map(list, zip(*columns)))
+
+                # Append each column as a new row (since HDF5 datasets are row-major)
+                for col in columns:
+                    levee_group.datasets["BREACH_INDIVIDUAL"].data.append(col)
 
             if fragility_rows:
                 levee_group.create_dataset('FRAGILITY_CURVES', [])
