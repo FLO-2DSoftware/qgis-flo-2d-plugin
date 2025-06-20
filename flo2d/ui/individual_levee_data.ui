@@ -166,7 +166,7 @@
         </sizepolicy>
        </property>
        <property name="toolTip">
-        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;LEVFRAGRID(LP)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Individual levee grid element with fragility curve assignment. T he fragility curves must be assigned in BREACH.DAT.&lt;/p&gt;&lt;p&gt;Range: 1 - NNOD&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;LGRIDNO(L)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;The grid element number containing the levee segment.&lt;/p&gt;&lt;p&gt;LGRIDNO = 1 to NNOD; default no overtop flows reported.&lt;/p&gt;&lt;p&gt;LGRIDNO = -1 to -NNOD; overtop flow rates reported to OVERTOP. OUT.&lt;/p&gt;&lt;p&gt;Range:&lt;/p&gt;&lt;p&gt;1 - NNOD&lt;/p&gt;&lt;p&gt;or&lt;/p&gt;&lt;p&gt;-1 to -NNOD&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
        </property>
        <property name="text">
         <string>Levee grid element</string>
@@ -197,7 +197,7 @@
         </size>
        </property>
        <property name="toolTip">
-        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;LEVFRAGRID(LP)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;LGRIDNO(L)&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
        </property>
        <property name="layoutDirection">
         <enum>Qt::LeftToRight</enum>
@@ -260,7 +260,7 @@
             </size>
            </property>
            <property name="toolTip">
-            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;LGRIDNO(L)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;The grid element number containing the levee segment.&lt;/p&gt;&lt;p&gt;LGRIDNO = 1 to NNOD; default no overtop flows reported.&lt;/p&gt;&lt;p&gt;LGRIDNO = -1 to -NNOD; overtop flow rates reported to OVERTOP. OUT.&lt;/p&gt;&lt;p&gt;Range:&lt;/p&gt;&lt;p&gt;1 - NNOD&lt;/p&gt;&lt;p&gt;      or&lt;/p&gt;&lt;p&gt;-1 to -NNOD&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;LGRIDNO(L)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
            </property>
            <property name="clearButtonEnabled">
             <bool>true</bool>
@@ -417,6 +417,9 @@
                <verstretch>0</verstretch>
               </sizepolicy>
              </property>
+             <property name="toolTip">
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;LFAILDIR(LF,LD)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;The potential failure direction.&lt;/p&gt;&lt;p&gt;8 = northwest&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+             </property>
              <property name="text">
               <string>North West (8)</string>
              </property>
@@ -429,6 +432,9 @@
                <horstretch>0</horstretch>
                <verstretch>0</verstretch>
               </sizepolicy>
+             </property>
+             <property name="toolTip">
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;LFAILDIR(LF,LD)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;The potential failure direction.&lt;/p&gt;&lt;p&gt;1 = north &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
              </property>
              <property name="text">
               <string>North (1)</string>
@@ -456,6 +462,9 @@
                <verstretch>0</verstretch>
               </sizepolicy>
              </property>
+             <property name="toolTip">
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;LFAILDIR(LF,LD)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;The potential failure direction.&lt;/p&gt;&lt;p&gt;2 = east &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+             </property>
              <property name="text">
               <string>East (2)</string>
              </property>
@@ -468,6 +477,9 @@
                <horstretch>0</horstretch>
                <verstretch>0</verstretch>
               </sizepolicy>
+             </property>
+             <property name="toolTip">
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;LFAILDIR(LF,LD)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;The potential failure direction.&lt;/p&gt;&lt;p&gt;4 = west &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
              </property>
              <property name="text">
               <string>West (4)</string>
@@ -521,6 +533,9 @@
                <verstretch>0</verstretch>
               </sizepolicy>
              </property>
+             <property name="toolTip">
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;LFAILDIR(LF,LD)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;The potential failure direction.&lt;/p&gt;&lt;p&gt;3 = south &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+             </property>
              <property name="text">
               <string>South (3)</string>
              </property>
@@ -560,6 +575,9 @@
                <verstretch>0</verstretch>
               </sizepolicy>
              </property>
+             <property name="toolTip">
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;LFAILDIR(LF,LD)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;The potential failure direction.&lt;/p&gt;&lt;p&gt;6 = southeast&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+             </property>
              <property name="text">
               <string>South East (6)</string>
              </property>
@@ -572,6 +590,9 @@
                <horstretch>0</horstretch>
                <verstretch>0</verstretch>
               </sizepolicy>
+             </property>
+             <property name="toolTip">
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;LFAILDIR(LF,LD)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;The potential failure direction.&lt;/p&gt;&lt;p&gt;7 = southwest&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
              </property>
              <property name="text">
               <string>South West (7)</string>
@@ -607,6 +628,9 @@
                <underline>false</underline>
               </font>
              </property>
+             <property name="toolTip">
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;LEVCREST(L,IM)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+             </property>
              <property name="layoutDirection">
               <enum>Qt::LeftToRight</enum>
              </property>
@@ -635,6 +659,9 @@
                <italic>true</italic>
                <bold>false</bold>
               </font>
+             </property>
+             <property name="toolTip">
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;LEVCREST(L,IM)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(ft or m)&lt;/p&gt;&lt;p&gt;The elevation of the levee crest.&lt;/p&gt;&lt;p&gt;Range: &lt;/p&gt;&lt;p&gt;.01 - 30,000 ft&lt;/p&gt;&lt;p&gt;.25 - 9,000 m&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
              </property>
              <property name="text">
               <string>Cell elevation</string>
@@ -665,6 +692,9 @@
                <verstretch>0</verstretch>
               </sizepolicy>
              </property>
+             <property name="toolTip">
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;LFAILDIR(LF,LD)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;The potential failure direction.&lt;/p&gt;&lt;p&gt;5 = northeast&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+             </property>
              <property name="text">
               <string>North East (5)</string>
              </property>
@@ -684,6 +714,9 @@
           <bold>true</bold>
           <kerning>true</kerning>
          </font>
+        </property>
+        <property name="toolTip">
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Elevation of north cell.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
         </property>
         <property name="frameShape">
          <enum>QFrame::NoFrame</enum>
@@ -708,6 +741,9 @@
           <bold>true</bold>
           <kerning>true</kerning>
          </font>
+        </property>
+        <property name="toolTip">
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Elevation of north-west cell.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
         </property>
         <property name="frameShape">
          <enum>QFrame::NoFrame</enum>
@@ -736,6 +772,9 @@
           <kerning>true</kerning>
          </font>
         </property>
+        <property name="toolTip">
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Elevation of south-west cell.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+        </property>
         <property name="frameShape">
          <enum>QFrame::NoFrame</enum>
         </property>
@@ -759,6 +798,9 @@
           <bold>true</bold>
           <kerning>true</kerning>
          </font>
+        </property>
+        <property name="toolTip">
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Elevation of north-east cell.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
         </property>
         <property name="frameShape">
          <enum>QFrame::NoFrame</enum>
@@ -784,6 +826,9 @@
           <kerning>true</kerning>
          </font>
         </property>
+        <property name="toolTip">
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Elevation of east cell.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+        </property>
         <property name="frameShape">
          <enum>QFrame::NoFrame</enum>
         </property>
@@ -807,6 +852,9 @@
           <bold>true</bold>
           <kerning>true</kerning>
          </font>
+        </property>
+        <property name="toolTip">
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Elevation of south cell.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
         </property>
         <property name="frameShape">
          <enum>QFrame::NoFrame</enum>
@@ -832,6 +880,9 @@
           <kerning>true</kerning>
          </font>
         </property>
+        <property name="toolTip">
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Elevation of south-east cell.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+        </property>
         <property name="frameShape">
          <enum>QFrame::NoFrame</enum>
         </property>
@@ -855,6 +906,9 @@
           <bold>true</bold>
           <kerning>true</kerning>
          </font>
+        </property>
+        <property name="toolTip">
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Elevation of west cell.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
         </property>
         <property name="frameShape">
          <enum>QFrame::NoFrame</enum>
@@ -885,7 +939,7 @@
       <bool>false</bool>
      </property>
      <property name="collapsed">
-      <bool>true</bool>
+      <bool>false</bool>
      </property>
      <property name="saveCollapsedState">
       <bool>false</bool>
@@ -896,7 +950,7 @@
         <item row="0" column="0">
          <widget class="QLabel" name="label">
           <property name="toolTip">
-           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;FAILEVEL(LF,LD)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(ft or m)&lt;/p&gt;&lt;p&gt;The maximum elevation of the prescribed levee failure if different than the levee crest (LEVELEV). Set FAILEVEL = 0 to fail the levee when over topped.&lt;/p&gt;&lt;p&gt;Range: 0.01 - No upper limit&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;FAILEVEL(LF,LD)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(ft or m)&lt;/p&gt;&lt;p&gt;The maximum elevation of the prescribed levee failure if different than the levee crest (LEVELEV). Set FAILEVEL = 0 to fail the levee when overtopped.&lt;/p&gt;&lt;p&gt;Range: 0.01 - No upper limit&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
           </property>
           <property name="text">
            <string>Elevation of prescribed failure (if different than top of levee)</string>
