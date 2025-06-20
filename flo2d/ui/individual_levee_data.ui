@@ -449,6 +449,9 @@
                <verstretch>0</verstretch>
               </sizepolicy>
              </property>
+             <property name="toolTip">
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;LEVCREST(L,IM) to the north.&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(ft or m)&lt;/p&gt;&lt;p&gt;The elevation of the levee crest.&lt;/p&gt;&lt;p&gt;Range: &lt;/p&gt;&lt;p&gt;.01 - 30,000 ft&lt;/p&gt;&lt;p&gt;.25 - 9,000 m&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+             </property>
              <property name="maximum">
               <double>99999.000000000000000</double>
              </property>
