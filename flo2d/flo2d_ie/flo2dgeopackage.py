@@ -2530,11 +2530,14 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 # Read ARF_TOTALLY_BLOCKED dataset
                 if "ARF_TOTALLY_BLOCKED" in arfwrf_group.datasets:
                     totally_blocked = arfwrf_group.datasets["ARF_TOTALLY_BLOCKED"].data
-                    collapse_cells = arfwrf_group.datasets["COLLAPSE_CELLS"].data
-                    collapse_info = {
-                        abs(int(row[0])): (int(row[1]), int(row[2]), int(row[3]))
-                        for row in collapse_cells
-                    }
+                    if "COLLAPSE_CELLS" in arfwrf_group.datasets:
+                        collapse_cells = arfwrf_group.datasets["COLLAPSE_CELLS"].data
+                        collapse_info = {
+                            abs(int(row[0])): (int(row[1]), int(row[2]), int(row[3]))
+                            for row in collapse_cells
+                        }
+                    else:
+                        collapse_info = {}
                     x_list = grid_group.datasets["COORDINATES"].data[:, 0]
                     y_list = grid_group.datasets["COORDINATES"].data[:, 1]
                     for i, cell in enumerate(totally_blocked, 1):
@@ -2554,11 +2557,14 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 # Read ARF_PARTIALLY_BLOCKED dataset
                 if "ARF_PARTIALLY_BLOCKED" in arfwrf_group.datasets:
                     partially_blocked = arfwrf_group.datasets["ARF_PARTIALLY_BLOCKED"].data
-                    collapse_cells = arfwrf_group.datasets["COLLAPSE_CELLS"].data
-                    collapse_info = {
-                        abs(int(row[0])): (int(row[1]), int(row[2]), int(row[3]))
-                        for row in collapse_cells
-                    }
+                    if "COLLAPSE_CELLS" in arfwrf_group.datasets:
+                        collapse_cells = arfwrf_group.datasets["COLLAPSE_CELLS"].data
+                        collapse_info = {
+                            abs(int(row[0])): (int(row[1]), int(row[2]), int(row[3]))
+                            for row in collapse_cells
+                        }
+                    else:
+                        collapse_info = {}
                     x_list = grid_group.datasets["COORDINATES"].data[:, 0]
                     y_list = grid_group.datasets["COORDINATES"].data[:, 1]
                     for row in partially_blocked:
@@ -9587,6 +9593,9 @@ class Flo2dGeoPackage(GeoPackageUtils):
                             [int(cell), int(collapse[0]), int(collapse[1]), int(collapse[2])])
                         if int(collapse[0]) == 1:
                             cell = -cell
+                    else:
+                        arfwrf_group.datasets["COLLAPSE_CELLS"].data.append(
+                            [int(cell), 0, 1, 0])
                     arfwrf_group.datasets["ARF_TOTALLY_BLOCKED"].data.append(cell)
 
             # Partially blocked grid elements:
@@ -9605,6 +9614,9 @@ class Flo2dGeoPackage(GeoPackageUtils):
                         arfwrf_group.datasets["COLLAPSE_CELLS"].data.append([int(cell), int(collapse[0]), int(collapse[1]), int(collapse[2])])
                         if int(collapse[0]) == 1:
                             arf_value = -arf_value
+                    else:
+                        arfwrf_group.datasets["COLLAPSE_CELLS"].data.append(
+                            [int(cell), 0, 1, 0])
                     arfwrf_group.datasets["ARF_PARTIALLY_BLOCKED"].data.append(
                         create_array(line3, 10, np.float64, cell, arf_value, *row[3:]))
 
