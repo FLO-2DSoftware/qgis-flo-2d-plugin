@@ -97,8 +97,9 @@ RAIN = {
 REDUCTION_FACTORS = {
     "ARF_GLOBAL": "Global revision to the ARF",
     "ARF_TOTALLY_BLOCKED": "Totally blocked grid elements",
-    "ARF_PARTIALLY_BLOCKED": "Partially blocked gridd elements",
-    "WRF": "Floodplain Width Reduction",
+    "ARF_PARTIALLY_BLOCKED": "Partially blocked grid elements",
+    "WRF": "Floodplain width reduction",
+    "COLLAPSE_CELLS": "Collapse cell data"
 }
 
 SPATIALLY_VARIABLE = {
