@@ -73,9 +73,9 @@ class EvapEditorDialog(qtBaseClass, uiDialog):
             self.timeCbo.addItem(str(i))
         self.evap = Evaporation(self.con, self.iface)
         row = self.evap.get_row()
-        self.monthCbo.setCurrentIndex(row["ievapmonth"])
-        self.dayCbo.setCurrentIndex(row["iday"])
-        self.timeCbo.setCurrentIndex(row["clocktime"])
+        self.monthCbo.setCurrentIndex(int(row["ievapmonth"])) # Change made on 21st June 2025.
+        self.dayCbo.setCurrentIndex(int(row["iday"])) # Change made on 21st June 2025.
+        self.timeCbo.setCurrentIndex(int(row["clocktime"])) # Change made on 21st June 2025.
         self.populate_monthly()
 
     def populate_monthly(self):
@@ -94,7 +94,11 @@ class EvapEditorDialog(qtBaseClass, uiDialog):
         self.populate_hourly()
 
     def populate_hourly(self):
-        cur_index = self.monthlyEvapTView.selectionModel().selectedIndexes()[0]
+        indexes = self.monthlyEvapTView.selectionModel().selectedIndexes()
+        if not indexes: # Change made on 21st June
+            print("No month selected.") # Change made on 21st June
+            return # Change made on 21st June
+        cur_index = indexes[0] # Change made on 21st June
         cur_month = self.monthlyEvapTView.model().itemFromIndex(cur_index).text()
         self.evap.month = cur_month
         hourly = self.evap.get_hourly()
@@ -151,5 +155,6 @@ class EvapEditorDialog(qtBaseClass, uiDialog):
         for i in range(dm.rowCount()):
             x.append(float(dm.data(dm.index(i, 0), Qt.DisplayRole)))
             y.append(float(dm.data(dm.index(i, 1), Qt.DisplayRole)))
-        self.plotWidget.add_new_plot([x, y])
-        self.plotWidget.add_org_plot([x, y])
+        # self.plotWidget.add_new_plot([x, y]) # Commented on 21st June 2025
+        # self.plotWidget.add_org_plot([x, y]) # Commented on 21st June 2025
+        self.plotWidget.add_item("Evaporation", [x, y])  # Change made on 21st June 2025.

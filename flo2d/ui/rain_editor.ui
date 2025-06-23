@@ -35,7 +35,7 @@
       </sizepolicy>
      </property>
      <property name="toolTip">
-      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Set this checkbox to simulate rain on the grid system. &lt;/p&gt;&lt;p&gt;The IRAIN variable in the CONT.DAT file will be set to 1. If this switch is not checked, the RAIN.DAT file file will be ommited when using the &amp;quot;Export GDS files&amp;quot; icon in the FLO-2D toolbar.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Set this checkbox to simulate rain on the grid system. &lt;/p&gt;&lt;p&gt;The IRAIN variable in the CONT.DAT file will be set to 1.&lt;/p&gt;&lt;p&gt;If this switch is not checked, the RAIN.DAT file file will be ommited when using the &amp;quot;Export GDS files&amp;quot; icon in the FLO-2D toolbar.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
      </property>
      <property name="whatsThis">
       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Set this checkbox to simulate rain on the grid system. &lt;/p&gt;&lt;p&gt;The IRAIN variable in the CONT.DAT file will be set to 1. If this switch is not checked, the RAIN.DAT file file will be omitted when using the &amp;quot;Export GDS files&amp;quot; icon in the FLO-2D toolbar.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>

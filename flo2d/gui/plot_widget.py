@@ -52,7 +52,12 @@ class PlotWidget(QWidget):
         """
         Function to update the axis when changing the plots
         """
-        any_checked = any(self.plot.legend.items[i][1].isVisible() for i in range(0, len(self.plot.legend.items)))
+        # any_checked = any(self.plot.legend.items[i][1].isVisible() for i in range(0, len(self.plot.legend.items))) #Commented out on 21st June 2025
+        if self.plot.legend is None: # Change made on 21st June 2025
+            return   # Change made on 21st June 2025
+
+        any_checked = any(self.plot.legend.items[i][1].isVisible() for i in range(len(self.plot.legend.items))) # Change made on 21st June 2025
+
         for i in range(len(self.plot.legend.items)):
             data_tuple = self.items[self.plot.legend.items[i][1].text].getData()
             any_nan = any(np.isnan(data) for data in data_tuple[0])

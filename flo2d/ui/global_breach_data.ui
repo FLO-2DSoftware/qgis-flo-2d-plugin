@@ -147,7 +147,7 @@
                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;GUWS&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
               <property name="maximum">
-               <double>9999.000000000000000</double>
+               <double>999999.000000000000000</double>
               </property>
               <property name="value">
                <double>130.000000000000000</double>
@@ -172,6 +172,9 @@
               <property name="toolTip">
                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;GD50S&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
+              <property name="maximum">
+               <double>999999.000000000000000</double>
+              </property>
               <property name="value">
                <double>20.000000000000000</double>
               </property>
@@ -182,6 +185,9 @@
               <property name="toolTip">
                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;GPORS&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
+              <property name="maximum">
+               <double>999999.000000000000000</double>
+              </property>
               <property name="value">
                <double>0.400000000000000</double>
               </property>
@@ -191,6 +197,12 @@
              <widget class="QDoubleSpinBox" name="gcns_dbox">
               <property name="toolTip">
                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;GCNS&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
+              <property name="decimals">
+               <number>3</number>
+              </property>
+              <property name="maximum">
+               <double>999999.000000000000000</double>
               </property>
               <property name="value">
                <double>0.200000000000000</double>
@@ -203,7 +215,7 @@
                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;GAFRS&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
               <property name="maximum">
-               <double>999.000000000000000</double>
+               <double>999999.000000000000000</double>
               </property>
               <property name="value">
                <double>38.000000000000000</double>
@@ -229,7 +241,7 @@
                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;GCOHS&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
               <property name="maximum">
-               <double>9999.000000000000000</double>
+               <double>999999.000000000000000</double>
               </property>
               <property name="value">
                <double>250.000000000000000</double>
@@ -253,6 +265,9 @@
              <widget class="QDoubleSpinBox" name="gunfcs_dbox">
               <property name="toolTip">
                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;GUNFCS&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
+              <property name="maximum">
+               <double>999999.000000000000000</double>
               </property>
               <property name="value">
                <double>7.500000000000000</double>
@@ -309,6 +324,9 @@
               <property name="toolTip">
                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;GGRASSVMAXP&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
+              <property name="maximum">
+               <double>999999.000000000000000</double>
+              </property>
              </widget>
             </item>
             <item row="0" column="2">
@@ -355,6 +373,9 @@
               <property name="toolTip">
                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;GGRASSCOND&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
+              <property name="maximum">
+               <double>999999.000000000000000</double>
+              </property>
              </widget>
             </item>
             <item row="0" column="1">
@@ -362,12 +383,18 @@
               <property name="toolTip">
                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;GGRASSLENGTH&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
+              <property name="maximum">
+               <double>999999.000000000000000</double>
+              </property>
              </widget>
             </item>
             <item row="0" column="3">
              <widget class="QDoubleSpinBox" name="gsedconmax_dbox">
               <property name="toolTip">
                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;GSEDCONMAX&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
+              <property name="maximum">
+               <double>999999.000000000000000</double>
               </property>
               <property name="value">
                <double>0.550000000000000</double>
@@ -392,6 +419,9 @@
               <property name="toolTip">
                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;GD50DF&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
+              <property name="maximum">
+               <double>999999.000000000000000</double>
+              </property>
              </widget>
             </item>
             <item row="2" column="2">
@@ -411,6 +441,9 @@
              <widget class="QDoubleSpinBox" name="gunfcdf_dbox">
               <property name="toolTip">
                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;GUNDFCDF&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
+              <property name="maximum">
+               <double>999999.000000000000000</double>
               </property>
              </widget>
             </item>
@@ -437,6 +470,9 @@
              <widget class="QDoubleSpinBox" name="gzu_dbox">
               <property name="toolTip">
                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;GZU&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
+              <property name="maximum">
+               <double>999999.000000000000000</double>
               </property>
              </widget>
             </item>
@@ -471,6 +507,9 @@
               <property name="toolTip">
                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;GCRESTWIDTH&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
+              <property name="maximum">
+               <double>999999.000000000000000</double>
+              </property>
              </widget>
             </item>
             <item row="0" column="0">
@@ -491,12 +530,18 @@
               <property name="toolTip">
                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;GZC&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
+              <property name="maximum">
+               <double>999999.000000000000000</double>
+              </property>
              </widget>
             </item>
             <item row="1" column="1">
              <widget class="QDoubleSpinBox" name="gzd_dbox">
               <property name="toolTip">
                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;GZD&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
+              <property name="maximum">
+               <double>999999.000000000000000</double>
               </property>
              </widget>
             </item>
@@ -531,6 +576,9 @@
               <property name="toolTip">
                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;GCRESTLENGTH&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
+              <property name="maximum">
+               <double>999999.000000000000000</double>
+              </property>
              </widget>
             </item>
             <item row="1" column="2">
@@ -550,6 +598,9 @@
              <widget class="QDoubleSpinBox" name="gbrbotwidmax_dbox">
               <property name="toolTip">
                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;GBRBOTWIDWAX&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
+              <property name="maximum">
+               <double>999999.000000000000000</double>
               </property>
              </widget>
             </item>
@@ -571,6 +622,9 @@
               <property name="toolTip">
                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;GBRTOPWIDMAX&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
+              <property name="maximum">
+               <double>999999.000000000000000</double>
+              </property>
              </widget>
             </item>
             <item row="3" column="2">
@@ -590,6 +644,9 @@
              <widget class="QDoubleSpinBox" name="gbrbottomel_dbox">
               <property name="toolTip">
                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;GBRBOTTOMEL&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
+              <property name="maximum">
+               <double>999999.000000000000000</double>
               </property>
              </widget>
             </item>
@@ -629,6 +686,9 @@
              <widget class="QDoubleSpinBox" name="gporc_dbox">
               <property name="toolTip">
                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;GPORC&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
+              <property name="maximum">
+               <double>999999.000000000000000</double>
               </property>
               <property name="value">
                <double>0.350000000000000</double>
@@ -680,7 +740,7 @@
                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;AFRC&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
               <property name="maximum">
-               <double>999.000000000000000</double>
+               <double>999999.000000000000000</double>
               </property>
               <property name="value">
                <double>26.000000000000000</double>
@@ -693,7 +753,7 @@
                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;GUWC&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
               <property name="maximum">
-               <double>9999.000000000000000</double>
+               <double>999999.000000000000000</double>
               </property>
               <property name="value">
                <double>109.000000000000000</double>
@@ -704,6 +764,9 @@
              <widget class="QDoubleSpinBox" name="gd50c_dbox">
               <property name="toolTip">
                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;D50C&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
+              <property name="maximum">
+               <double>999999.000000000000000</double>
               </property>
               <property name="value">
                <double>0.020000000000000</double>
@@ -727,6 +790,12 @@
              <widget class="QDoubleSpinBox" name="gcnc_dbox">
               <property name="toolTip">
                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;GCNC&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
+              <property name="decimals">
+               <number>3</number>
+              </property>
+              <property name="maximum">
+               <double>999999.000000000000000</double>
               </property>
               <property name="value">
                <double>0.200000000000000</double>
@@ -752,7 +821,7 @@
                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;GCOHC&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
               <property name="maximum">
-               <double>9999.000000000000000</double>
+               <double>999999.000000000000000</double>
               </property>
               <property name="value">
                <double>922.000000000000000</double>
