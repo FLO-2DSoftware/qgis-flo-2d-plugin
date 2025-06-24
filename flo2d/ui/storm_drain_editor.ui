@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>442</width>
-    <height>401</height>
+    <height>461</height>
    </rect>
   </property>
   <property name="minimumSize">
@@ -57,6 +57,9 @@
             <height>16777215</height>
            </size>
           </property>
+          <property name="toolTip">
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;STRUCTNAME_ INLET&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Name of the type 4 inlet.&lt;/p&gt;&lt;p&gt;No spaces allowed in the name.&lt;/p&gt;&lt;p&gt;Range: Alpha numeric&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+          </property>
           <property name="text">
            <string>Tab/Eq. Name</string>
           </property>
@@ -88,6 +91,9 @@
             <height>16777215</height>
            </size>
           </property>
+          <property name="toolTip">
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;STRUCTNAME_ INLET&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+          </property>
           <property name="maxVisibleItems">
            <number>20</number>
           </property>
@@ -111,7 +117,7 @@
            </size>
           </property>
           <property name="toolTip">
-           <string>Add inlet type 4 data</string>
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Add inlet type 4 data.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
           </property>
           <property name="text">
            <string/>
@@ -143,7 +149,7 @@
            </size>
           </property>
           <property name="toolTip">
-           <string>Add predefined rating table/culvert eq.</string>
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Add predefined rating table/culvert equation.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
           </property>
           <property name="text">
            <string>Add</string>
@@ -178,7 +184,7 @@
            </size>
           </property>
           <property name="toolTip">
-           <string>Remove inlet type 4 condition</string>
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Remove inlet type 4 condition.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
           </property>
           <property name="text">
            <string/>
@@ -207,7 +213,7 @@
            </size>
           </property>
           <property name="toolTip">
-           <string>Rename inlet type 4 condition</string>
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Rename inlet type 4 condition.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
           </property>
           <property name="text">
            <string/>
@@ -243,6 +249,9 @@
         </item>
         <item row="0" column="3">
          <widget class="QToolButton" name="find_object_btn">
+          <property name="toolTip">
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Zoom into the selected object.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+          </property>
           <property name="text">
            <string>...</string>
           </property>
@@ -360,6 +369,9 @@
           </item>
           <item>
            <widget class="QToolButton" name="center_chbox">
+            <property name="toolTip">
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Zoom into the selected node.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            </property>
             <property name="text">
              <string>...</string>
             </property>
@@ -675,7 +687,7 @@
            </size>
           </property>
           <property name="toolTip">
-           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-family:'Arial','Helvetica'; font-size:10pt; color:#000000;&quot;&gt;Pumps are links used to lift water to higher elevations.&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'Arial','Helvetica'; font-size:10pt; color:#000000;&quot;&gt;A pump curve describes the relation between a pump's flow rate and conditions at its inlet and outlet nodes.&lt;br/&gt;Five different types of pumps are supported;&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'Arial','Helvetica'; font-size:10pt; color:#000000;&quot;&gt;Type 1: An off-line pump with a wet well where flow increases incrementally with available wet well volume. &lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'Arial','Helvetica'; font-size:10pt; color:#000000;&quot;&gt;Type 2: An in-line pump where flow increases incrementally with inlet node depth. &lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'Arial','Helvetica'; font-size:10pt; color:#000000;&quot;&gt;Type 3: An in-line pump where flow varies continuously with head difference between the inlet and outlet nodes.&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'Arial','Helvetica'; font-size:10pt; color:#000000;&quot;&gt;Type 4: A variable speed in-line pump where flow varies continuously with inlet node depth.&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'Arial','Helvetica'; font-size:10pt; color:#000000;&quot;&gt;Ideal: An &amp;quot;ideal&amp;quot; transfer pump whose flow rate equals the inflow rate at its inlet node. No curve is required. The pump must be the only outflow link from its inlet node. Used mainly for preliminary design. &lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'Arial','Helvetica'; font-size:10pt; color:#000000;&quot;&gt;Range: 1 - 5&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Pump Types&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'Arial','Helvetica'; color:#000000;&quot;&gt;Pumps are links used to lift water to higher elevations.&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'Arial','Helvetica'; color:#000000;&quot;&gt;A pump curve describes the relation between a pump's flow rate and conditions at its inlet and outlet nodes.&lt;br/&gt;Five different types of pumps are supported;&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'Arial','Helvetica'; color:#000000;&quot;&gt;Type 1: An off-line pump with a wet well where flow increases incrementally with available wet well volume. &lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'Arial','Helvetica'; color:#000000;&quot;&gt;Type 2: An in-line pump where flow increases incrementally with inlet node depth. &lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'Arial','Helvetica'; color:#000000;&quot;&gt;Type 3: An in-line pump where flow varies continuously with head difference between the inlet and outlet nodes.&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'Arial','Helvetica'; color:#000000;&quot;&gt;Type 4: A variable speed in-line pump where flow varies continuously with inlet node depth.&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'Arial','Helvetica'; color:#000000;&quot;&gt;Ideal: An &amp;quot;ideal&amp;quot; transfer pump whose flow rate equals the inflow rate at its inlet node. No curve is required. The pump must be the only outflow link from its inlet node. Used mainly for preliminary design. &lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'Arial','Helvetica'; color:#000000;&quot;&gt;Range: 1 - 5&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
           </property>
           <property name="text">
            <string>Pump Type</string>
@@ -706,7 +718,7 @@
            </size>
           </property>
           <property name="toolTip">
-           <string>Rename pump curve</string>
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Rename pump curve.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
           </property>
           <property name="text">
            <string/>
@@ -763,7 +775,7 @@
            </size>
           </property>
           <property name="toolTip">
-           <string>Add predefined pump curve</string>
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Add predefined pump curve.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
           </property>
           <property name="text">
            <string>Add</string>
@@ -826,7 +838,7 @@
            </size>
           </property>
           <property name="toolTip">
-           <string>Remove pump curve</string>
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Remove pump curve.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
           </property>
           <property name="text">
            <string/>
@@ -855,7 +867,7 @@
            </size>
           </property>
           <property name="toolTip">
-           <string>Add pump curve</string>
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Add pump curve.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
           </property>
           <property name="text">
            <string/>
@@ -915,7 +927,7 @@
            </size>
           </property>
           <property name="toolTip">
-           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;1.&lt;/span&gt; Consists of a series of constant flow rates that apply over a corresponding series of volume intervals at the pump’s inlet node. &lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;2.&lt;/span&gt; Similar to a Type1 pump except that the fixed flow rate levels vary over a set of depth intervals at the pump’s inlet node. &lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;3.&lt;/span&gt; A centrifugal pump characteristic curve at some nominal impeller speed represented in a piecewise linear fashion. Flow is a function of the head difference between the inlet and outlet nodes. &lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;4.&lt;/span&gt; A variable speed in-line pump where flow varies continuously with inlet node depth.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Pump Type&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
           </property>
           <property name="currentText">
            <string>1. Volume x Flow</string>
