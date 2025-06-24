@@ -363,7 +363,7 @@ class Flo2D(object):
                 (
                     os.path.join(self.plugin_dir, "img/export_gds.svg"),
                     "Export data (*.DAT) files",
-                    lambda: self.export_gds(),
+                    lambda: self.export_dat(),
                 ),
                 (
                     os.path.join(self.plugin_dir, "img/import_hdf5.svg"),
@@ -1226,6 +1226,7 @@ class Flo2D(object):
         """
         Function to export and run FLO-2D Pro
         """
+        self.uncheck_all_info_tools()
         if self.gutils.is_table_empty("grid"):
             self.uc.bar_warn("There is no grid! Please create it before running tool.")
             self.uc.log_info("There is no grid! Please create it before running tool.")
@@ -3102,13 +3103,14 @@ class Flo2D(object):
                 )
 
     @connection_required
-    def export_gds(self):
+    def export_dat(self):
         """
-        Export traditional GDS files into FLO-2D database (GeoPackage).
+        Export DAT files from FLO-2D Geopackage
         """
         self.uncheck_all_info_tools()
         if self.gutils.is_table_empty("grid"):
             self.uc.bar_warn("There is no grid! Please create it before running tool.")
+            self.uc.log_info("There is no grid! Please create it before running tool.")
             return
 
         s = QSettings()
@@ -3124,242 +3126,232 @@ class Flo2D(object):
             directory=project_dir,
         )
         if outdir:
-            self.f2g = Flo2dGeoPackage(self.con, self.iface)
-            sql = """SELECT name, value FROM cont;"""
-            options = {o: v if v is not None else "" for o, v in self.f2g.execute(sql).fetchall()}
-            export_calls = [
-                "export_cont_toler",
-                "export_tolspatial",
-                "export_inflow",
-                "export_tailings",
-                'export_outrc',
-                "export_outflow",
-                "export_rain",
-                "export_evapor",
-                "export_infil",
-                "export_chan",
-                "export_xsec",
-                "export_hystruc",
-                "export_bridge_xsec",
-                "export_bridge_coeff_data",
-                "export_street",
-                "export_arf",
-                "export_mult",
-                "export_sed",
-                "export_levee",
-                "export_fpxsec",
-                "export_breach",
-                "export_gutter",
-                "export_fpfroude",
-                "export_steep_slopen",
-                "export_lid_volume",
-                "export_swmmflo",
-                "export_swmmflort",
-                "export_swmmoutf",
-                "export_swmmflodropbox",
-                "export_sdclogging",
-                "export_wsurf",
-                "export_wstime",
-                "export_shallowNSpatial",
-                "export_mannings_n_topo",
-            ]
-
             s.setValue("FLO-2D/lastGdsDir", outdir)
+            QApplication.setOverrideCursor(Qt.WaitCursor)
+            self.export_dat_files(outdir)
 
-            dlg_components = ComponentsDialog(self.con, self.iface, self.lyrs, "out")
+            if self.files_used != "":
+                info = "Files exported to\n" + outdir + "\n\n" + self.files_used
+                self.uc.show_info(info)
+                self.uc.log_info(info)
 
-            # Check the presence of fplain cadpts neighbors dat files
-            files = [
-                "FPLAIN.DAT",
-                "CADPTS.DAT",
-                "NEIGHBORS.DAT"
-            ]
-            for file in files:
-                file_path = os.path.join(outdir, file)
-                if os.path.exists(file_path):
-                    dlg_components.remove_files_chbox.setEnabled(True)
-                    break
+            if self.f2g.export_messages != "":
+                info = "WARNINGS 100424.0613:\n\n" + self.f2g.export_messages
+                self.uc.show_info(info)
+                self.uc.log_info(info)
 
-            ok = dlg_components.exec_()
-            if ok:
-                if dlg_components.remove_files_chbox.isChecked():
-                    for file in files:
-                        file_path = os.path.join(outdir, file)
-                        if os.path.exists(file_path):
-                            os.remove(file_path)
+            self.uc.bar_info("FLO-2D model exported to " + outdir, dur=3)
+            QApplication.restoreOverrideCursor()
 
-                if "Channels" not in dlg_components.components:
-                    export_calls.remove("export_chan")
-                    export_calls.remove("export_xsec")
+    def export_dat_files(self, outdir):
 
-                if "Reduction Factors" not in dlg_components.components:
-                    export_calls.remove("export_arf")
+        self.f2g = Flo2dGeoPackage(self.con, self.iface)
+        sql = """SELECT name, value FROM cont;"""
+        options = {o: v if v is not None else "" for o, v in self.f2g.execute(sql).fetchall()}
+        export_calls = [
+            "export_cont_toler",
+            "export_tolspatial",
+            "export_inflow",
+            "export_tailings",
+            'export_outrc',
+            "export_outflow",
+            "export_rain",
+            "export_evapor",
+            "export_infil",
+            "export_chan",
+            "export_xsec",
+            "export_hystruc",
+            "export_bridge_xsec",
+            "export_bridge_coeff_data",
+            "export_street",
+            "export_arf",
+            "export_mult",
+            "export_sed",
+            "export_levee",
+            "export_fpxsec",
+            "export_breach",
+            "export_gutter",
+            "export_fpfroude",
+            "export_steep_slopen",
+            "export_lid_volume",
+            "export_swmmflo",
+            "export_swmmflort",
+            "export_swmmoutf",
+            "export_swmmflodropbox",
+            "export_sdclogging",
+            "export_wsurf",
+            "export_wstime",
+            "export_shallowNSpatial",
+            "export_mannings_n_topo",
+        ]
 
-                if "Streets" not in dlg_components.components:
-                    export_calls.remove("export_street")
+        dlg_components = ComponentsDialog(self.con, self.iface, self.lyrs, "out")
 
-                if "Outflow Elements" not in dlg_components.components:
-                    export_calls.remove("export_outflow")
-
-                if "Inflow Elements" not in dlg_components.components:
-                    export_calls.remove("export_inflow")
-
-                if "Tailings" not in dlg_components.components:
-                    export_calls.remove("export_tailings")
-
-                if "Surface Water Rating Tables" not in dlg_components.components:
-                    export_calls.remove("export_outrc")
-
-                if "Levees" not in dlg_components.components:
-                    export_calls.remove("export_levee")
-
-                if "Multiple Channels" not in dlg_components.components:
-                    export_calls.remove("export_mult")
-
-                if "Breach" not in dlg_components.components:
-                    export_calls.remove("export_breach")
-
-                if "Gutters" not in dlg_components.components:
-                    export_calls.remove("export_gutter")
-
-                if "Infiltration" not in dlg_components.components:
-                    export_calls.remove("export_infil")
-
-                if "Floodplain Cross Sections" not in dlg_components.components:
-                    export_calls.remove("export_fpxsec")
-
-                if "Mudflow and Sediment Transport" not in dlg_components.components:
-                    export_calls.remove("export_sed")
-
-                if "Evaporation" not in dlg_components.components:
-                    export_calls.remove("export_evapor")
-
-                if "Hydraulic  Structures" not in dlg_components.components:
-                    export_calls.remove("export_hystruc")
-                    export_calls.remove("export_bridge_xsec")
-                    export_calls.remove("export_bridge_coeff_data")
-                else:
-                    # if not self.uc.question("Did you schematize Hydraulic Structures? Do you want to export Hydraulic Structures files?"):
-                    #     export_calls.remove("export_hystruc")
-                    #     export_calls.remove("export_bridge_xsec")
-                    #     export_calls.remove("export_bridge_coeff_data")
-                    # else:
-                    xsecs = self.gutils.execute("SELECT fid FROM struct WHERE icurvtable = 3").fetchone()
-                    if not xsecs:
-                        if os.path.isfile(outdir + r"\BRIDGE_XSEC.DAT"):
-                            os.remove(outdir + r"\BRIDGE_XSEC.DAT")
-                        export_calls.remove("export_bridge_xsec")
-                        export_calls.remove("export_bridge_coeff_data")
-
-                if "Rain" not in dlg_components.components:
-                    export_calls.remove("export_rain")
-
-                if "Storm Drain" not in dlg_components.components:
-                    export_calls.remove("export_swmmflo")
-                    export_calls.remove("export_swmmflort")
-                    export_calls.remove("export_swmmoutf")
-                    export_calls.remove("export_swmmflodropbox")
-                    export_calls.remove("export_sdclogging")
-
-                if "Spatial Shallow-n" not in dlg_components.components:
-                    export_calls.remove("export_shallowNSpatial")
-
-                if "Spatial Tolerance" not in dlg_components.components:
-                    export_calls.remove("export_tolspatial")
-
-                if "Spatial Froude" not in dlg_components.components:
-                    export_calls.remove("export_fpfroude")
-
-                if "Manning's n and Topo" not in dlg_components.components:
-                    export_calls.remove("export_mannings_n_topo")
-
-                if "Spatial Steep Slope-n" not in dlg_components.components:
-                    export_calls.remove("export_steep_slopen")
-
-                if "LID Volume" not in dlg_components.components:
-                    export_calls.remove("export_lid_volume")
-
-                try:
-                    s = QSettings()
-                    s.setValue("FLO-2D/lastGdsDir", outdir)
-
-                    # QApplication.setOverrideCursor(Qt.WaitCursor)
-                    self.call_IO_methods(export_calls, True, outdir)
-
-                    # The strings list 'export_calls', contains the names of
-                    # the methods in the class Flo2dGeoPackage to export (write) the
-                    # FLO-2D .DAT files
-
-                finally:
-
-                    if "export_tailings" in export_calls:
-                        MUD = self.gutils.get_cont_par("MUD")
-                        concentration_sql = """SELECT 
-                                            CASE WHEN COUNT(*) > 0 THEN True
-                                                 ELSE False
-                                            END AS result
-                                            FROM 
-                                                tailing_cells
-                                            WHERE 
-                                                concentration <> 0 OR concentration IS NULL;"""
-                        cv = self.gutils.execute(concentration_sql).fetchone()[0]
-                        # TAILINGS.DAT and TAILINGS_CV.DAT
-                        if MUD == '1':
-                            # Export TAILINGS_CV.DAT
-                            if cv == 1:
-                                new_files_used = self.files_used.replace("TAILINGS.DAT\n", "TAILINGS_CV.DAT\n")
-                                self.files_used = new_files_used
-                        # TAILINGS_STACK_DEPTH.DAT
-                        elif MUD == '2':
-                            new_files_used = self.files_used.replace("TAILINGS.DAT\n", "TAILINGS_STACK_DEPTH.DAT\n")
-                            self.files_used = new_files_used
-
-                    if "export_swmmflo" in export_calls:
-                        self.f2d_widget.storm_drain_editor.export_storm_drain_INP_file()
-
-                    # Delete .DAT files the model will try to use if existing:
-                    if "export_mult" in export_calls:
-                        if self.gutils.is_table_empty("simple_mult_cells"):
-                            new_files_used = self.files_used.replace("SIMPLE_MULT.DAT\n", "")
-                            self.files_used = new_files_used
-                            if os.path.isfile(outdir + r"\SIMPLE_MULT.DAT"):
-                                QApplication.setOverrideCursor(Qt.ArrowCursor)
-                                if self.uc.question(
-                                        "There are no simple multiple channel cells in the project but\n"
-                                        + "there is a SIMPLE_MULT.DAT file in the directory.\n"
-                                        + "If the file is not deleted it will be used by the model.\n\n"
-                                        + "Delete SIMPLE_MULT.DAT?"
-                                ):
-                                    os.remove(outdir + r"\SIMPLE_MULT.DAT")
-                                QApplication.restoreOverrideCursor()
-                        if self.gutils.is_table_empty("mult_cells"):
-                            new_files_used = self.files_used.replace("\nMULT.DAT\n", "\n")
-                            self.files_used = new_files_used
-                            if os.path.isfile(outdir + r"\MULT.DAT"):
-                                QApplication.setOverrideCursor(Qt.ArrowCursor)
-                                if self.uc.question(
-                                        "There are no multiple channel cells in the project but\n"
-                                        + "there is a MULT.DAT file in the directory.\n"
-                                        + "If the file is not deleted it will be used by the model.\n\n"
-                                        + "Delete MULT.DAT?"
-                                ):
-                                    os.remove(outdir + r"\MULT.DAT")
-                                QApplication.restoreOverrideCursor()
-                    if self.files_used != "":
-                        QApplication.setOverrideCursor(Qt.ArrowCursor)
-                        info = "Files exported to\n" + outdir + "\n\n" + self.files_used
-                        self.uc.show_info(info)
-                        QApplication.restoreOverrideCursor()
-
-                    if self.f2g.export_messages != "":
-                        QApplication.setOverrideCursor(Qt.ArrowCursor)
-                        info = "WARNINGS 100424.0613:\n\n" + self.f2g.export_messages
-                        self.uc.show_info(info)
-                        QApplication.restoreOverrideCursor()
-
-                    self.uc.bar_info("FLO-2D model exported to " + outdir, dur=3)
+        # Check the presence of fplain cadpts neighbors dat files
+        files = [
+            "FPLAIN.DAT",
+            "CADPTS.DAT",
+            "NEIGHBORS.DAT"
+        ]
+        for file in files:
+            file_path = os.path.join(outdir, file)
+            if os.path.exists(file_path):
+                dlg_components.remove_files_chbox.setEnabled(True)
+                break
 
         QApplication.restoreOverrideCursor()
+        ok = dlg_components.exec_()
+        if ok:
+            QApplication.setOverrideCursor(Qt.WaitCursor)
+            if dlg_components.remove_files_chbox.isChecked():
+                for file in files:
+                    file_path = os.path.join(outdir, file)
+                    if os.path.exists(file_path):
+                        os.remove(file_path)
+
+            if "Channels" not in dlg_components.components:
+                export_calls.remove("export_chan")
+                export_calls.remove("export_xsec")
+
+            if "Reduction Factors" not in dlg_components.components:
+                export_calls.remove("export_arf")
+
+            if "Streets" not in dlg_components.components:
+                export_calls.remove("export_street")
+
+            if "Outflow Elements" not in dlg_components.components:
+                export_calls.remove("export_outflow")
+
+            if "Inflow Elements" not in dlg_components.components:
+                export_calls.remove("export_inflow")
+
+            if "Tailings" not in dlg_components.components:
+                export_calls.remove("export_tailings")
+
+            if "Surface Water Rating Tables" not in dlg_components.components:
+                export_calls.remove("export_outrc")
+
+            if "Levees" not in dlg_components.components:
+                export_calls.remove("export_levee")
+
+            if "Multiple Channels" not in dlg_components.components:
+                export_calls.remove("export_mult")
+
+            if "Breach" not in dlg_components.components:
+                export_calls.remove("export_breach")
+
+            if "Gutters" not in dlg_components.components:
+                export_calls.remove("export_gutter")
+
+            if "Infiltration" not in dlg_components.components:
+                export_calls.remove("export_infil")
+
+            if "Floodplain Cross Sections" not in dlg_components.components:
+                export_calls.remove("export_fpxsec")
+
+            if "Mudflow and Sediment Transport" not in dlg_components.components:
+                export_calls.remove("export_sed")
+
+            if "Evaporation" not in dlg_components.components:
+                export_calls.remove("export_evapor")
+
+            if "Hydraulic  Structures" not in dlg_components.components:
+                export_calls.remove("export_hystruc")
+                export_calls.remove("export_bridge_xsec")
+                export_calls.remove("export_bridge_coeff_data")
+            else:
+                xsecs = self.gutils.execute("SELECT fid FROM struct WHERE icurvtable = 3").fetchone()
+                if not xsecs:
+                    if os.path.isfile(outdir + r"\BRIDGE_XSEC.DAT"):
+                        os.remove(outdir + r"\BRIDGE_XSEC.DAT")
+                    export_calls.remove("export_bridge_xsec")
+                    export_calls.remove("export_bridge_coeff_data")
+
+            if "Rain" not in dlg_components.components:
+                export_calls.remove("export_rain")
+
+            if "Storm Drain" not in dlg_components.components:
+                export_calls.remove("export_swmmflo")
+                export_calls.remove("export_swmmflort")
+                export_calls.remove("export_swmmoutf")
+                export_calls.remove("export_swmmflodropbox")
+                export_calls.remove("export_sdclogging")
+
+            if "Spatial Shallow-n" not in dlg_components.components:
+                export_calls.remove("export_shallowNSpatial")
+
+            if "Spatial Tolerance" not in dlg_components.components:
+                export_calls.remove("export_tolspatial")
+
+            if "Spatial Froude" not in dlg_components.components:
+                export_calls.remove("export_fpfroude")
+
+            if "Manning's n and Topo" not in dlg_components.components:
+                export_calls.remove("export_mannings_n_topo")
+
+            if "Spatial Steep Slope-n" not in dlg_components.components:
+                export_calls.remove("export_steep_slopen")
+
+            if "LID Volume" not in dlg_components.components:
+                export_calls.remove("export_lid_volume")
+
+            self.call_IO_methods(export_calls, True, outdir)
+
+            if "export_tailings" in export_calls:
+                MUD = self.gutils.get_cont_par("MUD")
+                concentration_sql = """SELECT 
+                                    CASE WHEN COUNT(*) > 0 THEN True
+                                         ELSE False
+                                    END AS result
+                                    FROM 
+                                        tailing_cells
+                                    WHERE 
+                                        concentration <> 0 OR concentration IS NULL;"""
+                cv = self.gutils.execute(concentration_sql).fetchone()[0]
+                # TAILINGS.DAT and TAILINGS_CV.DAT
+                if MUD == '1':
+                    # Export TAILINGS_CV.DAT
+                    if cv == 1:
+                        new_files_used = self.files_used.replace("TAILINGS.DAT\n", "TAILINGS_CV.DAT\n")
+                        self.files_used = new_files_used
+                # TAILINGS_STACK_DEPTH.DAT
+                elif MUD == '2':
+                    new_files_used = self.files_used.replace("TAILINGS.DAT\n", "TAILINGS_STACK_DEPTH.DAT\n")
+                    self.files_used = new_files_used
+
+                if "export_swmmflo" in export_calls:
+                    self.f2d_widget.storm_drain_editor.export_storm_drain_INP_file()
+
+                # Delete .DAT files the model will try to use if existing:
+                if "export_mult" in export_calls:
+                    if self.gutils.is_table_empty("simple_mult_cells"):
+                        new_files_used = self.files_used.replace("SIMPLE_MULT.DAT\n", "")
+                        self.files_used = new_files_used
+                        if os.path.isfile(outdir + r"\SIMPLE_MULT.DAT"):
+                            QApplication.setOverrideCursor(Qt.ArrowCursor)
+                            if self.uc.question(
+                                    "There are no simple multiple channel cells in the project but\n"
+                                    + "there is a SIMPLE_MULT.DAT file in the directory.\n"
+                                    + "If the file is not deleted it will be used by the model.\n\n"
+                                    + "Delete SIMPLE_MULT.DAT?"
+                            ):
+                                os.remove(outdir + r"\SIMPLE_MULT.DAT")
+                            QApplication.restoreOverrideCursor()
+                    if self.gutils.is_table_empty("mult_cells"):
+                        new_files_used = self.files_used.replace("\nMULT.DAT\n", "\n")
+                        self.files_used = new_files_used
+                        if os.path.isfile(outdir + r"\MULT.DAT"):
+                            QApplication.setOverrideCursor(Qt.ArrowCursor)
+                            if self.uc.question(
+                                    "There are no multiple channel cells in the project but\n"
+                                    + "there is a MULT.DAT file in the directory.\n"
+                                    + "If the file is not deleted it will be used by the model.\n\n"
+                                    + "Delete MULT.DAT?"
+                            ):
+                                os.remove(outdir + r"\MULT.DAT")
+                            QApplication.restoreOverrideCursor()
+        else:
+            QApplication.restoreOverrideCursor()
 
     @connection_required
     def export_hdf5(self):
