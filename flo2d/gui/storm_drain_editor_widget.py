@@ -6084,7 +6084,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 return
 
             fields = QgsFields()
-            fields.append(QgsField('name', QVariant.String))
+            fields.append(QgsField(name='name', type=QVariant.String))
 
             pr = SD_all_nodes_layer.dataProvider()
 
@@ -6893,14 +6893,16 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         """)
 
         if table_name == "user_swmm_inlets_junctions":
-            inlet_name = self.gutils.execute(f"""SELECT name FROM {table_name} WHERE fid = '{fid}'""").fetchone()[0]
-            has_rt = self.gutils.execute(f"""SELECT COUNT(*) FROM swmmflort WHERE name = '{inlet_name}'""").fetchone()
-            if has_rt[0]:
-                self.gutils.execute(f"""
-                    UPDATE swmmflort
-                    SET grid_fid = '{grid_fid}'
-                    WHERE name = '{inlet_name}' AND fid = '{fid}';
-                """)
+            inlet_name = self.gutils.execute(f"""SELECT name FROM {table_name} WHERE fid = '{fid}'""").fetchone()
+            if inlet_name:
+                inlet_name = inlet_name[0]
+                has_rt = self.gutils.execute(f"""SELECT COUNT(*) FROM swmmflort WHERE name = '{inlet_name}'""").fetchone()
+                if has_rt[0]:
+                    self.gutils.execute(f"""
+                        UPDATE swmmflort
+                        SET grid_fid = '{grid_fid}'
+                        WHERE name = '{inlet_name}' AND fid = '{fid}';
+                    """)
 
 
     def conduit_added(self, fid):
