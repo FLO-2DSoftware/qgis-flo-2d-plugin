@@ -11653,9 +11653,9 @@ class Flo2dGeoPackage(GeoPackageUtils):
                             else:
                                 errors += "* Unknown grid element in Culverts eq. table.\n"
             if errors:
-                QApplication.setOverrideCursor(Qt.ArrowCursor)
-                self.uc.show_info("WARNING 040319.0521:\n\n" + errors)
                 QApplication.restoreOverrideCursor()
+                self.uc.show_info("WARNING 040319.0521:\n\n" + errors)
+                QApplication.setOverrideCursor(Qt.WaitCursor)
             return True
 
         except Exception as e:
