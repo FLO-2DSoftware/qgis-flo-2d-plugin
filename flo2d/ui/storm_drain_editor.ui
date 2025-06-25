@@ -245,6 +245,9 @@
             <verstretch>0</verstretch>
            </sizepolicy>
           </property>
+          <property name="toolTip">
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;SWMM_IDEN(I)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+          </property>
          </widget>
         </item>
         <item row="0" column="3">
@@ -274,6 +277,9 @@
             <width>75</width>
             <height>16777215</height>
            </size>
+          </property>
+          <property name="toolTip">
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;SWMM_IDEN(I)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Storm drain inlet name. &lt;/p&gt;&lt;p&gt;Inlet name in the SWMM.inp file. &lt;/p&gt;&lt;p&gt;Variable is not case sensitive. &lt;/p&gt;&lt;p&gt;No spaces in data.&lt;/p&gt;&lt;p&gt;Start the name with an i or I to indicate an inlet: im or IM for manholes. This is mandatory. &lt;/p&gt;&lt;p&gt;Range: Alpha Numeric&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
           </property>
           <property name="text">
            <string>Object Name</string>
@@ -331,6 +337,9 @@
               <height>16777215</height>
              </size>
             </property>
+            <property name="toolTip">
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Inlet node&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'Arial','Helvetica'; color:#000000;&quot;&gt;Name of node on the inlet side of the pump. &lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            </property>
             <property name="text">
              <string>Start Node</string>
             </property>
@@ -340,7 +349,11 @@
            </widget>
           </item>
           <item>
-           <widget class="QComboBox" name="start_node_cbo"/>
+           <widget class="QComboBox" name="start_node_cbo">
+            <property name="toolTip">
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Inlet node&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            </property>
+           </widget>
           </item>
           <item>
            <widget class="QLabel" name="label_5">
@@ -356,6 +369,9 @@
               <height>16777215</height>
              </size>
             </property>
+            <property name="toolTip">
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Outlet node&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Name of node on the outlet side of the pump. &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            </property>
             <property name="text">
              <string>End Node</string>
             </property>
@@ -365,7 +381,11 @@
            </widget>
           </item>
           <item>
-           <widget class="QComboBox" name="end_node_cbo"/>
+           <widget class="QComboBox" name="end_node_cbo">
+            <property name="toolTip">
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Outlet node.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            </property>
+           </widget>
           </item>
           <item>
            <widget class="QToolButton" name="center_chbox">
@@ -687,7 +707,7 @@
            </size>
           </property>
           <property name="toolTip">
-           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Pump Types&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'Arial','Helvetica'; color:#000000;&quot;&gt;Pumps are links used to lift water to higher elevations.&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'Arial','Helvetica'; color:#000000;&quot;&gt;A pump curve describes the relation between a pump's flow rate and conditions at its inlet and outlet nodes.&lt;br/&gt;Five different types of pumps are supported;&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'Arial','Helvetica'; color:#000000;&quot;&gt;Type 1: An off-line pump with a wet well where flow increases incrementally with available wet well volume. &lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'Arial','Helvetica'; color:#000000;&quot;&gt;Type 2: An in-line pump where flow increases incrementally with inlet node depth. &lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'Arial','Helvetica'; color:#000000;&quot;&gt;Type 3: An in-line pump where flow varies continuously with head difference between the inlet and outlet nodes.&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'Arial','Helvetica'; color:#000000;&quot;&gt;Type 4: A variable speed in-line pump where flow varies continuously with inlet node depth.&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'Arial','Helvetica'; color:#000000;&quot;&gt;Ideal: An &amp;quot;ideal&amp;quot; transfer pump whose flow rate equals the inflow rate at its inlet node. No curve is required. The pump must be the only outflow link from its inlet node. Used mainly for preliminary design. &lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'Arial','Helvetica'; color:#000000;&quot;&gt;Range: 1 - 5&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Pump Types&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'Arial','Helvetica'; color:#000000;&quot;&gt;Pumps are links used to lift water to higher elevations.&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'Arial','Helvetica'; color:#000000;&quot;&gt;A pump curve describes the relation between a pump's flow rate and conditions at its inlet and outlet nodes.&lt;br/&gt;Five different types of pumps are supported;&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'Arial','Helvetica'; color:#000000;&quot;&gt;Type 1: An off-line pump with a wet well where flow increases incrementally with available wet well volume (Volume x Flow). &lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'Arial','Helvetica'; color:#000000;&quot;&gt;Type 2: An in-line pump where flow increases incrementally with inlet node depth (Depth x Flow). &lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'Arial','Helvetica'; color:#000000;&quot;&gt;Type 3: An in-line pump where flow varies continuously with head difference between the inlet and outlet nodes (Flow x head).&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'Arial','Helvetica'; color:#000000;&quot;&gt;Type 4: A variable speed in-line pump where flow varies continuously with inlet node depth (Depth x Flow).&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'Arial','Helvetica'; color:#000000;&quot;&gt;Ideal: An &amp;quot;ideal&amp;quot; transfer pump whose flow rate equals the inflow rate at its inlet node. No curve is required. The pump must be the only outflow link from its inlet node. Used mainly for preliminary design. &lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'Arial','Helvetica'; color:#000000;&quot;&gt;Range: 1 - 5&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
           </property>
           <property name="text">
            <string>Pump Type</string>
@@ -742,6 +762,9 @@
             <width>75</width>
             <height>16777215</height>
            </size>
+          </property>
+          <property name="toolTip">
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Pump Curve Name&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Name of the Pump Curve which contains the pump's operating data.&lt;/p&gt;&lt;p&gt;Use * for an Ideal pump. &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
           </property>
           <property name="text">
            <string>Curve Name</string>
@@ -811,6 +834,9 @@
             <width>16777215</width>
             <height>16777215</height>
            </size>
+          </property>
+          <property name="toolTip">
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Pump Curve Name&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
           </property>
           <property name="insertPolicy">
            <enum>QComboBox::InsertAtBottom</enum>
@@ -898,6 +924,9 @@
             <height>16777215</height>
            </size>
           </property>
+          <property name="toolTip">
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Pump curve description&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Add an optional description of the the pump. &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+          </property>
           <property name="text">
            <string>Description</string>
           </property>
@@ -973,6 +1002,9 @@
             <width>16777215</width>
             <height>16777215</height>
            </size>
+          </property>
+          <property name="toolTip">
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Pump curve description&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
           </property>
          </widget>
         </item>
