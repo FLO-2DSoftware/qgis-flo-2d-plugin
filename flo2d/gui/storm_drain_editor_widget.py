@@ -738,7 +738,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             name = this_user_inlet_node["name"]
             # rt_fid = this_user_node["rt_fid"]
             # rt_name = this_user_node["rt_name"]
-            sd_type = this_user_inlet_node["sd_type"]
+            sd_type = this_user_inlet_node["name"]
 
             if sd_type[0].lower() == "i":
                 # Insert inlet:
