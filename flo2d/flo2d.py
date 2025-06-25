@@ -1910,8 +1910,20 @@ class Flo2D(object):
         if calls[0] == "export_cont_toler":
             self.files_used = "CONT.DAT\n"
 
+        progDialog = QProgressDialog("Exporting to DATA...", None, 0, len(calls))
+        progDialog.setModal(True)
+        progDialog.setValue(0)
+        progDialog.show()
+        i = 0
+
         QApplication.setOverrideCursor(Qt.WaitCursor)
         for call in calls:
+
+            i += 1
+            progDialog.setValue(i)
+            progDialog.setLabelText(call)
+            QApplication.processEvents()
+
             if call == "export_bridge_xsec":
                 dat = "BRIDGE_XSEC.DAT"
             elif call == "export_bridge_coeff_data":
