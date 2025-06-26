@@ -2918,6 +2918,18 @@ class Flo2D(object):
                 dlg_components.data_rb.setVisible(True)
                 dlg_components.hdf5_rb.setVisible(True)
 
+                # True hdf5, False data
+                user_preference = s.value("FLO-2D/quickRun")
+                if user_preference == "hdf5":
+                    dlg_components.hdf5_rb.setChecked(True)
+                    dlg_components.data_rb.setChecked(False)
+                elif user_preference  == "data":
+                    dlg_components.hdf5_rb.setChecked(False)
+                    dlg_components.data_rb.setChecked(True)
+                else:
+                    dlg_components.hdf5_rb.setChecked(True)
+                    dlg_components.data_rb.setChecked(False)
+
             QApplication.restoreOverrideCursor()
             ok = dlg_components.exec_()
             if ok:
@@ -2925,8 +2937,10 @@ class Flo2D(object):
                 if not export_type:
                     if dlg_components.hdf5_rb.isChecked():
                         export_type = "hdf5"
+                        s.setValue("FLO-2D/quickRun", "hdf5")
                     if dlg_components.data_rb.isChecked():
                         export_type = "data"
+                        s.setValue("FLO-2D/quickRun", "data")
 
                 QApplication.setOverrideCursor(Qt.WaitCursor)
                 if export_type == "data":
@@ -3011,6 +3025,9 @@ class Flo2D(object):
                     remove = ("export_bridge_coeff_data", "export_wstime", "export_wsurf")
                     export_calls_filtered = [item for item in export_calls if item not in remove]
                     self.export_flo2d_files(output_hdf5, export_calls_filtered, dlg_components)
+
+            else:
+                return
 
             if self.files_used != "":
                 info = export_message + self.files_used
