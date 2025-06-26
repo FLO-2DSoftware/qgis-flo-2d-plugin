@@ -11701,6 +11701,9 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     outf_flo
                 ) = row
 
+                if grid_fid is None or grid_fid == "":
+                    grid_fid = -9999  # Use -9999 for missing grid_fid
+
                 stormdrain_group.datasets["SWMMOUTF_DATA"].data.append([fid, grid_fid, outf_flo])
                 stormdrain_group.datasets["SWMMOUTF_NAME"].data.append(
                     create_array(swmmoutf_name, 2, np.bytes_, tuple([fid, name])))
