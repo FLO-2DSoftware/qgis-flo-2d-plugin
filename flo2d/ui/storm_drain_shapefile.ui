@@ -47,7 +47,7 @@
       <cursorShape>ArrowCursor</cursorShape>
      </property>
      <property name="currentIndex">
-      <number>2</number>
+      <number>6</number>
      </property>
      <widget class="QWidget" name="inlets_tab">
       <property name="sizePolicy">
@@ -3340,6 +3340,9 @@ inlets/junctions</string>
                 <height>22</height>
                </size>
               </property>
+              <property name="toolTip">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;INFMETHOD&lt;/span&gt;&lt;/p&gt;&lt;p&gt;1: Green-Ampt method; &lt;/p&gt;&lt;p&gt;2: SCS curve number method; &lt;/p&gt;&lt;p&gt;3: Combined Green-Ampt and CN methods; &lt;/p&gt;&lt;p&gt;4: Horton method.&lt;/p&gt;&lt;p&gt; Range: 1 - 4&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
               <property name="text">
                <string>Infiltration Method</string>
               </property>
@@ -3635,6 +3638,9 @@ inlets/junctions</string>
                 <width>16777215</width>
                 <height>22</height>
                </size>
+              </property>
+              <property name="toolTip">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;INFMETHOD&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
               <property name="maxVisibleItems">
                <number>20</number>
@@ -4306,6 +4312,9 @@ inlets/junctions</string>
            <layout class="QGridLayout" name="gridLayout_21">
             <item row="0" column="0">
              <widget class="QLabel" name="label_36">
+              <property name="toolTip">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Name&lt;/span&gt;&lt;/p&gt;&lt;p&gt;User-assigned conduit name. &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
               <property name="text">
                <string>Conduit Name</string>
               </property>
@@ -4316,6 +4325,9 @@ inlets/junctions</string>
             </item>
             <item row="1" column="0">
              <widget class="QLabel" name="label_29">
+              <property name="toolTip">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Inlet Node &lt;/span&gt;&lt;/p&gt;&lt;p&gt;Name of node on the inlet end of the conduit (which is normally the end at higher elevation). &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
               <property name="text">
                <string>From Inlet</string>
               </property>
@@ -4326,6 +4338,9 @@ inlets/junctions</string>
             </item>
             <item row="2" column="0">
              <widget class="QLabel" name="label_30">
+              <property name="toolTip">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Outlet Node &lt;/span&gt;&lt;/p&gt;&lt;p&gt;Name of node on the outlet end of the conduit (which is normally the end at lower elevation). &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
               <property name="text">
                <string>To Outlet</string>
               </property>
@@ -4336,6 +4351,9 @@ inlets/junctions</string>
             </item>
             <item row="3" column="0">
              <widget class="QLabel" name="label_32">
+              <property name="toolTip">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Inlet Offset &lt;/span&gt;&lt;/p&gt;&lt;p&gt;(ft or m)&lt;/p&gt;&lt;p&gt;Depth or elevation of the conduit invert above the node invert at the inlet end of the conduit. &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
               <property name="text">
                <string>Inlet Offset</string>
               </property>
@@ -4346,6 +4364,9 @@ inlets/junctions</string>
             </item>
             <item row="4" column="0">
              <widget class="QLabel" name="label_44">
+              <property name="toolTip">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Outlet Offset &lt;/span&gt;&lt;/p&gt;&lt;p&gt;(ft or m)&lt;/p&gt;&lt;p&gt;Depth or elevation of the conduit invert above the node invert at the outlet end of the conduit.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
               <property name="text">
                <string>Outlet Offset</string>
               </property>
@@ -4378,6 +4399,9 @@ inlets/junctions</string>
                 <height>22</height>
                </size>
               </property>
+              <property name="toolTip">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Name&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
               <property name="maxVisibleItems">
                <number>20</number>
               </property>
@@ -4402,6 +4426,9 @@ inlets/junctions</string>
                 <width>16777215</width>
                 <height>22</height>
                </size>
+              </property>
+              <property name="toolTip">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Inlet Node &lt;/p&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
               <property name="maxVisibleItems">
                <number>20</number>
@@ -4428,6 +4455,9 @@ inlets/junctions</string>
                 <height>22</height>
                </size>
               </property>
+              <property name="toolTip">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Outlet Node &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
               <property name="maxVisibleItems">
                <number>20</number>
               </property>
@@ -4453,6 +4483,9 @@ inlets/junctions</string>
                 <height>22</height>
                </size>
               </property>
+              <property name="toolTip">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Inlet Offset&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
               <property name="maxVisibleItems">
                <number>20</number>
               </property>
@@ -4477,6 +4510,9 @@ inlets/junctions</string>
                 <width>16777215</width>
                 <height>22</height>
                </size>
+              </property>
+              <property name="toolTip">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Outlet Offset &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
               <property name="maxVisibleItems">
                <number>20</number>
@@ -4631,6 +4667,9 @@ inlets/junctions</string>
               <layout class="QGridLayout" name="gridLayout_8">
                <item row="0" column="0">
                 <widget class="QLabel" name="label_37">
+                 <property name="toolTip">
+                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Length&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(ft or m)&lt;/p&gt;&lt;p&gt;Conduit length.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                 </property>
                  <property name="text">
                   <string>Length</string>
                  </property>
@@ -4641,6 +4680,9 @@ inlets/junctions</string>
                </item>
                <item row="1" column="0">
                 <widget class="QLabel" name="label_39">
+                 <property name="toolTip">
+                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Roughness&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Manning's roughness coefficient. &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                 </property>
                  <property name="text">
                   <string>Manning's n</string>
                  </property>
@@ -4651,6 +4693,9 @@ inlets/junctions</string>
                </item>
                <item row="2" column="0">
                 <widget class="QLabel" name="label_40">
+                 <property name="toolTip">
+                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Initial Flow &lt;/span&gt;&lt;/p&gt;&lt;p&gt;Initial flow in the conduit at the start of the simulation. &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                 </property>
                  <property name="text">
                   <string>Initial Flow</string>
                  </property>
@@ -4661,6 +4706,9 @@ inlets/junctions</string>
                </item>
                <item row="3" column="0">
                 <widget class="QLabel" name="label_41">
+                 <property name="toolTip">
+                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Maximum Flow &lt;/span&gt;&lt;/p&gt;&lt;p&gt;Maximum flow allowed in the conduit.&lt;/p&gt;&lt;p&gt;Use 0 or leave blank if not applicable. &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                 </property>
                  <property name="text">
                   <string>Max Flow</string>
                  </property>
@@ -4693,6 +4741,9 @@ inlets/junctions</string>
                    <height>22</height>
                   </size>
                  </property>
+                 <property name="toolTip">
+                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Length&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                 </property>
                  <property name="maxVisibleItems">
                   <number>20</number>
                  </property>
@@ -4717,6 +4768,9 @@ inlets/junctions</string>
                    <width>16777215</width>
                    <height>22</height>
                   </size>
+                 </property>
+                 <property name="toolTip">
+                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Roughness&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                  </property>
                  <property name="maxVisibleItems">
                   <number>20</number>
@@ -4743,6 +4797,9 @@ inlets/junctions</string>
                    <height>22</height>
                   </size>
                  </property>
+                 <property name="toolTip">
+                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Initial Flow &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                 </property>
                  <property name="maxVisibleItems">
                   <number>20</number>
                  </property>
@@ -4767,6 +4824,9 @@ inlets/junctions</string>
                    <width>16777215</width>
                    <height>22</height>
                   </size>
+                 </property>
+                 <property name="toolTip">
+                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Maximum Flow &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                  </property>
                  <property name="maxVisibleItems">
                   <number>20</number>
@@ -4904,6 +4964,9 @@ inlets/junctions</string>
                    <italic>false</italic>
                   </font>
                  </property>
+                 <property name="toolTip">
+                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Shape&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Click the ellipsis button (or press Enter) to edit the geometric properties of the conduit's cross section. &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                 </property>
                  <property name="text">
                   <string>Conduit Shape</string>
                  </property>
@@ -4933,6 +4996,9 @@ inlets/junctions</string>
                   <font>
                    <italic>false</italic>
                   </font>
+                 </property>
+                 <property name="toolTip">
+                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Max. Depth &lt;/p&gt;&lt;p&gt;(ft or m)&lt;/p&gt;&lt;p&gt;Maximum depth of the conduit's cross section. &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                  </property>
                  <property name="text">
                   <string>Max. Depth</string>
@@ -5017,6 +5083,9 @@ inlets/junctions</string>
                    <height>22</height>
                   </size>
                  </property>
+                 <property name="toolTip">
+                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Shape&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                 </property>
                  <property name="maxVisibleItems">
                   <number>20</number>
                  </property>
@@ -5078,6 +5147,9 @@ inlets/junctions</string>
                    <width>0</width>
                    <height>22</height>
                   </size>
+                 </property>
+                 <property name="toolTip">
+                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Max. Depth &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                  </property>
                  <property name="maxVisibleItems">
                   <number>20</number>
@@ -5353,6 +5425,9 @@ inlets/junctions</string>
               <layout class="QGridLayout" name="gridLayout_18">
                <item row="0" column="0">
                 <widget class="QLabel" name="label_42">
+                 <property name="toolTip">
+                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Entry Loss Coeff. &lt;/span&gt;&lt;/p&gt;&lt;p&gt;Head loss coefficient associated with energy losses at the entrance of the conduit. &lt;/p&gt;&lt;p&gt;For culverts, refer to Culvert Inlet Loss Coefficients table. &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                 </property>
                  <property name="text">
                   <string>Entry Loss Coeff.</string>
                  </property>
@@ -5363,6 +5438,9 @@ inlets/junctions</string>
                </item>
                <item row="1" column="0">
                 <widget class="QLabel" name="label_38">
+                 <property name="toolTip">
+                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Exit Loss Coeff. &lt;/span&gt;&lt;/p&gt;&lt;p&gt;Head loss coefficient associated with energy losses at the exit of the conduit. &lt;/p&gt;&lt;p&gt;For culverts, use a value of 1.0. &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                 </property>
                  <property name="text">
                   <string>Exit Loss Coeff.</string>
                  </property>
@@ -5373,6 +5451,9 @@ inlets/junctions</string>
                </item>
                <item row="2" column="0">
                 <widget class="QLabel" name="label_43">
+                 <property name="toolTip">
+                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Avg. Loss Coeff. &lt;/span&gt;&lt;/p&gt;&lt;p&gt;Head loss coefficient associated with energy losses along the length of the conduit. &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                 </property>
                  <property name="text">
                   <string>Average Loss Coeff.</string>
                  </property>
@@ -5383,6 +5464,9 @@ inlets/junctions</string>
                </item>
                <item row="3" column="0">
                 <widget class="QLabel" name="label_45">
+                 <property name="toolTip">
+                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Flap Gate &lt;/span&gt;&lt;/p&gt;&lt;p&gt;YES if a flap gate exists that prevents backflow through the conduit, or NO if no flap gate exists. &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                 </property>
                  <property name="text">
                   <string>Flap Gate</string>
                  </property>
@@ -5415,6 +5499,9 @@ inlets/junctions</string>
                    <height>22</height>
                   </size>
                  </property>
+                 <property name="toolTip">
+                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Avg. Loss Coeff. &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                 </property>
                  <property name="maxVisibleItems">
                   <number>20</number>
                  </property>
@@ -5439,6 +5526,9 @@ inlets/junctions</string>
                    <width>16777215</width>
                    <height>22</height>
                   </size>
+                 </property>
+                 <property name="toolTip">
+                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Exit Loss Coeff. &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                  </property>
                  <property name="maxVisibleItems">
                   <number>20</number>
@@ -5465,6 +5555,9 @@ inlets/junctions</string>
                    <height>22</height>
                   </size>
                  </property>
+                 <property name="toolTip">
+                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Entry Loss Coeff. &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                 </property>
                  <property name="maxVisibleItems">
                   <number>20</number>
                  </property>
@@ -5489,6 +5582,9 @@ inlets/junctions</string>
                    <width>16777215</width>
                    <height>22</height>
                   </size>
+                 </property>
+                 <property name="toolTip">
+                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Flap Gate &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                  </property>
                  <property name="maxVisibleItems">
                   <number>20</number>
@@ -5807,6 +5903,9 @@ inlets/junctions</string>
            <layout class="QGridLayout" name="gridLayout_38">
             <item row="0" column="0">
              <widget class="QLabel" name="label_48">
+              <property name="toolTip">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Name&lt;/span&gt;&lt;/p&gt;&lt;p&gt;User-assigned pump name. &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
               <property name="text">
                <string>Pump Name</string>
               </property>
@@ -5817,6 +5916,9 @@ inlets/junctions</string>
             </item>
             <item row="1" column="0">
              <widget class="QLabel" name="label_49">
+              <property name="toolTip">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Inlet Node &lt;/span&gt;&lt;/p&gt;&lt;p&gt;Name of node on the inlet side of the pump. &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
               <property name="text">
                <string>From Inlet</string>
               </property>
@@ -5827,6 +5929,9 @@ inlets/junctions</string>
             </item>
             <item row="2" column="0">
              <widget class="QLabel" name="label_50">
+              <property name="toolTip">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Outlet Node &lt;/span&gt;&lt;/p&gt;&lt;p&gt;Name of node on the outlet side of the pump. &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
               <property name="text">
                <string>To Outlet</string>
               </property>
@@ -5859,6 +5964,9 @@ inlets/junctions</string>
                 <height>22</height>
                </size>
               </property>
+              <property name="toolTip">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Name&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
               <property name="maxVisibleItems">
                <number>20</number>
               </property>
@@ -5884,6 +5992,9 @@ inlets/junctions</string>
                 <height>22</height>
                </size>
               </property>
+              <property name="toolTip">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Outlet Node &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
               <property name="maxVisibleItems">
                <number>20</number>
               </property>
@@ -5908,6 +6019,9 @@ inlets/junctions</string>
                 <width>16777215</width>
                 <height>22</height>
                </size>
+              </property>
+              <property name="toolTip">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Inlet Node &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
               <property name="maxVisibleItems">
                <number>20</number>
@@ -6031,6 +6145,9 @@ inlets/junctions</string>
                </item>
                <item row="0" column="0">
                 <widget class="QLabel" name="label_53">
+                 <property name="toolTip">
+                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Pump Curve &lt;/span&gt;&lt;/p&gt;&lt;p&gt;Name of the Pump Curve which contains the pump's operating data (double-click to edit the curve)&lt;/p&gt;&lt;p&gt;Use * for an Ideal pump. &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                 </property>
                  <property name="text">
                   <string>Curve Name</string>
                  </property>
@@ -6043,6 +6160,9 @@ inlets/junctions</string>
                 <widget class="QLabel" name="label_55">
                  <property name="enabled">
                   <bool>false</bool>
+                 </property>
+                 <property name="toolTip">
+                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Description &lt;/span&gt;&lt;/p&gt;&lt;p&gt;Click the ellipsis button (or press Enter) to edit an optional description of the the pump. &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                  </property>
                  <property name="text">
                   <string>Curve Description</string>
@@ -6104,6 +6224,9 @@ inlets/junctions</string>
                    <height>22</height>
                   </size>
                  </property>
+                 <property name="toolTip">
+                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Pump Curve &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                 </property>
                  <property name="maxVisibleItems">
                   <number>20</number>
                  </property>
@@ -6131,6 +6254,9 @@ inlets/junctions</string>
                    <width>16777215</width>
                    <height>22</height>
                   </size>
+                 </property>
+                 <property name="toolTip">
+                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Description &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                  </property>
                  <property name="maxVisibleItems">
                   <number>20</number>
@@ -6249,6 +6375,9 @@ inlets/junctions</string>
                    <italic>false</italic>
                   </font>
                  </property>
+                 <property name="toolTip">
+                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Initial Status &lt;/span&gt;&lt;/p&gt;&lt;p&gt;Status of the pump (ON or OFF) at the start of the simulation. &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                 </property>
                  <property name="text">
                   <string>Initial Status</string>
                  </property>
@@ -6264,6 +6393,9 @@ inlets/junctions</string>
                    <italic>false</italic>
                   </font>
                  </property>
+                 <property name="toolTip">
+                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Startup Depth &lt;/span&gt;&lt;/p&gt;&lt;p&gt;(ft or m)&lt;/p&gt;&lt;p&gt;Depth at inlet node when pump turns on. &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                 </property>
                  <property name="text">
                   <string>Startup Depth</string>
                  </property>
@@ -6278,6 +6410,9 @@ inlets/junctions</string>
                   <font>
                    <italic>false</italic>
                   </font>
+                 </property>
+                 <property name="toolTip">
+                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Shutoff Depth &lt;/span&gt;&lt;/p&gt;&lt;p&gt;(ft or m)&lt;/p&gt;&lt;p&gt;Depth at inlet node when pump shuts off. &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                  </property>
                  <property name="text">
                   <string>Shutoff Depth</string>
@@ -6311,6 +6446,9 @@ inlets/junctions</string>
                    <height>22</height>
                   </size>
                  </property>
+                 <property name="toolTip">
+                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Initial Status &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                 </property>
                  <property name="maxVisibleItems">
                   <number>20</number>
                  </property>
@@ -6336,6 +6474,9 @@ inlets/junctions</string>
                    <height>22</height>
                   </size>
                  </property>
+                 <property name="toolTip">
+                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Shutoff Depth &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                 </property>
                  <property name="maxVisibleItems">
                   <number>20</number>
                  </property>
@@ -6360,6 +6501,9 @@ inlets/junctions</string>
                    <width>16777215</width>
                    <height>22</height>
                   </size>
+                 </property>
+                 <property name="toolTip">
+                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Startup Depth &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                  </property>
                  <property name="maxVisibleItems">
                   <number>20</number>
@@ -6655,6 +6799,9 @@ inlets/junctions</string>
              <layout class="QVBoxLayout" name="verticalLayout">
               <item>
                <widget class="QLabel" name="label_51">
+                <property name="toolTip">
+                 <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Name&lt;/span&gt;&lt;/p&gt;&lt;p&gt;User-assigned orifice name.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                </property>
                 <property name="text">
                  <string>Orifice Name</string>
                 </property>
@@ -6665,6 +6812,9 @@ inlets/junctions</string>
               </item>
               <item>
                <widget class="QLabel" name="label_52">
+                <property name="toolTip">
+                 <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Inlet Node &lt;/span&gt;&lt;/p&gt;&lt;p&gt;Name of node on the inlet side of the orifice. &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                </property>
                 <property name="text">
                  <string>From Inlet</string>
                 </property>
@@ -6675,6 +6825,9 @@ inlets/junctions</string>
               </item>
               <item>
                <widget class="QLabel" name="label_56">
+                <property name="toolTip">
+                 <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Outlet Node &lt;/span&gt;&lt;/p&gt;&lt;p&gt;Name of node on the outlet side of the orifice.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                </property>
                 <property name="text">
                  <string>To Outlet</string>
                 </property>
@@ -6689,6 +6842,9 @@ inlets/junctions</string>
                  <font>
                   <italic>false</italic>
                  </font>
+                </property>
+                <property name="toolTip">
+                 <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Type&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Type of orifice (SIDE or BOTTOM). &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                 </property>
                 <property name="text">
                  <string>Orifice Type</string>
@@ -6705,6 +6861,9 @@ inlets/junctions</string>
                   <italic>false</italic>
                  </font>
                 </property>
+                <property name="toolTip">
+                 <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Inlet Offset &lt;/span&gt;&lt;/p&gt;&lt;p&gt;(ft or m)&lt;/p&gt;&lt;p&gt;Depth or elevation of bottom of orifice above invert of inlet node.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                </property>
                 <property name="text">
                  <string>Inlets Offset (Crest Height)</string>
                 </property>
@@ -6719,6 +6878,9 @@ inlets/junctions</string>
                  <font>
                   <italic>false</italic>
                  </font>
+                </property>
+                <property name="toolTip">
+                 <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Discharge Coeff. &lt;/span&gt;&lt;/p&gt;&lt;p&gt;(dimensionless)&lt;/p&gt;&lt;p&gt;Discharge coefficient. &lt;/p&gt;&lt;p&gt;A typical value is 0.65. &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                 </property>
                 <property name="text">
                  <string>Discharge Coeff.</string>
@@ -6752,6 +6914,9 @@ inlets/junctions</string>
                   <height>22</height>
                  </size>
                 </property>
+                <property name="toolTip">
+                 <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Name&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                </property>
                 <property name="maxVisibleItems">
                  <number>20</number>
                 </property>
@@ -6776,6 +6941,9 @@ inlets/junctions</string>
                   <width>16777215</width>
                   <height>22</height>
                  </size>
+                </property>
+                <property name="toolTip">
+                 <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Inlet Node &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                 </property>
                 <property name="maxVisibleItems">
                  <number>20</number>
@@ -6802,6 +6970,9 @@ inlets/junctions</string>
                   <height>22</height>
                  </size>
                 </property>
+                <property name="toolTip">
+                 <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Outlet Node &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                </property>
                 <property name="maxVisibleItems">
                  <number>20</number>
                 </property>
@@ -6826,6 +6997,9 @@ inlets/junctions</string>
                   <width>16777215</width>
                   <height>22</height>
                  </size>
+                </property>
+                <property name="toolTip">
+                 <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Type&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                 </property>
                 <property name="maxVisibleItems">
                  <number>20</number>
@@ -6852,6 +7026,9 @@ inlets/junctions</string>
                   <height>22</height>
                  </size>
                 </property>
+                <property name="toolTip">
+                 <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Inlet Offset &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                </property>
                 <property name="maxVisibleItems">
                  <number>20</number>
                 </property>
@@ -6876,6 +7053,9 @@ inlets/junctions</string>
                   <width>16777215</width>
                   <height>22</height>
                  </size>
+                </property>
+                <property name="toolTip">
+                 <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Discharge Coeff. &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                 </property>
                 <property name="maxVisibleItems">
                  <number>20</number>
@@ -7046,6 +7226,9 @@ inlets/junctions</string>
              <layout class="QVBoxLayout" name="verticalLayout_4">
               <item>
                <widget class="QLabel" name="label_69">
+                <property name="toolTip">
+                 <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Flap Gate &lt;/span&gt;&lt;/p&gt;&lt;p&gt;YES if a flap gate exists which prevents backflow through the orifice, or NO if no flap gate exists. &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                </property>
                 <property name="text">
                  <string>Flap Gate</string>
                 </property>
@@ -7056,6 +7239,9 @@ inlets/junctions</string>
               </item>
               <item>
                <widget class="QLabel" name="label_70">
+                <property name="toolTip">
+                 <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Time to Open/Close &lt;/span&gt;&lt;/p&gt;&lt;p&gt;(decimal hours)&lt;/p&gt;&lt;p&gt;The time to open a closed (or close an open) gated orifice. Use 0 or leave blank if timed openings/closings do not apply. &lt;/p&gt;&lt;p&gt;Use Control Rules to adjust gate position. &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                </property>
                 <property name="text">
                  <string>Time Open/Close</string>
                 </property>
@@ -7066,6 +7252,9 @@ inlets/junctions</string>
               </item>
               <item>
                <widget class="QLabel" name="label_66">
+                <property name="toolTip">
+                 <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Shape &lt;/span&gt;&lt;/p&gt;&lt;p&gt;Orifice shape (CIRCULAR or RECT_CLOSED).&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                </property>
                 <property name="text">
                  <string>Orifice Shape</string>
                 </property>
@@ -7081,6 +7270,9 @@ inlets/junctions</string>
                   <italic>false</italic>
                  </font>
                 </property>
+                <property name="toolTip">
+                 <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Height &lt;/span&gt;&lt;/p&gt;&lt;p&gt;(ft or m)&lt;/p&gt;&lt;p&gt;Height of orifice opening when fully open.&lt;/p&gt;&lt;p&gt;Corresponds to the diameter of a circular orifice or the height of a rectangular orifice. &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                </property>
                 <property name="text">
                  <string>Height (Geom1)</string>
                 </property>
@@ -7095,6 +7287,9 @@ inlets/junctions</string>
                  <font>
                   <italic>false</italic>
                  </font>
+                </property>
+                <property name="toolTip">
+                 <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Width &lt;/span&gt;&lt;/p&gt;&lt;p&gt;(ft or m)&lt;/p&gt;&lt;p&gt;Width of rectangular orifice when fully opened.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                 </property>
                 <property name="text">
                  <string>Width (Geom2)</string>
@@ -7128,6 +7323,9 @@ inlets/junctions</string>
                   <height>22</height>
                  </size>
                 </property>
+                <property name="toolTip">
+                 <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Flap Gate &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                </property>
                 <property name="maxVisibleItems">
                  <number>20</number>
                 </property>
@@ -7152,6 +7350,9 @@ inlets/junctions</string>
                   <width>16777215</width>
                   <height>22</height>
                  </size>
+                </property>
+                <property name="toolTip">
+                 <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Time to Open/Close &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                 </property>
                 <property name="maxVisibleItems">
                  <number>20</number>
@@ -7178,6 +7379,9 @@ inlets/junctions</string>
                   <height>22</height>
                  </size>
                 </property>
+                <property name="toolTip">
+                 <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Shape &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                </property>
                 <property name="maxVisibleItems">
                  <number>20</number>
                 </property>
@@ -7203,6 +7407,9 @@ inlets/junctions</string>
                   <height>22</height>
                  </size>
                 </property>
+                <property name="toolTip">
+                 <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Height &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                </property>
                 <property name="maxVisibleItems">
                  <number>20</number>
                 </property>
@@ -7227,6 +7434,9 @@ inlets/junctions</string>
                   <width>16777215</width>
                   <height>22</height>
                  </size>
+                </property>
+                <property name="toolTip">
+                 <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Width &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                 </property>
                 <property name="maxVisibleItems">
                  <number>20</number>
@@ -7600,6 +7810,9 @@ inlets/junctions</string>
              <layout class="QVBoxLayout" name="verticalLayout_10">
               <item>
                <widget class="QLabel" name="label_76">
+                <property name="toolTip">
+                 <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Name&lt;/span&gt;&lt;/p&gt;&lt;p&gt;User-assigned weir name. &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                </property>
                 <property name="text">
                  <string>Weir Name</string>
                 </property>
@@ -7610,6 +7823,9 @@ inlets/junctions</string>
               </item>
               <item>
                <widget class="QLabel" name="label_77">
+                <property name="toolTip">
+                 <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Inlet Node &lt;/span&gt;&lt;/p&gt;&lt;p&gt;Name of node on inlet side of weir. &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                </property>
                 <property name="text">
                  <string>From Inlet</string>
                 </property>
@@ -7620,6 +7836,9 @@ inlets/junctions</string>
               </item>
               <item>
                <widget class="QLabel" name="label_78">
+                <property name="toolTip">
+                 <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Outlet Node &lt;/span&gt;&lt;/p&gt;&lt;p&gt;Name of node on outlet side of weir. &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                </property>
                 <property name="text">
                  <string>To Outlet</string>
                 </property>
@@ -7634,6 +7853,9 @@ inlets/junctions</string>
                  <font>
                   <italic>false</italic>
                  </font>
+                </property>
+                <property name="toolTip">
+                 <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Type &lt;/span&gt;&lt;/p&gt;&lt;p&gt;Weir type: TRANSVERSE, SIDEFLOW, V-NOTCH, or TRAPEZOIDAL &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                 </property>
                 <property name="text">
                  <string>Weir Type</string>
@@ -7650,6 +7872,9 @@ inlets/junctions</string>
                   <italic>false</italic>
                  </font>
                 </property>
+                <property name="toolTip">
+                 <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Inlet Offset &lt;/span&gt;&lt;/p&gt;&lt;p&gt;(ft or m)&lt;/p&gt;&lt;p&gt;Depth or elevation of bottom of weir opening from invert of inlet node. &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                </property>
                 <property name="text">
                  <string>Inlet Offset (Crest Height)</string>
                 </property>
@@ -7664,6 +7889,9 @@ inlets/junctions</string>
                  <font>
                   <italic>false</italic>
                  </font>
+                </property>
+                <property name="toolTip">
+                 <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Discharge Coeff. &lt;/span&gt;&lt;/p&gt;&lt;p&gt;Discharge coefficient for flow through the central portion of the weir (for flow in CFS when using US units or CMS when using SI units). &lt;/p&gt;&lt;p&gt;Typical values are: 3.33 US (1.84 SI) for sharp crested transverse weirs, 2.5 - 3.3 US (1.38 - 1.83 SI) for broad crested rectangular weirs, 2.4 - 2.8 US (1.35 - 1.55 SI) for V-notch (triangular) weirs &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                 </property>
                 <property name="text">
                  <string>Discharge Coeff.</string>
@@ -7697,6 +7925,9 @@ inlets/junctions</string>
                   <height>22</height>
                  </size>
                 </property>
+                <property name="toolTip">
+                 <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Name&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                </property>
                 <property name="maxVisibleItems">
                  <number>20</number>
                 </property>
@@ -7721,6 +7952,9 @@ inlets/junctions</string>
                   <width>16777215</width>
                   <height>22</height>
                  </size>
+                </property>
+                <property name="toolTip">
+                 <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Inlet Node &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                 </property>
                 <property name="maxVisibleItems">
                  <number>20</number>
@@ -7747,6 +7981,9 @@ inlets/junctions</string>
                   <height>22</height>
                  </size>
                 </property>
+                <property name="toolTip">
+                 <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Outlet Node &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                </property>
                 <property name="maxVisibleItems">
                  <number>20</number>
                 </property>
@@ -7771,6 +8008,9 @@ inlets/junctions</string>
                   <width>16777215</width>
                   <height>22</height>
                  </size>
+                </property>
+                <property name="toolTip">
+                 <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Type &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                 </property>
                 <property name="maxVisibleItems">
                  <number>20</number>
@@ -7797,6 +8037,9 @@ inlets/junctions</string>
                   <height>22</height>
                  </size>
                 </property>
+                <property name="toolTip">
+                 <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Inlet Offset &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                </property>
                 <property name="maxVisibleItems">
                  <number>20</number>
                 </property>
@@ -7821,6 +8064,9 @@ inlets/junctions</string>
                   <width>16777215</width>
                   <height>22</height>
                  </size>
+                </property>
+                <property name="toolTip">
+                 <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Discharge Coeff. &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                 </property>
                 <property name="maxVisibleItems">
                  <number>20</number>
@@ -7991,6 +8237,9 @@ inlets/junctions</string>
              <layout class="QVBoxLayout" name="verticalLayout_7">
               <item>
                <widget class="QLabel" name="label_72">
+                <property name="toolTip">
+                 <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Flap Gate &lt;/span&gt;&lt;/p&gt;&lt;p&gt;YES if the weir has a flap gate that prevents backflow, NO if it does not. &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                </property>
                 <property name="text">
                  <string>Flap Gate</string>
                 </property>
@@ -8001,6 +8250,9 @@ inlets/junctions</string>
               </item>
               <item>
                <widget class="QLabel" name="label_73">
+                <property name="toolTip">
+                 <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;End Contractions &lt;/span&gt;&lt;/p&gt;&lt;p&gt;Number of end contractions for a TRANSVERSE or TRAPEZOIDAL weir whose length is shorter than the channel it is placed in. &lt;/p&gt;&lt;p&gt;Either 0, 1, or 2 depending on if no ends, one end, or both ends are beveled in from the side walls. &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                </property>
                 <property name="text">
                  <string>End Contractions</string>
                 </property>
@@ -8011,6 +8263,9 @@ inlets/junctions</string>
               </item>
               <item>
                <widget class="QLabel" name="label_74">
+                <property name="toolTip">
+                 <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;End Coeff. &lt;/span&gt;&lt;/p&gt;&lt;p&gt;Discharge coefficient for flow through the triangular ends of a TRAPEZOIDAL weir.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                </property>
                 <property name="text">
                  <string>End Coeff</string>
                 </property>
@@ -8025,6 +8280,9 @@ inlets/junctions</string>
                  <font>
                   <italic>false</italic>
                  </font>
+                </property>
+                <property name="toolTip">
+                 <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Side Slope &lt;/span&gt;&lt;/p&gt;&lt;p&gt;Slope (width-to-height) of side walls for a V-NOTCH or TRAPEZOIDAL weir. &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                 </property>
                 <property name="text">
                  <string>Side Slope</string>
@@ -8056,6 +8314,9 @@ inlets/junctions</string>
                   <italic>false</italic>
                  </font>
                 </property>
+                <property name="toolTip">
+                 <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Height&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(ft or m)&lt;/p&gt;&lt;p&gt;Vertical height of weir opening. &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                </property>
                 <property name="text">
                  <string>Height (Geom1)</string>
                 </property>
@@ -8070,6 +8331,9 @@ inlets/junctions</string>
                  <font>
                   <italic>false</italic>
                  </font>
+                </property>
+                <property name="toolTip">
+                 <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Length &lt;/span&gt;&lt;/p&gt;&lt;p&gt;(ft or m)&lt;/p&gt;&lt;p&gt;Horizontal length of weir opening.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                 </property>
                 <property name="text">
                  <string>Length (Geom2)</string>
@@ -8103,6 +8367,9 @@ inlets/junctions</string>
                   <height>22</height>
                  </size>
                 </property>
+                <property name="toolTip">
+                 <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Flap Gate &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                </property>
                 <property name="maxVisibleItems">
                  <number>20</number>
                 </property>
@@ -8127,6 +8394,9 @@ inlets/junctions</string>
                   <width>194</width>
                   <height>22</height>
                  </size>
+                </property>
+                <property name="toolTip">
+                 <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;End Contractions &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                 </property>
                 <property name="maxVisibleItems">
                  <number>20</number>
@@ -8153,6 +8423,9 @@ inlets/junctions</string>
                   <height>22</height>
                  </size>
                 </property>
+                <property name="toolTip">
+                 <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;End Coeff. &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                </property>
                 <property name="maxVisibleItems">
                  <number>20</number>
                 </property>
@@ -8177,6 +8450,9 @@ inlets/junctions</string>
                   <width>194</width>
                   <height>22</height>
                  </size>
+                </property>
+                <property name="toolTip">
+                 <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Side Slope &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                 </property>
                 <property name="maxVisibleItems">
                  <number>20</number>
@@ -8228,6 +8504,9 @@ inlets/junctions</string>
                   <height>22</height>
                  </size>
                 </property>
+                <property name="toolTip">
+                 <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Height&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                </property>
                 <property name="maxVisibleItems">
                  <number>20</number>
                 </property>
@@ -8252,6 +8531,9 @@ inlets/junctions</string>
                   <width>194</width>
                   <height>22</height>
                  </size>
+                </property>
+                <property name="toolTip">
+                 <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Length &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                 </property>
                 <property name="maxVisibleItems">
                  <number>20</number>
