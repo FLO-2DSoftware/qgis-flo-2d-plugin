@@ -3050,14 +3050,23 @@ class Flo2D(object):
     def export_flo2d_files(self, outdir, export_calls, dlg_components):
 
         if "Channels" not in dlg_components.components:
+            self.gutils.set_cont_par("ICHANNEL", 0)
             export_calls.remove("export_chan")
             export_calls.remove("export_xsec")
+        else:
+            self.gutils.set_cont_par("ICHANNEL", 1)
 
         if "Reduction Factors" not in dlg_components.components:
+            self.gutils.set_cont_par("IWRFS", 0)
             export_calls.remove("export_arf")
+        else:
+            self.gutils.set_cont_par("IWRFS", 1)
 
         if "Streets" not in dlg_components.components:
+            self.gutils.set_cont_par("MSTREET", 0)
             export_calls.remove("export_street")
+        else:
+            self.gutils.set_cont_par("MSTREET", 1)
 
         if "Outflow Elements" not in dlg_components.components:
             export_calls.remove("export_outflow")
@@ -3072,10 +3081,16 @@ class Flo2D(object):
             export_calls.remove("export_outrc")
 
         if "Levees" not in dlg_components.components:
+            self.gutils.set_cont_par("LEVEE", 0)
             export_calls.remove("export_levee")
+        else:
+            self.gutils.set_cont_par("LEVEE", 1)
 
         if "Multiple Channels" not in dlg_components.components:
+            self.gutils.set_cont_par("IMULTC", 0)
             export_calls.remove("export_mult")
+        else:
+            self.gutils.set_cont_par("IMULTC", 1)
 
         if "Breach" not in dlg_components.components:
             export_calls.remove("export_breach")
@@ -3084,23 +3099,36 @@ class Flo2D(object):
             export_calls.remove("export_gutter")
 
         if "Infiltration" not in dlg_components.components:
+            self.gutils.set_cont_par("INFIL", 0)
             export_calls.remove("export_infil")
+        else:
+            self.gutils.set_cont_par("INFIL", 1)
 
         if "Floodplain Cross Sections" not in dlg_components.components:
             export_calls.remove("export_fpxsec")
 
         if "Mudflow and Sediment Transport" not in dlg_components.components:
+            self.gutils.set_cont_par("MUD", 0)
+            self.gutils.set_cont_par("ISED", 0)
             export_calls.remove("export_sed")
+        else:
+            self.gutils.set_cont_par("MUD", 1)
+            self.gutils.set_cont_par("ISED", 1)
 
         if "Evaporation" not in dlg_components.components:
+            self.gutils.set_cont_par("IEVAP", 0)
             export_calls.remove("export_evapor")
+        else:
+            self.gutils.set_cont_par("IEVAP", 1)
 
         if "Hydraulic  Structures" not in dlg_components.components:
+            self.gutils.set_cont_par("IHYDRSTRUCT", 0)
             export_calls.remove("export_hystruc")
             export_calls.remove("export_bridge_xsec")
             if "export_bridge_coeff_data" in export_calls:
                 export_calls.remove("export_bridge_coeff_data")
         else:
+            self.gutils.set_cont_par("IHYDRSTRUCT", 1)
             xsecs = self.gutils.execute("SELECT fid FROM struct WHERE icurvtable = 3").fetchone()
             if not xsecs:
                 export_calls.remove("export_bridge_xsec")
@@ -3108,11 +3136,15 @@ class Flo2D(object):
                     export_calls.remove("export_bridge_coeff_data")
 
         if "Rain" not in dlg_components.components:
+            self.gutils.set_cont_par("IRAIN", 0)
             export_calls.remove("export_rain")
             if "export_raincell" in export_calls:
                 export_calls.remove("export_raincell")
+        else:
+            self.gutils.set_cont_par("IRAIN", 1)
 
         if "Storm Drain" not in dlg_components.components:
+            self.gutils.set_cont_par("SWMM", 0)
             export_calls.remove("export_swmmflo")
             export_calls.remove("export_swmmflort")
             export_calls.remove("export_swmmoutf")
@@ -3120,6 +3152,8 @@ class Flo2D(object):
             export_calls.remove("export_sdclogging")
             if "export_swmminp" in export_calls:
                 export_calls.remove("export_swmminp")
+        else:
+            self.gutils.set_cont_par("SWMM", 1)
 
         if "Spatial Shallow-n" not in dlg_components.components:
             export_calls.remove("export_shallowNSpatial")
