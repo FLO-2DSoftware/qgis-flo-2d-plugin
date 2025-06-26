@@ -1872,6 +1872,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
                         chan_id, depinitial, froudc, roughadj, ibaseflow, isedn = row
                     chan_id = int(chan_id)
                     geom = left_bank_geom.get(chan_id)
+                    if float(isedn) == -9999:
+                        isedn = None  # Default value for isedn if not provided
                     chan_sql += [(geom, depinitial, froudc, roughadj, isedn, ibaseflow)]
 
             # Process CONFLUENCES
@@ -8640,7 +8642,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
         for row in chan_rows:
             row = [x if x is not None else "0" for x in row]
             fid = row[0]
-            if ISED == "0":
+            if float(ISED) == 0:
                 row[5] = -9999
             channel_group.datasets["CHAN_GLOBAL"].data.append(create_array(segment, 6, np.float64, tuple(row)))
             # Writes depinitial, froudc, roughadj, isedn from 'chan' table (schematic layer).
