@@ -2946,7 +2946,7 @@ class Flo2D(object):
                 if export_type == "data":
                     export_message = "Files exported to\n" + outdir + "\n\n"
                     self.f2g = Flo2dGeoPackage(self.con, self.iface)
-                    remove = ("export_raincell", "export_swmminp")
+                    remove = "export_swmminp"
                     export_calls_filtered = [item for item in export_calls if item not in remove]
 
                     # Check the presence of fplain cadpts neighbors dat files
@@ -3158,6 +3158,9 @@ class Flo2D(object):
             if "export_raincell" in export_calls:
                 export_calls.remove("export_raincell")
         else:
+            if not self.f2d_widget.rain_editor.realtime_rainfall_grp.isChecked():
+                if "export_raincell" in export_calls:
+                    export_calls.remove("export_raincell")
             self.gutils.set_cont_par("IRAIN", 1)
 
         if "Storm Drain" not in dlg_components.components:
