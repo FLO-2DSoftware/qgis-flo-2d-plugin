@@ -11,7 +11,7 @@ about=The FLO-2D Plugin for QGIS is a tool to develop, format, analyze, and disp
 changelog=
  <p>2.0.0
  - General
-    Add warnings for missing CHAN.DAT, SUMMARY.OUT, and CADPTS.DAT files in run profiles, hydrog, and maxplot functions (#1680)
+    Add warnings for missing CHAN.DAT, SUMMARY.OUT, and CADPTS.DAT files in run profiles, hydrog, and maxplot functions
     Add rendering options for Mannings and improve grid rendering logic
     Add auto range button on the FLO-2D Plot
     Added a smart code to avoid bad gpkg names when updating gpkg
@@ -23,6 +23,16 @@ changelog=
     Removed the "Raster not found" message
     Automatically turn on switches 
     Improved the efficiency of exporting FPFROUDE
+    Updated minimum value for Increment n Value at runtime to allow negative inputs
+    Updated tooltips
+    Updated FLO-2D project handling and version to 2.0.0
+    Added warnings for old geopackage formats and improve external layer deletion logic
+    Enhanced input file validation to include 'Input.hdf5' alongside 'CONT.DAT'
+    Export Quick Run improvements
+    Update export logic to conditionally update switches based on dialog components
+    Add user preference handling for quick run export type
+ - HDF5
+    Import from HDF5 files
  - Grid Tools
     Added a filter on create grid from external layer
     Added a filter on ARF & WRF from external layer
@@ -30,12 +40,20 @@ changelog=
     Added a raster converter to quickly convert raster units
     Initialize GeoPackage connection in pre-processing widget 
     Connect layer added and removed signals to update raster combo box in pre-processing widget
+    Refactorred raster combobox population to retrieve all raster layers in the project
+ - Areas Editor
+    Added the Areas Editor
+    Added the Steep Slope n file creation
+    Added the LID volume file creation
  - Initial Condition Editor
     Populate data on the comboboxes based on the signal of layer edited   
  - Floodplain Cross-Section Editor
     Fixed the bug of setting the iflo direction as the extension of the cross sections instead of a perpendicular direction
     Populate data on the comboboxes based on the signal of layer edited
     Improved the IFLO directions combobox
+ - Channel Editor
+    Update channel SQL queries to include 'ibaseflow' and adjust data handling in CHAN_GLOBAL
+    Handle None values in channel geometry construction to prevent errors
  - Hydraulic Structures
     Changed the number to the name of the structure and clicking on the map and on the plot
  - Boundary Condition Editor
@@ -44,22 +62,32 @@ changelog=
     Improved the efficiency of importing inflow data
     Improved diagonal inflows
     Divide the flow between schematized elements when exporting to INFLOW.DAT on line BCs
+    Refactor batch update logic in inflow_time_series_data to handle empty updates and improve logging
  - Storm Drain
     Added a new Storm Drain Profile plot and animation
     Improved the code for importing the SWMM.INP and other minor bug fixes
     Inlet type minimum value on dialog allow 0
     Weir coefficient min/max limits removed on the dialog
     Inlet type set to 0 when importing from INP
+    Refactored storm drain feature handlers to use generic methods for added and geometry changes to update grid_fid
+    Update swmmflort grid_fid for user_swmm_inlets_junctions based on inlet name
+    Connect afterCommitChanges signals to populate profile plot
  - Infiltration Editor
     Fixed the SSURGO and improved messages
  - Levees and Breach Editor
     Changed the elevation correction processing to a SQL processing
+ - Rain Editor
+    Refined export logic to ensure 'export_raincell' is conditionally removed based on realtime rainfall group status
  - Multiple Domain Editor
     First stable version of the Multi Domain Editor for MULTIDOMAIN.DAT
     Add subdomain rendering functionality to grid info widget
     Export methods include CADPTS.DAT and CADPTS_DSx options
+    Multiple domains 2D data
  - Results Tool
     Refactor HYCHAN file parsing to handle clear water and mudflow simulations, updating peak data extraction and display logic
+    Fix max_water_elev assignment to use bed_elev when zero
+ - Unit tests
+    Added hdf5 tests
  - Bug Fixes
     Fixed a bug of the cell size being a float when importing DAT files
     Fixed a bug of the Project Units for QGIS versions > 3.40
