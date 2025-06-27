@@ -296,6 +296,9 @@
               <height>16777215</height>
              </size>
             </property>
+            <property name="toolTip">
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Sum of hourly percentage of the daily total evaporation for each month.&lt;/p&gt;&lt;p&gt;There will be 24 values that will total 1.00 for each of the twelve months. &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            </property>
             <property name="text">
              <string>Total Daily Evaporation (should be 1):</string>
             </property>
