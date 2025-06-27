@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>424</width>
-    <height>662</height>
+    <height>700</height>
    </rect>
   </property>
   <property name="minimumSize">
@@ -336,6 +336,9 @@
                  <height>0</height>
                 </size>
                </property>
+               <property name="toolTip">
+                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;RESERVOIREL&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               </property>
                <property name="wrapping">
                 <bool>false</bool>
                </property>
@@ -397,6 +400,9 @@
                  <height>0</height>
                 </size>
                </property>
+               <property name="toolTip">
+                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Reservoir Name&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               </property>
                <property name="text">
                 <string>Reservoir name</string>
                </property>
@@ -451,6 +457,9 @@
                  <width>0</width>
                  <height>0</height>
                 </size>
+               </property>
+               <property name="toolTip">
+                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;RESERVOIREL&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(ft or m)&lt;/p&gt;&lt;p&gt;Water surface elevation of the reservoir or ponded water area.&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-style:italic;&quot;&gt;Note: Negative water surface elevation assigns the reservoir bed elevations below the breach foundation elevation as dead pool ground and reduces the reservoir starting flow depth for those dead pool elements.&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Range: 0 to Dam Crest&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                </property>
                <property name="text">
                 <string>Water Elev.</string>
@@ -701,6 +710,9 @@
                    <width>100</width>
                    <height>0</height>
                   </size>
+                 </property>
+                 <property name="toolTip">
+                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Tailing Stack Name&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                  </property>
                  <property name="text">
                   <string>Tailings stack</string>
@@ -1025,6 +1037,9 @@
                  <width>0</width>
                  <height>0</height>
                 </size>
+               </property>
+               <property name="toolTip">
+                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Tailing Reservoir Name&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                </property>
                <property name="text">
                 <string>Tailing reservoir</string>
