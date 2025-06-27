@@ -47,7 +47,7 @@
       <cursorShape>ArrowCursor</cursorShape>
      </property>
      <property name="currentIndex">
-      <number>2</number>
+      <number>4</number>
      </property>
      <widget class="QWidget" name="inlets_tab">
       <property name="sizePolicy">
@@ -6153,6 +6153,9 @@ inlets/junctions</string>
                  <property name="enabled">
                   <bool>false</bool>
                  </property>
+                 <property name="toolTip">
+                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Tag&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Optional label used to categorize or classify the pump. &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                 </property>
                  <property name="text">
                   <string>Curve Type</string>
                  </property>
@@ -6216,6 +6219,9 @@ inlets/junctions</string>
                    <width>16777215</width>
                    <height>22</height>
                   </size>
+                 </property>
+                 <property name="toolTip">
+                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Tag&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                  </property>
                  <property name="maxVisibleItems">
                   <number>20</number>
