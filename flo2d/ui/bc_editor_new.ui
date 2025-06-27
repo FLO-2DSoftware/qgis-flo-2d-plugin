@@ -136,7 +136,7 @@
         <item row="5" column="0" colspan="13">
          <widget class="QCheckBox" name="inflow_interval_ckbx">
           <property name="toolTip">
-           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;IHOURDAILY:Daily if checked&lt;br/&gt;Hourly if unchecked&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;IHOURDAILY&lt;/span&gt;&lt;/p&gt;&lt;p&gt;IHOURDAILY = 0 for inflow hydrograph hourly intervals HP (I,J,1). &lt;/p&gt;&lt;p&gt;IHOURDAILY = 1 for daily (24hr) intervals of HP (I,J,1).&lt;/p&gt;&lt;p&gt;Range: 0, 1&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
           </property>
           <property name="layoutDirection">
            <enum>Qt::LeftToRight</enum>
@@ -448,7 +448,7 @@
         <item row="3" column="0">
          <widget class="QLabel" name="component_label">
           <property name="toolTip">
-           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;NOSTACFP&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Channel or floodplain identifier.&lt;/p&gt;&lt;p&gt;If NOSTACFP = 0, the following stage-time relationship is for a floodplain element.&lt;/p&gt;&lt;p&gt;If NOSTACFP = 1, the stage-time relationship is for a chan nel element.&lt;/p&gt;&lt;p&gt;Range: 0 - 1&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;IFC(I)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Character ‘F’ or ‘C’ to identify the inflow hydrograph grid element as a floodplain ‘F’ or a channel ‘C. &lt;/p&gt;&lt;p&gt;Variable is Case Sensitive. It must be upper case.&lt;/p&gt;&lt;p&gt;Range: F or C&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
           </property>
           <property name="text">
            <string>Component</string>
@@ -495,7 +495,7 @@
           <item>
            <widget class="QRadioButton" name="ifc_fplain_radio">
             <property name="toolTip">
-             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;NOSTACFP = 0&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;IFC(I) = F&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
             </property>
             <property name="text">
              <string>Floodplain</string>
@@ -508,7 +508,7 @@
           <item>
            <widget class="QRadioButton" name="ifc_chan_radio">
             <property name="toolTip">
-             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;NOSTACFP = 1&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;IFC(I) = C&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
             </property>
             <property name="text">
              <string>Channel</string>
@@ -991,6 +991,9 @@
           <property name="enabled">
            <bool>false</bool>
           </property>
+          <property name="toolTip">
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;STA_TIME(J)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Array of time intervals (hrs) for the grid element stage-time relationship.&lt;/p&gt;&lt;p&gt;Range: 0.0 - No upper limit&lt;/p&gt;&lt;p&gt;500 pairs&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+          </property>
           <property name="text">
            <string>Time series</string>
           </property>
@@ -1091,7 +1094,7 @@
         <item row="3" column="1" rowspan="2" colspan="10">
          <widget class="QComboBox" name="outflow_data_cbo">
           <property name="toolTip">
-           <string>Outflow time series boundary condition</string>
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;STA_TIME(J)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
           </property>
          </widget>
         </item>
