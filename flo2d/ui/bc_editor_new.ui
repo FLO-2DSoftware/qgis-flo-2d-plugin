@@ -109,6 +109,9 @@
             <height>16777215</height>
            </size>
           </property>
+          <property name="toolTip">
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Inflow boundary condition name.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+          </property>
           <property name="text">
            <string>Name</string>
           </property>
@@ -186,6 +189,9 @@
             <height>16777215</height>
            </size>
           </property>
+          <property name="toolTip">
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;INOUTFC(I)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Floodplain &lt;/p&gt;&lt;p&gt;INOUTFC = 0 Inflow&lt;/p&gt;&lt;p&gt;INOUTFC = 1 Diversion &lt;/p&gt;&lt;p&gt;INOUTFC = 2 Source from groundwater &lt;/p&gt;&lt;p&gt;INOUTFC = 3 Sink to groundwater &lt;/p&gt;&lt;p&gt;Channel &lt;/p&gt;&lt;p&gt;INOUTFC = 0 Inflow &lt;/p&gt;&lt;p&gt;INOUTFC = 1 Diversion &lt;/p&gt;&lt;p&gt;INOUTFC = 2 MODFLOW Source &lt;/p&gt;&lt;p&gt;INOUTFC = 3 MODFLOW Sink&lt;/p&gt;&lt;p&gt;Range: 0 - 3&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+          </property>
           <property name="text">
            <string>Type</string>
           </property>
@@ -194,7 +200,7 @@
         <item row="4" column="1" colspan="8">
          <widget class="QComboBox" name="inflow_tseries_cbo">
           <property name="toolTip">
-           <string>Inflow time series boundary condition</string>
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;STA_TIME(J)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
           </property>
          </widget>
         </item>
@@ -440,6 +446,9 @@
             <height>16777215</height>
            </size>
           </property>
+          <property name="toolTip">
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;STA_TIME(J)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(hrs)&lt;/p&gt;&lt;p&gt;Array of time intervals for the grid element stage-time relationship.&lt;/p&gt;&lt;p&gt;Range: 0.0 - No upper limit&lt;/p&gt;&lt;p&gt;500 pairs&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+          </property>
           <property name="text">
            <string>Time series</string>
           </property>
@@ -476,7 +485,7 @@
            </size>
           </property>
           <property name="toolTip">
-           <string>Inflow boundary condition type</string>
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;INOUTFC(I)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
           </property>
           <item>
            <property name="text">
@@ -571,7 +580,7 @@
            </size>
           </property>
           <property name="toolTip">
-           <string>Rename inflow boundary condition</string>
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Rename selected inflow boundary condition&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
           </property>
           <property name="layoutDirection">
            <enum>Qt::LeftToRight</enum>
@@ -586,11 +595,7 @@
          </widget>
         </item>
         <item row="1" column="1" colspan="9">
-         <widget class="QComboBox" name="inflow_bc_name_cbo">
-          <property name="toolTip">
-           <string>Inflow boundary condition name</string>
-          </property>
-         </widget>
+         <widget class="QComboBox" name="inflow_bc_name_cbo"/>
         </item>
        </layout>
       </item>
@@ -853,7 +858,7 @@
            </size>
           </property>
           <property name="toolTip">
-           <string>Outflow boundary condition type</string>
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Outflow Boundary condition type.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
           </property>
           <property name="maxVisibleItems">
            <number>15</number>
@@ -891,6 +896,9 @@
         </item>
         <item row="2" column="0">
          <widget class="QLabel" name="outflow_type_label">
+          <property name="toolTip">
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Outflow Boundary condition type.&lt;/span&gt;&lt;/p&gt;&lt;p&gt;0 = No outflow&lt;/p&gt;&lt;p&gt;1 = Floodplain outflow (no hydrograph)&lt;/p&gt;&lt;p&gt;2 = Channel outflow (no hydrograph)&lt;/p&gt;&lt;p&gt;3 = Floodplain and channel outflow (no hydrograph)&lt;/p&gt;&lt;p&gt;4 = Outflow with hydrograph&lt;/p&gt;&lt;p&gt;5 = Time-stage for floodplain&lt;/p&gt;&lt;p&gt;6 = Time-stage for channel&lt;/p&gt;&lt;p&gt;7 = Time-stage for floodplain and free floodplain and channel&lt;/p&gt;&lt;p&gt;8 = Time-stage for floodplain and free floodplain and channel&lt;/p&gt;&lt;p&gt;9 = Channel Depth-Discharge Power Regression (Q(h) params)&lt;/p&gt;&lt;p&gt;10 = Channel depth-discharge (Q(h) table)&lt;/p&gt;&lt;p&gt;Range: 0 - 10&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+          </property>
           <property name="text">
            <string>Type</string>
           </property>
@@ -918,6 +926,9 @@
         </item>
         <item row="1" column="0">
          <widget class="QLabel" name="outflow_name_label">
+          <property name="toolTip">
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Outflow boundary condition name.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+          </property>
           <property name="text">
            <string>Name</string>
           </property>
@@ -961,6 +972,9 @@
         </item>
         <item row="5" column="0">
          <widget class="QLabel" name="outflow_hydro_label">
+          <property name="toolTip">
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;OUTCHAR&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Character line identifier that initializes each line in the data file.&lt;/p&gt;&lt;p&gt;Variable is case sensitive. &lt;/p&gt;&lt;p&gt;It must be upper case.&lt;/p&gt;&lt;p&gt;Range:&lt;/p&gt;&lt;p&gt;K, H, T&lt;/p&gt;&lt;p&gt;N, S, O &lt;/p&gt;&lt;p&gt;O1 - O9&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+          </property>
           <property name="text">
            <string>Hydrograph </string>
           </property>
@@ -969,7 +983,7 @@
         <item row="5" column="1">
          <widget class="QComboBox" name="outflow_hydro_cbo">
           <property name="toolTip">
-           <string>Outflow output hydrograph</string>
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;OUTCHAR&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
           </property>
          </widget>
         </item>
@@ -992,7 +1006,7 @@
            <bool>false</bool>
           </property>
           <property name="toolTip">
-           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;STA_TIME(J)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Array of time intervals (hrs) for the grid element stage-time relationship.&lt;/p&gt;&lt;p&gt;Range: 0.0 - No upper limit&lt;/p&gt;&lt;p&gt;500 pairs&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;STA_TIME(J)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(hrs)&lt;/p&gt;&lt;p&gt;Array of time intervals for the grid element stage-time relationship.&lt;/p&gt;&lt;p&gt;Range: 0.0 - No upper limit&lt;/p&gt;&lt;p&gt;500 pairs&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
           </property>
           <property name="text">
            <string>Time series</string>
@@ -1119,11 +1133,7 @@
          </widget>
         </item>
         <item row="1" column="1" colspan="10">
-         <widget class="QComboBox" name="outflow_bc_name_cbo">
-          <property name="toolTip">
-           <string>Outflow boundary condition name</string>
-          </property>
-         </widget>
+         <widget class="QComboBox" name="outflow_bc_name_cbo"/>
         </item>
        </layout>
       </item>
