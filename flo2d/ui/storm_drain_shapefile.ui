@@ -47,7 +47,7 @@
       <cursorShape>ArrowCursor</cursorShape>
      </property>
      <property name="currentIndex">
-      <number>4</number>
+      <number>1</number>
      </property>
      <widget class="QWidget" name="inlets_tab">
       <property name="sizePolicy">
@@ -1945,6 +1945,9 @@ inlets/junctions</string>
                      <height>0</height>
                     </size>
                    </property>
+                   <property name="toolTip">
+                    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Flap Gate &lt;/span&gt;&lt;/p&gt;&lt;p&gt;YES if a flap gate exists which prevents backflow through the pump, or NO if no flap gate exists. &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                   </property>
                    <property name="text">
                     <string>Flap Gate</string>
                    </property>
@@ -1972,6 +1975,9 @@ inlets/junctions</string>
                      <width>16777215</width>
                      <height>22</height>
                     </size>
+                   </property>
+                   <property name="toolTip">
+                    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Flap Gate &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                    </property>
                    <property name="maxVisibleItems">
                     <number>20</number>
