@@ -47,7 +47,7 @@
       <cursorShape>ArrowCursor</cursorShape>
      </property>
      <property name="currentIndex">
-      <number>6</number>
+      <number>2</number>
      </property>
      <widget class="QWidget" name="inlets_tab">
       <property name="sizePolicy">
@@ -3371,6 +3371,9 @@ inlets/junctions</string>
                 <height>22</height>
                </size>
               </property>
+              <property name="toolTip">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Suction Head &lt;/span&gt;&lt;/p&gt;&lt;p&gt;(inches or mm)&lt;/p&gt;&lt;p&gt;Average value of soil capillary suction along the wetting front.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
               <property name="text">
                <string>Suction Head</string>
               </property>
@@ -3398,6 +3401,9 @@ inlets/junctions</string>
                 <width>16777215</width>
                 <height>22</height>
                </size>
+              </property>
+              <property name="toolTip">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Conductivity &lt;/span&gt;&lt;/p&gt;&lt;p&gt;(in/hr or mm/hr) &lt;/p&gt;&lt;p&gt;Soil saturated hydraulic conductivity.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
               <property name="text">
                <string>Conductivity</string>
@@ -3431,6 +3437,9 @@ inlets/junctions</string>
                <font>
                 <italic>false</italic>
                </font>
+              </property>
+              <property name="toolTip">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Initial Deficit &lt;/span&gt;&lt;/p&gt;&lt;p&gt;Fraction of soil volume that is initially dry (i.e., difference between soil porosity and initial moisture content). &lt;/p&gt;&lt;p&gt;The initial deficit for a completely drained soil is the difference between the soil's porosity and its field capacity.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
               <property name="text">
                <string>Initial Deficit</string>
@@ -3667,6 +3676,9 @@ inlets/junctions</string>
                 <height>22</height>
                </size>
               </property>
+              <property name="toolTip">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Suction Head &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
               <property name="maxVisibleItems">
                <number>20</number>
               </property>
@@ -3692,6 +3704,9 @@ inlets/junctions</string>
                 <height>22</height>
                </size>
               </property>
+              <property name="toolTip">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Conductivity &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
               <property name="maxVisibleItems">
                <number>20</number>
               </property>
@@ -3716,6 +3731,9 @@ inlets/junctions</string>
                 <width>16777215</width>
                 <height>22</height>
                </size>
+              </property>
+              <property name="toolTip">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Initial Deficit &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
               <property name="maxVisibleItems">
                <number>20</number>
