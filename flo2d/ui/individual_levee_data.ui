@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>513</width>
-    <height>548</height>
+    <height>608</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -885,7 +885,7 @@
       <bool>false</bool>
      </property>
      <property name="collapsed">
-      <bool>true</bool>
+      <bool>false</bool>
      </property>
      <property name="saveCollapsedState">
       <bool>false</bool>
@@ -961,7 +961,7 @@
         <item row="1" column="0">
          <widget class="QLabel" name="label_2">
           <property name="toolTip">
-           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;FAILTIME(LF,LD)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(hrs)&lt;/p&gt;&lt;p&gt;The duration that the levee will fail after the FAILEVEL elevation is exceeded by the flow depth.&lt;/p&gt;&lt;p&gt;If FAILTIME = 0.0, the level erosion begins immediately when pipe elevation is exceeded.&lt;/p&gt;&lt;p&gt;If FAILTIME &amp;gt; 0.0, the start time for time to 1 ft and time to 2 ft is based on the model start time 0.0 hr.&lt;/p&gt;&lt;p&gt;If FAILTIME &amp;lt; 0.0, the start time for time to 1 ft and time to 2 ft is the first dam or levee breach time for multiple breaches.&lt;/p&gt;&lt;p&gt;If FAILTIME = -99.0, the start time for time to 1 ft and time to 2 is the first&lt;/p&gt;&lt;p&gt;dam or levee breach time for multiple breaches and FAILTIME is reset to 0.0 hrs.&lt;/p&gt;&lt;p&gt;Range: -99.0 to SIMUL-99.0&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;FAILTIME(LF,LD)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(hrs)&lt;/p&gt;&lt;p&gt;The duration that the levee will fail after the FAILEVEL elevation is exceeded by the flow depth.&lt;/p&gt;&lt;p&gt;If FAILTIME = 0.0, the level erosion begins immediately when pipe elevation is exceeded.&lt;/p&gt;&lt;p&gt;If FAILTIME &amp;gt; 0.0, the start time for time to 1 ft and time to 2 ft is based on the model start time 0.0 hr.&lt;/p&gt;&lt;p&gt;If FAILTIME &amp;lt; 0.0, the start time for time to 1 ft and time to 2 ft is the first dam or levee breach time for multiple breaches.&lt;/p&gt;&lt;p&gt;If FAILTIME = -99.0, the start time for time to 1 ft and time to 2 is the first&lt;/p&gt;&lt;p&gt;dam or levee breach time for multiple breaches and FAILTIME is reset to 0.0 hrs.&lt;/p&gt;&lt;p&gt;Range: -99.0 to SIMUL -99.0&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
           </property>
           <property name="text">
            <string>Duration (hrs) for failure after failure levee exceeded</string>
