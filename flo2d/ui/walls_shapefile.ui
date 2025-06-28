@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>420</width>
-    <height>517</height>
+    <width>450</width>
+    <height>557</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -53,6 +53,9 @@
             <italic>false</italic>
            </font>
           </property>
+          <property name="toolTip">
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;LEVCREST(L,IM)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(ft or m) &lt;/p&gt;&lt;p&gt;The elevation of the levee crest.&lt;/p&gt;&lt;p&gt;.01 - 30,000 ft&lt;/p&gt;&lt;p&gt;.25 - 9,000 m&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+          </property>
           <property name="text">
            <string>Crest Elevation</string>
           </property>
@@ -74,6 +77,9 @@
             <width>193</width>
             <height>20</height>
            </size>
+          </property>
+          <property name="toolTip">
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;LEVCREST(L,IM)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
           </property>
           <property name="inputMethodHints">
            <set>Qt::ImhNone</set>
@@ -130,6 +136,9 @@
             <italic>false</italic>
            </font>
           </property>
+          <property name="toolTip">
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Name &lt;/span&gt;&lt;/p&gt;&lt;p&gt;Feature name. &lt;/p&gt;&lt;p&gt;The Name field is required by the dialog box, but the values can be null.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+          </property>
           <property name="text">
            <string>Name</string>
           </property>
@@ -151,6 +160,9 @@
             <width>193</width>
             <height>20</height>
            </size>
+          </property>
+          <property name="toolTip">
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Name &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
           </property>
           <property name="inputMethodHints">
            <set>Qt::ImhNone</set>
@@ -207,6 +219,9 @@
             <italic>false</italic>
            </font>
           </property>
+          <property name="toolTip">
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Correction&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(ft or m)&lt;/p&gt;&lt;p&gt;Elevation correction.&lt;/p&gt;&lt;p&gt;Null correction is OK.&lt;/p&gt;&lt;p&gt;The correction field is ignored if it is NULL.&lt;/p&gt;&lt;p&gt;If Elevation is not NULL and Correction is positive, it will be added to the elevation of the wall.&lt;/p&gt;&lt;p&gt;If Elevation is not NULL and Correction is negative, it will be subtracted from the elevation of the wall.&lt;/p&gt;&lt;p&gt;If Elevation is NULL and Correction is filled, the Correction is used as a wall height and is applied to a wall elevation calculation using the grid max grid element + the wall height.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+          </property>
           <property name="text">
            <string>Correction</string>
           </property>
@@ -228,6 +243,9 @@
             <width>193</width>
             <height>20</height>
            </size>
+          </property>
+          <property name="toolTip">
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Correction&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
           </property>
           <property name="inputMethodHints">
            <set>Qt::ImhNone</set>
@@ -303,6 +321,9 @@
                <italic>false</italic>
               </font>
              </property>
+             <property name="toolTip">
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;LEVBASE(LF,LD)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(ft or m)&lt;/p&gt;&lt;p&gt;The prescribed final failure elevation. Vertical failure growth stops at this elevation.&lt;/p&gt;&lt;p&gt;Set LEVBASE = 0 if the levee fails to the floodplain elevation.&lt;/p&gt;&lt;p&gt;Range: 0 - No upper limit&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+             </property>
              <property name="text">
               <string>Base Elevation</string>
              </property>
@@ -324,6 +345,9 @@
                <width>193</width>
                <height>20</height>
               </size>
+             </property>
+             <property name="toolTip">
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;LEVBASE(LF,LD)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
              </property>
              <property name="maxVisibleItems">
               <number>15</number>
@@ -360,6 +384,9 @@
                <italic>false</italic>
               </font>
              </property>
+             <property name="toolTip">
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;FAILWIDTHMAX (LF,LD)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(ft or m)&lt;/p&gt;&lt;p&gt;The maximum breach width. The breach can extend into more than one grid element direction if necessary and the failure width can be larger than one grid element.&lt;/p&gt;&lt;p&gt;Range: 0 - No upper limit&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+             </property>
              <property name="text">
               <string>Maximum Width</string>
              </property>
@@ -381,6 +408,9 @@
                <width>193</width>
                <height>20</height>
               </size>
+             </property>
+             <property name="toolTip">
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;FAILWIDTHMAX (LF,LD)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
              </property>
              <property name="maxVisibleItems">
               <number>15</number>
@@ -439,6 +469,9 @@
                <height>20</height>
               </size>
              </property>
+             <property name="toolTip">
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;FAILTIME(LF,LD)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+             </property>
              <property name="inputMethodHints">
               <set>Qt::ImhNone</set>
              </property>
@@ -477,6 +510,9 @@
             <layout class="QGridLayout" name="gridLayout_2">
              <item row="0" column="0">
               <widget class="QRadioButton" name="fail_elev_radio">
+               <property name="toolTip">
+                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;FAILEVEL(LF,LD)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;The maximum elevation of the prescribed levee failure if different than the levee crest (LEVELEV). &lt;/p&gt;&lt;p&gt;Set FAILEVEL = 0 to fail the levee when over topped.&lt;/p&gt;&lt;p&gt;Range: 0.01 - No upper limit&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               </property>
                <property name="text">
                 <string>Failure Elevation</string>
                </property>
@@ -487,6 +523,9 @@
              </item>
              <item row="1" column="0">
               <widget class="QRadioButton" name="fail_depth_radio">
+               <property name="toolTip">
+                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;FAILEVEL(LF,LD)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;The maximum elevation of the prescribed levee failure if different than the levee crest (LEVELEV). &lt;/p&gt;&lt;p&gt;Set FAILEVEL = 0 to fail the levee when over topped.&lt;/p&gt;&lt;p&gt;Range: 0.01 - No upper limit&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               </property>
                <property name="text">
                 <string>Failure Depth</string>
                </property>
@@ -509,6 +548,9 @@
                  <width>193</width>
                  <height>20</height>
                 </size>
+               </property>
+               <property name="toolTip">
+                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;FAILEVEL(LF,LD)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                </property>
                <property name="inputMethodHints">
                 <set>Qt::ImhNone</set>
@@ -553,6 +595,9 @@
                <italic>false</italic>
               </font>
              </property>
+             <property name="toolTip">
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;FAILRATE(LF,LD)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(ft/hr or m/hr)&lt;/p&gt;&lt;p&gt;The rate of vertical levee failure. Set failrate = 0 for wall collapse.&lt;/p&gt;&lt;p&gt;Range:&lt;/p&gt;&lt;p&gt;0.01 - 1000 ft/hr&lt;/p&gt;&lt;p&gt;0.25 - 300 m/hr&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+             </property>
              <property name="text">
               <string>Vertical Fail Rate</string>
              </property>
@@ -574,6 +619,9 @@
                <width>193</width>
                <height>20</height>
               </size>
+             </property>
+             <property name="toolTip">
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;FAILRATE(LF,LD)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
              </property>
              <property name="maxVisibleItems">
               <number>15</number>
@@ -616,6 +664,9 @@
                <italic>false</italic>
               </font>
              </property>
+             <property name="toolTip">
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;FAILWIDRATE (LF,LD)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(ft/hr or m/hr)&lt;/p&gt;&lt;p&gt;The rate at which the levee breach widens. Set failwidrate = 0 for wall collapse.&lt;/p&gt;&lt;p&gt;Range:&lt;/p&gt;&lt;p&gt;0.01 - 1000 ft/hr&lt;/p&gt;&lt;p&gt;0.25 - 300 m/hr&lt;br/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+             </property>
              <property name="text">
               <string>Horizontal Fail Rate</string>
              </property>
@@ -637,6 +688,9 @@
                <width>193</width>
                <height>20</height>
               </size>
+             </property>
+             <property name="toolTip">
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;FAILWIDRATE (LF,LD)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
              </property>
              <property name="maxVisibleItems">
               <number>15</number>
@@ -762,7 +816,7 @@ User Levee Lines layer</string>
   <customwidget>
    <class>QgsFieldComboBox</class>
    <extends>QComboBox</extends>
-   <header>qgis.gui</header>
+   <header>qgsfieldcombobox.h</header>
   </customwidget>
  </customwidgets>
  <resources/>
