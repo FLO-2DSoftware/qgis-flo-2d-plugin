@@ -348,7 +348,7 @@
      <item>
       <widget class="QLabel" name="label_h">
        <property name="toolTip">
-        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;DEPEX(L)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(ft or m)&lt;/p&gt;&lt;p&gt;Optional curb height for individual grid elements that supercedes the global curb height DEPX. Set DEPEX(L) = 0.0 to use DEPX.&lt;/p&gt;&lt;p&gt;Range:&lt;/p&gt;&lt;p&gt;0.01 - 2 ft&lt;/p&gt;&lt;p&gt;0.25 - 0.6 m&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;DEPEX(L)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(ft or m)&lt;/p&gt;&lt;p&gt;Optional curb height for individual grid elements that supercedes the global curb height DEPX. Set DEPEX(L) = 0.0 to use DEPX.&lt;/p&gt;&lt;p&gt;Range:&lt;/p&gt;&lt;p&gt;0.01 - 2 ft&lt;/p&gt;&lt;p&gt;0.003048 - 0.6096 m&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
        </property>
        <property name="text">
         <string>Curb height</string>
