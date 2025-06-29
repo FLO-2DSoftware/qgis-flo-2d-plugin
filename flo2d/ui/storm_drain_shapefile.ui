@@ -8354,7 +8354,7 @@ inlets/junctions</string>
                  </font>
                 </property>
                 <property name="toolTip">
-                 <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Weir Shape&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Physical crest Geometry. &lt;/p&gt;&lt;p&gt;Example: Rectangular, Triangular, Trapezoidal.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                 <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;WShape&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Physical crest Geometry. &lt;/p&gt;&lt;p&gt;Example: Rectangular, Triangular, Trapezoidal.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                 </property>
                 <property name="text">
                  <string>Shape</string>
@@ -8537,7 +8537,7 @@ inlets/junctions</string>
                  </size>
                 </property>
                 <property name="toolTip">
-                 <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Weir Shape&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                 <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;WShape&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                 </property>
                 <property name="maxVisibleItems">
                  <number>20</number>
