@@ -47,9 +47,9 @@
       <property name="geometry">
        <rect>
         <x>0</x>
-        <y>0</y>
-        <width>829</width>
-        <height>521</height>
+        <y>-351</y>
+        <width>804</width>
+        <height>862</height>
        </rect>
       </property>
       <layout class="QGridLayout" name="gridLayout_29">
@@ -61,7 +61,7 @@
             <string>Time Control and Report Variables</string>
            </property>
            <property name="collapsed">
-            <bool>true</bool>
+            <bool>false</bool>
            </property>
            <property name="saveCollapsedState">
             <bool>false</bool>
@@ -423,9 +423,7 @@
                     </size>
                    </property>
                    <property name="toolTip">
-                    <string>Note: Start and end date/time should 
-be synchronized with simulation time 
-and with SD time series</string>
+                    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Analysis Start Time&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                    </property>
                    <property name="displayFormat">
                     <string>HH:mm:ss</string>
@@ -456,9 +454,7 @@ and with SD time series</string>
                     </size>
                    </property>
                    <property name="toolTip">
-                    <string>Note: Start and end date/time should 
-be synchronized with simulation time 
-and with SD time series</string>
+                    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Reporting Start Date&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                    </property>
                    <property name="displayFormat">
                     <string>MM/dd/yyyy</string>
@@ -478,6 +474,9 @@ and with SD time series</string>
                      <width>16777215</width>
                      <height>30</height>
                     </size>
+                   </property>
+                   <property name="toolTip">
+                    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Analysis End Date&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Enter the date when the simulation is to end. &lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-style:italic;&quot;&gt;Note: Start and end date/time should be synchronized with simulation time and with SD time series.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                    </property>
                    <property name="text">
                     <string>END_DATE</string>
@@ -511,9 +510,7 @@ and with SD time series</string>
                     </size>
                    </property>
                    <property name="toolTip">
-                    <string>Note: Start and end date/time should 
-be synchronized with simulation time 
-and with SD time series</string>
+                    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Analysis Start Date&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                    </property>
                    <property name="displayFormat">
                     <string>MM/dd/yyyy</string>
@@ -533,6 +530,9 @@ and with SD time series</string>
                      <width>16777215</width>
                      <height>30</height>
                     </size>
+                   </property>
+                   <property name="toolTip">
+                    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Analysis Start Time&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Enter the time (hour/min/sec) of day when the simulation begins. &lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-style:italic;&quot;&gt;Note: Start and end date/time should be synchronized with simulation time and with SD time series.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                    </property>
                    <property name="text">
                     <string>START_TIME</string>
@@ -566,9 +566,7 @@ and with SD time series</string>
                     </size>
                    </property>
                    <property name="toolTip">
-                    <string>Note: Start and end date/time should 
-be synchronized with simulation time 
-and with SD time series</string>
+                    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Analysis End Date&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                    </property>
                    <property name="displayFormat">
                     <string>MM/dd/yyyy</string>
@@ -588,6 +586,9 @@ and with SD time series</string>
                      <width>16777215</width>
                      <height>30</height>
                     </size>
+                   </property>
+                   <property name="toolTip">
+                    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Analysis End Time&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Enter the time when the simulation is to end. &lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-style:italic;&quot;&gt;Note: Start and end date/time should be synchronized with simulation time and with SD time series.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                    </property>
                    <property name="text">
                     <string>END_TIME</string>
@@ -616,6 +617,9 @@ and with SD time series</string>
                      <width>16777215</width>
                      <height>30</height>
                     </size>
+                   </property>
+                   <property name="toolTip">
+                    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Analysis Start Date&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Enter the date (month/day/year) when the simulation begins. &lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-style:italic;&quot;&gt;Note: Start and end date/time should be synchronized with simulation time and with SD time series.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                    </property>
                    <property name="text">
                     <string>START_DATE</string>
@@ -649,9 +653,7 @@ and with SD time series</string>
                     </size>
                    </property>
                    <property name="toolTip">
-                    <string>Note: Start and end date/time should 
-be synchronized with simulation time 
-and with SD time series</string>
+                    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Analysis End Time&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                    </property>
                    <property name="displayFormat">
                     <string>HH:mm:ss</string>
@@ -671,6 +673,9 @@ and with SD time series</string>
                      <width>16777215</width>
                      <height>30</height>
                     </size>
+                   </property>
+                   <property name="toolTip">
+                    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Reporting Start Date&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Enter the date when reporting of simulation results is to begin. &lt;/p&gt;&lt;p&gt;This must be on or after the simulation starting date and time.&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-style:italic;&quot;&gt;Note: Start and end date/time should be synchronized with simulation time and with SD time series.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                    </property>
                    <property name="text">
                     <string>REPORT_START_DATE</string>
@@ -693,6 +698,9 @@ and with SD time series</string>
                      <width>16777215</width>
                      <height>30</height>
                     </size>
+                   </property>
+                   <property name="toolTip">
+                    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Reporting Start Time&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Enter the time of day when reporting of simulation results is to begin. &lt;/p&gt;&lt;p&gt;This must be on or after the simulation starting date and time.&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-style:italic;&quot;&gt;Note: Start and end date/time should be synchronized with simulation time and with SD time series.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                    </property>
                    <property name="text">
                     <string>REPORT_START_TIME</string>
@@ -726,9 +734,7 @@ and with SD time series</string>
                     </size>
                    </property>
                    <property name="toolTip">
-                    <string>Note: Start and end date/time should 
-be synchronized with simulation time 
-and with SD time series</string>
+                    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Reporting Start Time&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                    </property>
                    <property name="displayFormat">
                     <string>HH:mm:ss</string>
@@ -754,6 +760,9 @@ and with SD time series</string>
                      <width>16777215</width>
                      <height>30</height>
                     </size>
+                   </property>
+                   <property name="toolTip">
+                    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Reporting Time Step &lt;/span&gt;&lt;/p&gt;&lt;p&gt;Enter the time interval for reporting of computed results. &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                    </property>
                    <property name="text">
                     <string>REPORT_STEP</string>
@@ -786,6 +795,9 @@ and with SD time series</string>
                      <height>30</height>
                     </size>
                    </property>
+                   <property name="toolTip">
+                    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Reporting Time Step &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                   </property>
                    <property name="displayFormat">
                     <string>HH:mm:ss</string>
                    </property>
@@ -812,7 +824,7 @@ and with SD time series</string>
             <string>Advanced and Hardwired Options</string>
            </property>
            <property name="collapsed">
-            <bool>true</bool>
+            <bool>false</bool>
            </property>
            <property name="saveCollapsedState">
             <bool>false</bool>
@@ -863,6 +875,9 @@ and with SD time series</string>
                        <width>135</width>
                        <height>30</height>
                       </size>
+                     </property>
+                     <property name="toolTip">
+                      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Force Main Equation &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                      </property>
                      <property name="sizeAdjustPolicy">
                       <enum>QComboBox::AdjustToContents</enum>
@@ -962,6 +977,9 @@ and with SD time series</string>
                        <height>30</height>
                       </size>
                      </property>
+                     <property name="toolTip">
+                      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Skip Steady State Periods &lt;/span&gt;&lt;/p&gt;&lt;p&gt;Setting this option to YES will make the simulation use the most recently computed conveyance system flows during a steady state period instead of computing a new flow routing solution. &lt;/p&gt;&lt;p&gt;A time step is considered to be in steady state if the change in external inflow at each node is below 0.5 cfs and the relative difference between total system inflow and outflow is below 5%. &lt;/p&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                     </property>
                      <property name="text">
                       <string>SKIP_STEADY_STATE</string>
                      </property>
@@ -992,6 +1010,9 @@ and with SD time series</string>
                        <width>135</width>
                        <height>30</height>
                       </size>
+                     </property>
+                     <property name="toolTip">
+                      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Skip Steady State Periods &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                      </property>
                      <item>
                       <property name="text">
@@ -1024,6 +1045,9 @@ and with SD time series</string>
                        <width>16777215</width>
                        <height>30</height>
                       </size>
+                     </property>
+                     <property name="toolTip">
+                      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Force Main Equation &lt;/span&gt;&lt;/p&gt;&lt;p&gt;Selects which equation will be used to compute friction losses during pressurized flow for conduits that have been assigned a Circular Force Main cross-section. &lt;/p&gt;&lt;p&gt;The choices are either the Hazen-Williams equation or the Darcy-Weisbach equation. &lt;/p&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                      </property>
                      <property name="text">
                       <string>FORCE_MAIN_EQUATION</string>
@@ -1440,8 +1464,8 @@ p, li { white-space: pre-wrap; }
                <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
 &lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
 p, li { white-space: pre-wrap; }
-&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'MS Shell Dlg 2'; font-size:8.25pt; font-weight:400; font-style:normal;&quot;&gt;
-&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;INP file created by FLO-2D&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'MS Shell Dlg 2'; font-size:7.8pt; font-weight:400; font-style:normal;&quot;&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:8.25pt;&quot;&gt;INP file created by FLO-2D&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
              </widget>
             </item>
