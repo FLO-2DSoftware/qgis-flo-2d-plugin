@@ -68,10 +68,10 @@
      <widget class="QWidget" name="scrollAreaWidgetContents">
       <property name="geometry">
        <rect>
-        <x>-11</x>
-        <y>-255</y>
-        <width>460</width>
-        <height>496</height>
+        <x>0</x>
+        <y>0</y>
+        <width>454</width>
+        <height>262</height>
        </rect>
       </property>
       <layout class="QGridLayout" name="gridLayout_6">
@@ -81,7 +81,7 @@
           <string>Global Shell Data</string>
          </property>
          <property name="collapsed">
-          <bool>false</bool>
+          <bool>true</bool>
          </property>
          <property name="saveCollapsedState">
           <bool>false</bool>
@@ -283,7 +283,7 @@
           <string>Global Miscellaneous Data</string>
          </property>
          <property name="collapsed">
-          <bool>false</bool>
+          <bool>true</bool>
          </property>
          <property name="saveCollapsedState">
           <bool>false</bool>
@@ -604,7 +604,7 @@
           <string>Global Core Data</string>
          </property>
          <property name="collapsed">
-          <bool>false</bool>
+          <bool>true</bool>
          </property>
          <property name="saveCollapsedState">
           <bool>false</bool>
