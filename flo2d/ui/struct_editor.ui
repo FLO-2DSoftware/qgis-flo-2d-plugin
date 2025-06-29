@@ -782,7 +782,7 @@
           </size>
          </property>
          <property name="toolTip">
-          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;CDIAMETER(I,J)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(ft or m)&lt;/p&gt;&lt;p&gt;Circular culvert diameter. &lt;/p&gt;&lt;p&gt;For the generalized culvert equations CDIAMETER is the circular culvert diameter or the box culvert height.&lt;/p&gt;&lt;p&gt;Range: 0.1 - No upper limit&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;CDIAMETER(I,J)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(ft or m)&lt;/p&gt;&lt;p&gt;Circular culvert diameter. &lt;/p&gt;&lt;p&gt;For the generalized culvert equations CDIAMETER is the circular culvert diameter or the box culvert height.&lt;/p&gt;&lt;p&gt;Range:&lt;/p&gt;&lt;p&gt;0.1 - No upper limit (ft)&lt;/p&gt;&lt;p&gt;0.03048 - No upper limit (m)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
          </property>
          <property name="text">
           <string>Circular diameter or box culvert height</string>
@@ -804,7 +804,7 @@
           </size>
          </property>
          <property name="toolTip">
-          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;HEADREFEL(I)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(ft or m)&lt;/p&gt;&lt;p&gt;Reference elevation above which the headwater depth is determined for either the discharge rating curve or rating table.&lt;/p&gt;&lt;p&gt;Set HEADREFEL(I) = 0.0 to use the existing channel bed or floodplain elevation for the reference elevation to compute the headwater depth.&lt;/p&gt;&lt;p&gt;Range:&lt;/p&gt;&lt;p&gt;.01 - 30,000 ft&lt;/p&gt;&lt;p&gt;.25 - 9,000 m&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;HEADREFEL(I)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(ft or m)&lt;/p&gt;&lt;p&gt;Reference elevation above which the headwater depth is determined for either the discharge rating curve or rating table.&lt;/p&gt;&lt;p&gt;Set HEADREFEL(I) = 0.0 to use the existing channel bed or floodplain elevation for the reference elevation to compute the headwater depth.&lt;/p&gt;&lt;p&gt;Range:&lt;/p&gt;&lt;p&gt;.01 - 30,000 ft&lt;/p&gt;&lt;p&gt;.003 - 9,000 m&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
          </property>
          <property name="text">
           <string>Reference elevation for headwater</string>
@@ -826,7 +826,7 @@
           </size>
          </property>
          <property name="toolTip">
-          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;CLENGTH(I)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(ft or m)&lt;/p&gt;&lt;p&gt;Culvert length.&lt;/p&gt;&lt;p&gt;When a long culvert is simulated (&amp;gt;500 ft or 152.4 m), CLENGTH must be assigned to that culvert’s length to activate the long culvert routing routine.&lt;/p&gt;&lt;p&gt;Range:&lt;/p&gt;&lt;p&gt;1 - No upper limit (ft)&lt;/p&gt;&lt;p&gt;1 - No upper limit (m)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;CLENGTH(I)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(ft or m)&lt;/p&gt;&lt;p&gt;Culvert length.&lt;/p&gt;&lt;p&gt;When a long culvert is simulated (&amp;gt;500 ft or 152.4 m), CLENGTH must be assigned to that culvert’s length to activate the long culvert routing routine.&lt;/p&gt;&lt;p&gt;Range:&lt;/p&gt;&lt;p&gt;1 - No upper limit (ft)&lt;/p&gt;&lt;p&gt;0.3048 - No upper limit (m)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
          </property>
          <property name="text">
           <string>Culvert or conduit length</string>
