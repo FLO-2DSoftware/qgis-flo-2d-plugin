@@ -48,8 +48,8 @@
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>804</width>
-        <height>550</height>
+        <width>825</width>
+        <height>511</height>
        </rect>
       </property>
       <layout class="QGridLayout" name="gridLayout_29">
@@ -848,7 +848,7 @@
             <string>Advanced and Hardwired Options</string>
            </property>
            <property name="collapsed">
-            <bool>false</bool>
+            <bool>true</bool>
            </property>
            <property name="saveCollapsedState">
             <bool>false</bool>
