@@ -58,7 +58,7 @@
           <item row="0" column="0">
            <widget class="QToolButton" name="add_user_res_btn">
             <property name="toolTip">
-             <string>Add user reservoir</string>
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Add user reservoir.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
             </property>
             <property name="text">
              <string/>
@@ -81,7 +81,7 @@
           <item row="0" column="3">
            <widget class="QToolButton" name="schem_res_btn">
             <property name="toolTip">
-             <string>Schematize initial conditions</string>
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Schematize reservoir.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
             </property>
             <property name="text">
              <string>...</string>
@@ -107,7 +107,7 @@
              </size>
             </property>
             <property name="toolTip">
-             <string>Revert unsaved changes for reservoirs</string>
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Revert unsaved changes for reservoirs.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
             </property>
             <property name="text">
              <string/>
@@ -126,6 +126,9 @@
           </item>
           <item row="0" column="4">
            <widget class="QToolButton" name="delete_schem_res_btn">
+            <property name="toolTip">
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Delete schematized reservoir.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            </property>
             <property name="text">
              <string>...</string>
             </property>
@@ -143,6 +146,9 @@
           </item>
           <item row="0" column="5">
            <widget class="QToolButton" name="help_res_btn">
+            <property name="toolTip">
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Resvoir Help.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            </property>
             <property name="text">
              <string>...</string>
             </property>
@@ -211,6 +217,9 @@
                    <width>0</width>
                    <height>0</height>
                   </size>
+                 </property>
+                 <property name="toolTip">
+                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Channel segment.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                  </property>
                  <property name="text">
                   <string>Channel segment</string>
@@ -284,7 +293,7 @@
                   </size>
                  </property>
                  <property name="toolTip">
-                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;TAILINGSDEPTH&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(ft or m)&lt;/p&gt;&lt;p&gt;Tailings depth for a specific grid element.&lt;/p&gt;&lt;p&gt;Range: 0.01 - No upper limit&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;TAILINGSDEPTH&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(ft or m)&lt;/p&gt;&lt;p&gt;Tailings depth for a specific grid element.&lt;/p&gt;&lt;p&gt;Range: &lt;/p&gt;&lt;p&gt;0.01 - No upper limit (ft)&lt;/p&gt;&lt;p&gt;0.003048 - No upper limit (m)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                  </property>
                  <property name="text">
                   <string>Initial depth</string>
@@ -401,7 +410,7 @@
                 </size>
                </property>
                <property name="toolTip">
-                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Reservoir Name&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Reservoir name.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                </property>
                <property name="text">
                 <string>Reservoir name</string>
@@ -560,6 +569,9 @@
          <layout class="QGridLayout" name="gridLayout_20">
           <item row="0" column="0">
            <widget class="QToolButton" name="add_point_tailings_btn">
+            <property name="toolTip">
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Add user tailings node.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            </property>
             <property name="text">
              <string>...</string>
             </property>
@@ -594,7 +606,7 @@
           <item row="0" column="1">
            <widget class="QToolButton" name="add_tailings_btn">
             <property name="toolTip">
-             <string>Add tailings</string>
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Add user tailings polygon.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
             </property>
             <property name="text">
              <string/>
@@ -616,6 +628,9 @@
           </item>
           <item row="0" column="2">
            <widget class="QToolButton" name="revert_tal_changes_btn">
+            <property name="toolTip">
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Revert unsaved changes for tailings.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            </property>
             <property name="text">
              <string>...</string>
             </property>
@@ -633,6 +648,9 @@
           </item>
           <item row="0" column="5">
            <widget class="QToolButton" name="delete_schem_tal_btn">
+            <property name="toolTip">
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Delete schematized tailings.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            </property>
             <property name="text">
              <string>...</string>
             </property>
@@ -650,6 +668,9 @@
           </item>
           <item row="0" column="4">
            <widget class="QToolButton" name="schem_tal_btn">
+            <property name="toolTip">
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Schematize initial conditions (tailings).&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            </property>
             <property name="text">
              <string>...</string>
             </property>
@@ -667,6 +688,9 @@
           </item>
           <item row="0" column="6">
            <widget class="QToolButton" name="help_tal_btn">
+            <property name="toolTip">
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Tailings Help.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            </property>
             <property name="text">
              <string>...</string>
             </property>
@@ -712,7 +736,7 @@
                   </size>
                  </property>
                  <property name="toolTip">
-                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Tailing Stack Name&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Tailings stack name.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                  </property>
                  <property name="text">
                   <string>Tailings stack</string>
@@ -725,7 +749,7 @@
                   <bool>true</bool>
                  </property>
                  <property name="toolTip">
-                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;CVTFP(J)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Concentration of tailing material for a single grid element.&lt;/p&gt;&lt;p&gt;Range: 0 - 0.65&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;CVTFP(J)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(dimensionless)&lt;/p&gt;&lt;p&gt;Concentration of tailing material for a single grid element.&lt;/p&gt;&lt;p&gt;Range: 0 - 0.65&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                  </property>
                  <property name="text">
                   <string>Concentration</string>
@@ -1039,7 +1063,7 @@
                 </size>
                </property>
                <property name="toolTip">
-                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Tailing Reservoir Name&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Tailing reservoir name.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                </property>
                <property name="text">
                 <string>Tailing reservoir</string>
