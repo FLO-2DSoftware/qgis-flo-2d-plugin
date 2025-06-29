@@ -95,8 +95,8 @@
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>952</width>
-        <height>527</height>
+        <width>948</width>
+        <height>518</height>
        </rect>
       </property>
       <property name="sizePolicy">
@@ -129,7 +129,7 @@
             </size>
            </property>
            <property name="currentIndex">
-            <number>0</number>
+            <number>1</number>
            </property>
            <property name="usesScrollButtons">
             <bool>true</bool>
@@ -1723,7 +1723,7 @@
                   <string>Floodplain/Channel Display Options</string>
                  </property>
                  <property name="collapsed">
-                  <bool>false</bool>
+                  <bool>true</bool>
                  </property>
                  <property name="saveCollapsedState">
                   <bool>false</bool>
@@ -2261,7 +2261,7 @@
                      </sizepolicy>
                     </property>
                     <property name="toolTip">
-                     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;DEPTOL&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(ft or m)&lt;/p&gt;&lt;p&gt;Tolerance value for the percent change in the flow depth for a given timestep.&lt;/p&gt;&lt;p&gt;When a given element DEPTOL is exceeded, the timestep will be reduced.&lt;/p&gt;&lt;p&gt;If DEPTOL = 0, then the timestep is governed by the Courant numerical stability criteria.&lt;/p&gt;&lt;p&gt;It is recommended that DEPTOL only be used for specific ponded flow conditions where the Courant number is ineffective.&lt;/p&gt;&lt;p&gt;Range: &lt;/p&gt;&lt;p&gt;0.1 - 0.5 ft&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'Google Sans'; font-size:13px; color:#1f1f1f; background-color:#ffffff;&quot;&gt;0.03048 - 0.1524 m&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;DEPTOL&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(ft or m)&lt;/p&gt;&lt;p&gt;Tolerance value for the percent change in the flow depth for a given timestep.&lt;/p&gt;&lt;p&gt;When a given element DEPTOL is exceeded, the timestep will be reduced.&lt;/p&gt;&lt;p&gt;If DEPTOL = 0, then the timestep is governed by the Courant numerical stability criteria.&lt;/p&gt;&lt;p&gt;It is recommended that DEPTOL only be used for specific ponded flow conditions where the Courant number is ineffective.&lt;/p&gt;&lt;p&gt;Range: &lt;/p&gt;&lt;p&gt;0.1 - 0.5 ft&lt;/p&gt;&lt;p&gt;0.03048 - 0.1524 m&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                     </property>
                     <property name="layoutDirection">
                      <enum>Qt::RightToLeft</enum>
