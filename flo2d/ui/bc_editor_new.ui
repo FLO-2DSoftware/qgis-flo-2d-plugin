@@ -58,7 +58,7 @@
            </size>
           </property>
           <property name="toolTip">
-           <string>Delete inflow time series</string>
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Delete selected inflow time series.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
           </property>
           <property name="text">
            <string>...</string>
@@ -78,7 +78,7 @@
            </size>
           </property>
           <property name="toolTip">
-           <string>Rename inflow time series</string>
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Rename selected inflow time series.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
           </property>
           <property name="text">
            <string>...</string>
@@ -213,7 +213,7 @@
            </size>
           </property>
           <property name="toolTip">
-           <string>Lock into the selected inflow boundary condition</string>
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Lock into the selected inflow boundary condition.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
           </property>
           <property name="text">
            <string>...</string>
@@ -241,7 +241,7 @@
              </size>
             </property>
             <property name="toolTip">
-             <string>Add point inflow boundary condition</string>
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Add point inflow boundary condition.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
             </property>
             <property name="text">
              <string>...</string>
@@ -261,7 +261,7 @@
           <item>
            <widget class="QToolButton" name="create_inflow_line_bc_btn">
             <property name="toolTip">
-             <string>Add line inflow boundary condition</string>
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Add line inflow boundary condition.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
             </property>
             <property name="text">
              <string>...</string>
@@ -281,7 +281,7 @@
           <item>
            <widget class="QToolButton" name="rollback_inflow_btn">
             <property name="toolTip">
-             <string>Rollback edits in inflow boundary conditions</string>
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Rollback edits in inflow boundary conditions.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
             </property>
             <property name="text">
              <string>...</string>
@@ -314,7 +314,7 @@
           <item>
            <widget class="QToolButton" name="open_inflow_btn">
             <property name="toolTip">
-             <string>Open INFLOW.DAT</string>
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Open INFLOW.DAT.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
             </property>
             <property name="text">
              <string>...</string>
@@ -334,7 +334,7 @@
           <item>
            <widget class="QToolButton" name="delete_schem_inflow_bc_btn">
             <property name="toolTip">
-             <string>Delete schematized inflow boundary conditions</string>
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Delete schematized inflow boundary conditions.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
             </property>
             <property name="text">
              <string>...</string>
@@ -354,7 +354,7 @@
           <item>
            <widget class="QToolButton" name="bc_help_btn">
             <property name="toolTip">
-             <string>Boundary Conditions Help</string>
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Boundary Conditions Help.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
             </property>
             <property name="text">
              <string>...</string>
@@ -382,7 +382,7 @@
            </size>
           </property>
           <property name="toolTip">
-           <string>Schematize inflow boundary conditions</string>
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Schematize inflow boundary conditions.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
           </property>
           <property name="text">
            <string>...</string>
@@ -415,7 +415,7 @@
            </size>
           </property>
           <property name="toolTip">
-           <string>Add inflow time series</string>
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Add inflow time series.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
           </property>
           <property name="text">
            <string>+</string>
@@ -548,7 +548,7 @@
            </size>
           </property>
           <property name="toolTip">
-           <string>Delete inflow boundary condition</string>
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Delete inflow boundary condition.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
           </property>
           <property name="text">
            <string>...</string>
@@ -580,7 +580,7 @@
            </size>
           </property>
           <property name="toolTip">
-           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Rename selected inflow boundary condition&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Rename selected inflow boundary condition.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
           </property>
           <property name="layoutDirection">
            <enum>Qt::LeftToRight</enum>
@@ -652,7 +652,7 @@
              </size>
             </property>
             <property name="toolTip">
-             <string>Add point outflow boundary condition</string>
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Add point outflow boundary condition.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
             </property>
             <property name="text">
              <string>...</string>
@@ -678,7 +678,7 @@
              </size>
             </property>
             <property name="toolTip">
-             <string>Add line outflow boundary condition</string>
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Add line outflow boundary condition.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
             </property>
             <property name="text">
              <string>...</string>
@@ -704,7 +704,7 @@
              </size>
             </property>
             <property name="toolTip">
-             <string>Add polygon outflow boundary condition</string>
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Add polygon outflow boundary condition.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
             </property>
             <property name="text">
              <string>...</string>
@@ -730,7 +730,7 @@
              </size>
             </property>
             <property name="toolTip">
-             <string>Rollback edits in outflow boundary conditions</string>
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Rollback edits in outflow boundary conditions.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
             </property>
             <property name="text">
              <string>...</string>
@@ -756,7 +756,7 @@
              </size>
             </property>
             <property name="toolTip">
-             <string>Add outflow boundary conditions to the whole grid boundary cells</string>
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Add outflow boundary conditions to the whole grid boundary cells.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
             </property>
             <property name="text">
              <string>...</string>
@@ -795,7 +795,7 @@
              </size>
             </property>
             <property name="toolTip">
-             <string>Open OUTFLOW.DAT</string>
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Open OUTFLOW.DAT.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
             </property>
             <property name="text">
              <string>...</string>
@@ -824,7 +824,7 @@
              <bool>true</bool>
             </property>
             <property name="toolTip">
-             <string>Delete schematized outflow boundary conditions</string>
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Delete schematized outflow boundary conditions.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
             </property>
             <property name="text">
              <string>...</string>
@@ -877,7 +877,7 @@
            </size>
           </property>
           <property name="toolTip">
-           <string>Schematize outflow boundary conditions</string>
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Schematize outflow boundary conditions.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
           </property>
           <property name="text">
            <string>...</string>
@@ -943,7 +943,7 @@
            </size>
           </property>
           <property name="toolTip">
-           <string>Lock into the selected outflow boundary condition</string>
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Lock into the selected outflow boundary condition.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
           </property>
           <property name="text">
            <string>...</string>
@@ -1022,7 +1022,7 @@
            </size>
           </property>
           <property name="toolTip">
-           <string>Delete outflow boundary condition</string>
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Delete select outflow boundary condition.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
           </property>
           <property name="text">
            <string>...</string>
@@ -1048,7 +1048,7 @@
            </size>
           </property>
           <property name="toolTip">
-           <string>Add outflow time series</string>
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Add outflow time series.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
           </property>
           <property name="text">
            <string>...</string>
@@ -1074,7 +1074,7 @@
            </size>
           </property>
           <property name="toolTip">
-           <string>Delete outflow time series</string>
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Delete selected outflow time series.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
           </property>
           <property name="text">
            <string>...</string>
@@ -1094,7 +1094,7 @@
            </size>
           </property>
           <property name="toolTip">
-           <string>Rename outflow time series</string>
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Rename selected outflow time series.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
           </property>
           <property name="text">
            <string>...</string>
@@ -1121,7 +1121,7 @@
            </size>
           </property>
           <property name="toolTip">
-           <string>Rename outflow boundary condition</string>
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Rename selected outflow boundary condition.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
           </property>
           <property name="text">
            <string>...</string>
