@@ -468,7 +468,7 @@
                </sizepolicy>
               </property>
               <property name="toolTip">
-               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;AVULD50&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(mm)&lt;/p&gt;&lt;p&gt;Bed material D50 sediment size fraction.&lt;/p&gt;&lt;p&gt;Assignment of AVULD50 triggers the avulsion component that will allow a multiple channel to seek a new path if the channel conveyance capacity is exceeded.&lt;/p&gt;&lt;p&gt;Range: 0.00 - 100.0 mm&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;AVULD50&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(mm)&lt;/p&gt;&lt;p&gt;Bed material D50 sediment size fraction.&lt;/p&gt;&lt;p&gt;Assignment of AVULD50 triggers the avulsion component that will allow a multiple channel to seek a new path if the channel conveyance capacity is exceeded.&lt;/p&gt;&lt;p&gt;Range: 0.00 - 100.0&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
               <property name="text">
                <string>Surface sediment size (D50)</string>
