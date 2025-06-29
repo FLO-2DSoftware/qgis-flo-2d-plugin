@@ -47,7 +47,7 @@
       <cursorShape>ArrowCursor</cursorShape>
      </property>
      <property name="currentIndex">
-      <number>3</number>
+      <number>6</number>
      </property>
      <widget class="QWidget" name="inlets_tab">
       <property name="sizePolicy">
@@ -8353,6 +8353,9 @@ inlets/junctions</string>
                   <italic>false</italic>
                  </font>
                 </property>
+                <property name="toolTip">
+                 <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Weir Shape&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Physical crest Geometry. &lt;/p&gt;&lt;p&gt;Example: Rectangular, Triangular, Trapezoidal.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                </property>
                 <property name="text">
                  <string>Shape</string>
                 </property>
@@ -8532,6 +8535,9 @@ inlets/junctions</string>
                   <width>194</width>
                   <height>22</height>
                  </size>
+                </property>
+                <property name="toolTip">
+                 <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Weir Shape&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                 </property>
                 <property name="maxVisibleItems">
                  <number>20</number>
