@@ -70,8 +70,8 @@
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>458</width>
-        <height>273</height>
+        <width>454</width>
+        <height>262</height>
        </rect>
       </property>
       <layout class="QGridLayout" name="gridLayout_6">
@@ -105,7 +105,7 @@
             <item row="2" column="0">
              <widget class="QLabel" name="label_23">
               <property name="toolTip">
-               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;GUWS&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(lb/ft3 or N/m3)&lt;/p&gt;&lt;p&gt;Global unit weight of the levee or dam shell material for an unspecified failure location.&lt;/p&gt;&lt;p&gt;Range:&lt;/p&gt;&lt;p&gt;85 - 120 lb/ft3&lt;/p&gt;&lt;p&gt;13500 - 19000 N/m3&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;GUWS&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(lb/ft&lt;span style=&quot; vertical-align:super;&quot;&gt;3&lt;/span&gt; or N/m&lt;span style=&quot; vertical-align:super;&quot;&gt;3&lt;/span&gt;)&lt;/p&gt;&lt;p&gt;Global unit weight of the levee or dam shell material for an unspecified failure location.&lt;/p&gt;&lt;p&gt;Range:&lt;/p&gt;&lt;p&gt;85 - 120 lb/ft&lt;span style=&quot; vertical-align:super;&quot;&gt;3&lt;/span&gt;&lt;/p&gt;&lt;p&gt;13500 - 19000 N/m&lt;span style=&quot; vertical-align:super;&quot;&gt;3&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
               <property name="text">
                <string>Unit weight</string>
@@ -118,7 +118,7 @@
             <item row="0" column="2">
              <widget class="QLabel" name="label_25">
               <property name="toolTip">
-               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;GAFRS&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(degrees)&lt;/p&gt;&lt;p&gt;Global angle of internal friction of the shell material for the entire levee or dam. &lt;/p&gt;&lt;p&gt;Range: 0 - 50 degrees&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;GAFRS&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(degrees)&lt;/p&gt;&lt;p&gt;Global angle of internal friction of the shell material for the entire levee or dam. &lt;/p&gt;&lt;p&gt;Range: 0 - 50&lt;span style=&quot; vertical-align:super;&quot;&gt;o&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
               <property name="text">
                <string>Angle of internal friction</string>
@@ -213,7 +213,7 @@
             <item row="1" column="2">
              <widget class="QLabel" name="label_26">
               <property name="toolTip">
-               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;GCOHS&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(lb/ft2 or N/m2)&lt;/p&gt;&lt;p&gt;Global cohesive strength of the levee or dam shell material for an unspecified failure location.&lt;/p&gt;&lt;p&gt;Range:&lt;/p&gt;&lt;p&gt;0 - 750 lb/ft2&lt;/p&gt;&lt;p&gt;0 - 30000 N/m2&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;GCOHS&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(lb/ft&lt;span style=&quot; vertical-align:super;&quot;&gt;2&lt;/span&gt; or N/m&lt;span style=&quot; vertical-align:super;&quot;&gt;2&lt;/span&gt;)&lt;/p&gt;&lt;p&gt;Global cohesive strength of the levee or dam shell material for an unspecified failure location.&lt;/p&gt;&lt;p&gt;Range:&lt;/p&gt;&lt;p&gt;0 - 750 lb/ft&lt;span style=&quot; vertical-align:super;&quot;&gt;2&lt;/span&gt;&lt;/p&gt;&lt;p&gt;0 - 30000 N/m&lt;span style=&quot; vertical-align:super;&quot;&gt;2&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
               <property name="text">
                <string>Cohesive strength</string>
@@ -638,7 +638,7 @@
             <item row="2" column="0">
              <widget class="QLabel" name="label_15">
               <property name="toolTip">
-               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;GUWC&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(lb/ft3 or N/m3)&lt;/p&gt;&lt;p&gt;Global unit weight of the levee or dam core material for an unspecified failure location. &lt;/p&gt;&lt;p&gt;Set GUWC = 0.0 if there no core.&lt;/p&gt;&lt;p&gt;Range:&lt;/p&gt;&lt;p&gt;85 - 120 lb/ft3&lt;/p&gt;&lt;p&gt;13500 - 19000 N/m3&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;GUWC&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(lb/ft&lt;span style=&quot; vertical-align:super;&quot;&gt;3&lt;/span&gt; or N/m&lt;span style=&quot; vertical-align:super;&quot;&gt;3&lt;/span&gt;)&lt;/p&gt;&lt;p&gt;Global unit weight of the levee or dam core material for an unspecified failure location. &lt;/p&gt;&lt;p&gt;Set GUWC = 0.0 if there no core.&lt;/p&gt;&lt;p&gt;Range:&lt;/p&gt;&lt;p&gt;85 - 120 lb/ft&lt;span style=&quot; vertical-align:super;&quot;&gt;3&lt;/span&gt;&lt;/p&gt;&lt;p&gt;13500 - 19000 N/m&lt;span style=&quot; vertical-align:super;&quot;&gt;3&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
               <property name="text">
                <string>Unit weight</string>
@@ -651,7 +651,7 @@
             <item row="0" column="2">
              <widget class="QLabel" name="label_9">
               <property name="toolTip">
-               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;GAFRC&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(degrees)&lt;/p&gt;&lt;p&gt;Global angle of internal friction of the core material for the entire levee or dam. Set AFRC = 0.0 for no core.&lt;/p&gt;&lt;p&gt;Range: 0 - 50 degrees&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;GAFRC&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(degrees)&lt;/p&gt;&lt;p&gt;Global angle of internal friction of the core material for the entire levee or dam. Set AFRC = 0.0 for no core.&lt;/p&gt;&lt;p&gt;Range: 0 - 50&lt;span style=&quot; vertical-align:super;&quot;&gt;o&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
               <property name="text">
                <string>Angle of internal friction</string>
@@ -736,7 +736,7 @@
             <item row="1" column="2">
              <widget class="QLabel" name="label_10">
               <property name="toolTip">
-               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;GCOHC&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(lb/ft2 or N/m2)&lt;/p&gt;&lt;p&gt;Global cohesive strength of the levee or dam core material for an unspecified failure location. &lt;/p&gt;&lt;p&gt;If there is no core, GCOHC = 0.&lt;/p&gt;&lt;p&gt;Range:&lt;/p&gt;&lt;p&gt;0 - 750 lb/ft2&lt;/p&gt;&lt;p&gt;0 - 30000 N/m2&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;GCOHC&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(lb/ft&lt;span style=&quot; vertical-align:super;&quot;&gt;2&lt;/span&gt; or N/m&lt;span style=&quot; vertical-align:super;&quot;&gt;2&lt;/span&gt;)&lt;/p&gt;&lt;p&gt;Global cohesive strength of the levee or dam core material for an unspecified failure location. &lt;/p&gt;&lt;p&gt;If there is no core, GCOHC = 0.&lt;/p&gt;&lt;p&gt;Range:&lt;/p&gt;&lt;p&gt;0 - 750 lb/ft&lt;span style=&quot; vertical-align:super;&quot;&gt;2&lt;/span&gt;&lt;/p&gt;&lt;p&gt;0 - 30000 N/m&lt;span style=&quot; vertical-align:super;&quot;&gt;2&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
               <property name="text">
                <string>Cohesive strength</string>
