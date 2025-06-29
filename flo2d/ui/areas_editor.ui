@@ -344,6 +344,9 @@
             </item>
             <item>
              <widget class="QCheckBox" name="steep_slopen_global_chbox">
+              <property name="toolTip">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;ISTEEPNGLOBAL&lt;/span&gt;&lt;/p&gt;&lt;p&gt;ISTEEPN_GLOBAL = 0 , No steep slope n-value analysis. It is as if the steep slope methods do not exist.&lt;/p&gt;&lt;p&gt;ISTEEPN_GLOBAL = 1, Global assignment to perfom the steep slope n-value calculations for all grid elements capable of sharing discharge in at least on of eight flow directions.&lt;/p&gt;&lt;p&gt;ISTEEPN_GLOBAL = 2, The spatially variable steep slope n-value analysis is applied to the following list of grid elements beginning with line 2 of the date file.&lt;/p&gt;&lt;p&gt;Range: 0 - 2&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
               <property name="layoutDirection">
                <enum>Qt::LeftToRight</enum>
               </property>
