@@ -35,7 +35,7 @@
      <x>10</x>
      <y>10</y>
      <width>361</width>
-     <height>161</height>
+     <height>173</height>
     </rect>
    </property>
    <layout class="QFormLayout" name="formLayout_2">
@@ -119,7 +119,7 @@
     <item row="3" column="0">
      <widget class="QLabel" name="curb_label">
       <property name="toolTip">
-       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;DEPX&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(ft or m)&lt;/p&gt;&lt;p&gt;Global street curb height.&lt;/p&gt;&lt;p&gt;If the street curb height is exceeded by the flow it will result in overland flow depth in the grid element containing the street.&lt;/p&gt;&lt;p&gt;DEPX is used to assign a street curb height to all grid elements.&lt;/p&gt;&lt;p&gt;Range:&lt;/p&gt;&lt;p&gt;0.0 - 2.0 ft&lt;/p&gt;&lt;p&gt;0.0 - 0.6 m&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;DEPX&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(ft or m)&lt;/p&gt;&lt;p&gt;Global street curb height.&lt;/p&gt;&lt;p&gt;If the street curb height is exceeded by the flow it will result in overland flow depth in the grid element containing the street.&lt;/p&gt;&lt;p&gt;DEPX is used to assign a street curb height to all grid elements.&lt;/p&gt;&lt;p&gt;Range:&lt;/p&gt;&lt;p&gt;0.0 - 2.0 ft&lt;/p&gt;&lt;p&gt;0.0 - 0.6096 m&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
       </property>
       <property name="text">
        <string>Curb height</string>
