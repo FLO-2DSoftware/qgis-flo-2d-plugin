@@ -24,8 +24,8 @@
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>531</width>
-        <height>287</height>
+        <width>527</width>
+        <height>271</height>
        </rect>
       </property>
       <layout class="QGridLayout" name="gridLayout_7">
@@ -123,7 +123,7 @@
             <item row="2" column="0">
              <widget class="QLabel" name="label_23">
               <property name="toolTip">
-               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;UWS&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(lb/ft3 or N/m3)&lt;/p&gt;&lt;p&gt;Unit weight of the levee or dam shell material for a prescribed grid element failure location.&lt;/p&gt;&lt;p&gt;Range:&lt;/p&gt;&lt;p&gt;85 - 120 lb/ft3&lt;/p&gt;&lt;p&gt;13500 - 19000 N/m3&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;UWS&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(lb/ft&lt;span style=&quot; vertical-align:super;&quot;&gt;3&lt;/span&gt; or N/m&lt;span style=&quot; vertical-align:super;&quot;&gt;3&lt;/span&gt;)&lt;/p&gt;&lt;p&gt;Unit weight of the levee or dam shell material for a prescribed grid element failure location.&lt;/p&gt;&lt;p&gt;Range:&lt;/p&gt;&lt;p&gt;85 - 120 lb/ft&lt;span style=&quot; vertical-align:super;&quot;&gt;3&lt;/span&gt;&lt;/p&gt;&lt;p&gt;13500 - 19000 N/m&lt;span style=&quot; vertical-align:super;&quot;&gt;3&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
               <property name="text">
                <string>Unit weight</string>
@@ -136,7 +136,7 @@
             <item row="0" column="0">
              <widget class="QLabel" name="label_21">
               <property name="toolTip">
-               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;D50S&lt;/p&gt;&lt;p&gt;(mm)&lt;/p&gt;&lt;p&gt;Mean sediment size (D50 in mm) of the levee or dam shell material.&lt;/p&gt;&lt;p&gt;Range: 0.25 - 10 mm&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;D50S&lt;/p&gt;&lt;p&gt;(mm)&lt;/p&gt;&lt;p&gt;Mean sediment size (D50 in mm) of the levee or dam shell material.&lt;/p&gt;&lt;p&gt;Range: 0.25 - 10&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
               <property name="text">
                <string>Mean sediment size</string>
@@ -149,7 +149,7 @@
             <item row="0" column="2">
              <widget class="QLabel" name="label_25">
               <property name="toolTip">
-               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;UWS&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(degrees)&lt;/p&gt;&lt;p&gt;Angle of internal friction of the shell material for failure of a specific grid element flow direction.&lt;/p&gt;&lt;p&gt;Range: 0 - 50 degrees&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;UWS&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(degrees)&lt;/p&gt;&lt;p&gt;Angle of internal friction of the shell material for failure of a specific grid element flow direction.&lt;/p&gt;&lt;p&gt;Range: 0 - 50&lt;span style=&quot; vertical-align:super;&quot;&gt;o&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
               <property name="text">
                <string>Angle of internal friction</string>
@@ -191,7 +191,7 @@
             <item row="1" column="2">
              <widget class="QLabel" name="label_26">
               <property name="toolTip">
-               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;COHS&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(lb/ft2 or N/m2)&lt;/p&gt;&lt;p&gt;Cohesive strength of the levee or dam shell material.&lt;/p&gt;&lt;p&gt;If there is no core, COHS = 0.&lt;/p&gt;&lt;p&gt;Range:&lt;/p&gt;&lt;p&gt;0 - 750 lb/ft2&lt;/p&gt;&lt;p&gt;0 - 30000  N/m2&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;COHS&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(lb/ft&lt;span style=&quot; vertical-align:super;&quot;&gt;2&lt;/span&gt; or N/m&lt;span style=&quot; vertical-align:super;&quot;&gt;2&lt;/span&gt;)&lt;/p&gt;&lt;p&gt;Cohesive strength of the levee or dam shell material.&lt;/p&gt;&lt;p&gt;If there is no core, COHS = 0.&lt;/p&gt;&lt;p&gt;Range:&lt;/p&gt;&lt;p&gt;0 - 750 lb/ft&lt;span style=&quot; vertical-align:super;&quot;&gt;2&lt;/span&gt;&lt;/p&gt;&lt;p&gt;0 - 30000 N/m&lt;span style=&quot; vertical-align:super;&quot;&gt;2&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
               <property name="text">
                <string>Cohesive strength</string>
@@ -553,7 +553,7 @@
             <item row="2" column="0">
              <widget class="QLabel" name="label_15">
               <property name="toolTip">
-               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;UWC&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(lb/ft3 or N/m3)&lt;/p&gt;&lt;p&gt;Unit weight of the levee or dam core material for a prescribed grid element failure location.&lt;/p&gt;&lt;p&gt;Set UWC = 0.0 if there no core. &lt;/p&gt;&lt;p&gt;Range:&lt;/p&gt;&lt;p&gt;85 -120 lb/ft3&lt;/p&gt;&lt;p&gt;13500 - 19000 N/m3&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;UWC&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(lb/ft&lt;span style=&quot; vertical-align:super;&quot;&gt;3&lt;/span&gt; or N/m&lt;span style=&quot; vertical-align:super;&quot;&gt;3&lt;/span&gt;)&lt;/p&gt;&lt;p&gt;Unit weight of the levee or dam core material for a prescribed grid element failure location.&lt;/p&gt;&lt;p&gt;Set UWC = 0.0 if there no core. &lt;/p&gt;&lt;p&gt;Range:&lt;/p&gt;&lt;p&gt;85 -120 lb/ft&lt;span style=&quot; vertical-align:super;&quot;&gt;3&lt;/span&gt;&lt;/p&gt;&lt;p&gt;13500 - 19000 N/m&lt;span style=&quot; vertical-align:super;&quot;&gt;3&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
               <property name="text">
                <string>Unit weight</string>
@@ -598,7 +598,7 @@
             <item row="0" column="2">
              <widget class="QLabel" name="label_9">
               <property name="toolTip">
-               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;ARFC&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(degrees)&lt;/p&gt;&lt;p&gt;Angle of internal friction of the core material for failure of a specific grid element flow direction.&lt;/p&gt;&lt;p&gt;Set AFRC = 0.0 for no core.&lt;/p&gt;&lt;p&gt;Range: 0 - 50 degrees&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;ARFC&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(degrees)&lt;/p&gt;&lt;p&gt;Angle of internal friction of the core material for failure of a specific grid element flow direction.&lt;/p&gt;&lt;p&gt;Set AFRC = 0.0 for no core.&lt;/p&gt;&lt;p&gt;Range: 0 - 50&lt;span style=&quot; vertical-align:super;&quot;&gt;o&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
               <property name="text">
                <string>Angle of internal friction</string>
@@ -643,7 +643,7 @@
             <item row="0" column="0">
              <widget class="QLabel" name="label_13">
               <property name="toolTip">
-               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;D50C&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(mm)&lt;/p&gt;&lt;p&gt;Mean sediment size (D50) of the levee or dam core material.&lt;/p&gt;&lt;p&gt;Range: 0.0625 - 2 mm&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;D50C&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(mm)&lt;/p&gt;&lt;p&gt;Mean sediment size (D50) of the levee or dam core material.&lt;/p&gt;&lt;p&gt;Range: 0.0625 - 2&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
               <property name="text">
                <string>Mean sediment size</string>
@@ -698,7 +698,7 @@
             <item row="1" column="2">
              <widget class="QLabel" name="label_10">
               <property name="toolTip">
-               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;COHC&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(lb/ft2 or N/m2)&lt;/p&gt;&lt;p&gt;Cohesive strength (lb/ft2 or N/m2) of the levee or dam core material.&lt;/p&gt;&lt;p&gt;If there is no core, COHC = 0.&lt;/p&gt;&lt;p&gt;Range:&lt;/p&gt;&lt;p&gt;0 - 750 lb/ft2&lt;/p&gt;&lt;p&gt;0 - 30000 N/m2&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;COHC&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(lb/ft&lt;span style=&quot; vertical-align:super;&quot;&gt;2&lt;/span&gt; or N/m&lt;span style=&quot; vertical-align:super;&quot;&gt;2&lt;/span&gt;)&lt;/p&gt;&lt;p&gt;Cohesive strength of the levee or dam core material.&lt;/p&gt;&lt;p&gt;If there is no core, COHC = 0.&lt;/p&gt;&lt;p&gt;Range:&lt;/p&gt;&lt;p&gt;0 - 750 lb/ft&lt;span style=&quot; vertical-align:super;&quot;&gt;2&lt;/span&gt;&lt;/p&gt;&lt;p&gt;0 - 30000 N/m&lt;span style=&quot; vertical-align:super;&quot;&gt;2&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
               <property name="text">
                <string>Cohesive strength</string>
@@ -921,7 +921,7 @@
             <item row="1" column="2">
              <widget class="QLabel" name="label_34">
               <property name="toolTip">
-               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;D50DF&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(mm)&lt;/p&gt;&lt;p&gt;Mean sediment size (D50) of the top one foot (0.3 m) of the downstream face (riprap material).&lt;/p&gt;&lt;p&gt;If D50DF = 0.0, then D50DF = D50S.&lt;/p&gt;&lt;p&gt;Range: 1.0 - 100 mm&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;D50DF&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(mm)&lt;/p&gt;&lt;p&gt;Mean sediment size (D50) of the top one foot (0.3 m) of the downstream face (riprap material).&lt;/p&gt;&lt;p&gt;If D50DF = 0.0, then D50DF = D50S.&lt;/p&gt;&lt;p&gt;Range: 1.0 - 100&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
               <property name="text">
                <string>Mean sediment (riprap) size</string>
