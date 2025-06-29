@@ -872,7 +872,7 @@
              </sizepolicy>
             </property>
             <property name="toolTip">
-             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;LIDVOLUMEMAX&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(ft&lt;span style=&quot; vertical-align:super;&quot;&gt;2&lt;/span&gt; or m&lt;span style=&quot; vertical-align:super;&quot;&gt;2&lt;/span&gt;)&lt;/p&gt;&lt;p&gt;A volume assinged to a grid element that acts as a sink.. &lt;/p&gt;&lt;p&gt;Range:&lt;br/&gt;0.01 - No upper limit (ft&lt;span style=&quot; vertical-align:super;&quot;&gt;2&lt;/span&gt;)&lt;/p&gt;&lt;p&gt;0.0009 - No upper limit (m&lt;span style=&quot; vertical-align:super;&quot;&gt;2&lt;/span&gt;)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;LIDVOLUMEMAX&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(ft&lt;span style=&quot; vertical-align:super;&quot;&gt;2&lt;/span&gt; or m&lt;span style=&quot; vertical-align:super;&quot;&gt;2&lt;/span&gt;)&lt;/p&gt;&lt;p&gt;A volume assinged to a grid element that acts as a sink.&lt;/p&gt;&lt;p&gt;Range:&lt;br/&gt;0.01 - No upper limit (ft&lt;span style=&quot; vertical-align:super;&quot;&gt;2&lt;/span&gt;)&lt;/p&gt;&lt;p&gt;0.0009 - No upper limit (m&lt;span style=&quot; vertical-align:super;&quot;&gt;2&lt;/span&gt;)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
             </property>
             <property name="text">
              <string>Volume:</string>
