@@ -465,7 +465,7 @@
          <item row="2" column="0">
           <widget class="QLabel" name="label_6">
            <property name="toolTip">
-            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;RTIMPF(N)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Percent impervious floodplain area on a grid element.&lt;/p&gt;&lt;p&gt;Range: 0.0 - 1&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;RTIMPF(N)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(dimensionless)&lt;/p&gt;&lt;p&gt;Percent impervious floodplain area on a grid element.&lt;/p&gt;&lt;p&gt;Range: 0.0 - 1&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
            </property>
            <property name="text">
             <string>Impervious Area</string>
@@ -494,7 +494,7 @@
          <item row="2" column="2">
           <widget class="QLabel" name="label_7">
            <property name="toolTip">
-            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;SOIL_DEPTH(N)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(ft or m)&lt;/p&gt;&lt;p&gt;Spatially variable Green-Ampt infiltration soil limiting depth storage.&lt;/p&gt;&lt;p&gt;Maximum soil depth for infiltration on a grid element.&lt;/p&gt;&lt;p&gt;Range:&lt;/p&gt;&lt;p&gt;0.0 - 100. ft&lt;/p&gt;&lt;p&gt;0.0 - 30. m&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;SOIL_DEPTH(N)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(ft or m)&lt;/p&gt;&lt;p&gt;Spatially variable Green-Ampt infiltration soil limiting depth storage.&lt;/p&gt;&lt;p&gt;Maximum soil depth for infiltration on a grid element.&lt;/p&gt;&lt;p&gt;Range:&lt;/p&gt;&lt;p&gt;0.0 - 100 ft&lt;/p&gt;&lt;p&gt;0.0 - 30 m&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
            </property>
            <property name="text">
             <string>Soil Depth</string>
