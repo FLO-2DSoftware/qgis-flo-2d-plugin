@@ -47,7 +47,7 @@
       <cursorShape>ArrowCursor</cursorShape>
      </property>
      <property name="currentIndex">
-      <number>1</number>
+      <number>3</number>
      </property>
      <widget class="QWidget" name="inlets_tab">
       <property name="sizePolicy">
@@ -5006,6 +5006,9 @@ inlets/junctions</string>
                    <italic>false</italic>
                   </font>
                  </property>
+                 <property name="toolTip">
+                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Barrels&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Specifies how many identical parallel conduits exist between its end nodes. &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                 </property>
                  <property name="text">
                   <string>Barrels</string>
                  </property>
@@ -5039,6 +5042,9 @@ inlets/junctions</string>
                    <italic>false</italic>
                   </font>
                  </property>
+                 <property name="toolTip">
+                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;C-Conduit Geometry&lt;/span&gt;&lt;/p&gt;&lt;p&gt;C-Geometry in EPA SWMM GUI (cross-section editor).&lt;/p&gt;&lt;p&gt;Varies depending on the selected conduit shape (also may or may not be present).&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                 </property>
                  <property name="text">
                   <string>Geom2</string>
                  </property>
@@ -5054,6 +5060,9 @@ inlets/junctions</string>
                    <italic>false</italic>
                   </font>
                  </property>
+                 <property name="toolTip">
+                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;C-Conduit Geometry&lt;/span&gt;&lt;/p&gt;&lt;p&gt;C-Geometry in EPA SWMM GUI (cross-section editor).&lt;/p&gt;&lt;p&gt;Varies depending on the selected conduit shape (also may or may not be present).&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                 </property>
                  <property name="text">
                   <string>Geom3</string>
                  </property>
@@ -5068,6 +5077,9 @@ inlets/junctions</string>
                   <font>
                    <italic>false</italic>
                   </font>
+                 </property>
+                 <property name="toolTip">
+                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;C-Conduit Geometry&lt;/span&gt;&lt;/p&gt;&lt;p&gt;C-Geometry in EPA SWMM GUI (cross-section editor).&lt;/p&gt;&lt;p&gt;Varies depending on the selected conduit shape (also may or may not be present).&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                  </property>
                  <property name="text">
                   <string>Geom4</string>
@@ -5141,6 +5153,9 @@ inlets/junctions</string>
                    <height>22</height>
                   </size>
                  </property>
+                 <property name="toolTip">
+                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Barrels&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                 </property>
                  <property name="maxVisibleItems">
                   <number>20</number>
                  </property>
@@ -5206,6 +5221,9 @@ inlets/junctions</string>
                    <height>22</height>
                   </size>
                  </property>
+                 <property name="toolTip">
+                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;C-Conduit Geometry&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                 </property>
                  <property name="maxVisibleItems">
                   <number>20</number>
                  </property>
@@ -5237,6 +5255,9 @@ inlets/junctions</string>
                    <height>22</height>
                   </size>
                  </property>
+                 <property name="toolTip">
+                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;C-Conduit Geometry&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                 </property>
                  <property name="maxVisibleItems">
                   <number>20</number>
                  </property>
@@ -5267,6 +5288,9 @@ inlets/junctions</string>
                    <width>0</width>
                    <height>22</height>
                   </size>
+                 </property>
+                 <property name="toolTip">
+                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;C-Conduit Geometry&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                  </property>
                  <property name="maxVisibleItems">
                   <number>20</number>
