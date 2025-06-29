@@ -577,7 +577,7 @@
       <item row="1" column="3">
        <widget class="QLabel" name="label_9">
         <property name="toolTip">
-         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;ABSTR&lt;/p&gt;&lt;p&gt;(inches)&lt;/p&gt;&lt;p&gt;Horton global floodplain rainfall abstraction or interception.&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-style:italic;&quot;&gt;Note: Horton does not have a metric equivalent for FLO-2D. It uses English units for all flow calculations. It is OK to use Horton on a metric project. The output will still be converted to metric but the input data must be English.&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Range:&lt;/p&gt;&lt;p&gt;0 - 1&lt;/p&gt;&lt;p&gt;0 - 25&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;ABSTR&lt;/p&gt;&lt;p&gt;(inches or m)&lt;/p&gt;&lt;p&gt;Horton global floodplain rainfall abstraction or interception.&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-style:italic;&quot;&gt;Note: Horton does not have a metric equivalent for FLO-2D. It uses English units for all flow calculations. It is OK to use Horton on a metric project. The output will still be converted to metric but the input data must be English.&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Range:&lt;/p&gt;&lt;p&gt;0 - 1 inches&lt;/p&gt;&lt;p&gt;0 - 25 m&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
         </property>
         <property name="text">
          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Initial Abst.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
