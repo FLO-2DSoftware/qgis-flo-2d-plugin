@@ -54,7 +54,7 @@
            </font>
           </property>
           <property name="toolTip">
-           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;LEVCREST(L,IM)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(ft or m) &lt;/p&gt;&lt;p&gt;The elevation of the levee crest.&lt;/p&gt;&lt;p&gt;.01 - 30,000 ft&lt;/p&gt;&lt;p&gt;.25 - 9,000 m&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;LEVCREST(L,IM)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(ft or m) &lt;/p&gt;&lt;p&gt;The elevation of the levee crest.&lt;/p&gt;&lt;p&gt;.01 - 30,000 ft&lt;/p&gt;&lt;p&gt;.003 - 9,000 m&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
           </property>
           <property name="text">
            <string>Crest Elevation</string>
@@ -447,6 +447,9 @@
                <italic>false</italic>
               </font>
              </property>
+             <property name="toolTip">
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Duration&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+             </property>
              <property name="text">
               <string>Duration</string>
              </property>
@@ -596,7 +599,7 @@
               </font>
              </property>
              <property name="toolTip">
-              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;FAILRATE(LF,LD)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(ft/hr or m/hr)&lt;/p&gt;&lt;p&gt;The rate of vertical levee failure. Set failrate = 0 for wall collapse.&lt;/p&gt;&lt;p&gt;Range:&lt;/p&gt;&lt;p&gt;0.01 - 1000 ft/hr&lt;/p&gt;&lt;p&gt;0.25 - 300 m/hr&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;FAILRATE(LF,LD)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(ft/hr or m/hr)&lt;/p&gt;&lt;p&gt;The rate of vertical levee failure. Set failrate = 0 for wall collapse.&lt;/p&gt;&lt;p&gt;Range:&lt;/p&gt;&lt;p&gt;0.01 - 1000 ft/hr&lt;/p&gt;&lt;p&gt;0.003 - 300 m/hr&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
              </property>
              <property name="text">
               <string>Vertical Fail Rate</string>
@@ -665,7 +668,7 @@
               </font>
              </property>
              <property name="toolTip">
-              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;FAILWIDRATE (LF,LD)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(ft/hr or m/hr)&lt;/p&gt;&lt;p&gt;The rate at which the levee breach widens. Set failwidrate = 0 for wall collapse.&lt;/p&gt;&lt;p&gt;Range:&lt;/p&gt;&lt;p&gt;0.01 - 1000 ft/hr&lt;/p&gt;&lt;p&gt;0.25 - 300 m/hr&lt;br/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;FAILWIDRATE (LF,LD)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(ft/hr or m/hr)&lt;/p&gt;&lt;p&gt;The rate at which the levee breach widens. Set failwidrate = 0 for wall collapse.&lt;/p&gt;&lt;p&gt;Range:&lt;/p&gt;&lt;p&gt;0.01 - 1000 ft/hr&lt;/p&gt;&lt;p&gt;0.003 - 300 m/hr&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
              </property>
              <property name="text">
               <string>Horizontal Fail Rate</string>
