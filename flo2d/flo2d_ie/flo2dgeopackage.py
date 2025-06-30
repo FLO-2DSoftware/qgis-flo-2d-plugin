@@ -9377,13 +9377,13 @@ class Flo2dGeoPackage(GeoPackageUtils):
             self.uc.show_error("ERROR 101218.1609: exporting STREET.DAT failed!.\n", e)
             return False
 
-    def export_arf(self, output=None):
+    def export_arf(self, output=None, subdomain=None):
         if self.parsed_format == self.FORMAT_DAT:
-            return self.export_arf_dat(output)
+            return self.export_arf_dat(output, subdomain)
         elif self.parsed_format == self.FORMAT_HDF5:
-            return self.export_arf_hdf5()
+            return self.export_arf_hdf5(subdomain)
 
-    def export_arf_dat(self, outdir):
+    def export_arf_dat(self, outdir, subdomain):
         """
         Function to export arf data to HDF5 file
         """
@@ -9392,10 +9392,31 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 return False
             cont_sql = """SELECT name, value FROM cont WHERE name = 'IARFBLOCKMOD';"""
             tbc_sql = """SELECT grid_fid, area_fid FROM blocked_cells WHERE arf = 1 ORDER BY grid_fid;"""
+            if not subdomain:
+                pbc_sql = """SELECT grid_fid, area_fid,  arf, wrf1, wrf2, wrf3, wrf4, wrf5, wrf6, wrf7, wrf8
+                             FROM blocked_cells WHERE arf < 1 ORDER BY grid_fid;"""
+                collapse_sql = """SELECT collapse, calc_arf, calc_wrf FROM user_blocked_areas WHERE fid = ?;"""
+            else:
+                tbc_sql = f"""SELECT 
+                                md.domain_cell, 
+                                area_fid 
+                            FROM 
+                                blocked_cells AS bc
+                            JOIN 
+                                schema_md_cells md ON bc.grid_fid = md.grid_fid
+                            WHERE 
+                                arf = 1 AND md.domain_fid = {subdomain};"""
 
-            pbc_sql = """SELECT grid_fid, area_fid,  arf, wrf1, wrf2, wrf3, wrf4, wrf5, wrf6, wrf7, wrf8
-                         FROM blocked_cells WHERE arf < 1 ORDER BY grid_fid;"""
-            collapse_sql = """SELECT collapse FROM user_blocked_areas WHERE fid = ?;"""
+                pbc_sql = f"""SELECT 
+                                md.domain_cell, 
+                                area_fid,  
+                                arf, wrf1, wrf2, wrf3, wrf4, wrf5, wrf6, wrf7, wrf8
+                             FROM 
+                                blocked_cells AS bc
+                             JOIN 
+                                schema_md_cells md ON bc.grid_fid = md.grid_fid
+                             WHERE 
+                                arf < 1 AND md.domain_fid = {subdomain};"""
 
             line1 = "S  {}\n"
             line2 = " T   {}\n"
@@ -9454,17 +9475,38 @@ class Flo2dGeoPackage(GeoPackageUtils):
             self.uc.show_error("ERROR 101218.1610: exporting ARF.DAT failed!.", e)
             return False
 
-    def export_arf_hdf5(self):
+    def export_arf_hdf5(self, subdomain):
         # check if there are any grid cells with ARF defined.
         try:
             if self.is_table_empty("blocked_cells"):
                 return False
             cont_sql = """SELECT name, value FROM cont WHERE name = 'IARFBLOCKMOD';"""
             tbc_sql = """SELECT grid_fid, area_fid, arf FROM blocked_cells WHERE arf IN (1, -1);"""
+            if not subdomain:
+                pbc_sql = """SELECT grid_fid, area_fid,  arf, wrf1, wrf2, wrf3, wrf4, wrf5, wrf6, wrf7, wrf8
+                             FROM blocked_cells WHERE arf < 1 ORDER BY grid_fid;"""
+                collapse_sql = """SELECT collapse, calc_arf, calc_wrf FROM user_blocked_areas WHERE fid = ?;"""
+            else:
+                tbc_sql = f"""SELECT 
+                                md.domain_cell, 
+                                area_fid 
+                            FROM 
+                                blocked_cells AS bc
+                            JOIN 
+                                schema_md_cells md ON bc.grid_fid = md.grid_fid
+                            WHERE 
+                                arf = 1 AND md.domain_fid = {subdomain};"""
 
-            pbc_sql = """SELECT grid_fid, area_fid,  arf, wrf1, wrf2, wrf3, wrf4, wrf5, wrf6, wrf7, wrf8
-                         FROM blocked_cells WHERE arf < 1 ORDER BY grid_fid;"""
-            collapse_sql = """SELECT collapse, calc_arf, calc_wrf FROM user_blocked_areas WHERE fid = ?;"""
+                pbc_sql = f"""SELECT 
+                                md.domain_cell, 
+                                area_fid,  
+                                arf, wrf1, wrf2, wrf3, wrf4, wrf5, wrf6, wrf7, wrf8
+                             FROM 
+                                blocked_cells AS bc
+                             JOIN 
+                                schema_md_cells md ON bc.grid_fid = md.grid_fid
+                             WHERE 
+                                arf < 1 AND md.domain_fid = {subdomain};"""
 
             line3 = "{0:<8} {1:<5.2f} {2:<5.2f} {3:<5.2f} {4:<5.2f} {5:<5.2f} {6:<5.2f} {7:<5.2f} {8:5.2f} {9:<5.2f}\n"
             option = self.execute(cont_sql).fetchone()
@@ -9517,95 +9559,6 @@ class Flo2dGeoPackage(GeoPackageUtils):
                         create_array(line3, 10, np.float64, cell, arf_value, *row[3:]))
 
             self.parser.write_groups(arfwrf_group)
-            return True
-
-        except Exception as e:
-            QApplication.restoreOverrideCursor()
-            self.uc.show_error("ERROR 101218.1610: exporting ARF.DAT failed!.", e)
-            return False
-
-    def export_arf_md(self, outdir, subdomain):
-        """
-        Function to export arf data to HDF5 file
-        """
-        try:
-            if self.is_table_empty("blocked_cells"):
-                return False
-            cont_sql = """SELECT name, value FROM cont WHERE name = 'IARFBLOCKMOD';"""
-
-            tbc_sql = f"""SELECT 
-                            md.domain_cell, 
-                            area_fid 
-                        FROM 
-                            blocked_cells AS bc
-                        JOIN 
-							schema_md_cells md ON bc.grid_fid = md.grid_fid
-                        WHERE 
-                            arf = 1 AND md.domain_fid = {subdomain};"""
-
-            pbc_sql = f"""SELECT 
-                            md.domain_cell, 
-                            area_fid,  
-                            arf, wrf1, wrf2, wrf3, wrf4, wrf5, wrf6, wrf7, wrf8
-                         FROM 
-                            blocked_cells AS bc
-                         JOIN 
-							schema_md_cells md ON bc.grid_fid = md.grid_fid
-                         WHERE 
-                            arf < 1 AND md.domain_fid = {subdomain};"""
-
-            collapse_sql = """SELECT collapse FROM user_blocked_areas WHERE fid = ?;"""
-
-            line1 = "S  {}\n"
-            line2 = " T   {}\n"
-            #         line3 = '   {}' * 10 + '\n'
-            line3 = "{0:<8} {1:<5.2f} {2:<5.2f} {3:<5.2f} {4:<5.2f} {5:<5.2f} {6:<5.2f} {7:<5.2f} {8:5.2f} {9:<5.2f}\n"
-            option = self.execute(cont_sql).fetchone()
-            if option is None:
-                # TODO: We need to implement correct export of 'IARFBLOCKMOD'
-                option = ("IARFBLOCKMOD", 0)
-
-            arf = os.path.join(outdir, "ARF.DAT")
-
-            with open(arf, "w") as a:
-                head = option[-1]
-                if head is not None:
-                    a.write(line1.format(head))
-                else:
-                    pass
-
-                # Totally blocked grid elements:
-                for row in self.execute(tbc_sql):
-                    collapse = self.execute(collapse_sql, (row[1],)).fetchone()
-                    if collapse:
-                        cll = collapse[0]
-                    else:
-                        cll = 0
-                    cll = [cll if cll is not None else 0]
-                    cell = row[0]
-                    if cll[0] == 1:
-                        cell = -cell
-                    a.write(line2.format(cell))
-
-                # Partially blocked grid elements:
-                for row in self.execute(pbc_sql):
-                    row = [x if x is not None else "" for x in row]
-                    # Is there any side blocked? If not omit it:
-                    any_blocked = sum(row) - row[0] - row[1]
-                    if any_blocked > 0:
-                        collapse = self.execute(collapse_sql, (row[1],)).fetchone()
-                        if collapse:
-                            cll = collapse[0]
-                        else:
-                            cll = 0
-                        cll = [cll if cll is not None else 0]
-                        cell = row[0]
-                        arf_value = row[2]
-                        if cll[0] == 1:
-                            arf_value = -arf_value
-                        a.write(line3.format(cell, arf_value, *row[3:]))
-            #                     a.write(line3.format(*row))
-
             return True
 
         except Exception as e:
