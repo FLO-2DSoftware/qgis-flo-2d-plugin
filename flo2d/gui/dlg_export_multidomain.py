@@ -684,7 +684,7 @@ class ExportMultipleDomainsDialog(qtBaseClass, uiDialog):
                     # "export_breach",
                     # "export_gutter",
                     "export_fpfroude",
-                    "export_steep_slopen_md",
+                    "export_steep_slopen",
                     "export_lid_volume_md",
                     # "export_swmmflo",
                     # "export_swmmflort",
@@ -731,8 +731,10 @@ class ExportMultipleDomainsDialog(qtBaseClass, uiDialog):
 
                     if dlg_components.data_rb.isChecked():
                         export_type = "data"
+                        s.setValue("FLO-2D/quickRun", "data")
                     if dlg_components.hdf5_rb.isChecked():
                         export_type = "hdf5"
+                        s.setValue("FLO-2D/quickRun", "hdf5")
 
                     # if "Channels" not in dlg_components.components:
                     #     export_calls.remove("export_chan")
