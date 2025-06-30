@@ -6562,13 +6562,13 @@ class Flo2dGeoPackage(GeoPackageUtils):
             QApplication.setOverrideCursor(Qt.WaitCursor)
             return False
 
-    def export_mannings_n_topo(self, output=None):
+    def export_mannings_n_topo(self, output=None, subdomain=None):
         if self.parsed_format == self.FORMAT_DAT:
-            return self.export_mannings_n_topo_dat(output)
+            return self.export_mannings_n_topo_dat(output, subdomain)
         elif self.parsed_format == self.FORMAT_HDF5:
-            return self.export_mannings_n_topo_hdf5()
+            return self.export_mannings_n_topo_hdf5(subdomain)
 
-    def export_mannings_n_topo_hdf5(self):
+    def export_mannings_n_topo_hdf5(self, subdomain):
         try:
             sql = (
                 """SELECT fid, n_value, elevation, ST_AsText(ST_Centroid(GeomFromGPB(geom))) FROM grid ORDER BY fid;"""
@@ -6622,18 +6622,36 @@ class Flo2dGeoPackage(GeoPackageUtils):
             QApplication.setOverrideCursor(Qt.WaitCursor)
             return False
 
-    def export_mannings_n_topo_dat(self, outdir):
+    def export_mannings_n_topo_dat(self, outdir, subdomain):
         try:
-            sql = (
-                """SELECT fid, n_value, elevation, ST_AsText(ST_Centroid(GeomFromGPB(geom))) FROM grid ORDER BY fid;"""
-            )
-            records = self.execute(sql)
+            if not subdomain:
+                sql = (
+                    """SELECT fid, n_value, elevation, ST_AsText(ST_Centroid(GeomFromGPB(geom))) FROM grid ORDER BY fid;"""
+                )
+                records = self.execute(sql)
+            else:
+                sub_grid_cells = self.gutils.execute(f"""SELECT DISTINCT 
+                                                            md.domain_cell, 
+                                                            g.n_value, 
+                                                            g.elevation,
+                                                            ST_AsText(ST_Centroid(GeomFromGPB(g.geom)))
+                                                         FROM 
+                                                            grid g
+                                                         JOIN 
+                                                            schema_md_cells md ON g.fid = md.grid_fid
+                                                         WHERE 
+                                                             md.domain_fid = {subdomain};""").fetchall()
+
+                records = sorted(sub_grid_cells, key=lambda x: x[0])
+
             mannings = os.path.join(outdir, "MANNINGS_N.DAT")
             topo = os.path.join(outdir, "TOPO.DAT")
 
             mline = "{0: >10} {1: >10}\n"
             tline = "{0: >15} {1: >15} {2: >10}\n"
+
             nulls = 0
+
             with open(mannings, "w") as m, open(topo, "w") as t:
                 for row in records:
                     fid, man, elev, geom = row
@@ -6670,47 +6688,6 @@ class Flo2dGeoPackage(GeoPackageUtils):
             self.uc.show_error("ERROR 101218.1541: exporting MANNINGS_N.DAT or TOPO.DAT failed!.\n", e)
             QApplication.setOverrideCursor(Qt.WaitCursor)
             return False
-
-    def export_mannings_n_topo_md(self, outdir, subdomain):
-        
-        sub_grid_cells = self.gutils.execute(f"""SELECT DISTINCT 
-                                                    md.domain_cell, 
-                                                    g.n_value, 
-                                                    g.elevation,
-                                                    ST_AsText(ST_Centroid(GeomFromGPB(g.geom)))
-                                                 FROM 
-                                                    grid g
-                                                 JOIN 
-                                                    schema_md_cells md ON g.fid = md.grid_fid
-                                                 WHERE 
-                                                     md.domain_fid = {subdomain};""").fetchall()
-
-        records = sorted(sub_grid_cells, key=lambda x: x[0])
-
-        mannings = os.path.join(outdir, "MANNINGS_N.DAT")
-        topo = os.path.join(outdir, "TOPO.DAT")
-
-        mline = "{0: >10} {1: >10}\n"
-        tline = "{0: >15} {1: >15} {2: >10}\n"
-
-        with open(mannings, "w") as m, open(topo, "w") as t:
-            for row in records:
-                fid, man, elev, geom = row
-                if man == None or elev == None:
-                    if man == None:
-                        man = 0.04
-                    if elev == None:
-                        elev = -9999
-                x, y = geom.strip("POINT()").split()
-                m.write(mline.format(fid, "{0:.3f}".format(man)))
-                t.write(
-                    tline.format(
-                        "{0:.4f}".format(float(x)),
-                        "{0:.4f}".format(float(y)),
-                        "{0:.4f}".format(elev),
-                    )
-                )
-        return True
 
     # def export_neighbours(self):
     #     if self.parsed_format == self.FORMAT_DAT:

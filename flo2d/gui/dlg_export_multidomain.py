@@ -667,7 +667,7 @@ class ExportMultipleDomainsDialog(qtBaseClass, uiDialog):
                     # "export_tailings",
                     # 'export_outrc',
                     "export_outflow_md",
-                    "export_rain_md",
+                    "export_rain",
                     # "export_evapor",
                     "export_infil_md",
                     # "export_chan",
@@ -694,7 +694,7 @@ class ExportMultipleDomainsDialog(qtBaseClass, uiDialog):
                     # "export_wsurf",
                     # "export_wstime",
                     "export_shallowNSpatial_md",
-                    "export_mannings_n_topo_md",
+                    "export_mannings_n_topo",
                 ]
 
                 # Add a dummy cell to the outflow cells to show the Outflow checkbox
