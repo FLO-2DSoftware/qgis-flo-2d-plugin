@@ -6570,10 +6570,26 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
     def export_mannings_n_topo_hdf5(self, subdomain):
         try:
-            sql = (
-                """SELECT fid, n_value, elevation, ST_AsText(ST_Centroid(GeomFromGPB(geom))) FROM grid ORDER BY fid;"""
-            )
-            records = self.execute(sql)
+            if not subdomain:
+                sql = (
+                    """SELECT fid, n_value, elevation, ST_AsText(ST_Centroid(GeomFromGPB(geom))) FROM grid ORDER BY fid;"""
+                )
+                records = self.execute(sql)
+            else:
+                sub_grid_cells = self.gutils.execute(f"""SELECT DISTINCT 
+                                                            md.domain_cell, 
+                                                            g.n_value, 
+                                                            g.elevation,
+                                                            ST_AsText(ST_Centroid(GeomFromGPB(g.geom)))
+                                                         FROM 
+                                                            grid g
+                                                         JOIN 
+                                                            schema_md_cells md ON g.fid = md.grid_fid
+                                                         WHERE 
+                                                             md.domain_fid = {subdomain};""").fetchall()
+
+                records = sorted(sub_grid_cells, key=lambda x: x[0])
+
             nulls = 0
             grid_group = self.parser.grid_group
             coordinates_line = "{0} {1}"
@@ -7728,7 +7744,18 @@ class Flo2dGeoPackage(GeoPackageUtils):
                       FROM rain;"""
 
         ts_data_sql = """SELECT time, value FROM rain_time_series_data WHERE series_fid = ? ORDER BY fid;"""
-        rain_cells_sql = """SELECT grid_fid, arf FROM rain_arf_cells ORDER BY fid;"""
+        if not subdomain:
+            rain_cells_sql = """SELECT grid_fid, arf FROM rain_arf_cells ORDER BY fid;"""
+        else:
+            rain_cells_sql = f"""SELECT 
+                                    md.domain_cell, 
+                                    arf 
+                                FROM 
+                                    rain_arf_cells AS ra
+                                JOIN 
+                                    schema_md_cells md ON ra.grid_fid = md.grid_fid
+                                 WHERE 
+                                    md.domain_fid = {subdomain};"""
 
         rain_global = "{0}  {1}   {2}   {3}   {4}   {5}\n"
         tsd_line = "{0}   {1}\n"  # Rainfall Time series distribution
@@ -9792,7 +9819,17 @@ class Flo2dGeoPackage(GeoPackageUtils):
             if self.is_table_empty("tolspatial"):
                 return False
             tol_poly_sql = """SELECT fid, tol FROM tolspatial ORDER BY fid;"""
-            tol_cells_sql = """SELECT grid_fid FROM tolspatial_cells WHERE area_fid = ? ORDER BY grid_fid;"""
+            if not subdomain:
+                tol_cells_sql = """SELECT grid_fid FROM tolspatial_cells WHERE area_fid = ? ORDER BY grid_fid;"""
+            else:
+                tol_cells_sql = f"""SELECT 
+                                        md.domain_cell
+                                    FROM 
+                                        tolspatial_cells AS tc
+                                    JOIN 
+                                        schema_md_cells md ON tc.grid_fid = md.grid_fid    
+                                    WHERE 
+                                        area_fid = ? AND md.domain_fid = {subdomain}"""
 
             two_values = "{0}  {1}\n"
 

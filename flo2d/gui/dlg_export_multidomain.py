@@ -850,7 +850,8 @@ class ExportMultipleDomainsDialog(qtBaseClass, uiDialog):
                     if export_type == "data":
                         self.call_IO_methods_md_dat(export_calls, True, str(export_folder), subdomain[0])
                     if export_type == "hdf5":
-                        self.call_IO_methods_md_hdf5(export_calls, True, str(export_folder), subdomain[0])
+                        output_hdf5 = os.path.join(str(export_folder), "Input.hdf5")
+                        self.call_IO_methods_md_hdf5(export_calls, True, str(output_hdf5), subdomain[0])
 
                 cadpts = os.path.join(str(export_folder), "CADPTS.DAT")
                 multidomain = os.path.join(str(export_folder), "MULTIDOMAIN.DAT")
@@ -1104,7 +1105,9 @@ class ExportMultipleDomainsDialog(qtBaseClass, uiDialog):
         self.close_dlg()
         QApplication.restoreOverrideCursor()
 
-    def call_IO_methods_md_hdf5(self, calls, debug, *args):
+    def call_IO_methods_md_hdf5(self, calls, debug, output, *args):
+        self.f2g = Flo2dGeoPackage(self.con, self.iface, parsed_format=Flo2dGeoPackage.FORMAT_HDF5)
+        self.f2g.set_parser(output, get_cell_size=False)
         self.f2g.parser.write_mode = "w"
 
         progDialog = QProgressDialog("Exporting to HDF5...", None, 0, len(calls))
