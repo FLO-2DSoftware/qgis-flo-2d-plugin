@@ -128,6 +128,7 @@ class ExportMultipleDomainsDialog(qtBaseClass, uiDialog):
             - 3: ONLY CADPTS.DAT
             - 4: NO CONNECTIVITY
         """
+        s = QSettings()
         QApplication.setOverrideCursor(Qt.WaitCursor)
 
         # Figure out the export method
@@ -142,6 +143,8 @@ class ExportMultipleDomainsDialog(qtBaseClass, uiDialog):
 
         # Subdomains that had the FID changed due to the maximum of 9 subdomains
         subdomains_fid_changed_msg = ""
+
+        export_type = ""
 
         # Loop over checkboxes in order
         for i in range(1, 16):
@@ -205,12 +208,35 @@ class ExportMultipleDomainsDialog(qtBaseClass, uiDialog):
                 dummy_added = True
 
             dlg_components = ComponentsDialog(self.con, self.iface, self.lyrs, "out")
+
+            dlg_components.data_rb.setVisible(True)
+            dlg_components.hdf5_rb.setVisible(True)
+
+            # True hdf5, False data
+            user_preference = s.value("FLO-2D/quickRun")
+            if user_preference == "hdf5":
+                dlg_components.hdf5_rb.setChecked(True)
+                dlg_components.data_rb.setChecked(False)
+            elif user_preference == "data":
+                dlg_components.hdf5_rb.setChecked(False)
+                dlg_components.data_rb.setChecked(True)
+            else:
+                dlg_components.hdf5_rb.setChecked(True)
+                dlg_components.data_rb.setChecked(False)
+
             QApplication.restoreOverrideCursor()
 
             ok = dlg_components.exec_()
             if ok:
 
                 QApplication.setOverrideCursor(Qt.WaitCursor)
+
+                if dlg_components.data_rb.isChecked():
+                    export_type = "data"
+                    s.setValue("FLO-2D/quickRun", "data")
+                if dlg_components.hdf5_rb.isChecked():
+                    export_type = "hdf5"
+                    s.setValue("FLO-2D/quickRun", "hdf5")
 
                 # if "Channels" not in dlg_components.components:
                 #     export_calls.remove("export_chan")
@@ -353,7 +379,14 @@ class ExportMultipleDomainsDialog(qtBaseClass, uiDialog):
                     if dummy_added:
                         self.gutils.execute("DELETE FROM outflow_cells WHERE fid = 1;")
 
-                    self.call_IO_methods_md_dat(export_calls, True, str(export_folder), subdomains[0])
+                    if export_type == "data":
+                        self.call_IO_methods_md_dat(export_calls, True, str(export_folder), subdomains[0])
+                    if export_type == "hdf5":
+                        output_hdf5 = os.path.join(str(export_folder), "Input.hdf5")
+                        self.f2g = Flo2dGeoPackage(self.con, self.iface, parsed_format=Flo2dGeoPackage.FORMAT_HDF5)
+                        self.f2g.set_parser(output_hdf5, get_cell_size=False)
+                        self.f2g.parser.write_mode = "w"
+                        self.call_IO_methods_md_hdf5(export_calls, True, subdomains[0])
 
                 cadpts = os.path.join(str(export_folder), "CADPTS.DAT")
                 multidomain = os.path.join(str(export_folder), "MULTIDOMAIN.DAT")
@@ -366,15 +399,29 @@ class ExportMultipleDomainsDialog(qtBaseClass, uiDialog):
                 if export_method == 0:
                     connected_subdomains = downstream_domains[subdomains[0]]
                     if connected_subdomains:
-                        with open(multidomain, "w") as md:
+                        if export_type == "data":
+                            with open(multidomain, "w") as md:
+                                for connected_subdomain in connected_subdomains:
+                                    md.write(mdline_n.format(connected_subdomain))
+                                    up_cell_qry = f"""SELECT grid_fid, domain_cell FROM schema_md_cells WHERE domain_fid = {subdomains[0]} and down_domain_fid = {connected_subdomain};"""
+                                    for grid_fid, up_cell in self.gutils.execute(up_cell_qry).fetchall():
+                                        down_cells_qry = f"""SELECT domain_cell FROM schema_md_cells WHERE domain_fid = {connected_subdomain} and grid_fid = {grid_fid};"""
+                                        down_cells = self.gutils.execute(down_cells_qry).fetchall()
+                                        if down_cells:
+                                            md.write(mdline_d.format(str(up_cell), str(down_cells[0][0])))
+                        if export_type == "hdf5":
+                            self.f2g.parser.write_mode = "a"
+                            multipledomain_group = self.f2g.parser.multipledomain_group
+                            multipledomain_group.create_dataset('MULTIDOMAIN', [])
                             for connected_subdomain in connected_subdomains:
-                                md.write(mdline_n.format(connected_subdomain))
                                 up_cell_qry = f"""SELECT grid_fid, domain_cell FROM schema_md_cells WHERE domain_fid = {subdomains[0]} and down_domain_fid = {connected_subdomain};"""
                                 for grid_fid, up_cell in self.gutils.execute(up_cell_qry).fetchall():
                                     down_cells_qry = f"""SELECT domain_cell FROM schema_md_cells WHERE domain_fid = {connected_subdomain} and grid_fid = {grid_fid};"""
                                     down_cells = self.gutils.execute(down_cells_qry).fetchall()
                                     if down_cells:
-                                        md.write(mdline_d.format(str(up_cell), str(down_cells[0][0])))
+                                        multipledomain_group.datasets["MULTIDOMAIN"].data.append(
+                                            [connected_subdomain, up_cell, down_cells[0][0]])
+                            self.f2g.parser.write_groups(multipledomain_group)
 
                 # ONLY MULTIDOMAIN.DAT
                 elif export_method == 1:
@@ -406,17 +453,29 @@ class ExportMultipleDomainsDialog(qtBaseClass, uiDialog):
 
                     records = sorted(sub_grid_cells, key=lambda x: x[0])
 
-                    with open(cadpts, "w") as c:
+                    if export_type == "data":
+                        with open(cadpts, "w") as c:
+                            for row in records:
+                                fid, _, _, geom = row
+                                x, y = geom.strip("POINT()").split()
+                                c.write(
+                                    cline.format(
+                                        fid,
+                                        "{0:.3f}".format(float(x)),
+                                        "{0:.3f}".format(float(y))
+                                    )
+                                )
+
+                    if export_type == "hdf5":
+                        self.f2g.parser.write_mode = "a"
+                        multipledomain_group = self.f2g.parser.multipledomain_group
+                        multipledomain_group.create_dataset('CADPTS', [])
                         for row in records:
                             fid, _, _, geom = row
                             x, y = geom.strip("POINT()").split()
-                            c.write(
-                                cline.format(
-                                    fid,
-                                    "{0:.3f}".format(float(x)),
-                                    "{0:.3f}".format(float(y))
-                                )
-                            )
+                            multipledomain_group.datasets["CADPTS"].data.append(
+                                [float(fid), float(x), float(y)])
+                        self.f2g.parser.write_groups(multipledomain_group)
 
                 # ONLY CADPTS_DSx.DAT
                 elif export_method == 3:
@@ -509,8 +568,20 @@ class ExportMultipleDomainsDialog(qtBaseClass, uiDialog):
                                 if not os.path.exists(downstream_subdomains_folder) or subdomain_connectivity_name[2 * i - 1] == "":
                                     continue
                                 else:
-                                    shutil.copy2(os.path.join(str(downstream_subdomains_folder), "CADPTS.DAT"),
-                                                 os.path.join(str(current_subdomain_folder), f"CADPTS_DS{fid_subdomain}.DAT"))
+                                    if export_type == "data":
+                                        shutil.copy2(os.path.join(str(downstream_subdomains_folder), "CADPTS.DAT"),
+                                                     os.path.join(str(current_subdomain_folder),
+                                                                  f"CADPTS_DS{fid_subdomain}.DAT"))
+                                    if export_type == "hdf5":
+                                        source_hdf5 = os.path.join(str(downstream_subdomains_folder), "Input.hdf5")
+                                        target_hdf5 = os.path.join(str(current_subdomain_folder), "Input.hdf5")
+                                        with h5py.File(source_hdf5, "r") as src:
+                                            # Navigate to the dataset
+                                            dataset_path = "Input/Multiple Domains/CADPTS"
+                                            if dataset_path in src:
+                                                with h5py.File(target_hdf5, "a") as dst:
+                                                    src.copy(dataset_path, dst,
+                                                             name=f"Input/Multiple Domains/CADPTS_DS{fid_subdomain}")
 
                 # Update progress dialog
                 progDialog.setValue(j)
