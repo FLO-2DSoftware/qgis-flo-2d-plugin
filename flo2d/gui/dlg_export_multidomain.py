@@ -685,7 +685,7 @@ class ExportMultipleDomainsDialog(qtBaseClass, uiDialog):
                     # "export_gutter",
                     "export_fpfroude",
                     "export_steep_slopen",
-                    "export_lid_volume_md",
+                    "export_lid_volume",
                     # "export_swmmflo",
                     # "export_swmmflort",
                     # "export_swmmoutf",
