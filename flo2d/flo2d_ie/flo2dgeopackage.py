@@ -8208,10 +8208,58 @@ class Flo2dGeoPackage(GeoPackageUtils):
             return False
         infil_sql = """SELECT * FROM infil;"""
         infil_r_sql = """SELECT hydcx, hydcxfinal, soildepthcx FROM infil_chan_seg ORDER BY chan_seg_fid, fid;"""
-        green_sql = """SELECT grid_fid, hydc, soils, dtheta, abstrinf, rtimpf, soil_depth FROM infil_cells_green ORDER by grid_fid;"""
-        scs_sql = """SELECT grid_fid,scsn FROM infil_cells_scs ORDER BY grid_fid;"""
-        horton_sql = """SELECT grid_fid,fhorti, fhortf, deca FROM infil_cells_horton ORDER BY grid_fid;"""
-        chan_sql = """SELECT grid_fid, hydconch FROM infil_chan_elems ORDER by grid_fid;"""
+        if not subdomain:
+            green_sql = """SELECT grid_fid, hydc, soils, dtheta, abstrinf, rtimpf, soil_depth FROM infil_cells_green ORDER by grid_fid;"""
+            scs_sql = """SELECT grid_fid,scsn FROM infil_cells_scs ORDER BY grid_fid;"""
+            horton_sql = """SELECT grid_fid, fhorti, fhortf, deca FROM infil_cells_horton ORDER BY grid_fid;"""
+            chan_sql = """SELECT grid_fid, hydconch FROM infil_chan_elems ORDER by grid_fid;"""
+        else:
+            green_sql = f"""SELECT 
+                                md.domain_cell, 
+                                hydc, 
+                                soils, 
+                                dtheta, 
+                                abstrinf, 
+                                rtimpf, 
+                                soil_depth 
+                            FROM 
+                                infil_cells_green AS ga
+                            JOIN 
+                                schema_md_cells md ON ga.grid_fid = md.grid_fid
+                            WHERE 
+                                md.domain_fid = {subdomain}"""
+
+            scs_sql = f"""SELECT 
+                                md.domain_cell, 
+                                scsn 
+                            FROM 
+                                infil_cells_scs AS scs
+                            JOIN 
+                                schema_md_cells md ON scs.grid_fid = md.grid_fid
+                            WHERE 
+                                md.domain_fid = {subdomain}"""
+
+            horton_sql = f"""SELECT 
+                                md.domain_cell, 
+                                fhorti, 
+                                fhortf, 
+                                deca 
+                            FROM 
+                                infil_cells_horton AS ht
+                            JOIN 
+                                schema_md_cells md ON ht.grid_fid = md.grid_fid
+                            WHERE 
+                                md.domain_fid = {subdomain}"""
+
+            chan_sql = f"""SELECT 
+                            md.domain_cell, 
+                            hydconch 
+                          FROM 
+                            infil_chan_elems AS ch
+                          JOIN 
+                            schema_md_cells md ON ch.grid_fid = md.grid_fid
+                          WHERE 
+                            md.domain_fid = {subdomain}"""
 
         # line1 = "{0}"
         # line2 = "\n" + "  {}" * 6
