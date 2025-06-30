@@ -693,7 +693,7 @@ class ExportMultipleDomainsDialog(qtBaseClass, uiDialog):
                     # "export_sdclogging",
                     # "export_wsurf",
                     # "export_wstime",
-                    "export_shallowNSpatial_md",
+                    "export_shallowNSpatial",
                     "export_mannings_n_topo",
                 ]
 

@@ -10892,13 +10892,13 @@ class Flo2dGeoPackage(GeoPackageUtils):
             self.uc.show_error("ERROR 101218.1617: exporting FPFROUDE.DAT failed!.\n", e)
             return False
 
-    def export_shallowNSpatial(self, output=None):
+    def export_shallowNSpatial(self, output=None, subdomain=None):
         if self.parsed_format == self.FORMAT_DAT:
-            return self.export_shallowNSpatial_dat(output)
+            return self.export_shallowNSpatial_dat(output, subdomain)
         elif self.parsed_format == self.FORMAT_HDF5:
-            return self.export_shallowNSpatial_hdf5()
+            return self.export_shallowNSpatial_hdf5(subdomain)
 
-    def export_shallowNSpatial_hdf5(self):
+    def export_shallowNSpatial_hdf5(self, subdomain):
         """
         Function to export shallow n values to hdf5 file
         """
@@ -10906,7 +10906,17 @@ class Flo2dGeoPackage(GeoPackageUtils):
             if self.is_table_empty("spatialshallow"):
                 return False
             shallow_sql = """SELECT fid, shallow_n FROM spatialshallow ORDER BY fid;"""
-            cell_sql = """SELECT grid_fid FROM spatialshallow_cells WHERE area_fid = ? ORDER BY grid_fid;"""
+            if not subdomain:
+                cell_sql = """SELECT grid_fid FROM spatialshallow_cells WHERE area_fid = ? ORDER BY grid_fid;"""
+            else:
+                cell_sql = f"""SELECT 
+                                    md.domain_cell 
+                                FROM 
+                                    spatialshallow_cells AS ss
+                                JOIN 
+                                    schema_md_cells md ON ss.grid_fid = md.grid_fid
+                                WHERE 
+                                    area_fid = ? AND md.domain_fid = {subdomain};"""
 
             line1 = "{0} {1}\n"
 
@@ -10933,49 +10943,23 @@ class Flo2dGeoPackage(GeoPackageUtils):
             self.uc.show_error("ERROR 101218.1901: exporting SHALLOWN_SPATIAL failed!", e)
             return False
 
-    def export_shallowNSpatial_dat(self, outdir):
+    def export_shallowNSpatial_dat(self, outdir, subdomain):
         # check if there is any shallow-n defined.
         try:
             if self.is_table_empty("spatialshallow"):
                 return False
             shallow_sql = """SELECT fid, shallow_n FROM spatialshallow ORDER BY fid;"""
-            cell_sql = """SELECT grid_fid FROM spatialshallow_cells WHERE area_fid = ? ORDER BY grid_fid;"""
-
-            line1 = "{0} {1}\n"
-
-            shallow_rows = self.execute(shallow_sql).fetchall()
-            if not shallow_rows:
-                return False
+            if not subdomain:
+                cell_sql = """SELECT grid_fid FROM spatialshallow_cells WHERE area_fid = ? ORDER BY grid_fid;"""
             else:
-                pass
-            shallow_dat = os.path.join(outdir, "SHALLOWN_SPATIAL.DAT")
-            with open(shallow_dat, "w") as s:
-                for fid, shallow_n in shallow_rows:
-                    for row in self.execute(cell_sql, (fid,)):
-                        gid = row[0]
-                        s.write(line1.format(gid, shallow_n))
-
-            return True
-
-        except Exception as e:
-            QApplication.restoreOverrideCursor()
-            self.uc.show_error("ERROR 101218.1901: exporting SHALLOWN_SPATIAL.DAT failed!", e)
-            return False
-
-    def export_shallowNSpatial_md(self, outdir, subdomain):
-        # check if there is any shallow-n defined.
-        try:
-            if self.is_table_empty("spatialshallow"):
-                return False
-            shallow_sql = """SELECT fid, shallow_n FROM spatialshallow ORDER BY fid;"""
-            cell_sql = f"""SELECT 
-                            md.domain_cell 
-                        FROM 
-                            spatialshallow_cells AS ss
-                        JOIN 
-							schema_md_cells md ON ss.grid_fid = md.grid_fid
-                        WHERE 
-                            area_fid = ? AND md.domain_fid = {subdomain};"""
+                cell_sql = f"""SELECT 
+                                    md.domain_cell 
+                                FROM 
+                                    spatialshallow_cells AS ss
+                                JOIN 
+                                    schema_md_cells md ON ss.grid_fid = md.grid_fid
+                                WHERE 
+                                    area_fid = ? AND md.domain_fid = {subdomain};"""
 
             line1 = "{0} {1}\n"
 
