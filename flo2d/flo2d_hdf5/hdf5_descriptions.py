@@ -178,3 +178,12 @@ STREET = {
     "STREET_SEG": "Street Segments Data",
     "STREET_ELEMS": "Street Elements Data",
 }
+
+MULTIDOMAIN = {
+    "MULTIDOMAIN": "Multidomain Data",
+    "CADPTS": "CADPTS Data",
+}
+
+QGIS = {
+    "INFO": "QGIS Data",
+}
