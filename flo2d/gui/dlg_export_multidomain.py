@@ -666,7 +666,7 @@ class ExportMultipleDomainsDialog(qtBaseClass, uiDialog):
                     # "export_inflow",
                     # "export_tailings",
                     # 'export_outrc',
-                    "export_outflow_md",
+                    "export_outflow",
                     "export_rain",
                     # "export_evapor",
                     "export_infil",
