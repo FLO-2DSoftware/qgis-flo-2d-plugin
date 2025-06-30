@@ -963,7 +963,7 @@
       <bool>false</bool>
      </property>
      <property name="collapsed">
-      <bool>true</bool>
+      <bool>false</bool>
      </property>
      <property name="saveCollapsedState">
       <bool>false</bool>

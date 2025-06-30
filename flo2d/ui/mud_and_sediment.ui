@@ -54,8 +54,8 @@
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>868</width>
-        <height>382</height>
+        <width>872</width>
+        <height>310</height>
        </rect>
       </property>
       <layout class="QGridLayout" name="gridLayout_3">
@@ -1276,7 +1276,7 @@
                     </size>
                    </property>
                    <property name="toolTip">
-                    <string>Delete size fraction porcent finer</string>
+                    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Delete size fraction percent finer&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                    </property>
                    <property name="text">
                     <string>...</string>
@@ -1308,7 +1308,7 @@
                     </size>
                    </property>
                    <property name="toolTip">
-                    <string>Add size fraction porcent finer</string>
+                    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Add size fraction percent finer&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                    </property>
                    <property name="text">
                     <string>...</string>
@@ -2202,7 +2202,7 @@
          <item row="0" column="0">
           <widget class="QRadioButton" name="mud_debris_transport_radio">
            <property name="toolTip">
-            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Mud/Debris Transport&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Select Mud/Debris Transport.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
            </property>
            <property name="text">
             <string>Mud / Debris Transport</string>
@@ -2212,7 +2212,7 @@
          <item row="0" column="1">
           <widget class="QRadioButton" name="sediment_transport_radio">
            <property name="toolTip">
-            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Sediment Transport&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Select Sediment Transport.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
            </property>
            <property name="text">
             <string>Sediment Transport</string>
@@ -2254,7 +2254,7 @@
          <item row="0" column="2">
           <widget class="QRadioButton" name="two_phase_radio">
            <property name="toolTip">
-            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Two Phase&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Select Two Phase.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
            </property>
            <property name="text">
             <string>Two Phase</string>

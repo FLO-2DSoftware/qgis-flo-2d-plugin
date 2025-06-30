@@ -1872,6 +1872,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
                         chan_id, depinitial, froudc, roughadj, ibaseflow, isedn = row
                     chan_id = int(chan_id)
                     geom = left_bank_geom.get(chan_id)
+                    if float(isedn) == -9999:
+                        isedn = None  # Default value for isedn if not provided
                     chan_sql += [(geom, depinitial, froudc, roughadj, isedn, ibaseflow)]
 
             # Process CONFLUENCES
@@ -2513,8 +2515,11 @@ class Flo2dGeoPackage(GeoPackageUtils):
                                                            wrf1, wrf2, wrf3, wrf4, wrf5, wrf6, wrf7, wrf8) VALUES""",
                     12,
                 ]
+                collapse_sql = ["""INSERT INTO user_blocked_areas (geom, collapse, calc_arf, calc_wrf) VALUES""", 4]
 
-                self.clear_tables("blocked_cells")
+                self.clear_tables("blocked_cells", "user_blocked_areas")
+
+                i = 1
 
                 grid_group = self.parser.read_groups("Input/Grid")[0]
 
@@ -2527,28 +2532,59 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 # Read ARF_TOTALLY_BLOCKED dataset
                 if "ARF_TOTALLY_BLOCKED" in arfwrf_group.datasets:
                     totally_blocked = arfwrf_group.datasets["ARF_TOTALLY_BLOCKED"].data
+                    if "COLLAPSE_CELLS" in arfwrf_group.datasets:
+                        collapse_cells = arfwrf_group.datasets["COLLAPSE_CELLS"].data
+                        collapse_info = {
+                            abs(int(row[0])): (int(row[1]), int(row[2]), int(row[3]))
+                            for row in collapse_cells
+                        }
+                    else:
+                        collapse_info = {}
                     x_list = grid_group.datasets["COORDINATES"].data[:, 0]
                     y_list = grid_group.datasets["COORDINATES"].data[:, 1]
                     for i, cell in enumerate(totally_blocked, 1):
-                        grid_fid = abs(int(cell))
-                        arf = 1 if cell > 0 else -1
+                        cell = int(cell)
+                        grid_fid = abs(cell)
                         geom = self.build_point_xy(x_list[grid_fid - 1], y_list[grid_fid - 1])
-                        cells_sql += [(geom, i, grid_fid, arf) + (0,) * 8]  # Remaining WRF values are 0
+                        geom_pol = self.build_square(self.grid_centroids([grid_fid])[grid_fid], self.cell_size)
+                        arf = 1
+                        collapse, calc_arf, calc_wrf = collapse_info.get(grid_fid, (0, 1, 0))
+                        collapse_sql += [(geom_pol, collapse, calc_arf, calc_wrf)]
+                        if cell > 0:
+                            wrf = 0
+                        else:
+                            wrf = 1
+                        cells_sql += [(geom, i, grid_fid, arf) + (wrf,) * 8]  # Remaining WRF values are 0
 
                 # Read ARF_PARTIALLY_BLOCKED dataset
                 if "ARF_PARTIALLY_BLOCKED" in arfwrf_group.datasets:
                     partially_blocked = arfwrf_group.datasets["ARF_PARTIALLY_BLOCKED"].data
+                    if "COLLAPSE_CELLS" in arfwrf_group.datasets:
+                        collapse_cells = arfwrf_group.datasets["COLLAPSE_CELLS"].data
+                        collapse_info = {
+                            abs(int(row[0])): (int(row[1]), int(row[2]), int(row[3]))
+                            for row in collapse_cells
+                        }
+                    else:
+                        collapse_info = {}
                     x_list = grid_group.datasets["COORDINATES"].data[:, 0]
                     y_list = grid_group.datasets["COORDINATES"].data[:, 1]
-                    for i, row in enumerate(partially_blocked, 1):
+                    for row in partially_blocked:
+                        i += 1
                         grid_fid = int(row[0])
-                        arf = row[1]
-                        wrf_values = row[2:]
                         geom = self.build_point_xy(x_list[grid_fid - 1], y_list[grid_fid - 1])
-                        cells_sql += [(geom, i, grid_fid, arf) + tuple(wrf_values)]
+                        geom_pol = self.build_square(self.grid_centroids([grid_fid])[grid_fid], self.cell_size)
+                        arf = float(row[1])
+                        if arf < 0:
+                            collapse, calc_arf, calc_wrf = collapse_info.get(grid_fid, (0, 1, 0))
+                        else:
+                            collapse, calc_arf, calc_wrf = 0, 1, 0
+                        collapse_sql += [(geom_pol, collapse, calc_arf, calc_wrf)]
+                        wrf_values = row[2:]
+                        cells_sql += [(geom, i, grid_fid, abs(arf)) + tuple(wrf_values)]
 
                 # Execute batch inserts
-                self.batch_execute(cont_sql, cells_sql)
+                self.batch_execute(cont_sql, cells_sql, collapse_sql)
 
         except Exception as e:
             self.uc.show_error(
@@ -8606,7 +8642,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
         for row in chan_rows:
             row = [x if x is not None else "0" for x in row]
             fid = row[0]
-            if ISED == "0":
+            if float(ISED) == 0:
                 row[5] = -9999
             channel_group.datasets["CHAN_GLOBAL"].data.append(create_array(segment, 6, np.float64, tuple(row)))
             # Writes depinitial, froudc, roughadj, isedn from 'chan' table (schematic layer).
@@ -9530,10 +9566,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
             pbc_sql = """SELECT grid_fid, area_fid,  arf, wrf1, wrf2, wrf3, wrf4, wrf5, wrf6, wrf7, wrf8
                          FROM blocked_cells WHERE arf < 1 ORDER BY grid_fid;"""
-            collapse_sql = """SELECT collapse FROM user_blocked_areas WHERE fid = ?;"""
+            collapse_sql = """SELECT collapse, calc_arf, calc_wrf FROM user_blocked_areas WHERE fid = ?;"""
 
-            # line1 = "{}\n"
-            # line2 = "{}\n"
             line3 = "{0:<8} {1:<5.2f} {2:<5.2f} {3:<5.2f} {4:<5.2f} {5:<5.2f} {6:<5.2f} {7:<5.2f} {8:5.2f} {9:<5.2f}\n"
             option = self.execute(cont_sql).fetchone()
             if option is None:
@@ -9548,20 +9582,21 @@ class Flo2dGeoPackage(GeoPackageUtils):
             else:
                 pass
 
+            arfwrf_group.create_dataset('COLLAPSE_CELLS', [])
+
             # Totally blocked grid elements:
             totally_blocked_grid = self.execute(tbc_sql).fetchone()
             if totally_blocked_grid is not None:
                 arfwrf_group.create_dataset('ARF_TOTALLY_BLOCKED', [])
                 for row in self.execute(tbc_sql):
-                    collapse = self.execute(collapse_sql, (row[1],)).fetchone()
-                    if collapse:
-                        cll = collapse[0]
-                    else:
-                        cll = 0
-                    cll = [cll if cll is not None else 0]
                     cell = row[0]
-                    if cll[0] == 1 or row[2] == -1:
-                        cell = -cell
+                    collapse = self.execute(collapse_sql, (row[1],)).fetchone()
+                    # Check for collapse data, sometimes there is no collapse data
+                    if collapse:
+                        arfwrf_group.datasets["COLLAPSE_CELLS"].data.append(
+                            [int(cell), int(collapse[0]), int(collapse[1]), int(collapse[2])])
+                        if int(collapse[0]) == 1:
+                            cell = -cell
                     arfwrf_group.datasets["ARF_TOTALLY_BLOCKED"].data.append(cell)
 
             # Partially blocked grid elements:
@@ -9571,20 +9606,17 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 for row in self.execute(pbc_sql):
                     row = [x if x is not None else "" for x in row]
                     # Is there any side blocked? If not omit it:
-                    any_blocked = sum(row) - row[0] - row[1]
-                    if any_blocked > 0:
-                        collapse = self.execute(collapse_sql, (row[1],)).fetchone()
-                        if collapse:
-                            cll = collapse[0]
-                        else:
-                            cll = 0
-                        cll = [cll if cll is not None else 0]
-                        cell = row[0]
-                        arf_value = row[2]
-                        if cll[0] == 1:
+                    # any_blocked = sum(row) - row[0] - row[1]
+                    # if any_blocked > 0:
+                    cell = row[0]
+                    arf_value = round(row[2], 2)
+                    collapse = self.execute(collapse_sql, (row[1],)).fetchone()
+                    if collapse:
+                        arfwrf_group.datasets["COLLAPSE_CELLS"].data.append([int(cell), int(collapse[0]), int(collapse[1]), int(collapse[2])])
+                        if int(collapse[0]) == 1:
                             arf_value = -arf_value
-                        arfwrf_group.datasets["ARF_PARTIALLY_BLOCKED"].data.append(
-                            create_array(line3, 10, np.float64, cell, arf_value, *row[3:]))
+                    arfwrf_group.datasets["ARF_PARTIALLY_BLOCKED"].data.append(
+                        create_array(line3, 10, np.float64, cell, arf_value, *row[3:]))
 
             self.parser.write_groups(arfwrf_group)
             return True
@@ -11623,9 +11655,9 @@ class Flo2dGeoPackage(GeoPackageUtils):
                             else:
                                 errors += "* Unknown grid element in Culverts eq. table.\n"
             if errors:
-                QApplication.setOverrideCursor(Qt.ArrowCursor)
-                self.uc.show_info("WARNING 040319.0521:\n\n" + errors)
                 QApplication.restoreOverrideCursor()
+                self.uc.show_info("WARNING 040319.0521:\n\n" + errors)
+                QApplication.setOverrideCursor(Qt.WaitCursor)
             return True
 
         except Exception as e:
@@ -11668,6 +11700,9 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     grid_fid,
                     outf_flo
                 ) = row
+
+                if grid_fid is None or grid_fid == "":
+                    grid_fid = -9999  # Use -9999 for missing grid_fid
 
                 stormdrain_group.datasets["SWMMOUTF_DATA"].data.append([fid, grid_fid, outf_flo])
                 stormdrain_group.datasets["SWMMOUTF_NAME"].data.append(

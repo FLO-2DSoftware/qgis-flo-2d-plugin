@@ -836,6 +836,7 @@ class TestFlo2dGeoPackageHDF5(unittest.TestCase):
         self.assertTrue(compare_datasets(HDF5_1, EXPORT_HDF5_DIR, "Input/Reduction Factors/ARF_GLOBAL"))
         self.assertTrue(compare_datasets(HDF5_1, EXPORT_HDF5_DIR, "Input/Reduction Factors/ARF_PARTIALLY_BLOCKED"))
         self.assertTrue(compare_datasets(HDF5_1, EXPORT_HDF5_DIR, "Input/Reduction Factors/ARF_TOTALLY_BLOCKED"))
+        self.assertTrue(compare_datasets(HDF5_1, EXPORT_HDF5_DIR, "Input/Reduction Factors/COLLAPSE_CELLS"))
 
     def test_export_levee(self):
 

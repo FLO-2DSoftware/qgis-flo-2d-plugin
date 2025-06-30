@@ -51,6 +51,9 @@ class ComponentsDialog(qtBaseClass, uiDialog):
         last_dir = s.value("FLO-2D/lastGdsDir", "")
         self.file_lbl.setText(last_dir)
 
+        self.data_rb.setVisible(False)
+        self.hdf5_rb.setVisible(False)
+
         if self.in_or_out == "in":
             self.setWindowTitle("FLO-2D Components to Import")
             self.components_note_lbl.setVisible(False)

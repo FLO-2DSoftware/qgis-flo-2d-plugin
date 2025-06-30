@@ -372,7 +372,7 @@
             <item row="0" column="2">
              <widget class="QLabel" name="label_4">
               <property name="toolTip">
-               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;BRBOTWIDWAX&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(ft or m)&lt;/p&gt;&lt;p&gt;Maximum allowable breach bottom width as constrained by the valley cross section.&lt;/p&gt;&lt;p&gt;Set BRBOTWIDWAX = 0.0 if the dam levee is continuous through adjoining grid elements (default = grid element octagon side).&lt;/p&gt;&lt;p&gt;Range: 0 - No upper limit&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;BRBOTWIDMAX&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(ft or m)&lt;/p&gt;&lt;p&gt;Maximum allowable breach bottom width as constrained by the valley cross section.&lt;/p&gt;&lt;p&gt;Set BRBOTWIDMAX = 0.0 if the dam levee is continuous through adjoining grid elements (default = grid element octagon side).&lt;/p&gt;&lt;p&gt;Range: 0 - No upper limit&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
               <property name="text">
                <string>Maximum bottom width</string>

@@ -476,6 +476,10 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         self.user_swmm_storage_units_lyr.featureAdded.connect(
             lambda fid: self._feature_added(self.user_swmm_storage_units_lyr, fid, "user_swmm_storage_units"))
 
+        self.user_swmm_inlets_junctions_lyr.afterCommitChanges.connect(self.populate_profile_plot)
+        self.user_swmm_outlets_lyr.afterCommitChanges.connect(self.populate_profile_plot)
+        self.user_swmm_storage_units_lyr.afterCommitChanges.connect(self.populate_profile_plot)
+
         self.user_swmm_inlets_junctions_lyr.geometryChanged.connect(
             lambda fid, geom: self._geometry_changed(fid, geom, "user_swmm_inlets_junctions"))
         self.user_swmm_outlets_lyr.geometryChanged.connect(
@@ -6084,7 +6088,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 return
 
             fields = QgsFields()
-            fields.append(QgsField('name', QVariant.String))
+            fields.append(QgsField(name='name', type=QVariant.String))
 
             pr = SD_all_nodes_layer.dataProvider()
 
@@ -6869,6 +6873,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             return
         geom = feat.geometry()
         self._update_grid_field(fid, geom, table_name)
+        self.populate_profile_plot()
 
     def _geometry_changed(self, fid, geom, table_name):
         """
@@ -6893,14 +6898,16 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         """)
 
         if table_name == "user_swmm_inlets_junctions":
-            inlet_name = self.gutils.execute(f"""SELECT name FROM {table_name} WHERE fid = '{fid}'""").fetchone()[0]
-            has_rt = self.gutils.execute(f"""SELECT COUNT(*) FROM swmmflort WHERE name = '{inlet_name}'""").fetchone()
-            if has_rt[0]:
-                self.gutils.execute(f"""
-                    UPDATE swmmflort
-                    SET grid_fid = '{grid_fid}'
-                    WHERE name = '{inlet_name}' AND fid = '{fid}';
-                """)
+            inlet_name = self.gutils.execute(f"""SELECT name FROM {table_name} WHERE fid = '{fid}'""").fetchone()
+            if inlet_name:
+                inlet_name = inlet_name[0]
+                has_rt = self.gutils.execute(f"""SELECT COUNT(*) FROM swmmflort WHERE name = '{inlet_name}'""").fetchone()
+                if has_rt[0]:
+                    self.gutils.execute(f"""
+                        UPDATE swmmflort
+                        SET grid_fid = '{grid_fid}'
+                        WHERE name = '{inlet_name}' AND fid = '{fid}';
+                    """)
 
 
     def conduit_added(self, fid):

@@ -173,6 +173,9 @@
     </item>
     <item row="5" column="1">
      <widget class="QCheckBox" name="inflow_to_street">
+      <property name="toolTip">
+       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;ISTRFLO&lt;/span&gt;&lt;/p&gt;&lt;p&gt;ISTRFLO = 1 specifies that the floodplain inflow hydrograph will enter the streets rather than entering the overland portion of the grid element.&lt;/p&gt;&lt;p&gt;Range: 0, 1&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+      </property>
       <property name="text">
        <string>Inflow to street</string>
       </property>

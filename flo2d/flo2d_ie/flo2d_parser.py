@@ -298,6 +298,17 @@ class ParseHDF5:
         cell_size += size
         return cell_size
 
+    def list_input_subfolders(self):
+        files_used = ""
+        with h5py.File(self.hdf5_filepath, self.read_mode) as f:
+            input_group = f.get("Input")
+            if input_group is None:
+                return files_used
+            for name in input_group:
+                if isinstance(input_group[name], h5py.Group):
+                    files_used += name + "\n"
+        return files_used
+
 
 class ParseDAT(object):
     """
