@@ -9452,11 +9452,11 @@ class Flo2dGeoPackage(GeoPackageUtils):
             if self.is_table_empty("blocked_cells"):
                 return False
             cont_sql = """SELECT name, value FROM cont WHERE name = 'IARFBLOCKMOD';"""
-            tbc_sql = """SELECT grid_fid, area_fid FROM blocked_cells WHERE arf = 1 ORDER BY grid_fid;"""
+            collapse_sql = """SELECT collapse, calc_arf, calc_wrf FROM user_blocked_areas WHERE fid = ?;"""
             if not subdomain:
+                tbc_sql = """SELECT grid_fid, area_fid FROM blocked_cells WHERE arf = 1 ORDER BY grid_fid;"""
                 pbc_sql = """SELECT grid_fid, area_fid,  arf, wrf1, wrf2, wrf3, wrf4, wrf5, wrf6, wrf7, wrf8
                              FROM blocked_cells WHERE arf < 1 ORDER BY grid_fid;"""
-                collapse_sql = """SELECT collapse, calc_arf, calc_wrf FROM user_blocked_areas WHERE fid = ?;"""
             else:
                 tbc_sql = f"""SELECT 
                                 md.domain_cell, 
