@@ -302,6 +302,9 @@ class ExportMultipleDomainsDialog(qtBaseClass, uiDialog):
                 if "LID Volume" not in dlg_components.components:
                     export_calls.remove("export_lid_volume_md")
 
+            else:
+                return
+
         QApplication.processEvents()
         progDialog = QProgressDialog("Exporting subdomains...", None, 0, len(export_subdomains))
         progDialog.setModal(True)
@@ -608,6 +611,7 @@ class ExportMultipleDomainsDialog(qtBaseClass, uiDialog):
         details if required, and writes the results to appropriate folders
         as multiple files.
         """
+        s = QSettings()
         QApplication.setOverrideCursor(Qt.WaitCursor)
 
         # Figure out the export method
@@ -622,6 +626,8 @@ class ExportMultipleDomainsDialog(qtBaseClass, uiDialog):
 
         # Subdomains that had the FID changed due to the maximum of 9 subdomains
         subdomains_fid_changed_msg = ""
+
+        export_type = ""
 
         if subdomains:
 
@@ -656,7 +662,7 @@ class ExportMultipleDomainsDialog(qtBaseClass, uiDialog):
                 options = {o: v if v is not None else "" for o, v in self.f2g.execute(sql).fetchall()}
                 export_calls = [
                     "export_cont_toler",
-                    "export_tolspatial_md",
+                    "export_tolspatial",
                     # "export_inflow",
                     # "export_tailings",
                     # 'export_outrc',
@@ -700,12 +706,33 @@ class ExportMultipleDomainsDialog(qtBaseClass, uiDialog):
                     dummy_added = True
 
                 dlg_components = ComponentsDialog(self.con, self.iface, self.lyrs, "out")
+
+                dlg_components.data_rb.setVisible(True)
+                dlg_components.hdf5_rb.setVisible(True)
+
+                # True hdf5, False data
+                user_preference = s.value("FLO-2D/quickRun")
+                if user_preference == "hdf5":
+                    dlg_components.hdf5_rb.setChecked(True)
+                    dlg_components.data_rb.setChecked(False)
+                elif user_preference == "data":
+                    dlg_components.hdf5_rb.setChecked(False)
+                    dlg_components.data_rb.setChecked(True)
+                else:
+                    dlg_components.hdf5_rb.setChecked(True)
+                    dlg_components.data_rb.setChecked(False)
+
                 QApplication.restoreOverrideCursor()
 
                 ok = dlg_components.exec_()
                 if ok:
 
                     QApplication.setOverrideCursor(Qt.WaitCursor)
+
+                    if dlg_components.data_rb.isChecked():
+                        export_type = "data"
+                    if dlg_components.hdf5_rb.isChecked():
+                        export_type = "hdf5"
 
                     # if "Channels" not in dlg_components.components:
                     #     export_calls.remove("export_chan")
@@ -798,6 +825,9 @@ class ExportMultipleDomainsDialog(qtBaseClass, uiDialog):
                     if "LID Volume" not in dlg_components.components:
                         export_calls.remove("export_lid_volume_md")
 
+                else:
+                    return
+
             progDialog = QProgressDialog("Exporting subdomains...", None, 0, len(subdomains))
             progDialog.setModal(True)
             progDialog.setValue(0)
@@ -816,7 +846,11 @@ class ExportMultipleDomainsDialog(qtBaseClass, uiDialog):
                     os.makedirs(export_folder)
 
                 if export_method in [0, 2, 4]:
-                    self.call_IO_methods_md_dat(export_calls, True, str(export_folder), subdomain[0])
+
+                    if export_type == "data":
+                        self.call_IO_methods_md_dat(export_calls, True, str(export_folder), subdomain[0])
+                    if export_type == "hdf5":
+                        self.call_IO_methods_md_hdf5(export_calls, True, str(export_folder), subdomain[0])
 
                 cadpts = os.path.join(str(export_folder), "CADPTS.DAT")
                 multidomain = os.path.join(str(export_folder), "MULTIDOMAIN.DAT")
@@ -1069,12 +1103,6 @@ class ExportMultipleDomainsDialog(qtBaseClass, uiDialog):
         self.uc.bar_info(f"Subdomains exported correctly!")
         self.close_dlg()
         QApplication.restoreOverrideCursor()
-
-    def call_IO_methods_md(self, calls, debug, *args):
-        if self.f2g.parsed_format == Flo2dGeoPackage.FORMAT_DAT:
-            self.call_IO_methods_md_dat(calls, debug, *args)
-        elif self.f2g.parsed_format == Flo2dGeoPackage.FORMAT_HDF5:
-            self.call_IO_methods_md_hdf5(calls, debug, *args)
 
     def call_IO_methods_md_hdf5(self, calls, debug, *args):
         self.f2g.parser.write_mode = "w"

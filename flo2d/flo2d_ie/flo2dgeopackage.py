@@ -9876,13 +9876,13 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
         return rtrn
 
-    def export_tolspatial(self, output=None):
+    def export_tolspatial(self, output=None, subdomain=None):
         if self.parsed_format == self.FORMAT_DAT:
-            return self.export_tolspatial_dat(output)
+            return self.export_tolspatial_dat(output, subdomain)
         elif self.parsed_format == self.FORMAT_HDF5:
-            return self.export_tolspatial_hdf5()
+            return self.export_tolspatial_hdf5(subdomain)
 
-    def export_tolspatial_hdf5(self):
+    def export_tolspatial_hdf5(self, subdomain):
         """
         Function to export tolspatial to hdf5 file
         """
@@ -9919,49 +9919,23 @@ class Flo2dGeoPackage(GeoPackageUtils):
             self.uc.show_error("ERROR 101218.1539: exporting TOLSPATIAL.DAT failed!", e)
             return False
 
-    def export_tolspatial_dat(self, outdir):
+    def export_tolspatial_dat(self, outdir, subdomain):
         # check if there is any tolerance data defined.
         try:
             if self.is_table_empty("tolspatial"):
                 return False
             tol_poly_sql = """SELECT fid, tol FROM tolspatial ORDER BY fid;"""
-            tol_cells_sql = """SELECT grid_fid FROM tolspatial_cells WHERE area_fid = ? ORDER BY grid_fid;"""
-
-            line1 = "{0}  {1}\n"
-
-            tol_poly_rows = self.execute(tol_poly_sql).fetchall()  # A list of pairs (fid number, tolerance value),
-            # one for each tolerance polygon.                                                       #(fid, tol), that is, (polygon fid, tolerance value)
-            if not tol_poly_rows:
-                return False
+            if not subdomain:
+                tol_cells_sql = """SELECT grid_fid FROM tolspatial_cells WHERE area_fid = ? ORDER BY grid_fid;"""
             else:
-                pass
-            tolspatial_dat = os.path.join(outdir, "TOLSPATIAL.DAT")  # path and name of file to write
-            with open(tolspatial_dat, "w") as t:
-                for fid, tol in tol_poly_rows:
-                    for row in self.execute(tol_cells_sql, (fid,)):
-                        gid = row[0]
-                        t.write(line1.format(gid, tol))
-            return True
-
-        except Exception as e:
-            QApplication.restoreOverrideCursor()
-            self.uc.show_error("ERROR 101218.1539: exporting TOLSPATIAL.DAT failed!", e)
-            return False
-
-    def export_tolspatial_md(self, outdir, subdomain):
-        # check if there is any tolerance data defined.
-        try:
-            if self.is_table_empty("tolspatial"):
-                return False
-            tol_poly_sql = """SELECT fid, tol FROM tolspatial ORDER BY fid;"""
-            tol_cells_sql = f"""SELECT 
-                                    md.domain_cell
-                                FROM 
-                                    tolspatial_cells AS tc
-                                JOIN 
-									schema_md_cells md ON tc.grid_fid = md.grid_fid    
-                                WHERE 
-                                    area_fid = ? AND md.domain_fid = {subdomain}"""
+                tol_cells_sql = f"""SELECT 
+                                        md.domain_cell
+                                    FROM 
+                                        tolspatial_cells AS tc
+                                    JOIN 
+                                        schema_md_cells md ON tc.grid_fid = md.grid_fid    
+                                    WHERE 
+                                        area_fid = ? AND md.domain_fid = {subdomain}"""
 
             line1 = "{0}  {1}\n"
 
