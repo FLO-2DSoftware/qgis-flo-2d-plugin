@@ -3,6 +3,7 @@ import shutil
 import time
 import traceback
 
+import h5py
 from PyQt5.QtCore import QSettings, Qt
 from PyQt5.QtWidgets import QFileDialog, QApplication, QCheckBox, QProgressDialog
 from qgis.PyQt.QtCore import NULL
@@ -160,30 +161,30 @@ class ExportMultipleDomainsDialog(qtBaseClass, uiDialog):
             options = {o: v if v is not None else "" for o, v in self.f2g.execute(sql).fetchall()}
             export_calls = [
                 "export_cont_toler",
-                "export_tolspatial_md",
+                "export_tolspatial",
                 # "export_inflow",
                 # "export_tailings",
                 # 'export_outrc',
-                "export_outflow_md",
-                "export_rain_md",
+                "export_outflow",
+                "export_rain",
                 # "export_evapor",
-                "export_infil_md",
+                "export_infil",
                 # "export_chan",
                 # "export_xsec",
                 # "export_hystruc",
                 # "export_bridge_xsec",
                 # "export_bridge_coeff_data",
                 # "export_street",
-                "export_arf_md",
+                "export_arf",
                 # "export_mult",
-                "export_sed_md",
+                "export_sed",
                 # "export_levee",
                 # "export_fpxsec",
                 # "export_breach",
                 # "export_gutter",
-                "export_fpfroude_md",
-                "export_steep_slopen_md",
-                "export_lid_volume_md",
+                "export_fpfroude",
+                "export_steep_slopen",
+                "export_lid_volume",
                 # "export_swmmflo",
                 # "export_swmmflort",
                 # "export_swmmoutf",
@@ -191,8 +192,8 @@ class ExportMultipleDomainsDialog(qtBaseClass, uiDialog):
                 # "export_sdclogging",
                 # "export_wsurf",
                 # "export_wstime",
-                "export_shallowNSpatial_md",
-                "export_mannings_n_topo_md",
+                "export_shallowNSpatial",
+                "export_mannings_n_topo",
             ]
 
             # Add a dummy cell to the outflow cells to show the Outflow checkbox
@@ -216,13 +217,13 @@ class ExportMultipleDomainsDialog(qtBaseClass, uiDialog):
                 #     export_calls.remove("export_xsec")
 
                 if "Reduction Factors" not in dlg_components.components:
-                    export_calls.remove("export_arf_md")
+                    export_calls.remove("export_arf")
 
                 # if "Streets" not in dlg_components.components:
                 #     export_calls.remove("export_street")
 
                 if "Outflow Elements" not in dlg_components.components:
-                    export_calls.remove("export_outflow_md")
+                    export_calls.remove("export_outflow")
 
                 # if "Inflow Elements" not in dlg_components.components:
                 #     export_calls.remove("export_inflow")
@@ -246,7 +247,7 @@ class ExportMultipleDomainsDialog(qtBaseClass, uiDialog):
                 #     export_calls.remove("export_gutter")
 
                 if "Infiltration" not in dlg_components.components:
-                    export_calls.remove("export_infil_md")
+                    export_calls.remove("export_infil")
 
                 # if "Floodplain Cross Sections" not in dlg_components.components:
                 #     export_calls.remove("export_fpxsec")
@@ -275,7 +276,7 @@ class ExportMultipleDomainsDialog(qtBaseClass, uiDialog):
                 #         export_calls.remove("export_bridge_coeff_data")
 
                 if "Rain" not in dlg_components.components:
-                    export_calls.remove("export_rain_md")
+                    export_calls.remove("export_rain")
 
                 # if "Storm Drain" not in dlg_components.components:
                 #     export_calls.remove("export_swmmflo")
@@ -285,22 +286,22 @@ class ExportMultipleDomainsDialog(qtBaseClass, uiDialog):
                 #     export_calls.remove("export_sdclogging")
 
                 if "Spatial Shallow-n" not in dlg_components.components:
-                    export_calls.remove("export_shallowNSpatial_md")
+                    export_calls.remove("export_shallowNSpatial")
 
                 if "Spatial Tolerance" not in dlg_components.components:
-                    export_calls.remove("export_tolspatial_md")
+                    export_calls.remove("export_tolspatial")
 
                 if "Spatial Froude" not in dlg_components.components:
-                    export_calls.remove("export_fpfroude_md")
+                    export_calls.remove("export_fpfroude")
 
                 if "Manning's n and Topo" not in dlg_components.components:
-                    export_calls.remove("export_mannings_n_topo_md")
+                    export_calls.remove("export_mannings_n_topo")
 
                 if "Spatial Steep Slope-n" not in dlg_components.components:
-                    export_calls.remove("export_steep_slopen_md")
+                    export_calls.remove("export_steep_slopen")
 
                 if "LID Volume" not in dlg_components.components:
-                    export_calls.remove("export_lid_volume_md")
+                    export_calls.remove("export_lid_volume")
 
             else:
                 return
@@ -741,13 +742,13 @@ class ExportMultipleDomainsDialog(qtBaseClass, uiDialog):
                     #     export_calls.remove("export_xsec")
 
                     if "Reduction Factors" not in dlg_components.components:
-                        export_calls.remove("export_arf_md")
+                        export_calls.remove("export_arf")
 
                     # if "Streets" not in dlg_components.components:
                     #     export_calls.remove("export_street")
 
                     if "Outflow Elements" not in dlg_components.components:
-                        export_calls.remove("export_outflow_md")
+                        export_calls.remove("export_outflow")
 
                     # if "Inflow Elements" not in dlg_components.components:
                     #     export_calls.remove("export_inflow")
@@ -771,13 +772,13 @@ class ExportMultipleDomainsDialog(qtBaseClass, uiDialog):
                     #     export_calls.remove("export_gutter")
 
                     if "Infiltration" not in dlg_components.components:
-                        export_calls.remove("export_infil_md")
+                        export_calls.remove("export_infil")
 
                     # if "Floodplain Cross Sections" not in dlg_components.components:
                     #     export_calls.remove("export_fpxsec")
 
                     if "Mudflow and Sediment Transport" not in dlg_components.components:
-                        export_calls.remove("export_sed_md")
+                        export_calls.remove("export_sed")
 
                     # if "Evaporation" not in dlg_components.components:
                     #     export_calls.remove("export_evapor")
@@ -800,7 +801,7 @@ class ExportMultipleDomainsDialog(qtBaseClass, uiDialog):
                     #         export_calls.remove("export_bridge_coeff_data")
 
                     if "Rain" not in dlg_components.components:
-                        export_calls.remove("export_rain_md")
+                        export_calls.remove("export_rain")
 
                     # if "Storm Drain" not in dlg_components.components:
                     #     export_calls.remove("export_swmmflo")
@@ -810,22 +811,22 @@ class ExportMultipleDomainsDialog(qtBaseClass, uiDialog):
                     #     export_calls.remove("export_sdclogging")
 
                     if "Spatial Shallow-n" not in dlg_components.components:
-                        export_calls.remove("export_shallowNSpatial_md")
+                        export_calls.remove("export_shallowNSpatial")
 
                     if "Spatial Tolerance" not in dlg_components.components:
-                        export_calls.remove("export_tolspatial_md")
+                        export_calls.remove("export_tolspatial")
 
                     if "Spatial Froude" not in dlg_components.components:
-                        export_calls.remove("export_fpfroude_md")
+                        export_calls.remove("export_fpfroude")
 
                     if "Manning's n and Topo" not in dlg_components.components:
-                        export_calls.remove("export_mannings_n_topo_md")
+                        export_calls.remove("export_mannings_n_topo")
 
                     if "Spatial Steep Slope-n" not in dlg_components.components:
-                        export_calls.remove("export_steep_slopen_md")
+                        export_calls.remove("export_steep_slopen")
 
                     if "LID Volume" not in dlg_components.components:
-                        export_calls.remove("export_lid_volume_md")
+                        export_calls.remove("export_lid_volume")
 
                 else:
                     return
@@ -853,7 +854,10 @@ class ExportMultipleDomainsDialog(qtBaseClass, uiDialog):
                         self.call_IO_methods_md_dat(export_calls, True, str(export_folder), subdomain[0])
                     if export_type == "hdf5":
                         output_hdf5 = os.path.join(str(export_folder), "Input.hdf5")
-                        self.call_IO_methods_md_hdf5(export_calls, True, str(output_hdf5), subdomain[0])
+                        self.f2g = Flo2dGeoPackage(self.con, self.iface, parsed_format=Flo2dGeoPackage.FORMAT_HDF5)
+                        self.f2g.set_parser(output_hdf5, get_cell_size=False)
+                        self.f2g.parser.write_mode = "w"
+                        self.call_IO_methods_md_hdf5(export_calls, True, subdomain[0])
 
                 cadpts = os.path.join(str(export_folder), "CADPTS.DAT")
                 multidomain = os.path.join(str(export_folder), "MULTIDOMAIN.DAT")
@@ -866,30 +870,43 @@ class ExportMultipleDomainsDialog(qtBaseClass, uiDialog):
                 if export_method == 0:
                     connected_subdomains = downstream_domains[subdomain[0]]
                     if connected_subdomains:
-                        with open(multidomain, "w") as md:
+                        if export_type == "data":
+                            with open(multidomain, "w") as md:
+                                for connected_subdomain in connected_subdomains:
+                                    md.write(mdline_n.format(connected_subdomain))
+                                    up_cell_qry = f"""SELECT grid_fid, domain_cell FROM schema_md_cells WHERE domain_fid = {subdomain[0]} and down_domain_fid = {connected_subdomain};"""
+                                    for grid_fid, up_cell in self.gutils.execute(up_cell_qry).fetchall():
+                                        down_cells_qry = f"""SELECT domain_cell FROM schema_md_cells WHERE domain_fid = {connected_subdomain} and grid_fid = {grid_fid};"""
+                                        down_cells = self.gutils.execute(down_cells_qry).fetchall()
+                                        if down_cells:
+                                            md.write(mdline_d.format(str(up_cell), str(down_cells[0][0])))
+                        if export_type == "hdf5":
+                            self.f2g.parser.write_mode = "a"
+                            multipledomain_group = self.f2g.parser.multipledomain_group
+                            multipledomain_group.create_dataset('MULTIDOMAIN', [])
                             for connected_subdomain in connected_subdomains:
-                                md.write(mdline_n.format(connected_subdomain))
                                 up_cell_qry = f"""SELECT grid_fid, domain_cell FROM schema_md_cells WHERE domain_fid = {subdomain[0]} and down_domain_fid = {connected_subdomain};"""
                                 for grid_fid, up_cell in self.gutils.execute(up_cell_qry).fetchall():
                                     down_cells_qry = f"""SELECT domain_cell FROM schema_md_cells WHERE domain_fid = {connected_subdomain} and grid_fid = {grid_fid};"""
                                     down_cells = self.gutils.execute(down_cells_qry).fetchall()
                                     if down_cells:
-                                        md.write(mdline_d.format(str(up_cell), str(down_cells[0][0])))
+                                        multipledomain_group.datasets["MULTIDOMAIN"].data.append([connected_subdomain, up_cell, down_cells[0][0]])
+                            self.f2g.parser.write_groups(multipledomain_group)
 
                 # ONLY MULTIDOMAIN.DAT
                 elif export_method == 1:
                     connected_subdomains = downstream_domains[subdomain[0]]
                     if connected_subdomains:
-                        with open(multidomain, "w") as md:
-                            for connected_subdomain in connected_subdomains:
-                                md.write(mdline_n.format(connected_subdomain))
-                                up_cell_qry = f"""SELECT grid_fid, domain_cell FROM schema_md_cells WHERE domain_fid = {subdomain[0]} and down_domain_fid = {connected_subdomain};"""
-                                for grid_fid, up_cell in self.gutils.execute(up_cell_qry).fetchall():
-                                    down_cells_qry = f"""SELECT domain_cell FROM schema_md_cells WHERE domain_fid = {connected_subdomain} and grid_fid = {grid_fid};"""
-                                    down_cells = self.gutils.execute(down_cells_qry).fetchall()
-                                    if down_cells:
-                                        md.write(mdline_d.format(str(up_cell), str(down_cells[0][0])))
-
+                        if export_type == "data":
+                            with open(multidomain, "w") as md:
+                                for connected_subdomain in connected_subdomains:
+                                    md.write(mdline_n.format(connected_subdomain))
+                                    up_cell_qry = f"""SELECT grid_fid, domain_cell FROM schema_md_cells WHERE domain_fid = {subdomain[0]} and down_domain_fid = {connected_subdomain};"""
+                                    for grid_fid, up_cell in self.gutils.execute(up_cell_qry).fetchall():
+                                        down_cells_qry = f"""SELECT domain_cell FROM schema_md_cells WHERE domain_fid = {connected_subdomain} and grid_fid = {grid_fid};"""
+                                        down_cells = self.gutils.execute(down_cells_qry).fetchall()
+                                        if down_cells:
+                                            md.write(mdline_d.format(str(up_cell), str(down_cells[0][0])))
                 # CADPTS_DSx.DAT
                 elif export_method == 2:
                     sub_grid_cells = self.gutils.execute(f"""SELECT DISTINCT 
@@ -906,17 +923,29 @@ class ExportMultipleDomainsDialog(qtBaseClass, uiDialog):
 
                     records = sorted(sub_grid_cells, key=lambda x: x[0])
 
-                    with open(cadpts, "w") as c:
+                    if export_type == "data":
+                        with open(cadpts, "w") as c:
+                            for row in records:
+                                fid, _, _, geom = row
+                                x, y = geom.strip("POINT()").split()
+                                c.write(
+                                    cline.format(
+                                        fid,
+                                        "{0:.3f}".format(float(x)),
+                                        "{0:.3f}".format(float(y))
+                                    )
+                                )
+
+                    if export_type == "hdf5":
+                        self.f2g.parser.write_mode = "a"
+                        multipledomain_group = self.f2g.parser.multipledomain_group
+                        multipledomain_group.create_dataset('CADPTS', [])
                         for row in records:
                             fid, _, _, geom = row
                             x, y = geom.strip("POINT()").split()
-                            c.write(
-                                cline.format(
-                                    fid,
-                                    "{0:.3f}".format(float(x)),
-                                    "{0:.3f}".format(float(y))
-                                )
-                            )
+                            multipledomain_group.datasets["CADPTS"].data.append(
+                                [float(fid), float(x), float(y)])
+                        self.f2g.parser.write_groups(multipledomain_group)
 
                 # ONLY CADPTS_DSx.DAT
                 elif export_method == 3:
@@ -933,18 +962,18 @@ class ExportMultipleDomainsDialog(qtBaseClass, uiDialog):
                                                                          md.domain_fid = {subdomain[0]};""").fetchall()
 
                     records = sorted(sub_grid_cells, key=lambda x: x[0])
-
-                    with open(cadpts, "w") as c:
-                        for row in records:
-                            fid, _, _, geom = row
-                            x, y = geom.strip("POINT()").split()
-                            c.write(
-                                cline.format(
-                                    fid,
-                                    "{0:.3f}".format(float(x)),
-                                    "{0:.3f}".format(float(y))
+                    if export_type == "data":
+                        with open(cadpts, "w") as c:
+                            for row in records:
+                                fid, _, _, geom = row
+                                x, y = geom.strip("POINT()").split()
+                                c.write(
+                                    cline.format(
+                                        fid,
+                                        "{0:.3f}".format(float(x)),
+                                        "{0:.3f}".format(float(y))
+                                    )
                                 )
-                            )
 
                 i += 1
                 progDialog.setValue(i)
@@ -1012,8 +1041,18 @@ class ExportMultipleDomainsDialog(qtBaseClass, uiDialog):
                             if not os.path.exists(downstream_subdomains_folder) or subdomain_connectivity_name[2 * i - 1] == "":
                                 continue
                             else:
-                                shutil.copy2(os.path.join(str(downstream_subdomains_folder), "CADPTS.DAT"),
-                                             os.path.join(str(current_subdomain_folder), f"CADPTS_DS{fid_subdomain}.DAT"))
+                                if export_type == "data":
+                                    shutil.copy2(os.path.join(str(downstream_subdomains_folder), "CADPTS.DAT"),
+                                                 os.path.join(str(current_subdomain_folder), f"CADPTS_DS{fid_subdomain}.DAT"))
+                                if export_type == "hdf5":
+                                    source_hdf5 = os.path.join(str(downstream_subdomains_folder), "Input.hdf5")
+                                    target_hdf5 = os.path.join(str(current_subdomain_folder), "Input.hdf5")
+                                    with h5py.File(source_hdf5, "r") as src:
+                                        # Navigate to the dataset
+                                        dataset_path = "Input/Multiple Domains/CADPTS"
+                                        if dataset_path in src:
+                                            with h5py.File(target_hdf5, "a") as dst:
+                                                src.copy(dataset_path, dst, name=f"Input/Multiple Domains/CADPTS_DS{fid_subdomain}")
 
                         # The strings list 'export_calls', contains the names of
                         # the methods in the class Flo2dGeoPackage to export (write) the
@@ -1107,10 +1146,7 @@ class ExportMultipleDomainsDialog(qtBaseClass, uiDialog):
         self.close_dlg()
         QApplication.restoreOverrideCursor()
 
-    def call_IO_methods_md_hdf5(self, calls, debug, output, *args):
-        self.f2g = Flo2dGeoPackage(self.con, self.iface, parsed_format=Flo2dGeoPackage.FORMAT_HDF5)
-        self.f2g.set_parser(output, get_cell_size=False)
-        self.f2g.parser.write_mode = "w"
+    def call_IO_methods_md_hdf5(self, calls, debug, subdomain):
 
         progDialog = QProgressDialog("Exporting to HDF5...", None, 0, len(calls))
         progDialog.setModal(True)
@@ -1124,9 +1160,10 @@ class ExportMultipleDomainsDialog(qtBaseClass, uiDialog):
             progDialog.setLabelText(call)
             QApplication.processEvents()
             method = getattr(self.f2g, call)
+
             try:
-                method(*args)
-                self.f2g.parser.write_mode = "a"
+                if method(subdomain=subdomain):
+                    self.f2g.parser.write_mode = "a"
             except Exception as e:
                 if debug is True:
                     self.uc.log_info(traceback.format_exc())
@@ -1152,11 +1189,11 @@ class ExportMultipleDomainsDialog(qtBaseClass, uiDialog):
             #     dat = "BRIDGE_XSEC.DAT"
             # elif call == "import_swmminp":
             #     dat = "SWMM.INP"
-            if call == 'export_steep_slopen_md':
+            if call == 'export_steep_slopen':
                 dat = "STEEP_SLOPEN.DAT"
             # elif call == 'import_steep_slopen_md':
             #     dat = "STEEP_SLOPEN.DAT"
-            elif call == 'export_lid_volume_md':
+            elif call == 'export_lid_volume':
                 dat = "LID_VOLUME.DAT"
             # elif call == 'import_lid_volume_md':
             #     dat = "LID_VOLUME.DAT"

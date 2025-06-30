@@ -9542,11 +9542,12 @@ class Flo2dGeoPackage(GeoPackageUtils):
             if self.is_table_empty("blocked_cells"):
                 return False
             cont_sql = """SELECT name, value FROM cont WHERE name = 'IARFBLOCKMOD';"""
-            tbc_sql = """SELECT grid_fid, area_fid, arf FROM blocked_cells WHERE arf IN (1, -1);"""
+            collapse_sql = """SELECT collapse, calc_arf, calc_wrf FROM user_blocked_areas WHERE fid = ?;"""
             if not subdomain:
+                tbc_sql = """SELECT grid_fid, area_fid, arf FROM blocked_cells WHERE arf IN (1, -1);"""
                 pbc_sql = """SELECT grid_fid, area_fid,  arf, wrf1, wrf2, wrf3, wrf4, wrf5, wrf6, wrf7, wrf8
                              FROM blocked_cells WHERE arf < 1 ORDER BY grid_fid;"""
-                collapse_sql = """SELECT collapse, calc_arf, calc_wrf FROM user_blocked_areas WHERE fid = ?;"""
+
             else:
                 tbc_sql = f"""SELECT 
                                 md.domain_cell, 
@@ -10209,15 +10210,16 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 for row in self.execute(areas_s_sql):
                     aid = row[0]
                     dist_fid = row[1] if row[1] != "" else 0
-                    gid = self.execute(cells_s_sql, (aid,)).fetchone()[0]
-
-                    try:
-                        sed_group.datasets["SED_SUPPLY_AREAS"].data.append(
-                            create_array(five_values, 5, np.float64, dist_fid, gid, *row[2:]))
-                    except:
-                        sed_group.create_dataset('SED_SUPPLY_AREAS', [])
-                        sed_group.datasets["SED_SUPPLY_AREAS"].data.append(
-                            create_array(five_values, 5, np.float64, dist_fid, gid, *row[2:]))
+                    result = self.execute(cells_s_sql, (aid,)).fetchone()
+                    if result:
+                        gid = result[0]
+                        try:
+                            sed_group.datasets["SED_SUPPLY_AREAS"].data.append(
+                                create_array(five_values, 5, np.float64, dist_fid, gid, *row[2:]))
+                        except:
+                            sed_group.create_dataset('SED_SUPPLY_AREAS', [])
+                            sed_group.datasets["SED_SUPPLY_AREAS"].data.append(
+                                create_array(five_values, 5, np.float64, dist_fid, gid, *row[2:]))
 
                     for nrow in self.execute(data_n_sql, (dist_fid,)):
                         try:
