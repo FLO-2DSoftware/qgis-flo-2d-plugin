@@ -678,7 +678,7 @@ class ExportMultipleDomainsDialog(qtBaseClass, uiDialog):
                     # "export_street",
                     "export_arf",
                     # "export_mult",
-                    "export_sed_md",
+                    "export_sed",
                     # "export_levee",
                     # "export_fpxsec",
                     # "export_breach",
