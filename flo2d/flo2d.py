@@ -87,7 +87,7 @@ from .gui.storm_drain_editor_widget import StormDrainEditorWidget
 from .gui.table_editor_widget import TableEditorWidget
 from .layers import Layers
 from .misc.invisible_lyrs_grps import InvisibleLayersAndGroups
-from .user_communication import UserCommunication
+from .user_communication import UserCommunication, is_file_locked
 from .utils import get_flo2dpro_version, get_plugin_version
 
 from PIL import Image
@@ -3027,6 +3027,11 @@ class Flo2D(object):
 
                 if export_type == "hdf5":
                     output_hdf5 = os.path.join(outdir, "Input.hdf5")
+                    if is_file_locked(output_hdf5):
+                        QApplication.restoreOverrideCursor()
+                        self.uc.bar_error("The file Input.hdf5 is currently open or locked by another process!")
+                        self.uc.log_info("The file Input.hdf5 is currently open or locked by another process!")
+                        return
                     export_message = "Datasets exported to\n" + output_hdf5 + "\n\n"
                     self.f2g = Flo2dGeoPackage(self.con, self.iface, parsed_format=Flo2dGeoPackage.FORMAT_HDF5)
                     self.f2g.set_parser(output_hdf5, get_cell_size=False)
