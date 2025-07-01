@@ -2121,6 +2121,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 )
 
                 hystruc_params = [
+                    "fid",
                     "geom",
                     "ifporchan",
                     "icurvtable",
@@ -2134,7 +2135,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
                 hystruc_sql = [
                     "INSERT INTO struct (" + ", ".join(hystruc_params) + ") VALUES",
-                    9,
+                    10,
                 ]
                 ratc_sql = [
                     """INSERT INTO rat_curves (struct_fid, hdepexc, coefq, expq, coefa, expa) VALUES""",
@@ -2167,7 +2168,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     for row in data:
                         struct_fid, ifporchan, icurvtable, inflonod, outflonod, inoutcont, headrefel, clength, cdiameter = row
                         geom = self.build_linestring([int(inflonod), int(outflonod)])
-                        hystruc_sql += [(geom, int(ifporchan), int(icurvtable), int(inflonod), int(outflonod), int(inoutcont), headrefel, clength, cdiameter)]
+                        hystruc_sql += [(int(struct_fid), geom, int(ifporchan), int(icurvtable), int(inflonod), int(outflonod), int(inoutcont), headrefel, clength, cdiameter)]
 
                 # Process RAT_CURVES
                 if "RATING_CURVE" in hydrostruct_group.datasets:
@@ -2201,33 +2202,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 # Process BRIDGE VARIABLES
                 if "BRIDGE_VARIABLES" in hydrostruct_group.datasets:
                     data = hydrostruct_group.datasets["BRIDGE_VARIABLES"].data
-                    for row in data:
-                        (struct_fid,
-                         IBTYPE,
-                         COEFF,
-                         C_PRIME_USER,
-                         KF_COEF,
-                         KWW_COEF,
-                         KPHI_COEF,
-                         KY_COEF,
-                         KX_COEF,
-                         KJ_COEF,
-                         BOPENING,
-                         BLENGTH,
-                         BN_VALUE,
-                         UPLENGTH12,
-                         LOWCHORD,
-                         DECKHT,
-                         DECKLENGTH,
-                         PIERWIDTH,
-                         SLUICECOEFADJ,
-                         ORIFICECOEFADJ,
-                         COEFFWEIRB,
-                         WINGWALL_ANGLE,
-                         PHI_ANGLE,
-                         LBTOEABUT,
-                         RBTOEABUT) = row
-                        bridge_sql += [(int(struct_fid), IBTYPE, COEFF, C_PRIME_USER, KF_COEF, KWW_COEF, KPHI_COEF, KY_COEF, KX_COEF, KJ_COEF, BOPENING, BLENGTH, BN_VALUE, UPLENGTH12, LOWCHORD, DECKHT, DECKLENGTH, PIERWIDTH, SLUICECOEFADJ, ORIFICECOEFADJ, COEFFWEIRB, WINGWALL_ANGLE, PHI_ANGLE, LBTOEABUT, RBTOEABUT)]
+                    values = [row[0] for row in data]
+                    bridge_sql += [tuple(values)]
 
                 if hystruc_sql:
                     self.batch_execute(hystruc_sql)
@@ -2336,8 +2312,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 if "BRIDGE_XSEC" in hydrostruct_group.datasets:
                     data = hydrostruct_group.datasets["BRIDGE_XSEC"].data
                     for row in data:
-                        ibridge, xup, yup, yb = row
-                        bridge_xs_sql += [(int(ibridge), xup, yup, yb)]
+                        struct_fid, xup, yup, yb = row
+                        bridge_xs_sql += [(int(struct_fid), xup, yup, yb)]
 
                 if bridge_xs_sql:
                     self.batch_execute(bridge_xs_sql)
@@ -8846,7 +8822,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
         Function to export xsection data to hdf5 file
         """
         try:
-            chan_n_sql = """SELECT nxsecnum, xsecname FROM chan_n ORDER BY nxsecnum;"""
+            chan_n_sql = """SELECT DISTINCT nxsecnum, xsecname FROM chan_n ORDER BY nxsecnum;"""
             xsec_sql = """SELECT xi, yi FROM xsec_n_data WHERE chan_n_nxsecnum = ? ORDER BY fid;"""
 
             xsec_line = """{0}  {1}\n"""
@@ -9091,12 +9067,16 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
                             if i == 3:  # Bridge routine line
                                 try:
-                                    hystruc_group.datasets["BRIDGE_VARIABLES"].data.append(
-                                        create_array(tfive_values, 25, np.float64, tuple(subvals)))
+                                    for val in subvals:
+                                        hystruc_group.datasets["BRIDGE_VARIABLES"].data.append(
+                                            create_array("{0}", 1, np.float64, (val,))
+                                        )
                                 except:
                                     hystruc_group.create_dataset('BRIDGE_VARIABLES', [])
-                                    hystruc_group.datasets["BRIDGE_VARIABLES"].data.append(
-                                        create_array(tfive_values, 25, np.float64, tuple(subvals)))
+                                    for val in subvals:
+                                        hystruc_group.datasets["BRIDGE_VARIABLES"].data.append(
+                                            create_array("{0}", 1, np.float64, (val,))
+                                        )
 
                             if i == 4:
                                 try:
@@ -9245,7 +9225,6 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
             for stru in hystruc_rows:
                 struct_fid = stru[0]
-                in_node = stru[5]
                 bridge_rows = self.execute(bridge_xs_sql, (struct_fid,)).fetchall()
                 if not bridge_rows:
                     continue
@@ -9253,7 +9232,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
                     for row in bridge_rows:
                         row = [x if x not in [NULL, None, "None", "none"] else 0 for x in row]
-                        line = str(in_node) + "  " + str(row[0]) + "  " + str(row[1]) + "  " + str(row[2]) + "\n"
+                        line = str(struct_fid) + "  " + str(row[0]) + "  " + str(row[1]) + "  " + str(row[2]) + "\n"
                         hystruc_group.datasets["BRIDGE_XSEC"].data.append(create_array(line, 4, np.float64))
 
             self.parser.write_groups(hystruc_group)
