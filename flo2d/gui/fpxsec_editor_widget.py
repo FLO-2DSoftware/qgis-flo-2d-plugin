@@ -342,6 +342,11 @@ class FPXsecEditorWidget(qtBaseClass, uiDialog):
                                 if not line.strip():
                                     break
                                 line = line.split()
+                                # If this line starts with the string "VELOCITY", it is a channel cross section
+                                if line[0] == "VELOCITY":
+                                    for _ in range(5):
+                                        line = next(myfile)
+                                        line = line.split()
                                 time_list.append(float(line[0]))
                                 discharge_list.append(float(line[5]))
                                 flow_width_list.append(float(line[1]))
