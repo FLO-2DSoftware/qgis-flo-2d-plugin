@@ -409,6 +409,10 @@ class RainEditorWidget(qtBaseClass, uiDialog):
 
         if self.gutils.get_cont_par("IRAIN") == "1":
             self.simulate_rain_grp.setChecked(True)
+            self.populate_tseries()
+            idx = self.tseries_cbo.findData(self.rain.series_fid)
+            self.tseries_cbo.setCurrentIndex(idx)
+            self.populate_tseries_data()
         else:
             self.simulate_rain_grp.setChecked(False)
 
@@ -442,10 +446,6 @@ class RainEditorWidget(qtBaseClass, uiDialog):
         else:
             self.moving_storm_speed_dbox.setValue(0)
 
-        self.populate_tseries()
-        idx = self.tseries_cbo.findData(self.rain.series_fid)
-        self.tseries_cbo.setCurrentIndex(idx)
-        self.populate_tseries_data()
         self.connect_signals()
 
     def populate_tseries(self):
@@ -698,6 +698,10 @@ class RainEditorWidget(qtBaseClass, uiDialog):
             return
         if self.simulate_rain_grp.isChecked():
             self.gutils.set_cont_par("IRAIN", 1)
+            self.populate_tseries()
+            idx = self.tseries_cbo.findData(self.rain.series_fid)
+            self.tseries_cbo.setCurrentIndex(idx)
+            self.populate_tseries_data()
         else:
             self.gutils.set_cont_par("IRAIN", 0)
 
