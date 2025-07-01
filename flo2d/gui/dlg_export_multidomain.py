@@ -12,7 +12,7 @@ from .dlg_components import ComponentsDialog
 from .ui_utils import load_ui
 from ..flo2d_ie.flo2dgeopackage import Flo2dGeoPackage
 from ..geopackage_utils import GeoPackageUtils
-from ..user_communication import UserCommunication
+from ..user_communication import UserCommunication, is_file_locked
 
 uiDialog, qtBaseClass = load_ui("export_multiple_domains")
 
@@ -391,6 +391,10 @@ class ExportMultipleDomainsDialog(qtBaseClass, uiDialog):
                         self.call_IO_methods_md_dat(export_calls, True, str(export_folder), subdomains[0])
                     if export_type == "hdf5":
                         output_hdf5 = os.path.join(str(export_folder), "Input.hdf5")
+                        if is_file_locked(output_hdf5):
+                            self.uc.bar_error(f"The file Input.hdf5 for subdomain {subdomain_name} is currently open or locked by another process!")
+                            self.uc.log_info(f"The file Input.hdf5 for subdomain {subdomain_name} is currently open or locked by another process!")
+                            continue
                         self.f2g = Flo2dGeoPackage(self.con, self.iface, parsed_format=Flo2dGeoPackage.FORMAT_HDF5)
                         self.f2g.set_parser(output_hdf5, get_cell_size=False)
                         self.f2g.parser.write_mode = "w"
