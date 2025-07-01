@@ -3,7 +3,10 @@ import shutil
 import time
 import traceback
 
-import h5py
+try:
+    import h5py
+except ImportError:
+    pass
 from PyQt5.QtCore import QSettings, Qt
 from PyQt5.QtWidgets import QFileDialog, QApplication, QCheckBox, QProgressDialog
 from qgis.PyQt.QtCore import NULL
