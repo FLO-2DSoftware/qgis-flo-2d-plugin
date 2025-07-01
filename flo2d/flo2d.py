@@ -3030,6 +3030,7 @@ class Flo2D(object):
                 return
 
             if self.files_used != "":
+                QApplication.restoreOverrideCursor()
                 info = export_message + self.files_used
                 self.uc.show_info(info)
                 self.uc.log_info(info)
