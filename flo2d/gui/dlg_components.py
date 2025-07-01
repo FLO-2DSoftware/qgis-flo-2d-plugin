@@ -170,6 +170,21 @@ class ComponentsDialog(qtBaseClass, uiDialog):
                     self.spatial_shallow_n_chbox.setChecked(True)
                     self.spatial_shallow_n_chbox.setEnabled(True)
 
+            if os.path.isfile(last_dir + r"\TAILINGS.DAT"):
+                if os.path.getsize(last_dir + r"\TAILINGS.DAT") > 0:
+                    self.tailings_chbox.setChecked(True)
+                    self.tailings_chbox.setEnabled(True)
+
+            if os.path.isfile(last_dir + r"\TAILINGS_CV.DAT"):
+                if os.path.getsize(last_dir + r"\TAILINGS_CV.DAT") > 0:
+                    self.tailings_chbox.setChecked(True)
+                    self.tailings_chbox.setEnabled(True)
+
+            if os.path.isfile(last_dir + r"\TAILINGS_STACK_DEPTH.DAT"):
+                if os.path.getsize(last_dir + r"\TAILINGS_STACK_DEPTH.DAT") > 0:
+                    self.tailings_chbox.setChecked(True)
+                    self.tailings_chbox.setEnabled(True)
+
         elif self.in_or_out == "out":
             self.setWindowTitle("FLO-2D Components to Export")
             self.file_lbl.setText(last_dir)

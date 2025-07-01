@@ -652,7 +652,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 if "TAILINGS_STACK_DEPTH" in tailings_group.datasets:
                     data = tailings_group.datasets["TAILINGS_STACK_DEPTH"].data
                     for row in data:
-                        grid_fid, water_surf_elev, tailings_surf_elev = row
+                        grid_fid, tailings_surf_elev, water_surf_elev = row
                         square = self.build_square(self.grid_centroids([grid_fid])[grid_fid], self.cell_size)
                         tailings_sd_sql += [(grid_fid, tailings_surf_elev, water_surf_elev, 0, square)]
                     self.batch_execute(tailings_sd_sql)
