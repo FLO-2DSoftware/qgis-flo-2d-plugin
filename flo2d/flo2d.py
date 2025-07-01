@@ -2974,9 +2974,6 @@ class Flo2D(object):
 
                     self.export_flo2d_files(outdir, export_calls_filtered, dlg_components)
 
-                    if os.path.isfile(outdir + r"\BRIDGE_XSEC.DAT"):
-                        os.remove(outdir + r"\BRIDGE_XSEC.DAT")
-
                     if "export_tailings" in export_calls:
                         MUD = self.gutils.get_cont_par("MUD")
                         concentration_sql = """SELECT 
