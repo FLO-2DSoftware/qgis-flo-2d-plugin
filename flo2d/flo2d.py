@@ -1665,6 +1665,13 @@ class Flo2D(object):
                 dat = "LID_VOLUME.DAT"
             elif call == 'import_shallowNSpatial':
                 dat = "SHALLOWN_SPATIAL.DAT"
+            elif call == "import_tailings":
+                if self.f2g.parser.dat_files["TAILINGS.DAT"] is not None:
+                    dat = "TAILINGS.DAT"
+                if self.f2g.parser.dat_files["TAILINGS_CV.DAT"] is not None:
+                    dat = "TAILINGS_CV.DAT"
+                if self.f2g.parser.dat_files["TAILINGS_STACK_DEPTH.DAT"] is not None:
+                    dat = "TAILINGS_STACK_DEPTH.DAT"
             else:
                 dat = call.split("_")[-1].upper() + ".DAT"
             if call.startswith("import"):
@@ -1840,6 +1847,8 @@ class Flo2D(object):
 
                     if "Inflow Elements" not in dlg_components.components:
                         import_calls.remove("import_inflow")
+
+                    if "Tailings" not in dlg_components.components:
                         import_calls.remove("import_tailings")
 
                     # if "Surface Water Rating Tables" not in dlg_components.components: Add back when OUTRC is completed
@@ -2543,6 +2552,8 @@ class Flo2D(object):
 
                     if "Inflow Elements" not in dlg_components.components:
                         import_calls.remove("import_inflow")
+
+                    if "Tailings" not in dlg_components.components:
                         import_calls.remove("import_tailings")
 
                     # if "Surface Water Rating Tables" not in dlg_components.components:
@@ -3129,9 +3140,6 @@ class Flo2D(object):
             self.gutils.set_cont_par("MUD", 0)
             self.gutils.set_cont_par("ISED", 0)
             export_calls.remove("export_sed")
-        else:
-            self.gutils.set_cont_par("MUD", 1)
-            self.gutils.set_cont_par("ISED", 1)
 
         if "Evaporation" not in dlg_components.components:
             self.gutils.set_cont_par("IEVAP", 0)
