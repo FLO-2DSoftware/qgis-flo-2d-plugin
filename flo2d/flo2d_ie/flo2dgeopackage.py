@@ -90,6 +90,10 @@ class Flo2dGeoPackage(GeoPackageUtils):
             )
             return False
 
+        self.buffer = self.cell_size * 0.4
+        self.shrink = self.cell_size * 0.95
+        return True
+
     def import_cont_toler(self):
         if self.parsed_format == self.FORMAT_DAT:
             return self.import_cont_toler_dat()
@@ -445,21 +449,26 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 inflow_sql = ["""INSERT INTO inflow (time_series_fid, ident, inoutfc, geom_type, bc_fid) VALUES""", 5]
                 cells_sql = ["""INSERT INTO inflow_cells (inflow_fid, grid_fid) VALUES""", 2]
                 ts_sql = ["""INSERT OR REPLACE INTO inflow_time_series (fid, name) VALUES""", 2]
-                tsd_sql = ["""INSERT INTO inflow_time_series_data (series_fid, time, value, value2) VALUES""", 4,]
+                tsd_sql = ["""INSERT INTO inflow_time_series_data (series_fid, time, value, value2) VALUES""", 4, ]
 
                 # Reservoirs
                 schematic_reservoirs_sql = ["""INSERT INTO reservoirs (grid_fid, wsel, n_value, geom) VALUES""", 4]
                 user_reservoirs_sql = ["""INSERT INTO user_reservoirs (wsel, n_value, geom) VALUES""", 3]
 
                 # Tailings Reservoirs
-                schematic_tailings_reservoirs_sql = ["""INSERT INTO tailing_reservoirs (grid_fid, wsel, n_value, tailings, geom) VALUES""", 5]
-                user_tailing_reservoirs = ["""INSERT INTO user_tailing_reservoirs (wsel, n_value, tailings, geom) VALUES""", 4]
+                schematic_tailings_reservoirs_sql = [
+                    """INSERT INTO tailing_reservoirs (grid_fid, wsel, n_value, tailings, geom) VALUES""", 5]
+                user_tailing_reservoirs = [
+                    """INSERT INTO user_tailing_reservoirs (wsel, n_value, tailings, geom) VALUES""", 4]
 
                 # Import inflow global parameters if present
                 if "INF_GLOBAL" in inflow_group.datasets:
                     inflow_global = inflow_group.datasets["INF_GLOBAL"].data
-                    self.execute("INSERT INTO cont (name, value, note) VALUES (?, ?, ?)", ("IHOURDAILY", int(inflow_global[0]), GeoPackageUtils.PARAMETER_DESCRIPTION["IHOURDAILY"]))
-                    self.execute("INSERT INTO cont (name, value, note) VALUES (?, ?, ?)", ("IDEPLT", int(inflow_global[1]), GeoPackageUtils.PARAMETER_DESCRIPTION["IDEPLT"]))
+                    self.execute("INSERT INTO cont (name, value, note) VALUES (?, ?, ?)",
+                                 ("IHOURDAILY", int(inflow_global[0]),
+                                  GeoPackageUtils.PARAMETER_DESCRIPTION["IHOURDAILY"]))
+                    self.execute("INSERT INTO cont (name, value, note) VALUES (?, ?, ?)",
+                                 ("IDEPLT", int(inflow_global[1]), GeoPackageUtils.PARAMETER_DESCRIPTION["IDEPLT"]))
 
                 # Import inflow time series
                 if "INF_GRID" in inflow_group.datasets:
@@ -487,7 +496,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     for reservoir in inflow_group.datasets["RESERVOIRS"].data:
                         grid_fid, wsel, n_value, tailings = reservoir
                         user_geom = self.build_point_xy(x_list[int(grid_fid) - 1], y_list[int(grid_fid) - 1])
-                        schema_geom = self.build_square_xy(x_list[int(grid_fid) - 1], y_list[int(grid_fid) - 1], self.cell_size)
+                        schema_geom = self.build_square_xy(x_list[int(grid_fid) - 1], y_list[int(grid_fid) - 1],
+                                                           self.cell_size)
                         # Water
                         if int(tailings) == -9999:
                             schematic_reservoirs_sql += [(grid_fid, wsel, n_value, schema_geom)]
@@ -656,7 +666,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 if "TAILINGS_STACK_DEPTH" in tailings_group.datasets:
                     data = tailings_group.datasets["TAILINGS_STACK_DEPTH"].data
                     for row in data:
-                        grid_fid, tailings_surf_elev, water_surf_elev = row
+                        grid_fid, water_surf_elev, tailings_surf_elev = row
                         square = self.build_square(self.grid_centroids([grid_fid])[grid_fid], self.cell_size)
                         tailings_sd_sql += [(grid_fid, tailings_surf_elev, water_surf_elev, 0, square)]
                     self.batch_execute(tailings_sd_sql)
@@ -986,12 +996,14 @@ class Flo2dGeoPackage(GeoPackageUtils):
                         else:
                             if int(cell_type) == 0:  # floodplain
                                 existing_fid = parsed_grid[grid]
-                                update_sql.append(f"UPDATE outflow SET fp_tser_fid = {int(ts_id)} WHERE fid = {existing_fid};")
+                                update_sql.append(
+                                    f"UPDATE outflow SET fp_tser_fid = {int(ts_id)} WHERE fid = {existing_fid};")
                                 ts_sql += [(int(ts_id), "Time series " + str(ts_id))]
 
                             if int(cell_type) == 1:  # channel
                                 existing_fid = parsed_grid[grid]
-                                update_sql.append(f"UPDATE outflow SET chan_tser_fid = {int(ts_id)} WHERE fid = {existing_fid};")
+                                update_sql.append(
+                                    f"UPDATE outflow SET chan_tser_fid = {int(ts_id)} WHERE fid = {existing_fid};")
                                 ts_sql += [(int(ts_id), "Time series " + str(ts_id))]
 
                 if "TS_OUT_DATA" in outflow_group.datasets:
@@ -1649,9 +1661,9 @@ class Flo2dGeoPackage(GeoPackageUtils):
             for i, seg in enumerate(segments, 1):
                 bLine = "0.0"
                 if seg[-1][0] == "B":
-                    bLine = seg[-1][1] 
-                    seg.pop()  
-                    
+                    bLine = seg[-1][1]
+                    seg.pop()
+
                 xs = seg[-1]  # Last element from segment. [-1] means count from right, last from right.
                 gids = []
                 for ii, row in enumerate(xs, 1):  # Adds counter ii to iterable.
@@ -1669,7 +1681,6 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 options = seg[:-1]
                 geom = self.build_linestring(gids)
                 chan_sql += [(geom,) + tuple(options + [bLine])]
-                
 
             for row in wsel:
                 chan_wsel_sql += [tuple(row)]
@@ -1936,7 +1947,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             qry = """UPDATE chan SET name = 'Channel ' ||  cast(fid as text);"""
             self.execute(qry)
 
-            self.set_cont_par("ICHANNEL" , 1)  # Set ICHANNEL to 1 after import
+            self.set_cont_par("ICHANNEL", 1)  # Set ICHANNEL to 1 after import
 
             QApplication.restoreOverrideCursor()
 
@@ -2172,7 +2183,9 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     for row in data:
                         struct_fid, ifporchan, icurvtable, inflonod, outflonod, inoutcont, headrefel, clength, cdiameter = row
                         geom = self.build_linestring([int(inflonod), int(outflonod)])
-                        hystruc_sql += [(int(struct_fid), geom, int(ifporchan), int(icurvtable), int(inflonod), int(outflonod), int(inoutcont), headrefel, clength, cdiameter)]
+                        hystruc_sql += [
+                            (int(struct_fid), geom, int(ifporchan), int(icurvtable), int(inflonod), int(outflonod),
+                             int(inoutcont), headrefel, clength, cdiameter)]
 
                 # Process RAT_CURVES
                 if "RATING_CURVE" in hydrostruct_group.datasets:
@@ -2680,7 +2693,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     data = mult_group.datasets["MULT_GLOBAL"].data
                     for row in data:
                         wmc, wdrall, dmall, nodchansall, xnmultall, sslopemin, sslopemax, avuld50, simple_n = row
-                        mult_sql += [(wmc, wdrall, dmall, nodchansall, xnmultall, sslopemin, sslopemax, avuld50, simple_n)]
+                        mult_sql += [
+                            (wmc, wdrall, dmall, nodchansall, xnmultall, sslopemin, sslopemax, avuld50, simple_n)]
 
                 # Process MULT dataset
                 if "MULT" in mult_group.datasets:
@@ -3015,7 +3029,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 data = sed_group.datasets["SED_PARAMS"].data
                 for row in data:
                     isedeqg, isedsizefrac, dfifty, sgrad, sgst, dryspwt, cvfg, isedsupply, isedisplay, scourdep = row
-                    sed_c_sql += [(int(isedeqg), int(isedsizefrac), dfifty, sgrad, sgst, dryspwt, cvfg, int(isedsupply), int(isedisplay), scourdep)]
+                    sed_c_sql += [(int(isedeqg), int(isedsizefrac), dfifty, sgrad, sgst, dryspwt, cvfg, int(isedsupply),
+                                   int(isedisplay), scourdep)]
 
             if "SED_GROUPS" in sed_group.datasets:
                 data = sed_group.datasets["SED_GROUPS"].data
@@ -3222,7 +3237,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     data = levee_group.datasets["LEVEE_FAILURE"].data
                     for row in data:
                         lfailgrid, lfaildir, failevel, failtime, levbase, failwidthmax, failrate, failwidrate = row
-                        lfailure_sql += [(int(lfailgrid), lfaildir, failevel, failtime, levbase, failwidthmax, failrate, failwidrate)]
+                        lfailure_sql += [(int(lfailgrid), lfaildir, failevel, failtime, levbase, failwidthmax, failrate,
+                                          failwidrate)]
 
                 if lgeneral_sql:
                     self.batch_execute(lgeneral_sql)
@@ -3877,7 +3893,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
             inlet_junctions_delete = self.execute(inlet_junctions_delete_query, inside_nodes)
             inlet_junctions_deleted_count = inlet_junctions_delete.rowcount
             if inlet_junctions_deleted_count > 0:
-                self.uc.log_info(f"JUNCTIONS: {inlet_junctions_deleted_count} are outside the domain and not added to the project")
+                self.uc.log_info(
+                    f"JUNCTIONS: {inlet_junctions_deleted_count} are outside the domain and not added to the project")
             outfalls_delete_query = f"""
                 DELETE FROM user_swmm_outlets
                 WHERE name NOT IN ({placeholders});
@@ -3885,7 +3902,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
             outfalls_delete = self.execute(outfalls_delete_query, inside_nodes)
             outfalls_deleted_count = outfalls_delete.rowcount
             if outfalls_deleted_count > 0:
-                self.uc.log_info(f"OUTFALLS: {outfalls_deleted_count} are outside the domain and not added to the project")
+                self.uc.log_info(
+                    f"OUTFALLS: {outfalls_deleted_count} are outside the domain and not added to the project")
             storage_delete_query = f"""
                 DELETE FROM user_swmm_storage_units
                 WHERE name NOT IN ({placeholders});
@@ -3893,7 +3911,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
             storage_delete = self.execute(storage_delete_query, inside_nodes)
             storage_deleted_count = storage_delete.rowcount
             if storage_deleted_count > 0:
-                self.uc.log_info(f"STORAGES: {storage_deleted_count} are outside the domain and not added to the project")
+                self.uc.log_info(
+                    f"STORAGES: {storage_deleted_count} are outside the domain and not added to the project")
 
         except Exception as e:
             QApplication.setOverrideCursor(Qt.ArrowCursor)
@@ -3921,8 +3940,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 self.gutils.execute(insert_controls_sql, (
                     control[0],
                     control[1]
-                    )
                 )
+                                    )
 
             report_data = swmminp_dict.get('REPORT', [])
 
@@ -3930,8 +3949,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 self.gutils.execute(insert_controls_sql, (
                     report[0],
                     report[1]
-                    )
                 )
+                                    )
 
             # Adjust the TITLE
             title_sql = self.gutils.execute("SELECT name, value FROM swmm_control WHERE name = 'TITLE';").fetchone()
@@ -4087,21 +4106,21 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     else:
                         added_weirs += 1
                         self.gutils.execute(insert_weirs_sql, (
-                                            weir_name,
-                                            weir_inlet,
-                                            weir_outlet,
-                                            weir_type,
-                                            weir_crest_height,
-                                            weir_disch_coeff,
-                                            weir_flap_gate,
-                                            weir_end_contrac,
-                                            weir_end_coeff,
-                                            weir_shape,
-                                            weir_height,
-                                            weir_length,
-                                            weir_side_slope,
-                                            geom
-                                            )
+                            weir_name,
+                            weir_inlet,
+                            weir_outlet,
+                            weir_type,
+                            weir_crest_height,
+                            weir_disch_coeff,
+                            weir_flap_gate,
+                            weir_end_contrac,
+                            weir_end_coeff,
+                            weir_shape,
+                            weir_height,
+                            weir_length,
+                            weir_side_slope,
+                            geom
+                        )
                                             )
                 self.uc.log_info(f"WEIRS: {added_weirs} added and {updated_weirs} updated from imported SWMM INP file")
 
@@ -4257,9 +4276,10 @@ class Flo2dGeoPackage(GeoPackageUtils):
                             orifice_height,
                             orifice_width,
                             geom
-                            )
                         )
-                self.uc.log_info(f"ORIFICES: {added_orifices} added and {updated_orifices} updated from imported SWMM INP file")
+                                            )
+                self.uc.log_info(
+                    f"ORIFICES: {added_orifices} added and {updated_orifices} updated from imported SWMM INP file")
 
                 if len(not_added) > 0:
                     self.uc.log_info(
@@ -4390,7 +4410,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                             pump_shutoff_depth,
                             geom
                         )
-                        )
+                                            )
                 self.uc.log_info(f"PUMPS: {added_pumps} added and {updated_pumps} updated from imported SWMM INP file")
 
                 if len(not_added) > 0:
@@ -4599,8 +4619,9 @@ class Flo2dGeoPackage(GeoPackageUtils):
                             xsections_geom4,
                             geom
                         )
-                        )
-                self.uc.log_info(f"CONDUITS: {added_conduits} added and {updated_conduits} updated from imported SWMM INP file")
+                                            )
+                self.uc.log_info(
+                    f"CONDUITS: {added_conduits} added and {updated_conduits} updated from imported SWMM INP file")
 
                 if len(not_added) > 0:
                     self.uc.log_info(
@@ -4788,9 +4809,10 @@ class Flo2dGeoPackage(GeoPackageUtils):
                             curve_name,
                             geom
                         )
-                        )
+                                            )
 
-                self.uc.log_info(f"STORAGES: {added_storages} added and {updated_storages} updated from imported SWMM INP file")
+                self.uc.log_info(
+                    f"STORAGES: {added_storages} added and {updated_storages} updated from imported SWMM INP file")
 
         except Exception as e:
             QApplication.setOverrideCursor(Qt.ArrowCursor)
@@ -4911,9 +4933,10 @@ class Flo2dGeoPackage(GeoPackageUtils):
                             fixed_stage,
                             geom
                         )
-                        )
+                                            )
 
-                self.uc.log_info(f"OUTFALLS: {added_outfalls} added and {updated_outfalls} updated from imported SWMM INP file")
+                self.uc.log_info(
+                    f"OUTFALLS: {added_outfalls} added and {updated_outfalls} updated from imported SWMM INP file")
 
         except Exception as e:
             QApplication.setOverrideCursor(Qt.ArrowCursor)
@@ -4933,7 +4956,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
             if delete_existing:
                 self.gutils.clear_tables('user_swmm_inlets_junctions')
             else:
-                existing_inlets_junctions_qry = self.gutils.execute("SELECT name FROM user_swmm_inlets_junctions;").fetchall()
+                existing_inlets_junctions_qry = self.gutils.execute(
+                    "SELECT name FROM user_swmm_inlets_junctions;").fetchall()
                 existing_inlets_junctions = [inlet_junction[0] for inlet_junction in existing_inlets_junctions_qry]
 
             insert_inlets_junctions_sql = """
@@ -5049,7 +5073,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                             drboxarea,
                             name
                         )
-                        )
+                                            )
 
                     else:
                         added_inlets_junctions += 1
@@ -5074,9 +5098,10 @@ class Flo2dGeoPackage(GeoPackageUtils):
                             drboxarea,
                             geom
                         )
-                        )
+                                            )
 
-                self.uc.log_info(f"JUNCTIONS: {added_inlets_junctions} added and {updated_inlets_junctions} updated from imported SWMM INP file")
+                self.uc.log_info(
+                    f"JUNCTIONS: {added_inlets_junctions} added and {updated_inlets_junctions} updated from imported SWMM INP file")
 
         except Exception as e:
             QApplication.setOverrideCursor(Qt.ArrowCursor)
@@ -5099,11 +5124,14 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 self.gutils.clear_tables('swmm_tidal_curve_data')
                 self.gutils.clear_tables('swmm_other_curves')
             else:
-                existing_pump_curves_qry = self.gutils.execute("SELECT DISTINCT pump_curve_name FROM swmm_pumps_curve_data;").fetchall()
+                existing_pump_curves_qry = self.gutils.execute(
+                    "SELECT DISTINCT pump_curve_name FROM swmm_pumps_curve_data;").fetchall()
                 existing_pump_curves = [pump_curve[0] for pump_curve in existing_pump_curves_qry]
-                existing_tidal_curves_qry = self.gutils.execute("SELECT DISTINCT tidal_curve_name FROM swmm_tidal_curve;").fetchall()
+                existing_tidal_curves_qry = self.gutils.execute(
+                    "SELECT DISTINCT tidal_curve_name FROM swmm_tidal_curve;").fetchall()
                 existing_tidal_curves = [tidal_curve[0] for tidal_curve in existing_tidal_curves_qry]
-                existing_other_curves_qry = self.gutils.execute("SELECT DISTINCT name FROM swmm_other_curves;").fetchall()
+                existing_other_curves_qry = self.gutils.execute(
+                    "SELECT DISTINCT name FROM swmm_other_curves;").fetchall()
                 existing_other_curves = [other_curve[0] for other_curve in existing_other_curves_qry]
                 existing_curves = existing_pump_curves + existing_tidal_curves + existing_other_curves
 
@@ -5193,7 +5221,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
                             extra_column = curve[1]  # Use the entire name (e.g., 'Storage')
 
                         # Start a new group
-                        current_group_data = [[curve[0], curve[2], curve[3], extra_column]]  # Reset the list for the new group
+                        current_group_data = [
+                            [curve[0], curve[2], curve[3], extra_column]]  # Reset the list for the new group
                         data_added = False  # Reset the flag for the new group
                     else:
                         # Add subsequent rows to the current group data
@@ -5219,8 +5248,10 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     else:
                         added_pumps_curves += 1
                         for value in values:
-                            self.gutils.execute(insert_pump_curves_sql, (value[0], value[3][-1], value[1], value[2], ''))
-                self.uc.log_info(f"CURVES (pumps): {added_pumps_curves} added and {updated_pumps_curves} updated from imported SWMM INP file")
+                            self.gutils.execute(insert_pump_curves_sql,
+                                                (value[0], value[3][-1], value[1], value[2], ''))
+                self.uc.log_info(
+                    f"CURVES (pumps): {added_pumps_curves} added and {updated_pumps_curves} updated from imported SWMM INP file")
 
                 added_tidal_curves = 0
                 updated_tidal_curves = 0
@@ -5234,7 +5265,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
                         for value in values:
                             self.gutils.execute(insert_tidal_curves_sql, (value[0], ''))
                             self.gutils.execute(insert_tidal_curves_data_sql, (value[0], value[1], value[2]))
-                self.uc.log_info(f"CURVES (tidal): {added_tidal_curves} added and {updated_tidal_curves} updated from imported SWMM INP file")
+                self.uc.log_info(
+                    f"CURVES (tidal): {added_tidal_curves} added and {updated_tidal_curves} updated from imported SWMM INP file")
 
                 added_other_curves = 0
                 updated_other_curves = 0
@@ -5247,7 +5279,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
                         added_other_curves += 1
                         for value in values:
                             self.gutils.execute(insert_other_curves_sql, (value[0], value[3], '', value[1], value[2]))
-                self.uc.log_info(f"CURVES (other): {added_other_curves} added and {updated_other_curves} updated from imported SWMM INP file")
+                self.uc.log_info(
+                    f"CURVES (other): {added_other_curves} added and {updated_other_curves} updated from imported SWMM INP file")
 
         except Exception as e:
             QApplication.setOverrideCursor(Qt.ArrowCursor)
@@ -5268,7 +5301,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 self.gutils.clear_tables('swmm_time_series')
                 self.gutils.clear_tables('swmm_time_series_data')
             else:
-                existing_time_series_qry = self.gutils.execute("SELECT DISTINCT time_series_name FROM swmm_time_series;").fetchall()
+                existing_time_series_qry = self.gutils.execute(
+                    "SELECT DISTINCT time_series_name FROM swmm_time_series;").fetchall()
                 existing_time_series = [time_series[0] for time_series in existing_time_series_qry]
             insert_times_from_file_sql = """INSERT INTO swmm_time_series 
                                     (   time_series_name, 
@@ -5306,7 +5340,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 updated_time_series = 0
                 added_time_series = 0
 
-                time_series_names = self.gutils.execute("SELECT DISTINCT time_series_name FROM swmm_time_series;").fetchall()
+                time_series_names = self.gutils.execute(
+                    "SELECT DISTINCT time_series_name FROM swmm_time_series;").fetchall()
                 for time_series_name in time_series_names:
                     if time_series_name[0] in existing_time_series:
                         updated_time_series += 1
@@ -5336,7 +5371,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
                                 self.gutils.execute(replace_times_from_file_sql, (file2.strip(), "True", name))
                             else:
                                 added_time_series += 1
-                                self.gutils.execute(insert_times_from_file_sql, (name, description, file2.strip(), "True"))
+                                self.gutils.execute(insert_times_from_file_sql,
+                                                    (name, description, file2.strip(), "True"))
 
                         name = time_series[0]
                         date = time_series[1]
@@ -5457,7 +5493,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
             if delete_existing:
                 self.gutils.clear_tables('swmm_inflow_patterns')
             else:
-                existing_patterns_qry = self.gutils.execute("SELECT DISTINCT pattern_name FROM swmm_inflow_patterns;").fetchall()
+                existing_patterns_qry = self.gutils.execute(
+                    "SELECT DISTINCT pattern_name FROM swmm_inflow_patterns;").fetchall()
                 existing_patterns = [pattern[0] for pattern in existing_patterns_qry]
 
             insert_patterns_sql = """INSERT INTO swmm_inflow_patterns
@@ -5604,7 +5641,9 @@ class Flo2dGeoPackage(GeoPackageUtils):
                             swmm_ident = swmm_ident.decode("utf-8")
                         geom = self.build_point_xy(x_list[int(swmm_jt) - 1], y_list[int(swmm_jt) - 1])
                         swmm_char = "D"
-                        swmmflo_sql += [(geom, int(node_id), swmm_char, int(swmm_jt), swmm_ident, intype, swmm_length, swmm_width, swmm_height, swmm_coeff, 0, curbheight, feature)]
+                        swmmflo_sql += [
+                            (geom, int(node_id), swmm_char, int(swmm_jt), swmm_ident, intype, swmm_length, swmm_width,
+                             swmm_height, swmm_coeff, 0, curbheight, feature)]
 
                 if swmmflo_sql:
                     self.batch_execute(swmmflo_sql)
@@ -5649,7 +5688,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
                         name = node_id_to_name.get(int(node_id), None)
                         if isinstance(name, bytes):
                             name = name.decode("utf-8")
-                        self.execute(f"UPDATE user_swmm_inlets_junctions SET drboxarea = '{swmmdropbox}' WHERE name = '{name}'")
+                        self.execute(
+                            f"UPDATE user_swmm_inlets_junctions SET drboxarea = '{swmmdropbox}' WHERE name = '{name}'")
 
         except Exception as e:
             QApplication.restoreOverrideCursor()
@@ -5845,7 +5885,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     culvert_name = node_id_to_name.get(int(node_id), None)
                     if isinstance(culvert_name, bytes):
                         culvert_name = culvert_name.decode("utf-8")
-                    swmmflo_culvert_sql += [(int(grid_fid), culvert_name, cdiameter, int(typec), int(typeen), cubase, int(multbarrels))]
+                    swmmflo_culvert_sql += [
+                        (int(grid_fid), culvert_name, cdiameter, int(typec), int(typeen), cubase, int(multbarrels))]
 
             if swmmflort_sql:
                 self.batch_execute(swmmflort_sql)
@@ -5887,7 +5928,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
             gid = row[1]
             allow_q = row[2]
             # Update the swmm_allow_discharge on the user_swmm_outlets
-            self.execute(f"UPDATE user_swmm_outlets SET swmm_allow_discharge = {allow_q} WHERE name = '{outfall_name}';")
+            self.execute(
+                f"UPDATE user_swmm_outlets SET swmm_allow_discharge = {allow_q} WHERE name = '{outfall_name}';")
             # Outfall outside the grid -> Add exactly over the Storm Drain Outfalls
             if gid == '-9999':
                 have_outside = True
@@ -5936,7 +5978,6 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
                 if swmmoutf_sql:
                     self.batch_execute(swmmoutf_sql)
-
 
                 # data = self.parser.parse_swmmoutf()
                 # gids = []
@@ -6689,7 +6730,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
         """
         Function to export inflow data to hdf5
         """
-        if self.is_table_empty("inflow") and self.is_table_empty("reservoirs") and self.is_table_empty("tailing_reservoirs"):
+        if self.is_table_empty("inflow") and self.is_table_empty("reservoirs") and self.is_table_empty(
+                "tailing_reservoirs"):
             return False
         cont_sql = """SELECT value FROM cont WHERE name = ?;"""
         inflow_sql = """SELECT fid, time_series_fid, ident, inoutfc FROM inflow WHERE fid = ?;"""
@@ -6841,7 +6883,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
             line_cells_dict = {}
             if has_line_hyd:
                 for line_hyd in has_line_hyd:
-                    line_cells = self.execute(f"SELECT grid_fid FROM inflow_cells WHERE inflow_fid = '{line_hyd[0]}';").fetchall()
+                    line_cells = self.execute(
+                        f"SELECT grid_fid FROM inflow_cells WHERE inflow_fid = '{line_hyd[0]}';").fetchall()
                     for cell in line_cells:
                         line_cells_dict[cell[0]] = len(line_cells)
 
@@ -6892,7 +6935,9 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     for tsd_row in series:
                         tsd_row = [x if x is not None else "" for x in tsd_row]
                         if gid in line_cells_dict.keys():
-                            inflow_lines.append(tsd_line.format(tsd_row[0], round(tsd_row[1]/line_cells_dict.get(gid), 2), tsd_row[2]).rstrip())
+                            inflow_lines.append(
+                                tsd_line.format(tsd_row[0], round(tsd_row[1] / line_cells_dict.get(gid), 2),
+                                                tsd_row[2]).rstrip())
                         else:
                             inflow_lines.append(tsd_line.format(tsd_row[0], tsd_row[1], tsd_row[2]).rstrip())
 
@@ -7605,7 +7650,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
     #                             JOIN
     #                                 schema_md_cells md ON oc.grid_fid = md.grid_fid
     #                             WHERE
-	# 							    md.domain_fid = {subdomain};"""
+    # 							    md.domain_fid = {subdomain};"""
     #
     #         qh_params_data_sql = """SELECT hmax, coef, exponent FROM qh_params_data WHERE params_fid = ?;"""
     #         qh_table_data_sql = """SELECT depth, q FROM qh_table_data WHERE table_fid = ? ORDER BY fid;"""
@@ -8544,7 +8589,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
             return False
 
         chan_sql = """SELECT fid, depinitial, froudc, roughadj, ibaseflow, isedn FROM chan ORDER BY fid;"""
-        chan_elems_sql = ("""SELECT fid, rbankgrid, fcn, xlen, type FROM chan_elems WHERE seg_fid = ? ORDER BY nr_in_seg;""")
+        chan_elems_sql = (
+            """SELECT fid, rbankgrid, fcn, xlen, type FROM chan_elems WHERE seg_fid = ? ORDER BY nr_in_seg;""")
 
         chan_r_sql = """SELECT elem_fid, bankell, bankelr, fcw, fcd FROM chan_r WHERE elem_fid = ?;"""
         chan_v_sql = """SELECT elem_fid, bankell, bankelr, fcd, a1, a2, b1, b2, c1, c2,
@@ -8700,17 +8746,17 @@ class Flo2dGeoPackage(GeoPackageUtils):
             chan_elems_sql = (
                 """SELECT fid, rbankgrid, fcn, xlen, type FROM chan_elems WHERE seg_fid = ? ORDER BY nr_in_seg;"""
             )
-    
+
             chan_r_sql = """SELECT elem_fid, bankell, bankelr, fcw, fcd FROM chan_r WHERE elem_fid = ?;"""
             chan_v_sql = """SELECT elem_fid, bankell, bankelr, fcd, a1, a2, b1, b2, c1, c2,
                                        excdep, a11, a22, b11, b22, c11, c22 FROM chan_v WHERE elem_fid = ?;"""
             chan_t_sql = """SELECT elem_fid, bankell, bankelr, fcw, fcd, zl, zr FROM chan_t WHERE elem_fid = ?;"""
             chan_n_sql = """SELECT elem_fid, nxsecnum FROM chan_n WHERE elem_fid = ?;"""
-    
+
             chan_wsel_sql = """SELECT istart, wselstart, iend, wselend FROM chan_wsel ORDER BY fid;"""
             chan_conf_sql = """SELECT chan_elem_fid FROM chan_confluences ORDER BY fid;"""
             chan_e_sql = """SELECT grid_fid FROM noexchange_chan_cells ORDER BY fid;"""
-    
+
             segment = "   {0:.2f}   {1:.2f}   {2:.2f}   {3}\n"
             chan_r = "R" + "  {}" * 7 + "\n"
             chan_v = "V" + "  {}" * 19 + "\n"
@@ -8720,7 +8766,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             wsel = "{0} {1:.2f}\n"
             conf = " C {0}  {1}\n"
             chan_e = " E {0}\n"
-    
+
             sqls = {
                 "R": [chan_r_sql, chan_r, 3, 6],
                 "V": [chan_v_sql, chan_v, 3, 5],
@@ -8728,19 +8774,19 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 "N": [chan_n_sql, chan_n, 1, 2],
             }
             bLines = ""
-    
+
             chan_rows = self.execute(chan_sql).fetchall()
             if not chan_rows:
                 return False
             else:
                 pass
-    
+
             chan = os.path.join(outdir, "CHAN.DAT")
             bank = os.path.join(outdir, "CHANBANK.DAT")
-    
+
             with open(chan, "w") as c, open(bank, "w") as b:
                 ISED = self.gutils.get_cont_par("ISED")
-    
+
                 for row in chan_rows:
                     row = [x if x is not None else "0" for x in row]
                     fid = row[0]
@@ -8773,7 +8819,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                         res = [
                             x if x is not None else "" for x in self.execute(sql, (eid,)).fetchone()
                         ]  # 'res' is a list of values depending on 'typ' (R,V,T, or N).
-    
+
                         res.insert(
                             fcn_idx, fcn
                         )  # Add 'fcn' (coming from table ´chan_elems' (cross sections) to 'res' list) in position 'fcn_idx'.
@@ -8782,16 +8828,16 @@ class Flo2dGeoPackage(GeoPackageUtils):
                         )  # Add ´xlen' (coming from table ´chan_elems' (cross sections) to 'res' list in position 'xlen_idx'.
                         c.write(line.format(*res))
                         b.write(chanbank.format(eid, rbank))
-                    
-                    if row[5]: # ibaseflow
+
+                    if row[5]:  # ibaseflow
                         if str(row[5]) != "":
                             bLines += "B " + str(row[5]) + "\n"
                             # c.write("B " + str(row[5]) + "\n")
-                            
+
                 for row in self.execute(chan_wsel_sql):
                     c.write(wsel.format(*row[:2]))
                     c.write(wsel.format(*row[2:]))
-    
+
                 pairs = []
                 for row in self.execute(chan_conf_sql):
                     chan_elem = row[0]
@@ -8801,13 +8847,13 @@ class Flo2dGeoPackage(GeoPackageUtils):
                         pairs.append(chan_elem)
                         c.write(conf.format(*pairs))
                         del pairs[:]
-    
+
                 for row in self.execute(chan_e_sql):
                     c.write(chan_e.format(row[0]))
-                    
+
                 if bLines != "":
                     c.write(bLines)
-                
+
             return True
 
         except Exception as e:
@@ -9597,7 +9643,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     arf_value = round(row[2], 2)
                     collapse = self.execute(collapse_sql, (row[1],)).fetchone()
                     if collapse:
-                        arfwrf_group.datasets["COLLAPSE_CELLS"].data.append([int(cell), int(collapse[0]), int(collapse[1]), int(collapse[2])])
+                        arfwrf_group.datasets["COLLAPSE_CELLS"].data.append(
+                            [int(cell), int(collapse[0]), int(collapse[1]), int(collapse[2])])
                         if int(collapse[0]) == 1:
                             arf_value = -arf_value
                     arfwrf_group.datasets["ARF_PARTIALLY_BLOCKED"].data.append(
@@ -9645,7 +9692,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 mult_group.create_dataset('MULT_GLOBAL', [])
                 mult_group.create_dataset('MULT', [])
 
-                mult_group.datasets["MULT_GLOBAL"].data.append(create_array(global_data_values, 9, np.float64, head[1:]))
+                mult_group.datasets["MULT_GLOBAL"].data.append(
+                    create_array(global_data_values, 9, np.float64, head[1:]))
 
                 mult_cells = self.execute(mult_cell_sql).fetchall()
 
