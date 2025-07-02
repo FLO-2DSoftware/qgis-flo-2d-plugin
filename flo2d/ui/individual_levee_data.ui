@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>513</width>
-    <height>548</height>
+    <height>606</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -50,7 +50,7 @@
        </property>
        <property name="icon">
         <iconset>
-         <normaloff>../img/arrow_2.svg</normaloff>../img/arrow_2.svg</iconset>
+         <normaloff>../../../../AppData/Roaming/QGIS/QGIS3/profiles/img/arrow_2.svg</normaloff>../../../../AppData/Roaming/QGIS/QGIS3/profiles/img/arrow_2.svg</iconset>
        </property>
       </widget>
      </item>
@@ -95,7 +95,7 @@
        </property>
        <property name="icon">
         <iconset>
-         <normaloff>../img/arrow_4.svg</normaloff>../img/arrow_4.svg</iconset>
+         <normaloff>../../../../AppData/Roaming/QGIS/QGIS3/profiles/img/arrow_4.svg</normaloff>../../../../AppData/Roaming/QGIS/QGIS3/profiles/img/arrow_4.svg</iconset>
        </property>
       </widget>
      </item>
@@ -295,7 +295,7 @@
            </property>
            <property name="icon">
             <iconset>
-             <normaloff>../img/eye-svgrepo-com.svg</normaloff>../img/eye-svgrepo-com.svg</iconset>
+             <normaloff>../../../../AppData/Roaming/QGIS/QGIS3/profiles/img/eye-svgrepo-com.svg</normaloff>../../../../AppData/Roaming/QGIS/QGIS3/profiles/img/eye-svgrepo-com.svg</iconset>
            </property>
           </widget>
          </item>
@@ -327,7 +327,7 @@
          </property>
          <property name="icon">
           <iconset>
-           <normaloff>../img/zoom_in.svg</normaloff>../img/zoom_in.svg</iconset>
+           <normaloff>../../../../AppData/Roaming/QGIS/QGIS3/profiles/img/zoom_in.svg</normaloff>../../../../AppData/Roaming/QGIS/QGIS3/profiles/img/zoom_in.svg</iconset>
          </property>
         </widget>
        </item>
@@ -353,7 +353,7 @@
          </property>
          <property name="icon">
           <iconset>
-           <normaloff>../img/zoom_out.svg</normaloff>../img/zoom_out.svg</iconset>
+           <normaloff>../../../../AppData/Roaming/QGIS/QGIS3/profiles/img/zoom_out.svg</normaloff>../../../../AppData/Roaming/QGIS/QGIS3/profiles/img/zoom_out.svg</iconset>
          </property>
         </widget>
        </item>
@@ -450,7 +450,7 @@
               </sizepolicy>
              </property>
              <property name="toolTip">
-              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;LEVCREST(L,IM) to the north.&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(ft or m)&lt;/p&gt;&lt;p&gt;The elevation of the levee crest.&lt;/p&gt;&lt;p&gt;Range: &lt;/p&gt;&lt;p&gt;.01 - 30,000 ft&lt;/p&gt;&lt;p&gt;.25 - 9,000 m&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;LEVCREST(L,IM) to the north.&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(ft or m)&lt;/p&gt;&lt;p&gt;The elevation of the levee crest.&lt;/p&gt;&lt;p&gt;Range: &lt;/p&gt;&lt;p&gt;.01 - 30,000 ft&lt;/p&gt;&lt;p&gt;.003 - 9,000 m&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
              </property>
              <property name="maximum">
               <double>99999.000000000000000</double>
@@ -498,7 +498,7 @@
               </sizepolicy>
              </property>
              <property name="toolTip">
-              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;LEVCREST(L,IM) to the north east.&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(ft or m)&lt;/p&gt;&lt;p&gt;The elevation of the levee crest.&lt;/p&gt;&lt;p&gt;Range: &lt;/p&gt;&lt;p&gt;.01 - 30,000 ft&lt;/p&gt;&lt;p&gt;.25 - 9,000 m&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;LEVCREST(L,IM) to the north east.&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(ft or m)&lt;/p&gt;&lt;p&gt;The elevation of the levee crest.&lt;/p&gt;&lt;p&gt;Range: &lt;/p&gt;&lt;p&gt;.01 - 30,000 ft&lt;/p&gt;&lt;p&gt;.003 - 9,000 m&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
              </property>
              <property name="maximum">
               <double>99999.000000000000000</double>
@@ -514,7 +514,7 @@
               </sizepolicy>
              </property>
              <property name="toolTip">
-              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;LEVCREST(L,IM) to the west.&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(ft or m)&lt;/p&gt;&lt;p&gt;The elevation of the levee crest.&lt;/p&gt;&lt;p&gt;Range: &lt;/p&gt;&lt;p&gt;.01 - 30,000 ft&lt;/p&gt;&lt;p&gt;.25 - 9,000 m&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;LEVCREST(L,IM) to the west.&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(ft or m)&lt;/p&gt;&lt;p&gt;The elevation of the levee crest.&lt;/p&gt;&lt;p&gt;Range: &lt;/p&gt;&lt;p&gt;.01 - 30,000 ft&lt;/p&gt;&lt;p&gt;.003 - 9,000 m&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
              </property>
              <property name="maximum">
               <double>99999.000000000000000</double>
@@ -530,7 +530,7 @@
               </sizepolicy>
              </property>
              <property name="toolTip">
-              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;LEVCREST(L,IM) to the east.&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(ft or m)&lt;/p&gt;&lt;p&gt;The elevation of the levee crest.&lt;/p&gt;&lt;p&gt;Range: &lt;/p&gt;&lt;p&gt;.01 - 30,000 ft&lt;/p&gt;&lt;p&gt;.25 - 9,000 m&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;LEVCREST(L,IM) to the east.&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(ft or m)&lt;/p&gt;&lt;p&gt;The elevation of the levee crest.&lt;/p&gt;&lt;p&gt;Range: &lt;/p&gt;&lt;p&gt;.01 - 30,000 ft&lt;/p&gt;&lt;p&gt;.003 - 9,000 m&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
              </property>
              <property name="maximum">
               <double>99999.000000000000000</double>
@@ -562,7 +562,7 @@
               </sizepolicy>
              </property>
              <property name="toolTip">
-              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;LEVCREST(L,IM) to the south.&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(ft or m)&lt;/p&gt;&lt;p&gt;The elevation of the levee crest.&lt;/p&gt;&lt;p&gt;Range: &lt;/p&gt;&lt;p&gt;.01 - 30,000 ft&lt;/p&gt;&lt;p&gt;.25 - 9,000 m&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;LEVCREST(L,IM) to the south.&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(ft or m)&lt;/p&gt;&lt;p&gt;The elevation of the levee crest.&lt;/p&gt;&lt;p&gt;Range: &lt;/p&gt;&lt;p&gt;.01 - 30,000 ft&lt;/p&gt;&lt;p&gt;.003 - 9,000 m&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
              </property>
              <property name="maximum">
               <double>99999.000000000000000</double>
@@ -578,7 +578,7 @@
               </sizepolicy>
              </property>
              <property name="toolTip">
-              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;LEVCREST(L,IM) to the south west.&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(ft or m)&lt;/p&gt;&lt;p&gt;The elevation of the levee crest.&lt;/p&gt;&lt;p&gt;Range: &lt;/p&gt;&lt;p&gt;.01 - 30,000 ft&lt;/p&gt;&lt;p&gt;.25 - 9,000 m&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;LEVCREST(L,IM) to the south west.&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(ft or m)&lt;/p&gt;&lt;p&gt;The elevation of the levee crest.&lt;/p&gt;&lt;p&gt;Range: &lt;/p&gt;&lt;p&gt;.01 - 30,000 ft&lt;/p&gt;&lt;p&gt;.003 - 9,000 m&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
              </property>
              <property name="maximum">
               <double>99999.000000000000000</double>
@@ -626,7 +626,7 @@
               </sizepolicy>
              </property>
              <property name="toolTip">
-              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;LEVCREST(L,IM) to the south east.&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(ft or m)&lt;/p&gt;&lt;p&gt;The elevation of the levee crest.&lt;/p&gt;&lt;p&gt;Range: &lt;/p&gt;&lt;p&gt;.01 - 30,000 ft&lt;/p&gt;&lt;p&gt;.25 - 9,000 m&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;LEVCREST(L,IM) to the south east.&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(ft or m)&lt;/p&gt;&lt;p&gt;The elevation of the levee crest.&lt;/p&gt;&lt;p&gt;Range: &lt;/p&gt;&lt;p&gt;.01 - 30,000 ft&lt;/p&gt;&lt;p&gt;.003 - 9,000 m&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
              </property>
              <property name="maximum">
               <double>99999.000000000000000</double>
@@ -701,7 +701,7 @@
               </sizepolicy>
              </property>
              <property name="toolTip">
-              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;LEVCREST(L,IM) to the north west.&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(ft or m)&lt;/p&gt;&lt;p&gt;The elevation of the levee crest.&lt;/p&gt;&lt;p&gt;Range: &lt;/p&gt;&lt;p&gt;.01 - 30,000 ft&lt;/p&gt;&lt;p&gt;.25 - 9,000 m&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;LEVCREST(L,IM) to the north west.&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(ft or m)&lt;/p&gt;&lt;p&gt;The elevation of the levee crest.&lt;/p&gt;&lt;p&gt;Range: &lt;/p&gt;&lt;p&gt;.01 - 30,000 ft&lt;/p&gt;&lt;p&gt;.003 - 9,000 m&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
              </property>
              <property name="maximum">
               <double>99999.000000000000000</double>
@@ -963,7 +963,7 @@
       <bool>false</bool>
      </property>
      <property name="collapsed">
-      <bool>false</bool>
+      <bool>true</bool>
      </property>
      <property name="saveCollapsedState">
       <bool>false</bool>
@@ -974,7 +974,7 @@
         <item row="0" column="0">
          <widget class="QLabel" name="label">
           <property name="toolTip">
-           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;FAILEVEL(LF,LD)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(ft or m)&lt;/p&gt;&lt;p&gt;The maximum elevation of the prescribed levee failure if different than the levee crest (LEVELEV). Set FAILEVEL = 0 to fail the levee when overtopped.&lt;/p&gt;&lt;p&gt;Range: 0.01 - No upper limit&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;FAILEVEL(LF,LD)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(ft or m)&lt;/p&gt;&lt;p&gt;The maximum elevation of the prescribed levee failure if different than the levee crest (LEVELEV). Set FAILEVEL = 0 to fail the levee when overtopped.&lt;/p&gt;&lt;p&gt;Range:&lt;/p&gt;&lt;p&gt;0.01 - No upper limit (ft)&lt;/p&gt;&lt;p&gt;0.003048 - No upper limit (m)&lt;/p&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
           </property>
           <property name="text">
            <string>Elevation of prescribed failure (if different than top of levee)</string>
@@ -987,7 +987,7 @@
         <item row="5" column="0">
          <widget class="QLabel" name="label_9">
           <property name="toolTip">
-           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;FAILWIDRATE (LF,LD)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(ft/hr or m/hr)&lt;/p&gt;&lt;p&gt;The rate at which the levee breach widens. Set failwidrate = 0 for wall collapse.&lt;/p&gt;&lt;p&gt;Range:&lt;/p&gt;&lt;p&gt;0.01 - 1000 ft/hr&lt;/p&gt;&lt;p&gt;0.25 - 300 m/hr&lt;br/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;FAILWIDRATE (LF,LD)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(ft/hr or m/hr)&lt;/p&gt;&lt;p&gt;The rate at which the levee breach widens. Set failwidrate = 0 for wall collapse.&lt;/p&gt;&lt;p&gt;Range:&lt;/p&gt;&lt;p&gt;0.01 - 1000 ft/hr&lt;/p&gt;&lt;p&gt;0.25 - 300 m/hr&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
           </property>
           <property name="text">
            <string>Horizontal rate of levee breach opening</string>
