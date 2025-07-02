@@ -64,7 +64,7 @@ class SDAnimator(QDialog):
                             if i == 0:
                                 ts_str = NodeTSData[0] + " " + NodeTSData[1]
                                 self.nodes_ts.append(ts_str)
-                                dt = QDateTime.fromString(ts_str, "MM/dd/yyyy HH:mm")
+                                dt = QDateTime.fromString(ts_str, "MMM-dd-yyyy HH:mm:ss")
                                 dt.setTimeSpec(Qt.UTC)
                                 self.nodes_qdatetime.append(dt)
             i += 1
@@ -75,13 +75,18 @@ class SDAnimator(QDialog):
         self.temporal_controller = self.iface.mapCanvas().temporalController()
         if hasattr(QgsTemporalNavigationObject.NavigationMode, "Animated"):
             self.temporal_controller.setNavigationMode(QgsTemporalNavigationObject.NavigationMode.Animated)
-        self.temporal_controller.temporalExtentsChanged.connect(self.handle_time_change)
+        self.temporal_controller.updateTemporalRange.connect(self.handle_time_change)
 
-        # Trigger animation update on launch
-        initial_range = self.temporal_controller.temporalExtents()
-        self.handle_time_change(initial_range)
+        # Set temporal extent from data range
+        if self.nodes_qdatetime:
+            start_time = self.nodes_qdatetime[0]
+            end_time = self.nodes_qdatetime[-1]
+            self.temporal_controller.setTemporalExtents(QgsDateTimeRange(start_time, end_time))
+            self.handle_time_change(QgsDateTimeRange(start_time, start_time))
+
 
     def handle_time_change(self, time_range):
+        QgsMessageLog.logMessage(f"[DEBUG] handle_time_change")
         current_time = time_range.begin()
         for idx, qdt in enumerate(self.nodes_qdatetime):
             if abs(qdt.msecsTo(current_time)) < 1000:
