@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>424</width>
-    <height>662</height>
+    <height>700</height>
    </rect>
   </property>
   <property name="minimumSize">
@@ -81,7 +81,7 @@
           <item row="0" column="3">
            <widget class="QToolButton" name="schem_res_btn">
             <property name="toolTip">
-             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Schematize initial conditions (reservoir).&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Schematize reservoir.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
             </property>
             <property name="text">
              <string>...</string>
@@ -219,7 +219,7 @@
                   </size>
                  </property>
                  <property name="toolTip">
-                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Channel segment name.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Channel segment.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                  </property>
                  <property name="text">
                   <string>Channel segment</string>
@@ -293,7 +293,7 @@
                   </size>
                  </property>
                  <property name="toolTip">
-                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;TAILINGSDEPTH&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(ft or m)&lt;/p&gt;&lt;p&gt;Tailings depth for a specific grid element.&lt;/p&gt;&lt;p&gt;Range: 0.01 - No upper limit&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;TAILINGSDEPTH&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(ft or m)&lt;/p&gt;&lt;p&gt;Tailings depth for a specific grid element.&lt;/p&gt;&lt;p&gt;Range: &lt;/p&gt;&lt;p&gt;0.01 - No upper limit (ft)&lt;/p&gt;&lt;p&gt;0.003048 - No upper limit (m)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                  </property>
                  <property name="text">
                   <string>Initial depth</string>
@@ -313,9 +313,6 @@
                    <width>50</width>
                    <height>0</height>
                   </size>
-                 </property>
-                 <property name="toolTip">
-                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Select channel segment.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                  </property>
                 </widget>
                </item>
@@ -348,6 +345,9 @@
                  <height>0</height>
                 </size>
                </property>
+               <property name="toolTip">
+                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;RESERVOIREL&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               </property>
                <property name="wrapping">
                 <bool>false</bool>
                </property>
@@ -375,9 +375,6 @@
                  <width>50</width>
                  <height>0</height>
                 </size>
-               </property>
-               <property name="toolTip">
-                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Select reservoir.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                </property>
                <property name="sizeAdjustPolicy">
                 <enum>QComboBox::AdjustToMinimumContentsLength</enum>
@@ -469,6 +466,9 @@
                  <width>0</width>
                  <height>0</height>
                 </size>
+               </property>
+               <property name="toolTip">
+                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;RESERVOIREL&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(ft or m)&lt;/p&gt;&lt;p&gt;Water surface elevation of the reservoir or ponded water area.&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-style:italic;&quot;&gt;Note: Negative water surface elevation assigns the reservoir bed elevations below the breach foundation elevation as dead pool ground and reduces the reservoir starting flow depth for those dead pool elements.&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Range: 0 to Dam Crest&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                </property>
                <property name="text">
                 <string>Water Elev.</string>
@@ -749,7 +749,7 @@
                   <bool>true</bool>
                  </property>
                  <property name="toolTip">
-                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;CVTFP(J)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Concentration of tailing material for a single grid element.&lt;/p&gt;&lt;p&gt;Range: 0 - 0.65&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;CVTFP(J)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(dimensionless)&lt;/p&gt;&lt;p&gt;Concentration of tailing material for a single grid element.&lt;/p&gt;&lt;p&gt;Range: 0 - 0.65&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                  </property>
                  <property name="text">
                   <string>Concentration</string>
@@ -879,9 +879,6 @@
                    <height>0</height>
                   </size>
                  </property>
-                 <property name="toolTip">
-                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Select tailings stack.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-                 </property>
                 </widget>
                </item>
                <item row="0" column="2">
@@ -997,9 +994,6 @@
                  <width>50</width>
                  <height>0</height>
                 </size>
-               </property>
-               <property name="toolTip">
-                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Select tailing reservoir.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                </property>
               </widget>
              </item>

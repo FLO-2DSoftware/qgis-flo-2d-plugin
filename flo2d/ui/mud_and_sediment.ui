@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>892</width>
-    <height>361</height>
+    <height>443</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -54,8 +54,8 @@
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>872</width>
-        <height>310</height>
+        <width>868</width>
+        <height>382</height>
        </rect>
       </property>
       <layout class="QGridLayout" name="gridLayout_3">
@@ -243,7 +243,7 @@
                  <item row="0" column="0">
                   <widget class="QLabel" name="label_7">
                    <property name="toolTip">
-                    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;SGSM&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Mudflow sediment specific gravity.&lt;/p&gt;&lt;p&gt;Range: 2.5 - 2.8&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;SGSM&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(Dimensionless)&lt;/p&gt;&lt;p&gt;Mudflow sediment specific gravity.&lt;/p&gt;&lt;p&gt;Range: 2.5 - 2.8&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                    </property>
                    <property name="text">
                     <string>Mudflow specific gravity</string>
@@ -321,7 +321,7 @@
                  <item row="1" column="0">
                   <widget class="QLabel" name="label_8">
                    <property name="toolTip">
-                    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;XKX&lt;/span&gt;&lt;/p&gt;&lt;p&gt;The laminar flow resistance parameter for overland flow.&lt;/p&gt;&lt;p&gt;It is suggested that a value of 2,480 initially be used for mudflows.&lt;/p&gt;&lt;p&gt;If a value of XKX is entered, it will be used by the model.&lt;/p&gt;&lt;p&gt;If XKX = 0, then XKX is computed by the following formulas where FPN is the floodplain grid ele ment Manning’s n-value:&lt;/p&gt;&lt;p&gt;FPN &amp;lt; 0.01,  XKX = 24&lt;/p&gt;&lt;p&gt;0.01 &amp;lt; FPN &amp;lt; 0.025,  XKX = 1,460,865.85&lt;span style=&quot; vertical-align:super;&quot;&gt;*&lt;/span&gt;(FPN)&lt;span style=&quot; vertical-align:super;&quot;&gt;2.381&lt;/span&gt;&lt;/p&gt;&lt;p&gt;0.25 &amp;lt; FPN,  XKX = 2,480 &lt;/p&gt;&lt;p&gt;Range: 24 - 50,000&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;XKX&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(s/m&lt;span style=&quot; vertical-align:super;&quot;&gt;2&lt;/span&gt;)&lt;/p&gt;&lt;p&gt;The laminar flow resistance parameter for overland flow.&lt;/p&gt;&lt;p&gt;It is suggested that a value of 2,480 initially be used for mudflows.&lt;/p&gt;&lt;p&gt;If a value of XKX is entered, it will be used by the model.&lt;/p&gt;&lt;p&gt;If XKX = 0, then XKX is computed by the following formulas where FPN is the floodplain grid ele ment Manning’s n-value:&lt;/p&gt;&lt;p&gt;FPN &amp;lt; 0.01, XKX = 24&lt;/p&gt;&lt;p&gt;0.01 &amp;lt; FPN &amp;lt; 0.025, XKX = 1,460,865.85&lt;span style=&quot; vertical-align:super;&quot;&gt;*&lt;/span&gt;(FPN)&lt;span style=&quot; vertical-align:super;&quot;&gt;2.381&lt;/span&gt;&lt;/p&gt;&lt;p&gt;0.25 &amp;lt; FPN, XKX = 2,480 &lt;/p&gt;&lt;p&gt;Range: 24 - 50,000&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                    </property>
                    <property name="text">
                     <string>Laminar flow resistance</string>
@@ -416,7 +416,7 @@
                       <item>
                        <widget class="QLabel" name="label_9">
                         <property name="toolTip">
-                         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;VA&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(dimensionless)&lt;/p&gt;&lt;p&gt;Coefficient in the viscosity versus sediment concentration by volume relationship.&lt;/p&gt;&lt;p&gt;The relationship is based on a viscosity given in poises (dynes-s/ cm2) for either the English or Metric system.&lt;/p&gt;&lt;p&gt;Range: 0 - No upper limit&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;VA&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(dimensionless)&lt;/p&gt;&lt;p&gt;Coefficient in the viscosity versus sediment concentration by volume relationship.&lt;/p&gt;&lt;p&gt;The relationship is based on a viscosity given in poises (dynes-s/ cm&lt;span style=&quot; vertical-align:super;&quot;&gt;2&lt;/span&gt;) for either the English or Metric system.&lt;/p&gt;&lt;p&gt;Range: 0 - No upper limit&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                         </property>
                         <property name="text">
                          <string>Coefficient</string>
@@ -749,7 +749,7 @@
             <item row="2" column="0">
              <widget class="QgsCollapsibleGroupBox" name="sed_rating_curve_grp">
               <property name="toolTip">
-               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;ISEDSUPPLY&lt;/span&gt;&lt;/p&gt;&lt;p&gt;ISEDSUPPLY = 1 if a sediment rating curve will be used to define the sediment supply to a channel reach or floodplain area. &lt;/p&gt;&lt;p&gt;Range: 0, 1&lt;/p&gt;&lt;p&gt;When checked, it enables to use of the following variables;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;ISEDGRID(N):&lt;/span&gt; Grid element that will be a sediment supply node (channel or floodplain) with a sediment rating curve.&lt;/p&gt;&lt;p&gt;Range: 1 - NNOD&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;ISEDCFP(N):&lt;/span&gt; ISEDCFP(N) = 0 for a floodplain sediment supply rating curve, ISEDCFP(N) = 1 for a channel sediment supply rating curve.&lt;/p&gt;&lt;p&gt;Range: 0, 1&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;ASED(N): &lt;/span&gt;Sediment rating curve coefficient.&lt;/p&gt;&lt;p&gt;Range: 0 - No upper limit&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;BSED(N):&lt;/span&gt; (tons/day or kg/day). Sediment rating curve exponent. Q&lt;span style=&quot; vertical-align:sub;&quot;&gt;s&lt;/span&gt; = ASED* Q&lt;span style=&quot; vertical-align:sub;&quot;&gt;w&lt;/span&gt;&lt;span style=&quot; vertical-align:super;&quot;&gt;BSED&lt;/span&gt;, where: Q&lt;span style=&quot; vertical-align:sub;&quot;&gt;w&lt;/span&gt; is the water discharge (cfs or cms) and Q&lt;span style=&quot; vertical-align:sub;&quot;&gt;s&lt;/span&gt; is the sediment supply . &lt;/p&gt;&lt;p&gt;Range: 0 - No upper limit&lt;/p&gt;&lt;p&gt;dist_fid:*****************************************  MISSING *******************************************************&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;SSEDIAM:&lt;/span&gt; (mm). Representative sediment supply diamete for sediment routing by size fraction.&lt;/p&gt;&lt;p&gt;Range: 0 - No upper limit.&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;SSEDPERCENT&lt;/span&gt;: (decimal). Sediment supply size distribution percentage. Represents the percent of the sediment that is finer than the representative size diameter.&lt;/p&gt;&lt;p&gt;Range: 0 - 1&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;ISEDSUPPLY&lt;/span&gt;&lt;/p&gt;&lt;p&gt;ISEDSUPPLY = 1 if a sediment rating curve will be used to define the sediment supply to a channel reach or floodplain area. &lt;/p&gt;&lt;p&gt;Range: 0, 1&lt;/p&gt;&lt;p&gt;When checked, it enables to use of the following variables;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;ISEDGRID(N):&lt;/span&gt; Grid element that will be a sediment supply node (channel or floodplain) with a sediment rating curve.&lt;/p&gt;&lt;p&gt;Range: 1 - NNOD&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;ISEDCFP(N):&lt;/span&gt; ISEDCFP(N) = 0 for a floodplain sediment supply rating curve, ISEDCFP(N) = 1 for a channel sediment supply rating curve.&lt;/p&gt;&lt;p&gt;Range: 0, 1&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;ASED(N): &lt;/span&gt;Sediment rating curve coefficient.&lt;/p&gt;&lt;p&gt;Range: 0 - No upper limit&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;BSED(N):&lt;/span&gt; (tons/day or kg/day). Sediment rating curve exponent. Q&lt;span style=&quot; vertical-align:sub;&quot;&gt;s&lt;/span&gt; = ASED* Q&lt;span style=&quot; vertical-align:sub;&quot;&gt;w&lt;/span&gt;&lt;span style=&quot; vertical-align:super;&quot;&gt;BSED&lt;/span&gt;, where: Q&lt;span style=&quot; vertical-align:sub;&quot;&gt;w&lt;/span&gt; is the water discharge (cfs or cms) and Q&lt;span style=&quot; vertical-align:sub;&quot;&gt;s&lt;/span&gt; is the sediment supply . &lt;/p&gt;&lt;p&gt;Range: 0 - No upper limit&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;SSEDIAM:&lt;/span&gt; (mm). Representative sediment supply diamete for sediment routing by size fraction.&lt;/p&gt;&lt;p&gt;Range: 0 - No upper limit.&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;SSEDPERCENT&lt;/span&gt;: (decimal). Sediment supply size distribution percentage. Represents the percent of the sediment that is finer than the representative size diameter.&lt;/p&gt;&lt;p&gt;Range: 0 - 1&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
               <property name="title">
                <string>Use Sediment Supply Rating Curve</string>
@@ -1005,7 +1005,7 @@
             <item row="1" column="0">
              <widget class="QgsCollapsibleGroupBox" name="sed_size_fraction_grp">
               <property name="toolTip">
-               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;ISEDSIZEFRAC&lt;/span&gt;&lt;/p&gt;&lt;p&gt;ISEDSIZEFRAC = 1, The sediment routing will be performed by size fraction. Requires data input from Lines 3 and 4 and Line 9 if a sediment supply is also input. &lt;/p&gt;&lt;p&gt;ISEDSIZEFRAC = 0, No sediment routing by size fraction. Sediment routing is based on the median bed material size D50 . For this case, the default bed thickness is 10 ft (3m).&lt;/p&gt;&lt;p&gt;Range: 0, 1&lt;/p&gt;&lt;p&gt;When checked, it enables to use of the following variables;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;ISEDEQI: &lt;/span&gt;Represents the sediment transport equation used for sediment routing by size fractions and it is used to identify the sediment transport equation for a specific channel segment or reach.&lt;/p&gt;&lt;p&gt;Range: 1 - 11&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;BEDTHICK: &lt;/span&gt;(ft or m). Sediment bed thickness for sediment routing by size fraction. The available sediment volume for a size fraction within a grid element is defined by the bed thickness times the floodplain or channel element surface area times the percent size distribution. &lt;/p&gt;&lt;p&gt;Range:&lt;/p&gt;&lt;p&gt;0 - 100 ft&lt;/p&gt;&lt;p&gt;0 - 30 m&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;CVFI: &lt;/span&gt;Represents the fine sediment volumetric concentration for an individual channel segment(s). CVFI represents the concentration by volume of sediment for sizes less than 0.0625 mm (sand-silt split). It is used only in the Woo-MPM sediment transport equation.&lt;/p&gt;&lt;p&gt;Range: 0 - 0.2&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;ISEDGROUP(N): &lt;/span&gt;The sediment group ID for each set of size fraction data.&lt;/p&gt;&lt;p&gt;Range: 1- NNOD &lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;SEDIAM: &lt;/span&gt;(mm). Representative sediment diameter for sediment routing by size fraction. The sediment diameter corresponds to a given size fraction percent finer and usually is a pan sieve size.&lt;/p&gt;&lt;p&gt;Range: 0 - No upper limit&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;SEDPERCENT: &lt;/span&gt;(decimal). Sediment size distribution percentage. The percentage represents the percent of the bed material sediment that is finer than the representative size diameter. For example, SEDPERCENT = 0.456 defines that 45.6% of the sediment is finer than the 1 mm sediment size fraction. The last entry should be 1.00.&lt;/p&gt;&lt;p&gt;Range: 0 - 1&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;ISEDUM: &lt;/span&gt;Grid element number for the sediment size fraction group. &lt;/p&gt;&lt;p&gt;Range: 1 - NNOD&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;ISEDSIZEFRAC&lt;/span&gt;&lt;/p&gt;&lt;p&gt;ISEDSIZEFRAC = 1, The sediment routing will be performed by size fraction. Requires data input from Lines 3 and 4 and Line 9 if a sediment supply is also input. &lt;/p&gt;&lt;p&gt;ISEDSIZEFRAC = 0, No sediment routing by size fraction. Sediment routing is based on the median bed material size D50 . For this case, the default bed thickness is 10 ft (3m).&lt;/p&gt;&lt;p&gt;Range: 0, 1&lt;/p&gt;&lt;p&gt;When checked, it enables to use of the following variables;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;ISEDEQI: &lt;/span&gt;Represents the sediment transport equation used for sediment routing by size fractions and it is used to identify the sediment transport equation for a specific channel segment or reach.&lt;/p&gt;&lt;p&gt;Range: 1 - 11&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;BEDTHICK: &lt;/span&gt;(ft or m). Sediment bed thickness for sediment routing by size fraction. The available sediment volume for a size fraction within a grid element is defined by the bed thickness times the floodplain or channel element surface area times the percent size distribution. &lt;/p&gt;&lt;p&gt;Range:&lt;/p&gt;&lt;p&gt;0 - 100 ft&lt;/p&gt;&lt;p&gt;0 - 30 m&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;CVFI: &lt;/span&gt;(decimal). Represents the fine sediment volumetric concentration for an individual channel segment(s). CVFI represents the concentration by volume of sediment for sizes less than 0.0625 mm (sand-silt split). It is used only in the Woo-MPM sediment transport equation.&lt;/p&gt;&lt;p&gt;Range: 0 - 0.2&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;ISEDGROUP(N): &lt;/span&gt;The sediment group ID for each set of size fraction data.&lt;/p&gt;&lt;p&gt;Range: 1- NNOD &lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;SEDIAM: &lt;/span&gt;(mm). Representative sediment diameter for sediment routing by size fraction. The sediment diameter corresponds to a given size fraction percent finer and usually is a pan sieve size.&lt;/p&gt;&lt;p&gt;Range: 0 - No upper limit&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;SEDPERCENT: &lt;/span&gt;(decimal). Sediment size distribution percentage. The percentage represents the percent of the bed material sediment that is finer than the representative size diameter. For example, SEDPERCENT = 0.456 defines that 45.6% of the sediment is finer than the 1 mm sediment size fraction. The last entry should be 1.00.&lt;/p&gt;&lt;p&gt;Range: 0 - 1&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;ISEDUM: &lt;/span&gt;Grid element number for the sediment size fraction group. &lt;/p&gt;&lt;p&gt;Range: 1 - NNOD&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
               <property name="title">
                <string>Use Size Fraction</string>
@@ -1276,7 +1276,7 @@
                     </size>
                    </property>
                    <property name="toolTip">
-                    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Delete size fraction percent finer&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                    <string>Delete size fraction porcent finer</string>
                    </property>
                    <property name="text">
                     <string>...</string>
@@ -1308,7 +1308,7 @@
                     </size>
                    </property>
                    <property name="toolTip">
-                    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Add size fraction percent finer&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                    <string>Add size fraction porcent finer</string>
                    </property>
                    <property name="text">
                     <string>...</string>
@@ -1451,7 +1451,7 @@
                     </size>
                    </property>
                    <property name="toolTip">
-                    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;SGST&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Sediment specific gravity&lt;/p&gt;&lt;p&gt;Range: 2.6 - 2.8&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;SGST&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(Dimensionless)&lt;/p&gt;&lt;p&gt;Sediment specific gravity&lt;/p&gt;&lt;p&gt;Range: 2.6 - 2.8&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                    </property>
                    <property name="layoutDirection">
                     <enum>Qt::LeftToRight</enum>
@@ -1634,7 +1634,7 @@
                     </size>
                    </property>
                    <property name="toolTip">
-                    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;DRYSPWT&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(lb/ft&lt;span style=&quot; vertical-align:super;&quot;&gt;3&lt;/span&gt; or N/m&lt;span style=&quot; vertical-align:super;&quot;&gt;3&lt;/span&gt;)&lt;/p&gt;&lt;p&gt;Dry specific weight of the sediment.&lt;/p&gt;&lt;p&gt;Range: 70 - 130&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;DRYSPWT&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(lb/ft&lt;span style=&quot; vertical-align:super;&quot;&gt;3&lt;/span&gt; or N/m&lt;span style=&quot; vertical-align:super;&quot;&gt;3&lt;/span&gt;)&lt;/p&gt;&lt;p&gt;Dry specific weight of the sediment.&lt;/p&gt;&lt;p&gt;Range: &lt;/p&gt;&lt;p&gt;70 - 130 lb/ft&lt;span style=&quot; vertical-align:super;&quot;&gt;3&lt;/span&gt;&lt;/p&gt;&lt;p&gt;10996 - 20421 N/m&lt;span style=&quot; vertical-align:super;&quot;&gt;3&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                    </property>
                    <property name="text">
                     <string>Dry specific weight</string>
@@ -1727,7 +1727,7 @@
                     </size>
                    </property>
                    <property name="toolTip">
-                    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;CVFG&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Fine sediment volumetric concentration for overland, channel, and streets.&lt;/p&gt;&lt;p&gt;This value is superseded by CVFI in Line 3. &lt;/p&gt;&lt;p&gt;Concentration by volume of sediment for sizes less than 0.0625 mm (sand-silt split).&lt;/p&gt;&lt;p&gt;This concentration by volume generally ranges from 5% to 15% and is expressed as a decimal (0.05 for 5% concentration by volume).&lt;/p&gt;&lt;p&gt;It is used only in Woo-MPM sediment transport equation.&lt;/p&gt;&lt;p&gt;Range: 0 - 0.2&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;CVFG&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(decimal)&lt;/p&gt;&lt;p&gt;Fine sediment volumetric concentration for overland, channel, and streets.&lt;/p&gt;&lt;p&gt;This value is superseded by CVFI in Line 3. &lt;/p&gt;&lt;p&gt;Concentration by volume of sediment for sizes less than 0.0625 mm (sand-silt split).&lt;/p&gt;&lt;p&gt;This concentration by volume generally ranges from 5% to 15% and is expressed as a decimal (0.05 for 5% concentration by volume).&lt;/p&gt;&lt;p&gt;It is used only in Woo-MPM sediment transport equation.&lt;/p&gt;&lt;p&gt;Range: 0 - 0.2&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                    </property>
                    <property name="text">
                     <string>Global fine sediment volume concentration</string>
@@ -2202,7 +2202,7 @@
          <item row="0" column="0">
           <widget class="QRadioButton" name="mud_debris_transport_radio">
            <property name="toolTip">
-            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Select Mud/Debris Transport.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Mud/Debris Transport&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
            </property>
            <property name="text">
             <string>Mud / Debris Transport</string>
@@ -2212,7 +2212,7 @@
          <item row="0" column="1">
           <widget class="QRadioButton" name="sediment_transport_radio">
            <property name="toolTip">
-            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Select Sediment Transport.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Sediment Transport&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
            </property>
            <property name="text">
             <string>Sediment Transport</string>
@@ -2254,7 +2254,7 @@
          <item row="0" column="2">
           <widget class="QRadioButton" name="two_phase_radio">
            <property name="toolTip">
-            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Select Two Phase.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Two Phase&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
            </property>
            <property name="text">
             <string>Two Phase</string>

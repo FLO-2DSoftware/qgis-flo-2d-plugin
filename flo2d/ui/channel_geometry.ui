@@ -27,7 +27,7 @@
        <item>
         <widget class="QLabel" name="label">
          <property name="toolTip">
-          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Channel segment name.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Channel segment.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
          </property>
          <property name="text">
           <string>Channel segment</string>
@@ -38,11 +38,7 @@
         </widget>
        </item>
        <item>
-        <widget class="QComboBox" name="channel_segment_cbo">
-         <property name="toolTip">
-          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Select channel segment.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-         </property>
-        </widget>
+        <widget class="QComboBox" name="channel_segment_cbo"/>
        </item>
       </layout>
      </item>
@@ -347,8 +343,8 @@
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>1097</width>
-        <height>467</height>
+        <width>1093</width>
+        <height>447</height>
        </rect>
       </property>
       <layout class="QGridLayout" name="gridLayout_26">
@@ -808,7 +804,7 @@
                  <item row="0" column="0">
                   <widget class="QLabel" name="label_16">
                    <property name="toolTip">
-                    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;XLEN(I)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(ft or m)&lt;/p&gt;&lt;p&gt;Channel length contained within the grid element ICHANGRID (ft).&lt;/p&gt;&lt;p&gt;If more than one channel exists in a given grid element, assign XLEN(I) equal to the average representative flow length in one direction&lt;/p&gt;&lt;p&gt;Range: 0.01 - No upper limit&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;XLEN(I)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(ft or m)&lt;/p&gt;&lt;p&gt;Channel length contained within the grid element ICHANGRID (ft).&lt;/p&gt;&lt;p&gt;If more than one channel exists in a given grid element, assign XLEN(I) equal to the average representative flow length in one direction&lt;/p&gt;&lt;p&gt;Range: &lt;/p&gt;&lt;p&gt;0.01 - No upper limit (ft)&lt;/p&gt;&lt;p&gt;0.003048 - No upper limit (m)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                    </property>
                    <property name="text">
                     <string>Channel  length</string>
@@ -840,7 +836,7 @@
                    <item row="0" column="0">
                     <widget class="QLabel" name="label_3">
                      <property name="toolTip">
-                      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;BANKELL(I)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(ft or m)&lt;/p&gt;&lt;p&gt;Left bank elevation looking downstream &lt;/p&gt;&lt;p&gt;Range: 0.01 - No upper limit&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;BANKELL(I)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(ft or m)&lt;/p&gt;&lt;p&gt;Left bank elevation looking downstream &lt;/p&gt;&lt;p&gt;Range: &lt;/p&gt;&lt;p&gt;0.01 - No upper limit (ft)&lt;/p&gt;&lt;p&gt;0.003048 - No upper limit (m)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                      </property>
                      <property name="text">
                       <string>Left bank elevation</string>
@@ -853,7 +849,7 @@
                    <item row="1" column="0">
                     <widget class="QLabel" name="label_4">
                      <property name="toolTip">
-                      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;BANKELR(I)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(ft or m)&lt;/p&gt;&lt;p&gt;Right bank elevation looking downstream.&lt;/p&gt;&lt;p&gt;Range: 0.01 - No upper limit&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;BANKELR(I)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(ft or m)&lt;/p&gt;&lt;p&gt;Right bank elevation looking downstream.&lt;/p&gt;&lt;p&gt;Range: &lt;/p&gt;&lt;p&gt;0.01 - No upper limit (ft)&lt;/p&gt;&lt;p&gt;0.003048 - No upper limit (m)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                      </property>
                      <property name="text">
                       <string>Right bank elevation</string>
@@ -1004,7 +1000,7 @@
                    <item row="0" column="0">
                     <widget class="QLabel" name="label_5">
                      <property name="toolTip">
-                      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;FCW(I)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(ft or m)&lt;/p&gt;&lt;p&gt;Set FCW(I) = channel width for rectangular channel.&lt;/p&gt;&lt;p&gt;Set FCW(I) = width of channel base for trapezoidal channel. &lt;/p&gt;&lt;p&gt;Range: 0.1 - No upper limit&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;FCW(I)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(ft or m)&lt;/p&gt;&lt;p&gt;Set FCW(I) = channel width for rectangular channel.&lt;/p&gt;&lt;p&gt;Set FCW(I) = width of channel base for trapezoidal channel. &lt;/p&gt;&lt;p&gt;Range: &lt;/p&gt;&lt;p&gt;0.1 - No upper limit (ft)&lt;/p&gt;&lt;p&gt;0.03048 - No upper limit (m)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                      </property>
                      <property name="text">
                       <string>Average width</string>
