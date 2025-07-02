@@ -5564,9 +5564,9 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
 
         else:
             if rpt_file:
-                sd_animator = SDAnimator(existing_nodes_dict, rpt_file, units, manhole_diameter)
+                self.sd_animator = SDAnimator(self.iface, existing_nodes_dict, rpt_file, units, manhole_diameter)
                 QApplication.restoreOverrideCursor()
-                sd_animator.show()
+                self.sd_animator.show()
             else:
                 QApplication.restoreOverrideCursor()
                 self.uc.bar_warn("No swmm.RPT file found!")
