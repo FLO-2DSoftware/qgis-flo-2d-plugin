@@ -73,18 +73,22 @@ class Flo2dGeoPackage(GeoPackageUtils):
             self.cell_size = int(round(self.parser.calculate_cellsize()))
         else:
             raise NotImplementedError("Unsupported extension type.")
-        if not get_cell_size:
-            return True
-        if self.cell_size == 0:
+
+        # New fallback logic for single file imports
+        if get_cell_size and self.cell_size == 0:
+            # Try reading cell size from cont table
+            try:
+                cellsize_from_db = self.gutils.execute("SELECT value FROM cont WHERE name = 'CELLSIZE';").fetchone()
+                if cellsize_from_db:
+                    self.cell_size = int(float(cellsize_from_db[0]))
+            except Exception as e:
+                self.uc.log_info(f"Error reading CELLSIZE from cont table: {str(e)}")
+
+        if get_cell_size and self.cell_size == 0:
             self.uc.show_info(
                 "ERROR 060319.1604: Cell size is 0 - something went wrong!\nDoes TOPO.DAT file exist or is empty?"
             )
             return False
-        else:
-            pass
-        self.buffer = self.cell_size * 0.4
-        self.shrink = self.cell_size * 0.95
-        return True
 
     def import_cont_toler(self):
         if self.parsed_format == self.FORMAT_DAT:
