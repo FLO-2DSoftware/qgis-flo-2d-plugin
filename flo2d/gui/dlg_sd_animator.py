@@ -2,13 +2,13 @@ from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
 from matplotlib import patches
 import numpy as np
-from PyQt5.QtWidgets import QDialog, QVBoxLayout
+from PyQt5.QtWidgets import QDockWidget, QVBoxLayout, QWidget
 from qgis._core import QgsTemporalController, QgsTemporalNavigationObject, QgsMessageLog
 from qgis.core import QgsProject, QgsDateTimeRange
 from PyQt5.QtCore import QDateTime, Qt
 
 
-class SDAnimator(QDialog):
+class SDAnimator(QDockWidget):
     def __init__(self, iface, existing_nodes_dict, rpt_file, units, manhole_diameter, parent=None):
         super().__init__(parent)
 
@@ -18,12 +18,13 @@ class SDAnimator(QDialog):
         self.units = units
         self.manhole_diameter = manhole_diameter
 
+        self.main_widget = QWidget()
         self.vertical_layout = QVBoxLayout()
         self.canvas = FigureCanvas(Figure())
         self.vertical_layout.addWidget(self.canvas)
-        self.setLayout(self.vertical_layout)
+        self.main_widget.setLayout(self.vertical_layout)
+        self.setWidget(self.main_widget)
 
-        self.setGeometry(0, 0, 800, 600)
         self.setWindowTitle("FLO-2D Storm Drain Profile Animator")
 
         self.ax = self.canvas.figure.add_subplot(111)
@@ -86,13 +87,11 @@ class SDAnimator(QDialog):
 
 
     def handle_time_change(self, time_range):
-        QgsMessageLog.logMessage(f"[DEBUG] handle_time_change")
         current_time = time_range.begin()
         for idx, qdt in enumerate(self.nodes_qdatetime):
             if abs(qdt.msecsTo(current_time)) < 1000:
                 self.update_frame_by_index(idx)
                 return
-        QgsMessageLog.logMessage(f"[DEBUG] No match found for time: {current_time.toString(Qt.ISODate)}")
 
     def update_frame_by_index(self, idx):
         self.line.set_data(np.array(self.nodes_distances_anim), self.nodes_array[:, idx])

@@ -5565,6 +5565,9 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         else:
             if rpt_file:
                 self.sd_animator = SDAnimator(self.iface, existing_nodes_dict, rpt_file, units, manhole_diameter)
+                self.iface.addDockWidget(Qt.BottomDockWidgetArea, self.sd_animator)
+                self.sd_animator.setFloating(True)
+                self.sd_animator.setGeometry(100, 100, 800, 600)
                 QApplication.restoreOverrideCursor()
                 self.sd_animator.show()
             else:
