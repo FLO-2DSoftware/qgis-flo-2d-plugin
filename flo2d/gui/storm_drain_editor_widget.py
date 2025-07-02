@@ -5098,6 +5098,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         RPT_file = os.path.join(GDS_dir, "swmm.RPT")
         TOPO_file = os.path.join(GDS_dir, "TOPO.DAT")
         WSE_file = os.path.join(GDS_dir, "MAXWSELEV.OUT")
+        MH_file = os.path.join(GDS_dir, "ManholePop.OUT")
 
         if not os.path.isfile(RPT_file):
             RPT_file = None
@@ -5107,6 +5108,9 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
 
         if not os.path.isfile(WSE_file):
             WSE_file = None
+
+        if not os.path.isfile(MH_file):
+            MH_file = None
 
         start_node = self.start_node_cbo.currentText()
         end_node = self.end_node_cbo.currentText()
@@ -5367,9 +5371,9 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             i += 1
 
         QApplication.restoreOverrideCursor()
-        self.create_profile_plot(animated, existing_nodes_dict, RPT_file, TOPO_file, WSE_file)
+        self.create_profile_plot(animated, existing_nodes_dict, RPT_file, TOPO_file, WSE_file, MH_file)
 
-    def create_profile_plot(self, animated, existing_nodes_dict, rpt_file, topo_file, wse_file):
+    def create_profile_plot(self, animated, existing_nodes_dict, rpt_file, topo_file, wse_file, mh_file):
         """
         Function to create the profile plot using pyqtgraph
 
@@ -5422,6 +5426,14 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                     WseData = line.split()
                     if int(WseData[0]) in grid_elements:
                         WseDict[WseData[0]] = WseData[3]
+
+        if mh_file:
+            mh_pop = []
+            with open(mh_file, "r") as f:
+                for line in f:
+                    parts = line.split()
+                    if len(parts) >= 4:
+                        mh_pop.append(parts[3])
 
         if not animated:
             # Create a new figure
@@ -5499,6 +5511,9 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             max_depths = []
             # Manholes
             for key, value in existing_nodes_dict.items():
+                facecolor = 'white'
+                if mh_file and key in mh_pop:
+                    facecolor = 'red'
                 invert_elev = value[1]
                 max_depth = value[2]
                 length = value[3]
@@ -5507,7 +5522,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                 distance_acc += length
                 rect = patches.Rectangle((distance_acc - (manhole_diameter / 2), invert_elev), manhole_diameter, max_depth,
                                          linewidth=1.5, edgecolor='black',
-                                         facecolor='white', zorder=2)
+                                         facecolor=facecolor, zorder=2)
                 ax.add_patch(rect)
 
             secax = ax.secondary_xaxis('top')
@@ -5564,7 +5579,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
 
         else:
             if rpt_file:
-                self.sd_animator = SDAnimator(self.iface, existing_nodes_dict, rpt_file, units, manhole_diameter)
+                self.sd_animator = SDAnimator(self.iface, existing_nodes_dict, rpt_file, units, manhole_diameter, mh_pop)
                 self.iface.addDockWidget(Qt.BottomDockWidgetArea, self.sd_animator)
                 self.sd_animator.setFloating(True)
                 self.sd_animator.setGeometry(100, 100, 800, 600)

@@ -9,7 +9,7 @@ from PyQt5.QtCore import QDateTime, Qt
 
 
 class SDAnimator(QDockWidget):
-    def __init__(self, iface, existing_nodes_dict, rpt_file, units, manhole_diameter, parent=None):
+    def __init__(self, iface, existing_nodes_dict, rpt_file, units, manhole_diameter, mh_pop=None, parent=None):
         super().__init__(parent)
 
         self.iface = iface
@@ -17,6 +17,7 @@ class SDAnimator(QDockWidget):
         self.rpt_file = rpt_file
         self.units = units
         self.manhole_diameter = manhole_diameter
+        self.mh_pop = mh_pop
 
         self.main_widget = QWidget()
         self.vertical_layout = QVBoxLayout()
@@ -98,7 +99,10 @@ class SDAnimator(QDockWidget):
         if self.counter_label:
             self.counter_label.get_texts()[0].set_text(f"HGL | {self.nodes_ts[idx]}")
         if self.base_title:
-            self.ax.set_title(f"{self.base_title} | {self.nodes_ts[idx]}")
+            current_dt = self.nodes_qdatetime[idx]
+            start_dt = self.nodes_qdatetime[0]
+            hours_elapsed = start_dt.secsTo(current_dt) / 3600.0  # float hours
+            self.ax.set_title(f"{self.base_title} | {self.nodes_ts[idx]} | {hours_elapsed:.2f} h")
         self.canvas.draw_idle()
 
     def init_line(self):
@@ -137,6 +141,9 @@ class SDAnimator(QDockWidget):
         invert_elevs = []
         max_depths = []
         for key, value in self.existing_nodes_dict.items():
+            facecolor = 'white'
+            if key in self.mh_pop:
+                facecolor = 'red'
             invert_elev = value[1]
             max_depth = value[2]
             length = value[3]
@@ -144,7 +151,7 @@ class SDAnimator(QDockWidget):
             max_depths.append(max_depth)
             distance_acc += length
             rect = patches.Rectangle((distance_acc - (manhole_diameter / 2), invert_elev), manhole_diameter, max_depth,
-                                     linewidth=1.5, edgecolor='black', facecolor='white', zorder=2)
+                                     linewidth=1.5, edgecolor='black', facecolor=facecolor, zorder=2)
             self.ax.add_patch(rect)
 
         secax = self.ax.secondary_xaxis('top')
