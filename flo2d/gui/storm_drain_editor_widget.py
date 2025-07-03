@@ -5386,6 +5386,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
         manhole_diameter = 1.5 if self.gutils.get_cont_par("METRIC") == "1" else 5
 
         grid_elements = []
+        mh_pop = []
         for key, value in existing_nodes_dict.items():
             grid_elements.append(value[0])
 
@@ -5428,7 +5429,6 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
                         WseDict[WseData[0]] = WseData[3]
 
         if mh_file:
-            mh_pop = []
             with open(mh_file, "r") as f:
                 for line in f:
                     parts = line.split()
@@ -5512,7 +5512,7 @@ class StormDrainEditorWidget(qtBaseClass, uiDialog):
             # Manholes
             for key, value in existing_nodes_dict.items():
                 facecolor = 'white'
-                if mh_file and key in mh_pop:
+                if key in mh_pop:
                     facecolor = 'red'
                 invert_elev = value[1]
                 max_depth = value[2]
