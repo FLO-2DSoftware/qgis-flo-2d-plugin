@@ -864,7 +864,7 @@ class StructEditorWidget(qtBaseClass, uiDialog):
         with open(HYDROSTRUCT_file, "r") as myfile:
             time_list = []
             discharge_list = []
-            pattern = r'THE MAXIMUM DISCHARGE FOR:\s+(\w+)\s+STRUCTURE\sNO.\s+(\d+)\s+IS:'
+            pattern = r"THE MAXIMUM DISCHARGE FOR:\s+(\S+)\s+STRUCTURE\s+NO\.\s+(\d+)\s+IS:"
             structure_name = None
             while True:
                 try:
