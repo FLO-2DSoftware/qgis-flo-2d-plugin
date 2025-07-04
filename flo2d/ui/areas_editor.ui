@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>344</width>
-    <height>843</height>
+    <height>973</height>
    </rect>
   </property>
   <property name="minimumSize">
@@ -73,13 +73,20 @@
           </item>
           <item row="1" column="0">
            <widget class="QLabel" name="label_11">
+            <property name="toolTip">
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;FROUDEFP&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Floodplain limiting Froude number. &lt;/p&gt;&lt;p&gt;Range: 0.1 - 2 &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            </property>
             <property name="text">
              <string>Froude:</string>
             </property>
            </widget>
           </item>
           <item row="1" column="1">
-           <widget class="QDoubleSpinBox" name="froud_dsb"/>
+           <widget class="QDoubleSpinBox" name="froud_dsb">
+            <property name="toolTip">
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;FROUDEFP&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            </property>
+           </widget>
           </item>
           <item row="1" column="2" colspan="2">
            <spacer name="horizontalSpacer_3">
@@ -150,13 +157,20 @@
           </item>
           <item row="1" column="0">
            <widget class="QLabel" name="label_13">
+            <property name="toolTip">
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;FPNVALUE&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Manning’s n roughness coefficient assigned to grid element I.&lt;/p&gt;&lt;p&gt;Range: 0.010 - 0.4 &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            </property>
             <property name="text">
              <string>Mannings:</string>
             </property>
            </widget>
           </item>
           <item row="1" column="1">
-           <widget class="QDoubleSpinBox" name="mannings_dsb"/>
+           <widget class="QDoubleSpinBox" name="mannings_dsb">
+            <property name="toolTip">
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;FPNVALUE&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            </property>
+           </widget>
           </item>
           <item row="1" column="2" colspan="2">
            <spacer name="horizontalSpacer_5">
@@ -229,6 +243,9 @@
            <layout class="QHBoxLayout" name="horizontalLayout">
             <item>
              <widget class="QCheckBox" name="collapse_chbox">
+              <property name="toolTip">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Apply Collapse.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
               <property name="text">
                <string>Collapse</string>
               </property>
@@ -236,6 +253,9 @@
             </item>
             <item>
              <widget class="QCheckBox" name="arf_chbox">
+              <property name="toolTip">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;ARF(I)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Area reduction factors (ARF).&lt;/p&gt;&lt;p&gt;ARF is the percent of the grid element (I) area that cannot be covered by surface flows.&lt;/p&gt;&lt;p&gt;Buildings or other physical features within the grid element that cannot store flow volume are accounted by using the ARF value. &lt;/p&gt;&lt;p&gt;The maximum ARF value is limited according to cell size.&lt;/p&gt;&lt;p&gt;If the value is negative, the building collapse function is turned on.&lt;/p&gt;&lt;p&gt;Range:&lt;br/&gt;0 - 1 &lt;/p&gt;&lt;p&gt;or&lt;/p&gt;&lt;p&gt;-1 - 0&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
               <property name="text">
                <string>ARF</string>
               </property>
@@ -243,6 +263,9 @@
             </item>
             <item>
              <widget class="QCheckBox" name="wrf_chbox">
+              <property name="toolTip">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;WRF(I,J)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Width reduction factors (WRF). &lt;/p&gt;&lt;p&gt;The width reduction factor corresponds to the percentage of flow width blocked due to obstruction in the eight flow directions. &lt;/p&gt;&lt;p&gt;Assuming that the flow field is oriented with the north direction, use the following WRF assignment: &lt;/p&gt;&lt;p&gt;WRF(I,1) = North &lt;/p&gt;&lt;p&gt;WRF(I,2) = East &lt;/p&gt;&lt;p&gt;WRF(I,3) = South &lt;/p&gt;&lt;p&gt;WRF(I,4) = West &lt;/p&gt;&lt;p&gt;WRF(I,5) = Northeast &lt;/p&gt;&lt;p&gt;WRF(I,6) = Southeast &lt;/p&gt;&lt;p&gt;WRF(I,7) = Southwest &lt;/p&gt;&lt;p&gt;WRF(I,8) = Northwest &lt;/p&gt;&lt;p&gt;where I is the grid element number.&lt;/p&gt;&lt;p&gt;Range: 0 - 1&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
               <property name="text">
                <string>WRF</string>
               </property>
@@ -321,6 +344,9 @@
             </item>
             <item>
              <widget class="QCheckBox" name="steep_slopen_global_chbox">
+              <property name="toolTip">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;ISTEEPNGLOBAL&lt;/span&gt;&lt;/p&gt;&lt;p&gt;ISTEEPN_GLOBAL = 0: No steep slope n-value analysis. It is as if the steep slope methods does not exist.&lt;/p&gt;&lt;p&gt;ISTEEPN_GLOBAL = 1: Global assignment to perform the steep slope n-value calculation for all grid elements capable of sharing discharge in at least one of eight flow directions.&lt;/p&gt;&lt;p&gt;ISTEEPN_GLOBAL = 2: The spatial variable steep slope n-value analysis is applied to the following list of grid elements beginning with line 2 of the data file.&lt;/p&gt;&lt;p&gt;Range: 0 - 2&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
               <property name="layoutDirection">
                <enum>Qt::LeftToRight</enum>
               </property>
@@ -351,6 +377,9 @@
      </item>
      <item row="0" column="5">
       <widget class="QToolButton" name="del_schema_btn">
+       <property name="toolTip">
+        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Delete schematized areas.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+       </property>
        <property name="text">
         <string>...</string>
        </property>
@@ -368,6 +397,9 @@
      </item>
      <item row="0" column="6">
       <widget class="QToolButton" name="help_btn">
+       <property name="toolTip">
+        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Areas Help.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+       </property>
        <property name="text">
         <string>...</string>
        </property>
@@ -434,13 +466,20 @@
           </item>
           <item row="1" column="0">
            <widget class="QLabel" name="label_12">
+            <property name="toolTip">
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;TOL&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(ft or m)&lt;/p&gt;&lt;p&gt;Spatially variable TOL value.&lt;/p&gt;&lt;p&gt;Range:&lt;/p&gt;&lt;p&gt;0.001 - 5. ft&lt;/p&gt;&lt;p&gt;0.0003 - 1.52 m&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            </property>
             <property name="text">
              <string>Tolerance:</string>
             </property>
            </widget>
           </item>
           <item row="1" column="1">
-           <widget class="QDoubleSpinBox" name="tolerance_dsb"/>
+           <widget class="QDoubleSpinBox" name="tolerance_dsb">
+            <property name="toolTip">
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;TOL&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            </property>
+           </widget>
           </item>
           <item row="1" column="2" colspan="2">
            <spacer name="horizontalSpacer_4">
@@ -511,6 +550,9 @@
           </item>
           <item row="1" column="0">
            <widget class="QLabel" name="label_10">
+            <property name="toolTip">
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;SHALLOWN(I)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Spatially variable shallow n-value.&lt;/p&gt;&lt;p&gt;Range: 0.01 - 0.99&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            </property>
             <property name="text">
              <string>Shallow-n</string>
             </property>
@@ -530,7 +572,11 @@
            </spacer>
           </item>
           <item row="1" column="1">
-           <widget class="QDoubleSpinBox" name="shallown_dsb"/>
+           <widget class="QDoubleSpinBox" name="shallown_dsb">
+            <property name="toolTip">
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;SHALLOWN(I)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            </property>
+           </widget>
           </item>
          </layout>
         </item>
@@ -593,6 +639,9 @@
      </item>
      <item row="1" column="0" colspan="7">
       <widget class="QGroupBox" name="ne_channel_grp">
+       <property name="toolTip">
+        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Channel elements listed as NO-Exchange will not exchange flows between the channel and the bank element.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+       </property>
        <property name="title">
         <string>No-Exchange Channel Areas</string>
        </property>
@@ -647,6 +696,9 @@
      </item>
      <item row="0" column="1">
       <widget class="QToolButton" name="revert_changes_btn">
+       <property name="toolTip">
+        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Revert all unsaved changes.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+       </property>
        <property name="text">
         <string>...</string>
        </property>
@@ -667,6 +719,9 @@
      </item>
      <item row="0" column="4">
       <widget class="QToolButton" name="schema_btn">
+       <property name="toolTip">
+        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Schematize areas.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+       </property>
        <property name="text">
         <string>...</string>
        </property>
@@ -684,6 +739,9 @@
      </item>
      <item row="2" column="0" colspan="7">
       <widget class="QGroupBox" name="building_areas_grp">
+       <property name="toolTip">
+        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Building areas for HAZUS processing.&lt;/p&gt;&lt;p&gt;Used to define first floor elevation and water surface elevation for HAZUS feature flood elevation.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+       </property>
        <property name="title">
         <string>Building Areas</string>
        </property>
@@ -733,6 +791,9 @@
           </item>
           <item row="1" column="0">
            <widget class="QLabel" name="label_9">
+            <property name="toolTip">
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Adjustment Factor&lt;/span&gt;&lt;/p&gt;&lt;p&gt;A value that represents how much flow area is reduced due to buildings.&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'Courier New';&quot;&gt;1.0&lt;/span&gt; = no adjustment (fully open)&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'Courier New';&quot;&gt;0.0&lt;/span&gt; = fully blocked (no flow allowed)&lt;/p&gt;&lt;p&gt;Range: 0.0 - 1.0&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            </property>
             <property name="text">
              <string>Adjustment Factor</string>
             </property>
@@ -752,7 +813,11 @@
            </spacer>
           </item>
           <item row="1" column="1">
-           <widget class="QDoubleSpinBox" name="adj_factor_dsp"/>
+           <widget class="QDoubleSpinBox" name="adj_factor_dsp">
+            <property name="toolTip">
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Adjustment Factor&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            </property>
+           </widget>
           </item>
          </layout>
         </item>
@@ -761,6 +826,9 @@
      </item>
      <item row="0" column="0">
       <widget class="QToolButton" name="create_polygon_btn">
+       <property name="toolTip">
+        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Create areas polygon.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+       </property>
        <property name="text">
         <string>...</string>
        </property>
@@ -791,7 +859,11 @@
            <widget class="QComboBox" name="lid_volume_cbo"/>
           </item>
           <item row="1" column="1">
-           <widget class="QDoubleSpinBox" name="volume_dsb"/>
+           <widget class="QDoubleSpinBox" name="volume_dsb">
+            <property name="toolTip">
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;LIDVOLUMEMAX&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            </property>
+           </widget>
           </item>
           <item row="0" column="0">
            <widget class="QLabel" name="label_14">
@@ -813,6 +885,9 @@
               <horstretch>0</horstretch>
               <verstretch>0</verstretch>
              </sizepolicy>
+            </property>
+            <property name="toolTip">
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;LIDVOLUMEMAX&lt;/span&gt;&lt;/p&gt;&lt;p&gt;(ft&lt;span style=&quot; vertical-align:super;&quot;&gt;2&lt;/span&gt; or m&lt;span style=&quot; vertical-align:super;&quot;&gt;2&lt;/span&gt;)&lt;/p&gt;&lt;p&gt;A volume assinged to a grid element that acts as a sink.&lt;/p&gt;&lt;p&gt;Range:&lt;/p&gt;&lt;p&gt;0.01 - No upper limit (ft&lt;span style=&quot; vertical-align:super;&quot;&gt;2&lt;/span&gt;)&lt;/p&gt;&lt;p&gt;0.0009 - No upper limit (m&lt;span style=&quot; vertical-align:super;&quot;&gt;2&lt;/span&gt;)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
             </property>
             <property name="text">
              <string>Volume:</string>
