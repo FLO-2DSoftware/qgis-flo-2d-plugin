@@ -66,15 +66,19 @@ class Flo2dGeoPackage(GeoPackageUtils):
         if self.parsed_format == self.FORMAT_DAT:
             self.parser = ParseDAT()
             self.parser.scan_project_dir(fpath)
-            self.cell_size = int(round(self.parser.calculate_cellsize()))
+            if get_cell_size:
+                self.cell_size = int(round(self.parser.calculate_cellsize()))
+            else:
+                self.cell_size = int(self.gutils.get_cont_par("CELLSIZE"))
         elif self.parsed_format == self.FORMAT_HDF5:
             self.parser = ParseHDF5()
             self.parser.hdf5_filepath = fpath
-            self.cell_size = int(round(self.parser.calculate_cellsize()))
+            if get_cell_size:
+                self.cell_size = int(round(self.parser.calculate_cellsize()))
+            else:
+                self.cell_size = int(self.gutils.get_cont_par("CELLSIZE"))
         else:
             raise NotImplementedError("Unsupported extension type.")
-        if not get_cell_size:
-            return True
         if self.cell_size == 0:
             self.uc.show_info(
                 "ERROR 060319.1604: Cell size is 0 - something went wrong!\nDoes TOPO.DAT file exist or is empty?"
