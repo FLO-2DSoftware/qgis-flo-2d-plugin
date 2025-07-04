@@ -89,7 +89,7 @@ class RainEditorWidget(qtBaseClass, uiDialog):
 
     def connect_signals(self):
         self.asc_btn.clicked.connect(self.import_rainfall)
-        self.hdf_btn.clicked.connect(self.export_rainfall_to_binary_hdf5)
+        # self.hdf_btn.clicked.connect(self.export_rainfall_to_binary_hdf5)
         self.tseries_cbo.currentIndexChanged.connect(self.populate_tseries_data)
         self.simulate_rain_grp.toggled.connect(self.set_rain)
         self.realtime_rainfall_grp.toggled.connect(self.set_realtime)
