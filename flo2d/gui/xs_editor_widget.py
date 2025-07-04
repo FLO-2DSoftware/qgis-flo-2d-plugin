@@ -205,9 +205,10 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
                     self.uc.log_info(msg)
                     self.uc.show_warn("WARNING 060319.1740: " + msg)
                     return False
-        self.interpolate_channel_elevation()
-
-        return True
+        if self.interpolate_channel_elevation():
+            return True
+        else:
+            return False
 
     def populate_xsec_type_cbo(self):
         """
@@ -1133,6 +1134,8 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
             original_xs = total_xs[row_number][0] - n_interpolated_xs
             log_msg = f"Interpolation of {name[0]}: {total_xs[row_number][0]} ({original_xs} xsecs & {n_interpolated_xs} interpolated)"
             self.uc.log_info(log_msg)
+        self.uc.log_info("Channel Schematization finished successfully!")
+        self.uc.bar_info("Channel Schematization finished successfully!")
 
     def schematize_right_banks(self):
         if self.gutils.is_table_empty("grid"):
@@ -1176,20 +1179,16 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
     def interpolate_xs_values(self):
         if self.gutils.is_table_empty("grid"):
             self.uc.bar_warn("WARNING 060319.1754: There is no grid! Please create it before running tool.")
+            self.uc.log_info("WARNING 060319.1754: There is no grid! Please create it before running tool.")
             return
         if self.gutils.is_table_empty("chan"):
-            self.uc.bar_warn(
-                "WARNING 060319.1755: There are no cross-sections! Please create them before running tool."
-            )
+            self.uc.bar_warn("WARNING 060319.1755: There are no cross-sections! Please create them before running tool.")
+            self.uc.log_info("WARNING 060319.1755: There are no cross-sections! Please create them before running tool.")
             return
         if not self.interp_bed_and_banks():
             QApplication.restoreOverrideCursor()
-            self.uc.show_warn(
-                "WARNING 060319.1756: Interpolation of cross-sections values failed! " "Please check your User Layers."
-            )
-            self.uc.log_info(
-                "WARNING 060319.1756: Interpolation of cross-sections values failed! " "Please check your User Layers."
-            )
+            self.uc.show_warn("WARNING 060319.1756: Interpolation of cross-sections values failed!")
+            self.uc.log_info("WARNING 060319.1756: Interpolation of cross-sections values failed!")
             return
         else:
             current_fid = self.xs_cbo.currentData()
@@ -1215,7 +1214,9 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
                                 last_dir = s.value("FLO-2D/lastGdsDir", "") + "/temp/"
                                 fname = last_dir + "\\CONT.DAT"
                                 if not fname:
-                                    return
+                                    self.uc.bar_warn("The CONT.DAT was not found!")
+                                    self.uc.log_info("The CONT.DAT was not found!")
+                                    return False
                                 self.parser.scan_project_dir(fname)
                                 self.import_chan(temp=last_dir)
                                 zero, few = self.import_xsec()
@@ -1239,6 +1240,12 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
                                     self.uc.bar_info(m)
                                     self.uc.log_info(m)
                                 self.uc.log_info(m)
+                                QApplication.restoreOverrideCursor()
+                                return True
+                            elif rtrn == -2:
+                                QApplication.restoreOverrideCursor()
+                                return False
+
             QApplication.restoreOverrideCursor()
         except Exception as e:
             QApplication.restoreOverrideCursor()
@@ -1774,7 +1781,8 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
                 return return_code
             else:
                 QApplication.restoreOverrideCursor()
-                self.uc.show_warn("WARNING 060319.1750: Program INTERPOLATE.EXE is not in directory\n\n" + self.exe_dir)
+                self.uc.bar_warn("WARNING 060319.1750: Program INTERPOLATE.EXE is not in folder:\n\n" + self.exe_dir)
+                self.uc.log_info("WARNING 060319.1750: Program INTERPOLATE.EXE is not in folder:\n\n" + self.exe_dir)
                 return -2
         except Exception as e:
             self.uc.log_info(repr(e))
@@ -1822,9 +1830,8 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         QApplication.setOverrideCursor(Qt.WaitCursor)
         if not self.interp_bed_and_banks():
             QApplication.restoreOverrideCursor()
-            self.uc.show_warn(
-                "WARNING 060319.1756: Interpolation of cross-sections values failed! " "Please check your User Layers."
-            )
+            self.uc.show_warn("WARNING 060319.1756: Interpolation of cross-sections values failed!")
+            self.uc.log_info("WARNING 060319.1756: Interpolation of cross-sections values failed!")
             return
         else:
             current_fid = self.xs_cbo.currentData()
