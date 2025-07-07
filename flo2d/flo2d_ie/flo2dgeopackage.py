@@ -7255,17 +7255,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
                             else:
                                 pass
 
-                # Write O1, O2, ... lines:
-                for gid, hydro_out in sorted(iter(floodplains.items()), key=lambda items: (items[1], items[0])):
-                    if not subdomain:
-                        ident = "O{0}".format(hydro_out) if hydro_out > 0 else "O"
-                    else:
-                        ident = "O"
-                    o.write(o_line.format(ident, gid))
-                    data_written = True
-                    if border is not None:
-                        if gid in border:
-                            border.remove(gid)
+                # Write the subdomains O lines
+                subdomain_hydrograph_grid_elements = []
                 if subdomain:
                     if any(hydro_out > 0 for _, hydro_out in floodplains.items()):
                         self.uc.bar_warn(
@@ -7326,6 +7317,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                         outflow_md_cells = self.execute(outflow_md_cells_sql, (subdomain, *fid_subdomains)).fetchall()
                         for cell in outflow_md_cells:
                             gid = cell[0]
+                            subdomain_hydrograph_grid_elements.append(gid)
                             hydro_out = cell[1]
                             if hydro_out > 9:
                                 # Check if the hydro_out value is in the mapping
@@ -7336,6 +7328,19 @@ class Flo2dGeoPackage(GeoPackageUtils):
                             o.write(o_line.format(ident, gid))
                             data_written = True
                             if border is not None and gid in border:
+                                border.remove(gid)
+
+                # Write O1, O2, ... lines:
+                for gid, hydro_out in sorted(iter(floodplains.items()), key=lambda items: (items[1], items[0])):
+                    if gid not in subdomain_hydrograph_grid_elements:
+                        if not subdomain:
+                            ident = "O{0}".format(hydro_out) if hydro_out > 0 else "O"
+                        else:
+                            ident = "O"
+                        o.write(o_line.format(ident, gid))
+                        data_written = True
+                        if border is not None:
+                            if gid in border:
                                 border.remove(gid)
 
                 # Write lines 'O cell_id":
@@ -7405,6 +7410,88 @@ class Flo2dGeoPackage(GeoPackageUtils):
         border = get_BC_Border()
         data_written = False
 
+        subdomain_hydrograph_grid_elements = []
+        if subdomain:
+
+            outflow_md_connections_sql = f"""SELECT
+                                               fid_subdomain_1,
+                                               fid_subdomain_2,
+                                               fid_subdomain_3,
+                                               fid_subdomain_4,
+                                               fid_subdomain_5,
+                                               fid_subdomain_6,
+                                               fid_subdomain_7,
+                                               fid_subdomain_8,
+                                               fid_subdomain_9
+                                           FROM
+                                               mult_domains_con AS im
+                                           WHERE 
+                                                fid = {subdomain};"""
+
+            result = self.gutils.execute(outflow_md_connections_sql).fetchone()
+
+            # Initialize fid_subdomains
+            fid_subdomains = [fid for fid in result if fid not in (0, None, 'NULL')] if result else []
+
+            # Find fids greater than 9
+            fids_greater_than_9 = [fid for fid in fid_subdomains if int(fid) > 9]
+
+            # Find available fids between 1 and 9
+            used_fids = set(fid_subdomains)  # Already used fids
+            available_fids = [i for i in range(1, 10) if i not in used_fids]
+
+            # Create a dictionary to map fids greater than 9 to the lowest available fid
+            fid_mapping = {}
+            for fid in fids_greater_than_9:
+                if available_fids:
+                    new_fid = available_fids.pop(0)  # Get the lowest available fid
+                    fid_mapping[fid] = new_fid
+
+            # Proceed only if fid_subdomains is not empty
+            if fid_subdomains:
+                placeholders = ", ".join(
+                    "?" for _ in fid_subdomains)  # Create placeholders for the IN clause
+                outflow_md_cells_sql = f"""
+                                        SELECT 
+                                            domain_cell, 
+                                            down_domain_fid 
+                                        FROM 
+                                            schema_md_cells AS md
+                                        JOIN 
+                                            mult_domains_con mdc ON mdc.fid = md.domain_fid
+                                        WHERE 
+                                            domain_fid = ? AND down_domain_fid IS NOT NULL AND down_domain_fid IN ({placeholders})
+                                        ORDER BY 
+                                            down_domain_fid, domain_cell;
+                                        """
+                outflow_md_cells = self.execute(outflow_md_cells_sql,
+                                                (subdomain, *fid_subdomains)).fetchall()
+
+                for cell in outflow_md_cells:
+                    gid = cell[0]
+                    subdomain_hydrograph_grid_elements.append(gid)
+                    hydro_out = cell[1]
+                    if hydro_out > 9:
+                        # Check if the hydro_out value is in the mapping
+                        if hydro_out in fid_mapping:
+                            # Replace the hydro_out value with the mapped value
+                            hydro_out = fid_mapping[hydro_out]
+                    try:
+                        bc_group.datasets["Outflow/HYD_OUT_GRID"].data.append(
+                            create_array(two_values, 2, np.int_, (hydro_out, gid)))
+                    except:
+                        bc_group.create_dataset('Outflow/HYD_OUT_GRID', [])
+                        bc_group.datasets["Outflow/HYD_OUT_GRID"].data.append(
+                            create_array(two_values, 2, np.int_, (hydro_out, gid)))
+                    data_written = True
+
+                    # ident = "O{0}".format(hydro_out)
+                    #
+                    # o.write(o_line.format(ident, gid))
+
+                    if border is not None and gid in border:
+                        border.remove(gid)
+
         for oid, gid in out_cells:
             if previous_oid != oid:
                 row = self.execute(outflow_sql, (oid,)).fetchone()
@@ -7437,6 +7524,9 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     chan_qhtab_fid,
                     fp_tser_fid,
                 ) = (to_int(x) for x in row)
+
+                if gid in subdomain_hydrograph_grid_elements:
+                    continue
 
                 # 1. Floodplain outflow (no hydrograph)
                 variables = (chan_out, hydro_out, chan_tser_fid, chan_qhpar_fid, chan_qhtab_fid, fp_tser_fid)
@@ -7603,101 +7693,6 @@ class Flo2dGeoPackage(GeoPackageUtils):
                         qh_table_fid.append(chan_qhtab_fid)
                     data_written = True
                     continue
-
-        self.uc.log_info("Entrou")
-        outflow_md_connections_sql = f"""SELECT
-                                           fid_subdomain_1,
-                                           fid_subdomain_2,
-                                           fid_subdomain_3,
-                                           fid_subdomain_4,
-                                           fid_subdomain_5,
-                                           fid_subdomain_6,
-                                           fid_subdomain_7,
-                                           fid_subdomain_8,
-                                           fid_subdomain_9
-                                       FROM
-                                           mult_domains_con AS im
-                                       WHERE 
-                                            fid = {subdomain};"""
-
-        result = self.gutils.execute(outflow_md_connections_sql).fetchone()
-
-        self.uc.log_info(str(result))
-
-        # Initialize fid_subdomains
-        fid_subdomains = [fid for fid in result if fid not in (0, None, 'NULL')] if result else []
-
-        # Find fids greater than 9
-        fids_greater_than_9 = [fid for fid in fid_subdomains if int(fid) > 9]
-
-        # Find available fids between 1 and 9
-        used_fids = set(fid_subdomains)  # Already used fids
-        available_fids = [i for i in range(1, 10) if i not in used_fids]
-
-        # Create a dictionary to map fids greater than 9 to the lowest available fid
-        fid_mapping = {}
-        for fid in fids_greater_than_9:
-            if available_fids:
-                new_fid = available_fids.pop(0)  # Get the lowest available fid
-                fid_mapping[fid] = new_fid
-
-        self.uc.log_info(str(fid_subdomains))
-        # Proceed only if fid_subdomains is not empty
-        if fid_subdomains:
-            placeholders = ", ".join(
-                "?" for _ in fid_subdomains)  # Create placeholders for the IN clause
-            outflow_md_cells_sql = f"""
-                                    SELECT 
-                                        domain_cell, 
-                                        down_domain_fid 
-                                    FROM 
-                                        schema_md_cells AS md
-                                    JOIN 
-                                        mult_domains_con mdc ON mdc.fid = md.domain_fid
-                                    WHERE 
-                                        domain_fid = ? AND down_domain_fid IS NOT NULL AND down_domain_fid IN ({placeholders})
-                                    ORDER BY 
-                                        down_domain_fid, domain_cell;
-                                    """
-            outflow_md_cells = self.execute(outflow_md_cells_sql,
-                                            (subdomain, *fid_subdomains)).fetchall()
-
-            self.uc.log_info(str(outflow_md_cells))
-            for cell in outflow_md_cells:
-                gid = cell[0]
-                hydro_out = cell[1]
-                if hydro_out > 9:
-                    # Check if the hydro_out value is in the mapping
-                    if hydro_out in fid_mapping:
-                        # Replace the hydro_out value with the mapped value
-                        hydro_out = fid_mapping[hydro_out]
-                try:
-                    bc_group.datasets["Outflow/HYD_OUT_GRID"].data.append(
-                        create_array(two_values, 2, np.int_, (hydro_out, gid)))
-                except:
-                    bc_group.create_dataset('Outflow/HYD_OUT_GRID', [])
-                    bc_group.datasets["Outflow/HYD_OUT_GRID"].data.append(
-                        create_array(two_values, 2, np.int_, (hydro_out, gid)))
-                data_written = True
-
-                # ident = "O{0}".format(hydro_out)
-                #
-                # o.write(o_line.format(ident, gid))
-
-                if border is not None and gid in border:
-                    border.remove(gid)
-
-        # Write lines 'O cell_id":
-        # if border is not None:
-        #     for b in border:
-        #         try:
-        #             bc_group.datasets["Outflow/HYD_OUT_GRID"].data.append(
-        #                 create_array(two_values, 2, np.int_, (hydro_out, b)))
-        #         except:
-        #             bc_group.create_dataset('Outflow/HYD_OUT_GRID', [])
-        #             bc_group.datasets["Outflow/HYD_OUT_GRID"].data.append(
-        #                 create_array(two_values, 2, np.int_, (hydro_out, b)))
-                # o.write(o_line.format("O", b))
 
         if data_written:
             self.parser.write_groups(bc_group)
