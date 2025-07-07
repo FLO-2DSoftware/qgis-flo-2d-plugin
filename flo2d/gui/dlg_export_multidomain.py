@@ -160,7 +160,7 @@ class ExportMultipleDomainsDialog(qtBaseClass, uiDialog):
         # Loop over checkboxes in order
         for i in range(1, 16):
             checkbox = self.findChild(QCheckBox, f"checkBox_{i}")  # Find checkbox by name
-            if checkbox.isChecked():
+            if checkbox.isChecked() and checkbox.isVisible():
                 export_subdomains.append(checkbox.text())
 
         if len(export_subdomains) == 0:
