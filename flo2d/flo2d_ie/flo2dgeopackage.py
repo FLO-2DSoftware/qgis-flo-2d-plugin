@@ -7159,7 +7159,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
     def export_outflow_dat(self, outdir, subdomain):
         # check if there are any outflows defined.
         try:
-            if self.is_table_empty("outflow") or self.is_table_empty("outflow_cells"):
+            if self.is_table_empty("outflow") and self.is_table_empty("outflow_cells"):
                 return False
 
             outflow_sql = """
@@ -7189,77 +7189,75 @@ class Flo2dGeoPackage(GeoPackageUtils):
             o_line = "{0}  {1}\n"
 
             out_cells = self.execute(outflow_cells_sql).fetchall()
-            if not out_cells:
-                return False
-            else:
-                pass
             outflow = os.path.join(outdir, "OUTFLOW.DAT")
             floodplains = {}
             previous_oid = -1
             row = None
             border = get_BC_Border()
 
+            data_written = False
+
             warning = ""
             with open(outflow, "w") as o:
-                for oid, gid in out_cells:
-                    if previous_oid != oid:
-                        row = self.execute(outflow_sql, (oid,)).fetchone()
+                if out_cells:
+                    for oid, gid in out_cells:
+                        if previous_oid != oid:
+                            row = self.execute(outflow_sql, (oid,)).fetchone()
+                            if row is not None:
+                                row = [x if x is not None and x != "" else 0 for x in row]
+                                previous_oid = oid
+                            else:
+                                warning += (
+                                        "<br>* Cell " + str(
+                                    gid) + " in 'outflow_cells' table points to 'outflow' table with"
+                                )
+                                warning += "<br> 'outflow_fid' = " + str(oid) + ".<br>"
+                                continue
+                        else:
+                            pass
+
                         if row is not None:
-                            row = [x if x is not None and x != "" else 0 for x in row]
-                            previous_oid = oid
-                        else:
-                            warning += (
-                                    "<br>* Cell " + str(
-                                gid) + " in 'outflow_cells' table points to 'outflow' table with"
-                            )
-                            warning += "<br> 'outflow_fid' = " + str(oid) + ".<br>"
-                            continue
-                    else:
-                        pass
+                            (
+                                fid,
+                                fp_out,
+                                chan_out,
+                                hydro_out,
+                                chan_tser_fid,
+                                chan_qhpar_fid,
+                                chan_qhtab_fid,
+                                fp_tser_fid,
+                            ) = row
+                            if gid not in floodplains and (fp_out == 1 or hydro_out > 0):
+                                floodplains[gid] = hydro_out
+                            if chan_out == 1:
+                                o.write(k_line.format(gid))
+                                data_written = True
+                                for values in self.execute(qh_params_data_sql, (chan_qhpar_fid,)):
+                                    o.write(qh_params_line.format(*values))
+                                    data_written = True
+                                for values in self.execute(qh_table_data_sql, (chan_qhtab_fid,)):
+                                    o.write(qh_table_line.format(*values))
+                                    data_written = True
+                            else:
+                                pass
 
-                    if row is not None:
-                        (
-                            fid,
-                            fp_out,
-                            chan_out,
-                            hydro_out,
-                            chan_tser_fid,
-                            chan_qhpar_fid,
-                            chan_qhtab_fid,
-                            fp_tser_fid,
-                        ) = row
-                        if gid not in floodplains and (fp_out == 1 or hydro_out > 0):
-                            floodplains[gid] = hydro_out
-                        if chan_out == 1:
-                            o.write(k_line.format(gid))
-                            for values in self.execute(qh_params_data_sql, (chan_qhpar_fid,)):
-                                o.write(qh_params_line.format(*values))
-                            for values in self.execute(qh_table_data_sql, (chan_qhtab_fid,)):
-                                o.write(qh_table_line.format(*values))
-                        else:
-                            pass
+                            if chan_tser_fid > 0 or fp_tser_fid > 0:
+                                if border is not None:
+                                    if gid in border:
+                                        continue
+                                nostacfp = 1 if chan_tser_fid == 1 else 0
+                                o.write(n_line.format(gid, nostacfp))
+                                data_written = True
+                                series_fid = chan_tser_fid if chan_tser_fid > 0 else fp_tser_fid
+                                for values in self.execute(ts_data_sql, (series_fid,)):
+                                    o.write(ts_line.format(*values))
+                                    data_written = True
+                            else:
+                                pass
 
-                        if chan_tser_fid > 0 or fp_tser_fid > 0:
-                            if border is not None:
-                                if gid in border:
-                                    continue
-                            nostacfp = 1 if chan_tser_fid == 1 else 0
-                            o.write(n_line.format(gid, nostacfp))
-                            series_fid = chan_tser_fid if chan_tser_fid > 0 else fp_tser_fid
-                            for values in self.execute(ts_data_sql, (series_fid,)):
-                                o.write(ts_line.format(*values))
-                        else:
-                            pass
-
-                # Write O1, O2, ... lines:
-                if not subdomain:
-                    for gid, hydro_out in sorted(iter(floodplains.items()), key=lambda items: (items[1], items[0])):
-                        ident = "O{0}".format(hydro_out) if hydro_out > 0 else "O"
-                        o.write(o_line.format(ident, gid))
-                        if border is not None:
-                            if gid in border:
-                                border.remove(gid)
-                else:
+                # Write the subdomains O lines
+                subdomain_hydrograph_grid_elements = []
+                if subdomain:
                     if any(hydro_out > 0 for _, hydro_out in floodplains.items()):
                         self.uc.bar_warn(
                             "During multiple domain export, the outflow hydrograph boundary condition is automatically replaced by the connections between the domains.")
@@ -7267,19 +7265,19 @@ class Flo2dGeoPackage(GeoPackageUtils):
                             "During multiple domain export, the outflow hydrograph boundary condition is automatically replaced by the connections between the domains.")
 
                     outflow_md_connections_sql = f"""SELECT
-                                                                           fid_subdomain_1,
-                                                                           fid_subdomain_2,
-                                                                           fid_subdomain_3,
-                                                                           fid_subdomain_4,
-                                                                           fid_subdomain_5,
-                                                                           fid_subdomain_6,
-                                                                           fid_subdomain_7,
-                                                                           fid_subdomain_8,
-                                                                           fid_subdomain_9
-                                                                       FROM
-                                                                           mult_domains_con AS im
-                                                                       WHERE 
-                                                                            fid = {subdomain};"""
+                                                       fid_subdomain_1,
+                                                       fid_subdomain_2,
+                                                       fid_subdomain_3,
+                                                       fid_subdomain_4,
+                                                       fid_subdomain_5,
+                                                       fid_subdomain_6,
+                                                       fid_subdomain_7,
+                                                       fid_subdomain_8,
+                                                       fid_subdomain_9
+                                                   FROM
+                                                       mult_domains_con AS im
+                                                   WHERE 
+                                                        fid = {subdomain};"""
 
                     result = self.gutils.execute(outflow_md_connections_sql).fetchone()
 
@@ -7317,9 +7315,9 @@ class Flo2dGeoPackage(GeoPackageUtils):
                                                 down_domain_fid, domain_cell;
                                         """
                         outflow_md_cells = self.execute(outflow_md_cells_sql, (subdomain, *fid_subdomains)).fetchall()
-
                         for cell in outflow_md_cells:
                             gid = cell[0]
+                            subdomain_hydrograph_grid_elements.append(gid)
                             hydro_out = cell[1]
                             if hydro_out > 9:
                                 # Check if the hydro_out value is in the mapping
@@ -7328,13 +7326,31 @@ class Flo2dGeoPackage(GeoPackageUtils):
                                     hydro_out = fid_mapping[hydro_out]
                             ident = "O{0}".format(hydro_out)
                             o.write(o_line.format(ident, gid))
+                            data_written = True
                             if border is not None and gid in border:
+                                border.remove(gid)
+
+                # Write O1, O2, ... lines:
+                for gid, hydro_out in sorted(iter(floodplains.items()), key=lambda items: (items[1], items[0])):
+                    if gid not in subdomain_hydrograph_grid_elements:
+                        if not subdomain:
+                            ident = "O{0}".format(hydro_out) if hydro_out > 0 else "O"
+                        else:
+                            ident = "O"
+                        o.write(o_line.format(ident, gid))
+                        data_written = True
+                        if border is not None:
+                            if gid in border:
                                 border.remove(gid)
 
                 # Write lines 'O cell_id":
                 if border is not None:
                     for b in border:
                         o.write(o_line.format("O", b))
+                        data_written = True
+
+            if not data_written:
+                os.remove(outflow)
 
             QApplication.restoreOverrideCursor()
             if warning != "":
@@ -7354,7 +7370,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
         """
 
         # check if there are any outflows defined.
-        if self.is_table_empty("outflow") or self.is_table_empty("outflow_cells"):
+        if self.is_table_empty("outflow") and self.is_table_empty("outflow_cells"):
             return False
 
         outflow_sql = """
@@ -7381,10 +7397,6 @@ class Flo2dGeoPackage(GeoPackageUtils):
         four_values = "{0}  {1}  {2}  {3}\n"
 
         out_cells = self.execute(outflow_cells_sql).fetchall()
-        if not out_cells:
-            return False
-        else:
-            pass
         bc_group = self.parser.bc_group
 
         previous_oid = -1
@@ -7394,6 +7406,91 @@ class Flo2dGeoPackage(GeoPackageUtils):
         qh_table_fid = []
 
         warning = ""
+
+        border = get_BC_Border()
+        data_written = False
+
+        subdomain_hydrograph_grid_elements = []
+        if subdomain:
+
+            outflow_md_connections_sql = f"""SELECT
+                                               fid_subdomain_1,
+                                               fid_subdomain_2,
+                                               fid_subdomain_3,
+                                               fid_subdomain_4,
+                                               fid_subdomain_5,
+                                               fid_subdomain_6,
+                                               fid_subdomain_7,
+                                               fid_subdomain_8,
+                                               fid_subdomain_9
+                                           FROM
+                                               mult_domains_con AS im
+                                           WHERE 
+                                                fid = {subdomain};"""
+
+            result = self.gutils.execute(outflow_md_connections_sql).fetchone()
+
+            # Initialize fid_subdomains
+            fid_subdomains = [fid for fid in result if fid not in (0, None, 'NULL')] if result else []
+
+            # Find fids greater than 9
+            fids_greater_than_9 = [fid for fid in fid_subdomains if int(fid) > 9]
+
+            # Find available fids between 1 and 9
+            used_fids = set(fid_subdomains)  # Already used fids
+            available_fids = [i for i in range(1, 10) if i not in used_fids]
+
+            # Create a dictionary to map fids greater than 9 to the lowest available fid
+            fid_mapping = {}
+            for fid in fids_greater_than_9:
+                if available_fids:
+                    new_fid = available_fids.pop(0)  # Get the lowest available fid
+                    fid_mapping[fid] = new_fid
+
+            # Proceed only if fid_subdomains is not empty
+            if fid_subdomains:
+                placeholders = ", ".join(
+                    "?" for _ in fid_subdomains)  # Create placeholders for the IN clause
+                outflow_md_cells_sql = f"""
+                                        SELECT 
+                                            domain_cell, 
+                                            down_domain_fid 
+                                        FROM 
+                                            schema_md_cells AS md
+                                        JOIN 
+                                            mult_domains_con mdc ON mdc.fid = md.domain_fid
+                                        WHERE 
+                                            domain_fid = ? AND down_domain_fid IS NOT NULL AND down_domain_fid IN ({placeholders})
+                                        ORDER BY 
+                                            down_domain_fid, domain_cell;
+                                        """
+                outflow_md_cells = self.execute(outflow_md_cells_sql,
+                                                (subdomain, *fid_subdomains)).fetchall()
+
+                for cell in outflow_md_cells:
+                    gid = cell[0]
+                    subdomain_hydrograph_grid_elements.append(gid)
+                    hydro_out = cell[1]
+                    if hydro_out > 9:
+                        # Check if the hydro_out value is in the mapping
+                        if hydro_out in fid_mapping:
+                            # Replace the hydro_out value with the mapped value
+                            hydro_out = fid_mapping[hydro_out]
+                    try:
+                        bc_group.datasets["Outflow/HYD_OUT_GRID"].data.append(
+                            create_array(two_values, 2, np.int_, (hydro_out, gid)))
+                    except:
+                        bc_group.create_dataset('Outflow/HYD_OUT_GRID', [])
+                        bc_group.datasets["Outflow/HYD_OUT_GRID"].data.append(
+                            create_array(two_values, 2, np.int_, (hydro_out, gid)))
+                    data_written = True
+
+                    # ident = "O{0}".format(hydro_out)
+                    #
+                    # o.write(o_line.format(ident, gid))
+
+                    if border is not None and gid in border:
+                        border.remove(gid)
 
         for oid, gid in out_cells:
             if previous_oid != oid:
@@ -7428,6 +7525,9 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     fp_tser_fid,
                 ) = (to_int(x) for x in row)
 
+                if gid in subdomain_hydrograph_grid_elements:
+                    continue
+
                 # 1. Floodplain outflow (no hydrograph)
                 variables = (chan_out, hydro_out, chan_tser_fid, chan_qhpar_fid, chan_qhtab_fid, fp_tser_fid)
                 if fp_out == 1 and check_outflow_condition(variables):
@@ -7436,6 +7536,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     except:
                         bc_group.create_dataset('Outflow/FP_OUT_GRID', [])
                         bc_group.datasets["Outflow/FP_OUT_GRID"].data.append(gid)
+                    data_written = True
                     continue
 
                 # 2. Channel outflow (no hydrograph)
@@ -7446,6 +7547,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     except:
                         bc_group.create_dataset('Outflow/CH_OUT_GRID', [])
                         bc_group.datasets["Outflow/CH_OUT_GRID"].data.append(gid)
+                    data_written = True
                     continue
 
                 # 3. Floodplain and channel outflow (no hydrograph)
@@ -7461,19 +7563,28 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     except:
                         bc_group.create_dataset('Outflow/CH_OUT_GRID', [])
                         bc_group.datasets["Outflow/CH_OUT_GRID"].data.append(gid)
+                    data_written = True
                     continue
 
                 # 4. Outflow with hydrograph
-                variables = (fp_out, chan_out, chan_tser_fid, chan_qhpar_fid, chan_qhtab_fid, fp_tser_fid)
-                if hydro_out != 0 and check_outflow_condition(variables):
-                    try:
-                        bc_group.datasets["Outflow/HYD_OUT_GRID"].data.append(
-                            create_array(two_values, 2, np.int_, (hydro_out, gid)))
-                    except:
-                        bc_group.create_dataset('Outflow/HYD_OUT_GRID', [])
-                        bc_group.datasets["Outflow/HYD_OUT_GRID"].data.append(
-                            create_array(two_values, 2, np.int_, (hydro_out, gid)))
-                    continue
+                if not subdomain:
+                    variables = (fp_out, chan_out, chan_tser_fid, chan_qhpar_fid, chan_qhtab_fid, fp_tser_fid)
+                    if hydro_out != 0 and check_outflow_condition(variables):
+                        try:
+                            bc_group.datasets["Outflow/HYD_OUT_GRID"].data.append(
+                                create_array(two_values, 2, np.int_, (hydro_out, gid)))
+                        except:
+                            bc_group.create_dataset('Outflow/HYD_OUT_GRID', [])
+                            bc_group.datasets["Outflow/HYD_OUT_GRID"].data.append(
+                                create_array(two_values, 2, np.int_, (hydro_out, gid)))
+                        data_written = True
+                        continue
+                else:
+                    if hydro_out != 0 and check_outflow_condition(variables):
+                        self.uc.bar_warn(
+                            "During multiple domain export, the outflow hydrograph boundary condition is automatically replaced by the connections between the domains.")
+                        self.uc.log_info(
+                            "During multiple domain export, the outflow hydrograph boundary condition is automatically replaced by the connections between the domains.")
 
                 # Time-stage BCs
                 variables = (hydro_out, chan_qhpar_fid, chan_qhtab_fid)
@@ -7497,6 +7608,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                                 bc_group.datasets["Outflow/TS_OUT_DATA"].data.append(
                                     create_array(three_values, 3, np.float64, ts_line_values))
                             ts_series_fid.append(fp_tser_fid)
+                        data_written = True
                     # 6. Time-stage for channel
                     if chan_tser_fid != 0:
                         try:
@@ -7516,6 +7628,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                                 bc_group.datasets["Outflow/TS_OUT_DATA"].data.append(
                                     create_array(three_values, 3, np.float64, ts_line_values))
                             ts_series_fid.append(chan_tser_fid)
+                        data_written = True
                     # Free floodplain
                     if fp_out == 1 and check_outflow_condition(variables):
                         try:
@@ -7523,6 +7636,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                         except:
                             bc_group.create_dataset('Outflow/FP_OUT_GRID', [])
                             bc_group.datasets["Outflow/FP_OUT_GRID"].data.append(gid)
+                        data_written = True
                     # Free channel
                     if chan_out == 1:
                         try:
@@ -7530,6 +7644,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                         except:
                             bc_group.create_dataset('Outflow/CH_OUT_GRID', [])
                             bc_group.datasets["Outflow/CH_OUT_GRID"].data.append(gid)
+                        data_written = True
                     continue
 
                 # 9. Channel Depth-Discharge Power Regression (qh-params)
@@ -7553,6 +7668,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                             bc_group.datasets["Outflow/QH_PARAMS"].data.append(
                                 create_array(four_values, 4, np.float64, qh_params_values))
                         qh_params_fid.append(chan_qhpar_fid)
+                    data_written = True
                     continue
 
                 # 10. Channel Depth-Discharge (qh-table)
@@ -7575,9 +7691,11 @@ class Flo2dGeoPackage(GeoPackageUtils):
                             bc_group.datasets["Outflow/QH_TABLE"].data.append(
                                 create_array(three_values, 3, np.float64, qh_table_values))
                         qh_table_fid.append(chan_qhtab_fid)
+                    data_written = True
                     continue
 
-        self.parser.write_groups(bc_group)
+        if data_written:
+            self.parser.write_groups(bc_group)
         QApplication.restoreOverrideCursor()
         if warning != "":
             msg = "ERROR 170319.2018: error while exporting OUTFLOW.DAT!<br><br>" + warning
