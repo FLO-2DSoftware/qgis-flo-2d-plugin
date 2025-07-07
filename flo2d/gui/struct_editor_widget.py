@@ -861,6 +861,15 @@ class StructEditorWidget(qtBaseClass, uiDialog):
             self.uc.log_info("File  '" + os.path.basename(HYDROSTRUCT_file) + "'  is empty!")
             return
 
+        # Get structure name from FID because the HYDROSTRUCT.OUT structure number is not always the same as the FID
+        struct_name = self.gutils.execute(
+            "SELECT structname FROM struct WHERE fid = ?;",
+            (fid,),
+        ).fetchone()
+
+        if struct_name:
+            struct_name = struct_name[0]
+
         with open(HYDROSTRUCT_file, "r") as myfile:
             time_list = []
             discharge_list = []
@@ -872,8 +881,7 @@ class StructEditorWidget(qtBaseClass, uiDialog):
                     match = re.search(pattern, line)
                     if match:
                         matched_structure_name = match.group(1)
-                        matched_structure_number = int(match.group(2))
-                        if matched_structure_number == fid:
+                        if matched_structure_name == struct_name:
                             structure_name = matched_structure_name
                             line = next(myfile)
                             while True:
