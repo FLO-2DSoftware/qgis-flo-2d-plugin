@@ -21,7 +21,7 @@ from qgis.PyQt.QtWidgets import QApplication, QFileDialog, QInputDialog, QMessag
 from PyQt5.QtCore import QUrl
 from PyQt5.QtGui import QDesktopServices
 from ..flo2d_ie.flo2dgeopackage import Flo2dGeoPackage
-from ..flo2d_ie.rainfall_io import ASCProcessor, HDFProcessor
+from ..flo2d_ie.rainfall_io import ASCProcessor, HDFProcessor, NetCDFProcessor
 from ..flo2dobjects import Rain
 from ..geopackage_utils import GeoPackageUtils
 from ..gui.dlg_sampling_rain import SamplingRainDialog
@@ -88,7 +88,10 @@ class RainEditorWidget(qtBaseClass, uiDialog):
             return True
 
     def connect_signals(self):
-        self.asc_btn.clicked.connect(self.import_rainfall)
+        self.asc_btn.clicked.connect(lambda: self.import_rainfall("asc"))
+        self.era5_btn.clicked.connect(lambda: self.import_rainfall("era"))
+        self.raster_btn.clicked.connect(lambda: self.import_rainfall("tif"))
+        self.delete_realtime_rainfall_btn.clicked.connect(self.delete_realtime_rainfall)
         # self.hdf_btn.clicked.connect(self.export_rainfall_to_binary_hdf5)
         self.tseries_cbo.currentIndexChanged.connect(self.populate_tseries_data)
         self.simulate_rain_grp.toggled.connect(self.set_rain)
@@ -148,25 +151,29 @@ class RainEditorWidget(qtBaseClass, uiDialog):
         self.rain = Rain(self.con, self.iface)
         self.control_lyr.editingStopped.connect(self.check_simulate_rainfall)
 
-    def import_rainfall(self):
-        try:
-            s = QSettings()
-            last_dir = s.value("FLO-2D/lastASC", "")
-            asc_dir = QFileDialog.getExistingDirectory(
-                None,
-                "Select directory with Rainfall ASCII grid files",
-                directory=last_dir,
-            )
-            if not asc_dir:
-                return
-            s.setValue("FLO-2D/lastASC", asc_dir)
+    def import_rainfall(self, data_format):
+        s = QSettings()
+        last_dir = s.value("FLO-2D/lastASC", "")
 
-            try:
-                grid_lyr = self.lyrs.data["grid"]["qlyr"]
+        head_qry = "INSERT INTO raincell (rainintime, irinters, timestamp) VALUES(?,?,?);"
+        # data_qry = "INSERT INTO raincell_data (time_interval, rrgrid, iraindum) VALUES (?,?,?);"
+        data_qry = ["""INSERT INTO raincell_data (time_interval, rrgrid, iraindum) VALUES""", 3]
+
+        try:
+            grid_lyr = self.lyrs.data["grid"]["qlyr"]
+            if data_format == "asc":
+                asc_dir = QFileDialog.getExistingDirectory(
+                    None,
+                    "Select directory with Rainfall ASCII grid files",
+                    directory=last_dir,
+                )
+                if not asc_dir:
+                    return
+                s.setValue("FLO-2D/lastASC", asc_dir)
+
                 QApplication.setOverrideCursor(Qt.WaitCursor)
+
                 asc_processor = ASCProcessor(grid_lyr, asc_dir, self.iface)  # as_processor, an instance of the ASCProcessor class,
-                head_qry = "INSERT INTO raincell (rainintime, irinters, timestamp) VALUES(?,?,?);"
-                data_qry = "INSERT INTO raincell_data (time_interval, rrgrid, iraindum) VALUES (?,?,?);"
                 self.gutils.clear_tables("raincell", "raincell_data")
                 header = asc_processor.parse_rfc()
                 time_step = float(header[0])
@@ -182,30 +189,79 @@ class RainEditorWidget(qtBaseClass, uiDialog):
 
                 for rain_series in asc_processor.rainfall_sampling():
                     pd.setValue(i)
-                    cur = self.gutils.con.cursor()
                     for val, gid in rain_series:
-                        cur.execute(data_qry, (time_interval, gid, val))
-                    self.gutils.con.commit()
+                        data_qry += [(time_interval, gid, val)]
                     time_interval += time_step
                     i += 1
 
+                self.gutils.batch_execute(data_qry)
+
                 QApplication.restoreOverrideCursor()
-                self.uc.bar_info("Importing Rainfall Data finished!")
-                self.uc.log_info("Importing Rainfall Data finished!")
-            except Exception as e:
-                self.uc.log_info(traceback.format_exc())
+                self.uc.bar_info("ASCII Realtime Rainfall imported successfully!")
+                self.uc.log_info("ASCII Realtime Rainfall imported successfully!")
+
+            if data_format == "era":
+                era_file = QFileDialog.getOpenFileName(
+                    None,
+                    "Select ERA5 NetCDF File",
+                    "",
+                    "NetCDF (*.nc)")[0]
+                if not era_file:
+                    return
+                s.setValue("FLO-2D/lastASC", os.path.dirname(era_file))
+
+                QApplication.setOverrideCursor(Qt.WaitCursor)
+
+                # 1. Create processor
+                netcdf_proc = NetCDFProcessor(grid_lyr, era_file, self.iface, self.gutils)
+
+                # 2. Read header for raincell table
+                header = netcdf_proc.parse_header()  # [interval_time, num_intervals, start_timestamp]
+                time_step = float(header[0])
+                irinters = int(header[1]) - 1
+
+                # 3. Clear previous data
+                self.gutils.clear_tables("raincell", "raincell_data")
+
+                # 4. Insert raincell header
+                self.gutils.execute(head_qry, header)
+
+                time_interval = 0
+                pd = QProgressDialog("Importing ERA5 Rainfall...", None, 0, irinters)
+                pd.setModal(True)
+                pd.setValue(0)
+                pd.show()
+
+                # 5. Loop through rainfall time steps
+                i = 0
+                for rain_series in netcdf_proc.rainfall_sampling():
+                    pd.setValue(i)
+                    QApplication.processEvents()
+
+                    for val, fid in rain_series:
+                        data_qry += [(time_interval, fid, val)]
+
+                    time_interval += time_step
+                    i += 1
+
+                self.gutils.batch_execute(data_qry)
+
                 QApplication.restoreOverrideCursor()
-                self.uc.bar_error("Importing Rainfall Data from ASCII files failed!")
-                self.uc.log_info(
-                    "Importing Rainfall Data from ASCII files failed! Please check your input data.\nIs the .RFC file "
-                    "missing?"
-                )
+                self.uc.bar_info("ERA5 Realtime Rainfall imported successfully!")
+                self.uc.log_info("ERA5 Realtime Rainfall imported successfully!")
+
+            if data_format == "tif":
+                pass
+
+
 
         except Exception as e:
             self.uc.log_info(traceback.format_exc())
             QApplication.restoreOverrideCursor()
-            self.uc.show_warn(
-                f"WARNING 060319.1835: Importing Rainfall Data failed! : {e}"
+            self.uc.bar_error("Importing Rainfall Data from ASCII files failed!")
+            self.uc.log_info(
+                "Importing Rainfall Data from ASCII files failed! Please check your input data.\nIs the .RFC file "
+                "missing?"
             )
 
     def export_rainfall_to_binary_hdf5(self):
@@ -808,3 +864,13 @@ class RainEditorWidget(qtBaseClass, uiDialog):
             return
         self.rain.rainabs = self.rainfall_abst_sbox.value()
         self.rain.set_row()
+
+    def delete_realtime_rainfall(self):
+        """
+        Delete all realtime rainfall data from the database.
+        """
+        QApplication.setOverrideCursor(Qt.WaitCursor)
+        self.gutils.clear_tables("raincell", "raincell_data")
+        self.uc.bar_info("Realtime Rainfall data deleted successfully!")
+        self.uc.log_info("Realtime Rainfall data deleted successfully!")
+        QApplication.restoreOverrideCursor()

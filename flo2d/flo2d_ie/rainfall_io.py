@@ -10,8 +10,11 @@
 import os
 
 import numpy as np
+from netCDF4 import Dataset, num2date
+from osgeo import osr
+from scipy.interpolate import griddata
 
-from ..flo2d_tools.grid_tools import rasters2centroids
+from ..flo2d_tools.grid_tools import rasters2centroids, spatial_index
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
 from qgis.PyQt.QtWidgets import QProgressDialog
@@ -55,6 +58,73 @@ class ASCProcessor(object):
     def rainfall_sampling(self):
         for raster_values in rasters2centroids(self.vlayer, None, *self.asc_files):
             yield raster_values
+
+class NetCDFProcessor:
+    def __init__(self, vlayer, nc_file, iface, gutils):
+        self.gutils = gutils
+        self.vlayer = vlayer
+        self.nc = Dataset(nc_file, "r")
+        self.iface = iface
+        self.uc = UserCommunication(iface, "FLO-2D")
+
+        # Load coordinates and data
+        self.tp = self.nc.variables["tp"]  # shape: (time, lat, lon)
+        self.lat = self.nc.variables["latitude"][:]
+        self.lon = self.nc.variables["longitude"][:]
+        self.time = self.nc.variables["valid_time"]
+        self.dates = num2date(self.time[:], self.time.units)
+
+        # Create meshgrid
+        self.lon_grid, self.lat_grid = np.meshgrid(self.lon, self.lat)
+
+        # Get grid CRS from database
+        grid_crs = self.gutils.get_grid_crs()
+        epsg_code = int(grid_crs.split(":")[1])
+        self.grid_srs = osr.SpatialReference()
+        self.grid_srs.ImportFromEPSG(epsg_code)
+
+        self.era5_srs = osr.SpatialReference()
+        self.era5_srs.ImportFromEPSG(4326)  # ERA5 is in WGS84
+        self.tx = osr.CoordinateTransformation(self.grid_srs, self.era5_srs)  # EPSG:31982 -> WGS84
+
+        # Build mapping between FLO-2D grid and NetCDF grid
+        self.grid_map = []  # list of (fid, i, j) tuples
+        self.build_grid_mapping()
+
+    def build_grid_mapping(self):
+        lat_vals = self.lat
+        lon_vals = self.lon
+
+        grid_centroids = self.gutils.grid_centroids_all()
+
+        for fid, (x, y) in grid_centroids:
+            lon, lat, _ = self.tx.TransformPoint(x, y)
+            i = np.abs(lat_vals - lat).argmin()
+            j = np.abs(lon_vals - lon).argmin()
+            self.grid_map.append((fid, i, j))
+
+    def parse_header(self):
+        # Compute interval (in minutes) from first two timestamps
+        delta = (self.dates[1] - self.dates[0]).total_seconds()
+        interval_minutes = int(delta / 60)
+
+        # Format start and end timestamps
+        start_time = self.dates[0].strftime("%m/%d/%Y %H:%M")
+        end_time = self.dates[-1].strftime("%m/%d/%Y %H:%M")
+
+        intervals = str(len(self.dates))
+
+        return [str(interval_minutes), intervals, f"{start_time} {end_time}"]
+
+    def rainfall_sampling(self):
+        for i, date in enumerate(self.dates):
+            values = self.tp[i, :, :] * 1000  # meters to mm
+            series = []
+            for fid, ilat, ilon in self.grid_map:
+                val = float(values[ilat, ilon])
+                val = val if not np.isnan(val) else 0.0
+                series.append((val, fid))
+            yield series
 
 
 class HDFProcessor(object):
