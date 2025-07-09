@@ -2491,7 +2491,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                                                            wrf1, wrf2, wrf3, wrf4, wrf5, wrf6, wrf7, wrf8) VALUES""",
                     12,
                 ]
-                collapse_sql = ["""INSERT INTO user_blocked_areas (geom, collapse, calc_arf, calc_wrf) VALUES""", 4]
+                # collapse_sql = ["""INSERT INTO user_blocked_areas (geom, collapse, calc_arf, calc_wrf) VALUES""", 4]
 
                 self.clear_tables("blocked_cells", "user_blocked_areas")
 
@@ -2508,59 +2508,30 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 # Read ARF_TOTALLY_BLOCKED dataset
                 if "ARF_TOTALLY_BLOCKED" in arfwrf_group.datasets:
                     totally_blocked = arfwrf_group.datasets["ARF_TOTALLY_BLOCKED"].data
-                    if "COLLAPSE_CELLS" in arfwrf_group.datasets:
-                        collapse_cells = arfwrf_group.datasets["COLLAPSE_CELLS"].data
-                        collapse_info = {
-                            abs(int(row[0])): (int(row[1]), int(row[2]), int(row[3]))
-                            for row in collapse_cells
-                        }
-                    else:
-                        collapse_info = {}
                     x_list = grid_group.datasets["COORDINATES"].data[:, 0]
                     y_list = grid_group.datasets["COORDINATES"].data[:, 1]
                     for i, cell in enumerate(totally_blocked, 1):
                         cell = int(cell)
-                        grid_fid = abs(cell)
-                        geom = self.build_point_xy(x_list[grid_fid - 1], y_list[grid_fid - 1])
-                        geom_pol = self.build_square(self.grid_centroids([grid_fid])[grid_fid], self.cell_size)
+                        geom = self.build_point_xy(x_list[abs(cell) - 1], y_list[abs(cell) - 1])
                         arf = 1
-                        collapse, calc_arf, calc_wrf = collapse_info.get(grid_fid, (0, 1, 0))
-                        collapse_sql += [(geom_pol, collapse, calc_arf, calc_wrf)]
-                        if cell > 0:
-                            wrf = 0
-                        else:
-                            wrf = 1
-                        cells_sql += [(geom, i, grid_fid, arf) + (wrf,) * 8]  # Remaining WRF values are 0
+                        wrf = 1
+                        cells_sql += [(geom, i, cell, arf) + (wrf,) * 8]  # Remaining WRF values are 0
 
                 # Read ARF_PARTIALLY_BLOCKED dataset
                 if "ARF_PARTIALLY_BLOCKED" in arfwrf_group.datasets:
                     partially_blocked = arfwrf_group.datasets["ARF_PARTIALLY_BLOCKED"].data
-                    if "COLLAPSE_CELLS" in arfwrf_group.datasets:
-                        collapse_cells = arfwrf_group.datasets["COLLAPSE_CELLS"].data
-                        collapse_info = {
-                            abs(int(row[0])): (int(row[1]), int(row[2]), int(row[3]))
-                            for row in collapse_cells
-                        }
-                    else:
-                        collapse_info = {}
                     x_list = grid_group.datasets["COORDINATES"].data[:, 0]
                     y_list = grid_group.datasets["COORDINATES"].data[:, 1]
                     for row in partially_blocked:
                         i += 1
                         grid_fid = int(row[0])
                         geom = self.build_point_xy(x_list[grid_fid - 1], y_list[grid_fid - 1])
-                        geom_pol = self.build_square(self.grid_centroids([grid_fid])[grid_fid], self.cell_size)
                         arf = float(row[1])
-                        if arf < 0:
-                            collapse, calc_arf, calc_wrf = collapse_info.get(grid_fid, (0, 1, 0))
-                        else:
-                            collapse, calc_arf, calc_wrf = 0, 1, 0
-                        collapse_sql += [(geom_pol, collapse, calc_arf, calc_wrf)]
                         wrf_values = row[2:]
-                        cells_sql += [(geom, i, grid_fid, abs(arf)) + tuple(wrf_values)]
+                        cells_sql += [(geom, i, grid_fid, arf) + tuple(wrf_values)]
 
                 # Execute batch inserts
-                self.batch_execute(cont_sql, cells_sql, collapse_sql)
+                self.batch_execute(cont_sql, cells_sql)
 
         except Exception as e:
             self.uc.show_error(
@@ -9543,13 +9514,13 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
     def export_arf_dat(self, outdir, subdomain):
         """
-        Function to export arf data to HDF5 file
+        Function to export arf data to data file
         """
         try:
             if self.is_table_empty("blocked_cells"):
                 return False
             cont_sql = """SELECT name, value FROM cont WHERE name = 'IARFBLOCKMOD';"""
-            collapse_sql = """SELECT collapse, calc_arf, calc_wrf FROM user_blocked_areas WHERE fid = ?;"""
+            # collapse_sql = """SELECT collapse, calc_arf, calc_wrf FROM user_blocked_areas WHERE fid = ?;"""
             if not subdomain:
                 tbc_sql = """SELECT grid_fid, area_fid FROM blocked_cells WHERE arf = 1 ORDER BY grid_fid;"""
                 pbc_sql = """SELECT grid_fid, area_fid,  arf, wrf1, wrf2, wrf3, wrf4, wrf5, wrf6, wrf7, wrf8
@@ -9596,35 +9567,35 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
                 # Totally blocked grid elements:
                 for row in self.execute(tbc_sql):
-                    collapse = self.execute(collapse_sql, (row[1],)).fetchone()
-                    if collapse:
-                        cll = collapse[0]
-                    else:
-                        cll = 0
-                    cll = [cll if cll is not None else 0]
+                    # collapse = self.execute(collapse_sql, (row[1],)).fetchone()
+                    # if collapse:
+                    #     cll = collapse[0]
+                    # else:
+                    #     cll = 0
+                    # cll = [cll if cll is not None else 0]
                     cell = row[0]
-                    if cll[0] == 1:
-                        cell = -cell
+                    # if cll[0] == 1:
+                    #     cell = -cell
                     a.write(line2.format(cell))
 
                 # Partially blocked grid elements:
                 for row in self.execute(pbc_sql):
                     row = [x if x is not None else "" for x in row]
                     # Is there any side blocked? If not omit it:
-                    any_blocked = sum(row) - row[0] - row[1]
-                    if any_blocked > 0:
-                        collapse = self.execute(collapse_sql, (row[1],)).fetchone()
-                        if collapse:
-                            cll = collapse[0]
-                        else:
-                            cll = 0
-                        cll = [cll if cll is not None else 0]
-                        cell = row[0]
-                        arf_value = row[2]
-                        if cll[0] == 1:
-                            arf_value = -arf_value
-                        a.write(line3.format(cell, arf_value, *row[3:]))
-            #                     a.write(line3.format(*row))
+                    # any_blocked = sum(row) - row[0] - row[1]
+                    # if any_blocked > 0:
+                    # collapse = self.execute(collapse_sql, (row[1],)).fetchone()
+                    # if collapse:
+                    #     cll = collapse[0]
+                    # else:
+                    #     cll = 0
+                    # cll = [cll if cll is not None else 0]
+                    cell = row[0]
+                    arf_value = row[2]
+                    # if cll[0] == 1:
+                    #     arf_value = -arf_value
+                    a.write(line3.format(cell, arf_value, *row[3:]))
+        #                     a.write(line3.format(*row))
 
             return True
 
@@ -9639,7 +9610,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             if self.is_table_empty("blocked_cells"):
                 return False
             cont_sql = """SELECT name, value FROM cont WHERE name = 'IARFBLOCKMOD';"""
-            collapse_sql = """SELECT collapse, calc_arf, calc_wrf FROM user_blocked_areas WHERE fid = ?;"""
+            # collapse_sql = """SELECT collapse, calc_arf, calc_wrf FROM user_blocked_areas WHERE fid = ?;"""
             if not subdomain:
                 tbc_sql = """SELECT grid_fid, area_fid, arf FROM blocked_cells WHERE arf IN (1, -1);"""
                 pbc_sql = """SELECT grid_fid, area_fid,  arf, wrf1, wrf2, wrf3, wrf4, wrf5, wrf6, wrf7, wrf8
@@ -9681,7 +9652,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             else:
                 pass
 
-            arfwrf_group.create_dataset('COLLAPSE_CELLS', [])
+            # arfwrf_group.create_dataset('COLLAPSE_CELLS', [])
 
             # Totally blocked grid elements:
             totally_blocked_grid = self.execute(tbc_sql).fetchone()
@@ -9689,13 +9660,13 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 arfwrf_group.create_dataset('ARF_TOTALLY_BLOCKED', [])
                 for row in self.execute(tbc_sql):
                     cell = row[0]
-                    collapse = self.execute(collapse_sql, (row[1],)).fetchone()
+                    # collapse = self.execute(collapse_sql, (row[1],)).fetchone()
                     # Check for collapse data, sometimes there is no collapse data
-                    if collapse:
-                        arfwrf_group.datasets["COLLAPSE_CELLS"].data.append(
-                            [int(cell), int(collapse[0]), int(collapse[1]), int(collapse[2])])
-                        if int(collapse[0]) == 1:
-                            cell = -cell
+                    # # if collapse:
+                    #     arfwrf_group.datasets["COLLAPSE_CELLS"].data.append(
+                    #         [int(cell), int(collapse[0]), int(collapse[1]), int(collapse[2])])
+                    #     if int(collapse[0]) == 1:
+                    #         cell = -cell
                     arfwrf_group.datasets["ARF_TOTALLY_BLOCKED"].data.append(cell)
 
             # Partially blocked grid elements:
@@ -9709,11 +9680,11 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     # if any_blocked > 0:
                     cell = row[0]
                     arf_value = round(row[2], 2)
-                    collapse = self.execute(collapse_sql, (row[1],)).fetchone()
-                    if collapse:
-                        arfwrf_group.datasets["COLLAPSE_CELLS"].data.append([int(cell), int(collapse[0]), int(collapse[1]), int(collapse[2])])
-                        if int(collapse[0]) == 1:
-                            arf_value = -arf_value
+                    # collapse = self.execute(collapse_sql, (row[1],)).fetchone()
+                    # if collapse:
+                    #     arfwrf_group.datasets["COLLAPSE_CELLS"].data.append([int(cell), int(collapse[0]), int(collapse[1]), int(collapse[2])])
+                    #     if int(collapse[0]) == 1:
+                    #         arf_value = -arf_value
                     arfwrf_group.datasets["ARF_PARTIALLY_BLOCKED"].data.append(
                         create_array(line3, 10, np.float64, cell, arf_value, *row[3:]))
 
