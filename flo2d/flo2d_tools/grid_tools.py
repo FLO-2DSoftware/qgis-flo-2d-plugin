@@ -18,7 +18,7 @@ from subprocess import PIPE, STDOUT, Popen
 
 import numpy as np
 from PyQt5.QtCore import QVariant
-from qgis._core import QgsField, QgsVectorDataProvider
+from qgis._core import QgsField, QgsVectorDataProvider, QgsMessageLog
 from qgis.analysis import QgsInterpolator, QgsTinInterpolator, QgsZonalStatistics
 from qgis.core import (
     NULL,
@@ -1748,14 +1748,24 @@ def calculate_arfwrf(grid, areas):
                     was_null = True
                 farf = int(round(1 if f["calc_arf"] == NULL else f["calc_arf"]))
                 fwrf = int(round(1 if f["calc_wrf"] == NULL else f["calc_wrf"]))
+                fcol = int(round(0 if f["collapse"] == NULL else f["collapse"]))
                 inter = fgeom.intersects(geom)
                 if inter is True:
                     areas_intersection = fgeom.intersection(geom)
                     arf = round(areas_intersection.area() / grid_area, 2) if farf == 1 else 0
                     centroid = geom.centroid()
                     centroid_wkt = centroid.asWkt()
+                    # Totally Blocked
                     if arf >= 0.9:
-                        yield (centroid_wkt, feat.id(), f.id(), 1) + (full_wrf if fwrf == 1 else empty_wrf), was_null
+                        if fcol == 1:
+                            yield (centroid_wkt, -feat.id(), f.id(), 1) + (full_wrf if fwrf == 1 else empty_wrf), was_null
+                        else:
+                            yield (centroid_wkt, feat.id(), f.id(), 1) + (full_wrf if fwrf == 1 else empty_wrf), was_null
+                        continue
+                    # elif arf < 0.1:
+                    #     yield (centroid_wkt, feat.id(), f.id(), 0) + (full_wrf if fwrf == 1 else empty_wrf), was_null
+                    #     continue
+                    elif arf == 0:
                         continue
                     else:
                         pass
@@ -1768,7 +1778,11 @@ def calculate_arfwrf(grid, areas):
                         wrf = (round(line.intersection(fgeom).length() / octagon_side, 2) for line in wrf_geoms)
                     else:
                         wrf = empty_wrf
-                    yield (centroid_wkt, feat.id(), f.id(), arf) + tuple(wrf), was_null
+                    # Partially Blocked
+                    if fcol == 1:
+                        yield (centroid_wkt, feat.id(), f.id(), -arf) + tuple(wrf), was_null
+                    else:
+                        yield (centroid_wkt, feat.id(), f.id(), arf) + tuple(wrf), was_null
                 else:
                     pass
             i += 1
