@@ -460,6 +460,19 @@ CREATE TABLE "out_hydrographs_cells" (
 );
 INSERT INTO gpkg_contents (table_name, data_type) VALUES ('out_hydrographs_cells', 'aspatial');
 
+CREATE TABLE "user_timdep" (
+    "fid" INTEGER NOT NULL PRIMARY KEY,
+    "grid_fid" INTEGER
+);
+INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('user_timdep', 'features', 4326);
+SELECT gpkgAddGeometryColumn('user_timdep', 'geom', 'POINT', 0, 0, 0);
+SELECT gpkgAddGeometryTriggers('user_timdep', 'geom');
+
+CREATE TABLE "timdep_cells" (
+    "fid" INTEGER NOT NULL PRIMARY KEY,
+    "grid_fid" INTEGER
+);
+INSERT INTO gpkg_contents (table_name, data_type) VALUES ('timdep_cells', 'aspatial');
 
 -- RAIN.DAT
 
@@ -684,6 +697,12 @@ CREATE TABLE "noexchange_chan_cells" (
     "grid_fid" INTEGER -- NOEXCHANGE, channel element number not exchanging flow. Filled in by a geoprocessing trigger
 );
 INSERT INTO gpkg_contents (table_name, data_type) VALUES ('noexchange_chan_cells', 'aspatial');
+
+CREATE TABLE "chan_interior_nodes" (
+    "fid" INTEGER NOT NULL PRIMARY KEY,
+    "grid_fid" INTEGER
+);
+INSERT INTO gpkg_contents (table_name, data_type) VALUES ('chan_interior_nodes', 'aspatial');
 
 CREATE TABLE "user_steep_slope_n_areas" (
     "fid" INTEGER NOT NULL PRIMARY KEY,
@@ -1460,7 +1479,8 @@ SELECT gpkgAddGeometryTriggers('fpfroude', 'geom');
 CREATE TABLE "fpfroude_cells" (
     "fid" INTEGER NOT NULL PRIMARY KEY,
     "area_fid" INTEGER, -- fid of area from frfroude table
-    "grid_fid" INTEGER -- grid element fid that has an individual Froude number
+    "grid_fid" INTEGER, -- grid element fid that has an individual Froude number
+    "froudefp" REAL DEFAULT 0.9 -- FROUDEFP, Froude number for grid elements
 );
 INSERT INTO gpkg_contents (table_name, data_type) VALUES ('fpfroude_cells', 'aspatial');
 
@@ -1871,7 +1891,8 @@ SELECT gpkgAddGeometryTriggers('spatialshallow', 'geom');
 CREATE TABLE "spatialshallow_cells" (
     "fid" INTEGER NOT NULL PRIMARY KEY,
     "area_fid" INTEGER, -- fid of area from spatialshallow table
-    "grid_fid" INTEGER -- grid element fid that has an individual shallow number
+    "grid_fid" INTEGER, -- grid element fid that has an individual shallow number
+    "shallow_n" REAL DEFAULT 0.04 -- shallow_n
 );
 INSERT INTO gpkg_contents (table_name, data_type) VALUES ('spatialshallow_cells', 'aspatial');
 
@@ -1956,7 +1977,8 @@ SELECT gpkgAddGeometryTriggers('tolspatial', 'geom');
 CREATE TABLE "tolspatial_cells" (
     "fid" INTEGER NOT NULL PRIMARY KEY,
     "area_fid" INTEGER, -- fid of a polygon from tolspatial table
-    "grid_fid" INTEGER -- IDUM, fid of grid cell contained in a fpxsection 
+    "grid_fid" INTEGER, -- IDUM, fid of grid cell contained in a fpxsection
+    "tol" REAL DEFAULT 0.01 -- TOL, tolerance for grid cells
 );
 INSERT INTO gpkg_contents (table_name, data_type) VALUES ('tolspatial_cells', 'aspatial');
 
@@ -3080,6 +3102,21 @@ CREATE TABLE "raincell_data" (
 );
 INSERT INTO gpkg_contents (table_name, data_type) VALUES ('raincell_data', 'aspatial');
 
+CREATE TABLE "flo2d_raincell" (
+    "fid" INTEGER PRIMARY KEY NOT NULL,
+    "iraindum" INTEGER, -- GRID fid
+    "nxrdgd" INTEGER
+);
+INSERT INTO gpkg_contents (table_name, data_type) VALUES ('flo2d_raincell', 'aspatial');
+
+CREATE TABLE "raincellraw" (
+    "fid" INTEGER PRIMARY KEY NOT NULL,
+    "nxrdgd" INTEGER,
+    "r_time" REAL,
+    "rrgrid" INTEGER
+);
+INSERT INTO gpkg_contents (table_name, data_type) VALUES ('raincellraw', 'aspatial');
+
 CREATE TABLE "buildings_areas" (
     "fid" INTEGER NOT NULL PRIMARY KEY,
     "adjustment_factor" REAL
@@ -3112,7 +3149,19 @@ SELECT gpkgAddGeometryColumn('buildings_stats', 'geom', 'POLYGON', 0, 0, 0);
 SELECT gpkgAddGeometryTriggers('buildings_stats', 'geom');
 SELECT gpkgAddSpatialIndex('buildings_stats', 'geom');
 
+CREATE TABLE "user_building_collapse" (
+    "fid" INTEGER NOT NULL PRIMARY KEY,
+    "iarfsmash" INTEGER DEFAULT 2
+);
+INSERT INTO gpkg_contents (table_name, data_type, srs_id) VALUES ('user_building_collapse', 'features', 4326);
+SELECT gpkgAddGeometryColumn('user_building_collapse', 'geom', 'POLYGON', 0, 0, 0);
+SELECT gpkgAddGeometryTriggers('user_building_collapse', 'geom');
 
-
-
+CREATE TABLE "building_collapse_cells" (
+    "fid" INTEGER PRIMARY KEY NOT NULL,
+    "iarfsmashglobal" INTEGER,
+    "iarfsmash" INTEGER,
+    "ig" INTEGER
+);
+INSERT INTO gpkg_contents (table_name, data_type) VALUES ('building_collapse_cells', 'aspatial');
 
