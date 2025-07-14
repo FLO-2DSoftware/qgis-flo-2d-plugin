@@ -226,23 +226,21 @@ class RainEditorWidget(qtBaseClass, uiDialog):
                 # 4. Insert raincell header
                 self.gutils.execute(head_qry, header)
 
+                # 5. Insert data
                 time_interval = 0
                 pd = QProgressDialog("Importing ERA5 Rainfall...", None, 0, irinters)
                 pd.setModal(True)
                 pd.setValue(0)
                 pd.show()
 
-                # 5. Loop through rainfall time steps
-                i = 0
-                for rain_series in netcdf_proc.rainfall_sampling():
-                    pd.setValue(i)
+                for timestep_data in netcdf_proc.sample_all():
+                    pd.setValue(int(time_interval))
                     QApplication.processEvents()
 
-                    for val, fid in rain_series:
-                        data_qry += [(time_interval, fid, val)]
+                    for rainfall, fid in timestep_data:
+                        data_qry += [(time_interval, fid, round(rainfall,2))]
 
-                    time_interval += time_step
-                    i += 1
+                    time_interval += 1
 
                 self.gutils.batch_execute(data_qry)
 

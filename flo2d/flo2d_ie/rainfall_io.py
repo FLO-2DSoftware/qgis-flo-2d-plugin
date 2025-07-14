@@ -11,10 +11,11 @@ import os
 
 import numpy as np
 from netCDF4 import Dataset, num2date
-from osgeo import osr
-from scipy.interpolate import griddata
+from osgeo import osr, gdal
+from qgis._core import QgsCoordinateTransform, QgsProject, QgsCoordinateReferenceSystem, QgsRasterLayer, QgsPointXY
+import tempfile
 
-from ..flo2d_tools.grid_tools import rasters2centroids, spatial_index
+from ..flo2d_tools.grid_tools import rasters2centroids, spatial_index, raster2grid
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
 from qgis.PyQt.QtWidgets import QProgressDialog
@@ -61,47 +62,79 @@ class ASCProcessor(object):
 
 class NetCDFProcessor:
     def __init__(self, vlayer, nc_file, iface, gutils):
-        self.gutils = gutils
         self.vlayer = vlayer
         self.nc = Dataset(nc_file, "r")
         self.iface = iface
+        self.gutils = gutils
         self.uc = UserCommunication(iface, "FLO-2D")
 
-        # Load coordinates and data
-        self.tp = self.nc.variables["tp"]  # shape: (time, lat, lon)
+        self.tp = self.nc.variables["tp"][:] * 1000  # Convert m to mm
         self.lat = self.nc.variables["latitude"][:]
         self.lon = self.nc.variables["longitude"][:]
         self.time = self.nc.variables["valid_time"]
         self.dates = num2date(self.time[:], self.time.units)
 
-        # Create meshgrid
-        self.lon_grid, self.lat_grid = np.meshgrid(self.lon, self.lat)
+        if self.lat[0] < self.lat[-1]:  # Flip if needed
+            self.lat = self.lat[::-1]
+            self.tp = self.tp[:, ::-1, :]
 
-        # Get grid CRS from database
-        grid_crs = self.gutils.get_grid_crs()
-        epsg_code = int(grid_crs.split(":")[1])
-        self.grid_srs = osr.SpatialReference()
-        self.grid_srs.ImportFromEPSG(epsg_code)
+        self.interval_minutes = 60
+        self.n_steps = self.tp.shape[0]
+        self.layer_crs = self.vlayer.crs()
 
-        self.era5_srs = osr.SpatialReference()
-        self.era5_srs.ImportFromEPSG(4326)  # ERA5 is in WGS84
-        self.tx = osr.CoordinateTransformation(self.grid_srs, self.era5_srs)  # EPSG:31982 -> WGS84
+        self.x_grid, self.y_grid, self.geotransform, self.crs_wkt = self.transform_lonlat_to_grid_crs(
+            self.lon, self.lat, self.layer_crs
+        )
 
-        # Build mapping between FLO-2D grid and NetCDF grid
-        self.grid_map = []  # list of (fid, i, j) tuples
-        self.build_grid_mapping()
+    def transform_lonlat_to_grid_crs(self, lon, lat, target_crs):
+        """
+        Transforms ERA5 (lon, lat) grid into the target CRS (e.g., vlayer.crs()).
+        Returns transformed x_grid, y_grid, geotransform, and target CRS WKT.
+        """
 
-    def build_grid_mapping(self):
-        lat_vals = self.lat
-        lon_vals = self.lon
+        # Prepare transformer: EPSG:4326 → target_crs
+        wgs84 = QgsCoordinateReferenceSystem("EPSG:4326")
+        transformer = QgsCoordinateTransform(wgs84, target_crs, QgsProject.instance())
 
-        grid_centroids = self.gutils.grid_centroids_all()
+        # Flip lat if needed (ERA5 is usually north-to-south)
+        if lat[0] < lat[-1]:
+            lat = lat[::-1]
 
-        for fid, (x, y) in grid_centroids:
-            lon, lat, _ = self.tx.TransformPoint(x, y)
-            i = np.abs(lat_vals - lat).argmin()
-            j = np.abs(lon_vals - lon).argmin()
-            self.grid_map.append((fid, i, j))
+        # Build meshgrid of (lon, lat)
+        lon_grid, lat_grid = np.meshgrid(lon, lat)
+
+        # Flatten for transformation
+        flat_lon = lon_grid.flatten()
+        flat_lat = lat_grid.flatten()
+
+        # Transform each (lon, lat) to target CRS
+        transformed_x = []
+        transformed_y = []
+        for x, y in zip(flat_lon, flat_lat):
+            try:
+                pt = transformer.transform(QgsPointXY(x, y))
+                transformed_x.append(pt.x())
+                transformed_y.append(pt.y())
+            except Exception:
+                transformed_x.append(np.nan)
+                transformed_y.append(np.nan)
+
+        # Reshape to 2D grid
+        x_grid = np.array(transformed_x).reshape(lon_grid.shape)
+        y_grid = np.array(transformed_y).reshape(lat_grid.shape)
+
+        # Calculate uniform resolution (assumes regular grid)
+        x_res = float(np.mean(np.diff(x_grid[0, :])))
+        y_res = float(np.mean(np.diff(y_grid[:, 0])))
+
+        # Upper-left corner
+        ulx = x_grid[0, 0] - x_res / 2
+        uly = y_grid[0, 0] + y_res / 2
+
+        geotransform = (ulx, x_res, 0, uly, 0, -abs(y_res))
+        crs_wkt = target_crs.toWkt()
+
+        return x_grid, y_grid, geotransform, crs_wkt
 
     def parse_header(self):
         # Compute interval (in minutes) from first two timestamps
@@ -116,15 +149,40 @@ class NetCDFProcessor:
 
         return [str(interval_minutes), intervals, f"{start_time} {end_time}"]
 
-    def rainfall_sampling(self):
-        for i, date in enumerate(self.dates):
-            values = self.tp[i, :, :] * 1000  # meters to mm
-            series = []
-            for fid, ilat, ilon in self.grid_map:
-                val = float(values[ilat, ilon])
-                val = val if not np.isnan(val) else 0.0
-                series.append((val, fid))
-            yield series
+    def find_closest_era5_index(self, x, y):
+        """
+        Given a (x, y) point in layer CRS, find the closest ERA5 index (i, j)
+        using Euclidean distance to the transformed ERA5 grid.
+        """
+        # Flatten the 2D grid
+        flat_x = self.x_grid.flatten()
+        flat_y = self.y_grid.flatten()
+
+        # Compute squared distances
+        dists_squared = (flat_x - x) ** 2 + (flat_y - y) ** 2
+
+        # Get index of minimum distance
+        min_idx = np.argmin(dists_squared)
+
+        # Convert flat index to 2D index
+        i, j = np.unravel_index(min_idx, self.x_grid.shape)
+
+        return i, j
+
+    def sample_all(self):
+        """
+        Generator yielding (val, fid) for each rainfall time step.
+        """
+        grid_centroids = self.gutils.grid_centroids_all()  # list of (fid, (x, y))
+        grid_map = {}
+
+        for fid, (x, y) in grid_centroids:
+            i, j = self.find_closest_era5_index(x, y)
+            grid_map[fid] = (i, j)
+
+        for t in range(self.n_steps):
+            rain_step = self.tp[t]  # shape (lat, lon)
+            yield [(float(rain_step[i, j]), fid) for fid, (i, j) in grid_map.items()]
 
 
 class HDFProcessor(object):
