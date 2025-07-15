@@ -20,13 +20,15 @@ from qgis.PyQt.QtGui import QColor
 from qgis.PyQt.QtWidgets import QApplication, QFileDialog, QInputDialog, QMessageBox
 from PyQt5.QtCore import QUrl
 from PyQt5.QtGui import QDesktopServices
+
+from .grid_info_widget import GridInfoWidget
 from ..flo2d_ie.flo2dgeopackage import Flo2dGeoPackage
-from ..flo2d_ie.rainfall_io import ASCProcessor, HDFProcessor, NetCDFProcessor
+from ..flo2d_ie.rainfall_io import ASCProcessor, HDFProcessor, NetCDFProcessor, TIFProcessor
 from ..flo2dobjects import Rain
 from ..geopackage_utils import GeoPackageUtils
 from ..gui.dlg_sampling_rain import SamplingRainDialog
 from ..user_communication import UserCommunication
-from ..utils import is_number, m_fdata, get_flo2dpro_release_date
+from ..utils import is_number, m_fdata, get_flo2dpro_release_date, second_smallest, set_min_max_elevs
 from .table_editor_widget import CommandItemEdit, StandardItem, StandardItemModel
 from .ui_utils import load_ui, set_icon, try_disconnect
 
@@ -61,6 +63,8 @@ class RainEditorWidget(qtBaseClass, uiDialog):
         set_icon(self.rename_tseries_btn, "change_name.svg")
 
         self.control_lyr = self.lyrs.data["cont"]["qlyr"]
+        # self.grid = self.lyrs.data["grid"]["qlyr"]
+        # self.raincell_data = self.lyrs.data["raincell_data"]["qlyr"]
 
         self.table.before_paste.connect(self.block_saving)
         self.table.after_paste.connect(self.unblock_saving)
@@ -238,7 +242,7 @@ class RainEditorWidget(qtBaseClass, uiDialog):
                     QApplication.processEvents()
 
                     for rainfall, fid in timestep_data:
-                        data_qry += [(time_interval, fid, round(rainfall,2))]
+                        data_qry += [(time_interval, fid, round(rainfall,4))]
 
                     time_interval += 1
 
@@ -249,18 +253,54 @@ class RainEditorWidget(qtBaseClass, uiDialog):
                 self.uc.log_info("ERA5 Realtime Rainfall imported successfully!")
 
             if data_format == "tif":
-                pass
 
+                tif_dir = QFileDialog.getExistingDirectory(
+                    None,
+                    "Select directory with Rainfall Raster files",
+                    directory=last_dir,
+                )
+                if not tif_dir:
+                    return
+                s.setValue("FLO-2D/lastASC", tif_dir)
 
+                QApplication.setOverrideCursor(Qt.WaitCursor)
+
+                tif_processor = TIFProcessor(grid_lyr, tif_dir,
+                                             self.iface)  # as_processor, an instance of the ASCProcessor class,
+                self.gutils.clear_tables("raincell", "raincell_data")
+                header = tif_processor.parse_rfc()
+                time_step = float(header[0])
+                irinters = int(header[1]) - 1
+                self.gutils.execute(head_qry, header)
+                time_interval = 0
+
+                pd = QProgressDialog("Importing RealTime Rainfall...", None, 0, irinters)
+                pd.setModal(True)
+                pd.setValue(0)
+                pd.show()
+                i = 0
+
+                for rain_series in tif_processor.rainfall_sampling():
+                    pd.setValue(i)
+                    for val, gid in rain_series:
+                        data_qry += [(time_interval, gid, val)]
+                    time_interval += time_step
+                    i += 1
+
+                self.gutils.batch_execute(data_qry)
+
+                QApplication.restoreOverrideCursor()
+                self.uc.bar_info("ASCII Realtime Rainfall imported successfully!")
+                self.uc.log_info("ASCII Realtime Rainfall imported successfully!")
 
         except Exception as e:
-            self.uc.log_info(traceback.format_exc())
-            QApplication.restoreOverrideCursor()
-            self.uc.bar_error("Importing Rainfall Data from ASCII files failed!")
-            self.uc.log_info(
-                "Importing Rainfall Data from ASCII files failed! Please check your input data.\nIs the .RFC file "
-                "missing?"
-            )
+                self.uc.log_info(traceback.format_exc())
+                QApplication.restoreOverrideCursor()
+                self.uc.bar_error("Importing Realtime Rainfall Data failed!")
+                self.uc.log_info(
+                    "Importing Rainfall Data failed! Please check your input data.\nIs the .RFC file "
+                    "missing?"
+                )
 
     def export_rainfall_to_binary_hdf5(self):
         """

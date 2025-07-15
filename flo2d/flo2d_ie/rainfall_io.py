@@ -185,6 +185,40 @@ class NetCDFProcessor:
             yield [(float(rain_step[i, j]), fid) for fid, (i, j) in grid_map.items()]
 
 
+class TIFProcessor(object):
+    def __init__(self, vlayer, tif_dir, iface):
+        self.vlayer = vlayer
+        self.tif_dir = tif_dir
+        self.tif_files = []
+        self.rfc = None
+        self.header = []
+        self.iface = iface
+        self.uc = UserCommunication(iface, "FLO-2D")
+        for f in sorted(os.listdir(tif_dir)):
+            fpath = os.path.join(tif_dir, f)
+            fpath_lower = fpath.lower()
+            if fpath_lower.endswith((".tif", ".geotiff", ".tiff")):  # Sees if this is a file ending in ".tif", "geotiff", "tiff"
+                self.tif_files.append(fpath)
+            elif fpath_lower.endswith(".rfc"):  # Sees if this is a file ending in .rfc (RainFall Catalogue).
+                self.rfc = fpath
+            else:
+                continue
+
+    def parse_rfc(self):
+        if self.rfc is None:
+            return
+        with open(self.rfc) as rfc_file:
+            rfc_params = rfc_file.readline().strip().split()
+            timestamp = " ".join(rfc_params[:4])
+            interval_time = rfc_params[4]
+            intervals_number = rfc_params[5]
+            self.header += [interval_time, intervals_number, timestamp]
+        return self.header
+
+    def rainfall_sampling(self):
+        for raster_values in rasters2centroids(self.vlayer, None, *self.tif_files):
+            yield raster_values
+
 class HDFProcessor(object):
     def __init__(self, hdf_path, iface):
         self.iface = iface
