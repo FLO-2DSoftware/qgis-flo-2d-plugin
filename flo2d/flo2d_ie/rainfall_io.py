@@ -269,6 +269,7 @@ class HDFProcessor(object):
             # Scalar dataset
             n_cells = self.gutils.execute(qry_size).fetchone()[0] / irinters
             dts = grp.create_dataset("IRAINDUM", (n_cells, int(irinters)), compression="gzip")
+            dts.attrs["description"] = np.array(["Rainfall data in the grid cells"], dtype=np.bytes_)
 
             progDialog = QProgressDialog("Exporting RealTime Rainfall (.HDF5)...", None, 0, int(irinters))
             progDialog.setModal(True)

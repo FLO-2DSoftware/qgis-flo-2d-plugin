@@ -13,10 +13,15 @@ import traceback
 from itertools import chain, groupby
 from operator import itemgetter
 
+from .rainfall_io import HDFProcessor
+
+try:
+    import h5py
+except ImportError:
+    pass
 import numpy as np
 from PyQt5.QtCore import QSettings
 from PyQt5.QtWidgets import QMessageBox
-from qgis._core import QgsGeometry, QgsPointXY
 from qgis.core import NULL
 from qgis.PyQt.QtCore import Qt
 from qgis.PyQt.QtWidgets import QApplication, QProgressDialog
@@ -24,7 +29,6 @@ from qgis.PyQt.QtWidgets import QApplication, QProgressDialog
 from ..flo2d_tools.grid_tools import grid_compas_neighbors, number_of_elements, cell_centroid
 from ..geopackage_utils import GeoPackageUtils
 from ..gui.dlg_settings import SettingsDialog
-# from ..gui.bc_editor_widget import BCEditorWidget
 from ..layers import Layers
 from ..utils import float_or_zero, get_BC_Border
 from .flo2d_parser import ParseDAT, ParseHDF5
@@ -7966,7 +7970,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             raincell = os.path.join(outdir, "RAINCELL.DAT")
             if os.path.exists(raincell):
                 msg = f"There is an existing RAINCELL.DAT file at: \n\n{outdir}\n\n"
-                msg += "Would you like to override it"
+                msg += "Would you like to overwrite it?"
                 QApplication.restoreOverrideCursor()
                 answer = self.uc.customized_question("FLO-2D", msg)
                 if answer == QMessageBox.No:
@@ -8071,38 +8075,32 @@ class Flo2dGeoPackage(GeoPackageUtils):
             if self.is_table_empty("raincell"):
                 return False
 
-            head_sql = """SELECT rainintime, irinters, timestamp FROM raincell LIMIT 1;"""
+            s = QSettings()
+            project_dir = s.value("FLO-2D/lastGdsDir")
 
-            rain_group = self.parser.rain_group
+            raincell = os.path.join(project_dir, "RAINCELL.HDF5")
+            if os.path.exists(raincell):
+                msg = f"There is an existing RAINCELL.HDF5 file at: \n\n{project_dir}\n\n"
+                msg += "Would you like to overwrite it?"
+                QApplication.restoreOverrideCursor()
+                answer = self.uc.customized_question("FLO-2D", msg)
+                if answer == QMessageBox.No:
+                    QApplication.setOverrideCursor(Qt.WaitCursor)
+                    return
+                else:
+                    QApplication.setOverrideCursor(Qt.WaitCursor)
 
-            header = self.gutils.execute(head_sql).fetchone()
+            qry_header = "SELECT rainintime, irinters, timestamp FROM raincell LIMIT 1;"
+            header = self.gutils.execute(qry_header).fetchone()
             if header:
-                qry_data = "SELECT iraindum FROM raincell_data"
-                qry_timeinterval = "SELECT DISTINCT time_interval FROM raincell_data"
                 rainintime, irinters, timestamp = header
+                header_data = [rainintime, irinters, timestamp]
+                qry_data = "SELECT iraindum FROM raincell_data"
+                qry_size = "SELECT COUNT(iraindum) FROM raincell_data"
+                qry_timeinterval = "SELECT DISTINCT time_interval FROM raincell_data"
+                hdf_processor = HDFProcessor(raincell, self.iface)
+                hdf_processor.export_rainfall_to_binary_hdf5(header_data, qry_data, qry_size, qry_timeinterval)
 
-                if isinstance(rainintime, bytes):
-                    rainintime = int.from_bytes(rainintime, byteorder="little", signed=False)
-                if isinstance(timestamp, bytes):
-                    timestamp = timestamp.decode("utf-8")
-
-                rain_group.create_dataset('RAININTIME', [int(rainintime)])
-                rain_group.create_dataset('IRINTERS', [int(irinters)])
-                rain_group.create_dataset('TIMESTAMP', [np.array([timestamp], dtype=np.bytes_)])
-                rain_group.create_dataset("IRAINDUM", [])
-
-                timeinterval = self.gutils.execute(qry_timeinterval).fetchall()
-
-                all_data = []
-                for interval in timeinterval:
-                    batch_query = qry_data + f" WHERE time_interval = {interval[0]} ORDER BY rrgrid, time_interval"
-                    data = self.gutils.execute(batch_query).fetchall()
-                    all_data.append(np.array(data).flatten())
-
-                iraindum_array = np.stack(all_data, axis=1)
-                rain_group.datasets["IRAINDUM"].data = iraindum_array
-
-                self.parser.write_groups(rain_group)
                 return True
 
         except Exception as e:
