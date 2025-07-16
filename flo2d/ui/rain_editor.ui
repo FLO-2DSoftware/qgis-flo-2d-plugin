@@ -873,7 +873,7 @@
          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;IRAINREAL&lt;/span&gt;&lt;/p&gt;&lt;p&gt;IRAINREAL = 1 indicates that real-time rainfall (e.g. NEXRAD) will be simulated.&lt;/p&gt;&lt;p&gt;The RAINCELL.DAT file containing the spatial and temporal rainfall data must be prepared by the GDS.&lt;/p&gt;&lt;p&gt;0 = off &lt;/p&gt;&lt;p&gt;1 = on&lt;/p&gt;&lt;p&gt;Range: 0, 1&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
         </property>
         <property name="title">
-         <string>Realtime Rainfall</string>
+         <string>Realtime Rainfall (RAINCELL.DAT)</string>
         </property>
         <property name="checkable">
          <bool>true</bool>
@@ -950,7 +950,7 @@
               </sizepolicy>
              </property>
              <property name="text">
-              <string>Import Realtime Rainfall into the grid cells</string>
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Import Realtime Rainfall into the grid cells&lt;/p&gt;&lt;p&gt;(NEXRAD, Raster, ERA5-Land)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
              </property>
              <property name="alignment">
               <set>Qt::AlignCenter</set>
