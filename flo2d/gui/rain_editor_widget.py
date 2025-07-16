@@ -21,7 +21,6 @@ from qgis.PyQt.QtWidgets import QApplication, QFileDialog, QInputDialog, QMessag
 from PyQt5.QtCore import QUrl
 from PyQt5.QtGui import QDesktopServices
 
-from .grid_info_widget import GridInfoWidget
 from ..flo2d_ie.flo2dgeopackage import Flo2dGeoPackage
 from ..flo2d_ie.rainfall_io import ASCProcessor, HDFProcessor, NetCDFProcessor, TIFProcessor
 from ..flo2dobjects import Rain
@@ -92,9 +91,7 @@ class RainEditorWidget(qtBaseClass, uiDialog):
             return True
 
     def connect_signals(self):
-        self.asc_btn.clicked.connect(lambda: self.import_rainfall("asc"))
-        self.era5_btn.clicked.connect(lambda: self.import_rainfall("era"))
-        self.raster_btn.clicked.connect(lambda: self.import_rainfall("tif"))
+        self.realtime_btn.clicked.connect(self.import_rainfall)
         self.delete_realtime_rainfall_btn.clicked.connect(self.delete_realtime_rainfall)
         # self.hdf_btn.clicked.connect(self.export_rainfall_to_binary_hdf5)
         self.tseries_cbo.currentIndexChanged.connect(self.populate_tseries_data)
@@ -155,25 +152,30 @@ class RainEditorWidget(qtBaseClass, uiDialog):
         self.rain = Rain(self.con, self.iface)
         self.control_lyr.editingStopped.connect(self.check_simulate_rainfall)
 
-    def import_rainfall(self, data_format):
+    def import_rainfall(self):
         s = QSettings()
         last_dir = s.value("FLO-2D/lastASC", "")
 
         head_qry = "INSERT INTO raincell (rainintime, irinters, timestamp) VALUES(?,?,?);"
-        # data_qry = "INSERT INTO raincell_data (time_interval, rrgrid, iraindum) VALUES (?,?,?);"
         data_qry = ["""INSERT INTO raincell_data (time_interval, rrgrid, iraindum) VALUES""", 3]
 
         try:
             grid_lyr = self.lyrs.data["grid"]["qlyr"]
-            if data_format == "asc":
-                asc_dir = QFileDialog.getExistingDirectory(
-                    None,
-                    "Select directory with Rainfall ASCII grid files",
-                    directory=last_dir,
-                )
-                if not asc_dir:
-                    return
-                s.setValue("FLO-2D/lastASC", asc_dir)
+
+            realtime_file = QFileDialog.getOpenFileName(
+                None,
+                "Select Realtime Rainfall File",
+                directory=last_dir,
+                filter="Realtime Rainfall Files (*.asc *.tif *.tiff *.geotiff *.nc)")[0]
+            if not realtime_file:
+                return
+            s.setValue("FLO-2D/lastASC", os.path.dirname(realtime_file))
+
+            extension = os.path.splitext(realtime_file)[1]
+
+            if extension == ".asc":
+
+                asc_dir = os.path.dirname(realtime_file)
 
                 QApplication.setOverrideCursor(Qt.WaitCursor)
 
@@ -204,15 +206,9 @@ class RainEditorWidget(qtBaseClass, uiDialog):
                 self.uc.bar_info("ASCII Realtime Rainfall imported successfully!")
                 self.uc.log_info("ASCII Realtime Rainfall imported successfully!")
 
-            if data_format == "era":
-                era_file = QFileDialog.getOpenFileName(
-                    None,
-                    "Select ERA5 NetCDF File",
-                    "",
-                    "NetCDF (*.nc)")[0]
-                if not era_file:
-                    return
-                s.setValue("FLO-2D/lastASC", os.path.dirname(era_file))
+            if extension == ".nc":
+
+                era_file = realtime_file
 
                 QApplication.setOverrideCursor(Qt.WaitCursor)
 
@@ -252,16 +248,9 @@ class RainEditorWidget(qtBaseClass, uiDialog):
                 self.uc.bar_info("ERA5 Realtime Rainfall imported successfully!")
                 self.uc.log_info("ERA5 Realtime Rainfall imported successfully!")
 
-            if data_format == "tif":
+            if extension in [".tif", ".tiff", ".geotiff"]:
 
-                tif_dir = QFileDialog.getExistingDirectory(
-                    None,
-                    "Select directory with Rainfall Raster files",
-                    directory=last_dir,
-                )
-                if not tif_dir:
-                    return
-                s.setValue("FLO-2D/lastASC", tif_dir)
+                tif_dir = os.path.dirname(realtime_file)
 
                 QApplication.setOverrideCursor(Qt.WaitCursor)
 
