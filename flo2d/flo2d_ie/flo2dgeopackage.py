@@ -15,6 +15,7 @@ from operator import itemgetter
 
 import numpy as np
 from PyQt5.QtCore import QSettings
+from PyQt5.QtWidgets import QMessageBox
 from qgis._core import QgsGeometry, QgsPointXY
 from qgis.core import NULL
 from qgis.PyQt.QtCore import Qt
@@ -7958,10 +7959,22 @@ class Flo2dGeoPackage(GeoPackageUtils):
             return self.export_raincell_hdf5()
 
     def export_raincell_dat(self, outdir):
-        QApplication.setOverrideCursor(Qt.WaitCursor)
         try:
             if self.is_table_empty("raincell"):
                 return False
+
+            raincell = os.path.join(outdir, "RAINCELL.DAT")
+            if os.path.exists(raincell):
+                msg = f"There is an existing RAINCELL.DAT file at: \n\n{outdir}\n\n"
+                msg += "Would you like to override it"
+                QApplication.restoreOverrideCursor()
+                answer = self.uc.customized_question("FLO-2D", msg)
+                if answer == QMessageBox.No:
+                    QApplication.setOverrideCursor(Qt.WaitCursor)
+                    return
+                else:
+                    QApplication.setOverrideCursor(Qt.WaitCursor)
+
             head_sql = """SELECT rainintime, irinters, timestamp FROM raincell LIMIT 1;"""
             data_sql = """SELECT rrgrid, iraindum FROM raincell_data ORDER BY time_interval, rrgrid;"""
             size_sql = """SELECT COUNT(iraindum) FROM raincell_data"""
@@ -7971,7 +7984,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             raincell_head = self.execute(head_sql).fetchone()
             raincell_rows = self.execute(data_sql)
             raincell_size = self.execute(size_sql).fetchone()[0]
-            raincell = os.path.join(outdir, "RAINCELL.DAT")
+
             with open(raincell, "w") as r:
                 r.write(line1.format(*raincell_head))
                 progDialog = QProgressDialog("Exporting RealTime Rainfall (.DAT)...", None, 0, int(raincell_size))
