@@ -10,12 +10,15 @@
 import os
 
 import numpy as np
-from netCDF4 import Dataset, num2date
-from osgeo import osr, gdal
-from qgis._core import QgsCoordinateTransform, QgsProject, QgsCoordinateReferenceSystem, QgsRasterLayer, QgsPointXY
-import tempfile
 
-from ..flo2d_tools.grid_tools import rasters2centroids, spatial_index, raster2grid
+try:
+    from netCDF4 import Dataset, num2date
+except ImportError:
+    pass
+
+from qgis._core import QgsCoordinateTransform, QgsProject, QgsCoordinateReferenceSystem, QgsPointXY
+
+from ..flo2d_tools.grid_tools import rasters2centroids
 from ..geopackage_utils import GeoPackageUtils
 from ..user_communication import UserCommunication
 from qgis.PyQt.QtWidgets import QProgressDialog
