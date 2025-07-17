@@ -279,8 +279,8 @@ class RainEditorWidget(qtBaseClass, uiDialog):
                 self.gutils.batch_execute(data_qry)
 
                 QApplication.restoreOverrideCursor()
-                self.uc.bar_info("ASCII Realtime Rainfall imported successfully!")
-                self.uc.log_info("ASCII Realtime Rainfall imported successfully!")
+                self.uc.bar_info("Raster Realtime Rainfall imported successfully!")
+                self.uc.log_info("Raster Realtime Rainfall imported successfully!")
 
         except Exception as e:
                 self.uc.log_info(traceback.format_exc())
