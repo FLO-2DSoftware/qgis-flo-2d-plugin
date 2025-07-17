@@ -7975,13 +7975,13 @@ class Flo2dGeoPackage(GeoPackageUtils):
             if os.path.exists(raincell):
                 msg = f"There is an existing RAINCELL.DAT file at: \n\n{outdir}\n\n"
                 msg += "Would you like to overwrite it?"
-                QApplication.restoreOverrideCursor()
+                QApplication.setOverrideCursor(Qt.ArrowCursor)
                 answer = self.uc.customized_question("FLO-2D", msg)
                 if answer == QMessageBox.No:
-                    QApplication.setOverrideCursor(Qt.WaitCursor)
+                    QApplication.restoreOverrideCursor()
                     return
                 else:
-                    QApplication.setOverrideCursor(Qt.WaitCursor)
+                    QApplication.restoreOverrideCursor()
 
             # Check FLOPRO.exe version to determine RAINCELL.DAT format
             flopro_dir = s.value("FLO-2D/last_flopro")
