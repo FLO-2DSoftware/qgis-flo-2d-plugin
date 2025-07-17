@@ -10,12 +10,19 @@
 import os
 import shutil
 import traceback
+from datetime import datetime
 from itertools import chain, groupby
 from operator import itemgetter
 
+from .rainfall_io import HDFProcessor
+
+try:
+    import h5py
+except ImportError:
+    pass
 import numpy as np
 from PyQt5.QtCore import QSettings
-from qgis._core import QgsGeometry, QgsPointXY
+from PyQt5.QtWidgets import QMessageBox
 from qgis.core import NULL
 from qgis.PyQt.QtCore import Qt
 from qgis.PyQt.QtWidgets import QApplication, QProgressDialog
@@ -23,9 +30,8 @@ from qgis.PyQt.QtWidgets import QApplication, QProgressDialog
 from ..flo2d_tools.grid_tools import grid_compas_neighbors, number_of_elements, cell_centroid
 from ..geopackage_utils import GeoPackageUtils
 from ..gui.dlg_settings import SettingsDialog
-# from ..gui.bc_editor_widget import BCEditorWidget
 from ..layers import Layers
-from ..utils import float_or_zero, get_BC_Border
+from ..utils import float_or_zero, get_BC_Border, get_flo2dpro_release_date
 from .flo2d_parser import ParseDAT, ParseHDF5
 
 
@@ -8076,98 +8082,157 @@ class Flo2dGeoPackage(GeoPackageUtils):
             return self.export_raincell_hdf5()
 
     def export_raincell_dat(self, outdir):
-        QApplication.setOverrideCursor(Qt.WaitCursor)
         try:
             if self.is_table_empty("raincell"):
                 return False
-            head_sql = """SELECT rainintime, irinters, timestamp FROM raincell LIMIT 1;"""
-            data_sql = """SELECT rrgrid, iraindum FROM raincell_data ORDER BY time_interval, rrgrid;"""
-            size_sql = """SELECT COUNT(iraindum) FROM raincell_data"""
-            line1 = "{0} {1} {2}\n"
-            line2 = "{0} {1}\n"
 
-            raincell_head = self.execute(head_sql).fetchone()
-            raincell_rows = self.execute(data_sql)
-            raincell_size = self.execute(size_sql).fetchone()[0]
+            s = QSettings()
+
+            # Check for existing RAINCELL.DAT file
             raincell = os.path.join(outdir, "RAINCELL.DAT")
-            with open(raincell, "w") as r:
-                r.write(line1.format(*raincell_head))
-                progDialog = QProgressDialog("Exporting RealTime Rainfall (.DAT)...", None, 0, int(raincell_size))
-                progDialog.setModal(True)
-                progDialog.setValue(0)
-                progDialog.show()
-                i = 0
-                for row in raincell_rows:
-                    if row[1] is None:
-                        r.write(line2.format(row[0], "0"))
-                    else:
-                        # r.write(line2.format(*row))
-                        r.write(line2.format(row[0], "{0:.4f}".format(float(row[1]))))
-                        # r.write(tline.format('{0:.3f}'.format(float(x)), '{0:.3f}'.format(float(y)), '{0:.2f}'.format(elev)))
-                    progDialog.setValue(i)
-                    i += 1
+            if os.path.exists(raincell):
+                msg = f"There is an existing RAINCELL.DAT file at: \n\n{outdir}\n\n"
+                msg += "Would you like to overwrite it?"
+                QApplication.setOverrideCursor(Qt.ArrowCursor)
+                answer = self.uc.customized_question("FLO-2D", msg)
+                if answer == QMessageBox.No:
+                    QApplication.restoreOverrideCursor()
+                    return
+                else:
+                    QApplication.restoreOverrideCursor()
 
-            return True
-
-        except Exception as e:
-            QApplication.restoreOverrideCursor()
-            self.uc.show_error("ERROR 101218.1558: exporting RAINCELL.DAT failed!.\n", e)
-            return False
-        finally:
-            QApplication.restoreOverrideCursor()
-
-    def export_raincell_new(self, outdir):
-        """
-        Function to export the RAINCELL.DAT to tthe new format read by FLOPRO (08/2024)
-        The new RAINCELL.DAT format has a smaller file size
-        """
-        try:
-            QApplication.setOverrideCursor(Qt.WaitCursor)
-            if self.is_table_empty("raincell"):
+            # Check FLOPRO.exe version to determine RAINCELL.DAT format
+            flopro_dir = s.value("FLO-2D/last_flopro")
+            flo2d_release_date = False
+            if flopro_dir is not None:
+                if os.path.isfile(flopro_dir + "/FLOPRO.exe"):
+                    flo2d_release_date = get_flo2dpro_release_date(flopro_dir + "/FLOPRO.exe")
+                elif os.path.isfile(flopro_dir + "/FLOPRO_Demo.exe"):
+                    flo2d_release_date = get_flo2dpro_release_date(flopro_dir + "/FLOPRO_Demo.exe")
+            else:
                 return False
 
-            head_sql = """SELECT rainintime, irinters, timestamp FROM raincell LIMIT 1;"""
-            data_sql = """SELECT rrgrid, iraindum FROM raincell_data ORDER BY time_interval, rrgrid;"""
-            size_sql = """SELECT COUNT(iraindum) FROM raincell_data"""
-            line1 = "{0} {1} {2}\n"
-            line2 = "{0} {1}\n"
+            new_raincell_format = False
+            new_raincell_format_release_date = "2024-08-01"
+            target_date = datetime.strptime(new_raincell_format_release_date, "%Y-%m-%d")
+            flo2d_release_date = datetime.strptime(flo2d_release_date, "%Y-%m-%d")
+            if flo2d_release_date >= target_date:
+                new_raincell_format = True
 
-            grid_lyr = self.lyrs.data["grid"]["qlyr"]
-            n_cells = number_of_elements(self.gutils, grid_lyr)
+            title = "Select RAINCELL format to export"
 
-            raincell_head = self.execute(head_sql).fetchone()
-            raincell_rows = self.execute(data_sql)
-            raincell_size = self.execute(size_sql).fetchone()[0]
-            raincell = os.path.join(outdir, "RAINCELL.DAT")
+            msg = "Select the desired RAINCELL.DAT format. \n\n" \
+                  "New RAINCELL.DAT: Suggested for a smaller file size. \n" \
+                  "Old RAINCELL.DAT: Use this format if your FLOPRO.exe build is earlier than 23.10.25.\n"
 
-            with open(raincell, "w") as r:
-                r.write(line1.format(*raincell_head))
-                progDialog = QProgressDialog("Exporting RealTime Rainfall (.DAT)...", None, 0, int(raincell_size))
-                progDialog.setModal(True)
-                progDialog.setValue(0)
-                progDialog.show()
-                i = 0
+            if not new_raincell_format:
+                msg += "\nYour current version of FLOPRO.exe does not support the new RAINCELL.DAT format. Please " \
+                       "contact the FLO-2D team to update your FLOPRO.exe build."
 
-                for row in raincell_rows:
-                    # Check if it is the last grid element -> Needs to be printed every single interval
-                    if row[0] == n_cells:
+            msg_box = QMessageBox()
+
+            # Set the title for the message box
+            msg_box.setWindowTitle(title)
+
+            # Set the text for the message box
+            msg_box.setText(msg)
+
+            # Add buttons to the message box
+            button2 = msg_box.addButton("New RAINCELL.DAT", QMessageBox.ActionRole)
+            button3 = msg_box.addButton("Old RAINCELL.DAT", QMessageBox.ActionRole)
+            if not new_raincell_format:
+                button2.setEnabled(False)
+            button4 = msg_box.addButton("Cancel", QMessageBox.ActionRole)
+
+            # Set the icon for the message box
+            msg_box.setIcon(QMessageBox.Information)
+
+            # Display the message box and wait for the user to click a button
+            QApplication.restoreOverrideCursor()
+            msg_box.exec_()
+
+            # New RAINCELL.DAT
+            if msg_box.clickedButton() == button2:
+                QApplication.setOverrideCursor(Qt.WaitCursor)
+                head_sql = """SELECT rainintime, irinters, timestamp FROM raincell LIMIT 1;"""
+                data_sql = """SELECT rrgrid, iraindum FROM raincell_data ORDER BY time_interval, rrgrid;"""
+                size_sql = """SELECT COUNT(iraindum) FROM raincell_data"""
+                line1 = "{0} {1} {2}\n"
+                line2 = "{0} {1}\n"
+
+                grid_lyr = self.lyrs.data["grid"]["qlyr"]
+                n_cells = number_of_elements(self.gutils, grid_lyr)
+
+                raincell_head = self.execute(head_sql).fetchone()
+                raincell_rows = self.execute(data_sql)
+                raincell_size = self.execute(size_sql).fetchone()[0]
+
+                with open(raincell, "w") as r:
+                    r.write(line1.format(*raincell_head))
+                    progDialog = QProgressDialog("Exporting RealTime Rainfall (.DAT)...", None, 0, int(raincell_size))
+                    progDialog.setModal(True)
+                    progDialog.setValue(0)
+                    progDialog.show()
+                    i = 0
+
+                    for row in raincell_rows:
+                        # Check if it is the last grid element -> Needs to be printed every single interval
+                        if row[0] == n_cells:
+                            if row[1] is None:
+                                r.write(line2.format(row[0], "0"))
+                            else:
+                                r.write(line2.format(row[0], "{0:.4f}".format(float(row[1]))))
+                        elif row[1] is None or row[1] == 0:
+                            pass
+                        else:
+                            r.write(line2.format(row[0], "{0:.4f}".format(float(row[1]))))
+                        progDialog.setValue(i)
+                        i += 1
+                return True
+
+            # Old RAINCELL.DAT
+            elif msg_box.clickedButton() == button3:
+                QApplication.setOverrideCursor(Qt.WaitCursor)
+                head_sql = """SELECT rainintime, irinters, timestamp FROM raincell LIMIT 1;"""
+                data_sql = """SELECT rrgrid, iraindum FROM raincell_data ORDER BY time_interval, rrgrid;"""
+                size_sql = """SELECT COUNT(iraindum) FROM raincell_data"""
+                line1 = "{0} {1} {2}\n"
+                line2 = "{0} {1}\n"
+
+                raincell_head = self.execute(head_sql).fetchone()
+                raincell_rows = self.execute(data_sql)
+                raincell_size = self.execute(size_sql).fetchone()[0]
+
+                with open(raincell, "w") as r:
+                    r.write(line1.format(*raincell_head))
+                    progDialog = QProgressDialog("Exporting RealTime Rainfall (.DAT)...", None, 0, int(raincell_size))
+                    progDialog.setModal(True)
+                    progDialog.setValue(0)
+                    progDialog.show()
+                    i = 0
+                    for row in raincell_rows:
                         if row[1] is None:
                             r.write(line2.format(row[0], "0"))
                         else:
+                            # r.write(line2.format(*row))
                             r.write(line2.format(row[0], "{0:.4f}".format(float(row[1]))))
-                    elif row[1] is None or row[1] == 0:
-                        pass
-                    else:
-                        r.write(line2.format(row[0], "{0:.4f}".format(float(row[1]))))
-                    progDialog.setValue(i)
-                    i += 1
-            return True
+                            # r.write(tline.format('{0:.3f}'.format(float(x)), '{0:.3f}'.format(float(y)), '{0:.2f}'.format(elev)))
+                        progDialog.setValue(i)
+                        i += 1
+
+                return True
+
+            # Close button
+            elif msg_box.clickedButton() == button4:
+                self.uc.bar_info("Export RealTime Rainfall canceled!")
+                self.uc.log_info("Export RealTime Rainfall canceled!")
+                return
 
         except Exception as e:
-            self.uc.bar_error("ERROR 101218.1558: exporting RAINCELL.DAT failed!.")
-            self.uc.log_info(f"ERROR 101218.1558: exporting RAINCELL.DAT failed!.\n{e}")
+            QApplication.restoreOverrideCursor()
+            self.uc.show_error("Exporting RAINCELL.DAT failed!.\n", e)
+            self.uc.log_info("Exporting RAINCELL.DAT failed!")
             return False
-
         finally:
             QApplication.restoreOverrideCursor()
 
@@ -8176,38 +8241,32 @@ class Flo2dGeoPackage(GeoPackageUtils):
             if self.is_table_empty("raincell"):
                 return False
 
-            head_sql = """SELECT rainintime, irinters, timestamp FROM raincell LIMIT 1;"""
+            s = QSettings()
+            project_dir = s.value("FLO-2D/lastGdsDir")
 
-            rain_group = self.parser.rain_group
+            raincell = os.path.join(project_dir, "RAINCELL.HDF5")
+            if os.path.exists(raincell):
+                msg = f"There is an existing RAINCELL.HDF5 file at: \n\n{project_dir}\n\n"
+                msg += "Would you like to overwrite it?"
+                QApplication.restoreOverrideCursor()
+                answer = self.uc.customized_question("FLO-2D", msg)
+                if answer == QMessageBox.No:
+                    QApplication.setOverrideCursor(Qt.WaitCursor)
+                    return
+                else:
+                    QApplication.setOverrideCursor(Qt.WaitCursor)
 
-            header = self.gutils.execute(head_sql).fetchone()
+            qry_header = "SELECT rainintime, irinters, timestamp FROM raincell LIMIT 1;"
+            header = self.gutils.execute(qry_header).fetchone()
             if header:
-                qry_data = "SELECT iraindum FROM raincell_data"
-                qry_timeinterval = "SELECT DISTINCT time_interval FROM raincell_data"
                 rainintime, irinters, timestamp = header
+                header_data = [rainintime, irinters, timestamp]
+                qry_data = "SELECT iraindum FROM raincell_data"
+                qry_size = "SELECT COUNT(iraindum) FROM raincell_data"
+                qry_timeinterval = "SELECT DISTINCT time_interval FROM raincell_data"
+                hdf_processor = HDFProcessor(raincell, self.iface)
+                hdf_processor.export_rainfall_to_binary_hdf5(header_data, qry_data, qry_size, qry_timeinterval)
 
-                if isinstance(rainintime, bytes):
-                    rainintime = int.from_bytes(rainintime, byteorder="little", signed=False)
-                if isinstance(timestamp, bytes):
-                    timestamp = timestamp.decode("utf-8")
-
-                rain_group.create_dataset('RAININTIME', [int(rainintime)])
-                rain_group.create_dataset('IRINTERS', [int(irinters)])
-                rain_group.create_dataset('TIMESTAMP', [np.array([timestamp], dtype=np.bytes_)])
-                rain_group.create_dataset("IRAINDUM", [])
-
-                timeinterval = self.gutils.execute(qry_timeinterval).fetchall()
-
-                all_data = []
-                for interval in timeinterval:
-                    batch_query = qry_data + f" WHERE time_interval = {interval[0]} ORDER BY rrgrid, time_interval"
-                    data = self.gutils.execute(batch_query).fetchall()
-                    all_data.append(np.array(data).flatten())
-
-                iraindum_array = np.stack(all_data, axis=1)
-                rain_group.datasets["IRAINDUM"].data = iraindum_array
-
-                self.parser.write_groups(rain_group)
                 return True
 
         except Exception as e:
