@@ -71,7 +71,9 @@ class NetCDFProcessor:
         self.gutils = gutils
         self.uc = UserCommunication(iface, "FLO-2D")
 
-        self.tp = self.nc.variables["tp"][:] * 1000  # Convert m to mm
+        convertion = 1000 if self.gutils.get_cont_par("METRIC") == "1" else 39.37  # Convert m to mm or m to inches
+
+        self.tp = self.nc.variables["tp"][:] * convertion
         self.lat = self.nc.variables["latitude"][:]
         self.lon = self.nc.variables["longitude"][:]
         self.time = self.nc.variables["valid_time"]
