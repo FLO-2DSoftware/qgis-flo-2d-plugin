@@ -9456,13 +9456,13 @@ class Flo2dGeoPackage(GeoPackageUtils):
             self.uc.show_error("ERROR 101218.1608: exporting HYSTRUC.DAT failed!.\n", e)
             return False
 
-    def export_bridge_xsec(self, output=None):
+    def export_bridge_xsec(self, output=None, subdomain=None):
         if self.parsed_format == self.FORMAT_DAT:
-            return self.export_bridge_xsec_dat(output)
+            return self.export_bridge_xsec_dat(output, subdomain)
         elif self.parsed_format == self.FORMAT_HDF5:
-            return self.export_bridge_xsec_hdf5()
+            return self.export_bridge_xsec_hdf5(subdomain)
 
-    def export_bridge_xsec_hdf5(self):
+    def export_bridge_xsec_hdf5(self, subdomain):
         """
         Function to export bridge cross sections to hdf5 file\
         """
@@ -9471,7 +9471,33 @@ class Flo2dGeoPackage(GeoPackageUtils):
             if self.is_table_empty("struct") or self.is_table_empty("bridge_xs"):
                 return False
 
-            hystruct_sql = """SELECT * FROM struct WHERE icurvtable = 3 ORDER BY fid;"""
+            if not subdomain:
+                hystruct_sql = """SELECT * FROM struct WHERE icurvtable = 3 ORDER BY fid;"""
+            else:
+                hystruct_sql = f"""
+                                SELECT 
+                                    s.fid,
+                                    s.type,
+                                    s.structname, 
+                                    s.ifporchan,
+                                    s.icurvtable,
+                                    inflow_md.domain_cell AS inflonod,
+                                    outflow_md.domain_cell AS outflonod,
+                                    s.inoutcont,
+                                    s.headrefel,
+                                    s.clength,
+                                    s.cdiameter
+                                FROM 
+                                    struct AS s
+                                JOIN
+                                    schema_md_cells inflow_md ON s.inflonod = inflow_md.grid_fid AND inflow_md.domain_fid = {subdomain}
+                                JOIN
+                                    schema_md_cells outflow_md ON s.outflonod = outflow_md.grid_fid AND outflow_md.domain_fid = {subdomain}
+                                WHERE 
+                                    s.icurvtable = 3
+                                ORDER BY s.fid;
+                                """
+
             bridge_xs_sql = """SELECT xup, yup, yb FROM bridge_xs WHERE struct_fid = ? ORDER BY struct_fid;"""
 
             hystruc_rows = self.execute(hystruct_sql).fetchall()
@@ -9503,7 +9529,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             self.uc.show_error("ERROR 101122.0753: exporting BRIDGE_XSEC.DAT failed!.\n", e)
             return False
 
-    def export_bridge_xsec_dat(self, outdir):
+    def export_bridge_xsec_dat(self, outdir, subdomain):
         try:
             # check if there is any hydraulic structure and bridge cross sections defined.
             if self.is_table_empty("struct") or self.is_table_empty("bridge_xs"):
@@ -9511,7 +9537,33 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     os.remove(outdir + r"\BRIDGE_XSEC.DAT")
                 return False
 
-            hystruct_sql = """SELECT * FROM struct WHERE icurvtable = 3 ORDER BY fid;"""
+            if not subdomain:
+                hystruct_sql = """SELECT * FROM struct WHERE icurvtable = 3 ORDER BY fid;"""
+            else:
+                hystruct_sql = f"""
+                                SELECT 
+                                    s.fid,
+                                    s.type,
+                                    s.structname, 
+                                    s.ifporchan,
+                                    s.icurvtable,
+                                    inflow_md.domain_cell AS inflonod,
+                                    outflow_md.domain_cell AS outflonod,
+                                    s.inoutcont,
+                                    s.headrefel,
+                                    s.clength,
+                                    s.cdiameter
+                                FROM 
+                                    struct AS s
+                                JOIN
+                                    schema_md_cells inflow_md ON s.inflonod = inflow_md.grid_fid AND inflow_md.domain_fid = {subdomain}
+                                JOIN
+                                    schema_md_cells outflow_md ON s.outflonod = outflow_md.grid_fid AND outflow_md.domain_fid = {subdomain}
+                                WHERE 
+                                    s.icurvtable = 3
+                                ORDER BY s.fid;
+                                """
+
             bridge_xs_sql = """SELECT xup, yup, yb FROM bridge_xs WHERE struct_fid = ? ORDER BY struct_fid;"""
 
             hystruc_rows = self.execute(hystruct_sql).fetchall()
