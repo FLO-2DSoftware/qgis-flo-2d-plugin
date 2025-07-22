@@ -9067,252 +9067,252 @@ class Flo2dGeoPackage(GeoPackageUtils):
         """
         Function to export Hydraulic Structure data to HDF5 file
         """
-        # try:
-        # check if there is any hydraulic structure defined.
-        if self.is_table_empty("struct"):
-            return False
-        else:
-            nodes = self.execute("SELECT outflonod, outflonod FROM struct;").fetchall()
-            for nod in nodes:
-                if nod[0] in [NULL, 0, ""] or nod[1] in [NULL, 0, ""]:
-                    QApplication.restoreOverrideCursor()
-                    self.uc.bar_warn(
-                        "WARNING: some structures have no cells assigned.\nDid you schematize the structures?"
-                    )
-                    break
+        try:
+            # check if there is any hydraulic structure defined.
+            if self.is_table_empty("struct"):
+                return False
+            else:
+                nodes = self.execute("SELECT inflonod, outflonod FROM struct;").fetchall()
+                for nod in nodes:
+                    if nod[0] in [NULL, 0, ""] or nod[1] in [NULL, 0, ""]:
+                        QApplication.restoreOverrideCursor()
+                        self.uc.bar_warn(
+                            "WARNING: some structures have no cells assigned.\nDid you schematize the structures?"
+                        )
+                        break
 
-        ratc_sql = """SELECT * FROM rat_curves WHERE struct_fid = ? ORDER BY fid;"""
-        repl_ratc_sql = """SELECT * FROM repl_rat_curves WHERE struct_fid = ? ORDER BY fid;"""
-        ratt_sql = """SELECT * FROM rat_table WHERE struct_fid = ? ORDER BY fid;"""
-        culvert_sql = """SELECT * FROM culvert_equations WHERE struct_fid = ? ORDER BY fid;"""
-        bridge_sql = """SELECT fid, 
-                                       struct_fid, 
-                                       IBTYPE, 
-                                       COEFF, 
-                                       C_PRIME_USER, 
-                                       KF_COEF, 
-                                       KWW_COEF,  
-                                       KPHI_COEF, 
-                                       KY_COEF, 
-                                       KX_COEF, 
-                                       KJ_COEF,
-                                       BOPENING, 
-                                       BLENGTH, 
-                                       BN_VALUE, 
-                                       UPLENGTH12, 
-                                       LOWCHORD,
-                                       DECKHT, 
-                                       DECKLENGTH, 
-                                       PIERWIDTH, 
-                                       SLUICECOEFADJ, 
-                                       ORIFICECOEFADJ, 
-                                       COEFFWEIRB, 
-                                       WINGWALL_ANGLE, 
-                                       PHI_ANGLE, 
-                                       LBTOEABUT, 
-                                       RBTOEABUT 
-                                FROM bridge_variables WHERE struct_fid = ? ORDER BY fid;"""
+            ratc_sql = """SELECT * FROM rat_curves WHERE struct_fid = ? ORDER BY fid;"""
+            repl_ratc_sql = """SELECT * FROM repl_rat_curves WHERE struct_fid = ? ORDER BY fid;"""
+            ratt_sql = """SELECT * FROM rat_table WHERE struct_fid = ? ORDER BY fid;"""
+            culvert_sql = """SELECT * FROM culvert_equations WHERE struct_fid = ? ORDER BY fid;"""
+            bridge_sql = """SELECT fid, 
+                                           struct_fid, 
+                                           IBTYPE, 
+                                           COEFF, 
+                                           C_PRIME_USER, 
+                                           KF_COEF, 
+                                           KWW_COEF,  
+                                           KPHI_COEF, 
+                                           KY_COEF, 
+                                           KX_COEF, 
+                                           KJ_COEF,
+                                           BOPENING, 
+                                           BLENGTH, 
+                                           BN_VALUE, 
+                                           UPLENGTH12, 
+                                           LOWCHORD,
+                                           DECKHT, 
+                                           DECKLENGTH, 
+                                           PIERWIDTH, 
+                                           SLUICECOEFADJ, 
+                                           ORIFICECOEFADJ, 
+                                           COEFFWEIRB, 
+                                           WINGWALL_ANGLE, 
+                                           PHI_ANGLE, 
+                                           LBTOEABUT, 
+                                           RBTOEABUT 
+                                    FROM bridge_variables WHERE struct_fid = ? ORDER BY fid;"""
 
-        if not subdomain:
-            hystruct_sql = """SELECT * FROM struct ORDER BY fid;"""
-            storm_sql = """SELECT * FROM storm_drains WHERE struct_fid = ? ORDER BY fid;"""
+            if not subdomain:
+                hystruct_sql = """SELECT * FROM struct ORDER BY fid;"""
+                storm_sql = """SELECT * FROM storm_drains WHERE struct_fid = ? ORDER BY fid;"""
 
-        else:
-            hystruct_sql = f"""
-                            SELECT 
-                                s.fid,
-                                s.type,
-                                s.structname, 
-                                s.ifporchan,
-                                s.icurvtable,
-                                inflow_md.domain_cell AS inflonod,
-                                outflow_md.domain_cell AS outflonod,
-                                s.inoutcont,
-                                s.headrefel,
-                                s.clength,
-                                s.cdiameter
-                            FROM 
-                                struct AS s
-                            JOIN
-                                schema_md_cells inflow_md ON s.inflonod = inflow_md.grid_fid AND inflow_md.domain_fid = {subdomain}
-                            JOIN
-                                schema_md_cells outflow_md ON s.outflonod = outflow_md.grid_fid AND outflow_md.domain_fid = {subdomain}
-                            ORDER BY s.fid;
+            else:
+                hystruct_sql = f"""
+                                SELECT 
+                                    s.fid,
+                                    s.type,
+                                    s.structname, 
+                                    s.ifporchan,
+                                    s.icurvtable,
+                                    inflow_md.domain_cell AS inflonod,
+                                    outflow_md.domain_cell AS outflonod,
+                                    s.inoutcont,
+                                    s.headrefel,
+                                    s.clength,
+                                    s.cdiameter
+                                FROM 
+                                    struct AS s
+                                JOIN
+                                    schema_md_cells inflow_md ON s.inflonod = inflow_md.grid_fid AND inflow_md.domain_fid = {subdomain}
+                                JOIN
+                                    schema_md_cells outflow_md ON s.outflonod = outflow_md.grid_fid AND outflow_md.domain_fid = {subdomain}
+                                ORDER BY s.fid;
+                                """
+
+                storm_sql = f"""
+                                SELECT 
+                                    sd.fid, 
+                                    sd.struct_fid,
+                                    md.domain_cell, 
+                                    sd.stormdmax
+                                FROM 
+                                    storm_drains AS sd
+                                JOIN
+                                    schema_md_cells md ON sd.istormdout = md.grid_fid
+                                WHERE 
+                                    sd.struct_fid = ? AND md.domain_fid = {subdomain}
+                                ORDER BY sd.fid;
                             """
 
-            storm_sql = f"""
-                            SELECT 
-                                sd.fid, 
-                                sd.struct_fid,
-                                md.domain_cell, 
-                                sd.stormdmax
-                            FROM 
-                                storm_drains AS sd
-                            JOIN
-                                schema_md_cells md ON sd.istormdout = md.grid_fid
-                            WHERE 
-                                sd.struct_fid = ? AND md.domain_fid = {subdomain}
-                            ORDER BY sd.fid;
-                        """
+            # line1 = "S" + "  {}" * 9 + "\n"
+            line2 = "C" + "  {}" * 5 + "\n"
+            line3 = "R" + "  {}" * 5 + "\n"
 
-        # line1 = "S" + "  {}" * 9 + "\n"
-        line2 = "C" + "  {}" * 5 + "\n"
-        line3 = "R" + "  {}" * 5 + "\n"
+            line5 = "F" + "  {}" * 6 + "\n"
+            line6 = "D" + "  {}" * 2 + "\n"
+            line7a = "B" + "  {}" * 9 + "\n"
+            line7b = "B" + "  {}" * 15 + "\n"
 
-        line5 = "F" + "  {}" * 6 + "\n"
-        line6 = "D" + "  {}" * 2 + "\n"
-        line7a = "B" + "  {}" * 9 + "\n"
-        line7b = "B" + "  {}" * 15 + "\n"
+            two_values = "{}  {}\n"
+            three_values = "{}  {}  {}\n"
+            four_values = "{}  {}  {}  {}\n"
+            five_values = "{}  {}  {}  {}  {}\n"
+            six_values = "{}  {}  {}  {}  {}  {}\n"
+            seven_values = "{}  {}  {}  {}  {}  {}  {}\n"
+            nine_values = "{}  {}  {}  {}  {}  {}  {}  {}  {}\n"
+            eleven_values = "{}  {}  {}  {}  {}  {}  {}  {}  {}  {}  {}\n"
+            tfive_values = "{}" + " {}" * 24 + "\n"
 
-        two_values = "{}  {}\n"
-        three_values = "{}  {}  {}\n"
-        four_values = "{}  {}  {}  {}\n"
-        five_values = "{}  {}  {}  {}  {}\n"
-        six_values = "{}  {}  {}  {}  {}  {}\n"
-        seven_values = "{}  {}  {}  {}  {}  {}  {}\n"
-        nine_values = "{}  {}  {}  {}  {}  {}  {}  {}  {}\n"
-        eleven_values = "{}  {}  {}  {}  {}  {}  {}  {}  {}  {}  {}\n"
-        tfive_values = "{}" + " {}" * 24 + "\n"
+            pairs = [
+                [ratc_sql, line2],  # rating curve  ('C' lines)
+                [ratt_sql, three_values],  # rating table ('T' lines)
+                [culvert_sql, line5],  # culvert equation ('F' lines)
+                [bridge_sql, line7a],  # bridge ('B' lines a
+                [storm_sql, line6],  # storm drains ('D' lines)
+            ]
 
-        pairs = [
-            [ratc_sql, line2],  # rating curve  ('C' lines)
-            [ratt_sql, three_values],  # rating table ('T' lines)
-            [culvert_sql, line5],  # culvert equation ('F' lines)
-            [bridge_sql, line7a],  # bridge ('B' lines a
-            [storm_sql, line6],  # storm drains ('D' lines)
-        ]
+            hystruc_rows = self.execute(hystruct_sql).fetchall()
+            if not hystruc_rows:
+                return False
+            else:
+                pass
 
-        hystruc_rows = self.execute(hystruct_sql).fetchall()
-        if not hystruc_rows:
-            return False
-        else:
-            pass
+            hystruc_group = self.parser.hystruc_group
+            hystruc_group.create_dataset('STR_CONTROL', [])
+            hystruc_group.create_dataset('STR_NAME', [])
 
-        hystruc_group = self.parser.hystruc_group
-        hystruc_group.create_dataset('STR_CONTROL', [])
-        hystruc_group.create_dataset('STR_NAME', [])
+            for stru in hystruc_rows:
+                fid = stru[0]
+                vals1 = [x if x is not None and x != "" else 0 for x in stru[2:8]]
+                vals2 = [x if x is not None and x != "" else 0.0 for x in stru[8:11]]
+                vals = vals1 + vals2
+                (
+                    struct_name,
+                    ifporchan,
+                    icurvtable,
+                    inflonod,
+                    outflonod,
+                    inoutcont,
+                    headrefel,
+                    clength,
+                    cdiameter
+                ) = vals
+                hystruc_group.datasets["STR_CONTROL"].data.append(create_array(
+                    nine_values,
+                    9,
+                    np.float64,
+                    fid,
+                    ifporchan,
+                    icurvtable,
+                    inflonod,
+                    outflonod,
+                    inoutcont,
+                    headrefel,
+                    clength,
+                    cdiameter))
+                hystruc_group.datasets["STR_NAME"].data.append(create_array(two_values, 2, np.bytes_, fid, struct_name))
 
-        for stru in hystruc_rows:
-            fid = stru[0]
-            vals1 = [x if x is not None and x != "" else 0 for x in stru[2:8]]
-            vals2 = [x if x is not None and x != "" else 0.0 for x in stru[8:11]]
-            vals = vals1 + vals2
-            (
-                struct_name,
-                ifporchan,
-                icurvtable,
-                inflonod,
-                outflonod,
-                inoutcont,
-                headrefel,
-                clength,
-                cdiameter
-            ) = vals
-            hystruc_group.datasets["STR_CONTROL"].data.append(create_array(
-                nine_values,
-                9,
-                np.float64,
-                fid,
-                ifporchan,
-                icurvtable,
-                inflonod,
-                outflonod,
-                inoutcont,
-                headrefel,
-                clength,
-                cdiameter))
-            hystruc_group.datasets["STR_NAME"].data.append(create_array(two_values, 2, np.bytes_, fid, struct_name))
+                #  0: rating curve
+                #  1: rating table
+                #  2: culvert equation
+                #  3: bridge routine
 
-            #  0: rating curve
-            #  1: rating table
-            #  2: culvert equation
-            #  3: bridge routine
+                type = stru[4]
 
-            type = stru[4]
+                for i, (qry, line) in enumerate(pairs):
+                    if (
+                            (type == 0 and i == 0)  # rating curve
+                            or (type == 1 and i == 1)  # rating table
+                            or (type == 2 and i == 2)  # culvert equation
+                            or (type == 3 and i == 3)  # bridge routine
+                            or i == 4  # storm drains
+                    ):
+                        for row in self.execute(qry, (fid,)):
+                            if row:
+                                subvals = [x if x is not None else 0.0 for x in row[1:]]
 
-            for i, (qry, line) in enumerate(pairs):
-                if (
-                        (type == 0 and i == 0)  # rating curve
-                        or (type == 1 and i == 1)  # rating table
-                        or (type == 2 and i == 2)  # culvert equation
-                        or (type == 3 and i == 3)  # bridge routine
-                        or i == 4  # storm drains
-                ):
-                    for row in self.execute(qry, (fid,)):
-                        if row:
-                            subvals = [x if x is not None else 0.0 for x in row[1:]]
+                                if i == 0:  # Rating curve line 'C' and 'R'
+                                    # Replacement rating curve
+                                    rrc_row = self.execute(repl_ratc_sql, (fid,)).fetchone()
+                                    if rrc_row:
+                                        rrc_row = [x if x is not None else 0.0 for x in rrc_row[2:]]
+                                        try:
+                                            hystruc_group.datasets["RATING_CURVE"].data.append(
+                                                create_array(eleven_values, 11, np.float64, tuple(subvals + rrc_row)))
+                                        except:
+                                            hystruc_group.create_dataset('RATING_CURVE', [])
+                                            hystruc_group.datasets["RATING_CURVE"].data.append(
+                                                create_array(eleven_values, 11, np.float64, tuple(subvals + rrc_row)))
+                                    else:
+                                        try:
+                                            hystruc_group.datasets["RATING_CURVE"].data.append(
+                                                create_array(eleven_values, 11, np.float64, tuple(subvals + (5 * [0]))))
+                                        except:
+                                            hystruc_group.create_dataset('RATING_CURVE', [])
+                                            hystruc_group.datasets["RATING_CURVE"].data.append(
+                                                create_array(eleven_values, 11, np.float64, tuple(subvals + (5 * [0]))))
 
-                            if i == 0:  # Rating curve line 'C' and 'R'
-                                # Replacement rating curve
-                                rrc_row = self.execute(repl_ratc_sql, (fid,)).fetchone()
-                                if rrc_row:
-                                    rrc_row = [x if x is not None else 0.0 for x in rrc_row[2:]]
+                                if i == 1:  # Rating table
                                     try:
-                                        hystruc_group.datasets["RATING_CURVE"].data.append(
-                                            create_array(eleven_values, 11, np.float64, tuple(subvals + rrc_row)))
+                                        hystruc_group.datasets["RATING_TABLE"].data.append(
+                                            create_array(four_values, 4, np.float64, tuple(subvals)))
                                     except:
-                                        hystruc_group.create_dataset('RATING_CURVE', [])
-                                        hystruc_group.datasets["RATING_CURVE"].data.append(
-                                            create_array(eleven_values, 11, np.float64, tuple(subvals + rrc_row)))
+                                        hystruc_group.create_dataset('RATING_TABLE', [])
+                                        hystruc_group.datasets["RATING_TABLE"].data.append(
+                                            create_array(four_values, 4, np.float64, tuple(subvals)))
+
+                                if i == 2:  # Culvert equation.
+                                    subvals[-1] = subvals[-1] if subvals[-1] not in [None, "0", "0.0"] else 1
+                                    try:
+                                        hystruc_group.datasets["CULVERT_EQUATIONS"].data.append(
+                                            create_array(seven_values, 7, np.float64, tuple(subvals)))
+                                    except:
+                                        hystruc_group.create_dataset('CULVERT_EQUATIONS', [])
+                                        hystruc_group.datasets["CULVERT_EQUATIONS"].data.append(
+                                            create_array(seven_values, 7, np.float64, tuple(subvals)))
+
+                                if i == 3:  # Bridge routine line
+                                    try:
+                                        for val in subvals:
+                                            hystruc_group.datasets["BRIDGE_VARIABLES"].data.append(
+                                                create_array("{0}", 1, np.float64, (val,))
+                                            )
+                                    except:
+                                        hystruc_group.create_dataset('BRIDGE_VARIABLES', [])
+                                        for val in subvals:
+                                            hystruc_group.datasets["BRIDGE_VARIABLES"].data.append(
+                                                create_array("{0}", 1, np.float64, (val,))
+                                            )
+
+                                if i == 4:
+                                    try:
+                                        hystruc_group.datasets["STORM_DRAIN"].data.append(
+                                            create_array(three_values, 3, np.float64, tuple(subvals)))
+                                    except:
+                                        hystruc_group.create_dataset('STORM_DRAIN', [])
+                                        hystruc_group.datasets["STORM_DRAIN"].data.append(
+                                            create_array(three_values, 3, np.float64, tuple(subvals)))
                                 else:
-                                    try:
-                                        hystruc_group.datasets["RATING_CURVE"].data.append(
-                                            create_array(eleven_values, 11, np.float64, tuple(subvals + (5 * [0]))))
-                                    except:
-                                        hystruc_group.create_dataset('RATING_CURVE', [])
-                                        hystruc_group.datasets["RATING_CURVE"].data.append(
-                                            create_array(eleven_values, 11, np.float64, tuple(subvals + (5 * [0]))))
+                                    pass
 
-                            if i == 1:  # Rating table
-                                try:
-                                    hystruc_group.datasets["RATING_TABLE"].data.append(
-                                        create_array(four_values, 4, np.float64, tuple(subvals)))
-                                except:
-                                    hystruc_group.create_dataset('RATING_TABLE', [])
-                                    hystruc_group.datasets["RATING_TABLE"].data.append(
-                                        create_array(four_values, 4, np.float64, tuple(subvals)))
+            self.parser.write_groups(hystruc_group)
+            return True
 
-                            if i == 2:  # Culvert equation.
-                                subvals[-1] = subvals[-1] if subvals[-1] not in [None, "0", "0.0"] else 1
-                                try:
-                                    hystruc_group.datasets["CULVERT_EQUATIONS"].data.append(
-                                        create_array(seven_values, 7, np.float64, tuple(subvals)))
-                                except:
-                                    hystruc_group.create_dataset('CULVERT_EQUATIONS', [])
-                                    hystruc_group.datasets["CULVERT_EQUATIONS"].data.append(
-                                        create_array(seven_values, 7, np.float64, tuple(subvals)))
-
-                            if i == 3:  # Bridge routine line
-                                try:
-                                    for val in subvals:
-                                        hystruc_group.datasets["BRIDGE_VARIABLES"].data.append(
-                                            create_array("{0}", 1, np.float64, (val,))
-                                        )
-                                except:
-                                    hystruc_group.create_dataset('BRIDGE_VARIABLES', [])
-                                    for val in subvals:
-                                        hystruc_group.datasets["BRIDGE_VARIABLES"].data.append(
-                                            create_array("{0}", 1, np.float64, (val,))
-                                        )
-
-                            if i == 4:
-                                try:
-                                    hystruc_group.datasets["STORM_DRAIN"].data.append(
-                                        create_array(three_values, 3, np.float64, tuple(subvals)))
-                                except:
-                                    hystruc_group.create_dataset('STORM_DRAIN', [])
-                                    hystruc_group.datasets["STORM_DRAIN"].data.append(
-                                        create_array(three_values, 3, np.float64, tuple(subvals)))
-                            else:
-                                pass
-
-        self.parser.write_groups(hystruc_group)
-        return True
-
-        # except Exception as e:
-        #     QApplication.restoreOverrideCursor()
-        #     self.uc.show_error("ERROR 101218.1608: exporting HYSTRUC.DAT failed!.\n", e)
-        #     return False
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            self.uc.show_error("ERROR 101218.1608: exporting HYSTRUC.DAT failed!.\n", e)
+            return False
 
     def export_hystruc_dat(self, outdir, subdomain):
         try:
@@ -9456,13 +9456,13 @@ class Flo2dGeoPackage(GeoPackageUtils):
             self.uc.show_error("ERROR 101218.1608: exporting HYSTRUC.DAT failed!.\n", e)
             return False
 
-    def export_bridge_xsec(self, output=None):
+    def export_bridge_xsec(self, output=None, subdomain=None):
         if self.parsed_format == self.FORMAT_DAT:
-            return self.export_bridge_xsec_dat(output)
+            return self.export_bridge_xsec_dat(output, subdomain)
         elif self.parsed_format == self.FORMAT_HDF5:
-            return self.export_bridge_xsec_hdf5()
+            return self.export_bridge_xsec_hdf5(subdomain)
 
-    def export_bridge_xsec_hdf5(self):
+    def export_bridge_xsec_hdf5(self, subdomain):
         """
         Function to export bridge cross sections to hdf5 file\
         """
@@ -9471,7 +9471,33 @@ class Flo2dGeoPackage(GeoPackageUtils):
             if self.is_table_empty("struct") or self.is_table_empty("bridge_xs"):
                 return False
 
-            hystruct_sql = """SELECT * FROM struct WHERE icurvtable = 3 ORDER BY fid;"""
+            if not subdomain:
+                hystruct_sql = """SELECT * FROM struct WHERE icurvtable = 3 ORDER BY fid;"""
+            else:
+                hystruct_sql = f"""
+                                SELECT 
+                                    s.fid,
+                                    s.type,
+                                    s.structname, 
+                                    s.ifporchan,
+                                    s.icurvtable,
+                                    inflow_md.domain_cell AS inflonod,
+                                    outflow_md.domain_cell AS outflonod,
+                                    s.inoutcont,
+                                    s.headrefel,
+                                    s.clength,
+                                    s.cdiameter
+                                FROM 
+                                    struct AS s
+                                JOIN
+                                    schema_md_cells inflow_md ON s.inflonod = inflow_md.grid_fid AND inflow_md.domain_fid = {subdomain}
+                                JOIN
+                                    schema_md_cells outflow_md ON s.outflonod = outflow_md.grid_fid AND outflow_md.domain_fid = {subdomain}
+                                WHERE 
+                                    s.icurvtable = 3
+                                ORDER BY s.fid;
+                                """
+
             bridge_xs_sql = """SELECT xup, yup, yb FROM bridge_xs WHERE struct_fid = ? ORDER BY struct_fid;"""
 
             hystruc_rows = self.execute(hystruct_sql).fetchall()
@@ -9503,7 +9529,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             self.uc.show_error("ERROR 101122.0753: exporting BRIDGE_XSEC.DAT failed!.\n", e)
             return False
 
-    def export_bridge_xsec_dat(self, outdir):
+    def export_bridge_xsec_dat(self, outdir, subdomain):
         try:
             # check if there is any hydraulic structure and bridge cross sections defined.
             if self.is_table_empty("struct") or self.is_table_empty("bridge_xs"):
@@ -9511,7 +9537,33 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     os.remove(outdir + r"\BRIDGE_XSEC.DAT")
                 return False
 
-            hystruct_sql = """SELECT * FROM struct WHERE icurvtable = 3 ORDER BY fid;"""
+            if not subdomain:
+                hystruct_sql = """SELECT * FROM struct WHERE icurvtable = 3 ORDER BY fid;"""
+            else:
+                hystruct_sql = f"""
+                                SELECT 
+                                    s.fid,
+                                    s.type,
+                                    s.structname, 
+                                    s.ifporchan,
+                                    s.icurvtable,
+                                    inflow_md.domain_cell AS inflonod,
+                                    outflow_md.domain_cell AS outflonod,
+                                    s.inoutcont,
+                                    s.headrefel,
+                                    s.clength,
+                                    s.cdiameter
+                                FROM 
+                                    struct AS s
+                                JOIN
+                                    schema_md_cells inflow_md ON s.inflonod = inflow_md.grid_fid AND inflow_md.domain_fid = {subdomain}
+                                JOIN
+                                    schema_md_cells outflow_md ON s.outflonod = outflow_md.grid_fid AND outflow_md.domain_fid = {subdomain}
+                                WHERE 
+                                    s.icurvtable = 3
+                                ORDER BY s.fid;
+                                """
+
             bridge_xs_sql = """SELECT xup, yup, yb FROM bridge_xs WHERE struct_fid = ? ORDER BY struct_fid;"""
 
             hystruc_rows = self.execute(hystruct_sql).fetchall()
