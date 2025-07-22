@@ -9057,13 +9057,13 @@ class Flo2dGeoPackage(GeoPackageUtils):
             self.uc.show_error("ERROR 101218.1607:  exporting XSEC.DAT  failed!.\n", e)
             return False
 
-    def export_hystruc(self, output=None):
+    def export_hystruc(self, output=None, subdomain=None):
         if self.parsed_format == self.FORMAT_DAT:
-            return self.export_hystruc_dat(output)
+            return self.export_hystruc_dat(output, subdomain)
         elif self.parsed_format == self.FORMAT_HDF5:
-            return self.export_hystruc_hdf5()
+            return self.export_hystruc_hdf5(subdomain)
 
-    def export_hystruc_hdf5(self):
+    def export_hystruc_hdf5(self, subdomain):
         """
         Function to export Hydraulic Structure data to HDF5 file
         """
@@ -9081,39 +9081,79 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     )
                     break
 
-        hystruct_sql = """SELECT * FROM struct ORDER BY fid;"""
         ratc_sql = """SELECT * FROM rat_curves WHERE struct_fid = ? ORDER BY fid;"""
         repl_ratc_sql = """SELECT * FROM repl_rat_curves WHERE struct_fid = ? ORDER BY fid;"""
         ratt_sql = """SELECT * FROM rat_table WHERE struct_fid = ? ORDER BY fid;"""
         culvert_sql = """SELECT * FROM culvert_equations WHERE struct_fid = ? ORDER BY fid;"""
-        storm_sql = """SELECT * FROM storm_drains WHERE struct_fid = ? ORDER BY fid;"""
         bridge_sql = """SELECT fid, 
-                               struct_fid, 
-                               IBTYPE, 
-                               COEFF, 
-                               C_PRIME_USER, 
-                               KF_COEF, 
-                               KWW_COEF,  
-                               KPHI_COEF, 
-                               KY_COEF, 
-                               KX_COEF, 
-                               KJ_COEF,
-                               BOPENING, 
-                               BLENGTH, 
-                               BN_VALUE, 
-                               UPLENGTH12, 
-                               LOWCHORD,
-                               DECKHT, 
-                               DECKLENGTH, 
-                               PIERWIDTH, 
-                               SLUICECOEFADJ, 
-                               ORIFICECOEFADJ, 
-                               COEFFWEIRB, 
-                               WINGWALL_ANGLE, 
-                               PHI_ANGLE, 
-                               LBTOEABUT, 
-                               RBTOEABUT 
-                        FROM bridge_variables WHERE struct_fid = ? ORDER BY fid;"""
+                                       struct_fid, 
+                                       IBTYPE, 
+                                       COEFF, 
+                                       C_PRIME_USER, 
+                                       KF_COEF, 
+                                       KWW_COEF,  
+                                       KPHI_COEF, 
+                                       KY_COEF, 
+                                       KX_COEF, 
+                                       KJ_COEF,
+                                       BOPENING, 
+                                       BLENGTH, 
+                                       BN_VALUE, 
+                                       UPLENGTH12, 
+                                       LOWCHORD,
+                                       DECKHT, 
+                                       DECKLENGTH, 
+                                       PIERWIDTH, 
+                                       SLUICECOEFADJ, 
+                                       ORIFICECOEFADJ, 
+                                       COEFFWEIRB, 
+                                       WINGWALL_ANGLE, 
+                                       PHI_ANGLE, 
+                                       LBTOEABUT, 
+                                       RBTOEABUT 
+                                FROM bridge_variables WHERE struct_fid = ? ORDER BY fid;"""
+
+        if not subdomain:
+            hystruct_sql = """SELECT * FROM struct ORDER BY fid;"""
+            storm_sql = """SELECT * FROM storm_drains WHERE struct_fid = ? ORDER BY fid;"""
+
+        else:
+            hystruct_sql = f"""
+                            SELECT 
+                                s.fid,
+                                s.type,
+                                s.structname, 
+                                s.ifporchan,
+                                s.icurvtable,
+                                inflow_md.domain_cell AS inflonod,
+                                outflow_md.domain_cell AS outflonod,
+                                s.inoutcont,
+                                s.headrefel,
+                                s.clength,
+                                s.cdiameter
+                            FROM 
+                                struct AS s
+                            JOIN
+                                schema_md_cells inflow_md ON s.inflonod = inflow_md.grid_fid AND inflow_md.domain_fid = {subdomain}
+                            JOIN
+                                schema_md_cells outflow_md ON s.outflonod = outflow_md.grid_fid AND outflow_md.domain_fid = {subdomain}
+                            ORDER BY s.fid;
+                            """
+
+            storm_sql = f"""
+                            SELECT 
+                                sd.fid, 
+                                sd.struct_fid,
+                                md.domain_cell, 
+                                sd.stormdmax
+                            FROM 
+                                storm_drains AS sd
+                            JOIN
+                                schema_md_cells md ON sd.istormdout = md.grid_fid
+                            WHERE 
+                                sd.struct_fid = ? AND md.domain_fid = {subdomain}
+                            ORDER BY sd.fid;
+                        """
 
         # line1 = "S" + "  {}" * 9 + "\n"
         line2 = "C" + "  {}" * 5 + "\n"
@@ -9274,33 +9314,76 @@ class Flo2dGeoPackage(GeoPackageUtils):
         #     self.uc.show_error("ERROR 101218.1608: exporting HYSTRUC.DAT failed!.\n", e)
         #     return False
 
-    def export_hystruc_dat(self, outdir):
+    def export_hystruc_dat(self, outdir, subdomain):
         try:
             # check if there is any hydraulic structure defined.
             if self.is_table_empty("struct"):
                 return False
             else:
-                nodes = self.execute("SELECT outflonod, outflonod FROM struct;").fetchall()
+                nodes = self.execute("SELECT inflonod, outflonod FROM struct;").fetchall()
                 for nod in nodes:
                     if nod[0] in [NULL, 0, ""] or nod[1] in [NULL, 0, ""]:
                         QApplication.restoreOverrideCursor()
                         self.uc.bar_warn(
                             "WARNING: some structures have no cells assigned.\nDid you schematize the structures?"
                         )
+                        self.uc.log_info(
+                            "WARNING: some structures have no cells assigned.\nDid you schematize the structures?"
+                        )
                         break
 
-            hystruct_sql = """SELECT * FROM struct ORDER BY fid;"""
             ratc_sql = """SELECT * FROM rat_curves WHERE struct_fid = ? ORDER BY fid;"""
             repl_ratc_sql = """SELECT * FROM repl_rat_curves WHERE struct_fid = ? ORDER BY fid;"""
             ratt_sql = """SELECT * FROM rat_table WHERE struct_fid = ? ORDER BY fid;"""
             culvert_sql = """SELECT * FROM culvert_equations WHERE struct_fid = ? ORDER BY fid;"""
-            storm_sql = """SELECT * FROM storm_drains WHERE struct_fid = ? ORDER BY fid;"""
             bridge_a_sql = """SELECT fid, struct_fid, IBTYPE, COEFF, C_PRIME_USER, KF_COEF, KWW_COEF,  KPHI_COEF, KY_COEF, KX_COEF, KJ_COEF 
                                 FROM bridge_variables WHERE struct_fid = ? ORDER BY fid;"""
             bridge_b_sql = """SELECT fid, struct_fid, BOPENING, BLENGTH, BN_VALUE, UPLENGTH12, LOWCHORD,
                                      DECKHT, DECKLENGTH, PIERWIDTH, SLUICECOEFADJ, ORIFICECOEFADJ, 
                                     COEFFWEIRB, WINGWALL_ANGLE, PHI_ANGLE, LBTOEABUT, RBTOEABUT 
                                   FROM bridge_variables WHERE struct_fid = ? ORDER BY fid;"""
+
+            if not subdomain:
+                hystruct_sql = """SELECT * FROM struct ORDER BY fid;"""
+                storm_sql = """SELECT * FROM storm_drains WHERE struct_fid = ? ORDER BY fid;"""
+
+            else:
+                hystruct_sql = f"""
+                                SELECT 
+                                    s.fid,
+                                    s.type,
+                                    s.structname, 
+                                    s.ifporchan,
+                                    s.icurvtable,
+                                    inflow_md.domain_cell AS inflonod,
+                                    outflow_md.domain_cell AS outflonod,
+                                    s.inoutcont,
+                                    s.headrefel,
+                                    s.clength,
+                                    s.cdiameter
+                                FROM 
+                                    struct AS s
+                                JOIN
+                                    schema_md_cells inflow_md ON s.inflonod = inflow_md.grid_fid AND inflow_md.domain_fid = {subdomain}
+                                JOIN
+                                    schema_md_cells outflow_md ON s.outflonod = outflow_md.grid_fid AND outflow_md.domain_fid = {subdomain}
+                                ORDER BY s.fid;
+                                """
+
+                storm_sql = f"""
+                                SELECT 
+                                    sd.fid, 
+                                    sd.struct_fid,
+                                    md.domain_cell, 
+                                    sd.stormdmax
+                                FROM 
+                                    storm_drains AS sd
+                                JOIN
+                                    schema_md_cells md ON sd.istormdout = md.grid_fid
+                                WHERE 
+                                    sd.struct_fid = ? AND md.domain_fid = {subdomain}
+                                ORDER BY sd.fid;
+                            """
 
             line1 = "S" + "  {}" * 9 + "\n"
             line2 = "C" + "  {}" * 5 + "\n"

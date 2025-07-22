@@ -185,9 +185,9 @@ class ExportMultipleDomainsDialog(qtBaseClass, uiDialog):
                 "export_infil",
                 # "export_chan",
                 # "export_xsec",
-                # "export_hystruc",
-                # "export_bridge_xsec",
-                # "export_bridge_coeff_data",
+                "export_hystruc",
+                "export_bridge_xsec",
+                "export_bridge_coeff_data",
                 # "export_street",
                 "export_arf",
                 # "export_mult",
@@ -295,22 +295,17 @@ class ExportMultipleDomainsDialog(qtBaseClass, uiDialog):
                 # if "Evaporation" not in dlg_components.components:
                 #     export_calls.remove("export_evapor")
 
-                # if "Hydraulic  Structures" not in dlg_components.components:
-                #     export_calls.remove("export_hystruc")
-                #     export_calls.remove("export_bridge_xsec")
-                #     export_calls.remove("export_bridge_coeff_data")
-                # else:
-                #     # if not self.uc.question("Did you schematize Hydraulic Structures? Do you want to export Hydraulic Structures files?"):
-                #     #     export_calls.remove("export_hystruc")
-                #     #     export_calls.remove("export_bridge_xsec")
-                #     #     export_calls.remove("export_bridge_coeff_data")
-                #     # else:
-                #     xsecs = self.gutils.execute("SELECT fid FROM struct WHERE icurvtable = 3").fetchone()
-                #     if not xsecs:
-                #         if os.path.isfile(outdir + r"\BRIDGE_XSEC.DAT"):
-                #             os.remove(outdir + r"\BRIDGE_XSEC.DAT")
-                #         export_calls.remove("export_bridge_xsec")
-                #         export_calls.remove("export_bridge_coeff_data")
+                if "Hydraulic  Structures" not in dlg_components.components:
+                    export_calls.remove("export_hystruc")
+                    export_calls.remove("export_bridge_xsec")
+                    if "export_bridge_coeff_data" in export_calls:
+                        export_calls.remove("export_bridge_coeff_data")
+                else:
+                    xsecs = self.gutils.execute("SELECT fid FROM struct WHERE icurvtable = 3").fetchone()
+                    if not xsecs:
+                        export_calls.remove("export_bridge_xsec")
+                        if "export_bridge_coeff_data" in export_calls:
+                            export_calls.remove("export_bridge_coeff_data")
 
                 if "Rain" not in dlg_components.components:
                     export_calls.remove("export_rain")
