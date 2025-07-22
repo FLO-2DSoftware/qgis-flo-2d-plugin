@@ -10565,13 +10565,13 @@ class Flo2dGeoPackage(GeoPackageUtils):
             self.uc.show_error("ERROR 101218.1612: exporting SED.DAT failed!.\n", e)
             return False
 
-    def export_levee(self, output=None):
+    def export_levee(self, output=None, subdomain=None):
         if self.parsed_format == self.FORMAT_DAT:
-            return self.export_levee_dat(output)
+            return self.export_levee_dat(output, subdomain)
         elif self.parsed_format == self.FORMAT_HDF5:
-            return self.export_levee_hdf5()
+            return self.export_levee_hdf5(subdomain)
 
-    def export_levee_hdf5(self):
+    def export_levee_hdf5(self, subdomain):
         """
         Function to export levee data to HDF5 file
         """
@@ -10581,17 +10581,61 @@ class Flo2dGeoPackage(GeoPackageUtils):
             return False
 
         levee_gen_sql = """SELECT raiselev, ilevfail, gfragchar, gfragprob FROM levee_general;"""
-        levee_data_sql = """SELECT grid_fid, ldir, levcrest FROM levee_data ORDER BY grid_fid, fid;"""
-        levee_fail_sql = """SELECT grid_fid,
-                                   lfaildir, 
-                                   failevel,
-                                   failtime,
-                                   levbase,
-                                   failwidthmax,
-                                   failrate,
-                                   failwidrate 
-                                   FROM levee_failure ORDER BY grid_fid, fid;"""
-        levee_frag_sql = """SELECT grid_fid, levfragchar, levfragprob FROM levee_fragility ORDER BY grid_fid;"""
+
+        if not subdomain:
+            levee_data_sql = """SELECT grid_fid, ldir, levcrest FROM levee_data ORDER BY grid_fid, fid;"""
+            levee_fail_sql = """SELECT * FROM levee_failure ORDER BY grid_fid, fid;"""
+            levee_frag_sql = """SELECT grid_fid, levfragchar, levfragprob FROM levee_fragility ORDER BY grid_fid;"""
+        else:
+            levee_data_sql = f"""
+                                     SELECT 
+                                        md.domain_cell, 
+                                        ld.ldir, 
+                                        ld.levcrest 
+                                     FROM 
+                                        levee_data AS ld
+                                     JOIN
+                                        schema_md_cells md ON ld.grid_fid = md.grid_fid
+                                     WHERE 
+                                        md.domain_fid = {subdomain}
+                                     ORDER BY 
+                                        md.domain_cell, ld.fid;
+                                     """
+
+            levee_fail_sql = f"""
+                                     SELECT 
+                                        md.domain_cell, 
+                                        lf.lfaildir, 
+                                        lf.failevel,
+                                        lf.failtime,
+                                        lf.levbase,
+                                        lf.failwidthmax,
+                                        lf.failrate,
+                                        lf.failwidrate
+                                     FROM 
+                                        levee_failure AS lf
+                                     JOIN
+                                        schema_md_cells md ON lf.grid_fid = md.grid_fid
+                                     WHERE 
+                                        md.domain_fid = {subdomain}
+                                     ORDER BY 
+                                        md.domain_cell, lf.fid;
+                                     """
+
+            levee_frag_sql = f"""
+                                     SELECT 
+                                        md.domain_cell, 
+                                        lf.levfragchar, 
+                                        lf.levfragprob 
+                                     FROM 
+                                        levee_fragility AS lf
+                                     JOIN
+                                        schema_md_cells md ON lf.grid_fid = md.grid_fid
+                                     WHERE 
+                                        md.domain_fid = {subdomain}
+                                     ORDER BY 
+                                        md.domain_cell;
+                                     """
 
         # line1 = "{0}  {1}\n"
         # line3 = "{0}  {1}  {2}\n"
@@ -10648,15 +10692,67 @@ class Flo2dGeoPackage(GeoPackageUtils):
         #     self.uc.show_error("ERROR 101218.1614: exporting LEVEE.DAT failed!.\n", e)
         #     return False
 
-    def export_levee_dat(self, outdir):
+    def export_levee_dat(self, outdir, subdomain):
         # check if there are any levees defined.
         try:
             if self.is_table_empty("levee_data"):
                 return False
             levee_gen_sql = """SELECT raiselev, ilevfail, gfragchar, gfragprob FROM levee_general;"""
-            levee_data_sql = """SELECT grid_fid, ldir, levcrest FROM levee_data ORDER BY grid_fid, fid;"""
-            levee_fail_sql = """SELECT * FROM levee_failure ORDER BY grid_fid, fid;"""
-            levee_frag_sql = """SELECT grid_fid, levfragchar, levfragprob FROM levee_fragility ORDER BY grid_fid;"""
+
+            if not subdomain:
+                levee_data_sql = """SELECT grid_fid, ldir, levcrest FROM levee_data ORDER BY grid_fid, fid;"""
+                levee_fail_sql = """SELECT * FROM levee_failure ORDER BY grid_fid, fid;"""
+                levee_frag_sql = """SELECT grid_fid, levfragchar, levfragprob FROM levee_fragility ORDER BY grid_fid;"""
+            else:
+                levee_data_sql = f"""
+                                 SELECT 
+                                    md.domain_cell, 
+                                    ld.ldir, 
+                                    ld.levcrest 
+                                 FROM 
+                                    levee_data AS ld
+                                 JOIN
+                                    schema_md_cells md ON ld.grid_fid = md.grid_fid
+                                 WHERE 
+                                    md.domain_fid = {subdomain}
+                                 ORDER BY 
+                                    md.domain_cell, ld.fid;
+                                 """
+
+                levee_fail_sql = f"""
+                                 SELECT 
+                                    md.domain_cell, 
+                                    lf.lfaildir, 
+                                    lf.failevel,
+                                    lf.failtime,
+                                    lf.levbase,
+                                    lf.failwidthmax,
+                                    lf.failrate,
+                                    lf.failwidrate
+                                 FROM 
+                                    levee_failure AS lf
+                                 JOIN
+                                    schema_md_cells md ON lf.grid_fid = md.grid_fid
+                                 WHERE 
+                                    md.domain_fid = {subdomain}
+                                 ORDER BY 
+                                    md.domain_cell, lf.fid;
+                                 """
+
+                levee_frag_sql = f"""
+                                 SELECT 
+                                    md.domain_cell, 
+                                    lf.levfragchar, 
+                                    lf.levfragprob 
+                                 FROM 
+                                    levee_fragility AS lf
+                                 JOIN
+                                    schema_md_cells md ON lf.grid_fid = md.grid_fid
+                                 WHERE 
+                                    md.domain_fid = {subdomain}
+                                 ORDER BY 
+                                    md.domain_cell;
+                                 """
 
             line1 = "{0}  {1}\n"
             line2 = "L  {0}\n"
@@ -10702,7 +10798,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
         except Exception as e:
             QApplication.restoreOverrideCursor()
-            self.uc.show_error("ERROR 101218.1614: exporting LEVEE.DAT failed!.\n", e)
+            self.uc.bar_error("Exporting LEVEE.DAT failed!")
+            self.uc.log_info("Exporting LEVEE.DAT failed!")
             return False
 
     def export_fpxsec(self, output=None):
