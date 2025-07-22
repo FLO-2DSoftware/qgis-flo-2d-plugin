@@ -192,7 +192,7 @@ class ExportMultipleDomainsDialog(qtBaseClass, uiDialog):
                 "export_arf",
                 # "export_mult",
                 "export_sed",
-                # "export_levee",
+                "export_levee",
                 # "export_fpxsec",
                 # "export_breach",
                 # "export_gutter",
@@ -271,8 +271,8 @@ class ExportMultipleDomainsDialog(qtBaseClass, uiDialog):
                 # if "Surface Water Rating Tables" not in dlg_components.components:
                 #     export_calls.remove("export_outrc")
 
-                # if "Levees" not in dlg_components.components:
-                #     export_calls.remove("export_levee")
+                if "Levees" not in dlg_components.components:
+                    export_calls.remove("export_levee")
 
                 # if "Multiple Channels" not in dlg_components.components:
                 #     export_calls.remove("export_mult")
