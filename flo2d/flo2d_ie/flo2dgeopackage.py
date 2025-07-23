@@ -8703,31 +8703,149 @@ class Flo2dGeoPackage(GeoPackageUtils):
             self.uc.show_error("ERROR 101218.1544: exporting EVAPOR.DAT failed!.\n", e)
             return False
 
-    def export_chan(self, output=None):
+    def export_chan(self, output=None, subdomain=None):
         if self.parsed_format == self.FORMAT_DAT:
-            return self.export_chan_dat(output)
+            return self.export_chan_dat(output, subdomain)
         elif self.parsed_format == self.FORMAT_HDF5:
-            return self.export_chan_hdf5()
+            return self.export_chan_hdf5(subdomain)
 
-    def export_chan_hdf5(self):
+    def export_chan_hdf5(self, subdomain):
         """
         Function to export channel data to hdf5
         """
         if self.is_table_empty("chan"):
             return False
 
-        chan_sql = """SELECT fid, depinitial, froudc, roughadj, ibaseflow, isedn FROM chan ORDER BY fid;"""
-        chan_elems_sql = ("""SELECT fid, rbankgrid, fcn, xlen, type FROM chan_elems WHERE seg_fid = ? ORDER BY nr_in_seg;""")
+        chan_wsel_sql = """SELECT istart, wselstart, iend, wselend FROM chan_wsel ORDER BY fid;"""
+        chan_conf_sql = """SELECT chan_elem_fid FROM chan_confluences ORDER BY fid;"""
 
-        chan_r_sql = """SELECT elem_fid, bankell, bankelr, fcw, fcd FROM chan_r WHERE elem_fid = ?;"""
-        chan_v_sql = """SELECT elem_fid, bankell, bankelr, fcd, a1, a2, b1, b2, c1, c2,
-                                   excdep, a11, a22, b11, b22, c11, c22 FROM chan_v WHERE elem_fid = ?;"""
-        chan_t_sql = """SELECT elem_fid, bankell, bankelr, fcw, fcd, zl, zr FROM chan_t WHERE elem_fid = ?;"""
-        chan_n_sql = """SELECT elem_fid, nxsecnum FROM chan_n WHERE elem_fid = ?;"""
+        if not subdomain:
+            chan_sql = """SELECT fid, depinitial, froudc, roughadj, isedn, ibaseflow FROM chan ORDER BY fid;"""
+            chan_elems_sql = (
+                """SELECT fid, rbankgrid, fcn, xlen, type FROM chan_elems WHERE seg_fid = ? ORDER BY nr_in_seg;"""
+            )
+            chan_r_sql = """SELECT elem_fid, bankell, bankelr, fcw, fcd FROM chan_r WHERE elem_fid = ?;"""
+            chan_v_sql = """SELECT elem_fid, bankell, bankelr, fcd, a1, a2, b1, b2, c1, c2,
+                                                          excdep, a11, a22, b11, b22, c11, c22 FROM chan_v WHERE elem_fid = ?;"""
+            chan_t_sql = """SELECT elem_fid, bankell, bankelr, fcw, fcd, zl, zr FROM chan_t WHERE elem_fid = ?;"""
+            chan_n_sql = """SELECT elem_fid, nxsecnum FROM chan_n WHERE elem_fid = ?;"""
+            chan_e_sql = """SELECT grid_fid FROM noexchange_chan_cells ORDER BY fid;"""
+        else:
+            subdomain_fids = self.execute(f"""
+                       SELECT 
+                           DISTINCT(c.fid)
+                       FROM 
+                           chan AS c
+                       JOIN
+                           chan_elems ce ON c.fid = ce.seg_fid 
+                       JOIN
+                           schema_md_cells left_grid_md ON ce.fid = left_grid_md.grid_fid AND left_grid_md.domain_fid = {subdomain}
+                       JOIN
+                           schema_md_cells right_grid_md ON ce.rbankgrid = right_grid_md.grid_fid AND right_grid_md.domain_fid = {subdomain}
+                   """).fetchall()
+            fid_list = [fid[0] for fid in subdomain_fids]
+            placeholders = ",".join(str(fid) for fid in fid_list)
+            chan_sql = f"""SELECT fid, depinitial, froudc, roughadj, isedn, ibaseflow FROM chan WHERE fid IN ({placeholders}) ORDER BY fid;"""
+            chan_elems_sql = f"""
+                       SELECT
+                           left_grid_md.domain_cell AS left_grid,
+                           right_grid_md.domain_cell AS right_grid,
+                           ce.fcn,
+                           ce.xlen,
+                           ce.type
+                       FROM
+                           chan_elems AS ce
+                       JOIN
+                           schema_md_cells left_grid_md ON ce.fid = left_grid_md.grid_fid AND left_grid_md.domain_fid = {subdomain}
+                       JOIN
+                           schema_md_cells right_grid_md ON ce.rbankgrid = right_grid_md.grid_fid AND right_grid_md.domain_fid = {subdomain}
+                       WHERE
+                           ce.seg_fid = ?
+                       ORDER BY ce.nr_in_seg;
+                       """
 
-        chan_wsel_sql = """SELECT seg_fid, istart, wselstart, iend, wselend FROM chan_wsel ORDER BY fid;"""
-        chan_conf_sql = """SELECT conf_fid, type, chan_elem_fid FROM chan_confluences ORDER BY fid;"""
-        chan_e_sql = """SELECT grid_fid FROM noexchange_chan_cells ORDER BY fid;"""
+            chan_r_sql = f"""
+                       SELECT 
+                           md.domain_cell, 
+                           cr.bankell, 
+                           cr.bankelr, 
+                           cr.fcw, 
+                           cr.fcd 
+                       FROM 
+                           chan_r AS cr
+                       JOIN
+                           schema_md_cells md ON cr.elem_fid = md.grid_fid
+                       WHERE 
+                           md.domain_cell = ? AND md.domain_fid = {subdomain};
+                       """
+
+            chan_v_sql = f"""
+                       SELECT 
+                           md.domain_cell, 
+                           cv.bankell, 
+                           cv.bankelr, 
+                           cv.fcd, 
+                           cv.a1, 
+                           cv.a2, 
+                           cv.b1, 
+                           cv.b2, 
+                           cv.c1, 
+                           cv.c2,
+                           cv.excdep, 
+                           cv.a11, 
+                           cv.a22, 
+                           cv.b11, 
+                           cv.b22, 
+                           cv.c11, 
+                           cv.c22 
+                       FROM 
+                           chan_v AS cv
+                       JOIN
+                           schema_md_cells md ON cv.elem_fid = md.grid_fid
+                       WHERE 
+                           md.domain_cell = ? AND md.domain_fid = {subdomain};
+                           """
+
+            chan_t_sql = f"""
+                       SELECT 
+                           md.domain_cell, 
+                           ct.bankell, 
+                           ct.bankelr, 
+                           ct.fcw, 
+                           ct.fcd, 
+                           ct.zl, 
+                           ct.zr 
+                       FROM 
+                           chan_t AS ct
+                       JOIN
+                           schema_md_cells md ON ct.elem_fid = md.grid_fid
+                       WHERE 
+                           md.domain_cell = ? AND md.domain_fid = {subdomain};
+                           """
+
+            chan_n_sql = f"""
+                       SELECT 
+                           md.domain_cell, 
+                           cn.nxsecnum 
+                       FROM 
+                           chan_n AS cn
+                       JOIN
+                           schema_md_cells md ON cn.elem_fid = md.grid_fid
+                       WHERE 
+                           md.domain_cell = ? AND md.domain_fid = {subdomain};
+                           """
+
+            chan_e_sql = f"""
+                       SELECT 
+                           md.domain_cell 
+                       FROM 
+                           noexchange_chan_cells AS ne
+                       JOIN
+                           schema_md_cells md ON ne.grid_fid = md.grid_fid
+                       WHERE 
+                           md.domain_fid = {subdomain}
+                       ORDER BY ne.fid;
+                       """
 
         segment = "{}  {}  {}  {}  {}  {}\n"
         chanbank = " {0: <10} {1}\n"
@@ -8778,50 +8896,50 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     typ
                 ]  # depending on 'typ' (R,V,T, or N) select sql (the SQLite SELECT statement to execute),
                 # line (format to write), fcn_idx (?), and xlen_idx (?)
-                res = [
-                    x if x is not None else "" for x in self.execute(sql, (eid,)).fetchone()
-                ]  # 'res' is a list of values depending on 'typ' (R,V,T, or N).
+                res_query = self.execute(sql, (eid,)).fetchone()
+                if res_query is not None:
+                    res = [x if x is not None else "" for x in
+                           res_query]  # 'res' is a list of values depending on 'typ' (R,V,T, or N).
+                    res.insert(
+                        fcn_idx, fcn
+                    )  # Add 'fcn' (coming from table ´chan_elems' (cross sections) to 'res' list) in position 'fcn_idx'.
+                    res.insert(
+                        xlen_idx, xlen
+                    )  # Add ´xlen' (coming from table ´chan_elems' (cross sections) to 'res' list in position 'xlen_idx'.
 
-                res.insert(
-                    fcn_idx, fcn
-                )  # Add 'fcn' (coming from table ´chan_elems' (cross sections) to 'res' list) in position 'fcn_idx'.
-                res.insert(
-                    xlen_idx, xlen
-                )  # Add ´xlen' (coming from table ´chan_elems' (cross sections) to 'res' list in position 'xlen_idx'.
+                    if typ == 'R':
+                        data = ([fid] + res)
+                        try:
+                            channel_group.datasets["CHAN_RECTANGULAR"].data.append(data)
+                        except:
+                            channel_group.create_dataset('CHAN_RECTANGULAR', [])
+                            channel_group.datasets["CHAN_RECTANGULAR"].data.append(data)
 
-                if typ == 'R':
-                    data = ([fid] + res)
-                    try:
-                        channel_group.datasets["CHAN_RECTANGULAR"].data.append(data)
-                    except:
-                        channel_group.create_dataset('CHAN_RECTANGULAR', [])
-                        channel_group.datasets["CHAN_RECTANGULAR"].data.append(data)
+                    if typ == 'V':
+                        data = ([fid] + res)
+                        try:
+                            channel_group.datasets["CHAN_VARIABLE"].data.append(data)
+                        except:
+                            channel_group.create_dataset('CHAN_VARIABLE', [])
+                            channel_group.datasets["CHAN_VARIABLE"].data.append(data)
 
-                if typ == 'V':
-                    data = ([fid] + res)
-                    try:
-                        channel_group.datasets["CHAN_VARIABLE"].data.append(data)
-                    except:
-                        channel_group.create_dataset('CHAN_VARIABLE', [])
-                        channel_group.datasets["CHAN_VARIABLE"].data.append(data)
+                    if typ == 'T':
+                        data = ([fid] + res)
+                        try:
+                            channel_group.datasets["CHAN_TRAPEZOIDAL"].data.append(data)
+                        except:
+                            channel_group.create_dataset('CHAN_TRAPEZOIDAL', [])
+                            channel_group.datasets["CHAN_TRAPEZOIDAL"].data.append(data)
 
-                if typ == 'T':
-                    data = ([fid] + res)
-                    try:
-                        channel_group.datasets["CHAN_TRAPEZOIDAL"].data.append(data)
-                    except:
-                        channel_group.create_dataset('CHAN_TRAPEZOIDAL', [])
-                        channel_group.datasets["CHAN_TRAPEZOIDAL"].data.append(data)
+                    if typ == 'N':
+                        data = ([fid] + res)
+                        try:
+                            channel_group.datasets["CHAN_NATURAL"].data.append(data)
+                        except:
+                            channel_group.create_dataset('CHAN_NATURAL', [])
+                            channel_group.datasets["CHAN_NATURAL"].data.append(data)
 
-                if typ == 'N':
-                    data = ([fid] + res)
-                    try:
-                        channel_group.datasets["CHAN_NATURAL"].data.append(data)
-                    except:
-                        channel_group.create_dataset('CHAN_NATURAL', [])
-                        channel_group.datasets["CHAN_NATURAL"].data.append(data)
-
-                channel_group.datasets["CHANBANK"].data.append(create_array(chanbank, 2, np.int_, eid, rbank))
+                    channel_group.datasets["CHANBANK"].data.append(create_array(chanbank, 2, np.int_, eid, rbank))
 
         segment_added = []
         for row in self.execute(chan_wsel_sql):
@@ -8864,89 +8982,205 @@ class Flo2dGeoPackage(GeoPackageUtils):
         self.parser.write_groups(channel_group)
         return True
 
-    def export_chan_dat(self, outdir):
+    def export_chan_dat(self, outdir, subdomain):
         # check if there are any channels defined.
-        try:
-            if self.is_table_empty("chan"):
-                return False
+        # try:
+        if self.is_table_empty("chan"):
+            return False
+
+        chan_wsel_sql = """SELECT istart, wselstart, iend, wselend FROM chan_wsel ORDER BY fid;"""
+        chan_conf_sql = """SELECT chan_elem_fid FROM chan_confluences ORDER BY fid;"""
+
+        if not subdomain:
             chan_sql = """SELECT fid, depinitial, froudc, roughadj, isedn, ibaseflow FROM chan ORDER BY fid;"""
             chan_elems_sql = (
                 """SELECT fid, rbankgrid, fcn, xlen, type FROM chan_elems WHERE seg_fid = ? ORDER BY nr_in_seg;"""
             )
-    
             chan_r_sql = """SELECT elem_fid, bankell, bankelr, fcw, fcd FROM chan_r WHERE elem_fid = ?;"""
             chan_v_sql = """SELECT elem_fid, bankell, bankelr, fcd, a1, a2, b1, b2, c1, c2,
-                                       excdep, a11, a22, b11, b22, c11, c22 FROM chan_v WHERE elem_fid = ?;"""
+                                                   excdep, a11, a22, b11, b22, c11, c22 FROM chan_v WHERE elem_fid = ?;"""
             chan_t_sql = """SELECT elem_fid, bankell, bankelr, fcw, fcd, zl, zr FROM chan_t WHERE elem_fid = ?;"""
             chan_n_sql = """SELECT elem_fid, nxsecnum FROM chan_n WHERE elem_fid = ?;"""
-    
-            chan_wsel_sql = """SELECT istart, wselstart, iend, wselend FROM chan_wsel ORDER BY fid;"""
-            chan_conf_sql = """SELECT chan_elem_fid FROM chan_confluences ORDER BY fid;"""
             chan_e_sql = """SELECT grid_fid FROM noexchange_chan_cells ORDER BY fid;"""
-    
-            segment = "   {0:.2f}   {1:.2f}   {2:.2f}   {3}\n"
-            chan_r = "R" + "  {}" * 7 + "\n"
-            chan_v = "V" + "  {}" * 19 + "\n"
-            chan_t = "T" + "  {}" * 9 + "\n"
-            chan_n = "N" + "  {}" * 4 + "\n"
-            chanbank = " {0: <10} {1}\n"
-            wsel = "{0} {1:.2f}\n"
-            conf = " C {0}  {1}\n"
-            chan_e = " E {0}\n"
-    
-            sqls = {
-                "R": [chan_r_sql, chan_r, 3, 6],
-                "V": [chan_v_sql, chan_v, 3, 5],
-                "T": [chan_t_sql, chan_t, 3, 6],
-                "N": [chan_n_sql, chan_n, 1, 2],
-            }
-            bLines = ""
-    
-            chan_rows = self.execute(chan_sql).fetchall()
-            if not chan_rows:
-                return False
-            else:
-                pass
-    
-            chan = os.path.join(outdir, "CHAN.DAT")
-            bank = os.path.join(outdir, "CHANBANK.DAT")
-    
-            with open(chan, "w") as c, open(bank, "w") as b:
-                ISED = self.gutils.get_cont_par("ISED")
-    
-                for row in chan_rows:
-                    row = [x if x is not None else "0" for x in row]
-                    fid = row[0]
-                    if ISED == "0":
-                        row[4] = ""
-                    c.write(
-                        segment.format(*row[1:5])
-                    )  # Writes depinitial, froudc, roughadj, isedn from 'chan' table (schematic layer).
-                    # A single line for each channel segment. The next lines will be the grid elements of
-                    # this channel segment.
-                    for elems in self.execute(
-                            chan_elems_sql, (fid,)
-                    ):  # each 'elems' is a list [(fid, rbankgrid, fcn, xlen, type)] from
-                        # 'chan_elems' table (the cross sections in the schematic layer),
-                        #  that has the 'fid' value indicated (the channel segment id).
-                        elems = [
-                            x if x is not None else "" for x in elems
-                        ]  # If 'elems' has a None in any of above values of list, replace it by ''
-                        (
-                            eid,
-                            rbank,
-                            fcn,
-                            xlen,
-                            typ,
-                        ) = elems  # Separates values of list into individual variables.
-                        sql, line, fcn_idx, xlen_idx = sqls[
-                            typ
-                        ]  # depending on 'typ' (R,V,T, or N) select sql (the SQLite SELECT statement to execute),
-                        # line (format to write), fcn_idx (?), and xlen_idx (?)
-                        res = [
-                            x if x is not None else "" for x in self.execute(sql, (eid,)).fetchone()
-                        ]  # 'res' is a list of values depending on 'typ' (R,V,T, or N).
-    
+        else:
+            subdomain_fids = self.execute(f"""
+                SELECT 
+                    DISTINCT(c.fid)
+                FROM 
+                    chan AS c
+                JOIN
+                    chan_elems ce ON c.fid = ce.seg_fid 
+                JOIN
+                    schema_md_cells left_grid_md ON ce.fid = left_grid_md.grid_fid AND left_grid_md.domain_fid = {subdomain}
+                JOIN
+                    schema_md_cells right_grid_md ON ce.rbankgrid = right_grid_md.grid_fid AND right_grid_md.domain_fid = {subdomain}
+            """).fetchall()
+            fid_list = [fid[0] for fid in subdomain_fids]
+            placeholders = ",".join(str(fid) for fid in fid_list)
+            chan_sql = f"""SELECT fid, depinitial, froudc, roughadj, isedn, ibaseflow FROM chan WHERE fid IN ({placeholders}) ORDER BY fid;"""
+            chan_elems_sql = f"""
+                SELECT
+                    left_grid_md.domain_cell AS left_grid,
+                    right_grid_md.domain_cell AS right_grid,
+                    ce.fcn,
+                    ce.xlen,
+                    ce.type
+                FROM
+                    chan_elems AS ce
+                JOIN
+                    schema_md_cells left_grid_md ON ce.fid = left_grid_md.grid_fid AND left_grid_md.domain_fid = {subdomain}
+                JOIN
+                    schema_md_cells right_grid_md ON ce.rbankgrid = right_grid_md.grid_fid AND right_grid_md.domain_fid = {subdomain}
+                WHERE
+                    ce.seg_fid = ?
+                ORDER BY ce.nr_in_seg;
+                """
+
+            chan_r_sql = f"""
+                SELECT 
+                    md.domain_cell, 
+                    cr.bankell, 
+                    cr.bankelr, 
+                    cr.fcw, 
+                    cr.fcd 
+                FROM 
+                    chan_r AS cr
+                JOIN
+                    schema_md_cells md ON cr.elem_fid = md.grid_fid
+                WHERE 
+                    md.domain_cell = ? AND md.domain_fid = {subdomain};
+                """
+
+            chan_v_sql = f"""
+                SELECT 
+                    md.domain_cell, 
+                    cv.bankell, 
+                    cv.bankelr, 
+                    cv.fcd, 
+                    cv.a1, 
+                    cv.a2, 
+                    cv.b1, 
+                    cv.b2, 
+                    cv.c1, 
+                    cv.c2,
+                    cv.excdep, 
+                    cv.a11, 
+                    cv.a22, 
+                    cv.b11, 
+                    cv.b22, 
+                    cv.c11, 
+                    cv.c22 
+                FROM 
+                    chan_v AS cv
+                JOIN
+                    schema_md_cells md ON cv.elem_fid = md.grid_fid
+                WHERE 
+                    md.domain_cell = ? AND md.domain_fid = {subdomain};
+                    """
+
+            chan_t_sql = f"""
+                SELECT 
+                    md.domain_cell, 
+                    ct.bankell, 
+                    ct.bankelr, 
+                    ct.fcw, 
+                    ct.fcd, 
+                    ct.zl, 
+                    ct.zr 
+                FROM 
+                    chan_t AS ct
+                JOIN
+                    schema_md_cells md ON ct.elem_fid = md.grid_fid
+                WHERE 
+                    md.domain_cell = ? AND md.domain_fid = {subdomain};
+                    """
+
+            chan_n_sql = f"""
+                SELECT 
+                    md.domain_cell, 
+                    cn.nxsecnum 
+                FROM 
+                    chan_n AS cn
+                JOIN
+                    schema_md_cells md ON cn.elem_fid = md.grid_fid
+                WHERE 
+                    md.domain_cell = ? AND md.domain_fid = {subdomain};
+                    """
+
+            chan_e_sql = f"""
+                SELECT 
+                    md.domain_cell 
+                FROM 
+                    noexchange_chan_cells AS ne
+                JOIN
+                    schema_md_cells md ON ne.grid_fid = md.grid_fid
+                WHERE 
+                    md.domain_fid = {subdomain}
+                ORDER BY ne.fid;
+                """
+
+        segment = "   {0:.2f}   {1:.2f}   {2:.2f}   {3}\n"
+        chan_r = "R" + "  {}" * 7 + "\n"
+        chan_v = "V" + "  {}" * 19 + "\n"
+        chan_t = "T" + "  {}" * 9 + "\n"
+        chan_n = "N" + "  {}" * 4 + "\n"
+        chanbank = " {0: <10} {1}\n"
+        wsel = "{0} {1:.2f}\n"
+        conf = " C {0}  {1}\n"
+        chan_e = " E {0}\n"
+
+        sqls = {
+            "R": [chan_r_sql, chan_r, 3, 6],
+            "V": [chan_v_sql, chan_v, 3, 5],
+            "T": [chan_t_sql, chan_t, 3, 6],
+            "N": [chan_n_sql, chan_n, 1, 2],
+        }
+        bLines = ""
+
+        chan_rows = self.execute(chan_sql).fetchall()
+        if not chan_rows:
+            return False
+        else:
+            pass
+
+        chan = os.path.join(outdir, "CHAN.DAT")
+        bank = os.path.join(outdir, "CHANBANK.DAT")
+
+        with open(chan, "w") as c, open(bank, "w") as b:
+            ISED = self.gutils.get_cont_par("ISED")
+
+            for row in chan_rows:
+                row = [x if x is not None else "0" for x in row]
+                fid = row[0]
+                if ISED == "0":
+                    row[4] = ""
+                c.write(
+                    segment.format(*row[1:5])
+                )  # Writes depinitial, froudc, roughadj, isedn from 'chan' table (schematic layer).
+                # A single line for each channel segment. The next lines will be the grid elements of
+                # this channel segment.
+                for elems in self.execute(
+                        chan_elems_sql, (fid,)
+                ):  # each 'elems' is a list [(fid, rbankgrid, fcn, xlen, type)] from
+                    # 'chan_elems' table (the cross sections in the schematic layer),
+                    #  that has the 'fid' value indicated (the channel segment id).
+                    elems = [
+                        x if x is not None else "" for x in elems
+                    ]  # If 'elems' has a None in any of above values of list, replace it by ''
+                    (
+                        eid,
+                        rbank,
+                        fcn,
+                        xlen,
+                        typ,
+                    ) = elems  # Separates values of list into individual variables.
+                    sql, line, fcn_idx, xlen_idx = sqls[
+                        typ
+                    ]  # depending on 'typ' (R,V,T, or N) select sql (the SQLite SELECT statement to execute),
+                    # line (format to write), fcn_idx (?), and xlen_idx (?)
+                    res_query = self.execute(sql, (eid,)).fetchone()
+                    if res_query is not None:
+                        res = [x if x is not None else "" for x in res_query]  # 'res' is a list of values depending on 'typ' (R,V,T, or N).
                         res.insert(
                             fcn_idx, fcn
                         )  # Add 'fcn' (coming from table ´chan_elems' (cross sections) to 'res' list) in position 'fcn_idx'.
@@ -8955,46 +9189,46 @@ class Flo2dGeoPackage(GeoPackageUtils):
                         )  # Add ´xlen' (coming from table ´chan_elems' (cross sections) to 'res' list in position 'xlen_idx'.
                         c.write(line.format(*res))
                         b.write(chanbank.format(eid, rbank))
-                    
-                    if row[5]: # ibaseflow
-                        if str(row[5]) != "":
-                            bLines += "B " + str(row[5]) + "\n"
-                            # c.write("B " + str(row[5]) + "\n")
-                            
-                for row in self.execute(chan_wsel_sql):
-                    c.write(wsel.format(*row[:2]))
-                    c.write(wsel.format(*row[2:]))
-    
-                pairs = []
-                for row in self.execute(chan_conf_sql):
-                    chan_elem = row[0]
-                    if not pairs:
-                        pairs.append(chan_elem)
-                    else:
-                        pairs.append(chan_elem)
-                        c.write(conf.format(*pairs))
-                        del pairs[:]
-    
-                for row in self.execute(chan_e_sql):
-                    c.write(chan_e.format(row[0]))
-                    
-                if bLines != "":
-                    c.write(bLines)
-                
-            return True
 
-        except Exception as e:
-            self.uc.bar_error("ERROR 090624.0624: exporting CHAN.DAT failed!")
-            self.uc.log_info("ERROR 090624.0624: exporting CHAN.DAT failed!")
-            return False
+                if row[5]: # ibaseflow
+                    if str(row[5]) != "":
+                        bLines += "B " + str(row[5]) + "\n"
+                        # c.write("B " + str(row[5]) + "\n")
 
-    def export_xsec(self, output=None):
+            for row in self.execute(chan_wsel_sql):
+                c.write(wsel.format(*row[:2]))
+                c.write(wsel.format(*row[2:]))
+
+            pairs = []
+            for row in self.execute(chan_conf_sql):
+                chan_elem = row[0]
+                if not pairs:
+                    pairs.append(chan_elem)
+                else:
+                    pairs.append(chan_elem)
+                    c.write(conf.format(*pairs))
+                    del pairs[:]
+
+            for row in self.execute(chan_e_sql):
+                c.write(chan_e.format(row[0]))
+
+            if bLines != "":
+                c.write(bLines)
+
+        return True
+
+        # except Exception as e:
+        #     self.uc.bar_error("ERROR 090624.0624: exporting CHAN.DAT failed!")
+        #     self.uc.log_info("ERROR 090624.0624: exporting CHAN.DAT failed!")
+        #     return False
+
+    def export_xsec(self, output=None, subdomain=None):
         if self.parsed_format == self.FORMAT_DAT:
-            return self.export_xsec_dat(output)
+            return self.export_xsec_dat(output, subdomain)
         elif self.parsed_format == self.FORMAT_HDF5:
-            return self.export_xsec_hdf5()
+            return self.export_xsec_hdf5(subdomain)
 
-    def export_xsec_hdf5(self):
+    def export_xsec_hdf5(self, subdomain):
         """
         Function to export xsection data to hdf5 file
         """
@@ -9028,7 +9262,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             self.uc.show_error("ERROR 101218.1607:  exporting XSEC.DAT  failed!.\n", e)
             return False
 
-    def export_xsec_dat(self, outdir):
+    def export_xsec_dat(self, outdir, subdomain):
         try:
             chan_n_sql = """SELECT nxsecnum, xsecname FROM chan_n ORDER BY nxsecnum;"""
             xsec_sql = """SELECT xi, yi FROM xsec_n_data WHERE chan_n_nxsecnum = ? ORDER BY fid;"""
