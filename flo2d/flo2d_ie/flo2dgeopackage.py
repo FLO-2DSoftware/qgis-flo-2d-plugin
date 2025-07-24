@@ -8869,12 +8869,12 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
         ISED = self.gutils.get_cont_par("ISED")
 
-        for row in chan_rows:
+        for i, row in enumerate(chan_rows, start=1):
             row = [x if x is not None else "0" for x in row]
-            fid = row[0]
+            fid, depinitial, froudc, roughadj, isedn, ibaseflow = row
             if float(ISED) == 0:
-                row[5] = -9999
-            channel_group.datasets["CHAN_GLOBAL"].data.append(create_array(segment, 6, np.float64, tuple(row)))
+                isedn = -9999
+            channel_group.datasets["CHAN_GLOBAL"].data.append(create_array(segment, 6, np.float64, (i, depinitial, froudc, roughadj, ibaseflow, isedn)))
             # Writes depinitial, froudc, roughadj, isedn from 'chan' table (schematic layer).
             # A single line for each channel segment.
             for elems in self.execute(
@@ -8908,7 +8908,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     )  # Add ´xlen' (coming from table ´chan_elems' (cross sections) to 'res' list in position 'xlen_idx'.
 
                     if typ == 'R':
-                        data = ([fid] + res)
+                        data = ([i] + res)
                         try:
                             channel_group.datasets["CHAN_RECTANGULAR"].data.append(data)
                         except:
@@ -8916,7 +8916,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                             channel_group.datasets["CHAN_RECTANGULAR"].data.append(data)
 
                     if typ == 'V':
-                        data = ([fid] + res)
+                        data = ([i] + res)
                         try:
                             channel_group.datasets["CHAN_VARIABLE"].data.append(data)
                         except:
@@ -8924,7 +8924,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                             channel_group.datasets["CHAN_VARIABLE"].data.append(data)
 
                     if typ == 'T':
-                        data = ([fid] + res)
+                        data = ([i] + res)
                         try:
                             channel_group.datasets["CHAN_TRAPEZOIDAL"].data.append(data)
                         except:
@@ -8932,7 +8932,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                             channel_group.datasets["CHAN_TRAPEZOIDAL"].data.append(data)
 
                     if typ == 'N':
-                        data = ([fid] + res)
+                        data = ([i] + res)
                         try:
                             channel_group.datasets["CHAN_NATURAL"].data.append(data)
                         except:
@@ -9827,13 +9827,13 @@ class Flo2dGeoPackage(GeoPackageUtils):
             self.uc.show_error("ERROR 101122.0753: exporting BRIDGE_XSEC.DAT failed!.\n", e)
             return False
 
-    def export_bridge_coeff_data(self, output=None):
+    def export_bridge_coeff_data(self, output=None, subdomain=None):
         if self.parsed_format == self.FORMAT_DAT:
-            return self.export_bridge_coeff_data_dat(output)
+            return self.export_bridge_coeff_data_dat(output, subdomain)
         elif self.parsed_format == self.FORMAT_HDF5:
-            return self.export_bridge_coeff_data_hdf5()
+            return self.export_bridge_coeff_data_hdf5(subdomain)
 
-    def export_bridge_coeff_data_hdf5(self):
+    def export_bridge_coeff_data_hdf5(self, subdomain):
         """
         Export bridge coefficient data to the hdf5 file
         """
@@ -9857,7 +9857,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             self.uc.show_error("ERROR 101122.0754: exporting BRIDGE_COEFF_DATA.DAT failed!.\n", e)
             return False
 
-    def export_bridge_coeff_data_dat(self, outdir):
+    def export_bridge_coeff_data_dat(self, outdir, subdomain):
         try:
             # check if there is any hydraulic structure defined.
             if self.is_table_empty("struct"):
