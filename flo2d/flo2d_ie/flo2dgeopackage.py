@@ -11179,13 +11179,13 @@ class Flo2dGeoPackage(GeoPackageUtils):
             self.uc.log_info("Exporting LEVEE.DAT failed!")
             return False
 
-    def export_fpxsec(self, output=None):
+    def export_fpxsec(self, output=None, subdomain=None):
         if self.parsed_format == self.FORMAT_DAT:
-            return self.export_fpxsec_dat(output)
+            return self.export_fpxsec_dat(output, subdomain)
         elif self.parsed_format == self.FORMAT_HDF5:
-            return self.export_fpxsec_hdf5()
+            return self.export_fpxsec_hdf5(subdomain)
 
-    def export_fpxsec_hdf5(self):
+    def export_fpxsec_hdf5(self, subdomain):
         """
         Function to export floodplain cross-section data to hdf5 file
         """
@@ -11195,7 +11195,20 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
         cont_sql = """SELECT name, value FROM cont WHERE name = 'NXPRT';"""
         fpxsec_sql = """SELECT fid, iflo, nnxsec FROM fpxsec ORDER BY fid;"""
-        cell_sql = """SELECT grid_fid FROM fpxsec_cells WHERE fpxsec_fid = ? ORDER BY grid_fid;"""
+        if not subdomain:
+            cell_sql = """SELECT grid_fid FROM fpxsec_cells WHERE fpxsec_fid = ? ORDER BY grid_fid;"""
+        else:
+            cell_sql = f"""
+                        SELECT
+                            md.domain_cell  
+                        FROM 
+                            fpxsec_cells AS fc
+                        JOIN
+                            schema_md_cells md ON fc.grid_fid = md.grid_fid
+                        WHERE 
+                            fc.fpxsec_fid = ? AND md.domain_fid = {subdomain}
+                        ORDER BY fc.grid_fid
+                        """
 
         option = self.execute(cont_sql).fetchone()
         if option is None:
@@ -11219,27 +11232,41 @@ class Flo2dGeoPackage(GeoPackageUtils):
         floodplain_group.datasets["FPXSEC_GLOBAL"].data.append(int(head))
 
         for row in self.execute(fpxsec_sql):
-            fid, iflo, nnxsec = row
-            grids = self.execute(cell_sql, (fid,))
-            grids_txt = " ".join(["{}".format(x[0]) for x in grids])
-            grids_list = [int(num) for num in grids_txt.split()]
-            fpxsec = [iflo, nnxsec] + grids_list
-            fpxsec.extend([-9999] * (max_grid - len(fpxsec)))
-            values_str = "{} " * len(fpxsec)
-            floodplain_group.datasets["FPXSEC_DATA"].data.append(
-                create_array(values_str, max_grid, np.int_, tuple(fpxsec)))
+            fid, iflo, _ = row
+            grids = self.execute(cell_sql, (fid,)).fetchall()
+            if len(grids) > 0:
+                grids_txt = " ".join(["{}".format(x[0]) for x in grids])
+                grids_list = [int(num) for num in grids_txt.split()]
+                fpxsec = [iflo, len(grids)] + grids_list
+                fpxsec.extend([-9999] * (max_grid - len(fpxsec)))
+                values_str = "{} " * len(fpxsec)
+                floodplain_group.datasets["FPXSEC_DATA"].data.append(
+                    create_array(values_str, max_grid, np.int_, tuple(fpxsec)))
 
         self.parser.write_groups(floodplain_group)
         return True
 
-    def export_fpxsec_dat(self, outdir):
+    def export_fpxsec_dat(self, outdir, subdomain):
         # check if there are any floodplain cross section defined.
         try:
             if self.is_table_empty("fpxsec"):
                 return False
             cont_sql = """SELECT name, value FROM cont WHERE name = 'NXPRT';"""
             fpxsec_sql = """SELECT fid, iflo, nnxsec FROM fpxsec ORDER BY fid;"""
-            cell_sql = """SELECT grid_fid FROM fpxsec_cells WHERE fpxsec_fid = ? ORDER BY grid_fid;"""
+            if not subdomain:
+                cell_sql = """SELECT grid_fid FROM fpxsec_cells WHERE fpxsec_fid = ? ORDER BY grid_fid;"""
+            else:
+                cell_sql = f"""
+                            SELECT
+                                md.domain_cell  
+                            FROM 
+                                fpxsec_cells AS fc
+                            JOIN
+                                schema_md_cells md ON fc.grid_fid = md.grid_fid
+                            WHERE 
+                                fc.fpxsec_fid = ? AND md.domain_fid = {subdomain}
+                            ORDER BY fc.grid_fid
+                            """
 
             line1 = "P  {}\n"
             line2 = "X {0} {1} {2}\n"
@@ -11256,9 +11283,10 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
                 for row in self.execute(fpxsec_sql):
                     fid, iflo, nnxsec = row
-                    grids = self.execute(cell_sql, (fid,))
-                    grids_txt = " ".join(["{}".format(x[0]) for x in grids])
-                    f.write(line2.format(iflo, nnxsec, grids_txt))
+                    grids = self.execute(cell_sql, (fid,)).fetchall()
+                    if len(grids) > 0:
+                        grids_txt = " ".join(["{}".format(x[0]) for x in grids])
+                        f.write(line2.format(iflo, len(grids), grids_txt))
 
             return True
 
