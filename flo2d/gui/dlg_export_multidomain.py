@@ -183,8 +183,8 @@ class ExportMultipleDomainsDialog(qtBaseClass, uiDialog):
                 "export_rain",
                 # "export_evapor",
                 "export_infil",
-                # "export_chan",
-                # "export_xsec",
+                "export_chan",
+                "export_xsec",
                 "export_hystruc",
                 "export_bridge_xsec",
                 "export_bridge_coeff_data",
@@ -249,9 +249,9 @@ class ExportMultipleDomainsDialog(qtBaseClass, uiDialog):
                     export_type = "hdf5"
                     s.setValue("FLO-2D/quickRun", "hdf5")
 
-                # if "Channels" not in dlg_components.components:
-                #     export_calls.remove("export_chan")
-                #     export_calls.remove("export_xsec")
+                if "Channels" not in dlg_components.components:
+                    export_calls.remove("export_chan")
+                    export_calls.remove("export_xsec")
 
                 if "Reduction Factors" not in dlg_components.components:
                     export_calls.remove("export_arf")
