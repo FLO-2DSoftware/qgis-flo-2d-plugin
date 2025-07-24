@@ -193,7 +193,7 @@ class ExportMultipleDomainsDialog(qtBaseClass, uiDialog):
                 # "export_mult",
                 "export_sed",
                 "export_levee",
-                # "export_fpxsec",
+                "export_fpxsec",
                 # "export_breach",
                 # "export_gutter",
                 "export_fpfroude",
@@ -286,8 +286,8 @@ class ExportMultipleDomainsDialog(qtBaseClass, uiDialog):
                 if "Infiltration" not in dlg_components.components:
                     export_calls.remove("export_infil")
 
-                # if "Floodplain Cross Sections" not in dlg_components.components:
-                #     export_calls.remove("export_fpxsec")
+                if "Floodplain Cross Sections" not in dlg_components.components:
+                    export_calls.remove("export_fpxsec")
 
                 if "Mudflow and Sediment Transport" not in dlg_components.components:
                     export_calls.remove("export_sed")
