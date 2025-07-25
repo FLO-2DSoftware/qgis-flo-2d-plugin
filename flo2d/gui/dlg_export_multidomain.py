@@ -176,7 +176,7 @@ class ExportMultipleDomainsDialog(qtBaseClass, uiDialog):
             export_calls = [
                 "export_cont_toler",
                 "export_tolspatial",
-                # "export_inflow",
+                "export_inflow",
                 # "export_tailings",
                 # 'export_outrc',
                 "export_outflow",
@@ -262,8 +262,8 @@ class ExportMultipleDomainsDialog(qtBaseClass, uiDialog):
                 if "Outflow Elements" not in dlg_components.components:
                     export_calls.remove("export_outflow")
 
-                # if "Inflow Elements" not in dlg_components.components:
-                #     export_calls.remove("export_inflow")
+                if "Inflow Elements" not in dlg_components.components:
+                    export_calls.remove("export_inflow")
 
                 # if "Tailings" not in dlg_components.components:
                 #     export_calls.remove("export_tailings")
