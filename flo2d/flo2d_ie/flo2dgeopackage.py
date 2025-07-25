@@ -6281,7 +6281,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                             # options = {o: v if v is not None else "" for o, v in self.execute(sql).fetchall()}
 
                             if options["ITIMTEP"] != "0" and float_or_zero(options["ENDTIMTEP"]) > 0.0:
-                                _itimtep = ("11", "21", "31", "41", "51")[int(options["ITIMTEP"]) - 1]
+                                _itimtep = ("11", "21", "31", "41", "51")[int(float(options["ITIMTEP"])) - 1]
                                 if (
                                         float_or_zero(options["STARTIMTEP"]) == 0.0
                                         and float_or_zero(options["ENDTIMTEP"]) == 0.0
@@ -11930,11 +11930,11 @@ class Flo2dGeoPackage(GeoPackageUtils):
             self.uc.show_error("ERROR 101218.1901: exporting SHALLOWN_SPATIAL.DAT failed!", e)
             return False
 
-    def export_swmmflo(self, output=None):
+    def export_swmmflo(self, output=None, subdomain=None):
         if self.parsed_format == self.FORMAT_DAT:
-            return self.export_swmmflo_dat(output)
+            return self.export_swmmflo_dat(output, subdomain)
         elif self.parsed_format == self.FORMAT_HDF5:
-            return self.export_swmmflo_hdf5()
+            return self.export_swmmflo_hdf5(subdomain)
 
     def export_swmmflodropbox(self, output=None):
         if self.parsed_format == self.FORMAT_DAT:
@@ -11988,7 +11988,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
         else:
             return False
 
-    def export_swmmflo_hdf5(self):
+    def export_swmmflo_hdf5(self, subdomain):
         """
         Function to export the swmm flo to the hdf5 file
         """
@@ -11996,9 +11996,32 @@ class Flo2dGeoPackage(GeoPackageUtils):
             if self.is_table_empty("swmmflo"):
                 return False
 
-            swmmflo_sql = """SELECT fid, swmmchar, swmm_jt, swmm_iden, intype, swmm_length, swmm_width, 
-                                    swmm_height, swmm_coeff, swmm_feature, curbheight
-                             FROM swmmflo ORDER BY swmm_iden;"""
+            if not subdomain:
+                swmmflo_sql = """SELECT fid, swmmchar, swmm_jt, swmm_iden, intype, swmm_length, swmm_width, 
+                                        swmm_height, swmm_coeff, swmm_feature, curbheight
+                                 FROM swmmflo ORDER BY swmm_iden;"""
+            else:
+                swmmflo_sql = f"""
+                                SELECT 
+                                    sf.fid,
+                                    sf.swmmchar, 
+                                    md.domain_cell, 
+                                    sf.swmm_iden, 
+                                    sf.intype, 
+                                    sf.swmm_length, 
+                                    sf.swmm_width, 
+                                    sf.swmm_height, 
+                                    sf.swmm_coeff, 
+                                    sf.swmm_feature, 
+                                    sf.curbheight
+                                FROM 
+                                    swmmflo AS sf
+                                JOIN
+                                    schema_md_cells md ON sf.swmm_jt = md.grid_fid
+                                 WHERE 
+                                    md.domain_fid = {subdomain}
+                                ORDER BY sf.swmm_iden;
+                                """
 
             swmmflo_rows = self.execute(swmmflo_sql).fetchall()
             if not swmmflo_rows:
@@ -12047,20 +12070,41 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
         except Exception as e:
             QApplication.restoreOverrideCursor()
-            self.uc.show_error("ERROR 101218.1618: exporting SWMMFLO.DAT failed!.\n", e)
+            self.uc.show_error("ERROR 101218.1618: exporting SWMMFLO to hdf5 file failed!.\n", e)
             return False
 
-    def export_swmmflo_dat(self, outdir):
+    def export_swmmflo_dat(self, outdir, subdomain):
         # check if there is any SWMM data defined.
         try:
             if self.is_table_empty("swmmflo"):
                 return False
-            # swmmflo_sql = '''SELECT swmmchar, swmm_jt, swmm_iden, intype, swmm_length, swmm_width, swmm_height, swmm_coeff, flapgate, curbheight
-            #                  FROM swmmflo ORDER BY fid;'''
 
-            swmmflo_sql = """SELECT swmmchar, swmm_jt, swmm_iden, intype, swmm_length, swmm_width, 
-                                    swmm_height, swmm_coeff, swmm_feature, curbheight
-                             FROM swmmflo ORDER BY swmm_iden;"""
+            if not subdomain:
+                swmmflo_sql = """SELECT swmmchar, swmm_jt, swmm_iden, intype, swmm_length, swmm_width, 
+                                        swmm_height, swmm_coeff, swmm_feature, curbheight
+                                 FROM swmmflo ORDER BY swmm_iden;"""
+            else:
+                swmmflo_sql = f"""
+                                SELECT 
+                                    sf.swmmchar, 
+                                    md.domain_cell, 
+                                    sf.swmm_iden, 
+                                    sf.intype, 
+                                    sf.swmm_length, 
+                                    sf.swmm_width, 
+                                    sf.swmm_height, 
+                                    sf.swmm_coeff, 
+                                    sf.swmm_feature, 
+                                    sf.curbheight
+                                FROM 
+                                    swmmflo AS sf
+                                JOIN
+                                    schema_md_cells md ON sf.swmm_jt = md.grid_fid
+                                 WHERE 
+                                    md.domain_fid = {subdomain}
+                                ORDER BY sf.swmm_iden;
+                                """
+
             line1 = "{0}  {1} {2} {3} {4} {5} {6} {7} {8} {9}\n"
 
             swmmflo_rows = self.execute(swmmflo_sql).fetchall()
