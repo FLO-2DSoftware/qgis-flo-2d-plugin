@@ -479,7 +479,10 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 if "TS_INF_DATA" in inflow_group.datasets:
                     for tsd in inflow_group.datasets["TS_INF_DATA"].data:
                         ts_id, hpj1, hpj2, hpj3 = tsd
-                        tsd_sql += [(ts_id, hpj1, hpj2, hpj3)]
+                        if hpj3 == -9999:
+                            tsd_sql += [(ts_id, hpj1, hpj2, None)]
+                        else:
+                            tsd_sql += [(ts_id, hpj1, hpj2, hpj3)]
 
                 # Import reservoir
                 if "RESERVOIRS" in inflow_group.datasets:
@@ -6229,6 +6232,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 del options["COURANTC"]
             if options["LGPLOT"] != "2":
                 del options["GRAPTIM"]
+            if options["LGPLOT"] == "2":
+                options["IDEPLT"] = "0"
             if options["MSTREET"] == "0":
                 del options["COURANTST"]
 
@@ -6238,7 +6243,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             if options["LGPLOT"] == "0":
                 options["IDEPLT"] = "0"
                 self.set_cont_par("IDEPLT", 0)
-            elif first_gid > 0:
+            elif options["IDEPLT"] == "0" and first_gid > 0:
                 options["IDEPLT"] = first_gid
                 self.set_cont_par("IDEPLT", first_gid)
             # elif options["IRAIN"] != "0":
@@ -6681,35 +6686,77 @@ class Flo2dGeoPackage(GeoPackageUtils):
     #     #     QApplication.setOverrideCursor(Qt.WaitCursor)
     #     #     return False
 
-    def export_inflow(self, output=None):
+    def export_inflow(self, output=None, subdomain=None):
         if self.parsed_format == self.FORMAT_DAT:
-            return self.export_inflow_dat(output)
+            return self.export_inflow_dat(output, subdomain)
         elif self.parsed_format == self.FORMAT_HDF5:
-            return self.export_inflow_hdf5()
+            return self.export_inflow_hdf5(subdomain)
 
-    def export_inflow_hdf5(self):
+    def export_inflow_hdf5(self, subdomain):
         """
         Function to export inflow data to hdf5
         """
         if self.is_table_empty("inflow") and self.is_table_empty("reservoirs") and self.is_table_empty("tailing_reservoirs"):
             return False
+
+        # Create the SQL queries
         cont_sql = """SELECT value FROM cont WHERE name = ?;"""
         inflow_sql = """SELECT fid, time_series_fid, ident, inoutfc FROM inflow WHERE fid = ?;"""
-        inflow_cells_sql = """SELECT inflow_fid, grid_fid FROM inflow_cells ORDER BY inflow_fid, grid_fid;"""
         ts_data_sql = (
             """SELECT series_fid, time, value, value2 FROM inflow_time_series_data WHERE series_fid = ? ORDER BY fid;"""
         )
 
-        three_values = "{0}  {1}  {2}"
-        four_values = "{0}  {1}  {2}  {3}"
-        five_values = "{0}  {1}  {2}  {3}  {4}"
+        if not subdomain:
+            inflow_cells_sql = """SELECT inflow_fid, grid_fid FROM inflow_cells ORDER BY inflow_fid, grid_fid;"""
+        else:
+            inflow_cells_sql = f"""
+                                SELECT 
+                                    ic.inflow_fid, 
+                                    md.domain_cell 
+                                FROM 
+                                    inflow_cells AS ic
+                                JOIN
+                                    schema_md_cells md ON ic.grid_fid = md.grid_fid
+                                WHERE 
+                                    md.domain_fid = {subdomain}
+                                ORDER BY ic.inflow_fid, md.domain_cell;
+                                """
 
+        four_values = "{0}  {1}  {2}  {3}"
+        ts_series_fid = []
+
+        # Create the INF_GLOBAL dataset
         ideplt = self.execute(cont_sql, ("IDEPLT",)).fetchone()
+        # Adjust the ideplt grid number to the multi domain cell
+        if subdomain:
+            ideplt = self.execute(f"""
+                                    SELECT
+                                        md.domain_cell 
+                                    FROM 
+                                        schema_md_cells AS md
+                                    JOIN 
+                                        grid g ON g.fid = md.grid_fid
+                                    WHERE 
+                                        g.fid = {ideplt[0]} AND md.domain_fid = {subdomain}
+                                    """).fetchone()
+        if ideplt is None:
+            if not subdomain:
+                first_gid = self.execute("""SELECT grid_fid FROM inflow_cells ORDER BY fid LIMIT 1;""").fetchone()
+            else:
+                first_gid = self.execute(f"""SELECT 
+                                                md.domain_cell 
+                                            FROM 
+                                                inflow_cells AS ic
+                                            JOIN
+                                                schema_md_cells md ON ic.grid_fid = md.grid_fid
+                                            WHERE 
+                                                md.domain_fid = {subdomain}
+                                            ORDER BY ic.fid LIMIT 1;""").fetchone()
+            ideplt = first_gid if first_gid is not None else (0,)
+
         if ideplt:
             ideplt = ideplt[0]
-        else:
-            first_gid = self.execute("""SELECT grid_fid FROM inflow_cells ORDER BY fid LIMIT 1;""").fetchone()[0]
-            ideplt = first_gid if first_gid is not None else 0
+
         ihourdaily = self.execute(cont_sql, ("IHOURDAILY",)).fetchone()
         if ihourdaily:
             ihourdaily = ihourdaily[0]
@@ -6723,11 +6770,59 @@ class Flo2dGeoPackage(GeoPackageUtils):
         for data in inflow_global:
             bc_group.datasets["Inflow/INF_GLOBAL"].data.append(data)
 
+        # Create the TS_INF_DATA dataset
+        ts_fids = self.execute("SELECT DISTINCT time_series_fid FROM inflow;").fetchall()
+        for (ts_fid,) in ts_fids:
+            try:
+                for tsd_row in self.execute(ts_data_sql, (ts_fid,)):
+                    tsd_row = [x if (x is not None and x != "") else -9999 for x in tsd_row]
+                    bc_group.datasets["Inflow/TS_INF_DATA"].data.append(
+                        create_array(four_values, 4, np.float64, tuple(tsd_row)))
+            except:
+                bc_group.create_dataset('Inflow/TS_INF_DATA', [])
+                for tsd_row in self.execute(ts_data_sql, (ts_fid,)):
+                    tsd_row = [x if (x is not None and x != "") else -9999 for x in tsd_row]
+                    bc_group.datasets["Inflow/TS_INF_DATA"].data.append(
+                        create_array(four_values, 4, np.float64, tuple(tsd_row)))
+
+            #     ts_series_fid.append(ts_fid)
+            # ts_series_fid.append(ts_fid)
+
+        max_ts_series_fid = self.execute("""SELECT MAX(series_fid) FROM inflow_time_series_data;""").fetchone()
+        if max_ts_series_fid:
+            max_ts_series_fid = max_ts_series_fid[0]
+
+        # Divide inflow line hydrograph between grid elements
+        has_line_hyd = self.execute("SELECT fid, time_series_fid FROM inflow WHERE geom_type = 'line';").fetchall()
+        split_ts = {}
+        if has_line_hyd:
+            for (line_hyd, time_series_fid) in has_line_hyd:
+                line_cells = self.execute(f"SELECT grid_fid FROM inflow_cells WHERE inflow_fid = '{line_hyd}';").fetchall()
+                if subdomain:
+                    subdomain_line_cells = self.execute(f"""
+                    SELECT 
+                        md.domain_cell 
+                    FROM 
+                        inflow_cells AS ic
+                    JOIN
+                        schema_md_cells md ON ic.grid_fid = md.grid_fid
+                    WHERE 
+                        inflow_fid = '{line_hyd}' AND md.domain_fid = {subdomain};
+                    """).fetchall()
+                    if len(subdomain_line_cells) == 0:
+                        continue
+                max_ts_series_fid += 1
+                split_ts[line_hyd] = max_ts_series_fid
+                for tsd_row in self.execute(ts_data_sql, (time_series_fid,)):
+                    tsd_row = [x if (x is not None and x != "") else -9999 for x in tsd_row]
+                    _, time, value, value2 = tsd_row
+                    bc_group.datasets["Inflow/TS_INF_DATA"].data.append(
+                        create_array(four_values, 4, np.float64, (split_ts[line_hyd] , time, round(value/len(line_cells), 2), value2)))
+
         previous_iid = -1
         row = None
 
         warning = ""
-        ts_series_fid = []
 
         if not self.is_table_empty("inflow"):
             for iid, gid in self.execute(inflow_cells_sql):
@@ -6751,51 +6846,47 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 fid, ts_fid, ident, inoutfc = row
                 if ident == 'F':
                     try:
+                        if fid in split_ts.keys():
+                            ts_fid = split_ts[fid]
                         bc_group.datasets["Inflow/INF_GRID"].data.append(
                             create_array(four_values, 4, np.int_, (0, inoutfc, gid, ts_fid)))
-                        if ts_fid not in ts_series_fid:
-                            for tsd_row in self.execute(ts_data_sql, (ts_fid,)):
-                                tsd_row = [x if (x is not None and x != "") else -9999 for x in tsd_row]
-                                bc_group.datasets["Inflow/TS_INF_DATA"].data.append(
-                                    create_array(four_values, 4, np.float64, tuple(tsd_row)))
-                            ts_series_fid.append(ts_fid)
                     except:
                         bc_group.create_dataset('Inflow/INF_GRID', [])
+                        if fid in split_ts.keys():
+                            ts_fid = split_ts[fid]
                         bc_group.datasets["Inflow/INF_GRID"].data.append(
                             create_array(four_values, 4, np.int_, (0, inoutfc, gid, ts_fid)))
-                        bc_group.create_dataset('Inflow/TS_INF_DATA', [])
-                        for tsd_row in self.execute(ts_data_sql, (ts_fid,)):
-                            tsd_row = [x if (x is not None and x != "") else -9999 for x in tsd_row]
-                            bc_group.datasets["Inflow/TS_INF_DATA"].data.append(
-                                create_array(four_values, 4, np.float64, tuple(tsd_row)))
-                        ts_series_fid.append(ts_fid)
 
                 if ident == 'C':
                     try:
                         bc_group.datasets["Inflow/INF_GRID"].data.append(
                             create_array(four_values, 4, np.int_, (1, inoutfc, gid, ts_fid)))
-                        if ts_fid not in ts_series_fid:
-                            for tsd_row in self.execute(ts_data_sql, (ts_fid,)):
-                                tsd_row = [x if (x is not None and x != "") else -9999 for x in tsd_row]
-                                bc_group.datasets["Inflow/TS_INF_DATA"].data.append(
-                                    create_array(four_values, 4, np.float64, tuple(tsd_row)))
-                            ts_series_fid.append(ts_fid)
                     except:
                         bc_group.create_dataset('Inflow/INF_GRID', [])
                         bc_group.datasets["Inflow/INF_GRID"].data.append(
                             create_array(four_values, 4, np.int_, (1, inoutfc, gid, ts_fid)))
-                        bc_group.create_dataset('Inflow/TS_INF_DATA', [])
-                        for tsd_row in self.execute(ts_data_sql, (ts_fid,)):
-                            tsd_row = [x if (x is not None and x != "") else -9999 for x in tsd_row]
-                            bc_group.datasets["Inflow/TS_INF_DATA"].data.append(
-                                create_array(four_values, 4, np.float64, tuple(tsd_row)))
-                        ts_series_fid.append(ts_fid)
 
         if not self.is_table_empty("tailing_reservoirs"):
 
-            schematic_tailings_reservoirs_sql = (
-                """SELECT grid_fid, wsel, n_value, tailings FROM tailing_reservoirs ORDER BY fid;"""
-            )
+            if not subdomain:
+                schematic_tailings_reservoirs_sql = (
+                    """SELECT grid_fid, wsel, n_value, tailings FROM tailing_reservoirs ORDER BY fid;"""
+                )
+            else:
+                schematic_tailings_reservoirs_sql = f"""
+                                        SELECT 
+                                            md.domain_cell, 
+                                            tr.wsel, 
+                                            tr.n_value,
+                                            tr.tailings
+                                        FROM 
+                                            tailing_reservoirs AS tr
+                                        JOIN
+                                            schema_md_cells md ON tr.grid_fid = md.grid_fid
+                                        WHERE 
+                                            md.domain_fid = {subdomain}
+                                        ORDER BY tr.fid;"""
+
             for res in self.execute(schematic_tailings_reservoirs_sql):
                 res = [x if (x is not None and x != "") else -9999 for x in res]
                 try:
@@ -6808,9 +6899,24 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
         if not self.is_table_empty("reservoirs"):
 
-            schematic_reservoirs_sql = (
-                """SELECT grid_fid, wsel, n_value, -9999 FROM reservoirs ORDER BY fid;"""
-            )
+            if not subdomain:
+                schematic_reservoirs_sql = (
+                    """SELECT grid_fid, wsel, n_value, -9999 FROM reservoirs ORDER BY fid;"""
+                )
+            else:
+                schematic_reservoirs_sql = f"""SELECT 
+                                                    md.domain_cell, 
+                                                    r.wsel, 
+                                                    r.n_value,
+                                                    -9999 AS tailings 
+                                                FROM 
+                                                    reservoirs AS r
+                                                JOIN
+                                                    schema_md_cells md ON r.grid_fid = md.grid_fid
+                                                WHERE 
+                                                    md.domain_fid = {subdomain}
+                                                ORDER BY r.fid;"""
+
             for res in self.execute(schematic_reservoirs_sql):
                 res = [x if (x is not None and x != "") else -9999 for x in res]
                 try:
@@ -6825,157 +6931,281 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
         return True
 
-    def export_inflow_dat(self, outdir):
+    def export_inflow_dat(self, outdir, subdomain):
         # check if there are any inflows defined
-        try:
-            if self.is_table_empty("inflow") and self.is_table_empty("reservoirs") and self.is_table_empty(
-                    "tailing_reservoirs"):
-                return False
-            cont_sql = """SELECT value FROM cont WHERE name = ?;"""
-            inflow_sql = """SELECT fid, time_series_fid, ident, inoutfc FROM inflow WHERE fid = ?;"""
+        # try:
+        if self.is_table_empty("inflow") and self.is_table_empty("reservoirs") and self.is_table_empty(
+                "tailing_reservoirs"):
+            return False
+        cont_sql = """SELECT value FROM cont WHERE name = ?;"""
+        inflow_sql = """SELECT fid, time_series_fid, ident, inoutfc FROM inflow WHERE fid = ?;"""
+        ts_data_sql = (
+            """SELECT time, value, value2 FROM inflow_time_series_data WHERE series_fid = ? ORDER BY fid;"""
+        )
+
+        if not subdomain:
             inflow_cells_sql = """SELECT inflow_fid, grid_fid FROM inflow_cells ORDER BY inflow_fid, grid_fid;"""
-            ts_data_sql = (
-                """SELECT time, value, value2 FROM inflow_time_series_data WHERE series_fid = ? ORDER BY fid;"""
-            )
+        else:
+            inflow_cells_sql = f"""
+                                SELECT 
+                                    ic.inflow_fid, 
+                                    md.domain_cell 
+                                FROM 
+                                    inflow_cells AS ic
+                                JOIN
+                                    schema_md_cells md ON ic.grid_fid = md.grid_fid
+                                WHERE 
+                                    md.domain_fid = {subdomain}
+                                ORDER BY ic.inflow_fid, md.domain_cell;
+                                """
 
-            # Divide inflow line hydrograph between grid elements
-            has_line_hyd = self.execute("SELECT fid FROM inflow WHERE geom_type = 'line';").fetchall()
-            line_cells_dict = {}
-            if has_line_hyd:
-                for line_hyd in has_line_hyd:
-                    line_cells = self.execute(f"SELECT grid_fid FROM inflow_cells WHERE inflow_fid = '{line_hyd[0]}';").fetchall()
-                    for cell in line_cells:
-                        line_cells_dict[cell[0]] = len(line_cells)
+        # Divide inflow line hydrograph between grid elements
+        has_line_hyd = self.execute("SELECT fid FROM inflow WHERE geom_type = 'line';").fetchall()
+        line_cells_dict = {}
+        if has_line_hyd:
+            for line_hyd in has_line_hyd:
+                line_cells = self.execute(f"SELECT grid_fid FROM inflow_cells WHERE inflow_fid = '{line_hyd[0]}';").fetchall()
+                n_cells = len(line_cells)
+                if subdomain:
+                    line_cells = self.execute(
+                        f"""SELECT 
+                                md.domain_cell 
+                            FROM 
+                                inflow_cells AS ic
+                            JOIN
+                                schema_md_cells md ON ic.grid_fid = md.grid_fid
+                            WHERE 
+                                ic.inflow_fid = '{line_hyd[0]}' AND md.domain_fid = {subdomain};
+                            """).fetchall()
+                for cell in line_cells:
+                    line_cells_dict[cell[0]] = n_cells
 
-            head_line = " {0: <15} {1}"
-            inf_line = "{0: <15} {1: <15} {2}"
-            tsd_line = "H   {0: <15} {1: <15} {2}"
+        head_line = " {0: <15} {1}"
+        inf_line = "{0: <15} {1: <15} {2}"
+        tsd_line = "H   {0: <15} {1: <15} {2}"
 
-            ideplt = self.execute(cont_sql, ("IDEPLT",)).fetchone()
-            ihourdaily = self.execute(cont_sql, ("IHOURDAILY",)).fetchone()
+        ideplt = self.execute(cont_sql, ("IDEPLT",)).fetchone()
+        # Adjust the ideplt grid number to the multi domain cell
+        if subdomain:
+            ideplt = self.execute(f"""
+                                    SELECT
+                                        md.domain_cell 
+                                    FROM 
+                                        schema_md_cells AS md
+                                    JOIN 
+                                        grid g ON g.fid = md.grid_fid
+                                    WHERE 
+                                        g.fid = {ideplt[0]} AND md.domain_fid = {subdomain}
+                                    """).fetchone()
 
-            if ihourdaily is None:
-                ihourdaily = (0,)
-            if ideplt is None:
+        ihourdaily = self.execute(cont_sql, ("IHOURDAILY",)).fetchone()
+
+        if ihourdaily is None:
+            ihourdaily = (0,)
+
+        if ideplt is None:
+            if not subdomain:
                 first_gid = self.execute("""SELECT grid_fid FROM inflow_cells ORDER BY fid LIMIT 1;""").fetchone()
-                ideplt = first_gid if first_gid is not None else (0,)
+            else:
+                first_gid = self.execute(f"""SELECT 
+                                                md.domain_cell 
+                                            FROM 
+                                                inflow_cells AS ic
+                                            JOIN
+                                                schema_md_cells md ON ic.grid_fid = md.grid_fid
+                                            WHERE 
+                                                md.domain_fid = {subdomain}
+                                            ORDER BY ic.fid LIMIT 1;""").fetchone()
+            ideplt = first_gid if first_gid is not None else (0,)
 
-            inflow = os.path.join(outdir, "INFLOW.DAT")
-            previous_iid = -1
-            row = None
+        inflow = os.path.join(outdir, "INFLOW.DAT")
+        previous_iid = -1
+        row = None
 
-            warning = ""
-            inflow_lines = []
+        warning = ""
+        inflow_lines = []
 
-            if not self.is_table_empty("inflow"):
-                for iid, gid in self.execute(inflow_cells_sql):
-                    if previous_iid != iid:
-                        row = self.execute(inflow_sql, (iid,)).fetchone()
-                        if row:
-                            row = [x if x is not None and x != "" else 0 for x in row]
-                            if previous_iid == -1:
-                                inflow_lines.append(head_line.format(ihourdaily[0], ideplt[0]))
-                            previous_iid = iid
-                        else:
-                            warning += (
-                                    "Data for inflow in cell "
-                                    + str(gid)
-                                    + " not found in 'Inflow' table (wrong inflow 'id' "
-                                    + str(iid)
-                                    + " in 'Inflow Cells' table).\n\n"
-                            )
-                            continue
+        if not self.is_table_empty("inflow"):
+            for iid, gid in self.execute(inflow_cells_sql):
+                if previous_iid != iid:
+                    row = self.execute(inflow_sql, (iid,)).fetchone()
+                    if row:
+                        row = [x if x is not None and x != "" else 0 for x in row]
+                        if previous_iid == -1:
+                            inflow_lines.append(head_line.format(ihourdaily[0], ideplt[0]))
+                        previous_iid = iid
                     else:
-                        pass
+                        warning += (
+                                "Data for inflow in cell "
+                                + str(gid)
+                                + " not found in 'Inflow' table (wrong inflow 'id' "
+                                + str(iid)
+                                + " in 'Inflow Cells' table).\n\n"
+                        )
+                        continue
+                else:
+                    pass
 
-                    fid, ts_fid, ident, inoutfc = row  # ident is 'F' or 'C'
-                    inflow_lines.append(inf_line.format(ident, inoutfc, gid))
-                    series = self.execute(ts_data_sql, (ts_fid,))
-                    for tsd_row in series:
-                        tsd_row = [x if x is not None else "" for x in tsd_row]
-                        if gid in line_cells_dict.keys():
-                            inflow_lines.append(tsd_line.format(tsd_row[0], round(tsd_row[1]/line_cells_dict.get(gid), 2), tsd_row[2]).rstrip())
-                        else:
-                            inflow_lines.append(tsd_line.format(tsd_row[0], tsd_row[1], tsd_row[2]).rstrip())
+                fid, ts_fid, ident, inoutfc = row  # ident is 'F' or 'C'
+                inflow_lines.append(inf_line.format(ident, inoutfc, gid))
+                series = self.execute(ts_data_sql, (ts_fid,))
+                for tsd_row in series:
+                    tsd_row = [x if x is not None and x not in [-9999] else "" for x in tsd_row]
+                    if gid in line_cells_dict.keys():
+                        inflow_lines.append(tsd_line.format(tsd_row[0], round(tsd_row[1]/line_cells_dict.get(gid), 2), tsd_row[2]).rstrip())
+                    else:
+                        inflow_lines.append(tsd_line.format(tsd_row[0], round(tsd_row[1], 2), tsd_row[2]).rstrip())
 
-            mud = self.gutils.get_cont_par("MUD")
-            ised = self.gutils.get_cont_par("ISED")
+        mud = self.gutils.get_cont_par("MUD")
+        ised = self.gutils.get_cont_par("ISED")
 
-            if not self.is_table_empty("reservoirs"):
-                if mud == '0':
+        if not self.is_table_empty("reservoirs"):
+            if mud == '0':
+                if not subdomain:
                     schematic_reservoirs_sql = (
                         """SELECT grid_fid, wsel, n_value FROM reservoirs ORDER BY fid;"""
                     )
+                else:
+                    schematic_reservoirs_sql = f"""
+                                                SELECT 
+                                                    md.domain_cell,
+                                                    r.wsel, 
+                                                    r.n_value 
+                                                FROM 
+                                                    reservoirs AS r
+                                                JOIN
+                                                    schema_md_cells md ON r.grid_fid = md.grid_fid
+                                                WHERE 
+                                                    md.domain_fid = {subdomain}
+                                                ORDER BY r.fid;"""
 
-                    res_line1a = "R   {0: <15} {1:<10.2f} {2:<10.2f}"
+                res_line1a = "R   {0: <15} {1:<10.2f} {2:<10.2f}"
 
-                    for res in self.execute(schematic_reservoirs_sql):
-                        res = [x if x is not None else "" for x in res]
-                        inflow_lines.append(res_line1a.format(*res))
-                if mud == '2':
+                for res in self.execute(schematic_reservoirs_sql):
+                    res = [x if x is not None else "" for x in res]
+                    inflow_lines.append(res_line1a.format(*res))
+            if mud == '2':
+                if not subdomain:
                     schematic_reservoirs_sql = (
                         """SELECT grid_fid, wsel, 0 AS tailings, n_value FROM reservoirs ORDER BY fid;"""
                     )
+                else:
+                    schematic_reservoirs_sql = f"""SELECT 
+                                                    md.domain_cell, 
+                                                    r.wsel, 
+                                                    0 AS tailings, 
+                                                    r.n_value 
+                                                FROM 
+                                                    reservoirs AS r
+                                                JOIN
+                                                    schema_md_cells md ON r.grid_fid = md.grid_fid
+                                                WHERE 
+                                                    md.domain_fid = {subdomain}
+                                                ORDER BY r.fid;"""
 
-                    res_line1a = "R   {0: <15} {1:<10.2f} {2:<10.2f} {3:<10.2f}"
+                res_line1a = "R   {0: <15} {1:<10.2f} {2:<10.2f} {3:<10.2f}"
 
-                    for res in self.execute(schematic_reservoirs_sql):
-                        res = [x if x is not None else "" for x in res]
-                        inflow_lines.append(res_line1a.format(*res))
+                for res in self.execute(schematic_reservoirs_sql):
+                    res = [x if x is not None else "" for x in res]
+                    inflow_lines.append(res_line1a.format(*res))
 
-            if not self.is_table_empty("tailing_reservoirs"):
-                if mud == '2':
+        if not self.is_table_empty("tailing_reservoirs"):
+            if mud == '2':
+                if not subdomain:
                     schematic_tailing_reservoirs_sql = (
                         """SELECT grid_fid, wsel, tailings, n_value FROM tailing_reservoirs ORDER BY fid;"""
                     )
+                else:
+                    schematic_tailing_reservoirs_sql = f"""
+                        SELECT 
+                            md.domain_cell, 
+                            tr.wsel, 
+                            tr.tailings, 
+                            tr.n_value 
+                        FROM 
+                            tailing_reservoirs AS tr
+                        JOIN
+                            schema_md_cells md ON tr.grid_fid = md.grid_fid
+                        WHERE 
+                            md.domain_fid = {subdomain}
+                        ORDER BY tr.fid;"""
 
-                    res_line1at = "R   {0: <15} {1:<10.2f} {2:<10.2f} {3:<10.2f}"
 
-                    for res in self.execute(schematic_tailing_reservoirs_sql):
-                        res = [x if x is not None else "" for x in res]
-                        inflow_lines.append(res_line1at.format(*res))
-                if mud == '1':
+                res_line1at = "R   {0: <15} {1:<10.2f} {2:<10.2f} {3:<10.2f}"
+
+                for res in self.execute(schematic_tailing_reservoirs_sql):
+                    res = [x if x is not None else "" for x in res]
+                    inflow_lines.append(res_line1at.format(*res))
+            if mud == '1':
+                if not subdomain:
                     schematic_tailing_reservoirs_sql = (
                         """SELECT grid_fid, tailings, n_value FROM tailing_reservoirs ORDER BY fid;"""
                     )
+                else:
+                    schematic_tailing_reservoirs_sql = f"""
+                        SELECT 
+                            md.domain_cell, 
+                            tr.tailings, 
+                            tr.n_value 
+                        FROM 
+                            tailing_reservoirs AS tr
+                        JOIN
+                            schema_md_cells md ON tr.grid_fid = md.grid_fid
+                        WHERE 
+                            md.domain_fid = {subdomain}
+                        ORDER BY tr.fid;"""
 
-                    res_line1at = "R   {0: <15} {1:<10.2f} {2:<10.2f}"
+                res_line1at = "R   {0: <15} {1:<10.2f} {2:<10.2f}"
 
-                    for res in self.execute(schematic_tailing_reservoirs_sql):
-                        res = [x if x is not None else "" for x in res]
-                        inflow_lines.append(res_line1at.format(*res))
+                for res in self.execute(schematic_tailing_reservoirs_sql):
+                    res = [x if x is not None else "" for x in res]
+                    inflow_lines.append(res_line1at.format(*res))
 
-                if mud == '0' and ised == '1':
+            if mud == '0' and ised == '1':
+                if not subdomain:
                     schematic_tailing_reservoirs_sql = (
                         """SELECT grid_fid, tailings, n_value FROM tailing_reservoirs ORDER BY fid;"""
                     )
+                else:
+                    schematic_tailing_reservoirs_sql = f"""
+                        SELECT 
+                            md.domain_cell, 
+                            tr.tailings, 
+                            tr.n_value 
+                        FROM 
+                            tailing_reservoirs AS tr
+                        JOIN
+                            schema_md_cells md ON tr.grid_fid = md.grid_fid
+                        WHERE 
+                            md.domain_fid = {subdomain}
+                        ORDER BY tr.fid;"""
 
-                    res_line1at = "R   {0: <15} {1:<10.2f} {2:<10.2f}"
+                res_line1at = "R   {0: <15} {1:<10.2f} {2:<10.2f}"
 
-                    for res in self.execute(schematic_tailing_reservoirs_sql):
-                        res = [x if x is not None else "" for x in res]
-                        inflow_lines.append(res_line1at.format(*res))
+                for res in self.execute(schematic_tailing_reservoirs_sql):
+                    res = [x if x is not None else "" for x in res]
+                    inflow_lines.append(res_line1at.format(*res))
 
-            if inflow_lines:
-                with open(inflow, "w") as inf:
-                    for line in inflow_lines:
-                        if line:
-                            inf.write(line + "\n")
+        if inflow_lines:
+            with open(inflow, "w") as inf:
+                for line in inflow_lines:
+                    if line:
+                        inf.write(line + "\n")
 
-            QApplication.restoreOverrideCursor()
-            if warning != "":
-                self.uc.show_warn(
-                    "ERROR 180319.1020: error while exporting INFLOW.DAT!\n\n"
-                    + warning
-                    + "\n\nWere the Boundary Conditions schematized? "
-                )
+        QApplication.restoreOverrideCursor()
+        if warning != "":
+            self.uc.show_warn(
+                "ERROR 180319.1020: error while exporting INFLOW.DAT!\n\n"
+                + warning
+                + "\n\nWere the Boundary Conditions schematized? "
+            )
 
-            return True
-
-        except Exception as e:
-            QApplication.restoreOverrideCursor()
-            self.uc.show_error("ERROR 101218.1542: exporting INFLOW.DAT failed!.\n", e)
-            return False
+        return True
+        #
+        # except Exception as e:
+        #     QApplication.restoreOverrideCursor()
+        #     self.uc.show_error("ERROR 101218.1542: exporting INFLOW.DAT failed!.\n", e)
+        #     return False
 
     def export_outrc(self, output=None):
         if self.parsed_format == self.FORMAT_DAT:

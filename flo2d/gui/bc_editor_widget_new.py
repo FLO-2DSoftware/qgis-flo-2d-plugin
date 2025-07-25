@@ -474,6 +474,7 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
             self.ts_fid = 0
         else:
             self.ts_fid = int(self.ts_fid)
+        self.uc.log_info(str(self.ts_fid))
         self.inflow_tseries_cbo.setCurrentIndex(self.ts_fid)
 
         if self.inflow.ident == "F":
@@ -525,7 +526,7 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
         # Sometimes it is an empty string, then set it to the first time series
         else:
             self.inflow_tseries_cbo.setCurrentIndex(0)
-        self.inflow_data_changed()
+        # self.inflow_data_changed() this was removed because it was not populating correclty when importing data
 
     def inflow_data_changed(self):
         """
