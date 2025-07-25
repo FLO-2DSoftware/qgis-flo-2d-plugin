@@ -12439,20 +12439,36 @@ class Flo2dGeoPackage(GeoPackageUtils):
             QApplication.restoreOverrideCursor()
             return False
 
-    def export_swmmoutf(self, output=None):
+    def export_swmmoutf(self, output=None, subdomain=None):
         if self.parsed_format == self.FORMAT_DAT:
-            return self.export_swmmoutf_dat(output)
+            return self.export_swmmoutf_dat(output, subdomain)
         elif self.parsed_format == self.FORMAT_HDF5:
-            return self.export_swmmoutf_hdf5()
+            return self.export_swmmoutf_hdf5(subdomain)
 
-    def export_swmmoutf_hdf5(self):
+    def export_swmmoutf_hdf5(self, subdomain):
         """
         Function to export the swmmoutf to hdf5 file
         """
         try:
             if self.is_table_empty("swmmoutf"):
                 return False
-            swmmoutf_sql = """SELECT fid, name, grid_fid, outf_flo FROM swmmoutf ORDER BY name;"""
+
+            if not subdomain:
+                swmmoutf_sql = """SELECT fid, name, grid_fid, outf_flo FROM swmmoutf ORDER BY name;"""
+            else:
+                swmmoutf_sql = f"""
+                SELECT 
+                    sf.fid,
+                    sf.name, 
+                    md.domain_cell, 
+                    sf.outf_flo 
+                FROM
+                    swmmoutf AS sf
+                JOIN
+                    schema_md_cells md ON sf.grid_fid = md.grid_fid
+                WHERE 
+                    md.domain_fid = {subdomain}    
+                ORDER BY sf.name;"""
 
             swmmoutf_rows = self.execute(swmmoutf_sql).fetchall()
             if not swmmoutf_rows:
@@ -12489,12 +12505,27 @@ class Flo2dGeoPackage(GeoPackageUtils):
             self.uc.show_error("ERROR 101218.1620: exporting SWMMOUTF.DAT failed!.\n", e)
             return False
 
-    def export_swmmoutf_dat(self, outdir):
+    def export_swmmoutf_dat(self, outdir, subdomain):
         # check if there is any SWMM data defined.
         try:
             if self.is_table_empty("swmmoutf"):
                 return False
-            swmmoutf_sql = """SELECT name, grid_fid, outf_flo FROM swmmoutf ORDER BY name;"""
+
+            if not subdomain:
+                swmmoutf_sql = """SELECT name, grid_fid, outf_flo FROM swmmoutf ORDER BY name;"""
+            else:
+                swmmoutf_sql = f"""
+                SELECT 
+                    sf.name, 
+                    md.domain_cell, 
+                    sf.outf_flo 
+                FROM
+                    swmmoutf AS sf
+                JOIN
+                    schema_md_cells md ON sf.grid_fid = md.grid_fid
+                WHERE 
+                    md.domain_fid = {subdomain}    
+                ORDER BY sf.name;"""
 
             line1 = "{0}  {1}  {2}\n"
 

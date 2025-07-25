@@ -201,7 +201,7 @@ class ExportMultipleDomainsDialog(qtBaseClass, uiDialog):
                 "export_lid_volume",
                 "export_swmmflo",
                 # "export_swmmflort",
-                # "export_swmmoutf",
+                "export_swmmoutf",
                 # "export_swmmflodropbox",
                 # "export_sdclogging",
                 # "export_wsurf",
@@ -310,12 +310,12 @@ class ExportMultipleDomainsDialog(qtBaseClass, uiDialog):
                 if "Rain" not in dlg_components.components:
                     export_calls.remove("export_rain")
 
-                # if "Storm Drain" not in dlg_components.components:
-                #     export_calls.remove("export_swmmflo")
-                #     export_calls.remove("export_swmmflort")
-                #     export_calls.remove("export_swmmoutf")
-                #     export_calls.remove("export_swmmflodropbox")
-                #     export_calls.remove("export_sdclogging")
+                if "Storm Drain" not in dlg_components.components:
+                    export_calls.remove("export_swmmflo")
+                    export_calls.remove("export_swmmflort")
+                    export_calls.remove("export_swmmoutf")
+                    export_calls.remove("export_swmmflodropbox")
+                    export_calls.remove("export_sdclogging")
 
                 if "Spatial Shallow-n" not in dlg_components.components:
                     export_calls.remove("export_shallowNSpatial")
