@@ -6232,6 +6232,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 del options["COURANTC"]
             if options["LGPLOT"] != "2":
                 del options["GRAPTIM"]
+            if options["LGPLOT"] == "2":
+                options["IDEPLT"] = "0"
             if options["MSTREET"] == "0":
                 del options["COURANTST"]
 
