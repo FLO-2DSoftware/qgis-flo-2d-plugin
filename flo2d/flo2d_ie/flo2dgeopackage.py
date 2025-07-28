@@ -12247,25 +12247,52 @@ class Flo2dGeoPackage(GeoPackageUtils):
             self.uc.show_error("ERROR 140424.1828: exporting SDCLOGGING.DAT failed!.\n", e)
             return False
 
-    def export_swmmflort(self, output=None):
+    def export_swmmflort(self, output=None, subdomain=None):
         if self.parsed_format == self.FORMAT_DAT:
-            return self.export_swmmflort_dat(output)
+            return self.export_swmmflort_dat(output, subdomain)
         elif self.parsed_format == self.FORMAT_HDF5:
-            return self.export_swmmflort_hdf5()
+            return self.export_swmmflort_hdf5(subdomain)
 
-    def export_swmmflort_hdf5(self):
+    def export_swmmflort_hdf5(self, subdomain):
         """
         Function to export swmmflort to the hdf5 file.
         """
         if self.is_table_empty("swmmflort") and self.is_table_empty("swmmflo_culvert"):
             return False
 
-        swmmflort_sql = """
-                        SELECT swmmflo.fid as FID, depth, q
-                        FROM swmmflort_data
-                        JOIN swmmflort ON swmmflort_data.swmm_rt_fid = swmmflort.fid
-                        JOIN swmmflo ON swmmflort.grid_fid = swmmflo.swmm_jt;
-                        """
+        if not subdomain:
+            swmmflort_sql = """
+                            SELECT swmmflo.fid as FID, depth, q
+                            FROM swmmflort_data
+                            JOIN swmmflort ON swmmflort_data.swmm_rt_fid = swmmflort.fid
+                            JOIN swmmflo ON swmmflort.grid_fid = swmmflo.swmm_jt;
+                            """
+            culverts_sql = """
+                            SELECT swmmflo.fid as FID, cdiameter, typec, typeen, cubase, multbarrels
+                            FROM swmmflo_culvert
+                            JOIN swmmflo ON swmmflo_culvert.grid_fid = swmmflo.swmm_jt;
+                            """
+        else:
+            swmmflort_sql = f"""
+                            SELECT swmmflo.fid as FID, depth, q
+                            FROM swmmflort_data
+                            JOIN swmmflort ON swmmflort_data.swmm_rt_fid = swmmflort.fid
+                            JOIN swmmflo ON swmmflort.grid_fid = swmmflo.swmm_jt
+                            JOIN
+                            schema_md_cells md ON swmmflort.grid_fid = md.grid_fid
+                            WHERE 
+                            md.domain_fid = {subdomain};
+                            """
+            culverts_sql = f"""
+                            SELECT swmmflo.fid as FID, cdiameter, typec, typeen, cubase, multbarrels
+                            FROM swmmflo_culvert
+                            JOIN swmmflo ON swmmflo_culvert.grid_fid = swmmflo.swmm_jt
+                            JOIN
+                            schema_md_cells md ON swmmflo_culvert.grid_fid = md.grid_fid
+                            WHERE 
+                            md.domain_fid = {subdomain}
+                            """
+
         swmmflort_rows = self.execute(swmmflort_sql).fetchall()
 
         if not swmmflort_rows and self.is_table_empty("swmmflo_culvert"):
@@ -12282,12 +12309,6 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 stormdrain_group.create_dataset('RATING_TABLE', [])
                 stormdrain_group.datasets["RATING_TABLE"].data.append([fid, depth, q])
 
-        culverts_sql = """
-                        SELECT swmmflo.fid as FID, cdiameter, typec, typeen, cubase, multbarrels
-                        FROM swmmflo_culvert
-                        JOIN swmmflo ON swmmflo_culvert.grid_fid = swmmflo.swmm_jt;
-                        """
-
         culverts_rows = self.execute(culverts_sql).fetchall()
 
         for fid, cdiameter, typec, typeen, cubase, multbarrels in culverts_rows:
@@ -12302,7 +12323,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
         self.parser.write_groups(stormdrain_group)
         return True
 
-    def export_swmmflort_dat(self, outdir):
+    def export_swmmflort_dat(self, outdir, subdomain):
         # check if there is any SWMM rating data defined.
         try:
             if self.is_table_empty("swmmflort") and self.is_table_empty("swmmflo_culvert"):
@@ -12312,20 +12333,88 @@ class Flo2dGeoPackage(GeoPackageUtils):
                     self.export_messages += m
                     return False
 
-            swmmflort_sql = "SELECT fid, grid_fid, name FROM swmmflort ORDER BY grid_fid;"
+            if not subdomain:
+                swmmflort_sql = """SELECT fid, grid_fid, name FROM swmmflort ORDER BY grid_fid;"""
+                inlet_type_qry = "SELECT intype FROM swmmflo WHERE swmm_jt = ?;"
+                inlet_type_qry2 = "SELECT intype FROM swmmflo WHERE swmm_jt = ? AND intype = '4';"
+                inlet_name_qry = "SELECT swmm_iden FROM swmmflo WHERE swmm_jt = ?;"
+                culvert_qry = "SELECT grid_fid, name, cdiameter, typec, typeen, cubase, multbarrels FROM swmmflo_culvert ORDER BY fid;"
+            else:
+                swmmflort_sql = f"""
+                SELECT 
+                    sf.fid, 
+                    md.domain_cell, 
+                    sf.name 
+                FROM 
+                    swmmflort AS sf
+                JOIN
+                    schema_md_cells md ON sf.grid_fid = md.grid_fid
+                WHERE 
+                    md.domain_fid = {subdomain}
+                ORDER BY md.domain_cell;"""
+
+                inlet_type_qry = f"""
+                SELECT 
+                    sf.intype 
+                FROM 
+                    swmmflo AS sf
+                JOIN
+                    schema_md_cells md ON sf.swmm_jt = md.grid_fid
+                WHERE 
+                    md.domain_cell = ? AND md.domain_fid = {subdomain};"""
+
+                inlet_type_qry2 = f"""
+                SELECT 
+                    sf.intype 
+                FROM 
+                    swmmflo AS sf
+                JOIN
+                    schema_md_cells md ON sf.swmm_jt = md.grid_fid
+                WHERE 
+                    md.domain_cell = ? AND sf.intype = '4' AND md.domain_fid = {subdomain};"""
+
+                inlet_name_qry = f"""
+                SELECT 
+                    sij.swmm_iden 
+                FROM 
+                    swmmflo AS sij
+                JOIN
+                    schema_md_cells md ON sij.swmm_jt = md.grid_fid
+                WHERE md.domain_cell = ? AND md.domain_fid = {subdomain};"""
+
+                culvert_qry = f"""
+                SELECT 
+                    md.domain_cell,
+                    su.name, 
+                    su.cdiameter, 
+                    su.typec, 
+                    su.typeen, 
+                    su.cubase, 
+                    su.multbarrels 
+                FROM 
+                    swmmflo_culvert AS su
+                JOIN
+                    schema_md_cells md ON su.grid_fid = md.grid_fid
+                WHERE 
+                    md.domain_fid = {subdomain}
+                ORDER BY su.fid;"""
+
             data_sql = "SELECT depth, q FROM swmmflort_data WHERE swmm_rt_fid = ? ORDER BY depth;"
-            #             line1 = 'D {0}\n'
+
             line1 = "D {0}  {1}\n"
             line2 = "N {0}  {1}\n"
             errors = ""
             swmmflort_rows = self.execute(swmmflort_sql).fetchall()
+            culverts = self.gutils.execute(culvert_qry).fetchall()
+            if len(swmmflort_rows) == 0 and len(culverts) == 0:
+                return False
             if not swmmflort_rows and self.is_table_empty("swmmflo_culvert"):
                 return False
             else:
                 pass
             swmmflort = os.path.join(outdir, "SWMMFLORT.DAT")
             error_mentioned = False
-            with open(swmmflort, "w") as s:
+            with (open(swmmflort, "w") as s):
                 for fid, gid, rtname in swmmflort_rows:
                     rtname = rtname.strip()
                     if gid is not None:
@@ -12333,20 +12422,18 @@ class Flo2dGeoPackage(GeoPackageUtils):
                             if rtname is None or rtname == "":
                                 errors += "* Grid element " + str(gid) + " has an empty rating table name.\n"
                             else:
-                                inlet_type_qry = "SELECT intype FROM swmmflo WHERE swmm_jt = ?;"
                                 inlet_type = self.execute(inlet_type_qry, (gid,)).fetchall()
                                 if inlet_type is not None and len(inlet_type) != 0:
                                     # TODO: there may be more than one record. Why? Some may have intype = 4.
                                     if len(inlet_type) > 1:
                                         errors += "* Grid element " + str(gid) + " has has more than one inlet.\n"
                                     # See if there is a type 4:
-                                    inlet_type_qry2 = "SELECT intype FROM swmmflo WHERE swmm_jt = ? AND intype = '4';"
                                     inlet_type = self.execute(inlet_type_qry2, (gid,)).fetchone()
                                     if inlet_type is not None:
                                         rows = self.execute(data_sql, (fid,)).fetchone()
                                         if not rows:
                                             inlet_name = self.execute(
-                                                "SELECT name FROM user_swmm_inlets_junctions WHERE grid = ?;",
+                                                inlet_name_qry,
                                                 (gid,),
                                             ).fetchone()
                                             if inlet_name != None:
@@ -12369,42 +12456,30 @@ class Flo2dGeoPackage(GeoPackageUtils):
                                                             + ".\n"
                                                     )
                                         else:
-                                            if not self.gutils.is_table_empty("user_swmm_inlets_junctions"):
-                                                inlet_name = self.execute(
-                                                    "SELECT name FROM user_swmm_inlets_junctions WHERE grid = ?;",
-                                                    (gid,),
-                                                ).fetchone()
-                                                if inlet_name != None:
-                                                    if inlet_name[0] != "":
-                                                        s.write(line1.format(gid, inlet_name[0]))
-                                                        # s.write(line1.format(gid))
-                                                        # s.write(line1.format(gid, rtname, inlet_name[0]))
-                                                        table = self.execute(data_sql, (fid,)).fetchall()
-                                                        if table:
-                                                            for row in table:
-                                                                s.write(line2.format(*row))
-                                                        else:
-                                                            errors += (
-                                                                    "* Could not find data for rating table '"
-                                                                    + rtname
-                                                                    + "' for grid element "
-                                                                    + str(gid)
-                                                                    + ".\n"
-                                                            )
+                                            inlet_name = self.execute(inlet_name_qry, (gid,)).fetchone()
+                                            if inlet_name not in [None, ""]:
+                                                s.write(line1.format(gid, inlet_name[0]))
+                                                table = self.execute(data_sql, (fid,)).fetchall()
+                                                if table:
+                                                    for row in table:
+                                                        s.write(line2.format(*row))
+                                                else:
+                                                    errors += (
+                                                            "* Could not find data for rating table '"
+                                                            + rtname
+                                                            + "' for grid element "
+                                                            + str(gid)
+                                                            + ".\n"
+                                                    )
                                             else:
                                                 if not error_mentioned:
-                                                    errors += "Storm Drain Inlets/Junctions layer in User Layers is empty.\nSWMMFLORT.DAT may be incomplete!\n"
+                                                    errors += (
+                                                            "* Rating table " + rtname + " doesn't have an inlet associated with node " + str(
+                                                        gid) + ".\n"
+                                                    )
                                                     error_mentioned = True
-                                else:
-                                    errors += (
-                                            "* Rating table " + rtname + " doesn't have an inlet associated with node " + str(
-                                        gid) + ".\n"
-                                    )
                     else:
                         errors += "* Unknown grid element for Rating Table " + rtname + ".\n"
-                culverts = self.gutils.execute(
-                    "SELECT grid_fid, name, cdiameter, typec, typeen, cubase, multbarrels FROM swmmflo_culvert ORDER BY fid;"
-                ).fetchall()
                 if culverts:
                     for culv in culverts:
                         (
@@ -12428,9 +12503,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                             else:
                                 errors += "* Unknown grid element in Culverts eq. table.\n"
             if errors:
-                QApplication.restoreOverrideCursor()
                 self.uc.show_info("WARNING 040319.0521:\n\n" + errors)
-                QApplication.setOverrideCursor(Qt.WaitCursor)
             return True
 
         except Exception as e:

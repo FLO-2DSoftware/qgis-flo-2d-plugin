@@ -200,7 +200,7 @@ class ExportMultipleDomainsDialog(qtBaseClass, uiDialog):
                 "export_steep_slopen",
                 "export_lid_volume",
                 "export_swmmflo",
-                # "export_swmmflort",
+                "export_swmmflort",
                 "export_swmmoutf",
                 # "export_swmmflodropbox",
                 # "export_sdclogging",
