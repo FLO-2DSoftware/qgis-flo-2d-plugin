@@ -11936,11 +11936,11 @@ class Flo2dGeoPackage(GeoPackageUtils):
         elif self.parsed_format == self.FORMAT_HDF5:
             return self.export_swmmflo_hdf5(subdomain)
 
-    def export_swmmflodropbox(self, output=None):
+    def export_swmmflodropbox(self, output=None, subdomain=None):
         if self.parsed_format == self.FORMAT_DAT:
-            return self.export_swmmflodropbox_dat(output)
+            return self.export_swmmflodropbox_dat(output, subdomain)
         elif self.parsed_format == self.FORMAT_HDF5:
-            return self.export_swmmflodropbox_hdf5()
+            return self.export_swmmflodropbox_hdf5(subdomain)
 
     def export_sdclogging(self, output=None):
         if self.parsed_format == self.FORMAT_DAT:
@@ -12136,7 +12136,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             self.uc.show_error("ERROR 101218.1618: exporting SWMMFLO.DAT failed!.\n", e)
             return False
 
-    def export_swmmflodropbox_hdf5(self):
+    def export_swmmflodropbox_hdf5(self, subdomain):
         """
         Function to export the SWMMFLODROPBOX to hdf5 file
         """
@@ -12144,12 +12144,31 @@ class Flo2dGeoPackage(GeoPackageUtils):
         if self.is_table_empty("user_swmm_inlets_junctions"):
             return False
 
-        qry = """
-        SELECT swmmflo.fid as FID, user_swmm_inlets_junctions.drboxarea FROM swmmflo JOIN user_swmm_inlets_junctions ON swmmflo.swmm_jt 
-        = user_swmm_inlets_junctions.grid WHERE (sd_type = 'I' OR sd_type = 'J') AND 
-        drboxarea > 0.0 GROUP BY 
-        user_swmm_inlets_junctions.grid;
-        """
+        if not subdomain:
+            qry = """        
+                    SELECT 
+                        swmmflo.fid as FID, 
+                        user_swmm_inlets_junctions.drboxarea 
+                    FROM 
+                        swmmflo JOIN user_swmm_inlets_junctions ON swmmflo.swmm_jt = user_swmm_inlets_junctions.grid
+                    WHERE (sd_type = 'I' OR sd_type = 'J') AND drboxarea > 0.0 GROUP BY user_swmm_inlets_junctions.grid;
+                    """
+        else:
+            qry = f"""                    
+                    SELECT 
+                        swmmflo.fid as FID, 
+                        user_swmm_inlets_junctions.drboxarea 
+                    FROM 
+                        swmmflo
+                        JOIN user_swmm_inlets_junctions ON swmmflo.swmm_jt = user_swmm_inlets_junctions.grid
+                        JOIN schema_md_cells md ON swmmflo.swmm_jt = md.grid_fid
+                    WHERE 
+                        (sd_type = 'I' OR sd_type = 'J') 
+                        AND drboxarea > 0.0 
+                        AND md.domain_fid = {subdomain}
+                    GROUP BY 
+                        user_swmm_inlets_junctions.grid;
+                    """
 
         rows = self.gutils.execute(qry).fetchall()
 
@@ -12166,12 +12185,25 @@ class Flo2dGeoPackage(GeoPackageUtils):
             self.parser.write_groups(stormdrain_group)
             return True
 
-    def export_swmmflodropbox_dat(self, outdir):
+    def export_swmmflodropbox_dat(self, outdir, subdomain):
         try:
             if self.is_table_empty("user_swmm_inlets_junctions"):
                 return False
 
-            qry = """SELECT name, grid, drboxarea  FROM user_swmm_inlets_junctions WHERE SUBSTR(name, 1,1) NOT LIKE 'J%'  AND drboxarea > 0.0;"""
+            if not subdomain:
+                qry = """SELECT name, grid, drboxarea  FROM user_swmm_inlets_junctions WHERE SUBSTR(name, 1,1) NOT LIKE 'J%'  AND drboxarea > 0.0;"""
+            else:
+                qry = f"""SELECT 
+                            usij.name, 
+                            usij.grid, 
+                            usij.drboxarea 
+                        FROM 
+                            user_swmm_inlets_junctions AS usij
+                         JOIN
+                            schema_md_cells md ON usij.grid = md.grid_fid
+                        WHERE 
+                            md.domain_fid = {subdomain} AND SUBSTR(usij.name, 1,1) NOT LIKE 'J%'  AND usij.drboxarea > 0.0;"""
+
             rows = self.gutils.execute(qry).fetchall()
             if rows:
                 line1 = "{0:16} {1:<10} {2:<10.2f}\n"
