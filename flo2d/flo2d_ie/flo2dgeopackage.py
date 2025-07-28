@@ -11942,11 +11942,11 @@ class Flo2dGeoPackage(GeoPackageUtils):
         elif self.parsed_format == self.FORMAT_HDF5:
             return self.export_swmmflodropbox_hdf5(subdomain)
 
-    def export_sdclogging(self, output=None):
+    def export_sdclogging(self, output=None, subdomain=None):
         if self.parsed_format == self.FORMAT_DAT:
-            return self.export_sdclogging_dat(output)
+            return self.export_sdclogging_dat(output, subdomain)
         elif self.parsed_format == self.FORMAT_HDF5:
-            return self.export_sdclogging_hdf5()
+            return self.export_sdclogging_hdf5(subdomain)
 
     def export_swmminp(self, output=None):
         if self.parsed_format == self.FORMAT_HDF5:
@@ -12167,7 +12167,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                         AND drboxarea > 0.0 
                         AND md.domain_fid = {subdomain}
                     GROUP BY 
-                        user_swmm_inlets_junctions.grid;
+                        md.domain_cell;
                     """
 
         rows = self.gutils.execute(qry).fetchall()
@@ -12195,7 +12195,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
             else:
                 qry = f"""SELECT 
                             usij.name, 
-                            usij.grid, 
+                            md.domain_cell, 
                             usij.drboxarea 
                         FROM 
                             user_swmm_inlets_junctions AS usij
@@ -12224,18 +12224,46 @@ class Flo2dGeoPackage(GeoPackageUtils):
             self.uc.show_error("ERROR 120424.0449: exporting SWMMFLODROPBOX.DAT failed!.\n", e)
             return False
 
-    def export_sdclogging_hdf5(self):
+    def export_sdclogging_hdf5(self, subdomain):
         """
         Function to export the sdclogging to a hdf5 file
         """
         if self.is_table_empty("user_swmm_inlets_junctions"):
             return False
 
-        qry = """SELECT swmmflo.fid as FID, user_swmm_inlets_junctions.swmm_clogging_factor, 
-        user_swmm_inlets_junctions.swmm_time_for_clogging FROM swmmflo JOIN user_swmm_inlets_junctions ON swmmflo.swmm_jt 
-        = user_swmm_inlets_junctions.grid WHERE (user_swmm_inlets_junctions.sd_type = 'I' OR user_swmm_inlets_junctions.sd_type = 'J') AND 
-        user_swmm_inlets_junctions.swmm_clogging_factor > 0.0 AND user_swmm_inlets_junctions.swmm_time_for_clogging > 0.0 GROUP BY 
-        user_swmm_inlets_junctions.grid;"""
+        if not subdomain:
+            qry = """SELECT 
+                        swmmflo.fid as FID, 
+                        user_swmm_inlets_junctions.swmm_clogging_factor, 
+                        user_swmm_inlets_junctions.swmm_time_for_clogging 
+                    FROM 
+                        swmmflo 
+                    JOIN 
+                        user_swmm_inlets_junctions ON swmmflo.swmm_jt = user_swmm_inlets_junctions.grid 
+                    WHERE 
+                        (user_swmm_inlets_junctions.sd_type = 'I' OR user_swmm_inlets_junctions.sd_type = 'J') 
+                        AND user_swmm_inlets_junctions.swmm_clogging_factor > 0.0 
+                        AND user_swmm_inlets_junctions.swmm_time_for_clogging > 0.0 
+                    GROUP BY
+                        user_swmm_inlets_junctions.grid;
+                    """
+        else:
+            qry = f"""
+                    SELECT 
+                        swmmflo.fid AS FID, 
+                        user_swmm_inlets_junctions.swmm_clogging_factor, 
+                        user_swmm_inlets_junctions.swmm_time_for_clogging 
+                    FROM 
+                        swmmflo
+                        JOIN user_swmm_inlets_junctions ON swmmflo.swmm_jt = user_swmm_inlets_junctions.grid
+                        JOIN schema_md_cells md ON swmmflo.swmm_jt = md.grid_fid
+                    WHERE 
+                        (user_swmm_inlets_junctions.sd_type = 'I' OR user_swmm_inlets_junctions.sd_type = 'J')
+                        AND user_swmm_inlets_junctions.swmm_clogging_factor > 0.0
+                        AND user_swmm_inlets_junctions.swmm_time_for_clogging > 0.0
+                        AND md.domain_fid = {subdomain}
+                    GROUP BY
+                        user_swmm_inlets_junctions.grid;"""
 
         rows = self.gutils.execute(qry).fetchall()
         if rows:
@@ -12251,14 +12279,33 @@ class Flo2dGeoPackage(GeoPackageUtils):
             self.parser.write_groups(stormdrain_group)
             return True
 
-    def export_sdclogging_dat(self, outdir):
+    def export_sdclogging_dat(self, outdir, subdomain):
         try:
             if self.is_table_empty("user_swmm_inlets_junctions"):
                 return False
 
-            qry = """SELECT grid, name, swmm_clogging_factor, swmm_time_for_clogging
-                     FROM user_swmm_inlets_junctions 
-                     WHERE (sd_type = 'I' OR sd_type = 'J') AND swmm_clogging_factor > 0.0 AND swmm_time_for_clogging > 0.0;"""
+            if not subdomain:
+                qry = """SELECT grid, name, swmm_clogging_factor, swmm_time_for_clogging
+                         FROM user_swmm_inlets_junctions 
+                         WHERE (sd_type = 'I' OR sd_type = 'J') AND swmm_clogging_factor > 0.0 AND swmm_time_for_clogging > 0.0;"""
+            else:
+                qry = f"""
+                        SELECT 
+                            md.domain_cell, 
+                            usij.name, 
+                            usij.swmm_clogging_factor, 
+                            usij.swmm_time_for_clogging
+                        FROM 
+                            user_swmm_inlets_junctions AS usij
+                        JOIN
+                            schema_md_cells md ON usij.grid = md.grid_fid
+                        WHERE 
+                            (usij.sd_type = 'I' OR usij.sd_type = 'J') 
+                            AND usij.swmm_clogging_factor > 0.0 
+                            AND usij.swmm_time_for_clogging > 0.0
+                            AND md.domain_fid = {subdomain};
+                        """
+
             rows = self.gutils.execute(qry).fetchall()
             if rows:
                 line1 = "D {0:8}   {1:<16} {2:<10.2f} {3:<10.2f}\n"

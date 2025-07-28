@@ -203,7 +203,7 @@ class ExportMultipleDomainsDialog(qtBaseClass, uiDialog):
                 "export_swmmflort",
                 "export_swmmoutf",
                 "export_swmmflodropbox",
-                # "export_sdclogging",
+                "export_sdclogging",
                 # "export_wsurf",
                 # "export_wstime",
                 "export_shallowNSpatial",
