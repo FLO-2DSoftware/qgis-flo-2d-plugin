@@ -1737,7 +1737,7 @@ class Flo2D(object):
         """
         self.uncheck_all_info_tools()
         self.gutils.disable_geom_triggers()
-        self.f2g = Flo2dGeoPackage(self.con, self.iface)
+        self.f2g = Flo2dGeoPackage(self.con, self.iface, self.lyrs)
         import_calls = [
             "import_cont_toler",
             "import_mannings_n_topo",
@@ -2216,7 +2216,7 @@ class Flo2D(object):
         indir = os.path.dirname(input_hdf5)
         s = QSettings()
         s.setValue("FLO-2D/lastGdsDir", indir)
-        self.f2g = Flo2dGeoPackage(self.con, self.iface, parsed_format=Flo2dGeoPackage.FORMAT_HDF5)
+        self.f2g = Flo2dGeoPackage(self.con, self.iface, self.lyrs, parsed_format=Flo2dGeoPackage.FORMAT_HDF5)
         self.f2g.set_parser(input_hdf5)
         QApplication.setOverrideCursor(Qt.WaitCursor)
         empty = self.f2g.is_table_empty("grid")
@@ -2474,7 +2474,7 @@ class Flo2D(object):
     @connection_required
     def import_selected_components(self):
         self.gutils.disable_geom_triggers()
-        self.f2g = Flo2dGeoPackage(self.con, self.iface)
+        self.f2g = Flo2dGeoPackage(self.con, self.iface, self.lyrs)
         import_calls = [
             # "import_cont_toler",
             "import_tolspatial",
@@ -2702,7 +2702,7 @@ class Flo2D(object):
         Import selected traditional GDS files into FLO-2D database (GeoPackage).
         """
         self.gutils.disable_geom_triggers()
-        self.f2g = Flo2dGeoPackage(self.con, self.iface)
+        self.f2g = Flo2dGeoPackage(self.con, self.iface, self.lyrs)
         s = QSettings()
         last_dir = s.value("FLO-2D/lastGdsDir", "")
         fname, __ = QFileDialog.getOpenFileName(
@@ -2956,7 +2956,7 @@ class Flo2D(object):
                 QApplication.setOverrideCursor(Qt.WaitCursor)
                 if export_type == "data":
                     export_message = "Files exported to\n" + outdir + "\n\n"
-                    self.f2g = Flo2dGeoPackage(self.con, self.iface)
+                    self.f2g = Flo2dGeoPackage(self.con, self.iface, self.lyrs)
                     remove = "export_swmminp"
                     export_calls_filtered = [item for item in export_calls if item not in remove]
 
@@ -3033,7 +3033,7 @@ class Flo2D(object):
                         self.uc.log_info("The file Input.hdf5 is currently open or locked by another process!")
                         return
                     export_message = "Datasets exported to\n" + output_hdf5 + "\n\n"
-                    self.f2g = Flo2dGeoPackage(self.con, self.iface, parsed_format=Flo2dGeoPackage.FORMAT_HDF5)
+                    self.f2g = Flo2dGeoPackage(self.con, self.iface, self.lyrs, parsed_format=Flo2dGeoPackage.FORMAT_HDF5)
                     self.f2g.set_parser(output_hdf5, get_cell_size=False)
                     remove = ("export_bridge_coeff_data", "export_wstime", "export_wsurf")
                     export_calls_filtered = [item for item in export_calls if item not in remove]
@@ -3268,7 +3268,7 @@ class Flo2D(object):
 
             QApplication.setOverrideCursor(Qt.WaitCursor)
 
-            self.f2g = Flo2dGeoPackage(self.con, self.iface, parsed_format="DAT")
+            self.f2g = Flo2dGeoPackage(self.con, self.iface, self.lyrs, parsed_format="DAT")
             s = QSettings()
             last_dir = s.value("FLO-2D/lastGdsDir", "")
             fname, __ = QFileDialog.getOpenFileName(

@@ -3,6 +3,8 @@ import shutil
 import time
 import traceback
 
+from .storm_drain_editor_widget import StormDrainEditorWidget
+
 try:
     import h5py
 except ImportError:
@@ -37,7 +39,7 @@ class ExportMultipleDomainsDialog(qtBaseClass, uiDialog):
         self.lyrs = lyrs
         self.uc = UserCommunication(iface, "FLO-2D")
         self.gutils = GeoPackageUtils(con, iface)
-        self.f2g = Flo2dGeoPackage(con, iface)
+        self.f2g = Flo2dGeoPackage(con, iface, lyrs)
 
         self.ok_btn.clicked.connect(self.export_selected_subdomains)
         self.cancel_btn.clicked.connect(self.close_dlg)
@@ -199,6 +201,7 @@ class ExportMultipleDomainsDialog(qtBaseClass, uiDialog):
                 "export_fpfroude",
                 "export_steep_slopen",
                 "export_lid_volume",
+                "export_swmminp",
                 "export_swmmflo",
                 "export_swmmflort",
                 "export_swmmoutf",
@@ -311,6 +314,7 @@ class ExportMultipleDomainsDialog(qtBaseClass, uiDialog):
                     export_calls.remove("export_rain")
 
                 if "Storm Drain" not in dlg_components.components:
+                    export_calls.remove("export_swmminp")
                     export_calls.remove("export_swmmflo")
                     export_calls.remove("export_swmmflort")
                     export_calls.remove("export_swmmoutf")
@@ -393,7 +397,7 @@ class ExportMultipleDomainsDialog(qtBaseClass, uiDialog):
                             self.uc.bar_error(f"The file Input.hdf5 for subdomain {subdomain_name} is currently open or locked by another process!")
                             self.uc.log_info(f"The file Input.hdf5 for subdomain {subdomain_name} is currently open or locked by another process!")
                             continue
-                        self.f2g = Flo2dGeoPackage(self.con, self.iface, parsed_format=Flo2dGeoPackage.FORMAT_HDF5)
+                        self.f2g = Flo2dGeoPackage(self.con, self.iface, self.lyrs, parsed_format=Flo2dGeoPackage.FORMAT_HDF5)
                         self.f2g.set_parser(output_hdf5, get_cell_size=False)
                         self.f2g.parser.write_mode = "w"
                         self.call_IO_methods_md_hdf5(export_calls, True, subdomains[0])

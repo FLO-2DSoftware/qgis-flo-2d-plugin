@@ -52,7 +52,7 @@ from qgis.PyQt.QtWidgets import (
     qApp,
 )
 
-import pyqtgraph as pg
+from ..deps import safe_pyqtgraph as pg
 
 from .dlg_sd_animator import SDAnimator
 from .dlg_sd_profile_view import SDProfileView
