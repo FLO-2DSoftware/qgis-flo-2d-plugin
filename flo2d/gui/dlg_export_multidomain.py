@@ -7,6 +7,7 @@ try:
     import h5py
 except ImportError:
     pass
+
 from PyQt5.QtCore import QSettings, Qt
 from PyQt5.QtWidgets import QFileDialog, QApplication, QCheckBox, QProgressDialog
 from qgis.PyQt.QtCore import NULL
@@ -190,7 +191,7 @@ class ExportMultipleDomainsDialog(qtBaseClass, uiDialog):
                 "export_bridge_coeff_data",
                 # "export_street",
                 "export_arf",
-                # "export_mult",
+                # "export_mult", <-
                 "export_sed",
                 "export_levee",
                 "export_fpxsec",
@@ -199,11 +200,12 @@ class ExportMultipleDomainsDialog(qtBaseClass, uiDialog):
                 "export_fpfroude",
                 "export_steep_slopen",
                 "export_lid_volume",
-                # "export_swmmflo",
-                # "export_swmmflort",
-                # "export_swmmoutf",
-                # "export_swmmflodropbox",
-                # "export_sdclogging",
+                "export_swmminp",
+                "export_swmmflo",
+                "export_swmmflort",
+                "export_swmmoutf",
+                "export_swmmflodropbox",
+                "export_sdclogging",
                 # "export_wsurf",
                 # "export_wstime",
                 "export_shallowNSpatial",
@@ -310,12 +312,13 @@ class ExportMultipleDomainsDialog(qtBaseClass, uiDialog):
                 if "Rain" not in dlg_components.components:
                     export_calls.remove("export_rain")
 
-                # if "Storm Drain" not in dlg_components.components:
-                #     export_calls.remove("export_swmmflo")
-                #     export_calls.remove("export_swmmflort")
-                #     export_calls.remove("export_swmmoutf")
-                #     export_calls.remove("export_swmmflodropbox")
-                #     export_calls.remove("export_sdclogging")
+                if "Storm Drain" not in dlg_components.components:
+                    export_calls.remove("export_swmminp")
+                    export_calls.remove("export_swmmflo")
+                    export_calls.remove("export_swmmflort")
+                    export_calls.remove("export_swmmoutf")
+                    export_calls.remove("export_swmmflodropbox")
+                    export_calls.remove("export_sdclogging")
 
                 if "Spatial Shallow-n" not in dlg_components.components:
                     export_calls.remove("export_shallowNSpatial")

@@ -474,7 +474,6 @@ class BCEditorWidgetNew(qtBaseClass, uiDialog):
             self.ts_fid = 0
         else:
             self.ts_fid = int(self.ts_fid)
-        self.uc.log_info(str(self.ts_fid))
         self.inflow_tseries_cbo.setCurrentIndex(self.ts_fid)
 
         if self.inflow.ident == "F":
