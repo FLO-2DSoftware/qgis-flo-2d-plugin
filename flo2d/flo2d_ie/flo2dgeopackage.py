@@ -15,7 +15,7 @@ from datetime import datetime
 from itertools import chain, groupby
 from operator import itemgetter
 
-from qgis._core import QgsFeatureRequest
+from qgis._core import QgsFeatureRequest, QgsGeometry
 from qgis.core import QgsWkbTypes
 
 from .rainfall_io import HDFProcessor
@@ -12176,10 +12176,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
                         )
 
                         line = "\n{0:16} {1:<10.2f} {2:<10.2f} {3:<10.2f} {4:<10.2f} {5:<10.2f}"
-                        self.uc.log_info(f"SUBDOMAIN {subdomain}")
-                        self.uc.log_info(str(SD_junctions_sql))
                         for row in junctions_rows:
-                            self.uc.log_info(str(row))
                             nodes_names.append(row[0])
                             row = (
                                 row[0],
@@ -13368,30 +13365,32 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
                     line = "\n{0:16} {1:<18} {2:<18}"
 
-                    sd_conduits_lyr = self.lyrs.data["user_swmm_conduits"]["qlyr"]
+                    vertices_sql = self.execute("""
+                        SELECT ST_AsBinary(GeomFromGPB(geom)), conduit_name 
+                        FROM user_swmm_conduits
+                    """).fetchall()
 
-                    def process_feature(feature, domain_geom=None):
-                        geom = feature.geometry()
-                        conduit_name = feature['conduit_name']
+                    for row in vertices_sql:
+                        wkb_geom, conduit_name = row
+
+                        if not wkb_geom:
+                            continue
+
+                        # Ensure WKB is bytes (sqlite3 returns memoryview sometimes)
+                        if isinstance(wkb_geom, memoryview):
+                            wkb_geom = bytes(wkb_geom)
+
+                        geom = QgsGeometry()
+                        geom.fromWkb(wkb_geom)
+
+                        if geom.isNull() or geom.type() != QgsWkbTypes.LineGeometry:
+                            continue
+
                         if QgsWkbTypes.isSingleType(geom.wkbType()):
                             polyline = geom.asPolyline()
                             if len(polyline) > 2:
-                                if domain_geom is None or geom.intersects(domain_geom):
-                                    for pnt in polyline[1:-1]:
-                                        swmm_inp_file.write(line.format(conduit_name, pnt.x(), pnt.y()))
-
-                    if not subdomain:
-                        if sd_conduits_lyr.geometryType() == QgsWkbTypes.LineGeometry:
-                            for feature in sd_conduits_lyr.getFeatures():
-                                process_feature(feature)
-                    else:
-                        mult_domain_lyr = self.lyrs.data["mult_domains"]["qlyr"]
-                        domain_feat = next(mult_domain_lyr.getFeatures(QgsFeatureRequest().setFilterFid(subdomain)), None)
-                        if domain_feat:
-                            domain_geom = domain_feat.geometry()
-                            if sd_conduits_lyr.geometryType() == QgsWkbTypes.LineGeometry:
-                                for feature in sd_conduits_lyr.getFeatures():
-                                    process_feature(feature, domain_geom)
+                                for pt in polyline[1:-1]:
+                                    swmm_inp_file.write(line.format(conduit_name, pt.x(), pt.y()))
 
                 except Exception as e:
                     QApplication.restoreOverrideCursor()
@@ -13526,42 +13525,6 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
         except Exception as e:
             self.uc.show_error("ERROR 160618.0634: couldn't export .INP file!", e)
-
-    # def export_swmminp_hdf5(self, subdomain):
-    #     """
-    #     Function to export swmm inp to the hdf5 file
-    #     """
-    #
-    #     s = QSettings()
-    #     swmm_dir = s.value("FLO-2D/lastSWMMDir", "")
-    #     swmm_input_file_path = swmm_dir + r"\SWMM.INP"
-    #     swmm_ini_file_path = swmm_dir + r"\SWMM.INI"
-    #
-    #     if os.path.isfile(swmm_input_file_path) and os.path.isfile(swmm_ini_file_path):
-    #
-    #         stormdrain_group = self.parser.stormdrain_group
-    #         stormdrain_group.create_dataset('SWMM_INP', [])
-    #         stormdrain_group.create_dataset('SWMM_INI', [])
-    #
-    #         # Read the entire SWMM input file
-    #         with open(swmm_input_file_path, 'r') as swmm_input_file:
-    #             swmm_input_contents = swmm_input_file.read()
-    #
-    #         stormdrain_group.datasets["SWMM_INP"].data.append(swmm_input_contents)
-    #
-    #         # Read the entire SWMM ini file
-    #         with open(swmm_ini_file_path, 'r') as swmm_ini_file:
-    #             swmm_ini_contents = swmm_ini_file.read()
-    #
-    #         stormdrain_group.datasets["SWMM_INI"].data.append(swmm_ini_contents)
-    #
-    #         self.parser.write_groups(stormdrain_group)
-    #
-    #         # os.remove(swmm_input_file_path)
-    #         # os.remove(swmm_ini_file_path)
-    #         return True
-    #     else:
-    #         return False
 
     def export_swmmflo_hdf5(self, subdomain):
         """
