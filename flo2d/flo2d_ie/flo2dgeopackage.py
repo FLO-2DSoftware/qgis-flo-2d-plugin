@@ -13365,10 +13365,18 @@ class Flo2dGeoPackage(GeoPackageUtils):
 
                     line = "\n{0:16} {1:<18} {2:<18}"
 
-                    vertices_sql = self.execute("""
-                        SELECT ST_AsBinary(GeomFromGPB(geom)), conduit_name 
-                        FROM user_swmm_conduits
-                    """).fetchall()
+                    if not subdomain:
+                        vertices_sql = self.execute("""
+                            SELECT ST_AsBinary(GeomFromGPB(geom)), conduit_name 
+                            FROM user_swmm_conduits
+                        """).fetchall()
+                    else:
+                        placeholders = ','.join(['?'] * len(nodes_names))
+                        vertices_sql = self.execute(f"""
+                            SELECT ST_AsBinary(GeomFromGPB(geom)), conduit_name
+                            FROM user_swmm_conduits
+                            WHERE conduit_inlet IN ({placeholders}) AND conduit_outlet IN ({placeholders})
+                        """, nodes_names + nodes_names).fetchall()
 
                     for row in vertices_sql:
                         wkb_geom, conduit_name = row
