@@ -61,7 +61,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
     FORMAT_DAT = "DAT"
     FORMAT_HDF5 = "HDF5"
 
-    def __init__(self, con, iface, lyrs, parsed_format=FORMAT_DAT):
+    def __init__(self, con, iface, parsed_format=FORMAT_DAT):
         super(Flo2dGeoPackage, self).__init__(con, iface)
         self.parsed_format = parsed_format
         self.parser = None
@@ -70,7 +70,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
         self.shrink = None
         self.chunksize = float("inf")
         self.gutils = GeoPackageUtils(con, iface)
-        self.lyrs = lyrs
+        self.lyrs = Layers(iface)
         self.export_messages = ""
 
     def set_parser(self, fpath, get_cell_size=True):

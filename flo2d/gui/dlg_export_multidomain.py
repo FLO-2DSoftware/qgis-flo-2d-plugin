@@ -3,12 +3,11 @@ import shutil
 import time
 import traceback
 
-from .storm_drain_editor_widget import StormDrainEditorWidget
-
 try:
     import h5py
 except ImportError:
     pass
+
 from PyQt5.QtCore import QSettings, Qt
 from PyQt5.QtWidgets import QFileDialog, QApplication, QCheckBox, QProgressDialog
 from qgis.PyQt.QtCore import NULL
@@ -39,7 +38,7 @@ class ExportMultipleDomainsDialog(qtBaseClass, uiDialog):
         self.lyrs = lyrs
         self.uc = UserCommunication(iface, "FLO-2D")
         self.gutils = GeoPackageUtils(con, iface)
-        self.f2g = Flo2dGeoPackage(con, iface, lyrs)
+        self.f2g = Flo2dGeoPackage(con, iface)
 
         self.ok_btn.clicked.connect(self.export_selected_subdomains)
         self.cancel_btn.clicked.connect(self.close_dlg)
@@ -192,7 +191,7 @@ class ExportMultipleDomainsDialog(qtBaseClass, uiDialog):
                 "export_bridge_coeff_data",
                 # "export_street",
                 "export_arf",
-                # "export_mult",
+                # "export_mult", <-
                 "export_sed",
                 "export_levee",
                 "export_fpxsec",
@@ -397,7 +396,7 @@ class ExportMultipleDomainsDialog(qtBaseClass, uiDialog):
                             self.uc.bar_error(f"The file Input.hdf5 for subdomain {subdomain_name} is currently open or locked by another process!")
                             self.uc.log_info(f"The file Input.hdf5 for subdomain {subdomain_name} is currently open or locked by another process!")
                             continue
-                        self.f2g = Flo2dGeoPackage(self.con, self.iface, self.lyrs, parsed_format=Flo2dGeoPackage.FORMAT_HDF5)
+                        self.f2g = Flo2dGeoPackage(self.con, self.iface, parsed_format=Flo2dGeoPackage.FORMAT_HDF5)
                         self.f2g.set_parser(output_hdf5, get_cell_size=False)
                         self.f2g.parser.write_mode = "w"
                         self.call_IO_methods_md_hdf5(export_calls, True, subdomains[0])

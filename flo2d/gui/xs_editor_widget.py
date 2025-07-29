@@ -2665,7 +2665,7 @@ class XsecEditorWidget(qtBaseClass, uiDialog):
         flo2d_dir = s.value("FLO-2D/last_flopro", "")
         project_dir = s.value("FLO-2D/lastGdsDir", "")
         outdir = project_dir + "/temp/"
-        self.f2g = Flo2dGeoPackage(self.con, self.iface, self.lyrs)
+        self.f2g = Flo2dGeoPackage(self.con, self.iface)
         if not os.path.exists(outdir):
             os.mkdir(outdir)
         try:
