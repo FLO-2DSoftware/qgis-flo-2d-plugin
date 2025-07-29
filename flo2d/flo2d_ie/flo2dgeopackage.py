@@ -19,7 +19,6 @@ from qgis._core import QgsFeatureRequest
 from qgis.core import QgsWkbTypes
 
 from .rainfall_io import HDFProcessor
-from ..gui.storm_drain_editor_widget import INP_GroupsDialog
 
 try:
     import h5py
@@ -11999,10 +11998,10 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 )
                 return
 
-            # Set the default SD control variables
-            if self.gutils.is_table_empty("swmm_control"):
-                dlg_INP_groups = INP_GroupsDialog(self.con, self.iface)
-                dlg_INP_groups.save_INP_control()
+            # # Set the default SD control variables
+            # if self.gutils.is_table_empty("swmm_control"):
+            #     dlg_INP_groups = INP_GroupsDialog(self.con, self.iface)
+            #     dlg_INP_groups.save_INP_control()
 
             INP_groups = OrderedDict()
 
