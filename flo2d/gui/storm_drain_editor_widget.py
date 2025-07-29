@@ -34,11 +34,7 @@ from qgis.core import (
     QgsUnitTypes,
     QgsSpatialIndex
 )
-try:
-    import networkx
-except ImportError:
-    pass
-
+import networkx as nx
 from qgis.PyQt.QtCore import QSettings, Qt, QTime, QVariant, QUrl
 from qgis.PyQt.QtGui import QColor, QIcon, QDesktopServices
 from qgis.PyQt.QtWidgets import (
