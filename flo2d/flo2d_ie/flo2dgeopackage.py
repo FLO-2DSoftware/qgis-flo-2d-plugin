@@ -6240,6 +6240,8 @@ class Flo2dGeoPackage(GeoPackageUtils):
                 options["IDEPLT"] = "0"
             if options["MSTREET"] == "0":
                 del options["COURANTST"]
+            if "IDEPLT" not in options:
+                options["IDEPLT"] = "0"
 
             first_gid = self.execute("""SELECT grid_fid FROM inflow_cells ORDER BY fid LIMIT 1;""").fetchone()
             first_gid = first_gid[0] if first_gid is not None else 0
