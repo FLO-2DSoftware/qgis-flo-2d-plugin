@@ -191,7 +191,7 @@ class ExportMultipleDomainsDialog(qtBaseClass, uiDialog):
                 "export_bridge_coeff_data",
                 # "export_street",
                 "export_arf",
-                # "export_mult", <-
+                "export_mult",
                 "export_sed",
                 "export_levee",
                 "export_fpxsec",
@@ -276,8 +276,8 @@ class ExportMultipleDomainsDialog(qtBaseClass, uiDialog):
                 if "Levees" not in dlg_components.components:
                     export_calls.remove("export_levee")
 
-                # if "Multiple Channels" not in dlg_components.components:
-                #     export_calls.remove("export_mult")
+                if "Multiple Channels" not in dlg_components.components:
+                    export_calls.remove("export_mult")
 
                 # if "Breach" not in dlg_components.components:
                 #     export_calls.remove("export_breach")

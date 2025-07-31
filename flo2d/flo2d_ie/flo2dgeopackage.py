@@ -10387,13 +10387,13 @@ class Flo2dGeoPackage(GeoPackageUtils):
             self.uc.show_error("ERROR 101218.1610: exporting ARF.DAT failed!.", e)
             return False
 
-    def export_mult(self, output=None):
+    def export_mult(self, output=None, subdomain=None):
         if self.parsed_format == self.FORMAT_DAT:
-            return self.export_mult_dat(output)
+            return self.export_mult_dat(output, subdomain)
         elif self.parsed_format == self.FORMAT_HDF5:
-            return self.export_mult_hdf5()
+            return self.export_mult_hdf5(subdomain)
 
-    def export_mult_hdf5(self):
+    def export_mult_hdf5(self, subdomain):
         """
         Function to export mult data to hdf5 file
         """
@@ -10414,7 +10414,25 @@ class Flo2dGeoPackage(GeoPackageUtils):
         if not self.is_table_empty("mult_cells"):
             try:
                 # Multiple Channels (not simplified):
-                mult_cell_sql = """SELECT grid_fid, wdr, dm, nodchns, xnmult FROM mult_cells ORDER BY grid_fid ;"""
+                if not subdomain:
+                    mult_cell_sql = """SELECT grid_fid, wdr, dm, nodchns, xnmult FROM mult_cells ORDER BY grid_fid ;"""
+                else:
+                    mult_cell_sql = f"""
+                    SELECT 
+                        md.domain_cell, 
+                        mc.wdr, 
+                        mc.dm, 
+                        mc.nodchns, 
+                        mc.xnmult 
+                    FROM 
+                        mult_cells AS mc
+                    JOIN 
+                        schema_md_cells md ON mc.grid_fid = md.grid_fid    
+                    WHERE
+                        md.domain_fid = {subdomain}
+                    ORDER BY 
+                        mc.grid_fid;"""
+
                 global_data_values = " {}" * 9 + "\n"
                 five_values = " {}" * 5 + "\n"
 
@@ -10443,7 +10461,21 @@ class Flo2dGeoPackage(GeoPackageUtils):
         if not self.is_table_empty("simple_mult_cells"):
             try:
                 # Simplified Multiple Channels:
-                simple_mult_cell_sql = """SELECT DISTINCT grid_fid FROM simple_mult_cells ORDER BY grid_fid;"""
+                if not subdomain:
+                    simple_mult_cell_sql = """SELECT DISTINCT grid_fid FROM simple_mult_cells ORDER BY grid_fid;"""
+                else:
+                    simple_mult_cell_sql = f"""
+                    SELECT DISTINCT
+                        md.domain_cell 
+                    FROM 
+                        simple_mult_cells AS smc
+                    JOIN 
+                        schema_md_cells md ON smc.grid_fid = md.grid_fid    
+                    WHERE
+                        md.domain_fid = {subdomain}
+                    ORDER BY 
+                        smc.grid_fid;"""
+
                 global_data_values = "{}" + "\n"
                 grid_values = "{}" + "\n"
 
@@ -10475,7 +10507,7 @@ class Flo2dGeoPackage(GeoPackageUtils):
         self.parser.write_groups(mult_group)
         return True
 
-    def export_mult_dat(self, outdir):
+    def export_mult_dat(self, outdir, subdomain):
         rtrn = True
         if self.is_table_empty("mult_cells") and self.is_table_empty("simple_mult_cells"):
             return False
@@ -10492,7 +10524,25 @@ class Flo2dGeoPackage(GeoPackageUtils):
         if not self.is_table_empty("mult_cells"):
             try:
                 # Multiple Channels (not simplified):
-                mult_cell_sql = """SELECT grid_fid, wdr, dm, nodchns, xnmult FROM mult_cells ORDER BY grid_fid ;"""
+                if not subdomain:
+                    mult_cell_sql = """SELECT grid_fid, wdr, dm, nodchns, xnmult FROM mult_cells ORDER BY grid_fid ;"""
+                else:
+                    mult_cell_sql = f"""
+                    SELECT 
+                        md.domain_cell, 
+                        mc.wdr, 
+                        mc.dm, 
+                        mc.nodchns, 
+                        mc.xnmult 
+                    FROM 
+                        mult_cells AS mc
+                    JOIN 
+                        schema_md_cells md ON mc.grid_fid = md.grid_fid    
+                    WHERE
+                        md.domain_fid = {subdomain}
+                    ORDER BY 
+                        mc.grid_fid;"""
+
                 line1 = " {}" * 8 + "\n"
                 line2 = " {}" * 5 + "\n"
 
@@ -10520,7 +10570,21 @@ class Flo2dGeoPackage(GeoPackageUtils):
         if not self.is_table_empty("simple_mult_cells"):
             try:
                 # Simplified Multiple Channels:
-                simple_mult_cell_sql = """SELECT DISTINCT grid_fid FROM simple_mult_cells ORDER BY grid_fid;"""
+                if not subdomain:
+                    simple_mult_cell_sql = """SELECT DISTINCT grid_fid FROM simple_mult_cells ORDER BY grid_fid;"""
+                else:
+                    simple_mult_cell_sql = f"""
+                    SELECT DISTINCT
+                        md.domain_cell 
+                    FROM 
+                        simple_mult_cells AS smc
+                    JOIN 
+                        schema_md_cells md ON smc.grid_fid = md.grid_fid    
+                    WHERE
+                        md.domain_fid = {subdomain}
+                    ORDER BY 
+                        smc.grid_fid;"""
+
                 line1 = "{}" + "\n"
                 line2 = "{}" + "\n"
 
