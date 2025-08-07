@@ -3172,6 +3172,87 @@ def render_grid_mannings(grid_lyr, show_nodata, mini, mini2, maxi):
     prj.layerTreeRoot().findLayer(grid_lyr.id()).setItemVisibilityCheckedParentRecursive(True)
 
 
+def render_grid_infiltration(grid_lyr, show_nodata, mini, mini2, maxi, infil_type):
+    if show_nodata:
+        colors = [
+            "#0011FF",
+            "#0061FF",
+            "#00D4FF",
+            "#00FF66",
+            "#00FF00",
+            "#E5FF32",
+            "#FCFC0C",
+            "#FF9F00",
+            "#FF3F00",
+            "#FF0000",
+        ]
+        myRangeList = []
+        if mini == -9999:
+            symbol = QgsSymbol.defaultSymbol(grid_lyr.geometryType())
+            symbol.symbolLayer(0).setStrokeStyle(Qt.PenStyle(Qt.NoPen))
+            symbol.setColor(QColor(Qt.lightGray))
+            try:
+                symbol.setSize(1)
+            except:
+                pass
+            myRange = QgsRendererRange(-9999, -9999, symbol, "-9999")
+            myRangeList.append(myRange)
+            step = (maxi - mini2) / (len(colors) - 1)
+            low = mini2
+            high = mini2 + step
+        else:
+            step = (maxi - mini) / (len(colors) - 1)
+            low = mini
+            high = mini + step
+
+        for i in range(0, len(colors) - 2):
+            symbol = QgsSymbol.defaultSymbol(grid_lyr.geometryType())
+            symbol.symbolLayer(0).setStrokeStyle(Qt.PenStyle(Qt.NoPen))
+            symbol.setColor(QColor(colors[i]))
+            try:
+                symbol.setSize(1)
+            except:
+                pass
+            myRange = QgsRendererRange(
+                low,
+                high,
+                symbol,
+                "{0:.2f}".format(low) + " - " + "{0:.2f}".format(high),
+            )
+            myRangeList.append(myRange)
+            low = high
+            high = high + step
+
+        symbol = QgsSymbol.defaultSymbol(grid_lyr.geometryType())
+        symbol.symbolLayer(0).setStrokeStyle(Qt.PenStyle(Qt.NoPen))
+        symbol.setColor(QColor(colors[len(colors) - 1]))
+        try:
+            symbol.setSize(1)
+        except:
+            pass
+
+        myRange = QgsRendererRange(low, maxi, symbol, "{0:.2f}".format(low) + " - " + "{0:.2f}".format(maxi))
+        myRangeList.append(myRange)
+
+        myRenderer = QgsGraduatedSymbolRenderer(infil_type, myRangeList)
+
+        grid_lyr.setRenderer(myRenderer)
+        grid_lyr.triggerRepaint()
+
+    else:
+        style_path2 = get_file_path("styles", "grid.qml")
+        if os.path.isfile(style_path2):
+            err_msg, res = grid_lyr.loadNamedStyle(style_path2)
+            if not res:
+                QApplication.restoreOverrideCursor()
+                msg = "Unable to load style {}.\n{}".format(style_path2, err_msg)
+                raise Flo2dError(msg)
+        else:
+            QApplication.restoreOverrideCursor()
+            raise Flo2dError("Unable to load style {}".format(style_path2))
+    prj = QgsProject.instance()
+    prj.layerTreeRoot().findLayer(grid_lyr.id()).setItemVisibilityCheckedParentRecursive(True)
+
 def find_this_cell(iface, lyrs, uc, gutils, cell, color=Qt.yellow, zoom_in=False, clear_previous=True):
     try:
         QApplication.setOverrideCursor(Qt.WaitCursor)

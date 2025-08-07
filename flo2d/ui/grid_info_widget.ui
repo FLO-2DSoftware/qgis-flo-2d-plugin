@@ -186,32 +186,22 @@
       </widget>
      </item>
      <item>
-      <widget class="QComboBox" name="render_cbo">
-       <item>
-        <property name="text">
-         <string/>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>Rain</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>Elevation</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>Mannings</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>Subdomains</string>
-        </property>
-       </item>
+      <widget class="QToolButton" name="render_tb">
+       <property name="minimumSize">
+        <size>
+         <width>100</width>
+         <height>0</height>
+        </size>
+       </property>
+       <property name="text">
+        <string/>
+       </property>
+       <property name="popupMode">
+        <enum>QToolButton::MenuButtonPopup</enum>
+       </property>
+       <property name="toolButtonStyle">
+        <enum>Qt::ToolButtonIconOnly</enum>
+       </property>
       </widget>
      </item>
     </layout>
